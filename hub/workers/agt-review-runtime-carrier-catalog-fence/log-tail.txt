@@ -1,0 +1,400 @@
+                if (variant["id"] != selection["variant_id"]
+                        or association["size"] != entry["size"] or association["media_type"] != entry["media_type"]):
+                    raise ConflictError("selected media output identity changed")
+                record["variant"]["managed_output"] = {key: association[key] for key in (
+                    "association_id", "task_id", "attempt_id", "project_id", "generation_id", "object_id",
+                    "output_port", "group_key", "variant_key", "ordinal", "role", "size", "media_type",
+                    "filename", "durability", "lifecycle", "provenance",
+                )}
+            if entry["media_type"].startswith(("video/", "audio/")) and "duration_seconds" not in entry:
+                raise ValueError("selected audio/video requires intrinsic duration")
+            # A selected command input is authoritative only while its exact
+            # managed object bytes still match the catalog size and digest.
+            # Keep this scoped to consumed selections; the acceptance closure
+            # remains responsible for its existing manifest checks.
+            self.service._verify_child_object_bytes(
+                row["object_digest"], row["size"], label="selected media CAS object",
+            )
+            record["catalog_digest"] = digest(record)
+        except (ValueError, TypeError, OverflowError) as exc:
+            raise ValidationError("invalid selected media metadata") from exc
+        if "catalog_digest" in selection and selection["catalog_digest"] != record["catalog_digest"]:
+            raise ConflictError("selected media catalog digest changed")
+        return record
+
+    def selected(self, project_id, selection):
+        from .timeline_commit_validation import validate_commit_value
+        validate_commit_value(selection, "MediaSelection")
+        if not isinstance(selection, dict) or set(selection) != {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}:
+            raise ValidationError("selected media requires all five exact identity fields")
+        record = self._selected_project_media(project_id, selection)
+        return {"selection": {key: record[key] for key in selection},
+                **{key: record["entry"][key] for key in ("media_type", "size", "duration_seconds", "width", "height") if key in record["entry"]}}
+
+    def text(self, project_id, selection):
+        """Exact UTF-8 text read; retention is the manifest media pin, as for selected media."""
+        return verify_text_object(self.store.conn, self.cas, project_id, selection)
+
+    def narration(self, project_id, refs):
+        from .timeline_commit_validation import validate_commit_value
+        validate_commit_value(refs, "NarrationTakeRefs")
+--- test files in CAS commit and integration ---
+[3021a5b79102e9c0873f70df46f5a686bd1276ff]
+contract/schemas/media-relation.json
+contract/schemas/media-selection.json
+runtime_protocol/cas.py
+tests/fixtures/precut-repeat-media-v31.tar.xz
+tests/test_imported_media_catalog.py
+tests/test_streaming_media_io.py
+tests/test_timeline_clip_replacement.py
+tests/test_timeline_media_completion_fence.py
+tests/test_timeline_media_selection.py
+tests/test_timeline_verified_media.py
+tests/test_timeline_verified_media_http.py
+[a51af885ea631c695a857985239c7fe7bf2e871f]
+contract/schemas/media-relation.json
+contract/schemas/media-selection.json
+runtime_protocol/cas.py
+tests/fixtures/precut-repeat-media-v31.tar.xz
+tests/test_imported_media_catalog.py
+tests/test_streaming_media_io.py
+tests/test_timeline_clip_replacement.py
+tests/test_timeline_media_completion_fence.py
+tests/test_timeline_media_selection.py
+tests/test_timeline_verified_media.py
+tests/test_timeline_verified_media_http.py
+
+exec
+/bin/bash -lc "RT=/home/user/work/runtime
+base=81f8c7e0b22c34804015c054762af3d737e4698a
+cand=7b8d6d9afe963e2b7a6c6b32fd4e3797451090da
+printf '%s\\n' '--- public floor preservation ---'
+git -C \""'$RT" diff --quiet "$base" "$cand" -- tests/fixtures/published-command-schemas/agent-26ef2bbb.json && echo '"'unchanged from 81f'
+printf 'candidate_floor_sha='; git -C \""'$RT" show "$cand:tests/fixtures/published-command-schemas/agent-26ef2bbb.json" | sha256sum
+printf '"'%s\\n' '--- candidate added test-control markers ---'
+git -C \""'$RT" diff 83fe4a1cc8e79ba6db2f06271097a96ff2e7c59a "$cand" -- tests runtime_protocol | rg -n '"'"'^[+].*(xfail|skip|TODO|HACK|@pytest'"\\.mark\\.xfail)' || true
+printf '%s\\n' '--- candidate diff route/DTO markers ---'
+git -C \""'$RT" diff 81f8c7e0b22c34804015c054762af3d737e4698a "$cand" -- runtime_protocol packages contract | rg -n '"'"'^[+].*(route|endpoint|DTO|dto|/v1|version)'"' | head -100 || true
+printf '%s\\n' '--- carrier parent guard line count ---'
+git -C \""'$RT" diff --unified=0 83fe4a1cc8e79ba6db2f06271097a96ff2e7c59a "$cand" -- runtime_protocol/timeline_commit_store.py | awk '"'/"'^'"\\+["'^+]/ {n++} END {print "added_nonheader_lines=" n}'"'" in /home/user/work/wt/agt-review-runtime-carrier-catalog-fence
+ succeeded in 78ms:
+--- public floor preservation ---
+unchanged from 81f
+candidate_floor_sha=a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef  -
+--- candidate added test-control markers ---
+--- candidate diff route/DTO markers ---
+38:+  "version": "sha256:15fdc87f04f6d2a4de9e7959baaa0b0dd70bb5a10ccd019fe5667afa58459af4"
+90:+                  "version": {
+111:+                  "version": {
+149:+                  "version": {
+176:+                  "version": {
+221:+                  "version": {
+242:+                  "version": {
+280:+                  "version": {
+301:+                  "version": {
+339:+                  "version": {
+376:+                  "version": {
+438:+                  "version": {
+465:+                  "version": {
+510:+                  "version": {
+537:+                  "version": {
+582:+                  "version": {
+619:+                  "version": {
+681:+                  "version": {
+708:+                  "version": {
+753:+                  "version": {
+780:+                  "version": {
+825:+                  "version": {
+852:+                  "version": {
+897:+                  "version": {
+918:+                  "version": {
+1027:+                      "version": {
+1047:+                      "version": {
+1088:+                      "version": {
+1119:+                      "version": {
+1158:+                      "version": {
+1178:+                      "version": {
+1217:+                      "version": {
+1237:+                      "version": {
+1294:+                      "version": {
+1336:+                      "version": {
+1377:+                      "version": {
+1408:+                      "version": {
+1449:+                      "version": {
+1480:+                      "version": {
+1537:+                      "version": {
+1579:+                      "version": {
+1620:+                      "version": {
+1651:+                      "version": {
+1692:+                      "version": {
+1723:+                      "version": {
+1764:+                      "version": {
+1795:+                      "version": {
+1834:+                      "version": {
+1854:+                      "version": {
+--- carrier parent guard line count ---
+added_nonheader_lines=17
+
+exec
+/bin/bash -lc "RT=/home/user/work/runtime
+printf '%s\\n' '--- CAS commit exact summary ---'
+git -C \""'$RT" show --stat --oneline 3021a5b79102e9c0873f70df46f5a686bd1276ff | sed -n '"'1,120p'
+printf '%s\\n' '--- CAS test names ---'
+git -C \""'$RT" grep -n '"'"'^def test_'"' 3021a5b79102e9c0873f70df46f5a686bd1276ff -- tests/test_timeline_clip_replacement.py tests/test_timeline_media_selection.py | rg -i 'cas|media|replace|object|digest' | head -100
+printf '%s\\n' '--- text replay commit exact summary/tests ---'
+git -C \""'$RT" show --stat --oneline 63e761e29e7e51fc5fa71cc01cd1fe0cf5952125 | sed -n '"'1,120p'
+git -C \""'$RT" grep -n '"'"'^def test_'"' 63e761e29e7e51fc5fa71cc01cd1fe0cf5952125 -- tests/test_shot_text_bindings.py | head -80" in /home/user/work/wt/agt-review-runtime-carrier-catalog-fence
+ succeeded in 124ms:
+--- CAS commit exact summary ---
+3021a5b fix(runtime): verify selected media CAS bytes
+ runtime_protocol/timeline_commit_port.py |  8 ++++++
+ tests/test_timeline_clip_replacement.py  | 47 +++++++++++++++++++++++++++++---
+ 2 files changed, 51 insertions(+), 4 deletions(-)
+--- CAS test names ---
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:257:def test_native_clip_swap_is_atomic_cas_and_exactly_replayable(native_editing):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:287:def test_native_parent_clip_swap_route_replaces_parent_media(native_editing):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:307:def test_native_clip_swap_rejects_cross_project_source_without_mutation(native_editing):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:319:def test_native_clip_swap_rejects_malformed_source_before_native_commit(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:332:def test_native_clip_swap_rejects_tampered_cas_without_mutation(native_editing):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:346:def test_native_clip_swap_rejects_selected_source_corruption_between_capture_and_accept(native_editing, monkeypatch):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:381:def test_native_clip_swap_rejects_wrong_stream_without_mutation(native_editing):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:391:def test_native_clip_swap_rejects_too_short_or_end_short_source(native_editing, duration):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:402:def test_native_generic_visual_media_requires_video_stream(native_editing):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:419:def test_native_clip_swap_replays_after_intervening_edit_and_reopen(native_editing):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:439:def test_native_clip_swap_public_http_route(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:489:def test_replace_timeline_clip_is_atomic_cas_and_exactly_replayable(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:517:def test_replace_timeline_clip_rejects_cross_project_source(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:530:def test_replace_timeline_clip_rejects_malformed_source_without_mutation(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:545:def test_replace_timeline_clip_rejects_tampered_cas_without_mutation(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:560:def test_replace_timeline_clip_rejects_wrong_stream_without_mutation(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:573:def test_replace_timeline_clip_rejects_too_short_source_without_mutation(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:586:def test_replace_timeline_clip_requires_source_to_reach_authored_end(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:599:def test_replace_timeline_clip_generic_visual_media_requires_video_stream(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:612:def test_replace_timeline_clip_replays_after_intervening_edit_and_reopen(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_clip_replacement.py:632:def test_replace_timeline_clip_public_http_route(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_media_selection.py:77:def test_media_selection_query_decodes_exact_selector_values():
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_media_selection.py:104:def test_media_selection_query_rejects_duplicate_ambiguous_or_malformed_selectors(query):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_media_selection.py:113:def test_media_selection_query_rejects_invalid_percent_encoding():
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_media_selection.py:125:def test_media_selection_denies_unmanaged_uncompleted_and_foreign_outputs(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_media_selection.py:156:def test_unrelated_catalogue_change_does_not_invalidate_exact_selected_pin(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_media_selection.py:206:def test_selected_media_capture_and_accept_records_exact_pin(tmp_path):
+3021a5b79102e9c0873f70df46f5a686bd1276ff:tests/test_timeline_media_selection.py:258:def test_selected_media_mutation_between_capture_and_accept_is_atomic(tmp_path, mutation):
+--- text replay commit exact summary/tests ---
+63e761e fix(runtime): replay text binding receipts before live state
+ runtime_protocol/service.py      | 81 +++++++++++++++++++++++++++-------------
+ tests/test_shot_text_bindings.py | 62 ++++++++++++++++++++++++++++++
+ 2 files changed, 118 insertions(+), 25 deletions(-)
+63e761e29e7e51fc5fa71cc01cd1fe0cf5952125:tests/test_shot_text_bindings.py:38:def test_set_is_deterministic_project_scoped_and_replays(daemon):
+63e761e29e7e51fc5fa71cc01cd1fe0cf5952125:tests/test_shot_text_bindings.py:53:def test_set_rebind_and_event_order(daemon):
+63e761e29e7e51fc5fa71cc01cd1fe0cf5952125:tests/test_shot_text_bindings.py:64:def test_invalid_utf8_and_size_are_zero_write(daemon):
+63e761e29e7e51fc5fa71cc01cd1fe0cf5952125:tests/test_shot_text_bindings.py:76:def test_identity_digest_is_sha256(daemon):
+63e761e29e7e51fc5fa71cc01cd1fe0cf5952125:tests/test_shot_text_bindings.py:83:def test_exact_set_retry_after_later_rebind_survives_restart(tmp_path, monkeypatch):
+
+codex
+The focused regression passed on private extracted snapshots: `1 passed in 1.88s`. The source audit also reconciles the boundary count: 16 paths differ from `81f`, while the documented 17-path audit allowlist includes the unchanged door-audit test, leaving exactly 415 candidate paths; all 415 blobs match `81f` with zero mismatches. I’m writing the bounded approval and the successor CAS/text hold conditions now.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-catalog-fence.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-catalog-fence.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-catalog-fence.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7f61fb11bc569f0a1c49d63c336fd499fa302902
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-catalog-fence.md
+@@ -0,0 +1,32 @@
++# Agent counterpart review: Runtime catalog-head carrier fence
++
++**APPROVE — bounded private source review only.** Runtime
++`7b8d6d9afe963e2b7a6c6b32fd4e3797451090da` / tree
++`d20b745c26a33c2ea4e20863f846335c8cf33e1e` is approved as the narrow
++catalog-head-fence counterpart for Agent
++`3730d0bd51686a1692450359482205df64dcc839` / tree
++`3892a10bcffa9bf520b4c79591637cf3259d6724`, private schema
++`f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f`.
++
++The source boundary is clean: 16 paths differ from Runtime `81f8c7e`; with
++the documented 17-path audit boundary (including the unchanged door-audit
++test), exactly 415 candidate paths are outside the allowlist and all 415 blobs
++match `81f8c7e` (0 mismatches, 0 missing). The public floor remains
++`a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`.
++
++The new guard requires the project-scoped `shot_revision_heads.revision_id`
++to equal the authenticated accepted image revision on current, inverse-source,
++and accepted-historical-slot authorization. Thus a newer catalog head cannot
++be repointed through any of those proofs. The typed/private controls,
++public-floor refusal, legacy-v1 and accepted-ledger-first retry behavior remain
++preserved. The focused regression passed: **1 passed in 1.88s**.
++
++This is not approval to pin, release, activate, integrate, or claim native
++qualification. The successor must include Runtime current integration
++`a51af885ea631c695a857985239c7fe7bf2e871f` / tree
++`7c6ab6700307309a7942e64eb4d0c6c7cc42b681`, retain CAS commit
++`3021a5b79102e9c0873f70df46f5a686bd1276ff` / tree
++`521fb1dc9aa9e4094e0f901aa3961a1f9db0d471` and its clip-replacement tests,
++and preserve/re-review the catalog-text replay fix if merged (local ref
++`63e761e29e7e51fc5fa71cc01cd1fe0cf5952125`; the handoff text has a final-`f`
++typo). Then run one coordinated `3730` native pair; no such pair was run here.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..59e19df44cd1003a0a82fc170aca3c8a2f1596c9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/commit-msg.txt
+@@ -0,0 +1,5 @@
++chore(review): approve runtime carrier counterpart
++
++Record the bounded Agent review of the Runtime catalog-head fence and its
++focused regression. Keep current-base CAS/text successor review and the single
++coordinated native pair as adoption gates.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0a6438975312b5981a7a7b9dba9cff4d2dcb930f
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/report.md
+@@ -0,0 +1,62 @@
++# Agent counterpart review: Runtime catalog-head carrier fence
++
++Date: 2026-10-20 UTC
++
++## Decision
++
++**APPROVE — bounded private source review only.** Runtime commit
++`7b8d6d9afe963e2b7a6c6b32fd4e3797451090da`, tree
++`d20b745c26a33c2ea4e20863f846335c8cf33e1e`, is acceptable as the narrow
++catalog-head-fence counterpart for Agent commit
++`3730d0bd51686a1692450359482205df64dcc839`, tree
++`3892a10bcffa9bf520b4c79591637cf3259d6724`.
++
++This does not approve pinning, freeze, release, activation, integration, or
++native qualification. Adoption remains held until the current-base successor
++and the one coordinated native pair are complete.
++
++## Source checks
++
++- The private Agent schema is the exact matched `f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f` (48 definitions, 22 operation clauses, 13 source-bound v2 operations). The public floor is unchanged at
++  `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`.
++- Against Runtime source image `81f8c7e0b22c34804015c054762af3d737e4698a`, the candidate has 16 changed paths. Using the documented 17-path audit boundary (the 16 changed paths plus the unchanged door-audit test), the candidate has exactly **415 paths outside the allowlist**; all 415 candidate blobs match `81f8c7e` with **0 mismatches and 0 missing paths**.
++- Relative to the prior private carrier `83fe4a1cc8e79ba6db2f06271097a96ff2e7c59a`, the intended source delta is the catalog-head guard in `runtime_protocol/timeline_commit_store.py` and the 55-line regression `test_source_bound_owned_slot_cannot_overwrite_newer_catalog_head`.
++- The guard reads the project-scoped `shot_revision_heads.revision_id` and authorizes only an equal authenticated accepted image revision. That equality is required on the current-film path, inverse-source restoration path, and accepted-historical-slot path. A newer catalog head therefore remains occupied and cannot be repointed through current, inverse, or historical proof.
++- Existing typed/private behavior, public-floor refusal, legacy-v1 behavior, accepted-ledger-first retry, inverse/redo/restore, provenance/owner/item checks, materialization joins, global item reservation, and historical proof remain present. No new endpoint, DTO, xfail, skip, or weakened assertion was added.
++
++## Evidence
++
++Executed against private extracted archives of the exact Runtime and Agent
++commits, with shared dependencies left read-only:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 ASTRID_CHECKOUT=<private Agent 3730 archive> \
++  PYTHONPATH=<private Runtime 7b archive>:<private Agent archive> \
++  /home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider \
++  --basetemp=<private temp> -m integration \
++  tests/test_timeline_projection_ownership.py::test_source_bound_owned_slot_cannot_overwrite_newer_catalog_head
++PASS: 1 passed in 1.88s
++```
++
++No full suite, native comprehensive pair, browser/live-socket suite, or
++duplicate Runtime lane was run.
++
++## Required successor conditions
++
++The review intentionally excludes current integration CAS changes. The next
++committed Runtime successor must be based on `a51af885ea631c695a857985239c7fe7bf2e871f`
++(tree `7c6ab6700307309a7942e64eb4d0c6c7cc42b681`) and retain the selected-media
++CAS helper from `3021a5b79102e9c0873f70df46f5a686bd1276ff` (tree
++`521fb1dc9aa9e4094e0f901aa3961a1f9db0d471`) plus its
++`tests/test_timeline_clip_replacement.py` controls. Do not replace the current
++`timeline_commit_port.py` with this older carrier copy; re-review the successor.
++
++If the catalog-text replay fix is included, preserve the local Runtime ref
++`63e761e29e7e51fc5fa71cc01cd1fe0cf5952125` (the handoff text spells the final
++character as `f`) and re-review the resulting current-base tree; it is not an
++ancestor of `a51af88`, so this carrier review makes no claim for that behavior.
++
++After the successor review, coordinate exactly one named Agent `3730` native
++pair covering accepted-v1 ledger-first retry, undo/redo, lost-ACK/restart,
++own-slot and global-item occupancy, and draft preservation. Do not duplicate
++that pair in this review.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- assigned worktree status ---'; git -C /home/user/work/wt/agt-review-runtime-carrier-catalog-fence status --short; printf '%s\\n' '--- worker outputs ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/commit-msg.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/DONE; printf '%s\\n' '--- shared handoff tail ---'; tail -35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-catalog-fence.md" in /home/user/work/wt/agt-review-runtime-carrier-catalog-fence
+ succeeded in 98ms:
+--- assigned worktree status ---
+--- worker outputs ---
+-rw-r--r-- 1 root root    0 Oct 20 15:53 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/DONE
+-rw-r--r-- 1 root root  248 Oct 20 15:53 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/commit-msg.txt
+-rw-r--r-- 1 root root 4051 Oct 20 15:53 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/report.md
+--- shared handoff tail ---
+# Agent counterpart review: Runtime catalog-head carrier fence
+
+**APPROVE — bounded private source review only.** Runtime
+`7b8d6d9afe963e2b7a6c6b32fd4e3797451090da` / tree
+`d20b745c26a33c2ea4e20863f846335c8cf33e1e` is approved as the narrow
+catalog-head-fence counterpart for Agent
+`3730d0bd51686a1692450359482205df64dcc839` / tree
+`3892a10bcffa9bf520b4c79591637cf3259d6724`, private schema
+`f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f`.
+
+The source boundary is clean: 16 paths differ from Runtime `81f8c7e`; with
+the documented 17-path audit boundary (including the unchanged door-audit
+test), exactly 415 candidate paths are outside the allowlist and all 415 blobs
+match `81f8c7e` (0 mismatches, 0 missing). The public floor remains
+`a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`.
+
+The new guard requires the project-scoped `shot_revision_heads.revision_id`
+to equal the authenticated accepted image revision on current, inverse-source,
+and accepted-historical-slot authorization. Thus a newer catalog head cannot
+be repointed through any of those proofs. The typed/private controls,
+public-floor refusal, legacy-v1 and accepted-ledger-first retry behavior remain
+preserved. The focused regression passed: **1 passed in 1.88s**.
+
+This is not approval to pin, release, activate, integrate, or claim native
+qualification. The successor must include Runtime current integration
+`a51af885ea631c695a857985239c7fe7bf2e871f` / tree
+`7c6ab6700307309a7942e64eb4d0c6c7cc42b681`, retain CAS commit
+`3021a5b79102e9c0873f70df46f5a686bd1276ff` / tree
+`521fb1dc9aa9e4094e0f901aa3961a1f9db0d471` and its clip-replacement tests,
+and preserve/re-review the catalog-text replay fix if merged (local ref
+`63e761e29e7e51fc5fa71cc01cd1fe0cf5952125`; the handoff text has a final-`f`
+typo). Then run one coordinated `3730` native pair; no such pair was run here.
+
+codex
+## Report
+
+- **APPROVE — bounded private source review only.** Adoption/release remains **HOLD**.
+- Verified Runtime `7b8d6d9…` / tree `d20b745…` against Agent `3730d0b…` / tree `3892a10…`, schema `f80215f…`.
+- Verified 415 outside-allowlist paths match `81f8c7e` exactly; 0 mismatches.
+- Confirmed the catalog-head guard protects current, inverse, and historical authorization paths.
+- Focused test: **1 passed in 1.88s**.
+- No Runtime, schema, or product edits; no full/native suite run.
+- Successor must preserve Runtime `a51af88…` CAS behavior and re-review any merged catalog-text replay fix. One coordinated native pair remains required.
+
+Files written:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/report.md)
+- [shared handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-catalog-fence.md)
+- [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/commit-msg.txt)
+
+`DONE` created.
+tokens used
+139,489
+## Report
+
+- **APPROVE — bounded private source review only.** Adoption/release remains **HOLD**.
+- Verified Runtime `7b8d6d9…` / tree `d20b745…` against Agent `3730d0b…` / tree `3892a10…`, schema `f80215f…`.
+- Verified 415 outside-allowlist paths match `81f8c7e` exactly; 0 mismatches.
+- Confirmed the catalog-head guard protects current, inverse, and historical authorization paths.
+- Focused test: **1 passed in 1.88s**.
+- No Runtime, schema, or product edits; no full/native suite run.
+- Successor must preserve Runtime `a51af88…` CAS behavior and re-review any merged catalog-text replay fix. One coordinated native pair remains required.
+
+Files written:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/report.md)
+- [shared handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-catalog-fence.md)
+- [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/commit-msg.txt)
+
+`DONE` created.

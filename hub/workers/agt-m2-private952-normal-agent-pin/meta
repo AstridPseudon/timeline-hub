@@ -1,0 +1,9 @@
+name=agt-m2-private952-normal-agent-pin
+repo=agent
+base=357230816c86da65d5f8cc92b10a3a90d29874e0
+base_sha=35723081
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-private952-normal-agent-pin
+started=2026-10-20T18:31:58Z

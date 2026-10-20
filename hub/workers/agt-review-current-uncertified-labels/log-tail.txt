@@ -1,0 +1,400 @@
+A	tests/packs/rendering/test_live_source_label_native.py
+M	tests/packs/rendering/test_scene_source_carry.py
+M	tests/packs/rendering/test_timeline_filmstrip_cards.py
+M	tests/packs/rendering/test_timeline_filmstrip_execution.py
+--- MERGE RESULT ---
+53214e13be3c1c9c057c58f93e55039832ba0eba
+--- CURRENT WORKTREE ---
+## tl/agt-review-current-uncertified-labels
+--- REMOTE TREE FILES ---
+astrid/packs/rendering/actions/timeline_visualize/provenance.py
+tests/packs/rendering/test_fast_lane.py
+tests/packs/rendering/test_live_source_label_native.py
+tests/packs/rendering/test_scene_source_carry.py
+tests/packs/rendering/test_timeline_filmstrip_cards.py
+tests/packs/rendering/test_timeline_filmstrip_execution.py
+
+exec
+/bin/bash -lc "find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design -maxdepth 1 -type f -printf '%f\\n' 2>/dev/null | sort | tail -40; printf '\\n--- WORKER ARTIFACTS ---\\n'; find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels -maxdepth 1 -type f -printf '%f\\n' | sort" in /home/user/work/wt/agt-review-current-uncertified-labels
+ succeeded in 221ms:
+runtime-view-scope-final-review.md
+runtime-view-write-scope-handoff.md
+runtime-viewing-retained-genesis-review.md
+selected-param-original-pin-counterexample.json
+selected-param-original-pin-probe.py
+selected-param-original-pin-rule.md
+suffix-basis-agent.md
+suffix-basis-runtime.md
+suffix-basis.md
+viewing-agent-d09-root-prep-handoff.md
+viewing-app-native-buffer-handoff.md
+viewing-capture-envelope-confirmation.md
+viewing-conditional-renderconfig-handoff-1110.md
+viewing-contract-review.md
+viewing-coordination.md
+viewing-current-adoption.md
+viewing-final-route.md
+viewing-incoming-policy.md
+viewing-m3-consumer-seams.md
+viewing-main-image-cap-actual-reference.md
+viewing-main-image-cap-compiled-input-confirmation.md
+viewing-main-reference-retry-registration.md
+viewing-package-eleven.md
+viewing-pcm-clock-handoff.md
+viewing-private12-graph-source-direction.md
+viewing-release-obsolete-audio-worktrees-1110.md
+viewing-release-tab-historical-worktrees-1117.md
+viewing-resume-0847-source-state.md
+viewing-scanner107-agent-policy-review-request.md
+viewing-scanner108-agent-policy-review-request.md
+viewing-scanner108-delivery-selection.json
+viewing-scene-current-agent-owner-request.md
+viewing-size-census.md
+viewing-size-cut-plan.md
+viewing-size-cuts.md
+viewing-stereo6323-preflight-condition-closed.md
+viewing-tab-clean-install-capability-grant.md
+viewing-tab-short-tmp-1340-run-scope.md
+viewing.md
+visual-compile-contract.md
+
+--- WORKER ARTIFACTS ---
+brief.md
+log.txt
+meta
+running
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ac063fb6da73f3d1bad74d050d43a340840debde
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md
+@@ -0,0 +1,5 @@
++# Agent uncertified-label review
++
++**APPROVE** owner head `d93b4ff6a99b0a421ecad47131467754deff3445`, tree `b73e63ece1c498dc42a433a7b1e12b0b9ef6919a`; clean merge onto current `f133a87986d839d7716d3efac2c2ba25fe036098` yields tree `53214e13be3c1c9c057c58f93e55039832ba0eba`.
++
++The ledger boundary is exact: metadata-only, legacy, and CAS-unclaimed snapshots remain `UNCERTIFIED`; only the exact host-minted `VerifiedTimelineSource` can mint accepted revision/candidate status. Forged, replacement, reserved-key, and prepared-input refusal behavior remains covered. Focused review passed 114 label/refusal-neighbor tests plus 16 direct authority/refusal integration cases. Two final-root cases remain locally unverified because the sandbox denies socket creation; no parity or D09 claim is made.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f8efc5e3178653194fedfda4582507b0487105d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg
+@@ -0,0 +1,3 @@
++test(rendering): review uncertified snapshot labels
++
++Record the owner review and exact merge boundary for metadata-only labels.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f8efc5e3178653194fedfda4582507b0487105d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt
+@@ -0,0 +1,3 @@
++test(rendering): review uncertified snapshot labels
++
++Record the owner review and exact merge boundary for metadata-only labels.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..beb9c2850785d1b21deb5a6cda1666dd6b1e5bb7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+@@ -0,0 +1,26 @@
++# Review report: uncertified snapshot labels
++
++## Verdict
++
++**APPROVE** `d93b4ff6a99b0a421ecad47131467754deff3445` (tree `b73e63ece1c498dc42a433a7b1e12b0b9ef6919a`), reviewed as the owner stack on `815714e8bdb75a8ce1bb422c18466bcb3edb7fc2` against current Agent `f133a87986d839d7716d3efac2c2ba25fe036098` after root `634867fed71b4ae53acaa3c3162315527c2bdb23`.
++
++The clean merge tree is `53214e13be3c1c9c057c58f93e55039832ba0eba` (`git merge-tree --write-tree f133a879 d93b4ff6a`). `git diff --check` passed for both root-to-owner and current-to-owner comparisons. The six changed paths are the intended provenance implementation and focused rendering tests only; there are no SDK/save/pin changes and no D09 deletion or parity claim.
++
++## Review boundary
++
++- Metadata-only, legacy, and CAS-unclaimed inputs remain `status: "uncertified"`; revision/candidate hints remain readable but never mint `actual_revision_id`.
++- Only an exact host-owned `VerifiedTimelineSource`, whose bound snapshot bytes and CAS anchor validate, can produce `committed` or `candidate` labels.
++- The direct evidence preserves reserved-key, forged-source, replacement, prepared-input, and atomic refusal behavior. The explicit scene-query/save-core split remains intact.
++- The three changed expectations in `test_scene_source_carry.py` are one-to-one with the settled uncertainty decision: candidate, historical, and exported metadata-only labels. Scene availability, retained maps, and public label readability remain asserted.
++
++## Tests
++
++All commands ran against private overlay tree `53214e13be3c1c9c057c58f93e55039832ba0eba`; shared node modules, runtimes, and venv were not modified.
++
++- `env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules /home/user/work/venv-agent/bin/pytest -q tests/packs/rendering/test_fast_lane.py tests/packs/rendering/test_timeline_filmstrip_cards.py tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/rendering/test_capture_scene_labels.py tests/sdk/test_scene_save_core.py` — **114 passed**, 1 deprecation warning.
++- `env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/pytest -q -m integration tests/packs/rendering/test_live_source_label_native.py -k 'not retained_source_reaches_exact_final_root_inside_normal_lifetime'` — **16 passed, 2 deselected**. These are the direct authority/refusal cases.
++- The two deselected final-root cases were attempted separately with the private Remotion/runtime/schema paths. They reached host validation but were blocked at `socket.socket(...)` with sandbox `PermissionError: [Errno 1] Operation not permitted`; they are **unverified locally**, not claimed green. No full suite or new matrix was requested.
++
++## Next step
++
++Merge the owner stack with the recorded tree hash. If final-root qualification is required, run those two socket-bound tests through the central test service; no product change is indicated by this review.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- ARTIFACTS ---' && for p in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md; do test -e \""'$p" && printf '"'OK %s\\n' \""'$p" || printf '"'MISSING %s\\n' \""'$p"; done && printf '"'%s\\n' '--- STATUS ---' && git status --short --branch && printf '%s\\n' '--- REPORT ---' && sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md" in /home/user/work/wt/agt-review-current-uncertified-labels
+ succeeded in 267ms:
+--- ARTIFACTS ---
+OK /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+OK /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg
+OK /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt
+OK /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/DONE
+OK /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md
+--- STATUS ---
+## tl/agt-review-current-uncertified-labels
+--- REPORT ---
+# Review report: uncertified snapshot labels
+
+## Verdict
+
+**APPROVE** `d93b4ff6a99b0a421ecad47131467754deff3445` (tree `b73e63ece1c498dc42a433a7b1e12b0b9ef6919a`), reviewed as the owner stack on `815714e8bdb75a8ce1bb422c18466bcb3edb7fc2` against current Agent `f133a87986d839d7716d3efac2c2ba25fe036098` after root `634867fed71b4ae53acaa3c3162315527c2bdb23`.
+
+The clean merge tree is `53214e13be3c1c9c057c58f93e55039832ba0eba` (`git merge-tree --write-tree f133a879 d93b4ff6a`). `git diff --check` passed for both root-to-owner and current-to-owner comparisons. The six changed paths are the intended provenance implementation and focused rendering tests only; there are no SDK/save/pin changes and no D09 deletion or parity claim.
+
+## Review boundary
+
+- Metadata-only, legacy, and CAS-unclaimed inputs remain `status: "uncertified"`; revision/candidate hints remain readable but never mint `actual_revision_id`.
+- Only an exact host-owned `VerifiedTimelineSource`, whose bound snapshot bytes and CAS anchor validate, can produce `committed` or `candidate` labels.
+- The direct evidence preserves reserved-key, forged-source, replacement, prepared-input, and atomic refusal behavior. The explicit scene-query/save-core split remains intact.
+- The three changed expectations in `test_scene_source_carry.py` are one-to-one with the settled uncertainty decision: candidate, historical, and exported metadata-only labels. Scene availability, retained maps, and public label readability remain asserted.
+
+## Tests
+
+All commands ran against private overlay tree `53214e13be3c1c9c057c58f93e55039832ba0eba`; shared node modules, runtimes, and venv were not modified.
+
+- `env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules /home/user/work/venv-agent/bin/pytest -q tests/packs/rendering/test_fast_lane.py tests/packs/rendering/test_timeline_filmstrip_cards.py tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/rendering/test_capture_scene_labels.py tests/sdk/test_scene_save_core.py` — **114 passed**, 1 deprecation warning.
+- `env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/pytest -q -m integration tests/packs/rendering/test_live_source_label_native.py -k 'not retained_source_reaches_exact_final_root_inside_normal_lifetime'` — **16 passed, 2 deselected**. These are the direct authority/refusal cases.
+- The two deselected final-root cases were attempted separately with the private Remotion/runtime/schema paths. They reached host validation but were blocked at `socket.socket(...)` with sandbox `PermissionError: [Errno 1] Operation not permitted`; they are **unverified locally**, not claimed green. No full suite or new matrix was requested.
+
+## Next step
+
+Merge the owner stack with the recorded tree hash. If final-root qualification is required, run those two socket-bound tests through the central test service; no product change is indicated by this review.
+
+exec
+/bin/bash -lc "OV=/tmp/agt-review-current-uncertified-labels-overlay.mWtXRo
+env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO \\
+  ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node \\
+  ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules \\
+  /home/user/work/venv-agent/bin/pytest -q \\
+    \""'$OV/tests/packs/rendering/test_scene_source_carry.py"' in /tmp/agt-review-current-uncertified-labels-overlay.mWtXRo
+ succeeded in 50106ms:
+...........................................................              [100%]
+59 passed in 48.82s
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ac063fb6da73f3d1bad74d050d43a340840debde
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md
+@@ -0,0 +1,5 @@
++# Agent uncertified-label review
++
++**APPROVE** owner head `d93b4ff6a99b0a421ecad47131467754deff3445`, tree `b73e63ece1c498dc42a433a7b1e12b0b9ef6919a`; clean merge onto current `f133a87986d839d7716d3efac2c2ba25fe036098` yields tree `53214e13be3c1c9c057c58f93e55039832ba0eba`.
++
++The ledger boundary is exact: metadata-only, legacy, and CAS-unclaimed snapshots remain `UNCERTIFIED`; only the exact host-minted `VerifiedTimelineSource` can mint accepted revision/candidate status. Forged, replacement, reserved-key, and prepared-input refusal behavior remains covered. Focused review passed 114 label/refusal-neighbor tests plus 16 direct authority/refusal integration cases. Two final-root cases remain locally unverified because the sandbox denies socket creation; no parity or D09 claim is made.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f8efc5e3178653194fedfda4582507b0487105d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg
+@@ -0,0 +1,3 @@
++test(rendering): review uncertified snapshot labels
++
++Record the owner review and exact merge boundary for metadata-only labels.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f8efc5e3178653194fedfda4582507b0487105d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt
+@@ -0,0 +1,3 @@
++test(rendering): review uncertified snapshot labels
++
++Record the owner review and exact merge boundary for metadata-only labels.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..e85db35f381808a4c0b0f31c7eaa8f22442a34f4
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+@@ -0,0 +1,27 @@
++# Review report: uncertified snapshot labels
++
++## Verdict
++
++**APPROVE** `d93b4ff6a99b0a421ecad47131467754deff3445` (tree `b73e63ece1c498dc42a433a7b1e12b0b9ef6919a`), reviewed as the owner stack on `815714e8bdb75a8ce1bb422c18466bcb3edb7fc2` against current Agent `f133a87986d839d7716d3efac2c2ba25fe036098` after root `634867fed71b4ae53acaa3c3162315527c2bdb23`.
++
++The clean merge tree is `53214e13be3c1c9c057c58f93e55039832ba0eba` (`git merge-tree --write-tree f133a879 d93b4ff6a`). `git diff --check` passed for both root-to-owner and current-to-owner comparisons. The six changed paths are the intended provenance implementation and focused rendering tests only; there are no SDK/save/pin changes and no D09 deletion or parity claim.
++
++## Review boundary
++
++- Metadata-only, legacy, and CAS-unclaimed inputs remain `status: "uncertified"`; revision/candidate hints remain readable but never mint `actual_revision_id`.
++- Only an exact host-owned `VerifiedTimelineSource`, whose bound snapshot bytes and CAS anchor validate, can produce `committed` or `candidate` labels.
++- The direct evidence preserves reserved-key, forged-source, replacement, prepared-input, and atomic refusal behavior. The explicit scene-query/save-core split remains intact.
++- The three changed expectations in `test_scene_source_carry.py` are one-to-one with the settled uncertainty decision: candidate, historical, and exported metadata-only labels. Scene availability, retained maps, and public label readability remain asserted.
++
++## Tests
++
++All commands ran against private overlay tree `53214e13be3c1c9c057c58f93e55039832ba0eba`; shared node modules, runtimes, and venv were not modified.
++
++- `env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules /home/user/work/venv-agent/bin/pytest -q tests/packs/rendering/test_fast_lane.py tests/packs/rendering/test_timeline_filmstrip_cards.py tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/rendering/test_capture_scene_labels.py tests/sdk/test_scene_save_core.py` — **114 passed**, 1 deprecation warning.
++- `env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules /home/user/work/venv-agent/bin/pytest -q tests/packs/rendering/test_scene_source_carry.py` — **59 passed**.
++- `env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/pytest -q -m integration tests/packs/rendering/test_live_source_label_native.py -k 'not retained_source_reaches_exact_final_root_inside_normal_lifetime'` — **16 passed, 2 deselected**. These are the direct authority/refusal cases.
++- The two deselected final-root cases were attempted separately with the private Remotion/runtime/schema paths. They reached host validation but were blocked at `socket.socket(...)` with sandbox `PermissionError: [Errno 1] Operation not permitted`; they are **unverified locally**, not claimed green. No full suite or new matrix was requested.
++
++## Next step
++
++Merge the owner stack with the recorded tree hash. If final-root qualification is required, run those two socket-bound tests through the central test service; no product change is indicated by this review.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ac063fb6da73f3d1bad74d050d43a340840debde
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-agent-uncertified-labels-review.md
+@@ -0,0 +1,5 @@
++# Agent uncertified-label review
++
++**APPROVE** owner head `d93b4ff6a99b0a421ecad47131467754deff3445`, tree `b73e63ece1c498dc42a433a7b1e12b0b9ef6919a`; clean merge onto current `f133a87986d839d7716d3efac2c2ba25fe036098` yields tree `53214e13be3c1c9c057c58f93e55039832ba0eba`.
++
++The ledger boundary is exact: metadata-only, legacy, and CAS-unclaimed snapshots remain `UNCERTIFIED`; only the exact host-minted `VerifiedTimelineSource` can mint accepted revision/candidate status. Forged, replacement, reserved-key, and prepared-input refusal behavior remains covered. Focused review passed 114 label/refusal-neighbor tests plus 16 direct authority/refusal integration cases. Two final-root cases remain locally unverified because the sandbox denies socket creation; no parity or D09 claim is made.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f8efc5e3178653194fedfda4582507b0487105d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg
+@@ -0,0 +1,3 @@
++test(rendering): review uncertified snapshot labels
++
++Record the owner review and exact merge boundary for metadata-only labels.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f8efc5e3178653194fedfda4582507b0487105d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg.txt
+@@ -0,0 +1,3 @@
++test(rendering): review uncertified snapshot labels
++
++Record the owner review and exact merge boundary for metadata-only labels.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..dbe1c11a0d2ce72628748dce8bb79f136c6053f9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+@@ -0,0 +1,27 @@
++# Review report: uncertified snapshot labels
++
++## Verdict
++
++**APPROVE** `d93b4ff6a99b0a421ecad47131467754deff3445` (tree `b73e63ece1c498dc42a433a7b1e12b0b9ef6919a`), reviewed as the owner stack on `815714e8bdb75a8ce1bb422c18466bcb3edb7fc2` against current Agent `f133a87986d839d7716d3efac2c2ba25fe036098` after root `634867fed71b4ae53acaa3c3162315527c2bdb23`.
++
++The clean merge tree is `53214e13be3c1c9c057c58f93e55039832ba0eba` (`git merge-tree --write-tree f133a879 d93b4ff6a`). `git diff --check` passed for both root-to-owner and current-to-owner comparisons. The six changed paths are the intended provenance implementation and focused rendering tests only; there are no SDK/save/pin changes and no D09 deletion or parity claim.
++
++## Review boundary
++
++- Metadata-only, legacy, and CAS-unclaimed inputs remain `status: "uncertified"`; revision/candidate hints remain readable but never mint `actual_revision_id`.
++- Only an exact host-owned `VerifiedTimelineSource`, whose bound snapshot bytes and CAS anchor validate, can produce `committed` or `candidate` labels.
++- The direct evidence preserves reserved-key, forged-source, replacement, prepared-input, and atomic refusal behavior. The explicit scene-query/save-core split remains intact.
++- The three changed expectations in `test_scene_source_carry.py` are one-to-one with the settled uncertainty decision: candidate, historical, and exported metadata-only labels. Scene availability, retained maps, and public label readability remain asserted.
++
++## Tests
++
++All commands ran against private overlay tree `53214e13be3c1c9c057c58f93e55039832ba0eba`; shared node modules, runtimes, and venv were not modified.
++
++- `env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules /home/user/work/venv-agent/bin/pytest -q tests/packs/rendering/test_fast_lane.py tests/packs/rendering/test_timeline_filmstrip_cards.py tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/rendering/test_capture_scene_labels.py tests/sdk/test_scene_save_core.py` — **114 passed**, 1 deprecation warning.
++- `env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules /home/user/work/venv-agent/bin/pytest -q tests/packs/rendering/test_scene_source_carry.py` — **59 passed**.
++- `env -u NODE_OPTIONS -u NODE_PATH -u GIT_CONFIG_COUNT -u GIT_CONFIG_KEY_0 -u GIT_CONFIG_KEY_1 -u GIT_CONFIG_KEY_2 -u GIT_CONFIG_VALUE_0 -u GIT_CONFIG_VALUE_1 -u GIT_CONFIG_VALUE_2 -u GIT_SSL_CAINFO ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/pytest -q -m integration tests/packs/rendering/test_live_source_label_native.py -k 'not retained_source_reaches_exact_final_root_inside_normal_lifetime'` — **16 passed, 2 deselected**. These are the direct authority/refusal cases.
++- The authority test file has 18 collected cases: the 16 direct refusal/UNCERTIFIED cases above pass; the two final-root cases were attempted separately with the private Remotion/runtime/schema paths, reached host validation, and were blocked at `socket.socket(...)` with sandbox `PermissionError: [Errno 1] Operation not permitted`. They are **unverified locally**, not claimed green. No full suite or new matrix was requested.
++
++## Next step
++
++Merge the owner stack with the recorded tree hash. If final-root qualification is required, run those two socket-bound tests through the central test service; no product change is indicated by this review.
+
+codex
+The final audit is complete: 59 source-carry tests also pass, the worktree remains clean, and the only unverified boundary is the two socket-bound final-root cases. I’ve written the APPROVE report, conventional commit message, shared design note, and DONE marker; I’m cleaning only the private overlay now.
+exec
+/bin/bash -lc 'OV=/tmp/agt-review-current-uncertified-labels-overlay.mWtXRo
+find "$OV" -depth -type f -delete
+find "$OV" -depth -type l -delete
+find "$OV" -depth -type d -empty -delete
+test ! -e "$OV" && echo "private overlay removed"' in /home/user/work/wt/agt-review-current-uncertified-labels
+ succeeded in 4926ms:
+private overlay removed
+
+exec
+/bin/bash -lc "git status --short --branch && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/DONE && echo DONE && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/commit-msg && printf '\\nREPORT HASHES\\n' && sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md /tmp/claude-0/-home/user/repo 2>/dev/null || true" in /home/user/work/wt/agt-review-current-uncertified-labels
+ succeeded in 458ms:
+## tl/agt-review-current-uncertified-labels
+DONE
+test(rendering): review uncertified snapshot labels
+
+Record the owner review and exact merge boundary for metadata-only labels.
+
+REPORT HASHES
+18f554d9eb042b27eede3670eec9cc8442f255554f8f74448ba5dea12a38f0d6  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-uncertified-labels/report.md
+
+codex
+## Review: APPROVE
+
+Reviewed owner stack `d93b4ff6a99b0a421ecad47131467754deff3445` against current `f133a879`.
+
+- Clean merge tree: `53214e13be3c1c9c057c58f93e55039832ba0eba`
+- Metadata-only/CAS-unclaimed inputs remain `UNCERTIFIED`; only host-minted `VerifiedTimelineSource` can mint accepted labels.
+- Reserved-key, forged-source, replacement, and save/refusal boundaries preserved.
+- No SDK/save/pin changes, D09 deletion, parity claim, or product edits.
+
+Tests:
+
+- Focused label/refusal neighbours: **114 passed**
+- Scene source-carry tests: **59 passed**
+- Direct authority/refusal tests: **16 passed**, 2 deselected
+- Two final-root cases remain unverified because sandbox socket creation is denied.
+
+Artifacts written:
+
+- `report.md`
+- `commit-msg` and `commit-msg.txt`
+- Shared note in `orch/design`
+- `DONE` marker
+
+Worktree is clean.
+tokens used
+227,736
+## Review: APPROVE
+
+Reviewed owner stack `d93b4ff6a99b0a421ecad47131467754deff3445` against current `f133a879`.
+
+- Clean merge tree: `53214e13be3c1c9c057c58f93e55039832ba0eba`
+- Metadata-only/CAS-unclaimed inputs remain `UNCERTIFIED`; only host-minted `VerifiedTimelineSource` can mint accepted labels.
+- Reserved-key, forged-source, replacement, and save/refusal boundaries preserved.
+- No SDK/save/pin changes, D09 deletion, parity claim, or product edits.
+
+Tests:
+
+- Focused label/refusal neighbours: **114 passed**
+- Scene source-carry tests: **59 passed**
+- Direct authority/refusal tests: **16 passed**, 2 deselected
+- Two final-root cases remain unverified because sandbox socket creation is denied.
+
+Artifacts written:
+
+- `report.md`
+- `commit-msg` and `commit-msg.txt`
+- Shared note in `orch/design`
+- `DONE` marker
+
+Worktree is clean.

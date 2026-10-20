@@ -1,0 +1,400 @@
++            reload().flush()
++        assert outbox.read()['pending'] == [b] and outbox.read()['flight']
++    else:
++        result = reload().flush()
++        assert result['data']['status'] == 'rebased'
++        assert result['data']['commands'] == [b]
++        assert sent[-1][1] != sent[0][1]
++        assert outbox.read()['pending'] == [] and outbox.read()['flight'] is None
++        current = bundle_from_document(result['data']['canonical_document'])
++        assert State(current).entity(ref)['params'] == {'x': 3}
++        assert State(current).entity(ref)['hold'] == 4
++
++
+ @pytest.mark.parametrize('damage', ['missing', 'extra', 'wrong', 'commands', 'owner', 'item', 'scope', 'source'])
+ def test_unverified_paired_ack_refuses_even_when_receipt_echoes_the_forgery(damage):
+     from astrid.sdk.timeline._common import TimelineEditError
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/editing_conformance/test_recipe_clip_delete.py' in /home/user/work/wt/agt-m2-materialization-capture-compat
+exec
+/bin/bash -lc 'git diff -- tests/sdk/test_timeline_sync.py | head -40; git diff -- tests/editing_conformance/test_recipe_clip_delete.py; PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/sync.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_clip_delete.py --output-format concise' in /home/user/work/wt/agt-m2-materialization-capture-compat
+ succeeded in 109ms:
+diff --git a/tests/sdk/test_timeline_sync.py b/tests/sdk/test_timeline_sync.py
+index ab7c6fe7..faf5b06f 100644
+--- a/tests/sdk/test_timeline_sync.py
++++ b/tests/sdk/test_timeline_sync.py
+@@ -138,7 +138,12 @@ class Client:
+                                      "summary": {"head_revision_id": self.generated.head["revision_id"]}})
+ 
+     def open_bundle(self, project, timeline, *, revision_id):
++        from astrid.sdk.timeline.commit import bundle_from_document
++
+         self.reads.append(revision_id)
++        for _, result in self.generated.accepted.values():
++            if result['data']['accepted_revision_id'] == revision_id:
++                return DomainResult.success({'bundle': bundle_from_document(result['data']['canonical_document'])})
+         return DomainResult.success({"bundle": copy.deepcopy(self.generated.bundles[revision_id])})
+ 
+ 
+@@ -691,6 +696,88 @@ def test_paired_ack_verifies_known_commands_original_source_and_output_closure()
+                 source_bundle=original) == (result['data'], result['receipt'])
+ 
+ 
++@pytest.mark.parametrize('damage', [None, 'history-receipt', 'original-source'])
++def test_dependent_paired_ack_after_lost_ack_reload_and_disjoint_child_edit(tmp_path, monkeypatch, damage):
++    from astrid.core.receipts.contract import CommandReceipt
++    from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
++    from astrid.sdk.timeline._command_state import State
++    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
++    from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service
++    from astrid.sdk.timeline.outbox import Outbox
++    from tests.editing_conformance.test_materialization_identity import source
++    from tests.sdk.test_timeline_commit_provider import DetachedPort, DetachedRealm, runtime_abi
++
++    runtime_abi.__wrapped__(monkeypatch)
++    realm = DetachedRealm(source())
++    identity = {'realm_id': 'realm', 'actor_id': 'actor-1'}
++    outbox = Outbox(tmp_path / 'dependent.json')
++    outbox.write({'scope': {**identity, 'project_id': 'project-1', 'timeline_id': 'film'},
++                  'base': copy.deepcopy(realm.head), 'pending': [], 'flight': None})
++    sent, accepted = [], {}
++
+diff --git a/tests/editing_conformance/test_recipe_clip_delete.py b/tests/editing_conformance/test_recipe_clip_delete.py
+index bfb3ba49..0de9f373 100644
+--- a/tests/editing_conformance/test_recipe_clip_delete.py
++++ b/tests/editing_conformance/test_recipe_clip_delete.py
+@@ -45,7 +45,7 @@ def portable_golden():
+     document['dependency_manifest']['shots'] = document['dependency_manifest']['internal_timelines'] = []
+     from astrid.sdk.timeline.commit import _digest
+     document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+-    bundle = bundle_from_document(document)
++    bundle = bundle_from_document(document, capture_sources=False)
+     select = 'parent/clip:clip-b'
+     command = capture_clip_delete(bundle, select)
+     plan = execute(bundle, [command])
+All checks passed!
+
+exec
+/bin/bash -lc 'git status --short --untracked-files=all; git diff --check; git diff --numstat -- astrid' in /home/user/work/wt/agt-m2-materialization-capture-compat
+ succeeded in 416ms:
+ M astrid/sdk/timeline/_materialization.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/test_recipe_clip_delete.py
+ M tests/editing_conformance/test_recipe_m2_placement.py
+ M tests/editing_conformance/test_recipe_occurrence_media.py
+ M tests/sdk/test_timeline_clip_scalar_provider.py
+ M tests/sdk/test_timeline_commit_provider_scalar.py
+ M tests/sdk/test_timeline_sync.py
+17	1	astrid/sdk/timeline/_materialization.py
+14	1	astrid/sdk/timeline/commit.py
+26	12	astrid/sdk/timeline/sync.py
+
+ succeeded in 20746ms:
+........................................................................ [ 43%]
+........................................................................ [ 86%]
+......................                                                   [100%]
+166 passed in 20.07s
+
+codex
+All six SDK failures reproduce with the base ACK code. The fake was returning a prepublication working copy for an accepted revision; it now opens the accepted canonical document, and the affected tests pass with their original assertions. I’m rerunning the two broader targeted groups on the final tree.
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recording_clear.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_commit_runtime_opaque_items.py' in /home/user/work/wt/agt-m2-materialization-capture-compat
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_clip_trim_provider.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_split_last.py tests/sdk/test_timeline_commit_provider_parent_track_label.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/timeline/test_authoring_media.py tests/sdk/test_timeline_sync_native.py' in /home/user/work/wt/agt-m2-materialization-capture-compat
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib, json, os, subprocess
+from pathlib import Path
+
+def oid(kind, data):
+    return hashlib.sha1(kind + b' ' + str(len(data)).encode() + b'\\0' + data).digest()
+
+def add(tree, path, mode, value):
+    node = tree
+    parts = path.split('/')
+    for name in parts[:-1]:
+        node = node.setdefault(name, {})
+    node[parts[-1]] = (mode, value)
+
+def encode(node):
+    result = b''
+    for name, child in sorted(node.items(), key=lambda pair: pair[0] + ('/' if isinstance(pair[1], dict) else '')):
+        mode, digest = (b'40000', encode(child)) if isinstance(child, dict) else child
+        result += mode + b' ' + name.encode() + b'\\0' + digest
+    return oid(b'tree', result)
+base, current, fixtures = {}, {}, []
+for entry in subprocess.check_output(['git', 'ls-files', '--stage', '-z']).split(b'\\0'):
+    if not entry:
+        continue
+    info, raw_path = entry.split(b'\\t', 1)
+    mode, digest, stage = info.split()
+    assert stage == b'0'
+    path = raw_path.decode()
+    add(base, path, mode, bytes.fromhex(digest.decode()))
+    p = Path(path)
+    if not p.exists() and not p.is_symlink():
+        continue
+    data = os.readlink(p).encode() if mode == b'120000' else p.read_bytes()
+    actual = oid(b'blob', data)
+    add(current, path, mode, actual)
+    if path.startswith('tests/editing_conformance/fixtures/'):
+        assert actual.hex() == digest.decode(), path
+        fixtures.append(path)
+head_tree = subprocess.check_output(['git', 'rev-parse', 'HEAD"'^{tree}'"'], text=True).strip()
+assert encode(base).hex() == head_tree
+result = {'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+    'base_tree': head_tree, 'final_tracked_tree': encode(current).hex(),
+    'astrid_tree': encode(current['astrid']).hex(), 'tests_tree': encode(current['tests']).hex(),
+    'unchanged_conformance_fixtures': len(fixtures),
+    'schema_sha256': hashlib.sha256(Path('astrid/core/timeline/schema/edit-command.schema.json').read_bytes()).hexdigest(),
+    'materialization_sha256': hashlib.sha256(Path('astrid/sdk/timeline/_materialization.py').read_bytes()).hexdigest()}
+print(json.dumps(result, indent=2))
+PY" in /home/user/work/wt/agt-m2-materialization-capture-compat
+ succeeded in 456ms:
+{
+  "head": "2ea37958c8e70ab56209f1c104976f8a198a6a85",
+  "base_tree": "42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5",
+  "final_tracked_tree": "2c98353028a09d3800300440f5a31cbb96fa2919",
+  "astrid_tree": "02d6d5e172750f4825dbb24d46914676b520508c",
+  "tests_tree": "2f47c598c0faa72683317ae3c5c903252e650f98",
+  "unchanged_conformance_fixtures": 18,
+  "schema_sha256": "8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce",
+  "materialization_sha256": "0a9150d937a9df873b54420ef50e63c244448b0372f355a88852b2ed5e3f48da"
+}
+
+exec
+/bin/bash -lc "python3 - <<'PYDOC'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+provenance = '''Worker "'`agt-m2-materialization-capture-compat`, assigned branch/worktree only. HEAD/base `2ea37958c8e70ab56209f1c104976f8a198a6a85`, base tree `42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5`; final tracked source tree `2c98353028a09d3800300440f5a31cbb96fa2919`, astrid subtree `02d6d5e172750f4825dbb24d46914676b520508c`, tests subtree `2f47c598c0faa72683317ae3c5c903252e650f98`. Harness successor SHA is not yet available; manager must publish it after commit. Tree hashes were reconstructed from Git blob/tree encoding without writing .git, with the base reconstruction independently matching HEAD''^{tree}.'"'''
+map_note = '''
+
+## agt-m2-materialization-capture-compat — original context and explicit legacy capture
+
+''' + provenance + '''
+
+Provider ingress now selects allocation records ONLY from authenticated accepted history bounded through the request's base publication, then loads their ORIGINAL parent closures through the existing scoped immutable revision port. The shared "'`accepted_context` helper calls the existing checked allocation join; execution still verifies scope, S/I, original D/J, owner and every submitted claim. It supplies `materializations` and read-only `closures`, never replaces the current bundle or recaptures B. SDK ACK reconstruction uses the same helper after checking accepted receipt commands/maps, and reads history only through the original base publication. Original command bytes, dependent values, fresh request identity and exact ACK/map/output checks remain intact. No opcode handler, allocator seed, schema, DTO, persisted field/table, ledger, media resolver, pin, Runtime source or inverse ABA rule changed. Product delta +57/-14 (net +43), below 100 lines added.
+
+`bundle_from_document(..., capture_sources=False)` explicitly forwards the ALREADY EXISTING `open_authoring_bundle` legacy capture option, while retaining the verified `_runtime_document` needed for exact conversion. Allocation discovery now respects explicit `_source_closure` capture context rather than treating retained conversion data as opt-in. Default document/SDK/provider opening remains source-bound. Legacy media add/swap, placement and old clip-delete bundle golden setup explicitly selects legacy opening; the separate materialization_v1 fixtures select source capture. All 18 tracked editing-conformance fixture files, including native M1 and label files, are byte-identical. No command/assertion/record/output fixture refresh and no fabricated new authority.
+
+The five strict xfails have been removed only after their original positive assertions passed. New controls cover original-allocation/source forgeries, SDK lost-A-ACK/reload/original-B/stale-disjoint-child handoff and corrupt accepted history/source refusal with the flight kept, and unchanged old accepted placement history through provider undo/redo. The SDK transport fake now opens accepted canonical documents at their real revision instead of returning prepublication working copies; all original assertions remain. Exact final commands/results: `'"''' + str(root / 'workers/agt-m2-materialization-capture-compat/notes/report.md') + '''"'`.
+
+**Boundary:** explicit legacy capture/golden compatibility is restored. A NEW submission of an old sealed command to the default paired native provider still refuses `capture_mismatch`; there is no capture-version discriminator. The exact executable counterexample and smallest bounded version option are in runtime-coordination.md below. This is not claimed as full old-sealed-request admission. Old authenticated accepted history remains authoritative and undoable; accepted retry ledger-first behavior was not modified (actual Runtime retry was not run).
+
+This worker'"'s schema bytes remain base candidate "'`8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce`. Sibling superset/schema62a work is NOT composed here and was not edited. `_materialization.py` SHA256 `0a9150d937a9df873b54420ef50e63c244448b0372f355a88852b2ed5e3f48da`. No official matched new-map Runtime artifact/own-slot pair was available or exercised; no schema overrides, SQL admission or App-readiness claim. M2 integration remains HELD.
+'"'''
+coord_note = '''
+
+## agt-m2-materialization-capture-compat — legacy sealed-request version boundary
+
+''' + provenance + '''
+
+The five original positive fixture requirements now pass using authenticated original allocation/source hydration for dependent B and explicit existing legacy capture opening for old goldens. No golden bytes or original assertions changed. This does NOT prove new native admission of old sealed commands. Both old and source-bound captures currently use "'`schema_version=1`, `version="1"`, provider `astrid-v1`, compiler `authoring-bundle-1`; the new carrier adds bindings/dependencies which old sealed commands cannot contain.
+
+Executable counterexample on this exact tree (cwd `/home/user/work/wt/agt-m2-materialization-capture-compat`):
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import json
+from pathlib import Path
+from pytest import MonkeyPatch
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from tests.sdk.test_timeline_commit_provider import CommitRejected, DetachedRealm, runtime_abi
+case = next(case for case in json.loads(Path('tests/editing_conformance/fixtures/recipe_m2_placement.json').read_text())['cases'] if case['command']['select'].startswith('occurrence:'))
+legacy = execute(bundle_from_document(case['input'], capture_sources=False), [case['command']])
+assert legacy.records == case['records']
+assert document_from_bundle(legacy.bundle) == case['output']
+print('legacy sealed command/records/output: unchanged PASS')
+with MonkeyPatch.context() as patch:
+    runtime_abi.__wrapped__(patch)
+    realm = DetachedRealm(case['input'])
+    try:
+        realm.call([case['command']])
+    except CommitRejected as error:
+        print('same sealed command through paired native ingress:', error.failure['details']['reason'], str(error))
+    else:
+        raise AssertionError('counterexample no longer reproduces')
+    assert not realm.prepared and not realm.accepted
+PY
+"'```
+
+Observed exit 0:
+
+```text
+legacy sealed command/records/output: unchanged PASS
+same sealed command through paired native ingress: capture_mismatch submitted bindings does not match authoritative capture
+```
+
+**Smallest bounded option for orchestrator/Runtime coordination:** keep explicit legacy opening/read/replay for old captures and accepted history, and distinguish future source-bound capture contracts with the EXISTING EditCommand `version` field if NEW old-sealed submissions must also remain admissible. That would mean reviewed v1 legacy capture versus v2 source-bound capture (same opcode function meaning), with official schema/compiler/provider/producer/ACK compatibility owned jointly before adoption. Do not infer authorization by absent bindings, add a DTO/ledger, silently refresh old claims, or erase new map facts. This worker did NOT implement or decide that version change; shared schema and sibling wording/guard integration remain untouched. New paired commands still require the full existing allocation join and verified immutable source; legacy golden execution is not an authority waiver on native ingress.
+
+Provider source hydration is accepted-history-only and bounded to the request base; SDK ACK checks accepted history receipt command/map consistency before using the same helper and original immutable closures. Old accepted placement records were retained exactly and pass current provider undo/redo using their authenticated before/after boundaries. No Runtime receipt/retry path changed. Actual matched new-map admission, global/retired/own-slot occupancy, official generated artifact and coupled acceptance remain UNQUALIFIED. No full suite, installs, sockets, browsers, merges, pushes or pin/schema mutation. M2 integration remains HELD. Final test provenance: `'"''' + str(root / 'workers/agt-m2-materialization-capture-compat/notes/report.md') + '''"'`.
+'"'''
+for name, text in [('m2-materialization-map.md', map_note), ('runtime-coordination.md', coord_note)]:
+    with (root / 'design' / name).open('a') as handle:
+        handle.write(text)
+print('Appended worker-specific source contract and executable version-boundary notes to both absolute design pages.')
+PYDOC" in /home/user/work/wt/agt-m2-materialization-capture-compat
+ succeeded in 82ms:
+Appended worker-specific source contract and executable version-boundary notes to both absolute design pages.
+
+ succeeded in 74964ms:
+........................................................................ [ 11%]
+........................................................................ [ 22%]
+........................................................................ [ 34%]
+........................................................................ [ 45%]
+........................................................................ [ 56%]
+........................................................................ [ 68%]
+........................................................................ [ 79%]
+........................................................................ [ 90%]
+..........................................................               [100%]
+634 passed, 7 deselected in 73.15s (0:01:13)
+
+ succeeded in 80364ms:
+........................................................................ [  9%]
+........................................................................ [ 18%]
+........................................................................ [ 28%]
+........................................................................ [ 37%]
+........................................................................ [ 47%]
+........................................................................ [ 56%]
+........................................................................ [ 66%]
+........................................................................ [ 75%]
+........................................................................ [ 84%]
+........................................................................ [ 94%]
+...........................................                              [100%]
+763 passed, 1 deselected in 79.26s (0:01:19)
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/sync.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_clip_delete.py --output-format concise' in /home/user/work/wt/agt-m2-materialization-capture-compat
+ succeeded in 0ms:
+All checks passed!
+
+exec
+/bin/bash -lc 'git diff --check' in /home/user/work/wt/agt-m2-materialization-capture-compat
+ succeeded in 49ms:
+codex
+Both final targeted groups pass: 634 and 763 tests, with no xfails. The five original requirements pass, all 18 conformance fixture files are unchanged, and Ruff and `git diff --check` pass. I’m recording the exact tree and results; M2 remains held for the legacy-request version decision and official Runtime admission proof.
+
+exec
+/bin/bash -lc "python3 - <<'PYDOC'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = root / 'workers/agt-m2-materialization-capture-compat'
+(worker / 'notes').mkdir(exist_ok=True)
+report = '''# Original materialization context and legacy capture compatibility
+
+All five preserved positive requirements PASS; their strict xfails are removed. Original golden files, command claims and positive assertions were not refreshed. M2 integration remains HELD: explicit legacy capture compatibility is proven, but NEW old-sealed-command admission at default paired ingress still needs a coordinated capture-version decision, and actual new-map Runtime admission remains unqualified.
+
+**Source provenance**
+
+- Worktree "'`/home/user/work/wt/agt-m2-materialization-capture-compat`, branch `tl/agt-m2-materialization-capture-compat` only.
+- HEAD/base `2ea37958c8e70ab56209f1c104976f8a198a6a85`, base tree `42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5`.
+- Final tracked tree **`2c98353028a09d3800300440f5a31cbb96fa2919`**, astrid subtree `02d6d5e172750f4825dbb24d46914676b520508c`, tests subtree `2f47c598c0faa72683317ae3c5c903252e650f98`. No untracked deliverables in the worktree. Git blob/tree encoding reconstructed without .git writes; independent base reconstruction matches HEAD''^{tree}. Harness successor commit SHA must be published by the manager after exit.
+- Schema SHA256 unchanged **`8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce`**. Sibling schema62a/superset work is not composed here and was not edited.
+- `_materialization.py` SHA256 `0a9150d937a9df873b54420ef50e63c244448b0372f355a88852b2ed5e3f48da`.
+- Product diff **+57/-14, net +43 lines**, three existing files; below 100 added lines. All 18 tracked editing-conformance fixture files byte-identical, including M1, label, legacy and separate materialization_v1 fixtures.
+
+**Changes and decisions**
+
+1. `accepted_context` reuses the existing checked allocation join to select ORIGINAL source contexts only from authenticated accepted records. Provider reads accepted ancestry through the request base and exact original scoped immutable parent closures, supplying existing `materializations` and read-only `closures` to execute. Current/head bundles, B'"'s claims, S/I bindings, D/J and allocator seeds are retained; no recapture or current-head replacement. Execution still verifies complete bindings and source/owner/scope.
+2. SDK ACK reconstruction uses the same helper after receipt command/map checks, bounds history through B's original base publication, reconstructs the exact original commands/map and verifies output closure/receipt identity. A lost ACK followed by reload, B captured over local A, A exact retry, a disjoint same-child edit and B stale submission is now an executable positive SDK journey. Forged history/source keeps the original flight and pending command.
+3. "'`bundle_from_document(..., capture_sources=False)` forwards the EXISTING core legacy capture mode; default opening remains source-bound. Retained `_runtime_document` conversion inputs no longer silently opt a legacy context into new source capture. Old media add/swap and placement goldens select explicit legacy opening; separate materialization_v1 cases retain new source capture. The old clip-delete bundle golden needed the same explicit legacy setup because new default bundles retain `_source_closure`; its files/assertions are unchanged.
+4. Old accepted placement records are preserved exactly and pass provider reload/undo/redo via authenticated before/after boundaries without invented source claims. Provider source/owner/item binding forgery and unavailable/foreign original closure controls refuse atomically.
+5. Expanded SDK native tests exposed a pre-existing fake returning a prepublication working copy at an accepted revision. All six failures reproduced after loading HEAD'"'s unchanged sync.py in memory. The existing fake's read boundary now returns its accepted canonical document at that revision; original positive expectations remain and all six pass. No production ACK checks were weakened.
+
+No canonical opcode function, registry, numeric encoding/equality, selected-object/schema/media resolver, root inverse, created-ID reservation, inverse ABA guard, Runtime source, DTO/table/persisted field/ledger, dependency pin or generated schema changed. No prior frontend/provider file was copied. Existing old-accepted retry ledger-first behavior is untouched; actual Runtime retry was not exercised.
+
+**Final exact commands and results** (cwd = assigned worktree; both groups ran against final tree above):
+
+"'```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recording_clear.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_commit_runtime_opaque_items.py
+```
+
+**634 passed, 7 deselected in 73.15s**, exit 0. Prior 631 neighbors plus three new SDK cases. Existing marker exclusions include six actual opaque Runtime requirements and one prior integration case; no skips/xfails added.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_clip_trim_provider.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_split_last.py tests/sdk/test_timeline_commit_provider_parent_track_label.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/timeline/test_authoring_media.py tests/sdk/test_timeline_sync_native.py
+```
+
+**763 passed, 1 deselected in 79.26s**, exit 0; **zero xfails**. Prior 721 neighbors plus five restored positive requirements, five new provider refusal controls, one old-history positive and 31 SDK-native neighbors. Existing integration marker exclusion unchanged. Original outbox/reload, fresh request keys, same-child/sibling stale replay, undo/redo/restore, ABA and forged-source/ACK controls included. No actual new-map Runtime qualification claimed.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/editing_conformance/test_recipe_clip_delete.py
+```
+
+**166 passed in 20.07s**, exit 0, final fixture-fix check before the two broad final groups.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/sync.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_clip_delete.py --output-format concise
+git diff --check
+```
+
+Both PASS, exit 0. All 18 fixture blob hashes compared directly to HEAD and match. No full suite, central full request, installs, localhost/sockets/browser, merge/commit/checkout/rebase/push, SQL/schema override or pin mutation performed. No build outputs/temp files in tracked or untracked worktree changes.
+
+Initial broad runs before final fixture fixes: first group **1 failed/633 passed/7 deselected in 93.10s** (old clip-delete bundle gained private source context); second **6 failed/757 passed/1 deselected in 103.73s** (pre-existing fake accepted-revision boundary). Both corrected as above, without changing original assertions. The exact six-failure baseline probe was:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import subprocess
+import pytest
+from astrid.sdk.timeline import sync
+source = subprocess.check_output(['git', 'show', 'HEAD:astrid/sdk/timeline/sync.py'], text=True)
+exec(compile(source, '<base-sync>', 'exec'), sync.__dict__)
+raise SystemExit(pytest.main(['-q', '--tb=short', 'tests/sdk/test_timeline_sync_native.py::test_native_session_preserves_presence_clear_and_unchanged_history']))
+PY
+"'```
+
+Observed exit 1: **6 failed in 0.48s**, all at the existing base revision identity check. No filesystem mutation from this probe.
+
+**Remaining boundary / recommendation**
+
+The default paired provider still refuses a NEW submission of a pre-carrier sealed placement command: `capture_mismatch: submitted bindings does not match authoritative capture`. The same command/records/output pass unchanged under explicit legacy opening. Both contracts currently advertise v1, so safely admitting both needs a coordinated semantic capture-version decision rather than guessing from missing bindings. Exact executable counterexample and smallest bounded option (existing EditCommand.version, no new DTO/ledger) are published in the ABSOLUTE design/runtime-coordination.md worker section. This limitation is explicit; five passing fixture requirements are not claimed as universal old-sealed native admission.
+
+Updated absolute coordination pages:
+
+- `'"''' + str(root / 'design/m2-materialization-map.md') + '''"'`
+- `'"''' + str(root / 'design/runtime-coordination.md') + '''"'`
+
+Next: harness commit and manager publication of exact successor SHA/tree; orchestrator/Runtime decide legacy NEW-request capture-version support if required; compose sibling schema successor under its owner; official normal Runtime generation plus own-slot/occupancy implementation and actual paired admission/retry/inverse/opaque requirements before any release/pin/App-readiness claim. **M2 integration HELD.**
+'"'''
+(worker / 'notes/report.md').write_text(report)
+(worker / 'commit-msg').write_text('''fix(timeline): retain original materialization capture contexts
+
+Hydrate dependent captures from accepted allocation history and original
+immutable closures, and reuse those contexts for full SDK ACK validation.
+Preserve legacy golden captures through the existing explicit capture mode
+without refreshing claims or weakening source-bound allocation checks.
+
+Cover lost acknowledgements, reload, stale child edits, forged source context
+and old accepted history. Document the remaining legacy request version
+boundary and keep new-map Runtime admission unqualified.
+''')
+summary = '''\\n\\nagt-m2-materialization-capture-compat FINAL evidence on tracked tree "'`2c98353028a09d3800300440f5a31cbb96fa2919`: pure source/provider/ACK group **634 passed, 7 deselected in 73.15s**; ordinary + SDK-native neighbors **763 passed, 1 deselected in 79.26s**; zero xfails in either. Ruff and git diff --check PASS. All18 conformance fixture blobs unchanged. Exact commands, initial failures and final fixture-boundary fixes are in this worker'"'s notes/report.md linked above. No later product/test edits. Explicit legacy capture is proven; NEW old-sealed native submission version boundary and actual official Runtime admission remain unresolved. M2 integration HELD.\\n'''
+for name in ('m2-materialization-map.md', 'runtime-coordination.md'):
+    with (root / 'design' / name).open('a') as handle:
+        handle.write(summary)
+print('Wrote worker notes/report.md and commit-msg; appended final exact test provenance to both absolute design pages.')
+PYDOC" in /home/user/work/wt/agt-m2-materialization-capture-compat
+ succeeded in 0ms:
+Wrote worker notes/report.md and commit-msg; appended final exact test provenance to both absolute design pages.
+
+codex
+All five original positive requirements pass. Original golden bytes and assertions remain unchanged.
+
+- Restored authenticated original-context hydration in provider ingress and SDK ACK verification.
+- Final targeted runs: **634 passed** and **763 passed**, with 8 existing marker deselections and zero xfails. Ruff and diff checks pass.
+- **M2 remains HELD:** new submissions of old sealed commands need a capture-version decision; actual Runtime admission remains unqualified.
+
+[Report with exact commands and provenance](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-capture-compat/notes/report.md). Both design pages and the harness commit message are written.
+tokens used
+177,153
+All five original positive requirements pass. Original golden bytes and assertions remain unchanged.
+
+- Restored authenticated original-context hydration in provider ingress and SDK ACK verification.
+- Final targeted runs: **634 passed** and **763 passed**, with 8 existing marker deselections and zero xfails. Ruff and diff checks pass.
+- **M2 remains HELD:** new submissions of old sealed commands need a capture-version decision; actual Runtime admission remains unqualified.
+
+[Report with exact commands and provenance](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-capture-compat/notes/report.md). Both design pages and the harness commit message are written.

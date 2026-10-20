@@ -1,0 +1,400 @@
+ 
++class _PidfdExitProof:
++    """Keep the bind-time kernel watch, never reconstruct it from fd metadata.
++
++    epoll keys membership by (fd number, open file description). MOD therefore
++    rejects a substituted pidfd even on kernels sharing one anonymous inode.
++    Final file release removes the watch before that file can be recycled.
++    The custody lock serializes capture, proof and close; this private epoll
++    instance must remain owned and its membership must never be extended.
++    """
++
++    def __init__(self, descriptor: int):
++        self._descriptor = descriptor
++        self._watch: Any = None
++        try:
++            self._watch = select.epoll()
++            self._watch.register(descriptor, select.EPOLLIN)
++        except (OSError, ValueError, AttributeError):
++            self.close()  # Custody still retains the pidfd, without exit proof.
++
++    def exited(self, descriptor: int) -> bool:
++        if self._watch is None or descriptor != self._descriptor:
++            return False
++        try:
++            self._watch.modify(descriptor, select.EPOLLIN)
++            events = self._watch.poll(0)
++            if (len(events) != 1 or events[0][0] != descriptor
++                    or events[0][1] not in (select.EPOLLIN, select.EPOLLIN | select.EPOLLHUP)):
++                return False
++            self._watch.modify(descriptor, select.EPOLLIN)
++        except (OSError, ValueError):
++            return False
++        return True
++
++    def close(self) -> None:
++        if self._watch is not None:
++            self._watch.close()
++            self._watch = None
++
++
+ def _retained_incarnation_exited(process: subprocess.Popen, pid: int, birth: str) -> bool:
+     custody = getattr(process, "_astrid_custody", None)
+     proof = getattr(custody, "retained_incarnation_exited", None)
+9675a9ba92a7d2a14c440f91d13ba2886b48e328d3cc3917538465cc526e4cf2  astrid/core/execution/custody_broker.py
+1234b73f61ee47de14f9006fdd0bf7c8b958da16e9d54ea15ac7fdbe0d4321d2  astrid/core/execution/process_group.py
+c43f3a8be25b68aa729b2c4ff12e83d6a96774d4a6970e7e99d1b9fc0844f43e  tests/core/execution/test_process_group.py
+ea6b9b779d6c4f857e55da4138cda267d1afdb00f1a7cf989b0149023a753c91  tests/core/execution/test_custody_broker.py
+6.18.44-fc-v139
+
+exec
+/bin/bash -lc 'cat astrid/core/execution/__init__.py && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873/status && tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873/log.txt' in /home/user/work/wt/agt-m2-custody-kernel-capability-proof
+ succeeded in 0ms:
+"""Execution tier: executor + orchestrator runners (orchestrator drives executor, intra-package)."""
+from .persistent_supervisor import (
+    JsonlSupervisor,
+    LeaseFence,
+    PersistentJsonlSupervisor,
+    PersistentSupervisor,
+    SupervisorError,
+)
+from .reconciler import (
+    ExecutionReconciler,
+    ExecutionUncertain,
+    OutputCustodyError,
+    ReconcileResult,
+    ReconcilerError,
+    verify_output_custody,
+)
+from .target_adapter import (
+    LocalMachineTargetAdapter,
+    RunPodTargetAdapter,
+    TargetAdapterError,
+    TargetObservation,
+    TargetReceipt,
+)
+
+__all__ = [
+    "JsonlSupervisor",
+    "LeaseFence",
+    "PersistentJsonlSupervisor",
+    "PersistentSupervisor",
+    "SupervisorError",
+    "ExecutionReconciler",
+    "ExecutionUncertain",
+    "OutputCustodyError",
+    "ReconcileResult",
+    "ReconcilerError",
+    "verify_output_custody",
+    "LocalMachineTargetAdapter",
+    "RunPodTargetAdapter",
+    "TargetAdapterError",
+    "TargetObservation",
+    "TargetReceipt",
+]
+running
+...........s...............s......s..s......s........................... [ 10%]
+..................
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-custody-kernel-capability-proof')
+(base/'verify_regression.py').write_text('''\"\"\"Replay the new shared-metadata negative against the frozen predecessor.\"\"\"
+import importlib.util
+import subprocess
+import sys
+from pathlib import Path
+
+import astrid.core.execution as execution
+import pytest
+
+if \"--predecessor\" in sys.argv:
+    for name in (\"custody_broker\", \"process_group\"):
+        path = f\"astrid/core/execution/{name}.py\"
+        source = subprocess.check_output([\"git\", \"show\", f\"36f8427283ccfa7edfc0b29fb8c3fd5ea79c2966:{path}\"], text=True)
+        module_name = f\"astrid.core.execution.{name}\"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+        module.__file__ = str(Path(path).resolve())
+        sys.modules[module_name] = module
+        setattr(execution, name, module)
+        exec(compile(source, f\"36f84272:{path}\", \"exec\"), module.__dict__)
+raise SystemExit(pytest.main([\"-q\", \"-o\", \"addopts=\", \"-p\", \"no:cacheprovider\", \"tests/core/execution/test_process_group.py\", \"-k\", \"test_pidfd_kernel_watch and other-exited\"]))
+''')
+PY
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-custody-kernel-capability-proof/verify_regression.py --predecessor > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-custody-kernel-capability-proof/predecessor.log 2>&1' in /home/user/work/wt/agt-m2-custody-kernel-capability-proof
+ exited 1 in 1137ms:
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-custody-kernel-capability-proof/verify_regression.py' in /home/user/work/wt/agt-m2-custody-kernel-capability-proof
+ succeeded in 30002ms:
+test agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873: pass exit=0 in 29s — root-prep-current-integration on agt-m2-custody-kernel-capability-proof (agent tree ecd26c7c6eeb8c6ad53ead2f68a07ab056c3122c)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py
+counts: 652 passed, 16 skipped in 27.61s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873/log.txt ---
+...........s...............s......s..s......s........................... [ 10%]
+........................................................................ [ 21%]
+........................................................................ [ 32%]
+........................................................................ [ 43%]
+........................................................................ [ 53%]
+........................................................................ [ 64%]
+........................................................................ [ 75%]
+..s..............ss............................................ss....... [ 86%]
+.........s........................................ss......sss........... [ 97%]
+....................                                                     [100%]
+652 passed, 16 skipped in 27.61s
+
+ succeeded in 1053ms:
+..                                                                       [100%]
+2 passed, 90 deselected in 0.34s
+
+exec
+/bin/bash -lc 'tail -28 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-custody-kernel-capability-proof/predecessor.log && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873/status && tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873/log.txt' in /home/user/work/wt/agt-m2-custody-kernel-capability-proof
+ succeeded in 0ms:
+            assert os.fstat(descriptor) == os.fstat(replacement)
+            assert os.readlink(f"/proc/self/fd/{descriptor}") == os.readlink(f"/proc/self/fd/{replacement}")
+            if fault == "closed":
+                os.close(descriptor)
+            elif fault == "ordinary":
+                with open(os.devnull, "rb") as ordinary:
+                    os.dup2(ordinary.fileno(), descriptor)
+            elif fault.startswith("other-"):
+                if fault == "other-exited":
+                    other.kill()
+                    other.wait()
+                os.dup2(replacement, descriptor)
+                if fault == "other-exited":
+                    poller = select.poll()
+                    poller.register(descriptor, select.POLLIN)
+                    assert poller.poll(0) == [(descriptor, select.POLLIN | select.POLLHUP)]
+            assert process.poll() is None
+>           assert not owner.retained_incarnation_exited(process.pid, birth)
+E           AssertionError: assert not True
+E            +  where True = retained_incarnation_exited(10, 'b38142f7-84c5-487d-95a4-8180cbff3972:5900954')
+E            +    where retained_incarnation_exited = <astrid.core.execution.custody_broker.ProcessCustody object at 0x7f7a27c83110>.retained_incarnation_exited
+E            +    and   10 = <Popen: returncode: None args: ['/home/user/work/venv-agent/bin/python', '-c...>.pid
+
+tests/core/execution/test_process_group.py:1122: AssertionError
+=========================== short test summary info ============================
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[other-exited-False]
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[other-exited-True]
+2 failed, 90 deselected in 0.31s
+pass
+........................................................................ [ 75%]
+..s..............ss............................................ss....... [ 86%]
+.........s........................................ss......sss........... [ 97%]
+....................                                                     [100%]
+652 passed, 16 skipped in 27.61s
+
+codex
+Central qualification passed both strict files unfiltered: **652 passed, 16 existing Darwin skips**. The new shared-metadata test fails on predecessor `36f84272` by reproducing false exit proof, and passes on this fix. All original process and custody test definitions are unchanged. I’m writing the design and handoff report; the committed fix still needs separate fresh security review and the real current D13 join qualification before merge.
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873/snap && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873/summary && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873/exit && git status --short && git diff --check && wc -l astrid/core/execution/custody_broker.py astrid/core/execution/process_group.py && sha256sum astrid/core/execution/custody_broker.py astrid/core/execution/process_group.py tests/core/execution/test_process_group.py' in /home/user/work/wt/agt-m2-custody-kernel-capability-proof
+ succeeded in 953ms:
+tree=ecd26c7c6eeb8c6ad53ead2f68a07ab056c3122c
+key=5d58171a22e7e1d8ead999e7aedf49cb
+worktree=/home/user/work/wt/agt-m2-custody-kernel-capability-proof
+test agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873: pass exit=0 in 29s — root-prep-current-integration on agt-m2-custody-kernel-capability-proof (agent tree ecd26c7c6eeb8c6ad53ead2f68a07ab056c3122c)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py
+counts: 652 passed, 16 skipped in 27.61s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873/log.txt ---
+...........s...............s......s..s......s........................... [ 10%]
+........................................................................ [ 21%]
+........................................................................ [ 32%]
+........................................................................ [ 43%]
+........................................................................ [ 53%]
+........................................................................ [ 64%]
+........................................................................ [ 75%]
+..s..............ss............................................ss....... [ 86%]
+.........s........................................ss......sss........... [ 97%]
+....................                                                     [100%]
+652 passed, 16 skipped in 27.61s
+0
+ M astrid/core/execution/custody_broker.py
+ M astrid/core/execution/process_group.py
+ M tests/core/execution/test_process_group.py
+  4060 astrid/core/execution/custody_broker.py
+   817 astrid/core/execution/process_group.py
+  4877 total
+9675a9ba92a7d2a14c440f91d13ba2886b48e328d3cc3917538465cc526e4cf2  astrid/core/execution/custody_broker.py
+1234b73f61ee47de14f9006fdd0bf7c8b958da16e9d54ea15ac7fdbe0d4321d2  astrid/core/execution/process_group.py
+c43f3a8be25b68aa729b2c4ff12e83d6a96774d4a6970e7e99d1b9fc0844f43e  tests/core/execution/test_process_group.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib, shutil
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=orch/'workers/agt-m2-custody-kernel-capability-proof'
+design='''# Retained Linux pidfd exit proof through a bind-time kernel watch
+
+Worker: agt-m2-custody-kernel-capability-proof. Predecessor: "'`36f8427283ccfa7edfc0b29fb8c3fd5ea79c2966`. Qualified source tree: `ecd26c7c6eeb8c6ad53ead2f68a07ab056c3122c`. This is the bounded custody correction, not approval of the D13 join.
+
+## Decision and capability assumptions
+
+Replace the metadata fingerprint with one private epoll instance per admitted Linux pidfd. Capture membership once during the existing birth-fenced `pidfd_open` registration. Reuse the existing custody lock for capture, proof, and release. `_PidfdExitProof` belongs in the existing process-only helper seam, `process_group.py`; no new module or public API is needed.
+
+The captured descriptor must be the actual result of custody'"'s existing "'`pidfd_open`, surrounded by its existing identity checks. Arbitrary caller-supplied descriptors never gain proof authority. The private epoll instance and its membership remain exclusively owned by custody; proof only performs MOD and wait, never ADD. This is a trusted same-process lifetime assumption, not protection against arbitrary code mutating private proof objects or epoll membership. Signaling, admission, sessions, adoption, ownership, census checks, and Darwin authority are unchanged.
+
+The kernel key is `(struct file *, descriptor number)`, not inode metadata. In Linux v6.8, `do_epoll_ctl` takes the target file reference with `fdget`, uses `ep_find(ep, tf.file, fd)`, and MOD returns ENOENT if the original registration is missing. `ep_item_poll` polls the registered file. `eventpoll_release_file` removes its entries when the underlying open file description is finally released. See [the kernel implementation](https://raw.githubusercontent.com/torvalds/linux/v6.8/fs/eventpoll.c) and [epoll'"'s documented key/lifetime](https://man7.org/linux/man-pages/man7/epoll.7.html). Epoll does **not** keep the pidfd's open file description alive after final close. Instead the watch disappears, so a subsequently recycled file pointer cannot inherit it.
+
+## Proof and lifetime
+
+1. MOD the original registration to prove that this descriptor still resolves to the registered open file description.
+2. Accept only exactly one event for that descriptor, with IN or IN|HUP. Errors, HUP alone, malformed events, and wait errors refuse proof.
+3. MOD again to reject substitution during the wait. Events came from the retained kernel registration, not a newly registered numeric descriptor.
+4. Conditional release records birth-bound terminal provenance only after this proof. Unconditional release creates no proof. Both release paths close the epoll and pidfd and remove the proof object. Failed epoll capture closes partial state and conservatively disables this exit exception while retaining existing signal custody.
+
+Closing the sole original fd destroys its registration. Keeping a duplicate alive may preserve a stale watch, but MOD on a different file at the original number still fails. A different live or dead pidfd therefore cannot provide the original's proof even when inode/device/mode/link metadata are shared. An intact original pidfd remains valid after its process exits and is reaped; its proof allows the existing PID-reuse cleanup exception while the existing ancestry guards exclude replacements and their children.
+
+No extra pidfd or duplicate is retained. The additional epoll fd is non-inheritable and released with custody. Watch allocation/registration failure and missing watches refuse the reuse exception; there is no metadata fallback. Loss of a descriptor may require explicit unconditional disposal after the caller's existing cleanup policy, and never becomes terminal provenance.
+
+## Scope and limits
+
+Only "'`custody_broker.py`, `process_group.py`, and their direct process test file change. The Timeline proof helper is extracted into the existing helper seam to satisfy inventory without updating entries or thresholds: broker 4,085 -> 4,060 lines, versus inventory/main 4,031 (+29 <= 50); helper module 817 lines (<1,200). No generic framework or separate helper module.
+
+Host is Linux `6.18.44-fc-v139`. Shared old-kernel metadata are modeled from binding onward; child lifetimes, pidfds, descriptor duplication/substitution, and readiness are real kernel operations. This is not execution on Linux v6.8. PID recycling in census tests is simulated, not forced. No normal production close race or external exploit is claimed. Darwin'"'s 16 existing native tests remain UNRUN here. A separate fresh security review of the harness-committed fix and the actual current D13 join qualification are mandatory before merge. This worker does neither merge nor commit.
+
+See the worker report for commands, results, source hashes, and predecessor counterexample replay. Prior review diagnostics/evidence were read only and remain untouched.
+'''
+(orch/'design/agent-custody-kernel-capability-proof.md').write_text(design)
+paths=['astrid/core/execution/custody_broker.py','astrid/core/execution/process_group.py','tests/core/execution/test_process_group.py','tests/core/execution/test_custody_broker.py']
+hashes='\\n'.join(f'| "'`{p}` | `{hashlib.sha256(Path(p).read_bytes()).hexdigest()}` |'"' for p in paths)
+report='''# Custody kernel capability proof: implementation complete, merge held
+
+Replaced inode fingerprints with a bind-time private kernel epoll watch, checked by MOD before and after exit readiness. A different file at the same descriptor cannot satisfy the original watch, even with shared anonymous-inode metadata or an independently retained original duplicate. Conditional release preserves only trusted terminal provenance. Unconditional release never mints it. Failure to capture the watch refuses this exit exception. No signal/adoption/session/owner changes, new module, or public API.
+
+Three-file diff over "'`36f8427283ccfa7edfc0b29fb8c3fd5ea79c2966`: **+244/-36**. Source qualified by central service: **`ecd26c7c6eeb8c6ad53ead2f68a07ab056c3122c`**. The harness will create the commit after worker exit; there is no worker-created commit hash yet.
+
+Design: `ORCH/design/agent-custody-kernel-capability-proof.md` (kernel assumptions, lifetime argument, boundaries, sources). Inventory: broker **4,060**, main/rationale **4,031**, delta **+29**; process helper **817**. Existing inventory contract passes without any entry/tolerance edit. The extraction uses the existing cohesive process-helper seam, with no new module or semantic scope.
+
+## Exact qualification
+
+From `/home/user/work/wt/agt-m2-custody-kernel-capability-proof`, with `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD` and `/home/user/work/venv-agent/bin/python`:
+
+```sh
+/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py -k '"'pidfd or exact_exited_descendant or reaped_root_pid_reuse or observation_uncertainty_persists' tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+"'```
+
+**30 passed, 63 deselected in 1.98s**, exit 0. The `-k` deselected inventory, so it was also executed explicitly:
+
+```sh
+/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+```
+
+**1 passed in 0.30s**, exit 0.
+
+Central request, after the final edit (one request, no full suite):
+
+```sh
+$ORCH/bin/request-test agt-m2-custody-kernel-capability-proof root-prep-current-integration --files '"'tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py'
+"'$ORCH/bin/wait-test agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873
+```
+
+Service command, under its recorded clean `root-prep-current-integration` environment and with `PYTHONPATH="$PWD"`, `PYTHONDONTWRITEBYTECODE=1`:
+
+```sh
+/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py
+```
+
+**652 passed, 16 skipped in 27.61s**, exit 0, **zero deselected**. Exact tree above is recorded in `ORCH/tests/agt-m2-custody-kernel-capability-proof-root-prep-current-integration-1020170702-5873/snap`; summary, exit, and log agree. The skips are the existing Darwin-native cases, not failures reclassified by this work.
+
+The 23 new cases exercise live/closed/ordinary/other-live/other-exited fd controls with shared metadata, each with and without an original duplicate; stale ready original watches; substitution during waiting; unavailable capture; malformed/error events; closing both descriptors/failed partial capture without leaks; and exact zombie then reaped descendant proof across simulated PID reuse, including conditional-release provenance and exclusion of replacement children. New platform tests reuse the existing Linux-only guard. No existing expectations, decorators, assertions, skips or xfails changed.
+
+The new negative was replayed against predecessor product modules loaded in memory directly from `git show 36f84272`, leaving this worktree and the previous reviewer'"'s diagnostics untouched:
+
+"'```sh
+/home/user/work/venv-agent/bin/python "$ORCH/workers/agt-m2-custody-kernel-capability-proof/verify_regression.py" --predecessor
+/home/user/work/venv-agent/bin/python "$ORCH/workers/agt-m2-custody-kernel-capability-proof/verify_regression.py"
+```
+
+Predecessor: **2 failed, 90 deselected in 0.31s**, exit 1, both failures exactly `assert not owner.retained_incarnation_exited(...)` because the original is live and the substituted dead pidfd falsely proves exit. Output retained in `predecessor.log`. Fix: **2 passed, 90 deselected in 0.34s**, exit 0. The replay is a regression-sensitivity check authored by this implementation worker, not a separate independent security review.
+
+Other checks:
+
+- `python -m scripts.reshape.compare_structure_baseline`: **current=14, new=0, fixed=0**, exit 0.
+- `git diff --check`: exit 0.
+- AST/source-segment comparison: all **53** predecessor process definitions and **213** custody definitions unchanged; all **50** origin/main process definitions and **213** custody definitions unchanged. Custody test file byte-identical. Only 6 new test definitions (23 parameterized cases) added here.
+- Scoped Ruff comparison used `python -m ruff check --no-cache --output-format=json --stdin-filename PATH -` on `git show HEAD:PATH` and current contents. Findings **27 -> 27** broker, **6 -> 6** process helper, **22 -> 22** process tests; **zero new diagnostics**. Raw scoped Ruff exits 1 on existing debt. Global `python -m scripts.reshape.compare_ruff_baseline` exits 1 because **2188 < 2220**, requiring a shrink-only baseline refresh outside this three-file grant. No baseline edited.
+- One intermediate focused run hit a syntax error after a formatting edit split an embedded child command. Corrected before the final focused and central runs; no central request used that intermediate source.
+
+No full suite, matrix, `make check`, macOS execution, or current D13 integration run requested or claimed. No commits, merge operations, branch/ref changes, other-worker edits, or shared-dependency writes. Private generated cache cleaned from worktree.
+
+## Source SHA-256
+
+| Path | SHA-256 |
+| --- | --- |
+'"'''+hashes+'''
+
+## Decisions, limits and next steps
+
+Use epoll's file-object membership and automatic final-file-release removal rather than metadata, numeric PID lookup, kcmp permission dependencies, or a second pidfd. Keep the proof in the existing process helper to restore the inventory allowance. Preserve successful Linux signal admission if optional proof capture fails, while refusing any exit/reuse exception without its watch.
+
+Implementation is not blocked. Merge remains **held** by the task's explicit requirement: orchestrator must commission a separate fresh security review of the harness-committed fix, then qualify the real current D13 join. Linux 6.18 execution plus a modeled older shared-inode backend does not establish actual old-kernel or Darwin execution. Census recycling is synthetic; no normal production close race or external exploit is established. Private epoll instance/membership ownership is a required assumption; arbitrary process-memory or private-epoll tampering is outside this bounded descriptor-fault proof. Existing signal behavior is unchanged and is not newly certified against arbitrary descriptor-table tampering.
+
+Recommended next steps: harness commit, independent security review referencing the exact source tree/hashes, then separate current D13 join qualification. The source owner can separately refresh the already-improved Ruff baseline within its own grant. Do not merge on this worker's report alone.
+'''
+(worker/'report.md').write_text(report)
+msg='''fix(execution): bind pidfd exit proof to a retained kernel watch
+
+Replace metadata fingerprints with a private epoll registration captured at
+pidfd binding. Check file-object membership around exit readiness so closed
+or substituted descriptors cannot mint terminal provenance, including on
+kernels with shared anonymous pidfd inodes. Release the watch with custody.
+
+Extract the proof into the existing process helper to restore the giant-file
+inventory allowance. Preserve original strict tests and add shared-inode,
+stale-watch, lifetime, and exact exited-descendant PID-reuse regressions.
+
+Validation: 652 passed, 16 existing Darwin skips in central unfiltered strict
+files; 30 focused tests and the giant-file inventory contract pass.
+Separate committed-fix security review and current D13 join remain required.
+'''
+(worker/'commit-msg').write_text(msg)
+(worker/'commit-msg.txt').write_text(msg)
+cache=Path('.ruff_cache')
+if cache.is_dir() and not cache.is_symlink():
+    shutil.rmtree(cache)
+print('Design, report, and both commit message paths written; private Ruff cache removed.')
+PY" in /home/user/work/wt/agt-m2-custody-kernel-capability-proof
+ succeeded in 128ms:
+Design, report, and both commit message paths written; private Ruff cache removed.
+
+exec
+/bin/bash -lc "git diff --check && git status --short && python3 - <<'PY'
+from pathlib import Path
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-custody-kernel-capability-proof')
+for name in ('report.md','commit-msg','commit-msg.txt'):
+    assert (worker/name).stat().st_size > 0
+assert not Path('.ruff_cache').exists()
+(worker/'DONE').touch()
+print('DONE written. No commit or merge performed.')
+PY" in /home/user/work/wt/agt-m2-custody-kernel-capability-proof
+ succeeded in 646ms:
+ M astrid/core/execution/custody_broker.py
+ M astrid/core/execution/process_group.py
+ M tests/core/execution/test_process_group.py
+DONE written. No commit or merge performed.
+
+codex
+Implemented the three-file fix using a retained epoll watch to verify the original kernel capability. Broker inventory is within allowance; original tests remain unchanged.
+
+- Central unfiltered strict files: **652 passed, 16 existing Darwin skips**.
+- Focused tests: **30 passed**; inventory contract passed.
+- New regression reproduces false proof on the predecessor and passes on the fix.
+- No new scoped Ruff diagnostics; global baseline refresh remains outstanding.
+
+[Report with exact commands, hashes, assumptions, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-custody-kernel-capability-proof/report.md).
+
+Commit messages and `DONE` written. No commit or merge performed. Separate committed-fix security review and current D13 join qualification remain required; macOS is unrun.
+tokens used
+139,920
+Implemented the three-file fix using a retained epoll watch to verify the original kernel capability. Broker inventory is within allowance; original tests remain unchanged.
+
+- Central unfiltered strict files: **652 passed, 16 existing Darwin skips**.
+- Focused tests: **30 passed**; inventory contract passed.
+- New regression reproduces false proof on the predecessor and passes on the fix.
+- No new scoped Ruff diagnostics; global baseline refresh remains outstanding.
+
+[Report with exact commands, hashes, assumptions, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-custody-kernel-capability-proof/report.md).
+
+Commit messages and `DONE` written. No commit or merge performed. Separate committed-fix security review and current D13 join qualification remain required; macOS is unrun.

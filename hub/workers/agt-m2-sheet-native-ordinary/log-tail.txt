@@ -1,0 +1,400 @@
+        os.close(temporary_fd)
+        temporary_fd = -1
+        validate_created_parent(destination, destination_identity, parent_fd)
+        try:
+            os.stat(destination_name, dir_fd=parent_fd, follow_symlinks=False)
+        except FileNotFoundError:
+            pass
+        else:
+            raise ConflictError("restore destination appeared before publication")
+        os.rename(temporary_name, destination_name, src_dir_fd=parent_fd, dst_dir_fd=parent_fd)
+        os.fsync(parent_fd)
+        validate_created_parent(destination, destination_identity, parent_fd)
+        return {"destination": str(destination), "realm_id": realm["id"], "activation_handoff": str(destination / "activation-handoff.json"), "source_manifest_sha256": handoff["source_manifest_sha256"], "verification": verified["manifest"]}
+    except Exception:
+        if temporary_fd >= 0:
+            try:
+                os.close(temporary_fd)
+            except OSError:
+                pass
+        if temporary_name is not None:
+            try:
+                remove_tree_at(parent_fd, temporary_name)
+            except OSError:
+                pass
+        raise
+    finally:
+        os.close(source_fd)
+        if own_source_identity:
+            close_pinned(source_identity)
+        if parent_fd >= 0 and parent_fd != destination_identity.get("_parent_fd"):
+            os.close(parent_fd)
+        if own_destination_identity:
+            close_pinned(destination_identity)
+
+
+def structured_export(store) -> dict:
+    def rows(query, transform=None):
+        values = [dict(row) for row in store.conn.execute(query)]
+        return [transform(value) if transform else value for value in values]
+
+    projects = rows("SELECT * FROM projects ORDER BY created_at", lambda value: value | {"metadata": json.loads(value.pop("metadata_json"))})
+    runs = rows("SELECT * FROM runs ORDER BY created_at", lambda value: value | {"spec": store._load_spec(value.pop("spec_digest"))})
+    tasks = rows("SELECT * FROM tasks ORDER BY created_at", lambda value: value | {"spec": store._load_spec(value.pop("spec_digest")), **({"result": json.loads(value["result_json"])} if value.get("result_json") else {})})
+    for task in tasks:
+        task.pop("result_json", None)
+        if task.get("expected_effect_json"):
+            task["expected_effect"] = json.loads(task.pop("expected_effect_json"))
+        else:
+            task.pop("expected_effect_json", None)
+    events = rows("SELECT * FROM events ORDER BY id", lambda value: value | {"payload": json.loads(value.pop("payload_json"))})
+    capabilities = rows("SELECT * FROM capabilities ORDER BY id", lambda value: value | {"required_resource_keys": json.loads(value.pop("required_resource_keys_json"))})
+    executors = rows("SELECT * FROM executors ORDER BY id", lambda value: value | {"capabilities": json.loads(value.pop("capabilities_json")), "resource_keys": json.loads(value.pop("resource_keys_json"))})
+    reservations = rows("SELECT * FROM reservations ORDER BY task_id, resource_key")
+    documents = rows("SELECT * FROM project_documents ORDER BY project_id, created_at, id", lambda value: value | {"content": json.loads(value.pop("content_json"))})
+    generations = rows("SELECT * FROM generations ORDER BY project_id, created_at, id", lambda value: value | {"metadata": json.loads(value.pop("metadata_json"))})
+/home/user/work/wt/rt-pin-94114269/runtime_protocol/upgrade.py:807:def migrate_canonical_v24_to_v25(
+/home/user/work/wt/rt-pin-94114269/runtime_protocol/upgrade.py:856:def migrate_canonical_v25_to_v26(
+/home/user/work/wt/rt-pin-94114269/runtime_protocol/upgrade.py:907:def _reclaim_after_migration(connection: sqlite3.Connection) -> dict[str, object]:
+/home/user/work/wt/rt-pin-94114269/runtime_protocol/upgrade.py:926:def migrate_canonical_to_current(
+/home/user/work/wt/rt-pin-94114269/runtime_protocol/upgrade.py:1212:def upgrade_realm(
+/home/user/work/wt/rt-pin-94114269/runtime_protocol/upgrade.py:1875:def migrate_historical_managed_outputs(
+    "project_sequences": frozenset("project_id next_seq".split()),
+    "project_shots": frozenset("id project_id name metadata_json version created_at updated_at archived_at".split()),
+    "projects": frozenset("id realm_id slug name metadata_json version created_at updated_at idempotency_key".split()),
+    "realm": frozenset("id display_name created_at updated_at".split()),
+    "realm_lifecycle": frozenset("realm_id state tombstoned_at reason version".split()),
+    "recovery_checkpoints": frozenset("id attempt_id task_id executor_id runtime_epoch lease_id fence nonce checkpoint_path checkpoint_digest checkpoint_size state recovery_receipt_json created_at updated_at".split()),
+    "reference_links": frozenset("from_reference_id to_reference_id kind metadata_json created_at".split()),
+    "reservations": frozenset("task_id resource_key lease_token created_at released_at executor_id fence lease_expires_at runtime_epoch".split()),
+    "runs": frozenset("id project_id capability spec_digest status idempotency_key created_at updated_at".split()),
+    "runtime_lifecycle": frozenset("id runtime_epoch boot_id previous_boot_id started_at recovered_task_count".split()),
+    "shot_items": frozenset("id shot_id media_id sort_key source_frame metadata_json created_at".split()),
+    "shot_text_binding_events": frozenset("event_id binding_id project_id seq kind payload_json previous_hash event_hash created_at".split()),
+    "shot_text_bindings": frozenset("id project_id shot_id kind slot media_digest event_stream_id head_seq created_at updated_at".split()),
+    "task_dependencies": frozenset("continuation_task_id predecessor_task_id ordinal".split()),
+    "tasks": frozenset("id run_id capability spec_digest status lease_token executor_id attempt expected_effect_json result_json created_at updated_at capability_digest waiting_reason lease_expires_at lease_fence attempt_id runtime_epoch execution_request_json".split()),
+    "task_specs": frozenset("digest body_json created_at".split()),
+    "timeline_events": frozenset("id timeline_id kind payload_json previous_hash event_hash created_at".split()),
+    "timeline_reference_state": frozenset("id version archived_at".split()),
+    "timeline_references": frozenset("id timeline_id object_id role".split()),
+    "timeline_render_publications": frozenset("authoring_task_id attempt_id fence runtime_epoch request_hash prepared_json state timeline_id timeline_version render_task_id render_run_id result_json created_at updated_at".split()),
+    "timeline_revisions": frozenset("id timeline_id version shots_json references_json created_at".split()),
+    "timeline_shot_state": frozenset("id version archived_at".split()),
+    "timeline_shots": frozenset("id timeline_id start_ms duration_ms reference_ids_json".split()),
+    "timelines": frozenset("id project_id version name created_at archived_at".split()),
+    "runtime_schema": frozenset("id format_id version created_at".split()),
+}
+REQUIRED_SCHEMA_TABLES = frozenset(REQUIRED_SCHEMA_COLUMNS)
+_REALM_METADATA_TABLES = frozenset({"runtime_schema", "realm_lifecycle", "runtime_lifecycle"})
+
+
+def normalize_execution_facts(value, *, field="execution facts"):
+    """Validate the small engine-neutral required/verified-facts contract."""
+    if not isinstance(value, dict):
+        raise ValidationError(f"{field} must be an object")
+    unknown = set(value) - {"exact", "minimum"}
+    if unknown:
+        raise ValidationError(f"{field} contains unsupported fields", details={"fields": sorted(unknown)})
+    exact = value.get("exact", {})
+    minimum = value.get("minimum", {})
+    if not isinstance(exact, dict) or not isinstance(minimum, dict):
+        raise ValidationError(f"{field}.exact and {field}.minimum must be objects")
+    unknown_exact = set(exact) - FACT_EXACT_KEYS
+    if unknown_exact:
+        raise ValidationError(f"{field}.exact contains unsupported facts", details={"facts": sorted(unknown_exact)})
+    unknown_minimum = set(minimum) - FACT_MINIMUM_KEYS
+    if unknown_minimum:
+
+exec
+/bin/bash -lc "git -C /home/user/work/runtime show 8c1830d:runtime_protocol/store.py | rg -n '"'^SCHEMA_VERSION|''^FORMAT_ID'"'; rg -n '"'^SCHEMA_VERSION|''^FORMAT_ID'"' /home/user/work/wt/rt-pin-94114269/runtime_protocol/store.py; sed -n '1212,1270p' /home/user/work/wt/rt-pin-94114269/runtime_protocol/upgrade.py; sed -n '926,957p' /home/user/work/wt/rt-pin-94114269/runtime_protocol/upgrade.py; rg -n 'owner.*(mismatch|marker)|active.*marker|runtime.*version' /home/user/work/wt/rt-pin-94114269/runtime_protocol/store.py | head -35" in /home/user/work/wt/agt-m2-sheet-native-ordinary
+ succeeded in 104ms:
+43:SCHEMA_VERSION = 30
+43:SCHEMA_VERSION = 31
+def upgrade_realm(
+    root: str | Path,
+    *,
+    archive_root: str | Path | None = None,
+    retain_backup: bool = False,
+    timeout_seconds: float = DEFAULT_UPGRADE_TIMEOUT_SECONDS,
+    confirmation: str | None = None,
+) -> dict:
+    """Upgrade one stopped v23 realm with a temporary rollback snapshot.
+
+    A durable source archive is created only when ``retain_backup`` is
+    explicitly requested. The transaction always takes a same-filesystem
+    temporary copy so it can verify and roll back the swap; that copy is
+    removed after success or successful rollback.
+    """
+    root = _safe_realm_root(root)
+    if not root.exists() or not root.is_dir() or root.is_symlink():
+        raise RealmAdmissionError("realm root is missing or invalid")
+    if not math.isfinite(float(timeout_seconds)) or timeout_seconds <= 0:
+        raise ValidationError("timeout_seconds must be positive")
+    if archive_root is not None and not retain_backup:
+        raise ValidationError("archive_root requires retain_backup=True")
+    archive_parent = None
+    if retain_backup:
+        archive_parent = Path(archive_root).expanduser().resolve() if archive_root else root / "realm-upgrade-backups"
+        try:
+            archive_parent.relative_to(root.parent)
+        except ValueError as exc:
+            raise ValidationError("archive_root must share the realm's filesystem parent") from exc
+    with _owner_fence(root):
+        source_db = root / "realm.sqlite3"
+        source = None
+        stage_dir = None
+        target = None
+        swapped = False
+        archive = None
+        temporary_archive_parent = None
+        preserve_temporary_archive = False
+        try:
+            operation_id = uuid.uuid4().hex
+            if archive_parent is None:
+                temporary_archive_parent = Path(
+                    tempfile.mkdtemp(prefix=".realm-upgrade-transaction-", dir=root.parent)
+                )
+                archive = temporary_archive_parent / f"v23-{operation_id}"
+            else:
+                archive_parent.mkdir(parents=True, exist_ok=True)
+                archive = archive_parent / f"v23-{operation_id}"
+            # Archive before opening SQLite.  Even a read-only SQLite
+            # connection may create/update a WAL shared-memory sidecar; the
+            # source tree must remain byte-identical on every rejected plan.
+            archive_meta = _archive_source(root, archive)
+            source = _open_readonly(archive / "realm.sqlite3")
+            tables, columns, source_version = _source_shape(source)
+            source_check = _quick_check(source, timeout_seconds)
+            if source_check != "ok":
+                raise ValidationError("archived source failed SQLite integrity check")
+            if _foreign_key_errors(source, timeout_seconds):
+                raise ValidationError("archived source failed foreign-key validation")
+def migrate_canonical_to_current(
+    root: str | Path,
+    *,
+    timeout_seconds: float = DEFAULT_UPGRADE_TIMEOUT_SECONDS,
+    confirmation: str | None = None,
+    expected_realm_id: str | None = None,
+) -> dict:
+    """Atomically run every supported canonical step through pinned v30.
+
+    Current v30 is a read-only idempotent result.  Unknown, alternate, and
+    newer layouts are rejected by the read-only preflight before an owner-lock
+    marker, SQLite sidecar, journal, process signal, or schema mutation occurs.
+    """
+    root = _safe_realm_root(root)
+    if not math.isfinite(float(timeout_seconds)) or timeout_seconds <= 0:
+        raise ValidationError("timeout_seconds must be positive")
+    identity = inspect_canonical_schema(root, expected_realm_id=expected_realm_id)
+    realm_id = str(identity["realm_id"])
+    expected_confirmation = f"MIGRATE CANONICAL {realm_id}"
+    if confirmation != expected_confirmation:
+        raise ValidationError(f"migration requires confirmation exactly '{expected_confirmation}'")
+    source_version = int(identity["version"])
+    if source_version == TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
+        return {
+            "ok": True,
+            "realm_id": realm_id,
+            "source_schema_version": source_version,
+            "target_schema_version": TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,
+            "steps": [],
+            "changed": False,
+        }
+    started = time.monotonic()
+219:    "timeline_render_publications": frozenset("authoring_task_id attempt_id fence runtime_epoch request_hash prepared_json state timeline_id timeline_version render_task_id render_run_id result_json created_at updated_at".split()),
+224:    "runtime_schema": frozenset("id format_id version created_at".split()),
+747:            # If an owner marker already exists, take the owner lock before
+752:            owner_marker_present = self.lock_path.exists() or self.lock_path.is_symlink()
+753:            if acquire_owner and owner_marker_present:
+755:            self.admission_report = self.inspect_realm(self.root, timeout_seconds=admission_timeout, allow_active_marker=False)
+758:            if acquire_owner and not owner_marker_present:
+882:    def inspect_realm(cls, root: str | Path, *, catalog_path=None, timeout_seconds: float = REALM_ADMISSION_TIMEOUT_SECONDS, deep: bool = False, allow_active_marker: bool = True):
+941:                if admission_state is not None and allow_active_marker:
+991:        # active marker, so the next startup must run the deep tier.
+1119:                "INSERT INTO runtime_schema(id, format_id, version, created_at) VALUES (1, ?, ?, ?)",
+2802:                attempt_id, int(fence), int(runtime_epoch), timeline_id, int(timeline_version),
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/editing_conformance/test_native_sheet_ordinary_runtime.py');s=p.read_text().replace(\"    print(json.dumps({'project_id': project}))\", \"    print(json.dumps({'project_id': project, 'realm_id': service.store.realm['id']}))\")
+s=s.replace(\"    return root, json.loads(result.stdout)['project_id']\", \"\"\"    facts = json.loads(result.stdout)
+    from runtime_protocol.upgrade import migrate_canonical_to_current
+
+    migration = migrate_canonical_to_current(root, expected_realm_id=facts['realm_id'],
+        confirmation='MIGRATE CANONICAL ' + facts['realm_id'])
+    assert migration['ok']
+    return root, facts['project_id']\"\"\")
+p.write_text(s)
+PY
+/home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/test_native_sheet_ordinary_runtime.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-sheet-native-ordinary identity-pin94114269-integration --files 'tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py'" in /home/user/work/wt/agt-m2-sheet-native-ordinary
+ succeeded in 96ms:
+All checks passed!
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-sheet-native-ordinary-identity-pin94114269-integration-1020104801-32667/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-sheet-native-ordinary-identity-pin94114269-integration-1020104801-32667
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sheet-native-ordinary.md')
+s=p.read_text().replace('Validation and exact results are in', 'The HTTP trim fixture is authored through Runtime main "'`8c1830d1ca64a3934c37611a28ffe8db7df879ea` in an isolated subprocess, upgraded with the production `migrate_canonical_to_current` function, and then edited only through the locked Runtime/client/provider. It creates no synthetic history or new commands and disables no admission guard. Main'"\\'s old publication evaluator rejects rational-object FPS, so this HTTP fixture uses the equivalent numeric rate; rational-object preservation is verified in the direct conformance lane.\\n\\nValidation and exact results are in')
+p.write_text(s)
+PY
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-sheet-native-ordinary-identity-pin94114269-integration-1020104801-32667/status; tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-sheet-native-ordinary-identity-pin94114269-integration-1020104801-32667/log.txt" in /home/user/work/wt/agt-m2-sheet-native-ordinary
+ succeeded in 113ms:
+running
+.........
+codex
+The first new end-to-end trim case has passed. The fixture now uses the production schema-30→31 migration, and the batch has completed apply, lost-ack retry after restart, reload, undo, and redo. The remaining cases are checking concurrent edits and retained drafts on conflict.
+
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-sheet-native-ordinary-identity-pin94114269-integration-1020104801-32667 0' in /home/user/work/wt/agt-m2-sheet-native-ordinary
+ succeeded in 157ms:
+test agt-m2-sheet-native-ordinary-identity-pin94114269-integration-1020104801-32667: pass exit=0 in 41s — identity-pin94114269-integration on agt-m2-sheet-native-ordinary (agent tree c100d227938679b3aa1d4954946f30b2640f7d7f)
+cmd: test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py
+counts: 12 passed in 29.27s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-sheet-native-ordinary-identity-pin94114269-integration-1020104801-32667/log.txt ---
+............                                                             [100%]
+12 passed in 29.27s
+
+codex
+All 12 checks in the final central lane passed. The mixed batch passed disjoint server rebase, exact retry after restart, reload, undo, and redo. Relevant trim and parameter conflicts kept the draft and original basis intact.
+
+I’ll write the report and commit message now. The report will leave AG03/WC7 deletion open and name the remaining legacy callers and CLI stale-export gap.
+
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-native-ordinary/notes/report.md <<'EOF'
+# agt-m2-sheet-native-ordinary
+
+Implemented a coherent ordinary editable-sheet subset on assigned Agent base "'`ba5f2756`. That base did not contain the reviewed NativeSheet, so I ported only its existing adapter/parser/CLI/Session-base-fence pieces from `b77d7b5a`, then extended them. No new view framework, operation, schema, DTO, SDK alias, model bridge, publisher, history/restore path, installation, shared dependency write, integration-tree edit, push or ledger change.
+
+The same native view now emits existing capturers for parent source trim/window, explicit source-hold set/clear, raw asset/incoming-transition clear, built-in scalar literal parameter edits/clears, move and parent labels. A changed row captures sequentially over the preceding commands, then verifies the entire batch against the untouched original. One Session.commit_many acceptance is one undo step. Bindings come from `# ref` metadata, never decoded display IDs. Clip/explicit-occurrence fragment selection is retained with the original export in the existing scoped outbox. Original text/opaque JSON, integer versus float values, unknown/namespaced fields, null versus absence, rational FPS, and source-second units survive no-op and supported edits; native rows cannot fall into the old candidate writer.
+
+No original passing legacy behavior test was weakened, skipped, removed, or marked expected-to-fail. The prior native test that rejected `--clip a` is replaced by its now-supported positive fragment export/apply assertion; other unsupported-view expectations remain. No AG03/WC7 deletion closure is claimed.
+
+## Passing validation
+
+Local dependency-only environment; assigned worktree code; no bytecode or pytest cache:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sheet_native.py tests/packs/timeline/test_cli_native_sheet.py tests/editing_conformance/test_native_sheet_current.py tests/editing_conformance/test_native_sheet_ordinary.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_native.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/test_artifact_manifest.py tests/test_cli_surface_conformance.py
+```
+
+**500 passed in 47.25s, exit 0.** Product source did not change afterward; only integration-fixture refinements followed. Includes original same-view round trips, exact capture/undo, numeric spellings, scientific-notation source windows, explicit null/empty/absent clears, parent/occurrence ownership, shared-sibling preservation, opaque/unknown data, rational clocks, atomic CLI trim+clear+params, original guards and native retry/outbox neighbours.
+
+Final central request, after the last source/test change:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-sheet-native-ordinary identity-pin94114269-integration --files '"'tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py'
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-sheet-native-ordinary-identity-pin94114269-integration-1020104801-32667 0
+"'```
+
+**12 passed in 29.27s, exit 0**, final source tree `c100d227938679b3aa1d4954946f30b2640f7d7f`. Actual service command:
+
+```sh
+test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py
+```
+
+The four new cases prove a trim + hold/asset/transition clear + hold/parameter edit batch through the authenticated generated-client HTTP handler, actual startup-loaded provider and durable Session/outbox: original request/pin equality, one accepted publication, lost acknowledgement, service restart, exact body/key retry without bundle reads, reload, one-step undo/redo, concurrent disjoint label preservation and conflicts on relevant source-window/parameter fields with the original draft, pending commands and basis kept. Five restored current-sheet HTTP cases and three identity neighbours also pass. Runtime lock/generated client bytes are untouched.
+
+The trim fixture is built through the actual frozen Runtime main API (`8c1830d1ca64a3934c37611a28ffe8db7df879ea`) in an isolated subprocess. The production `migrate_canonical_to_current` function upgrades its schema-30 realm to 31 before the locked Runtime adopts its history. No SQL-seeded revision/history, fake operation/provider, validator bypass, or disabled admission check. Main'"'s publication evaluator only accepts numeric FPS, so this HTTP fixture uses "'`30000 / 1001`; rational-object preservation is covered by the direct conformance lane. The existing batch transport fixture gained an optional historical-root input and a non-adopting initial resource read; its default positive tests were also exercised centrally: **48 passed, 4 fixture errors** on `...1020104414-22345` (the four new cases still had rational-object seed FPS then). The final 12-case result qualifies the corrected historical fixture.
+
+Other commands:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py --check
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/sync.py tests/editing_conformance/test_native_batch_ingress.py tests/sdk/test_timeline_sheet_native.py tests/packs/timeline/test_cli_native_sheet.py tests/editing_conformance/test_native_sheet_current.py tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_native_sheet_ordinary.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_structure_baseline
+git diff --check
+```
+
+All exit 0; structure: **14 known violations, 0 new, 0 fixed**. Generated manifest changes only the CLI surface digest/version. Direct Ruff JSON comparison with `git show HEAD:FILE`, through `ruff check --no-cache --output-format=json --stdin-filename FILE -`, showed **zero added findings** in every changed product file: sheet 10→10, CLI 15→15, show 0→0, sync 0→0.
+
+## Non-green checks and earlier attempts
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 RUFF_CACHE_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-native-ordinary/ruff-cache /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_ruff_baseline
+```
+
+**Exit 1:** 2209 findings versus baseline 2220; the strict shrink gate asks to ratchet an 11-finding improvement. No unrelated baseline edit. Touched-file comparison above is green.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 MYPY_CACHE_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-native-ordinary/mypy-cache /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_mypy_baseline
+```
+
+**Exit 2 before complete checking:** missing PyYAML stubs (12 import-untyped findings) and installed NumPy stubs use syntax newer than mypy'"'s configured Python target. No dependency/cache writes inside shared venv; no install attempted. Typecheck remains unverified.
+
+"'```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m scripts.reshape.import_cycles --baseline scripts/reshape/baselines/import_cycles.json
+git diff --quiet HEAD -- astrid/core scripts/reshape/import_cycles.py scripts/reshape/baselines/import_cycles.json
+```
+
+First exits 1 on the existing `astrid.core.rendering ↔ timeline` cycle absent from its saved baseline; the second exits 0, proving all checker inputs are unchanged by this task. No baseline change.
+
+Earlier local new-test attempts: 108 passed/3 failed (JSON key-order-sensitive inverse assertions, corrected to canonical JSON while preserving numeric types); 485 passed/1 failed (too-specific exception-message regex, corrected to the canonical selector error). The final local 500 supersedes these; original expectations stayed intact.
+
+Initial central command used `commit-integration` with the same two appended sheet files: request `...1020103533-1934`, **11 failed** at the health handshake because mutable Runtime integration has a newer schema than this locked client. Switched to the existing matching pinned named lane. Pinned fixture refinements then exposed: generated mutation results are mappings (`...1020103702-7411`, 8 pass/4 fail); retired whole-publication refuses tracked seeds (`...1020103815-2061`, 8/4); direct seed requires explicit scope (`...1020103905-10405`, 8/4); historical seeds are also adopted (`...1020104102-24372`, 48/4); old main rejects rational-object FPS (`...1020104414-22345`, 48 pass/4 errors); old main'"'s schema-30 realm needs the real production migration ("'`...1020104621-16524`, 8 pass/4 errors). These affected the new fixture, not product acceptance; final `...1020104801-32667` passes all 12. No test was skipped, disabled, weakened into refusal, or xfailed to get green.
+
+No full or full* suite, make check, browser/render/macOS lane, complete AG03/WC7 gate, or delivery qualification was run or claimed.
+
+## Decisions, remaining scope and next steps
+
+Routine implementation choices: reuse canonical capturers, stage trim before explicit scalar clears, treat numerically equivalent unchanged cells as no-op, persist selection alongside the existing original artifact, and keep the reviewed conservative stale-CLI refusal. No PLAN decision changed. Supported trim remains parent-only because clip.trim v1 explicitly requires parent ownership; occurrence hold/clear/params use their existing occurrence-aware recipes.
+
+Still-old exact sheet/publication callers: `cli_show.print_sheet` → `timeline_sheet.render_sheet`; non-native `cli._cmd_apply` → `timeline_sheet.apply_sheet`/`merge_sheet`/`find_version` → Checkout.save; `cli._cmd_publish` → `_PublishMixin.publish` → `store.publish_bundle` (and `_publish_narration`). Native dispatch does not invoke these. No old path was deleted because the named-cut/narration/structural/complex grammar still needs positive replacements.
+
+Remaining positive requirements: narration/gaps; named cuts/notes/deliberate holds; cut/layer structure and ordering; sequences and relational moments; sound/look/fades and film/music policy; slip; custom-pack exact-input params and selected-media assignment; complex parameter edits; occurrence trim; named-cut/time/word fragments; and first-apply CLI stale exports. In particular, opening an idle CLI Session after another author advances head refreshes its base and an older export visibly refuses; a still-original or explicitly original-pinned Session rebases on the server, and flights retry exactly. Do not label this AG03 cut until these callers migrate and are removed. Bridge/model methods and reconciliation remain sibling-owned.
+
+Design: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sheet-native-ordinary.md`.
+
+Recommend review/merge this bounded port, then migrate the remaining grammar with its original positive tests before retiring the listed legacy callers. No task blocker remains for this delivered subset. Static environment/baseline limits above remain; full gates are unverified. Harness owns commit. Commit message and DONE are provided; no build/temp output remains in the worktree.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-native-ordinary/commit-msg <<'"'EOF'
+feat(timeline): extend native sheet ordinary command edits
+
+Port the reviewed pinned native sheet adapter onto the integration base and
+capture source trim, scalar clears and built-in parameter edits through the
+existing command recipes and atomic Session batch path. Retain original
+publication guards, exact retries and explicit occurrence fragment bindings.
+
+Cover no-op preservation, CLI batches, real provider reload/inverse/retry,
+server rebase and conflicts that keep the draft. Keep unsupported legacy
+sheet behavior and publication callers visible for coordinated migration.
+EOF
+python3 - <<'PY'
+from pathlib import Path
+import shutil
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-native-ordinary')
+for name in ('ruff-cache', 'mypy-cache'):
+    shutil.rmtree(worker/name, ignore_errors=True)
+PY
+git diff --check
+python3 - <<'PY'
+from pathlib import Path
+Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-native-ordinary/DONE').touch()
+PY" in /home/user/work/wt/agt-m2-sheet-native-ordinary
+ succeeded in 195ms:
+codex
+Implemented the ordinary native-sheet subset: trim/source windows, explicit clears, scalar parameter edits, and occurrence fragments through existing capturers and Session batches.
+
+Validation: **500 targeted tests passed locally; 12 central integration tests passed**, covering reload, undo/redo, exact retry after restart, disjoint rebase, and conflicts retaining the draft. Exact commands and results are in the [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-native-ordinary/notes/report.md).
+
+AG03/WC7 remains open. The [design](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sheet-native-ordinary.md) names remaining legacy callers, unsupported grammar, and the stale first-apply CLI gap. No full suite ran; typechecking and global baseline checks remain non-green as documented.
+
+`commit-msg` and `DONE` are written. Recommend reviewing this bounded port, then completing the remaining caller migrations before deletion.
+tokens used
+361,214
+Implemented the ordinary native-sheet subset: trim/source windows, explicit clears, scalar parameter edits, and occurrence fragments through existing capturers and Session batches.
+
+Validation: **500 targeted tests passed locally; 12 central integration tests passed**, covering reload, undo/redo, exact retry after restart, disjoint rebase, and conflicts retaining the draft. Exact commands and results are in the [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-native-ordinary/notes/report.md).
+
+AG03/WC7 remains open. The [design](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sheet-native-ordinary.md) names remaining legacy callers, unsupported grammar, and the stale first-apply CLI gap. No full suite ran; typechecking and global baseline checks remain non-green as documented.
+
+`commit-msg` and `DONE` are written. Recommend reviewing this bounded port, then completing the remaining caller migrations before deletion.

@@ -1,0 +1,400 @@
++Reuse TimelineSession.trim for the no-pending native CLI path so raw audio
++trims receive the existing request-scoped metadata preflight before commit.
++Keep selector fallback behavior and add a forwarding regression.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..e9b47180884d4e249a17da281a14962d070be303
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/notes/report.md
+@@ -0,0 +1,35 @@
++# Report: native CLI trim verified preflight
++
++## Completed
++
++`astrid/packs/timeline/cli_native.py` no longer captures a no-pending trim
++directly. It forwards to the existing `TimelineSession.trim` queue/flush path,
++which supplies the existing request-scoped WAV preflight before the normal
++Runtime commit. Existing pending retry behavior and alias fallback/refusal
++behavior remain unchanged. Added one CLI forwarding regression.
++
++## Tests
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_commit_trim.py tests/editing_conformance/test_recipe_m2_clip_trim.py`
++  — **138 passed in 17.80s**.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_sync.py`
++  — **79 passed in 16.84s**.
++- `git diff --check` — passed.
++
++The unchanged Runtime-owned original-audio9bf journey was not run locally. It
++must be rerun once by Runtime against normal Runtime 7d1 and this new Agent
++source, limited to the two previously failing strict-positive nodes.
++
++## Source handoff
++
++- Worktree: `/home/user/work/wt/agt-m2-cli-trim-verified-preflight`
++- Base commit/tree: `dbb34e2124a7f8196f27b7ee5625b81818bd3666` /
++  `99ce6cb23d21252c348df2c899fc04aea302b637`
++- `astrid/packs/timeline/cli_native.py`:
++  `ab683e9dd7080fc4a3ef2e2732694c75b2f21ec30cfddbd1f6c9615118dc1463`
++- `tests/packs/timeline/test_cli_commit_trim.py`:
++  `1727b13a9ad929cc51aabe3899d06f46483a8880dcd459ebcde110f0d8e30af0`
++- Patch SHA-256:
++  `a5b3fcc00bcb3d209cee55d0ce0222d3d9b95faf33157c0fa98c819c698d3fd4`
++
++Harness commit SHA is pending worker exit.
+diff --git a/astrid/packs/timeline/cli_native.py b/astrid/packs/timeline/cli_native.py
+index c358fe57d5aba80ccc52732be3779ed52d021d7d..d21936e02f592e98d30d4066c618bbe965202317
+--- a/astrid/packs/timeline/cli_native.py
++++ b/astrid/packs/timeline/cli_native.py
+@@ -60,7 +60,6 @@
+ 
+ def commit_trim(session, parsed, options):
+     from astrid.sdk.timeline._command_state import CommandError
+-    from astrid.sdk.timeline._trim_commands import capture_clip_trim
+ 
+     with session.outbox.locked():
+         state = session._state()
+@@ -72,12 +71,11 @@
+         return NotImplemented
+     if not state['pending']:
+         try:
+-            command = capture_clip_trim(bundle, select, in_s=parsed.trim_in, out_s=parsed.trim_out)
++            return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
+         except CommandError:
+             if parsed.clip == select:  # Explicit native identities report native errors.
+                 raise
+             return NotImplemented
+-        return session.commit(command, **options)
+     return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
+ 
+ def configure_track_label(parser):
+diff --git a/tests/packs/timeline/test_cli_commit_trim.py b/tests/packs/timeline/test_cli_commit_trim.py
+index 5a1a4fc18ab487ba420eb93c7e44278a4989764b..0f0e44eef9b24f50805c9f3dd4cc06e96ca8549a
+--- a/tests/packs/timeline/test_cli_commit_trim.py
++++ b/tests/packs/timeline/test_cli_commit_trim.py
+@@ -53,6 +53,27 @@
+     assert output['data']['show_command'].endswith('--published --revision-id r1')
+ 
+ 
++def test_ordinary_trim_forwards_to_session_preflight(trim, monkeypatch, capsys):
++    from astrid.sdk.timeline.sync import TimelineSession
++
++    run, generated, original = trim
++    calls = []
++    session_trim = TimelineSession.trim
++
++    def forwarded(session, select, **options):
++        calls.append((select, options))
++        return session_trim(session, select, **options)
++
++    monkeypatch.setattr(TimelineSession, 'trim', forwarded)
++    assert run('edit', 't', '--clip', 'a', '--trim-out', '5', '--json') == 0
++    capsys.readouterr()
++
++    assert calls == [(REF, {'in_s': None, 'out_s': 5.0, 'idempotency_key': None,
++                            'dry_run': False, 'via': 'cli'})]
++    assert json.loads(generated.calls[0][0])['commands'] == [
++        capture_clip_trim(original, REF, out_s=5.0)]
++
++
+ def test_trim_lost_ack_keeps_original_flight_and_undo(trim, capsys):
+     run, generated, _ = trim
+     generated.lose_ack = True
+
+exec
+/bin/bash -lc "git diff --check; git status --short; printf '\\n--- worktree diff stat ---\\n'; git diff --stat; printf '\\n--- handoff files ---\\n'; sha256sum astrid/packs/timeline/cli_native.py tests/packs/timeline/test_cli_commit_trim.py; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-original-audio9bf-cli-preflight.md && echo design-ok; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/notes/report.md && echo report-ok; tail -30 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md" in /home/user/work/wt/agt-m2-cli-trim-verified-preflight
+ succeeded in 648ms:
+ M astrid/packs/timeline/cli_native.py
+ M tests/packs/timeline/test_cli_commit_trim.py
+
+--- worktree diff stat ---
+ astrid/packs/timeline/cli_native.py          |  4 +---
+ tests/packs/timeline/test_cli_commit_trim.py | 21 +++++++++++++++++++++
+ 2 files changed, 22 insertions(+), 3 deletions(-)
+
+--- handoff files ---
+ab683e9dd7080fc4a3ef2e2732694c75b2f21ec30cfddbd1f6c9615118dc1463  astrid/packs/timeline/cli_native.py
+1727b13a9ad929cc51aabe3899d06f46483a8880dcd459ebcde110f0d8e30af0  tests/packs/timeline/test_cli_commit_trim.py
+design-ok
+report-ok
+Runtime mustcomposeCURRENT e2 protections(CAS/text/promotion/C4catalog-head/globalitems/headless/strictmarker), useFIXEDdcac/7d baseeligibility ifrawdelta included (notb731/6798), generatePRIVATEfrom357/613, thenreturnexactcommittedcounterpartforAgentreview. ONEactualnativev1ledgerretry/v2/reload/lostACK/undo/redo/ownslot/globalitem/drafthold pair ONLY afterbothcurrentcounterpartreviews. Noartifactfromoldpartial/withdrawnunion andno currentqualificationclaim.
+
+## 2026-10-20T17:xxZ — Agent native CLI trim preflight handoff
+
+Agent worktree `/home/user/work/wt/agt-m2-cli-trim-verified-preflight` based on
+`dbb34e2124a7f8196f27b7ee5625b81818bd3666` (tree
+`99ce6cb23d21252c348df2c899fc04aea302b637`) now routes no-pending native CLI
+trim through the existing `TimelineSession.trim` queue/flush helper. This
+preserves the non-authoritative client WAV preflight and lets Runtime 7d1
+recompute the exact original-base declared media descriptor as before. No
+Runtime fixture/guard/endpoint/schema/provider/timing change was made.
+
+Changed source SHA-256:
+`astrid/packs/timeline/cli_native.py`
+`ab683e9dd7080fc4a3ef2e2732694c75b2f21ec30cfddbd1f6c9615118dc1463`.
+Regression SHA-256:
+`tests/packs/timeline/test_cli_commit_trim.py`
+`1727b13a9ad929cc51aabe3899d06f46483a8880dcd459ebcde110f0d8e30af0`.
+Two-file patch SHA-256:
+`a5b3fcc00bcb3d209cee55d0ce0222d3d9b95faf33157c0fa98c819c698d3fd4`.
+Evidence: Agent targeted trim/recipe **138 passed**, native CLI/frontend
+neighbors **79 passed**, `git diff --check` passed.
+
+Please rerun ONLY the unchanged previously failing strict-positive nodes
+`historical-audio` and `literal-media` once, on normal Runtime
+`7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e` and this new Agent source. The
+unchanged lost-ACK/restart control already passed and should not be duplicated.
+
+
+## 17:22Z — orchestrator (hourly check): e2db1e8 is good: explicit current-schema refusal test plus strict xfail. One nit, small Luna worker: `xfail(strict=True, raises=ValidationError)` now also absorbs any OTHER ValidationError in the body (fixture build, capture). Narrow it so only the commit step's parent-ownership error counts: wrap just the commit call and re-raise anything whose message does not match.
+
+codex
+The handoff is published in the orchestrator design/report and Runtime INBOX with the exact base/tree, file hashes, and patch hash. I did not run the Runtime-owned journey locally; the request is limited to the two unchanged failed positives, as required. I’m marking this worker complete with that downstream rerun explicitly unverified.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-original-audio9bf-cli-preflight.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-original-audio9bf-cli-preflight.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a8890677cf484e5df581d8412e90097f926e5ae
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-original-audio9bf-cli-preflight.md
+@@ -0,0 +1,47 @@
++# Agent native trim preflight handoff
++
++Date: 2026-10-20
++
++## Change
++
++The native CLI trim adapter now routes a no-pending trim through the existing
++`TimelineSession.trim` helper. That helper is the established queue/flush path:
++it performs the client WAV read only as a non-authoritative preflight, captures
++the media duration read, and leaves Runtime to recompute the descriptor from
++the exact original-base declared media pin. Pending retries continue through
++the same helper, and selector/error fallback behavior is unchanged.
++
++No Runtime fixture, guard, endpoint, DTO, schema, provider, timing math,
++registry duration, media adoption, or success assertion was changed.
++
++## Exact source
++
++- Worktree: `/home/user/work/wt/agt-m2-cli-trim-verified-preflight`
++- Base commit: `dbb34e2124a7f8196f27b7ee5625b81818bd3666`
++- Base tree: `99ce6cb23d21252c348df2c899fc04aea302b637`
++- Changed source: `astrid/packs/timeline/cli_native.py`
++  SHA-256 `ab683e9dd7080fc4a3ef2e2732694c75b2f21ec30cfddbd1f6c9615118dc1463`
++- Regression: `tests/packs/timeline/test_cli_commit_trim.py`
++  SHA-256 `1727b13a9ad929cc51aabe3899d06f46483a8880dcd459ebcde110f0d8e30af0`
++- Two-file binary patch SHA-256:
++  `a5b3fcc00bcb3d209cee55d0ce0222d3d9b95faf33157c0fa98c819c698d3fd4`
++
++The harness commit SHA is not available until worker exit; the tuple above
++identifies the exact current source plus patch.
++
++## Evidence
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_commit_trim.py tests/editing_conformance/test_recipe_m2_clip_trim.py`
++  — **138 passed**.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_sync.py`
++  — **79 passed**.
++- `git diff --check` — passed.
++
++## Runtime request
++
++Runtime should rerun only the two unchanged strict-positive original nodes
++(`historical-audio` and `literal-media`) from the original-audio9bf CLI pair
++once, using normal Runtime `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e` and this
++new Agent source. The unchanged control node already passed and need not be
++duplicated. Runtime owns the actual journey and should report the normal-door,
++provider-authenticated result; no comprehensive suite is requested here.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
+index 23dbcf738b33b2c2a29b6d1fe6830e41f3db2fd5..2c3feef7aee5b4dc6190e1ec1724683fe46ed115
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
+@@ -1139,3 +1139,29 @@
+ This357/613 fullunion replaces3730/f802 as the source for PRIVATEcounterpart preparation; old sources stayimmutable/historical. SourceACK unblocksnormalPRIVATEgeneration, notpublicfreeze/release/version/pin/integration/adoption. Keepcurrentpublic013 andnormalcandidate014a0/f021 unchanged.
+ Runtime mustcomposeCURRENT e2 protections(CAS/text/promotion/C4catalog-head/globalitems/headless/strictmarker), useFIXEDdcac/7d baseeligibility ifrawdelta included (notb731/6798), generatePRIVATEfrom357/613, thenreturnexactcommittedcounterpartforAgentreview. ONEactualnativev1ledgerretry/v2/reload/lostACK/undo/redo/ownslot/globalitem/drafthold pair ONLY afterbothcurrentcounterpartreviews. Noartifactfromoldpartial/withdrawnunion andno currentqualificationclaim.
+ 
++## 2026-10-20T17:xxZ — Agent native CLI trim preflight handoff
++
++Agent worktree `/home/user/work/wt/agt-m2-cli-trim-verified-preflight` based on
++`dbb34e2124a7f8196f27b7ee5625b81818bd3666` (tree
++`99ce6cb23d21252c348df2c899fc04aea302b637`) now routes no-pending native CLI
++trim through the existing `TimelineSession.trim` queue/flush helper. This
++preserves the non-authoritative client WAV preflight and lets Runtime 7d1
++recompute the exact original-base declared media descriptor as before. No
++Runtime fixture/guard/endpoint/schema/provider/timing change was made.
++
++Changed source SHA-256:
++`astrid/packs/timeline/cli_native.py`
++`ab683e9dd7080fc4a3ef2e2732694c75b2f21ec30cfddbd1f6c9615118dc1463`.
++Regression SHA-256:
++`tests/packs/timeline/test_cli_commit_trim.py`
++`1727b13a9ad929cc51aabe3899d06f46483a8880dcd459ebcde110f0d8e30af0`.
++Two-file patch SHA-256:
++`a5b3fcc00bcb3d209cee55d0ce0222d3d9b95faf33157c0fa98c819c698d3fd4`.
++Evidence: Agent targeted trim/recipe **138 passed**, native CLI/frontend
++neighbors **79 passed**, `git diff --check` passed.
++
++Please rerun ONLY the unchanged previously failing strict-positive nodes
++`historical-audio` and `literal-media` once, on normal Runtime
++`7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e` and this new Agent source. The
++unchanged lost-ACK/restart control already passed and should not be duplicated.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..1f05a0514b3aea2c995aded615ac167a33e3d654
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/commit-msg
+@@ -0,0 +1,5 @@
++fix(timeline): route native trims through verified preflight
++
++Reuse TimelineSession.trim for the no-pending native CLI path so raw audio
++trims receive the existing request-scoped metadata preflight before commit.
++Keep selector fallback behavior and add a forwarding regression.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..1f05a0514b3aea2c995aded615ac167a33e3d654
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/commit-msg.txt
+@@ -0,0 +1,5 @@
++fix(timeline): route native trims through verified preflight
++
++Reuse TimelineSession.trim for the no-pending native CLI path so raw audio
++trims receive the existing request-scoped metadata preflight before commit.
++Keep selector fallback behavior and add a forwarding regression.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..e9b47180884d4e249a17da281a14962d070be303
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/notes/report.md
+@@ -0,0 +1,35 @@
++# Report: native CLI trim verified preflight
++
++## Completed
++
++`astrid/packs/timeline/cli_native.py` no longer captures a no-pending trim
++directly. It forwards to the existing `TimelineSession.trim` queue/flush path,
++which supplies the existing request-scoped WAV preflight before the normal
++Runtime commit. Existing pending retry behavior and alias fallback/refusal
++behavior remain unchanged. Added one CLI forwarding regression.
++
++## Tests
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_commit_trim.py tests/editing_conformance/test_recipe_m2_clip_trim.py`
++  — **138 passed in 17.80s**.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_sync.py`
++  — **79 passed in 16.84s**.
++- `git diff --check` — passed.
++
++The unchanged Runtime-owned original-audio9bf journey was not run locally. It
++must be rerun once by Runtime against normal Runtime 7d1 and this new Agent
++source, limited to the two previously failing strict-positive nodes.
++
++## Source handoff
++
++- Worktree: `/home/user/work/wt/agt-m2-cli-trim-verified-preflight`
++- Base commit/tree: `dbb34e2124a7f8196f27b7ee5625b81818bd3666` /
++  `99ce6cb23d21252c348df2c899fc04aea302b637`
++- `astrid/packs/timeline/cli_native.py`:
++  `ab683e9dd7080fc4a3ef2e2732694c75b2f21ec30cfddbd1f6c9615118dc1463`
++- `tests/packs/timeline/test_cli_commit_trim.py`:
++  `1727b13a9ad929cc51aabe3899d06f46483a8880dcd459ebcde110f0d8e30af0`
++- Patch SHA-256:
++  `a5b3fcc00bcb3d209cee55d0ce0222d3d9b95faf33157c0fa98c819c698d3fd4`
++
++Harness commit SHA is pending worker exit.
+diff --git a/astrid/packs/timeline/cli_native.py b/astrid/packs/timeline/cli_native.py
+index c358fe57d5aba80ccc52732be3779ed52d021d7d..d21936e02f592e98d30d4066c618bbe965202317
+--- a/astrid/packs/timeline/cli_native.py
++++ b/astrid/packs/timeline/cli_native.py
+@@ -60,7 +60,6 @@
+ 
+ def commit_trim(session, parsed, options):
+     from astrid.sdk.timeline._command_state import CommandError
+-    from astrid.sdk.timeline._trim_commands import capture_clip_trim
+ 
+     with session.outbox.locked():
+         state = session._state()
+@@ -72,12 +71,11 @@
+         return NotImplemented
+     if not state['pending']:
+         try:
+-            command = capture_clip_trim(bundle, select, in_s=parsed.trim_in, out_s=parsed.trim_out)
++            return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
+         except CommandError:
+             if parsed.clip == select:  # Explicit native identities report native errors.
+                 raise
+             return NotImplemented
+-        return session.commit(command, **options)
+     return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
+ 
+ def configure_track_label(parser):
+diff --git a/tests/packs/timeline/test_cli_commit_trim.py b/tests/packs/timeline/test_cli_commit_trim.py
+index 5a1a4fc18ab487ba420eb93c7e44278a4989764b..0f0e44eef9b24f50805c9f3dd4cc06e96ca8549a
+--- a/tests/packs/timeline/test_cli_commit_trim.py
++++ b/tests/packs/timeline/test_cli_commit_trim.py
+@@ -53,6 +53,27 @@
+     assert output['data']['show_command'].endswith('--published --revision-id r1')
+ 
+ 
++def test_ordinary_trim_forwards_to_session_preflight(trim, monkeypatch, capsys):
++    from astrid.sdk.timeline.sync import TimelineSession
++
++    run, generated, original = trim
++    calls = []
++    session_trim = TimelineSession.trim
++
++    def forwarded(session, select, **options):
++        calls.append((select, options))
++        return session_trim(session, select, **options)
++
++    monkeypatch.setattr(TimelineSession, 'trim', forwarded)
++    assert run('edit', 't', '--clip', 'a', '--trim-out', '5', '--json') == 0
++    capsys.readouterr()
++
++    assert calls == [(REF, {'in_s': None, 'out_s': 5.0, 'idempotency_key': None,
++                            'dry_run': False, 'via': 'cli'})]
++    assert json.loads(generated.calls[0][0])['commands'] == [
++        capture_clip_trim(original, REF, out_s=5.0)]
++
++
+ def test_trim_lost_ack_keeps_original_flight_and_undo(trim, capsys):
+     run, generated, _ = trim
+     generated.lose_ack = True
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/DONE && echo DONE; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-trim-verified-preflight/commit-msg && echo commit-msg; git status --short' in /home/user/work/wt/agt-m2-cli-trim-verified-preflight
+ succeeded in 310ms:
+DONE
+commit-msg
+ M astrid/packs/timeline/cli_native.py
+ M tests/packs/timeline/test_cli_commit_trim.py
+
+codex
+Implemented and handed off.
+
+- Routed native CLI trim through existing `TimelineSession.trim` verified preflight.
+- Added CLI forwarding regression.
+- Tests:
+  - `test_cli_commit_trim.py` + trim recipe: **138 passed**
+  - CLI/native neighbors: **79 passed**
+  - `git diff --check`: passed
+- Runtime rerun request published for only the two original failed nodes.
+- Runtime journey remains unverified downstream.
+- Commit message written; `DONE` marker created.
+tokens used
+194,821
+Implemented and handed off.
+
+- Routed native CLI trim through existing `TimelineSession.trim` verified preflight.
+- Added CLI forwarding regression.
+- Tests:
+  - `test_cli_commit_trim.py` + trim recipe: **138 passed**
+  - CLI/native neighbors: **79 passed**
+  - `git diff --check`: passed
+- Runtime rerun request published for only the two original failed nodes.
+- Runtime journey remains unverified downstream.
+- Commit message written; `DONE` marker created.

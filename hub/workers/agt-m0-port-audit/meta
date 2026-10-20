@@ -1,0 +1,9 @@
+name=agt-m0-port-audit
+repo=agent
+base=tl/agt-m0-spike
+base_sha=8003c8dd
+model=gpt-5.6-luna
+effort=xhigh
+heavy=0
+worktree=/home/user/work/wt/agt-m0-port-audit
+started=2026-10-19T17:59:13Z

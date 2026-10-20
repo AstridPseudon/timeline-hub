@@ -1,0 +1,400 @@
+    57	
+    58	
+    59	def test_http_original_sdk_parent_hold_publish_reload_and_undo(runtime):
+    60	    seed(runtime)
+    61	    tl = attach(runtime)
+    62	    original = copy.deepcopy(tl.clip(REF).data)
+    63	    clip = tl.clip(REF)
+    64	    clip.hold_for(2)
+    65	    captured = json.loads(tl.session.outbox.path.read_bytes())['pending']
+    66	    assert len(captured) == 1
+    67	    assert captured[0]['op'] == 'clip.set'
+    68	    assert captured[0]['select'] == REF
+    69	    assert captured[0]['args'] == {'values': {'hold': 2.0}, 'clear': []}
+    70	
+    71	    accepted = tl.publish('Hold the opening', idempotency_key='sdk-parent-hold')
+    72	    body = json.loads(runtime.calls[-1][0])
+    73	    assert body['commands'] == captured
+    74	    assert accepted['receipt']['result']['commands'] == captured
+    75	    runtime.restart()
+    76	    loaded = attach(runtime)
+    77	    assert loaded.clip(REF).data == dict(original, hold=2.0)
+    78	    loaded.undo([accepted['receipt']['receipt_id']])
+    79	    assert loaded.clip(REF).data == original
+    80	
+    81	
+    82	def test_http_lost_ack_restart_exact_retry_and_unrelated_global_nonconsumption(runtime):
+    83	    seed(runtime)
+    84	    tl = attach(runtime)
+    85	    tl.clip(REF).on(2)
+    86	    runtime.lost.add('sdk-once')
+    87	    with pytest.raises(WorkspaceClientError):
+    88	        tl.publish('Opening', idempotency_key='sdk-once')
+    89	    first = copy.deepcopy(runtime.calls[-1])
+    90	    path = tl.session.outbox.path
+    91	    durable = path.read_bytes()
+    92	    count = len(runtime.history()['items'])
+    93	    runtime.restart()
+    94	    # A CLI/global move is distinct from this explicitly selected draft.
+    95	    global_session = TimelineSession.open(runtime.project, 'film', client=runtime.client())
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-wc7-parent-scalar-consumer/astrid/sdk/timeline/native_checkout.py
+diff --git a/astrid/sdk/timeline/native_checkout.py b/astrid/sdk/timeline/native_checkout.py
+index f2638afd41fc2a82b1ff115cac2b710f22f7d4a4..94e0d79ffbb775b8ebe954db1b1557b158101e95
+--- a/astrid/sdk/timeline/native_checkout.py
++++ b/astrid/sdk/timeline/native_checkout.py
+@@ -28,6 +28,19 @@
+     return number(value, 'literal timeline seconds')
+ 
+ 
++def _publishable_parent_command(command):
++    if (not isinstance(command, dict) or not isinstance(command.get('select'), str)
++            or not command['select'].startswith('parent/clip:')):
++        return False
++    if command.get('op') == 'clip.move':
++        return True
++    args = command.get('args')
++    values = args.get('values') if isinstance(args, dict) else None
++    return (command.get('op') == 'clip.set' and isinstance(args, dict)
++            and args.get('clear') == [] and isinstance(values, dict)
++            and set(values) == {'hold'} and values['hold'] is not None)
++
++
+ class AttachedCheckout(Checkout):
+     """A raw scoped preview, never flattened or published as a candidate."""
+ 
+@@ -100,11 +113,13 @@
+         return result
+ 
+     def publish(self, message='', *, idempotency_key=None, client=None, force=False, restructure=False):
+-        """Publish one captured parent move from an explicitly selected outbox.
++        """Publish one captured parent move or source-hold set from an explicitly selected outbox.
+ 
+         The outbox path is this draft's recovery identity. Reattach that same
+         session after a restart; detached checkouts never discover its intent.
+-        Other attached verbs continue to use ``flush()``.
++        Other attached verbs continue to use ``flush()``. A hold remains a
++        source-unit scalar; ``AttachedClip.set_duration`` has already captured
++        that value through the native ``clip.set`` operation.
+         """
+         if (not getattr(self.session, '_explicit_outbox', False) or force or restructure
+                 or (client is not None and client is not self.session.client)):
+@@ -114,8 +129,7 @@
+         def prepare(state):
+             self._unchanged_basis(state)
+             commands = state['pending']
+-            if (len(commands) != 1 or commands[0]['op'] != 'clip.move'
+-                    or not commands[0]['select'].startswith('parent/clip:')):
++            if len(commands) != 1 or not _publishable_parent_command(commands[0]):
+                 _held()
+             # Rationale and request are sealed in one existing outbox write.
+             # A retry may omit the message, but cannot replace the original.
+diff --git a/tests/editing_conformance/test_owned_move_publish_runtime.py b/tests/editing_conformance/test_owned_move_publish_runtime.py
+index d4a406709f7a86931663398954d1438be4e115b7..da1e559f27c95d22111379f28481d6ceaff2ff91
+--- a/tests/editing_conformance/test_owned_move_publish_runtime.py
++++ b/tests/editing_conformance/test_owned_move_publish_runtime.py
+@@ -56,6 +56,29 @@
+     assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer label'
+ 
+ 
++def test_http_original_sdk_parent_hold_publish_reload_and_undo(runtime):
++    seed(runtime)
++    tl = attach(runtime)
++    original = copy.deepcopy(tl.clip(REF).data)
++    clip = tl.clip(REF)
++    clip.hold_for(2)
++    captured = json.loads(tl.session.outbox.path.read_bytes())['pending']
++    assert len(captured) == 1
++    assert captured[0]['op'] == 'clip.set'
++    assert captured[0]['select'] == REF
++    assert captured[0]['args'] == {'values': {'hold': 2.0}, 'clear': []}
++
++    accepted = tl.publish('Hold the opening', idempotency_key='sdk-parent-hold')
++    body = json.loads(runtime.calls[-1][0])
++    assert body['commands'] == captured
++    assert accepted['receipt']['result']['commands'] == captured
++    runtime.restart()
++    loaded = attach(runtime)
++    assert loaded.clip(REF).data == dict(original, hold=2.0)
++    loaded.undo([accepted['receipt']['receipt_id']])
++    assert loaded.clip(REF).data == original
++
++
+ def test_http_lost_ack_restart_exact_retry_and_unrelated_global_nonconsumption(runtime):
+     seed(runtime)
+     tl = attach(runtime)
+diff --git a/tests/sdk/test_timeline_owned_move_publish.py b/tests/sdk/test_timeline_owned_move_publish.py
+index dd4d0742ce15eb2ab457508e6cac571cfb8a4a01..831debc3d68c5d861d12e88bc5229ee29822a2ea
+--- a/tests/sdk/test_timeline_owned_move_publish.py
++++ b/tests/sdk/test_timeline_owned_move_publish.py
+@@ -47,6 +47,28 @@
+     assert client.reads
+ 
+ 
++def test_parent_publish_captures_source_hold_set_and_undoes_without_legacy_writer(connected):
++    client, generated, _ = connected
++    State(generated.bundles['r0']).entity('parent/clip:a')['speed'] = 2
++    tl = Checkout.attach(open_session(connected))
++    original = copy.deepcopy(tl.clip('a').data)
++    clip = tl.clip('parent/clip:a')
++    clip.hold_for(2)
++    command = state(connected)['pending'][0]
++    assert clip.duration == 2
++    assert command['op'] == 'clip.set'
++    assert command['select'] == 'parent/clip:a'
++    assert command['args'] == {'values': {'hold': 4}, 'clear': []}
++
++    accepted = tl.publish('Hold the opening', idempotency_key='owned-hold')
++    assert json.loads(generated.calls[-1][0])['commands'] == [command]
++    loaded = Checkout.attach(open_session(connected))
++    assert loaded.clip('parent/clip:a').data == dict(original, hold=4)
++    loaded.undo([accepted['receipt']['receipt_id']])
++    assert loaded.clip('parent/clip:a').data == original
++    assert client.reads
++
++
+ def test_parent_publish_restart_keeps_exact_request_key_and_rationale(connected, monkeypatch):
+     _, generated, _ = connected
+     tl = Checkout.attach(open_session(connected))
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-parent-scalar-consumer/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-parent-scalar-consumer/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-parent-scalar-consumer/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..52d5e29077f34426bbce21005f5e45c8b27816d7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-parent-scalar-consumer/commit-msg
+@@ -0,0 +1,5 @@
++feat(sdk): publish attached parent hold scalars
++
++Admit one explicitly scoped parent clip.set source-hold command through the
++existing attached session and outbox publish path. Preserve legacy refusal for
++mixed, occurrence, and unsupported edits while covering exact restore/undo.
+diff --git a/astrid/sdk/timeline/native_checkout.py b/astrid/sdk/timeline/native_checkout.py
+index f2638afd41fc2a82b1ff115cac2b710f22f7d4a4..94e0d79ffbb775b8ebe954db1b1557b158101e95
+--- a/astrid/sdk/timeline/native_checkout.py
++++ b/astrid/sdk/timeline/native_checkout.py
+@@ -28,6 +28,19 @@
+     return number(value, 'literal timeline seconds')
+ 
+ 
++def _publishable_parent_command(command):
++    if (not isinstance(command, dict) or not isinstance(command.get('select'), str)
++            or not command['select'].startswith('parent/clip:')):
++        return False
++    if command.get('op') == 'clip.move':
++        return True
++    args = command.get('args')
++    values = args.get('values') if isinstance(args, dict) else None
++    return (command.get('op') == 'clip.set' and isinstance(args, dict)
++            and args.get('clear') == [] and isinstance(values, dict)
++            and set(values) == {'hold'} and values['hold'] is not None)
++
++
+ class AttachedCheckout(Checkout):
+     """A raw scoped preview, never flattened or published as a candidate."""
+ 
+@@ -100,11 +113,13 @@
+         return result
+ 
+     def publish(self, message='', *, idempotency_key=None, client=None, force=False, restructure=False):
+-        """Publish one captured parent move from an explicitly selected outbox.
++        """Publish one captured parent move or source-hold set from an explicitly selected outbox.
+ 
+         The outbox path is this draft's recovery identity. Reattach that same
+         session after a restart; detached checkouts never discover its intent.
+-        Other attached verbs continue to use ``flush()``.
++        Other attached verbs continue to use ``flush()``. A hold remains a
++        source-unit scalar; ``AttachedClip.set_duration`` has already captured
++        that value through the native ``clip.set`` operation.
+         """
+         if (not getattr(self.session, '_explicit_outbox', False) or force or restructure
+                 or (client is not None and client is not self.session.client)):
+@@ -114,8 +129,7 @@
+         def prepare(state):
+             self._unchanged_basis(state)
+             commands = state['pending']
+-            if (len(commands) != 1 or commands[0]['op'] != 'clip.move'
+-                    or not commands[0]['select'].startswith('parent/clip:')):
++            if len(commands) != 1 or not _publishable_parent_command(commands[0]):
+                 _held()
+             # Rationale and request are sealed in one existing outbox write.
+             # A retry may omit the message, but cannot replace the original.
+diff --git a/tests/editing_conformance/test_owned_move_publish_runtime.py b/tests/editing_conformance/test_owned_move_publish_runtime.py
+index d4a406709f7a86931663398954d1438be4e115b7..da1e559f27c95d22111379f28481d6ceaff2ff91
+--- a/tests/editing_conformance/test_owned_move_publish_runtime.py
++++ b/tests/editing_conformance/test_owned_move_publish_runtime.py
+@@ -56,6 +56,29 @@
+     assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer label'
+ 
+ 
++def test_http_original_sdk_parent_hold_publish_reload_and_undo(runtime):
++    seed(runtime)
++    tl = attach(runtime)
++    original = copy.deepcopy(tl.clip(REF).data)
++    clip = tl.clip(REF)
++    clip.hold_for(2)
++    captured = json.loads(tl.session.outbox.path.read_bytes())['pending']
++    assert len(captured) == 1
++    assert captured[0]['op'] == 'clip.set'
++    assert captured[0]['select'] == REF
++    assert captured[0]['args'] == {'values': {'hold': 2.0}, 'clear': []}
++
++    accepted = tl.publish('Hold the opening', idempotency_key='sdk-parent-hold')
++    body = json.loads(runtime.calls[-1][0])
++    assert body['commands'] == captured
++    assert accepted['receipt']['result']['commands'] == captured
++    runtime.restart()
++    loaded = attach(runtime)
++    assert loaded.clip(REF).data == dict(original, hold=2.0)
++    loaded.undo([accepted['receipt']['receipt_id']])
++    assert loaded.clip(REF).data == original
++
++
+ def test_http_lost_ack_restart_exact_retry_and_unrelated_global_nonconsumption(runtime):
+     seed(runtime)
+     tl = attach(runtime)
+diff --git a/tests/sdk/test_timeline_owned_move_publish.py b/tests/sdk/test_timeline_owned_move_publish.py
+index dd4d0742ce15eb2ab457508e6cac571cfb8a4a01..831debc3d68c5d861d12e88bc5229ee29822a2ea
+--- a/tests/sdk/test_timeline_owned_move_publish.py
++++ b/tests/sdk/test_timeline_owned_move_publish.py
+@@ -47,6 +47,28 @@
+     assert client.reads
+ 
+ 
++def test_parent_publish_captures_source_hold_set_and_undoes_without_legacy_writer(connected):
++    client, generated, _ = connected
++    State(generated.bundles['r0']).entity('parent/clip:a')['speed'] = 2
++    tl = Checkout.attach(open_session(connected))
++    original = copy.deepcopy(tl.clip('a').data)
++    clip = tl.clip('parent/clip:a')
++    clip.hold_for(2)
++    command = state(connected)['pending'][0]
++    assert clip.duration == 2
++    assert command['op'] == 'clip.set'
++    assert command['select'] == 'parent/clip:a'
++    assert command['args'] == {'values': {'hold': 4}, 'clear': []}
++
++    accepted = tl.publish('Hold the opening', idempotency_key='owned-hold')
++    assert json.loads(generated.calls[-1][0])['commands'] == [command]
++    loaded = Checkout.attach(open_session(connected))
++    assert loaded.clip('parent/clip:a').data == dict(original, hold=4)
++    loaded.undo([accepted['receipt']['receipt_id']])
++    assert loaded.clip('parent/clip:a').data == original
++    assert client.reads
++
++
+ def test_parent_publish_restart_keeps_exact_request_key_and_rationale(connected, monkeypatch):
+     _, generated, _ = connected
+     tl = Checkout.attach(open_session(connected))
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-parent-scalar-consumer/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-parent-scalar-consumer/BLOCKED && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-parent-scalar-consumer/commit-msg && git diff --check && git status --short' in /home/user/work/wt/agt-m2-wc7-parent-scalar-consumer
+ succeeded in 163ms:
+ M astrid/sdk/timeline/native_checkout.py
+ M tests/editing_conformance/test_owned_move_publish_runtime.py
+ M tests/sdk/test_timeline_owned_move_publish.py
+
+codex
+Final source hygiene is clean, and the required `DONE` plus conventional commit message are written. I made one formatting-only source adjustment after the first central run, so I’m rerunning the bounded SDK and HTTP evidence against the exact final tree before handing off.
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_owned_move_publish.py tests/sdk/test_timeline_native_checkout.py' in /home/user/work/wt/agt-m2-wc7-parent-scalar-consumer
+ succeeded in 5127ms:
+..........................                                               [100%]
+26 passed in 4.08s
+
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-wc7-parent-scalar-consumer commit-integration --files '"'tests/editing_conformance/test_owned_move_publish_runtime.py') && echo \""'$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m2-wc7-parent-scalar-consumer
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc7-parent-scalar-consumer-commit-integration-1020201540-23071; cat "$D/status"; [ -f "$D/log.txt" ] && tail -20 "$D/log.txt" || true' in /home/user/work/wt/agt-m2-wc7-parent-scalar-consumer
+ succeeded in 0ms:
+queued
+
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc7-parent-scalar-consumer-commit-integration-1020201540-23071; cat "$D/status"; ls -l "$D"' in /home/user/work/wt/agt-m2-wc7-parent-scalar-consumer
+ succeeded in 0ms:
+running
+total 24
+-rw-r--r-- 1 root root 157 Oct 20 20:15 ext
+-rw-r--r-- 1 root root   1 Oct 20 20:16 log.txt
+-rw-r--r-- 1 root root 185 Oct 20 20:15 request
+-rw-r--r-- 1 root root   0 Oct 20 20:15 runner.log
+-rw-r--r-- 1 root root   6 Oct 20 20:15 running
+-rw-r--r-- 1 root root 145 Oct 20 20:15 snap
+-rw-r--r-- 1 root root   8 Oct 20 20:15 status
+
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc7-parent-scalar-consumer-commit-integration-1020201540-23071; cat "$D/status"; wc -c "$D/log.txt"; tail -30 "$D/log.txt"' in /home/user/work/wt/agt-m2-wc7-parent-scalar-consumer
+ succeeded in 0ms:
+running
+6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc7-parent-scalar-consumer-commit-integration-1020201540-23071/log.txt
+......
+ succeeded in 60066ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-wc7-parent-scalar-consumer-commit-integration-1020201540-23071
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc7-parent-scalar-consumer-commit-integration-1020201540-23071/
+test agt-m2-wc7-parent-scalar-consumer-commit-integration-1020201540-23071: pass exit=0 in 44s — commit-integration on agt-m2-wc7-parent-scalar-consumer (agent tree 7fe830e608c5b76b1577c587f63ce14e0952cc12)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_owned_move_publish_runtime.py
+counts: 14 passed in 40.18s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc7-parent-scalar-consumer-commit-integration-1020201540-23071/log.txt ---
+..............                                                           [100%]
+14 passed in 40.18s
+
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc7-parent-scalar-consumer-commit-integration-1020201540-23071; cat "$D/status"; tail -5 "$D/log.txt"' in /home/user/work/wt/agt-m2-wc7-parent-scalar-consumer
+ succeeded in 7ms:
+pass
+..............                                                           [100%]
+14 passed in 40.18s
+
+exec
+/bin/bash -lc "git diff --check && printf '%s\\n' '--- status ---' && git status --short && printf '%s\\n' '--- commit message ---' && sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-parent-scalar-consumer/commit-msg && printf '%s\\n' '--- markers ---' && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-parent-scalar-consumer/DONE && echo DONE" in /home/user/work/wt/agt-m2-wc7-parent-scalar-consumer
+ succeeded in 689ms:
+--- status ---
+ M astrid/sdk/timeline/native_checkout.py
+ M tests/editing_conformance/test_owned_move_publish_runtime.py
+ M tests/sdk/test_timeline_owned_move_publish.py
+--- commit message ---
+feat(sdk): publish attached parent hold scalars
+
+Admit one explicitly scoped parent clip.set source-hold command through the
+existing attached session and outbox publish path. Preserve legacy refusal for
+mixed, occurrence, and unsupported edits while covering exact restore/undo.
+--- markers ---
+DONE
+
+codex
+## Done
+
+- Extended `AttachedCheckout.publish()` to admit one explicit parent `clip.set` source-HOLD command.
+- Preserved source-unit semantics, exact capture, outbox/session retry identity, undo, and legacy refusal for mixed, occurrence, source-window, or unsupported edits.
+- `sync.py` unchanged; no legacy writer/public method/schema added.
+- Added SDK and HTTP regression coverage.
+
+## Tests
+
+- SDK: `26 passed`
+- Central HTTP integration: `14 passed`
+- `git diff --check`: passed
+- No full suite run.
+
+Commit message written to `commit-msg`; `DONE` marker created. No blockers.
+tokens used
+143,561
+## Done
+
+- Extended `AttachedCheckout.publish()` to admit one explicit parent `clip.set` source-HOLD command.
+- Preserved source-unit semantics, exact capture, outbox/session retry identity, undo, and legacy refusal for mixed, occurrence, source-window, or unsupported edits.
+- `sync.py` unchanged; no legacy writer/public method/schema added.
+- Added SDK and HTTP regression coverage.
+
+## Tests
+
+- SDK: `26 passed`
+- Central HTTP integration: `14 passed`
+- `git diff --check`: passed
+- No full suite run.
+
+Commit message written to `commit-msg`; `DONE` marker created. No blockers.

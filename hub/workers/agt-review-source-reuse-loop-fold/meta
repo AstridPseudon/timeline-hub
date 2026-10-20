@@ -1,0 +1,9 @@
+name=agt-review-source-reuse-loop-fold
+repo=agent
+base=tl/agt-m2-commit-source-reuse-loop-fold
+base_sha=14dd570a
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-source-reuse-loop-fold
+started=2026-10-20T16:51:05Z

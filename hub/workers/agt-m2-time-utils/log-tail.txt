@@ -1,0 +1,400 @@
+   |
+   = help: Remove unused import: `astrid.sdk.timeline_address.element_schema`
+
+astrid/sdk/timeline/units.py:57:45: F401 [*] `astrid.sdk.timeline_address.element_schema` imported but unused
+   |
+55 |     """What a param's number means, as the element declares it: ``canvas px`` (stored on a grid or not),
+56 |     ``clip frames``, ``clip seconds``; None when the element says nothing about it."""
+57 |     from astrid.sdk.timeline_address import element_schema
+   |                                             ^^^^^^^^^^^^^^ F401
+58 |
+59 |     units = _declared_units(element)
+   |
+   = help: Remove unused import: `astrid.sdk.timeline_address.element_schema`
+
+Found 3 errors.
+[*] 3 fixable with the `--fix` option.
+--- changed lint excluding inherited F401 ---
+All checks passed!
+
+exec
+/bin/bash -lc "rg -n 'timeline_editing|timeline\\.units|from astrid\\.sdk' astrid/core/timeline/moments.py astrid/sdk/timeline/_common.py astrid/sdk/timeline/units.py; git diff --check; git status --short" in /home/user/work/wt/agt-m2-time-utils
+ succeeded in 576ms:
+astrid/sdk/timeline/units.py:10:from astrid.sdk.timeline._common import (
+astrid/sdk/timeline/units.py:141:    from astrid.sdk.timeline_address import element_schema
+astrid/sdk/timeline/units.py:150:    from astrid.sdk.timeline_address import element_schema
+astrid/sdk/timeline/units.py:170:    from astrid.sdk.timeline_address import element_schema
+ M astrid/sdk/timeline/units.py
+ M astrid/sdk/timeline_editing.py
+
+codex
+Targeted behavior passes (`12 passed`), import identity smoke passes, and the changed code passes Ruff with inherited `F401` ignored. The full changed-file Ruff command still reports only the two pre-existing unused `element_schema` imports in untouched `units.py` functions; baseline verification confirms those existed before this work. I’m doing the final artifact/status checks and writing both required commit-message files now.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..9e0c017edd6bb6c1bda980dc98542eee46d723ba
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg
+@@ -0,0 +1,5 @@
++refactor(timeline): relocate exact time utilities
++
++Move rational frame, source-map, and interval quantization helpers into the
++timeline units module while preserving timeline_editing compatibility imports
++and existing numerical behavior.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..9e0c017edd6bb6c1bda980dc98542eee46d723ba
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg.txt
+@@ -0,0 +1,5 @@
++refactor(timeline): relocate exact time utilities
++
++Move rational frame, source-map, and interval quantization helpers into the
++timeline units module while preserving timeline_editing compatibility imports
++and existing numerical behavior.
+diff --git a/astrid/sdk/timeline/units.py b/astrid/sdk/timeline/units.py
+index e1ebc6844eaffd180a30ab2afb92d9f6f59e2afe..f7f8bad4456d32efb7b6aec07d2ef0a2d8d27872
+--- a/astrid/sdk/timeline/units.py
++++ b/astrid/sdk/timeline/units.py
+@@ -1,12 +1,126 @@
+ """Units (canvas px vs an element's stored grid) and formula/moment values as the sheet and --set write them."""
+ from __future__ import annotations
+ 
++import math
+ import re
++from fractions import Fraction
+ from typing import Any, Mapping
+ 
+ from astrid.core.timeline import moments as mo
+ 
+-from astrid.sdk.timeline._common import (LOGICAL_PX, POSITION_KEYS, TimelineEditError, _num)
++from astrid.sdk.timeline._common import (
++    LOGICAL_PX,
++    POSITION_KEYS,
++    TimelineEditError,
++    _num,
++)
++
++
++def frame_time(frame: int, fps: int | float) -> Fraction:
++    if isinstance(frame, bool) or isinstance(fps, bool) or frame < 0 or fps <= 0:
++        raise TimelineEditError("frame and fps must be non-negative/positive")
++    return Fraction(frame) / Fraction(str(fps))
++
++
++def _time_fraction(value: int | float | Fraction, label: str) -> Fraction:
++    if isinstance(value, bool) or not isinstance(value, (int, float, Fraction)):
++        raise TimelineEditError(f"{label} must be a number")
++    return value if isinstance(value, Fraction) else Fraction(str(value))
++
++
++def _playback_rate(speed: int | float | Fraction) -> Fraction:
++    rate = _time_fraction(speed, "speed")
++    if rate <= 0:
++        raise TimelineEditError("speed must be positive")
++    return rate
++
++
++def source_to_timeline_time(
++    source_time: int | float | Fraction,
++    *,
++    source_start: int | float | Fraction = 0,
++    timeline_start: int | float | Fraction = 0,
++    speed: int | float | Fraction = 1,
++) -> Fraction:
++    """Map a source timestamp into its local timeline timestamp.
++
++    The half-open interval mapping is ``timeline_start + (source_time -
++    source_start) / speed``.  Fractions keep 30fps/0.1s boundaries exact;
++    callers can apply :func:`quantize_time` at the renderer boundary.
++    """
++
++    rate = _playback_rate(speed)
++    return _time_fraction(timeline_start, "timeline_start") + (
++        _time_fraction(source_time, "source_time") - _time_fraction(source_start, "source_start")
++    ) / rate
++
++
++def timeline_to_source_time(
++    timeline_time: int | float | Fraction,
++    *,
++    source_start: int | float | Fraction = 0,
++    timeline_start: int | float | Fraction = 0,
++    speed: int | float | Fraction = 1,
++) -> Fraction:
++    """Map a local timeline timestamp back into source time."""
++
++    rate = _playback_rate(speed)
++    return _time_fraction(source_start, "source_start") + (
++        _time_fraction(timeline_time, "timeline_time") - _time_fraction(timeline_start, "timeline_start")
++    ) * rate
++
++
++def quantize_time(seconds: int | float | Fraction, fps: int | float, *, policy: str = "nearest") -> int:
++    if isinstance(fps, bool) or isinstance(seconds, bool) or fps <= 0 or policy not in {"floor", "ceil", "nearest"}:
++        raise TimelineEditError("invalid fps or quantization policy")
++    frames = _time_fraction(seconds, "seconds") * Fraction(str(fps))
++    if policy == "floor":
++        return math.floor(frames)
++    if policy == "ceil":
++        return math.ceil(frames)
++    return math.floor(frames + Fraction(1, 2))
++
++
++def quantize_interval(
++    start: int | float | Fraction,
++    end: int | float | Fraction,
++    fps: int | float,
++    *,
++    policy: str = "nearest",
++) -> dict[str, Any]:
++    """Quantize a half-open interval and report requested/applied boundaries.
++
++    The returned frame numbers are renderer-facing values; the Fraction
++    values are the exact seconds represented by those frames. A collapsed
++    interval is rejected instead of becoming a zero-frame clip.
++    """
++
++    start_value = _time_fraction(start, "start")
++    end_value = _time_fraction(end, "end")
++    if end_value <= start_value:
++        raise TimelineEditError("interval must be non-empty")
++    if isinstance(fps, bool) or fps <= 0:
++        raise TimelineEditError("fps must be positive")
++    fps_value = Fraction(str(fps))
++    start_frame = quantize_time(start_value, fps_value, policy=policy)
++    end_frame = quantize_time(end_value, fps_value, policy=policy)
++    if end_frame <= start_frame:
++        raise TimelineEditError(
++            "quantization collapsed the interval; choose a wider interval or a different policy"
++        )
++    applied_start = Fraction(start_frame, 1) / fps_value
++    applied_end = Fraction(end_frame, 1) / fps_value
++    return {
++        "policy": policy,
++        "fps": fps_value,
++        "requested_start": start_value,
++        "requested_end": end_value,
++        "start_frame": start_frame,
++        "end_frame": end_frame,
++        "applied_start": applied_start,
++        "applied_end": applied_end,
++        "rounded": applied_start != start_value or applied_end != end_value,
++    }
+ 
+ # The frozen donor declared these units in each element's metadata. The current
+ # V3 element declarations do not carry that metadata yet, so the SDK preserves
+diff --git a/astrid/sdk/timeline_editing.py b/astrid/sdk/timeline_editing.py
+index b1c1843f7744e5bd3e31e7304266927b45c4ede7..fbe949640b6927ab5a75437d747e2a342069efaa
+--- a/astrid/sdk/timeline_editing.py
++++ b/astrid/sdk/timeline_editing.py
+@@ -15,10 +15,18 @@
+ import re
+ import uuid
+ from collections.abc import Mapping, MutableMapping, Sequence
+-from fractions import Fraction
+ from typing import Any
+ 
+ from astrid.sdk.timeline._common import TimelineEditError
++from astrid.sdk.timeline.units import (
++    _playback_rate,  # noqa: F401 - preserve the legacy private import route
++    _time_fraction,  # noqa: F401 - preserve the legacy private import route
++    frame_time,
++    quantize_interval,
++    quantize_time,
++    source_to_timeline_time,
++    timeline_to_source_time,
++)
+ 
+ 
+ def _is_media_digest(value: Any) -> bool:
+@@ -431,113 +439,6 @@
+             [item.get("at", 0) + _clip_duration(item) for item in clips] or [0]
+         )
+     return clip
+-
+-
+-def frame_time(frame: int, fps: int | float) -> Fraction:
+-    if isinstance(frame, bool) or isinstance(fps, bool) or frame < 0 or fps <= 0:
+-        raise TimelineEditError("frame and fps must be non-negative/positive")
+-    return Fraction(frame) / Fraction(str(fps))
+-
+-
+-def _time_fraction(value: int | float | Fraction, label: str) -> Fraction:
+-    if isinstance(value, bool) or not isinstance(value, (int, float, Fraction)):
+-        raise TimelineEditError(f"{label} must be a number")
+-    return value if isinstance(value, Fraction) else Fraction(str(value))
+-
+-
+-def _playback_rate(speed: int | float | Fraction) -> Fraction:
+-    rate = _time_fraction(speed, "speed")
+-    if rate <= 0:
+-        raise TimelineEditError("speed must be positive")
+-    return rate
+-
+-
+-def source_to_timeline_time(
+-    source_time: int | float | Fraction,
+-    *,
+-    source_start: int | float | Fraction = 0,
+-    timeline_start: int | float | Fraction = 0,
+-    speed: int | float | Fraction = 1,
+-) -> Fraction:
+-    """Map a source timestamp into its local timeline timestamp.
+-
+-    The half-open interval mapping is ``timeline_start + (source_time -
+-    source_start) / speed``.  Fractions keep 30fps/0.1s boundaries exact;
+-    callers can apply :func:`quantize_time` at the renderer boundary.
+-    """
+-
+-    rate = _playback_rate(speed)
+-    return _time_fraction(timeline_start, "timeline_start") + (
+-        _time_fraction(source_time, "source_time") - _time_fraction(source_start, "source_start")
+-    ) / rate
+-
+-
+-def timeline_to_source_time(
+-    timeline_time: int | float | Fraction,
+-    *,
+-    source_start: int | float | Fraction = 0,
+-    timeline_start: int | float | Fraction = 0,
+-    speed: int | float | Fraction = 1,
+-) -> Fraction:
+-    """Map a local timeline timestamp back into source time."""
+-
+-    rate = _playback_rate(speed)
+-    return _time_fraction(source_start, "source_start") + (
+-        _time_fraction(timeline_time, "timeline_time") - _time_fraction(timeline_start, "timeline_start")
+-    ) * rate
+-
+-
+-def quantize_time(seconds: int | float | Fraction, fps: int | float, *, policy: str = "nearest") -> int:
+-    if isinstance(fps, bool) or isinstance(seconds, bool) or fps <= 0 or policy not in {"floor", "ceil", "nearest"}:
+-        raise TimelineEditError("invalid fps or quantization policy")
+-    frames = _time_fraction(seconds, "seconds") * Fraction(str(fps))
+-    if policy == "floor":
+-        return math.floor(frames)
+-    if policy == "ceil":
+-        return math.ceil(frames)
+-    return math.floor(frames + Fraction(1, 2))
+-
+-
+-def quantize_interval(
+-    start: int | float | Fraction,
+-    end: int | float | Fraction,
+-    fps: int | float,
+-    *,
+-    policy: str = "nearest",
+-) -> dict[str, Any]:
+-    """Quantize a half-open interval and report requested/applied boundaries.
+-
+-    The returned frame numbers are renderer-facing values; the Fraction
+-    values are the exact seconds represented by those frames. A collapsed
+-    interval is rejected instead of becoming a zero-frame clip.
+-    """
+-
+-    start_value = _time_fraction(start, "start")
+-    end_value = _time_fraction(end, "end")
+-    if end_value <= start_value:
+-        raise TimelineEditError("interval must be non-empty")
+-    if isinstance(fps, bool) or fps <= 0:
+-        raise TimelineEditError("fps must be positive")
+-    fps_value = Fraction(str(fps))
+-    start_frame = quantize_time(start_value, fps_value, policy=policy)
+-    end_frame = quantize_time(end_value, fps_value, policy=policy)
+-    if end_frame <= start_frame:
+-        raise TimelineEditError(
+-            "quantization collapsed the interval; choose a wider interval or a different policy"
+-        )
+-    applied_start = Fraction(start_frame, 1) / fps_value
+-    applied_end = Fraction(end_frame, 1) / fps_value
+-    return {
+-        "policy": policy,
+-        "fps": fps_value,
+-        "requested_start": start_value,
+-        "requested_end": end_value,
+-        "start_frame": start_frame,
+-        "end_frame": end_frame,
+-        "applied_start": applied_start,
+-        "applied_end": applied_end,
+-        "rounded": applied_start != start_value or applied_end != end_value,
+-    }
+ 
+ 
+ def sequence(clips: Sequence[MutableMapping[str, Any]], *, start: int | float = 0, durations: Sequence[int | float] | None = None, gap: int | float = 0) -> Sequence[MutableMapping[str, Any]]:
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check --ignore F401 astrid/sdk/timeline/units.py astrid/sdk/timeline_editing.py' in /home/user/work/wt/agt-m2-time-utils
+ succeeded in 0ms:
+All checks passed!
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_editing_helpers.py' in /home/user/work/wt/agt-m2-time-utils
+exec
+/bin/bash -lc "git diff --check && git diff --numstat && git status --short --untracked-files=all && printf '\\n--- commit messages ---\\n' && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg && cmp -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-time-utils/commit-msg.txt && echo 'commit messages: identical'" in /home/user/work/wt/agt-m2-time-utils
+ succeeded in 806ms:
+............                                                             [100%]
+12 passed in 0.25s
+
+ succeeded in 887ms:
+115	2	astrid/sdk/timeline/units.py
+9	108	astrid/sdk/timeline_editing.py
+ M astrid/sdk/timeline/units.py
+ M astrid/sdk/timeline_editing.py
+
+--- commit messages ---
+refactor(timeline): relocate exact time utilities
+
+Move rational frame, source-map, and interval quantization helpers into the
+timeline units module while preserving timeline_editing compatibility imports
+and existing numerical behavior.
+commit messages: identical
+
+codex
+## Report
+
+Implemented exact time utility relocation:
+
+- Moved seven utilities into `astrid/sdk/timeline/units.py`.
+- Preserved all `timeline_editing` and `astrid.sdk` import routes, including private helpers.
+- No behavior or tests changed.
+- Diff: `+115/-2` in `units.py`, `+9/-108` in `timeline_editing.py`.
+
+Tests:
+
+- `pytest -q tests/test_timeline_editing_helpers.py` — **12 passed**
+- Import smoke — **passed**
+- Ruff changed-code check — **passed**
+- `git diff --check` — **passed**
+
+The requested `tests/sdk/test_timeline_units.py` does not exist; no replacement test was invented. Full suite was not run per instructions.
+
+Two pre-existing unused `element_schema` imports remain in `units.py`; baseline verification confirmed they predate this change.
+
+Both commit message files were written. Retimer deletion remains dependent on later compiler consumer parity and validation gates.
+tokens used
+94,338
+## Report
+
+Implemented exact time utility relocation:
+
+- Moved seven utilities into `astrid/sdk/timeline/units.py`.
+- Preserved all `timeline_editing` and `astrid.sdk` import routes, including private helpers.
+- No behavior or tests changed.
+- Diff: `+115/-2` in `units.py`, `+9/-108` in `timeline_editing.py`.
+
+Tests:
+
+- `pytest -q tests/test_timeline_editing_helpers.py` — **12 passed**
+- Import smoke — **passed**
+- Ruff changed-code check — **passed**
+- `git diff --check` — **passed**
+
+The requested `tests/sdk/test_timeline_units.py` does not exist; no replacement test was invented. Full suite was not run per instructions.
+
+Two pre-existing unused `element_schema` imports remain in `units.py`; baseline verification confirmed they predate this change.
+
+Both commit message files were written. Retimer deletion remains dependent on later compiler consumer parity and validation gates.

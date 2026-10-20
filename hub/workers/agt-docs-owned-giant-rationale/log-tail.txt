@@ -1,0 +1,400 @@
+| 36 | `astrid/sdk/timeline_sheet.py` | 1,313 | The detached sheet grammar still owns the full-document render, parse, apply, and merge compatibility surface, while thin `AttachedCheckout`/`NativeSheet` adapters bind scoped edits to the durable native session. They temporarily coexist so each edit family can migrate without creating a second sheet authority. Decompose grammar/rendering, per-family appliers, and native adapters; after every family has a native command path, delete that family's legacy parser/applier seam and then retire the remaining detached whole-document path. |
+
+## M1 inventory audit
+
+At this snapshot, the M1-owned entries above have exact physical newline counts: `workspace_client.py` is 1,243 lines and `timeline/cli.py` is 4,045 lines. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-docs-owned-giant-rationale/docs/giant-file-rationale.md
+diff --git a/docs/giant-file-rationale.md b/docs/giant-file-rationale.md
+index b41dffb68d1640762e5ed1b432a9657ac3e16c94..2391593428c21d0f22d4ca5062bbb5e30d43be9d
+--- a/docs/giant-file-rationale.md
++++ b/docs/giant-file-rationale.md
+@@ -18,7 +18,7 @@
+ | 1 | `astrid/core/execution/generic_host.py` | 13,798 | Generic executor host owns discovery, admission, worker execution, and settlement orchestration. Split protocol boundary, admission, and worker lifecycle into cohesive modules. |
+ | 2 | `astrid/sdk/invocation.py` | 4,665 | SDK invocation owns the single admission/execution/finalization path. Split transport preparation, ledger transitions, and output projection behind the same facade. |
+ | 3 | `astrid/core/execution/custody_broker.py` | 4,031 | Consumes Runtime's designation ABI to observe candidate processes and deliver audit-token-checked signals, including the Darwin process-census ctypes layer. Signal delivery and observation share start-anchor and audit-token identity checks, so they stay together; the `_Darwin*` ABI structures and census readers are a separable platform seam. |
+-| 4 | `astrid/packs/timeline/cli.py` | 4,045 | Product parser and human renderer for the runtime-owned `timelines` family: each verb is argument parsing plus one SDK call. No single-file reason: candidate split into the human renderers (`_human_*`, `_render_*`, `_print_cut_table`) and per-verb handlers (`_cmd_*`), keeping `build_parser` as the entry point. |
++| 4 | `astrid/packs/timeline/cli.py` | 4,127 | Product parser and human renderer for the runtime-owned `timelines` family: each verb is argument parsing plus one SDK call. No single-file reason: candidate split into the human renderers (`_human_*`, `_render_*`, `_print_cut_table`) and per-verb handlers (`_cmd_*`), keeping `build_parser` as the entry point. |
+ | 5 | `astrid/sdk/remote.py` | 2,727 | Product-neutral adapter over the generated workspace client: `RemoteFamily` subclasses for projects, timelines, media, tasks, runs, references, shots, and generations behind the `RemoteAstridClient` facade. No single-file reason: candidate split one module per family, with `_vibecomfy_invocation_preflight` moved out because the module docstring says product-neutral. |
+ | 6 | `astrid/core/generation/backends/vibecomfy.py` | 2,381 | VibeComfy backend and engine: `bind_input` contract execution, ComfyUI version gating, output-descriptor extraction, owned-session verification, and a checkout-server HTTP adapter. No single-file reason: candidate split into `CheckoutServerAdapter` and its HTTP helpers, owned-session verification (`_verify_owned_vibe_session`, `_session_registry_binding`), and the backend/engine. |
+ | 7 | `astrid/core/rendering/service.py` | 2,314 | Managed rendering admission and lifecycle are kept together for transaction and preflight ordering. Split backend selection, staging, and lifecycle orchestration behind the service boundary. |
+@@ -50,7 +50,8 @@
+ | 33 | `astrid/sdk/timeline/reflow.py` | 1,221 | Voice-track re-flow for the `Checkout`: gaps, line insert/remove, retime, moments, orphans, and the ripple of a time shift through shots, sequences, and music beds. A shift and the film-length sync read the same shot-start and cut-window state, so they stay together. Only 21 lines over threshold; the ripple machinery (`_shift_now`, `_close_in_shot`, `_open_in_shot`, `_apply_bed_cuts`, `_shift_parent`) is a separable seam. |
+ | 34 | `astrid/packs/h3_av/shared/compose.py` | 1,210 | Deterministic H3 composition and preservation-evidence boundary: stream probing, generated and source coverage validation, spatial masks, and audio sample evidence, all gating the single `compose_candidate` decision. Only 10 lines over threshold; the audio-evidence helpers (`_audio_witness`, `_auto_sample_evidence`) are a separable seam. |
+ | 35 | `astrid/sdk/workspace_client.py` | 1,243 | M1's typed facade over the single generated Runtime workspace client: explicit endpoint/credential validation, authority handshake, shared error normalization, and resource methods. No intrinsic single-file necessity: M4 cleanup can split thin per-resource facades while preserving one generated Runtime client and the existing authority, handshake, and error-mapping boundary; do not add another product helper. |
++| 36 | `astrid/sdk/timeline_sheet.py` | 1,313 | The detached sheet grammar still owns the full-document render, parse, apply, and merge compatibility surface, while thin `AttachedCheckout`/`NativeSheet` adapters bind scoped edits to the durable native session. They temporarily coexist so each edit family can migrate without creating a second sheet authority. Decompose grammar/rendering, per-family appliers, and native adapters; after every family has a native command path, delete that family's legacy parser/applier seam and then retire the remaining detached whole-document path. |
+ 
+ ## M1 inventory audit
+ 
+-At this snapshot, the M1-owned entries above have exact physical newline counts: `workspace_client.py` is 1,243 lines and `timeline/cli.py` is 4,045 lines. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
++At this snapshot, the M1-owned timeline entries above have exact physical newline counts: `timeline/cli.py` is 4,127 lines and `timeline_sheet.py` is 1,313 lines. The `workspace_client.py` snapshot remains within the 50-line tolerance. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
+
+codex
+The metadata parser now finds all 36 oversized files documented and no invalid entries. The whole-inventory audit leaves only the inherited out-of-tolerance entries (`generic_host.py`, rendering `service.py`, and Remotion `run.py`); the required targeted test still fails first on the explicitly held generic-host mismatch, as expected. I’m recording that exact evidence and completing the handoff files.
+exec
+/bin/bash -lc "set -o pipefail
+printf '%s\\n' '--- final diff check ---'
+git diff --check
+git status --short
+printf '%s\\n' '--- final parser/inventory audit ---'
+python3 - <<'PY'
+import re
+from pathlib import Path
+threshold=1200
+tolerance=50
+root=Path('.')
+entries={m.group(1):int(m.group(2).replace(',','')) for m in re.finditer(r'\\|\\s*\\d+\\s*\\|\\s*"'`([''^`]+)`'"\\s*\\|\\s*([\\d,]+)\\s*\\|', (root/'docs/giant-file-rationale.md').read_text(encoding='utf-8'))}
+files={p.relative_to(root).as_posix():p.read_text(encoding='utf-8').count('\\n') for p in (root/'astrid').rglob('*.py') if not any(x.startswith('.') for x in p.relative_to(root/'astrid').parts)}
+over={p:n for p,n in files.items() if n>threshold}
+missing=sorted(set(over)-entries.keys())
+invalid=sorted(p for p,n in entries.items() if p not in files or files[p] <= threshold)
+out_tol=sorted((p, entries[p], files[p], files[p]-entries[p]) for p in entries if p in files and abs(files[p]-entries[p])>tolerance)
+print(f'entries={len(entries)} oversized={len(over)} missing={missing} invalid={invalid}')
+print('out_of_tolerance=', out_tol)
+PY
+printf '%s\\n' '--- final targeted test ---'
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\""'$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale' in /home/user/work/wt/agt-docs-owned-giant-rationale
+ exited 1 in 1118ms:
+--- final diff check ---
+ M docs/giant-file-rationale.md
+--- final parser/inventory audit ---
+entries=36 oversized=36 missing=[] invalid=[]
+out_of_tolerance= [('astrid/core/execution/generic_host.py', 13798, 13860, 62), ('astrid/core/rendering/service.py', 2314, 2367, 53), ('astrid/packs/rendering/rendering/renderers/remotion/run.py', 1851, 1929, 78)]
+--- final targeted test ---
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________ test_giant_file_inventory_matches_rationale __________________
+
+    def test_giant_file_inventory_matches_rationale() -> None:
+        """M4 gate: every ``astrid/**/*.py`` file over 1,200 physical lines
+        must appear in ``docs/giant-file-rationale.md``, and every entry in
+        the rationale must correspond to an existing file that genuinely
+        exceeds the threshold.  Files at or below 1,200 lines are watch-only
+        and do not require rationale entries.
+        """
+        import re
+    
+        from astrid.core.foundation.paths import REPO_ROOT
+    
+        GIANT_THRESHOLD = 1200
+    
+        # ── 1. Scan every astrid/**/*.py file and count physical lines ─────
+        astrid_root = REPO_ROOT / "astrid"
+        py_files: dict[str, int] = {}
+        for py_path in sorted(astrid_root.rglob("*.py")):
+            # Skip __pycache__ and other dotted directories.
+            parts = py_path.relative_to(astrid_root).parts
+            if any(part.startswith(".") for part in parts):
+                continue
+            rel = py_path.relative_to(REPO_ROOT).as_posix()
+            lines = py_path.read_text(encoding="utf-8").count("\n")
+            py_files[rel] = lines
+    
+        # ── 2. Parse the rationale doc ──────────────────────────────────────
+        rationale_path = REPO_ROOT / "docs" / "giant-file-rationale.md"
+        if not rationale_path.is_file():
+            pytest.skip("retired M4 giant-file rationale inventory is not shipped")
+        rationale_text = rationale_path.read_text(encoding="utf-8")
+    
+        # Extract table entries of the form: | N | `path` | NNNN | ...
+        # Pattern: | number | `astrid/...` | digits | ...
+        entry_pattern = re.compile(
+            r"\|\s*\d+\s*\|\s*`([^`]+)`\s*\|\s*([\d,]+)\s*\|"
+        )
+        rationale_entries: dict[str, int] = {}
+        for match in entry_pattern.finditer(rationale_text):
+            file_path = match.group(1)
+            lines_str = match.group(2).replace(",", "")
+            rationale_entries[file_path] = int(lines_str)
+    
+        m4_complete = "M4-complete" in rationale_text
+        if not m4_complete:
+            assert rationale_entries, (
+                "giant-file-rationale.md must contain at least one table entry "
+                "(or include an M4-complete marker when all files are below threshold)"
+            )
+    
+        # ── 3. Every file over threshold must be in rationale ───────────────
+        over_threshold = {
+            rel: lines
+            for rel, lines in py_files.items()
+            if lines > GIANT_THRESHOLD
+        }
+        missing_from_rationale = over_threshold.keys() - rationale_entries.keys()
+        assert not missing_from_rationale, (
+            f"Files over {GIANT_THRESHOLD} lines missing from "
+            f"giant-file-rationale.md: {sorted(missing_from_rationale)}"
+        )
+    
+        # ── 4. Every rationale entry must match an existing over-threshold file ─
+        for entry_path, entry_lines in rationale_entries.items():
+            assert entry_path in py_files, (
+                f"giant-file-rationale.md entry '{entry_path}' does not exist on disk"
+            )
+            actual_lines = py_files[entry_path]
+            assert actual_lines > GIANT_THRESHOLD, (
+                f"giant-file-rationale.md entry '{entry_path}' is only "
+                f"{actual_lines} lines (threshold: {GIANT_THRESHOLD})"
+            )
+            # Line count should match within a reasonable tolerance (the doc
+            # is a snapshot; a small drift from whitespace changes is acceptable).
+>           assert abs(actual_lines - entry_lines) <= 50, (
+                f"giant-file-rationale.md entry '{entry_path}' claims "
+                f"{entry_lines} lines but on-disk count is {actual_lines}"
+            )
+E           AssertionError: giant-file-rationale.md entry 'astrid/core/execution/generic_host.py' claims 13798 lines but on-disk count is 13860
+E           assert 62 <= 50
+E            +  where 62 = abs((13860 - 13798))
+
+tests/test_structure_contracts.py:1029: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+1 failed in 0.34s
+
+exec
+/bin/bash -lc 'ls -ld /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale' in /home/user/work/wt/agt-docs-owned-giant-rationale
+ succeeded in 0ms:
+drwxr-xr-x 2 root root 4096 Oct 20 12:43 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..0dcd418b8794f156db0402dc718d560c291cf38b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/commit-msg
+@@ -0,0 +1,4 @@
++docs(timeline): refresh giant-file rationale
++
++Document the current native timeline sheet size and its temporary coexistence
++with the detached sheet grammar, and refresh the known Agent timeline CLI count.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..33ad606bf998a5abf73ec444ada412c61651717b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/notes/report.md
+@@ -0,0 +1,34 @@
++# Report
++
++## Changes
++
++- Updated `docs/giant-file-rationale.md` entry 4 for the current Agent-owned
++  `astrid/packs/timeline/cli.py` count: 4,127 lines.
++- Added entry 36 for `astrid/sdk/timeline_sheet.py` at its current count of
++  1,313 lines.
++- The new rationale records why the detached sheet grammar temporarily
++  coexists with the thin `AttachedCheckout`/`NativeSheet` adapters, and names
++  the decomposition and per-family legacy parser/applier deletion seam once
++  every family has a native command path.
++- Updated the document's M1 inventory audit paragraph to match the current
++  exact Agent timeline counts.
++- Left the 1,200-line threshold, 50-line tolerance, inherited
++  `generic_host.py` rationale/count, tests, and product source unchanged.
++
++## Verification
++
++1. `git diff --check` — passed.
++2. Read-only parser/whole-inventory audit — parsed 36 entries and found all
++   36 oversized files documented with no invalid entries or missing entries.
++   The remaining out-of-tolerance inherited metadata is:
++
++   - `astrid/core/execution/generic_host.py`: claimed 13,798, actual 13,860
++     (delta +62; expected held failure).
++   - `astrid/core/rendering/service.py`: claimed 2,314, actual 2,367
++     (delta +53; inherited infrastructure metadata).
++   - `astrid/packs/rendering/rendering/renderers/remotion/run.py`: claimed
++     1,851, actual 1,929 (delta +78; inherited infrastructure metadata).
++
++3. `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale` — failed 1 test at the known inherited `generic_host.py` mismatch (13,798 claimed vs 13,860 actual). The parser and missing/invalid-entry checks passed before that assertion.
++
++No full or named suite was requested. No product source or tests were changed.
+diff --git a/docs/giant-file-rationale.md b/docs/giant-file-rationale.md
+index b41dffb68d1640762e5ed1b432a9657ac3e16c94..2391593428c21d0f22d4ca5062bbb5e30d43be9d
+--- a/docs/giant-file-rationale.md
++++ b/docs/giant-file-rationale.md
+@@ -18,7 +18,7 @@
+ | 1 | `astrid/core/execution/generic_host.py` | 13,798 | Generic executor host owns discovery, admission, worker execution, and settlement orchestration. Split protocol boundary, admission, and worker lifecycle into cohesive modules. |
+ | 2 | `astrid/sdk/invocation.py` | 4,665 | SDK invocation owns the single admission/execution/finalization path. Split transport preparation, ledger transitions, and output projection behind the same facade. |
+ | 3 | `astrid/core/execution/custody_broker.py` | 4,031 | Consumes Runtime's designation ABI to observe candidate processes and deliver audit-token-checked signals, including the Darwin process-census ctypes layer. Signal delivery and observation share start-anchor and audit-token identity checks, so they stay together; the `_Darwin*` ABI structures and census readers are a separable platform seam. |
+-| 4 | `astrid/packs/timeline/cli.py` | 4,045 | Product parser and human renderer for the runtime-owned `timelines` family: each verb is argument parsing plus one SDK call. No single-file reason: candidate split into the human renderers (`_human_*`, `_render_*`, `_print_cut_table`) and per-verb handlers (`_cmd_*`), keeping `build_parser` as the entry point. |
++| 4 | `astrid/packs/timeline/cli.py` | 4,127 | Product parser and human renderer for the runtime-owned `timelines` family: each verb is argument parsing plus one SDK call. No single-file reason: candidate split into the human renderers (`_human_*`, `_render_*`, `_print_cut_table`) and per-verb handlers (`_cmd_*`), keeping `build_parser` as the entry point. |
+ | 5 | `astrid/sdk/remote.py` | 2,727 | Product-neutral adapter over the generated workspace client: `RemoteFamily` subclasses for projects, timelines, media, tasks, runs, references, shots, and generations behind the `RemoteAstridClient` facade. No single-file reason: candidate split one module per family, with `_vibecomfy_invocation_preflight` moved out because the module docstring says product-neutral. |
+ | 6 | `astrid/core/generation/backends/vibecomfy.py` | 2,381 | VibeComfy backend and engine: `bind_input` contract execution, ComfyUI version gating, output-descriptor extraction, owned-session verification, and a checkout-server HTTP adapter. No single-file reason: candidate split into `CheckoutServerAdapter` and its HTTP helpers, owned-session verification (`_verify_owned_vibe_session`, `_session_registry_binding`), and the backend/engine. |
+ | 7 | `astrid/core/rendering/service.py` | 2,314 | Managed rendering admission and lifecycle are kept together for transaction and preflight ordering. Split backend selection, staging, and lifecycle orchestration behind the service boundary. |
+@@ -50,7 +50,8 @@
+ | 33 | `astrid/sdk/timeline/reflow.py` | 1,221 | Voice-track re-flow for the `Checkout`: gaps, line insert/remove, retime, moments, orphans, and the ripple of a time shift through shots, sequences, and music beds. A shift and the film-length sync read the same shot-start and cut-window state, so they stay together. Only 21 lines over threshold; the ripple machinery (`_shift_now`, `_close_in_shot`, `_open_in_shot`, `_apply_bed_cuts`, `_shift_parent`) is a separable seam. |
+ | 34 | `astrid/packs/h3_av/shared/compose.py` | 1,210 | Deterministic H3 composition and preservation-evidence boundary: stream probing, generated and source coverage validation, spatial masks, and audio sample evidence, all gating the single `compose_candidate` decision. Only 10 lines over threshold; the audio-evidence helpers (`_audio_witness`, `_auto_sample_evidence`) are a separable seam. |
+ | 35 | `astrid/sdk/workspace_client.py` | 1,243 | M1's typed facade over the single generated Runtime workspace client: explicit endpoint/credential validation, authority handshake, shared error normalization, and resource methods. No intrinsic single-file necessity: M4 cleanup can split thin per-resource facades while preserving one generated Runtime client and the existing authority, handshake, and error-mapping boundary; do not add another product helper. |
++| 36 | `astrid/sdk/timeline_sheet.py` | 1,313 | The detached sheet grammar still owns the full-document render, parse, apply, and merge compatibility surface, while thin `AttachedCheckout`/`NativeSheet` adapters bind scoped edits to the durable native session. They temporarily coexist so each edit family can migrate without creating a second sheet authority. Decompose grammar/rendering, per-family appliers, and native adapters; after every family has a native command path, delete that family's legacy parser/applier seam and then retire the remaining detached whole-document path. |
+ 
+ ## M1 inventory audit
+ 
+-At this snapshot, the M1-owned entries above have exact physical newline counts: `workspace_client.py` is 1,243 lines and `timeline/cli.py` is 4,045 lines. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
++At this snapshot, the M1-owned timeline entries above have exact physical newline counts: `timeline/cli.py` is 4,127 lines and `timeline_sheet.py` is 1,313 lines. The `workspace_client.py` snapshot remains within the 50-line tolerance. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..0dcd418b8794f156db0402dc718d560c291cf38b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/commit-msg
+@@ -0,0 +1,4 @@
++docs(timeline): refresh giant-file rationale
++
++Document the current native timeline sheet size and its temporary coexistence
++with the detached sheet grammar, and refresh the known Agent timeline CLI count.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..33ad606bf998a5abf73ec444ada412c61651717b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/notes/report.md
+@@ -0,0 +1,34 @@
++# Report
++
++## Changes
++
++- Updated `docs/giant-file-rationale.md` entry 4 for the current Agent-owned
++  `astrid/packs/timeline/cli.py` count: 4,127 lines.
++- Added entry 36 for `astrid/sdk/timeline_sheet.py` at its current count of
++  1,313 lines.
++- The new rationale records why the detached sheet grammar temporarily
++  coexists with the thin `AttachedCheckout`/`NativeSheet` adapters, and names
++  the decomposition and per-family legacy parser/applier deletion seam once
++  every family has a native command path.
++- Updated the document's M1 inventory audit paragraph to match the current
++  exact Agent timeline counts.
++- Left the 1,200-line threshold, 50-line tolerance, inherited
++  `generic_host.py` rationale/count, tests, and product source unchanged.
++
++## Verification
++
++1. `git diff --check` — passed.
++2. Read-only parser/whole-inventory audit — parsed 36 entries and found all
++   36 oversized files documented with no invalid entries or missing entries.
++   The remaining out-of-tolerance inherited metadata is:
++
++   - `astrid/core/execution/generic_host.py`: claimed 13,798, actual 13,860
++     (delta +62; expected held failure).
++   - `astrid/core/rendering/service.py`: claimed 2,314, actual 2,367
++     (delta +53; inherited infrastructure metadata).
++   - `astrid/packs/rendering/rendering/renderers/remotion/run.py`: claimed
++     1,851, actual 1,929 (delta +78; inherited infrastructure metadata).
++
++3. `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale` — failed 1 test at the known inherited `generic_host.py` mismatch (13,798 claimed vs 13,860 actual). The parser and missing/invalid-entry checks passed before that assertion.
++
++No full or named suite was requested. No product source or tests were changed.
+diff --git a/docs/giant-file-rationale.md b/docs/giant-file-rationale.md
+index b41dffb68d1640762e5ed1b432a9657ac3e16c94..2391593428c21d0f22d4ca5062bbb5e30d43be9d
+--- a/docs/giant-file-rationale.md
++++ b/docs/giant-file-rationale.md
+@@ -18,7 +18,7 @@
+ | 1 | `astrid/core/execution/generic_host.py` | 13,798 | Generic executor host owns discovery, admission, worker execution, and settlement orchestration. Split protocol boundary, admission, and worker lifecycle into cohesive modules. |
+ | 2 | `astrid/sdk/invocation.py` | 4,665 | SDK invocation owns the single admission/execution/finalization path. Split transport preparation, ledger transitions, and output projection behind the same facade. |
+ | 3 | `astrid/core/execution/custody_broker.py` | 4,031 | Consumes Runtime's designation ABI to observe candidate processes and deliver audit-token-checked signals, including the Darwin process-census ctypes layer. Signal delivery and observation share start-anchor and audit-token identity checks, so they stay together; the `_Darwin*` ABI structures and census readers are a separable platform seam. |
+-| 4 | `astrid/packs/timeline/cli.py` | 4,045 | Product parser and human renderer for the runtime-owned `timelines` family: each verb is argument parsing plus one SDK call. No single-file reason: candidate split into the human renderers (`_human_*`, `_render_*`, `_print_cut_table`) and per-verb handlers (`_cmd_*`), keeping `build_parser` as the entry point. |
++| 4 | `astrid/packs/timeline/cli.py` | 4,127 | Product parser and human renderer for the runtime-owned `timelines` family: each verb is argument parsing plus one SDK call. No single-file reason: candidate split into the human renderers (`_human_*`, `_render_*`, `_print_cut_table`) and per-verb handlers (`_cmd_*`), keeping `build_parser` as the entry point. |
+ | 5 | `astrid/sdk/remote.py` | 2,727 | Product-neutral adapter over the generated workspace client: `RemoteFamily` subclasses for projects, timelines, media, tasks, runs, references, shots, and generations behind the `RemoteAstridClient` facade. No single-file reason: candidate split one module per family, with `_vibecomfy_invocation_preflight` moved out because the module docstring says product-neutral. |
+ | 6 | `astrid/core/generation/backends/vibecomfy.py` | 2,381 | VibeComfy backend and engine: `bind_input` contract execution, ComfyUI version gating, output-descriptor extraction, owned-session verification, and a checkout-server HTTP adapter. No single-file reason: candidate split into `CheckoutServerAdapter` and its HTTP helpers, owned-session verification (`_verify_owned_vibe_session`, `_session_registry_binding`), and the backend/engine. |
+ | 7 | `astrid/core/rendering/service.py` | 2,314 | Managed rendering admission and lifecycle are kept together for transaction and preflight ordering. Split backend selection, staging, and lifecycle orchestration behind the service boundary. |
+@@ -50,7 +50,8 @@
+ | 33 | `astrid/sdk/timeline/reflow.py` | 1,221 | Voice-track re-flow for the `Checkout`: gaps, line insert/remove, retime, moments, orphans, and the ripple of a time shift through shots, sequences, and music beds. A shift and the film-length sync read the same shot-start and cut-window state, so they stay together. Only 21 lines over threshold; the ripple machinery (`_shift_now`, `_close_in_shot`, `_open_in_shot`, `_apply_bed_cuts`, `_shift_parent`) is a separable seam. |
+ | 34 | `astrid/packs/h3_av/shared/compose.py` | 1,210 | Deterministic H3 composition and preservation-evidence boundary: stream probing, generated and source coverage validation, spatial masks, and audio sample evidence, all gating the single `compose_candidate` decision. Only 10 lines over threshold; the audio-evidence helpers (`_audio_witness`, `_auto_sample_evidence`) are a separable seam. |
+ | 35 | `astrid/sdk/workspace_client.py` | 1,243 | M1's typed facade over the single generated Runtime workspace client: explicit endpoint/credential validation, authority handshake, shared error normalization, and resource methods. No intrinsic single-file necessity: M4 cleanup can split thin per-resource facades while preserving one generated Runtime client and the existing authority, handshake, and error-mapping boundary; do not add another product helper. |
++| 36 | `astrid/sdk/timeline_sheet.py` | 1,313 | The detached sheet grammar still owns the full-document render, parse, apply, and merge compatibility surface, while thin `AttachedCheckout`/`NativeSheet` adapters bind scoped edits to the durable native session. They temporarily coexist so each edit family can migrate without creating a second sheet authority. Decompose grammar/rendering, per-family appliers, and native adapters; after every family has a native command path, delete that family's legacy parser/applier seam and then retire the remaining detached whole-document path. |
+ 
+ ## M1 inventory audit
+ 
+-At this snapshot, the M1-owned entries above have exact physical newline counts: `workspace_client.py` is 1,243 lines and `timeline/cli.py` is 4,045 lines. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
++At this snapshot, the M1-owned timeline entries above have exact physical newline counts: `timeline/cli.py` is 4,127 lines and `timeline_sheet.py` is 1,313 lines. The `workspace_client.py` snapshot remains within the 50-line tolerance. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- final worktree ---'
+git status --short
+printf '%s\\n' '--- final diff stat ---'
+git diff --stat
+printf '%s\\n' '--- handoff files ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/{commit-msg,DONE,notes/report.md}
+printf '%s\\n' '--- commit message ---'
+sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/commit-msg
+printf '%s\\n' '--- docs diff ---'
+git diff -- docs/giant-file-rationale.md" in /home/user/work/wt/agt-docs-owned-giant-rationale
+ succeeded in 46ms:
+--- final worktree ---
+ M docs/giant-file-rationale.md
+--- final diff stat ---
+ docs/giant-file-rationale.md | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+--- handoff files ---
+-rw-r--r-- 1 root root    0 Oct 20 12:45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/DONE
+-rw-r--r-- 1 root root  205 Oct 20 12:45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/commit-msg
+-rw-r--r-- 1 root root 1861 Oct 20 12:45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/notes/report.md
+--- commit message ---
+docs(timeline): refresh giant-file rationale
+
+Document the current native timeline sheet size and its temporary coexistence
+with the detached sheet grammar, and refresh the known Agent timeline CLI count.
+--- docs diff ---
+diff --git a/docs/giant-file-rationale.md b/docs/giant-file-rationale.md
+index b41dffb6..23915934 100644
+--- a/docs/giant-file-rationale.md
++++ b/docs/giant-file-rationale.md
+@@ -18,7 +18,7 @@ or below the threshold.
+ | 1 | `astrid/core/execution/generic_host.py` | 13,798 | Generic executor host owns discovery, admission, worker execution, and settlement orchestration. Split protocol boundary, admission, and worker lifecycle into cohesive modules. |
+ | 2 | `astrid/sdk/invocation.py` | 4,665 | SDK invocation owns the single admission/execution/finalization path. Split transport preparation, ledger transitions, and output projection behind the same facade. |
+ | 3 | `astrid/core/execution/custody_broker.py` | 4,031 | Consumes Runtime's designation ABI to observe candidate processes and deliver audit-token-checked signals, including the Darwin process-census ctypes layer. Signal delivery and observation share start-anchor and audit-token identity checks, so they stay together; the `_Darwin*` ABI structures and census readers are a separable platform seam. |
+-| 4 | `astrid/packs/timeline/cli.py` | 4,045 | Product parser and human renderer for the runtime-owned `timelines` family: each verb is argument parsing plus one SDK call. No single-file reason: candidate split into the human renderers (`_human_*`, `_render_*`, `_print_cut_table`) and per-verb handlers (`_cmd_*`), keeping `build_parser` as the entry point. |
++| 4 | `astrid/packs/timeline/cli.py` | 4,127 | Product parser and human renderer for the runtime-owned `timelines` family: each verb is argument parsing plus one SDK call. No single-file reason: candidate split into the human renderers (`_human_*`, `_render_*`, `_print_cut_table`) and per-verb handlers (`_cmd_*`), keeping `build_parser` as the entry point. |
+ | 5 | `astrid/sdk/remote.py` | 2,727 | Product-neutral adapter over the generated workspace client: `RemoteFamily` subclasses for projects, timelines, media, tasks, runs, references, shots, and generations behind the `RemoteAstridClient` facade. No single-file reason: candidate split one module per family, with `_vibecomfy_invocation_preflight` moved out because the module docstring says product-neutral. |
+ | 6 | `astrid/core/generation/backends/vibecomfy.py` | 2,381 | VibeComfy backend and engine: `bind_input` contract execution, ComfyUI version gating, output-descriptor extraction, owned-session verification, and a checkout-server HTTP adapter. No single-file reason: candidate split into `CheckoutServerAdapter` and its HTTP helpers, owned-session verification (`_verify_owned_vibe_session`, `_session_registry_binding`), and the backend/engine. |
+ | 7 | `astrid/core/rendering/service.py` | 2,314 | Managed rendering admission and lifecycle are kept together for transaction and preflight ordering. Split backend selection, staging, and lifecycle orchestration behind the service boundary. |
+@@ -50,7 +50,8 @@ or below the threshold.
+ | 33 | `astrid/sdk/timeline/reflow.py` | 1,221 | Voice-track re-flow for the `Checkout`: gaps, line insert/remove, retime, moments, orphans, and the ripple of a time shift through shots, sequences, and music beds. A shift and the film-length sync read the same shot-start and cut-window state, so they stay together. Only 21 lines over threshold; the ripple machinery (`_shift_now`, `_close_in_shot`, `_open_in_shot`, `_apply_bed_cuts`, `_shift_parent`) is a separable seam. |
+ | 34 | `astrid/packs/h3_av/shared/compose.py` | 1,210 | Deterministic H3 composition and preservation-evidence boundary: stream probing, generated and source coverage validation, spatial masks, and audio sample evidence, all gating the single `compose_candidate` decision. Only 10 lines over threshold; the audio-evidence helpers (`_audio_witness`, `_auto_sample_evidence`) are a separable seam. |
+ | 35 | `astrid/sdk/workspace_client.py` | 1,243 | M1's typed facade over the single generated Runtime workspace client: explicit endpoint/credential validation, authority handshake, shared error normalization, and resource methods. No intrinsic single-file necessity: M4 cleanup can split thin per-resource facades while preserving one generated Runtime client and the existing authority, handshake, and error-mapping boundary; do not add another product helper. |
++| 36 | `astrid/sdk/timeline_sheet.py` | 1,313 | The detached sheet grammar still owns the full-document render, parse, apply, and merge compatibility surface, while thin `AttachedCheckout`/`NativeSheet` adapters bind scoped edits to the durable native session. They temporarily coexist so each edit family can migrate without creating a second sheet authority. Decompose grammar/rendering, per-family appliers, and native adapters; after every family has a native command path, delete that family's legacy parser/applier seam and then retire the remaining detached whole-document path. |
+ 
+ ## M1 inventory audit
+ 
+-At this snapshot, the M1-owned entries above have exact physical newline counts: `workspace_client.py` is 1,243 lines and `timeline/cli.py` is 4,045 lines. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
++At this snapshot, the M1-owned timeline entries above have exact physical newline counts: `timeline/cli.py` is 4,127 lines and `timeline_sheet.py` is 1,313 lines. The `workspace_client.py` snapshot remains within the 50-line tolerance. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
+
+codex
+Implemented the bounded metadata fix.
+
+- Added `timeline_sheet.py` rationale at 1,313 lines, documenting temporary detached/native coexistence and deletion seams.
+- Refreshed `timeline/cli.py` to 4,127 lines.
+- Preserved threshold, tolerance, generic-host rationale, tests, and product source.
+- Parser audit: 36 entries, 36 oversized files, no missing/invalid entries.
+- Targeted test fails only on inherited metadata mismatches:
+  - `generic_host.py`: +62
+  - rendering `service.py`: +53
+  - Remotion `run.py`: +78
+
+Test command and full report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/notes/report.md)
+
+`DONE` and commit message were written.
+tokens used
+89,495
+Implemented the bounded metadata fix.
+
+- Added `timeline_sheet.py` rationale at 1,313 lines, documenting temporary detached/native coexistence and deletion seams.
+- Refreshed `timeline/cli.py` to 4,127 lines.
+- Preserved threshold, tolerance, generic-host rationale, tests, and product source.
+- Parser audit: 36 entries, 36 oversized files, no missing/invalid entries.
+- Targeted test fails only on inherited metadata mismatches:
+  - `generic_host.py`: +62
+  - rendering `service.py`: +53
+  - Remotion `run.py`: +78
+
+Test command and full report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-docs-owned-giant-rationale/notes/report.md)
+
+`DONE` and commit message were written.

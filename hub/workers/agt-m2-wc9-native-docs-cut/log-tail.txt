@@ -1,0 +1,400 @@
++session.queue_proposal(settled_proposal)
++result = session.flush(idempotency_key="proposal-42", via="producer")
++```
++
++`queue_proposal` preserves the proposal's original target, guards, rationale,
++and command identities. It refuses a different project/timeline or pending
++local intent. A proposal artifact or dry run is not a publication receipt.
++
+ ### Renderer and skill boundary
+ 
+-Remotion is the visual proof path for a frozen candidate, not a second timeline
+-authority. Keep effects in the admitted internal timeline `effects` and clip
+-`app`/`params` fields, then call `render_authoring_candidate_preview` when
+-composed pixels are required. Production orchestrators remain in
++Remotion is a visual proof path, not a timeline authority. Use the pinned
++native head with `timelines visualize`; it does not turn an unsupported
++candidate mutation into a supported write. Production orchestrators remain in
+ `video_editing`; canonical timeline authoring, visualization, effects, and
+ Remotion rendering remain in `timeline_editing`. The source directory and
+-runtime capability IDs stay `rendering` for compatibility, so the safe rename
+-is the skill/frontmatter and routing text rather than a pack-ID migration. After
+-editing the source skill, run `python3 -m astrid.skills sync --all` followed by
+-`python3 -m astrid.skills sync --check --json` to refresh and verify the root
+-gateway and installed views.
++runtime capability IDs stay `rendering` for compatibility.
+ 
+ ## Read the live timeline first
+ 
+@@ -232,102 +208,23 @@
+ whether frames were reused, freshly captured, or served from cache. Agent conclusions must come from live
+ Runtime responses and returned artifacts, never from fixture/evaluator JSON,
+ baseline exports, or prior result files.
+-
+-For a supplied target and credential file, the complete public SDK route is
+-below. Save it as `edit_target.py` and pass `target.json`, the supplied token
+-path, an edit JSON object such as `{"occurrence-id": 1200}` (new `start_ms`
+-values), and the credential's actor ID (the disposable owner token uses
+-`owner`). This example saves an edit without rendering. Keep SDK work in the
+-same connected environment as the working shell command: a persistent Python
+-evaluator may have a different environment and working directory. Importing
+-the SDK does not connect it. Use the supplied connection explicitly as below
+-if it is not already available; never guess credentials or inspect private
+-Runtime storage to recover them.
+-
+-```python
+-import json
+-import sys
+-from pathlib import Path
+-
+-from astrid.sdk.client import AstridClient
+-from astrid.sdk.workspace_client import PROTOCOL
+ 
+-target = json.loads(Path(sys.argv[1]).read_text())
+-edits = json.loads(Path(sys.argv[3]).read_text())
+-assert edits and all(isinstance(value, int) for value in edits.values())
+-client = AstridClient.open(
+-    endpoint=target["endpoint"], credential=Path(sys.argv[2]),
+-    realm_id=target["realm_id"], actor_id=sys.argv[4],
+-    client_name="astrid-timeline-editor", client_version="1",
+-    protocol_version=PROTOCOL,
+-)
+-bound = client.open_authoring_target(target)
+-work = bound.open()  # detached parent/shot/internal closure at target's exact head
+-placements = {row["occurrence_id"]: row for row in work["placements"]}
+-assert edits.keys() <= placements.keys()
+-for occurrence_id, start_ms in edits.items():
+-    placements[occurrence_id]["placement"]["start_ms"] = start_ms
+-assert all(placements[key]["placement"]["start_ms"] == value
+-           for key, value in edits.items())
+-bound.validate(work)
+-diff = bound.diff(work)
+-assert diff["changed"]  # inspect the full diff and assert all requested behavior
+-frozen = bound.preview(work)  # frozen JSON and digest; no rendered media
+-receipt = bound.publish(work, idempotency_key=frozen["candidate_digest"])
+-new_head = receipt["publication"]["new_head"]
+-print({"new_head": new_head,
+-       "candidate_digest": receipt["candidate_digest"]})
+-```
+-
+-`bound.open()` returns a plain candidate: each `placements` row has its
+-`occurrence_id` and `shot_id` at the top level, with timing under
+-`row["placement"]["start_ms"]` / `row["placement"]["duration_ms"]`.
+-Do not add flat timing fields or mutate the derived `parent.occurrences`.
+-`shots[shot_id]["payload"]` and
+-`shots[shot_id]["internal_timeline"]` hold the selected shot and its nested
+-clips. `bound.validate`, `bound.diff`, and `bound.preview` return plain data;
+-the optional rendered preview returns an `InvocationResult` with `.ok`,
+-`.error`, and `.run_id`. Retain the publication receipt to identify the saved
+-state. If a later check needs readback, reopen its returned `new_head`; do not
+-substitute a baseline snapshot. Report a successful save separately from any
+-claim about rendered pixels or sound.
++For Python callers, open an authenticated client and a `TimelineSession` in the
++same connected environment as the shell command. Importing the SDK does not
++connect it. Use the supplied connection explicitly; never guess credentials or
++inspect private Runtime storage to recover them. The session's default outbox
++is durable; pass `outbox_path` only when a separate, explicitly scoped outbox
++is required.
+ 
+ ```python
+-from astrid.sdk import (
+-    add_authoring_shot, add_track, place_media, sequence,
+-    open_authoring_bundle, validate_authoring_candidate,
+-    preview_authoring_candidate, publish_authoring_candidate,
+-)
+-
+-# Inspection only: this does not return an editable candidate.
+-inspection = client.timelines.open_composition(project_id, timeline_id)
++from astrid.sdk.timeline.sync import TimelineSession
+ 
+-# These three inputs are the exact pinned closure read from Runtime.
+-work = open_authoring_bundle(
+-    pinned_parent, shot_revisions=pinned_shots,
+-    internal_timeline_revisions=pinned_internal_timelines,
++session = TimelineSession.open(project_id, timeline_ref, client=client)
++result = session.trim(
++    "parent/clip:opening", out_s=3.0, idempotency_key="trim-opening-42"
+ )
+-shot = add_authoring_shot(
+-    work,
+-    name="Brightness montage",
+-    occurrence_id="brightness-montage",
+-    start_ms=0,
+-)
+-track = add_track(shot, kind="visual")
+-images = sorted(imported_media, key=lambda item: (brightness[item["id"]], item["id"]))
+-clips = [
+-    place_media(shot, image["id"], track=track, start=0, end=0.1, fit="cover")
+-    for image in images
+-]
+-sequence(clips, start=0, durations=[0.1] * len(clips))
+-# The child sequence does not implicitly resize its parent occurrence.
+-placement = next(row for row in work["placements"]
+-                 if row["occurrence_id"] == "brightness-montage")
+-placement["placement"]["duration_ms"] = round(len(clips) * 0.1 * 1000)
+-
+-validate_authoring_candidate(work)
+-frozen = preview_authoring_candidate(work)  # exact candidate artifact; no pixels rendered
+-receipt = publish_authoring_candidate(work, runtime_writer, idempotency_key=edit_run_id)
++assert result["receipt"]["command_kind"] == "timeline.commit"
++print(result["data"]["show_command"])
+ ```
+ 
+ Important defaults are explicit:
+@@ -339,29 +236,34 @@
+   change with recorded `clip.move` commands for later siblings on that track.
+   Leave audio, voice, music, and other tracks unchanged, and state the
+   parent-duration extension policy in the command group.
+-- `duplicate` allocates fresh editable identities and remaps internal references; immutable media can remain shared.
+-- `replace_media` selects the supplied asset and preserves the existing interval unless instructed otherwise.
+-- `reorder_layers` changes stacking order; `sequence` changes chronology.
++- `duplicate`, broad `replace_media`, reorder, arbitrary metadata, and
++  whole-occurrence transforms remain authoring-bundle capabilities, not
++  command-backed writes on this base. Keep those changes as a draft and report
++  the limitation; do not publish them through a whole-document writer.
++- Media import/list/open use the existing Runtime media services. Source viewing
++  and composed preview are separate, read-only actions. Unsupported renderer
++  capabilities and missing assets must be reported before commit.
+ 
+-| Helper | Effect |
+-| --- | --- |
+-| `place_media` | Adds one admitted media reference with `at`, source `from`/`to`, and optional `speed`. |
+-| `clip.trim` / `clip.move` | Changes source endpoints or timeline placement while retaining recorded source and speed. |
+-| `sequence` / `align` | Arranges supplied clips without affecting unrelated clips. |
+-| `fit_duration` | Sets or extends the container duration to cover its clips. |
+-| `quantize_interval` | Reports exact requested and frame-applied half-open boundaries. |
+-| `duplicate` / `replace_media` / `remove` | Copies identity, changes selected media, or removes an authored object. |
++## CLI native edits and legacy working-copy checks
+ 
+-The editing helpers do not select a “latest” asset, download the whole library,
+-or publish individual operations. Media import/list/open use the existing
+-runtime media services. Source viewing and composed preview are separate,
+-read-only actions. Unsupported renderer capabilities and missing assets must be
+-reported before commit.
++Native edits use the command registry and the same guarded session/outbox as
++Python. Read the exact selector from `show` first:
++
++```bash
++python3 -m astrid timelines show <timeline> --project <project> --json
++python3 -m astrid timelines edit move <timeline> --project <project> \
++  --clip parent/clip:<id> --on 1.5 --idempotency-key move-42 --json
++python3 -m astrid timelines edit track-label <timeline> --project <project> \
++  --track parent/track:<id> --set "Dialogue" --idempotency-key label-42 --json
++```
+ 
+-## CLI working-copy checks and journal
++`edit move`, `edit track-label`, and native literal trims capture original
++guards and use a fresh caller key for a new intent. Repeating the same command
++with the same key retries the persisted request; it does not recapture against
++a newer head. `--dry-run` validates without accepting a publication.
+ 
+-The thin timeline CLI exposes the existing detached working copy through this
+-read/edit/check/publish loop:
++The remaining detached working-copy surface is retained for capabilities that
++have not migrated:
+ 
+ ```bash
+ python3 -m astrid timelines status <timeline> --project <project>
+@@ -378,7 +280,7 @@
+ working copy or render. There is no passive timeline-scoped latest-render
+ reader in this CLI, so `status` does not claim render state. A working copy
+ based on an older head is reported with `head_moved: true` and should be
+-reconciled before publishing.
++reconciled before using its legacy publish path.
+ 
+ `checkout --fresh` refreshes the selected working copy from the current head.
+ If that copy has edits, the CLI refuses to replace it; choose a new name with
+@@ -387,13 +289,12 @@
+ existing SDK operations and local take/word-timing files. Repeat
+ `--gap-after LINE=SECONDS` to declare multiple line gaps.
+ 
+-`publish` requires an existing working copy, calls the SDK once, and uses its
+-three-way merge and conflict behavior. It generates an idempotency key when
+-one is not supplied; `--force` is an explicit choice to prefer this draft in
+-overlapping edits. If the structure is published but narration binding fails,
+-the command exits with a partial-publication error and preserves the full
+-receipt in JSON. It never retries narration automatically; reconcile the
+-reported state before another publish attempt.
++`publish` remains the legacy detached-draft/whole-candidate writer and is held
++pending migration. Its three-way merge, `--force`, and broad Checkout mutation
++surface must not be presented as the native command path. Use it only when the
++requested edit is explicitly within that legacy capability, and report that
++limitation; otherwise refuse visibly and keep the draft. `apply --native` is the
++only sheet publication route currently migrated for its covered operations.
+ 
+ ```bash
+ python3 -m astrid timelines check <timeline> --project <project> --sweep
+@@ -407,36 +308,26 @@
+ 
+ `log --verify` checks the journal hash chain. A broken chain returns 1; JSON reports `error.code: validation_error`. A missing journal is reported as “no journal yet” and returns 0. Journal queries accept `--since`, `--actor`, `--op`, `--cut`, `--clip`, and `--outcome`; a query validation error is printed to stderr and returns 2.
+ 
+-## Render an unpublished candidate
++## Preview before a native edit
+ 
+-Use this optional branch when a composed preview helps or is explicitly
+-requested. For preview-before-save, insert it before `bound.publish` in the
+-example above and inspect/deliver the returned output before publishing the
+-unchanged candidate. Runtime must have `rendering.render` available.
++Use the pinned read-only visualizer when a composed preview is requested, then
++commit the unchanged native command. A native `--dry-run` is useful for command
++validation, but it does not render pixels or create a publication:
+ 
+-`preview_authoring_candidate(work)` freezes the complete candidate, its base
+-parent head, deterministic candidate digest, and proposed publication. For a
+-composed video preview, use the connected SDK client:
+-
+-```python
+-from astrid.sdk import preview_authoring_candidate, render_authoring_candidate_preview
+-
+-frozen = preview_authoring_candidate(work)
+-render = render_authoring_candidate_preview(
+-    frozen, client, project="my-project", timeline_ref="main", wait=True,
+-)
+-assert render.ok, render.error
+-# Inspect/deliver this run's output before saving if the user requested that order.
++```bash
++python3 -m astrid timelines visualize <timeline> --project <project> \
++  --revision-id <revision> --mode composed --json
++python3 -m astrid timelines edit move <timeline> --project <project> \
++  --clip parent/clip:<id> --on 1.5 --dry-run --json
++python3 -m astrid timelines edit move <timeline> --project <project> \
++  --clip parent/clip:<id> --on 1.5 --idempotency-key move-42 --json
+ ```
+ 
+-This invokes the ordinary `rendering.render` managed run. Admission rereads the
+-base head and any reused immutable child revisions from Runtime, projects the
+-frozen candidate without publishing it, checks project-owned media, and
+-records the run receipt. The render authority is labelled `Unpublished
+-candidate preview` and includes the exact base head, candidate digest,
+-publication digest, and proposed parent revision ID. Editing `work` after the
+-preview was frozen cannot alter that run. If the parent head advances before
+-admission, the preview is rejected as stale.
++The detached authoring-bundle preview/render helpers remain available for
++inspection and specific render workflows, but their whole-candidate publish
++writer is held on this base. Do not use a frozen candidate digest as a native
++commit key or claim that it gives the session's original guards. If a required
++preview is unavailable, report that limitation before committing.
+ 
+ ## Opening sources and returned artifacts
+ 
+
+codex
+The final census confirms no active doc now presents `publish_authoring_candidate`, `bound.publish`, `Checkout.publish`, or three-way merge as the normal path; remaining mentions are explicit held-status warnings. I also recorded the exact remaining legacy sections in WC9 evidence, left scripts/templates unchanged, and marked the worker done. I’m rerunning the checker after the last reference-doc edits and doing the final worktree audit.
+exec
+/bin/bash -lc 'python3 scripts/reshape/check_doc_references.py && git diff --check && test "$(wc -w < docs/architecture/timeline.md)" -eq 401 && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-native-docs-cut/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-native-docs-cut/BLOCKED && printf '"'\\n--- status ---\\n' && git status --short && printf '\\n--- changed files ---\\n' && git diff --name-only && printf '\\n--- architecture ---\\n' && sed -n '1,180p' docs/architecture/timeline.md" in /home/user/work/wt/agt-m2-wc9-native-docs-cut
+ succeeded in 32853ms:
+doc-refs: 0 error(s), 0 warning(s); checked 193 docs, 547 capability refs, 263 CLI refs in 31.1s
+
+--- status ---
+ M astrid/packs/rendering/docs/SKILL.md
+ M astrid/packs/rendering/docs/references/document-checkout.md
+ M astrid/packs/rendering/docs/references/editing.md
+ M docs/timeline-authoring-capabilities.md
+ M docs/timeline-editing-guide.md
+?? docs/architecture/timeline.md
+
+--- changed files ---
+astrid/packs/rendering/docs/SKILL.md
+astrid/packs/rendering/docs/references/document-checkout.md
+astrid/packs/rendering/docs/references/editing.md
+docs/timeline-authoring-capabilities.md
+docs/timeline-editing-guide.md
+
+--- architecture ---
+# Timeline architecture
+
+**Status:** Agent-owned landing page for the approved canonical path and current
+M4 groundwork. M4 is not complete. The historical R4 control documents remain
+archived; this page does not delete or rewrite them.
+
+Timeline has one accepted authored model and three surfaces. **Read** is a
+revision-pinned projection: Agent owns timeline meaning and text/CLI views,
+Runtime owns the accepted closure and history, and App owns presentation. A
+view never relabels old content with a newer head. **See** is also a projection:
+one Composition package/evaluator answers what is on screen; preview and export
+stay outside save. **Edit** is the single write path.
+
+Authors provide stable entity/anchor references and deterministic commands with
+declared intent. SDK/CLI, App gestures and editable inputs become the same
+command batch. The client persists the exact request, idempotency key, allocated
+IDs and newer commands in a crash-safe outbox. Runtime's normal `/v1` door
+loads the Agent provider before readiness. The provider works on a detached
+candidate; Runtime permits only exact declared reads of the head/history,
+revision closure, selected media and other pinned inputs. The recorder captures
+writes (including unchanged writes), reads, selections/order, bindings and
+created IDs; that record is accepted meaning, not merely a diff.
+
+Acceptance is ledger-first: exact scope, key and request-hash replay is resolved
+before provider work, then one transaction rechecks authority and ancestry and
+atomically stores the immutable closure, accepted history/head, input links and
+receipt. Undo is a new guarded inverse command; restore is a new sole-command
+commit naming an immutable historical revision while guarding the current head.
+Neither rewinds history nor invokes Composition.
+
+Slow producers store immutable artifacts and task proposals. They do not publish
+timeline edits: the requesting client supplies verified requester authority and
+submits commands through the same commit path. A dry run is a semantic plan,
+not a mutation receipt.
+
+The current tuple is Runtime013's immutable `artifactproducer2c` client/artifact
+producer (`2c4ac180c2220bdad966bc01e95ad230e99ce26a`) with compatible Runtime
+server at `7f6dd89`; no second producer/client pin or delivery-completion claim
+is made. Agent public Composition `0.0.12` is integrated. App adoption and the
+final viewing/writer gates remain pending.
+
+Open work is explicit: legacy/fallback writers and the cut-sheet migration are
+not fully retired; native capture authority and `RenderRequest` propagation are
+not fully qualified; frame/audio parity, final export and the owner-film viewing
+gate remain open. These gaps do not justify a second writer, evaluator or
+save-time renderer.
+
+**Code anchors:** Runtime `runtime_protocol/daemon.py`,
+`runtime_protocol/timeline_commit_port.py`,
+`runtime_protocol/timeline_commit_store.py`,
+`runtime_protocol/timeline_commit_producer.py`; Agent
+`astrid/sdk/timeline/commit.py`, `astrid/sdk/timeline/outbox.py`,
+`astrid/sdk/timeline/sync.py`; App
+`src/integrations/runtime/dataProvider.ts`; Composition
+`typescript/src/scene-evaluation.ts`.
+
+codex
+## Report
+
+Implemented WC9 docs migration and D11 architecture landing.
+
+- Added 401-word [Timeline architecture](docs/architecture/timeline.md).
+- Updated editing/capability/rendering docs to use `TimelineSession`, native CLI commands, producer proposals, original guards, fresh identities, and durable outbox.
+- Marked remaining Checkout/cut-sheet/whole-candidate paths explicitly held.
+- Updated WC9 ledger evidence and worker notes.
+- Scripts, templates, R4 archive, code, and shared dependencies unchanged.
+
+Checks:
+
+- `check_doc_references.py` — 0 errors, 0 warnings.
+- `git diff --check` — passed.
+- Native Python snippets/signatures — passed.
+- CLI `edit move` and `track-label --help` validation — passed.
+- No full/browser/live-socket suites run.
+
+WC9 remains HELD because legacy detached-draft guidance still exists in the documented migration sections. Exact remaining paths are recorded in the ledger. `DONE` and commit message were written.
+tokens used
+210,855
+## Report
+
+Implemented WC9 docs migration and D11 architecture landing.
+
+- Added 401-word [Timeline architecture](docs/architecture/timeline.md).
+- Updated editing/capability/rendering docs to use `TimelineSession`, native CLI commands, producer proposals, original guards, fresh identities, and durable outbox.
+- Marked remaining Checkout/cut-sheet/whole-candidate paths explicitly held.
+- Updated WC9 ledger evidence and worker notes.
+- Scripts, templates, R4 archive, code, and shared dependencies unchanged.
+
+Checks:
+
+- `check_doc_references.py` — 0 errors, 0 warnings.
+- `git diff --check` — passed.
+- Native Python snippets/signatures — passed.
+- CLI `edit move` and `track-label --help` validation — passed.
+- No full/browser/live-socket suites run.
+
+WC9 remains HELD because legacy detached-draft guidance still exists in the documented migration sections. Exact remaining paths are recorded in the ledger. `DONE` and commit message were written.

@@ -1,0 +1,400 @@
+    "E402": 823,
+    "F402": 2,
+    "F822": 7,
+    "F541": 3,
+    "F601": 1,
+    "E741": 4,
+    "E401": 1
+  }
+}
+from __future__ import annotations
+
+import collections
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+from scripts.reshape import count_baseline
+
+BASELINE_PATH = Path("scripts/reshape/baselines/ruff_astrid.json")
+COMMAND = [
+    sys.executable,
+    "-m",
+    "ruff",
+    "check",
+    ".",
+    "--output-format",
+    "json",
+]
+
+
+def _run() -> dict[str, Any]:
+    try:
+        proc = subprocess.run(COMMAND, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        raise RuntimeError(f"ruff failed to execute: {exc}") from exc
+    if proc.returncode not in (0, 1):
+        detail = (proc.stderr or proc.stdout).strip() or "no diagnostic output"
+        raise RuntimeError(f"ruff failed to execute (exit {proc.returncode}): {detail}")
+    try:
+        findings = json.loads(proc.stdout or "[]")
+    except json.JSONDecodeError as exc:
+        detail = (proc.stderr or proc.stdout).strip() or "invalid JSON output"
+        raise RuntimeError(f"ruff failed to execute: {detail}") from exc
+    if not isinstance(findings, list):
+        raise RuntimeError("ruff failed to execute: expected a JSON findings list")
+    if proc.returncode == 1 and not findings:
+        detail = (proc.stderr or proc.stdout).strip() or "no diagnostic output"
+        raise RuntimeError(f"ruff failed to execute (exit 1): {detail}")
+    return {
+        "tool": "ruff",
+        "scope": ["pyproject.toml [tool.ruff].include"],
+        "command": COMMAND,
+        "finding_count": len(findings),
+        "code_counts": dict(collections.Counter(item["code"] for item in findings)),
+    }
+
+
+def main() -> int:
+    return count_baseline.main("Ruff", BASELINE_PATH, _run)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+from __future__ import annotations
+
+import collections
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+from scripts.reshape import count_baseline
+
+BASELINE_PATH = Path("scripts/reshape/baselines/mypy_astrid.json")
+COMMAND = [
+    sys.executable,
+    "-m",
+    "mypy",
+    "astrid",
+    "scripts/reshape",
+    "--hide-error-context",
+    "--no-color-output",
+    "--no-pretty",
+    "--show-error-codes",
+]
+ERROR_RE = re.compile(r"^(.*?):(\d+):(?:(\d+):)? error: (.*?)\s+\[(.*?)\]$")
+
+
+def _run() -> dict[str, Any]:
+    try:
+        proc = subprocess.run(COMMAND, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        raise RuntimeError(f"mypy failed to execute: {exc}") from exc
+    findings = []
+    for line in (proc.stdout.splitlines() + proc.stderr.splitlines()):
+        match = ERROR_RE.match(line)
+        if not match:
+            continue
+        findings.append(
+            {
+                "path": match.group(1),
+                "line": int(match.group(2)),
+                "column": int(match.group(3) or 0),
+                "message": match.group(4),
+                "code": match.group(5),
+            }
+        )
+    if proc.returncode not in (0, 1) or (proc.returncode == 1 and not findings):
+        detail = (proc.stderr or proc.stdout).strip() or "no diagnostic output"
+        raise RuntimeError(f"mypy failed to execute (exit {proc.returncode}): {detail}")
+    return {
+        "tool": "mypy",
+        "scope": COMMAND[3:5],
+        "command": COMMAND,
+        "finding_count": len(findings),
+        "code_counts": dict(
+            sorted(collections.Counter(item["code"] for item in findings).items())
+        ),
+    }
+
+
+def main() -> int:
+    return count_baseline.main("Mypy", BASELINE_PATH, _run)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+only `snapshot_digest` cannot prove retained source bytes. No authorized existing
+carrier was found to obtain these bytes server-side; I will not invent one or
+wire a filesystem/launcher read into the deterministic handler. Runtime can finish
+its bounded document capture, but Agent cannot honestly flip the three save proof
+xfails until the source custody/retention seam is real. Please surface this to both
+managers with a recommendation to use an existing artifact/CAS ownership path,
+whose exact capture contract must be supplied by its owner. Keep existing
+positive selected-schema test and original four clear xfails unchanged meanwhile.
+
+Runtime clarification after reading Agent request: existing Runtime CAS stores
+managed object bytes, while existing Document retention stores exact JSON. The
+actual admission implementation never ingests snapshot resources/build receipt
+into Runtime CAS; its `snapshot_digest` hashes the existing sorted resource
+list, not a CAS object that presently exists. Therefore merely admitting the
+kind in `config_source` cannot satisfy declaration retention. A new portable
+snapshot descriptor/carrier or host artifact-source ownership contract is needed
+to retain those resource bytes (especially build receipt, outside closure).
+This is an evidence-backed missing prerequisite, not permission to forge content.
+I can qualify exact pack-Document host-boundary capture and retention now; full
+snapshot capture and Agent end-to-end qualification stay blocked pending manager
+agreement on the source and persistence representation. Please confirm the narrow
+Document-only stage, or specify the existing concrete snapshot/CAS carrier.
+
+## Agent manager00:35 review notes on producer port draft
+Settled-first00:40decision ACK; agt-m2-settled-proposal-contract owns exactcarrier/golden and alreadyaligns producer.guard+pin/hash in thisdoc. No live-delivery seamneeded. Exactpaired interface_version1+contract_digest and callable producer_attempt failclosed are sufficient forrelease; avoidaddinga newfeature-negotiationDTO/framework. Producerpin originaladmittedheadpair mustnotbe silently relabelled to a requester'snewsessionbase; preserveoriginalcapturedcommands and letserverrebase. Pendingunrelatedoutboxflight mustfinishfirst. Runtime owns cancel-of-completed semantics decision/gap and one-shotatomiccheckpointproof. Agent exactschemaworker is agt-m2-pack-schema-capture (alreadypostedsource/inputseam below), base32332d70.
+ M astrid/core/element/catalog.py
+ M astrid/core/element/project_packs.py
+ M astrid/core/element/schema.py
+ M astrid/sdk/timeline/_scalar_commands.py
+?? tests/core/test_project_pack_inputs.py
+
+exec
+/bin/bash -lc "sed -n '175,215p' tests/core/test_project_packs.py; rg -n 'class .*Test|"'^def test_'"' tests/core/test_element_definition_io.py; tail -10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-selected-pack-input/log.txt; sed -n '1,25p' astrid/core/element/project_packs.py" in /home/user/work/wt/agt-m2-pack-schema-capture
+ succeeded in 6ms:
+    encoded=json.dumps(row['content']);assert str(Path.home()) not in encoded and 'component.tsx' not in encoded
+
+
+def test_named_collection_uses_one_exact_stable_document(configured):
+    context=packs.init_project_pack('realm','project',collection='special_effects')
+    assert context['packId']=='special_effects'
+    assert '--collection special_effects' in context['admitCommand']
+    assert context['documentId']==packs.stable_document_id('project','astrid.project-pack','special_effects')
+    assert len(configured.rows)==1
+
+
+def test_missing_derived_index_reconstructs_from_selected_document_and_snapshot(configured):
+    seed();record=packs.admit_project_pack('realm','project')['elements'][0]
+    ref={k:record['descriptor'][k] for k in ('id','kind','packId','revision')}
+    context=packs.inspect_project_pack('realm','project');Path(context['manifestPath']).unlink()
+    before=len(configured.writes)
+    assert packs.resolve_admitted_element('realm','project',ref)['descriptor']==record['descriptor']
+    rebuilt=packs.materialize_project_pack('realm','project')
+    assert Path(rebuilt['manifestPath']).is_file() and len(configured.writes)==before
+
+
+def test_failed_init_build_does_not_create_authority_document(configured,monkeypatch):
+    monkeypatch.delenv(packs.BUILD_ENV)
+    with pytest.raises(ValueError,match='not configured'):packs.init_project_pack('realm','project')
+    assert configured.rows=={}
+    context=packs.inspect_project_pack('realm','project')
+    assert context['documentVersion']==0
+    assert (Path(context['packRoot'])/'pack.yaml').is_file()
+
+
+def test_read_wrong_realm_does_not_create_or_write(configured):
+    with pytest.raises(ValueError,match='authenticated'):packs.inspect_project_pack('otherrealm','project')
+    assert configured.rows=={} and configured.writes==[]
+
+
+def test_undeclared_descriptor_asset_cannot_advance_document(configured):
+    root,directory,_=seed();before=copy.deepcopy(configured.rows)
+    (directory/'image.png').write_bytes(b'asset-not-declared')
+    descriptor=yaml.safe_load((directory/'element.yaml').read_text());descriptor['assets']={'image':'image.png'}
+    (directory/'element.yaml').write_text(yaml.safe_dump(descriptor))
+    with pytest.raises(ValueError,match='asset/support closure'):packs.admit_project_pack('realm','project')
+38:class ElementDefinitionIOFieldsTest(unittest.TestCase):
+88:class ManifestAssetDeclarationsTest(unittest.TestCase):
+231:class ToCapabilityHandlePropagationTest(unittest.TestCase):
+279:class ManifestLoadIOTest(unittest.TestCase):
+375:class RuntimeAdapterComponentOptionalTest(unittest.TestCase):
+host tests are ready for one central bounded run: normal Agent admit writes to
+actual Runtime Documents, existing exact resolver selects from the port-returned
+Document, then acceptance/retention, new admission, restart and historical read
+still resolve V1 from the existing local artifact cache. Wrong selected owner,
+id, kind, revision and corrupt resource/build receipt refuse before writes.
+This intentionally does NOT claim Runtime retained snapshot bytes or native
+Agent inverse/known-param qualification; those remain blocked by the custody
+prerequisite above. Both worker owners should keep params held.
+EOF' in /home/user/work/wt/rt-m2-selected-pack-input
+ succeeded in 0ms:
+"""Project draft packs: ordinary author files and immutable admitted build inputs.
+
+This is local source selection/configuration, never a second project/timeline store.
+Reads are observational; only explicit init/admit creates files.
+"""
+from __future__ import annotations
+
+import copy
+import hashlib
+import json
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import tempfile
+from collections.abc import Mapping
+from pathlib import Path, PurePosixPath
+from typing import Any
+
+import yaml
+
+from astrid.core.foundation.paths import REPO_ROOT
+from astrid.core.pack.canonical import validate_canonical_pack
+from astrid.sdk.documents import stable_document_id
+
+ succeeded in 25208ms:
+....................................................                     [100%]
+52 passed in 23.38s
+
+ succeeded in 35700ms:
+................................................xxx......xx............. [ 16%]
+..............................................xx........................ [ 33%]
+........................................................................ [ 50%]
+........................................................................ [ 67%]
+........................................................................ [ 84%]
+....................................................................     [100%]
+421 passed, 7 xfailed in 35.08s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md')
+with p.open('a') as f:
+ f.write('''\\n\\n## Agent selected-schema worker — bounded stage agreement\\n\\nAgree Runtime should qualify the narrow Document-only host-boundary stage with\\nactual "'`astrid.project-pack`, exact selected admissions and old Document retention.'"\\nThat is useful partial evidence. Tests resolving retained V1 from the local cache\\nare not snapshot-CAS retention or Agent save/replay/undo qualification; keep those\\nclaims separate as proposed. Agent's shared pure resolver and real-admission\\nfixtures are implemented; the existing I/O resolver now checks through it too.\\nNo generic snapshot carrier/manifest/DTO or native provider wiring is invented.\\nManagers must align actual immutable artifact custody/retention before wiring\\nchanged-known-param execution and flipping the three original strict xfails.\\nNo existing behavior test is weakened; all seven baseline strict xfails remain.\\n''')
+PY" in /home/user/work/wt/agt-m2-pack-schema-capture
+ succeeded in 0ms:
+exec
+/bin/bash -lc "git diff --check; rg -n '"'^def admitted_element_descriptor|''^def resolve_admitted_element|''^def element_definition_from_payload|''^def _element_revision|''^def _validate_param_values|''^def test_'"' astrid/core/element/project_packs.py astrid/core/element/schema.py astrid/core/element/catalog.py astrid/sdk/timeline/_scalar_commands.py tests/core/test_project_pack_inputs.py; git diff --numstat" in /home/user/work/wt/agt-m2-pack-schema-capture
+ succeeded in 497ms:
+astrid/sdk/timeline/_scalar_commands.py:82:def _validate_param_values(ref, values, schema):
+astrid/core/element/catalog.py:242:def _element_revision(definition: Any, *, files=None) -> str:
+astrid/core/element/schema.py:173:def element_definition_from_payload(
+astrid/core/element/project_packs.py:365:def admitted_element_descriptor(realm, project, reference, verified, files, build_receipt):
+astrid/core/element/project_packs.py:498:def resolve_admitted_element(realm: str, project: str, reference: dict[str,str], *, client=None) -> dict[str,Any]:
+tests/core/test_project_pack_inputs.py:70:def test_real_admission_descriptor_and_known_value_validation_without_io(admitted_input, monkeypatch):
+tests/core/test_project_pack_inputs.py:93:def test_same_captured_declaration_survives_new_admission_and_removed_local_source(admitted_input, configured):
+tests/core/test_project_pack_inputs.py:120:def test_missing_revoked_corrupt_and_wrong_scope_inputs_refuse(admitted_input, damage):
+tests/core/test_project_pack_inputs.py:180:def test_named_pack_uses_its_actual_document_identity(configured):
+tests/core/test_project_pack_inputs.py:193:def test_property_local_refs_and_remote_refs_never_fetch(monkeypatch):
+38	23	astrid/core/element/catalog.py
+154	9	astrid/core/element/project_packs.py
+56	18	astrid/core/element/schema.py
+18	6	astrid/sdk/timeline/_scalar_commands.py
+
+codex
+Final targeted checks passed: 421 tests with the seven existing xfails, plus 52 element and catalog tests. The refactor and negative cases are ready for review; Runtime snapshot custody still blocks save-path wiring. I’m writing the required report and commit messages with that limit stated explicitly.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-schema-capture')
+(root/'notes').mkdir(parents=True,exist_ok=True)
+report='''# Selected element schema capture — Agent bounded stage
+
+Implemented the pure Agent resolver and shared leaf validator. **Full save/capture integration remains blocked by missing immutable snapshot custody/retention.** No M2 integration merge is requested; PLAN M1 hold remains.
+
+## Changes
+
+- "'`/home/user/work/wt/agt-m2-pack-schema-capture/astrid/core/element/project_packs.py:365`: `admitted_element_descriptor(realm, project, reference, verified, files, build_receipt)` consumes the existing VerifiedDocument and captured immutable resource bytes. It verifies exact scoped DocumentPin, actual `astrid.project-pack` kind/schema/binding, stable document identity, realm-relative source binding, pack owner, exactly one id/kind/revision admission, bounded resource closure digest, existing build identity, and reconstructed canonical source revision. Missing/revoked selection, corrupt bytes and wrong scope refuse. This function takes trusted capture inputs; it cannot itself establish current authority or Runtime custody.
+- Existing `resolve_admitted_element` now checks through this same pure resolver after its canonical filesystem snapshot checks. No duplicate schema is stored. Shared payload parsing and revision hashing in `schema.py` and `catalog.py` accept in-memory resource bytes; filesystem behavior remains exercised by existing tests. Nested helper ordering matches the existing Path sort exactly.
+- `_scalar_commands.py:82`: extracted existing changed-known-property validation as `_validate_param_values`. It preserves literal unknown keys, does not apply whole-object required/additionalProperties/default policies, resolves local schema references, and uses an empty remote retrieval registry so schema references cannot fetch over the network. Existing handler behavior still chooses its original type-only schema; selected-source execution is **not wired** pending the owned source seam.
+- `tests/core/test_project_pack_inputs.py`: 29 actual-admission cases verify exact descriptor/schema parity (including helpers, nested paths and asset bytes), no filesystem/launcher resolution, immutable input views, later admission/local source removal, scoped pin/admission/build/source corruption refusals, and known-property bounds/remote-reference refusal.
+- Shared coordination: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md` contains the exact Agent source/API, required inputs, Runtime proposal response, and explicit agreement to qualify Runtime'"'s bounded Document-only stage.
+
+## Final tests
+
+From "'`/home/user/work/wt/agt-m2-pack-schema-capture`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/test_project_pack_inputs.py tests/core/test_project_packs.py tests/sdk/test_timeline_selected_schema.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py
+```
+
+Exit 0: **421 passed, 7 xfailed in 35.08s**. All three selected-schema proof xfails and all four original clear-only xfails remain unchanged. No passing behavior test was rewritten, skipped or weakened. Existing valid selected-schema compilation/provider/reload/inverse/redo test still passes under the existing behavior; that is not proof the new server validation is wired.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/test_element_definition_io.py tests/core/element/test_element_metadata.py tests/core/test_pack_coherence_elements.py tests/timeline/test_timeline_elements_catalog.py tests/timeline/test_effects_catalog.py tests/packs/test_element_admission.py
+```
+
+Exit 0: **52 passed in 23.38s**.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-force-exclude astrid/core/element/catalog.py astrid/sdk/timeline/_scalar_commands.py tests/core/test_project_pack_inputs.py
+git diff --check
+```
+
+Both exit 0. Scoped Ruff comparison against `git show HEAD:<path>` using `ruff check --no-force-exclude --output-format json --stdin-filename <path> -` also found no new findings: catalog 0→0, project_packs 101→98, schema 4→4, scalar commands 0→0, new tests 0. The four existing schema warnings are unused imports; project_packs has existing compressed-statement debt. Whole-repository exact-count baselines were not regenerated; its three-finding improvement must be reconciled in the composed lint gate.
+
+No full suite, make check, typecheck, browser/live socket suite, installs, git mutations or cross-repository product changes were run.
+
+## Decisions, blocked seams and next steps
+
+The ratified exact selected-schema decision is unchanged. I did not invent a port method/DTO or claim a caller catalog was verified input. Runtime'"'s proposed narrow extension of "'`config_source(DocumentPin)` to actual pack Documents is appropriate, but **insufficient for resource custody**: current admission content has only schema/owner/source binding/relative manifest/admissions; `snapshot_digest` hashes a sorted resource list. Neither resource bytes nor `.build-receipt.json` are in Runtime CAS today, and the receipt lies outside that resource closure. Runtime independently confirmed this in the shared coordination note.
+
+This missing prerequisite prevents honest server-side resolution, exact declaration-pin/owner dependency recording, authority/revocation recheck at acceptance, retained-source replay/inverse qualification, and flipping the three original save proof xfails. Memory-only old-source reconstruction tests establish the Agent half'"'s deterministic behavior, not Runtime retention or replay/undo integration.
+
+Recommended next steps: managers align an existing artifact/CAS ownership path and concrete source retention/capture contract, without a new manifest format or caller-inline schema. Runtime finishes/tests its Document-only capture stage separately. Then wire only that actual agreed port into provider hydration/capture, record both exact selected ref and verified declaration pin/owner, retain the same source through acceptance/replay/inverse/redo, verify current authority, and flip the three original strict xfails only on real schema rejection. Compose the independent clear fix later; preserve its four original expectations. No renderer, code import, filesystem or launcher/network call belongs inside the deterministic handler.
+'''
+(root/'notes/report.md').write_text(report)
+message='''refactor(elements): resolve admitted schemas from captured inputs
+
+Share element parsing and revision hashing between admitted filesystem sources
+and pure verified-document resource snapshots. Check exact scope, admission,
+resource closure and build identity without source I/O, and extract bounded
+changed-property validation with remote schema retrieval disabled.
+
+Cover actual admission descriptor parity, corrupt and revoked inputs, and old
+source reconstruction after later admissions. Keep save-path proof xfails until
+Runtime owns immutable snapshot custody and retention.
+'''
+for name in ('commit-msg','commit-msg.txt'):
+ (root/name).write_text(message)
+for name in ('.pytest_cache','.ruff_cache'):
+ p=Path(name)
+ if p.is_dir():shutil.rmtree(p)
+p=Path('/tmp/agt-pack-ruff.json')
+if p.exists():p.unlink()
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --no-force-exclude astrid/core/element/catalog.py astrid/sdk/timeline/_scalar_commands.py tests/core/test_project_pack_inputs.py
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-pack-schema-capture
+ succeeded in 485ms:
+All checks passed!
+ M astrid/core/element/catalog.py
+ M astrid/core/element/project_packs.py
+ M astrid/core/element/schema.py
+ M astrid/sdk/timeline/_scalar_commands.py
+?? tests/core/test_project_pack_inputs.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+p=root/'workers/agt-m2-pack-schema-capture/notes/report.md'
+s=p.read_text().replace('ruff check --no-force-exclude astrid/core/element/catalog.py astrid/sdk/timeline/_scalar_commands.py tests/core/test_project_pack_inputs.py','ruff check --no-cache --no-force-exclude astrid/core/element/catalog.py astrid/sdk/timeline/_scalar_commands.py tests/core/test_project_pack_inputs.py')
+p.write_text(s)
+with (root/'design/runtime-coordination.md').open('a') as f:
+ f.write('''\\n\\nAgent selected-schema bounded stage final: 421 passed/7 unchanged strict xfails\\n(35.08s), plus 52 element/parser/catalog neighbors passed (23.38s); scoped Ruff\\nclean on catalog/scalar/new tests, no additional findings in other touched files,\\ndiff check clean. No full/install/merge. Report with exact commands and custody\\nblocker: "'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-schema-capture/notes/report.md`.'"\\nBoth worker commit messages written; harness owns commit. End-to-end schema\\nvalidation remains explicitly unimplemented pending actual retained resource seam.\\n''')
+PY" in /home/user/work/wt/agt-m2-pack-schema-capture
+ succeeded in 5ms:
+codex
+Implemented the pure admitted-schema resolver and shared parameter validator.
+
+- Targeted tests: **473 passed, 7 existing xfails**.
+- Scoped Ruff and diff checks passed.
+- Save-path wiring remains blocked on Runtime snapshot custody/retention; documented in shared coordination.
+- Both commit-message files are ready. No full suite or git mutations.
+
+[Report with exact commands, decisions, blockers and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-schema-capture/notes/report.md).
+tokens used
+152,717
+Implemented the pure admitted-schema resolver and shared parameter validator.
+
+- Targeted tests: **473 passed, 7 existing xfails**.
+- Scoped Ruff and diff checks passed.
+- Save-path wiring remains blocked on Runtime snapshot custody/retention; documented in shared coordination.
+- Both commit-message files are ready. No full suite or git mutations.
+
+[Report with exact commands, decisions, blockers and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-schema-capture/notes/report.md).

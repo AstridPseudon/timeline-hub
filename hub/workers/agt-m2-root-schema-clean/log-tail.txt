@@ -1,0 +1,400 @@
++Its reviewed delta is exactly four `shot:S` admissions: `ScopedId`, `EntityRef`,
++`TargetKey` (including the empty-root `shot:S::` form), and `AnchorIdentity`.
++The sealed `timeline.migrate-groups` fixture is wire-schema evidence only; it
++does not establish a registered operation or Runtime acceptance.
++
++For the group-command source, the canonical baseline is the larger
++`00a9eb9a`/`51948d40` lineage, not the label-only `86bfe186` artifact. The
++schema items to reconcile explicitly are:
++
++- `ClipSetParamsArgs` for literal `values`/`clear` parameter edits;
++- `ClipAddArgs` for a complete literal parent clip row;
++- the occurrence-capable `track.set` select condition;
++- the `clip.set-params` v1 conditional (select, args, closed intent); and
++- the `clip.add` v1 conditional (parent select, args, closed intent).
++
++Runtime owns the normal generated source/artifact refresh after Agent reviews
++bundle 2. It must apply the reviewed, source-aligned schema set above rather
++than blindly replacing the current final label-only schema with one branch's
++whole file. No new DTO, endpoint, client pin, generated artifact, handler, or
++acceptance is proposed here.
+diff --git a/docs/design/runtime-coordination.md b/docs/design/runtime-coordination.md
+deleted file mode 100644
+index 32bc9a3db24208eb14b5eead96a0231b9eb1f9b8..0000000000000000000000000000000000000000
+--- a/docs/design/runtime-coordination.md
++++ /dev/null
+@@ -1,25 +0,0 @@
+-# Runtime coordination — shot-root schema refresh
+-
+-This handoff is held until the PLAN M1 gate is recorded. It is explicitly after
+-the label-only `0.2.2` release sourced from Agent `86bfe1860cd2b4fe661bde88051ed4b690b94ce1`;
+-it must not be bundled with or used to replace that release.
+-
+-## Next canonical Agent source
+-
+-- Source path: `astrid/core/timeline/schema/edit-command.schema.json`
+-- Source SHA-256: `a92aaadf2d98f37e304769c8e5f779274aafafab83e81e83ed6bd40752d3b47a`
+-- Source branch: `tl/agt-m2-root-schema-slice` (harness commit is pending)
+-- Change: the four `shot:S` reference-pattern admissions in `ScopedId`,
+-  `EntityRef`, `TargetKey`, and `AnchorIdentity`.
+-
+-The Runtime owner should refresh its normal schema/artifact bundle from this
+-exact source after the label-only release. No DTO, ABI, endpoint, generated
+-client, producer, or handler change is part of this handoff.
+-
+-## Qualification boundary
+-
+-Draft 2020-12 validation covers the sealed `a0dad5fc` migration command's wire
+-envelope, shot-root select/binding/created facts, empty-root `TargetKey` paths,
+-malformed empty/slashed/ambiguous root IDs, and the original M1 envelopes.
+-The migration operation remains intentionally unknown to this branch's registry;
+-this proves schema admission only, not registered-handler or Runtime acceptance.
+
+exec
+/bin/bash -lc "git status --short --untracked-files=all
+printf '%s\\n' '--- changed paths ---'
+git diff --name-status
+printf '%s\\n' '--- absolute proposal tail ---'
+tail -45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md
+printf '%s\\n' '--- worker notes dir ---'
+ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean" in /home/user/work/wt/agt-m2-root-schema-clean
+ succeeded in 507ms:
+ D docs/design/runtime-coordination.md
+--- changed paths ---
+D	docs/design/runtime-coordination.md
+--- absolute proposal tail ---
+**Smallest next PR.** First finish App add/swap proof, then remove only the generic
+timeline-shot/reference routes/helpers after the external-contract scan: roughly
+0.3–0.6k Runtime lines plus focused contract tests. Retain project catalog reads,
+canonical parent/child reads, media selection, and App restore head-pair handling.
+
+
+## Agent 2026-10-19T23:36Z FINAL INTEGRATED PAIR PASS
+Permanent c8010022 mergedfc324e83; Runtime9f9b25c main normal source. Central agent-projection-occupancy-integration-1019233159-4586 PASS5/16.28s exactAgenttree042a07c6 +Runtime9f9b25c/Appbdc9/Comp7aa. Existing2M1CLI/Python actual plus3new identity tests. Refusal/nochanges,positivefresh/own/retry/restart/history/restore allgreen. AgentM1owncriteria satisfied; awaityourfull/orchestratorrecord, noM2merge or duplicatefull/browser.
+
+## M2 first official ordinary-label source ready (scopefreeze)
+Parent-only track.set contract ready in tl/agt-m2-parent-label-proof86bfe186: CLOSED args values(label string ONLY)+clear(label ONLY), stable select parent/track:ID, version1. ABSENT/emptystring/explicitclear/unchangededge/ABA/disjoint/pins/opaque allcovered; exactAppgolden andcompleteoldscalarparentrecordparity. Native153PASS; actualRuntimeonepositive1PASS4.14s, noxfail, allsemanticassertionsreachcompletion. ExistingRuntimewireenvelope permitsnewregisteredop, but officialsourceArtifact/digestrefresh remainsreleasegate. AfterPLANrecordsM1, please plan officialartifact generation fromthisAgent source (or its integrateddescendant); no newDTOshape. Agentwillvendor/pin andAppwillconsumeexistinggolden. Fullroots/migration separatelyheld, do NOTfreezeunimplementeditemrefs. Nativeingress branch addsCLI/Python samecommand4actualPASS, ownerreviewpending.
+
+## CONFIRMED official first M2 artifact freeze — Agent23:39Z
+YES: ship LABEL-ONLY artifact first, staged onbranch until PLAN M1record. Definitive canonical schema source is Agent tl/agt-m2-parent-label-proof 86bfe1860cd2b4fe661bde88051ed4b690b94ce1, astrid/core/timeline/schema/edit-command.schema.json. Handler astrid/sdk/timeline/_track_commands.py:track_set, op track.set/version1, parent/track-only, args CLOSED values(label string only)+clear(label only), same frozen golden recipe_m2_app_track_label.json. All previous M1 schema bytes/semantics retained apart from additive def/conditional. Full composed/root/migration schema is NOT frozen and MUST NOT be bundled yet. Nativeingress5f4dc247 descendant has SAME schema; verify bytes normally.
+Runtime owns normal official bundle/types/client/version/digest generation; no DTOshape/ABI/compiledComposition change. Agent will stage official consumer vendor/pin refresh atop reviewed nativeparent/ingress source once producer tupleavailable; App stages its parity/clientpin. Coordinate small source-aligned M2merge/testbatch AFTER M1record, no stale-tuple3products run during partial pins. No genericcompatibility writer/dualregistry. Root/migrationtypedrefs/crossowner gaps remainseparate.
+
+## Proposed Agent source freeze — shot-root schema handoff (held)
+
+This is a source-freeze proposal only. It is not an official artifact refresh,
+root acceptance, handler registration, or Runtime acceptance. M2 integration
+merges remain held until PLAN records M1.
+
+The reviewed Agent source is `astrid/core/timeline/schema/edit-command.schema.json`
+at `cae76eba`, SHA-256
+`a92aaadf2d98f37e304769c8e5f779274aafafab83e81e83ed6bd40752d3b47a`.
+Its reviewed delta is exactly four `shot:S` admissions: `ScopedId`, `EntityRef`,
+`TargetKey` (including the empty-root `shot:S::` form), and `AnchorIdentity`.
+The sealed `timeline.migrate-groups` fixture is wire-schema evidence only; it
+does not establish a registered operation or Runtime acceptance.
+
+For the group-command source, the canonical baseline is the larger
+`00a9eb9a`/`51948d40` lineage, not the label-only `86bfe186` artifact. The
+schema items to reconcile explicitly are:
+
+- `ClipSetParamsArgs` for literal `values`/`clear` parameter edits;
+- `ClipAddArgs` for a complete literal parent clip row;
+- the occurrence-capable `track.set` select condition;
+- the `clip.set-params` v1 conditional (select, args, closed intent); and
+- the `clip.add` v1 conditional (parent select, args, closed intent).
+
+Runtime owns the normal generated source/artifact refresh after Agent reviews
+bundle 2. It must apply the reviewed, source-aligned schema set above rather
+than blindly replacing the current final label-only schema with one branch's
+whole file. No new DTO, endpoint, client pin, generated artifact, handler, or
+acceptance is proposed here.
+--- worker notes dir ---
+total 636
+drwxr-xr-x   2 root root   4096 Oct 20 00:23 .
+drwxr-xr-x 252 root root  12288 Oct 20 00:23 ..
+-rw-r--r--   1 root root   1331 Oct 20 00:23 brief.md
+-rw-r--r--   1 root root 624284 Oct 20 00:24 log.txt
+-rw-r--r--   1 root root    213 Oct 20 00:23 meta
+-rw-r--r--   1 root root      0 Oct 20 00:23 running
+
+codex
+The repo diff now contains only the intended deletion of `docs/design/runtime-coordination.md`; the schema, 500-line fixture, and focused test are untouched. The absolute coordination page now carries the held proposal and preserves its prior contents. I’m running the exact 99-test targeted lane and then I’ll verify the deletion-only diff and write the required report/messages.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_edit_command_schema_shot_roots.py tests/editing_conformance/test_parent_track_label.py tests/editing_conformance/test_recipe_m1_commands.py' in /home/user/work/wt/agt-m2-root-schema-clean
+ succeeded in 4030ms:
+........................................................................ [ 72%]
+...........................                                              [100%]
+99 passed in 3.48s
+
+exec
+/bin/bash -lc "set -e
+ruff check tests/editing_conformance/test_edit_command_schema_shot_roots.py
+git diff --check
+if git diff --quiet HEAD -- astrid/core/timeline/schema/edit-command.schema.json tests/editing_conformance/test_edit_command_schema_shot_roots.py tests/editing_conformance/fixtures/recipe_m2_group_migration_command.json; then
+  echo 'schema/test/fixture unchanged: PASS'
+else
+  echo 'schema/test/fixture changed: FAIL' >&2
+  exit 1
+fi
+printf '%s\\n' 'repo diff name-status:'
+git diff --name-status
+printf '%s\\n' 'repo diff stat:'
+git diff --stat
+printf '%s\\n' 'deleted repo doc diff check:'
+git diff -- docs/design/runtime-coordination.md | sed -n '1,120p'
+if test "'! -e docs/design/runtime-coordination.md; then echo '"'repo-relative coordination doc absent: PASS'; else echo 'repo-relative coordination doc still present: FAIL' >&2; exit 1; fi
+if test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md; then echo 'absolute coordination proposal present: PASS'; else echo 'absolute proposal missing: FAIL' >&2; exit 1; fi" in /home/user/work/wt/agt-m2-root-schema-clean
+ succeeded in 931ms:
+All checks passed!
+schema/test/fixture unchanged: PASS
+repo diff name-status:
+D	docs/design/runtime-coordination.md
+repo diff stat:
+ docs/design/runtime-coordination.md | 25 -------------------------
+ 1 file changed, 25 deletions(-)
+deleted repo doc diff check:
+diff --git a/docs/design/runtime-coordination.md b/docs/design/runtime-coordination.md
+deleted file mode 100644
+index 32bc9a3d..00000000
+--- a/docs/design/runtime-coordination.md
++++ /dev/null
+@@ -1,25 +0,0 @@
+-# Runtime coordination — shot-root schema refresh
+-
+-This handoff is held until the PLAN M1 gate is recorded. It is explicitly after
+-the label-only `0.2.2` release sourced from Agent `86bfe1860cd2b4fe661bde88051ed4b690b94ce1`;
+-it must not be bundled with or used to replace that release.
+-
+-## Next canonical Agent source
+-
+-- Source path: `astrid/core/timeline/schema/edit-command.schema.json`
+-- Source SHA-256: `a92aaadf2d98f37e304769c8e5f779274aafafab83e81e83ed6bd40752d3b47a`
+-- Source branch: `tl/agt-m2-root-schema-slice` (harness commit is pending)
+-- Change: the four `shot:S` reference-pattern admissions in `ScopedId`,
+-  `EntityRef`, `TargetKey`, and `AnchorIdentity`.
+-
+-The Runtime owner should refresh its normal schema/artifact bundle from this
+-exact source after the label-only release. No DTO, ABI, endpoint, generated
+-client, producer, or handler change is part of this handoff.
+-
+-## Qualification boundary
+-
+-Draft 2020-12 validation covers the sealed `a0dad5fc` migration command's wire
+-envelope, shot-root select/binding/created facts, empty-root `TargetKey` paths,
+-malformed empty/slashed/ambiguous root IDs, and the original M1 envelopes.
+-The migration operation remains intentionally unknown to this branch's registry;
+-this proves schema admission only, not registered-handler or Runtime acceptance.
+repo-relative coordination doc absent: PASS
+absolute coordination proposal present: PASS
+
+exec
+/bin/bash -lc 'mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/notes' in /home/user/work/wt/agt-m2-root-schema-clean
+ succeeded in 0ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md
+index fddecd3815b20faff7736d4c8f6d4205dc37bfb0..de1e6f4fa2ec362da042c875abb11426c47393d7
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md
+@@ -184,3 +184,33 @@
+ ## CONFIRMED official first M2 artifact freeze — Agent23:39Z
+ YES: ship LABEL-ONLY artifact first, staged onbranch until PLAN M1record. Definitive canonical schema source is Agent tl/agt-m2-parent-label-proof 86bfe1860cd2b4fe661bde88051ed4b690b94ce1, astrid/core/timeline/schema/edit-command.schema.json. Handler astrid/sdk/timeline/_track_commands.py:track_set, op track.set/version1, parent/track-only, args CLOSED values(label string only)+clear(label only), same frozen golden recipe_m2_app_track_label.json. All previous M1 schema bytes/semantics retained apart from additive def/conditional. Full composed/root/migration schema is NOT frozen and MUST NOT be bundled yet. Nativeingress5f4dc247 descendant has SAME schema; verify bytes normally.
+ Runtime owns normal official bundle/types/client/version/digest generation; no DTOshape/ABI/compiledComposition change. Agent will stage official consumer vendor/pin refresh atop reviewed nativeparent/ingress source once producer tupleavailable; App stages its parity/clientpin. Coordinate small source-aligned M2merge/testbatch AFTER M1record, no stale-tuple3products run during partial pins. No genericcompatibility writer/dualregistry. Root/migrationtypedrefs/crossowner gaps remainseparate.
++
++## Proposed Agent source freeze — shot-root schema handoff (held)
++
++This is a source-freeze proposal only. It is not an official artifact refresh,
++root acceptance, handler registration, or Runtime acceptance. M2 integration
++merges remain held until PLAN records M1.
++
++The reviewed Agent source is `astrid/core/timeline/schema/edit-command.schema.json`
++at `cae76eba`, SHA-256
++`a92aaadf2d98f37e304769c8e5f779274aafafab83e81e83ed6bd40752d3b47a`.
++Its reviewed delta is exactly four `shot:S` admissions: `ScopedId`, `EntityRef`,
++`TargetKey` (including the empty-root `shot:S::` form), and `AnchorIdentity`.
++The sealed `timeline.migrate-groups` fixture is wire-schema evidence only; it
++does not establish a registered operation or Runtime acceptance.
++
++For the group-command source, the canonical baseline is the larger
++`00a9eb9a`/`51948d40` lineage, not the label-only `86bfe186` artifact. The
++schema items to reconcile explicitly are:
++
++- `ClipSetParamsArgs` for literal `values`/`clear` parameter edits;
++- `ClipAddArgs` for a complete literal parent clip row;
++- the occurrence-capable `track.set` select condition;
++- the `clip.set-params` v1 conditional (select, args, closed intent); and
++- the `clip.add` v1 conditional (parent select, args, closed intent).
++
++Runtime owns the normal generated source/artifact refresh after Agent reviews
++bundle 2. It must apply the reviewed, source-aligned schema set above rather
++than blindly replacing the current final label-only schema with one branch's
++whole file. No new DTO, endpoint, client pin, generated artifact, handler, or
++acceptance is proposed here.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2841738509c85b9ce0d65fcaaad12f644f897f79
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg
+@@ -0,0 +1,5 @@
++docs(timeline): relocate held schema handoff
++
++Remove the accidental repo-relative coordination note and preserve the held
++source-freeze proposal in the orchestrator design file. Keep schema, tests, and
++fixture unchanged; make no artifact or Runtime acceptance claim.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..2841738509c85b9ce0d65fcaaad12f644f897f79
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg.txt
+@@ -0,0 +1,5 @@
++docs(timeline): relocate held schema handoff
++
++Remove the accidental repo-relative coordination note and preserve the held
++source-freeze proposal in the orchestrator design file. Keep schema, tests, and
++fixture unchanged; make no artifact or Runtime acceptance claim.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..3c50a789f30e2806c2c1f1e48fdfae0386da9b44
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/notes/report.md
+@@ -0,0 +1,38 @@
++# agt-m2-root-schema-clean report
++
++## What changed
++
++- Removed the accidental repo-relative `docs/design/runtime-coordination.md`.
++- Added the concise held source-freeze proposal to the absolute orchestrator
++  file at `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md`.
++- Kept `astrid/core/timeline/schema/edit-command.schema.json`, the 500-line
++  migration fixture, and the focused schema test unchanged.
++- The proposal names the four reviewed `shot:S` schema admissions and the
++  larger `00a9eb9a`/`51948d40` group-command schema surface. It explicitly
++  keeps artifact refresh with Runtime after Agent bundle-2 review and makes no
++  artifact, handler, DTO, endpoint, or acceptance claim.
++
++## Evidence
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_edit_command_schema_shot_roots.py tests/editing_conformance/test_parent_track_label.py tests/editing_conformance/test_recipe_m1_commands.py` — **99 passed in 3.48s**.
++- `ruff check tests/editing_conformance/test_edit_command_schema_shot_roots.py` — **passed**.
++- `git diff --check` — **passed**.
++- Exact changed-path review — **only** `D docs/design/runtime-coordination.md` (25 lines deleted).
++- Schema/test/fixture comparison against `HEAD` — **unchanged**.
++- Absolute proposal existence check — **passed**.
++
++## Decisions and limits
++
++- The current Agent schema SHA-256 is recorded in the absolute proposal as
++  `a92aaadf2d98f37e304769c8e5f779274aafafab83e81e83ed6bd40752d3b47a`.
++- The sealed `timeline.migrate-groups` fixture remains wire-schema evidence
++  only; no registered operation or Runtime acceptance is claimed.
++- M2 integration merges remain held until PLAN records M1.
++- No full, install, socket, browser, merge, product-code, or generated-file
++  work was run or performed.
++
++## Blockers / next steps
++
++Runtime should perform its normal generated source/artifact refresh only after
++Agent reviews bundle 2 and the orchestrator authorizes it after the M1 hold.
++No further work is authorized in this slice.
+diff --git a/docs/design/runtime-coordination.md b/docs/design/runtime-coordination.md
+deleted file mode 100644
+index 32bc9a3db24208eb14b5eead96a0231b9eb1f9b8..0000000000000000000000000000000000000000
+--- a/docs/design/runtime-coordination.md
++++ /dev/null
+@@ -1,25 +0,0 @@
+-# Runtime coordination — shot-root schema refresh
+-
+-This handoff is held until the PLAN M1 gate is recorded. It is explicitly after
+-the label-only `0.2.2` release sourced from Agent `86bfe1860cd2b4fe661bde88051ed4b690b94ce1`;
+-it must not be bundled with or used to replace that release.
+-
+-## Next canonical Agent source
+-
+-- Source path: `astrid/core/timeline/schema/edit-command.schema.json`
+-- Source SHA-256: `a92aaadf2d98f37e304769c8e5f779274aafafab83e81e83ed6bd40752d3b47a`
+-- Source branch: `tl/agt-m2-root-schema-slice` (harness commit is pending)
+-- Change: the four `shot:S` reference-pattern admissions in `ScopedId`,
+-  `EntityRef`, `TargetKey`, and `AnchorIdentity`.
+-
+-The Runtime owner should refresh its normal schema/artifact bundle from this
+-exact source after the label-only release. No DTO, ABI, endpoint, generated
+-client, producer, or handler change is part of this handoff.
+-
+-## Qualification boundary
+-
+-Draft 2020-12 validation covers the sealed `a0dad5fc` migration command's wire
+-envelope, shot-root select/binding/created facts, empty-root `TargetKey` paths,
+-malformed empty/slashed/ambiguous root IDs, and the original M1 envelopes.
+-The migration operation remains intentionally unknown to this branch's registry;
+-this proves schema admission only, not registered-handler or Runtime acceptance.
+
+codex
+The targeted lane passes all 99 tests, Ruff and whitespace checks pass, and the final repo diff is exactly one deletion of the stray 25-line doc. I’ve written the absolute report plus both conventional commit-message files; I’m doing the final clean-status and artifact-scope check now.
+exec
+/bin/bash -lc "set -e
+printf '%s\\n' '--- final repo status ---'
+git status --short --untracked-files=all
+printf '%s\\n' '--- final diff names/stat ---'
+git diff --name-status
+git diff --stat
+printf '%s\\n' '--- protected files unchanged ---'
+git diff --quiet HEAD -- astrid/core/timeline/schema/edit-command.schema.json tests/editing_conformance/test_edit_command_schema_shot_roots.py tests/editing_conformance/fixtures/recipe_m2_group_migration_command.json
+echo PASS
+printf '%s\\n' '--- required handoff files ---'
+for f in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg.txt; do test -s \""'$f"; echo "$f: present"; done
+printf '"'%s\\n' '--- worktree build-output scan ---'
+find . -type d \\( -name __pycache__ -o -name .pytest_cache -o -name node_modules \\) -prune -print | head -20" in /home/user/work/wt/agt-m2-root-schema-clean
+ succeeded in 807ms:
+--- final repo status ---
+ D docs/design/runtime-coordination.md
+--- final diff names/stat ---
+D	docs/design/runtime-coordination.md
+ docs/design/runtime-coordination.md | 25 -------------------------
+ 1 file changed, 25 deletions(-)
+--- protected files unchanged ---
+PASS
+--- required handoff files ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md: present
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/notes/report.md: present
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg: present
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-clean/commit-msg.txt: present
+--- worktree build-output scan ---
+
+codex
+## Completed
+
+- Removed stray repo file: `docs/design/runtime-coordination.md`.
+- Added held source-freeze proposal to absolute orchestrator design path.
+- Preserved schema, tests, and fixture unchanged.
+- Wrote report and both commit-message files.
+
+## Evidence
+
+- Targeted pytest: **99 passed in 3.48s**
+- Ruff: passed
+- `git diff --check`: passed
+- Final repo diff: only the 25-line doc deletion.
+- No full/install/socket/browser/merge work performed.
+
+M2 remains held pending PLAN M1.
+tokens used
+116,420
+## Completed
+
+- Removed stray repo file: `docs/design/runtime-coordination.md`.
+- Added held source-freeze proposal to absolute orchestrator design path.
+- Preserved schema, tests, and fixture unchanged.
+- Wrote report and both commit-message files.
+
+## Evidence
+
+- Targeted pytest: **99 passed in 3.48s**
+- Ruff: passed
+- `git diff --check`: passed
+- Final repo diff: only the 25-line doc deletion.
+- No full/install/socket/browser/merge work performed.
+
+M2 remains held pending PLAN M1.

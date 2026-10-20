@@ -1,0 +1,400 @@
+........................................................................ [ 69%]
+.............................Tue Oct 20 02:24:45 UTC 2026
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967 1' in /home/user/work/wt/agt-m2-bundle2-final-qualify
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967/log.txt; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967/status' in /home/user/work/wt/agt-m2-bundle2-final-qualify
+ succeeded in 390ms:
+........................................................................ [ 34%]
+........................................................................ [ 69%]
+.....................................running
+
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967/log.txt; date -u' in /home/user/work/wt/agt-m2-bundle2-final-qualify
+ succeeded in 0ms:
+........................................................................ [ 34%]
+........................................................................ [ 69%]
+................................................Tue Oct 20 02:25:41 UTC 2026
+
+codex
+The central run is nearing completion, with no failures reported so far. It has passed both first-clip cases under `--runxfail`. I’ll wait for the final summary before removing the marker and publishing the handoff.
+
+ exited 124 in 60095ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967/status; tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967/log.txt' in /home/user/work/wt/agt-m2-bundle2-final-qualify
+ succeeded in 0ms:
+running
+........................................................................ [ 34%]
+........................................................................ [ 69%]
+...............................................................          [100%]
+207 passed in 262.40s (0:04:22)
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967 1' in /home/user/work/wt/agt-m2-bundle2-final-qualify
+ succeeded in 58ms:
+test agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967: pass exit=0 in 274s — bundle2-runtime-integration on agt-m2-bundle2-final-qualify (agent tree 5fb59b8957064256bd7c0c256d2304f54845b0bb)
+cmd: test "$(git -C /home/user/work/wt/rt-m2-null-speed-clean-candidate rev-parse HEAD)" = 4c145dc62192f0e942e3ee3922a11488aefe9b41 && test -z "$(git -C /home/user/work/wt/rt-m2-null-speed-clean-candidate status --porcelain)" && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-null-speed-clean-candidate PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration --runxfail tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py tests/sdk/test_timeline_numeric_revision_runtime.py tests/editing_conformance/test_native_batch_ingress.py tests/stage1/test_runtime_client_cutover.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+counts: 207 passed in 262.40s (0:04:22) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967/log.txt ---
+........................................................................ [ 34%]
+........................................................................ [ 69%]
+...............................................................          [100%]
+207 passed in 262.40s (0:04:22)
+
+codex
+The central lane passed all 207 cases, with no failures, skips, or xfails. That includes both first-clip cases and the full 29-case M1 cohort on this pair. I’m removing only the nullable-speed marker now, then recording the tested tree, the final marker-only tree, digests, and remaining limits.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import ast,json
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/notes')
+result=notes.parents[2]/'tests/agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967'
+assert (result/'exit').read_text().strip()=='0'
+assert '207 passed' in (result/'log.txt').read_text()
+path=Path('tests/editing_conformance/test_commit_runtime_first_clip.py')
+before=path.read_text()
+old=\"\"\"@pytest.mark.parametrize('nullable_speed', [False, pytest.param(True, marks=pytest.mark.xfail(
+    strict=True, reason='Runtime timeline_inspection must support main\\\\'s explicit null speed default'))])\"\"\"
+new=\"@pytest.mark.parametrize('nullable_speed', [False, True])\"
+assert old in before
+assert before.encode()==(notes/'first-clip-before.py').read_bytes()
+after=before.replace(old,new)
+pre,post=ast.parse(before),ast.parse(after)
+for module in (pre,post):
+    fn=next(node for node in module.body if isinstance(node,ast.FunctionDef) and node.name.startswith('test_empty_bootstrap'))
+    fn.decorator_list=[]
+assert ast.dump(pre)==ast.dump(post)
+path.write_text(after)
+(notes/'central-summary.txt').write_bytes((result/'summary').read_bytes())
+print('Removed only the now-passing nullable-speed strict marker; both cases and complete function AST preserved.')
+PY
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/notes/audit.py
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-null-speed-clean-candidate
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py --check
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/core/timeline/authoring_bundle.py astrid/sdk/timeline/commit.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py tests/sdk/test_timeline_numeric_revision_runtime.py
+git diff --check' in /home/user/work/wt/agt-m2-bundle2-final-qualify
+ succeeded in 1654ms:
+Removed only the now-passing nullable-speed strict marker; both cases and complete function AST preserved.
+Numeric delta/current M2 provider, exact pin, frozen schema, 12 captures and 16 goldens: PASS
+Tree: 1434f42b48fd062248faf1f4abef7ff467186377
+Lock SHA256: 8ea9e36e64d0664257f8dbeefaa61e465f96c8bc3c471caed0242941ec283414
+ok runtime.lock.json (matches producer manifest)
+cli-surface.json is current
+All checks passed!
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/notes/audit.py')
+s=p.read_text()
+s=s.replace(\"manifest = {\\n\", \"\"\"tested = json.loads((NOTES / 'tested-manifest.json').read_text())
+first_clip = b'tests/editing_conformance/test_commit_runtime_first_clip.py'
+proof = [(name, mode, object_id(b'blob', (NOTES / 'first-clip-before.py').read_bytes())
+          if name == first_clip else oid) for name, mode, oid in new]
+assert tree(proof) == tested['tree'], 'post-proof change must be only the first-clip marker'
+changed = set(git('diff', '--name-only', BASE).decode().splitlines()) | {os.fsdecode(p) for p in untracked if p}
+assert changed == {*numeric_files, 'runtime.lock.json', os.fsdecode(first_clip),
+                   'tests/editing_conformance/test_commit_runtime_numeric_move.py',
+                   'tests/editing_conformance/test_commit_runtime_numeric_params.py',
+                   'tests/sdk/test_timeline_numeric_revision_runtime.py'}
+for name in numeric_files:
+    def touched(delta):
+        return [line for line in delta.splitlines() if line.startswith((b'+', b'-'))
+                and not line.startswith((b'+++', b'---'))]
+    assert touched(git('diff', BASE, '--', name)) == touched(git('diff', '3eae3779"'^'"', '3eae3779', '--', name))
+manifest = {
+ 'central_tree': tested['tree'],
+ 'central_result': 'agt-m2-bundle2-final-qualify-bundle2-runtime-integration-1020022131-5967',
+ 'post_central_change': 'first-clip nullable-speed strict marker removed after 207 PASS under --runxfail',
+\"\"\")
+p.write_text(s)
+PY
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/notes/audit.py' in /home/user/work/wt/agt-m2-bundle2-final-qualify
+ succeeded in 1646ms:
+Numeric delta/current M2 provider, exact pin, frozen schema, 12 captures and 16 goldens: PASS
+Tree: 1434f42b48fd062248faf1f4abef7ff467186377
+Lock SHA256: 8ea9e36e64d0664257f8dbeefaa61e465f96c8bc3c471caed0242941ec283414
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import json,subprocess,hashlib,shutil
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=orch/'workers/agt-m2-bundle2-final-qualify'
+notes=worker/'notes'
+m=json.loads((notes/'final-manifest.json').read_text())
+result=orch/'tests'/m['central_result']
+assert (result/'exit').read_text().strip()=='0'
+root=Path.cwd()
+command=(notes/'suite-command.sh').read_text().strip()
+report=f'''# Bundle2 final pair — COMPOSED/REVIEWABLE
+
+Branch "'`tl/agt-m2-bundle2-final-qualify`; assigned worktree `{root}`.
+Current pre-harness HEAD/parent: `{m['"'base']}"'` (verified predecessor tree `3143c1e88522fed078ef1068a431fec7bee57ee3`). Candidate commit: **PENDING FINAL-QUALIFY HARNESS COMMIT**.
+Final source tree: `{m['"'tree']}"'`. Central tested tree: `{m['"'central_tree']}"'`.
+The only difference is removal of the nullable-speed strict xfail marker **after** both unchanged positive cases passed under `--runxfail`. Both cases and the complete test function AST are preserved. Audit reconstructs the central tree by restoring only that marker. No product/pin/test-body change followed the request; no repeat central request was needed. This explicitly follows the proof-before-marker-removal requirement; the final tree itself was not submitted as a second snapshot.
+
+## Changes and decisions
+
+- Applied ONLY approved `3eae37799447d476c7b82abddef66d230436384f` numeric comparison delta (21 touched product lines) and its pure/actual tests onto current M2. Exact comparison/digest+manifest reuse preserves int/float/bool encodings without changing value guards, hashes or stored films. Current M2 provider, PARAM hydration/scope, media/inverse/rebase/CLI/sync remain intact; no M1/older provider overlay.
+- Copied the six actual numeric MOVE cases exactly from compatible M1 `d9a849e8` (`use_runtime()`); official numeric PARAM tests use normal `vendored_runtime_commit()` instead of old d691. No historic pair used as current proof.
+- Normal `vendor_lock.py update/check` against clean committed Runtime `4c145dc62192f0e942e3ee3922a11488aefe9b41`, tree `f640ccf4aacb08e15f493bc7e3e5befe26ed0ceb`. Only lock source identity changes. Runtime owner02:22 reviewed this exact tuple, explicitly no correction/retarget. All74 official artifacts are byte-identicald691; canonical schema472622, client0.2.3, schemaa435 and artifact0f3d unchanged. No Runtime file edited.
+- Updated only owned `agent bundle2-runtime-integration` line in shared `suites.conf`, preserving other lines, with exact4c145+clean-source preflight and bounded207-case cohort. Before/after line and exact command saved in notes. One named request only; all waits used its existing ID. No full suite, daemon/socket/browser direct run, install/network, integration write, git commit/merge/checkout/rebase/push, ref mutation or old leased-branch mutation.
+- No passing behavior weakened/refused/deleted/skipped. Only now-passing firstclip nullable marker removed after proof; no new xfails. No operation/schema/producer guard/materialization/renderer/global cut added.
+
+## Exact tests and results
+
+All local commands from `{root}`, shared dependency-only venv.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_recipe_m1_commands.py --tb=short
+```
+**290 passed, 1 integration deselected in33.06s, exit0** (`focused-pure.log`).
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python {orch}/workers/agt-m2-bundle2-reviewed-successor/notes/native_save_import_fence.py
+```
+**1 passed in0.90s, exit0** (`import-fence.log`). Fresh-interpreter move→trim→undo test forbids legacy edits/model/Checkout/journal and rendering imports.
+
+Central request (exactly once):
+
+```sh
+{orch}/bin/request-test agt-m2-bundle2-final-qualify bundle2-runtime-integration > {notes}/central-result-dir
+{orch}/bin/wait-test {m['"'central_result']} 1
+"'```
+Intermediate waits exited124 while running; same ID waited again, final **exit0 / service274s**. Exact expanded lane:
+
+```sh
+{command}
+```
+**207 passed in262.40s, no skips/xfails/failures.** Result directory `{result}/`, exact source snapshot `{m['"'central_tree']}"'`. Default integration Runtime4bb in service `ext` is not the explicitly pinned Runtime4c145 selected by this lane. Native batch/client modules load the normal4c145 lock; numeric fixtures use the same source. No schema/provider/fixture normalization or Runtime rewrite.
+
+Coverage (not additive to207): full29 M1 cohort on THIS larger pair (M1 daemon2 + identity3 + shared/inverse10 + opaque6 + SDK restart/provider2 + numeric MOVE6); native batches40 including original suffix, ordinary BABA replay, guarded undo, retry/restart and retained drafts; popup/media48; numeric PARAM19; selected-object/mixed-admission PARAM20; client/CLI contract39; firstclip2; scalar/clear/parent-label/media-inverse/add-delete remaining cases. `cohort-counts.txt` lists every file count. Prior M1 29-pass result is not substituted for this proof.
+
+Final checks:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/vendor_lock.py update runtime.lock.json --producer /home/user/work/wt/rt-m2-null-speed-clean-candidate
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-null-speed-clean-candidate
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py --check
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/core/timeline/authoring_bundle.py astrid/sdk/timeline/commit.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py tests/sdk/test_timeline_numeric_revision_runtime.py
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python {notes}/audit.py
+git diff --check
+```
+All **exit0**. Audit verifies exact approved numeric delta, unchanged current M2 machinery, 12 callable captures, canonical schema and16 byte-identical goldens, exact final tree, and marker-only difference from central snapshot. `producer-check.json` verifies74 official artifact bytes and predecessor identity read-only; old finalization script/branch were not mutated.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --python-version 3.13 --follow-imports=silent --cache-dir=/tmp/agt-m2-final-qualify-mypy astrid/sdk/timeline/commit.py astrid/core/timeline/authoring_bundle.py
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --python-version 3.13 --follow-imports=silent --cache-dir=/tmp/agt-m2-final-qualify-mypy-base --shadow-file astrid/sdk/timeline/commit.py {notes}/commit.py.base --shadow-file astrid/core/timeline/authoring_bundle.py {notes}/authoring_bundle.py.base astrid/sdk/timeline/commit.py astrid/core/timeline/authoring_bundle.py
+```
+Both exit1 with **the identical two preexisting union-attr errors at authoring_bundle.py:1230**; output byte-identical (`mypy.log`, `mypy-base.log`), zero new diagnostics. No typecheck weakening or full mypy-green claim. Baseline shadow inputs retained for reproduction; temporary caches removed.
+
+## Handoff and limits
+
+COMPOSED/REVIEWABLE, **not App READY**. Runtime owner review and exact paired Agent lane now pass; Agent manager must review/harness-commit/freeze this new source, then App must qualify its normal exact consumer pair. Run `{notes}/finalize-handoff.py` after harness commit: it checks exact final tree and8c9 parent before publishing actual candidate HEAD here and in absolute `{orch}/design/m2-writer-bundle-2.md`. Current parent is not a final candidate commit.
+
+Unsupported custom-pack capture inputs (`schema_inputs`/`realm_id`) remain a CLI/commands-file limitation; those batches refuse visibly with file/outbox preserved. Explicit SDK/provider selected-schema tests are not CLI support. No all-gate1/all-M2 completion, App browser/popup/PARAM acceptance, full-suite/make-check, macOS, owner-film or pixel/audio-parity claim. Existing a610 full evidence remains separate. M2 integration waits for PLAN'"'s M1 record and manager approval. Frozen Bundle1/leasedf423/a76/d474/d691 unchanged. No blocker in this bounded cohort.
+
+Exact captures, absolute source/golden paths and hashes are in the design document and "'`final-manifest.json`. No build/temp output remains in worktree. Both worker-root conventional commit-message files are ready.
+'"'''
+(notes/'report.md').write_text(report)
+# Publish the current reviewable candidate without altering any historical branch/worker handoff.
+design=orch/'design/m2-writer-bundle-2.md'
+content=design.read_text()
+prefix='''# M2 writer bundle 2 — COMPOSED/REVIEWABLE; App release HELD
+
+Latest qualification is recorded in the final section below. Historical sections
+retain their original tuples and pending items; the final section supersedes
+those items for the new candidate. Manager review/App qualification and PLAN's
+M1 record still gate release/integration. No all-gate1 or all-M2 claim.
+
+'''
+content=prefix+'Frozen Bundle1 stays'+content.split('Frozen Bundle1 stays',1)[1]
+section=f'''\\n\\n## Final exact ordinary/PARAM/popup qualification — agt-m2-bundle2-final-qualify
+
+Status: **COMPOSED/REVIEWABLE, not App READY**. Runtime owner02:22 reviewed the
+exact4c145 successor with no correction. Agent final paired lane passes; manager
+source review/freeze and App qualification remain. All M2 integration waits for
+PLAN's M1 record. The following identities supersede historical pending items
+above only for this new candidate; no old source/ref was changed.
+
+| Field | Exact value |
+|---|---|
+| Branch | "'`tl/agt-m2-bundle2-final-qualify` |
+| Worktree | `{root}` |
+| Current source HEAD / harness parent | `{m['"'base']}"'` |
+| Verified predecessor tree | `3143c1e88522fed078ef1068a431fec7bee57ee3` |
+| Candidate commit | **PENDING FINAL-QUALIFY HARNESS COMMIT** |
+| Central tested tree | `{m['"'central_tree']}"'` |
+| Final source tree | `{m['"'tree']}"'` |
+| Runtime producer checkout | `/home/user/work/wt/rt-m2-null-speed-clean-candidate` |
+| Runtime producer SHA | `4c145dc62192f0e942e3ee3922a11488aefe9b41` |
+| Runtime producer tree | `f640ccf4aacb08e15f493bc7e3e5befe26ed0ceb` |
+| Client | `0.2.3` |
+| Official SCHEMA_DIGEST | `sha256:a435dde3b552999ea75ff593868ff4d56debdd64bd8f79c134fb470a279a05e6` |
+| Official artifact version | `sha256:0f3d217ba0f3ca51d580bf3938fb3df1361a561de5acae7a911d21a9eea8bd9e` |
+| Runtime artifact manifest raw SHA256 | `58e88352de9bf47969de2ce72e0c0ad8c3530560f0120d10eb067314a3603920` |
+| Canonical schema SHA256 | `{m['"'schema_sha256']}"'` |
+| Runtime lock SHA256 | `{m['"'runtime_lock_sha256']}"'` |
+
+Canonical schema: `{root}/astrid/core/timeline/schema/edit-command.schema.json`.
+Normal vendor-lock update/check consumed exact committed4c145. All74 official
+artifacts are byte-identicald691; only lock source identity changed. The approved
+3eae numeric21-line product comparison delta and direct tests were applied to the
+CURRENT M2 provider. Six M1 numeric MOVE cases match compatibled9a exactly and use
+the new normal source. No M1/older provider/core overlay, new op/schema/producer
+guard/materialization/renderer/global cut or fixture normalization.
+
+Exactly one named central request `{m['"'central_result']}"'`: **207 passed in262.40s,
+exit0 / service274s, no skip/xfail/failure**. Includes the entire29 M1 cohort on
+THIS pair, nativebatch40/suffixBABA, popup48, selected-object/mixed PARAM20,
+numeric PARAM19, SDK/CLI/clientcontract39, firstclip2, scalar/clear/media and
+add-delete. Full command/results: `{notes}/report.md`.
+Central result/log directory: `{result}/`.
+Default integration heads in service `ext` do not override explicit4c145 preflight.
+
+Both UNCHANGED firstclip cases passed with `--runxfail` in that final run BEFORE
+removing only the nullable-speed strict marker. Final tree differs from central
+snapshot only by that required marker removal; test body and both cases are
+unchanged. Audit reconstructs the tested tree using the original marker. No
+product/pin/test-body change after request, no second request or relabeled tree.
+Local focused290PASS33.06s, native renderer/legacy-import fence1PASS0.90s, scoped
+Ruff/vendor/CLIgen/audit/diffcheck allPASS. Mypy has only the same two preexisting
+union-attr errors as exact shadowed base. Full-suite/make-check was not run.
+
+Harness commits after worker exit. Manager runs `{notes}/finalize-handoff.py` to
+verify finaltree/parent and publish actual new HEAD. The current8c9 parent is not
+that commit. Read-only predecessor verification confirms8c9/tree3143 and a31 parent;
+no old finalization script or old source mutated.
+
+Current captures below use prefix `astrid.sdk.timeline.`; all12 ops remainv1,
+closed args. Batch ingress remains `sync.TimelineSession.queue_many/commit_many`.
+
+| Operation | Capture export | Absolute source path |
+|---|---|---|
+'"'''
+for op,export in m['capture_exports'].items():
+    module=export.rsplit('.',1)[0]
+    section+=f'| "'`{op}` | `{export}` | `{root}/astrid/sdk/timeline/{module}.py` |'"\\n'
+section+='\\nAll16 goldens are byte-identical frozen d474; M1+track-label also match Bundle1.\\n\\n| Absolute golden path | SHA256 |\\n|---|---|\\n'
+for name,data in m['goldens'].items():
+    section+=f\"| "'`{root}/{name}` | `{data['"'sha256']}"'` |'"\\n\"
+section+=f'''\\nUnsupported remaining cases: CLI/commands-file does not supply custom-pack
+selected-schema capture inputs ("'`schema_inputs`/`realm_id`); refusal preserves
+file/outbox. Native SDK/provider tests do not qualify that CLI surface. App'"'s
+actual browser/popup/PARAM pair, full suite, macOS, owner film and pixel/audio
+parity are unverified here. No all-gate1/all-M2 completion or App readiness claim.
+M2 integration stays HELD until PLAN M1 and manager approval; all frozen/leased
+refs remain unchanged. Capture/golden/source manifest: "'`{notes}/final-manifest.json`;
+exact report/commands/limitations: `{notes}/report.md`.
+'"'''
+design.write_text(content+section)
+commit='''fix(timeline): qualify exact Bundle2 Runtime pair
+
+Preserve exact numeric revision images on the current M2 provider and refresh
+the normal Runtime source pin to the reviewed clean 0.2.3 successor. Add the
+numeric move and PARAM regression tests without changing value guards.
+
+Qualify the complete 29-case M1 cohort within 207 paired cases, then remove
+only the now-passing nullable first-clip xfail marker. Keep schemas and all
+portable goldens unchanged; retain App release and integration review holds.
+'''
+for name in ['commit-msg','commit-msg.txt']:
+    (worker/name).write_text(commit)
+# Include untracked test additions in the review patch without index writes.
+patch=subprocess.check_output(['git','diff','--binary','HEAD'])
+for name in subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines():
+    extra=subprocess.run(['git','diff','--no-index','--binary','/dev/null',name],capture_output=True)
+    assert extra.returncode==1
+    patch+=extra.stdout
+(notes/'final.patch').write_bytes(patch)
+print('Published report/design and both commit messages.')
+print('Complete review patch SHA256:',hashlib.sha256(patch).hexdigest())
+for path in ['/tmp/agt-m2-final-numeric.patch','/tmp/agt-m2-final-qualify-mypy','/tmp/agt-m2-final-qualify-mypy-base']:
+    p=Path(path)
+    if p.is_dir(): shutil.rmtree(p)
+    elif p.exists(): p.unlink()
+PY" in /home/user/work/wt/agt-m2-bundle2-final-qualify
+ succeeded in 5523ms:
+Published report/design and both commit messages.
+Complete review patch SHA256: 5d813e28e7c3537ab9eb38d97cdf193bce0824c057a0bf406572924f6c14996e
+
+exec
+/bin/bash -lc 'git diff --check; git status --short; git diff --stat; git diff -- tests/editing_conformance/test_commit_runtime_first_clip.py; tail -7 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/commit-msg; git -C /home/user/work/wt/rt-m2-null-speed-clean-candidate status --short' in /home/user/work/wt/agt-m2-bundle2-final-qualify
+ succeeded in 393ms:
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/sdk/timeline/commit.py
+ M runtime.lock.json
+ M tests/editing_conformance/test_commit_runtime_first_clip.py
+ M tests/sdk/test_timeline_commit_provider_document.py
+?? tests/editing_conformance/test_commit_runtime_numeric_move.py
+?? tests/editing_conformance/test_commit_runtime_numeric_params.py
+?? tests/sdk/test_timeline_numeric_revision_runtime.py
+ astrid/core/timeline/authoring_bundle.py           |  4 +--
+ astrid/sdk/timeline/commit.py                      | 17 ++++++------
+ runtime.lock.json                                  |  2 +-
+ .../test_commit_runtime_first_clip.py              |  3 +--
+ .../sdk/test_timeline_commit_provider_document.py  | 31 ++++++++++++++++++++++
+ 5 files changed, 44 insertions(+), 13 deletions(-)
+diff --git a/tests/editing_conformance/test_commit_runtime_first_clip.py b/tests/editing_conformance/test_commit_runtime_first_clip.py
+index 99962dce..c0df84fe 100644
+--- a/tests/editing_conformance/test_commit_runtime_first_clip.py
++++ b/tests/editing_conformance/test_commit_runtime_first_clip.py
+@@ -20,8 +20,7 @@ from tests.helpers.runtime import use_runtime
+ pytestmark = pytest.mark.integration
+ 
+ 
+-@pytest.mark.parametrize('nullable_speed', [False, pytest.param(True, marks=pytest.mark.xfail(
+-    strict=True, reason='Runtime timeline_inspection must support main\'s explicit null speed default'))])
++@pytest.mark.parametrize('nullable_speed', [False, True])
+ def test_empty_bootstrap_first_clip_client_commit_exact_reload_inverse_redo(
+     tmp_path, monkeypatch, real_runtime, nullable_speed,
+ ):
+APPROVED, with refinements. Owners: Agent = projection method + candidate forwarding; Runtime = validation; Viewing = honest label + host consumption.
+1. An ADDITIVE OPTIONAL method on the EXISTING startup-loaded semantic provider. It calls the one existing projector, project_runtime_parent_composition: no copy, no Runtime re-implementation. It is pure: no IO, deterministic, verified CanonicalDocument (+ optional authoring_preview) in, projection out. No ABI major bump, no new DTO or endpoint, no renderer, and no client in save. Only capture task admission calls it; commit save is unchanged.
+   Required: a golden test showing the method's output equals what managed_timeline._project_exact_parent_head produces for the same saved revision. A provider without the method fails canonical certification closed; native CAS is unaffected.
+2. Agent forwards the real existing authoring_preview.candidate as plain opaque task data, never as caller-authoritative provenance, with its base/candidate binding kept. Runtime verifies base, scope and retained reads, then runs the same projector. The candidate stays a draft, not an accepted revision. Custody goes only through the existing task/CAS seam.
+3. Until then: explicit cas-only UNCERTIFIED preview. A claimed revision or working-copy certificate without authority REFUSES before any CAS or task write. The host and viewer never mint a canonical source from leftover capture metadata.
+   Old tests that require a certified working copy without a candidate are adapted to the uncertified-label expectation, each with a deletion-ledger row giving the reason. They are not relabelled green.
+Done when the 12 forgeries are refused and the positive controls pass (saved, plus working copy with a real candidate). This gates gate 1/7 and M3; it is not M1.
+fix(timeline): qualify exact Bundle2 Runtime pair
+
+Preserve exact numeric revision images on the current M2 provider and refresh
+the normal Runtime source pin to the reviewed clean 0.2.3 successor. Add the
+numeric move and PARAM regression tests without changing value guards.
+
+Qualify the complete 29-case M1 cohort within 207 paired cases, then remove
+only the now-passing nullable first-clip xfail marker. Keep schemas and all
+portable goldens unchanged; retain App release and integration review holds.
+
+codex
+Applied the approved numeric delta and normal Runtime pin to `4c145dc6`.
+
+- Central qualification: **207 passed**, including the complete 29-case M1 cohort.
+- Focused tests: **290 passed**; import fence: **1 passed**.
+- Ruff, vendor, CLI generation and invariant checks passed. Mypy retains two identical baseline errors.
+- Removed only the nullable-speed xfail after both unchanged cases passed.
+
+Final tree: `1434f42b48fd062248faf1f4abef7ff467186377`. Commit messages are ready; harness commit remains pending.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/notes/report.md).
+
+Candidate is **COMPOSED/REVIEWABLE**. Next: harness finalization, manager review and App qualification. Custom-pack CLI capture inputs remain unsupported; integration awaits PLAN’s M1 record.
+tokens used
+144,955
+Applied the approved numeric delta and normal Runtime pin to `4c145dc6`.
+
+- Central qualification: **207 passed**, including the complete 29-case M1 cohort.
+- Focused tests: **290 passed**; import fence: **1 passed**.
+- Ruff, vendor, CLI generation and invariant checks passed. Mypy retains two identical baseline errors.
+- Removed only the nullable-speed xfail after both unchanged cases passed.
+
+Final tree: `1434f42b48fd062248faf1f4abef7ff467186377`. Commit messages are ready; harness commit remains pending.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-final-qualify/notes/report.md).
+
+Candidate is **COMPOSED/REVIEWABLE**. Next: harness finalization, manager review and App qualification. Custom-pack CLI capture inputs remain unsupported; integration awaits PLAN’s M1 record.

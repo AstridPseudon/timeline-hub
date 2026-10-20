@@ -1,0 +1,400 @@
+   455	    return observations
+   456	
+   457	
+   458	def _look_inventory(
+   459	    record: Mapping[str, Any],
+   460	    properties: Sequence[str],
+   461	    source_paths: Sequence[str],
+   462	    errors: list[str],
+   463	    *,
+   464	    knowledge: str = "known",
+   465	) -> dict[str, Any]:
+   466	    result = _public_refs(record, errors)
+   467	    result.update(
+   468	        {
+   469	            "knowledge": knowledge,
+   470	            "properties": _dedupe(properties),
+   471	            "source_paths": _dedupe(source_paths),
+   472	            "interval_frames": list(record["interval_frames"]),
+   473	        }
+   474	    )
+   475	    return result
+   476	
+   477	
+   478	def _transition_inventory(
+   479	    clip: Mapping[str, Any], record: Mapping[str, Any], *, fps: float, api: Mapping[str, Any], errors: list[str]
+   480	) -> dict[str, Any] | None:
+   481	    source_path = record.get("source_path")
+   482	    error = f"{source_path}.transition is unreadable" if isinstance(source_path, str) else "transition is unreadable"
+   483	    try:
+   484	        transition = api["clip_fields"].read(clip, "transition", fps=fps)
+   485	    except Exception:  # noqa: BLE001 - unreadable declarations make the scan incomplete
+   486	        _add_error(errors, error)
+   487	        return None
+   488	    if transition is None:
+   489	        return None
+   490	    if not isinstance(transition, Mapping) or any(
+   491	        transition.get(key) is not None and not isinstance(transition[key], str)
+   492	        for key in ("id", "type")
+   493	    ):
+   494	        _add_error(errors, error)
+   495	        return None
+   496	    transition_id = transition.get("id")
+   497	    transition_type = transition.get("type")
+   498	    if not isinstance(transition_id, str) or not transition_id:
+   499	        transition_id = transition_type
+   500	    if not isinstance(transition_id, str) or not transition_id:
+   501	        _add_error(errors, error)
+   502	        return None
+   503	    if not isinstance(transition_type, str) or not transition_type:
+   504	        transition_type = transition_id
+   505	    result = _public_refs(record, errors)
+   506	    result.update(
+   507	        {
+   508	            "transition_id": transition_id,
+   509	            "transition_type": transition_type,
+   510	            "semantics": "incoming",
+   511	            "interval_frames": list(record["interval_frames"]),
+   512	            "source_paths": _dedupe(
+   513	                [
+   514	                    f"{record['source_path']}.transition"
+   515	                    if isinstance(record.get("source_path"), str)
+   516	                    else ""
+   517	                ]
+   518	            ),
+   519	        }
+   520	    )
+   635	        if isinstance(clip_id, str):
+   636	            record["clip_id"] = clip_id
+   637	        records.append((clip, record))
+   638	        source_path = source.get("source_path")
+   639	        look_paths = _look_source_paths(clip, source_path, api["clip_fields"])
+   640	        look_names = [name for name in _LOOK_NAMES if name in look_paths]
+   641	        look_decode_failed = False
+   642	        try:
+   643	            described = api["clip_fields"].describe(clip, fps=fps)
+   644	        except Exception:  # noqa: BLE001 - unreadable looks make the scan incomplete
+   645	            unreadable = _unreadable_look_names(
+   646	                clip,
+   647	                fps=fps,
+   648	                clip_fields=api["clip_fields"],
+   649	                names=look_names,
+   650	            )
+   651	            for name in unreadable:
+   652	                _add_error(errors, f"{look_paths[name]} is unreadable")
+   653	            look_decode_failed = bool(unreadable)
+   654	            described = {}
+   655	        if clip.get("clipType", clip.get("clip_type", "media")) in {"media", "video", "image"}:
+   656	            media_properties = (
+   657	                [name for name in _MEDIA_LOOK_NAMES if name in look_names]
+   658	                if look_decode_failed
+   659	                else [name for name in _MEDIA_LOOK_NAMES if name in described]
+   660	            )
+   661	            if media_properties:
+   662	                media_look_inventory.append(
+   663	                    _look_inventory(
+   664	                        record,
+   665	                        media_properties,
+   666	                        [look_paths[name] for name in media_properties if name in look_paths],
+   667	                        errors,
+   668	                        knowledge="unknown" if look_decode_failed else "known",
+   669	                    )
+   670	                )
+   671	        transition = _transition_inventory(clip, record, fps=fps, api=api, errors=errors)
+   672	        if transition is not None:
+   673	            transition_boundaries.append(transition)
+   674	        info = _element_info(clip, registry, api["root"])
+   675	        if info["classification"] != "not_element":
+   676	            look_properties = (
+   677	                look_names if look_decode_failed else [name for name in _LOOK_NAMES if name in described]
+   678	            )
+   679	            element_candidates.append(
+   680	                {
+   681	                    **record,
+   682	                    "track_id": clip.get("track"),
+   683	                    "classification": (
+   684	                        "unknown_candidate" if look_decode_failed else info["classification"]
+   685	                    ),
+   686	                    "compile_availability": (
+   687	                        "unknown" if look_decode_failed else info["compile_availability"]
+   688	                    ),
+   689	                    "properties": look_properties,
+   690	                    "source_paths": [look_paths[name] for name in look_properties if name in look_paths],
+   691	                }
+   692	            )
+   693	
+   694	    findings: list[dict[str, Any]] = []
+   695	    projected_registry = projected.registry if isinstance(projected.registry, Mapping) else {}
+   696	    for clip, record in records:
+   697	        refs = _public_refs(record, errors)
+   698	        for name, curve_present, curve_known, properties, paths, audio_known in _audio_fade_observations(
+   699	            clip, source_path=record.get("source_path"), fps=fps, config=config, registry=projected_registry, api=api
+   700	        ):
+   701	            findings.append(
+   702	                _finding(
+   703	                    category="continuous_audio_fade",
+   704	                    known=audio_known,
+   705	                    properties=properties,
+   706	                    source_paths=paths,
+   707	                    refs=refs,
+   708	                    errors=errors,
+   709	                    interval_frames=record["interval_frames"],
+   710	                )
+
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/python -I -B - <<'PY'
+from pathlib import Path
+import importlib.util, json
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scanner-107/scanner-review-107')
+def load(n,p):
+ s=importlib.util.spec_from_file_location(n,p); m=importlib.util.module_from_spec(s); assert s.loader; s.loader.exec_module(m); return m
+t=load('t',root/'tests/test_owner_film_cliplook_scan.py'); s=load('s',root/'owner_film_cliplook_scan.py')
+for label,mutate in [
+ ('opacity=true',lambda d:d['parent_revision']['payload']['clips'][0].__setitem__('opacity',True)),
+ ('entrance=\"BAD\"',lambda d:d['parent_revision']['payload']['clips'][0].__setitem__('entrance','BAD')),
+ ('entrance=[]',lambda d:d['parent_revision']['payload']['clips'][0].__setitem__('entrance',[])),
+ ('fadeIn=\"BAD\"',lambda d:d['parent_revision']['payload']['clips'][3]['params'].__setitem__('fadeIn','BAD')),
+ ('fadeIn=[]',lambda d:d['parent_revision']['payload']['clips'][3]['params'].__setitem__('fadeIn',[])),
+ ('fadeInCurve=[]',lambda d:d['parent_revision']['payload']['clips'][3]['params'].__setitem__('fadeInCurve',[])),
+]:
+ d=t.synthetic_document(); mutate(d); r=s.scan(d,agent_root='/home/user/work/wt/agt-review-scanner-107')
+ rows=[x for x in r['findings'] if x.get('clip_ids') in (['element-a'],['element-a','element-b']) or x.get('clip_id')=='audio-curved']
+ print(label, json.dumps({'status':r['status'],'errors':r['closure_errors'],'rows':[(x.get('clip_id') or x.get('clip_ids'),x['semantic_category'],x['knowledge'],x['properties']) for x in rows]}))
+PY" in /home/user/work/wt/agt-review-scanner-107
+ succeeded in 4214ms:
+opacity=true {"status": "complete", "errors": [], "rows": [["audio-curved", "continuous_audio_fade", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], ["audio-curved", "curve_honoured", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], [["element-a"], "element_clip_look_overlap", "known", ["entrance", "crop_left", "speed"]], [["element-a", "element-b"], "element_clip_look_overlap", "known", ["entrance", "crop_left", "speed", "exit"]]]}
+entrance="BAD" {"status": "complete", "errors": [], "rows": [["audio-curved", "continuous_audio_fade", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], ["audio-curved", "curve_honoured", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], [["element-a"], "element_clip_look_overlap", "known", ["opacity", "entrance", "crop_left", "speed"]], [["element-a", "element-b"], "element_clip_look_overlap", "known", ["opacity", "entrance", "crop_left", "speed", "exit"]]]}
+entrance=[] {"status": "complete", "errors": [], "rows": [["audio-curved", "continuous_audio_fade", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], ["audio-curved", "curve_honoured", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], [["element-a"], "element_clip_look_overlap", "known", ["opacity", "entrance", "crop_left", "speed"]], [["element-a", "element-b"], "element_clip_look_overlap", "known", ["opacity", "entrance", "crop_left", "speed", "exit"]]]}
+fadeIn="BAD" {"status": "complete", "errors": [], "rows": [["audio-curved", "continuous_audio_fade", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], ["audio-curved", "curve_honoured", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], [["element-a"], "element_clip_look_overlap", "known", ["opacity", "entrance", "crop_left", "speed"]], [["element-a", "element-b"], "element_clip_look_overlap", "known", ["opacity", "entrance", "crop_left", "speed", "exit"]]]}
+fadeIn=[] {"status": "complete", "errors": [], "rows": [["audio-curved", "continuous_audio_fade", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], ["audio-curved", "curve_honoured", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], [["element-a"], "element_clip_look_overlap", "known", ["opacity", "entrance", "crop_left", "speed"]], [["element-a", "element-b"], "element_clip_look_overlap", "known", ["opacity", "entrance", "crop_left", "speed", "exit"]]]}
+fadeInCurve=[] {"status": "complete", "errors": [], "rows": [["audio-curved", "continuous_audio_fade", "known", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], ["audio-curved", "curve_honoured", "unknown", ["fade_in", "params.fadeIn", "params.fadeInCurve"]], [["element-a"], "element_clip_look_overlap", "known", ["opacity", "entrance", "crop_left", "speed"]], [["element-a", "element-b"], "element_clip_look_overlap", "known", ["opacity", "entrance", "crop_left", "speed", "exit"]]]}
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worktree status ---'; git status --short; printf '%s\\n' '--- worktree untracked build/temp candidates ---'; find . -maxdepth 3 \\( -name '__pycache__' -o -name '.pytest_cache' -o -name '*.pyc' \\) -print; printf '%s\\n' '--- fuzz artifact counts ---'; find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scanner-107/fuzz-1.0.7 -type f -name '*.json' | wc -l; du -sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scanner-107/fuzz-1.0.7" in /home/user/work/wt/agt-review-scanner-107
+ succeeded in 0ms:
+--- worktree status ---
+--- worktree untracked build/temp candidates ---
+./astrid/__pycache__
+./astrid/__pycache__/__init__.cpython-313.pyc
+./astrid/__pycache__/version.cpython-313.pyc
+./astrid/core/__pycache__
+./astrid/sdk/__pycache__
+--- fuzz artifact counts ---
+131
+600K	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scanner-107/fuzz-1.0.7
+
+exec
+/bin/bash -lc "find astrid -type d -name __pycache__ -printf '%TY-%Tm-%Td %TH:%TM:%TS %p\\n' | sort | tail -20; find astrid -type f -name '*.pyc' -printf '%TY-%Tm-%Td %TH:%TM:%TS %p\\n' | sort | tail -20" in /home/user/work/wt/agt-review-scanner-107
+ succeeded in 0ms:
+2026-10-20 09:20:20.0829893350 astrid/__pycache__
+2026-10-20 09:20:20.2477590810 astrid/core/__pycache__
+2026-10-20 09:20:20.2679246290 astrid/core/registry/__pycache__
+2026-10-20 09:20:20.2761770610 astrid/core/contracts/__pycache__
+2026-10-20 09:20:20.2792317020 astrid/core/element/__pycache__
+2026-10-20 09:20:20.3256051550 astrid/core/timeline/validators/__pycache__
+2026-10-20 09:20:20.3729429580 astrid/core/timeline/__pycache__
+2026-10-20 09:20:20.3932000290 astrid/sdk/__pycache__
+2026-10-20 09:20:20.4019097710 astrid/sdk/timeline/__pycache__
+2026-10-20 09:20:20.4078146250 astrid/core/pack/__pycache__
+2026-10-20 09:20:20.4111891200 astrid/core/foundation/__pycache__
+2026-10-20 09:20:20.3182574470 astrid/core/timeline/validators/__pycache__/__init__.cpython-313.pyc
+2026-10-20 09:20:20.3202162260 astrid/core/timeline/validators/__pycache__/arrangement.cpython-313.pyc
+2026-10-20 09:20:20.3208069730 astrid/core/timeline/validators/__pycache__/metadata.cpython-313.pyc
+2026-10-20 09:20:20.3220814570 astrid/core/timeline/validators/__pycache__/pool.cpython-313.pyc
+2026-10-20 09:20:20.3230129920 astrid/core/timeline/validators/__pycache__/registry.cpython-313.pyc
+2026-10-20 09:20:20.3256051550 astrid/core/timeline/validators/__pycache__/timeline.cpython-313.pyc
+2026-10-20 09:20:20.3267038770 astrid/core/timeline/__pycache__/kinds.cpython-313.pyc
+2026-10-20 09:20:20.3297959420 astrid/core/timeline/__pycache__/duration.cpython-313.pyc
+2026-10-20 09:20:20.3348173720 astrid/core/timeline/__pycache__/shot_composition.cpython-313.pyc
+2026-10-20 09:20:20.3576472130 astrid/core/timeline/__pycache__/shot_composition_migration.cpython-313.pyc
+2026-10-20 09:20:20.3653670550 astrid/core/timeline/__pycache__/shot_composition_projection.cpython-313.pyc
+2026-10-20 09:20:20.3668088180 astrid/core/timeline/__pycache__/audio_curves.cpython-313.pyc
+2026-10-20 09:20:20.3729429580 astrid/core/timeline/__pycache__/clip_fields.cpython-313.pyc
+2026-10-20 09:20:20.3932000290 astrid/sdk/__pycache__/__init__.cpython-313.pyc
+2026-10-20 09:20:20.3936651070 astrid/sdk/timeline/__pycache__/__init__.cpython-313.pyc
+2026-10-20 09:20:20.3967267300 astrid/sdk/timeline/__pycache__/capture.cpython-313.pyc
+2026-10-20 09:20:20.4008559500 astrid/sdk/timeline/__pycache__/_command_state.cpython-313.pyc
+2026-10-20 09:20:20.4019097710 astrid/sdk/timeline/__pycache__/_common.cpython-313.pyc
+2026-10-20 09:20:20.4078146250 astrid/core/pack/__pycache__/source_setup.cpython-313.pyc
+2026-10-20 09:20:20.4111891200 astrid/core/foundation/__pycache__/atomic_io.cpython-313.pyc
+
+exec
+/bin/bash -lc "find astrid -type d -name __pycache__ -prune -exec rm -rf {} +
+git status --short
+find . -maxdepth 4 \\( -name '__pycache__' -o -name '.pytest_cache' -o -name '*.pyc' \\) -print" in /home/user/work/wt/agt-review-scanner-107
+ succeeded in 0ms:
+codex
+The regression checklist items from 1.0.5/1.0.6 are covered and pass, including audio source paths, malformed transitions, duplicate internal revision refusal, one projector, IDs-only output, explicit `asset=None`, canonical incoming transitions, curve gating, and cross-track overlap. The remaining fail-open is reproducible in 1.0.7 itself; I’m recording the exact inputs, outputs, and remediation in the required flat review.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scanner-1.0.7.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scanner-1.0.7.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scanner-1.0.7.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7a8316e28af5a48e7fb1463365ec88512dc7f4f4
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scanner-1.0.7.md
+@@ -0,0 +1,109 @@
++# Agent review: owner film clip-look scanner 1.0.7
++
++Reviewer: Agent worker `agt-review-scanner-107` (2026-10-20). Review only; no
++repository code changed, nothing pushed or merged.
++
++## Verdict
++
++**REJECT** for the exact artifact below. The candidate still reports malformed
++look and audio-fade values as `status: complete`, contrary to the handoff rule
++that malformed metadata must produce `incomplete`/error rather than a clean
++result or silently dropped row.
++
++## Artifact and flat-copy verification
++
++- Archive: `artifacts/owner-film-viewing-tools-v1.0.7.tgz`
++- Archive size: `15630` bytes
++- Archive SHA-256: `baf2fd28f96670b02e4dc63e21bc680e2ab0339a97671515d79ab91f9cbd3e27`
++- The archive was opened with Python `tarfile` in memory only; it was never
++  extracted or executed in place.
++- Members were copied to a fresh scratch directory and compared byte-for-byte
++  with the flat `design/handoff-viewing-scanner-final-1.0.7-*` copies. All four
++  matched:
++  - `owner_film_cliplook_scan.py`: 34,961 bytes,
++    `f195b21e05fc0f76f0483270ae77a3198926535f6ea83e5fb784a85be84b6480`
++  - `tests/test_owner_film_cliplook_scan.py`: 26,401 bytes,
++    `074ffcb9c140e87661aa5b82ac9e57e30776be05e29b288bc7ec956e91e1e51a`
++  - `tests/conftest.py`: 385 bytes,
++    `ea7d84927b97d78e2eb17fa87180ce2b7591f2c53645d1799b99f2c34197e430`
++  - `README.md`: 5,795 bytes,
++    `ef85115a1d294ae2cc46c9ad88b1f9346508bbad065e0b11977e914915300819`
++
++The flat metadata has a packaging inconsistency: its `source_archive` and
++`source_sha256` still identify the 1.0.6 archive, although its 1.0.7 archive
++entry and member hashes are correct.
++
++## Test run
++
++Command, from the fresh scratch copy:
++
++```text
++/home/user/work/venv-agent/bin/python -I -B -m pytest -p no:cacheprovider --agent-root /home/user/work/wt/agt-review-scanner-107 -q tests
++```
++
++Result: **40 passed in 8.78s**.
++
++The fuzz harness wrote 10 JSON variants for each of 13 authored look,
++transition, and audio-fade fields (130 variants total) under the worker
++scratchpad, then scanned each with the same interpreter and Agent root. The
++structurally malformed transition variants failed closed, but the following
++malformed look/fade inputs did not:
++
++- `parent_revision.payload.clips[0].entrance = "BAD_ENTRANCE"`: `status:
++  complete`, `closure_errors: []`, and a `known` entrance inventory/finding.
++- `parent_revision.payload.clips[0].entrance = ["BAD_ENTRANCE"]`: same wrong
++  complete/known result.
++- `parent_revision.payload.clips[0].opacity = true`: `status: complete`, no
++  error, and the affected `opacity` is silently absent from the element
++  finding.
++- `parent_revision.payload.clips[3].params.fadeIn = "BAD_FADE"` and
++  `[...] = ["BAD_FADE"]`: `status: complete`, no error, while the scanner
++  emits a `known` `continuous_audio_fade` finding for the malformed value.
++- `parent_revision.payload.clips[3].params.fadeInCurve = ["BAD_CURVE"]`:
++  `status: complete`, no error, while `curve_honoured` is emitted as
++  `knowledge: unknown` instead of making the closure incomplete.
++
++The same pattern was reproduced across the 10-variant fuzz sets for visual
++entrance/exit and crop values. Free-form string-valued transition mappings
++were not counted as defects because the candidate explicitly permits those
++IDs/types unchanged; list/non-dict transition values did fail closed.
++
++## Regression checklist
++
++The following prior 1.0.5/1.0.6 requirements pass in the 40-test suite and
++source review:
++
++- audio-fade findings retain openable parent and occurrence-child source paths;
++- malformed transition values produce bounded closure errors;
++- duplicate internal revision IDs make the closure incomplete rather than
++  selecting one row;
++- the scanner calls the single Agent projector;
++- output is bounded to IDs/pins/properties/paths/ranges/classifications;
++- canonical incoming transitions and explicit `asset=None` clears are kept;
++- `curve_honoured` is emitted only for a present, non-linear curve;
++- element/look overlap includes clips across tracks with half-open intervals.
++
++## Blocking defect and likely fix
++
++This is a concrete fail-open, not a stylistic concern. The scanner's
++`_unreadable_look_names` probes `FieldSpec.stored_at` only, so audio fades in
++`stored_at_audio` are never checked. The audio path then reads raw values and
++only downgrades an invalid curve to `unknown` without adding a closure error.
++For visual animation/number fields, the human-form `clip_fields.describe`
++path can accept or normalize malformed stored values without raising, so the
++scanner treats them as known or drops them as defaults.
++
++The scanner should validate every declared stored field with the Agent codec,
++including the audio-specific paths, and add only bounded authored source-path
++errors for invalid values. Add regression cases for malformed strings, lists,
++and non-dict values for each look/fade family; retain the existing allowance
++for free-form transition strings/mappings if that policy remains settled. Fix
++the 1.0.7 metadata's stale 1.0.6 source fields as part of repackaging.
++
++## Not verified
++
++- No owner-film canonical closure was supplied, so no owner-data run was made.
++- No full Agent suite was run; the exact delivery test suite above was run.
++- No macOS claim.
++
++**REJECT**
+
+exec
+/bin/bash -lc 'REPORT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scanner-1.0.7.md
+DONE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scanner-107/DONE
+test -s "$REPORT"
+tail -12 "$REPORT"
+touch "$DONE"
+test -f "$DONE"
+printf '"'\\nDONE marker: %s\\n' \""'$DONE"
+printf '"'worktree status:\\n'
+git status --short" in /home/user/work/wt/agt-review-scanner-107
+ succeeded in 0ms:
+errors for invalid values. Add regression cases for malformed strings, lists,
+and non-dict values for each look/fade family; retain the existing allowance
+for free-form transition strings/mappings if that policy remains settled. Fix
+the 1.0.7 metadata's stale 1.0.6 source fields as part of repackaging.
+
+## Not verified
+
+- No owner-film canonical closure was supplied, so no owner-data run was made.
+- No full Agent suite was run; the exact delivery test suite above was run.
+- No macOS claim.
+
+**REJECT**
+
+DONE marker: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scanner-107/DONE
+worktree status:
+
+codex
+## Review complete: **REJECT**
+
+Report: [agent-review-scanner-1.0.7.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scanner-1.0.7.md>)
+
+- Archive size/hash and all flat-copy comparisons passed.
+- Test command: `python -I -B -m pytest -p no:cacheprovider --agent-root /home/user/work/wt/agt-review-scanner-107 -q tests`
+- Result: **40 passed in 8.78s**
+- Fuzzed 130 malformed look/transition/fade variants.
+- Concrete defect: malformed entrance, opacity, audio fade, and curve values can return `status: complete` with no closure errors, including silently dropped findings.
+- Also noted stale 1.0.6 source metadata in the 1.0.7 metadata file.
+- No owner-film run or full suite was performed.
+- Completion marker created at `workers/agt-review-scanner-107/DONE`.
+tokens used
+119,579
+## Review complete: **REJECT**
+
+Report: [agent-review-scanner-1.0.7.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scanner-1.0.7.md>)
+
+- Archive size/hash and all flat-copy comparisons passed.
+- Test command: `python -I -B -m pytest -p no:cacheprovider --agent-root /home/user/work/wt/agt-review-scanner-107 -q tests`
+- Result: **40 passed in 8.78s**
+- Fuzzed 130 malformed look/transition/fade variants.
+- Concrete defect: malformed entrance, opacity, audio fade, and curve values can return `status: complete` with no closure errors, including silently dropped findings.
+- Also noted stale 1.0.6 source metadata in the 1.0.7 metadata file.
+- No owner-film run or full suite was performed.
+- Completion marker created at `workers/agt-review-scanner-107/DONE`.

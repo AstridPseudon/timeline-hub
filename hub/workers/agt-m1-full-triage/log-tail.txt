@@ -1,0 +1,400 @@
++
++## Run identity and exact counts
++
++| run | source/snapshot | exact command | result |
++|---|---|---|---|
++| pre-port baseline `agent-full-1019191532-6465` | source `a650280634de105641561c3475e37b2e5f77c4ef`; test tree `e475f212efff430149cbc2e6fa834980106aaf13` | `/home/user/work/venv-agent/bin/python -m pytest -q -n 3` | 11,503 passed, 48 failed, 456 skipped, 15 errors, 13 warnings, 563 subtests, 3,433.42s (0:57:13) |
++| merged `agent-full-1019193420-11899` | snapshot/tree `3c67145375d72f2507a22cdce54146ed240e45ad`; this is `HEAD^{tree}` for integration `a8eb28af525e13dc12391006b916b5cb1e60d9c4` | `/home/user/work/venv-agent/bin/python -m pytest -q -n 3` | 11,652 passed, 116 failed, 456 skipped, 15 errors, 13 warnings, 563 subtests, 2,392.19s (0:39:52) |
++
++The merged result is 149 more passes but also 68 more failed nodes; the
++runtime was 1,041.23s shorter. The current source delta from baseline is the
++49-file Agent M1/Viewing integration change, `+6,784/-105` lines. No duplicate
++full run, install, browser, socket, or focused-suite rerun was used for this
++comparison.
++
++## Complete node-set comparison
++
++The saved logs were parsed by exact lines beginning `FAILED ` or `ERROR ` and
++compared as node-ID sets:
++
++| set | nodes |
++|---|---:|
++| old non-passing (`48 failed + 15 errors`) | 63 |
++| current non-passing (`116 failed + 15 errors`) | 131 |
++| resolved | 0 |
++| still failing/erroring | 63 |
++| added failures | 68 |
++
++All 63 old node IDs are still present. The literal old IDs and their original
++classification are the ones enumerated in `design/agent-baseline.md`; the
++grouping below is a complete partition of those 63 nodes, not a rerun or an
++assumption that the baseline counts were unchanged.
++
++### Added failures — all 68
++
++| exact node family | count | observed traceback/evidence | classification |
++|---|---:|---|---|
++| `tests/core/execution/test_generic_host_child_bridge_d18.py::test_discovery_acquisition_production_cap_and_error_identity` with `slack ∈ {-1,0,5}`, `chunk ∈ {1,7,65536}`, `head ∈ {{}, {Content-Length:0}, {Content-Length:999999999}}`, `http_error ∈ {False,True}` | 54 | `ValueError: refusing to send a runtime credential to non-loopback host 'runtime'` at `astrid_runtime_client/generated.py:_require_loopback`, before the fixture's monkeypatched `urllib.request.urlopen` | M1 client/fixture contract break; not a proven live product defect because `http://runtime` is outside the settled local-loopback policy |
++| `...::test_discovery_acquisition_truncated_json_is_terminal_before_error_decode` with body `{"code":"private-prefix"`, `{"message":"\xc3`, `[]` and `http_error ∈ {False,True}` | 6 | same non-loopback rejection before truncated-body handling | same classification; live loopback/error-decoding behavior unverified |
++| `...::test_discovery_acquisition_remaining_budget_error_shared_client_and_binary_isolation` | 1 | same non-loopback rejection before the budget assertion | same classification |
++| `tests/packs/rendering/test_timeline_visualize_motion_views.py::test_visualize_prints_page_counts_timing_and_next_commands` | 1 | `lines[1]` is now `revision unavailable`, while the fixture supplies pages/timing but no revision snapshot or inspection | M1 provenance-output fixture drift; the new revision label is intentional, so no real-label defect is proved |
++| `tests/sdk/test_timeline_cuts.py::test_show_prints_the_cut_table_by_default` | 1 | `error protocol_error: immutable timeline read omitted its revision identity` | M1 immutable-readback fixture drift; the fixture has envelope `revision_id` only, while the new code accepts proof only from `bundle.base_parent.revision_id` |
++| `tests/sdk/test_timeline_cuts.py::test_show_unknown_shot_lists_the_shots` | 1 | same readback identity error | same classification |
++| `tests/sdk/test_timeline_cuts.py::test_show_as_script_and_diff_as_code` | 1 | same readback identity error | same classification |
++| `tests/test_artifact_manifest.py::test_cli_surface_is_current` | 1 | `gen_cli_surface.check()` returns `['timelines undo: changed']` | **M1 integration regression:** `cli.py` added publication undo surface but `cli-surface.json` was not regenerated |
++| `tests/test_artifact_manifest.py::test_planted_cli_surface_drift_is_named` | 1 | expected only `timelines show: changed`, received that plus `timelines undo: changed` | same stale generated-artifact regression, not an independent product failure |
++| `tests/test_generic_host.py::test_vendored_runtime_client_timeout_is_bounded_and_request_correlated` | 1 | `captured` has no `timeout` because the new `_urlopen_loopback` calls `build_opener().open`, bypassing the old `urllib.request.urlopen` monkeypatch | M1 transport test-seam compatibility break; source passes `self.timeout` to `opener.open`, so live timeout/request-ID behavior is unverified rather than disproved |
++
++The bridge family count is 54 + 6 + 1 = 61; the remaining seven rows total
++68. These are the only added node IDs in the merged summary.
++
++### Still failing — all 63 baseline nodes
++
++| baseline classification | exact current family | count | current evidence |
++|---|---|---:|---|
++| external VibeComfy fixture/setup | `tests/packs/runpod/test_worker_staging.py` (all 15 baseline nodes) | 15 errors | module fixture still raises `FileNotFoundError` for `/home/vibecomfy/vibecomfy` |
++| uninstalled-source child probe | `tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[...]` for the seven baseline parameters | 7 | child `python -I -c` still cannot import `astrid` from the dependency-only environment |
++| Runtime checkout/package exposure | `tests/packs/runpod/test_worker_preparation.py::test_runtime_activation_checkpoints_restore_only_the_exact_process` | 1 | `runtime_protocol.remote_worker_activation` remains unavailable in the full-suite environment |
++| xdist/execnet reporting/toolchain | `tests/packs/test_vibecomfy_metadata.py::VibeComfyStructuredMetadataTest::test_run_rejects_missing_or_empty_engine_inventory` | 1 | xdist still cannot serialize the parameter `PosixPath` (`execnet.gateway_base.DumpError`) |
++| pre-existing RunPod/main path drift | `tests/packs/runpod/test_ensure_storage.py` (2) and `tests/packs/runpod/test_pack_executors.py` (30), plus `tests/packs/runpod/test_provision_ports.py` (2) | 34 | same missing `astrid.packs.runpod.executors[...]` path/shape mismatch as baseline; no changed source in the M1 delta |
++| pre-existing test-code import issue | `tests/packs/runpod/test_worker_process.py::test_stop_pins_process_and_never_signals_after_identity_drift`, `::test_stop_requires_pinned_exit_proof_before_stopped_receipt[True]`, `[False]` | 3 | `signal` remains omitted by the test while the product module imports it |
++| pre-existing generic-host contract mismatch | `tests/test_generic_host.py::test_failed_worker_release_retains_original` | 1 | unchanged cleanup path still raises `CommandCleanupUnresolved` instead of the test's `CleanupUncertainError` |
++| structure gate | `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale` | 1 | node persists, but its cause changed to the M1-induced missing rationale for `astrid/sdk/workspace_client.py`; see below |
++
++The eight rows total 63. There were no resolved baseline nodes. The current
++RunPod, VibeComfy, H3, Runtime-import, xdist, worker-process, and generic-host
++release tracebacks preserve the baseline classifications. The structure node
++is the one exception: it is still a non-passing old node, but its current
++failure is M1-caused rather than the baseline's inherited generic-host line
++count mismatch.
++
++## M1 source inspection and manager action
++
++The exact source comparison was `git diff
++e475f212efff430149cbc2e6fa834980106aaf13..3c67145375d72f2507a22cdce54146ed240e45ad`.
++Relevant findings:
++
++* `astrid/packs/timeline/cli.py` adds publication undo options and changes the
++  generated CLI surface, but `cli-surface.json` is unchanged. This is an
++  actual M1 integration/delivery regression and was appended to
++  `design/m1-agent-coordination.md` for the manager.
++* `astrid/sdk/workspace_client.py` is 1,191 lines at the baseline and 1,243
++  lines in the merged tree. The structure contract correctly detects that the
++  new >1,200-line file has no `docs/giant-file-rationale.md` entry. This is an
++  actual M1 documentation/structure-gate regression and was appended to
++  `design/m1-agent-coordination.md`.
++* `astrid_runtime_client/generated.py` adds `_require_loopback` and routes
++  requests through a proxy-free opener. The bridge fixtures' `http://runtime`
++  alias and the timeout test's `urlopen` monkeypatch no longer reach their
++  intended assertions. This is a concrete M1 compatibility break in the full
++  suite, but the saved full run does not distinguish a stale test seam from a
++  live supported-loopback defect; it remains explicitly unverified.
++* `astrid/packs/timeline/cli_visualize.py` now emits provenance/revision lines,
++  and `astrid/packs/timeline/cli_show.py` rejects an immutable read unless the
++  loaded bundle proves `base_parent.revision_id`. Those changes match the
++  settled readback/provenance contract; the added failures use old fixtures
++  that do not supply the required proof. Do not weaken the contract or rewrite
++  the expectations to accept an unpinned read.
++
++No newly non-passing node came from the M1 registry/provider/outbox,
++editing-conformance, commit-runtime, sync, or workspace-client M1 test files.
++That observation is only a failure-set fact; it is not evidence that M1's
++seven gates are green. Browser, live socket, renderer-off, and full-suite
++claims beyond this central run remain unverified.
++
++## Reproduction and evidence boundary
++
++Reproduce the merged full run from the central Agent worktree with:
++
++```bash
++cd /home/user/work/agent
++/home/user/work/venv-agent/bin/python -m pytest -q -n 3
++```
++
++The saved authoritative artifacts are
++`tests/agent-full-1019193420-11899/log.txt`, `status`, `summary`, `snap`, and
++`exit` under the ORCH directory. This review used those artifacts and the
++baseline artifacts only; no tests were rerun, no fixtures were relaxed, and no
++expected failures or suppressions were added.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md
+index ed2dfa624beb121462689ccd38faa50fe7b9f93f..27a5cefb41bf1092fc67da98570a730314921aaa
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md
+@@ -300,3 +300,67 @@
+ These are proposals/evidence, not M1 fixes or parity claims. M1 original capture
+ and single-move semantics remain unchanged. No repository product/test edits,
+ new agents, product tests, git mutation or merge. M1 always wins conflicts.
++
++## Merged Agent full-suite delta — triage required (2026-10-19T20:53Z)
++
++Central `agent-full-1019193420-11899` on the frozen Agent tree
++`3c67145375d72f2507a22cdce54146ed240e45ad` completed with **11,652 passed,
++116 failed, 456 skipped, 15 errors, 563 subtests passed, 13 warnings, in
++2,392.19s (0:39:52)**. Exact command was
++`/home/user/work/venv-agent/bin/python -m pytest -q -n 3`. The pre-port
++`agent-full-1019191532-6465` was 11,503 passed, 48 failed, 456 skipped, 15
++errors, 563 subtests in 3,433.42s (0:57:13). Set comparison found all 63 old
++non-passing nodes still present, no resolved nodes, and 68 newly failing
++nodes.
++
++Two M1 integration regressions are concrete and need owner follow-up; no code
++was changed here:
++
++* `tests/test_artifact_manifest.py::test_cli_surface_is_current` and
++  `::test_planted_cli_surface_drift_is_named` now report `timelines undo:
++  changed`. M1 changed `astrid/packs/timeline/cli.py` to expose publication
++  undo, but did not update the generated `cli-surface.json`. This is a stale
++  generated artifact, not an inherited RunPod/setup failure.
++* The existing structure node
++  `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale`
++  still fails, but its cause changed. Baseline complained about the inherited
++  `generic_host.py` rationale count; merged M1 now reports missing rationale
++  for `astrid/sdk/workspace_client.py`, which grew from 1,191 to 1,243 lines
++  (+52 net) in the M1 client change. Add/update the inventory as a delivery
++  fix; do not hide the failure or alter the threshold.
++
++The other newly failing M1-adjacent nodes are contract/fixture compatibility
++breaks, not yet proof of a live product defect; preserve their expectations
++and resolve them against the settled contract:
++
++* 61 `tests/core/execution/test_generic_host_child_bridge_d18.py` nodes fail
++  before the mocked transport runs because M1's generated client now calls
++  `_require_loopback`, while these unchanged fixtures construct
++  `WorkspaceClient("http://runtime", "shared-auth")`. The concrete error is
++  `ValueError: refusing to send a runtime credential to non-loopback host
++  'runtime'`. The fixture alias is outside the local-door policy, so live
++  loopback behavior is unverified; either use an allowed loopback fixture or
++  an explicit test transport without weakening the policy.
++* `tests/test_generic_host.py::test_vendored_runtime_client_timeout_is_bounded_and_request_correlated`
++  fails because the new `_urlopen_loopback` uses `build_opener().open`, so its
++  old `urllib.request.urlopen` monkeypatch sees no call (`captured` has no
++  `timeout`). The source still passes `self.timeout` to `opener.open`; this is
++  an internal test seam compatibility break, and a live timeout/request-ID
++  assertion was not established by this full run.
++* `tests/packs/rendering/test_timeline_visualize_motion_views.py::test_visualize_prints_page_counts_timing_and_next_commands`
++  now sees the deliberate `revision unavailable` provenance line before the
++  timing line because the fixture supplies no snapshot/inspection revision.
++  This is a stale output fixture under the revision-label contract, not
++  evidence that a real revision was mislabeled.
++* The three `tests/sdk/test_timeline_cuts.py` nodes fail with
++  `immutable timeline read omitted its revision identity`: the fixture puts
++  `revision_id` only in the envelope, while M1 intentionally accepts identity
++  only from `bundle.base_parent.revision_id`. This is the required immutable
++  readback hardening; the test fixture does not prove a live readback defect.
++
++No newly non-passing node was observed in the M1 registry/provider/outbox,
++editing-conformance, commit-runtime, sync, or workspace-client M1 test files.
++That focused fact is not a green M1/full-suite claim. The 63 still-failing
++baseline nodes retain their prior setup/inherited classifications except for
++the structure node's M1-induced rationale cause above. Full details and the
++machine comparison are in `design/agent-m1-full-review.md`.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-triage/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-triage/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..25cd95e54d5a31c4fdb17a3065145fa09286286e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-triage/commit-msg
+@@ -0,0 +1,4 @@
++docs: record Agent M1 full-suite comparison
++
++Document the completed central full-suite result, exact node-set delta, and
++source-backed M1 regression classifications. No product source changes.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-triage/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-triage/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..de0595c8f2676c2e58495eb8e0dfef69b3f4180f
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-triage/report.md
+@@ -0,0 +1,73 @@
++# agt-m1-full-triage report
++
++## What I did
++
++- Read `PLAN.md`, `design/agent-baseline.md`, and `design/agent-review-notes.md`.
++- Waited for the single central merged Agent full run
++  `agent-full-1019193420-11899` to complete.
++- Compared every `FAILED`/`ERROR` node in its saved log against the old
++  `agent-full-1019191532-6465` log.
++- Wrote the complete review to
++  `ORCH/design/agent-m1-full-review.md`.
++- Appended the two concrete M1 integration regressions and the qualified
++  client/readback compatibility findings to
++  `ORCH/design/m1-agent-coordination.md` for the manager.
++- Made no repository/product/test changes; `git status --short` is clean.
++
++## Evidence
++
++Central command and result:
++
++```text
++/home/user/work/venv-agent/bin/python -m pytest -q -n 3
++11,652 passed, 116 failed, 456 skipped, 15 errors,
++13 warnings, 563 subtests passed in 2392.19s (0:39:52)
++tree=3c67145375d72f2507a22cdce54146ed240e45ad
++```
++
++Baseline was 11,503 passed, 48 failed, 456 skipped, 15 errors, 13 warnings,
++563 subtests in 3433.42s (0:57:13), tree
++`e475f212efff430149cbc2e6fa834980106aaf13`.
++
++Exact node-set comparison: 63 old non-passing, 131 current non-passing, 0
++resolved, 63 still failing, 68 added. The added set is 61 generic-host bridge
++client parameterizations, one visualize provenance fixture, three immutable
++readback fixtures, two stale CLI-surface checks, and one generated-client
++timeout seam check.
++
++No targeted tests were run: this task was documentation/evidence-only, and the
++central full run was the one already in progress. No browser, socket, install,
++duplicate full run, fixture relaxation, expected-failure change, or suppression
++was used.
++
++## Decisions/classifications
++
++- Classified stale `cli-surface.json` after M1 publication-undo CLI changes as
++  an actual M1 integration regression.
++- Classified the giant-file inventory node as an M1 structure/documentation
++  regression because `workspace_client.py` grew from 1,191 to 1,243 lines and
++  lacks a rationale entry.
++- Kept bridge, timeout, visualize, and show failures qualified: they are
++  concrete M1 compatibility/fixture breaks, but the full run does not prove a
++  live supported-loopback or immutable-readback product defect. The review
++  records the exact tracebacks and required contract-preserving next steps.
++- Preserved all 63 baseline classifications; none resolved in the merged run.
++
++## Blocked/unverified
++
++The merged full suite is nonpassing, so there is no M1/full-suite green claim.
++Live supported-loopback timeout behavior, browser journey, socket journey,
++renderer-off acceptance, and all other gates outside this central run remain
++unverified.
++
++## Recommended next steps
++
++1. Regenerate and check in the CLI surface for publication undo.
++2. Add the new `workspace_client.py` rationale entry or reduce the file within
++   the normal structure-gate process.
++3. Reconcile bridge and timeout test transport seams with the loopback-only
++   generated client without weakening local-door security.
++4. Update old show/visualize fixtures to include authoritative revision proof;
++   keep refusal of unpinned immutable reads.
++5. Rerun the named targeted lanes after those fixes, then request a new full
++   suite only after the last source change.
+
+codex
+Final consistency checks show the worktree remains clean, the review accounts for 131 current nonpassing nodes (`63 still + 68 added`), and the two required manager escalations are appended. I’ve also written the worker report and commit-message file; no product code or tests were modified.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+old = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-1019191532-6465/log.txt')
+new = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-1019193420-11899/log.txt')
+def ids(path):
+    return {line.split(' ', 1)[1] for line in path.read_text(errors='replace').splitlines() if line.startswith(('FAILED ', 'ERROR '))}
+o, n = ids(old), ids(new)
+assert len(o) == 63 and len(n) == 131 and len(o & n) == 63 and not (o - n) and len(n - o) == 68
+print(f'validated old={len(o)} current={len(n)} resolved={len(o-n)} still={len(o&n)} added={len(n-o)}')
+PY
+printf '%s\\n' '--- worktree ---'; git status --short; printf '%s\\n' '--- report/msg ---'; sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-triage/report.md; printf '%s\\n' '--- commit message ---'; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-triage/commit-msg" in /home/user/work/wt/agt-m1-full-triage
+ succeeded in 339ms:
+validated old=63 current=131 resolved=0 still=63 added=68
+--- worktree ---
+--- report/msg ---
+# agt-m1-full-triage report
+
+## What I did
+
+- Read `PLAN.md`, `design/agent-baseline.md`, and `design/agent-review-notes.md`.
+- Waited for the single central merged Agent full run
+  `agent-full-1019193420-11899` to complete.
+- Compared every `FAILED`/`ERROR` node in its saved log against the old
+  `agent-full-1019191532-6465` log.
+- Wrote the complete review to
+  `ORCH/design/agent-m1-full-review.md`.
+- Appended the two concrete M1 integration regressions and the qualified
+  client/readback compatibility findings to
+  `ORCH/design/m1-agent-coordination.md` for the manager.
+- Made no repository/product/test changes; `git status --short` is clean.
+
+## Evidence
+
+Central command and result:
+
+```text
+/home/user/work/venv-agent/bin/python -m pytest -q -n 3
+11,652 passed, 116 failed, 456 skipped, 15 errors,
+13 warnings, 563 subtests passed in 2392.19s (0:39:52)
+tree=3c67145375d72f2507a22cdce54146ed240e45ad
+```
+
+Baseline was 11,503 passed, 48 failed, 456 skipped, 15 errors, 13 warnings,
+563 subtests in 3433.42s (0:57:13), tree
+`e475f212efff430149cbc2e6fa834980106aaf13`.
+
+Exact node-set comparison: 63 old non-passing, 131 current non-passing, 0
+resolved, 63 still failing, 68 added. The added set is 61 generic-host bridge
+client parameterizations, one visualize provenance fixture, three immutable
+readback fixtures, two stale CLI-surface checks, and one generated-client
+timeout seam check.
+
+No targeted tests were run: this task was documentation/evidence-only, and the
+central full run was the one already in progress. No browser, socket, install,
+duplicate full run, fixture relaxation, expected-failure change, or suppression
+was used.
+
+## Decisions/classifications
+
+- Classified stale `cli-surface.json` after M1 publication-undo CLI changes as
+  an actual M1 integration regression.
+- Classified the giant-file inventory node as an M1 structure/documentation
+  regression because `workspace_client.py` grew from 1,191 to 1,243 lines and
+  lacks a rationale entry.
+- Kept bridge, timeout, visualize, and show failures qualified: they are
+  concrete M1 compatibility/fixture breaks, but the full run does not prove a
+  live supported-loopback or immutable-readback product defect. The review
+  records the exact tracebacks and required contract-preserving next steps.
+- Preserved all 63 baseline classifications; none resolved in the merged run.
+
+## Blocked/unverified
+
+The merged full suite is nonpassing, so there is no M1/full-suite green claim.
+Live supported-loopback timeout behavior, browser journey, socket journey,
+renderer-off acceptance, and all other gates outside this central run remain
+unverified.
+
+## Recommended next steps
+
+1. Regenerate and check in the CLI surface for publication undo.
+2. Add the new `workspace_client.py` rationale entry or reduce the file within
+   the normal structure-gate process.
+3. Reconcile bridge and timeout test transport seams with the loopback-only
+   generated client without weakening local-door security.
+4. Update old show/visualize fixtures to include authoritative revision proof;
+   keep refusal of unpinned immutable reads.
+5. Rerun the named targeted lanes after those fixes, then request a new full
+   suite only after the last source change.
+--- commit message ---
+docs: record Agent M1 full-suite comparison
+
+Document the completed central full-suite result, exact node-set delta, and
+source-backed M1 regression classifications. No product source changes.
+
+codex
+## Completed
+
+- Compared merged full run against baseline; wrote [agent-m1-full-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md).
+- Appended concrete M1 regressions to [m1-agent-coordination.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md).
+- Full result: 11,652 passed, 116 failed, 15 errors, 456 skipped; 2,392.19s.
+- Node comparison: 63 still failing, 0 resolved, 68 added.
+- No product changes; worktree clean. No targeted tests rerun.
+- Report and commit message written under the worker directory.
+
+Key regressions: stale CLI surface and missing `workspace_client.py` rationale entry. Bridge, timeout, visualize, and readback failures are documented as contract/fixture compatibility issues requiring follow-up.
+tokens used
+195,626
+## Completed
+
+- Compared merged full run against baseline; wrote [agent-m1-full-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md).
+- Appended concrete M1 regressions to [m1-agent-coordination.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md).
+- Full result: 11,652 passed, 116 failed, 15 errors, 456 skipped; 2,392.19s.
+- Node comparison: 63 still failing, 0 resolved, 68 added.
+- No product changes; worktree clean. No targeted tests rerun.
+- Report and commit message written under the worker directory.
+
+Key regressions: stale CLI surface and missing `workspace_client.py` rationale entry. Bridge, timeout, visualize, and readback failures are documented as contract/fixture compatibility issues requiring follow-up.

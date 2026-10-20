@@ -1,0 +1,9 @@
+name=agt-m2-wc6-reload-inverse-repair
+repo=agent
+base=tl/agt-m2-wc6-native-fixture-proof
+base_sha=53742bca
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-wc6-reload-inverse-repair
+started=2026-10-20T14:37:28Z

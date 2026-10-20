@@ -1,0 +1,9 @@
+name=agt-review-presenter-port
+repo=agent
+base=tl/vw-m3-presenter-current-port
+base_sha=80266992
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-presenter-port
+started=2026-10-20T07:15:04Z

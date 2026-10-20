@@ -1,0 +1,400 @@
+     "TargetBoundAuthoringBundle",
+ ]
+diff --git a/tests/timeline/test_authoring_bundle.py b/tests/timeline/test_authoring_bundle.py
+index 06d0d41c5dfcf3995b157434c81d3bf8ea82a1b9..2e8a4563cb76b85c8b54d1dfdfbedc3dc8ef8c61
+--- a/tests/timeline/test_authoring_bundle.py
++++ b/tests/timeline/test_authoring_bundle.py
+@@ -11,7 +11,6 @@
+ from astrid.core.timeline.authoring_bundle import (
+     AuthoringBundleError,
+     UnsupportedAuthoringEditError,
+-    approve_authoring_candidate,
+     authoring_contract,
+     authoring_media_inventory,
+     compile_authoring_candidate,
+@@ -20,7 +19,6 @@
+     inspect_authoring_candidate,
+     open_authoring_bundle,
+     preview_authoring_candidate,
+-    promote_approved_authoring_candidate,
+     publish_authoring_candidate,
+     validate_authoring_candidate,
+ )
+@@ -455,33 +453,8 @@
+     assert result["publication"]["data"]["new_head"] == writer.calls[0][2]["parent_revision_id"]
+ 
+ 
+-def test_approval_is_bound_to_candidate_and_base_revision():
+-    parent, shots, timelines = _closure(shared=True)
+-    candidate = open_authoring_bundle(
+-        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+-    )
+-    approval = approve_authoring_candidate(
+-        candidate, approver="editor-1", approval_id="approval-1"
+-    )
+-    writer = _Writer()
+-
+-    changed = copy.deepcopy(candidate)
+-    changed["parent"]["config"]["approved-edit"] = True
+-    with pytest.raises(AuthoringBundleError, match="stale or does not match"):
+-        promote_approved_authoring_candidate(
+-            changed, approval, writer, idempotency_key="promote-1"
+-        )
+-    assert writer.calls == []
+-
+-    promoted = promote_approved_authoring_candidate(
+-        candidate, approval, writer, idempotency_key="promote-1"
+-    )
+-    assert promoted["approval"]["approval_id"] == "approval-1"
+-    assert len(writer.calls) == 1
+-
+-
+-def test_frozen_render_restart_then_approval_promotion_is_single_generation(tmp_path):
+-    """Exercise the contract, durable replay, and candidate promotion seam together."""
++def test_frozen_render_restart_is_single_generation(tmp_path):
++    """Exercise the live render contract and durable replay seam together."""
+     from astrid.core.execution.reconciler import ExecutionReconciler
+     from astrid.core.execution.target_adapter import LocalMachineTargetAdapter
+ 
+@@ -613,19 +586,6 @@
+     assert second.phase == "recovery"
+     assert render_count == 1
+     assert [name for name, _ in runtime.calls].count("claim") == 1
+-
+-    parent, shots, timelines = _closure(shared=True)
+-    candidate = open_authoring_bundle(
+-        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+-    )
+-    approval = approve_authoring_candidate(candidate, approver="editor-1", approval_id="approval-render-1")
+-    writer = _Writer()
+-    promoted = promote_approved_authoring_candidate(
+-        candidate, approval, writer, idempotency_key="promote-render-1"
+-    )
+-    assert promoted["candidate_digest"] == approval["candidate_digest"]
+-    assert len(writer.calls) == 1
+-
+ 
+ def test_full_authored_field_edits_compile_without_normalizing_opaque_fields():
+     parent, shots, timelines = _closure(shared=False)
+
+exec
+/bin/bash -lc 'ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/DONE && od -An -t x1 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/DONE && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/commit-msg' in /home/user/work/wt/agt-m2-wc2-dead-promotion-cut
+ succeeded in 0ms:
+-rw-r--r-- 1 root root   1 Oct 20 20:32 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/DONE
+-rw-r--r-- 1 root root 305 Oct 20 20:32 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/commit-msg
+ 0a
+fix(timeline): retire dead candidate promotion helper
+
+Remove the unused approval-gated whole-candidate writer and its SDK
+re-exports while preserving the live publisher and authoring bundle paths.
+Retain render recovery assertions and document the proposal/requester test
+mapping for independent review.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-dead-helper-test-map.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-dead-helper-test-map.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..a57196c7dc031ace73c124588ecb8d225f3a72bc
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-dead-helper-test-map.md
+@@ -0,0 +1,55 @@
++# Agent WC2 dead-helper test map
++
++Status: **proposed; independent reviewer approval required before manager merge**.
++This note must not be read as a `DELETED` ledger update: the WC2 row changes only
++after the harness merges the worker result.
++
++## Census and decision
++
++The worker started at Agent `tl/integration`, source `4095a349` (the current
++integration head at dispatch). An exact repository search for
++`promote_approved_authoring_candidate` found no product/config/resource/docs
++caller. Before this change the complete set of references was:
++
++| Kind | References | Result |
++| --- | --- | --- |
++| Definition | `astrid/core/timeline/authoring_bundle.py:1571-1617` | dead approval-gated whole-candidate writer |
++| Production callers | none | zero |
++| Tests | `tests/timeline/test_authoring_bundle.py:471,476,623` plus import at `:23` | helper-only |
++| SDK boundary | `astrid/sdk/authoring_bundle.py` import/`__all__`; `astrid/sdk/__init__.py` lazy export | unused re-export only |
++| Canonical core boundary | no import from `astrid/core/timeline/__init__.py` | not part of canonical core `__all__` |
++
++The helper was therefore an accidentally export-visible but unconsumed SDK
++symbol, not a live/public product consumer. The settled WC2 decision applies:
++approval must bind a settled proposal digest and the requester commits it; no
++candidate-level promotion writer remains. WC1 `publish_authoring_candidate`
++and its writer, feedback, codec, closure, and retained-field paths are outside
++this cut and remain present.
++
++The narrative execution guide still mentions candidate approval/promotion, but
++does not call or import this exact helper. It belongs to the proposal-digest
++approval follow-up, not this deletion-only WC2 cut.
++
++## Proposed source/test diff
++
++| Existing behavior/test | WC2 action | Replacement or retained proof |
++| --- | --- | --- |
++| `test_approval_is_bound_to_candidate_and_base_revision` (`:458-480`) | Retire the whole test: both the stale-candidate refusal and the successful writer call are unreachable helper-only behavior. | No one-to-one replacement is claimed. The active proposal integrity suite already covers the governing replacement contract: `tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_all_settled_command_fields` and `::test_digest_binds_attempt_and_original_target`; the real requester path is covered by `tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_artifact_mutation_refuses_without_history_or_head_changes` and `::test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes`. |
++| Promotion tail of `test_frozen_render_restart_then_approval_promotion_is_single_generation` (`:617-627`) | Remove only the candidate approval/promotion tail; rename the test to `test_frozen_render_restart_is_single_generation`. | All live render execution, durable replay, lost-generation, and single-claim assertions remain unchanged in the same test. |
++| `promote_approved_authoring_candidate` definition | Delete exactly the 47-line function body plus surrounding blank-line diff. | No refusal shim, replacement writer, schema, history, or producer authority is added. |
++| Helper exports | Remove its one core-module `__all__` entry, the SDK facade import/`__all__` entries, and the lazy SDK export. | `publish_authoring_candidate` remains exported and untouched for WC1. `approve_authoring_candidate` remains for the separate proposal-digest rewrite; this cut does not claim that rewrite. |
++
++The implementation diff is intentionally limited to 50 product lines, 3 SDK
++export-boundary lines, and 42 test lines removed, with the live render test
++renamed in place. No assertion on publish, feedback, authoring closure, media,
++opaque fields, retained inputs, or active proposal/requester behavior was
++weakened.
++
++## Reviewer checklist
++
++- Confirm the exact-symbol census remains zero production callers at merge time.
++- Confirm the three active proposal/requester tests named above remain positive
++  and are not changed by this worker.
++- Confirm `publish_authoring_candidate` and all authoring codec/closure/feedback
++  paths remain present.
++- Confirm the WC2 ledger row is not marked `DELETED` until the harness merge.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..455e303a7e98c6e8ad38335ad99b47c2956caaec
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/commit-msg
+@@ -0,0 +1,6 @@
++fix(timeline): retire dead candidate promotion helper
++
++Remove the unused approval-gated whole-candidate writer and its SDK
++re-exports while preserving the live publisher and authoring bundle paths.
++Retain render recovery assertions and document the proposal/requester test
++mapping for independent review.
+diff --git a/astrid/core/timeline/authoring_bundle.py b/astrid/core/timeline/authoring_bundle.py
+index d79880336c465e7a4dca67adbffabf52181571f1..169b21c27a79b21eccec51d305abdbd6934e0fc5
+--- a/astrid/core/timeline/authoring_bundle.py
++++ b/astrid/core/timeline/authoring_bundle.py
+@@ -1568,55 +1568,6 @@
+     }
+ 
+ 
+-def promote_approved_authoring_candidate(
+-    candidate: Mapping[str, Any],
+-    approval: Mapping[str, Any],
+-    writer: AuthoringCandidateWriter,
+-    *,
+-    idempotency_key: str,
+-) -> dict[str, Any]:
+-    """Promote exactly the candidate represented by an approval artifact."""
+-
+-    if not isinstance(idempotency_key, str) or not idempotency_key:
+-        raise AuthoringBundleError("idempotency_key must be a non-empty string")
+-    approval_value = _mapping(approval, "approval")
+-    if approval_value.get("kind") != "authoring-candidate-approval":
+-        raise AuthoringBundleError("approval.kind is invalid")
+-    if approval_value.get("schema_version") != AUTHORING_BUNDLE_SCHEMA_VERSION:
+-        raise AuthoringBundleError("approval.schema_version is invalid")
+-    if approval_value.get("decision") != "approved":
+-        raise AuthoringBundleError("candidate is not approved")
+-    compilation = compile_authoring_candidate(candidate)
+-    root = _mapping(candidate, "candidate")
+-    base_parent = _mapping(root.get("base_parent"), "candidate.base_parent")
+-    expected = {
+-        "project_id": root["project_id"],
+-        "timeline_id": root["timeline_id"],
+-        "candidate_digest": compilation.candidate_digest,
+-        "publication_digest": _digest(compilation.publication),
+-        "base_parent": dict(base_parent),
+-    }
+-    for field, value in expected.items():
+-        if approval_value.get(field) != value:
+-            raise AuthoringBundleError(
+-                f"approval is stale or does not match candidate: {field}"
+-            )
+-    publication = compilation.publication
+-    result = writer.publish_parent_composition(
+-        publication["project_id"],
+-        publication["timeline_id"],
+-        _copy(dict(publication)),
+-        idempotency_key=idempotency_key,
+-    )
+-    return {
+-        "approval": _copy(dict(approval_value)),
+-        "candidate_digest": compilation.candidate_digest,
+-        "identity_mapping": _copy(dict(compilation.identity_mapping)),
+-        "changed_identities": _copy(list(compilation.changed_identities)),
+-        "publication": result,
+-    }
+-
+-
+ def publish_authoring_candidate(
+     candidate: Mapping[str, Any],
+     writer: AuthoringCandidateWriter,
+@@ -1670,7 +1621,6 @@
+     "inspect_authoring_candidate",
+     "open_authoring_bundle",
+     "publish_authoring_candidate",
+-    "promote_approved_authoring_candidate",
+     "preview_authoring_candidate",
+     "validate_authoring_candidate",
+ ]
+diff --git a/astrid/sdk/__init__.py b/astrid/sdk/__init__.py
+index bad1c815c345b89ac54ea9c8561ffb57127cdb85..85fc4b919270e994363bcce03ee925897239c26b
+--- a/astrid/sdk/__init__.py
++++ b/astrid/sdk/__init__.py
+@@ -75,7 +75,6 @@
+     "authoring_media_inventory": ("authoring_bundle", "authoring_media_inventory"),
+     "publish_authoring_candidate": ("authoring_bundle", "publish_authoring_candidate"),
+     "approve_authoring_candidate": ("authoring_bundle", "approve_authoring_candidate"),
+-    "promote_approved_authoring_candidate": ("authoring_bundle", "promote_approved_authoring_candidate"),
+     "GenerationFacade": ("generation", "GenerationFacade"),
+     "generate": ("generation", "generate"),
+     "discover": ("invocation", "discover"),
+diff --git a/astrid/sdk/authoring_bundle.py b/astrid/sdk/authoring_bundle.py
+index 7f5b4023ffe289810e4175ed16edbaf1353d92c3..7397a10f3ac7dd9fc3e12afd24725d45c5ad2218
+--- a/astrid/sdk/authoring_bundle.py
++++ b/astrid/sdk/authoring_bundle.py
+@@ -15,15 +15,13 @@
+     open_authoring_bundle,
+     preview_authoring_candidate,
+     publish_authoring_candidate,
+-    promote_approved_authoring_candidate,
+     validate_authoring_candidate,
+ )
+-
+ from astrid.core.timeline.authoring_diff_format import format_authoring_revision_diff
+-from .authoring_media import import_authoring_media, plan_authoring_media
+ 
+-from .authoring_render_preview import render_authoring_candidate_preview
++from .authoring_media import import_authoring_media, plan_authoring_media
+ from .authoring_remote import AuthoringRemoteError, TargetBoundAuthoringBundle
++from .authoring_render_preview import render_authoring_candidate_preview
+ 
+ __all__ = [
+     "authoring_media_inventory",
+@@ -40,7 +38,6 @@
+     "preview_authoring_candidate",
+     "render_authoring_candidate_preview",
+     "publish_authoring_candidate",
+-    "promote_approved_authoring_candidate",
+     "validate_authoring_candidate",
+     "TargetBoundAuthoringBundle",
+ ]
+diff --git a/tests/timeline/test_authoring_bundle.py b/tests/timeline/test_authoring_bundle.py
+index 06d0d41c5dfcf3995b157434c81d3bf8ea82a1b9..2e8a4563cb76b85c8b54d1dfdfbedc3dc8ef8c61
+--- a/tests/timeline/test_authoring_bundle.py
++++ b/tests/timeline/test_authoring_bundle.py
+@@ -11,7 +11,6 @@
+ from astrid.core.timeline.authoring_bundle import (
+     AuthoringBundleError,
+     UnsupportedAuthoringEditError,
+-    approve_authoring_candidate,
+     authoring_contract,
+     authoring_media_inventory,
+     compile_authoring_candidate,
+@@ -20,7 +19,6 @@
+     inspect_authoring_candidate,
+     open_authoring_bundle,
+     preview_authoring_candidate,
+-    promote_approved_authoring_candidate,
+     publish_authoring_candidate,
+     validate_authoring_candidate,
+ )
+@@ -455,33 +453,8 @@
+     assert result["publication"]["data"]["new_head"] == writer.calls[0][2]["parent_revision_id"]
+ 
+ 
+-def test_approval_is_bound_to_candidate_and_base_revision():
+-    parent, shots, timelines = _closure(shared=True)
+-    candidate = open_authoring_bundle(
+-        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+-    )
+-    approval = approve_authoring_candidate(
+-        candidate, approver="editor-1", approval_id="approval-1"
+-    )
+-    writer = _Writer()
+-
+-    changed = copy.deepcopy(candidate)
+-    changed["parent"]["config"]["approved-edit"] = True
+-    with pytest.raises(AuthoringBundleError, match="stale or does not match"):
+-        promote_approved_authoring_candidate(
+-            changed, approval, writer, idempotency_key="promote-1"
+-        )
+-    assert writer.calls == []
+-
+-    promoted = promote_approved_authoring_candidate(
+-        candidate, approval, writer, idempotency_key="promote-1"
+-    )
+-    assert promoted["approval"]["approval_id"] == "approval-1"
+-    assert len(writer.calls) == 1
+-
+-
+-def test_frozen_render_restart_then_approval_promotion_is_single_generation(tmp_path):
+-    """Exercise the contract, durable replay, and candidate promotion seam together."""
++def test_frozen_render_restart_is_single_generation(tmp_path):
++    """Exercise the live render contract and durable replay seam together."""
+     from astrid.core.execution.reconciler import ExecutionReconciler
+     from astrid.core.execution.target_adapter import LocalMachineTargetAdapter
+ 
+@@ -613,19 +586,6 @@
+     assert second.phase == "recovery"
+     assert render_count == 1
+     assert [name for name, _ in runtime.calls].count("claim") == 1
+-
+-    parent, shots, timelines = _closure(shared=True)
+-    candidate = open_authoring_bundle(
+-        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+-    )
+-    approval = approve_authoring_candidate(candidate, approver="editor-1", approval_id="approval-render-1")
+-    writer = _Writer()
+-    promoted = promote_approved_authoring_candidate(
+-        candidate, approval, writer, idempotency_key="promote-render-1"
+-    )
+-    assert promoted["candidate_digest"] == approval["candidate_digest"]
+-    assert len(writer.calls) == 1
+-
+ 
+ def test_full_authored_field_edits_compile_without_normalizing_opaque_fields():
+     parent, shots, timelines = _closure(shared=False)
+
+exec
+/bin/bash -lc 'test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/DONE && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-dead-promotion-cut/commit-msg && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-dead-helper-test-map.md && git diff --check && git status --short && printf '"'DONE is empty; commit message and test map exist\\n'" in /home/user/work/wt/agt-m2-wc2-dead-promotion-cut
+ succeeded in 382ms:
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/sdk/__init__.py
+ M astrid/sdk/authoring_bundle.py
+ M tests/timeline/test_authoring_bundle.py
+DONE is empty; commit message and test map exist
+
+codex
+Implemented WC2 deletion sweep.
+
+- Removed `promote_approved_authoring_candidate` (47-line helper) and three SDK export entries.
+- Retained WC1 publisher, codecs, closure/feedback logic, and live render assertions.
+- Retired only helper-specific tests; documented mapping/reviewer approval requirement in [agent-wc2-dead-helper-test-map.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-dead-helper-test-map.md).
+- Census: zero production callers; only three test call sites and export references existed.
+
+Tests:
+
+- Targeted authoring/feedback/proposal tests: **112 passed, 6 deselected**.
+- Explicit producer integration lane: **5 passed**.
+- Ruff and `git diff --check`: passed.
+- No full suite run.
+
+Commit message and empty `DONE` marker created. Independent reviewer approval and manager merge remain pending.
+tokens used
+145,062
+Implemented WC2 deletion sweep.
+
+- Removed `promote_approved_authoring_candidate` (47-line helper) and three SDK export entries.
+- Retained WC1 publisher, codecs, closure/feedback logic, and live render assertions.
+- Retired only helper-specific tests; documented mapping/reviewer approval requirement in [agent-wc2-dead-helper-test-map.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-dead-helper-test-map.md).
+- Census: zero production callers; only three test call sites and export references existed.
+
+Tests:
+
+- Targeted authoring/feedback/proposal tests: **112 passed, 6 deselected**.
+- Explicit producer integration lane: **5 passed**.
+- Ruff and `git diff --check`: passed.
+- No full suite run.
+
+Commit message and empty `DONE` marker created. Independent reviewer approval and manager merge remain pending.

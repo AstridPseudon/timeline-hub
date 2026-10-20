@@ -1,0 +1,400 @@
+--- scene test markers ---
+
+codex
+The first checks pass: catalog freshness and its three tests, all four environment-conformance tests, and 22 positive text-binding tests (the integration test was intentionally deselected there). The real Runtime-port test also passes with `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime`. I’m adding the directly affected `scene_answers` neighbor suite, then I’ll do final diff/cleanliness checks and write the required handoff artifacts.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_answers.py' in /home/user/work/wt/agt-full12-three-source-fixes
+ succeeded in 13160ms:
+..............................                                           [100%]
+30 passed in 11.95s
+
+exec
+/bin/bash -lc "git diff --check && printf '%s\\n' '--- files ---' && git diff --name-only && printf '%s\\n' '--- status ---' && git status --short && printf '%s\\n' '--- diff stat ---' && git diff --stat && printf '%s\\n' '--- line references ---' && nl -ba astrid/core/timeline/scene_answers.py | sed -n '1,90p' && nl -ba tests/editing_conformance/test_recipe_text_binding_spike.py | sed -n '1,25p;310,345p' && nl -ba astrid/packs/rendering/elements/catalog.ts | sed -n '2788,2803p'" in /home/user/work/wt/agt-full12-three-source-fixes
+ succeeded in 1242ms:
+--- files ---
+astrid/core/timeline/scene_answers.py
+astrid/packs/rendering/elements/catalog.ts
+tests/editing_conformance/test_recipe_text_binding_spike.py
+--- status ---
+ M astrid/core/timeline/scene_answers.py
+ M astrid/packs/rendering/elements/catalog.ts
+ M tests/editing_conformance/test_recipe_text_binding_spike.py
+--- diff stat ---
+ astrid/core/timeline/scene_answers.py                       |  6 ++++--
+ astrid/packs/rendering/elements/catalog.ts                  |  2 +-
+ tests/editing_conformance/test_recipe_text_binding_spike.py | 11 ++++++-----
+ 3 files changed, 11 insertions(+), 8 deletions(-)
+--- line references ---
+     1	"""Low-level public scene transport; input shape is not render-source authority."""
+     2	
+     3	from __future__ import annotations
+     4	
+     5	import json
+     6	import os
+     7	import subprocess
+     8	import sys
+     9	from collections.abc import Iterable, Mapping
+    10	from typing import Any
+    11	
+    12	from astrid.core.env_vars import ASTRID_PACKS_PATH
+    13	
+    14	
+    15	def remotion_runtime_status(*args, **kwargs):
+    16	    """Resolve renderer admission only when a native scene query is requested."""
+    17	    from astrid.core.rendering.remotion_runtime import remotion_runtime_status as _status
+    18	
+    19	    return _status(*args, **kwargs)
+    20	
+    21	
+    22	def probe_context(*args, **kwargs):
+    23	    """Resolve renderer environment probing only when a native scene query is requested."""
+    24	    from astrid.core.rendering.remotion_runtime import probe_context as _probe
+    25	
+    26	    return _probe(*args, **kwargs)
+    27	
+    28	
+    29	class SceneQueryUnavailable(RuntimeError):
+    30	    """No scene answer was obtained; this is different from an empty scene."""
+    31	
+    32	
+    33	def frames_at(scene: Mapping[str, Any], frames: Iterable[int]) -> list[dict[str, Any]]:
+    34	    """Query resolved visual ``SceneTrackInput`` records, never authored timelines.
+    35	
+    36	    ``scene`` contains tracks, assets, fps, width and height, with optional roles
+    37	    and element IDs. The host supplies bottom-to-top painter order, clips sorted
+    38	    by at, and one resolved Composition TransitionSpec (or null) per adjacent
+    39	    pair, as in prepareCompositionScene. Compiled clips/IDs pass through intact.
+    40	    No component capabilities, modifier declarations or media alpha evidence are
+    41	    synthesized here. Canonical UNKNOWN findings pass through unchanged.
+    42	    """
+    43	    return _query({"scene": dict(scene)}, frames)
+    44	
+    45	
+    46	def _query(payload: dict[str, Any], frames: Iterable[int]) -> list[dict[str, Any]]:
+    47	    requested = list(frames)
+    48	    payload = {**payload, "frames": requested}
+    49	    try:
+    50	        from astrid.core.rendering.remotion_runtime import RemotionValidationError
+    51	    except ImportError as exc:
+    52	        raise SceneQueryUnavailable(f"scene evaluation unavailable: {exc}") from exc
+    53	
+    54	    try:
+    55	        runtime = remotion_runtime_status(require_explicit_project=True)
+    56	        if not runtime.available or runtime.project_dir is None or runtime.node_executable is None:
+    57	            raise SceneQueryUnavailable(runtime.reason or "scene runtime unavailable")
+    58	        helper = (runtime.project_dir / "scene-query.mjs").resolve(strict=True)
+    59	        helper.relative_to(runtime.project_dir.resolve())
+    60	        if not helper.is_file():
+    61	            raise SceneQueryUnavailable("scene query helper is not a file")
+    62	        if "props" in payload:
+    63	            for name in ("native-scene.mjs", "src/host-scene.ts"):
+    64	                entry = (runtime.project_dir / name).resolve(strict=True)
+    65	                entry.relative_to(runtime.project_dir.resolve())
+    66	                if not entry.is_file():
+    67	                    raise SceneQueryUnavailable(f"scene host entry is not a file: {name}")
+    68	        environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+    69	        # Status validated this selector as part of the renderer's registry
+    70	        # context. The alias resolver must see that same admitted pack set.
+    71	        if ASTRID_PACKS_PATH in os.environ:
+    72	            environment[ASTRID_PACKS_PATH] = os.environ[ASTRID_PACKS_PATH]
+    73	        result = subprocess.run(
+    74	            [str(runtime.node_executable), str(helper), str(runtime.project_dir)],
+    75	            input=json.dumps(payload, allow_nan=False),
+    76	            cwd=runtime.project_dir, env=environment, capture_output=True, text=True, timeout=30,
+    77	        )
+    78	        if result.returncode:
+    79	            raise SceneQueryUnavailable(result.stderr.strip() or "scene query failed")
+    80	        answers = json.loads(result.stdout)
+    81	        if (not isinstance(answers, list) or len(answers) != len(requested)
+    82	                or any(not isinstance(answer, dict) for answer in answers)
+    83	                or any(type(answer.get("frame")) is not int or answer["frame"] != frame
+    84	                       for answer, frame in zip(answers, requested))):
+    85	            raise SceneQueryUnavailable("invalid scene query response")
+    86	        return answers
+    87	    except (OSError, ValueError, TypeError, subprocess.SubprocessError, RemotionValidationError) as exc:
+    88	        raise SceneQueryUnavailable(f"scene evaluation unavailable: {exc}") from exc
+    89	
+    90	
+     1	"""Spike: the Agent-owned shot text-binding command (design/m2-text-binding-contract.md).
+     2	
+     3	Test-local seam, product code unchanged. The recipe harness has no text-binding entity
+     4	yet, so this module teaches it, and only here, the following. Each names the product gap
+     5	it stands in for (design/m2-text-binding-contract.md section 4):
+     6	
+     7	* G-SCHEMA: the scoped-ref patterns admit `occurrence:<id>/text-binding:<key>`;
+     8	* G-OP: `validate_command` admits the op, and `operations()` registers it;
+     9	* G-STATE: `occurrence:<id>/text-binding:<key>` is a keyed row in the owner shot's
+    10	  `payload.text_bindings` (`State.entity` / `State.set`);
+    11	* G-INV1: a removed keyed row is restored by assignment, not by `create`, which needs
+    12	  a collection (`Recording.create`, reached from `inverse.apply_inverse`).
+    13	
+    14	The Runtime port presence check runs in the integration lane; acceptance is
+    15	covered by test_commit_runtime_text_binding.py.
+    16	"""
+    17	from __future__ import annotations
+    18	
+    19	import copy
+    20	import hashlib
+    21	import json
+    22	from pathlib import Path
+    23	
+    24	import pytest
+    25	from jsonschema import Draft202012Validator
+   310	
+   311	def test_replay_refuses_changed_guard_and_rebases_disjoint_key(original):
+   312	    plan = execute(original, [capture(original, {'binding': VOICE, 'text': descriptor(b'voice')})])
+   313	    other_voice = execute(original, [capture(original, {'binding': VOICE, 'text': descriptor(b'other')})]).bundle
+   314	    with pytest.raises(CommandError) as error:
+   315	        replay(plan, other_voice)
+   316	    assert error.value.kind == 'dependency_changed'
+   317	    prompt = execute(original, [capture(original, {'binding': PROMPT, 'text': descriptor(b'hero')})]).bundle
+   318	    rebased = replay(plan, prompt).bundle
+   319	    assert row_of(rebased, 'prompt:hero') == row_of(prompt, 'prompt:hero')
+   320	    assert row_of(rebased) == row_of(plan.bundle)
+   321	
+   322	
+   323	@pytest.mark.integration
+   324	def test_runtime_port_declares_exact_text_selection():
+   325	    from tests.helpers.runtime import use_runtime
+   326	
+   327	    use_runtime()
+   328	    import runtime_protocol.timeline_commit as port
+   329	
+   330	    assert 'def text_selection(' in Path(port.__file__).read_text()
+  2788	        "label": "Zoom",
+  2789	        "name": "zoom",
+  2790	        "type": "number"
+  2791	      }
+  2792	    ],
+  2793	    "renderability": {
+  2794	      "browserExport": "unknown",
+  2795	      "preview": "unknown",
+  2796	      "workerExport": "unknown"
+  2797	    },
+  2798	    "revision": "sha256:72048692b1229384e8ace7ec52fd3a631cf9cc103ee022b3a025059c64ba996f",
+  2799	    "runtime": {},
+  2800	    "schema": {
+  2801	      "additionalProperties": true,
+  2802	      "properties": {
+  2803	        "blinkEvery": {
+
+exec
+/bin/bash -lc 'test -d /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes && echo worker-dir-present || echo worker-dir-missing' in /home/user/work/wt/agt-full12-three-source-fixes
+ succeeded in 0ms:
+worker-dir-present
+
+codex
+All affected neighbors pass, including 30 `scene_answers` tests. Final verification shows only the three assigned files are modified, with no whitespace errors or generated artifacts. I’m recording the exact commands/results and limitations outside the repository, then creating the conventional commit message and `DONE` marker for the harness.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..67d1c6f75d0eafbffa9aeb8700c27a08dea1b5ed
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/commit-msg
+@@ -0,0 +1,5 @@
++fix(timeline): refresh catalog and runtime text-port check
++
++Regenerate the stale presenter catalog revision, use the canonical packs-path
++environment constant, and qualify the exact Runtime text-selection port check
++against the real Runtime checkout.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c48c3763f373fcbdd39d00bb6f556a7cd1acafdb
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/notes/report.md
+@@ -0,0 +1,51 @@
++# Agent full12 three-source fixes
++
++## Outcome
++
++Completed exactly the three directly confirmed fixes from
++`orch/design/agent-full12-classification-1055.md` on the current integration
++snapshot.
++
++1. Regenerated `astrid/packs/rendering/elements/catalog.ts` only with
++   `scripts/gen_element_catalog.py`. The generated diff is exactly the
++   `am-presenter` revision update from
++   `sha256:f1eb6f33000a3cdbea322048da7bea24094f47ff578582b86183535b7ecda57e`
++   to
++   `sha256:72048692b1229384e8ace7ec52fd3a631cf9cc103ee022b3a025059c64ba996f`.
++2. Updated `astrid/core/timeline/scene_answers.py` to import and use the
++   catalogued `ASTRID_PACKS_PATH` constant.
++3. Updated only the Runtime-port check in
++   `tests/editing_conformance/test_recipe_text_binding_spike.py`: it is now an
++   integration-marked test that calls `tests.helpers.runtime.use_runtime()`
++   before importing the real Runtime port. The stale strict xfail was removed;
++   all other positive tests remain unchanged. No native text product/schema
++   changes were copied from `cb1e907c`.
++
++## Verification
++
++All commands ran from `/home/user/work/wt/agt-full12-three-source-fixes` with
++`PYTHONDONTWRITEBYTECODE=1` where pytest was used and `-p no:cacheprovider` to
++avoid worktree cache output.
++
++- `python3 scripts/gen_element_catalog.py --check` — passed.
++- `/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/core/test_editor_element_catalog.py` — **3 passed**.
++- `/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_env_vars_conformance.py` — **4 passed**.
++- `/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_text_binding_spike.py` — **22 passed, 1 integration test deselected**.
++- `env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= -m integration tests/editing_conformance/test_recipe_text_binding_spike.py::test_runtime_port_declares_exact_text_selection` — **1 passed**.
++- `/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_answers.py` — **30 passed**.
++- `git diff --check` — passed.
++- Final `git diff --name-only` — exactly:
++  - `astrid/core/timeline/scene_answers.py`
++  - `astrid/packs/rendering/elements/catalog.ts`
++  - `tests/editing_conformance/test_recipe_text_binding_spike.py`
++
++## Decisions and limitations
++
++- Used the current integration checkout and the Runtime integration checkout
++  at `/home/user/work/runtime`, as directed.
++- Applied the relevant test/docstring hunk from `cb1e907c` but deliberately did
++  not copy its unrelated native collection/schema or other product changes.
++- No full or full-* suite was requested or run, per task instructions.
++- No commit, push, merge, rebase, checkout, integration, or ledger edits were
++  performed. The harness should commit the three-file worktree diff using the
++  supplied commit message.
+diff --git a/astrid/core/timeline/scene_answers.py b/astrid/core/timeline/scene_answers.py
+index 9fe3a369004ee9639b3ef947ba79f665ddb5964d..1d3f0879fe69e4ab95874c1542575c6cf7cf2e8c
+--- a/astrid/core/timeline/scene_answers.py
++++ b/astrid/core/timeline/scene_answers.py
+@@ -9,6 +9,8 @@
+ from collections.abc import Iterable, Mapping
+ from typing import Any
+ 
++from astrid.core.env_vars import ASTRID_PACKS_PATH
++
+ 
+ def remotion_runtime_status(*args, **kwargs):
+     """Resolve renderer admission only when a native scene query is requested."""
+@@ -66,8 +68,8 @@
+         environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+         # Status validated this selector as part of the renderer's registry
+         # context. The alias resolver must see that same admitted pack set.
+-        if "ASTRID_PACKS_PATH" in os.environ:
+-            environment["ASTRID_PACKS_PATH"] = os.environ["ASTRID_PACKS_PATH"]
++        if ASTRID_PACKS_PATH in os.environ:
++            environment[ASTRID_PACKS_PATH] = os.environ[ASTRID_PACKS_PATH]
+         result = subprocess.run(
+             [str(runtime.node_executable), str(helper), str(runtime.project_dir)],
+             input=json.dumps(payload, allow_nan=False),
+diff --git a/tests/editing_conformance/test_recipe_text_binding_spike.py b/tests/editing_conformance/test_recipe_text_binding_spike.py
+index 0e381cc88437ee571c1b3b7186c1aede7dbd85ac..461f28b03d8e24ed835e9fb80cc77c6c0e1d7d03
+--- a/tests/editing_conformance/test_recipe_text_binding_spike.py
++++ b/tests/editing_conformance/test_recipe_text_binding_spike.py
+@@ -11,7 +11,8 @@
+ * G-INV1: a removed keyed row is restored by assignment, not by `create`, which needs
+   a collection (`Recording.create`, reached from `inverse.apply_inverse`).
+ 
+-The Runtime-dependent part is a strict xfail with its reason (G-RT1).
++The Runtime port presence check runs in the integration lane; acceptance is
++covered by test_commit_runtime_text_binding.py.
+ """
+ from __future__ import annotations
+ 
+@@ -319,11 +320,11 @@
+     assert row_of(rebased) == row_of(plan.bundle)
+ 
+ 
+-@pytest.mark.xfail(strict=True, raises=(ImportError, AssertionError), reason=(
+-    "Runtime gap G-RT1 (design/m2-text-binding-contract.md section 6): no scoped exact UTF-8 text "
+-    "selection exists. Runtime selected_media rejects text/plain and zero-byte objects (seam note C1). "
+-    "This presence check does not prove acceptance; it flips only when the port method lands."))
++@pytest.mark.integration
+ def test_runtime_port_declares_exact_text_selection():
++    from tests.helpers.runtime import use_runtime
++
++    use_runtime()
+     import runtime_protocol.timeline_commit as port
+ 
+     assert 'def text_selection(' in Path(port.__file__).read_text()
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/DONE && echo DONE-present && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/DONE && echo DONE-empty && printf '"'%s\\n' '--- repo status ---' && git status --short && printf '%s\\n' '--- commit message ---' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/commit-msg && printf '%s\\n' '--- report tail ---' && tail -30 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/notes/report.md" in /home/user/work/wt/agt-full12-three-source-fixes
+ succeeded in 840ms:
+DONE-present
+DONE-empty
+--- repo status ---
+ M astrid/core/timeline/scene_answers.py
+ M astrid/packs/rendering/elements/catalog.ts
+ M tests/editing_conformance/test_recipe_text_binding_spike.py
+--- commit message ---
+fix(timeline): refresh catalog and runtime text-port check
+
+Regenerate the stale presenter catalog revision, use the canonical packs-path
+environment constant, and qualify the exact Runtime text-selection port check
+against the real Runtime checkout.
+--- report tail ---
+   changes were copied from `cb1e907c`.
+
+## Verification
+
+All commands ran from `/home/user/work/wt/agt-full12-three-source-fixes` with
+`PYTHONDONTWRITEBYTECODE=1` where pytest was used and `-p no:cacheprovider` to
+avoid worktree cache output.
+
+- `python3 scripts/gen_element_catalog.py --check` — passed.
+- `/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/core/test_editor_element_catalog.py` — **3 passed**.
+- `/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_env_vars_conformance.py` — **4 passed**.
+- `/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_text_binding_spike.py` — **22 passed, 1 integration test deselected**.
+- `env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= -m integration tests/editing_conformance/test_recipe_text_binding_spike.py::test_runtime_port_declares_exact_text_selection` — **1 passed**.
+- `/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_answers.py` — **30 passed**.
+- `git diff --check` — passed.
+- Final `git diff --name-only` — exactly:
+  - `astrid/core/timeline/scene_answers.py`
+  - `astrid/packs/rendering/elements/catalog.ts`
+  - `tests/editing_conformance/test_recipe_text_binding_spike.py`
+
+## Decisions and limitations
+
+- Used the current integration checkout and the Runtime integration checkout
+  at `/home/user/work/runtime`, as directed.
+- Applied the relevant test/docstring hunk from `cb1e907c` but deliberately did
+  not copy its unrelated native collection/schema or other product changes.
+- No full or full-* suite was requested or run, per task instructions.
+- No commit, push, merge, rebase, checkout, integration, or ledger edits were
+  performed. The harness should commit the three-file worktree diff using the
+  supplied commit message.
+
+codex
+Implemented the exact three fixes:
+
+- Regenerated `elements/catalog.ts` via the normal script; only `am-presenter` revision changed.
+- Replaced the bare `ASTRID_PACKS_PATH` string with the canonical constant.
+- Updated the Runtime port test to use `use_runtime()` with an integration marker and removed the stale strict xfail.
+
+Tests passed:
+
+- Catalog: 3
+- Env conformance: 4
+- Text-binding neighbors: 22
+- Runtime port: 1
+- Scene answers: 30
+- `git diff --check`
+
+Only the three assigned files changed. No full suite was run. Detailed report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/notes/report.md). DONE marker and commit message were written.
+tokens used
+84,131
+Implemented the exact three fixes:
+
+- Regenerated `elements/catalog.ts` via the normal script; only `am-presenter` revision changed.
+- Replaced the bare `ASTRID_PACKS_PATH` string with the canonical constant.
+- Updated the Runtime port test to use `use_runtime()` with an integration marker and removed the stale strict xfail.
+
+Tests passed:
+
+- Catalog: 3
+- Env conformance: 4
+- Text-binding neighbors: 22
+- Runtime port: 1
+- Scene answers: 30
+- `git diff --check`
+
+Only the three assigned files changed. No full suite was run. Detailed report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-full12-three-source-fixes/notes/report.md). DONE marker and commit message were written.

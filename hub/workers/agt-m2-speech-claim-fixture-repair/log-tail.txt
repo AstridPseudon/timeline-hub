@@ -1,0 +1,400 @@
++            "role": "auxiliary",
++            "is_primary": False,
++            "content_hash": "sha256:" + hashlib.sha256(
++                (out / "speech-provenance.json").read_bytes()
++            ).hexdigest(),
++            "bytes": (out / "speech-provenance.json").stat().st_size,
++            "media_type": "application/json",
++        },
++    ],
++}
++(out / "manifest.json").write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
+ """
+     (executor / "executor.yaml").write_text(
+         json.dumps({
+@@ -464,8 +497,8 @@
+                 "{voice}", "{rate}", "{volume}", "{pitch}", "{malformed}",
+             ]},
+             "outputs": [
+-                {"name": "audio", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
+-                {"name": "speech_manifest", "type": "file", "path_template": "{out}/speech-provenance.json", "artifact_type": "application/json"},
++                {"name": "audio", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav", "role": "result", "is_primary": True},
++                {"name": "speech_manifest", "type": "file", "path_template": "{out}/speech-provenance.json", "artifact_type": "application/json", "role": "auxiliary", "is_primary": False},
+             ],
+             "isolation": {"mode": "subprocess", "network": False},
+             "metadata": {"resource_keys": [], "estimated_scratch_bytes": 1024, "estimated_output_bytes": 65536},
+@@ -522,7 +555,152 @@
+     return candidate, scripts, bound, timelines
+ 
+ 
++def _speech_task_snapshot(
++    transport: WorkspaceClient,
++    project_refs: tuple[str, ...],
++    admission_observations: list[dict],
++) -> list[dict]:
++    def task_row(task, *, project_ref: str) -> dict:
++        return {
++            "project_ref": project_ref,
++            "task_id": task.task_id,
++            "project_id": task.project_id,
++            "capability_id": task.capability_id,
++            "capability_digest": task.capability_digest,
++            "state": task.state,
++            "attempt_id": task.attempt_id,
++            "execution_request": task.execution_request,
++            "execution_binding": task.execution_binding,
++            "generation_intent": task.generation_intent,
++            "expected_effect": task.expected_effect,
++            "result": task.result,
++        }
++
++    snapshots: list[dict] = []
++    seen_task_ids: set[str] = set()
++    for project_ref in project_refs:
++        tasks, cursor = transport._generated.list_project_tasks(project_ref, limit=50)
++        assert cursor is None, "speech fixture task listing exceeded its diagnostic bound"
++        for task in tasks:
++            if task.task_id in seen_task_ids:
++                continue
++            seen_task_ids.add(task.task_id)
++            snapshots.append(task_row(task, project_ref=project_ref))
++    for admission in admission_observations:
++        task_id = admission.get("task_id")
++        if not task_id or task_id in seen_task_ids:
++            continue
++        task = transport._generated.get_task(task_id)
++        seen_task_ids.add(task.task_id)
++        snapshots.append(task_row(task, project_ref=f"admitted:{admission.get('project_id')}"))
++    return snapshots
++
++
++def _speech_host_snapshot(
++    host: GenericPackHost,
++    transport: WorkspaceClient,
++    claim_observations: list[dict],
++    admission_observations: list[dict],
++) -> dict:
++    executor = transport._generated.get_executor(host.executor_id)
++    capabilities, cursor = transport._generated.list_capabilities(limit=50)
++    assert cursor is None, "speech fixture capability listing exceeded its diagnostic bound"
++    capability = next(
++        (item for item in capabilities if item.capability_id == "generation.generate_speech"),
++        None,
++    )
++    return {
++        "executor": {
++            "executor_id": executor.executor_id,
++            "readiness": executor.readiness,
++            "runtime_epoch": executor.runtime_epoch,
++            "capabilities": [
++                {
++                    "capability_id": item.capability_id,
++                    "definition_digest": item.definition_digest,
++                    "status": item.status,
++                    "required_resource_keys": item.required_resource_keys,
++                }
++                for item in executor.capabilities
++            ],
++        },
++        "capability": (
++            {
++                "capability_id": capability.capability_id,
++                "definition_digest": capability.definition_digest,
++                "status": capability.status,
++                "required_resource_keys": capability.required_resource_keys,
++            }
++            if capability is not None
++            else None
++        ),
++        "host_capabilities": {
++            key: {
++                "capability_digest": record.capability_digest,
++                "ready": record.ready,
++                "resource_keys": list(record.resource_keys),
++            }
++            for key, record in host.capabilities.items()
++            if key == "generation.generate_speech"
++        },
++        "claims": list(claim_observations[-8:]),
++        "admissions": list(admission_observations[-4:]),
++    }
++
++
++def _wait_for_speech_task(
++    transport: WorkspaceClient,
++    project_refs: tuple[str, ...],
++    host: GenericPackHost,
++    claim_observations: list[dict],
++    admission_observations: list[dict],
++    *,
++    timeout_seconds: float = 20.0,
++) -> dict:
++    terminal_states = {"succeeded", "completed", "failed", "cancelled", "cancel_requested"}
++    deadline = time.monotonic() + timeout_seconds
++    latest: list[dict] = []
++    while time.monotonic() < deadline:
++        latest = _speech_task_snapshot(transport, project_refs, admission_observations)
++        if latest and latest[0]["state"] in terminal_states:
++            return {"tasks": latest, "host": _speech_host_snapshot(host, transport, claim_observations, admission_observations)}
++        if latest:
++            time.sleep(0.05)
++            continue
++        time.sleep(0.05)
++    return {"tasks": latest, "host": _speech_host_snapshot(host, transport, claim_observations, admission_observations)}
++
++
++def _cancel_unsettled_speech_task(transport: WorkspaceClient, diagnostic: dict) -> None:
++    terminal_states = {"succeeded", "completed", "failed", "cancelled", "cancel_requested"}
++    task = next(
++        (
++            item for item in diagnostic["tasks"]
++            if item["state"] not in terminal_states
++        ),
++        None,
++    )
++    if task is not None:
++        transport._generated.cancel_task(
++            task["task_id"],
++            expected_version=None,
++            idempotency_key=f"speech-diagnostic-cancel-{task['task_id']}",
++        )
++
++
++def _speech_task_is_terminal(diagnostic: dict) -> bool:
++    return bool(diagnostic["tasks"]) and diagnostic["tasks"][0]["state"] in {
++        "succeeded",
++        "completed",
++        "failed",
++        "cancelled",
++        "cancel_requested",
++    }
++
++
+ def _run_real_speech_sync(tmp_path: Path, real_runtime, *, malformed: bool):
++    import astrid.sdk as sdk
++
+     from astrid.packs.video_editing.shared import draft_voiceover
+ 
+     daemon = real_runtime(commit=SPEECH_RUNTIME_COMMIT)
+@@ -546,47 +724,135 @@
+     _candidate, _scripts, bound, timelines = _speech_outer_fixture(project_id)
+     remote.timelines = timelines
+     remote.open_authoring_target = lambda target: bound
++    admission_observations: list[dict] = []
++    invoke_observations: list[dict] = []
++    task_create = remote.tasks.create
++
++    def observe_task_create(**kwargs):
++        result = task_create(**kwargs)
++        data = getattr(result, "data", None)
++        admission_observations.append({
++            "request": {
++                "project_id": kwargs.get("project_id"),
++                "capability": kwargs.get("capability"),
++                "generation_intent": kwargs.get("generation_intent"),
++                "settlement_effect": kwargs.get("settlement_effect"),
++            },
++            "ok": getattr(result, "ok", None),
++            "task_id": data.get("task_id") if isinstance(data, dict) else None,
++            "project_id": data.get("project_id") if isinstance(data, dict) else None,
++            "state": data.get("state") if isinstance(data, dict) else None,
++            "error": str(getattr(result, "error", "")) if not getattr(result, "ok", False) else None,
++        })
++        return result
++
++    remote.tasks.create = observe_task_create
+     host.discover()
+     host.preflight("generation.generate_speech")
+     host.register()
+     try:
+-        with ThreadPoolExecutor(max_workers=1) as pool:
+-            future = pool.submit(host.run, once=False, poll_seconds=0.02, max_tasks=1)
+-            if malformed:
+-                with pytest.raises(draft_voiceover.VoiceoverSyncError, match="hash verification"):
+-                    draft_voiceover.sync_draft_voiceover(
+-                        remote, project_id, "timeline", timing_policy="preserve", occurrence_ids=["occ-1"]
++        claim_observations: list[dict] = []
++        claim_next = worker.claim_next
++
++        def observe_claim(**kwargs):
++            claim = claim_next(**kwargs)
++            task = getattr(claim, "task", None)
++            claim_observations.append({
++                "executor_id": kwargs["executor_id"],
++                "capability_ids": list(kwargs["capability_ids"]),
++                "target": kwargs.get("target"),
++                "task_id": getattr(claim, "task_id", None) or getattr(task, "task_id", None),
++                "state": getattr(task, "state", None),
++                "capability_digest": getattr(task, "capability_digest", None),
++                "waiting_reason": getattr(claim, "waiting_reason", None),
++                "attempt_id": getattr(claim, "attempt_id", None) or getattr(task, "attempt_id", None),
++            })
++            return claim
++
++        worker.claim_next = observe_claim
++        original_invoke = sdk.invoke
++
++        def bounded_test_invoke(*args, **kwargs):
++            # Keep TEST bounded without changing the product's wait default.
++            kwargs.setdefault("timeout_seconds", 20.0)
++            invoke_observations.append({"stage": "entered", "capability": args[0] if args else kwargs.get("capability_id")})
++            try:
++                result = original_invoke(*args, **kwargs)
++            except BaseException as exc:
++                invoke_observations.append({"stage": "raised", "error": f"{type(exc).__name__}: {exc}"})
++                raise
++            invoke_observations.append({"stage": "returned", "ok": result.ok, "task_id": result.kernel_task_id})
++            return result
++
++        sdk.invoke = bounded_test_invoke
++        with ThreadPoolExecutor(max_workers=2) as pool:
++            host_future = pool.submit(host.run, once=False, poll_seconds=0.02, max_tasks=1)
++            sync_future = pool.submit(
++                draft_voiceover.sync_draft_voiceover,
++                remote,
++                project_id,
++                "timeline",
++                timing_policy="preserve",
++                occurrence_ids=["occ-1"],
++            )
++            try:
++                diagnostic = _wait_for_speech_task(
++                    transport, (project_id, "speech-wc5"), host,
++                    claim_observations, admission_observations
++                )
++                if not diagnostic["tasks"]:
++                    try:
++                        sync_future.result(timeout=1)
++                    except TimeoutError:
++                        sync_error = "SDK admission is still waiting"
++                    except BaseException as exc:
++                        sync_error = f"{type(exc).__name__}: {exc}"
++                    else:
++                        sync_error = "SDK admission returned without a task"
++                    raise AssertionError(
++                        f"speech task was not admitted ({sync_error}): "
++                        f"invocation={invoke_observations}; {diagnostic}"
+                     )
+-                assert bound.published is None
+-            else:
+-                result = draft_voiceover.sync_draft_voiceover(
+-                    remote, project_id, "timeline", timing_policy="preserve", occurrence_ids=["occ-1"]
+-                )
+-                assert result["published"] and bound.published is not None
+-                generated = result["generated"][0]
+-                context = generated["runtime_context"]
+-                assert {"task", "task_id", "attempt_id", "association_id", "managed_output", "generation_publish_v1"} <= set(context)
+-                assert context["task"]["task_id"] == context["task_id"]
+-                assert context["task"]["attempt_id"] == context["attempt_id"]
+-                assert context["managed_output"]["association_id"] == context["association_id"]
+-                assert context["generation_publish_v1"]["effect_type"] == "generation.publish_v1"
+-                output = context["managed_output"]
+-                selection = transport._generated.get_project_media_selection(project_id, {
+-                    "association_id": output["association_id"],
+-                    "object_id": output["object_id"],
+-                    "version": output["lifecycle"]["version"],
+-                })
+-                assert set(selection) == {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}
+-                assert selection["object_id"] == output["object_id"]
+-                verified = transport._generated.get_project_verified_media(project_id, selection)
+-                assert verified["selection"] == selection
+-                assert verified["media_type"] == "audio/wav"
+-                assert verified["duration_seconds"] == 1.0
+-                wav_bytes = remote.media.read_bytes(output["object_id"])
+-                with wave.open(io.BytesIO(wav_bytes), "rb") as wav:
+-                    assert wav.getframerate() == 8000 and wav.getnframes() == 8000
+-            future.result(timeout=60)
++                if not _speech_task_is_terminal(diagnostic):
++                    _cancel_unsettled_speech_task(transport, diagnostic)
++                    with pytest.raises(draft_voiceover.VoiceoverSyncError):
++                        sync_future.result(timeout=30)
++                    raise AssertionError(f"speech task did not settle: {diagnostic}")
++                if malformed:
++                    with pytest.raises(draft_voiceover.VoiceoverSyncError, match="hash verification"):
++                        sync_future.result(timeout=30)
++                    assert bound.published is None
++                else:
++                    result = sync_future.result(timeout=30)
++                    assert result["published"] and bound.published is not None
++                    generated = result["generated"][0]
++                    context = generated["runtime_context"]
++                    assert {"task", "task_id", "attempt_id", "association_id", "managed_output", "generation_publish_v1"} <= set(context)
++                    assert context["task"]["task_id"] == context["task_id"]
++                    assert context["task"]["attempt_id"] == context["attempt_id"]
++                    assert context["managed_output"]["association_id"] == context["association_id"]
++                    assert context["generation_publish_v1"]["effect_type"] == "generation.publish_v1"
++                    output = context["managed_output"]
++                    selection = transport._generated.get_project_media_selection(project_id, {
++                        "association_id": output["association_id"],
++                        "object_id": output["object_id"],
++                        "version": output["lifecycle"]["version"],
++                    })
++                    assert set(selection) == {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}
++                    assert selection["object_id"] == output["object_id"]
++                    verified = transport._generated.get_project_verified_media(project_id, selection)
++                    assert verified["selection"] == selection
++                    assert verified["media_type"] == "audio/wav"
++                    assert verified["duration_seconds"] == 1.0
++                    wav_bytes = remote.media.read_bytes(output["object_id"])
++                    with wave.open(io.BytesIO(wav_bytes), "rb") as wav:
++                        assert wav.getframerate() == 8000 and wav.getnframes() == 8000
++            finally:
++                host.shutdown()
++                host_future.result(timeout=5)
++        sdk.invoke = original_invoke
+     finally:
++        sdk.invoke = original_invoke if "original_invoke" in locals() else sdk.invoke
+         host.shutdown()
+         daemon.stop()
+ 
+
+exec
+/bin/bash -lc 'done_path=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-claim-fixture-repair/DONE; : > "$done_path"; test ! -s "$done_path"; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-claim-fixture-repair/commit-msg; echo '"'--- central summary ---'; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-speech-claim-fixture-repair-native014-sockets-integration-1020201310-6070/summary; echo '--- status ---'; git status --short" in /home/user/work/wt/agt-m2-speech-claim-fixture-repair
+ succeeded in 0ms:
+test(agent): repair speech publication fixture
+
+Bound WC5 speech admission diagnostics and test waiting, aligned the
+audio publication declaration, and supplied the fixture result receipt.
+--- central summary ---
+test agt-m2-speech-claim-fixture-repair-native014-sockets-integration-1020201310-6070: pass exit=0 in 38s — native014-sockets-integration on agt-m2-speech-claim-fixture-repair (agent tree 83f16e907286f0a33b92a15a9df42277b4188264)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_real_speech_publication_seam_settles_wav_and_selection tests/packs/video_editing/test_runtime_publication_chain.py::test_real_speech_publication_rejects_malformed_provenance
+counts: 2 passed in 36.34s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-speech-claim-fixture-repair-native014-sockets-integration-1020201310-6070/log.txt ---
+..                                                                       [100%]
+2 passed in 36.34s
+--- status ---
+ M astrid/packs/generation/pack.yaml
+ M astrid/packs/video_editing/shared/draft_voiceover.py
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+
+codex
+Implemented and validated the WC5 speech fixture repair.
+
+- Fixed SDK speech capability metadata to declare primary `audio`.
+- Added fixture `manifest.json` result receipt and bounded diagnostics/waiting.
+- Updated audio output selection compatibility.
+- Preserved all required assertions and test-double authoring boundary.
+
+Tests:
+
+- Local targeted suite: `58 passed`
+- Central `native014-sockets-integration`: `2 passed in 36.34s`
+- Tree: `83f16e907286f0a33b92a15a9df42277b4188264`
+
+No Runtime/API/schema/generator/pin changes. No full/D13/WC5 retirement claim. `commit-msg` and `DONE` were created.
+tokens used
+746,831
+Implemented and validated the WC5 speech fixture repair.
+
+- Fixed SDK speech capability metadata to declare primary `audio`.
+- Added fixture `manifest.json` result receipt and bounded diagnostics/waiting.
+- Updated audio output selection compatibility.
+- Preserved all required assertions and test-double authoring boundary.
+
+Tests:
+
+- Local targeted suite: `58 passed`
+- Central `native014-sockets-integration`: `2 passed in 36.34s`
+- Tree: `83f16e907286f0a33b92a15a9df42277b4188264`
+
+No Runtime/API/schema/generator/pin changes. No full/D13/WC5 retirement claim. `commit-msg` and `DONE` were created.

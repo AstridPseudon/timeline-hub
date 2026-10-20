@@ -1,0 +1,400 @@
+
+--- recent design handoffs ---
+runtime-view-scope-final-review.md
+runtime-view-write-scope-handoff.md
+runtime-viewing-retained-genesis-review.md
+selected-param-original-pin-counterexample.json
+selected-param-original-pin-probe.py
+selected-param-original-pin-rule.md
+suffix-basis-agent.md
+suffix-basis-runtime.md
+suffix-basis.md
+viewing-agent-d09-root-prep-handoff.md
+viewing-app-native-buffer-handoff.md
+viewing-capture-envelope-confirmation.md
+viewing-conditional-renderconfig-handoff-1110.md
+viewing-contract-review.md
+viewing-coordination.md
+viewing-current-adoption.md
+viewing-final-route.md
+viewing-incoming-policy.md
+viewing-m3-consumer-seams.md
+viewing-main-image-cap-actual-reference.md
+viewing-main-image-cap-compiled-input-confirmation.md
+viewing-main-reference-retry-registration.md
+viewing-package-eleven.md
+viewing-pcm-clock-handoff.md
+viewing-private12-graph-source-direction.md
+viewing-release-obsolete-audio-worktrees-1110.md
+viewing-release-tab-historical-worktrees-1117.md
+viewing-resume-0847-source-state.md
+viewing-scanner107-agent-policy-review-request.md
+viewing-scanner108-agent-policy-review-request.md
+viewing-scanner108-delivery-selection.json
+viewing-scene-current-agent-owner-request.md
+viewing-size-census.md
+viewing-size-cut-plan.md
+viewing-size-cuts.md
+viewing-stereo6323-preflight-condition-closed.md
+viewing-tab-clean-install-capability-grant.md
+viewing-tab-short-tmp-1340-run-scope.md
+viewing.md
+visual-compile-contract.md
+
+ succeeded in 227ms:
+DONE
+brief.md
+commit-msg
+commit.log
+ended
+exit
+log.txt
+meta
+recycled
+report.md
+
+--- prior report/handoff ---
+## Completed
+
+- Narrowed `timeline.init`’s recorded reads to authored fields while preserving the exact pristine-parent guard.
+- Added four original opaque-field reload → inverse → redo cases.
+- Updated the golden fixture’s actual read footprint.
+- Published ORCH/App2 reports, commit message, and `DONE`.
+
+## Tests
+
+- Focused initializer/provider tests: **31 passed**
+- Actual Runtime `a0dca169` init/retry test: **1 passed**
+- Actual Runtime init/birth neighbor tests: **2 passed**
+- `git diff --check`: passed
+
+No full suite, App activation, schema/wire/pin, release, or shared dependency changes.
+ succeeded in 2049ms:
+4296a7091d30543d3839fe703c0f0626f9882ebe
+4296a7091d30543d3839fe703c0f0626f9882ebe
+fix(timeline): narrow pristine init inverse reads
+tests/sdk/test_timeline_pristine_initialize_runtime.py
+104	0	tests/sdk/test_timeline_pristine_initialize_runtime.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+print(json.load(open('runtime.lock.json'))['source_commit'])
+PY
+printf 'patch-sha '; git diff --binary | sha256sum
+printf 'tree '; git write-tree 2>/dev/null || true
+printf '\\nbase '; git rev-parse HEAD" in /home/user/work/wt/agt-review-init-opaque-inverse-real
+ succeeded in 936ms:
+a0dca16975dfe8f5e762703b99d9791a16cf7fd7
+patch-sha c733c4eca7aba5c5252892857ed5113a2f974fde4fbe25dbb36d18536755583f  -
+tree 
+base 4296a7091d30543d3839fe703c0f0626f9882ebe
+
+codex
+The focused evidence is green: 31 direct initializer/provider tests and 4 actual Runtime-a0 initializer/birth tests pass, including the new restart/reload/undo/redo regression. The schema and golden artifact are unchanged, and the worktree contains only the one test file. I’m preparing the required APPROVE-for-this-bounded-candidate / HOLD-for-App-adoption handoff now.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-bootstrap-native-opaque-inverse-real-review.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-bootstrap-native-opaque-inverse-real-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-bootstrap-native-opaque-inverse-real-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5ec294bd3a232c122d8499e119f43089685c75ce
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-bootstrap-native-opaque-inverse-real-review.md
+@@ -0,0 +1,48 @@
++# Agent initializer opaque inverse — real-provider review
++
++## Decision
++
++**APPROVE** the bounded initializer candidate at source tree `HEAD
++4296a7091d30543d3839fe703c0f0626f9882ebe` plus the test-only change in
++`tests/sdk/test_timeline_pristine_initialize_runtime.py` (working-tree patch
++SHA256 `c733c4eca7aba5c5252892857ed5113a2f974fde4fbe25dbb36d18536755583f`).
++This approves the Agent initializer behavior and its real-provider proof for
++shared review. **HOLD** App2 consumer activation, public release, and adoption;
++this worker did not qualify those boundaries.
++
++## What was reviewed
++
++- `timeline.init` retains the complete raw-parent pristine guard at capture,
++  while its recorded reads are only the four authored/consumed paths:
++  `config.output`, `name`, `slug`, and `registry.assets`.
++- The existing direct four-value opaque cases (`null`, `false`, `[]`, `{}`)
++  remain strong successful expectations and pass serialized reload -> inverse
++  -> redo. Existing pristine-history, order/intervening-write, birth, and
++  exact-retry refusal coverage remains present; no expected success was
++  weakened.
++- The added real-provider regression uses Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`:
++  accepted init -> accepted disjoint opaque track row containing the four raw
++  values -> Runtime restart/reload -> initializer undo -> redo. It asserts the
++  absent `label`, exact raw values and array order, collection order, canonical
++  document, head pair, and five-entry history closure.
++- `astrid/core/timeline/schema/edit-command.schema.json` and
++  `tests/editing_conformance/fixtures/pristine_initialize.json` are unchanged.
++
++## Evidence
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_pristine_initialize.py tests/sdk/test_timeline_pristine_initialize_provider.py
++31 passed in 3.50s
++
++ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_pristine_initialize_runtime.py::test_pristine_init_crash_resume_reload_undo_retry_and_redo tests/sdk/test_timeline_pristine_initialize_runtime.py::test_pristine_init_real_provider_preserves_disjoint_opaque_row_after_reload_undo_redo tests/editing_conformance/test_next_command_cohort_runtime.py::test_pristine_init_first_birth_reload_undo_and_missing_word_source
++4 passed in 10.97s
++
++git diff --check
++passed
++```
++
++No full suite, browser, socket, App activation, schema/wire/pin, or public
++release qualification was run. The real regression intentionally uses a
++single disjoint opaque row after a `timeline.init` publication; the existing
++actual a0 test covers the full App-default batch's init/retry path, while the
++direct golden covers all four original opaque initializer inverse cases.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md
+index 54fa9a432be1ee772dc0168b02d51c9d0d4d8a13..fa5a0c946b52bfc5b479c86ba4ab799b335f525d
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md
+@@ -39,3 +39,17 @@
+ matched Agent/Runtime/App2 gate before changing the bootstrap hold.
+ 
+ ## 16:09Z — orchestrator: App integration is unfrozen; your queued merge requests will be processed now.
++
++## 2026-10-20 — Agent real-provider initializer review
++
++**APPROVE** bounded Agent initializer candidate `4296a7091d30543d3839fe703c0f0626f9882ebe`
++plus the test-only real-provider regression in worker
++`agt-review-init-opaque-inverse-real`; **HOLD** App2 activation/adoption and
++public release. Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7` passed the
++new accepted init -> disjoint opaque row -> restart/reload -> undo -> redo
++proof, preserving absent fields, `[null, false, [], {}]`, order, head, and
++history closure. Focused direct initializer/provider evidence is 31 passed;
++the actual initializer/retry + new provider + birth-neighbor lane is 4 passed.
++Schema `6ba` and the pristine fixture artifact are unchanged. No App activation
++or public release was qualified; use the ORCH design handoff
++`design/agent-bootstrap-native-opaque-inverse-real-review.md`.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..50582e0b8a38c3cc82eb440ed6bfb5711557db19
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): qualify real-provider opaque init inverse
++
++Add one real Runtime regression covering initializer undo/redo across a
++restart with a disjoint opaque row containing the original raw values.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..50582e0b8a38c3cc82eb440ed6bfb5711557db19
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(timeline): qualify real-provider opaque init inverse
++
++Add one real Runtime regression covering initializer undo/redo across a
++restart with a disjoint opaque row containing the original raw values.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..a82a97bd9a71a2aca3db1f7c8cad66a696de66a5
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/report.md
+@@ -0,0 +1,28 @@
++# Review report
++
++Decision: **APPROVE** the bounded Agent initializer candidate for shared
++review; **HOLD** App2 consumer activation, public release, and adoption.
++
++Exact source tree: base `4296a7091d30543d3839fe703c0f0626f9882ebe` plus the
++single test-only change to
++`tests/sdk/test_timeline_pristine_initialize_runtime.py` (working-tree patch
++SHA256 `c733c4eca7aba5c5252892857ed5113a2f974fde4fbe25dbb36d18536755583f`).
++
++## Change
++
++Added one real Runtime-provider regression: accepted `timeline.init`, accepted
++a separate disjoint opaque track row containing `[null, false, [], {}]`,
++restarted/reloaded Runtime, then initializer undo and redo. It checks the
++absent label, exact unknown values/order, canonical payload, head pair, and
++history closure. No product code, schema, or fixture artifact changed.
++
++## Tests
++
++- `... pytest ... tests/editing_conformance/test_pristine_initialize.py tests/sdk/test_timeline_pristine_initialize_provider.py` — **31 passed**.
++- Actual Runtime a0 (`a0dca16975dfe8f5e762703b99d9791a16cf7fd7`), focused initializer/retry, new real-provider regression, and initializer/birth neighbor — **4 passed**.
++- `git diff --check` — **passed**.
++
++No full suite, browser/socket suite, App activation, or public-release
++qualification was run. Existing direct success/refusal expectations remain
++strong, including the pristine guard, relevant/intervening/order refusal and
++history/retry protections.
+diff --git a/tests/sdk/test_timeline_pristine_initialize_runtime.py b/tests/sdk/test_timeline_pristine_initialize_runtime.py
+index d080e63ffbf428a0bd184adbd6e110e63ada33a6..3a9de97182fec9c7b58a334e4e4075caa337d7e3
+--- a/tests/sdk/test_timeline_pristine_initialize_runtime.py
++++ b/tests/sdk/test_timeline_pristine_initialize_runtime.py
+@@ -107,3 +107,107 @@
+         assert len(service.list_timeline_commits(project, 'film', authorize=lambda: None)['items']) == 4
+     finally:
+         service.close()
++
++
++def test_pristine_init_real_provider_preserves_disjoint_opaque_row_after_reload_undo_redo(
++        tmp_path,
++):
++    """A real accepted init must ignore a later disjoint opaque track row."""
++    use_runtime(commit=vendored_runtime_commit())
++    from runtime_protocol.service import RuntimeService
++    from runtime_protocol.store import RealmStore
++    from runtime_protocol.timeline_commit_port import route_path
++
++    from astrid.sdk.timeline import commit
++    from astrid.sdk.timeline.capture import capture_track_create
++    from astrid.sdk.timeline.commit import bundle_from_document
++    from astrid.sdk.timeline.commands import execute
++    from astrid.sdk.timeline.native_initialize import capture_initialize
++
++    root = tmp_path / 'realm'
++    RealmStore.initialize(root).close()
++    service = RuntimeService(root)
++    service.register_timeline_commit_provider(commit.create_runtime_commit_service())
++    project = service.create_project({'slug': 'opaque-init', 'name': 'Opaque Init'})['id']
++    service.create_timeline(project, 'film', idempotency_key='create-film')
++
++    def head():
++        row = service.get_project_timeline(project, 'film')
++        return {'revision_id': row['head_revision_id'],
++                'publication_id': row['head_publication_id']}
++
++    def document():
++        current = head()
++        return service._timeline_commits()[0].revision_closure(
++            project, 'film', current['revision_id'])
++
++    def submit(calls, key):
++        current = head()
++        body = {'api_version': 1, 'project_id': project, 'timeline_id': 'film',
++                'base_revision_id': current['revision_id'],
++                'base_publication_id': current['publication_id'],
++                'commands': calls, 'dry_run': False}
++        return service.commit_timeline(
++            project, 'film', body, idempotency_key=key, publisher='author',
++            invocation_path=route_path(project, 'film'), authorize=lambda: None)
++
++    def inverse(publication):
++        return {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1',
++                'select': None, 'args': {'publications': [publication]}}
++
++    def reopen():
++        service.close()
++        reopened = RuntimeService(root)
++        reopened.register_timeline_commit_provider(commit.create_runtime_commit_service())
++        return reopened
++
++    try:
++        bootstrap = bundle_from_document(document())
++        init = submit([capture_initialize(
++            bootstrap, name=GOLDEN['app_parent']['name'],
++            slug=GOLDEN['app_parent']['slug'],
++            output=GOLDEN['app_parent']['config']['output'])], 'init-film')
++        initialized = init['data']['canonical_document']
++
++        # This row deliberately uses one opaque array for the four original
++        # values. Its absent label and array order are part of the proof.
++        opaque_row = {
++            'id': 'opaque-holder', 'kind': 'visual',
++            'opaque': [None, False, [], {}],
++        }
++        opaque_command = capture_track_create(
++            bundle_from_document(initialized), 'parent', opaque_row)
++        added = submit([opaque_command], 'unrelated-opaque')
++        after_add = added['data']['canonical_document']
++        assert after_add['parent_revision']['payload']['config']['tracks'] == [opaque_row]
++
++        # Compile/reload through the actual Runtime store before reversing the
++        # initializer publication; this is not a detached provider replay.
++        service = reopen()
++        assert document() == after_add
++        undone = submit([inverse(init['receipt']['receipt_id'])], 'undo-init')
++        undo_payload = undone['data']['canonical_document']['parent_revision']['payload']
++        assert undo_payload == {
++            'config': {'clips': [], 'tracks': [opaque_row]},
++            'registry': {}, 'clips': [], 'occurrences': [],
++        }
++        holder = undo_payload['config']['tracks'][0]
++        assert list(holder) == ['id', 'kind', 'opaque']
++        assert holder['opaque'] == opaque_row['opaque']
++
++        redone = submit([inverse(undone['receipt']['receipt_id'])], 'redo-init')
++        assert redone['data']['canonical_document'] == after_add
++        assert head() == {
++            'revision_id': redone['data']['accepted_revision_id'],
++            'publication_id': redone['receipt']['receipt_id'],
++        }
++        history = service.list_timeline_commits(
++            project, 'film', authorize=lambda: None)['items']
++        assert len(history) == 5  # create, init, opaque row, undo, redo
++        assert history[-1]['publication_id'] == head()['publication_id']
++        assert history[-1]['previous'] == {
++            'revision_id': undone['data']['accepted_revision_id'],
++            'publication_id': undone['receipt']['receipt_id'],
++        }
++    finally:
++        service.close()
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-init-opaque-inverse-real/DONE && git diff --check && git status --short && find . -type d \\( -name __pycache__ -o -name .pytest_cache -o -name .mypy_cache -o -name .ruff_cache \\) -print | head -50" in /home/user/work/wt/agt-review-init-opaque-inverse-real
+ succeeded in 1822ms:
+ M tests/sdk/test_timeline_pristine_initialize_runtime.py
+
+codex
+## Report
+
+Decision: **APPROVE** bounded Agent initializer candidate; **HOLD** App2 activation/public adoption.
+
+Added one real Runtime regression covering:
+
+`init → disjoint opaque row [null, false, [], {}] → restart/reload → undo → redo`
+
+It verifies raw values, absent fields, order, head, and history closure. Only [test_timeline_pristine_initialize_runtime.py](/home/user/work/wt/agt-review-init-opaque-inverse-real/tests/sdk/test_timeline_pristine_initialize_runtime.py) changed.
+
+Tests:
+
+- Focused initializer/provider: **31 passed**
+- Actual Runtime a0 initializer/retry, new regression, and birth neighbors: **4 passed**
+- `git diff --check`: passed
+
+Schema and pristine fixture artifacts are unchanged. No full suite, App activation, or public release qualification was run.
+
+Published:
+
+- ORCH design handoff
+- App2 inbox handoff
+- Worker report and commit messages
+- `DONE` marker created
+tokens used
+160,775
+## Report
+
+Decision: **APPROVE** bounded Agent initializer candidate; **HOLD** App2 activation/public adoption.
+
+Added one real Runtime regression covering:
+
+`init → disjoint opaque row [null, false, [], {}] → restart/reload → undo → redo`
+
+It verifies raw values, absent fields, order, head, and history closure. Only [test_timeline_pristine_initialize_runtime.py](/home/user/work/wt/agt-review-init-opaque-inverse-real/tests/sdk/test_timeline_pristine_initialize_runtime.py) changed.
+
+Tests:
+
+- Focused initializer/provider: **31 passed**
+- Actual Runtime a0 initializer/retry, new regression, and birth neighbors: **4 passed**
+- `git diff --check`: passed
+
+Schema and pristine fixture artifacts are unchanged. No full suite, App activation, or public release qualification was run.
+
+Published:
+
+- ORCH design handoff
+- App2 inbox handoff
+- Worker report and commit messages
+- `DONE` marker created

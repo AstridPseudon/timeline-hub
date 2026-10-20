@@ -1,0 +1,400 @@
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-root-boundary-fixture/tests/editing_conformance/test_recorded_graph_roots.py
+diff --git a/tests/editing_conformance/test_recorded_graph_roots.py b/tests/editing_conformance/test_recorded_graph_roots.py
+index 9372a178bc1001cb11f390c0de44eb0160e86371..a005a4dfc7df64d1529b134d5c6ff5e3238d3bd1
+--- a/tests/editing_conformance/test_recorded_graph_roots.py
++++ b/tests/editing_conformance/test_recorded_graph_roots.py
+@@ -7,6 +7,7 @@
+ 
+ from astrid.core.timeline.authoring_bundle import AuthoringBundleError
+ from astrid.sdk.timeline import commands
++from astrid.sdk.timeline._collections import AcceptedRecords
+ from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
+ from astrid.sdk.timeline._recording import Recording
+ from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+@@ -204,6 +205,13 @@
+             'args': {'publications': ['trusted-records-fixture']}}
+ 
+ 
++def accepted_input_boundary(records, before, after):
++    """Model the provider's accepted records plus its captured input boundary."""
++    entry = {'records': {'commands': records,
++                         'undo_of': inverse_command()['args']['publications']}}
++    return AcceptedRecords([entry], records, lambda _: (before, after))
++
++
+ def test_creation_inverse_restores_original_root_absence(root_ops):
+     original = bundle_from_document(document_fixture())
+     plan = commands.execute(original, [create_command()])
+@@ -212,13 +220,54 @@
+     assert document_from_bundle(undone.bundle) == document_fixture()
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason='Exact pre-create parent revision identity needs an authenticated input boundary; bare root records contain no parent pin')
+ def test_creation_inverse_after_compiled_reload_restores_original_absence(root_ops):
+     original = bundle_from_document(document_fixture())
+     plan = commands.execute(original, [create_command()])
++    accepted_document = document_from_bundle(plan.bundle)
++    reloaded = bundle_from_document(accepted_document)
++    accepted = accepted_input_boundary(plan.records, original, reloaded)
++    undone = commands.execute(reloaded, [inverse_command()], inverse_records=accepted)
++    restored = document_from_bundle(undone.bundle, source_bundles=(original, reloaded))
++    assert restored == document_fixture()
++
++
++def test_record_only_inverse_restores_authored_closure_but_not_parent_pin(root_ops):
++    original = bundle_from_document(document_fixture())
++    plan = commands.execute(original, [create_command()])
+     reloaded = bundle_from_document(document_from_bundle(plan.bundle))
+     undone = commands.execute(reloaded, [inverse_command()], inverse_records=plan.records)
+-    assert document_from_bundle(undone.bundle) == document_fixture()
++    restored = document_from_bundle(undone.bundle)
++    expected = document_fixture()
++
++    assert restored['parent_revision']['payload'] == expected['parent_revision']['payload']
++    assert restored['parent_revision']['content_digest'] == expected['parent_revision']['content_digest']
++    assert restored['shot_revisions'] == expected['shot_revisions']
++    assert restored['internal_timeline_revisions'] == expected['internal_timeline_revisions']
++    assert restored['dependency_manifest'] == expected['dependency_manifest']
++    assert restored['parent_revision']['revision_id'] != expected['parent_revision']['revision_id']
++
++
++def test_record_only_inverse_cannot_distinguish_original_parent_revision_names(root_ops):
++    first = document_fixture()
++    second = copy.deepcopy(first)
++    second['parent_revision']['revision_id'] = 'different-original-parent'
++    plans = [commands.execute(bundle_from_document(source), [create_command()])
++             for source in (first, second)]
++    accepted_documents = [document_from_bundle(plan.bundle) for plan in plans]
++
++    assert plans[0].records == plans[1].records
++    assert accepted_documents[0] == accepted_documents[1]
++
++    restored = []
++    for document in accepted_documents:
++        reloaded = bundle_from_document(document)
++        undone = commands.execute(reloaded, [inverse_command()],
++                                  inverse_records=plans[0].records)
++        restored.append(document_from_bundle(undone.bundle))
++
++    assert restored[0] == restored[1]
++    assert restored[0]['parent_revision']['revision_id'] not in {
++        first['parent_revision']['revision_id'], second['parent_revision']['revision_id']}
+ 
+ 
+ def test_creation_inverse_redo_reuses_exact_roots(root_ops):
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py && git diff --check && git status --short --branch && git diff --stat' in /home/user/work/wt/agt-m2-root-boundary-fixture
+ succeeded in 826ms:
+All checks passed!
+## tl/agt-m2-root-boundary-fixture
+ M tests/editing_conformance/test_recorded_graph_roots.py
+ .../test_recorded_graph_roots.py                   | 53 +++++++++++++++++++++-
+ 1 file changed, 51 insertions(+), 2 deletions(-)
+
+codex
+All requested targeted tests pass: 364 passed, 1 repository-default deselected; Ruff and `git diff --check` also pass. I found no product/API gap, and the only remaining hold is the orchestrator’s stated M1 gate/integration hold. I’m writing the required report and both conventional commit-message files now, then I’ll do a final status/diff check.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e7e31a47d4e661398f637239ab7e13f6ab2d2913
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): cover authenticated root inverse boundary
++
++Use the accepted input boundary in the compiled root inverse fixture and
++retain explicit regressions for the bare-record parent identity limit.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..e7e31a47d4e661398f637239ab7e13f6ab2d2913
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(timeline): cover authenticated root inverse boundary
++
++Use the accepted input boundary in the compiled root inverse fixture and
++retain explicit regressions for the bare-record parent identity limit.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f36d65278735b5bf0fc39210ca1a42bff001bae3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/notes/report.md
+@@ -0,0 +1,43 @@
++# agt-m2-root-boundary-fixture — complete, integration-held
++
++## What changed
++
++- Changed only `tests/editing_conformance/test_recorded_graph_roots.py`.
++- Removed the strict xfail from `test_creation_inverse_after_compiled_reload_restores_original_absence`.
++- The positive fixture now models the supported accepted-input contract with `AcceptedRecords` and the exact before/after source bundles, then calls `document_from_bundle(..., source_bundles=...)`. Its original exact document-equality assertion remains unchanged.
++- Added two explicit record-only limit tests. They verify that offline inverse restores the authored parent payload, immutable shot/internal closure, content digest and dependency manifest, while it cannot recover the original parent revision name. They also prove that two different valid original parent names produce identical bare records, accepted output and bare inverse output.
++- No product, record, schema, DTO or operation changes; no receipt/SQL fabrication; no provider proof weakening. The existing actual provider test `test_authenticated_root_creation_reload_inverse_redo_exact_closure` is unchanged.
++
++## Verification
++
++Baseline before the edit:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py
++21 passed, 1 xfailed in 1.13s
++```
++
++Final targeted Agent lanes:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py
++364 passed, 1 deselected in 23.65s
++```
++
++Additional checks:
++
++```text
++/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py
++All checks passed!
++
++git diff --check
++exit 0
++```
++
++Not run: full suites, `make check`, localhost/network/socket/service tests, App/browser journeys, Runtime full suite, or artifact generation. The actual Runtime/provider root proof was run as part of the targeted provider lane and remains unchanged.
++
++## Decisions, holds and next steps
++
++- The positive must carry the authenticated input boundary; bare record-only inverse cannot mathematically recover a parent revision identity absent from both records and canonical accepted output. The tests make both sides of that contract explicit.
++- No technical blocker remains in this bounded test-only task. Integration remains held by the orchestrator’s rule that M2 merges wait until PLAN records the unrelated M1 shot-projection-overwrite fix.
++- Recommended next step: manager review/merge after the PLAN M1 hold is cleared, preserving the actual provider proof and the record-only ambiguity regressions.
+diff --git a/tests/editing_conformance/test_recorded_graph_roots.py b/tests/editing_conformance/test_recorded_graph_roots.py
+index 9372a178bc1001cb11f390c0de44eb0160e86371..a005a4dfc7df64d1529b134d5c6ff5e3238d3bd1
+--- a/tests/editing_conformance/test_recorded_graph_roots.py
++++ b/tests/editing_conformance/test_recorded_graph_roots.py
+@@ -7,6 +7,7 @@
+ 
+ from astrid.core.timeline.authoring_bundle import AuthoringBundleError
+ from astrid.sdk.timeline import commands
++from astrid.sdk.timeline._collections import AcceptedRecords
+ from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
+ from astrid.sdk.timeline._recording import Recording
+ from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+@@ -204,6 +205,13 @@
+             'args': {'publications': ['trusted-records-fixture']}}
+ 
+ 
++def accepted_input_boundary(records, before, after):
++    """Model the provider's accepted records plus its captured input boundary."""
++    entry = {'records': {'commands': records,
++                         'undo_of': inverse_command()['args']['publications']}}
++    return AcceptedRecords([entry], records, lambda _: (before, after))
++
++
+ def test_creation_inverse_restores_original_root_absence(root_ops):
+     original = bundle_from_document(document_fixture())
+     plan = commands.execute(original, [create_command()])
+@@ -212,13 +220,54 @@
+     assert document_from_bundle(undone.bundle) == document_fixture()
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason='Exact pre-create parent revision identity needs an authenticated input boundary; bare root records contain no parent pin')
+ def test_creation_inverse_after_compiled_reload_restores_original_absence(root_ops):
+     original = bundle_from_document(document_fixture())
+     plan = commands.execute(original, [create_command()])
++    accepted_document = document_from_bundle(plan.bundle)
++    reloaded = bundle_from_document(accepted_document)
++    accepted = accepted_input_boundary(plan.records, original, reloaded)
++    undone = commands.execute(reloaded, [inverse_command()], inverse_records=accepted)
++    restored = document_from_bundle(undone.bundle, source_bundles=(original, reloaded))
++    assert restored == document_fixture()
++
++
++def test_record_only_inverse_restores_authored_closure_but_not_parent_pin(root_ops):
++    original = bundle_from_document(document_fixture())
++    plan = commands.execute(original, [create_command()])
+     reloaded = bundle_from_document(document_from_bundle(plan.bundle))
+     undone = commands.execute(reloaded, [inverse_command()], inverse_records=plan.records)
+-    assert document_from_bundle(undone.bundle) == document_fixture()
++    restored = document_from_bundle(undone.bundle)
++    expected = document_fixture()
++
++    assert restored['parent_revision']['payload'] == expected['parent_revision']['payload']
++    assert restored['parent_revision']['content_digest'] == expected['parent_revision']['content_digest']
++    assert restored['shot_revisions'] == expected['shot_revisions']
++    assert restored['internal_timeline_revisions'] == expected['internal_timeline_revisions']
++    assert restored['dependency_manifest'] == expected['dependency_manifest']
++    assert restored['parent_revision']['revision_id'] != expected['parent_revision']['revision_id']
++
++
++def test_record_only_inverse_cannot_distinguish_original_parent_revision_names(root_ops):
++    first = document_fixture()
++    second = copy.deepcopy(first)
++    second['parent_revision']['revision_id'] = 'different-original-parent'
++    plans = [commands.execute(bundle_from_document(source), [create_command()])
++             for source in (first, second)]
++    accepted_documents = [document_from_bundle(plan.bundle) for plan in plans]
++
++    assert plans[0].records == plans[1].records
++    assert accepted_documents[0] == accepted_documents[1]
++
++    restored = []
++    for document in accepted_documents:
++        reloaded = bundle_from_document(document)
++        undone = commands.execute(reloaded, [inverse_command()],
++                                  inverse_records=plans[0].records)
++        restored.append(document_from_bundle(undone.bundle))
++
++    assert restored[0] == restored[1]
++    assert restored[0]['parent_revision']['revision_id'] not in {
++        first['parent_revision']['revision_id'], second['parent_revision']['revision_id']}
+ 
+ 
+ def test_creation_inverse_redo_reuses_exact_roots(root_ops):
+
+exec
+/bin/bash -lc "git status --short --branch && git diff --check && git diff -- tests/editing_conformance/test_recorded_graph_roots.py | sed -n '1,260p' && printf '\\n--- required files ---\\n' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg.txt" in /home/user/work/wt/agt-m2-root-boundary-fixture
+ succeeded in 557ms:
+## tl/agt-m2-root-boundary-fixture
+ M tests/editing_conformance/test_recorded_graph_roots.py
+diff --git a/tests/editing_conformance/test_recorded_graph_roots.py b/tests/editing_conformance/test_recorded_graph_roots.py
+index 9372a178..a005a4df 100644
+--- a/tests/editing_conformance/test_recorded_graph_roots.py
++++ b/tests/editing_conformance/test_recorded_graph_roots.py
+@@ -7,6 +7,7 @@ import pytest
+ 
+ from astrid.core.timeline.authoring_bundle import AuthoringBundleError
+ from astrid.sdk.timeline import commands
++from astrid.sdk.timeline._collections import AcceptedRecords
+ from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
+ from astrid.sdk.timeline._recording import Recording
+ from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+@@ -204,6 +205,13 @@ def inverse_command():
+             'args': {'publications': ['trusted-records-fixture']}}
+ 
+ 
++def accepted_input_boundary(records, before, after):
++    """Model the provider's accepted records plus its captured input boundary."""
++    entry = {'records': {'commands': records,
++                         'undo_of': inverse_command()['args']['publications']}}
++    return AcceptedRecords([entry], records, lambda _: (before, after))
++
++
+ def test_creation_inverse_restores_original_root_absence(root_ops):
+     original = bundle_from_document(document_fixture())
+     plan = commands.execute(original, [create_command()])
+@@ -212,13 +220,54 @@ def test_creation_inverse_restores_original_root_absence(root_ops):
+     assert document_from_bundle(undone.bundle) == document_fixture()
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason='Exact pre-create parent revision identity needs an authenticated input boundary; bare root records contain no parent pin')
+ def test_creation_inverse_after_compiled_reload_restores_original_absence(root_ops):
++    original = bundle_from_document(document_fixture())
++    plan = commands.execute(original, [create_command()])
++    accepted_document = document_from_bundle(plan.bundle)
++    reloaded = bundle_from_document(accepted_document)
++    accepted = accepted_input_boundary(plan.records, original, reloaded)
++    undone = commands.execute(reloaded, [inverse_command()], inverse_records=accepted)
++    restored = document_from_bundle(undone.bundle, source_bundles=(original, reloaded))
++    assert restored == document_fixture()
++
++
++def test_record_only_inverse_restores_authored_closure_but_not_parent_pin(root_ops):
+     original = bundle_from_document(document_fixture())
+     plan = commands.execute(original, [create_command()])
+     reloaded = bundle_from_document(document_from_bundle(plan.bundle))
+     undone = commands.execute(reloaded, [inverse_command()], inverse_records=plan.records)
+-    assert document_from_bundle(undone.bundle) == document_fixture()
++    restored = document_from_bundle(undone.bundle)
++    expected = document_fixture()
++
++    assert restored['parent_revision']['payload'] == expected['parent_revision']['payload']
++    assert restored['parent_revision']['content_digest'] == expected['parent_revision']['content_digest']
++    assert restored['shot_revisions'] == expected['shot_revisions']
++    assert restored['internal_timeline_revisions'] == expected['internal_timeline_revisions']
++    assert restored['dependency_manifest'] == expected['dependency_manifest']
++    assert restored['parent_revision']['revision_id'] != expected['parent_revision']['revision_id']
++
++
++def test_record_only_inverse_cannot_distinguish_original_parent_revision_names(root_ops):
++    first = document_fixture()
++    second = copy.deepcopy(first)
++    second['parent_revision']['revision_id'] = 'different-original-parent'
++    plans = [commands.execute(bundle_from_document(source), [create_command()])
++             for source in (first, second)]
++    accepted_documents = [document_from_bundle(plan.bundle) for plan in plans]
++
++    assert plans[0].records == plans[1].records
++    assert accepted_documents[0] == accepted_documents[1]
++
++    restored = []
++    for document in accepted_documents:
++        reloaded = bundle_from_document(document)
++        undone = commands.execute(reloaded, [inverse_command()],
++                                  inverse_records=plans[0].records)
++        restored.append(document_from_bundle(undone.bundle))
++
++    assert restored[0] == restored[1]
++    assert restored[0]['parent_revision']['revision_id'] not in {
++        first['parent_revision']['revision_id'], second['parent_revision']['revision_id']}
+ 
+ 
+ def test_creation_inverse_redo_reuses_exact_roots(root_ops):
+
+--- required files ---
+-rw-r--r-- 1 root root  203 Oct 19 23:22 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg
+-rw-r--r-- 1 root root  203 Oct 19 23:22 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/commit-msg.txt
+-rw-r--r-- 1 root root 3033 Oct 19 23:22 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-boundary-fixture/notes/report.md
+
+codex
+## Completed
+
+- Updated only `tests/editing_conformance/test_recorded_graph_roots.py`.
+- Positive compiled-reload inverse now supplies `AcceptedRecords` and source bundles; strict xfail removed.
+- Added regressions documenting the bare-record parent-ID limitation and indistinguishable original names.
+- Product code and existing provider proof unchanged.
+
+## Tests
+
+- Targeted Agent suites: **364 passed, 1 deselected**
+- Ruff: passed
+- `git diff --check`: passed
+
+No full, network, socket, browser, or service suites run.
+
+Required report and commit messages written:
+
+- `notes/report.md`
+- `commit-msg`
+- `commit-msg.txt`
+
+Integration remains held until the PLAN-recorded M1 blocker is cleared.
+tokens used
+84,537
+## Completed
+
+- Updated only `tests/editing_conformance/test_recorded_graph_roots.py`.
+- Positive compiled-reload inverse now supplies `AcceptedRecords` and source bundles; strict xfail removed.
+- Added regressions documenting the bare-record parent-ID limitation and indistinguishable original names.
+- Product code and existing provider proof unchanged.
+
+## Tests
+
+- Targeted Agent suites: **364 passed, 1 deselected**
+- Ruff: passed
+- `git diff --check`: passed
+
+No full, network, socket, browser, or service suites run.
+
+Required report and commit messages written:
+
+- `notes/report.md`
+- `commit-msg`
+- `commit-msg.txt`
+
+Integration remains held until the PLAN-recorded M1 blocker is cleared.

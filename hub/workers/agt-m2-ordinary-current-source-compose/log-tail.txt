@@ -1,0 +1,400 @@
+-        idempotency_key='remove-current-selection')
+-    shutil.rmtree(case.source_root)
+-    shutil.rmtree(case.artifact_root)
+-    case.service.close()
+-    case.service = RuntimeService(case.root)
+-    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+-
+-    def forbidden(*args, **kwargs):
+-        raise AssertionError('retained PARAM used launcher, source, cache, or renderer')
+-
+-    monkeypatch.setattr(packs, '_open_client', forbidden)
+-    monkeypatch.setattr(packs, 'resolve_admitted_element', forbidden)
+-    monkeypatch.setattr(packs, 'artifact_root', forbidden)
+-    monkeypatch.setattr(packs, 'authoring_root', forbidden)
+-    with monkeypatch.context() as retry:
+-        retry.setattr(commands, 'execute', forbidden)
+-        assert case.submit(body, 'original-params') == accepted
+-    # The current admission permits 16, but this history's captured V1 does not.
+-    with pytest.raises(RuntimeErrorBase, match='10|16'):
+-        case.submit(case.request([raw_params(case, {'seed': 16})]), 'retained-invalid')
+-    undone = case.submit(case.request([inverse(accepted['receipt']['receipt_id'])]), 'undo')
+-    assert State(commit.bundle_from_document(undone['data']['canonical_document'])).entity(REF) == original
+-    redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'redo')
+-    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
+-    opaque = {'literal': [None, False, {}, 'ƒ(keep literal)']}
+-    cleared = case.submit(case.request([raw_params(case, {'other': opaque}, ['seed'])]), 'clear-opaque')
+-    params = State(commit.bundle_from_document(cleared['data']['canonical_document'])).entity(REF)['params']
+-    assert params == {'other': opaque, 'future': original['params']['future']}
+-
+-
+-@pytest.mark.parametrize('damage', ['stale', 'owner', 'id', 'kind', 'revision', 'revoked',
+-                                   'legacy', 'missing', 'corrupt', 'foreign', 'authorization'])
+-def test_native_provider_refuses_unavailable_or_wrong_retained_basis(retained_pack, damage):
+-    from runtime_protocol.errors import ForbiddenError, RuntimeErrorBase
+-
+-    case = retained_pack
+-    call = raw_params(case, {'seed': 8})
+-    def authorize():
+-        return None
+-    if damage in {'owner', 'id', 'kind', 'revision'}:
+-        row = copy.deepcopy(State(case.bundle()).entity(REF))
+-        row['id'] = 'damaged'
+-        row['elementRef']['packId' if damage == 'owner' else damage] = 'wrong'
+-        case.submit(case.request([capture_clip_add(case.bundle(), 'parent', row)]), 'damaged-ref')
+-        call['select'] = 'parent/clip:damaged'
+-    elif damage in {'stale', 'revoked', 'legacy'}:
+-        row = case.service.get_document(case.project, case.pin['document_id'])
+-        content = copy.deepcopy(row['content'])
+-        if damage == 'revoked':
+-            content['admissions'] = []
+-        elif damage == 'legacy':
+-            for admission in content['admissions']:
+-                del admission['snapshot_object']
+-        updated = case.service.update_document(
+-            case.project, row['document_id'], {'expected_version': row['version'], 'content': content},
+-            idempotency_key='changed-admission')['data']
+-        if damage == 'stale':
+-            case.submit(case.request([{'schema_version': 1, 'op': 'clip.set-element',
+-                'version': '1', 'select': REF,
+-                'args': {'elementRef': case.selected, 'schema_source': {
+-                    'document_id': updated['document_id'], 'version': updated['version'],
+-                    'content_digest': commit._digest(updated['content'])}}}]), 'select-new-head')
+-        if damage != 'stale':
+-            call['args']['schema_source'] = {
+-                'document_id': updated['document_id'], 'version': updated['version'],
+-                'content_digest': commit._digest(updated['content'])}
+-    elif damage in {'missing', 'corrupt'}:
+-        objects = case.options['schema_inputs'][0][1]
+-        path = case.service.cas.path_for(next(iter(objects)).removeprefix('sha256:'))
+-        if damage == 'missing':
+-            path.unlink()
+-        else:
+-            path.write_bytes(b'corrupt')
+-    elif damage == 'foreign':
+-        foreign = case.service.create_project({'slug': 'foreign', 'name': 'Foreign'})['id']
+-        test_project_packs.seed(foreign)
+-        result = packs.admit_project_pack('realm', foreign)
+-        row = case.service.get_document(foreign, result['documentId'])
+-        call['args']['schema_source'] = {'document_id': row['document_id'], 'version': row['version'],
+-                                         'content_digest': commit._digest(row['content'])}
+-    else:
+-        def authorize():
+-            raise ForbiddenError('actor revoked')
+-    before = case.head()
+-    with pytest.raises(RuntimeErrorBase) as error:
+-        case.submit(case.request([call]), 'refused-' + damage, authorize=authorize)
+-    if damage == 'legacy':
+-        assert 'pack snapshot unavailable; re-admit pack' in str(error.value)
+-    assert case.head() == before
+-
+-
+-def test_paired_provider_requires_exact_installed_contract_digest():
+-    use_runtime()
+-    from runtime_protocol.errors import ValidationError
+-    from runtime_protocol.timeline_commit_provider import validate_timeline_commit_provider
+-
+-    assert validate_timeline_commit_provider(commit.create_runtime_commit_service())
+-    with pytest.raises(ValidationError, match='interface/contract mismatch'):
+-        validate_timeline_commit_provider(commit.RuntimeCommitService('sha256:' + '0' * 64))
+-
+-
+-def select_source(case, pin, *, ref=REF, element=None):
+-    return {'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': ref,
+-            'args': {'elementRef': element or case.selected, 'schema_source': pin}}
+-
+-
+-def test_native_equal_json_opposite_selection_order_and_inverse_restore(retained_pack):
+-    from runtime_protocol.errors import RuntimeErrorBase
+-
+-    case = retained_pack
+-    p1 = copy.deepcopy(case.pin)
+-    manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
+-    test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
+-    packs.admit_project_pack('realm', case.project)
+-    document = case.service.get_document(case.project, p1['document_id'])
+-    p2 = {'document_id': document['document_id'], 'version': document['version'],
+-          'content_digest': commit._digest(document['content'])}
+-    assert p1 != p2
+-    # Both pins contain the exact SAME E/O; current admission is not selection.
+-    case.pin = p1
+-    case.submit(case.request([select_source(case, p1), raw_params(case, {'seed': 9}),
+-                              select_source(case, p2)]), 'order-a')
+-    a = case.service._timeline_commits()[0].revision_closure(case.project, 'film', case.head()['revision_id'])
+-    case.pin = p2
+-    selected = case.submit(case.request([select_source(case, p2), raw_params(case, {'seed': 9}),
+-                                         select_source(case, p1)]), 'order-b')
+-    case.pin = p1
+-    assert selected['data']['canonical_document'] == a
+-    # These publications have equal complete canonical JSON but different next P.
+-    with pytest.raises(RuntimeErrorBase, match='source changed'):
+-        case.submit(case.request([{**raw_params(case, {'seed': 8}),
+-                                   'args': {**raw_params(case, {'seed': 8})['args'],
+-                                            'schema_source': p2}}]), 'cannot-switch')
+-    before = case.head()
+-    with pytest.raises(RuntimeErrorBase, match='10|16'):
+-        case.submit(case.request([raw_params(case, {'seed': 16})]), 'original-max10')
+-    assert case.head() == before
+-    undone = case.submit(case.request([inverse(selected['receipt']['receipt_id'])]), 'selection-undo')
+-    case.pin = p2
+-    # An inverse consumes P1 but restores the target's BEFORE selection P2.
+-    same = case.submit(case.request([raw_params(case, {'seed': 9})]), 'after-selection-undo')
+-    entry = case.service._timeline_commits()[0].history_entry(case.project, 'film', same['receipt']['receipt_id'])
+-    assert next(d['pin'] for d in entry['records']['commands'][0]['dependencies']
+-                if d['key'] == 'params.schema') == p2
+-    # Undoing the no-op PARAM first leaves guarded redo unblocked.
+-    case.submit(case.request([inverse(same['receipt']['receipt_id'])]), 'undo-noop')
+-    with pytest.raises(RuntimeErrorBase):
+-        case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'strict-redo-aba')
+-    # A new explicit selection supplies a clean target after the ABA writes.
+-    again = case.submit(case.request([select_source(case, p1)]), 'select-again')
+-    rev = again['data']['canonical_document']['parent_revision']
+-    restored = case.submit(case.request([{'schema_version': 1, 'op': 'timeline.restore',
+-        'version': '1', 'select': None,
+-        'args': {k: rev[k] for k in ('revision_id', 'content_digest')}}]), 'ambiguous-restore')
+-    assert restored['data']['canonical_document'] == a
+-    for pin in (p1, p2):
+-        case.pin = pin
+-        with pytest.raises(RuntimeErrorBase, match='authority is unavailable'):
+-            case.submit(case.request([raw_params(case, {'seed': 8})]), 'restore-param-' + str(pin['version']))
+-    assert undone['data']['canonical_document'] == a
+-    # Inverse of restore uses its authenticated before publication, which is
+-    # unambiguous even though revision-only restore was ambiguous.
+-    case.submit(case.request([inverse(restored['receipt']['receipt_id'])]), 'undo-restore')
+-    case.pin = p1
+-    case.submit(case.request([raw_params(case, {'seed': 8})]), 'param-after-undo-restore')
+-
+-
+-@pytest.mark.parametrize('peer', ['pin', 'element'])
+-def test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive(retained_pack, peer):
+-    from runtime_protocol.errors import RuntimeErrorBase
+-    from runtime_protocol.service import RuntimeService
+-
+-    case = retained_pack
+-    base = case.head()
+-    body = case.request([raw_params(case, {'seed': 8})], base)
+-    case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
+-                                               values={'label': 'Peer'})]), 'authority-peer')
+-    accepted = case.submit(body, 'authority-retry')
+-    assert accepted['data']['status'] == 'rebased'
+-    manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
+-    test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
+-    packs.admit_project_pack('realm', case.project)
+-    document = case.service.get_document(case.project, case.pin['document_id'])
+-    p2 = {'document_id': document['document_id'], 'version': document['version'],
+-          'content_digest': commit._digest(document['content'])}
+-    stale = case.request([raw_params(case, {'seed': 9})])
+-    element = case.selected
+-    if peer == 'element':
+-        case.definition['schema']['properties']['seed']['maximum'] = 20
+-        case.path.write_text(yaml.safe_dump(case.definition))
+-        admitted = packs.admit_project_pack('realm', case.project)
+-        element = next({k: e['descriptor'][k] for k in ('packId', 'id', 'kind', 'revision')}
+-                       for e in admitted['elements'] if e['descriptor']['id'] == case.selected['id'])
+-        document = case.service.get_document(case.project, case.pin['document_id'])
+-        p2 = {'document_id': document['document_id'], 'version': document['version'],
+-              'content_digest': commit._digest(document['content'])}
+-    case.submit(case.request([select_source(case, p2, element=element)]), 'authority-peer-selection')
+-    before = case.head()
+-    with pytest.raises(RuntimeErrorBase, match='source changed|guard changed'):
+-        case.submit(stale, 'authority-conflict')
+-    assert case.head() == before
+-    case.service.close()
+-    case.service = RuntimeService(case.root)
+-    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+-    # Runtime's first ledger check returns accepted history before any new
+-    # provider selection interpretation, even after a new selection and restart.
+-    assert case.submit(body, 'authority-retry') == accepted
+-
+-
+-@pytest.mark.parametrize('values,clear', [({'seed': 4}, []), ({}, ['missing']), ({}, [])])
+-def test_native_birth_without_selection_cannot_authorize_param(retained_pack, values, clear):
+-    from runtime_protocol.errors import RuntimeErrorBase
+-
+-    case = retained_pack
+-    row = copy.deepcopy(State(case.bundle()).entity(REF))
+-    row['id'] = 'unselected'
+-    case.submit(case.request([capture_clip_add(case.bundle(), 'parent', row)]), 'unselected-birth')
+-    call = raw_params(case, values, clear)
+-    call['select'] = 'parent/clip:unselected'
+-    before = case.head()
+-    with pytest.raises(RuntimeErrorBase):
+-        case.submit(case.request([call]), 'unselected-param')
+-    assert case.head() == before
+
+exec
+/bin/bash -lc "test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary-current-source-compose/DONE && echo DONE-present; wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary-current-source-compose/DONE; sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary-current-source-compose/commit-msg; git status --short --branch; git diff --check" in /home/user/work/wt/agt-m2-ordinary-current-source-compose
+ succeeded in 246ms:
+DONE-present
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary-current-source-compose/DONE
+feat(timeline): compose ordinary source onto current integration
+
+Port the reviewed ordinary 55-definition, 29-operation Agent source onto
+current integration while retaining current authority, scene, extraction,
+staged-inverse, and rendering predecessor changes. Keep public Runtime and
+Composition artifacts unchanged pending official candidate approval.
+## tl/agt-m2-ordinary-current-source-compose
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline/__init__.py
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_delete_commands.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_root_inverse.py
+ M astrid/sdk/timeline/_timing_evaluators.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/native_auto_placement.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+ M tests/editing_conformance/test_commit_runtime_occurrence_media.py
+ M tests/editing_conformance/test_recipe_clip_delete.py
+ M tests/editing_conformance/test_recipe_text_binding_spike.py
+ M tests/editing_conformance/test_recorded_graph_roots.py
+ M tests/editing_conformance/test_timing_retained_inputs.py
+ M tests/helpers/trusted_seed.py
+ M tests/sdk/test_timeline_current_union_schema.py
+ M tests/test_timeline_clip_replacement.py
+?? astrid/sdk/timeline/native_initialize.py
+?? astrid/sdk/timeline/native_occurrence_create.py
+?? astrid/sdk/timeline/native_parent_media_commands.py
+?? astrid/sdk/timeline/native_text_binding.py
+?? astrid/sdk/timeline/native_word_anchor.py
+?? astrid/sdk/timeline_media_replacement.py
+?? tests/editing_conformance/fixtures/native_word_anchor.json
+?? tests/editing_conformance/fixtures/pristine_initialize.json
+?? tests/editing_conformance/fixtures/recipe_m2_parent_media.json
+?? tests/editing_conformance/fixtures/recipe_m2_text_binding.json
+?? tests/editing_conformance/fixtures/recipe_parent_media.json
+?? tests/editing_conformance/fixtures/reviewed_native_s3.json
+?? tests/editing_conformance/native_word_anchor_fixture.py
+?? tests/editing_conformance/test_commit_runtime_occurrence_create.py
+?? tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+?? tests/editing_conformance/test_commit_runtime_parent_media.py
+?? tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+?? tests/editing_conformance/test_commit_runtime_text_binding.py
+?? tests/editing_conformance/test_grouped_clip_cache_inverse.py
+?? tests/editing_conformance/test_native_word_anchor.py
+?? tests/editing_conformance/test_native_word_anchor_vectors.py
+?? tests/editing_conformance/test_next_command_cohort_runtime.py
+?? tests/editing_conformance/test_next_ordinary_union_runtime.py
+?? tests/editing_conformance/test_pristine_initialize.py
+?? tests/editing_conformance/test_producer_insertion.py
+?? tests/editing_conformance/test_recipe_m2_parent_media.py
+?? tests/editing_conformance/test_recipe_occurrence_create.py
+?? tests/editing_conformance/test_recipe_parent_auto_completion.py
+?? tests/editing_conformance/test_recipe_parent_media.py
+?? tests/editing_conformance/test_recipe_text_binding_native.py
+?? tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+?? tests/fixtures/current-union-command-schemas/agent-frozen-s2-26ef2bbb.json
+?? tests/fixtures/current-union-command-schemas/agent-word-caea687e.json
+?? tests/fixtures/current-union-command-schemas/next-command-additions.json
+?? tests/fixtures/current-union-command-schemas/text-command-additions.json
+?? tests/sdk/test_timeline_pristine_initialize_provider.py
+?? tests/sdk/test_timeline_pristine_initialize_runtime.py
+
+exec
+/bin/bash -lc "rg -n '"'^def test_'"' tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py | sed -n '1,220p'" in /home/user/work/wt/agt-m2-ordinary-current-source-compose
+ succeeded in 38ms:
+tests/editing_conformance/test_recipe_parent_media.py:49:def test_scoped_capture_reload_inverse_and_exact_existing_alias(kind, location):
+tests/editing_conformance/test_recipe_parent_media.py:86:def test_disjoint_rebase_aba_identity_and_created_alias_dependencies():
+tests/editing_conformance/test_recipe_parent_media.py:115:def test_closed_contract_refuses_atomically(damage):
+tests/editing_conformance/test_recipe_parent_media.py:144:def test_clear_removes_presence_and_swap_does_not_treat_null_empty_or_false_as_clear(value):
+tests/editing_conformance/test_recipe_parent_media.py:157:def test_provider_manifest_reload_undo_and_redo():
+tests/editing_conformance/test_recipe_parent_media.py:176:def test_parent_raw_window_and_incoming_transition_survive_without_normalization(window):
+tests/editing_conformance/test_recipe_occurrence_media.py:79:def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
+tests/editing_conformance/test_recipe_occurrence_media.py:102:def test_portable_goldens(operation):
+tests/editing_conformance/test_recipe_occurrence_media.py:111:def test_existing_binding_is_required_exactly_without_birth(operation):
+tests/editing_conformance/test_recipe_occurrence_media.py:130:def test_refusals_preserve_input(operation, damage):
+tests/editing_conformance/test_recipe_occurrence_media.py:170:def test_asset_address_alias_overlap_and_guarded_dependency():
+tests/editing_conformance/test_recipe_occurrence_media.py:181:def test_disjoint_edit_rebases_but_same_value_asset_write_blocks_undo():
+tests/editing_conformance/test_recipe_occurrence_media.py:214:def test_provider_exact_reload_inverse_redo_and_retired_asset_reservation(operation):
+tests/editing_conformance/test_recipe_occurrence_media.py:233:def test_missing_port_pin_refuses_before_acceptance(operation):
+tests/editing_conformance/test_recipe_occurrence_media.py:244:def test_asset_removal_checks_declared_references_across_owners(scope):
+tests/editing_conformance/test_recipe_occurrence_media.py:259:def test_occupied_asset_alias_is_never_replaced(entry):
+tests/editing_conformance/test_recipe_occurrence_media.py:269:def test_noninteger_positive_speed_preserves_source_units_and_half_open_boundary():
+tests/editing_conformance/test_recipe_m2_parent_media.py:123:def test_exact_capture_replay_scoped_birth_and_inverse(kind):
+tests/editing_conformance/test_recipe_m2_parent_media.py:148:def test_portable_golden():
+tests/editing_conformance/test_recipe_m2_parent_media.py:156:def test_existing_binding_is_required_exactly_without_birth():
+tests/editing_conformance/test_recipe_m2_parent_media.py:172:def test_missing_registry_containers_are_guarded_writes_with_exact_inverse_redo(kind, storage):
+tests/editing_conformance/test_recipe_m2_parent_media.py:222:def test_explicit_malformed_asset_containers_refuse_untouched(path, value):
+tests/editing_conformance/test_recipe_m2_parent_media.py:239:def test_refusals_preserve_input(damage):
+tests/editing_conformance/test_recipe_m2_parent_media.py:302:def test_replace_removes_the_populated_clip_and_inverse_restores_its_slot():
+tests/editing_conformance/test_recipe_m2_parent_media.py:330:def test_replace_first_middle_last_exact_reload_inverse_redo_and_replay(kind, target):
+tests/editing_conformance/test_recipe_m2_parent_media.py:352:def test_replace_preserves_equal_z_order_in_composition_input():
+tests/editing_conformance/test_recipe_m2_parent_media.py:367:def test_replace_keeps_order_and_membership_guards(damage, undo):
+tests/editing_conformance/test_recipe_m2_parent_media.py:388:def test_replace_refuses_corrupt_insertion_proof(field):
+tests/editing_conformance/test_recipe_m2_parent_media.py:401:def test_replacement_composes_with_create_remove_neighbors(create_first):
+tests/editing_conformance/test_recipe_m2_parent_media.py:419:def test_replace_refuses_without_a_populated_same_track_target(damage):
+tests/editing_conformance/test_recipe_m2_parent_media.py:440:def test_asset_alias_inverse_is_guarded_by_dependents_and_aba(replace):
+tests/editing_conformance/test_recipe_m2_parent_media.py:452:def test_disjoint_edit_rebases_and_a_taken_id_conflicts():
+tests/editing_conformance/test_recipe_m2_parent_media.py:468:def test_provider_exact_reload_inverse_redo_and_retired_ids(replace):
+tests/editing_conformance/test_recipe_m2_parent_media.py:484:def test_completion_builder_places_a_parent_clip_after_the_anchor_or_at_the_track_end(
+tests/editing_conformance/test_recipe_m2_parent_media.py:498:def test_completion_builder_needs_a_parent_track_and_matching_ownership():
+tests/editing_conformance/test_recipe_m2_parent_media.py:510:def test_ordered_provider_reload_inverse_redo_and_retired_ids(kind, target):
+tests/editing_conformance/test_recipe_m2_parent_media.py:535:def test_literal_completion_uses_only_the_row_media_birth_and_preserves_source_units(kind, speed):
+tests/editing_conformance/test_recipe_m2_parent_media.py:555:def test_birth_after_a_boundary_keeps_it_until_an_explicit_delete():
+tests/editing_conformance/test_recipe_m2_parent_media.py:566:def test_scoped_replacement_rebases_over_disjoint_sibling_values_without_losing_opaque_data():
+
+codex
+## Completed
+
+Composed frozen ordinary Agent source onto current integration without Git merge/index mutation.
+
+- Source tree: `aa0b15850d4b777b77f54faec189cf7e4c60a7b6`
+- Schema: 55 definitions / 29 operations
+- Raw schema SHA: `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
+- Public Runtime/Composition locks and artifacts unchanged.
+- Resolved two `commit.py` joins while retaining current PARAM authority and inverse-aware hydration.
+- Removed duplicate F1 tests already present on current integration.
+- Runtime publication/pinning remains pending official candidate approval.
+
+Tests:
+
+- Portable focused lane: 18 passed
+- Schema/source floors: 43 passed
+- Selected PARAM/F1/legacy alias Runtime lane: 32 passed
+- Birth + text inverse/redo/retry: 2 passed
+- Parent-auto guards: 14 passed
+- Ruff changed files: passed; `remote.py` diagnostics unchanged at 121
+- `git diff --check`: passed
+- Media fixture: 2 setup errors because private Runtime lacks historical seed commit `b2a1d9f…`
+
+No full suite was run. The exact requested compose-design filename was absent; I used the available source-freeze and final-review documents.
+
+Report: [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary-current-source-compose/notes/report.md)
+
+Commit message and `DONE` were written.
+tokens used
+179,877
+## Completed
+
+Composed frozen ordinary Agent source onto current integration without Git merge/index mutation.
+
+- Source tree: `aa0b15850d4b777b77f54faec189cf7e4c60a7b6`
+- Schema: 55 definitions / 29 operations
+- Raw schema SHA: `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
+- Public Runtime/Composition locks and artifacts unchanged.
+- Resolved two `commit.py` joins while retaining current PARAM authority and inverse-aware hydration.
+- Removed duplicate F1 tests already present on current integration.
+- Runtime publication/pinning remains pending official candidate approval.
+
+Tests:
+
+- Portable focused lane: 18 passed
+- Schema/source floors: 43 passed
+- Selected PARAM/F1/legacy alias Runtime lane: 32 passed
+- Birth + text inverse/redo/retry: 2 passed
+- Parent-auto guards: 14 passed
+- Ruff changed files: passed; `remote.py` diagnostics unchanged at 121
+- `git diff --check`: passed
+- Media fixture: 2 setup errors because private Runtime lacks historical seed commit `b2a1d9f…`
+
+No full suite was run. The exact requested compose-design filename was absent; I used the available source-freeze and final-review documents.
+
+Report: [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary-current-source-compose/notes/report.md)
+
+Commit message and `DONE` were written.

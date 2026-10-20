@@ -1,0 +1,9 @@
+name=agt-m2-app-delete-golden
+repo=agent
+base=tl/agt-m2-clip-delete
+base_sha=bbb60b5c
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-app-delete-golden
+started=2026-10-19T23:50:55Z

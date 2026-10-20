@@ -1,0 +1,400 @@
++EditCommandVariant16Intent = TypedDict('EditCommandVariant16Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant17Intent = TypedDict('EditCommandVariant17Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant18Intent = TypedDict('EditCommandVariant18Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant19Intent = TypedDict('EditCommandVariant19Intent', {'ripple': NotRequired[Literal['none']], 'anchor': NotRequired[Literal['fixed']], 'position': NotRequired[Literal['absolute']], 'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant20Intent = TypedDict('EditCommandVariant20Intent', {'ripple': NotRequired[Literal['none']], 'anchor': NotRequired[Literal['fixed']], 'position': NotRequired[Literal['absolute']], 'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant21Intent = TypedDict('EditCommandVariant21Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant22Intent = TypedDict('EditCommandVariant22Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant23Intent = TypedDict('EditCommandVariant23Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant24Intent = TypedDict('EditCommandVariant24Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant25Intent = TypedDict('EditCommandVariant25Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant26Intent = TypedDict('EditCommandVariant26Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant28Intent = TypedDict('EditCommandVariant28Intent', {})
++EditCommandVariant29Intent = TypedDict('EditCommandVariant29Intent', {})
++EditCommandVariant30Intent = TypedDict('EditCommandVariant30Intent', {})
++EditCommandVariant31Intent = TypedDict('EditCommandVariant31Intent', {})
++EditCommandVariant32Intent = TypedDict('EditCommandVariant32Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant33Intent = TypedDict('EditCommandVariant33Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant34Intent = TypedDict('EditCommandVariant34Intent', {})
++EditCommandVariant35Intent = TypedDict('EditCommandVariant35Intent', {})
++EditCommandVariant36Intent = TypedDict('EditCommandVariant36Intent', {})
++EditCommandVariant37Intent = TypedDict('EditCommandVariant37Intent', {})
++EditCommandVariant38Intent = TypedDict('EditCommandVariant38Intent', {'anchor': NotRequired[Literal['follow']]})
++EditCommandVariant39Intent = TypedDict('EditCommandVariant39Intent', {'ownership': NotRequired[Literal['occurrence']]})
++EditCommandVariant40Intent = TypedDict('EditCommandVariant40Intent', {'ownership': NotRequired[Literal['parent']]})
++EditCommandVariant41Intent = TypedDict('EditCommandVariant41Intent', {'ownership': NotRequired[Literal['occurrence']]})
+ ClipSetArgsVariant1Values = TypedDict('ClipSetArgsVariant1Values', {'hold': float})
+ ClipSetArgsVariant2Values = TypedDict('ClipSetArgsVariant2Values', {'hold': NotRequired[float]})
++TextBindingSetArgsVariant1Binding = TypedDict('TextBindingSetArgsVariant1Binding', {'kind': Literal['prompt', 'voiceover_script', 'transcript'], 'slot': Union[None, str]})
++TextBindingSetArgsVariant1Text = TypedDict('TextBindingSetArgsVariant1Text', {'object_id': ForwardRef('Digest', module=__name__), 'digest': ForwardRef('Digest', module=__name__), 'size': int, 'media_type': Literal['text/plain; charset=utf-8']})
++TextBindingSetArgsVariant2Binding = TypedDict('TextBindingSetArgsVariant2Binding', {'kind': Literal['prompt', 'voiceover_script', 'transcript'], 'slot': Union[None, str]})
++TextBindingSetArgsVariant2Text = TypedDict('TextBindingSetArgsVariant2Text', {'object_id': ForwardRef('Digest', module=__name__), 'digest': ForwardRef('Digest', module=__name__), 'size': int, 'media_type': Literal['text/plain; charset=utf-8']})
+ ShotSetArgsVariant1ValuesSettings = TypedDict('ShotSetArgsVariant1ValuesSettings', {'videoControlMode': NotRequired[Union[str, None]], 'prompt': NotRequired[Union[str, None]], 'negativePrompt': NotRequired[Union[str, None]], 'dimensionSource': NotRequired[Union[str, None]], 'generationMode': NotRequired[Union[str, None]], 'selectedModel': NotRequired[Union[str, None]], 'motionMode': NotRequired[Union[str, None]], 'selectedPhasePresetId': NotRequired[Union[str, None]], 'textBeforePrompts': NotRequired[Union[str, None]], 'textAfterPrompts': NotRequired[Union[str, None]], 'generationTypeMode': NotRequired[Union[str, None]], 'batchVideoFrames': NotRequired[Union[float, None]], 'batchVideoSteps': NotRequired[Union[float, None]], 'customWidth': NotRequired[Union[float, None]], 'customHeight': NotRequired[Union[float, None]], 'guidanceScale': NotRequired[Union[float, None]], 'amountOfMotion': NotRequired[Union[float, None]], 'enhancePrompt': NotRequired[Union[bool, None]], 'turboMode': NotRequired[Union[bool, None]], 'advancedMode': NotRequired[Union[bool, None]], 'smoothContinuations': NotRequired[Union[bool, None]], 'ltxHdResolution': NotRequired[Union[bool, None]]})
+ ShotSetArgsVariant2ValuesSettings = TypedDict('ShotSetArgsVariant2ValuesSettings', {'videoControlMode': NotRequired[Union[str, None]], 'prompt': NotRequired[Union[str, None]], 'negativePrompt': NotRequired[Union[str, None]], 'dimensionSource': NotRequired[Union[str, None]], 'generationMode': NotRequired[Union[str, None]], 'selectedModel': NotRequired[Union[str, None]], 'motionMode': NotRequired[Union[str, None]], 'selectedPhasePresetId': NotRequired[Union[str, None]], 'textBeforePrompts': NotRequired[Union[str, None]], 'textAfterPrompts': NotRequired[Union[str, None]], 'generationTypeMode': NotRequired[Union[str, None]], 'batchVideoFrames': NotRequired[Union[float, None]], 'batchVideoSteps': NotRequired[Union[float, None]], 'customWidth': NotRequired[Union[float, None]], 'customHeight': NotRequired[Union[float, None]], 'guidanceScale': NotRequired[Union[float, None]], 'amountOfMotion': NotRequired[Union[float, None]], 'enhancePrompt': NotRequired[Union[bool, None]], 'turboMode': NotRequired[Union[bool, None]], 'advancedMode': NotRequired[Union[bool, None]], 'smoothContinuations': NotRequired[Union[bool, None]], 'ltxHdResolution': NotRequired[Union[bool, None]]})
+
+exec
+/bin/bash -lc "rg --files | rg 'edit-command|timeline.*schema|command.*schema' | sed -n '1,200p'; rg -n 'SCHEMA_DIGEST|613123|0\\.2\\.14|runtime.lock' tests/sdk tests/stage1 tests | head -160" in /home/user/work/wt/agt-m2-private952-normal-agent-pin
+exec
+/bin/bash -lc "git diff --numstat; git diff --summary; git status --porcelain=v1 | awk '{print "'$2}'"' | wc -l" in /home/user/work/wt/agt-m2-private952-normal-agent-pin
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib, json
+from pathlib import Path
+p=Path('/home/user/work/wt/rt-pin-95202c2b/contract/schemas/edit-command.json')
+# Locate Agent schema authority candidates and compare bytes if present.
+for q in Path('/home/user/work/wt/agt-m2-private952-normal-agent-pin').rglob('edit-command.json'):
+ print(q, 'sha256:'+hashlib.sha256(q.read_bytes()).hexdigest(), 'equal=',q.read_bytes()==p.read_bytes())
+PY" in /home/user/work/wt/agt-m2-private952-normal-agent-pin
+ succeeded in 22ms:
+ succeeded in 39ms:
+astrid/core/timeline/events/schema/payloads/arrangement.py
+astrid/core/timeline/events/schema/payloads/clip.py
+astrid/core/timeline/events/schema/payloads/transition.py
+astrid/core/timeline/events/schema/payloads/asset_registry.py
+astrid/core/timeline/events/schema/payloads/recovery.py
+astrid/core/timeline/events/schema/payloads/track.py
+astrid/core/timeline/events/schema/payloads/_base.py
+astrid/core/timeline/events/schema/payloads/__init__.py
+astrid/core/timeline/events/schema/payloads/config.py
+astrid/core/timeline/events/schema/payloads/audio.py
+astrid/core/timeline/events/schema/payloads/pool.py
+astrid/core/timeline/events/schema/payloads/theme.py
+astrid/core/timeline/events/schema/payloads/effect.py
+astrid/core/timeline/events/schema/types.py
+astrid/core/timeline/events/schema/ulid.py
+astrid/core/timeline/events/schema/__init__.py
+astrid/core/timeline/events/schema/serialize.py
+astrid/core/timeline/banodoco_schema.py
+astrid/core/timeline/schema/edit-command.schema.json
+astrid/core/timeline/schema/timeline-config.schema.json
+astrid/packs/rendering/actions/timeline_visualize/schemas/asset-index.json
+astrid/packs/rendering/actions/timeline_visualize/schemas/diagnostics.json
+astrid/packs/rendering/actions/timeline_visualize/schemas/view-map.json
+astrid/packs/rendering/actions/timeline_visualize/schemas/metric-definitions.json
+astrid/packs/rendering/actions/timeline_visualize/schemas/transcript-index.json
+astrid/packs/rendering/actions/timeline_visualize/schemas/manifest.json
+astrid/packs/rendering/actions/timeline_visualize/schemas/__init__.py
+astrid/packs/rendering/actions/timeline_visualize/schemas/ground-truth.json
+astrid/packs/rendering/actions/timeline_visualize/schemas/action-index.json
+astrid/packs/rendering/actions/timeline_visualize/schemas/_defs.json
+tests/fixtures/current-union-command-schemas/agent-frozen-s2-26ef2bbb.json
+tests/fixtures/current-union-command-schemas/agent-current-df2739f9.json
+tests/fixtures/current-union-command-schemas/next-command-additions.json
+tests/fixtures/current-union-command-schemas/agent-frozen-s1-0a0ac7ba.json
+tests/fixtures/current-union-command-schemas/runtime-0.2.1-4bb1d0f7.json
+tests/fixtures/current-union-command-schemas/agent-word-caea687e.json
+tests/fixtures/current-union-command-schemas/runtime-0.2.9-94114269.json
+tests/fixtures/current-union-command-schemas/runtime-0.2.10-6023cfb.json
+tests/fixtures/current-union-command-schemas/runtime-0.2.2-6be97063.json
+tests/fixtures/current-union-command-schemas/agent-current-c456b328.json
+tests/fixtures/current-union-command-schemas/text-command-additions.json
+tests/fixtures/current-union-command-schemas/published-sources.json
+tests/packs/rendering/test_timeline_visualize_optional_schema.py
+tests/sdk/test_timeline_selected_schema.py
+tests/core/timeline/test_timeline_visualize_schemas.py
+tests/sdk/test_timeline_materialization_schema_union.py
+tests/sdk/test_timeline_selected_schema_runtime.py
+tests/sdk/command_schema_compatibility.py
+tests/sdk/test_timeline_current_union_schema.py
+tests/sdk/test_timeline_composed_schema.py
+tests/stage1/test_runtime_client_cutover.py:786:    from astrid_runtime_client.contract_metadata import PROTOCOL, SCHEMA_DIGEST
+tests/stage1/test_runtime_client_cutover.py:795:                "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_cold_launch_autobootstrap.py:15:from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+tests/stage1/test_cold_launch_autobootstrap.py:531:                "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_cold_launch_autobootstrap.py:541:                "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_cold_launch_autobootstrap.py:604:                        "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_runtime_lifecycle_reproducer.py:79:            from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+tests/stage1/test_runtime_lifecycle_reproducer.py:84:                "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_runtime_lifecycle_reproducer.py:92:            from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+tests/stage1/test_runtime_lifecycle_reproducer.py:96:                "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_vendored_workspace_client_parity_luna.py:4:checked-in client is a copy, and ``runtime.lock.json`` (written by
+tests/stage1/test_vendored_workspace_client_parity_luna.py:26:    SCHEMA_DIGEST,
+tests/stage1/test_vendored_workspace_client_parity_luna.py:38:LOCK = ROOT / "runtime.lock.json"
+tests/stage1/test_vendored_workspace_client_parity_luna.py:60:    assert SCHEMA_DIGEST == generated.SCHEMA_DIGEST
+tests/stage1/test_vendored_workspace_client_parity_luna.py:61:    assert DIGEST.fullmatch(SCHEMA_DIGEST) and DIGEST.fullmatch(COMPONENT_MANIFEST_SHA256)
+tests/stage1/test_vendored_workspace_client_parity_luna.py:126:        "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_client_handshake_boundary_luna.py:15:    SCHEMA_DIGEST,
+tests/stage1/test_client_handshake_boundary_luna.py:40:        "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_client_handshake_boundary_luna.py:58:        "schema_digest": SCHEMA_DIGEST,
+tests/sdk/test_timeline_commit_provider.py:42:    metadata.SCHEMA_DIGEST = "exact-installed-runtime-digest"
+tests/test_luna_operational_diagnostics.py:12:from astrid_runtime_client.contract_metadata import COMPONENT_MANIFEST_SHA256, SCHEMA_DIGEST
+tests/test_luna_operational_diagnostics.py:117:    assert details["expected_schema_digest"] == SCHEMA_DIGEST
+tests/journeys/test_cross_client.py:20:from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+tests/journeys/test_cross_client.py:89:    assert seen["schema_digest"] == SCHEMA_DIGEST
+tests/sdk/test_timeline_commit_provider.py:42:    metadata.SCHEMA_DIGEST = "exact-installed-runtime-digest"
+tests/test_vendor_lock.py:18:LOCK = ROOT / "runtime.lock.json"
+tests/test_vendor_lock.py:46:    lock = root / "runtime.lock.json"
+tests/test_vendor_lock.py:233:    result = subprocess.run([sys.executable, str(SCRIPT), "update", "runtime.lock.json"], cwd=ROOT, capture_output=True, text=True)
+tests/test_vendor_lock.py:236:    missing = subprocess.run([sys.executable, str(SCRIPT), "check", "runtime.lock.json", "--producer"], cwd=ROOT, capture_output=True, text=True)
+tests/helpers/h3_cpu_runtime.py:165:from astrid.sdk.workspace_client import SCHEMA_DIGEST  # noqa: E402
+tests/helpers/h3_cpu_runtime.py:1463:                or schema_digest != SCHEMA_DIGEST
+tests/helpers/h3_cpu_runtime.py:1510:                        "runtime_lock": "sha256:" + "1" * 64,
+tests/helpers/runtime.py:42:    lock = ASTRID / "runtime.lock.json"
+tests/test_generic_host.py:1550:    from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+tests/test_generic_host.py:1565:        schema_digest = SCHEMA_DIGEST
+tests/test_generic_host_vibecomfy_lifecycle.py:115:            "interpreter": "python", "runtime_lock": "runtime", "engine_lock": "engine",
+tests/integrations/test_agent_context_runtime.py:15:from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+tests/integrations/test_agent_context_runtime.py:31:        assert SCHEMA_DIGEST == daemon.service.health()["schema_digest"]
+tests/core/execution/test_pack_host_cleanup_doctor.py:17:from astrid_runtime_client.contract_metadata import PROTOCOL, SCHEMA_DIGEST
+tests/core/execution/test_pack_host_cleanup_doctor.py:30:        health = {"status": "ok", "protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST}
+tests/core/execution/test_local_runtime_reconnect.py:12:from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+tests/core/execution/test_local_runtime_reconnect.py:32:                              "schema_digest": SCHEMA_DIGEST}}
+tests/core/execution/test_generic_host_actions_v3.py:217:    exact = {"interpreter": "python", "runtime_lock": "sha256:" + "1" * 64,
+tests/core/generation/backends/test_checkout_server.py:548:        "runtime_lock": "sha256:" + "1" * 64,
+tests/stage1/test_runtime_client_cutover.py:786:    from astrid_runtime_client.contract_metadata import PROTOCOL, SCHEMA_DIGEST
+tests/stage1/test_runtime_client_cutover.py:795:                "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_cold_launch_autobootstrap.py:15:from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+tests/stage1/test_cold_launch_autobootstrap.py:531:                "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_cold_launch_autobootstrap.py:541:                "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_cold_launch_autobootstrap.py:604:                        "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_runtime_lifecycle_reproducer.py:79:            from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+tests/stage1/test_runtime_lifecycle_reproducer.py:84:                "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_runtime_lifecycle_reproducer.py:92:            from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+tests/stage1/test_runtime_lifecycle_reproducer.py:96:                "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_vendored_workspace_client_parity_luna.py:4:checked-in client is a copy, and ``runtime.lock.json`` (written by
+tests/stage1/test_vendored_workspace_client_parity_luna.py:26:    SCHEMA_DIGEST,
+tests/stage1/test_vendored_workspace_client_parity_luna.py:38:LOCK = ROOT / "runtime.lock.json"
+tests/stage1/test_vendored_workspace_client_parity_luna.py:60:    assert SCHEMA_DIGEST == generated.SCHEMA_DIGEST
+tests/stage1/test_vendored_workspace_client_parity_luna.py:61:    assert DIGEST.fullmatch(SCHEMA_DIGEST) and DIGEST.fullmatch(COMPONENT_MANIFEST_SHA256)
+tests/stage1/test_vendored_workspace_client_parity_luna.py:126:        "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_client_handshake_boundary_luna.py:15:    SCHEMA_DIGEST,
+tests/stage1/test_client_handshake_boundary_luna.py:40:        "schema_digest": SCHEMA_DIGEST,
+tests/stage1/test_client_handshake_boundary_luna.py:58:        "schema_digest": SCHEMA_DIGEST,
+tests/v10/test_release_reproducibility.py:25:        "requirements/runtime.lock",
+tests/v10/test_release_reproducibility.py:29:    assert report["locks"]["requirements/runtime.lock"]["packages"] >= 60
+tests/v10/test_release_reproducibility.py:64:    assert "-r requirements/runtime.lock" in workflow
+tests/test_lanes.py:97:    assert runtime.vendored_runtime_commit() == json.loads((REPO / "runtime.lock.json").read_text())["source_commit"]
+tests/test_gateway_diagnostics_i08.py:185:    from astrid_runtime_client.contract_metadata import PROTOCOL, SCHEMA_DIGEST
+tests/test_gateway_diagnostics_i08.py:189:    schema = [SCHEMA_DIGEST]
+tests/packs/h3_av/test_character_swap_cpu_boundary.py:1540:    health={"status":"ok","runtime_instance_id":"fixture-runtime","runtime_epoch":1,"runtime_session_id":"fixture-session","schema_digest":helper.SCHEMA_DIGEST}
+tests/editing_conformance/test_timing_retained_inputs.py:83:    from runtime_protocol.contract_metadata import SCHEMA_DIGEST
+tests/editing_conformance/test_timing_retained_inputs.py:163:        contract_digest = SCHEMA_DIGEST
+tests/packs/rendering/test_remotion_render_contract.py:76:        runtime_lock_path = project_dir / "package-lock.json"
+tests/packs/rendering/test_remotion_render_contract.py:83:            runtime_lock_path.is_file(),
+tests/packs/rendering/test_remotion_render_contract.py:84:            f"selected Remotion runtime is missing package-lock.json: {runtime_lock_path}",
+tests/packs/rendering/test_remotion_render_contract.py:89:        runtime_lock = json.loads(runtime_lock_path.read_text(encoding="utf-8"))
+tests/packs/rendering/test_remotion_render_contract.py:101:            runtime_lock,
+tests/packs/rendering/test_remotion_render_contract.py:103:            f"selected Remotion runtime {runtime_lock_path} disagrees with snapshot package-lock.json",
+
+ succeeded in 97ms:
+1	1	astrid_runtime_client/contract_metadata.py
+1	1	astrid_runtime_client/generated.py
+177	90	astrid_runtime_client/timeline_commit_types.py
+5	5	runtime.lock.json
+4
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/stage1/test_vendored_workspace_client_parity_luna.py tests/test_lanes.py' in /home/user/work/wt/agt-m2-private952-normal-agent-pin
+ succeeded in 6206ms:
+.......................                                                  [100%]
+23 passed in 5.40s
+
+exec
+/bin/bash -lc "sha256sum astrid/core/timeline/schema/edit-command.schema.json /home/user/work/wt/rt-pin-95202c2b/contract/schemas/edit-command.json; python3 - <<'PY'
+from pathlib import Path
+import hashlib
+p=Path('astrid/core/timeline/schema/edit-command.schema.json')
+r=Path('/home/user/work/wt/rt-pin-95202c2b/contract/schemas/edit-command.json')
+print('byte_equal',p.read_bytes()==r.read_bytes(), 'agent_bytes',p.stat().st_size, 'runtime_bytes',r.stat().st_size)
+PY
+rg -n 'schema.*digest|SCHEMA_DIGEST|edit-command' astrid/core/timeline/schema/edit-command.schema.json | head -20" in /home/user/work/wt/agt-m2-private952-normal-agent-pin
+ succeeded in 0ms:
+613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3  astrid/core/timeline/schema/edit-command.schema.json
+613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3  /home/user/work/wt/rt-pin-95202c2b/contract/schemas/edit-command.json
+byte_equal True agent_bytes 82018 runtime_bytes 82018
+3:  "$id": "https://astrid.local/schemas/timeline/edit-command.schema.json",
+
+codex
+All bounded verification is green: producer manifest `--check`, vendor lock check, 32 vendor/schema tests, 175 provider/capture tests with 9 integration cases deselected and 2 pre-existing strict xfails, 9 SDK workspace-client tests, and 23 parity/lane tests. The Agent schema is byte-identical to Runtime’s 613123... schema, and no cache/build output was created. I’m doing the final clean-tree/diff audit and writing the harness commit message plus DONE marker now.
+exec
+/bin/bash -lc 'git diff --check && git status --short --branch && git diff --name-only && git diff --numstat && git rev-parse HEAD && git rev-parse HEAD''^{tree}' in /home/user/work/wt/agt-m2-private952-normal-agent-pin
+ succeeded in 262ms:
+## tl/agt-m2-private952-normal-agent-pin
+ M astrid_runtime_client/contract_metadata.py
+ M astrid_runtime_client/generated.py
+ M astrid_runtime_client/timeline_commit_types.py
+ M runtime.lock.json
+astrid_runtime_client/contract_metadata.py
+astrid_runtime_client/generated.py
+astrid_runtime_client/timeline_commit_types.py
+runtime.lock.json
+1	1	astrid_runtime_client/contract_metadata.py
+1	1	astrid_runtime_client/generated.py
+177	90	astrid_runtime_client/timeline_commit_types.py
+5	5	runtime.lock.json
+357230816c86da65d5f8cc92b10a3a90d29874e0
+94692ec85167d5c606626c4ec678fe2a63ee0aa6
+
+2026-10-20T18:37:30.192262Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid patch: The last line of the patch must be '*** End Patch'
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2269e32bd1fbd632990af645f1600155e9558437
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg
+@@ -0,0 +1,6 @@
++chore(timeline): pin private Runtime 0.2.14 artifacts
++
++Refresh the normal Agent Runtime vendor lock and generated clients from
++Runtime 95202c2b09e83aaae028287d6c59b773410141f3 (tree
++d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2). Keep this as unpublished private
++staging; no integration or public release adoption is included.
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 83e150eeb945a224b2b0c2ad0ea7cf01c1ed986c..0863be59e35c47df109daeae0ba0ef49c704d5bd
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -64,5 +64,5 @@
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+   "producer_version": "sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0",
+-  "source_commit": "a0dca16975dfe8f5e762703b99d9791a16cf7fd7"
++  "source_commit": "95202c2b09e83aaae028287d6c59b773410141f3"
+ }
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2269e32bd1fbd632990af645f1600155e9558437
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg
+@@ -0,0 +1,6 @@
++chore(timeline): pin private Runtime 0.2.14 artifacts
++
++Refresh the normal Agent Runtime vendor lock and generated clients from
++Runtime 95202c2b09e83aaae028287d6c59b773410141f3 (tree
++d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2). Keep this as unpublished private
++staging; no integration or public release adoption is included.
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 83e150eeb945a224b2b0c2ad0ea7cf01c1ed986c..0863be59e35c47df109daeae0ba0ef49c704d5bd
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -64,5 +64,5 @@
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+   "producer_version": "sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0",
+-  "source_commit": "a0dca16975dfe8f5e762703b99d9791a16cf7fd7"
++  "source_commit": "95202c2b09e83aaae028287d6c59b773410141f3"
+ }
+
+exec
+/bin/bash -lc 'ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin; wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/DONE; git status --short --branch' in /home/user/work/wt/agt-m2-private952-normal-agent-pin
+ succeeded in 0ms:
+total 2008
+drwxr-xr-x    2 root root    4096 Oct 20 18:37 .
+drwxr-xr-x 1138 root root   69632 Oct 20 18:36 ..
+-rw-r--r--    1 root root       0 Oct 20 18:37 DONE
+-rw-r--r--    1 root root    1606 Oct 20 18:31 brief.md
+-rw-r--r--    1 root root     322 Oct 20 18:37 commit-msg
+-rw-r--r--    1 root root 1960958 Oct 20 18:37 log.txt
+-rw-r--r--    1 root root     246 Oct 20 18:31 meta
+-rw-r--r--    1 root root       0 Oct 20 18:31 running
+-rw-r--r--    1 root root      18 Oct 20 18:31 tmpdir
+322 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg
+  0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/DONE
+322 total
+## tl/agt-m2-private952-normal-agent-pin
+ M astrid_runtime_client/contract_metadata.py
+ M astrid_runtime_client/generated.py
+ M astrid_runtime_client/timeline_commit_types.py
+ M runtime.lock.json
+
+exec
+/bin/bash -lc "find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers -maxdepth 2 -type f -name 'commit-msg*' | head -20 | xargs -r -n1 basename | sort | uniq -c" in /home/user/work/wt/agt-m2-private952-normal-agent-pin
+ succeeded in 55ms:
+find: ‘standard output’: Broken pipe
+find: write error
+     16 commit-msg
+      4 commit-msg.txt
+
+codex
+The harness control files are in place: `commit-msg` contains the conventional message and `DONE` is empty. Because the task’s final sentence also explicitly names `commit-msg.txt` while the harness path is `commit-msg`, I’m adding the same message under that compatibility filename as well; repository changes remain only the four intended Agent files.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2269e32bd1fbd632990af645f1600155e9558437
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg
+@@ -0,0 +1,6 @@
++chore(timeline): pin private Runtime 0.2.14 artifacts
++
++Refresh the normal Agent Runtime vendor lock and generated clients from
++Runtime 95202c2b09e83aaae028287d6c59b773410141f3 (tree
++d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2). Keep this as unpublished private
++staging; no integration or public release adoption is included.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..2269e32bd1fbd632990af645f1600155e9558437
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-normal-agent-pin/commit-msg.txt
+@@ -0,0 +1,6 @@
++chore(timeline): pin private Runtime 0.2.14 artifacts
++
++Refresh the normal Agent Runtime vendor lock and generated clients from
++Runtime 95202c2b09e83aaae028287d6c59b773410141f3 (tree
++d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2). Keep this as unpublished private
++staging; no integration or public release adoption is included.
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 83e150eeb945a224b2b0c2ad0ea7cf01c1ed986c..0863be59e35c47df109daeae0ba0ef49c704d5bd
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -64,5 +64,5 @@
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+   "producer_version": "sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0",
+-  "source_commit": "a0dca16975dfe8f5e762703b99d9791a16cf7fd7"
++  "source_commit": "95202c2b09e83aaae028287d6c59b773410141f3"
+ }
+
+codex
+Implemented the normal private Runtime pin.
+
+Changed:
+
+- Vendored generated clients and metadata from Runtime `95202c2b09e83aaae028287d6c59b773410141f3`
+- Runtime tree: `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`
+- Updated `runtime.lock.json`
+- Preserved schema `55/29/12`; schema bytes remain `613123...`
+
+Tests:
+
+- Vendor/schema: 32 passed
+- Provider/capture: 175 passed, 9 integration deselected, 2 pre-existing xfails
+- SDK client: 9 passed
+- Parity/lane: 23 passed
+- Runtime artifact manifest: current
+- Vendor lock check: passed
+
+No full suites, integration merge, public release, or version adoption performed. `commit-msg`, `commit-msg.txt`, and empty `DONE` are written.
+tokens used
+173,465
+Implemented the normal private Runtime pin.
+
+Changed:
+
+- Vendored generated clients and metadata from Runtime `95202c2b09e83aaae028287d6c59b773410141f3`
+- Runtime tree: `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`
+- Updated `runtime.lock.json`
+- Preserved schema `55/29/12`; schema bytes remain `613123...`
+
+Tests:
+
+- Vendor/schema: 32 passed
+- Provider/capture: 175 passed, 9 integration deselected, 2 pre-existing xfails
+- SDK client: 9 passed
+- Parity/lane: 23 passed
+- Runtime artifact manifest: current
+- Vendor lock check: passed
+
+No full suites, integration merge, public release, or version adoption performed. `commit-msg`, `commit-msg.txt`, and empty `DONE` are written.

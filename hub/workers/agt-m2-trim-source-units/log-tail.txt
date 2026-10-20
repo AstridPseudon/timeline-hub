@@ -1,0 +1,400 @@
++
++
+ def test_windowless_trim_uses_file_not_hold_and_length_helper_stays_windowless():
+     from astrid.sdk.timeline.doc import _set_length, _trim_front
+ 
+@@ -118,6 +132,15 @@ def test_rational_fps_source_contact_and_half_open_intervals_are_not_requantized
+     assert not any(read['path'] == ['config', 'output', 'fps'] for read in plan.commands[0]['reads'])
+ 
+ 
++def test_retrim_changes_a_stored_hold_but_reading_and_undo_do_not_normalize_it():
++    original = bundle(speed=2, hold=17)
++    assert clip_timeline_duration(clip(original)) == pytest.approx(8.5)
++    plan = execute(original, [capture_clip_trim(original, REF, in_s=1, out_s=5)])
++    assert clip(plan.bundle)['hold'] == 4
++    assert inverse(plan.bundle, plan.records).bundle == original
++    assert clip(inverse(plan.bundle, plan.records).bundle)['hold'] == 17
++
++
+ @pytest.mark.parametrize('args', [{'in_s': -1}, {'out_s': 11}, {'in_s': 6, 'out_s': 6},
+     {'in_s': 7, 'out_s': 6}, {'in_s': 0, 'out_s': .0000001}, {'out_s': float('inf')},
+     {'in_s': float('nan')}, {'in_s': True}, {'out_s': '4'}, {'out_s': 0},
+diff --git a/tests/sdk/test_timeline_clip_trim_provider.py b/tests/sdk/test_timeline_clip_trim_provider.py
+index ca2680a1..f4b246b2 100644
+--- a/tests/sdk/test_timeline_clip_trim_provider.py
++++ b/tests/sdk/test_timeline_clip_trim_provider.py
+@@ -30,7 +30,7 @@ def test_trim_committed_reload_exact_inverse_redo_keeps_registry_and_child_pins(
+     assert accepted['data']['commands'] == [command]
+     document = accepted['data']['canonical_document']
+     reloaded = bundle_from_document(json.loads(json.dumps(document)))
+-    assert (clip(reloaded)['from'], clip(reloaded)['to'], clip(reloaded)['hold']) == (1, 5, 2)
++    assert (clip(reloaded)['from'], clip(reloaded)['to'], clip(reloaded)['hold']) == (1, 5, 4)
+     assert clip(reloaded)['at'] == 1 and clip(reloaded)['speed'] == 2
+     for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
+         assert document[key] == original[key]
+--- fixture diff summary ---
+diff --git a/tests/editing_conformance/fixtures/recipe_m2_clip_trim.json b/tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+index 08bed359..326e0ed1 100644
+--- a/tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
++++ b/tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+@@ -1105,7 +1105,7 @@
+           },
+           "after": {
+             "state": "present",
+-            "value": 2.0
++            "value": 4.0
+           }
+         },
+         {
+@@ -1929,7 +1929,7 @@
+                 "asset": "picture",
+                 "clipType": "media",
+                 "at": 1,
+-                "hold": 2.0,
++                "hold": 4.0,
+                 "app": {
+                   "astrid": {
+                     "opaque": [
+@@ -1972,8 +1972,8 @@
+     "project_id": "project-1",
+     "timeline_id": "film",
+     "parent_revision": {
+-      "revision_id": "authoring-parent-revision-658bd3ebea53507eea3797d5b49444a5f83c5e89be4dc8a407dfaa310e8365ba",
+-      "content_digest": "sha256:fa8fb98eb78bd20c538355be37a71cc466fccc4736961f6698e2fdcda07a1c60",
++      "revision_id": "authoring-parent-revision-ffd648d8033a6d0a68ce64b1aff0e5d12dafb4373b6638fff21fa58f6bc1496a",
++      "content_digest": "sha256:a7f28f7cc2495a5db632063adb2801a743a755e5de9a661c3a1dc1008c07aed0",
+       "payload": {
+         "config": {
+           "tracks": [
+@@ -1989,7 +1989,7 @@
+               "asset": "picture",
+               "clipType": "media",
+               "at": 1,
+-              "hold": 2.0,
++              "hold": 4.0,
+               "app": {
+                 "astrid": {
+                   "opaque": [
+@@ -2043,7 +2043,7 @@
+             "asset": "picture",
+             "clipType": "media",
+             "at": 1,
+-            "hold": 2.0,
++            "hold": 4.0,
+             "app": {
+               "astrid": {
+                 "opaque": [
+
+exec
+/bin/bash -lc 'test -d /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/notes; echo notes_dir:$?; ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units' in /home/user/work/wt/agt-m2-trim-source-units
+ succeeded in 0ms:
+notes_dir:1
+total 624
+drwxr-xr-x   2 root root   4096 Oct 20 00:22 .
+drwxr-xr-x 252 root root  12288 Oct 20 00:23 ..
+-rw-r--r--   1 root root   1258 Oct 20 00:22 brief.md
+-rw-r--r--   1 root root 614188 Oct 20 00:24 log.txt
+-rw-r--r--   1 root root    205 Oct 20 00:22 meta
+-rw-r--r--   1 root root      0 Oct 20 00:22 running
+
+codex
+All behavior tests and shared neighbors are green. The only hygiene exception is the pre-existing `model.py` import-order warning, confirmed against `d82f6ef7`; the new trim helper and both changed test files pass Ruff, and `git diff --check` is clean. I’m writing the required report and both conventional-message files now, then I’ll do final status/artifact checks.
+exec
+/bin/bash -lc 'mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/notes' in /home/user/work/wt/agt-m2-trim-source-units
+ succeeded in 0ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-recipe.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-recipe.md
+index 84a9aae0285b77f6449bc437e330c89eac9effdd..7341747b5438e4bbd34d8b9d6109b6dedb06d68f
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-recipe.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-recipe.md
+@@ -376,6 +376,7 @@
+ merge callbacks. Bindings retain R4's text-to-identity map for compatibility;
+ typed provenance records in `reads` carry source/document/revision/digest and
+ clock/time-map dependencies. `created` remains an ordered array of scoped IDs.
++Trim holds are source seconds: films written by the old nonunit-speed helper may play short, and only an explicit user re-trim changes those stored holds.
+ The sole canonical M0 design artifact is [edit-command.schema.json](edit-command.schema.json), `$id=https://astrid.local/schemas/timeline/edit-command.schema.json`. [command-schema-handoff.md](command-schema-handoff.md) defines its actual Draft 2020-12 command/batch and semantic-leaf schemas, operation signatures and accepted/rejected examples. The recipe worker's branch-local `schemas/change-contract/edit-command.schema.json` is superseded diagnostic evidence, not a second source.
+ 
+ At M1 authority moves to packaged Agent `astrid/core/timeline/schema/edit-command.schema.json` (already covered by `core/**/*.json` package data); Runtime pins a byte-identical `contract/schemas/edit-command.json`, with generated Python/TS exports from that same contract. Preserve `$id`; check with `cmp` and the existing generated Runtime contract digest checks as detailed in the handoff. Retarget M0 scratch/frozen-ref tests to the packaged schema before product-suite integration. Registry-owned argument schemas extend the common envelope; `CommandBatch` already requires nonempty commands and makes restore the sole command.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..885ac730efde4d681f5a2201b16bed7dfbea4642
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg
+@@ -0,0 +1,5 @@
++fix(timeline): keep trim holds in source units
++
++Write native and legacy trim holds as source-window seconds so playback
++duration applies speed exactly once. Refresh trim goldens and add nonunit-speed,
++rational-fps, half-open, and stored-hold preservation coverage.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..885ac730efde4d681f5a2201b16bed7dfbea4642
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg.txt
+@@ -0,0 +1,5 @@
++fix(timeline): keep trim holds in source units
++
++Write native and legacy trim holds as source-window seconds so playback
++duration applies speed exactly once. Refresh trim goldens and add nonunit-speed,
++rational-fps, half-open, and stored-hold preservation coverage.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..1518520acba681b20b6af23d51be573f7cb86f75
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/notes/report.md
+@@ -0,0 +1,46 @@
++# agt-m2-trim-source-units report
++
++## What changed
++
++- Corrected native `clip.trim` so `hold` is the source-unit window length
++  (`to - from`); timeline playback remains `hold / speed`.
++- Corrected the legacy `Clip.trim` caller in `astrid/sdk/timeline/model.py` to
++  produce the same source-unit hold.
++- Updated the portable trim golden and the provider expectation, preserving
++  exact inverse/redo behavior and stored pre-existing holds.
++- Added speed-2 and rational-speed proofs, rational-FPS/half-open geometry
++  coverage, and an explicit no-silent-normalization regression.
++- Added the ratified one-line stored-film behavior note to the shared
++  `design/edit-recipe.md`.
++- Examined `astrid/sdk/timeline/doc.py` length/trim helpers; they are broader
++  retime/split behavior and were left unchanged per task scope.
++
++## Evidence
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_clip_trim_provider.py --basetemp=/tmp/agt-m2-trim-focused`
++  - **91 passed** in 3.10s.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_cuts.py tests/timeline/test_model.py tests/test_timeline_editing_helpers.py --basetemp=/tmp/agt-m2-trim-neighbors`
++  - **58 passed** in 4.58s.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_checkout.py --basetemp=/tmp/agt-m2-trim-shared-neighbors`
++  - **210 passed, 17 deselected**, 4 pre-existing Pillow deprecation warnings, in 6.79s.
++- New helper/tests: Ruff passed for `_trim_commands.py` and the two changed
++  test files. `git diff --check` passed.
++- Ruff on `model.py` reports the existing import-order violation; the same
++  violation is present in the base `d82f6ef7` file. It was not broadened here.
++
++## Decisions / scope
++
++The ratified source-unit hold decision was followed. Existing films are not
++rewritten or normalized: only an explicit trim writes a new hold, and inverse
++restores the original stored hold. No compiler, ABI, schema, registry, or
++unrelated retime changes were made.
++
++## Blocked / unverified
++
++No implementation blocker. Full, localhost, browser, install, merge, and
++integration suites were not run, as prohibited by this worker assignment.
++
++## Recommended next step
++
++Review this bounded trim fix and keep its M2 integration merge held until the
++orchestrator records PLAN M1 closure.
+diff --git a/astrid/sdk/timeline/_trim_commands.py b/astrid/sdk/timeline/_trim_commands.py
+index ec7da6f074d2fdb0e8639336e40af4f9649b9b5d..d537597b48470638c248287623a2fbc1be6f0d26
+--- a/astrid/sdk/timeline/_trim_commands.py
++++ b/astrid/sdk/timeline/_trim_commands.py
+@@ -4,7 +4,6 @@
+ import copy
+ import re
+ 
+-from astrid.core.timeline.duration import clip_timeline_duration
+ from astrid.sdk import timeline_intent as intent
+ 
+ from ._command_state import CommandError
+@@ -72,7 +71,8 @@
+     source_in, source_out = endpoints
+     if source_in < 0 or source_out > limit or source_out <= source_in:
+         raise CommandError(f'source range must fit inside the file (0–{limit:g} s)', ref=ref)
+-    hold = _r(clip_timeline_duration({'at': start, 'from': source_in, 'to': source_out, 'speed': speed}))
++    # ``hold`` is authored source time; playback duration applies ``speed``.
++    hold = _r(source_out - source_in)
+     if _r(source_out) <= _r(source_in) or hold <= 0:
+         raise CommandError('source range collapses at authored precision', ref=ref)
+     ctx.dependency('trim.source', 'entity', {'asset': asset, 'source': source})
+diff --git a/astrid/sdk/timeline/model.py b/astrid/sdk/timeline/model.py
+index ce13ee9603d737d8605a2a1fc1e842adf2b6de26..d0f0ee1804d7ebe8980405d2f160f67cd49436bc
+--- a/astrid/sdk/timeline/model.py
++++ b/astrid/sdk/timeline/model.py
+@@ -438,9 +438,8 @@
+         source_out = (_num(self.data.get("to"), limit) if out_s is None else float(out_s))
+         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
+             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
+-        speed = _num(self.data.get("speed"), 1.0) or 1.0
+         self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
+-        self.data["hold"] = _r((source_out - source_in) / speed)
++        self.data["hold"] = _r(source_out - source_in)
+         intent.set_until(self.data, None)
+         intent.set_for(self.data, None)
+         self._tl._mcache = None
+diff --git a/tests/editing_conformance/fixtures/recipe_m2_clip_trim.json b/tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+index 08bed3598c284f02083baf694b3610675ead2cc4..326e0ed12d1efaa4fee15e42911071f671e9cba7
+--- a/tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
++++ b/tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+@@ -1105,7 +1105,7 @@
+           },
+           "after": {
+             "state": "present",
+-            "value": 2.0
++            "value": 4.0
+           }
+         },
+         {
+@@ -1929,7 +1929,7 @@
+                 "asset": "picture",
+                 "clipType": "media",
+                 "at": 1,
+-                "hold": 2.0,
++                "hold": 4.0,
+                 "app": {
+                   "astrid": {
+                     "opaque": [
+@@ -1972,8 +1972,8 @@
+     "project_id": "project-1",
+     "timeline_id": "film",
+     "parent_revision": {
+-      "revision_id": "authoring-parent-revision-658bd3ebea53507eea3797d5b49444a5f83c5e89be4dc8a407dfaa310e8365ba",
+-      "content_digest": "sha256:fa8fb98eb78bd20c538355be37a71cc466fccc4736961f6698e2fdcda07a1c60",
++      "revision_id": "authoring-parent-revision-ffd648d8033a6d0a68ce64b1aff0e5d12dafb4373b6638fff21fa58f6bc1496a",
++      "content_digest": "sha256:a7f28f7cc2495a5db632063adb2801a743a755e5de9a661c3a1dc1008c07aed0",
+       "payload": {
+         "config": {
+           "tracks": [
+@@ -1989,7 +1989,7 @@
+               "asset": "picture",
+               "clipType": "media",
+               "at": 1,
+-              "hold": 2.0,
++              "hold": 4.0,
+               "app": {
+                 "astrid": {
+                   "opaque": [
+@@ -2043,7 +2043,7 @@
+             "asset": "picture",
+             "clipType": "media",
+             "at": 1,
+-            "hold": 2.0,
++            "hold": 4.0,
+             "app": {
+               "astrid": {
+                 "opaque": [
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index 37ef4bf5eb264464f87bae0179a01d347dfcdd1c..1dc7b9c9bb4d1d3a5dee5d7d01e8e583b5e24956
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -70,6 +70,20 @@
+                    inverse(plan.bundle, plan.records).records).bundle == plan.bundle
+ 
+ 
++@pytest.mark.parametrize('speed', [2, 3 / 2])
++def test_trim_hold_is_source_time_and_playback_duration_applies_speed(monkeypatch, speed):
++    original = bundle(speed=speed, hold=17)
++    row = copy.deepcopy(clip(original))
++    monkeypatch.setattr(Clip, '_source_duration', lambda self: 10)
++    Clip(SimpleNamespace(_is_audio=lambda *args: False), None, row).trim(1, 5)
++    plan = execute(original, [capture_clip_trim(original, REF, in_s=1, out_s=5)])
++    assert clip(plan.bundle)['hold'] == 4
++    assert clip(plan.bundle)['hold'] == row['hold']
++    assert clip_timeline_duration(clip(plan.bundle)) == pytest.approx(4 / speed)
++    assert clip(plan.bundle)['from'] == 1
++    assert clip(plan.bundle)['to'] == 5
++
++
+ def test_windowless_trim_uses_file_not_hold_and_length_helper_stays_windowless():
+     from astrid.sdk.timeline.doc import _set_length, _trim_front
+ 
+@@ -118,6 +132,15 @@
+     assert not any(read['path'] == ['config', 'output', 'fps'] for read in plan.commands[0]['reads'])
+ 
+ 
++def test_retrim_changes_a_stored_hold_but_reading_and_undo_do_not_normalize_it():
++    original = bundle(speed=2, hold=17)
++    assert clip_timeline_duration(clip(original)) == pytest.approx(8.5)
++    plan = execute(original, [capture_clip_trim(original, REF, in_s=1, out_s=5)])
++    assert clip(plan.bundle)['hold'] == 4
++    assert inverse(plan.bundle, plan.records).bundle == original
++    assert clip(inverse(plan.bundle, plan.records).bundle)['hold'] == 17
++
++
+ @pytest.mark.parametrize('args', [{'in_s': -1}, {'out_s': 11}, {'in_s': 6, 'out_s': 6},
+     {'in_s': 7, 'out_s': 6}, {'in_s': 0, 'out_s': .0000001}, {'out_s': float('inf')},
+     {'in_s': float('nan')}, {'in_s': True}, {'out_s': '4'}, {'out_s': 0},
+diff --git a/tests/sdk/test_timeline_clip_trim_provider.py b/tests/sdk/test_timeline_clip_trim_provider.py
+index ca2680a198043cef58499604209ffb86f9789307..f4b246b2f0f8d7f4dcb0c7a4a5d403d57f9913a0
+--- a/tests/sdk/test_timeline_clip_trim_provider.py
++++ b/tests/sdk/test_timeline_clip_trim_provider.py
+@@ -30,7 +30,7 @@
+     assert accepted['data']['commands'] == [command]
+     document = accepted['data']['canonical_document']
+     reloaded = bundle_from_document(json.loads(json.dumps(document)))
+-    assert (clip(reloaded)['from'], clip(reloaded)['to'], clip(reloaded)['hold']) == (1, 5, 2)
++    assert (clip(reloaded)['from'], clip(reloaded)['to'], clip(reloaded)['hold']) == (1, 5, 4)
+     assert clip(reloaded)['at'] == 1 and clip(reloaded)['speed'] == 2
+     for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
+         assert document[key] == original[key]
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- final worktree ---'; git status --short; printf '%s\\n' '--- diff stat ---'; git diff --stat; printf '%s\\n' '--- diff check ---'; git diff --check; printf '%s\\n' '--- generated artifacts ---'; find . -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -print; find . -type d -name __pycache__ -print; printf '%s\\n' '--- required artifacts ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg.txt; printf '%s\\n' '--- shared note ---'; rg -n 'Trim holds are source seconds' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-recipe.md" in /home/user/work/wt/agt-m2-trim-source-units
+ succeeded in 876ms:
+--- final worktree ---
+ M astrid/sdk/timeline/_trim_commands.py
+ M astrid/sdk/timeline/model.py
+ M tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+ M tests/sdk/test_timeline_clip_trim_provider.py
+--- diff stat ---
+ astrid/sdk/timeline/_trim_commands.py              |  4 ++--
+ astrid/sdk/timeline/model.py                       |  3 +--
+ .../fixtures/recipe_m2_clip_trim.json              | 12 +++++------
+ .../test_recipe_m2_clip_trim.py                    | 23 ++++++++++++++++++++++
+ tests/sdk/test_timeline_clip_trim_provider.py      |  2 +-
+ 5 files changed, 33 insertions(+), 11 deletions(-)
+--- diff check ---
+--- generated artifacts ---
+--- required artifacts ---
+-rw-r--r-- 1 root root  265 Oct 20 00:24 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg
+-rw-r--r-- 1 root root  265 Oct 20 00:24 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/commit-msg.txt
+-rw-r--r-- 1 root root 2548 Oct 20 00:24 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/notes/report.md
+--- shared note ---
+379:Trim holds are source seconds: films written by the old nonunit-speed helper may play short, and only an explicit user re-trim changes those stored holds.
+
+codex
+## Completed
+
+- Fixed native and legacy trim to store `hold = to - from` in source seconds.
+- Added speed-2/rational-speed, FPS/half-open geometry, inverse/redo, and stored-hold preservation tests.
+- Updated portable golden and provider expectations.
+- Added the required design note.
+- Wrote [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/notes/report.md) and both commit-message files.
+
+Tests:
+
+- Trim tests: **91 passed**
+- Neighbor timing/model tests: **58 passed**
+- Shared editing/checkouts: **210 passed, 17 deselected**
+- Ruff passed for new/changed non-model files; `git diff --check` passed.
+- Existing `model.py` import-order warning confirmed present on base.
+
+Full/integration suites were not run per assignment.
+tokens used
+172,121
+## Completed
+
+- Fixed native and legacy trim to store `hold = to - from` in source seconds.
+- Added speed-2/rational-speed, FPS/half-open geometry, inverse/redo, and stored-hold preservation tests.
+- Updated portable golden and provider expectations.
+- Added the required design note.
+- Wrote [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-source-units/notes/report.md) and both commit-message files.
+
+Tests:
+
+- Trim tests: **91 passed**
+- Neighbor timing/model tests: **58 passed**
+- Shared editing/checkouts: **210 passed, 17 deselected**
+- Ruff passed for new/changed non-model files; `git diff --check` passed.
+- Existing `model.py` import-order warning confirmed present on base.
+
+Full/integration suites were not run per assignment.

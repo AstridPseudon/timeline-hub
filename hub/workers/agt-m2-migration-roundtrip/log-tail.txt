@@ -1,0 +1,400 @@
++        if bound_state.entity(ref, optional=True) is None:
+             raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
+ 
+ 
+@@ -233,6 +241,7 @@
+         guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+     scratch = State(copy.deepcopy(ctx.state.bundle), closures=ctx.state.closures)
+     for record in reversed(records):
++        output_state = State(copy.deepcopy(scratch.bundle), closures=scratch.closures)
+         staged = Recording(scratch.bundle, record['command'], record['ordinal'], closures=scratch.closures)
+         scratch = staged.state
+         staged_orders = restoration_orders(records, only=record)
+@@ -253,7 +262,7 @@
+         for (owner, kind), (original, _) in staged_orders.items():
+             arrange(scratch, owner, kind, original)
+         staged.compile_mirrors()
+-        _validate_inputs(scratch, record, records)
++        _validate_inputs(scratch, record, records, output_state)
+ 
+     # Historical checks above are internal. Public claims describe H even when
+     # the same address is read after another reversal during installation.
+diff --git a/tests/editing_conformance/test_recipe_m2_group_migration.py b/tests/editing_conformance/test_recipe_m2_group_migration.py
+index 2a8fab9eeb57f252246ceee26399d3b2e8dcd5d8..47912c988f9604a448af2e437117d384e19e9e24
+--- a/tests/editing_conformance/test_recipe_m2_group_migration.py
++++ b/tests/editing_conformance/test_recipe_m2_group_migration.py
+@@ -26,7 +26,7 @@
+ GROUPS = [{'legacy_shot_id': 'legacy', 'shot_id': 'new-shot', 'occurrence_id': 'new-occ'}]
+ 
+ 
+-def legacy_document():
++def legacy_document(*, opaque_variant=False):
+     clips = [{'id': 'before', 'track': 'V1', 'at': 10, 'hold': 1, 'text': 'ungrouped'},
+              {'id': 'c1', 'track': 'V1', 'at': 0, 'hold': 2, 'asset': 'image',
+               'clipType': 'media', 'params': None, 'app': {'astrid': None},
+@@ -37,6 +37,14 @@
+     group = {'shotId': 'legacy', 'trackId': 'V1', 'clipIds': ['c1', 'c2'], 'mode': 'images',
+              'items': [], 'nullable': None, 'unknown': {'pinnedShotGroups': [None], 'clipType': 'shot'},
+              'imageClipSnapshot': copy.deepcopy(clips[1:3])}
++    if opaque_variant:
++        group['unknown'].update({
++            'provenance': {'group_migration': {'legacy_group': {
++                'pinnedShotGroups': [None, [], {'clipType': 'shot'}]}}},
++            'occurrences[0].provenance.group_migration.legacy_group': {
++                'clipType': 'shot', 'ordered': [False, None, {}, ['c2', 'c1']]},
++            'absent_sibling': None,
++        })
+     payload = {'config': {'clips': copy.deepcopy(clips), 'tracks': [
+                    {'id': 'V1', 'kind': 'visual', 'label': 'Picture', 'unknown': [None]},
+                    {'id': 'A1', 'kind': 'audio', 'label': 'Audio', 'opaque': False}],
+@@ -193,16 +201,20 @@
+         validate_command(command)
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason='Migration requires inverse validation of destination bindings at their creation stage; current inverse validates them after deleting the created owner')
+-def test_compiled_reload_guarded_inverse_restores_exact_legacy_then_redo_same_ids():
+-    original, plan = plan_for()
++@pytest.mark.parametrize('opaque_variant', [False, True])
++def test_compiled_reload_guarded_inverse_restores_exact_legacy_then_redo_same_ids(opaque_variant):
++    document = legacy_document(opaque_variant=opaque_variant)
++    original, plan = plan_for(document)
+     canonical = document_from_bundle(plan.bundle)
+     reloaded = bundle_from_document(canonical)
+     undone = inverse(reloaded, plan.records)
+     assert undone.bundle['parent'] == original['parent']
+     assert undone.bundle['placements'] == [] and undone.bundle['shots'] == {}
+     restored = document_from_bundle(undone.bundle, source_bundles=[original])
+-    assert restored == legacy_document()
++    assert restored == document
++    assert json.dumps(restored, sort_keys=True) == json.dumps(document, sort_keys=True)
++    assert json.dumps(restored['parent_revision']['payload']['config']['pinnedShotGroups']) == json.dumps(
++        document['parent_revision']['payload']['config']['pinnedShotGroups'])
+     accepted = accepted_boundaries(undone.records, reloaded, undone.bundle)
+     redone = inverse(undone.bundle, accepted)
+     assert document_from_bundle(redone.bundle, source_bundles=[plan.bundle]) == canonical
+@@ -216,16 +228,17 @@
+     assert plan.bundle == before
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason='Lossless migration provenance requires the canonical graph validator to reject retired structural fields by scope rather than recursively in opaque JSON')
+-def test_canonical_graph_accepts_complete_opaque_migration_provenance():
++@pytest.mark.parametrize('opaque_variant', [False, True])
++def test_canonical_graph_accepts_complete_opaque_migration_provenance(opaque_variant):
+     from astrid.core.timeline.shot_composition import parse_shot_composition
+     from tests.timeline.test_shot_composition import load_fixture
+ 
+-    _, plan = plan_for()
++    _, plan = plan_for(legacy_document(opaque_variant=opaque_variant))
+     graph = load_fixture()
+     provenance = copy.deepcopy(plan.bundle['placements'][0]['provenance'])
+     graph['occurrences'][0]['provenance'] = provenance
+     assert parse_shot_composition(graph)['occurrences'][0]['provenance'] == provenance
++    assert json.dumps(parse_shot_composition(graph)['occurrences'][0]['provenance']) == json.dumps(provenance)
+ 
+ 
+ def test_captured_legacy_basis_cannot_be_used_for_ordinary_edits_or_batches():
+diff --git a/tests/editing_conformance/test_recorded_graph_roots.py b/tests/editing_conformance/test_recorded_graph_roots.py
+index a005a4dfc7df64d1529b134d5c6ff5e3238d3bd1..90cb23e8652fc88555a885a7dc97526e4ccb65e5
+--- a/tests/editing_conformance/test_recorded_graph_roots.py
++++ b/tests/editing_conformance/test_recorded_graph_roots.py
+@@ -279,6 +279,64 @@
+     assert document_from_bundle(redone.bundle) == document_from_bundle(plan.bundle)
+ 
+ 
++def bound_creation(monkeypatch, bindings):
++    operations = commands.operations()
++    operation = operations['test.create-roots']
++
++    def create(ctx, command):
++        operation.handler(ctx, command)
++        for index, ref in enumerate(bindings):
++            ctx.bind('test.binding:' + str(index), ref)
++
++    monkeypatch.setattr(commands, 'operations', lambda: {
++        **operations, 'test.create-roots': commands.Operation(operation.parameters, create, {}),
++    })
++    original = bundle_from_document(document_fixture())
++    return original, commands.execute(original, [create_command()])
++
++
++def test_created_owner_bindings_validate_at_output_and_external_bindings_at_input(root_ops, monkeypatch):
++    bindings = ['shot:new-shot', 'occurrence:new-occ', 'occurrence:new-occ/clip:title',
++                'occurrence:new-occ/track:picture', 'parent/clip:clip-a']
++    original, plan = bound_creation(monkeypatch, bindings)
++    assert [binding['ref'] for binding in plan.records[0]['bindings']] == bindings
++    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
++    undone = commands.execute(reloaded, [inverse_command()], inverse_records=plan.records)
++    assert document_from_bundle(undone.bundle, source_bundles=[original]) == document_fixture()
++
++
++@pytest.mark.parametrize('binding', ['occurrence:new-occ/clip:missing',
++    'occurrence:new-occ/track:missing', 'parent/clip:title',
++    'occurrence:new-occ-suffix/clip:title'])
++def test_created_owner_does_not_exempt_missing_or_prefix_collision_bindings(root_ops, monkeypatch, binding):
++    _, plan = bound_creation(monkeypatch, [binding])
++    before = copy.deepcopy(plan.bundle)
++    with pytest.raises(CommandError):
++        commands.execute(plan.bundle, [inverse_command()], inverse_records=plan.records)
++    assert plan.bundle == before
++
++
++def test_created_owner_does_not_exempt_disappeared_external_binding(root_ops, monkeypatch):
++    _, plan = bound_creation(monkeypatch, ['occurrence:new-occ/clip:title', 'parent/clip:clip-a'])
++    State(plan.bundle).set('parent/clip:clip-a', [], ABSENT)
++    before = copy.deepcopy(plan.bundle)
++    with pytest.raises(CommandError, match='bound identity disappeared'):
++        commands.execute(plan.bundle, [inverse_command()], inverse_records=plan.records)
++    assert plan.bundle == before
++
++
++def test_new_shot_inverse_refuses_surviving_occurrence(root_ops):
++    original = bundle_from_document(document_fixture())
++    plan = commands.execute(original, [create_command()])
++    dependent = copy.deepcopy(root_values()[1]['value'])
++    dependent['occurrence_id'] = 'dependent'
++    State(plan.bundle).set('occurrence:dependent', [], present(dependent))
++    before = copy.deepcopy(plan.bundle)
++    with pytest.raises(CommandError, match='surviving occurrences'):
++        commands.execute(plan.bundle, [inverse_command()], inverse_records=plan.records)
++    assert plan.bundle == before
++
++
+ def test_public_registry_and_closed_track_args_are_unchanged():
+     for op in ('test.create-roots', 'shot.create', 'occurrence.create'):
+         with pytest.raises(CommandError, match='unsupported operation'):
+diff --git a/tests/sdk/test_timeline_group_migration_provider.py b/tests/sdk/test_timeline_group_migration_provider.py
+index 0f9571f55b32fbfe5c02d29b6e59e4fed5985bd9..845cb803bc83c9c452e451b5e24cbd69584a9121
+--- a/tests/sdk/test_timeline_group_migration_provider.py
++++ b/tests/sdk/test_timeline_group_migration_provider.py
+@@ -2,15 +2,25 @@
+ from __future__ import annotations
+ 
+ import copy
++import json
+ 
+ import pytest
+ 
+-from astrid.sdk.timeline.commit import _digest
++from astrid.sdk.timeline._command_state import State
++from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
++from astrid.sdk.timeline.commit import _digest, bundle_from_document
+ from astrid.sdk.timeline.new_group_commands import capture_migrate_groups
+ from tests.editing_conformance.test_recipe_m2_group_migration import GROUPS, legacy_document
++from tests.editing_conformance.test_recorded_graph_roots import (
++    create_command,
++)
++from tests.editing_conformance.test_recorded_graph_roots import (
++    root_ops as root_ops,
++)
+ from tests.sdk.test_timeline_commit_provider import (
+     CommitRejected,
+     DetachedRealm,
++    inverse,
+     source_fixture,
+ )
+ from tests.sdk.test_timeline_commit_provider import (
+@@ -20,6 +30,100 @@
+ pytestmark = pytest.mark.usefixtures('runtime_abi')
+ 
+ 
++def migration_realm(document=None):
++    document = legacy_document() if document is None else document
++    realm = DetachedRealm(document)
++    transcript = source_fixture('transcript')
++    realm.live_sources[_digest(transcript['pin'])] = transcript
++    return realm
++
++
++@pytest.mark.parametrize('opaque_variant', [False, True])
++def test_provider_migration_reload_inverse_restores_raw_legacy_and_redo_same_ids(opaque_variant):
++    realm = migration_realm(legacy_document(opaque_variant=opaque_variant))
++    original = copy.deepcopy(realm.documents[realm.head['revision_id']])
++    migrated = realm.call([capture_migrate_groups(original, GROUPS)])
++    canonical = copy.deepcopy(migrated['data']['canonical_document'])
++    undone = realm.call([inverse([migrated['receipt']['receipt_id']])])
++    assert undone['data']['canonical_document'] == original
++    assert json.dumps(undone['data']['canonical_document'], sort_keys=True) == json.dumps(original, sort_keys=True)
++    before = copy.deepcopy((realm.documents, realm.entries, realm.accepted, realm.head))
++    with pytest.raises(CommitRejected, match='explicit timeline.migrate-groups'):
++        realm.call([{'schema_version': 1, 'op': 'track.create', 'version': '1',
++                     'select': 'parent', 'args': {'row': {'id': 'ordinary', 'kind': 'visual'}}}])
++    assert (realm.documents, realm.entries, realm.accepted, realm.head) == before
++    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
++    assert redone['data']['canonical_document'] == canonical
++    assert redone['data']['commands'][0]['created'] == ['shot:new-shot', 'occurrence:new-occ']
++
++
++def test_provider_migration_inverse_preserves_disjoint_work_and_retained_pins():
++    realm = migration_realm()
++    original = realm.documents[realm.head['revision_id']]
++    migrated = realm.call([capture_migrate_groups(original, GROUPS)])
++    basis = copy.deepcopy(realm.head)
++    canonical = copy.deepcopy(migrated['data']['canonical_document'])
++    command = capture_clip_set_params(bundle_from_document(canonical), 'parent/clip:before',
++                                      values={'custom': None})
++    realm.call([command])
++    undone = realm.call([inverse([migrated['receipt']['receipt_id']])], base=basis)
++    expected = copy.deepcopy(original)
++    expected['parent_revision']['payload']['clips'][0]['params'] = {'custom': None}
++    expected['parent_revision']['payload']['config']['clips'][0]['params'] = {'custom': None}
++    document = undone['data']['canonical_document']
++    assert undone['data']['status'] == 'rebased'
++    assert document['parent_revision']['payload'] == expected['parent_revision']['payload']
++    assert document['dependency_manifest'] == expected['dependency_manifest']
++    redone = realm.call([inverse([undone['receipt']['receipt_id']])])['data']['canonical_document']
++    canonical['parent_revision']['payload']['clips'][0]['params'] = {'custom': None}
++    canonical['parent_revision']['payload']['config']['clips'][0]['params'] = {'custom': None}
++    assert redone['parent_revision']['payload'] == canonical['parent_revision']['payload']
++    assert redone['dependency_manifest'] == canonical['dependency_manifest']
++
++
++@pytest.mark.parametrize('damage', ['destination-aba', 'source-aba', 'later-dependent'])
++@pytest.mark.usefixtures('root_ops')
++def test_provider_migration_inverse_refuses_later_dependency_and_aba(damage):
++    realm = migration_realm()
++    migrated = realm.call([capture_migrate_groups(legacy_document(), GROUPS)])
++    canonical = migrated['data']['canonical_document']
++    bundle = bundle_from_document(canonical)
++    if damage == 'later-dependent':
++        occurrence = copy.deepcopy(bundle['placements'][0])
++        occurrence['occurrence_id'] = 'dependent'
++        realm.call([create_command([{'ref': 'occurrence:dependent', 'kind': 'occurrence',
++                                    'owner': 'parent', 'value': occurrence}])])
++    else:
++        ref = 'occurrence:new-occ/track:V1' if damage == 'destination-aba' else 'parent/track:V1'
++        label = State(bundle).entity(ref)['label']
++        realm.call([capture_track_set(bundle, ref, values={'label': 'Later label'})])
++        current = bundle_from_document(realm.documents[realm.head['revision_id']])
++        realm.call([capture_track_set(current, ref, values={'label': label})])
++        assert State(bundle_from_document(realm.documents[realm.head['revision_id']])).entity(ref)['label'] == label
++    before = copy.deepcopy((realm.documents, realm.entries, realm.accepted, realm.head))
++    with pytest.raises(CommitRejected) as error:
++        realm.call([inverse([migrated['receipt']['receipt_id']])])
++    assert error.value.failure['details']['reason'] == 'intervening_write'
++    assert (realm.documents, realm.entries, realm.accepted, realm.head) == before
++
++
++@pytest.mark.parametrize('damage', ['beforeimage', 'missing-boundary'])
++def test_provider_migration_inverse_cannot_take_caller_images_or_missing_history(damage):
++    realm = migration_realm()
++    migrated = realm.call([capture_migrate_groups(legacy_document(), GROUPS)])
++    command = inverse([migrated['receipt']['receipt_id']])
++    if damage == 'beforeimage':
++        command['writes'] = [{'ref': 'parent', 'path': [], 'before': {'forged': True}}]
++    else:
++        del realm.documents['legacy-parent']
++    before = copy.deepcopy((realm.documents, realm.entries, realm.accepted, realm.head))
++    with pytest.raises(CommitRejected) as error:
++        realm.call([command])
++    expected = 'invalid_edit_command' if damage == 'beforeimage' else 'history_unavailable'
++    assert error.value.failure['details']['reason'] == expected
++    assert (realm.documents, realm.entries, realm.accepted, realm.head) == before
++
++
+ def test_provider_migration_preview_reads_exact_retained_transcript_and_media():
+     document = legacy_document()
+     transcript = source_fixture('transcript')
+diff --git a/tests/timeline/test_shot_composition.py b/tests/timeline/test_shot_composition.py
+index 9d532b1abc7d386a04399b805ec5c9ebd6c59764..daed1652ebdb5f6fa41e13ab6fa7093a27080543
+--- a/tests/timeline/test_shot_composition.py
++++ b/tests/timeline/test_shot_composition.py
+@@ -90,6 +90,36 @@
+         parse_shot_composition(legacy_clip)
+ 
+ 
++@pytest.mark.parametrize('field', [{'pinnedShotGroups': []}, {'clipType': 'shot'}])
++@pytest.mark.parametrize('site', ['root', 'occurrence', 'timeline', 'clip', 'provenance',
++                                 'migration-sibling', 'shot-provenance', 'collision-key'])
++def test_migration_provenance_does_not_admit_legacy_fields_elsewhere(field, site):
++    graph = load_fixture()
++    occurrence = graph['occurrences'][0]
++    shot = graph['shot_revisions'][0]
++    timeline = shot['internal_timeline_revision']['timeline']
++    if site == 'root':
++        target = graph
++    elif site == 'occurrence':
++        target = occurrence
++    elif site == 'timeline':
++        target = timeline
++    elif site == 'clip':
++        target = timeline['clips'][0]
++    elif site == 'provenance':
++        target = occurrence.setdefault('provenance', {})
++    elif site == 'migration-sibling':
++        target = occurrence.setdefault('provenance', {}).setdefault('group_migration', {})
++        target['legacy_group'] = copy.deepcopy(field)
++    elif site == 'shot-provenance':
++        target = shot.setdefault('provenance', {}).setdefault('group_migration', {}).setdefault('legacy_group', {})
++    else:
++        target = graph.setdefault('occurrences[0].provenance.group_migration.legacy_group', {})
++    target.update(field)
++    with pytest.raises(ShotCompositionValidationError, match='migration-only'):
++        parse_shot_composition(graph)
++
++
+ def test_prepare_normalizes_typed_source_records_and_stable_identities() -> None:
+     fixture = load_fixture()
+     occurrences = copy.deepcopy(fixture["occurrences"])
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import os
+import shutil
+from pathlib import Path
+
+root = Path.cwd()
+for cache in ('.mypy_cache', '.pytest_cache', '.ruff_cache'):
+    path = root / cache
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+for directory, names, _ in os.walk(root, followlinks=False):
+    names[:] = [name for name in names if name "'!= '"'.git' and not (Path(directory) / name).is_symlink()]
+    if '__pycache__' in names:
+        shutil.rmtree(Path(directory) / '__pycache__')
+        names.remove('__pycache__')
+print('Removed local test/type/lint caches and bytecode directories.')
+PY" in /home/user/work/wt/agt-m2-migration-roundtrip
+ succeeded in 185ms:
+Removed local test/type/lint caches and bytecode directories.
+
+exec
+/bin/bash -lc 'git diff --check; git status --short; git diff --stat; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-migration-roundtrip/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-migration-roundtrip/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-migration-roundtrip/commit-msg.txt' in /home/user/work/wt/agt-m2-migration-roundtrip
+ succeeded in 560ms:
+ M astrid/core/timeline/shot_composition.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_recipe_m2_group_migration.py
+ M tests/editing_conformance/test_recorded_graph_roots.py
+ M tests/sdk/test_timeline_group_migration_provider.py
+ M tests/timeline/test_shot_composition.py
+ astrid/core/timeline/shot_composition.py           |  11 +-
+ astrid/sdk/timeline/inverse.py                     |  15 ++-
+ .../test_recipe_m2_group_migration.py              |  29 ++++--
+ .../test_recorded_graph_roots.py                   | 111 ++++++++++++++++++++-
+ .../sdk/test_timeline_group_migration_provider.py  | 106 +++++++++++++++++++-
+ tests/timeline/test_shot_composition.py            |  30 ++++++
+ 6 files changed, 285 insertions(+), 17 deletions(-)
+-rw-r--r-- 1 root root  490 Oct 19 23:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-migration-roundtrip/commit-msg
+-rw-r--r-- 1 root root  490 Oct 19 23:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-migration-roundtrip/commit-msg.txt
+-rw-r--r-- 1 root root 5906 Oct 19 23:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-migration-roundtrip/notes/report.md
+
+codex
+Fixed both gaps: created-root bindings validate at the correct inverse stage, and the exact legacy provenance path preserves opaque data. Original and opaque-variant reload → inverse → same-ID redo tests pass.
+
+- Targeted tests: **603 passed, 1 deselected, zero xfails**.
+- Ruff, whitespace and inverse mypy checks pass.
+- Graph mypy retains **13 verified pre-existing errors**.
+- No loader/compiler change was needed.
+- Runtime seed/schema gaps remain unresolved; **all M2 merges remain HELD**.
+
+[Report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-migration-roundtrip/notes/report.md). Both commit-message files are written; local caches removed.
+tokens used
+137,753
+Fixed both gaps: created-root bindings validate at the correct inverse stage, and the exact legacy provenance path preserves opaque data. Original and opaque-variant reload → inverse → same-ID redo tests pass.
+
+- Targeted tests: **603 passed, 1 deselected, zero xfails**.
+- Ruff, whitespace and inverse mypy checks pass.
+- Graph mypy retains **13 verified pre-existing errors**.
+- No loader/compiler change was needed.
+- Runtime seed/schema gaps remain unresolved; **all M2 merges remain HELD**.
+
+[Report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-migration-roundtrip/notes/report.md). Both commit-message files are written; local caches removed.

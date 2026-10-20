@@ -1,0 +1,400 @@
+    result = _copy(dict(payload))
+    for item in result.get("items", []):
+        identity = item.get("item_id", item.get("id"))
+        for field in ("item_id", "id"):
+            if field in item and item[field] == identity:
+                item[field] = item_ids.get(identity, identity)
+        # Shot dependency descriptors use metadata, or the item itself when
+        # metadata is absent. Other fields and namespaces carry no reference
+        # authority merely because their keys end in _item_id.
+        descriptor = item.get("metadata")
+        if not isinstance(descriptor, Mapping):
+            descriptor = item
+        for field in ("source_item_id", "source_item"):
+            source = descriptor.get(field)
+            if isinstance(source, str):
+                descriptor[field] = item_ids.get(source, source)
+    return result
+
+
+def _copy_shot_for_placement(
+    payload: Mapping[str, Any],
+    *,
+    project_id: str,
+    timeline_id: str,
+    occurrence_id: str,
+    authoring_shot_id: str,
+    source_shot_id: str,
+) -> tuple[dict[str, Any], dict[str, str]]:
+    result = _copy(dict(payload))
+    if authoring_shot_id == source_shot_id:
+        return result, {}
+    items = result.get("items", [])
+    if not isinstance(items, list):
+        raise AuthoringBundleError("shot revision payload.items must be a list")
+    remap: dict[str, str] = {}
+    for index, raw_item in enumerate(items):
+        item = _mapping(raw_item, f"shot payload.items[{index}]")
+        source_item_id = item.get("item_id", item.get("id"))
+        source_item_id = _string(source_item_id, f"shot payload.items[{index}].item_id")
+        if source_item_id in remap:
+            raise AuthoringBundleError(
+                f"shot payload contains duplicate item identity {source_item_id!r}"
+            )
+        remap[source_item_id] = _identity(
+            "shot-item-placement",
+            project_id,
+            timeline_id,
+            occurrence_id,
+            authoring_shot_id,
+            source_item_id,
+        )
+    result = _remap_known_item_references(result, remap)
+    return result, remap
+
+
+def open_authoring_bundle(
+    parent_revision: Mapping[str, Any],
+    *,
+    shot_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+    internal_timeline_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+    capture_sources: bool = False,
+) -> dict[str, Any]:
+    """Open one exact immutable closure as a detached, lossless working copy.
+
+    ``parent_revision`` and both child collections are the exact-head Runtime
+    read results.  No mutable child head is consulted and this function has no
+    persistence port, so opening cannot mutate storage.
+    """
+
+    parent = _mapping(parent_revision, "parent_revision")
+    project_id = _string(parent.get("project_id"), "parent_revision.project_id")
+    timeline_id = _string(parent.get("timeline_id"), "parent_revision.timeline_id")
+    revision_id = _string(parent.get("revision_id"), "parent_revision.revision_id")
+    payload = _mapping(parent.get("payload"), "parent_revision.payload")
+    parent_digest = _verify_digest(
+        payload, parent.get("content_digest"), "parent_revision.content_digest"
+    )
+    occurrences = _sequence(payload.get("occurrences"), "parent_revision.payload.occurrences")
+    shot_index = _records_by_identity(shot_revisions, identity="revision_id", path="shot_revisions")
+    internal_index = _records_by_identity(
+        internal_timeline_revisions,
+        identity="revision_id",
+        path="internal_timeline_revisions",
+    )
+
+    source_counts = Counter(
+        _string(
+            _mapping(row, f"occurrences[{index}]").get("shot_id"), f"occurrences[{index}].shot_id"
+        )
+        for index, row in enumerate(occurrences)
+    )
+    candidate_parent = _copy(dict(payload))
+    candidate_parent.pop("occurrences", None)
+    placements: list[dict[str, Any]] = []
+    base_placements: dict[str, dict[str, Any]] = {}
+    shots: dict[str, dict[str, Any]] = {}
+    shot_sources: dict[str, dict[str, Any]] = {}
+    seen_occurrences: set[str] = set()
+    seen_authoring_shots: set[str] = set()
+    seen_items: set[str] = set()
+
+    for ordinal, raw_occurrence in enumerate(occurrences):
+        occurrence = _copy(dict(_mapping(raw_occurrence, f"occurrences[{ordinal}]")))
+        occurrence_id = _string(
+            occurrence.get("occurrence_id"), f"occurrences[{ordinal}].occurrence_id"
+        )
+        if occurrence_id in seen_occurrences:
+            raise AuthoringBundleError(f"duplicate occurrence identity {occurrence_id!r}")
+        seen_occurrences.add(occurrence_id)
+        source_shot_id = _string(occurrence.get("shot_id"), f"occurrences[{ordinal}].shot_id")
+        source_revision_id = _string(
+            occurrence.get("shot_revision_id"), f"occurrences[{ordinal}].shot_revision_id"
+        )
+        shot = shot_index.get(source_revision_id)
+        if (
+            shot is None
+            or shot.get("shot_id") != source_shot_id
+            or shot.get("project_id") != project_id
+        ):
+            raise AuthoringBundleError(
+                f"occurrence {occurrence_id!r} does not resolve to its pinned shot revision"
+            )
+        shot_payload = _mapping(
+            shot.get("payload"), f"shot_revisions[{source_revision_id}].payload"
+        )
+        shot_digest = _verify_digest(
+            shot_payload,
+            shot.get("content_digest"),
+            f"shot_revisions[{source_revision_id}].content_digest",
+        )
+
+exec
+/bin/bash -lc "ls -1 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/*/status 2>/dev/null | tail -12 | while read f; do printf '%s ' \""'$(basename "$(dirname "$f")")"; cat "$f"; done' in /home/user/work/wt/agt-m2-private952-reload-source-shape
+ succeeded in 297ms:
+runtime-targeted-1020130054-29879 pass
+runtime-targeted-1020135146-8604 pass
+runtime-targeted-1020150332-6100 pass
+runtime-targeted-1020150529-23235 error
+runtime-targeted-1020150541-31828 pass
+runtime-targeted-1020172349-28464 pass
+runtime-ts-client-check-1020084124-13517 pass
+runtime-ts-client-check-1020092738-31278 pass
+runtime-ts-client-check-1020112501-16056 pass
+vw-m3-built-package-targeted-1019192446-23047 fail
+vw-m3-labels-preserve-uncertified-controls-root-prep-current-integration-1020161706-28716 error
+vw-m3-package-progress-viewing-package-1019193130-7664 pass
+
+exec
+/bin/bash -lc 'for f in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-reload-source-shape-targeted-1020191723-3480/{status,why,snap}; do echo ===$f; cat "$f" 2>/dev/null || true; done; ps -eo pid,etime,stat,cmd | rg '"'pytest|dispatcher|test-service' | rg -v rg | head -30" in /home/user/work/wt/agt-m2-private952-reload-source-shape
+ succeeded in 41ms:
+===/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-reload-source-shape-targeted-1020191723-3480/status
+queued
+===/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-reload-source-shape-targeted-1020191723-3480/why
+2 targeted/named runs already running
+===/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-reload-source-shape-targeted-1020191723-3480/snap
+tree=3775e2e00c9e45999f6c0277f4dbc323079749b0
+key=e6309dd3401ea8bf8ee7cb68f41a2ebc
+worktree=/home/user/work/wt/agt-m2-private952-reload-source-shape
+
+exec
+/bin/bash -lc "rg -n \"def document_from_bundle|source_mapping.*_source_closure|_source_closure\" astrid/core/timeline astrid/sdk tests/editing_conformance | head -100 && sed -n '220,300p' astrid/sdk/timeline/commit.py" in /home/user/work/wt/agt-m2-private952-reload-source-shape
+ succeeded in 130ms:
+astrid/sdk/timeline/_materialization.py:18:    if '_source_closure' in bundle['source_mapping'] and isinstance(select, str):
+astrid/sdk/timeline/_materialization.py:36:    if '_source_closure' not in bundle['source_mapping']:
+astrid/sdk/timeline/_materialization.py:144:        source = bundle['source_mapping'].get('_source_closure')
+astrid/sdk/timeline/_materialization.py:171:                                              verified['source_mapping'].get('_source_closure'))
+astrid/sdk/timeline/_recording.py:187:            document = mapping.get('_runtime_document', mapping.get('_source_closure', {}))
+astrid/core/timeline/authoring_bundle.py:474:            **({"_source_closure": {"parent_revision": _copy(dict(parent)),
+astrid/sdk/timeline/commands.py:196:            if '_source_closure' not in candidate['source_mapping']:
+astrid/sdk/timeline/commit.py:274:def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
+astrid/sdk/host_bootstrap.py:1306:        "host_source_closure_digest": current["source_closure_digest"],
+astrid/sdk/host_bootstrap.py:1527:                    "host_source_closure_digest": source_closure_digest,
+astrid/sdk/host_bootstrap.py:1703:            "host_source_closure_digest": source_closure_digest,
+                arrange(state, owner, kind, expected)
+        replayed = document_from_bundle(state.bundle, source_bundles=(after,))
+        if (not equal(replayed['parent_revision']['payload'], images[1]['parent_revision']['payload'])
+                or any(not equal(replayed[key], images[1][key]) for key in (
+                    'shot_revisions', 'internal_timeline_revisions'))
+                or not equal(replayed['dependency_manifest']['documents'],
+                             images[1]['dependency_manifest']['documents'])
+                or not introduced <= _collect_media([write['after'] for record in commands
+                                                     for write in record['writes']])):
+            raise CommandError('unproven media boundary scope', kind='history_unavailable')
+        removed.update(introduced)
+    return removed
+
+
+def _inverse_clip_transcripts(records, bundle, *, pending=False):
+    """Release first-use pins owned by a created clip removed by this inverse."""
+    from ._collections import AcceptedRecords
+    from ._command_state import ABSENT, State, equal
+    from .inverse import coalesce
+
+    if not isinstance(records, AcceptedRecords):
+        return []
+    removed = {write['ref'] for write in coalesce(records) if not write['path']
+               and write['ref'].startswith('parent/clip:') and write['before'] == ABSENT
+               and (pending or State(bundle).get(write['ref'], []) == ABSENT)}
+    if not removed:
+        return []
+    parent = copy.deepcopy(bundle['parent'])
+    for container in (parent, parent.get('config', {})):
+        if isinstance(container.get('clips'), list):
+            container['clips'] = [row for row in container['clips']
+                                  if 'parent/clip:' + row['id'] not in removed]
+
+    def contains(value, pin):
+        if isinstance(value, dict):
+            return equal(value, pin) or any(contains(child, pin) for child in value.values())
+        return isinstance(value, list) and any(contains(child, pin) for child in value)
+
+    result = []
+    for entry in records.entries:
+        choices = [write['after'].get('value') for record in entry['records']['commands']
+                   for write in record['writes'] if write['ref'] in removed
+                   and write['path'][:3] == ['app', 'astrid', 'word_anchors']]
+        before, after = records.load_boundary(entry)
+        prior, accepted = (source['source_mapping']['_runtime_document']['dependency_manifest']['documents']
+                           for source in (before, after))
+        for pin in accepted:
+            if (pin not in prior and pin['document_id'].startswith('transcript:')
+                    and any(isinstance(choice, dict) and choice.get('document') == pin for choice in choices)
+                    and not contains([parent, bundle['shots'], bundle['placements']], pin)):
+                result.append(pin)
+    return result
+
+
+def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
+    """Compile exact inputs; inverse pin removal requires provider-verified records.
+
+    Historical source images alone never authorize dropping retained media.
+    """
+    # Immutable reuse follows exact encoded content, independently of value guards.
+    source = bundle["source_mapping"]["_runtime_document"]
+    publication = compile_authoring_candidate(bundle).publication
+    shot_index = {row["revision_id"]: copy.deepcopy(row) for row in source["shot_revisions"]}
+    internal_index = {row["revision_id"]: copy.deepcopy(row)
+                      for row in source["internal_timeline_revisions"]}
+    shot_index.update({row["revision_id"]: copy.deepcopy(row)
+                       for row in publication["shot_revisions"]})
+    internal_index.update({row["revision_id"]: copy.deepcopy(row)
+                           for row in publication["internal_timeline_revisions"]})
+    # Only authenticated publication boundaries may supply earlier immutable
+    # images. Reuse them after exact authored-content comparison, never restore
+    # a parent snapshot or replace a sibling's currently accepted pins.
+    for historical in source_bundles:
+        document = historical['source_mapping']['_runtime_document']
+        _verify_document(document)
+        _require((document['project_id'], document['timeline_id']) ==
+                 (bundle['project_id'], bundle['timeline_id']), 'foreign inverse source')
+        shot_index.update({row['revision_id']: copy.deepcopy(row) for row in document['shot_revisions']})
+        internal_index.update({row['revision_id']: copy.deepcopy(row)
+                               for row in document['internal_timeline_revisions']})
+    parent = copy.deepcopy(publication["parent_composition"])
+
+exec
+/bin/bash -lc "sleep 2; D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-reload-source-shape-targeted-1020191723-3480; printf 'status='; cat \""'$D/status"; printf '"'\\nwhy='; cat \""'$D/why" 2>/dev/null || true' in /home/user/work/wt/agt-m2-private952-reload-source-shape
+ succeeded in 2053ms:
+status=queued
+
+why=2 targeted/named runs already running
+
+codex
+The implementation and local evidence are complete: exact six-case reload pass, native ingress file 40/40, and non-socket neighbors 49 passed/4 deselected. The central socket-dependent neighbor request remains queued because the service reports two other targeted runs active; no local result is being represented as a pass. I’m recording the harness commit message and completion marker now.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..ed696e7342e8a79a18e63a87b391fae7dc05de09
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/commit-msg
+@@ -0,0 +1,6 @@
++fix(timeline): canonicalize reloaded bundle source images
++
++Project Runtime read envelopes onto the existing canonical image fieldsets when
++constructing a reloaded authoring bundle. Preserve raw GET data and authored
++payload, pin, order, identity, and history data while excluding only outer read
++decoration from the derived source closure.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ed696e7342e8a79a18e63a87b391fae7dc05de09
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/commit-msg.txt
+@@ -0,0 +1,6 @@
++fix(timeline): canonicalize reloaded bundle source images
++
++Project Runtime read envelopes onto the existing canonical image fieldsets when
++constructing a reloaded authoring bundle. Preserve raw GET data and authored
++payload, pin, order, identity, and history data while excluding only outer read
++decoration from the derived source closure.
+diff --git a/astrid/sdk/remote.py b/astrid/sdk/remote.py
+index ff7ba062b4d89a949cb2440d2061fbe263c90e3c..00cef07645b9f736e32880bb9c45f1f6ca3a527c
+--- a/astrid/sdk/remote.py
++++ b/astrid/sdk/remote.py
+@@ -1198,6 +1198,11 @@
+         is_current_head}``.
+         """
+         from astrid.core.timeline.authoring_bundle import open_authoring_bundle
++        from astrid.sdk.timeline.commit import (
++            INTERNAL_IMAGE_FIELDS,
++            PARENT_IMAGE_FIELDS,
++            SHOT_IMAGE_FIELDS,
++        )
+ 
+         opened = self.open_composition(project, ref, revision_id=revision_id, limit=1)
+         if not opened.ok or not isinstance(opened.data, Mapping):
+@@ -1238,11 +1243,33 @@
+                     return internal
+                 internals[internal_revision] = internal.data
+         try:
++            # The source closure is a canonical image graph derived from the
++            # read envelope.  Keep the raw GET rows above unchanged, but do
++            # not carry their storage-only decoration into the graph.
++            parent_image = {
++                **{key: parent.data[key] for key in PARENT_IMAGE_FIELDS},
++                "project_id": project_id,
++                "timeline_id": timeline_id,
++            }
++            shot_images = [
++                {
++                    **{key: row[key] for key in SHOT_IMAGE_FIELDS},
++                    "project_id": row.get("project_id", project_id),
++                }
++                for row in shots.values()
++            ]
++            internal_images = [
++                {
++                    **{key: row[key] for key in INTERNAL_IMAGE_FIELDS},
++                    "project_id": row.get("project_id", project_id),
++                }
++                for row in internals.values()
++            ]
+             bundle = open_authoring_bundle(
+-                parent.data,
++                parent_image,
+                 capture_sources=True,
+-                shot_revisions=list(shots.values()),
+-                internal_timeline_revisions=list(internals.values()),
++                shot_revisions=shot_images,
++                internal_timeline_revisions=internal_images,
+             )
+         except Exception as exc:  # the bundle compiler names the inconsistent field
+             return DomainResult.failure(ErrorObject(
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/DONE && git status --short && git diff --stat && git diff --check' in /home/user/work/wt/agt-m2-private952-reload-source-shape
+ succeeded in 1272ms:
+ M astrid/sdk/remote.py
+ astrid/sdk/remote.py | 33 ++++++++++++++++++++++++++++++---
+ 1 file changed, 30 insertions(+), 3 deletions(-)
+
+exec
+/bin/bash -lc "D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-reload-source-shape-targeted-1020191723-3480; printf 'status='; cat \""'$D/status"; printf '"'\\nsummary:\\n'; cat \""'$D/summary" 2>/dev/null || true' in /home/user/work/wt/agt-m2-private952-reload-source-shape
+ succeeded in 65ms:
+status=queued
+
+summary:
+
+codex
+Implemented in [astrid/sdk/remote.py](/home/user/work/wt/agt-m2-private952-reload-source-shape/astrid/sdk/remote.py).
+
+- Canonicalized reloaded `_source_closure` rows using existing image fieldsets.
+- Preserved raw GET envelopes, payloads, pins, ordering, identities, and history.
+- Classified all six failures as outer `created_at`/duplicate-manifest decoration only.
+- No pin or public integration changes.
+
+Tests:
+
+- Native six-case reload: `6 passed`
+- Native ingress file: `40 passed`
+- Non-socket neighbors: `49 passed, 4 deselected`
+- Socket-dependent central run: queued due service capacity; unverified.
+- `git diff --check`: passed.
+
+Recorded `commit-msg`, `commit-msg.txt`, and `DONE`.
+2026-10-20T19:24:53.624832Z ERROR codex_core::session: failed to record rollout items: thread 01a15abb-19ce-7e90-adca-c8183d57d23c not found
+2026-10-20T19:24:53.624924Z ERROR codex_core::session: failed to record rollout items: thread 01a15abb-19ce-7e90-adca-c8183d57d23c not found
+2026-10-20T19:24:53.624938Z ERROR codex_core::session: failed to record rollout items: thread 01a15abb-19ce-7e90-adca-c8183d57d23c not found
+2026-10-20T19:24:53.624960Z ERROR codex_core::session: failed to record rollout items: thread 01a15abb-19ce-7e90-adca-c8183d57d23c not found
+2026-10-20T19:24:53.624978Z ERROR codex_core::session: failed to record rollout items: thread 01a15abb-19ce-7e90-adca-c8183d57d23c not found
+tokens used
+321,919
+Implemented in [astrid/sdk/remote.py](/home/user/work/wt/agt-m2-private952-reload-source-shape/astrid/sdk/remote.py).
+
+- Canonicalized reloaded `_source_closure` rows using existing image fieldsets.
+- Preserved raw GET envelopes, payloads, pins, ordering, identities, and history.
+- Classified all six failures as outer `created_at`/duplicate-manifest decoration only.
+- No pin or public integration changes.
+
+Tests:
+
+- Native six-case reload: `6 passed`
+- Native ingress file: `40 passed`
+- Non-socket neighbors: `49 passed, 4 deselected`
+- Socket-dependent central run: queued due service capacity; unverified.
+- `git diff --check`: passed.
+
+Recorded `commit-msg`, `commit-msg.txt`, and `DONE`.

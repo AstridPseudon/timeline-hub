@@ -1,5 +1,7 @@
 # Models (owner rule, 2026-10-19). This applies to the orchestrator, area leads, managers and workers.
 
+**Automatic Codex fallback (owner rule, 2026-10-20 evening):** when Codex hits its usage limit, the machine switches by itself. A worker that dies on a usage-limit error creates $ORCH/CODEX_UNAVAILABLE. bin/dispatch then maps Luna to Haiku, Sol to Sonnet and Astra to Opus, and bin/run-manager restarts the manager on Sonnet at the round boundary. The dispatcher probes Codex every 20 min and, when it answers, removes the flag; managers go back to Codex at their next round boundary. Nobody needs to act. Leads only confirm it in their lead line.
+
 **Owner rule 2026-10-20, rev 2 (overrides the table below for workers):** effort is **high** everywhere. Nobody uses xhigh; it over-optimises and drives test bloat. Workers use `gpt-5.6-luna --effort high`. Sol (`gpt-6.1-sol --effort high`) is only for genuinely hard tasks (cross-repo contracts, undo/rebase semantics, a failure Luna already missed), and the brief must carry a first-lines `HARD: <reason>` line. bin/dispatch turns xhigh into high, turns Sol without a HARD: line into Luna, and logs both in $ORCH/model-downgrades.log. Reviews, test-only work, merge-forward and docs always use Luna. Managers and the 3-hourly audit (coordination, not code) stay on Sol high.
 
 Prefer Codex models. Fall back to Claude models only when the Codex one is unavailable: login missing, rate-limited, or erroring repeatedly.

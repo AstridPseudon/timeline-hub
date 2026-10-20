@@ -1,0 +1,400 @@
++        editing.pins = {association['variant_key']: service.get_project_media_selection(editing.project, {
++            'association_id': association['association_id'], 'object_id': association['object_id'],
++            'version': association['lifecycle']['version']}, authorize=editing.authorize)
++            for association in editing.associations}
++        service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
++        if not historical:
++            service.create_timeline(editing.project, 'film', idempotency_key='empty-film')
++        else:
++            # Install only the verified legacy baseline from the committed,
++            # authenticated pre-cut backup, through the normal history read.
++            service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize)
++        tracked = capture_track_create(bundle_from_document(current(editing)), 'parent', {
++            'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False]})
++        commit(editing, body(editing, [tracked]), 'visual-track')
++        editing.selected.clear()
++        editing.candidates.clear()
++        yield editing
++    finally:
++        editing.service.close()
++
++
++@pytest.fixture(params=['image', 'video'])
++def custody(request, tmp_path, monkeypatch):
++    yield from media_realm(tmp_path, monkeypatch, request.param, historical=False)
++
++
++@pytest.fixture(params=['image', 'video'])
++def editing(request, tmp_path, monkeypatch):
++    yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
++
++
++# Restore when the parent recipe can record creation of absent bootstrap assets
++# without replacing null/opaque containers, including exact inverse to registry:{}.
++@pytest.mark.xfail(strict=True, raises=ParentMediaSeamBlocked,
++                   reason='Empty Runtime bootstrap registry:{} has no authored assets container')
++def test_fresh_film_first_media_birth_and_exact_inverse(custody):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    baseline = current(custody)
++    before = rows(custody)
++    try:
++        created = commit(custody, body(custody, [birth(custody)]), 'first-media')
++    except RuntimeErrorBase as error:
++        assert error.message == 'media edit requires an authored asset registry'
++        assert rows(custody) == before and custody.candidates == []
++        raise ParentMediaSeamBlocked(error.message) from error
++    assert clip_ids(current(custody)) == ['reserved-row']
++    assert undo(custody, created, 'undo-first-media')['data']['canonical_document'] == baseline
++
++
++@pytest.mark.parametrize('replace', [False, True])
++def test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry(editing, monkeypatch, replace):
++    from runtime_protocol.errors import RuntimeErrorBase
++    from runtime_protocol.service import RuntimeService
++    from runtime_protocol.timeline_commit_producer import request_pin
++    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
++    from runtime_protocol.timeline_commit_validation import validate_commit_value
++
++    from astrid.sdk.timeline import commands
++
++    if replace:
++        literal_replacement(editing)
++    baseline = current(editing)
++    value = row(editing)
++    calls = [birth(editing, value)]
++    if replace:
++        # Public dry-run performs the exact custody read; the ordinary capture
++        # builder consumes those real VerifiedMedia values, never a substitute.
++        commit(editing, body(editing, calls, dry_run=True), 'selection-preview')
++        calls = capture_clip_replace_media(bundle_from_document(baseline), 'parent/clip:target',
++                                            value, editing.pins['new'], verified_media=editing.selected)
++        assert [item['op'] for item in calls] == ['timeline.assembled-target', 'clip.add-media', 'clip.delete']
++    request = body(editing, calls)
++    assert request_pin(request) is None
++    validate_commit_value(request, 'CommitRequest')
++    before = rows(editing)
++    preview = commit(editing, dict(request, dry_run=True), 'preview')
++    assert preview['receipt'] is None and rows(editing) == before
++    created = commit(editing, request, 'birth')
++    document = created['data']['canonical_document']
++    assert document == current(editing) == preview['data']['canonical_document']
++    assert clip_ids(document) == (['music-bed', 'A', 'reserved-row', 'C'] if replace
++                                 else ['music-bed', 'reserved-row'])
++    parent = document['parent_revision']['payload']
++    assert parent['clips'] == parent['config'].get('clips', parent['clips'])
++    assert next(clip for clip in parent['clips'] if clip['id'] == value['id']) == value
++    assert parent['registry']['assets'][value['asset']] == {
++        'media_id': editing.pins['new']['object_id'], 'type': editing.kind,
++        'generationId': editing.pins['new']['generation_id'], 'variantId': editing.pins['new']['variant_id']}
++    for alias, entry in baseline['parent_revision']['payload']['registry']['assets'].items():
++        assert parent['registry']['assets'][alias] == entry
++    assert parent['config']['playback'] == baseline['parent_revision']['payload']['config']['playback']
++    assert document['shot_revisions'] == baseline['shot_revisions']
++    assert document['internal_timeline_revisions'] == baseline['internal_timeline_revisions']
++    assert all(pin in document['dependency_manifest']['media'] for pin in baseline['dependency_manifest']['media'])
++    assert document['dependency_manifest']['documents'] == baseline['dependency_manifest']['documents']
++    record = next(record for record in editing.candidates[-1]['records']['commands']
++                  if record['command']['op'] == 'clip.add-media')
++    assert record['command']['created'] == ['parent/asset:' + value['asset'], 'parent/clip:reserved-row']
++    assert record['dependencies'][-1]['pin'] == editing.pins['new']
++    assert all(not dependency['key'].startswith('producer_attempt:')
++               for record in editing.candidates[-1]['records']['commands'] for dependency in record['dependencies'])
++    history = editing.service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize)
++    editing.service.close()
++    editing.service = RuntimeService(editing.root)
++    editing.service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
++    assert current(editing) == document
++    with monkeypatch.context() as retry:
++        retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('exact retry executed semantics'))
++        assert commit(editing, request, 'birth') == created
++    assert editing.service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize) == history
++    undo_request = body(editing, [call('timeline.inverse', {
++        'publications': [created['receipt']['receipt_id']]}, None)])
++    undone = commit(editing, undo_request, 'undo')
++    assert current(editing) == undone['data']['canonical_document'] == baseline
++    before = rows(editing)
++    with pytest.raises(RuntimeErrorBase) as error:
++        commit(editing, body(editing, [birth(editing, value)]), 'retired-id')
++    assert error.value.details['reason'] == 'identity_collision'
++    assert rows(editing) == before
++    redo_request = body(editing, [call('timeline.inverse', {
++        'publications': [undone['receipt']['receipt_id']]}, None)])
++    redone = commit(editing, redo_request, 'redo')
++    assert current(editing) == redone['data']['canonical_document'] == document
++    before = rows(editing)
++    with monkeypatch.context() as retry:
++        retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('exact retry executed semantics'))
++        for saved_request, key, expected in ((request, 'birth', created), (undo_request, 'undo', undone),
++                                             (redo_request, 'redo', redone)):
++            assert commit(editing, saved_request, key) == expected
++    changed = copy.deepcopy(request)
++    changed['source'] = {'via': 'cli'}
++    with pytest.raises(RuntimeErrorBase) as error:
++        commit(editing, changed, 'birth')
++    assert error.value.status == 409 and rows(editing) == before
++    assert undo(editing, redone, 'undo-again')['data']['canonical_document'] == baseline
++    assert editing.service.store.integrity_report()['ok']
++
++
++def foreign_pin(editing):
++    from test_generation_publish_v1_settlement import CAPABILITY, _output, _settle
++
++    service = editing.service
++    project = service.create_project({'slug': 'foreign', 'name': 'Foreign'})['id']
++    effect = editing.effect(project)
++    task = service.create_task({
++        'capability_id': CAPABILITY, 'capability_digest': 'sha256:' + hashlib.sha256(CAPABILITY.encode()).hexdigest(),
++        'project': project, 'settlement_effect': effect, 'idempotency_key': 'foreign-task'})
++    attempt = service.claim_next({'executor_id': 'publish-worker', 'capability_ids': [CAPABILITY],
++        'runtime_epoch': service.health()['runtime_epoch']}, idempotency_key='foreign-claim')
++    _settle(service, attempt, [_output(('foreign-' + name).encode(), output_port=editing.kind,
++        group_key='main', variant_key=name, ordinal=index,
++        filename=name + ('.mp4' if editing.kind == 'video' else '.png'),
++        media_type=editing.kind + ('/mp4' if editing.kind == 'video' else '/png'))
++        for index, name in enumerate(('old', 'new', 'unrelated'))], effect=effect, key='foreign-settle')
++    association = service.managed_outputs(task['task']['id'])[0]
++    return service.get_project_media_selection(project, {
++        'association_id': association['association_id'], 'object_id': association['object_id'],
++        'version': association['lifecycle']['version']}, authorize=editing.authorize)
++
++
++@pytest.mark.parametrize('damage', ['foreign', 'binding', 'fingerprint', 'stale', 'occupied-row', 'occupied-alias'])
++def test_invalid_media_or_reserved_identity_refuses_before_accept_and_writes(editing, damage):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    request = body(editing, [birth(editing)])
++    args = request['commands'][0]['args']
++    if damage == 'foreign':
++        args['media'] = foreign_pin(editing)
++    elif damage == 'binding':
++        args['media'] = dict(args['media'], object_id=editing.pins['old']['object_id'])
++    elif damage == 'fingerprint':
++        args['media'] = dict(args['media'], catalog_digest=args['media']['object_id'])
++    elif damage == 'stale':
++        association = next(item for item in editing.associations if item['variant_key'] == 'new')
++        editing.service.update_managed_output_lifecycle(association['association_id'], {
++            'operation': 'promote', 'expected_version': association['lifecycle']['version']},
++            idempotency_key='promote-before-capture')
++    elif damage == 'occupied-row':
++        args['row']['id'] = 'music-bed'
++    else:
++        args['row']['asset'] = 'music-bed'
++    before = rows(editing)
++    with pytest.raises(RuntimeErrorBase) as error:
++        commit(editing, request, 'invalid')
++    expected = {
++        'foreign': 'selected media is not a managed project generation/variant/object',
++        'binding': 'selected media is not a managed project generation/variant/object',
++        'fingerprint': 'selected media catalog digest changed',
++        'stale': 'selected media catalog digest changed',
++        'occupied-row': 'created identity is occupied',
++        'occupied-alias': 'existing registry binding differs from exact selection',
++    }
++    assert error.value.message == expected[damage]
++    assert editing.candidates == []
++    assert rows(editing) == before
++
++
++def test_runtime_generic_envelope_does_not_admit_the_obsolete_scalar_shape(editing):
++    from runtime_protocol.errors import RuntimeErrorBase
++    from runtime_protocol.timeline_commit_validation import validate_commit_value
++
++    value = row(editing)
++    scalar = {key: value[key] for key in ('id', 'track', 'at', 'hold', 'speed')}
++    if editing.kind == 'video':
++        scalar.update({key: value[key] for key in ('from', 'to')})
++    scalar['media'] = editing.pins['new']
++    request = body(editing, [call('clip.add-media', scalar)])
++    validate_commit_value(request, 'CommitRequest')
++    before = rows(editing)
++    with pytest.raises(RuntimeErrorBase) as error:
++        commit(editing, request, 'obsolete-scalar-shape')
++    assert error.value.details['reason'] == 'invalid_edit_command'
++    assert editing.selected == editing.candidates == []
++    assert rows(editing) == before
++
++
++def test_stale_explicit_replacement_membership_refuses_before_accept_and_writes(editing):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    literal_replacement(editing)
++    commit(editing, body(editing, [birth(editing)], dry_run=True), 'selection')
++    calls = capture_clip_replace_media(bundle_from_document(current(editing)), 'parent/clip:target',
++                                        row(editing), editing.pins['new'], verified_media=editing.selected)
++    request = body(editing, calls)
++    pin = editing.pins['unrelated']
++    commit(editing, body(editing, [birth(editing, row(editing, 'later', asset=pin['asset']), pin)]), 'later')
++    editing.candidates.clear()
++    before = rows(editing)
++    with pytest.raises(RuntimeErrorBase) as error:
++        commit(editing, request, 'stale-order')
++    assert error.value.details['reason'] == 'selection_changed'
++    assert editing.candidates == []
++    assert rows(editing) == before
++
++
++@pytest.mark.parametrize('replace', [False, True])
++@pytest.mark.parametrize('interference', ['dependent', 'ABA'])
++def test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes(editing, replace, interference):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    if replace:
++        literal_replacement(editing)
++    calls = [birth(editing)]
++    if replace:
++        commit(editing, body(editing, calls, dry_run=True), 'selection')
++        calls = capture_clip_replace_media(bundle_from_document(current(editing)), 'parent/clip:target',
++                                            row(editing), editing.pins['new'], verified_media=editing.selected)
++    created = commit(editing, body(editing, calls), 'create')
++    if interference == 'dependent':
++        dependent = commit(editing, body(editing, [birth(editing, row(editing, 'dependent'))]), 'dependent')
++        state = State(bundle_from_document(dependent['data']['canonical_document']))
++        assert state.entity('parent/clip:dependent')['asset'] == state.entity('parent/clip:reserved-row')['asset']
++    else:
++        before = copy.deepcopy(State(bundle_from_document(current(editing))).entity('parent/clip:reserved-row'))
++        for index, hold in enumerate((before['hold'] / 2, before['hold'])):
++            change = capture_clip_set(bundle_from_document(current(editing)),
++                'parent/clip:reserved-row', values={'hold': hold})
++            commit(editing, body(editing, [change]), 'aba-' + str(index))
++        assert State(bundle_from_document(current(editing))).entity('parent/clip:reserved-row') == before
++    editing.candidates.clear()
++    before = rows(editing)
++    with pytest.raises(RuntimeErrorBase) as error:
++        undo(editing, created, 'unsafe-undo')
++    # Accepted suffix guards also cover the later creation's collection write;
++    # refusal can precede the structural surviving-dependent check.
++    assert error.value.details['reason'] == 'intervening_write'
++    assert editing.candidates == []
++    assert rows(editing) == before
++
++
++def promote_latest_variant(editing):
++    from test_generation_publish_v1_settlement import CAPABILITY, _output, _settle
++
++    old = editing.pins['old']
++    service = editing.service
++    effect = {'effect_type': 'generation.variant.append', 'target_id': old['generation_id'],
++              'expected_version': service.get_generation(old['generation_id'])['version'],
++              'payload': {'source_variant_id': old['variant_id'], 'source_object_id': old['object_id'],
++                          'variant_type': 'latest', 'output_name': editing.kind,
++                          'output_ordinal': 0, 'primary_policy': 'promote'}}
++    service.create_task({
++        'capability_id': CAPABILITY, 'capability_digest': 'sha256:' + hashlib.sha256(CAPABILITY.encode()).hexdigest(),
++        'project': editing.project, 'input_object_ids': [old['object_id']],
++        'settlement_effect': effect, 'idempotency_key': 'latest-task'})
++    attempt = service.claim_next({'executor_id': 'publish-worker', 'capability_ids': [CAPABILITY],
++        'runtime_epoch': service.health()['runtime_epoch']}, idempotency_key='latest-claim')
++    output = _output(b'latest-variant', output_port=editing.kind, group_key='main', variant_key='latest', ordinal=0,
++                     filename='latest' + ('.mp4' if editing.kind == 'video' else '.png'),
++                     media_type=editing.kind + ('/mp4' if editing.kind == 'video' else '/png'))
++    settled = _settle(service, attempt, [output], effect=effect, key='latest-settle')
++    result = settled['data']['result']['generation_variant']
++    assert result['previous_primary_variant_id'] == old['variant_id']
++    assert result['new_primary_variant_id'] == result['variant_id'] != old['variant_id']
++    assert result['new_primary_object_id'] != old['object_id']
++    return result
++
++
++def test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse(editing):
++    literal_replacement(editing)
++    baseline = current(editing)
++    old = copy.deepcopy(editing.pins['old'])
++    old_binding = copy.deepcopy(baseline['parent_revision']['payload']['registry']['assets']['old-target'])
++    old_variant = editing.service.get_variant(old['variant_id'])
++    promote_latest_variant(editing)
++    assert editing.service.get_variant(old['variant_id'])['object_id'] == old_variant['object_id']
++    assert editing.service.get_project_media_selection(editing.project, {
++        key: old[key] for key in ('asset', 'generation_id', 'variant_id')}, authorize=editing.authorize) == old
++    assert current(editing) == baseline
++    commit(editing, body(editing, [birth(editing)], dry_run=True), 'selection')
++    calls = capture_clip_replace_media(bundle_from_document(baseline), 'parent/clip:target', row(editing),
++                                        editing.pins['new'], verified_media=editing.selected)
++    created = commit(editing, body(editing, calls), 'replace-after-primary-change')
++    document = created['data']['canonical_document']
++    assert document['parent_revision']['payload']['registry']['assets']['old-target'] == old_binding
++    assert old_binding == {'media_id': old['object_id'], 'type': editing.kind,
++                           'generationId': old['generation_id'], 'variantId': old['variant_id']}
++    assert {'media_id': old['object_id'], 'content_digest': old['object_id']} in document['dependency_manifest']['media']
++    undone = undo(editing, created, 'undo-after-primary-change')
++    assert current(editing) == undone['data']['canonical_document'] == baseline
++    assert undo(editing, undone, 'redo-after-primary-change')['data']['canonical_document'] == document
++
++
++# Restore when ordinary deletion resolves unrelated occurrence transitions rather
++# than refusing the entire film; no weakening/removal of the original expectation.
++@pytest.mark.xfail(strict=True, raises=ParentMediaSeamBlocked,
++                   reason='clip.delete globally rejects the captured film occurrence-2 transition')
++def test_ordered_replacement_preserves_unrelated_historical_transition(editing):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    for identity in ('A', 'target', 'C'):
++        commit(editing, body(editing, [birth(editing, row(editing, identity, asset='old-' + identity),
++                                            editing.pins['old'])]), 'old-' + identity)
++    baseline = current(editing)
++    refs = ['parent/clip:' + identity for identity in clip_ids(baseline)]
++    calls = [call('timeline.assembled-target', {'replace_clips': refs}, 'parent/clip:target'),
++             dict(birth(editing), select='parent/clip:target'), call('clip.delete', {}, 'parent/clip:target')]
++    editing.candidates.clear()
++    before = rows(editing)
++    try:
++        created = commit(editing, body(editing, calls), 'replace-with-transition')
++    except RuntimeErrorBase as error:
++        assert error.details['reason'] == 'unsupported_dependency'
++        assert error.details['conflicts'] == []
++        assert error.message == 'clip.delete cannot prove declared semantic dependencies safe'
++        assert rows(editing) == before and editing.candidates == []
++        raise ParentMediaSeamBlocked(error.message) from error
++    assert clip_ids(current(editing)) == ['music-bed', 'A', 'reserved-row', 'C']
++    assert created['data']['canonical_document']['internal_timeline_revisions'] == baseline['internal_timeline_revisions']
++    assert undo(editing, created, 'undo-with-transition')['data']['canonical_document'] == baseline
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-real-proof')
+(worker/'commit-msg').write_text('test(timeline): qualify parent media edits through real Runtime\\n\\nExercise ordinary parent birth and ordered replacement using managed project\\nmedia, the normal Agent provider, accepted inverse/redo, restart and retry.\\nCover selection, collision, dependent and ABA refusals before writes, and retain\\nexact source pins across a real primary variant promotion.\\n\\nKeep positive strict regressions for missing bootstrap assets and unrelated\\ntransition deletion guards; document candidate schema and authority limits.\\n')
+(worker/'BLOCKED').write_text('Ordinary existing-film birth and literal ordered replacement qualified: 30 passed, 4 precise strict xfails; neighbors 233 passed, 5 existing xfails. Unrestricted fresh-film birth is blocked by bootstrap registry:{} lacking an authored assets container (existing explicit refusal policy). Replacement on the unchanged approved historical film is blocked by clip.delete globally refusing an unrelated occurrence transition (outside allowed parent/provider-order scope). Positive expectations are retained as strict xfails; no guards or passing tests were weakened. Official full superset schema/Runtime pair and authentic assembler lifecycle remain separately unqualified. See worktree notes/report.md and actual-tests.log.\\n')
+(worker/'report.md').write_text(Path('notes/report.md').read_text())
+print('Wrote commit-msg, detailed report, and precise BLOCKED marker; no DONE.')
+PY" in /home/user/work/wt/agt-m2-parent-media-real-proof
+ succeeded in 44ms:
+Wrote commit-msg, detailed report, and precise BLOCKED marker; no DONE.
+
+exec
+/bin/bash -lc 'git status --short; git diff --check; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-real-proof/commit-msg; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-real-proof/BLOCKED' in /home/user/work/wt/agt-m2-parent-media-real-proof
+exec
+/bin/bash -lc 'git diff --no-index --check /dev/null tests/editing_conformance/test_commit_runtime_parent_media.py' in /home/user/work/wt/agt-m2-parent-media-real-proof
+exec
+/bin/bash -lc 'git diff --no-index --check /dev/null notes/report.md' in /home/user/work/wt/agt-m2-parent-media-real-proof
+ exited 1 in 18ms:
+ exited 1 in 28ms:
+ succeeded in 527ms:
+?? notes/
+?? tests/editing_conformance/test_commit_runtime_parent_media.py
+
+codex
+Added real Runtime integration coverage; no production changes.
+
+- Actual custody/provider tests: **30 passed, 4 strict xfailed**.
+- Neighboring tests: **233 passed, 5 existing xfailed**.
+- Ruff and whitespace checks passed. No full suite or sockets used.
+
+Positive strict xfails preserve two unresolved behaviors: fresh-film birth lacks an assets container, and replacement refuses an unrelated occurrence transition. Literal ordered replacement passes after a normal accepted transition-clear command.
+
+Wrote `commit-msg` and precise `BLOCKED`; no `DONE`. Official schema regeneration/pair and authentic assembler lifecycle remain unqualified.
+
+[Detailed report with exact commands, results, Runtime commit, and next steps](/home/user/work/wt/agt-m2-parent-media-real-proof/notes/report.md).
+tokens used
+208,941
+Added real Runtime integration coverage; no production changes.
+
+- Actual custody/provider tests: **30 passed, 4 strict xfailed**.
+- Neighboring tests: **233 passed, 5 existing xfailed**.
+- Ruff and whitespace checks passed. No full suite or sockets used.
+
+Positive strict xfails preserve two unresolved behaviors: fresh-film birth lacks an assets container, and replacement refuses an unrelated occurrence transition. Literal ordered replacement passes after a normal accepted transition-clear command.
+
+Wrote `commit-msg` and precise `BLOCKED`; no `DONE`. Official schema regeneration/pair and authentic assembler lifecycle remain unqualified.
+
+[Detailed report with exact commands, results, Runtime commit, and next steps](/home/user/work/wt/agt-m2-parent-media-real-proof/notes/report.md).

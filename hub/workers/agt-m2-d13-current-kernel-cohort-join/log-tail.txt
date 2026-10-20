@@ -1,0 +1,400 @@
+    |
+
+tests/core/execution/test_process_group.py:982:23: E702 Multiple statements on one line (semicolon)
+    |
+980 |     def hold():
+981 |         with owner._lock:
+982 |             held.set(); release.wait(5)
+    |                       ^ E702
+983 |     thread = threading.Thread(target=hold); thread.start(); held.wait(5)
+984 |     return release, thread
+    |
+
+tests/core/execution/test_process_group.py:983:43: E702 Multiple statements on one line (semicolon)
+    |
+981 |         with owner._lock:
+982 |             held.set(); release.wait(5)
+983 |     thread = threading.Thread(target=hold); thread.start(); held.wait(5)
+    |                                           ^ E702
+984 |     return release, thread
+    |
+
+tests/core/execution/test_process_group.py:983:59: E702 Multiple statements on one line (semicolon)
+    |
+981 |         with owner._lock:
+982 |             held.set(); release.wait(5)
+983 |     thread = threading.Thread(target=hold); thread.start(); held.wait(5)
+    |                                                           ^ E702
+984 |     return release, thread
+    |
+
+tests/core/execution/test_process_group.py:998:22: E702 Multiple statements on one line (semicolon)
+     |
+ 996 |             groups.observe_tree(process)
+ 997 |     finally:
+ 998 |         release.set(); thread.join()
+     |                      ^ E702
+ 999 |     assert not getattr(process, "_astrid_tree_uncertain", None) and owner._uncertain is None
+1000 |     monkeypatch.setattr(groups, "_candidate_reconciliation_deadline", lambda d: time.monotonic() + 5)
+     |
+
+tests/core/execution/test_process_group.py:1012:22: E702 Multiple statements on one line (semicolon)
+     |
+1010 |             groups.verify_tree_absent(process, deadline=time.monotonic() + 0.05)
+1011 |     finally:
+1012 |         release.set(); thread.join()
+     |                      ^ E702
+1013 |     assert process._astrid_tree_uncertain
+     |
+
+tests/packs/video_editing/test_runtime_publication_chain.py:1:1: I001 [*] Import block is un-sorted or un-formatted
+   |
+ 1 | / from __future__ import annotations
+ 2 | |
+ 3 | | import base64
+ 4 | | import hashlib
+ 5 | | import json
+ 6 | | import os
+ 7 | | import shlex
+ 8 | | import shutil
+ 9 | | import subprocess
+10 | | from pathlib import Path
+11 | | from types import SimpleNamespace
+12 | |
+13 | | import pytest
+14 | |
+15 | | from astrid.core.execution.generic_host import GenericPackHost, HostError, RuntimeProtocolClient
+16 | | from astrid.core.contracts.runtime_orchestration import OrchestrationContractError
+17 | | from astrid.packs.rendering.actions.assemble_timeline.run import build_authoring_proposal
+18 | | from astrid.packs.rendering.shared.runtime_stitch import publish_authoring_proposal
+19 | | from astrid.sdk.client import AstridClient
+20 | | from astrid.sdk.timeline.assembly import read_assembly_proposal
+21 | | from astrid.sdk.timeline.sync import TimelineSession
+22 | | from astrid.sdk.workspace_client import WorkspaceClientError
+23 | | from tests.helpers.runtime import use_runtime
+   | |_____________________________________________^ I001
+   |
+   = help: Organize imports
+
+Found 158 errors.
+[*] 19 fixable with the `--fix` option (4 hidden fixes can be enabled with the `--unsafe-fixes` option).
+
+2026-10-20T17:48:03.891898Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc 'set +e\\nV=/home/user/work/venv-agent/bin/python\\n$V -m ruff check astrid/core/contracts/runtime_orchestration.py astrid/sdk/timeline/assembly.py tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/packs/rendering/actions/assemble_timeline/run.py >/tmp/agt-d13-ruff.out 2>&1\\nrc=$?; echo \\\"ruff_rc=$rc\\\"; sed -n '\\\"'1,100p' /tmp/agt-d13-ruff.out\…735 chars truncated…rev-parse HEAD)\\\" \\\"$(git -C /home/user/work/wt/rt-pin-7d1cfa6b rev-parse HEAD''^{tree})\\\"\\nprintf '\\\"'remotion=%s\\\\\\\\n' \\\\\\\"\\\"'$(realpath /home/user/work/runtimes/agent-remotion-current 2>/dev/null || true)\\\"\\nprintf '\\\"'node=%s\\\\\\\\n' \\\\\\\"\\\"'$(realpath /home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node 2>/dev/null || true)\\\"'` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc 'V=/home/user/work/venv-agent/bin/python
+$V -m ruff check astrid/core/contracts/runtime_orchestration.py astrid/sdk/timeline/assembly.py tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/packs/rendering/actions/assemble_timeline/run.py; echo "ruff_rc=$?"
+printf '"'%s\\n' '--- diff checks ---'
+git diff --check; echo \"diff_check_rc="'$?"
+printf '"'%s\\n' '--- exact tree/provenance ---'
+printf 'base=%s\\n' \""'$(git rev-parse HEAD)"
+printf '"'base_tree=%s\\n' \""'$(git rev-parse '"'HEAD"'^{tree}'"')\"
+printf 'custody_merged=%s custody_parent=%s\\n' \""'$(git rev-parse d999197a)" "$(git rev-parse '"'d999197a"'^2'"')\"
+printf 'd13_donor=%s donor_parent=%s\\n' \""'$(git rev-parse cecbe9ea)" "$(git rev-parse '"'cecbe9ea"'^'"')\"
+printf 'runtime_7d=%s runtime_tree=%s\\n' \""'$(git -C /home/user/work/wt/rt-pin-7d1cfa6b rev-parse HEAD)" "$(git -C /home/user/work/wt/rt-pin-7d1cfa6b rev-parse '"'HEAD"'^{tree}'"')\"
+printf 'remotion=%s\\n' \""'$(realpath /home/user/work/runtimes/agent-remotion-current 2>/dev/null || true)"
+printf '"'node=%s\\n' \""'$(realpath /home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node 2>/dev/null || true)"' in /home/user/work/wt/agt-m2-d13-current-kernel-cohort-join
+ succeeded in 526ms:
+tests/packs/rendering/actions/assemble_timeline/run.py:1:1: E902 No such file or directory (os error 2)
+Found 1 error.
+ruff_rc=1
+--- diff checks ---
+diff_check_rc=0
+--- exact tree/provenance ---
+base=3c4f6de4fa777323b3386c01c7266b619b86af6d
+base_tree=aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c
+custody_merged=d999197aed9c471f7b133e664f8086a0efc6cb66 custody_parent=19e4abb2a8083ee331f96cc33b0b4891cc89f1f0
+d13_donor=cecbe9eac5b9216383fa0fbe4bc2cc60dcc52b38 donor_parent=65c87dd5d5310bc028acafaf1cab31196a03a86d
+runtime_7d=7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e runtime_tree=ac693097189637d3bd0fc3a39299d9b166758853
+remotion=/home/user/work/runtimes/agent-remotion-current
+node=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+
+exec
+/bin/bash -lc 'V=/home/user/work/venv-agent/bin/python
+$V -m ruff check astrid/core/contracts/runtime_orchestration.py astrid/sdk/timeline/assembly.py tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py astrid/packs/rendering/actions/assemble_timeline/run.py; echo "ruff_rc=$?"' in /home/user/work/wt/agt-m2-d13-current-kernel-cohort-join
+ succeeded in 0ms:
+All checks passed!
+ruff_rc=0
+
+codex
+Local and central targeted evidence is green: direct targeted coverage is `87 passed, 5 skipped, 82 deselected`; the central snapshot of all touched test files is `167 passed, 7 deselected`. Ruff passes on the newly introduced D13 contract/assembly/test files, and `git diff --check` passes. The full real two-case proof remains unrun because the required `7d1cfa6b` Runtime-backed suite is absent from the central suite allow-list; I’m recording that exact blocker rather than substituting the known `a0dca169` lane.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/merge-parent
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..cc94114fdc0e584b7a3958d64a65026d6dea0e56
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/commit-msg.txt
+@@ -0,0 +1,9 @@
++feat(timeline): compose D13 consumer on current 014 source
++
++Compose the reviewed registered assembler consumer and parity tests onto the
++current staged 014 Agent source, retaining the merged epoll custody proof.
++Record the current integration merge parent without importing unrelated pins,
++artifacts, or historical branch changes.
++
++Targeted Agent coverage passes; the exact Runtime 7d1 current-cohort live
++suite remains pending because no such central suite is available.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/merge-parent b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/merge-parent
+new file mode 100644
+index 0000000000000000000000000000000000000000..bac0ce08d70c32795aaf3618e1ba3ad2972e84da
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/merge-parent
+@@ -0,0 +1 @@
++d999197aed9c471f7b133e664f8086a0efc6cb66
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..331d59f1ac0a7a4a7c92986d7400df2762f3bf94
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/report.md
+@@ -0,0 +1,22 @@
++# D13 current-kernel cohort join
++
++## Source and composition
++
++- Worker base: `3c4f6de4fa777323b3386c01c7266b619b86af6d`, tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`.
++- Harness merge parent: current Agent integration `d999197aed9c471f7b133e664f8086a0efc6cb66`, whose second parent is approved custody fix `19e4abb2a8083ee331f96cc33b0b4891cc89f1f0`.
++- Custody files are byte-identical to `d999197a`; D13 consumer/parity files are byte-identical to donor `cecbe9eac5b9216383fa0fbe4bc2cc60dcc52b38` (parent `65c87dd5`).
++- No `runtime.lock.json`, `artifacts.json`, generated-client, normal pin, private carrier, raw audio, project-data, or unrelated current-integration files changed.
++- Exact retained Runtime reference: `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`, tree `ac693097189637d3bd0fc3a39299d9b166758853`; current Remotion profile is `/home/user/work/runtimes/agent-remotion-current` with Node `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node`.
++
++## Evidence
++
++- Direct targeted: `PYTHONPATH=$PWD PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/packs/rendering/test_assemble_timeline.py tests/packs/video_editing/test_runtime_publication_chain.py -m 'not integration' tests/core/execution/test_process_group.py -k 'pidfd or process_group'` — **87 passed, 5 skipped, 82 deselected**.
++- Central targeted snapshot: `agt-m2-d13-current-kernel-cohort-join-targeted-1020174647-4175` — **167 passed, 7 deselected**, exit 0; tree `d4871247bc072c5c32b3c6366e79ae2df33aa930`.
++- Ruff on new D13 contract/assembly/test files — **passed**. `git diff --check` — **passed**.
++- Custody independent review/central evidence is retained at approved `19e4abb2`: **652 passed, 16 existing Darwin skips** and focused proof **19 passed**. This worker did not rerun the full custody suite.
++
++## Blocker and limits
++
++The requested single owned live `registered D13 current-cohort integration` suite using exact Runtime `7d1cfa6b` and current Remotion is not present in the central `/tmp/.../tests/suites.conf` allow-list. Existing `registered014-render-integration` uses the different `a0dca169` checkout and was not substituted; existing `registered-native-render-integration` uses the mutable current Runtime and is not the requested tuple. Therefore the two real registered cases (lost ACK/restart, pinned render, CAS MP4/ffprobe/decode, undo) are **not claimed green on this composed tree**.
++
++No full suite, new skip/xfail, public pin, release, or deletion was performed.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- repo status ---'; git status --short; printf '%s\\n' '--- diff summary ---'; git diff --stat; printf '%s\\n' '--- metadata ---'; for f in merge-parent commit-msg commit-msg.txt DONE BLOCKED report.md; do p=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/"'$f; [ -e "$p" ] && { echo "### $f"; sed -n '"'1,220p' \""'$p"; }; done; printf '"'%s\\n' '--- forbidden source changes ---'; git diff --name-only | rg '"'^(runtime.lock.json|artifacts.json|astrid_runtime_client/|tests/fixtures/)'"' || true" in /home/user/work/wt/agt-m2-d13-current-kernel-cohort-join
+ succeeded in 980ms:
+--- repo status ---
+ M astrid/core/contracts/runtime_orchestration.py
+ M astrid/core/execution/custody_broker.py
+ M astrid/core/execution/generic_host.py
+ M astrid/core/execution/process_group.py
+ M astrid/packs/rendering/actions/assemble_timeline/run.py
+ M astrid/packs/rendering/pack.yaml
+ M astrid/sdk/timeline/sync.py
+ M astrid/sdk/workspace_client.py
+ M tests/core/execution/test_process_group.py
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/assembly.py
+?? tests/sdk/test_timeline_assembly.py
+--- diff summary ---
+ astrid/core/contracts/runtime_orchestration.py     |  87 +++++
+ astrid/core/execution/custody_broker.py            |  37 ++-
+ astrid/core/execution/generic_host.py              | 137 ++------
+ astrid/core/execution/process_group.py             |  63 +++-
+ .../rendering/actions/assemble_timeline/run.py     |  84 ++++-
+ astrid/packs/rendering/pack.yaml                   |   6 +-
+ astrid/sdk/timeline/sync.py                        |  87 ++++-
+ astrid/sdk/workspace_client.py                     |   9 +
+ tests/core/execution/test_process_group.py         | 266 +++++++++++++++
+ .../test_runtime_publication_chain.py              | 360 ++++++++++++++-------
+ tests/sdk/test_timeline_sync.py                    |  20 ++
+ 11 files changed, 911 insertions(+), 245 deletions(-)
+--- metadata ---
+### merge-parent
+d999197aed9c471f7b133e664f8086a0efc6cb66
+### commit-msg.txt
+feat(timeline): compose D13 consumer on current 014 source
+
+Compose the reviewed registered assembler consumer and parity tests onto the
+current staged 014 Agent source, retaining the merged epoll custody proof.
+Record the current integration merge parent without importing unrelated pins,
+artifacts, or historical branch changes.
+
+Targeted Agent coverage passes; the exact Runtime 7d1 current-cohort live
+suite remains pending because no such central suite is available.
+### DONE
+### report.md
+# D13 current-kernel cohort join
+
+## Source and composition
+
+- Worker base: `3c4f6de4fa777323b3386c01c7266b619b86af6d`, tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`.
+- Harness merge parent: current Agent integration `d999197aed9c471f7b133e664f8086a0efc6cb66`, whose second parent is approved custody fix `19e4abb2a8083ee331f96cc33b0b4891cc89f1f0`.
+- Custody files are byte-identical to `d999197a`; D13 consumer/parity files are byte-identical to donor `cecbe9eac5b9216383fa0fbe4bc2cc60dcc52b38` (parent `65c87dd5`).
+- No `runtime.lock.json`, `artifacts.json`, generated-client, normal pin, private carrier, raw audio, project-data, or unrelated current-integration files changed.
+- Exact retained Runtime reference: `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`, tree `ac693097189637d3bd0fc3a39299d9b166758853`; current Remotion profile is `/home/user/work/runtimes/agent-remotion-current` with Node `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node`.
+
+## Evidence
+
+- Direct targeted: `PYTHONPATH=$PWD PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/packs/rendering/test_assemble_timeline.py tests/packs/video_editing/test_runtime_publication_chain.py -m 'not integration' tests/core/execution/test_process_group.py -k 'pidfd or process_group'` — **87 passed, 5 skipped, 82 deselected**.
+- Central targeted snapshot: `agt-m2-d13-current-kernel-cohort-join-targeted-1020174647-4175` — **167 passed, 7 deselected**, exit 0; tree `d4871247bc072c5c32b3c6366e79ae2df33aa930`.
+- Ruff on new D13 contract/assembly/test files — **passed**. `git diff --check` — **passed**.
+- Custody independent review/central evidence is retained at approved `19e4abb2`: **652 passed, 16 existing Darwin skips** and focused proof **19 passed**. This worker did not rerun the full custody suite.
+
+## Blocker and limits
+
+The requested single owned live `registered D13 current-cohort integration` suite using exact Runtime `7d1cfa6b` and current Remotion is not present in the central `/tmp/.../tests/suites.conf` allow-list. Existing `registered014-render-integration` uses the different `a0dca169` checkout and was not substituted; existing `registered-native-render-integration` uses the mutable current Runtime and is not the requested tuple. Therefore the two real registered cases (lost ACK/restart, pinned render, CAS MP4/ffprobe/decode, undo) are **not claimed green on this composed tree**.
+
+No full suite, new skip/xfail, public pin, release, or deletion was performed.
+--- forbidden source changes ---
+
+codex
+The implementation and evidence package are complete, but the acceptance gate is externally blocked: the central allow-list has no suite that can run this worker snapshot with the required Runtime `7d1cfa6b` and current Remotion profile. I’m marking the worker blocked (not claiming the live MP4/ffprobe/restart/undo proof) while preserving the staged source and harness merge-parent metadata for the manager’s suite update and rerun.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/BLOCKED
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/BLOCKED b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/BLOCKED
+new file mode 100644
+index 0000000000000000000000000000000000000000..99bb20ef4ea3cd6668ed623aaf56644f81314675
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/BLOCKED
+@@ -0,0 +1 @@
++The requested owned live D13 current-cohort suite using exact Runtime 7d1cfa6b and the current Remotion profile is absent from the central test-service allow-list. Existing registered lanes use a different Runtime tuple, so the required real MP4/ffprobe, lost-ACK/restart, pinned-render, and undo proof cannot be honestly claimed. Targeted source and test evidence is complete; manager must provide or authorize the exact 7d1 suite and rerun it.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..cc94114fdc0e584b7a3958d64a65026d6dea0e56
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/commit-msg.txt
+@@ -0,0 +1,9 @@
++feat(timeline): compose D13 consumer on current 014 source
++
++Compose the reviewed registered assembler consumer and parity tests onto the
++current staged 014 Agent source, retaining the merged epoll custody proof.
++Record the current integration merge parent without importing unrelated pins,
++artifacts, or historical branch changes.
++
++Targeted Agent coverage passes; the exact Runtime 7d1 current-cohort live
++suite remains pending because no such central suite is available.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/merge-parent b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/merge-parent
+new file mode 100644
+index 0000000000000000000000000000000000000000..bac0ce08d70c32795aaf3618e1ba3ad2972e84da
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/merge-parent
+@@ -0,0 +1 @@
++d999197aed9c471f7b133e664f8086a0efc6cb66
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..331d59f1ac0a7a4a7c92986d7400df2762f3bf94
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/report.md
+@@ -0,0 +1,22 @@
++# D13 current-kernel cohort join
++
++## Source and composition
++
++- Worker base: `3c4f6de4fa777323b3386c01c7266b619b86af6d`, tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`.
++- Harness merge parent: current Agent integration `d999197aed9c471f7b133e664f8086a0efc6cb66`, whose second parent is approved custody fix `19e4abb2a8083ee331f96cc33b0b4891cc89f1f0`.
++- Custody files are byte-identical to `d999197a`; D13 consumer/parity files are byte-identical to donor `cecbe9eac5b9216383fa0fbe4bc2cc60dcc52b38` (parent `65c87dd5`).
++- No `runtime.lock.json`, `artifacts.json`, generated-client, normal pin, private carrier, raw audio, project-data, or unrelated current-integration files changed.
++- Exact retained Runtime reference: `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`, tree `ac693097189637d3bd0fc3a39299d9b166758853`; current Remotion profile is `/home/user/work/runtimes/agent-remotion-current` with Node `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node`.
++
++## Evidence
++
++- Direct targeted: `PYTHONPATH=$PWD PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/packs/rendering/test_assemble_timeline.py tests/packs/video_editing/test_runtime_publication_chain.py -m 'not integration' tests/core/execution/test_process_group.py -k 'pidfd or process_group'` — **87 passed, 5 skipped, 82 deselected**.
++- Central targeted snapshot: `agt-m2-d13-current-kernel-cohort-join-targeted-1020174647-4175` — **167 passed, 7 deselected**, exit 0; tree `d4871247bc072c5c32b3c6366e79ae2df33aa930`.
++- Ruff on new D13 contract/assembly/test files — **passed**. `git diff --check` — **passed**.
++- Custody independent review/central evidence is retained at approved `19e4abb2`: **652 passed, 16 existing Darwin skips** and focused proof **19 passed**. This worker did not rerun the full custody suite.
++
++## Blocker and limits
++
++The requested single owned live `registered D13 current-cohort integration` suite using exact Runtime `7d1cfa6b` and current Remotion is not present in the central `/tmp/.../tests/suites.conf` allow-list. Existing `registered014-render-integration` uses the different `a0dca169` checkout and was not substituted; existing `registered-native-render-integration` uses the mutable current Runtime and is not the requested tuple. Therefore the two real registered cases (lost ACK/restart, pinned render, CAS MP4/ffprobe/decode, undo) are **not claimed green on this composed tree**.
++
++No full suite, new skip/xfail, public pin, release, or deletion was performed.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- final status ---'; git status --short; printf '%s\\n' '--- worktree generated files ---'; find . -path './.git' -prune -o \\( -name '__pycache__' -o -name '*.pyc' -o -name '.pytest_cache' -o -name '.ruff_cache' \\) -print | head -50; printf '%s\\n' '--- final metadata markers ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/{BLOCKED,commit-msg.txt,merge-parent,report.md}; test "'! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/DONE; echo no_DONE=$?; printf '"'%s\\n' '--- final changed path list ---'; git diff --name-only; git ls-files --others --exclude-standard" in /home/user/work/wt/agt-m2-d13-current-kernel-cohort-join
+ succeeded in 706ms:
+--- final status ---
+ M astrid/core/contracts/runtime_orchestration.py
+ M astrid/core/execution/custody_broker.py
+ M astrid/core/execution/generic_host.py
+ M astrid/core/execution/process_group.py
+ M astrid/packs/rendering/actions/assemble_timeline/run.py
+ M astrid/packs/rendering/pack.yaml
+ M astrid/sdk/timeline/sync.py
+ M astrid/sdk/workspace_client.py
+ M tests/core/execution/test_process_group.py
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/assembly.py
+?? tests/sdk/test_timeline_assembly.py
+--- worktree generated files ---
+./.ruff_cache
+--- final metadata markers ---
+-rw-r--r-- 1 root root  446 Oct 20 17:48 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/BLOCKED
+-rw-r--r-- 1 root root  472 Oct 20 17:48 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/commit-msg.txt
+-rw-r--r-- 1 root root   41 Oct 20 17:48 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/merge-parent
+-rw-r--r-- 1 root root 2595 Oct 20 17:48 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/report.md
+no_DONE=0
+--- final changed path list ---
+astrid/core/contracts/runtime_orchestration.py
+astrid/core/execution/custody_broker.py
+astrid/core/execution/generic_host.py
+astrid/core/execution/process_group.py
+astrid/packs/rendering/actions/assemble_timeline/run.py
+astrid/packs/rendering/pack.yaml
+astrid/sdk/timeline/sync.py
+astrid/sdk/workspace_client.py
+tests/core/execution/test_process_group.py
+tests/packs/video_editing/test_runtime_publication_chain.py
+tests/sdk/test_timeline_sync.py
+astrid/sdk/timeline/assembly.py
+tests/sdk/test_timeline_assembly.py
+
+exec
+/bin/bash -lc 'find .ruff_cache -type f -delete 2>/dev/null; find .ruff_cache -depth -type d -empty -delete 2>/dev/null; test ! -e .ruff_cache && echo '"'ruff cache removed' || find .ruff_cache -maxdepth 2 -print" in /home/user/work/wt/agt-m2-d13-current-kernel-cohort-join
+ succeeded in 0ms:
+ruff cache removed
+
+codex
+## Report
+
+Composed the reviewed D13 consumer/parity source onto `3c4f6de4`, retaining custody fix `19e4abb2` via harness merge parent `d999197a`.
+
+- D13 donor: `cecbe9ea`
+- Runtime tuple: `7d1cfa6b` / tree `ac693097`
+- Remotion: `agent-remotion-current`
+- No pin, artifact, generated-client, raw-audio, or unrelated integration changes.
+
+Tests:
+
+- Direct targeted: **87 passed, 5 skipped, 82 deselected**
+- Central targeted `agt-m2-d13-current-kernel-cohort-join-targeted-1020174647-4175`: **167 passed, 7 deselected**
+- Focused Ruff: passed
+- `git diff --check`: passed
+- Custody retained evidence: **652 passed, 16 Darwin skips; 19 focused passed**
+
+Blocked: the required live D13 suite using exact Runtime `7d1cfa6b` is absent from the central allow-list. Existing lanes use a different Runtime tuple, so real MP4/ffprobe, lost-ACK restart, pinned-render, and undo proof are not claimed.
+
+Wrote [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/commit-msg.txt) and `BLOCKED`; no `DONE` marker.
+tokens used
+259,393
+## Report
+
+Composed the reviewed D13 consumer/parity source onto `3c4f6de4`, retaining custody fix `19e4abb2` via harness merge parent `d999197a`.
+
+- D13 donor: `cecbe9ea`
+- Runtime tuple: `7d1cfa6b` / tree `ac693097`
+- Remotion: `agent-remotion-current`
+- No pin, artifact, generated-client, raw-audio, or unrelated integration changes.
+
+Tests:
+
+- Direct targeted: **87 passed, 5 skipped, 82 deselected**
+- Central targeted `agt-m2-d13-current-kernel-cohort-join-targeted-1020174647-4175`: **167 passed, 7 deselected**
+- Focused Ruff: passed
+- `git diff --check`: passed
+- Custody retained evidence: **652 passed, 16 Darwin skips; 19 focused passed**
+
+Blocked: the required live D13 suite using exact Runtime `7d1cfa6b` is absent from the central allow-list. Existing lanes use a different Runtime tuple, so real MP4/ffprobe, lost-ACK restart, pinned-render, and undo proof are not claimed.
+
+Wrote [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current-kernel-cohort-join/commit-msg.txt) and `BLOCKED`; no `DONE` marker.

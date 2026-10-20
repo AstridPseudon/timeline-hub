@@ -1,0 +1,400 @@
+        assert binding["authority"]["expansion"]["shots"][0]["content_digest"] == runtime.get_project_shot_revision(
+            runtime.project_id, "shot-shared", "shot-rev-1")["content_digest"]
+        assert binding["authority"]["expansion"]["children"][0]["config_hash"] == runtime.get_project_timeline_revision(
+            runtime.project_id, "main", "internal-1")["content_digest"]
+        assert binding["ref"]["source_kind"] == ("working_copy" if working_copy else "revision")
+        if working_copy:
+            marker = snapshot["metadata"]["working_copy"]
+            assert snapshot["config"]["opaque_parent_config"] == {"unsaved": True}
+            assert binding["ref"]["revision_digest"] == marker["candidate_digest"]
+            assert binding["ref"]["working_copy"]["base_revision_digest"] == marker["base_parent"]["content_digest"]
+            assert task["spec"]["spec"]["inputs"]["authoring_preview"] == runtime.authoring_preview
+            from runtime_protocol.errors import NotFoundError
+            with pytest.raises(NotFoundError):
+                runtime.get_project_parent_composition_revision(runtime.project_id, "main", marker["candidate_parent_revision_id"])
+        else:
+            assert "authoring_preview" not in task["spec"]["spec"]["inputs"]
+        from astrid.core.rendering.verified_source import SOURCE_ENV
+        monkeypatch.setenv(SOURCE_ENV, values.timeline_source._anchor)
+        parsed = RenderRequest(schema_version=1, timeline_path=values["timeline"],
+                               assets_registry_path=values["assets_registry"], output_name="probe.mp4")
+>       assert parsed.verified_source.read() == binding
+               ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'RenderRequest' object has no attribute 'verified_source'
+
+tests/sdk/test_capture_source_runtime.py:232: AttributeError
+_ test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host[True-True] _
+
+runtime = <test_capture_source_runtime.CaptureRuntime object at 0x7f65df1aa030>
+tmp_path = PosixPath('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/tmp-native-final/test_saved_projection_and_unsa3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f65e114a120>
+working_copy = True, inline = True
+
+    @pytest.mark.xfail(strict=True, reason="needs verified source propagation through RenderRequest")
+    @pytest.mark.parametrize("working_copy", [False, True])
+    @pytest.mark.parametrize("inline", [False, True])
+    def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtime, tmp_path, monkeypatch, working_copy, inline):
+        snapshot = runtime.snapshot(working_copy)
+        task = runtime.admit(snapshot, inline=inline)
+        values = runtime.materialize(task, tmp_path / "attempt")
+        binding = values.timeline_source.read()
+        assert binding["snapshot"] == snapshot
+        assert json.loads(Path(values["timeline"]).read_text()) == snapshot["config"]
+        assert binding["authority"] == snapshot["metadata"]["capture_authority"]
+        assert binding["authority"]["expansion"]["shots"][0]["content_digest"]
+        assert binding["authority"]["expansion"]["children"][0]["config_hash"]
+        assert binding["authority"]["expansion"]["shots"][0]["content_digest"] == runtime.get_project_shot_revision(
+            runtime.project_id, "shot-shared", "shot-rev-1")["content_digest"]
+        assert binding["authority"]["expansion"]["children"][0]["config_hash"] == runtime.get_project_timeline_revision(
+            runtime.project_id, "main", "internal-1")["content_digest"]
+        assert binding["ref"]["source_kind"] == ("working_copy" if working_copy else "revision")
+        if working_copy:
+            marker = snapshot["metadata"]["working_copy"]
+            assert snapshot["config"]["opaque_parent_config"] == {"unsaved": True}
+            assert binding["ref"]["revision_digest"] == marker["candidate_digest"]
+            assert binding["ref"]["working_copy"]["base_revision_digest"] == marker["base_parent"]["content_digest"]
+            assert task["spec"]["spec"]["inputs"]["authoring_preview"] == runtime.authoring_preview
+            from runtime_protocol.errors import NotFoundError
+            with pytest.raises(NotFoundError):
+                runtime.get_project_parent_composition_revision(runtime.project_id, "main", marker["candidate_parent_revision_id"])
+        else:
+            assert "authoring_preview" not in task["spec"]["spec"]["inputs"]
+        from astrid.core.rendering.verified_source import SOURCE_ENV
+        monkeypatch.setenv(SOURCE_ENV, values.timeline_source._anchor)
+        parsed = RenderRequest(schema_version=1, timeline_path=values["timeline"],
+                               assets_registry_path=values["assets_registry"], output_name="probe.mp4")
+>       assert parsed.verified_source.read() == binding
+               ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'RenderRequest' object has no attribute 'verified_source'
+
+tests/sdk/test_capture_source_runtime.py:232: AttributeError
+=========================== short test summary info ============================
+FAILED tests/sdk/test_capture_source_runtime.py::test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host[False-False]
+FAILED tests/sdk/test_capture_source_runtime.py::test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host[False-True]
+FAILED tests/sdk/test_capture_source_runtime.py::test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host[True-False]
+FAILED tests/sdk/test_capture_source_runtime.py::test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host[True-True]
+4 failed, 67 passed in 107.77s (0:01:47)
+..                                                                       [100%]
+2 passed in 11.89s
+
+exec
+/bin/bash -lc "rg -n 'xfail|skip' tests/sdk/test_timeline_producer_guard_runtime.py tests/sdk/test_capture_source_runtime.py tests/editing_conformance/test_{s3_reviewed_cohort_runtime,commit_runtime_parent_auto_completion,commit_runtime_text_binding,next_ordinary_union_runtime}.py && git show HEAD:tests/sdk/test_capture_source_runtime.py | sed -n '194,205p' && git show HEAD:astrid/core/rendering/contracts.py | rg -n 'RenderRequest|verified_source'" in /home/user/work/wt/agt-m2-next-ordinary-source-union
+ succeeded in 115ms:
+tests/sdk/test_capture_source_runtime.py:199:@pytest.mark.xfail(strict=True, reason="needs verified source propagation through RenderRequest")
+        assert binding["authority"]["expansion"] == {
+            **expansion, "parent_content_digest": parent["content_digest"]}
+
+
+# Renderer request propagation is still separate from the now-restored host handoff.
+@pytest.mark.xfail(strict=True, reason="needs verified source propagation through RenderRequest")
+@pytest.mark.parametrize("working_copy", [False, True])
+@pytest.mark.parametrize("inline", [False, True])
+def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtime, tmp_path, monkeypatch, working_copy, inline):
+    snapshot = runtime.snapshot(working_copy)
+    task = runtime.admit(snapshot, inline=inline)
+    values = runtime.materialize(task, tmp_path / "attempt")
+735:class RenderRequest:
+814:    def from_dict(cls, payload: Mapping[str, Any]) -> RenderRequest:
+866:    def for_backend(self, backend: str) -> RenderRequest:
+871:        return RenderRequest(
+2270:    "RenderRequest",
+
+codex
+Those four failures are existing strict xfails for `RenderRequest.verified_source`; my `--runxfail` flag exposed them. The final run passed all 67 other tests, including the new joins, S3 chain, parent completion, text, producer, and source-provenance positives. The separate birth/replay lane also passed both tests. I’ll confirm the four existing xfails under their normal markers and record them as held coverage.
+
+exec
+/bin/bash -lc 'ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/runtime-private PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/sdk/test_capture_source_runtime.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/source-provenance-final.log 2>&1' in /home/user/work/wt/agt-m2-next-ordinary-source-union
+exec
+/bin/bash -lc "git -C /home/user/work/runtime rev-parse HEAD && PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import subprocess, pathlib
+p = pathlib.Path('tests/sdk/test_capture_source_runtime.py')
+assert p.read_bytes() == subprocess.check_output(['git', 'show', 'HEAD:'+str(p)])
+p = pathlib.Path('astrid/core/rendering/contracts.py')
+assert p.read_bytes() == subprocess.check_output(['git', 'show', 'HEAD:'+str(p)])
+paths = subprocess.check_output(['git', 'ls-files', '--modified', '--others', '--exclude-standard', '-z']).decode().strip('\\0').split('\\0')
+paths = [p for p in paths if p.endswith('.py') and p "'!= '"'astrid/sdk/remote.py']
+r = subprocess.run(['/home/user/work/venv-agent/bin/ruff', 'check', '--no-cache', *paths], capture_output=True, text=True)
+n = pathlib.Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes')
+(n/'ruff-command.txt').write_text(' '.join(r.args)+'\\n')
+(n/'ruff.log').write_text(r.stdout+r.stderr)
+print(r.stdout+r.stderr)
+raise SystemExit(r.returncode)
+PY" in /home/user/work/wt/agt-m2-next-ordinary-source-union
+ succeeded in 1206ms:
+b748ae723b51c6d578ba7a393209ce37d6e2b0c3
+All checks passed!
+
+
+ succeeded in 26000ms:
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/report.md <<'MD'
+Broad native source/cohort + retained selected-pack/producer/inverse lane: **202 passed / 4 failed in 435.33s**, "'`native.log`. Two failures are the new joint tests collected before either reservation/owner join fix; both now pass in the final lane. The other two are the unchanged, already documented retired `_binding_descriptor` fixture import nodes (`[add]`, `[swap]`) before Agent execution. They remain visible and unchanged for the separately assigned fixture migration worker; no WIP fix was imported.
+
+```sh
+ASTRID_RUNTIME_CHECKOUT="$N/runtime-private" ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-word" ASTRID_PARENT_MEDIA_SEED_RUNTIME="$N/historical-parent" "$P" -m pytest -q -o addopts= -p no:cacheprovider -m integration --runxfail --basetemp="$N/tmp-native" tests/editing_conformance/test_commit_runtime_parent_media.py tests/editing_conformance/test_commit_runtime_parent_media_swap.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_next_command_cohort_runtime.py tests/editing_conformance/test_s3_reviewed_cohort_runtime.py tests/editing_conformance/test_commit_runtime_parent_auto_completion.py tests/editing_conformance/test_commit_runtime_text_binding.py tests/editing_conformance/test_next_ordinary_union_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_producer_guard_runtime.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_timing_retained_inputs.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+```
+
+Final affected native service + source provenance lane: **67 passed / 4 forced-existing-xfail failures in 107.77s**, `native-final.log`. Exact command is the checked-in-notes script below; all tests are main-suite files in this worktree.
+
+```sh
+bash "$N/run-final-affected.sh"
+# The script exports the private Runtime and runs:
+"$P" -m pytest -q -o addopts= -p no:cacheprovider -m integration --runxfail --basetemp="$N/tmp-native-final" '"\\
+  tests/editing_conformance/test_next_ordinary_union_runtime.py \\
+  tests/editing_conformance/test_s3_reviewed_cohort_runtime.py \\
+  tests/editing_conformance/test_commit_runtime_parent_auto_completion.py \\
+  tests/editing_conformance/test_commit_runtime_text_binding.py \\
+  tests/editing_conformance/test_recipe_text_binding_spike.py::test_runtime_port_declares_exact_text_selection \\
+  tests/sdk/test_timeline_producer_guard_runtime.py \\
+  tests/sdk/test_capture_source_runtime.py
+"'```
+
+All new and ported native positives pass, including exact 21 text cases, 14 automatic parent cases, the pristine S3 word/parent chain and both birth-plus-text joins. The exact previously skipped port node also passes. All current selected-pack native cases passed in the broad lane; the final two changes affect authenticated new-root replay and absent text owners only, not those retained schema cases.
+
+The four forced failures are the existing `@pytest.mark.xfail(strict=True, reason="needs verified source propagation through RenderRequest")` parameterizations of `test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host`. The test file and `astrid/core/rendering/contracts.py` are byte-identical to HEAD. They fail at the already held `RenderRequest.verified_source` boundary, not source custody/claim/admission. `--runxfail` deliberately bypassed those existing markers in this diagnostic run. No marker, success assertion, renderer carrier or product source was changed. The separate normal-marker source lane below confirms these exact existing holds.
+
+Final compiler/parent original positives: **55 passed / 81 deselected in 33.28s**, `timing-parent-final.log`. This includes all four unchanged original completion positives with no xfail/skip.
+
+```sh
+"$P" -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/editing_conformance/test_recipe_m2_parent_media.py -k '"'completion_builder or timing'
+"'```
+
+Normally generated original birth/reservation/replay tests on the final Agent source: **2 passed in 11.89s**, `birth-final.log`. Runtime HEAD was checked before and after and was the exact same committed `b748ae723b51c6d578ba7a393209ce37d6e2b0c3`; its fixture archives that commit and generates the complete union normally into private pytest storage.
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime "$P" -m pytest -q -o addopts= -p no:cacheprovider -m integration --basetemp="$N/tmp-birth-final" tests/editing_conformance/test_commit_runtime_occurrence_create.py
+```
+
+Additional checks:
+
+- Changed Python product/test files (excluding inherited `remote.py` lint debt): `ruff check --no-cache` **pass**; exact expanded command in `ruff-command.txt`, output `ruff.log`.
+- `remote.py`: exact base-versus-current JSON diagnostics compare **121 inherited / 0 new**; `remote-lint-baseline.json`, `remote-lint-current.json`. Same Ruff command with current path and base supplied through `--stdin-filename astrid/sdk/remote.py -`.
+- `git diff --check`: **pass**, including the three explicitly repaired EOF blanks in the actual working patch.
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check`: **pass**, `agent-artifacts.log`; public artifacts unchanged.
+- `PYTHONDONTWRITEBYTECODE=1 python3 "$N/identify.py"`: **pass**, `identities.log`. Exact S2 clauses, 55/29 inventory, byte-identical schema/embedded object, protected current paths, original positive bodies and full content-tree/patch identity.
+
+Initial diagnostics are retained: first new joint run had two missing-`name` test-construction TypeErrors; correcting the new fixture call exposed the two reservation-proof failures; after that repair, two redo absent-owner failures; final joint tests pass unchanged in outcome. `union-runtime-first.log`, `union-runtime-second.log`, `union-runtime-third.log`, `union-runtime-final.log`. No old positive was changed or marked.
+
+## Limits and next steps
+
+No implementation blocker remains for source preparation. Two original media-manifest fixture import failures remain unqualified, owned by the separate migration worker. Four existing renderer-request propagation strict xfails remain outside this source union; forcing them proves the same held boundary, not a new source-admission regression. Destructive media GC remains unverified (append-only CAS and deep reachability/retained bytes are the actual proof; no collector cycle exists).
+
+No public release/client adoption, version bump, lock/artifact mutation, App journey/outbox/cutover, HTTP/browser/live-socket transport, registered producer/action/automatic requester adoption, renderer/pixels/audio/owner-film/macOS or full-suite qualification is claimed. No independent review of this new source join is claimed. Keep the parent'"'s active follow-up review and all source/public/adoption holds.
+
+Next: harness assigns the actual Agent commit; manager arranges independent review of this exact complete source tree and the two join repairs. Resolve the separate fixture migration on committed source. Only after follow-up reviews/gates may the manager freeze/publish an ordinary fresh-version complete Runtime artifact successor and coordinate consumer pins and actual App journeys. Do not republish 0.2.13 or identify this parent/base commit as the finished source commit.
+MD" in /home/user/work/wt/agt-m2-next-ordinary-source-union
+ succeeded in 79ms:
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/source-provenance-final.log && git diff --check && git status --short | head -9' in /home/user/work/wt/agt-m2-next-ordinary-source-union
+ succeeded in 1068ms:
+....xxxx...................                                              [100%]
+23 passed, 4 xfailed in 24.80s
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline/__init__.py
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_delete_commands.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_root_inverse.py
+
+codex
+Verification is complete. The source-provenance file passes normally with 23 passed and the four existing strict xfails. The union has 55 definitions and 29 operations, with exact S2 preservation and no public artifact or pin changes. I’m finishing the handoff reports and removing the private test trees. Independent review and any freeze remain with the manager.
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/report.md <<'MD'
+
+Normal source-provenance lane after forced-xfail classification: **23 passed / 4 original strict xfailed in 24.80s**, "'`source-provenance-final.log`:
+
+```sh
+ASTRID_RUNTIME_CHECKOUT="$N/runtime-private" "$P" -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/sdk/test_capture_source_runtime.py
+```
+
+## Final source identities
+
+| Identity | Exact value |
+| --- | --- |
+| Agent candidate source content tree (not commit) | `260f2615b869b5e0d8ab236d6c1fbc952c0f6186` |
+| Agent base commit | `4ef1391c2c104d5d11b3a27265035c51be296045` |
+| Canonical schema raw SHA256 | `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d` |
+| Schema canonical JSON SHA256 (sorted keys, compact separators, UTF-8) | `63ac77b3c3e2c582f76ab4b2499be5011ea4836e8c92264b1938632b3bfacba7` |
+| Complete Agent source/test patch SHA256 | `845c7791da76dc94ef7cde6e516570e9bcb4ae7302d609f84ff29f78053cfa34` |
+| Private normally generated Runtime content tree (not commit) | `542c772f5d083df073b5c2ba018f090c9553647b` |
+| Committed Runtime source base | `b748ae723b51c6d578ba7a393209ce37d6e2b0c3` |
+| Runtime base source tree | `1711b198be7f693f11ee4640eb0922ec0d0da952` |
+
+The Runtime input and Agent canonical schema have identical raw bytes. Generated metadata refers to the complete private bundle and all 75 artifact entries; its schema/artifact digests differ by design from the raw command-schema digest. All exact path hashes/deltas are in `source-facts.json` and `private-runtime-delta.json`. The public lock still names producer `2c4ac180…`; it was not changed. The candidate content tree must not be used as a commit/pinnable producer identity.
+
+Private Runtime/historical archives, conformance output and test basetemp directories were removed after verification. `prepare-runtime.py` recreates the whole normal private pair from the exact immutable sources and this Agent schema; logs, provenance, exact patch and source facts remain. No build output, bytecode or reject/backup files remain in the Agent worktree. No full/full* request was made.
+MD
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-next-ordinary-source-union.md <<'"'MD'
+# Complete next ordinary Agent source union — private preparation
+
+Prepared on CURRENT integration "'`4ef1391c2c104d5d11b3a27265035c51be296045`, preserving current verified-source host extraction, CLI/sheet/test fixes, duplicate factory fields/source and safe S2. Ports only independently approved S3 `537c2ecd`, separate committed parent completion follow-up `0937d6fd` (review still gated), and independently approved text `09ca873c`. No integration edit, public freeze/adoption, 0.2.13 artifact/version mutation, pin change or Git mutation. The harness/manager assigns the actual resulting commit after exit; no base/parent is presented as the final SHA.
+
+| Source identity | Exact value |
+| --- | --- |
+| Agent candidate source TREE (content identity, not commit) | `260f2615b869b5e0d8ab236d6c1fbc952c0f6186` |
+| Authored schema raw SHA256 | `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d` |
+| Schema canonical JSON SHA256 | `63ac77b3c3e2c582f76ab4b2499be5011ea4836e8c92264b1938632b3bfacba7` |
+| Complete source/test patch SHA256 | `845c7791da76dc94ef7cde6e516570e9bcb4ae7302d609f84ff29f78053cfa34` |
+| Committed Runtime generation base | `b748ae723b51c6d578ba7a393209ce37d6e2b0c3` |
+| Private normally generated Runtime TREE (not commit) | `542c772f5d083df073b5c2ba018f090c9553647b` |
+| Normal private schema digest | `sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59` |
+| Normal private artifact identity (75 entries) | `sha256:7e8fe2e485f036741369eed62ccc7a389e27719a166fd70b0009a161c9c7240d` |
+
+Canonical `astrid/core/timeline/schema/edit-command.schema.json`: **55 definitions / 29 operations**, complete S2 **48/22** preserved. Every original S2 opcode clause/argument reference is unchanged. Seven additions: `timeline.init`, `timeline.assembled-target`, `occurrence.create`, `clip.add-media`, `clip.swap-media`, `clip.anchor`, `text-binding.set`. Argument definitions and registry metadata match exactly; approved parent ownership/description and the complete legacy/S2/native text reference unions are the only existing-definition updates. Stripping exactly the reviewed delta restores frozen S2. All prior source/published floors and mutation controls pass.
+
+One State/collection/recording/inverse implementation retains stable word ID+pin, authenticated same-closure restored transcript+media, cache-versus-authored guard staging, raw parent plus config dependents, exact text EMPTY/ABSENT/order/retained legacy MIME, and parent'"'s saved policy/all consumed reads. Media inverse retains BOTH authenticated new-root creation replay and restoration_orders/arrange. Only the three named S3 EOF blanks were removed; old captures/goldens/source metadata are unchanged.
+
+A new main-suite native test found and now covers two genuine join repairs: the reservation scanner must replay a recorded root birth through the existing recorder to retain its creation proof for same-commit text; redo must record empty text-owner membership while the occurrence is absent, like the existing placement-owner query. EMPTY and nonempty birth+two-text-row → clear/restore order → whole-group undo/redo/reopen/exact retry now pass. Original four parent-auto positives pass with AST-identical bodies and no markers. No new xfail/skip, broad cache exemption, numeric normalization, ID seed, inferred task ownership, SourceFactory, duplicate query validator or excluded producer/action/outbox/carrier/PARAM source unit.
+
+Private whole-candidate Runtime uses only its ordinary authored schema input plus normal complete Python/TypeScript/conformance/artifact generation/check. Exactly 13 tracked Runtime paths differ: input plus 12 normal outputs; no product/test source differences. Embedded object and raw schema bytes equal the complete Agent schema. Private input still says 0.2.13 and is **not publishable at that existing version**. Public Agent lock/client/artifacts remain byte-identical.
+
+Targeted evidence (overlapping counts):
+
+- Schema/S2/published floors/pristine/native text: **81 passed**.
+- Portable parent/S3/cache/inverse/source: **590 passed**.
+- Current CLI/sheet/history/duplicate/trim/unplace/selected-pack/host/source neighbors: **1518 passed / 1 existing Runtime-locator skip**, with that exact port-presence node passing in the final native lane.
+- Private current Runtime text/clear/legacy/schema/artifacts: **202 passed**.
+- Broad native cohort: **202 passed / 4 failed** before the join fixes; two were the repaired new join cases, two are unchanged retired "'`_binding_descriptor` fixture-import nodes, held for the separate migration worker.
+- Final native affected S3 chain/parent-auto/text/join/producer/source lane: **67 passed / 4 forced existing strict-xfail failures** (`--runxfail` exposed the already held RenderRequest propagation boundary). Normal source-provenance rerun: **23 passed / 4 original strict xfailed**. Test file/contracts source are byte-identical to base.
+- Final original compiler/parent-auto positives: **55 passed**; normal generated birth/reservation controls: **2 passed**; new birth+text joint controls: **2 passed**.
+- Changed-file Ruff, whitespace, Agent public artifact check, normal private generation and all generated/conformance/artifact checks: **pass**. `remote.py`: 121 inherited lint diagnostics, zero additions.
+
+No full/full* request/run, browser/socket/HTTP/App/public-client tuple, registered automatic producer admission, renderer/pixels/audio/owner-film/macOS or destructive-GC claim. Destructive GC remains unverified; actual proof is append-only retained bytes/deep reachability. Keep the two original media fixture failures and four old renderer-request strict holds visible. Parent follow-up and the new source-join independent review/gates remain pending. Manager alone publishes the actual harness SHA and FREEZE, then may authorize one fresh ordinary whole-schema artifact successor and consumer qualification.
+
+[Detailed report: exact commands, results, decisions, source identities and gaps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/report.md). [All changed path hashes and protected current paths](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/source-facts.json). [Private normal Runtime delta](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/private-runtime-delta.json).
+MD' in /home/user/work/wt/agt-m2-next-ordinary-source-union
+ succeeded in 89ms:
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import hashlib, json, shutil
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union')
+notes = root / 'notes'
+facts = json.loads((notes / 'source-facts.json').read_text())
+agent = Path('/home/user/work/wt/agt-m2-next-ordinary-source-union')
+for name, value in facts['changed_paths'].items():
+    if not value.get('deleted'):
+        assert hashlib.sha256((agent / name).read_bytes()).hexdigest() == value['sha256'], name
+for name in ['runtime-private', 'historical-word', 'historical-parent', 'conformance-generated',
+             'tmp-portable', 'tmp-neighbors', 'tmp-native', 'tmp-native-final', 'tmp-birth-final']:
+    path = notes / name
+    if path.exists():
+        shutil.rmtree(path)
+(root / 'commit-msg').write_text('feat(timeline): prepare complete next ordinary command union\\n\\nCompose reviewed S3, parent automatic completion and native text source on\\ncurrent integration while preserving complete S2 and public runtime pins.\\n\\nRetain authenticated birth and collection-order proofs across text joins,\\nwith native grouped undo, redo and retry regression coverage.\\n')
+print('Final source hashes match; private generated/test trees removed.')
+PY
+git diff --check" in /home/user/work/wt/agt-m2-next-ordinary-source-union
+ succeeded in 6678ms:
+Final source hashes match; private generated/test trees removed.
+
+exec
+/bin/bash -lc "rg --files --hidden --no-ignore -g '*.pyc' -g '*.orig' -g '*.rej' -g '"'!'"\\.git/**' -g '"'!node_modules/**'"' && git status --short" in /home/user/work/wt/agt-m2-next-ordinary-source-union
+ succeeded in 460ms:
+astrid/core/__pycache__/__init__.cpython-313.pyc
+astrid/__pycache__/version.cpython-313.pyc
+astrid/core/rendering/__pycache__/__init__.cpython-313.pyc
+astrid/core/foundation/__pycache__/hash.cpython-313.pyc
+astrid/__pycache__/__init__.cpython-313.pyc
+astrid/core/rendering/__pycache__/verified_source.cpython-313.pyc
+astrid/core/rendering/__pycache__/contracts.cpython-313.pyc
+astrid/core/foundation/__pycache__/__init__.cpython-313.pyc
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline/__init__.py
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_delete_commands.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_root_inverse.py
+ M astrid/sdk/timeline/_timing_evaluators.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/native_auto_placement.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M tests/editing_conformance/test_commit_runtime_occurrence_media.py
+ M tests/editing_conformance/test_recipe_clip_delete.py
+ M tests/editing_conformance/test_recipe_text_binding_spike.py
+ M tests/editing_conformance/test_recorded_graph_roots.py
+ M tests/editing_conformance/test_timing_retained_inputs.py
+ M tests/sdk/test_timeline_current_union_schema.py
+ M tests/test_timeline_clip_replacement.py
+?? astrid/sdk/timeline/native_initialize.py
+?? astrid/sdk/timeline/native_occurrence_create.py
+?? astrid/sdk/timeline/native_parent_media_commands.py
+?? astrid/sdk/timeline/native_text_binding.py
+?? astrid/sdk/timeline/native_word_anchor.py
+?? astrid/sdk/timeline_media_replacement.py
+?? tests/editing_conformance/fixtures/native_word_anchor.json
+?? tests/editing_conformance/fixtures/pristine_initialize.json
+?? tests/editing_conformance/fixtures/recipe_m2_parent_media.json
+?? tests/editing_conformance/fixtures/recipe_m2_text_binding.json
+?? tests/editing_conformance/fixtures/recipe_parent_media.json
+?? tests/editing_conformance/fixtures/reviewed_native_s3.json
+?? tests/editing_conformance/native_word_anchor_fixture.py
+?? tests/editing_conformance/test_commit_runtime_occurrence_create.py
+?? tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+?? tests/editing_conformance/test_commit_runtime_parent_media.py
+?? tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+?? tests/editing_conformance/test_commit_runtime_text_binding.py
+?? tests/editing_conformance/test_grouped_clip_cache_inverse.py
+?? tests/editing_conformance/test_native_word_anchor.py
+?? tests/editing_conformance/test_native_word_anchor_vectors.py
+?? tests/editing_conformance/test_next_command_cohort_runtime.py
+?? tests/editing_conformance/test_next_ordinary_union_runtime.py
+?? tests/editing_conformance/test_pristine_initialize.py
+?? tests/editing_conformance/test_producer_insertion.py
+?? tests/editing_conformance/test_recipe_m2_parent_media.py
+?? tests/editing_conformance/test_recipe_occurrence_create.py
+?? tests/editing_conformance/test_recipe_parent_auto_completion.py
+?? tests/editing_conformance/test_recipe_parent_media.py
+?? tests/editing_conformance/test_recipe_text_binding_native.py
+?? tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+?? tests/fixtures/current-union-command-schemas/agent-frozen-s2-26ef2bbb.json
+?? tests/fixtures/current-union-command-schemas/agent-word-caea687e.json
+?? tests/fixtures/current-union-command-schemas/next-command-additions.json
+?? tests/fixtures/current-union-command-schemas/text-command-additions.json
+?? tests/sdk/test_timeline_pristine_initialize_provider.py
+?? tests/sdk/test_timeline_pristine_initialize_runtime.py
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+root = Path('/home/user/work/wt/agt-m2-next-ordinary-source-union')
+for path in root.rglob('*.pyc'):
+    path.unlink()
+for path in root.rglob('__pycache__'):
+    if path.is_dir() and not any(path.iterdir()):
+        path.rmdir()
+notes = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union')
+assert (notes / 'commit-msg').is_file()
+assert (notes / 'notes/report.md').is_file()
+assert not (notes / 'BLOCKED').exists()
+(notes / 'DONE').touch()
+print('DONE and commit-msg written; no bytecode remains in worktree.')
+PY" in /home/user/work/wt/agt-m2-next-ordinary-source-union
+ succeeded in 210ms:
+DONE and commit-msg written; no bytecode remains in worktree.
+
+codex
+Prepared the complete **55-definition / 29-operation** source union on `4ef1391c`, preserving S2 and public pins. Fixed two birth/text inverse joins.
+
+Targeted evidence: 590 portable, 1,518 neighboring Agent, 202 Runtime, and 67 final native positives passed. Two known fixture-import failures and four existing renderer strict xfails remain documented. No full suite or public release occurred.
+
+[Handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-next-ordinary-source-union.md) · [Exact commands, results, identities and gaps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/report.md)
+
+`commit-msg` and `DONE` written. Independent review and manager-controlled freeze are next.
+tokens used
+201,323
+Prepared the complete **55-definition / 29-operation** source union on `4ef1391c`, preserving S2 and public pins. Fixed two birth/text inverse joins.
+
+Targeted evidence: 590 portable, 1,518 neighboring Agent, 202 Runtime, and 67 final native positives passed. Two known fixture-import failures and four existing renderer strict xfails remain documented. No full suite or public release occurred.
+
+[Handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-next-ordinary-source-union.md) · [Exact commands, results, identities and gaps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-source-union/notes/report.md)
+
+`commit-msg` and `DONE` written. Independent review and manager-controlled freeze are next.

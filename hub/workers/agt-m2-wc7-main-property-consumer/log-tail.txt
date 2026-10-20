@@ -1,0 +1,400 @@
+         return receipt
+ 
+-    def _reset_base(self, *, client: Any = None) -> None:
++    def _publish_native_move(self, message: str, key: str, *, client: Any) -> dict[str, Any] | None:
++        """Commit one already-supported detached move through the durable outbox."""
++        from astrid.sdk.timeline.sync import TimelineSession
++
++        command = _native_move_command(self)
++        if command is None:
++            return None
++        try:
++            session = TimelineSession.open(self.bundle["project_id"], self.bundle["timeline_id"], client=client)
++        except (KeyError, TypeError, ValueError, TimelineEditError):
++            return None
++        with session.outbox.locked():
++            state = session._state()
++            if state["base"]["revision_id"] != self.base_revision:
++                return None
++            if message and state.get("rationale") is None:
++                state["rationale"] = message
++                session.outbox.write(state)
++        result = session.commit(command, idempotency_key=key, via="python")
++
++        data, accepted = result["data"], result["receipt"]
++        before = _journal.document_digest(self.document())
++        self._retire_draft_history()
++        self._reset_base(client=client, revision_id=data["accepted_revision_id"])
++        if self.path:
++            _journal.record_or_note(self, Path(self.path), kind="publish", outcome="changed", label="publish",
++                                    reason=message or None, before=before,
++                                    after=_journal.document_digest(self.document()),
++                                    evidence=({"kind": "revision", "id": data["accepted_revision_id"]},))
++        return {"old_head": data["previous_revision_id"], "new_head": data["accepted_revision_id"],
++                "structure": "changed", "receipt": accepted, "idempotency_key": result["idempotency_key"],
++                "narration_pinned": [], "transcripts": [], "message": message}
++
++    def _reset_base(self, *, client: Any = None, revision_id: str | None = None) -> None:
+         """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""
+         self._retire_draft_history()
+         try:
+-            head = _store.fetch_bundle(str(self.bundle["project_id"]), str(self.bundle["timeline_id"]), client=client)
++            head = _store.fetch_bundle(str(self.bundle["project_id"]), str(self.bundle["timeline_id"]),
++                                       revision_id=revision_id, client=client)
+         except Exception as exc:  # noqa: BLE001 - the publish stands; the working copy keeps its old base
+             self.notes.append(f"published, but this working copy could not re-read the new head ({exc}); "
+                               "its base is still the old one: timelines checkout TL --fresh")
+diff --git a/tests/sdk/test_timeline_checkout_publication_retry.py b/tests/sdk/test_timeline_checkout_publication_retry.py
+index 33879807bd9e0e5830f9049a5ad0c20bc89b09a2..271f380c17b2812dd5c7473ca08fc4fa827d246e
+--- a/tests/sdk/test_timeline_checkout_publication_retry.py
++++ b/tests/sdk/test_timeline_checkout_publication_retry.py
+@@ -1,10 +1,13 @@
+ """Publication undo and redo reuse their exact persisted request after lost ACK."""
++import copy
+ import json
+ 
+ import pytest
++from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+ from astrid.sdk.timeline_checkout import Checkout
+ from astrid.sdk.timeline.sync import TimelineSession
+ from astrid.sdk.workspace_client import WorkspaceClientError
++from tests.editing_conformance.test_recipe_clip_scalar_fields import app_closure
+ from tests.sdk.test_timeline_checkout_history import native  # noqa: F401
+ from tests.sdk.test_timeline_sync import connected  # noqa: F401
+ 
+@@ -36,3 +39,46 @@
+     assert checkout.path.read_bytes() == saved
+     state = json.loads(generated.path.read_text())
+     assert state["flight"] is None and state["pending"] == []
++
++
++def test_detached_numeric_move_publish_uses_native_commit_and_retry(native, tmp_path):
++    """The existing Checkout edit/publish consumer uses clip.move, not whole publication."""
++    client, generated = native
++    parent, shots, internals = app_closure()
++    parent["project_id"], parent["timeline_id"] = "p", "t"
++    for shot in shots:
++        shot["project_id"] = "p"
++    for internal in internals:
++        internal["project_id"], internal["timeline_id"] = "p", "t"
++    bundle = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
++    bundle["base_parent"]["revision_id"] = "r0"
++    generated.bundles["r0"] = copy.deepcopy(bundle)
++
++    checkout = Checkout.open("p", "t", revision_id="r0", client=client)
++    checkout.clips[2].on(7)
++    accepted = checkout.publish("move the clear clip", client=client, idempotency_key="checkout-move")
++    assert accepted["new_head"] == "r1"
++    assert json.loads(generated.calls[0][0])["commands"][0]["op"] == "clip.move"
++
++    reloaded = Checkout.open("p", "t", revision_id="r1", client=client)
++    assert reloaded.clips[2].start == pytest.approx(7)
++    undone = reloaded.undo(publications=[accepted["receipt"]["receipt_id"]], client=client,
++                           idempotency_key="checkout-undo")
++    assert generated.bundles[undone["data"]["accepted_revision_id"]] == generated.bundles["r0"]
++
++    draft = Checkout.open("p", "t", revision_id=generated.head["revision_id"], client=client)
++    # The generated transport fake keeps the command-engine bundle while the
++    # real Runtime read returns a fresh base-parent revision.
++    draft.bundle["base_parent"]["revision_id"] = generated.head["revision_id"]
++    draft.clips[2].on(8)
++    path = tmp_path / "move.json"
++    draft.save(path, quiet=True)
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        draft.publish("move after undo", client=client, idempotency_key="checkout-lost")
++    flight = json.loads(generated.path.read_text())["flight"]
++    retried = Checkout.load(path).publish("move after undo", client=client, idempotency_key="checkout-lost")
++    assert retried["receipt"] == generated.accepted["checkout-lost"][1]["receipt"]
++    assert generated.calls[-1] == generated.calls[-2] == (flight["body"].encode(), "checkout-lost")
++    assert [json.loads(body)["commands"][0]["op"] for body, _key in generated.calls] == [
++        "clip.move", "timeline.inverse", "clip.move", "clip.move"]
+
+exec
+/bin/bash -lc 'git diff --check && git status --short && find . -type d -name __pycache__ -prune -print | head -20' in /home/user/work/wt/agt-m2-wc7-main-property-consumer
+ succeeded in 291ms:
+ M astrid/sdk/timeline/publish.py
+ M tests/sdk/test_timeline_checkout_publication_retry.py
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_native_checkout.py tests/sdk/test_timeline_checkout_publication_retry.py tests/sdk/test_timeline_transaction.py tests/sdk/test_scene_save_core.py' in /home/user/work/wt/agt-m2-wc7-main-property-consumer
+ succeeded in 11938ms:
+.........................................................                [100%]
+57 passed in 10.53s
+
+codex
+Adjacent history/boundary tests also pass. The final diff remains limited to `astrid/sdk/timeline/publish.py` and one direct SDK test; unsupported/property edits still do not get guessed as timing commands, while the migrated numeric move carries the publish message as native `rationale`.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-main-property-consumer/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-main-property-consumer/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-main-property-consumer/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-main-property-consumer/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-main-property-consumer/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-main-property-consumer/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..4825630dd74bb7d81ed753b46caa23fd35751a37
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-main-property-consumer/commit-msg
+@@ -0,0 +1,5 @@
++feat(sdk): migrate checkout move publish to timeline commit
++
++Route supported detached numeric clip moves through TimelineSession and the
++durable outbox while retaining the existing whole-document path for edits whose
++property semantics are not yet a native timing contract.
+diff --git a/astrid/sdk/timeline/publish.py b/astrid/sdk/timeline/publish.py
+index 62e7aa31d63e00902eaa58f4ac7575e81eef0cc0..8b3c36bfb612ba6a6ddaf23ea3441efdb4c80a02
+--- a/astrid/sdk/timeline/publish.py
++++ b/astrid/sdk/timeline/publish.py
+@@ -21,6 +21,89 @@
+ from astrid.sdk import timeline_transcripts as _transcripts  # module access: its functions resolve at call time
+ 
+ 
++def _native_move_command(checkout: Any) -> dict[str, Any] | None:
++    """Recognise only the detached checkout edit that already has native meaning.
++
++    Main's ``Clip.set`` also accepts element parameters and clip-look fields, so
++    publishing from a generic property diff cannot safely be guessed as a native
++    timing operation.  A single unannotated numeric position change is the
++    existing ``clip.move`` contract; everything else stays on the detached
++    publication path.
++    """
++    from astrid.sdk.timeline._command_state import State
++    from astrid.sdk.timeline.capture import capture_move, occurrence_start
++    from astrid.sdk.timeline.commands import execute
++    from astrid.sdk.timeline_cuts import base_bundle
++
++    candidate = checkout.document()
++    pinned = base_bundle(candidate)
++    # Keep the fetched closure's authoring/source mapping intact.  The diff
++    # view is intentionally flatter than the command state's occurrence
++    # ownership model, so using it as the whole command base loses that proof.
++    base = copy.deepcopy(candidate)
++    base["parent"] = copy.deepcopy(pinned["parent"])
++    base["placements"] = copy.deepcopy(pinned["placements"])
++    for shot in base.get("shots", {}).values():
++        if isinstance(shot, Mapping) and isinstance(shot.get("base_payload"), Mapping):
++            shot["payload"] = copy.deepcopy(shot["base_payload"])
++        if isinstance(shot, Mapping) and isinstance(shot.get("base_internal_timeline"), Mapping):
++            shot["internal_timeline"] = copy.deepcopy(shot["base_internal_timeline"])
++    # Core validation materializes an empty intent namespace while resolving a
++    # checkout.  It is not an authored edit, so give the command base the same
++    # empty derived unit without accepting any non-empty property change.
++    candidate_units = _store._units(candidate)
++    if candidate_units.get(("parent-config", "slots")) == {}:
++        config = base.setdefault("parent", {}).setdefault("config", {})
++        app = config.setdefault("app", {})
++        app.setdefault("astrid", {})["slots"] = {}
++    before, after = _store._units(base), _store._units(candidate)
++    changed = [key for key in set(before) | set(after) if before.get(key) != after.get(key)]
++    if len(changed) != 1 or changed[0][0] != "clip":
++        return None
++    key = changed[0]
++    old, new = before[key], after[key]
++    if not isinstance(old, Mapping) or not isinstance(new, Mapping):
++        return None
++    if set(old) - {"at"} != set(new) - {"at"}:
++        return None
++    if any(not isinstance(value, (int, float)) or isinstance(value, bool)
++           for value in (old.get("at"), new.get("at"))):
++        return None
++    # An annotated/anchored clip has additional Main meaning that clip.move
++    # deliberately does not infer.  Keep it as a visible detached draft.
++    if old.get("app"):
++        return None
++    shot_id, clip_id = key[1:]
++    placement = next((row for row in candidate.get("placements") or []
++                      if str(row.get("shot_id")) == shot_id), None)
++    if not isinstance(placement, Mapping) or not placement.get("occurrence_id"):
++        return None
++    ref = f"occurrence:{placement['occurrence_id']}/clip:{clip_id}"
++    try:
++        on = float(new["at"]) + occurrence_start(placement)
++        command = capture_move(base, ref, on)
++        planned = execute(base, [command]).bundle
++    except (KeyError, TypeError, ValueError, TimelineEditError):
++        return None
++    planned_units = _store._units(planned)
++    if any(planned_units.get(unit) != value for unit, value in after.items() if unit != key):
++        return None
++    # clip.move records the equivalent fixed timing rationale in app.astrid;
++    # compare authored content excluding that native timing annotation.
++    planned_clip = planned_units.get(key)
++    if not isinstance(planned_clip, Mapping):
++        return None
++    without_app = lambda row: {k: v for k, v in row.items() if k != "app"}
++    if without_app(planned_clip) != without_app(new):
++        return None
++    try:
++        if State(base).entity(ref).get("app"):
++            return None
++    except (KeyError, TypeError, ValueError, TimelineEditError):
++        return None
++    return command
++
++
+ class _PublishMixin:
+     """Checkout: publish, narration binding, and the document as it is saved (annotated) and read back (absorb)."""
+ 
+@@ -38,6 +121,10 @@
+         if not report.valid:
+             raise TimelineEditError("not publishing: " + "; ".join(report.problems or ["the candidate is invalid"]))
+         key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
++        if client is not None and not force and not restructure:
++            native = self._publish_native_move(message, key, client=client)
++            if native is not None:
++                return native
+         stored = self.stored_document(restructure=restructure)  # chapters as shots only for a film that opted in
+         chapter_film = len(stored.get("placements") or []) > 1
+         if restructure or self.edits().get("changes") or not (chapter_film or self.narration_changes()):
+@@ -86,11 +173,45 @@
+         receipt["message"] = message
+         return receipt
+ 
+-    def _reset_base(self, *, client: Any = None) -> None:
++    def _publish_native_move(self, message: str, key: str, *, client: Any) -> dict[str, Any] | None:
++        """Commit one already-supported detached move through the durable outbox."""
++        from astrid.sdk.timeline.sync import TimelineSession
++
++        command = _native_move_command(self)
++        if command is None:
++            return None
++        try:
++            session = TimelineSession.open(self.bundle["project_id"], self.bundle["timeline_id"], client=client)
++        except (KeyError, TypeError, ValueError, TimelineEditError):
++            return None
++        with session.outbox.locked():
++            state = session._state()
++            if state["base"]["revision_id"] != self.base_revision:
++                return None
++            if message and state.get("rationale") is None:
++                state["rationale"] = message
++                session.outbox.write(state)
++        result = session.commit(command, idempotency_key=key, via="python")
++
++        data, accepted = result["data"], result["receipt"]
++        before = _journal.document_digest(self.document())
++        self._retire_draft_history()
++        self._reset_base(client=client, revision_id=data["accepted_revision_id"])
++        if self.path:
++            _journal.record_or_note(self, Path(self.path), kind="publish", outcome="changed", label="publish",
++                                    reason=message or None, before=before,
++                                    after=_journal.document_digest(self.document()),
++                                    evidence=({"kind": "revision", "id": data["accepted_revision_id"]},))
++        return {"old_head": data["previous_revision_id"], "new_head": data["accepted_revision_id"],
++                "structure": "changed", "receipt": accepted, "idempotency_key": result["idempotency_key"],
++                "narration_pinned": [], "transcripts": [], "message": message}
++
++    def _reset_base(self, *, client: Any = None, revision_id: str | None = None) -> None:
+         """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""
+         self._retire_draft_history()
+         try:
+-            head = _store.fetch_bundle(str(self.bundle["project_id"]), str(self.bundle["timeline_id"]), client=client)
++            head = _store.fetch_bundle(str(self.bundle["project_id"]), str(self.bundle["timeline_id"]),
++                                       revision_id=revision_id, client=client)
+         except Exception as exc:  # noqa: BLE001 - the publish stands; the working copy keeps its old base
+             self.notes.append(f"published, but this working copy could not re-read the new head ({exc}); "
+                               "its base is still the old one: timelines checkout TL --fresh")
+diff --git a/tests/sdk/test_timeline_checkout_publication_retry.py b/tests/sdk/test_timeline_checkout_publication_retry.py
+index 33879807bd9e0e5830f9049a5ad0c20bc89b09a2..271f380c17b2812dd5c7473ca08fc4fa827d246e
+--- a/tests/sdk/test_timeline_checkout_publication_retry.py
++++ b/tests/sdk/test_timeline_checkout_publication_retry.py
+@@ -1,10 +1,13 @@
+ """Publication undo and redo reuse their exact persisted request after lost ACK."""
++import copy
+ import json
+ 
+ import pytest
++from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+ from astrid.sdk.timeline_checkout import Checkout
+ from astrid.sdk.timeline.sync import TimelineSession
+ from astrid.sdk.workspace_client import WorkspaceClientError
++from tests.editing_conformance.test_recipe_clip_scalar_fields import app_closure
+ from tests.sdk.test_timeline_checkout_history import native  # noqa: F401
+ from tests.sdk.test_timeline_sync import connected  # noqa: F401
+ 
+@@ -36,3 +39,46 @@
+     assert checkout.path.read_bytes() == saved
+     state = json.loads(generated.path.read_text())
+     assert state["flight"] is None and state["pending"] == []
++
++
++def test_detached_numeric_move_publish_uses_native_commit_and_retry(native, tmp_path):
++    """The existing Checkout edit/publish consumer uses clip.move, not whole publication."""
++    client, generated = native
++    parent, shots, internals = app_closure()
++    parent["project_id"], parent["timeline_id"] = "p", "t"
++    for shot in shots:
++        shot["project_id"] = "p"
++    for internal in internals:
++        internal["project_id"], internal["timeline_id"] = "p", "t"
++    bundle = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
++    bundle["base_parent"]["revision_id"] = "r0"
++    generated.bundles["r0"] = copy.deepcopy(bundle)
++
++    checkout = Checkout.open("p", "t", revision_id="r0", client=client)
++    checkout.clips[2].on(7)
++    accepted = checkout.publish("move the clear clip", client=client, idempotency_key="checkout-move")
++    assert accepted["new_head"] == "r1"
++    assert json.loads(generated.calls[0][0])["commands"][0]["op"] == "clip.move"
++
++    reloaded = Checkout.open("p", "t", revision_id="r1", client=client)
++    assert reloaded.clips[2].start == pytest.approx(7)
++    undone = reloaded.undo(publications=[accepted["receipt"]["receipt_id"]], client=client,
++                           idempotency_key="checkout-undo")
++    assert generated.bundles[undone["data"]["accepted_revision_id"]] == generated.bundles["r0"]
++
++    draft = Checkout.open("p", "t", revision_id=generated.head["revision_id"], client=client)
++    # The generated transport fake keeps the command-engine bundle while the
++    # real Runtime read returns a fresh base-parent revision.
++    draft.bundle["base_parent"]["revision_id"] = generated.head["revision_id"]
++    draft.clips[2].on(8)
++    path = tmp_path / "move.json"
++    draft.save(path, quiet=True)
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        draft.publish("move after undo", client=client, idempotency_key="checkout-lost")
++    flight = json.loads(generated.path.read_text())["flight"]
++    retried = Checkout.load(path).publish("move after undo", client=client, idempotency_key="checkout-lost")
++    assert retried["receipt"] == generated.accepted["checkout-lost"][1]["receipt"]
++    assert generated.calls[-1] == generated.calls[-2] == (flight["body"].encode(), "checkout-lost")
++    assert [json.loads(body)["commands"][0]["op"] for body, _key in generated.calls] == [
++        "clip.move", "timeline.inverse", "clip.move", "clip.move"]
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-main-property-consumer/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-main-property-consumer/DONE && git diff --check && git status --short' in /home/user/work/wt/agt-m2-wc7-main-property-consumer
+ succeeded in 279ms:
+ M astrid/sdk/timeline/publish.py
+ M tests/sdk/test_timeline_checkout_publication_retry.py
+
+codex
+Implemented WC7 consumer migration in `/home/user/work/wt/agt-m2-wc7-main-property-consumer` from `a760ecca`.
+
+- Numeric detached clip moves now use existing `clip.move` via `TimelineSession`/outbox.
+- Preserved rationale, reload, undo, and lost-ACK retry behavior.
+- Property/annotated edits remain on the existing path; no ambiguous `hold` interception.
+- Added bounded consumer regression test proving no legacy publication traffic.
+
+Tests:
+
+- `57 passed` targeted SDK suite.
+- `13 passed, 1 skipped` checkout history/boundary suite.
+- `git diff --check` passed.
+
+Commit message written and `DONE` created.
+tokens used
+364,644
+Implemented WC7 consumer migration in `/home/user/work/wt/agt-m2-wc7-main-property-consumer` from `a760ecca`.
+
+- Numeric detached clip moves now use existing `clip.move` via `TimelineSession`/outbox.
+- Preserved rationale, reload, undo, and lost-ACK retry behavior.
+- Property/annotated edits remain on the existing path; no ambiguous `hold` interception.
+- Added bounded consumer regression test proving no legacy publication traffic.
+
+Tests:
+
+- `57 passed` targeted SDK suite.
+- `13 passed, 1 skipped` checkout history/boundary suite.
+- `git diff --check` passed.
+
+Commit message written and `DONE` created.

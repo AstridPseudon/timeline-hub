@@ -1,0 +1,400 @@
+        if declaration["type"] != "element":
+            raise ValueError("Project draft pack admission supports rendering elements only")
+        path = PurePosixPath(declaration["path"])
+        # Admission uses the standard element manifest precedence.
+        name = next(
+            (
+                path.parent / name
+                for name in ("element.yaml", "element.yml", "element.json")
+                if (path.parent / name).as_posix() in files
+            ),
+            None,
+        )
+        if name is None:
+            raise ValueError("Selected pack element is unavailable")
+        payload = (
+            json.loads(files[name.as_posix()])
+            if name.suffix == ".json"
+            else yaml.safe_load(files[name.as_posix()])
+        )
+        definition = element_definition_from_payload(
+            payload,
+            root=path.parent,
+            kind=payload["kind"],
+            source=f"pack:{owner}",
+            editable=True,
+            priority=100,
+            manifest_path=name,
+            files=files,
+        )
+        if definition.id == reference["id"]:
+            exact.append(_element_descriptor(definition, files=files))
+    if len(exact) != 1 or any(exact[0].get(k) != reference[k] for k in required):
+        raise ValueError("Admitted source does not match canonical revision")
+    descriptor = exact[0]
+    descriptor["componentPath"] = (
+        f"external/{owner}/{admission['snapshot_digest']}/{descriptor['componentPath']}"
+    )
+    return copy.deepcopy(descriptor)
+
+
+def admitted_element_snapshot_descriptor(realm, project, reference, verified, snapshot):
+    """Resolve only portable bytes returned by the scoped document_object port.
+
+    Runtime owns capture/association authority; no caller-supplied object or
+    local cache establishes that authority. This function is a pure validator.
+    """
+    if not isinstance(reference, dict) or not isinstance(verified, Mapping):
+        raise ValueError('Missing selected project pack declaration')
+    content = _project_pack_content(verified.get('document', {}))
+    admitted = [a for a in content['admissions']
+                if all(a.get(k) == reference.get(k) for k in ('id', 'kind', 'revision'))]
+    if len(admitted) != 1:
+        raise ValueError('Element owner/revision is not admitted for this project')
+    expected = admitted[0].get('snapshot_object')
+    if expected is None:
+        raise ValueError('pack snapshot unavailable; re-admit pack')
+    if not isinstance(snapshot, Mapping) or set(snapshot) != {*expected, 'bytes_base64'}:
+        raise ValueError('Invalid verified pack snapshot object')
+    descriptor = _snapshot_descriptor({key: snapshot[key] for key in expected})
+    if descriptor != expected:
+        raise ValueError('Pack snapshot object does not match selected admission')
+    data = _decode_base64(snapshot['bytes_base64'])
+    files, receipt = _snapshot_object_resources(descriptor, data)
+    return admitted_element_descriptor(realm, project, reference, verified, files, receipt)
+
+
+def resolve_admitted_element(realm: str, project: str, reference: dict[str,str], *, client=None) -> dict[str,Any]:
+    if client is None:
+        with _open_client() as connected:return resolve_admitted_element(realm,project,reference,client=connected)
+    required={'id','kind','packId','revision'}
+    if not required.issubset(reference) or any(not isinstance(reference[k],str) or not reference[k] for k in required):raise ValueError('An admitted owner-qualified element reference is required')
+    document_id,row=_read_document(client,realm,project)
+
+exec
+/bin/bash -lc "rg -n 'def _typed\\(' astrid/sdk/remote.py; sed -n '365,418p' astrid/sdk/remote.py; rg -n 'ingest_project_object|import_bytes' tests/sdk/test_remote* | head -n 18; sed -n '760,793p' astrid/sdk/workspace_client.py; git diff --check" in /home/user/work/wt/agt-m2-pack-custody-recover
+ succeeded in 69ms:
+327:    def _typed(self, operation: str, *args: Any, key: str | None = None, **kwargs: Any) -> DomainResult[Any]:
+            elif operation == "current_project": value = self._client.current_project(*args, **kwargs)
+            elif operation == "diff_timeline": value = self._client.diff_timeline(*args, **kwargs)
+            elif operation == "get_generation": value = self._client.get_generation(*args, **kwargs)
+            elif operation == "get_object": value = self._client.get_object(*args, **kwargs)
+            elif operation == "get_project": value = self._client.get_project(*args, **kwargs)
+            elif operation == "get_project_reference": value = self._client.get_project_reference(*args, **kwargs)
+            elif operation == "get_project_shot": value = self._client.get_project_shot(*args, **kwargs)
+            elif operation == "get_project_shot_revision": value = self._client.get_project_shot_revision(*args, **kwargs)
+            elif operation == "get_project_timeline_revision": value = self._client.get_project_timeline_revision(*args, **kwargs)
+            elif operation == "get_project_parent_composition_revision": value = self._client.get_project_parent_composition_revision(*args, **kwargs)
+            elif operation == "get_source_frame_thumbnail":
+                value = self._client.get_source_frame_thumbnail(*args, **kwargs)
+            elif operation == "get_project_shot_text_binding": value = self._client.get_project_shot_text_binding(*args, **kwargs)
+            elif operation == "get_managed_output": value = self._client.get_managed_output(*args, **kwargs)
+            elif operation == "get_run": value = self._client.get_run(*args, **kwargs)
+            elif operation == "get_task": value = self._client.get_task(*args, **kwargs)
+            elif operation == "inspect_timeline": value = self._client.inspect_timeline(*args, **kwargs)
+            elif operation == "create_timeline_view": value = self._client.create_timeline_view(*args, **kwargs)
+            elif operation == "fail_attempt": value = self._client.fail_attempt(*args, **kwargs)
+            elif operation == "head_object": value = self._client.head_object(*args, **kwargs)
+            elif operation == "ensure_source_frame_thumbnail":
+                value = self._client.ensure_source_frame_thumbnail(*args, **kwargs)
+            elif operation == "ingest_project_object": value = self._client.ingest_project_object(*args, **kwargs)
+            elif operation == "link_references": value = self._client.link_references(*args, **kwargs)
+            elif operation == "list_events": value = self._client.list_events(*args, **kwargs)
+            elif operation == "list_generations": value = self._client.list_generations(*args, **kwargs)
+            elif operation == "list_media_relations": value = self._client.list_media_relations(*args, **kwargs)
+            elif operation == "list_project_objects": value = self._client.list_project_objects(*args, **kwargs)
+            elif operation == "list_project_references": value = self._client.list_project_references(*args, **kwargs)
+            elif operation == "list_project_runs": value = self._client.list_project_runs(*args, **kwargs)
+            elif operation == "list_project_shots": value = self._client.list_project_shots(*args, **kwargs)
+            elif operation == "list_project_shot_text_bindings": value = self._client.list_project_shot_text_bindings(*args, **kwargs)
+            elif operation == "list_project_tasks": value = self._client.list_project_tasks(*args, **kwargs)
+            elif operation == "list_managed_outputs": value = self._client.list_managed_outputs(*args, **kwargs)
+            elif operation == "list_projects": value = self._client.list_projects(*args, **kwargs)
+            elif operation == "list_run_events": value = self._client.list_run_events(*args, **kwargs)
+            elif operation == "list_timeline_commits":
+                value = self._client.list_timeline_commits(*args, **kwargs)
+            elif operation == "list_timeline_history": value = self._client.list_timeline_history(*args, **kwargs)
+            elif operation == "list_timelines": value = self._client.list_timelines(*args, **kwargs)
+            elif operation == "list_variants": value = self._client.list_variants(*args, **kwargs)
+            elif operation == "mark_generation_variants_viewed": value = self._client.mark_generation_variants_viewed(*args, **kwargs)
+            elif operation == "mark_variant_viewed": value = self._client.mark_variant_viewed(*args, **kwargs)
+            elif operation == "publish_timeline_render": value = self._client.publish_timeline_render(*args, **kwargs)
+            elif operation == "publish_parent_composition": value = self._client.publish_parent_composition(*args, **kwargs)
+            elif operation == "promote_project_shot_candidate": value = self._client.promote_project_shot_candidate(*args, **kwargs)
+            elif operation == "recover_project_reference": value = self._client.recover_project_reference(*args, **kwargs)
+            elif operation == "recover_project_shot": value = self._client.recover_project_shot(*args, **kwargs)
+            elif operation == "recover_timeline": value = self._client.recover_timeline(*args, **kwargs)
+            elif operation == "register_capability": value = self._client.register_capability(*args, **kwargs)
+            elif operation == "register_executor": value = self._client.register_executor(*args, **kwargs)
+            elif operation == "remove_shot_item": value = self._client.remove_shot_item(*args, **kwargs)
+            elif operation == "reorder_shot_items": value = self._client.reorder_shot_items(*args, **kwargs)
+            elif operation == "set_project_shot_text_binding": value = self._client.set_project_shot_text_binding(*args, **kwargs)
+rg: tests/sdk/test_remote*: IO error for operation on tests/sdk/test_remote*: No such file or directory (os error 2)
+            project_id,
+            document_id,
+            expected_version=expected_version,
+            idempotency_key=idempotency_key,
+            kind=kind,
+            **({"content": content} if content is not _DOCUMENT_CONTENT_UNSET else {}),
+        )
+
+    def ingest_object(self, data: bytes, *, media_type: str, idempotency_key: str, filename: str | None = None, upload_binding: Mapping[str, Any] | None = None) -> Any:
+        return self._call_generated("ingest_object", data, media_type=media_type, idempotency_key=idempotency_key, filename=filename, upload_binding=upload_binding)
+
+    def ingest_project_object(
+        self,
+        project_id: str,
+        data: bytes,
+        *,
+        media_type: str,
+        idempotency_key: str,
+        filename: str | None = None,
+    ) -> Any:
+        return self._call_generated(
+            "ingest_project_object",
+            project_id,
+            data,
+            media_type=media_type,
+            idempotency_key=idempotency_key,
+            filename=filename,
+        )
+
+    def import_project_media(
+        self, project_id: str, data: bytes, *, media_type: str,
+        idempotency_key: str, filename: str | None = None,
+        expected_digest: str | None = None, width: int | None = None,
+        height: int | None = None, duration_seconds: float | None = None,
+
+exec
+/bin/bash -lc "sed -n '433,482p' astrid/sdk/remote.py; rg --files tests | rg '(remote|media)' | head -n 18; rg -n 'def _call_generated' astrid/sdk/workspace_client.py; sed -n '330,366p' astrid/sdk/workspace_client.py; rg -n 'def _unpack|CommittedMutation' astrid/sdk/remote.py" in /home/user/work/wt/agt-m2-pack-custody-recover
+ exited 1 in 0ms:
+                value = value["data"]
+            return DomainResult.success(value, receipt=receipt, idempotency_key=key or "")
+        except WorkspaceClientError as exc:
+            return DomainResult.failure(ErrorObject(code=exc.code, message=exc.message, details=exc.details), idempotency_key=key or "")
+
+
+class RemoteProjects(_RemoteFamily):
+    def create(self, *, slug: str, name: str, metadata: Mapping[str, Any] | None = None, idempotency_key=None):
+        key = idempotency_key or uuid.uuid4().hex
+        return self._typed("create_project", name, key=key, idempotency_key=key, slug=slug, metadata=metadata)
+    def list(self, *, cursor=None, limit=50):
+        return self._typed("list_projects", cursor=cursor, limit=limit)
+    def show(self, ref): return self._typed("get_project", ref)
+    def update(self, ref, *, name=None, metadata=None, expected_version=None, idempotency_key=None):
+        key = idempotency_key or uuid.uuid4().hex
+        return self._typed("update_project", ref, key=key, idempotency_key=key, name=name, metadata=metadata, expected_version=expected_version)
+    def select(self, ref, *, scope="workspace", idempotency_key=None):
+        key = idempotency_key or uuid.uuid4().hex
+        return self._typed("select_project", key=key, project=ref, scope=scope, idempotency_key=key)
+    def current(self):
+        return self._typed("current_project")
+
+
+class RemoteTimelines(_RemoteFamily):
+    def __init__(self, client, *, invoker=None):
+        super().__init__(client)
+        self._invoker = invoker
+
+    @staticmethod
+    def _retired_document_route(operation: str, *, idempotency_key=None):
+        key = idempotency_key or uuid.uuid4().hex
+        return DomainResult.failure(
+            ErrorObject(
+                "retired_route",
+                f"timeline document route {operation!r} is retired; use canonical current-head inspection",
+                {
+                    "status": 410,
+                    "operation": operation,
+                    "replacement": "timelines.inspect/open_composition",
+                },
+            ),
+            idempotency_key=key,
+        )
+
+    def create(self, *, project, config: Mapping[str, Any], registry: Mapping[str, Any], slug=None, name=None, timeline_id=None, idempotency_key=None):
+        return self._retired_document_route("create", idempotency_key=idempotency_key)
+
+    def create_empty(
+        self,
+        *,
+tests/editing_scenarios/audio/audio.add.media-bed.yaml
+tests/editing_scenarios/fixtures/audio-media.json
+tests/sdk/test_media_handles.py
+tests/sdk/test_media_transcript.py
+tests/sdk/test_media_open.py
+tests/sdk/test_media_read_bytes.py
+tests/sdk/test_timeline_media_verbs.py
+tests/core/execution/test_remote_activation_owner.py
+tests/core/test_generic_host_settlement_media_type.py
+tests/core/util/test_util_media.py
+tests/stage1/test_remote_task_project_scope.py
+tests/stage1/test_remote_mutation_idempotency_luna.py
+tests/stage1/test_media_show_json_contract.py
+tests/stage1/test_media_handoff_render_boundary.py
+tests/stage1/test_zero_shim_media_cutover.py
+tests/v10/test_domain_cli_media_references.py
+tests/test_remote_targets.py
+tests/timeline/test_authoring_media.py
+225:    def _call_generated(self, operation: str, *args: Any, **kwargs: Any) -> Any:
+            return {"data": plain(data), "receipt": plain(value.receipt)}
+        return plain(value)
+
+    # The following methods are intentionally explicit.  They form the
+    # product adapter's typed vocabulary and keep generated operation names in
+    # one explicit mapping.
+    def health(self) -> Any:
+        return self._call_generated("health")
+
+    def handshake(self, client_name: str, client_version: str, requested_scopes: list[str]) -> Any:
+        value = self._call_generated("handshake", client_name, client_version, requested_scopes)
+        self._last_handshake = value
+        return value
+
+    def doctor(self) -> Any:
+        return self._call_generated("doctor")
+
+    def create_backup(self, destination: str) -> Any:
+        return self._call_generated("create_backup", destination)
+
+    def restore_backup(self, backup: str, destination: str) -> Any:
+        return self._call_generated("restore_backup", backup, destination)
+
+    def export_realm(self) -> Any:
+        return self._call_generated("export_realm")
+
+    def tombstone_realm(self, *, reason: str | None = None, expected_version: int | None = None) -> Any:
+        return self._call_generated("tombstone_realm", reason=reason, expected_version=expected_version)
+
+    def recover_realm(
+        self,
+        *,
+        expected_realm_id: str,
+        expected_version: int,
+        confirmation: str | None = None,
+        noninteractive: bool = False,
+    ) -> Any:
+
+codex
+The final targeted run passed: **164 passed, 7 unchanged strict xfails**. The three selected-schema cases remain among those expected failures. `git diff --check` is clean, and scoped Ruff findings decreased from 98 to 96 with no findings in the new snapshot tests. I’m writing the handoff report and commit messages now; no full suite, install, merge, or artifact-pin change was run.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-m2-pack-custody-recover'
+(worker/'notes').mkdir(parents=True,exist_ok=True)
+report='''# Agent portable pack custody recovery
+
+Implemented the bounded admission/parser stage on "'`tl/agt-m2-pack-custody-recover`, base `8b0946e6`. Params remains held pending the real Runtime/provider coupling and official paired artifact release.
+
+## Recovery and source alignment
+
+- Read PLAN, latest Agent INBOX (including completed-cancel, pack custody, internal object read, numeric forwarding), custody design and Runtime coordination.
+- Inspected predecessor `/home/user/work/wt/agt-m2-pack-portable-admission` read-only with `git status --short`, `git diff --binary HEAD`, and tracked/untracked inventory. It was clean at `8b0946e6`, identical to this worktree'"'s starting HEAD. No WIP, untracked product/tests, or caches needed transfer; predecessor unchanged.
+- ACKed the exact manager-approved descriptor/serialization/internal read in absolute "'`design/runtime-coordination.md`; observed Runtime implementation in `rt-m2-pack-custody-resume` read-only. No alternate port or public DTO.
+
+## Changes
+
+- Existing `admit_project_pack` captures original resource bytes, verifies the build before descriptor creation, preserves the original saved `.build-receipt.json`, ingests one canonical portable JSON object via existing `client.media.import_bytes`, validates returned actual object id/digest/size/MIME, and publishes one additive `snapshot_object` admission field before advancing the derived index.
+- Explicit legacy re-admission backfills one exact identity only when the original closure matches. Ambiguous identities and changed closure under an unchanged identity refuse. Failed upload/Document CAS preserves selection; retries reuse original bytes/upload identity. No-op re-admission retains its published descriptor/receipt, including recovery of the original receipt from existing CAS after local cache loss.
+- Added pure `admitted_element_snapshot_descriptor(realm, project, reference, verified, snapshot)` for the exact closed `document_object` result. It validates descriptor/bytes/hash, strict duplicate-free canonical UTF-8 JSON, sorted unique safe paths, canonical base64, resource bounds/hashes, original closure, successful build identity and selected owner/revision, then reuses the existing captured-input resolver. It performs no external reads and is **not** a source of custody authority.
+- Factored local admission validation into the same pure source checks without manufacturing a VerifiedDocument. Kept original ASCII-escaped closure hashing separate from UTF-8 Document content digests.
+- Extended existing admission test client only with its media seam; added 36 focused portable snapshot unit cases. Existing passing behavior tests and strict xfails were not weakened, deleted or flipped.
+
+## Tests
+
+All commands ran from `/home/user/work/wt/agt-m2-pack-custody-recover` with the shared venv; no installs.
+
+Final targeted command:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/test_project_packs.py tests/core/test_project_pack_inputs.py tests/core/test_project_pack_snapshots.py tests/sdk/test_timeline_selected_schema.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py
+```
+
+**164 passed, 7 xfailed in 47.99s.** All seven strict xfails remain unchanged, including the three selected-schema cases. These are unit/detached-provider proofs, not actual Runtime retained-PARAM qualification.
+
+Earlier focused commands:
+
+- Same environment, `python -m pytest -q tests/core/test_project_packs.py tests/core/test_project_pack_inputs.py`: **47 passed in 33.43s**.
+- Same environment, `python -m pytest -q tests/core/test_project_pack_snapshots.py tests/sdk/test_timeline_selected_schema.py tests/editing_conformance/test_recipe_scalar_commands.py`: initial **3 failed, 97 passed, 5 xfailed in 32.29s**. Two new legacy fixtures needed their derived index rebuilt after changing the simulated historical row; the Unicode admission golden exposed main'"'s ASCII-only canonical path grammar. Corrected those new fixtures/golden without changing existing expectations or canonical schema.
+- Same environment, "'`python -m pytest -q tests/core/test_project_pack_snapshots.py`: **35 passed in 23.12s**, before adding the final cache-loss case; final run above covers all 36.
+- `/home/user/work/venv-agent/bin/python -m ruff check astrid/core/element/project_packs.py tests/core/test_project_pack_snapshots.py --output-format json`: existing product E701/E702 backlog remains (exit 1), reduced **98 -> 96**, no other findings and none in the new snapshot tests. Compared with `git show HEAD:astrid/core/element/project_packs.py | /home/user/work/venv-agent/bin/python -m ruff check --stdin-filename astrid/core/element/project_packs.py --output-format json -`.
+- `git diff --check`: **PASS**.
+
+No full suite, `make check`, socket/browser suite, central request, generated-client release, install, commit, merge, checkout, push or frozen-ref mutation. Predecessor had no interrupted test request to resume; no interrupted run is claimed as a pass.
+
+## Decisions, limits and next steps
+
+- Followed the exact agreed field/encoding/read contract. Kept build-before-descriptor ordering to avoid the receipt/object hash cycle. Reused published receipts on retries/no-ops rather than rebuilding their identity.
+- Evidence for manager: current canonical pack resource paths reject non-ASCII names. The Unicode golden therefore proves the original closure/portable serializer algorithm and preserves normal admission refusal; it does not claim a normally admitted Unicode pack or broaden the pack schema.
+- Exact identity with a different closure refuses instead of appending an ambiguous duplicate or replacing immutable history. This also means a manifest-only change or a multi-element pack update that keeps another selected identity fixed may need follow-up policy/work; no alternate policy was invented here. Legacy backfill must not silently choose another closure.
+- **Blocked/unverified:** real project association/descriptor validation at the Runtime Document boundary, captured/retained `document_object` authority and acceptance rechecks, integrity/compaction/restart custody, native changed-known-param capture/compile/provider/rebase/inverse/restore coupling, and exact contract-digest/callable compatibility with the official regenerated artifacts. Runtime product implementation belongs to `rt-m2-pack-custody-resume`; no Runtime source or generated pins changed here.
+- Next: compose this admission/parser source with that Runtime worker; add the actual SDK admission -> retained Document/object -> native PARAM/replay/undo proof through the normal scoped association path. Only then flip the three strict cases and release the coordinated params pin. The pure wrapper already provides the required missing-legacy error `pack snapshot unavailable; re-admit pack`; it is not yet wired into native PARAM execution, so no claim that all save-path refusal/validation behavior is complete.
+- No foundation schema or host-helper changes in this bounded task. Frozen Bundle1 refs/artifacts untouched. M2 integration merges remain held until PLAN records M1.
+'"'''
+(worker/'notes/report.md').write_text(report)
+message='''feat(elements): retain portable admitted pack snapshots
+
+Capture original pack resources and build receipts through project object ingest
+and bind their exact descriptor in existing pack admissions. Preserve immutable
+receipt and retry identities, backfill matching legacy selections explicitly,
+and validate portable captured bytes through the shared pure schema resolver.
+
+Cover descriptor metadata, retries, legacy backfill, cache loss and malformed
+snapshots. Keep native params qualification held for the paired Runtime carrier
+and official artifact release; existing strict behavior cases remain unchanged.
+'''
+(worker/'commit-msg').write_text(message)
+(worker/'commit-msg.txt').write_text(message)
+with (root/'design/runtime-coordination.md').open('a') as f:
+ f.write('''\\n## Agent custody recovery bounded stage ready\\nagt-m2-pack-custody-recover admission/parser source ready on base8b0946e6 (harness commit pending). Exact entrypoint "'`astrid.core.element.project_packs.admitted_element_snapshot_descriptor(realm,project,reference,verified,snapshot)` consumes already-verified closed document_object result; caller still must capture the exact config_source and scoped object through Runtime. Existing admission now uploads canonical portable bytes via media.import_bytes BEFORE Document CAS, validates returned actual descriptor metadata, retains receipt/upload identity across retry, backfills only matching legacy closure, reuses existing descriptor/no-op including CAS receipt recovery after cache loss. Final targeted164PASS/7unchanged strict xfail47.99s; scoped Ruff backlog98->96/no new findings; diff check clean. No socket/full/central/install/generated pin or frozen Bundle1 change. Report: workers/agt-m2-pack-custody-recover/notes/report.md. Native save capture/selected PARAM/replay/inverse/compatibility/official artifact coupling remains a separate paired step; three strict schema cases NOT flipped. Actual canonical admission rejects non-ASCII resource paths, so Unicode golden covers closure/serializer compatibility plus existing admission refusal. Same selected identity +different closure refuses (legacy cannot be silently rebound); multi-element update policy needs manager attention if unchanged identities span a changed closure. No alternate custody scheme introduced.'"\\n''')
+print(worker/'notes/report.md')
+print(worker/'commit-msg')
+print(worker/'commit-msg.txt')
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-pack-custody-recover
+ succeeded in 552ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-custody-recover/notes/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-custody-recover/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-custody-recover/commit-msg.txt
+ M astrid/core/element/project_packs.py
+ M tests/core/test_project_packs.py
+?? tests/core/test_project_pack_snapshots.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+for name in ('/tmp/agt-pack-ruff-before.json','/tmp/agt-pack-ruff-after.json'):
+    Path(name).unlink(missing_ok=True)
+PY" in /home/user/work/wt/agt-m2-pack-custody-recover
+ succeeded in 0ms:
+codex
+Implemented portable pack admission and pure snapshot validation. The predecessor was clean; no recovery patch was needed. Both commit-message files are written.
+
+Final targeted command:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/test_project_packs.py tests/core/test_project_pack_inputs.py tests/core/test_project_pack_snapshots.py tests/sdk/test_timeline_selected_schema.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py
+```
+
+**164 passed, 7 unchanged strict xfails.** Diff check passed; scoped lint findings decreased.
+
+Runtime retention, native PARAM replay/undo, and the paired artifact release remain unverified. Next: compose with Runtime’s custody implementation and qualify those paths before flipping the three schema cases. M2 merges remain held.
+
+[Full report, decisions, limitations, and test results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-custody-recover/notes/report.md).
+tokens used
+135,187
+Implemented portable pack admission and pure snapshot validation. The predecessor was clean; no recovery patch was needed. Both commit-message files are written.
+
+Final targeted command:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/test_project_packs.py tests/core/test_project_pack_inputs.py tests/core/test_project_pack_snapshots.py tests/sdk/test_timeline_selected_schema.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py
+```
+
+**164 passed, 7 unchanged strict xfails.** Diff check passed; scoped lint findings decreased.
+
+Runtime retention, native PARAM replay/undo, and the paired artifact release remain unverified. Next: compose with Runtime’s custody implementation and qualify those paths before flipping the three schema cases. M2 merges remain held.
+
+[Full report, decisions, limitations, and test results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-custody-recover/notes/report.md).

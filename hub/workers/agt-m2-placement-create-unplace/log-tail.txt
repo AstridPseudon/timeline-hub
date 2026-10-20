@@ -1,0 +1,400 @@
+                    or any(value.get(key) == ref for key in ('asset_ref', 'owner_ref'))
+                    or any(references(child, local) for child in value.values()))
+        return isinstance(value, list) and any(references(child, local) for child in value)
+
+    owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in state.bundle['placements'])]
+    return (any(references(state.config(other), other == owner) for other in owners)
+            or any(references(shot['payload'], False) for shot in state.bundle['shots'].values()))
+
+
+def _legacy_inverse_sites(records, record):
+    """Recover only known v1 inverse read/create sites from its verified input."""
+    if record['command']['op'] != 'timeline.inverse' or not isinstance(records, AcceptedRecords):
+        raise CommandError('original read stage is unavailable', kind='history_unavailable')
+    state, _ = records.boundary(record)
+    reads, selections = [], []
+    for write in record['writes']:
+        guard(state, write['ref'], write['path'], write['before'], kind='history_unavailable')
+        # The old inverse read immediately before each authored reversal.
+        reads.append({'ref': write['ref'], 'path': write['path'], 'state': write['before']})
+        entity = member(write['ref'])
+        if entity is not None and not write['path'] and write['before'] == ABSENT:
+            owner, kind, _ = entity
+            if kind == 'track':
+                selections.append(selection(state, 'track.create', owner))
+        state.set(write['ref'], write['path'], write['after'])
+    return reads, selections
+
+
+def _validate_inputs(state, record, records):
+    sites = None
+
+    def proven_sites():
+        if record['command']['op'] == 'timeline.inverse':
+            return (*_legacy_inverse_sites(records, record), set())
+        # Recorder writes are ordered even though reads and selections are not.
+        # Reconstruct only those stages, retaining unrelated current authored data.
+        staged = Recording(copy.deepcopy(state.bundle), record['command'], record['ordinal'],
+                           closures=state.closures)
+        stage = staged.state
+        reads, selections, bindings = [], [], set()
+        for write in [None, *record['writes']]:
+            if write is not None:
+                guard(stage, write['ref'], write['path'], write['before'], kind='history_unavailable')
+                root = root_identity(write['ref'])
+                if root is not None and not write['path'] and write['before'] == ABSENT and write['after'] != ABSENT:
+                    created = {'ref': write['ref'], 'kind': root[0],
+                               'owner': None if root[0] == 'shot' else 'parent'}
+                    if record['created'].count(created) != 1:
+                        raise CommandError('root creation context is unavailable', kind='history_unavailable',
+                                           ref=write['ref'])
+                    staged.create_entity(**created, value=write['after']['value'], restoring=True)
+                else:
+                    stage.set(write['ref'], write['path'], write['after'])
+            reads.extend(read for read in record['reads']
+                         if stage.matches(read['ref'], read['path'], read['state']))
+            selections.extend(selected for selected in record['selections']
+                              if equal(selection(stage, selected['key'], selected['owner'],
+                                                 selected['members']), selected))
+            bindings.update(binding['ref'] for binding in record.get('bindings', [])
+                            if stage.entity(binding['ref'], optional=True) is not None)
+        return reads, selections, bindings
+
+    for read in record['reads']:
+        if state.matches(read['ref'], read['path'], read['state']):
+            continue
+        if sites is None:
+            sites = proven_sites()
+        if not any(equal(read, site) for site in sites[0]):
+            raise CommandError('original inverse read changed', kind='inverse_dependency_changed',
+                               ref=read['ref'], path=read['path'])
+    for selected in record['selections']:
+        actual = selection(state, selected['key'], selected['owner'], selected['members'])
+        if equal(actual, selected):
+            continue
+        if sites is None:
+            sites = proven_sites()
+        if not any(equal(selected, site) for site in sites[1]):
+            raise CommandError('inverse selection changed', kind='selection_changed', ref=selected['owner'])
+    created = {item['ref'] for item in record['created']}
+    for binding in record.get('bindings', []):
+        ref = binding['ref']
+        if ref not in created and state.entity(ref, optional=True) is None:
+            if sites is None:
+                sites = proven_sites()
+            if ref not in sites[2]:
+                raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
+
+
+def apply_inverse(ctx, records, intervening_records):
+    if not records:
+        raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
+    if any(not isinstance(record, dict) or 'writes' not in record for record in records):
+        raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
+    check_intervening(records, intervening_records, state=ctx.state)
+    changes = coalesce(records, ctx.state)
+    orders = restoration_orders(records)
+    for (owner, kind), (_, expected) in orders.items():
+        actual = ctx.select('collection.' + kind + 's', owner)
+        if actual != expected:
+            raise CommandError('inverse collection membership/order changed',
+                               kind='selection_changed', ref=owner)
+    for write in changes:
+        guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+    scratch = State(copy.deepcopy(ctx.state.bundle), closures=ctx.state.closures)
+    for record in reversed(records):
+        staged = Recording(scratch.bundle, record['command'], record['ordinal'], closures=scratch.closures)
+        scratch = staged.state
+        staged_orders = restoration_orders(records, only=record)
+        for write in reversed(record['writes']):
+            guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+            if not write['path'] and write['before'] == ABSENT:
+                if '/asset:' in write['ref'] and _asset_dependents(scratch, write['ref']):
+                    raise CommandError('created asset has surviving dependents', kind='surviving_dependents',
+                                       ref=write['ref'])
+                entity = member(write['ref'])
+                if entity is not None and entity[1] == 'track' and _dependents(scratch, write['ref']):
+                    raise CommandError('created track has surviving dependents', kind='surviving_dependents',
+                                       ref=write['ref'])
+            root = root_identity(write['ref'])
+            if (root is not None and not write['path'] and write['after'] == ABSENT
+                    and write['before']['state'] == 'present'):
+                staged.create_entity(write['ref'], kind=root[0],
+                                     owner=None if root[0] == 'shot' else 'parent',
+                                     value=write['before']['value'], restoring=True)
+            else:
+                scratch.set(write['ref'], write['path'], write['before'])
+        for (owner, kind), (original, _) in staged_orders.items():
+            arrange(scratch, owner, kind, original)
+        staged.compile_mirrors()
+        _validate_inputs(scratch, record, records)
+
+    # Historical checks above are internal. Public claims describe H even when
+    # the same address is read after another reversal during installation.
+    ctx.capture_input()
+    for record in records:
+        for read in record['reads']:
+            ctx.read(read['ref'], read['path'])
+        for selected in record['selections']:
+            ctx.select(selected['key'], selected['owner'], selected['members'])
+    for write in reversed(changes):
+        ctx.read(write['ref'], write['path'])
+        # An absent-to-absent edge still records authored intent, but restores
+        # no entity and must not allocate an identity or dereference a value.
+        if not write['path'] and write['after'] == ABSENT and write['before']['state'] == 'present':
+            root = root_identity(write['ref'])
+            if root is not None:
+                ctx.create_entity(write['ref'], kind=root[0],
+                                  owner=None if root[0] == 'shot' else 'parent',
+                                  value=write['before']['value'], restoring=True)
+            elif '/asset:' in write['ref']:
+                owner, identity = write['ref'].rsplit('/asset:', 1)
+                ctx.create_asset(owner, identity, write['before']['value'])
+            else:
+                owner, entity = write['ref'].rsplit('/', 1)
+                ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)
+        else:
+            ctx.assign(write['ref'], write['path'], write['before'])
+    for (owner, kind), (original, _) in orders.items():
+        arrange(ctx.state, owner, kind, original)
+"""Placement reuses clip.move writes with owner and complete binding guards."""
+from __future__ import annotations
+
+import copy
+import json
+from pathlib import Path
+
+import pytest
+
+from astrid.sdk.timeline._clip_commands import capture_clip_add
+from astrid.sdk.timeline._command_state import ABSENT, CommandError, State
+from astrid.sdk.timeline.capture import capture_move, capture_track_create
+from astrid.sdk.timeline.commands import execute, validate_command
+from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.native_placement_commands import capture_placement
+from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.test_recipe_m1_commands import inverse, later
+from tests.sdk.test_timeline_commit_provider_document import document_fixture
+
+FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_placement.json'
+
+
+def placement_document():
+    document = document_fixture()
+    for index, row in enumerate(document['parent_revision']['payload']['occurrences']):
+        row.update(source_offset=0, speed=1)
+        row['placement']['start_ms'] = 10000 + index * 10000
+    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+    return document
+
+
+def capture(bundle, owner='parent', clip_id='clip-a', on=4.004):
+    return capture_placement(bundle, owner, clip_id, on,
+                             ownership='parent' if owner == 'parent' else 'occurrence')
+
+
+def test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo():
+    for case in json.loads(FIXTURE.read_text())['cases']:
+        original = bundle_from_document(case['input'])
+        before = copy.deepcopy(original)
+        command = capture_placement(original, **case['request'])
+        assert command == case['command']
+        ordinary = execute(original, [capture_move(original, command['select'], command['args']['on'])])
+        validate_command(command)
+        assert json.loads(json.dumps(command, allow_nan=False)) == command
+        plan = execute(original, [command])
+        assert plan.bundle == ordinary.bundle
+        assert plan.records[0]['writes'] == ordinary.records[0]['writes']
+        assert plan.records == case['records']
+        assert document_from_bundle(plan.bundle) == case['output']
+        assert replay(plan, original).records == plan.records
+        assert original == before
+        assert inverse(plan.bundle, plan.records).bundle == original
+        reloaded = bundle_from_document(case['output'])
+        undone = inverse(reloaded, plan.records)
+        assert document_from_bundle(undone.bundle, source_bundles=[original]) == case['input']
+        # Reload retains the compiler's occurrence materialization and revision
+        # identities without a historical closure. Authored values still restore.
+        for owner in ('parent', 'occurrence:occ-a', 'occurrence:occ-b'):
+            assert State(undone.bundle).config(owner) == State(original).config(owner)
+            assert State(undone.bundle).collection(owner, 'clip') == State(original).collection(owner, 'clip')
+            assert State(undone.bundle).entity(owner + '/registry') == State(original).entity(owner + '/registry')
+            if owner != 'parent':
+                expected = copy.deepcopy(State(original).occurrence(owner))
+                actual = copy.deepcopy(State(undone.bundle).occurrence(owner))
+                expected.pop('shot_id')
+                actual.pop('shot_id')
+                assert actual == expected
+        redone = inverse(undone.bundle, undone.records)
+        assert document_from_bundle(redone.bundle) == case['output']
+        assert command['created'] == []
+
+
+@pytest.mark.parametrize('owner,on', [('parent', 4.004), ('occurrence:occ-a', 12.012)])
+def test_preserves_raw_identity_source_media_order_opaque_and_sibling(owner, on):
+    original = bundle_from_document(placement_document())
+    ref = owner + '/clip:clip-a'
+    target = State(original).entity(ref)
+    target.pop('hold')
+    target.update({'from': 2, 'to': 6, 'speed': 2})
+    if owner == 'parent':
+        original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+    plan = execute(original, [capture(original, owner, on=on)])
+    moved = State(plan.bundle).entity(ref)
+    assert (moved['id'], moved['track'], moved['asset']) == ('clip-a', 'picture', 'picture')
+    assert (moved['from'], moved['to'], moved['speed']) == (2, 6, 2)
+    assert moved['app']['org.example'] == target['app']['org.example']
+    assert moved['app']['astrid']['for'] == 2
+    for scope in ('parent', 'occurrence:occ-a', 'occurrence:occ-b'):
+        assert [row['id'] for row in State(plan.bundle).collection(scope, 'clip')] == [
+            row['id'] for row in State(original).collection(scope, 'clip')]
+        assert State(plan.bundle).entity(scope + '/registry') == State(original).entity(scope + '/registry')
+        if scope != owner:
+            assert State(plan.bundle).collection(scope, 'clip') == State(original).collection(scope, 'clip')
+    assert plan.bundle['placements'] == original['placements']
+    assert inverse(plan.bundle, plan.records).bundle == original
+    record = plan.records[0]
+    assert next(s for s in record['selections'] if s['key'] == 'move.target')['order'] == [ref]
+    assert any(d['key'] == 'move.source' for d in record['dependencies'])
+    assert all(w['ref'] == ref for w in record['writes'])
+
+
+@pytest.mark.parametrize('app', [None, {}, {'astrid': None},
+    {'on': None, 'until': 'end', 'until_film_end': True,
+     'astrid': {'on': 'word:old:0', 'until': None, 'until_film_end': None}, 'opaque': [None]}])
+def test_absence_null_and_relation_clears_roundtrip(app):
+    original = bundle_from_document(placement_document())
+    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+        rows[0]['app'] = copy.deepcopy(app)
+    plan = execute(original, [capture(original)])
+    moved = State(plan.bundle).entity('parent/clip:clip-a')
+    for container in (moved['app'], moved['app']['astrid']):
+        assert all(key not in container for key in ('on', 'until', 'until_film_end'))
+    writes = plan.records[0]['writes']
+    assert any(w['after'] == ABSENT for w in writes)
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_disjoint_rebase_retains_original_capture_and_unrelated_values():
+    original = bundle_from_document(placement_document())
+    plan = execute(original, [capture(original, 'occurrence:occ-a', on=12.012)])
+    head = copy.deepcopy(original)
+    State(head).entity('occurrence:occ-a/clip:clip-a')['opaque'] = {'concurrent': [None]}
+    State(head).entity('occurrence:occ-b/clip:clip-a')['at'] = 3
+    head['parent']['name'] = 'Someone else renamed this'
+    rebased = replay(plan, head)
+    assert rebased.commands == plan.commands
+    assert State(rebased.bundle).entity('occurrence:occ-a/clip:clip-a')['opaque'] == {'concurrent': [None]}
+    assert inverse(rebased.bundle, rebased.records).bundle == head
+
+
+@pytest.mark.parametrize('damage', ['target', 'track', 'media', 'window', 'map', 'blocker-order', 'absence'])
+def test_relevant_conflicts_refuse_atomically(damage):
+    original = bundle_from_document(placement_document())
+    plan = execute(original, [capture(original, 'occurrence:occ-a', on=12.012)])
+    head = copy.deepcopy(original)
+    state = State(head)
+    if damage == 'target':
+        state.entity('occurrence:occ-a/clip:clip-a')['id'] = 'different'
+    elif damage == 'track':
+        state.entity('occurrence:occ-a/track:picture')['kind'] = 'audio'
+    elif damage == 'media':
+        state.entity('occurrence:occ-a/registry')['assets']['picture']['media_id'] = 'sha256:' + '2' * 64
+    elif damage == 'window':
+        state.entity('occurrence:occ-a/clip:clip-a')['hold'] = 3
+    elif damage == 'map':
+        state.occurrence('occurrence:occ-a')['speed'] = 2
+    elif damage == 'blocker-order':
+        head['placements'].reverse()
+    else:
+        state.entity('occurrence:occ-a/clip:clip-a')['at_ms'] = 1000
+    before = copy.deepcopy(head)
+    with pytest.raises(CommandError):
+        replay(plan, head)
+    assert head == before
+
+
+@pytest.mark.parametrize('ref,path,value', [
+    ('parent/clip:clip-a', ['at'], 1),
+    ('parent/clip:clip-a', ['app', 'on'], None),
+    ('parent/registry', ['assets', 'picture', 'media_id'], 'sha256:' + '1' * 64),
+])
+def test_same_final_value_allows_rebase_but_intervening_writes_block_undo(ref, path, value):
+    original = bundle_from_document(placement_document())
+    plan = execute(original, [capture(original)])
+    intervening = [later(ref, path, value)]
+    assert replay(plan, original, intervening_records=intervening).records == plan.records
+    with pytest.raises(CommandError, match='intervening'):
+        inverse(plan.bundle, plan.records, intervening)
+
+
+@pytest.mark.parametrize('owner,ownership', [('parent', 'occurrence'), ('occurrence:occ-a', 'parent'),
+    ('shot:chapter-shot', 'shared'), ('occurrence:occ-a', 'shared'), ('parent', 'shared'),
+    (None, 'parent'), ('occurrence:bad/id', 'occurrence'), ('occurrence:bad::id', 'occurrence')])
+def test_explicit_owner_required_and_shared_refused(owner, ownership):
+    original = bundle_from_document(placement_document())
+    with pytest.raises(CommandError) as error:
+        capture_placement(original, owner, 'clip-a', 4, ownership=ownership)
+    assert error.value.kind == 'unsupported_ownership'
+
+
+@pytest.mark.parametrize('on', [None, True, -1, float('nan'), float('inf'), 'auto', {'frame': 120}])
+def test_pool_auto_frame_objects_and_nonfinite_timing_refuse(on):
+    original = bundle_from_document(placement_document())
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError):
+        capture(original, on=on)
+    assert original == before
+
+
+
+exec
+/bin/bash -lc "rg -n 'native_placement|placement.move|occurrence.add-media|OccurrenceAdd|ClipAdd' astrid/sdk/timeline/selection.py astrid/core/timeline/schema/edit-command.schema.json; rg -n 'move.images|def _.*source|def move|dependencies|def replay' astrid/sdk/timeline/capture.py astrid/sdk/timeline/rebase.py; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md" in /home/user/work/wt/agt-m2-placement-create-unplace
+ succeeded in 0ms:
+astrid/core/timeline/schema/edit-command.schema.json:499:    "ClipAddArgs": {
+astrid/core/timeline/schema/edit-command.schema.json:858:                "$ref": "#/$defs/ClipAddArgs"
+astrid/core/timeline/schema/edit-command.schema.json:871:                "const": "occurrence.add-media"
+astrid/core/timeline/schema/edit-command.schema.json:888:                "$ref": "#/$defs/OccurrenceAddMediaArgs"
+astrid/core/timeline/schema/edit-command.schema.json:941:                "const": "placement.move"
+astrid/core/timeline/schema/edit-command.schema.json:1157:    "OccurrenceAddMediaArgs": {
+astrid/core/timeline/schema/edit-command.schema.json:1165:          "$ref": "#/$defs/ClipAddArgs/properties/row"
+astrid/sdk/timeline/rebase.py:9:def replay(plan, head_bundle, *, intervening_records=(), inverse_records=(), id_map=None, closures=None,
+astrid/sdk/timeline/capture.py:100:    ctx.dependency('move.images', 'entity', pin)
+astrid/sdk/timeline/capture.py:103:def move(ctx, command):
+astrid/sdk/timeline/capture.py:142:    source_dependencies = []
+astrid/sdk/timeline/capture.py:150:        source_dependencies.append('move.source')
+astrid/sdk/timeline/capture.py:210:    ctx.bind('move.target', ref, dependencies=['move.images', 'move.quantization', *source_dependencies])
+astrid/sdk/timeline/capture.py:234:def move_intent(select):
+# Deletion ledger — AGENT rows (ONLY the agent manager edits this file)
+See deletion-ledger.md for the rules. Add rows here for contradicting code your area must delete; keep status/evidence current.
+
+| id | what (paths) | contradicts | replaced by | owner | ms | status | evidence |
+|---|---|---|---|---|---|---|---|
+| D05 | Agent astrid/core/timeline/inverses.py | duplicate inverse logic | registry guarded inverses | agent | M2 | held | fc33e0e7: -783 physical product lines,188PASS; no production caller. Named replacement: test_recipe_m1_commands.py::test_exact_authored_move_inverse_redo and test_timeline_commit_provider.py::test_undo_detects_aba_and_unchanged_write_publications. Old nonpublic event-planner self-tests have retired API-only cases; distinct supported behavior mapping in workers/agt-m2-review-retirements/notes/report.md must be judged before merge. NOT DELETED. |
+| D06 | Agent astrid/core/extensions/ | old extension model | live pack discovery/element registry; M5 seams | agent | M2 | held | 6c5b616a:-1698 product lines,168PASS/7subtests; no production caller. Replacement tests: test_pack_discovery_v3.py::test_external_broken_hidden_and_duplicate_roots_are_isolated, test_editor_extension_catalog.py::test_editor_entry_discovery_rejects_paths_outside_pack. Full old API/test mapping in retirement review; NOT DELETED before integration. |
+| D07 | Agent deprecated retime helpers in astrid/sdk/timeline_editing.py | duplicate timing math | the one timing compiler | agent | M2 | in-progress | Utility relocation57a1e595 and timing-kernel candidate held;12 utility +63 manager compiler tests PASS. Old helpers still present; compiler integration/replacement behavior gate open. |
+| D13 | Render assembler direct canonical publish: generic_host._publish_assembled_timeline → publishTimelineRender (+old Runtime endpoint) | one edit path | settled producer proposal committed by requesting client through its own outbox/authority, fenced commit +immutable render handoff | agent+runtime | M2 | in-progress | Runtime retry76f2f95 held273centralPASS, terminal114PASS; AgentPINONLY goldenbdebad36121+83PASS. Actualproducerport/checkpoint/historicalselector andclienthandoff UNQUALIFIED; oldwriter stays. No rendererwrite scopes ornewcoordinator. |
+| D01a | Popup occurrence add/swap shotCompositionAdapter.publish + saveTimeline fallback | one edit path | occurrence media commands, create-or-require registry, original guards | agent+app | M2 | in-progress | 5528c45c nativecaps/goldens470PASS; central42PASS12strictxfail atoldassetrefschema. Pairednormalartifact+actualacceptance/browserzero-traffic pending; parentexistingbinding swapreal24PASS ispriorgroundwork. |
+| D01b | Shared canonical placement load/mutate/CAS loop | one server rebase | explicit-owner placement command/builder | agent+app | M2 | in-progress | e4338c48 bounded319PASS wrapper; retrack154a70a9476PASS1typedbirthxfail, noAppqualification. Relational timeline_frame/end_frame excluded; oldwriter remains. |
+
+| AG01 | Agent local durable journal accepted-history/save consumers | Runtime only accepted history | outbox-only durable session + Runtime history | agent | M2 | in-progress | Bundle1 3bf uses TimelineSession.queue/commit; native ingress actual48PASS. Accepted journal consumers remain; no removal claim. |
+
+| AG02 | Legacy SDK/CLI snapshot publication and working-copy saves | one edit path | native registry ingress | agent | M2 | in-progress | Bundle1 label actual success/reload/undo/lostACK; native-batch-ingress in flight for atomicJSON/CLI. Remaining old saves present. |
+
+| AG03 | Cut-sheet client three-way merge/save | server-side replay only | NativeSheet parser emits captured commands | agent | M2 | held | ecdf018f nativeCLI originalbasis inexistingoutbox;132unitPASS7deselected +manager20actualPASS. Onlymove/parentlabelgrammar; oldsheet save remains until fullcoverage. |
+
+| AG-M3-CAP-01 | test_capture_source_runtime.py original working_copy=True, inline=False positive without forwarding candidate | Hash-only working-copy certificate contradicts PLAN02:28 real authored candidate authority | Same complete positive/assertion inventory now forwards actual spec.inputs.authoring_preview; separate no-candidate CAS preview expects no source and separate claimed-ref refusal checks zero writes. Visible UNCERTIFIED label pending Viewing | agent+runtime+viewing | M3 | held | No positive assertions deleted; real paired rerun blocked on reviewed provider/Runtime exact graph agreement; no relabel-green |
+| AG-M3-CAP-02 | test_capture_source_runtime.py original working_copy=True, inline=True positive without forwarding candidate | Same missing-candidate authority defect on inline publisher | Same complete positive/assertion inventory with real preview; separate inline no-candidate certificate refusal before SQL/CAS/staging writes | agent+runtime+viewing | M3 | held | All original four positive variants retained; all 12 malicious variants unchanged strict xfail. Explicit CAS-only fallback has no inline certificate |
+| AG-M3-CAP-03 | test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[False] pre-ingests saved snapshot in SDK | Approved Runtime certification must precede any snapshot write | SDK inline/zero-write transport tests + actual Runtime saved inline/ref positives retaining full ref/snapshot/authority/prepared-pair assertions | agent+runtime | M3 | held | Original test/assertions preserved strict xfail because admission double lacks Runtime publisher; no new fake certification/authority. Restore/retire only after real SDK→Runtime qualification |
+| AG-M3-CAP-04 | test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[True] pre-ingests working-copy snapshot in SDK | Same premature write; candidate is authored data, not a certificate | SDK full-candidate freeze/inline/zero-write tests + actual Runtime candidate positives with exact digests/base/draft assertions | agent+runtime | M3 | held | Original test/assertions preserved strict xfail; real post-admission ref proof pending. No positive changed to rejection/native expectation |
+
+AG-M3-CAP-01..04 bounded handoff: final SDK/authority-object28PASS/2strictXFAIL185.02s. Original two prepublished-ref assertions still strict/held, full actual Runtime positives and12 negatives preserved;21actual cases collected only, no paired green claim. UNCERTIFIED visible label pending Viewing; provider graph metadata agreement pending owner. Exact commands in workers/agt-m3-capture-candidate-forward/notes/report.md. No row marked DELETED or silently green.
+
+| AG05 | managed_timeline.py::_project_exact_parent_head copied GET read decoration into new expansion.graph (outer created_at and duplicate parent dependency_manifest) | ONE canonical capture projection from closed CanonicalDocument images | Existing canonical image fieldsets shared from sdk/timeline/commit.py, applied before SAME core project_runtime_parent_composition; normal GET and all payload fields retained | agent+viewing+runtime | M3 | HELD | tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden strict --runxfail PASS before removing only its marker; replacement test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows plus all six candidate goldens in focused run. Viewing no-consumer confirmation and integration pending. Stored snapshots never rewritten/recertified; Runtime certification remains owner. Source/result details workers/agt-m3-capture-projection-exact/notes/report.md. |
+
+AG05 final evidence: **304 focused PASS**, explicit strict entire-result saved + authored-field control + six candidate goldens **8 PASS**. Source tree13240cbc; successor HEAD harness pending. Report workers/agt-m3-capture-projection-exact/notes/report.md. Status remains **HELD**: Viewing confirmation, composed Runtime pair and integration unqualified.
+
+ERROR: You’ve hit your usage limit. Visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 24th, 2026 8:40 PM.
+ERROR: You’ve hit your usage limit. Visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 24th, 2026 8:40 PM.
+tokens used
+80,406

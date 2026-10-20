@@ -1,0 +1,400 @@
+    result = writer.publish_parent_composition(
+tests/timeline/test_authoring_media.py:408: in publish_parent_composition
+    return service.publish_parent_composition(
+/tmp/astrid-runtime-archive-p2lprqjm/runtime_protocol/service.py:451: in wrapped
+    result = function(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <runtime_protocol.service.RuntimeService object at 0x7f1a269ba990>
+project_id = 'aca9c7d3e2fc47ed9f3146f3a7b56b23', timeline_id = 'main'
+body = {'content_digest': 'sha256:d4880244c3b7b2c3397aeceda6433b690fc5c647c7c27dbd1f4e2850c41c88e1', 'dependency_manifest': {...ring-timeline-revision-2b0470ec3b00acc71c82ab64b3e4f13a89d50dc1b6b9d5190ca0ffaf9f736fde', 'timeline_id': 'main'}], ...}
+
+    @_durable_mutation
+    def publish_parent_composition(self, project_id, timeline_id, body, *, idempotency_key=None):
+        idempotency_key = require_idempotency_key(idempotency_key)
+        self._require_object_body(body)
+        project = self.store.get_project(project_id)
+        if (
+            "project_id" not in body
+            or "timeline_id" not in body
+            or ("expected_head" not in body and "expected_head_revision_id" not in body)
+        ):
+            raise ValidationError("publication requires project_id, timeline_id, and expected_head")
+        if body.get("project_id") != project["id"] or body.get("timeline_id") != timeline_id:
+            raise ConflictError("publication identity does not match route scope")
+        request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "timeline_id": timeline_id, "body": body}).encode()).hexdigest()
+        prior_key = self.store.conn.execute("SELECT aggregate_id, request_hash FROM command_idempotency WHERE command_kind=? AND idempotency_key=? LIMIT 1", ("parent_composition.publish", idempotency_key)).fetchone()
+        if prior_key and prior_key["aggregate_id"] != timeline_id:
+            raise ConflictError("idempotency key was already used with different input")
+        replay = self._command_replay("parent_composition.publish", timeline_id, idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        expected_head = body.get("expected_head") if "expected_head" in body else body.get("expected_head_revision_id")
+        if expected_head is not None:
+            self._revision_id(expected_head, "expected_head")
+        timeline = self.store.conn.execute("SELECT * FROM timelines WHERE id=?", (timeline_id,)).fetchone()
+        if timeline and timeline["project_id"] != project["id"]:
+            raise ConflictError("timeline belongs to a different project")
+        current_head_row = self.store.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, project["id"])).fetchone()
+        if current_head_row is not None and current_head_row["publication_id"] is not None:
+>           raise ConflictError("tracked timeline publication requires a timeline command",
+                                details={"status": "refused", "reason": "timeline_commit_required"})
+E           runtime_protocol.errors.ConflictError: tracked timeline publication requires a timeline command
+
+/tmp/astrid-runtime-archive-p2lprqjm/runtime_protocol/service.py:2766: ConflictError
+1 failed, 1 passed in 17.24s
+
+exec
+/bin/bash -lc 'for d in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-handoff /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse; do echo ---$d; find "$d" -maxdepth 2 -type f -printf '"'%P\\n' | sort; done; printf '\\n--- report examples ---\\n'; sed -n '1,180p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-handoff/report.md 2>/dev/null; sed -n '1,160p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-handoff/notes/report.md 2>/dev/null" in /home/user/work/wt/agt-m2-wc6-original-positive-fixture-port
+ succeeded in 104ms:
+---/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-handoff
+brief.md
+commit-msg
+commit-msg.txt
+commit.log
+ended
+exit
+log.txt.gz
+meta
+notes/report.md
+recycled
+report.md
+---/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse
+brief.md
+commit-msg
+commit-msg.txt
+commit.log
+ended
+exit
+log.txt
+meta
+notes/report.md
+recycled
+report.md
+
+--- report examples ---
+Implemented the internal source binding, canonical compiler gating, SDK capture handoff and forgery checks.
+
+- Final focused tests: **63 passed**; static checks passed.
+- Central batch: **377 passed, 4 render failures, 2 fixture errors**. Both fixture cases passed with the required artifact.
+- Open: Runtime capture-content verification, public9 adoption and actual App render/parity.
+
+[Report with exact commands and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-handoff/notes/report.md). Both commit-message files are written; temporary files removed. No full suite, package install or merge.# Verified canonical source handoff
+
+Base: reviewed Viewing consumer `35d0ce7e` on current M1. No merges, commits, checkouts, pushes, package pins or installs. Integration remains held for PLAN M1. The harness owns the eventual commit.
+
+## Implementation
+
+- Added one internal `VerifiedTimelineSource` / `PreparedTimelineInputs` binding. `GenericPackHost._materialize_inputs` retains the admitted immutable ref, entire authority (including Runtime `dependency_digests` / `snapshot_digest` when present), source snapshot, and exact prepared timeline/registry paths and byte hashes. Registry materialization remains the existing CAS/hash-checked host path.
+- Authority stays outside public input keys. Command launch supplies a binding-file path/hash through one parent-owned environment slot; the existing child environment policy carries it across the action and backend Python processes. Explicit environment overrides and reserved input/backend keys refuse. The inherited anchor authenticates the file; JSON claiming to be that file does not authenticate itself. Arbitrary local code running as the host user is outside this caller-JSON boundary.
+- `RenderRequest` has a typed Python-only field, omitted from request JSON. Public wire keys and forged typed values refuse; parsing, service admission, backend reconstruction, serialization, capture/cache admission and locked props preparation check the same prepared pair. Loss/replacement of the inherited authority fails closed. Render facade authority cannot replace the bound authority.
+- The existing public9 helper runs only for that inherited verified binding, after owned Root props/assets/theme preparation and before the props file and scene observer. Exactly one compiled vector reaches both consumers. Absolute imports work when the backend is launched as `python run.py`. No scene evaluator, timing evaluator, draw helper, caller sampling, launcher, credential or package source was replaced.
+- Inspected and reused `tl/agt-m2-transition-validator` (`cec3bb9c`) only for its explicit canonical-vs-compiled validator and tests. Managed canonical validation and the bound serializer admit incoming first-clip, gap and oversized transitions. Native compiled validation remains outgoing by default. Canonical serialization preserves authored declarations/precision; it does not use the native dump's normalization as a compiler and does not rewrite the source file.
+- Removed the modern SDK capture source-discard optimization for canonical captures: they now reach the existing `capture_snapshot_ref` publication/admission path instead of disappearing inside a generic authority object. Existing native/unqualified object-backed calls retain their behavior. Saved and working-copy admission use the same binding. Exact shot `content_digest` and internal `config_hash` values are preserved, including candidate render/capture rows; saved capture retains the complete expansion rather than a subset.
+- Reserved key, forged source, duplicate reference, replaced authority/file/binding, changed working-copy publication, missing authority, direct pack/service/backend and SDK entry cases are covered. Caller toggles, occurrence fields, receipt labels and raw inline snapshot/revision labels cannot mint the internal source.
+
+Coordination and trust boundary were documented before implementation and updated in the absolute shared file:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md`.
+
+## Exact validation commands and results
+
+All direct commands ran in `/home/user/work/wt/agt-m3-verified-source-handoff`. Definitions used below:
+
+```sh
+P=/home/user/work/venv-agent/bin/python
+N=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+A=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.9.tgz
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+```
+
+Final source/capture/owned-preparation tests on the final product code:
+
+```sh
+PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=$N ASTRID_COMPOSITION_TEST_ARTIFACT=$A "$P" -m pytest -q tests/packs/rendering/test_verified_canonical_preparation.py tests/sdk/test_capture_closure_source.py tests/packs/rendering/test_verified_source.py
+```
+
+**63 passed in 120.89s**, exit 0. Pytest emitted an atexit `FileNotFoundError` while concurrently removing the shared `pytest-current` symlink; test results and exit remained successful. Tests include real host -> action -> RenderService transport -> backend subprocesses, actual public9 compilation and public scene/SSR consumption of the exact delivered props, and source/caller negatives. Renderer/frame outputs are doubles: this does not claim pixels or Runtime admission-server qualification. The compiler fixture verifies exact artifact SHA256 `fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61` and unchanged package bytes.
+
+Focused validator, snapshot and import-fence batch (before the final absolute-import/SDK-error followups; those followups are covered by the final 63 above):
+
+```sh
+PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=$N ASTRID_COMPOSITION_TEST_ARTIFACT=$A "$P" -m pytest -q tests/packs/rendering/test_verified_source.py tests/packs/rendering/test_verified_canonical_preparation.py tests/sdk/test_capture_closure_source.py tests/sdk/test_visualize_authority_objects.py tests/core/timeline/test_transition_validation.py tests/test_snapshot_reference_handoff.py tests/editing_conformance/test_recipe_m1_commands.py::test_fixed_move_executes_without_runtime_or_renderer_imports
+```
+
+**149 passed in 96.25s**. The renderer-free editing import fence passes unchanged.
+
+Existing public compiler/carrier behavior:
+
+```sh
+PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=$N ASTRID_COMPOSITION_TEST_ARTIFACT=$A "$P" -m pytest -q tests/packs/rendering/test_canonical_root_compiler.py tests/packs/rendering/test_host_compiled_carrier.py
+```
+
+**18 passed in 27.12s**.
+
+Existing selected caller samples, rerun with the required artifact after central fixture-path errors:
+
+```sh
+PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=$N ASTRID_COMPOSITION_TEST_ARTIFACT=$A "$P" -m pytest -q tests/packs/rendering/test_scene_capture_chain.py
+```
+
+**2 passed in 10.06s**.
+
+Managed render/closure/environment neighbors:
+
+```sh
+PYTHONPATH=$PWD "$P" -m pytest -q tests/packs/rendering/test_managed_timeline_render.py tests/timeline/test_authoring_bundle.py tests/sdk/test_managed_render_invocation.py tests/core/test_subprocess_env.py
+```
+
+**80 passed, 1 deselected in 14.03s**. Existing lane selection was unchanged.
+
+Central service, including all real-render/socket-dependent checks, not run directly:
+
+```sh
+"$O/bin/request-test" agt-m3-verified-source-handoff targeted --files "tests/core/rendering/test_contracts.py tests/core/rendering/test_service.py tests/core/rendering/test_transport.py tests/packs/rendering/test_remotion_backend.py tests/packs/rendering/test_managed_timeline_render.py tests/packs/rendering/test_composed_frame_capture.py tests/packs/rendering/test_capture_prepared_files.py tests/packs/rendering/test_capture_scene_facts.py tests/packs/rendering/test_scene_capture_chain.py tests/sdk/test_managed_render_invocation.py tests/sdk/test_visualize_authority_objects.py tests/sdk/test_timeline_filmstrip.py tests/timeline/test_authoring_bundle.py tests/core/test_subprocess_env.py tests/test_generic_host.py::test_child_environment_carries_explicit_runtime_connection tests/test_generic_host.py::test_materialize_inputs_fetches_media_id_only_registry_entry"
+"$O/bin/wait-test" agt-m3-verified-source-handoff-targeted-1020014512-16479
+```
+
+**377 passed, 4 failed, 2 setup errors, 9 deselected in 211.22s**, service exit 1, tree `1d4ff116d6cab54845956d23105ee08578d70d43`. This snapshot predates the final absolute-import/SDK-error followups. Full log: `tests/agt-m3-verified-source-handoff-targeted-1020014512-16479/log.txt` under O.
+
+The four failed unchanged positive tests are `test_remotion_real_render_under_global_angle_keeps_identity`, `test_remotion_real_two_second_window_keeps_video_and_audio_duration`, `test_alpha_stamped_real_render_is_mov_prores_and_declared_profile_matches`, and `test_stamped_top_layer_via_real_service_is_mov_prores_with_alpha`. All refuse at real renderer support with `RendererUnsupportedError`; actual render qualification is **not green**. The central traceback does not expose the underlying support reasons, so a baseline/regression classification is unproven. No launch validation/environment bypass was added. An independent read-only `remotion_runtime_status(require_explicit_project=True)` with the shared runtime/node/schema paths reported `available=False`, reason `runtime validation refuses unsupported loader/interpreter overrides` in this worker environment.
+
+The two setup errors are the existing `test_scene_capture_chain.py` parameter cases: the generic central environment did not set `ASTRID_COMPOSITION_TEST_ARTIFACT`, so the fixture could not find public9 under the snapshot's remotion/artifacts. Their direct rerun using the exact artifact passed 2/2 above.
+
+A follow-up diagnostic request (same worker, targeted, `--files "tests/packs/rendering/test_remotion_backend.py::test_remotion_real_render_under_global_angle_keeps_identity --showlocals"`) was rejected by the central service before executing tests: `bad file arg --showlocals (relative path/glob/node-id, no ..)`, result `agt-m3-verified-source-handoff-targeted-1020015046-7071`. It supplies no test evidence; it was not resubmitted.
+
+Static checks on final code:
+
+```sh
+"$P" -m ruff check astrid/core/rendering/verified_source.py tests/packs/rendering/test_verified_source.py tests/packs/rendering/test_verified_canonical_preparation.py tests/sdk/test_capture_closure_source.py tests/core/timeline/test_transition_validation.py
+"$P" -m mypy --follow-imports=skip astrid/core/rendering/verified_source.py
+git diff --check
+```
+
+All pass. A comparison of Ruff rule counts on every changed Python file against `git show HEAD:<path>` found no added diagnostics; existing repository lint findings were not broadly reformatted. Typecheck is limited to the new internal module, not a whole-repository claim. No full suite or make-check run was requested/run.
+
+## Decisions, blockers and limits
+
+1. **Authenticated transport is qualified; raw Runtime capture-source authenticity is not.** Inspection of `/home/user/work/runtime/runtime_protocol/snapshot_refs.py::publish_snapshot` and `store.py::RealmStore._validate_spec_snapshot_refs` found that capture admission checks project-owned CAS, parent revision digest, and working-copy/base marker equality, but does not re-project captured config/registry against the immutable parent/shot/internal closure. Managed rendering has its separate Runtime-owned freeze. This Agent port trusts the Runtime-admitted reference as assigned; it cannot close an arbitrary raw Runtime capture-task forgery. Treat this as a Runtime-owner qualification/blocker before claiming that stronger property. No Runtime file, endpoint, DTO, or provenance model was added to work around it.
+2. Agent remains pinned to Composition **0.0.8**. Public9 was used only through the required bounded test overlay. A verified canonical render fails closed if the owned runtime lacks public9/helper support. No actual App render, preview/download frame+audio parity, browser journey, owner film or macOS claim.
+3. Exact prepared-path binding deliberately refuses replacement inputs, including new private layer/sliced files. Canonical planner/layer derivations were not qualified; native/custom/unknown behavior keeps its existing path. A future owned derivation must preserve the same source binding explicitly, never relabel arbitrary files.
+4. Full launch-qualified render verification and the four central actual-render failures remain open. Existing expectations were retained; no test was deleted, skipped, weakened, or changed to expect lost behavior.
+
+Recommended next steps: Runtime owner closes/qualifies the existing capture admission source-content check; Viewing/Agent owner performs the separately controlled public9 pin/runtime adoption and qualified actual App render/parity journey; classify the four actual-render support failures using the launcher-owned environment. All integration merges continue to wait for PLAN M1.
+
+Temporary dependency links, local caches and task scripts are removed before worker exit. Shared environments and installed package bytes are unchanged.
+
+ exited 1 in 90244ms:
+test agt-m2-wc6-original-positive-fixture-port-parent-label-proof-1020160145-15199: fail exit=1 in 25s — parent-label-proof on agt-m2-wc6-original-positive-fixture-port (agent tree fcc65e34da3c62a8f7e0934f01ec7e1d3f04f2b8)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration --runxfail -rx tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move tests/timeline/test_authoring_media.py::test_real_runtime_import_and_parent_publication_roundtrip
+counts: 1 failed, 1 passed in 17.24s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc6-original-positive-fixture-port-parent-label-proof-1020160145-15199/log.txt ---
+            assert {row["type"] for row in service.list_generations(project_id)["items"]} == {
+                "image",
+                "audio",
+            }
+            replay = import_authoring_media(plan, transport)
+            assert all(row["reused"] for row in replay["imports"])
+            assert len(service.list_generations(project_id)["items"]) == 2
+>           receipt = publish_authoring_candidate(
+                imported["candidate"], transport, idempotency_key="checkin"
+            )
+
+tests/timeline/test_authoring_media.py:422: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/core/timeline/authoring_bundle.py:1640: in publish_authoring_candidate
+    result = writer.publish_parent_composition(
+tests/timeline/test_authoring_media.py:408: in publish_parent_composition
+    return service.publish_parent_composition(
+/tmp/astrid-runtime-archive-p2lprqjm/runtime_protocol/service.py:451: in wrapped
+    result = function(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <runtime_protocol.service.RuntimeService object at 0x7f1a269ba990>
+project_id = 'aca9c7d3e2fc47ed9f3146f3a7b56b23', timeline_id = 'main'
+body = {'content_digest': 'sha256:d4880244c3b7b2c3397aeceda6433b690fc5c647c7c27dbd1f4e2850c41c88e1', 'dependency_manifest': {...ring-timeline-revision-2b0470ec3b00acc71c82ab64b3e4f13a89d50dc1b6b9d5190ca0ffaf9f736fde', 'timeline_id': 'main'}], ...}
+
+    @_durable_mutation
+    def publish_parent_composition(self, project_id, timeline_id, body, *, idempotency_key=None):
+        idempotency_key = require_idempotency_key(idempotency_key)
+        self._require_object_body(body)
+        project = self.store.get_project(project_id)
+        if (
+            "project_id" not in body
+            or "timeline_id" not in body
+            or ("expected_head" not in body and "expected_head_revision_id" not in body)
+        ):
+            raise ValidationError("publication requires project_id, timeline_id, and expected_head")
+        if body.get("project_id") != project["id"] or body.get("timeline_id") != timeline_id:
+            raise ConflictError("publication identity does not match route scope")
+        request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "timeline_id": timeline_id, "body": body}).encode()).hexdigest()
+        prior_key = self.store.conn.execute("SELECT aggregate_id, request_hash FROM command_idempotency WHERE command_kind=? AND idempotency_key=? LIMIT 1", ("parent_composition.publish", idempotency_key)).fetchone()
+        if prior_key and prior_key["aggregate_id"] != timeline_id:
+            raise ConflictError("idempotency key was already used with different input")
+        replay = self._command_replay("parent_composition.publish", timeline_id, idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        expected_head = body.get("expected_head") if "expected_head" in body else body.get("expected_head_revision_id")
+        if expected_head is not None:
+            self._revision_id(expected_head, "expected_head")
+        timeline = self.store.conn.execute("SELECT * FROM timelines WHERE id=?", (timeline_id,)).fetchone()
+        if timeline and timeline["project_id"] != project["id"]:
+            raise ConflictError("timeline belongs to a different project")
+        current_head_row = self.store.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, project["id"])).fetchone()
+        if current_head_row is not None and current_head_row["publication_id"] is not None:
+>           raise ConflictError("tracked timeline publication requires a timeline command",
+                                details={"status": "refused", "reason": "timeline_commit_required"})
+E           runtime_protocol.errors.ConflictError: tracked timeline publication requires a timeline command
+
+/tmp/astrid-runtime-archive-p2lprqjm/runtime_protocol/service.py:2766: ConflictError
+1 failed, 1 passed in 17.24s
+
+codex
+Central named evidence is complete: the original marked node now passes Runtime setup/import and both catalog imports, then fails strictly at the legacy publication call with the exact `timeline_commit_required` refusal; the companion parent-label node passes. The preserved catalog-reuse, narration-hold, group, and full-authored-field positives pass locally. I’m recording this as a reviewable fixture-only handoff with the old positive still strict/open.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/notes/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..498241db9d295fd079adadf4f172bc190fa2ac7d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/commit-msg
+@@ -0,0 +1,6 @@
++test(timeline): port WC6 Runtime fixture setup
++
++Select the exact ordinary014 Runtime archive and trusted-seed parent fixtures
++for the retained original authoring-media integration positive. Keep the
++legacy publication expectation strict so the native timeline-command gap
++remains visible.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..498241db9d295fd079adadf4f172bc190fa2ac7d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/commit-msg.txt
+@@ -0,0 +1,6 @@
++test(timeline): port WC6 Runtime fixture setup
++
++Select the exact ordinary014 Runtime archive and trusted-seed parent fixtures
++for the retained original authoring-media integration positive. Keep the
++legacy publication expectation strict so the native timeline-command gap
++remains visible.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..35e8029593575c09b963bdea2c0053fc22cce723
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/notes/report.md
+@@ -0,0 +1,7 @@
++# Shared handoff: WC6 original-positive fixture port
++
++The test-only fixture/import port is ready for review. `test_real_runtime_import_and_parent_publication_roundtrip` now selects exact Runtime ordinary014 `a0dca169…`, imports the archived Runtime fixture test helpers cleanly, and seeds its saved parent through the existing trusted setup helper. Its original assertions remain strict.
++
++Central named result: the parent-label neighbor passed; the original node reached setup and both media import/reuse assertions, then failed at unchanged legacy whole-candidate publication with Runtime `timeline_commit_required` / `tracked timeline publication requires a timeline command`. This identifies the exact remaining native operation gap; it is not a fixture or import failure.
++
++Preserved catalog reuse, narration hold, group, and full-authored-field tests pass locally. Exact HTTP same-alias and 71-unit WC6 evidence from the prior consumer proof remains retained. No product/provider/Runtime/shared-dependency changes, no xfail conversion, no skip, and no full suite.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..53c4ee2fa40722e9ef7f65f1ab1962c6c7b80958
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/report.md
+@@ -0,0 +1,28 @@
++# WC6 original-positive fixture port
++
++## Change
++
++Ported only `tests/timeline/test_authoring_media.py::test_real_runtime_import_and_parent_publication_roundtrip` setup:
++
++- Runtime is selected through `tests.helpers.runtime.use_runtime` at exact ordinary014 commit `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`.
++- The archived Runtime test fixture path is added with `monkeypatch.syspath_prepend`, so the test imports the selected Runtime rather than failing before fixture setup.
++- The saved parent baseline uses the existing `tests.helpers.trusted_seed.seed_trusted_parent` test boundary. No fake accepted history, direct SQL, caller DTO, or whole-document writer was added.
++- Original import, reuse, publication, and readback assertions are unchanged. Narration/structural positives remain strict/open.
++
++## Evidence
++
++- Central named integration lane:
++  `parent-label-proof` with the original marked node and the existing parent-label neighbor — **1 passed, 1 failed in 17.24s**.
++  The parent-label node passed. The original node now reaches exact Runtime `a0dca169` setup, imports both image/audio media, and reuses both imports; it fails at the unchanged legacy `publish_authoring_candidate` call with Runtime’s exact refusal: `tracked timeline publication requires a timeline command` (`reason=timeline_commit_required`).
++- Direct bounded unit file run, excluding the socket-dependent same-alias proof:
++  `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/timeline/test_authoring_media.py -k 'not real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba'` — **70 passed, 2 deselected in 8.33s**.
++- Preserved positives:
++  `tests/timeline/test_authoring_media.py::test_catalog_import_remains_reusable_after_later_parent_cas_conflict`, `tests/timeline/test_authoring_feedback.py::test_document_view_adapter_holds_narration_and_same_alias_media_changes`, `tests/timeline/test_authoring_bundle.py::test_full_authored_field_edits_compile_without_normalizing_opaque_fields`, and `tests/timeline/test_authoring_bundle.py::test_group_move_compiles_and_uses_existing_publication_boundary` — **4 passed in 2.06s**.
++- `git diff --check` — passed.
++- Previously qualified WC6 evidence remains retained: exact HTTP same-alias node **1 pass** and targeted media unit lane **71 passes, 1 deselected**. No full or broad matrix was run.
++
++## Boundary / next step
++
++The import/setup gap is closed. The minimal remaining product operation gap is the old whole-candidate publication path: `publish_authoring_candidate` still emits `publish_parent_composition`, while a tracked timeline must publish through a native timeline command. The original positive is intentionally not xfailed, weakened, deleted, or rewritten to expect refusal. Native document support for narration and arbitrary structural/group edits remains a separate owner qualification; do not mark WC6 deleted from this fixture port.
++
++No Runtime, App, Composition, shared dependency, generated client, or provider files were changed. No local socket evidence is claimed because the sandbox denies socket creation; the central named result is the authoritative marked-node evidence.
+diff --git a/tests/timeline/test_authoring_media.py b/tests/timeline/test_authoring_media.py
+index 96ee7cd74c70f4a1a8360be744157f8be200bb55..7aa70ab8ca14b03b549156c810e954e3fdb41dc3
+--- a/tests/timeline/test_authoring_media.py
++++ b/tests/timeline/test_authoring_media.py
+@@ -314,7 +314,12 @@
+ 
+ 
+ @pytest.mark.integration  # a real Runtime from a second checkout
+-def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
++def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path, monkeypatch):
++    from tests.helpers.runtime import use_runtime
++    from tests.helpers.trusted_seed import seed_trusted_parent
++
++    runtime = use_runtime(commit="a0dca16975dfe8f5e762703b99d9791a16cf7fd7")
++    monkeypatch.syspath_prepend(str(runtime / "tests"))
+     from runtime_protocol import service as service_module
+     from runtime_protocol import store as store_module
+ 
+@@ -364,7 +369,7 @@
+         publication = json.loads(
+             json.dumps(publication).replace(OLD, old).replace(AUDIO, old_audio)
+         )
+-        service.publish_parent_composition(project_id, "main", publication, idempotency_key="seed")
++        seed_trusted_parent(service, publication, idempotency_key="seed")
+         work = open_authoring_bundle(
+             service.get_project_parent_composition_revision(project_id, "main", "parent-1"),
+             shot_revisions=[
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check tests/timeline/test_authoring_media.py && git diff --check && printf '%s\\n' '--- status ---' && git status --short && printf '%s\\n' '--- changed diff stat ---' && git diff --stat && printf '%s\\n' '--- markers ---' && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/DONE && test "'! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-original-positive-fixture-port/DONE && echo DONE-empty' in /home/user/work/wt/agt-m2-wc6-original-positive-fixture-port
+ succeeded in 409ms:
+All checks passed!
+--- status ---
+ M tests/timeline/test_authoring_media.py
+--- changed diff stat ---
+ tests/timeline/test_authoring_media.py | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+--- markers ---
+DONE-empty
+
+codex
+Implemented the bounded test-only fixture/import port in `tests/timeline/test_authoring_media.py`.
+
+- Uses Runtime locator at exact `a0dca169…`.
+- Uses `trusted_seed` for the parent fixture.
+- Preserves all original positive assertions and strict narration/structural holds.
+- Central lane: parent-label neighbor passed; original test reaches import/reuse, then exposes the exact remaining gap: `timeline_commit_required`.
+- Local neighbors: `70 passed, 2 deselected`; preserved positives `4 passed`.
+- Ruff and `git diff --check` passed.
+- No full suite, product/provider/Runtime/shared-dependency changes.
+
+Reports, handoff, commit messages, and `DONE` are written under the worker directory.
+tokens used
+235,464
+Implemented the bounded test-only fixture/import port in `tests/timeline/test_authoring_media.py`.
+
+- Uses Runtime locator at exact `a0dca169…`.
+- Uses `trusted_seed` for the parent fixture.
+- Preserves all original positive assertions and strict narration/structural holds.
+- Central lane: parent-label neighbor passed; original test reaches import/reuse, then exposes the exact remaining gap: `timeline_commit_required`.
+- Local neighbors: `70 passed, 2 deselected`; preserved positives `4 passed`.
+- Ruff and `git diff --check` passed.
+- No full suite, product/provider/Runtime/shared-dependency changes.
+
+Reports, handoff, commit messages, and `DONE` are written under the worker directory.

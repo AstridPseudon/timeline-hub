@@ -1,0 +1,400 @@
+        return response
+
+
+class Client:
+    def __init__(self, generated):
+        transport = WorkspaceClient.__new__(WorkspaceClient)
+        transport._generated = generated
+        transport._last_handshake = {"realm_id": "realm", "actor_id": "actor"}
+
+exec
+/bin/bash -lc "rg -n 'for|follows|map' astrid/core/timeline/schema/timeline-config.schema.json | head -25; git diff --numstat; ls -d /tmp/pytest-of-root/pytest-* 2>/dev/null | tail -4" in /home/user/work/wt/agt-m2-hold-after-move
+ succeeded in 177ms:
+15	4	astrid/sdk/timeline/_clip_scalar_commands.py
+19	2	tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+116	0	tests/editing_conformance/test_recipe_clip_scalar_fields.py
+62	0	tests/sdk/test_timeline_clip_scalar_provider.py
+/tmp/pytest-of-root/pytest-7
+/tmp/pytest-of-root/pytest-887
+/tmp/pytest-of-root/pytest-888
+/tmp/pytest-of-root/pytest-889
+
+codex
+The new compiler/readback cases pass for parent and occurrence clips, including rational fps, speed two, hold clearing, and exact inverse/redo. The real Runtime tests also pass for scalar-only, compound move→hold, and separate-publication cases with normal validation. The broader targeted regression run is still running.
+
+ succeeded in 38470ms:
+........................................................................ [ 14%]
+........................................................................ [ 29%]
+........................................................................ [ 44%]
+........................................................................ [ 59%]
+........................................................................ [ 74%]
+........................................................................ [ 88%]
+......................................................                   [100%]
+486 passed in 37.82s
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-hold-after-move/astrid/sdk/timeline/_clip_scalar_commands.py
+diff --git a/astrid/sdk/timeline/_clip_scalar_commands.py b/astrid/sdk/timeline/_clip_scalar_commands.py
+index 63b4b740d1d8d6e806f0fb8c680524fd54ac2fa8..bedbed1643d7c18129c08d4cef3b5cd264402903
+--- a/astrid/sdk/timeline/_clip_scalar_commands.py
++++ b/astrid/sdk/timeline/_clip_scalar_commands.py
+@@ -2,6 +2,7 @@
+ from __future__ import annotations
+ 
+ import copy
++import math
+ 
+ from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
+ 
+@@ -18,11 +19,20 @@
+     for key in ('time_map', 'timeMap', 'clips', 'children', 'from_ms', 'to_ms'):
+         if row.get(key) is not None:
+             raise CommandError(f'clip.set does not support {key}', kind='unsupported_timing', ref=ref)
++    duration_paths = []
+     for prefix in ([], ['app'], ['app', 'astrid']):
+         for key in RELATIONS:
+             value = ctx.read(ref, prefix + [key])
+-            if value is not None and key != 'fixed_start':
+-                raise CommandError(f'clip.set hold does not support {key}', kind='unsupported_timing', ref=ref)
++            if value is None or (key == 'fixed_start' and isinstance(value, bool)):
++                continue
++            if key == 'for':
++                # Preserve independent intent; only an agreeing static extent
++                # follows this explicit source-hold edit.
++                if not math.isclose(number(value, 'for', positive=True), _duration(row), abs_tol=1e-9):
++                    raise CommandError('clip.set hold conflicts with static for', kind='unsupported_timing', ref=ref)
++                duration_paths.append(prefix + [key])
++                continue
++            raise CommandError(f'clip.set hold does not support {key}', kind='unsupported_timing', ref=ref)
+     if 'hold' in values:
+         number(values['hold'], 'hold', positive=True)
+         row['hold'] = values['hold']
+@@ -39,7 +49,7 @@
+         'numerator': fps.numerator, 'denominator': fps.denominator,
+         'rounding': 'half-toward-positive-infinity'})
+     if owner == 'parent':
+-        return
++        return duration_paths, duration
+     child_fps = ctx.read(owner + '/source', ['output', 'fps'])
+     if child_fps is not None and rate(child_fps) != fps:
+         raise CommandError('parent and child fps differ', kind='unsupported_timing')
+@@ -68,6 +78,7 @@
+     boundary = clip_start_frame({'at': limit - origin, 'hold': 1}, float(fps))
+     if row['at'] < 0 or row['at'] + duration > limit - origin + 1e-9 or end > boundary:
+         raise CommandError('clip.set interval crosses occurrence boundary', kind='occurrence_boundary', ref=owner)
++    return duration_paths, duration
+ 
+ 
+ def clip_set(ctx, command):
+@@ -83,7 +94,9 @@
+     if isinstance(asset, str):
+         ctx.read(ref.rsplit('/', 1)[0] + '/registry', ['assets', asset, 'content_sha256'])
+     if 'hold' in values or 'hold' in clear:
+-        _hold_extent(ctx, ref, values, clear)
++        duration_paths, duration = _hold_extent(ctx, ref, values, clear)
++        for path in duration_paths:
++            ctx.write(ref, path, duration)
+     for key in sorted(values):
+         ctx.write(ref, [key], values[key])
+     for key in sorted(clear):
+diff --git a/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py b/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+index 8d4c539904700a0065fdb7bf22d148c630833cb0..4c499dc252198104c4db4ea98e68c9d6d4bb4cb4
+--- a/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+@@ -26,7 +26,8 @@
+ pytestmark = pytest.mark.integration
+ 
+ 
+-def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path):
++@pytest.mark.parametrize('mode', ['scalar', 'compound', 'separate'])
++def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path, mode):
+     use_runtime()
+     from runtime_protocol.errors import RuntimeErrorBase
+     from runtime_protocol.service import RuntimeService
+@@ -84,7 +85,20 @@
+ 
+     try:
+         original = current()
+-        calls = app_calls(bundle_from_document(original))
++        state = bundle_from_document(original)
++        moves = []
++        if mode != 'scalar':
++            from astrid.sdk.timeline.capture import capture_move
++            from astrid.sdk.timeline.commands import execute
++
++            moves = [capture_move(state, CHILD, 4)]
++            state = execute(state, moves).bundle
++        calls = app_calls(state)
++        if mode == 'separate':
++            submit(request(moves), 'move-before-scalars')
++            original = current()
++        elif mode == 'compound':
++            calls = moves + calls
+         body = request(calls)
+         accepted = submit(body, 'app-scalars')
+         assert accepted['data']['commands'] == calls
+@@ -92,6 +106,9 @@
+         assert current() == document
+         state = bundle_from_document(document)
+         assert clip(state, CHILD)['hold'] == 4
++        if mode != 'scalar':
++            assert clip(state, CHILD)['at'] == 4
++            assert clip(state, CHILD)['app']['astrid'] == {'fixed_start': True, 'for': 4}
+         assert 'asset' not in clip(state, CLEAR)
+         assert 'transition' not in clip(state, PARENT)
+         service.close()
+diff --git a/tests/editing_conformance/test_recipe_clip_scalar_fields.py b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+index 94271b1a7e527c619a928d8f2e7e5600cf71c5f6..224d55a18ea4ade33b61bedc59ff815c73c93155
+--- a/tests/editing_conformance/test_recipe_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+@@ -307,7 +307,7 @@
+ 
+ @pytest.mark.parametrize('prefix', [[], ['app'], ['app', 'astrid']])
+ def test_matching_static_duration_leaves_only_and_unchanged_aba_guards(prefix):
+-    original = bundle()
++    original = bundle(app={'astrid': {}})
+     for path in (['for'], ['app', 'for'], ['app', 'astrid', 'for']):
+         State(original).set(REF, path, present(1))
+     plan = execute(original, [capture_clip_set(original, REF, values={'hold': 1})])
+diff --git a/tests/sdk/test_timeline_clip_scalar_provider.py b/tests/sdk/test_timeline_clip_scalar_provider.py
+index ef54a052601673bb6d19fa95c7c0d37435912758..b9f6a1cf6d6e4274d680628b999e20824d8eb551
+--- a/tests/sdk/test_timeline_clip_scalar_provider.py
++++ b/tests/sdk/test_timeline_clip_scalar_provider.py
+@@ -134,7 +134,7 @@
+     realm.call([capture_move(current(realm), CHILD, 4)])
+     first = realm.call([capture_clip_set(current(realm), CHILD, values={'hold': 3})])
+     assert any(w['path'] == ['app', 'astrid', 'for'] and w['before'] == w['after']
+-               for w in realm.entries[-1]['records'][0]['writes'])
++               for w in realm.entries[-1]['records']['commands'][0]['writes'])
+     if aba:
+         realm.call([capture_clip_set(current(realm), CHILD, values={'hold': 4})])
+     realm.call([capture_clip_set(current(realm), CHILD, values={'hold': 3})])
+
+exec
+/bin/bash -lc "cat >> tests/sdk/test_timeline_clip_scalar_provider.py <<'PY'
+
+
+@pytest.mark.parametrize('ref,on', [(PARENT, 16), (CHILD, 4)])
+def test_hold_captured_after_move_refuses_changed_basis_without_recapture(ref, on):
+    from astrid.sdk.timeline.capture import capture_move
+
+    realm = DetachedRealm(app_document())
+    realm.call([capture_move(current(realm), ref, on)])
+    sealed = capture_clip_set(current(realm), ref, values={'hold': 4})
+    realm.call([capture_clip_set(current(realm), ref, values={'hold': 5})])
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    with pytest.raises(CommitRejected):
+        realm.call([sealed])
+    assert before == (realm.head, realm.entries, realm.documents)
+PY" in /home/user/work/wt/agt-m2-hold-after-move
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_clip_scalar_provider.py && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_clip_scalar_commands.py && git diff --check' in /home/user/work/wt/agt-m2-hold-after-move
+exec
+/bin/bash -lc "git diff tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py && sha256sum astrid/sdk/timeline/_clip_scalar_commands.py astrid/core/timeline/schema/edit-command.schema.json tests/editing_conformance/fixtures/recipe_m2_app_clip_scalar_fields.json && rg --files --hidden --no-ignore -g '__pycache__/**' -g '.pytest_cache/**' -g '*.pyc' | head -25" in /home/user/work/wt/agt-m2-hold-after-move
+ succeeded in 0ms:
+diff --git a/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py b/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+index 8d4c5399..4c499dc2 100644
+--- a/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+@@ -26,7 +26,8 @@ from tests.timeline.test_authoring_bundle import AUDIO, OLD, _replace_values
+ pytestmark = pytest.mark.integration
+ 
+ 
+-def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path):
++@pytest.mark.parametrize('mode', ['scalar', 'compound', 'separate'])
++def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path, mode):
+     use_runtime()
+     from runtime_protocol.errors import RuntimeErrorBase
+     from runtime_protocol.service import RuntimeService
+@@ -84,7 +85,20 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path):
+ 
+     try:
+         original = current()
+-        calls = app_calls(bundle_from_document(original))
++        state = bundle_from_document(original)
++        moves = []
++        if mode != 'scalar':
++            from astrid.sdk.timeline.capture import capture_move
++            from astrid.sdk.timeline.commands import execute
++
++            moves = [capture_move(state, CHILD, 4)]
++            state = execute(state, moves).bundle
++        calls = app_calls(state)
++        if mode == 'separate':
++            submit(request(moves), 'move-before-scalars')
++            original = current()
++        elif mode == 'compound':
++            calls = moves + calls
+         body = request(calls)
+         accepted = submit(body, 'app-scalars')
+         assert accepted['data']['commands'] == calls
+@@ -92,6 +106,9 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path):
+         assert current() == document
+         state = bundle_from_document(document)
+         assert clip(state, CHILD)['hold'] == 4
++        if mode != 'scalar':
++            assert clip(state, CHILD)['at'] == 4
++            assert clip(state, CHILD)['app']['astrid'] == {'fixed_start': True, 'for': 4}
+         assert 'asset' not in clip(state, CLEAR)
+         assert 'transition' not in clip(state, PARENT)
+         service.close()
+fd54c4ca783188a64903b9bc36d380717a28c66a01f2708c97c0a3feff50bff3  astrid/sdk/timeline/_clip_scalar_commands.py
+cdab9bf609b901fab591a45e262719e05945435b8e1b260d109f2538a509be24  astrid/core/timeline/schema/edit-command.schema.json
+8bb75e23c10c9677635d85f33f219b7f1b2d89baf481e3b7ed21f425b76f0c06  tests/editing_conformance/fixtures/recipe_m2_app_clip_scalar_fields.json
+.pytest_cache/v/cache/nodeids
+.pytest_cache/v/cache/lastfailed
+.pytest_cache/.gitignore
+.pytest_cache/README.md
+.pytest_cache/CACHEDIR.TAG
+
+ succeeded in 4239ms:
+...............                                                          [100%]
+15 passed in 3.24s
+All checks passed!
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-clip-scalar-contract.md <<'MD'
+
+## Successor source: source-hold after native fixed move (2026-10-20)
+
+Worker "'`agt-m2-hold-after-move`, base `7b54ca92`, branch `tl/agt-m2-hold-after-move`. This section supersedes the blanket non-null `for` refusal described above **for this successor source only**. Bundle 2'"'s current schema freeze, packaged artifacts, DTO/ABI and pins remain immutable. M2 integration remains HELD; the orchestrator owns review/composition and any successor artifact qualification.
+
+Absolute successor handler: "'`/home/user/work/wt/agt-m2-hold-after-move/astrid/sdk/timeline/_clip_scalar_commands.py` (SHA-256 `fd54c4ca783188a64903b9bc36d380717a28c66a01f2708c97c0a3feff50bff3`). No command shape or version change.
+
+Supported cases:
+
+- Plain parent and occurrence-owned `clip.move` followed by explicit `clip.set` hold SET or CLEAR, in one batch or separate accepted publications. Capture the hold command on the local result of the move, preserve its original claims across acknowledgement/materialization, then submit it unchanged.
+- Each existing non-null `for` at raw clip, `app`, or `app.astrid` must be a positive finite number agreeing with the **previous** effective source duration divided by existing speed, using the existing duration helper and its numeric comparison tolerance. Every such leaf becomes an explicit recorded write to the new effective timeline duration. Multiple agreeing declarations update together; one disagreement refuses the whole edit. Absent/null declarations stay absent/null. No containers or `for` leaves are created.
+- Numeric hold wins over a surviving from/to source window in main. SET stores exact source seconds; CLEAR requires the surviving positive from/to window. Existing `capture._duration`, `clip_end_frame`, `clip_start_frame` and rational fps helpers determine extent. No new duration arithmetic or timing precedence was added.
+- Static boolean `fixed_start`, quantized authored start, existing speed/source windows, row order, opaque metadata and disjoint siblings are preserved. Unchanged duration writes participate in ordinary publication/ABA guards. Generic inverse/redo handles the move and hold'"'s repeated writes; undo of the move with a later dependent hold refuses.
+- Main authoring compilation, reopening its emitted closure, and "'`project_runtime_parent_composition` readback prove effective extent at speed two with 30 and 30000/1001 fps. Direct actual Runtime acceptance/reopen/exact retry/inverse/redo/ABA passes in scalar-only, compound and separate-publication cases against normal official `/home/user/work/runtime` source `9f9b25c000485e919f30f1411831fe2d5a3c1316`, without schema overrides or sockets.
+
+Refused cases: different/static-independent `for`, string/object/boolean/nonfinite/nonpositive `for`, non-boolean dynamic `fixed_start`, non-null follow/anchor intentions (`on`, `until`, other existing relation guards), clip time maps/nesting/from_ms/to_ms, incompatible duration/duration_ms declarations, nontranslation occurrence maps, differing child fps, occurrence half-open/frame-boundary overflow, changed captured basis, intervening writes (including unchanged and ABA), and surviving later dependencies. Asset/transition SET and all other previous bounded refusals remain unchanged. Dynamic anchors have not been widened.
+
+Absolute successor tests:
+
+- `/home/user/work/wt/agt-m2-hold-after-move/tests/editing_conformance/test_recipe_clip_scalar_fields.py`
+- `/home/user/work/wt/agt-m2-hold-after-move/tests/sdk/test_timeline_clip_scalar_provider.py`
+- `/home/user/work/wt/agt-m2-hold-after-move/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py`
+
+The no-`for` App golden remains byte-for-byte unchanged at `/home/user/work/wt/agt-m2-hold-after-move/tests/editing_conformance/fixtures/recipe_m2_app_clip_scalar_fields.json` (SHA-256 `8bb75e23c10c9677635d85f33f219b7f1b2d89baf481e3b7ed21f425b76f0c06`). Successor source schema `/home/user/work/wt/agt-m2-hold-after-move/astrid/core/timeline/schema/edit-command.schema.json` remains SHA-256 `cdab9bf609b901fab591a45e262719e05945435b8e1b260d109f2538a509be24`. These identical bytes do not qualify a replacement official artifact. Exact commands/results and remaining limits are in `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-hold-after-move/notes/report.md`.
+MD' in /home/user/work/wt/agt-m2-hold-after-move
+ succeeded in 0ms:
+codex
+The targeted regression run passed: 486 tests. A final provider run passed all 15 tests, including two added checks that reject a captured hold edit after its basis changes. The schema and App golden hashes are unchanged. I’m writing the report and commit messages; M2 integration remains held.
+
+exec
+/bin/bash -lc "mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-hold-after-move/notes
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-hold-after-move/notes/report.md <<'MD'
+# Source-hold after native fixed move
+
+Completed in "'`/home/user/work/wt/agt-m2-hold-after-move`, base `7b54ca92`. M2 integration remains HELD. No commits, merges, installs, network/browser runs, artifact changes or pin changes performed.
+
+## Change and precedence evidence
+
+Reproduced the original failure for plain parent and occurrence fixtures: hold=2, speed=2; native move writes fixed_start=true and for=1; capture of hold=4 raises `CommandError: clip.set hold does not support for`.
+
+Main'"'s "'`clip_source_duration` explicitly gives numeric hold precedence over from/to; `clip_timeline_duration` divides by existing speed. Main'"'s authoring compiler preserves the authored leaves; its Runtime parent projection consumes this same helper. There is no contradictory precedence to escalate. Tests compile and reopen the emitted closure, then assert projected start, effective duration and frame endpoint at 30 and 30000/1001 fps, including speed two and a surviving different source window.
+
+The handler now permits positive numeric "'`for` only when it agrees with the old `_duration` result, then records writes to each existing agreeing declaration at raw/app/app.astrid scope using the new `_duration` result. It creates no containers/declarations. Boolean fixed_start is preserved; dynamic values refuse. All existing timing/boundary guards remain. Product diff: 17 additions, 4 deletions in one file.
+
+Coverage proves move→hold SET/CLEAR in parent and occurrence fixtures; same batch versus separate acceptance; unchanged/ABA duration writes; generic inverse/redo through repeated own writes; disjoint parameter and shared-occurrence preservation; original captured command preservation after acknowledgement/rebase; changed-basis refusal; and refusal to undo a move while its later hold edit survives. Existing original App golden assertions still pass. No passing behavior test was weakened, skipped, deleted or marked expected-to-fail.
+
+## Verification
+
+Run from the worktree, using dependency-only shared venv and this worktree'"'s code:
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/timeline/test_inverses.py tests/packs/timeline/test_cli_commit_move.py
+```
+
+**486 passed in 37.82s.** Two further changed-basis tests were then added; final provider-file verification:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_clip_scalar_provider.py
+```
+
+**15 passed in 3.24s.** Only the new tests and a product comment changed after the broader targeted run.
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+```
+
+**3 passed in 5.61s.** Actual RuntimeService/RealmStore, API-ingested media, normal official validation, no schema substitution, no sockets. Runtime HEAD: `9f9b25c000485e919f30f1411831fe2d5a3c1316`. Covers existing scalar-only case plus compound move→hold and separate accepted commands, persisted reload/reopen, exact idempotent retry, inverse/redo, ABA refusal. Provider tests separately use the pre-existing detached ABI fixture; they are not presented as actual Runtime evidence.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_clip_scalar_commands.py
+git diff --check
+```
+
+**Passed.** During test development, newly added fixture tests initially failed because their app containers were absent (3 failures), and a new provider assertion initially used the wrong records envelope (2 failures). Both test-construction mistakes were corrected; final commands above are green.
+
+## Contract, decisions and remaining work
+
+Updated the requested absolute contract with successor source, exact supported/refused cases and immutable schema/golden hashes:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-clip-scalar-contract.md`.
+
+Schema SHA-256 remains `cdab9bf609b901fab591a45e262719e05945435b8e1b260d109f2538a509be24`; App golden remains `8bb75e23c10c9677635d85f33f219b7f1b2d89baf481e3b7ed21f425b76f0c06`.
+
+Routine bounded decisions: synchronize all existing agreeing `for` declarations rather than add fields or rewrite containers; reuse `_duration` and its comparison tolerance; continue refusing incompatible duration/duration_ms codecs rather than rewrite them; permit only boolean static fixed_start. No settled-plan deviation.
+
+No blockers. Full suites/make check, browsers/App journeys, and composed successor artifact qualification were not run, as instructed. No schema/DTO/ABI/artifact/pin changed. Recommend orchestrator review and successor-source composition when authorized; retain the Bundle 2 freeze and M2 integration hold. Both `commit-msg` and `commit-msg.txt` are ready in this worker'"'s shared directory for the harness.
+MD
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-hold-after-move/commit-msg <<'MSG'
+fix(timeline): compose source hold edits with native fixed moves
+
+Record updates to existing static for declarations only when they agree
+with the prior effective source duration. Preserve fixed placement and
+source windows, and keep independent or dynamic timing intent refused.
+
+Cover parent and occurrence move/hold batches, accepted-command handoff,
+compiler projection, boundary guards, unchanged writes, ABA and guarded
+inverse/redo. Preserve the existing App scalar golden and schema bytes.
+MSG
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-hold-after-move/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-hold-after-move/commit-msg.txt
+python3 - <<'PY'
+from pathlib import Path
+import shutil
+cache = Path('.pytest_cache')
+if cache.exists():
+    shutil.rmtree(cache)
+PY
+git diff --check
+git diff --stat
+git status --short --untracked-files=all" in /home/user/work/wt/agt-m2-hold-after-move
+ succeeded in 907ms:
+ astrid/sdk/timeline/_clip_scalar_commands.py       |  21 +++-
+ .../test_commit_runtime_clip_scalar_fields.py      |  21 +++-
+ .../test_recipe_clip_scalar_fields.py              | 116 +++++++++++++++++++++
+ tests/sdk/test_timeline_clip_scalar_provider.py    |  76 ++++++++++++++
+ 4 files changed, 228 insertions(+), 6 deletions(-)
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+ M tests/editing_conformance/test_recipe_clip_scalar_fields.py
+ M tests/sdk/test_timeline_clip_scalar_provider.py
+
+codex
+Implemented move→sourcehold compatibility with recorded updates to matching static `for` leaves. Independent/dynamic timing still refuses; schema and App golden remain unchanged.
+
+- Targeted regressions: **486 passed**
+- Final provider tests: **15 passed**
+- Actual Runtime cases: **3 passed**
+- Ruff and diff checks passed
+
+[Report with exact commands and decisions](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-hold-after-move/notes/report.md)
+
+Contract and both commit-message files are written. No blockers. Full suites were not run, as instructed; M2 integration remains held for orchestrator review.
+tokens used
+117,918
+Implemented move→sourcehold compatibility with recorded updates to matching static `for` leaves. Independent/dynamic timing still refuses; schema and App golden remain unchanged.
+
+- Targeted regressions: **486 passed**
+- Final provider tests: **15 passed**
+- Actual Runtime cases: **3 passed**
+- Ruff and diff checks passed
+
+[Report with exact commands and decisions](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-hold-after-move/notes/report.md)
+
+Contract and both commit-message files are written. No blockers. Full suites were not run, as instructed; M2 integration remains held for orchestrator review.

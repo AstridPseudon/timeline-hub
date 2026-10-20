@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-d13-regen commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-d13-regen commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-unify commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-a610-triage commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-catalog-text-replay-fix commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-review-union-013 commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-review-union-013 commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-viewing-extractions-current commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-authority-compose commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-authority-compose commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-commit-path-dedup commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-commit-path-dedup commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-legacy-final-review commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-cutover-route-tests commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/orch-fallback-smoke commit-msg
+
+exec
+/bin/bash -lc "git status --short --untracked-files=all; find . -maxdepth 2 -type d \\( -name __pycache__ -o -name .pytest_cache \\) -print | head -40" in /home/user/work/wt/agt-review-ag01-runtime-history-cut
+ succeeded in 324ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..020a6e0445ec827f3e0517618f255f128cbed95a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg.txt
+@@ -0,0 +1,3 @@
++test: review AG01 runtime history consumer cut
++
++Record the bounded accepted-history consumer review and focused evidence.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f9ec7465b1bdfc44b3f5287da5f8e4a65772b053
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md
+@@ -0,0 +1,91 @@
++# AG01 runtime-history consumer cut review
++
++## Decision
++
++**APPROVE** the bounded cut at Agent `tl/agt-review-ag01-runtime-history-cut`,
++HEAD `165f4616` (`tl/agt-m2-ag01-runtime-history-preservation`). This review
++found no reason to widen or alter the cut. It removes the remaining local
++accepted-publication journal append and changes the authenticated native-sheet
++basis lookup to `RuntimeRevisions` plus exact Runtime revision opens.
++
++The cut is minimal and scoped to:
++
++- `astrid/sdk/timeline/publish.py`: accepted publication is no longer duplicated
++  in the local journal.
++- `astrid/sdk/timeline_sheet.py`: with a client, older sheet bases come only
++  from the Runtime revision list and exact `Checkout.open` calls; local
++  snapshots/history are not accepted authority.
++- The corresponding regression tests in
++  `tests/sdk/test_timeline_checkout_history.py`,
++  `tests/sdk/test_timeline_checkout_history_runtime.py`, and
++  `tests/sdk/test_timeline_journal.py`.
++
++## Consumer safety audit
++
++- Draft `undo`/`redo` still use the local history/redo directories only for
++  unsent edits at the current `base_parent`; after publish/reset or a retained
++  restore, old steps stop at the accepted boundary and raise a visible
++  `no unsent draft edit` refusal. New local edits remain undoable/redoable.
++- Accepted undo/redo still uses `TimelineSession` and the durable outbox. The
++  exact publication IDs, request body, idempotency key, pending suffix, and
++  in-flight checkpoint survive a lost acknowledgement and reload.
++- Sheet basis lookup with a client first permits the current/base bundle, then
++  reads Runtime-owned accepted history and opens the matching revision. It no
++  longer consults `_exported` or local step files, so local draft state cannot
++  cross an accepted boundary silently. A Runtime history/read failure becomes a
++  visible `SheetError`; no forged local marker is accepted.
++- The Runtime adapter validates scoped history head pairs, publication ancestry,
++  revision identity, required records/receipt/source fields, fixed-head paging,
++  and exact closure reads. The actual Runtime exposes the authenticated
++  `/v1/projects/{project_id}/timelines/{timeline_id}/commits` route and
++  `revision_closure` through the existing `timeline_commit_history` store; no
++  Agent-side accepted-history table, endpoint, or authority was added.
++- Existing semantic assertions remain intact: legacy/unknown source handling,
++  visible refusal with draft preservation, native-equivalent success, opaque
++  values/clears, publication ancestry, and ABA/intervening-write protections
++  were not weakened. The old local DRAFT journal and D13 outbox
++  accepted-receipt/pending-render checkpoints remain in place.
++- The old SDK publisher body remains legacy behavior outside this one consumer;
++  this review does not claim AG01 is a whole-source deletion.
++
++## Exact evidence
++
++Local focused tests, run directly with the shared Agent venv and no pytest
++cache/bytecode writes:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_publication_retry.py tests/sdk/test_timeline_journal.py tests/sdk/test_timeline_native_checkout.py
++47 passed in 3.75s
++
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_revisions.py tests/sdk/test_timeline_sheet_native.py
++71 passed in 3.41s
++```
++
++Central live-runtime lane (required because it starts a daemon/client):
++
++```text
++env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
++12 passed in 42.16s
++```
++
++The generic central `targeted` request was also recorded: it ran the runtime
++file without `-m integration`, deselected both tests, and exited 5 (`2
++deselected in 0.26s`). It was not treated as product evidence. The corrected
++named integration lane above ran both AG01 runtime tests with no skips/xfails.
++
++Source context: Agent worktree HEAD `165f4616`; the central snapshot was
++`3190b22e8f5425077a8a788ef9e69c181ade65d`; `runtime.lock.json` pins Runtime
++`2c4ac180c2220bdad966bc01e95ad230e99ce26a`, which exists in the Runtime
++checkout. The integration command’s shared Runtime path was clean at
++`285a3b437c69d20e2af281c3d7fdd212cb784d1a`; the test helper selected the
++vendored lock commit for the daemon/import closure. No full suite or matrix was
++run.
++
++## Dependencies / handoff
++
++Integration remains gated by the owner’s historical-audio preservation and
++registered-completion requirements. The cut also depends on the existing
++Runtime commits/revision closure and authenticated local door; it does not add
++or replace either. Recommended next step: merge this bounded cut, then retain
++the owner’s historical-audio and registered-completion gates in the integration
++queue.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- artifacts ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/{report.md,commit-msg.txt,DONE}; printf '%s\\n' '--- report ---'; sed -n '1,280p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md; printf '%s\\n' '--- worktree status ---'; git status --short --untracked-files=all" in /home/user/work/wt/agt-review-ag01-runtime-history-cut
+ succeeded in 228ms:
+--- artifacts ---
+-rw-r--r-- 1 root root    0 Oct 20 17:47 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/DONE
+-rw-r--r-- 1 root root  122 Oct 20 17:47 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg.txt
+-rw-r--r-- 1 root root 4969 Oct 20 17:47 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md
+--- report ---
+# AG01 runtime-history consumer cut review
+
+## Decision
+
+**APPROVE** the bounded cut at Agent `tl/agt-review-ag01-runtime-history-cut`,
+HEAD `165f4616` (`tl/agt-m2-ag01-runtime-history-preservation`). This review
+found no reason to widen or alter the cut. It removes the remaining local
+accepted-publication journal append and changes the authenticated native-sheet
+basis lookup to `RuntimeRevisions` plus exact Runtime revision opens.
+
+The cut is minimal and scoped to:
+
+- `astrid/sdk/timeline/publish.py`: accepted publication is no longer duplicated
+  in the local journal.
+- `astrid/sdk/timeline_sheet.py`: with a client, older sheet bases come only
+  from the Runtime revision list and exact `Checkout.open` calls; local
+  snapshots/history are not accepted authority.
+- The corresponding regression tests in
+  `tests/sdk/test_timeline_checkout_history.py`,
+  `tests/sdk/test_timeline_checkout_history_runtime.py`, and
+  `tests/sdk/test_timeline_journal.py`.
+
+## Consumer safety audit
+
+- Draft `undo`/`redo` still use the local history/redo directories only for
+  unsent edits at the current `base_parent`; after publish/reset or a retained
+  restore, old steps stop at the accepted boundary and raise a visible
+  `no unsent draft edit` refusal. New local edits remain undoable/redoable.
+- Accepted undo/redo still uses `TimelineSession` and the durable outbox. The
+  exact publication IDs, request body, idempotency key, pending suffix, and
+  in-flight checkpoint survive a lost acknowledgement and reload.
+- Sheet basis lookup with a client first permits the current/base bundle, then
+  reads Runtime-owned accepted history and opens the matching revision. It no
+  longer consults `_exported` or local step files, so local draft state cannot
+  cross an accepted boundary silently. A Runtime history/read failure becomes a
+  visible `SheetError`; no forged local marker is accepted.
+- The Runtime adapter validates scoped history head pairs, publication ancestry,
+  revision identity, required records/receipt/source fields, fixed-head paging,
+  and exact closure reads. The actual Runtime exposes the authenticated
+  `/v1/projects/{project_id}/timelines/{timeline_id}/commits` route and
+  `revision_closure` through the existing `timeline_commit_history` store; no
+  Agent-side accepted-history table, endpoint, or authority was added.
+- Existing semantic assertions remain intact: legacy/unknown source handling,
+  visible refusal with draft preservation, native-equivalent success, opaque
+  values/clears, publication ancestry, and ABA/intervening-write protections
+  were not weakened. The old local DRAFT journal and D13 outbox
+  accepted-receipt/pending-render checkpoints remain in place.
+- The old SDK publisher body remains legacy behavior outside this one consumer;
+  this review does not claim AG01 is a whole-source deletion.
+
+## Exact evidence
+
+Local focused tests, run directly with the shared Agent venv and no pytest
+cache/bytecode writes:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_publication_retry.py tests/sdk/test_timeline_journal.py tests/sdk/test_timeline_native_checkout.py
+47 passed in 3.75s
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_revisions.py tests/sdk/test_timeline_sheet_native.py
+71 passed in 3.41s
+```
+
+Central live-runtime lane (required because it starts a daemon/client):
+
+```text
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
+12 passed in 42.16s
+```
+
+The generic central `targeted` request was also recorded: it ran the runtime
+file without `-m integration`, deselected both tests, and exited 5 (`2
+deselected in 0.26s`). It was not treated as product evidence. The corrected
+named integration lane above ran both AG01 runtime tests with no skips/xfails.
+
+Source context: Agent worktree HEAD `165f4616`; the central snapshot was
+`3190b22e8f5425077a8a788ef9e69c181ade65d`; `runtime.lock.json` pins Runtime
+`2c4ac180c2220bdad966bc01e95ad230e99ce26a`, which exists in the Runtime
+checkout. The integration command’s shared Runtime path was clean at
+`285a3b437c69d20e2af281c3d7fdd212cb784d1a`; the test helper selected the
+vendored lock commit for the daemon/import closure. No full suite or matrix was
+run.
+
+## Dependencies / handoff
+
+Integration remains gated by the owner’s historical-audio preservation and
+registered-completion requirements. The cut also depends on the existing
+Runtime commits/revision closure and authenticated local door; it does not add
+or replace either. Recommended next step: merge this bounded cut, then retain
+the owner’s historical-audio and registered-completion gates in the integration
+queue.
+--- worktree status ---
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- comparable review task metadata ---'; for d in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-element-retain /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards; do echo \""'$d"; sed -n '"'1,80p' \""'$d/brief.md" 2>/dev/null || true; done' in /home/user/work/wt/agt-review-ag01-runtime-history-cut
+ succeeded in 0ms:
+--- comparable review task metadata ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-element-retain
+Read-only ownerreview98c38a7c nativeWC4+element-only retaineddeclaration, predecessor167d0505/finalreport. Check sameidentity actualpackowner/id/kind; exactadmitteddeclaration retained withoutphantomparamswrite; no inline/localdisk authority; empty/absentparams; scalarholdsourceunits; mirrorsderived; opaque preservation; publicreturn/receipt/key/errors. Replay/inverse samepin afterV2/removal/restart. Verify9direct/34central evidence and missingnegatives.
+Optional schema_source needsnormalgeneration. Compare candidate schema to FROZEN0a0ac7ba/30da AND current: name exact additiveunion required; don'tapprove droppingproducerdefs because basepredatesfreeze. Do not edit product/schema/pin, no pairgreenclaim. Flat verdict design/agent-review-element-retain-current.md with exactpaths/conflicts/concretegaps. No full.
+Never request suite full*; only targeted/named. Shared deps READ-ONLY; overlays own. Read PLAN/AGENTS. No push/integration/ledger edits. Outputs report/commit-msg/DONE or BLOCKED under workers/agt-review-element-retain.
+
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards
+Read-only review of 5c6467da (agt-m2-auto-placement-guards) against 931d7ec5, orchestrator 08:46 rule and App design/app-automatic-capture-contract-review.md. Does it actually guard EVERY read (not merely clip rows): output fps, occurrence start/home lane, current anchor membership/absence, selected track validity and timing? Test stale changes 390→391, 450→480, 510→540, retarget ALL add-media branches, missing-anchor saved fallback and preferred lane. Check public added consumed args cannot cause refreshed guards. Verify saved target invalid refuses/re-evaluation semantics, 5/5/4s and short video impact. Need concrete counterexamples for each blocker, otherwise approve with exact targeted evidence. Whole-row guards may overconflict unrelated volume: classify minimal safe fix, do not invent another recorder. No product edits; report flat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-auto-guards-current.md. If a tiny test-only repro is needed keep under worker scratch, not repo. No full. Runtime generation is pending and MUST be stated; cannot call this actual paired qualification.
+Base tl/agt-m2-auto-placement-guards. Shared dependency folders READ-ONLY; overlays/caches own worker only. Never request suite full*; only targeted/named suites. No push/integration edits. Write report.md and commit-msg (code changes only) under workers/agt-review-auto-guards; DONE when task complete or BLOCKED with reason. Read PLAN/repo AGENTS.
+
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..020a6e0445ec827f3e0517618f255f128cbed95a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg
+@@ -0,0 +1,3 @@
++test: review AG01 runtime history consumer cut
++
++Record the bounded accepted-history consumer review and focused evidence.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..020a6e0445ec827f3e0517618f255f128cbed95a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/commit-msg.txt
+@@ -0,0 +1,3 @@
++test: review AG01 runtime history consumer cut
++
++Record the bounded accepted-history consumer review and focused evidence.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f9ec7465b1bdfc44b3f5287da5f8e4a65772b053
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md
+@@ -0,0 +1,91 @@
++# AG01 runtime-history consumer cut review
++
++## Decision
++
++**APPROVE** the bounded cut at Agent `tl/agt-review-ag01-runtime-history-cut`,
++HEAD `165f4616` (`tl/agt-m2-ag01-runtime-history-preservation`). This review
++found no reason to widen or alter the cut. It removes the remaining local
++accepted-publication journal append and changes the authenticated native-sheet
++basis lookup to `RuntimeRevisions` plus exact Runtime revision opens.
++
++The cut is minimal and scoped to:
++
++- `astrid/sdk/timeline/publish.py`: accepted publication is no longer duplicated
++  in the local journal.
++- `astrid/sdk/timeline_sheet.py`: with a client, older sheet bases come only
++  from the Runtime revision list and exact `Checkout.open` calls; local
++  snapshots/history are not accepted authority.
++- The corresponding regression tests in
++  `tests/sdk/test_timeline_checkout_history.py`,
++  `tests/sdk/test_timeline_checkout_history_runtime.py`, and
++  `tests/sdk/test_timeline_journal.py`.
++
++## Consumer safety audit
++
++- Draft `undo`/`redo` still use the local history/redo directories only for
++  unsent edits at the current `base_parent`; after publish/reset or a retained
++  restore, old steps stop at the accepted boundary and raise a visible
++  `no unsent draft edit` refusal. New local edits remain undoable/redoable.
++- Accepted undo/redo still uses `TimelineSession` and the durable outbox. The
++  exact publication IDs, request body, idempotency key, pending suffix, and
++  in-flight checkpoint survive a lost acknowledgement and reload.
++- Sheet basis lookup with a client first permits the current/base bundle, then
++  reads Runtime-owned accepted history and opens the matching revision. It no
++  longer consults `_exported` or local step files, so local draft state cannot
++  cross an accepted boundary silently. A Runtime history/read failure becomes a
++  visible `SheetError`; no forged local marker is accepted.
++- The Runtime adapter validates scoped history head pairs, publication ancestry,
++  revision identity, required records/receipt/source fields, fixed-head paging,
++  and exact closure reads. The actual Runtime exposes the authenticated
++  `/v1/projects/{project_id}/timelines/{timeline_id}/commits` route and
++  `revision_closure` through the existing `timeline_commit_history` store; no
++  Agent-side accepted-history table, endpoint, or authority was added.
++- Existing semantic assertions remain intact: legacy/unknown source handling,
++  visible refusal with draft preservation, native-equivalent success, opaque
++  values/clears, publication ancestry, and ABA/intervening-write protections
++  were not weakened. The old local DRAFT journal and D13 outbox
++  accepted-receipt/pending-render checkpoints remain in place.
++- The old SDK publisher body remains legacy behavior outside this one consumer;
++  this review does not claim AG01 is a whole-source deletion.
++
++## Exact evidence
++
++Local focused tests, run directly with the shared Agent venv and no pytest
++cache/bytecode writes:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_publication_retry.py tests/sdk/test_timeline_journal.py tests/sdk/test_timeline_native_checkout.py
++47 passed in 3.75s
++
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_revisions.py tests/sdk/test_timeline_sheet_native.py
++71 passed in 3.41s
++```
++
++Central live-runtime lane (required because it starts a daemon/client):
++
++```text
++env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
++12 passed in 42.16s
++```
++
++The generic central `targeted` request was also recorded: it ran the runtime
++file without `-m integration`, deselected both tests, and exited 5 (`2
++deselected in 0.26s`). It was not treated as product evidence. The corrected
++named integration lane above ran both AG01 runtime tests with no skips/xfails.
++
++Source context: Agent worktree HEAD `165f4616`; the central snapshot was
++`3190b22e8f5425077a8a788ef9e69c181ade65d`; `runtime.lock.json` pins Runtime
++`2c4ac180c2220bdad966bc01e95ad230e99ce26a`, which exists in the Runtime
++checkout. The integration command’s shared Runtime path was clean at
++`285a3b437c69d20e2af281c3d7fdd212cb784d1a`; the test helper selected the
++vendored lock commit for the daemon/import closure. No full suite or matrix was
++run.
++
++## Dependencies / handoff
++
++Integration remains gated by the owner’s historical-audio preservation and
++registered-completion requirements. The cut also depends on the existing
++Runtime commits/revision closure and authenticated local door; it does not add
++or replace either. Recommended next step: merge this bounded cut, then retain
++the owner’s historical-audio and registered-completion gates in the integration
++queue.
+
+codex
+APPROVE — bounded AG01 cut reviewed; no product changes made.
+
+- Verified Runtime-owned history/revision closure, authenticated scope, draft boundary safety, outbox retry, undo/redo, and sheet recovery.
+- Tests:
+  - 47 focused tests passed.
+  - 71 revision/sheet tests passed.
+  - Central integration: 12 passed, no skips/xfails.
+- Generic targeted lane exited 5 due to deselection; corrected integration lane passed.
+- No full suite run.
+- Wrote [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md), commit messages, and `DONE`.
+- Integration remains gated by historical-audio preservation and registered-completion requirements.
+tokens used
+147,928
+APPROVE — bounded AG01 cut reviewed; no product changes made.
+
+- Verified Runtime-owned history/revision closure, authenticated scope, draft boundary safety, outbox retry, undo/redo, and sheet recovery.
+- Tests:
+  - 47 focused tests passed.
+  - 71 revision/sheet tests passed.
+  - Central integration: 12 passed, no skips/xfails.
+- Generic targeted lane exited 5 due to deselection; corrected integration lane passed.
+- No full suite run.
+- Wrote [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-ag01-runtime-history-cut/report.md), commit messages, and `DONE`.
+- Integration remains gated by historical-audio preservation and registered-completion requirements.

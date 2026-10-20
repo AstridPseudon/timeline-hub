@@ -1,0 +1,9 @@
+name=agt-m2-literal-media-main-codecs
+repo=agent
+base=tl/agt-m2-clip-split
+base_sha=3b03eee9
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-literal-media-main-codecs
+started=2026-10-20T01:19:10Z

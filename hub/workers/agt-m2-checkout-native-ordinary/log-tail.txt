@@ -1,0 +1,400 @@
+........................................................................ [ 52%]
+................................................................         [100%]
+136 passed in 16.94s
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-checkout-native-ordinary-identity-pin94114269-integration-1020103805-12999' in /home/user/work/wt/agt-m2-checkout-native-ordinary
+exec
+/bin/bash -lc 'git diff -- astrid/sdk/timeline/checkout.py; cat astrid/sdk/timeline/native_checkout.py' in /home/user/work/wt/agt-m2-checkout-native-ordinary
+ succeeded in 0ms:
+diff --git a/astrid/sdk/timeline/checkout.py b/astrid/sdk/timeline/checkout.py
+index 8565ce5d..0ddcc4e2 100644
+--- a/astrid/sdk/timeline/checkout.py
++++ b/astrid/sdk/timeline/checkout.py
+@@ -64,6 +64,18 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
+         self._mcache = None
+ 
+     # ---- open / save ------------------------------------------------------
++    @classmethod
++    def attach(cls, session):
++        """Edit a TimelineSession's original base and pending intent.
++
++        Bounded literal clip verbs queue durably before updating the preview.
++        Use ``flush()`` to accept them; unsupported verbs refuse explicitly.
++        Detached ``open``/``load``/``draft`` retain their existing behavior.
++        """
++        from astrid.sdk.timeline.native_checkout import AttachedCheckout
++
++        return AttachedCheckout(session)
++
+     @classmethod
+     def open(cls, project: str, timeline: str, *, revision_id: str | None = None, client: Any = None) -> "Checkout":
+         """Check out the current head (read-only until ``publish``)."""
+"""Bounded ordinary clip verbs over the existing durable command session."""
+from __future__ import annotations
+
+import copy
+
+from astrid.core.timeline import clip_fields
+from astrid.sdk import timeline_intent as intent
+
+from ._command_state import State, equal
+from ._common import AUDIO_KINDS, TIME_RE, TimelineEditError, _length_seconds, _r
+from .capture import move_intent, number, occurrence_start, rate
+from .checkout import Checkout
+from .commands import execute
+from .model import Clip, _is_formula_or_moment
+from .selection import Selection
+from .units import from_canvas
+
+
+def _held(*args, **kwargs):
+    raise TimelineEditError('this verb is held for attached checkouts; use bounded clip verbs and flush()')
+
+
+def _seconds(value):
+    if isinstance(value, str):
+        match = TIME_RE.fullmatch(value.strip())
+        if match:
+            return int(match.group(1) or 0) * 60 + float(match.group(2))
+    return number(value, 'literal timeline seconds')
+
+
+class AttachedCheckout(Checkout):
+    """A raw scoped preview, never flattened or published as a candidate."""
+
+    def __init__(self, session):
+        super().__init__({})
+        self.session = session
+        self._read_pending()
+
+    def _read_pending(self):
+        with self.session.outbox.locked():
+            state = self.session._state()
+        self.bundle = self.session._bundle(state)
+        self._preview = copy.deepcopy(self.bundle)
+        self.fps = float(rate(self.bundle['parent'].get('config', {}).get('output', {}).get('fps')))
+        self._mcache = None
+
+    def _unchanged_preview(self):
+        if not equal(self.bundle, self._preview):
+            raise TimelineEditError('unqueued local changes in attached checkout; reattach before editing')
+
+    def _queue(self, command):
+        self._unchanged_preview()
+        plans = []
+
+        def capture(state):
+            bundle = self.session._bundle(state)
+            if not equal(bundle, self._preview):
+                raise TimelineEditError('attached checkout basis changed; reattach before editing')
+            plan = execute(bundle, [command])
+            plans.append(plan)
+            return plan.commands
+
+        self.session._stage(capture)
+        # Only expose the candidate after the existing outbox's atomic write.
+        self.bundle = plans[0].bundle
+        self._preview = copy.deepcopy(self.bundle)
+        self._mcache = None
+
+    @property
+    def clips(self):
+        state = State(self.bundle)
+        owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in self.bundle['placements'])]
+        pool = [AttachedClip(self, owner, row['id']) for owner in owners
+                for row in state.collection(owner, 'clip')]
+        return Selection(sorted(pool, key=lambda clip: (clip.start, clip.id)), kind='clip', tl=self)
+
+    def clip(self, query, *, cut=None, near=None):
+        if cut is not None or near is not None:
+            _held()
+        # A raw scope ref is also accepted, but never inferred from a display ID.
+        matches = [clip for clip in self.clips if query in (clip.id, clip._ref)]
+        if len(matches) != 1:
+            raise TimelineEditError('attached checkout needs one exact clip ID or raw scoped clip reference')
+        return matches[0]
+
+    def flush(self, **options):
+        self._unchanged_preview()
+        result = self.session.flush(**options)
+        self._read_pending()
+        return result
+
+    def undo(self, publications, **options):
+        """Reverse accepted publications through the session's guarded inverse."""
+        self._unchanged_preview()
+        result = self.session.undo(publications, **options)
+        self._read_pending()
+        return result
+
+    save = publish = edit = step = redo = discard = adopt = _held
+    cut = cut_picture = voice = sequence = pin_narration = _held
+    add = add_cut = set_cut_note = ripple_delete = close_gap = insert_time = _held
+    insert_line = remove_line = apply_script = fill_slot = fill_standins = _held
+    declare_gaps = reflow = retime = resolve = film_end = replace_asset = _held
+
+    @property
+    def cuts(self):
+        _held()
+
+
+class AttachedClip(Clip):
+    def __init__(self, checkout, owner, identity):
+        self._tl, self.shot_id = checkout, owner
+        self._ref = owner + '/clip:' + identity
+
+    @property
+    def data(self):
+        # Handles remain live after preview replacement, including materialization.
+        return State(self._tl.bundle).entity(self._ref)
+
+    @property
+    def at(self):
+        return self.data.get('at', self.data.get('at_ms', 0) / 1000)
+
+    @property
+    def start(self):
+        state = State(self._tl.bundle)
+        return self.at + (0 if self.shot_id == 'parent' else occurrence_start(state.occurrence(self.shot_id)))
+
+    @property
+    def is_audio(self):
+        tracks = State(self._tl.bundle).config(self.shot_id).get('tracks', [])
+        return self.track in AUDIO_KINDS or any(
+            row['id'] == self.track and row.get('kind') in AUDIO_KINDS for row in tracks)
+
+    def _command(self, op, args):
+        command = {'schema_version': 1, 'op': op, 'version': '1', 'select': self._ref, 'args': args}
+        if op == 'clip.move':
+            command['intent'] = move_intent(self._ref)
+        self._tl._queue(command)
+        return self
+
+    def on(self, moment):
+        if intent.cut_of(self.data):
+            _held()
+        return self._command('clip.move', {'on': _seconds(moment)})
+
+    def enter_at(self, when, *, offset=0.0, anchor=True):
+        return self.on(_seconds(when) + number(offset, 'offset'))
+
+    def nudge(self, seconds=0.0, *, frames=0):
+        if intent.on(self.data):
+            _held()
+        return self.on(self.start + number(seconds, 'seconds') + number(frames, 'frames') / self._tl.fps)
+
+    def trim(self, in_s=None, out_s=None):
+        return self._command('clip.trim', {'in_s': in_s, 'out_s': out_s})
+
+    def set_duration(self, seconds):
+        # Public duration is playback seconds; the native scalar is source hold.
+        speed = self.data.get('speed')
+        duration = self._tl.quantize(number(seconds, 'duration', positive=True))
+        hold = _r(duration * number(1 if speed is None else speed, 'speed', positive=True))
+        if self.data.get('from') is not None or self.data.get('to') is not None:
+            if (self.data.get('from') is None or self.data.get('to') is None
+                    or 'hold' not in self.data):
+                _held()
+            return self.trim(out_s=self.data['from'] + hold)
+        return self._command('clip.set', {'values': {'hold': hold}, 'clear': []})
+
+    def hold_for(self, seconds):
+        return self.set_duration(_length_seconds(seconds, self._tl.fps))
+
+    for_ = hold_for
+
+    def extend(self, seconds=0.0, *, frames=0):
+        return self.set_duration(self.duration + number(seconds, 'seconds') + number(frames, 'frames') / self._tl.fps)
+
+    def clear_asset(self):
+        return self._command('clip.set', {'values': {}, 'clear': ['asset']})
+
+    def set(self, **params):
+        allow_new = params.pop('_allow_new', False)
+        selected = self.data.get('elementRef') or self.data.get('element_ref')
+        if isinstance(selected, dict) and selected.get('packId'):
+            # Session queue currently has no exact selected-schema input reader.
+            # Never substitute the locally installed pack or caller-inline schema.
+            raise TimelineEditError('selected pack params require exact schema inputs; attached setter is held')
+        if any('.' in key or '[' in key or _is_formula_or_moment(value) for key, value in params.items()):
+            _held()
+        if intent.formulas(self.data):
+            _held()
+        from astrid.sdk.timeline_address import element_schema
+
+        declared = element_schema(self.element).get('properties', {})
+        if any(key not in declared and (key in clip_fields.FIELDS or clip_fields.is_reserved(key))
+               for key in params):
+            _held()
+        if not allow_new:
+            self._check_param_keys(list(params))
+        if not params:
+            return self
+        return self._command('clip.set-params', {
+            'values': {key: from_canvas(self.element, key, value) for key, value in params.items() if value is not None},
+            'clear': [key for key, value in params.items() if value is None],
+        })
+
+    def set_param(self, path, value):
+        return self.set(**{path: value}, _allow_new=True)
+
+    until = end_at = slip = keep = remove = remove_layer = _held
+    set_look = tag = move_to_cut = set_track = swap_asset = set_beats = keyframe_at = _held
+
+exec
+/bin/bash -lc 'ls -ld .mypy_cache .ruff_cache .pytest_cache 2>/dev/null; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-checkout-native-ordinary-identity-pin94114269-integration-1020103805-12999/status; tail -45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-checkout-native-ordinary-identity-pin94114269-integration-1020103805-12999/log.txt; git diff --check' in /home/user/work/wt/agt-m2-checkout-native-ordinary
+ succeeded in 357ms:
+pass
+......                                                                   [100%]
+6 passed in 21.81s
+
+codex
+The final central lane passed all 6 tests, including the new renderer-off move → trim → lost ACK → Runtime restart → exact retry → guarded undo flow. It also verified that a relevant basis change retains the dependent trim as a conflict, while a disjoint edit permits it, and that captured parameter commands work through CLI ingress.
+
+I’m writing the handoff with the supported path, exact results, and remaining callers. This slice leaves legacy publish/history and unsupported families in place.
+
+ succeeded in 30015ms:
+test agt-m2-checkout-native-ordinary-identity-pin94114269-integration-1020103805-12999: pass exit=0 in 24s — identity-pin94114269-integration on agt-m2-checkout-native-ordinary (agent tree ed4a64b5364294ebb297f681791644eff670869d)
+cmd: test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_native_checkout.py
+counts: 6 passed in 21.81s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-checkout-native-ordinary-identity-pin94114269-integration-1020103805-12999/log.txt ---
+......                                                                   [100%]
+6 passed in 21.81s
+
+exec
+/bin/bash -lc "mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-checkout-native-ordinary/notes
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-checkout-native-ordinary/notes/report.md <<'EOF'
+# Bounded native checkout bridge
+
+Implemented one explicit public Python path: "'`Checkout.attach(TimelineSession.open(...))`. It retains the original immutable base and pending prefix, captures through the existing registry, and persists with `TimelineSession._stage` before replacing its local preview. It never publishes a candidate, infers commands from a diff, merges a current head locally, or creates a second outbox. The existing CLI `edit move` and `edit commands-file` remain native ingress; the new real-provider test submits an attached setter'"'s exact captured commands through commands-file.
+
+## Changed paths and size
+
+- "'`astrid/sdk/timeline/checkout.py`: 12-line public attach entry point; existing open/load/draft and legacy publish/history/transaction code untouched.
+- `astrid/sdk/timeline/native_checkout.py`: thin attached Checkout/Clip views, 211 product lines. Targets are constructed from raw parent collection IDs and raw occurrence rows, resolved by the existing State/source_mapping bindings. No display ID or colon parsing. Reused occurrence sources are isolated by the existing materializer.
+- `tests/sdk/test_timeline_native_checkout.py`: 18 targeted adapter cases.
+- `tests/editing_conformance/test_commit_runtime_native_checkout.py`: 3 real-provider cases reusing the existing film/renderer-off/daemon/wire helpers.
+
+Product delta: +223 lines, no deleted writer claim. No changes to model.py, edits.py, sync.py, publish.py, transaction.py, restore, schema, Runtime, integration worktrees, shared dependencies, or ledgers.
+
+## Public behavior and boundaries
+
+Supported attached verbs: literal `on`/`enter_at`/unanchored `nudge`; parent literal-media `trim`; `set_duration`/`hold_for`/`for_`/`extend` where native recipes can represent them; `clear_asset`; literal top-level `set`/`set_param` with original clear semantics (`None` removes presence), built-in validation and canvas-unit conversion. Parent source-window duration changes use the existing trim command, keeping `to - from == hold` and applying playback speed; windowless holds remain windowless. Public duration helpers retain existing quantization and source precision. Same-value calls still capture writes. `flush` accepts via TimelineSession; `undo(publication_ids)` delegates to its guarded inverse. Unsupported shapes refuse before any outbox/preview change. Direct dict edits cannot be flushed: they cause an explicit unqueued-local-change refusal. Held/stale handles must reattach, rather than refreshing guards from a newer head.
+
+The attached path explicitly holds anchors/cut-relative movement, nested/formula params, look/transition authoring, track changes, slip, add/swap/remove, narration, sheets, structural/ripple/sequence/reflow families, local save/edit transactions and snapshot publish/redo. Occurrence trim and source-window duration changes are held because existing clip.trim is parent-only. A window without an authored hold is held for duration helpers rather than changing its shape.
+
+Selected project-pack params are deliberately held before any local schema lookup: TimelineSession'"'s queue does not yet provide the exact selected retained-schema/snapshot reader used by the provider. No caller-inline schema input or locally installed pack is substituted. This is a remaining qualification gate, not selected-schema support.
+
+## Evidence
+
+All local commands ran from "'`/home/user/work/wt/agt-m2-checkout-native-ordinary`, with shared dependencies read-only and pytest caches disabled.
+
+1. Final targeted adapter/session/provider/media/params lane:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_native_checkout.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_clip_trim_provider.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_media_verbs.py tests/sdk/test_timeline_param_values.py
+```
+
+**136 passed in 16.94s.** Earlier intermediate executions had test-fixture/assertion issues, then 135 passed; the final count includes the reserved-look refusal case. No existing positive test was weakened, skipped, deleted or re-marked.
+
+2. Neighboring conformance/transaction/sheet lane:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_sheet.py
+```
+
+**290 passed in 19.43s.**
+
+3. Final central real-provider/restart lane:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-checkout-native-ordinary identity-pin94114269-integration --files tests/editing_conformance/test_commit_runtime_native_checkout.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-checkout-native-ordinary-identity-pin94114269-integration-1020103805-12999
+```
+
+**6 passed in 21.81s.** Result directory: `$ORCH/tests/agt-m2-checkout-native-ordinary-identity-pin94114269-integration-1020103805-12999/`. Runtime is the exact `94114269d1ce23ab3224d7eca5a85138ce2b5fed` pinned by this checkout'"'s runtime.lock.json, with its existing named suite's SHA check. Proves attached move -> dependent trim authored on unacked A -> durable exact body/key across real Runtime restart -> A ACK before fresh-key B submission; disjoint C accepted vs relevant basis conflict preserving B; public reload and guarded inverse/redo; unchanged params get a distinct accepted publication and block old inverse; clear/undo; exact captured commands accepted by CLI; renderer tripwires active. Existing identity tests also pass. All localhost work was central.
+
+4. Lint/whitespace:
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/native_checkout.py tests/sdk/test_timeline_native_checkout.py tests/editing_conformance/test_commit_runtime_native_checkout.py --no-cache
+git diff --check
+```
+
+**Both passed.**
+
+## Failed or unavailable checks (not hidden)
+
+- Initial central `request-test agt-m2-checkout-native-ordinary commit-integration --files tests/editing_conformance/test_commit_runtime_native_checkout.py`, wait ID `agt-m2-checkout-native-ordinary-commit-integration-1020103357-23390`: **5 failed in 4.61s**, before edits, including the 2 existing M1 tests. Moving `/home/user/work/runtime` health digest `3e5e78d0...` differs from this checkout'"'s client "'`8d7f2987...`. Used the existing official pinned lane rather than modifying contract checks or shared dependencies.
+- Broader pinned central `request-test agt-m2-checkout-native-ordinary pin94114269-integration --files tests/editing_conformance/test_commit_runtime_native_checkout.py`, wait ID `agt-m2-checkout-native-ordinary-pin94114269-integration-1020103526-28550`: **42 passed / 7 failed in 90.00s**. Two new test assertions incorrectly compared SDK-enriched result to raw HTTP response; fixed to assert exact raw response, receipt, retry body/key and SDK publication ID, then both pass in the final central run. Five untouched `tests/stage1/test_runtime_client_cutover.py` tests fail because direct shot writes return `retired_route` (first test then subscripts absent data). These are outside this slice; no separate baseline execution is claimed. Existing M1 tests passed in this pinned run.
+- A narrowing attempt `request-test ... pin94114269-integration --files '"'tests/editing_conformance/test_commit_runtime_native_checkout.py -k attached'"'` was rejected by the service (`bad file arg -k`), **no tests executed**, ID `...-1020103728-18727`. Replaced with the existing narrower identity-pin named lane, no service/config edits.
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m scripts.reshape.import_cycles --baseline scripts/reshape/baselines/import_cycles.json`: **exit 1**, reports `rendering <-> timeline` beyond saved baseline. This checker scans only `astrid/core`, which this change does not modify: `git diff --quiet HEAD -- astrid/core` returned 0 and `git ls-files --others --exclude-standard astrid/core` returned empty. No cycle introduced in its scanned graph by this task.
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_mypy_baseline`: **exit 2**, missing yaml stubs in shared environment and NumPy stub syntax requiring Python >=3.12 while project mypy targets 3.11. No successful type gate claimed; dependencies left untouched.
+- No full/full* suite, make check, renderer build, pixel test, or App/browser journey requested or run.
+
+## Decisions, remaining callers and next steps
+
+Used explicit `Checkout.attach(session)` instead of changing legacy draft restoration or publisher semantics owned by the history worker. This supplies one reviewable bounded native public path with original capture and optimistic preview; it does not claim AG02/WC7-8 completion or full writer retirement.
+
+Remaining ordinary callers: CLI `_cmd_edit`/`_cmd_apply` still use legacy `Checkout.draft`/sheet/transaction dispatch outside native move/commands-file; `Checkout.open/load/draft` users still reach `_PublishMixin.publish`; look/formula/anchor/narration/media/structural methods in `model.py`, `edits.py`, `reflow.py` are not qualified through this attached path. The existing accepted publisher/client merge must not be removed based on this slice. Migrate those producer families and exact selected-schema capture next, then coordinate ordinary draft/save/publish/undo routing with `agt-m2-history-crash-reconcile` and Runtime route retirement. The stage1 retired-shot-route failures are visible sequencing/fixture work for their owner, not repaired here.
+
+No task blocker remains for this bounded deliverable. The unsupported families and repository-wide checks above remain explicit qualification gates. No push, commit, branch/ref operation, dependency mutation, or integration-tree edit performed.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-checkout-native-ordinary/commit-msg <<'"'EOF'
+feat(timeline): attach bounded checkout verbs to durable sessions
+
+Capture literal move, trim, hold, asset-clear and parameter intentions through
+the existing native registry and persist them before updating local previews.
+Bind parent and occurrence targets from raw scope, keep unsupported families
+held, and delegate acceptance and guarded inverse to TimelineSession.
+
+Cover persistence failures, original-basis retries, dependent edits, opaque
+values, source holds, CLI capture parity and renderer-off Runtime restart.
+Legacy draft publication and history remain outside this bounded migration.
+EOF
+: > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-checkout-native-ordinary/DONE" in /home/user/work/wt/agt-m2-checkout-native-ordinary
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'wc -l astrid/sdk/timeline/native_checkout.py tests/sdk/test_timeline_native_checkout.py tests/editing_conformance/test_commit_runtime_native_checkout.py; git diff --check; git status --short' in /home/user/work/wt/agt-m2-checkout-native-ordinary
+ succeeded in 606ms:
+  211 astrid/sdk/timeline/native_checkout.py
+  237 tests/sdk/test_timeline_native_checkout.py
+  152 tests/editing_conformance/test_commit_runtime_native_checkout.py
+  600 total
+ M astrid/sdk/timeline/checkout.py
+?? astrid/sdk/timeline/native_checkout.py
+?? tests/editing_conformance/test_commit_runtime_native_checkout.py
+?? tests/sdk/test_timeline_native_checkout.py
+
+codex
+Implemented `Checkout.attach(session)` for bounded move, trim, hold, asset-clear and literal parameter edits. Commands persist before preview changes; targets use raw scope bindings. No new writer, schema or state framework.
+
+Validation:
+
+- Targeted adapter/session/provider/media/parameter tests: **136 passed**.
+- Conformance/transaction/sheet tests: **290 passed**.
+- Central pinned Runtime lane: **6 passed**, including renderer-off restart, exact retry, dependent trim, CLI capture and guarded undo.
+- Ruff and whitespace checks passed. No full suite run.
+
+Exact commands, failed attempts and results are recorded in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-checkout-native-ordinary/notes/report.md).
+
+Selected-pack parameters and unsupported DSL families remain explicitly held. Legacy CLI edit/apply and snapshot publication remain migration work; this does **not** claim AG02/WC7-8 completion or writer deletion. Repository-wide mypy/cycle gates remain unresolved, alongside five untouched stage1 retired-route failures.
+
+`commit-msg` and `DONE` are written. No commit, push, integration-tree or shared-dependency changes made.
+tokens used
+213,122
+Implemented `Checkout.attach(session)` for bounded move, trim, hold, asset-clear and literal parameter edits. Commands persist before preview changes; targets use raw scope bindings. No new writer, schema or state framework.
+
+Validation:
+
+- Targeted adapter/session/provider/media/parameter tests: **136 passed**.
+- Conformance/transaction/sheet tests: **290 passed**.
+- Central pinned Runtime lane: **6 passed**, including renderer-off restart, exact retry, dependent trim, CLI capture and guarded undo.
+- Ruff and whitespace checks passed. No full suite run.
+
+Exact commands, failed attempts and results are recorded in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-checkout-native-ordinary/notes/report.md).
+
+Selected-pack parameters and unsupported DSL families remain explicitly held. Legacy CLI edit/apply and snapshot publication remain migration work; this does **not** claim AG02/WC7-8 completion or writer deletion. Repository-wide mypy/cycle gates remain unresolved, alongside five untouched stage1 retired-route failures.
+
+`commit-msg` and `DONE` are written. No commit, push, integration-tree or shared-dependency changes made.

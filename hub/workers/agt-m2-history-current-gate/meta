@@ -1,0 +1,9 @@
+name=agt-m2-history-current-gate
+repo=agent
+base=tl/integration
+base_sha=86405964
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-history-current-gate
+started=2026-10-20T11:01:19Z

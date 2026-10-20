@@ -1,0 +1,400 @@
++    generated.bundles["other"] = execute(initial_bundle(), [other]).bundle
++    generated.head = {"revision_id": "other", "publication_id": "other-pub"}
++    result = sheet.apply(edited, session=session, dry_run=False)
++    assert result["data"]["status"] == "rebased"
++    assert State(generated.bundles["r1"]).entity("parent/clip:b")["at"] == 7
++
++
++def test_omitted_native_clip_row_refuses_membership_change_without_accepting(connected):  # noqa: F811
++    session = open_session(connected)
++    sheet = sheet_for(initial_bundle())
++    _, generated, path = connected
++    edited = remove_row(sheet.text, "parent/clip:a")
++    generated.bundles["membership"] = copy.deepcopy(initial_bundle())
++    generated.bundles["membership"]["parent"]["clips"].append(
++        {"id": "new", "track": "picture", "clipType": "am-type", "at": 2, "hold": 1,
++         "params": {"text": "new"}})
++    generated.head = {"revision_id": "membership", "publication_id": "membership-pub"}
++    before = copy.deepcopy(generated.bundles["membership"])
++    calls = len(generated.calls)
++    with pytest.raises(CommitConflict):
++        sheet.apply(edited, session=session, dry_run=False)
++    assert generated.bundles["membership"] == before
++    assert len(generated.calls) == calls + 1
++    assert generated.accepted == {}
++
++
+ def test_native_rows_cannot_fall_into_the_legacy_sheet_writer():
+     with pytest.raises(SheetError, match="NativeSheet"):
+         apply_sheet(Checkout({}), sheet_for(initial_bundle()).text)
+
+codex
+No named central lane can run these exact Agent-owned HTTP files: the available Agent integration lanes cover other commit tests, while the Runtime `marked-integration` lane is a different repo. I’ll report the central targeted attempt as deselected and HTTP as unverified, then do one cache-free local targeted rerun after the final tiny cleanup.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sheet_native.py tests/packs/timeline/test_cli_native_sheet.py tests/editing_conformance/test_native_sheet_current.py tests/editing_conformance/test_native_sheet_ordinary.py' in /home/user/work/wt/agt-m2-native-sheet-delete-cut
+ succeeded in 33930ms:
+........................................................................ [ 60%]
+................................................                         [100%]
+120 passed in 30.82s
+
+exec
+/bin/bash -lc "git diff --check && git status --short && find . -type d \\( -name .pytest_cache -o -name __pycache__ \\) -print | head -30 && printf '\\n--- commit msg ---\\n' && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-sheet-delete-cut/commit-msg && printf '\\n--- design ---\\n' && sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-native-sheet-delete-cut.md" in /home/user/work/wt/agt-m2-native-sheet-delete-cut
+ succeeded in 313ms:
+ M astrid/sdk/timeline_sheet.py
+ M tests/packs/timeline/test_cli_native_sheet.py
+ M tests/sdk/test_timeline_sheet_native.py
+
+--- commit msg ---
+feat(agent): delete native sheet clip rows
+
+Translate omission of an addressed parent clip row into the existing guarded
+clip.delete command through NativeSheet's TimelineSession outbox. Preserve
+legacy detached-sheet omission behavior and refuse unsupported row ownership.
+
+--- design ---
+# AG03 / Gate 1 — bounded native sheet clip-row deletion
+
+Status: in progress, exact parent-clip omission slice only.
+
+## Decision
+
+`NativeSheet.preview` treats omission of a bound `parent/clip:<id>` row as one
+existing `capture_clip_delete` command. The row's `# ref` is the only target
+binding. The command is captured against the retained export bundle and is
+then sent through the existing `TimelineSession.commit_many` / outbox path.
+
+No operation, schema, DTO, API route, second writer, or client-side three-way
+merge was added.
+
+## Boundaries
+
+- Added parent clip omission only; omitted track rows, occurrence-owned rows,
+  additions, rebinding, row edits that alter the grammar, and changed basis
+  remain visible refusals before queueing.
+- Deletion uses the native executor, so source/opaque fields on the addressed
+  row are consumed by the recorded write, sibling rows and collection order
+  remain intact, and normal inverse/rebase/selection guards apply.
+- The legacy detached `apply_sheet` / `_apply_parsed` omission consumer remains
+  in place, including its existing positive tests. It must be identified as a
+  remaining consumer before any duplicate legacy deletion branch is removed.
+- Native `clip.delete` is intentionally parent-only. Occurrence/group/legacy
+  shot ownership is not inferred from display name or row position and remains
+  outside this slice.
+
+## Evidence
+
+Focused SDK and CLI tests cover exact target deletion, opaque/sibling/order
+preservation, lost-ack immutable retry without refetch, guarded undo and
+command-level redo, disjoint row rebase, membership conflict with no accepted
+write, and the actual native CLI entrypoint. The local targeted neighborhood
+passed 120 tests. Runtime HTTP integration was not run locally; it is queued
+through the central test service separately.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-native-sheet-delete-cut.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-sheet-delete-cut/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-native-sheet-delete-cut.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-native-sheet-delete-cut.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..bb067d3086c0112e31da4f751a8aa45241d00f38
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-native-sheet-delete-cut.md
+@@ -0,0 +1,39 @@
++# AG03 / Gate 1 — bounded native sheet clip-row deletion
++
++Status: in progress, exact parent-clip omission slice only.
++
++## Decision
++
++`NativeSheet.preview` treats omission of a bound `parent/clip:<id>` row as one
++existing `capture_clip_delete` command. The row's `# ref` is the only target
++binding. The command is captured against the retained export bundle and is
++then sent through the existing `TimelineSession.commit_many` / outbox path.
++
++No operation, schema, DTO, API route, second writer, or client-side three-way
++merge was added.
++
++## Boundaries
++
++- Added parent clip omission only; omitted track rows, occurrence-owned rows,
++  additions, rebinding, row edits that alter the grammar, and changed basis
++  remain visible refusals before queueing.
++- Deletion uses the native executor, so source/opaque fields on the addressed
++  row are consumed by the recorded write, sibling rows and collection order
++  remain intact, and normal inverse/rebase/selection guards apply.
++- The legacy detached `apply_sheet` / `_apply_parsed` omission consumer remains
++  in place, including its existing positive tests. It must be identified as a
++  remaining consumer before any duplicate legacy deletion branch is removed.
++- Native `clip.delete` is intentionally parent-only. Occurrence/group/legacy
++  shot ownership is not inferred from display name or row position and remains
++  outside this slice.
++
++## Evidence
++
++Focused SDK and CLI tests cover exact target deletion, opaque/sibling/order
++preservation, lost-ack immutable retry without refetch, guarded undo and
++command-level redo, disjoint row rebase, membership conflict with no accepted
++write, and the actual native CLI entrypoint. The local targeted neighborhood
++passed 120 tests. Runtime HTTP integration was not run locally; it is queued
++through the central test service separately. The central Agent targeted request
++completed with 9 integration tests deselected (exit 5), and no available named
++Agent lane runs these exact native-sheet HTTP files, so HTTP remains unverified.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-sheet-delete-cut/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-sheet-delete-cut/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-sheet-delete-cut/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-sheet-delete-cut/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..150272aa05b007e6dfd5a64058181e485e8f9137
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-sheet-delete-cut/commit-msg
+@@ -0,0 +1,5 @@
++feat(agent): delete native sheet clip rows
++
++Translate omission of an addressed parent clip row into the existing guarded
++clip.delete command through NativeSheet's TimelineSession outbox. Preserve
++legacy detached-sheet omission behavior and refuse unsupported row ownership.
+diff --git a/astrid/sdk/timeline_sheet.py b/astrid/sdk/timeline_sheet.py
+index 62ffbf99c21f318f7e01197a12017b97205f5cec..4b2eca5571a2f92ecc674984e294c4a73bc5aff5
+--- a/astrid/sdk/timeline_sheet.py
++++ b/astrid/sdk/timeline_sheet.py
+@@ -611,7 +611,9 @@
+     parent track labels, source trim, source-second hold and built-in literal params are
+     editable. Unquoted ``key=clear`` removes presence; null and "" are values.
+     Asset and incoming transition support explicit clear only. Omitting a cell
+-    never clears it. Built-in params retain the sheet's canvas units.
++    never clears it. Omitting a bound parent clip row emits the existing
++    ``clip.delete`` command; track and occurrence-row omissions remain refused.
++    Built-in params retain the sheet's canvas units.
+ 
+     ``basis`` is TimelineSession's revision/publication pair for the input bundle.
+     ``apply`` previews locally by default. Its commit seam uses the session's
+@@ -731,17 +733,24 @@
+         from astrid.sdk.timeline._command_state import State, equal
+         from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
+         from astrid.sdk.timeline._trim_commands import capture_clip_trim
+-        from astrid.sdk.timeline.capture import capture_move
++        from astrid.sdk.timeline.capture import capture_clip_delete, capture_move
+         from astrid.sdk.timeline.commands import Plan, execute
+         from astrid.sdk.timeline.units import from_canvas
+         from astrid.sdk.timeline_address import element_schema
+ 
+         rows, frame = self._read(text)
+-        if frame != self._frame or rows.keys() != self._rows.keys():
++        missing = self._rows.keys() - rows.keys()
++        extra = rows.keys() - self._rows.keys()
++        if frame != self._frame or extra:
+             raise SheetError("sheet structure/basis is read-only; additions and removals are unsupported")
++        for ref in missing:
++            section, _, _ = self._rows[ref]
++            if section != "clips" or not ref.startswith("parent/clip:"):
++                raise SheetError(f"only an addressed parent clip row may be omitted: {ref}")
+         commands = []
+         working = self._bundle
+-        capturers = {"clip.move": capture_move, "clip.trim": capture_clip_trim,
++        capturers = {"clip.delete": capture_clip_delete, "clip.move": capture_move,
++                     "clip.trim": capture_clip_trim,
+                      "clip.set": capture_clip_set, "clip.set-params": capture_clip_set_params,
+                      "track.set": capture_track_set}
+ 
+@@ -752,6 +761,9 @@
+             working = execute(working, [command]).bundle
+ 
+         for ref, (section, before, original) in self._rows.items():
++            if ref in missing:
++                emit("clip.delete", ref, {})
++                continue
+             current_section, after, row = rows[ref]
+             if current_section != section:
+                 raise SheetError("sheet row ownership is read-only")
+diff --git a/tests/packs/timeline/test_cli_native_sheet.py b/tests/packs/timeline/test_cli_native_sheet.py
+index 6ddfea8b6638780190afa90f9bcbc5df8abc1e9b..e71e6d1a952dc7bcf72ce9d5553024e30d33078a
+--- a/tests/packs/timeline/test_cli_native_sheet.py
++++ b/tests/packs/timeline/test_cli_native_sheet.py
+@@ -177,6 +177,23 @@
+     assert output["receipt"] is None and generated.calls == []
+ 
+ 
++def test_clip_row_omission_is_native_delete_and_keeps_other_rows(native_cli, tmp_path, capsys):
++    run, _, generated = native_cli
++    text = export(native_cli, capsys)
++    path = tmp_path / "deleted.txt"
++    path.write_text("\n".join(line for line in text.splitlines()
++                               if not line.endswith(' # ref "parent/clip:a"')) + "\n")
++
++    assert run("apply", "t", str(path), "--native", "--json") == 0
++    output = json.loads(capsys.readouterr().out)
++    assert [command["op"] for command in output["data"]["commands"]] == ["clip.delete"]
++    assert [row["id"] for row in generated.bundles["r1"]["parent"]["clips"]] == ["b"]
++    assert generated.bundles["r1"]["parent"]["config"]["tracks"] == generated.bundles["r0"]["parent"]["config"]["tracks"]
++    assert run("undo", "t", "--publication", output["receipt"]["receipt_id"], "--json") == 0
++    capsys.readouterr()
++    assert [row["id"] for row in generated.bundles["r2"]["parent"]["clips"]] == ["a", "b"]
++
++
+ @pytest.mark.parametrize("changed", ["pending", "bundle"])
+ def test_original_identity_never_coerces_boolean_to_number(native_cli, tmp_path, capsys, changed):
+     run, _, generated = native_cli
+diff --git a/tests/sdk/test_timeline_sheet_native.py b/tests/sdk/test_timeline_sheet_native.py
+index d8d420910018222252fc709d240fd4368037aa28..d10252fd18efa768ab44233044e9eeb708cd7c5f
+--- a/tests/sdk/test_timeline_sheet_native.py
++++ b/tests/sdk/test_timeline_sheet_native.py
+@@ -7,8 +7,9 @@
+ import pytest
+ 
+ from astrid.sdk.timeline._command_state import CommandError, State
++from astrid.sdk.timeline._common import TimelineEditError
+ from astrid.sdk.timeline._scalar_commands import capture_track_set
+-from astrid.sdk.timeline.capture import capture_move
++from astrid.sdk.timeline.capture import capture_clip_delete, capture_move
+ from astrid.sdk.timeline.commands import execute
+ from astrid.sdk.timeline.sync import CommitConflict
+ from astrid.sdk.timeline_checkout import Checkout
+@@ -38,6 +39,14 @@
+     raise AssertionError(f"no bound row for {ref}")
+ 
+ 
++def remove_row(text, ref):
++    suffix = " # ref " + json.dumps(ref)
++    lines = text.splitlines()
++    kept = [line for line in lines if not line.endswith(suffix)]
++    assert len(kept) == len(lines) - 1
++    return "\n".join(kept) + "\n"
++
++
+ def test_preview_and_unchanged_cells_have_no_writes_or_io(connected, monkeypatch):  # noqa: F811
+     session = open_session(connected)
+     client, generated, path = connected
+@@ -103,7 +112,6 @@
+     lambda text: text.replace('"parent/clip:a"', '"parent/clip:b"', 1),
+     lambda text: text.replace(' # ref "parent/clip:a"', "", 1),
+     lambda text: text.replace('"publication_id": "pub0"', '"publication_id": "different"'),
+-    lambda text: "\n".join(line for line in text.splitlines() if '"parent/clip:a"' not in line),
+     lambda text: text + '  2  picture new media # ref "parent/clip:new"\n',
+     lambda text: text.replace(" # ref", " extra=lost # ref", 1),
+     lambda text: text.replace(" # ref", " ~ignored # ref", 1),
+@@ -118,6 +126,85 @@
+     assert path.read_bytes() == before and generated.calls == []
+ 
+ 
++def test_omitting_native_clip_row_deletes_exact_bound_clip_and_preserves_sibling_state():
++    original = initial_bundle()
++    sibling = State(original).entity("parent/clip:b")
++    sibling["opaque"] = {"keep": [None, False, 1, 1.0]}
++    State(original).entity("parent/clip:a")["opaque"] = {"remove": True}
++    sheet = sheet_for(original)
++
++    plan = sheet.preview(remove_row(sheet.text, "parent/clip:a"))
++
++    assert plan.commands == [capture_clip_delete(original, "parent/clip:a")]
++    assert [row["id"] for row in State(plan.bundle).collection("parent", "clip")] == ["b"]
++    assert State(plan.bundle).entity("parent/clip:b") == sibling
++    assert State(plan.bundle).collection("parent", "track") == State(original).collection("parent", "track")
++
++
++def test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases(connected):  # noqa: F811
++    session = open_session(connected)
++    client, generated, path = connected
++    sheet = sheet_for(initial_bundle())
++    edited = remove_row(sheet.text, "parent/clip:a")
++    expected = sheet.preview(edited)
++    generated.lose_ack = True
++
++    with pytest.raises(WorkspaceClientError):
++        sheet.apply(edited, session=session, dry_run=False, idempotency_key="delete-once")
++    first = generated.calls[0]
++    reads = list(client.reads)
++    durable = path.read_bytes()
++    restarted = open_session(connected)
++    with pytest.raises(TimelineEditError, match="immutable"):
++        sheet.apply(edited, session=restarted, dry_run=False, idempotency_key="changed")
++    assert path.read_bytes() == durable
++    result = sheet.apply(edited, session=restarted, dry_run=False)
++    assert generated.calls[-1] == first
++    assert client.reads == reads  # exact retry uses the retained flight, not a fresh head
++    assert generated.bundles["r1"] == expected.bundle
++    assert State(generated.bundles["r1"]).entity("parent/clip:b") == State(initial_bundle()).entity("parent/clip:b")
++
++    restarted.undo([result["receipt"]["receipt_id"]])
++    assert generated.bundles["r2"] == initial_bundle()
++    from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse
++
++    undone = inverse(expected.bundle, expected.records)
++    redo_records = accepted_boundaries(undone.records, expected.bundle, undone.bundle)
++    assert inverse(undone.bundle, redo_records).bundle == expected.bundle
++
++
++def test_omitted_native_clip_row_rebases_over_unrelated_row_edit(connected):  # noqa: F811
++    session = open_session(connected)
++    _, generated, _ = connected
++    sheet = sheet_for(initial_bundle())
++    edited = remove_row(sheet.text, "parent/clip:a")
++    other = capture_move(initial_bundle(), "parent/clip:b", 7)
++    generated.bundles["other"] = execute(initial_bundle(), [other]).bundle
++    generated.head = {"revision_id": "other", "publication_id": "other-pub"}
++    result = sheet.apply(edited, session=session, dry_run=False)
++    assert result["data"]["status"] == "rebased"
++    assert State(generated.bundles["r1"]).entity("parent/clip:b")["at"] == 7
++
++
++def test_omitted_native_clip_row_refuses_membership_change_without_accepting(connected):  # noqa: F811
++    session = open_session(connected)
++    sheet = sheet_for(initial_bundle())
++    _, generated, path = connected
++    edited = remove_row(sheet.text, "parent/clip:a")
++    generated.bundles["membership"] = copy.deepcopy(initial_bundle())
++    generated.bundles["membership"]["parent"]["clips"].append(
++        {"id": "new", "track": "picture", "clipType": "am-type", "at": 2, "hold": 1,
++         "params": {"text": "new"}})
++    generated.head = {"revision_id": "membership", "publication_id": "membership-pub"}
++    before = copy.deepcopy(generated.bundles["membership"])
++    calls = len(generated.calls)
++    with pytest.raises(CommitConflict):
++        sheet.apply(edited, session=session, dry_run=False)
++    assert generated.bundles["membership"] == before
++    assert len(generated.calls) == calls + 1
++    assert generated.accepted == {}
++
++
+ def test_native_rows_cannot_fall_into_the_legacy_sheet_writer():
+     with pytest.raises(SheetError, match="NativeSheet"):
+         apply_sheet(Checkout({}), sheet_for(initial_bundle()).text)
+
+codex
+Implemented bounded native clip-row deletion.
+
+- Omitted bound `parent/clip:<id>` rows emit existing guarded `clip.delete` through `TimelineSession`/outbox.
+- Track, occurrence, added, rebound, or unsupported rows still refuse safely.
+- Added SDK and native CLI coverage for preservation, retry, undo/redo, rebase, and membership conflict.
+
+Tests:
+
+`PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider ...`  
+Result: **120 passed**
+
+Central HTTP attempt: **9 integration tests deselected**; no suitable named Agent lane exists, so HTTP integration remains unverified. No full suite run.
+
+Artifacts written:
+
+- Design: `/tmp/.../design/agent-native-sheet-delete-cut.md`
+- Commit message: `/tmp/.../workers/agt-m2-native-sheet-delete-cut/commit-msg`
+- Completion marker: `/tmp/.../workers/agt-m2-native-sheet-delete-cut/DONE`
+tokens used
+205,353
+Implemented bounded native clip-row deletion.
+
+- Omitted bound `parent/clip:<id>` rows emit existing guarded `clip.delete` through `TimelineSession`/outbox.
+- Track, occurrence, added, rebound, or unsupported rows still refuse safely.
+- Added SDK and native CLI coverage for preservation, retry, undo/redo, rebase, and membership conflict.
+
+Tests:
+
+`PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider ...`  
+Result: **120 passed**
+
+Central HTTP attempt: **9 integration tests deselected**; no suitable named Agent lane exists, so HTTP integration remains unverified. No full suite run.
+
+Artifacts written:
+
+- Design: `/tmp/.../design/agent-native-sheet-delete-cut.md`
+- Commit message: `/tmp/.../workers/agt-m2-native-sheet-delete-cut/commit-msg`
+- Completion marker: `/tmp/.../workers/agt-m2-native-sheet-delete-cut/DONE`

@@ -1,0 +1,400 @@
+ succeeded in 27ms:
+# WC7 owned HTTP gate
+
+## Result
+
+Qualified the predecessor's exact three HTTP tests without changing the test
+file or product code. The current-native central service run passed all three:
+
+```text
+3 passed in 6.21s
+```
+
+The tests retain the settled WC7 boundary: explicit attached-checkout owner
+and dedicated outbox, original command/rationale/base guards, disjoint server
+rebase plus reload/undo, lost-ACK restart with the same request identity, and
+unrelated global outboxes held and not consumed. The ambiguous owner and mixed
+edit case retains the exact one-clip refusal and byte-for-byte draft/head
+preservation assertions. No detached conversion, owner inference, new API,
+schema/DTO/pin/journal, global outbox adoption, or legacy-writer deletion was
+introduced. Broader detached writers remain outside this gate.
+
+## Exact central run
+
+Request:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-wc7-owned-http-gate native-script-current-integration --no-cache --files "tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_move_publish_disjoint_rebase_reload_undo tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_lost_ack_restart_exact_retry_and_unrelated_global_nonconsumption tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_ambiguous_owner_and_mixed_edits_keep_original_draft"
+
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-wc7-owned-http-gate-native-script-current-integration-1020195754-27911
+```
+
+Result directory:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc7-owned-http-gate-native-script-current-integration-1020195754-27911/`
+
+The service command used the current-native environment with
+`ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime` and the regular Agent
+`/home/user/work/venv-agent/bin/python`; no generated schema override or
+inline authority was supplied. The service snapshot was Agent tree
+`0c68c122143ff8d75337bc40295bcbe836559cba`. The final external provenance
+record before execution was Runtime commit
+`b511cb54dbf915327c1c336d8c34e7c6bc097ded`, tree
+`ebfb1ee91eefb805064f4c4fa81685476c2b25fa` (the moving shared checkout was
+observed at earlier queued snapshots too; the result is attributed only to the
+service snapshot and its recorded external provenance).
+
+## Source, health, auth, and request provenance
+
+- The normal Agent client remains locked to Runtime producer
+  `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, contract `0.2.13`, schema
+  digest `sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4`,
+  and artifact version
+  `sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56`.
+- The first two cases use the generated `WorkspaceClient` through the actual
+  Runtime `RuntimeHandler` and `CredentialStore` path. The fixture provisions
+  an owner credential with the required handshake/project/object scopes and
+  sends real HTTP request/response bytes through the handler. The test records
+  each commit body, idempotency key, status, and decoded response in
+  `runtime.calls`; it checks the exact captured commands, original base
+  revision/publication, rationale, receipt, retry body/key, and unchanged
+  history.
+- The third case uses the real-daemon `real_runtime` fixture, then
+  `AstridClient.open` with the daemon endpoint, credential, realm, and
+  `workspace.v1`; it does not replace health, auth, or provider behavior with
+  a fake. The fixture's actual Runtime startup/handshake path is therefore
+  exercised. These three tests do not add a separate health-response
+  assertion; no health or auth response was overridden.
+- A local control without `ASTRID_RUNTIME_CHECKOUT` failed at fixture setup
+  with the precise environment error `no Runtime checkout`; rerunning the two
+  in-process handler cases with `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime`
+  passed `2 passed in 10.22s`. This was an environment/source-selection issue,
+  not an implementation failure. The live-daemon case was left to the central
+  service as required.
+
+## Other checks
+
+```sh
+git diff --check
+```
+
+Passed. The worktree is clean and the only task source is the already-present
+`tests/editing_conformance/test_owned_move_publish_runtime.py` from the
+predecessor branch. No full suite was requested or run; neighbor broad suites
+were not repeated.
+
+
+--- brief ---
+Independent data-loss/retry integrity review required before merging bounded WC7 attached-checkout publication. Review exact tl/agt-m2-wc7-owned-move-outbox commitdfb4748a/tree0c68c122 against f82da322. Original REPORT.md describes46 product additions in native_checkout/sync and attachdocstring;199units +3actualHTTP nowPASS (gate worker agt-m2-wc7-owned-http-gate). Review only this small delta: dedicated explicitly selected outbox ownership, original request identity/guards/rationale atomically sealed, exact lostACK retries immutable, foreign/unrelated/globaloutbox never consumed, no fallbackaftercapture, detached/Mixed intentions retained. No need for new exhaustive matrices or rerunning199unchangedtests; one targeted negative if a concrete concern. No schema/API/pin/DTO/journal/capture refresh or code edits. Report APPROVE or precise counterexample in ORCH/design/agent-wc7-owned-outbox-review.md. Broader detached WC7 and AG01 remain OPEN; do not pretendthisdeleteall. Shareddeps READONLY. No full*/browser/service repeats. report/commit-msg.txt/DONE.
+
+--- prior design ---
+# WC7 b3bc review — HOLD
+
+The125line publication recognizer is not accepted. It changes the supposed original base by injecting an empty slots namespace, chooses the first occurrence by shot identity instead of retaining the selected handle owner, and routes a head advance back to the legacy writer rather than server rebase. Its new proof is an injected transport fixture, not the requested actual HTTP consumer path. Existing57+13 tests are retained as local evidence, not native qualification. No product from b3bc is merged. Follow-up captures explicit numeric move intent at the original ingress using existing draft/outbox carriers and preserves Main parameters and rationale. If no existing carrier suffices, it reports the exact boundary instead of inferring intent from a document diff.
+
+codex
+Static review finds the intended fences intact: `publish()` rejects default/global sessions, detached clients, force/restructure, non-parent owners, and mixed batches; `_flush()` persists rationale plus the exact serialized request/key before transport and validates that same flight on retry. I’m running the focused SDK regression file now and then I’ll record the approval with the exact evidence and remaining scope caveat.
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_owned_move_publish.py && git diff --check' in /home/user/work/wt/agt-review-wc7-owned-outbox-integrity
+ succeeded in 4765ms:
+.....                                                                    [100%]
+5 passed in 2.60s
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..135ce7c4aba0e9ce7e521797b557cdb01dce5f54
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md
+@@ -0,0 +1,48 @@
++# WC7 owned outbox integrity review — APPROVE
++
++Reviewed `tl/agt-m2-wc7-owned-move-outbox` commit `dfb4748a` / tree
++`0c68c122` against `f82da322`, limited to the five changed paths in that
++delta. I found no concrete data-loss or retry-integrity counterexample.
++
++## Findings
++
++- **Ownership/isolation:** `AttachedCheckout.publish()` requires an explicitly
++  supplied outbox path, rejects `force`, `restructure`, and a foreign client,
++  and `_state()` rechecks realm, actor, project, and timeline scope. Thus a
++  default/global or unrelated outbox is held and not discovered or consumed.
++- **Bounded intent:** publication accepts exactly one pending `clip.move`
++  whose selector is parent-scoped. Occurrence-scoped, ambiguous, and mixed
++  batches remain held; detached checkout publication remains held through the
++  unchanged detached path.
++- **Atomic sealing:** under the outbox lock, the rationale is added before the
++  existing `_flush()` write creates and persists the flight containing the
++  exact serialized body, original base IDs, command guards, idempotency key,
++  and fence. The request is persisted before transport.
++- **Lost-ACK retry:** restart reopens the same explicit outbox. `_flight_body()`
++  validates the stored body, command prefix, base IDs, scope, dry-run mode, and
++  supplied key; mismatch is refused without replacement. `publish()` also
++  refuses a changed non-empty retry rationale. No capture/rebase refresh is
++  performed on retry.
++- **Post-acceptance:** the existing acknowledgement path advances the outbox
++  base to the accepted revision/publication and removes only the sent prefix;
++  the attached checkout reloads from that state. The existing guarded undo path
++  remains available.
++
++## Evidence
++
++Local focused regression run:
++
++```text
++PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_owned_move_publish.py
++5 passed in 2.60s
++git diff --check
++passed
++```
++
++The supplied qualified HTTP gate report for the unchanged three Runtime cases
++records `3 passed in 6.21s`, including disjoint rebase/reload/undo, lost-ACK
++restart with exact request identity, and unrelated global-outbox non-consumption.
++I did not rerun the HTTP/service or any full suite, per the task instructions.
++
++This approval is only for bounded attached-checkout WC7 publication. Broader
++detached WC7 behavior and AG01 remain open and are not certified here.
+
+2026-10-20T20:10:32.609266Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid hunk at line 3, 'review(agent): approve WC7 owned outbox integrity' is not a valid hunk header. Valid hunk headers: '*** Add File: {path}', '*** Delete File: {path}', '*** Update File: {path}'
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..135ce7c4aba0e9ce7e521797b557cdb01dce5f54
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md
+@@ -0,0 +1,48 @@
++# WC7 owned outbox integrity review — APPROVE
++
++Reviewed `tl/agt-m2-wc7-owned-move-outbox` commit `dfb4748a` / tree
++`0c68c122` against `f82da322`, limited to the five changed paths in that
++delta. I found no concrete data-loss or retry-integrity counterexample.
++
++## Findings
++
++- **Ownership/isolation:** `AttachedCheckout.publish()` requires an explicitly
++  supplied outbox path, rejects `force`, `restructure`, and a foreign client,
++  and `_state()` rechecks realm, actor, project, and timeline scope. Thus a
++  default/global or unrelated outbox is held and not discovered or consumed.
++- **Bounded intent:** publication accepts exactly one pending `clip.move`
++  whose selector is parent-scoped. Occurrence-scoped, ambiguous, and mixed
++  batches remain held; detached checkout publication remains held through the
++  unchanged detached path.
++- **Atomic sealing:** under the outbox lock, the rationale is added before the
++  existing `_flush()` write creates and persists the flight containing the
++  exact serialized body, original base IDs, command guards, idempotency key,
++  and fence. The request is persisted before transport.
++- **Lost-ACK retry:** restart reopens the same explicit outbox. `_flight_body()`
++  validates the stored body, command prefix, base IDs, scope, dry-run mode, and
++  supplied key; mismatch is refused without replacement. `publish()` also
++  refuses a changed non-empty retry rationale. No capture/rebase refresh is
++  performed on retry.
++- **Post-acceptance:** the existing acknowledgement path advances the outbox
++  base to the accepted revision/publication and removes only the sent prefix;
++  the attached checkout reloads from that state. The existing guarded undo path
++  remains available.
++
++## Evidence
++
++Local focused regression run:
++
++```text
++PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_owned_move_publish.py
++5 passed in 2.60s
++git diff --check
++passed
++```
++
++The supplied qualified HTTP gate report for the unchanged three Runtime cases
++records `3 passed in 6.21s`, including disjoint rebase/reload/undo, lost-ACK
++restart with exact request identity, and unrelated global-outbox non-consumption.
++I did not rerun the HTTP/service or any full suite, per the task instructions.
++
++This approval is only for bounded attached-checkout WC7 publication. Broader
++detached WC7 behavior and AG01 remain open and are not certified here.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c33282017e813343c2cd8bd0d0ef6bb3a4783ee3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/commit-msg
+@@ -0,0 +1,4 @@
++review(agent): approve WC7 owned outbox integrity
++
++Record independent review approval for bounded attached-checkout publication,
++including focused SDK regression evidence and the qualified HTTP gate result.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..135ce7c4aba0e9ce7e521797b557cdb01dce5f54
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md
+@@ -0,0 +1,48 @@
++# WC7 owned outbox integrity review — APPROVE
++
++Reviewed `tl/agt-m2-wc7-owned-move-outbox` commit `dfb4748a` / tree
++`0c68c122` against `f82da322`, limited to the five changed paths in that
++delta. I found no concrete data-loss or retry-integrity counterexample.
++
++## Findings
++
++- **Ownership/isolation:** `AttachedCheckout.publish()` requires an explicitly
++  supplied outbox path, rejects `force`, `restructure`, and a foreign client,
++  and `_state()` rechecks realm, actor, project, and timeline scope. Thus a
++  default/global or unrelated outbox is held and not discovered or consumed.
++- **Bounded intent:** publication accepts exactly one pending `clip.move`
++  whose selector is parent-scoped. Occurrence-scoped, ambiguous, and mixed
++  batches remain held; detached checkout publication remains held through the
++  unchanged detached path.
++- **Atomic sealing:** under the outbox lock, the rationale is added before the
++  existing `_flush()` write creates and persists the flight containing the
++  exact serialized body, original base IDs, command guards, idempotency key,
++  and fence. The request is persisted before transport.
++- **Lost-ACK retry:** restart reopens the same explicit outbox. `_flight_body()`
++  validates the stored body, command prefix, base IDs, scope, dry-run mode, and
++  supplied key; mismatch is refused without replacement. `publish()` also
++  refuses a changed non-empty retry rationale. No capture/rebase refresh is
++  performed on retry.
++- **Post-acceptance:** the existing acknowledgement path advances the outbox
++  base to the accepted revision/publication and removes only the sent prefix;
++  the attached checkout reloads from that state. The existing guarded undo path
++  remains available.
++
++## Evidence
++
++Local focused regression run:
++
++```text
++PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_owned_move_publish.py
++5 passed in 2.60s
++git diff --check
++passed
++```
++
++The supplied qualified HTTP gate report for the unchanged three Runtime cases
++records `3 passed in 6.21s`, including disjoint rebase/reload/undo, lost-ACK
++restart with exact request identity, and unrelated global-outbox non-consumption.
++I did not rerun the HTTP/service or any full suite, per the task instructions.
++
++This approval is only for bounded attached-checkout WC7 publication. Broader
++detached WC7 behavior and AG01 remain open and are not certified here.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c33282017e813343c2cd8bd0d0ef6bb3a4783ee3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/commit-msg
+@@ -0,0 +1,4 @@
++review(agent): approve WC7 owned outbox integrity
++
++Record independent review approval for bounded attached-checkout publication,
++including focused SDK regression evidence and the qualified HTTP gate result.
+
+codex
+The focused SDK regression passed all 5 cases, and `git diff --check` passed. I found no counterexample, so the review is an approval limited to attached-checkout WC7; I’ve written that report, the conventional commit message, and the empty `DONE` marker. I’m doing a final filesystem/status check to ensure no worktree artifacts were left.
+exec
+/bin/bash -lc "printf '%s\\n' '--- report ---'; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md; printf '%s\\n' '--- commit message ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/commit-msg; printf '%s\\n' '--- markers ---'; stat -c '%n %s bytes' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/DONE; printf '%s\\n' '--- worktree status ---'; git status --short --branch" in /home/user/work/wt/agt-review-wc7-owned-outbox-integrity
+ succeeded in 391ms:
+--- report ---
+# WC7 owned outbox integrity review — APPROVE
+
+Reviewed `tl/agt-m2-wc7-owned-move-outbox` commit `dfb4748a` / tree
+`0c68c122` against `f82da322`, limited to the five changed paths in that
+delta. I found no concrete data-loss or retry-integrity counterexample.
+
+## Findings
+
+- **Ownership/isolation:** `AttachedCheckout.publish()` requires an explicitly
+  supplied outbox path, rejects `force`, `restructure`, and a foreign client,
+  and `_state()` rechecks realm, actor, project, and timeline scope. Thus a
+  default/global or unrelated outbox is held and not discovered or consumed.
+- **Bounded intent:** publication accepts exactly one pending `clip.move`
+  whose selector is parent-scoped. Occurrence-scoped, ambiguous, and mixed
+  batches remain held; detached checkout publication remains held through the
+  unchanged detached path.
+- **Atomic sealing:** under the outbox lock, the rationale is added before the
+  existing `_flush()` write creates and persists the flight containing the
+  exact serialized body, original base IDs, command guards, idempotency key,
+  and fence. The request is persisted before transport.
+- **Lost-ACK retry:** restart reopens the same explicit outbox. `_flight_body()`
+  validates the stored body, command prefix, base IDs, scope, dry-run mode, and
+  supplied key; mismatch is refused without replacement. `publish()` also
+  refuses a changed non-empty retry rationale. No capture/rebase refresh is
+  performed on retry.
+- **Post-acceptance:** the existing acknowledgement path advances the outbox
+  base to the accepted revision/publication and removes only the sent prefix;
+  the attached checkout reloads from that state. The existing guarded undo path
+  remains available.
+
+## Evidence
+
+Local focused regression run:
+
+```text
+PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_owned_move_publish.py
+5 passed in 2.60s
+git diff --check
+passed
+```
+
+The supplied qualified HTTP gate report for the unchanged three Runtime cases
+records `3 passed in 6.21s`, including disjoint rebase/reload/undo, lost-ACK
+restart with exact request identity, and unrelated global-outbox non-consumption.
+I did not rerun the HTTP/service or any full suite, per the task instructions.
+
+This approval is only for bounded attached-checkout WC7 publication. Broader
+detached WC7 behavior and AG01 remain open and are not certified here.
+--- commit message ---
+review(agent): approve WC7 owned outbox integrity
+
+Record independent review approval for bounded attached-checkout publication,
+including focused SDK regression evidence and the qualified HTTP gate result.
+--- markers ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc7-owned-outbox-integrity/DONE 0 bytes
+--- worktree status ---
+## tl/agt-review-wc7-owned-outbox-integrity
+
+codex
+## Result: APPROVE
+
+Reviewed `dfb4748a` / `0c68c122` against `f82da322`. No data-loss or retry-integrity counterexample found.
+
+Written:
+
+- [Review report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md)
+- Commit message
+- Empty `DONE` marker
+
+Evidence:
+
+- `pytest -q tests/sdk/test_timeline_owned_move_publish.py` — **5 passed**
+- `git diff --check` — **passed**
+- Supplied HTTP gate — **3 passed**
+
+No full/service suite rerun. Broader detached WC7 and AG01 remain open.
+tokens used
+69,559
+## Result: APPROVE
+
+Reviewed `dfb4748a` / `0c68c122` against `f82da322`. No data-loss or retry-integrity counterexample found.
+
+Written:
+
+- [Review report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc7-owned-outbox-review.md)
+- Commit message
+- Empty `DONE` marker
+
+Evidence:
+
+- `pytest -q tests/sdk/test_timeline_owned_move_publish.py` — **5 passed**
+- `git diff --check` — **passed**
+- Supplied HTTP gate — **3 passed**
+
+No full/service suite rerun. Broader detached WC7 and AG01 remain open.

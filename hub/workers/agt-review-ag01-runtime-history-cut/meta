@@ -1,0 +1,9 @@
+name=agt-review-ag01-runtime-history-cut
+repo=agent
+base=tl/agt-m2-ag01-runtime-history-preservation
+base_sha=165f4616
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-ag01-runtime-history-cut
+started=2026-10-20T17:44:15Z

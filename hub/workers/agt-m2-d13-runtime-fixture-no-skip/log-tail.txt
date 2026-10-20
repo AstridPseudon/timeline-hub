@@ -1,0 +1,400 @@
+     # The named integration suite supplies the pinned current Remotion/runtime
+     # pair. Keep this bootstrap read-only and do not redirect it to a mutable
+
+--- runtime/tool env ---
+ASTRID_RUNTIME_CHECKOUT=
+ASTRID_NODE_EXECUTABLE=
+ASTRID_REMOTION_PROJECT_DIR=
+ASTRID_TIMELINE_SCHEMA_PYTHONPATH=
+runtime checkout: /home/user/work/runtime
+/usr/bin/ffmpeg
+/usr/bin/ffprobe
+/opt/node22/bin/node
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- suite definitions ---'; rg -n -C 6 'registered-native-render-integration|exactoriginaltwo|native-render' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test; printf '%s\\n' '--- request-test help ---'; /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test --help 2>&1 | head -100; printf '%s\\n' '--- worktree status ---'; git status --short" in /home/user/work/wt/agt-m2-d13-runtime-fixture-no-skip
+ succeeded in 97ms:
+--- suite definitions ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-74-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-75-runtime text-native-private-pair-integration cd /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-native-private-pair/agent-source && env ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-native-private-pair/runtime-candidate ASTRID_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-native-private-pair/agent-source PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-native-private-pair/agent-source:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-native-private-pair/runtime-candidate /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --runxfail
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-76-agent full-remotion12-s2-integration env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent-child-s2/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -n 3
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-77-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-78-runtime public-s2-literal-current-integration test "$(git -C /home/user/work/runtime rev-parse HEAD)" = 388eff42a644aeafa5d4605d0bb235e1ca849741 && test -z "$(git -C /home/user/work/runtime status --porcelain)" && env ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=/home/user/work/runtime:$PWD:/home/user/work/agent PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -P -c 'import runtime_protocol, pytest, sys; assert runtime_protocol.__file__ == "/home/user/work/runtime/runtime_protocol/__init__.py"; print("Runtime source:", runtime_protocol.__file__, flush=True); raise SystemExit(pytest.main(sys.argv[1:]))' -q -p no:cacheprovider -m integration
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-79-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:80:agent registered-native-render-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-81-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-82-agent root-prep-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-83-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-84-agent native-script-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-85-agent ordinary014-consumer-integration env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_PARENT_MEDIA_SEED_RUNTIME=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration
+--- request-test help ---
+# request-test WORKER|integration:REPO SUITE [--files "a b c"] [--no-cache]  — queue a test run (done by the dispatcher OUTSIDE the
+# sandbox, so localhost/browsers work). SUITE: full | targeted (needs --files) | a named suite from $ORCH/tests/suites.conf.
+# Prints the result dir $ORCH/tests/<id>/ ; then: $ORCH/bin/wait-test <id>. Only writes under $ORCH.
+--- worktree status ---
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/video_editing/test_runtime_publication_chain.py::test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts' in /home/user/work/wt/agt-m2-d13-runtime-fixture-no-skip
+ succeeded in 1553ms:
+.                                                                        [100%]
+1 passed in 0.74s
+
+codex
+The scoped local regression passed (`1 passed`). The final-render test now has no environment-dependent skip; its first runtime dependency is `use_runtime()`, so the required lane’s existing failure policy applies. I’m now submitting the one permitted central `registered-native-render-integration` run for the two original integration test IDs, with the pinned Runtime/Node/private Remotion environment from the suite definition.
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-d13-runtime-fixture-no-skip registered-native-render-integration --files "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render") && printf '"'%s\\n' \""'$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m2-d13-runtime-fixture-no-skip
+exec
+/bin/bash -lc 'R=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830; find "$R" -maxdepth 2 -type f -printf '"'%f %s bytes\\n' | sort; printf '\\n--- status ---\\n'; for f in \""'$R"/*; do echo "### $f"; sed -n '"'1,80p' \""'$f" 2>/dev/null; done' in /home/user/work/wt/agt-m2-d13-runtime-fixture-no-skip
+ succeeded in 45ms:
+ext 157 bytes
+log.txt 0 bytes
+request 400 bytes
+runner.log 0 bytes
+running 6 bytes
+snap 146 bytes
+status 8 bytes
+
+--- status ---
+### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830/ext
+external=runtime=a51af885ea631c695a857985239c7fe7bf2e871f app=3599fc49ad76dfdd7847ab4c813fc9317a0304eb composition=5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8 
+### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830/log.txt
+### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830/request
+target=agt-m2-d13-runtime-fixture-no-skip
+repo=agent
+suite=registered-native-render-integration
+files=tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task\ tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+nocache=0
+requested=2026-10-20T15:31:35Z
+### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830/runner.log
+### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830/running
+15446
+### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830/snap
+tree=87b1441b9fb441ced465fdb3053b9cb0fb339687
+key=cc81f22f281fbc93c68d7dc94a2d23fc
+worktree=/home/user/work/wt/agt-m2-d13-runtime-fixture-no-skip
+### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830/status
+running
+
+codex
+The central run is queued and active; its snapshot captured the edited tree and the pinned external Runtime/App/Composition refs. The first poll returned while it was still running, so I’m waiting on that same result ID as required, without resubmitting.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830' in /home/user/work/wt/agt-m2-d13-runtime-fixture-no-skip
+codex
+The named run is still executing and has not produced a result yet; I’m continuing to poll the existing run only.
+exec
+/bin/bash -lc "R=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830; stat -c 'status=%y %s bytes log=%y %s bytes' \""'$R/status" "$R/log.txt"; cat "$R/status"; ps -p "$(cat "$R/running")" -o pid=,etime=,cmd= 2>/dev/null || true' in /home/user/work/wt/agt-m2-d13-runtime-fixture-no-skip
+ succeeded in 46ms:
+status=2026-10-20 15:31:38.872207485 +0000 8 bytes log=2026-10-20 15:31:38.872207485 +0000 8 bytes
+status=2026-10-20 15:31:46.484483597 +0000 1 bytes log=2026-10-20 15:31:46.484483597 +0000 1 bytes
+running
+
+codex
+The result directory is unchanged (`status=running`, empty log), so the dispatcher is still holding the same job rather than failing early. I’m leaving it in place and checking the same process again.
+ succeeded in 150066ms:
+test agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830: pass exit=0 in 156s — registered-native-render-integration on agt-m2-d13-runtime-fixture-no-skip (agent tree 87b1441b9fb441ced465fdb3053b9cb0fb339687)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+counts: 2 passed in 152.68s (0:02:32) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830/log.txt ---
+..                                                                       [100%]
+2 passed in 152.68s (0:02:32)
+
+codex
+The required central run passed: `2 passed in 152.68s` using the supplied Runtime checkout, current Node executable, and private Remotion project. I’m doing the final source-scope/diff checks now, then I’ll write the mandated design note, conventional commit message, and empty `DONE` marker.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-runtime-fixture-final.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-runtime-fixture-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-runtime-fixture-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7a2a126672aeaf8a48911331330f0e706aa001e0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-runtime-fixture-final.md
+@@ -0,0 +1,46 @@
++# Agent D13 runtime fixture final
++
++## Exact skip removal
++
++In `tests/packs/video_editing/test_runtime_publication_chain.py`, removed the
++environment-dependent conditional `pytest.skip` that checked `ffmpeg`,
++`ffprobe`, and `node` before the registered native final-render test.
++
++## Replacement and lane behavior
++
++The final-render test now imports and calls the existing
++`tests.helpers.runtime.use_runtime()` helper at its start. That helper uses the
++existing `tests.lanes.unavailable` convention: a missing required Runtime is a
++visible failure when the named integration lane selects `integration`, while
++non-required runs retain the established optional guard behavior. No
++`ImportError` catch or new skip was added. Existing optional guards elsewhere
++were not broadened.
++
++## Mandatory run
++
++Named central suite, restricted to the two original integration test IDs:
++
++```text
++registered-native-render-integration
++tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task
++tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
++```
++
++Result: `2 passed in 152.68s (0:02:32)`.
++
++The run used the provided `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime`,
++current pinned Node, private current Remotion project, and the central
++`venv-agent-child-s2` environment.
++
++## Source limits
++
++Only the test fixture file was changed in this worker. Product source and the
++reviewed D13 runtime/renderer/host/epoch/fence/proposal implementation were not
++modified. The legacy refusal/artifact-preservation test and the native
++assemble, lost-ACK restart, revision-pinned render, MP4 decode, and undo
++assertions remain unchanged.
++
++## Additional evidence
++
++The affected legacy refusal test passed directly: `1 passed in 0.74s`.
++`git diff --check HEAD` passed. No full suite was run.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d90c54b2b095116f91245f5c2c9bfae75922560c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): require runtime in native render lane
++
++Replace the final-render fixture's tool-availability skip with the existing
++use_runtime lane guard so a missing Runtime fails visibly in the required
++integration suite.
+diff --git a/tests/packs/video_editing/test_runtime_publication_chain.py b/tests/packs/video_editing/test_runtime_publication_chain.py
+index 26219f5fde5fd08dc984e0f584b7645991339dce..5c9085dec33f5e0ba13cb1e990782f606eee3906
+--- a/tests/packs/video_editing/test_runtime_publication_chain.py
++++ b/tests/packs/video_editing/test_runtime_publication_chain.py
+@@ -20,6 +20,7 @@
+ from astrid.sdk.timeline.assembly import read_assembly_proposal
+ from astrid.sdk.timeline.sync import TimelineSession
+ from astrid.sdk.workspace_client import WorkspaceClientError
++from tests.helpers.runtime import use_runtime
+ 
+ 
+ def _digest(value: str | bytes) -> str:
+@@ -204,8 +205,7 @@
+ @pytest.mark.integration
+ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch, real_runtime):
+     """Run registered native assembly through requester, host, Runtime, and render."""
+-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None or shutil.which("node") is None:
+-        pytest.skip("ffmpeg, ffprobe, and node are required for the daemon render chain")
++    use_runtime()
+     astrid_root = Path(__file__).resolve().parents[3]
+     # The named integration suite supplies the pinned current Remotion/runtime
+     # pair. Keep this bootstrap read-only and do not redirect it to a mutable
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-runtime-fixture-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-runtime-fixture-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7a2a126672aeaf8a48911331330f0e706aa001e0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-runtime-fixture-final.md
+@@ -0,0 +1,46 @@
++# Agent D13 runtime fixture final
++
++## Exact skip removal
++
++In `tests/packs/video_editing/test_runtime_publication_chain.py`, removed the
++environment-dependent conditional `pytest.skip` that checked `ffmpeg`,
++`ffprobe`, and `node` before the registered native final-render test.
++
++## Replacement and lane behavior
++
++The final-render test now imports and calls the existing
++`tests.helpers.runtime.use_runtime()` helper at its start. That helper uses the
++existing `tests.lanes.unavailable` convention: a missing required Runtime is a
++visible failure when the named integration lane selects `integration`, while
++non-required runs retain the established optional guard behavior. No
++`ImportError` catch or new skip was added. Existing optional guards elsewhere
++were not broadened.
++
++## Mandatory run
++
++Named central suite, restricted to the two original integration test IDs:
++
++```text
++registered-native-render-integration
++tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task
++tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
++```
++
++Result: `2 passed in 152.68s (0:02:32)`.
++
++The run used the provided `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime`,
++current pinned Node, private current Remotion project, and the central
++`venv-agent-child-s2` environment.
++
++## Source limits
++
++Only the test fixture file was changed in this worker. Product source and the
++reviewed D13 runtime/renderer/host/epoch/fence/proposal implementation were not
++modified. The legacy refusal/artifact-preservation test and the native
++assemble, lost-ACK restart, revision-pinned render, MP4 decode, and undo
++assertions remain unchanged.
++
++## Additional evidence
++
++The affected legacy refusal test passed directly: `1 passed in 0.74s`.
++`git diff --check HEAD` passed. No full suite was run.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d90c54b2b095116f91245f5c2c9bfae75922560c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): require runtime in native render lane
++
++Replace the final-render fixture's tool-availability skip with the existing
++use_runtime lane guard so a missing Runtime fails visibly in the required
++integration suite.
+diff --git a/tests/packs/video_editing/test_runtime_publication_chain.py b/tests/packs/video_editing/test_runtime_publication_chain.py
+index 26219f5fde5fd08dc984e0f584b7645991339dce..5c9085dec33f5e0ba13cb1e990782f606eee3906
+--- a/tests/packs/video_editing/test_runtime_publication_chain.py
++++ b/tests/packs/video_editing/test_runtime_publication_chain.py
+@@ -20,6 +20,7 @@
+ from astrid.sdk.timeline.assembly import read_assembly_proposal
+ from astrid.sdk.timeline.sync import TimelineSession
+ from astrid.sdk.workspace_client import WorkspaceClientError
++from tests.helpers.runtime import use_runtime
+ 
+ 
+ def _digest(value: str | bytes) -> str:
+@@ -204,8 +205,7 @@
+ @pytest.mark.integration
+ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch, real_runtime):
+     """Run registered native assembly through requester, host, Runtime, and render."""
+-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None or shutil.which("node") is None:
+-        pytest.skip("ffmpeg, ffprobe, and node are required for the daemon render chain")
++    use_runtime()
+     astrid_root = Path(__file__).resolve().parents[3]
+     # The named integration suite supplies the pinned current Remotion/runtime
+     # pair. Keep this bootstrap read-only and do not redirect it to a mutable
+
+exec
+/bin/bash -lc "git diff --check HEAD; printf '\\n--- worktree status ---\\n'; git status --short; printf '\\n--- changed paths ---\\n'; git diff --name-only HEAD; printf '\\n--- diff stat ---\\n'; git diff --stat HEAD; printf '\\n--- markers ---\\n'; wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/DONE; printf '%s\\n' '--- commit message ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/commit-msg; printf '%s\\n' '--- design note ---'; sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-runtime-fixture-final.md; printf '%s\\n' '--- worktree untracked/build candidates ---'; git status --short --untracked-files=all | sed -n '1,120p'" in /home/user/work/wt/agt-m2-d13-runtime-fixture-no-skip
+ succeeded in 144ms:
+
+--- worktree status ---
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+
+--- changed paths ---
+tests/packs/video_editing/test_runtime_publication_chain.py
+
+--- diff stat ---
+ tests/packs/video_editing/test_runtime_publication_chain.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- markers ---
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-runtime-fixture-no-skip/DONE
+--- commit message ---
+test(timeline): require runtime in native render lane
+
+Replace the final-render fixture's tool-availability skip with the existing
+use_runtime lane guard so a missing Runtime fails visibly in the required
+integration suite.
+--- design note ---
+# Agent D13 runtime fixture final
+
+## Exact skip removal
+
+In `tests/packs/video_editing/test_runtime_publication_chain.py`, removed the
+environment-dependent conditional `pytest.skip` that checked `ffmpeg`,
+`ffprobe`, and `node` before the registered native final-render test.
+
+## Replacement and lane behavior
+
+The final-render test now imports and calls the existing
+`tests.helpers.runtime.use_runtime()` helper at its start. That helper uses the
+existing `tests.lanes.unavailable` convention: a missing required Runtime is a
+visible failure when the named integration lane selects `integration`, while
+non-required runs retain the established optional guard behavior. No
+`ImportError` catch or new skip was added. Existing optional guards elsewhere
+were not broadened.
+
+## Mandatory run
+
+Named central suite, restricted to the two original integration test IDs:
+
+```text
+registered-native-render-integration
+tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task
+tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+```
+
+Result: `2 passed in 152.68s (0:02:32)`.
+
+The run used the provided `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime`,
+current pinned Node, private current Remotion project, and the central
+`venv-agent-child-s2` environment.
+
+## Source limits
+
+Only the test fixture file was changed in this worker. Product source and the
+reviewed D13 runtime/renderer/host/epoch/fence/proposal implementation were not
+modified. The legacy refusal/artifact-preservation test and the native
+assemble, lost-ACK restart, revision-pinned render, MP4 decode, and undo
+assertions remain unchanged.
+
+## Additional evidence
+
+The affected legacy refusal test passed directly: `1 passed in 0.74s`.
+`git diff --check HEAD` passed. No full suite was run.
+--- worktree untracked/build candidates ---
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+
+ succeeded in 180073ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830/
+test agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830: pass exit=0 in 156s — registered-native-render-integration on agt-m2-d13-runtime-fixture-no-skip (agent tree 87b1441b9fb441ced465fdb3053b9cb0fb339687)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+counts: 2 passed in 152.68s (0:02:32) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-runtime-fixture-no-skip-registered-native-render-integration-1020153135-25830/log.txt ---
+..                                                                       [100%]
+2 passed in 152.68s (0:02:32)
+
+codex
+Implemented the D13 fixture fix.
+
+- Replaced the `ffmpeg`/`ffprobe`/`node` conditional skip with `use_runtime()`.
+- Product/D13 runtime source unchanged; only the test file changed.
+- Direct test: `1 passed`.
+- Central named suite: `2 passed in 152.68s`.
+- `git diff --check HEAD`: passed.
+- No full suite run.
+
+Artifacts written:
+
+- [test fixture]( /home/user/work/wt/agt-m2-d13-runtime-fixture-no-skip/tests/packs/video_editing/test_runtime_publication_chain.py )
+- Design note: `/tmp/.../design/agent-d13-runtime-fixture-final.md`
+- Commit message and `DONE` marker created.
+- No blockers.
+tokens used
+89,861
+Implemented the D13 fixture fix.
+
+- Replaced the `ffmpeg`/`ffprobe`/`node` conditional skip with `use_runtime()`.
+- Product/D13 runtime source unchanged; only the test file changed.
+- Direct test: `1 passed`.
+- Central named suite: `2 passed in 152.68s`.
+- `git diff --check HEAD`: passed.
+- No full suite run.
+
+Artifacts written:
+
+- [test fixture]( /home/user/work/wt/agt-m2-d13-runtime-fixture-no-skip/tests/packs/video_editing/test_runtime_publication_chain.py )
+- Design note: `/tmp/.../design/agent-d13-runtime-fixture-final.md`
+- Commit message and `DONE` marker created.
+- No blockers.

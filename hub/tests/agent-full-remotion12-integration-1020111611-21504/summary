@@ -1,0 +1,64 @@
+test agent-full-remotion12-integration-1020111611-21504: fail exit=1 in 4810s — full-remotion12-integration on integration:agent (agent tree 97c81636a4ce624d9bf0b88e3df7d147a79b9621)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent-child/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent-child/bin/python -m pytest -q -n 3
+counts: 26 failed, 14111 passed, 452 skipped, 4 xfailed, 83 warnings, 565 subtests passed in 4806.04s (1:20:06) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-remotion12-integration-1020111611-21504/log.txt ---
+
+tests/packs/rendering/test_timeline_filmstrip_execution.py::test_input_audio_rail_is_prominent_but_remains_timing_only
+  /home/user/work/wt/.test-agent-full-remotion12-integration-1020111611-21504/tests/packs/rendering/test_timeline_filmstrip_execution.py:345: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    pixels = list(image.getdata())
+
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/.test-agent-full-remotion12-integration-1020111611-21504/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+  /home/user/work/wt/.test-agent-full-remotion12-integration-1020111611-21504/tests/sdk/test_timeline_checkout.py:1573: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    assert set(image.convert("RGB").getdata()) == {colors[n]}
+
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[prepared-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[prepared-redo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[target-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[target-redo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[first-promotion-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[first-promotion-redo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[second-promotion-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[second-promotion-redo]
+  /home/user/work/wt/.test-agent-full-remotion12-integration-1020111611-21504/tests/sdk/test_timeline_checkout_restore_recovery.py:300: DeprecationWarning: This process (pid=19546) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    pid = os.fork()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[window-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[window-other]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-other]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_full_stereo_wav_and_exact_compiler_clock_without_authored_writes[30-0.06666666666666667]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_full_stereo_wav_and_exact_compiler_clock_without_authored_writes[29.97002997002997-0.03336666666666667]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_prepared_output_cannot_be_applied_twice
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_no_envelope_does_not_create_render_source_or_pcm
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_replaced_staged_bytes_cannot_keep_the_original_managed_identity
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_failed_batch_removes_only_its_own_files
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_url_registration_failure_cleans_the_prepared_batch
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_internal_original_clip_seam_preserves_phase_without_trusting_app[30]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_internal_original_clip_seam_preserves_phase_without_trusting_app[29.97002997002997]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_successful_files_survive_until_the_attempt_owner_cleans_up
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_actual_slice_needs_original_compiled_clip_transport[window]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_actual_slice_needs_original_compiled_clip_transport[layer]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_window_transports_explicit_envelope_without_slice_origin_metadata[30]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_window_transports_explicit_envelope_without_slice_origin_metadata[29.97002997002997]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_exact_asset_keys_bind_distinct_managed_bytes_to_their_own_wav_urls
+FAILED tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name
+FAILED tests/test_artifact_manifest.py::test_committed_artifact_manifest_is_current
+FAILED tests/test_artifact_manifest.py::test_cli_surface_is_current - Asserti...
+FAILED tests/test_artifact_manifest.py::test_planted_cli_surface_drift_is_named
+FAILED tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary
+FAILED tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context
+FAILED tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+26 failed, 14111 passed, 452 skipped, 4 xfailed, 83 warnings, 565 subtests passed in 4806.04s (1:20:06)

@@ -1,0 +1,400 @@
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 6802, "elapsed_ms": 430}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 6802, "elapsed_ms": 3166}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 6802, "elapsed_ms": 3382}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "launch_transaction", "outcome": "completed", "process_id": 6802, "elapsed_ms": 50477}
+----------------------------- Captured stderr call -----------------------------
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 6802, "elapsed_ms": 4543}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 6802, "elapsed_ms": 4917}
+=========================== short test summary info ============================
+FAILED tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle
+1 failed in 119.62s (0:01:59)
+
+codex
+The diagnostic confirms authority is valid and the failure is specifically the default `scene result unavailable`, meaning the SDK adapter rejected the returned managed-result shape before provenance checks. I’m exposing the completed task and managed-output rows to identify that shape, then will adjust only the adapter if the returned data is otherwise valid.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m3-scene-managed-query-only/tests/integrations/test_d09_managed_scene_only.py
+diff --git a/astrid/sdk/timeline_filmstrip.py b/astrid/sdk/timeline_filmstrip.py
+index 1b7c6633e4d525e624d30217d878fce04d87a44c..b347ef3c5fb65cc495ee3b3d6603b56169f6e7b5
+--- a/astrid/sdk/timeline_filmstrip.py
++++ b/astrid/sdk/timeline_filmstrip.py
+@@ -1307,9 +1307,7 @@
+         for key, value in clip_map.items()
+     ):
+         return None
+-    if not all(isinstance(context.get(key), str) and context[key] for key in (
+-        "video_digest", "video_object_id", "managed_object_reference", "capture_identity",
+-    )):
++    if not isinstance(context.get("capture_identity"), str) or not context["capture_identity"]:
+         return None
+     capture_authority = metadata.get("capture_authority")
+     if not isinstance(capture_authority, Mapping):
+@@ -1319,9 +1317,6 @@
+         return None
+     return {
+         "capture_identity": context["capture_identity"],
+-        "video_digest": context["video_digest"],
+-        "video_object_id": context["video_object_id"],
+-        "managed_object_reference": context["managed_object_reference"],
+         "scene_clips": deepcopy(dict(clip_map)),
+         "snapshot_label": expected_label,
+         "timeline_id": snapshot.get("timeline_id"),
+@@ -1373,7 +1368,7 @@
+         "view": "filmstrip",
+         "formats": list(_SCENE_ONLY_FORMATS),
+         "composed_capture": True,
+-        "include_media": True,
++        "include_media": False,
+         "every_frames": 1,
+     })
+     context = prepare_filmstrip(request, project=project, client=client)
+diff --git a/tests/integrations/test_d09_managed_scene_only.py b/tests/integrations/test_d09_managed_scene_only.py
+index c2e1d7108f648d0ab6c6a348c6c02000dfad442c..62cfb1945e8b900be77b9485f6e7cfd313d21eff
+--- a/tests/integrations/test_d09_managed_scene_only.py
++++ b/tests/integrations/test_d09_managed_scene_only.py
+@@ -54,6 +54,7 @@
+         }:
+             monkeypatch.delenv(name, raising=False)
+     monkeypatch.setenv("ASTRID_RUNTIME_CHECKOUT", "/home/user/work/runtime")
++    monkeypatch.setenv("ASTRID_CHECKOUT", str(ROOT))
+     private_profile = tmp_path / "public13-profile"
+     shutil.copytree(
+         REMOTION,
+@@ -195,12 +196,26 @@
+ 
+     thread = threading.Thread(target=serve, name="d09-pack-host")
+     thread.start()
++    operation_error: BaseException | None = None
+     try:
+         result = operation()
++    except BaseException as exc:
++        operation_error = exc
++        raise
+     finally:
+-        if thread.is_alive():
++        cleanup_error: BaseException | None = None
++        try:
++            # Always close the owned host, including admission/query failures
++            # after its claim loop has already exited.  shutdown() reaps the
++            # host's child process groups before the Runtime fixture tears
++            # down its server.
+             host.shutdown()
+-        thread.join(timeout=30)
++        except BaseException as exc:
++            cleanup_error = exc
++        finally:
++            thread.join(timeout=30)
++        if cleanup_error is not None and operation_error is None:
++            raise cleanup_error
+     assert not thread.is_alive(), "pack host did not settle the managed task"
+     assert not errors, errors[0] if errors else None
+     return result
+@@ -241,32 +256,6 @@
+     return {"row": row, "manifest": manifest, "payload": payload}
+ 
+ 
+-def _render(client: AstridClient, host: GenericPackHost, project_id: str) -> None:
+-    result = _run_one(
+-        host,
+-        lambda: client.invoke_result(
+-            "rendering.render",
+-            kind="executor",
+-            project=project_id,
+-            inputs={
+-                "timeline_ref": "main",
+-                "selector": "rendering.remotion",
+-                "output_name": "d09-base.mp4",
+-                "backend_config": {
+-                    "rendering.remotion": {
+-                        "project_dir": os.environ["ASTRID_REMOTION_PROJECT_DIR"],
+-                        "composition_id": "TimelineComposition",
+-                    }
+-                },
+-            },
+-            wait=True,
+-            timeout_seconds=300,
+-            poll_seconds=0.05,
+-        ),
+-    )
+-    assert result.ok, result.to_dict()
+-
+-
+ def test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle(
+     tmp_path: Path, real_runtime: Any
+ ) -> None:
+@@ -274,16 +263,20 @@
+     with _connect(daemon) as client:
+         project_id, parent_revision = _publish(client, suffix="positive")
+         host = _host(daemon, tmp_path)
+-        _render(client, host, project_id)
+-
+-        host = _host(daemon, tmp_path)
+         saved_spans, saved_context = _run_one(
+             host,
+             lambda: timeline_filmstrip._invoke_scene_only(
+                 {"timeline_ref": "main"}, project=project_id, client=client
+             ),
+         )
+-        assert saved_spans[0].cls == "COVERED"
++        if saved_spans[0].cls != "COVERED":
++            saved_scene, saved_output_rows = _latest_scene_task(client, project_id)
++            raise AssertionError({
++                "findings": saved_spans[0].findings,
++                "context": saved_context,
++                "scene": saved_scene,
++                "managed_outputs": saved_output_rows,
++            })
+         assert saved_context["snapshot_label"] == {
+             "status": "committed",
+             "label": f"committed revision {parent_revision}",
+diff --git a/tests/sdk/test_scene_caller_preservation.py b/tests/sdk/test_scene_caller_preservation.py
+index 1488ea20be3ce56b7abda19dd3ee607c7074c347..4320595921768c01a4e3035fda5a04ceb2367b32
+--- a/tests/sdk/test_scene_caller_preservation.py
++++ b/tests/sdk/test_scene_caller_preservation.py
+@@ -197,5 +197,6 @@
+     assert request['mode'] == 'scene_only'
+     assert request['formats'] == ['md']
+     assert request['composed_capture'] is True
++    assert request['include_media'] is False
+     assert 'source_ref' not in request and 'authority_context' not in request
+     assert seen['inputs'] == request
+
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-scene-managed-query-only targeted --files "tests/integrations/test_d09_managed_scene_only.py" --no-cache) && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m3-scene-managed-query-only
+exec
+/bin/bash -lc "d=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-scene-managed-query-only-targeted-1020200754-27687; printf 'status='; cat \""'$d/status"; cat "$d/why" 2>/dev/null || true' in /home/user/work/wt/agt-m3-scene-managed-query-only
+ succeeded in 143ms:
+status=queued
+2 targeted/named runs already running
+
+codex
+The third diagnostic request is also queued behind the same two central jobs. It is the necessary bounded inspection run; I’m not broadening the suite or changing timeouts.
+exec
+/bin/bash -lc "d=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-scene-managed-query-only-targeted-1020200754-27687; printf 'status='; cat \""'$d/status"; stat -c '"'log=%s %y' \""'$d/log.txt" 2>/dev/null || true' in /home/user/work/wt/agt-m3-scene-managed-query-only
+ succeeded in 62ms:
+status=running
+log=0 2026-10-20 20:10:22.657201596 +0000
+
+ exited 1 in 240146ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-scene-managed-query-only-targeted-1020200754-27687
+test agt-m3-scene-managed-query-only-targeted-1020200754-27687: fail exit=1 in 91s — targeted on agt-m3-scene-managed-query-only (agent tree 6d554f22eaa074a7c2b75a1608bd4f971c5dc7be)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/integrations/test_d09_managed_scene_only.py
+counts: 1 failed in 87.61s (0:01:27) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-scene-managed-query-only-targeted-1020200754-27687/log.txt ---
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle ______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3414/test_saved_and_frozen_candidat0')
+real_runtime = <function real_runtime.<locals>.start at 0x7f2f6885bf60>
+
+    def test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle(
+        tmp_path: Path, real_runtime: Any
+    ) -> None:
+        daemon = real_runtime()
+        with _connect(daemon) as client:
+            project_id, parent_revision = _publish(client, suffix="positive")
+            host = _host(daemon, tmp_path)
+            saved_spans, saved_context = _run_one(
+                host,
+                lambda: timeline_filmstrip._invoke_scene_only(
+                    {"timeline_ref": "main"}, project=project_id, client=client
+                ),
+            )
+            if saved_spans[0].cls != "COVERED":
+>               saved_scene, saved_output_rows = _latest_scene_task(client, project_id)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integrations/test_d09_managed_scene_only.py:273: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = <astrid.sdk.client.AstridClient object at 0x7f2f647d17f0>
+project_id = '1e62a26cdaa84834a8b3de8af830ffc1'
+
+    def _latest_scene_task(client: AstridClient, project_id: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+        tasks = paged_rows(client._remote._transport.list_project_tasks, project_id, limit=50)
+>       assert tasks
+E       assert []
+
+tests/integrations/test_d09_managed_scene_only.py:226: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 21528, "elapsed_ms": 11234}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 21528, "elapsed_ms": 10078}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "registry_settle", "outcome": "completed", "process_id": 21528, "elapsed_ms": 23605}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 21528, "elapsed_ms": 3492}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 21528, "elapsed_ms": 138}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 21528, "elapsed_ms": 277}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 21528, "elapsed_ms": 3704}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 21528, "elapsed_ms": 4384}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 21528, "elapsed_ms": 328}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 21528, "elapsed_ms": 3530}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 21528, "elapsed_ms": 3522}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "launch_transaction", "outcome": "completed", "process_id": 21528, "elapsed_ms": 44962}
+----------------------------- Captured stderr call -----------------------------
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 21528, "elapsed_ms": 2383}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 21528, "elapsed_ms": 2223}
+=========================== short test summary info ============================
+FAILED tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle
+1 failed in 87.61s (0:01:27)
+
+codex
+The task list is empty, so this is a pre-admission failure, not a managed ZIP shape mismatch. I’m now exposing the private invocation’s structured error directly; the prior adapter correctly converted it to an unavailable span, which hid the admission cause.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m3-scene-managed-query-only/astrid/sdk/timeline_filmstrip.py
+diff --git a/astrid/sdk/timeline_filmstrip.py b/astrid/sdk/timeline_filmstrip.py
+index 1b7c6633e4d525e624d30217d878fce04d87a44c..11b504ecfc2c101a9e5932e803bddc1218a7de5e
+--- a/astrid/sdk/timeline_filmstrip.py
++++ b/astrid/sdk/timeline_filmstrip.py
+@@ -1307,9 +1307,7 @@
+         for key, value in clip_map.items()
+     ):
+         return None
+-    if not all(isinstance(context.get(key), str) and context[key] for key in (
+-        "video_digest", "video_object_id", "managed_object_reference", "capture_identity",
+-    )):
++    if not isinstance(context.get("capture_identity"), str) or not context["capture_identity"]:
+         return None
+     capture_authority = metadata.get("capture_authority")
+     if not isinstance(capture_authority, Mapping):
+@@ -1319,9 +1317,6 @@
+         return None
+     return {
+         "capture_identity": context["capture_identity"],
+-        "video_digest": context["video_digest"],
+-        "video_object_id": context["video_object_id"],
+-        "managed_object_reference": context["managed_object_reference"],
+         "scene_clips": deepcopy(dict(clip_map)),
+         "snapshot_label": expected_label,
+         "timeline_id": snapshot.get("timeline_id"),
+@@ -1373,7 +1368,7 @@
+         "view": "filmstrip",
+         "formats": list(_SCENE_ONLY_FORMATS),
+         "composed_capture": True,
+-        "include_media": True,
++        "include_media": False,
+         "every_frames": 1,
+     })
+     context = prepare_filmstrip(request, project=project, client=client)
+@@ -1643,6 +1638,8 @@
+         client=client,
+         inputs=request, wait=True, read_managed_outputs=True,
+     )
++    if not result.ok:
++        raise RuntimeError(result.to_dict())
+     return _scene_only_spans(result, context, client=client), context
+ 
+ 
+diff --git a/tests/integrations/test_d09_managed_scene_only.py b/tests/integrations/test_d09_managed_scene_only.py
+index c2e1d7108f648d0ab6c6a348c6c02000dfad442c..62cfb1945e8b900be77b9485f6e7cfd313d21eff
+--- a/tests/integrations/test_d09_managed_scene_only.py
++++ b/tests/integrations/test_d09_managed_scene_only.py
+@@ -54,6 +54,7 @@
+         }:
+             monkeypatch.delenv(name, raising=False)
+     monkeypatch.setenv("ASTRID_RUNTIME_CHECKOUT", "/home/user/work/runtime")
++    monkeypatch.setenv("ASTRID_CHECKOUT", str(ROOT))
+     private_profile = tmp_path / "public13-profile"
+     shutil.copytree(
+         REMOTION,
+@@ -195,12 +196,26 @@
+ 
+     thread = threading.Thread(target=serve, name="d09-pack-host")
+     thread.start()
++    operation_error: BaseException | None = None
+     try:
+         result = operation()
++    except BaseException as exc:
++        operation_error = exc
++        raise
+     finally:
+-        if thread.is_alive():
++        cleanup_error: BaseException | None = None
++        try:
++            # Always close the owned host, including admission/query failures
++            # after its claim loop has already exited.  shutdown() reaps the
++            # host's child process groups before the Runtime fixture tears
++            # down its server.
+             host.shutdown()
+-        thread.join(timeout=30)
++        except BaseException as exc:
++            cleanup_error = exc
++        finally:
++            thread.join(timeout=30)
++        if cleanup_error is not None and operation_error is None:
++            raise cleanup_error
+     assert not thread.is_alive(), "pack host did not settle the managed task"
+     assert not errors, errors[0] if errors else None
+     return result
+@@ -241,32 +256,6 @@
+     return {"row": row, "manifest": manifest, "payload": payload}
+ 
+ 
+-def _render(client: AstridClient, host: GenericPackHost, project_id: str) -> None:
+-    result = _run_one(
+-        host,
+-        lambda: client.invoke_result(
+-            "rendering.render",
+-            kind="executor",
+-            project=project_id,
+-            inputs={
+-                "timeline_ref": "main",
+-                "selector": "rendering.remotion",
+-                "output_name": "d09-base.mp4",
+-                "backend_config": {
+-                    "rendering.remotion": {
+-                        "project_dir": os.environ["ASTRID_REMOTION_PROJECT_DIR"],
+-                        "composition_id": "TimelineComposition",
+-                    }
+-                },
+-            },
+-            wait=True,
+-            timeout_seconds=300,
+-            poll_seconds=0.05,
+-        ),
+-    )
+-    assert result.ok, result.to_dict()
+-
+-
+ def test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle(
+     tmp_path: Path, real_runtime: Any
+ ) -> None:
+@@ -274,16 +263,20 @@
+     with _connect(daemon) as client:
+         project_id, parent_revision = _publish(client, suffix="positive")
+         host = _host(daemon, tmp_path)
+-        _render(client, host, project_id)
+-
+-        host = _host(daemon, tmp_path)
+         saved_spans, saved_context = _run_one(
+             host,
+             lambda: timeline_filmstrip._invoke_scene_only(
+                 {"timeline_ref": "main"}, project=project_id, client=client
+             ),
+         )
+-        assert saved_spans[0].cls == "COVERED"
++        if saved_spans[0].cls != "COVERED":
++            saved_scene, saved_output_rows = _latest_scene_task(client, project_id)
++            raise AssertionError({
++                "findings": saved_spans[0].findings,
++                "context": saved_context,
++                "scene": saved_scene,
++                "managed_outputs": saved_output_rows,
++            })
+         assert saved_context["snapshot_label"] == {
+             "status": "committed",
+             "label": f"committed revision {parent_revision}",
+diff --git a/tests/sdk/test_scene_caller_preservation.py b/tests/sdk/test_scene_caller_preservation.py
+index 1488ea20be3ce56b7abda19dd3ee607c7074c347..4320595921768c01a4e3035fda5a04ceb2367b32
+--- a/tests/sdk/test_scene_caller_preservation.py
++++ b/tests/sdk/test_scene_caller_preservation.py
+@@ -197,5 +197,6 @@
+     assert request['mode'] == 'scene_only'
+     assert request['formats'] == ['md']
+     assert request['composed_capture'] is True
++    assert request['include_media'] is False
+     assert 'source_ref' not in request and 'authority_context' not in request
+     assert seen['inputs'] == request
+
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-scene-managed-query-only targeted --files "tests/integrations/test_d09_managed_scene_only.py" --no-cache) && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m3-scene-managed-query-only

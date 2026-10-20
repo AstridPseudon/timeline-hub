@@ -1,0 +1,400 @@
+
+SDK sync reconstructs known native commands against the exact original source bundle and checks the entire returned commands list, derived map, scoped output owner/items, closure hashes and receipt identity. A missing map on a typed request fails too. For inverse results with a nonidentity map, SDK fetches the referenced accepted history and original source contexts, cross-checks returned commands/maps against that history, then validates the reversed source/output closure. Arbitrary nonidentity maps remain refused, leaving the flight intact. App owns its corresponding validator.
+
+No compatibility refresh of old sealed command claims was implemented. Frozen M1 bundles and identity maps retain their old captures; old accepted records/retry authority stay on the existing path. Any additional old-sealed-command migration needs joint Runtime review rather than dropping claims.
+
+Runtime must review the source candidate (including inverse provenance above), generate the four item-ref patterns through the official paired release, refresh pins/ACK validators under their owners, then run actual coupled admission/occupancy/own-slot/retry tests. Existing installed generated contracts are deliberately untouched; no schema override or claimed actual Runtime qualification. M2 integration remains held per PLAN.
+
+## Size and evidence
+
+The 150–220 line target is exceeded. Before implementation this page recorded the concrete reasons: sibling-first installation before guard verification and accepted-reload inverse require a read-only source resolver separate from State. Additional executable counterexamples required retaining inverse allocation provenance across unshared-source undo/redo, typed raw-item birth/reservations, and checking SDK ACKs against original commands and accepted inverse history. These are bounded functions over existing envelopes; no new framework, table, endpoint, DTO, receipt ledger or allocator was introduced. Exact final counts and test commands are in the worker report.
+''')
+PY" in /home/user/work/wt/agt-m2-materialization-map-impl
+ succeeded in 0ms:
+ exited 1 in 46312ms:
+exec
+/bin/bash -lc 'tail -8 /tmp/agt-materialization-last.log && tail -8 /tmp/agt-materialization-final-verified.log && git diff --check && PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/core/timeline/authoring_bundle.py --output-format concise' in /home/user/work/wt/agt-m2-materialization-map-impl
+ succeeded in 0ms:
+FAILED tests/editing_conformance/test_recording_clear.py::test_shared_clear_records_only_leaf_and_needed_ancestor[clear-container5-None]
+FAILED tests/editing_conformance/test_recording_clear.py::test_shared_clear_records_only_leaf_and_needed_ancestor[assign-container0-guard_path0]
+FAILED tests/editing_conformance/test_recording_clear.py::test_shared_clear_records_only_leaf_and_needed_ancestor[assign-container1-guard_path1]
+FAILED tests/editing_conformance/test_recording_clear.py::test_shared_clear_records_only_leaf_and_needed_ancestor[assign-container2-guard_path2]
+FAILED tests/editing_conformance/test_recording_clear.py::test_shared_clear_records_only_leaf_and_needed_ancestor[assign-container3-guard_path3]
+FAILED tests/editing_conformance/test_recording_clear.py::test_shared_clear_records_only_leaf_and_needed_ancestor[assign-container4-None]
+FAILED tests/editing_conformance/test_recording_clear.py::test_shared_clear_records_only_leaf_and_needed_ancestor[assign-container5-None]
+12 failed, 572 passed, 1 deselected in 45.76s
+........................................................................ [ 27%]
+........................................................................ [ 41%]
+........................................................................ [ 55%]
+........................................................................ [ 69%]
+........................................................................ [ 83%]
+........................................................................ [ 97%]
+.............                                                            [100%]
+517 passed, 1 deselected in 45.48s
+All checks passed!
+
+exec
+/bin/bash -lc "head -85 /tmp/agt-materialization-last.log && sed -n '20,62p' tests/editing_conformance/test_recording_clear.py" in /home/user/work/wt/agt-m2-materialization-map-impl
+ succeeded in 0ms:
+........................................................................ [ 12%]
+.....................FFFFFFFFFFFF....................................... [ 24%]
+........................................................................ [ 36%]
+........................................................................ [ 49%]
+........................................................................ [ 61%]
+........................................................................ [ 73%]
+........................................................................ [ 86%]
+........................................................................ [ 98%]
+........                                                                 [100%]
+=================================== FAILURES ===================================
+_ test_shared_clear_records_only_leaf_and_needed_ancestor[clear-container0-guard_path0] _
+
+container = {'state': 'absent'}, guard_path = ['params'], primitive = 'clear'
+
+    @pytest.mark.parametrize('container,guard_path', CONTAINERS)
+    @pytest.mark.parametrize('primitive', ['set', 'clear', 'assign'])
+    def test_shared_clear_records_only_leaf_and_needed_ancestor(container, guard_path, primitive):
+        original = {'parent': {}}
+        set_container(original['parent'], container)
+        candidate = copy.deepcopy(original)
+        state = State(candidate)
+        before = state.get('parent', PATH)
+        if primitive == 'set':
+            state.set('parent', PATH, ABSENT)
+        else:
+            ctx = Recording(candidate, {}, 0)
+            if primitive == 'clear':
+                ctx.clear('parent', PATH)
+            else:
+                ctx.assign('parent', PATH, ABSENT)
+            assert ctx.record['writes'] == [
+                {'ref': 'parent', 'path': PATH, 'before': before, 'after': ABSENT}]
+            assert ctx.record['reads'] == ([] if guard_path is None else [
+                {'ref': 'parent', 'path': guard_path, 'state': State(original).get('parent', guard_path)}])
+>           assert ctx.finish(capture=True)['command']['expect'] == {'parent::params.nested.leaf': before}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/editing_conformance/test_recording_clear.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <astrid.sdk.timeline._recording.Recording object at 0x7f79ce1d82f0>
+
+    def finish(self, *, capture=False):
+        # A raw aggregate replacement cannot smuggle an unrecorded item birth.
+        created = {item['ref'] for item in self.record['created']}
+>       for identity, shot in self.state.bundle['shots'].items():
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'shots'
+
+astrid/sdk/timeline/_recording.py:199: KeyError
+_ test_shared_clear_records_only_leaf_and_needed_ancestor[clear-container1-guard_path1] _
+
+container = {'state': 'present', 'value': None}, guard_path = ['params']
+primitive = 'clear'
+
+    @pytest.mark.parametrize('container,guard_path', CONTAINERS)
+    @pytest.mark.parametrize('primitive', ['set', 'clear', 'assign'])
+    def test_shared_clear_records_only_leaf_and_needed_ancestor(container, guard_path, primitive):
+        original = {'parent': {}}
+        set_container(original['parent'], container)
+        candidate = copy.deepcopy(original)
+        state = State(candidate)
+        before = state.get('parent', PATH)
+        if primitive == 'set':
+            state.set('parent', PATH, ABSENT)
+        else:
+            ctx = Recording(candidate, {}, 0)
+            if primitive == 'clear':
+                ctx.clear('parent', PATH)
+            else:
+                ctx.assign('parent', PATH, ABSENT)
+            assert ctx.record['writes'] == [
+                {'ref': 'parent', 'path': PATH, 'before': before, 'after': ABSENT}]
+            assert ctx.record['reads'] == ([] if guard_path is None else [
+                {'ref': 'parent', 'path': guard_path, 'state': State(original).get('parent', guard_path)}])
+>           assert ctx.finish(capture=True)['command']['expect'] == {'parent::params.nested.leaf': before}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/editing_conformance/test_recording_clear.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <astrid.sdk.timeline._recording.Recording object at 0x7f79cea37a80>
+
+    def finish(self, *, capture=False):
+        # A raw aggregate replacement cannot smuggle an unrecorded item birth.
+    (present({}), ['params', 'nested']),
+    (present({'nested': None}), ['params', 'nested']),
+    (present({'nested': {'other': [False, None]}}), None),
+    (present({'nested': {'leaf': None, 'other': [False, None]}}), None),
+]
+
+
+def set_container(row, container):
+    if container != ABSENT:
+        row['params'] = copy.deepcopy(container['value'])
+
+
+def clear_call():
+    return {'schema_version': 1, 'op': 'fixture.properties', 'version': '1', 'select': REF,
+            'args': {'changes': [{'path': PATH, 'state': ABSENT}]}}
+
+
+@pytest.mark.parametrize('container,guard_path', CONTAINERS)
+@pytest.mark.parametrize('primitive', ['set', 'clear', 'assign'])
+def test_shared_clear_records_only_leaf_and_needed_ancestor(container, guard_path, primitive):
+    original = {'parent': {}}
+    set_container(original['parent'], container)
+    candidate = copy.deepcopy(original)
+    state = State(candidate)
+    before = state.get('parent', PATH)
+    if primitive == 'set':
+        state.set('parent', PATH, ABSENT)
+    else:
+        ctx = Recording(candidate, {}, 0)
+        if primitive == 'clear':
+            ctx.clear('parent', PATH)
+        else:
+            ctx.assign('parent', PATH, ABSENT)
+        assert ctx.record['writes'] == [
+            {'ref': 'parent', 'path': PATH, 'before': before, 'after': ABSENT}]
+        assert ctx.record['reads'] == ([] if guard_path is None else [
+            {'ref': 'parent', 'path': guard_path, 'state': State(original).get('parent', guard_path)}])
+        assert ctx.finish(capture=True)['command']['expect'] == {'parent::params.nested.leaf': before}
+    expected = copy.deepcopy(original)
+    if before != ABSENT:
+        del expected['parent']['params']['nested']['leaf']
+    assert candidate == expected
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('astrid/sdk/timeline/_recording.py');s=p.read_text().replace(\"for identity, shot in self.state.bundle['shots'].items():\", \"for identity, shot in self.state.bundle.get('shots', {}).items():\");p.write_text(s)
+PY
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recording_clear.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_recipe_clip_delete.py > /tmp/agt-materialization-complete.log 2>&1' in /home/user/work/wt/agt-m2-materialization-map-impl
+exec
+/bin/bash -lc "rg -n 'addopts|markers|live|deselect' pyproject.toml tests/conftest.py && git diff --check" in /home/user/work/wt/agt-m2-materialization-map-impl
+ succeeded in 0ms:
+pyproject.toml:250:# timeout_method = "signal": a SIGALRM is delivered to the test on the main
+pyproject.toml:264:addopts = "-m 'not integration and not darwin_native and not live and not opt_in'"
+pyproject.toml:278:# The lane markers (integration, darwin_native, live, opt_in) are registered by
+pyproject.toml:280:markers = [
+
+codex
+The 517-test regression run passed. Adding the adjacent recorder-clear tests then exposed a parent-only fixture case in the new birth check; I fixed it without changing the assertions. The final combined run is in progress. The Runtime review and release details are documented for the paired generation step.
+ succeeded in 43789ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('astrid/core/timeline/authoring_bundle.py');s=p.read_text();start=s.index('    result = _remap_known_item_references(result, remap)\\n',s.index('def _copy_shot_for_placement'));end=s.index('\\n\\ndef open_authoring_bundle',start);s=s[:start]+'''    return _remap_shot_items(result, remap), remap
+
+
+def _remap_shot_items(payload: Mapping[str, Any], item_ids: Mapping[str, str]) -> dict[str, Any]:
+    result = _remap_known_item_references(payload, item_ids)
+    for before, item in zip(payload.get(\"items\", []), result.get(\"items\", [])):
+        # Remap the raw codec (and an equal identity mirror), never opaque ids.
+        if \"id\" in before and before[\"id\"] == before.get(\"item_id\", before[\"id\"]):
+            item[\"id\"] = item_ids[before[\"id\"]]
+    return result
+''' +s[end:];p.write_text(s)
+p=Path('astrid/sdk/timeline/_materialization.py');s=p.read_text().replace('from astrid.core.timeline.authoring_bundle import _copy_shot_for_placement', 'from astrid.core.timeline.authoring_bundle import _remap_shot_items');s=s.replace('''            replacement[field], items = _copy_shot_for_placement(
+                shot[field], project_id=bundle['project_id'], timeline_id=bundle['timeline_id'],
+                occurrence_id=row['occurrence_id'], authoring_shot_id=destination, source_shot_id=current)
+            if items "'!= source['"'item_id_map']:
+                raise CommandError('materialization item allocation changed', kind='identity_conflict')''','''            items = {item.get('item_id', item.get('id')) for item in shot[field].get('items', [])}
+            if items "'!= source['"'item_id_map'].keys():
+                raise CommandError('materialization source items changed', kind='identity_conflict')
+            replacement[field] = _remap_shot_items(shot[field], source['item_id_map'])''');p.write_text(s)
+PY
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recording_clear.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_recipe_clip_delete.py > /tmp/agt-materialization-final-result.log 2>&1' in /home/user/work/wt/agt-m2-materialization-map-impl
+exec
+/bin/bash -lc 'tail -4 /tmp/agt-materialization-complete.log && git diff --check && PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/core/timeline/authoring_bundle.py --output-format concise' in /home/user/work/wt/agt-m2-materialization-map-impl
+ succeeded in 0ms:
+........................................................................ [ 86%]
+........................................................................ [ 98%]
+........                                                                 [100%]
+584 passed, 1 deselected in 43.08s
+All checks passed!
+
+codex
+The combined targeted run passed: 584 tests, with one deselected by the repository’s default marker filter. I then factored the codec remapper so replay applies the recorded item map directly, and the same targeted set is checking that final change. Runtime admission remains unverified until the official paired schema/client release.
+exec
+/bin/bash -lc "tail -4 /tmp/agt-materialization-final-result.log && python3 - <<'PY'
+from pathlib import Path
+import subprocess
+rows = subprocess.check_output(['git','diff','--numstat'], text=True).splitlines()
+added = removed = 0
+for row in rows:
+ a,d,path=row.split('\\t')
+ if path.startswith('astrid/'):
+  added += int(a)
+  removed += int(d)
+newlines=len(Path('astrid/sdk/timeline/_materialization.py').read_text().splitlines())
+print(f'Product: +{added+newlines}/-{removed}, net +{added+newlines-removed}; new helper {newlines} lines')
+PY" in /home/user/work/wt/agt-m2-materialization-map-impl
+ succeeded in 0ms:
+........................................................................ [ 49%]
+........................................................................ [ 61%]
+........................................................................ [ 73%]
+...................Product: +425/-28, net +397; new helper 175 lines
+
+ succeeded in 45203ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-m2-materialization-map-impl'
+(worker/'notes').mkdir(exist_ok=True)
+message='''feat(timeline): retain source-bound materialization allocations
+
+Capture exact shot/item allocation maps and original source/owner bindings
+before sealing commands. Consume recorded destinations across sibling-first
+replay and inverse reloads, resolving source entities through read-only
+verified closures. Preserve both raw item codecs and typed semantic births.
+
+Publish the four canonical item reference forms and validate SDK acceptance
+against original commands, source closures and accepted inverse history.
+Keep frozen M1 captures and allocator seeds unchanged.
+'''
+for name in ('commit-msg','commit-msg.txt'):
+ (worker/name).write_text(message)
+report='''# Source-bound materialization implementation
+
+Implemented on base "'`1b52391e` in `tl/agt-m2-materialization-map-impl`. Harness commits; no git mutations, Runtime edits, dependency installs, network, browsers, generated release artifacts or full-suite runs.
+
+- Overlaid the two contract test files from `tl/agt-m2-materialization-map-contract`, preserving all five corrected requirements and both replay/id-codec counterexamples. Their seven strict xfails are now positive tests with their assertions preserved. Kept the newer root-stage/alias tests from the assigned base.
+- Added exact Plan/prepared/result maps, complete fixed source/owner bindings and original parent/source dependencies before command sealing. No fabricated semantic creation or absent physical-row claims.
+- Rebase and inverse consume original D/J, preserving original source pins across stale parent, sibling-first and already-materialized-owner cases. Undo/redo after accepted reload recovers exact closures, including sibling-first -> undo -> redo. Source S/I resolution is detached and verified, with no writable State fallback.
+- Added raw item State access, both item codecs/equal mirrors, typed semantic item births and raw item retirement reservations. Opaque/secondary identity fields and source windows survive. Unrecorded raw item births through aggregate writes refuse.
+- Updated four canonical item-ref patterns and SDK ACK verification. Native ACKs bind known commands, original source, map and scoped output; inverse ACKs additionally bind accepted history. Missing, extra, wrong, unbound, owner/source/pin/scope forgeries refuse. Legacy identity pairs and frozen M1 goldens remain unchanged.
+- One necessary SDK read-boundary line enables `open_authoring_bundle(capture_sources=True)` in RemoteTimelines.open_bundle. Otherwise the actual SDK would seal legacy commands against a source-only bundle while the provider reconstructed new bindings. A dedicated SDK/provider parity test proves matching commands, records and maps. The core default stays legacy.
+
+Exact source/schema/capture exports and the pre-wiring coordination note are in:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-materialization-map.md`.
+
+## Decisions and size
+
+Followed the exact paired manager carrier. No new DTO, ABI, allocator seed, command args field, table, ledger or timing activation. Retained source allocation provenance in inverse records/results even when undo outputs physical S/I; those facts do not assert SQL absence or grant overwrite authority. Original source parents may precede the accepted inverse input boundary, so the provider opens them separately from retained compiler-input hydration.
+
+Product delta is **+425/-28, net +397 lines**, including the 175-line allocation helper. This exceeds the suggested 150–220-line target. Before growth, the design page identified the independent sibling-first installation and read-only source-resolution requirements. Further executable cases required inverse provenance after unshared-source undo, typed item birth/reservation checks, and SDK ACK validation including accepted inverse history. Removing those checks would reintroduce demonstrated failures or admit unverified ACKs. No speculative framework was added.
+
+No old sealed command claims are silently refreshed. Additional legacy-sealed-command compatibility requires joint Runtime review. Existing authenticated M1 accepted history and exact-retry authority remain Runtime-owned.
+
+## Verification
+
+Final command (result pending at report draft; updated before exit):
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recording_clear.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_recipe_clip_delete.py
+```
+
+The repository'"'s existing default marker filter deselects one test; no skip, xfail or test weakening was introduced. Earlier exploratory failures (source context, parent-only recorder fixture, legacy refusal text and SDK test receipt shape) were corrected, with positive assertions retained. A prior same-lane run passed 584 tests before the final remapper factoring; the final rerun checks the actual final source.
+
+"'```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/core/timeline/authoring_bundle.py --output-format concise
+```
+
+Result: **All checks passed**.
+
+```bash
+git diff --check
+```
+
+Result: **passed**.
+
+## Unverified / next steps
+
+No full suite or actual Runtime admission/socket lane was run, as explicitly instructed. Detached provider tests prove Agent preparation/replay/inverse/ACK semantics; they do not prove mutable shot/item occupancy, retired/global-item exclusion, authenticated own-slot reuse or live retry ordering.
+
+Runtime peer `rt-m2-materialization-own-slot` was waiting for this source candidate and the official generated item-ref contract. Jointly review the inverse provenance detail in the design page, generate the paired source/schema normally, refresh owned SDK/App pins and App ACK validator, then run central actual coupled Runtime tests. Keep existing M1 guards, legacy own-slot proof and exact retry first; no raw schema override. M2 integration remains held under PLAN.
+
+Both conventional commit message files are ready. No build output or temporary test logs remain in the worktree.
+'"'''
+(worker/'notes/report.md').write_text(report)
+PY" in /home/user/work/wt/agt-m2-materialization-map-impl
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'tail -5 /tmp/agt-materialization-final-result.log && git status --short && git diff --check' in /home/user/work/wt/agt-m2-materialization-map-impl
+ succeeded in 0ms:
+........................................................................ [ 73%]
+........................................................................ [ 86%]
+........................................................................ [ 98%]
+........                                                                 [100%]
+584 passed, 1 deselected in 44.55s
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+ M astrid/sdk/timeline/sync.py
+ M tests/sdk/test_timeline_commit_provider.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/_materialization.py
+?? tests/editing_conformance/test_materialization_identity.py
+?? tests/editing_conformance/test_materialization_map.py
+?? tests/editing_conformance/test_materialization_map_spike.py
+
+codex
+The final source passes all 584 targeted tests, with one default deselection. Scoped Ruff and `git diff --check` also pass. I’m finishing the report, design handoff, and commit-message files; Runtime admission still needs verification against the official paired release.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import os
+import shutil
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+report=root/'workers/agt-m2-materialization-map-impl/notes/report.md'
+s=report.read_text().replace('Final command (result pending at report draft; updated before exit):', 'Final command:')
+s=s.replace(\"The repository's existing default marker filter deselects one test;\", \"Result: **584 passed, 1 deselected in 44.55s** on the final source. The repository's existing default marker filter deselects one test;\")
+s=s.replace(' A prior same-lane run passed 584 tests before the final remapper factoring; the final rerun checks the actual final source.', ' Final replay applies the recorded item map directly through the shared raw-codec remapper; it does not allocate new destinations.')
+report.write_text(s)
+design=root/'design/m2-materialization-map.md'
+s=design.read_text()+'''\\nFinal status: **Agent source/schema/capture contract ready for joint Runtime/App review and official paired generation.** Targeted final source: 584 passed, 1 default-marker deselection in 44.55s; focused Ruff and git diff --check passed. Product net +397 lines (+425/-28). The shared "'`_remap_shot_items` raw-codec helper applies recorded I->J on replay; the allocator is used only for original opening/verification, with unchanged seeds. Actual Runtime occupancy/own-slot qualification remains unverified.'"\\n'''
+design.write_text(s)
+for name in ('agt-materialization-targeted.log','agt-materialization-new.log','agt-materialization-compat.log',
+             'agt-materialization-new2.log','agt-materialization-final-focus.log','agt-materialization-final.log',
+             'agt-materialization-neighbours.log','agt-materialization-verified.log',
+             'agt-materialization-final-verified.log','agt-materialization-last.log',
+             'agt-materialization-complete.log','agt-materialization-final-result.log'):
+ Path('/tmp',name).unlink(missing_ok=True)
+workspace=Path.cwd()
+removed=0
+for path, dirs, files in os.walk(workspace, followlinks=False):
+ dirs[:] = [name for name in dirs if name not in ('.git','node_modules')]
+ for name in list(dirs):
+  target=Path(path,name)
+  if name in ('__pycache__','.pytest_cache','.ruff_cache') and not target.is_symlink():
+   shutil.rmtree(target)
+   dirs.remove(name)
+   removed+=1
+print(f'Cleaned {removed} local cache directories; report and both commit messages ready.')
+PY
+git diff --check" in /home/user/work/wt/agt-m2-materialization-map-impl
+ succeeded in 3ms:
+Cleaned 14 local cache directories; report and both commit messages ready.
+
+codex
+Implemented exact source-bound allocation maps, stable replay/inverse handling, both item codecs, typed item births, and verified SDK ACK validation.
+
+- Tests: **584 passed, 1 default deselection**.
+- Scoped Ruff and `git diff --check`: passed.
+- Product delta: **+397 lines**; budget overrun and counterexamples documented.
+- Both commit-message files are ready.
+
+Official paired generation, App ACK updates, and actual Runtime admission tests remain unverified. No full suite ran.
+
+[Report with exact commands and decisions](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-map-impl/notes/report.md) · [Contract handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-materialization-map.md)
+tokens used
+258,742
+Implemented exact source-bound allocation maps, stable replay/inverse handling, both item codecs, typed item births, and verified SDK ACK validation.
+
+- Tests: **584 passed, 1 default deselection**.
+- Scoped Ruff and `git diff --check`: passed.
+- Product delta: **+397 lines**; budget overrun and counterexamples documented.
+- Both commit-message files are ready.
+
+Official paired generation, App ACK updates, and actual Runtime admission tests remain unverified. No full suite ran.
+
+[Report with exact commands and decisions](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-map-impl/notes/report.md) · [Contract handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-materialization-map.md)

@@ -1,0 +1,400 @@
++    validate_command(call)
++
++
+ def test_empty_clear_and_original_noncanonical_order(original):
+     first = apply(original, TRANSCRIPT)
+     second = apply(first.bundle, VOICE, b'')
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sealed-text-ref-contract-fix.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sealed-text-ref-contract-fix.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..932203008fa128a7e0a5852d4eb7679cbf173746
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sealed-text-ref-contract-fix.md
+@@ -0,0 +1,123 @@
++# Agent sealed text reference contract fix
++
++## Result
++
++No Agent product or canonical-schema change is needed. The Agent capture is
++already the correct sealed form, and the frozen Agent schema is already wide
++enough for it. The minimal Agent-side change is a regression test that keeps
++the exact authored key visible. The remaining integration seam is owned by
++Runtime.
++
++## Exact source and reproduction
++
++- Frozen Agent source: `310e54840fa5fb8eb7e51bb64ed2c34b7a1063b3`
++- Frozen Agent content tree: `c5a8a3ec7e9e01c61c5ae31834da53bed4be406a`
++- Agent canonical schema: `astrid/core/timeline/schema/edit-command.schema.json`
++- Agent schema SHA-256: `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
++- Frozen Runtime candidate: `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`
++- Frozen Runtime tree: `4b7dd0fe44be973c344bab3de568eaf0bdd28476`
++
++The Agent-native capture produces this key for the first occurrence-owned
++voiceover binding:
++
++```text
++occurrence:occurrence-1/text-binding:voiceover_script::
++```
++
++`_recording.finish()` derives it from the whole text-binding entity write. The
++key preserves occurrence identity, compound binding kind, and the empty
++property path; it must not be rewritten to a shot/property key or omitted from
++`expect`/`authorship`.
++
++The direct Agent reproduction is:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++  /home/user/work/venv-agent/bin/python -m pytest -q \
++  -o addopts= -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_text_binding_native.py \
++  -k 'exact_capture or authorship_key'
++```
++
++This reaches Agent `validate_command`; it does not use a schema override,
++prepared history, SQL, or a fake provider.
++
++## Cause classification
++
++1. **Not an Agent codec error.** Agent capture and `_normalize` intentionally
++   canonicalize whole-entity writes to `ref + '::' + spelling(path)`. For this
++   write, `spelling([])` is empty, so the exact key above is generated. The
++   frozen Agent `TargetKey` union admits the text-binding identity followed by
++   the empty path.
++2. **Runtime integration schema gap.** The current Runtime integration tree
++   (`a51af88`, `runtime_protocol/schemas/timeline-commit-bundle.json`) has the
++   older `TargetKey` union and rejects this text-binding identity before the
++   provider. This is the narrow Runtime-owned gap.
++3. **Frozen-candidate discrepancy.** The exact `a0dca169` source tree’s
++   generated `runtime_protocol/schemas/timeline-commit-bundle.json` contains
++   the same text-binding branch and direct validation of the key succeeds.
++   Therefore the reported rejection against `a0dca169` cannot be reproduced
++   from that committed candidate as inspected here; it indicates a stale or
++   mismatched Runtime source/artifact in that run. This must be reconciled by
++   Runtime before any landing or pin decision.
++
++## Exact narrow Runtime proposal
++
++Runtime should ensure its generated `TargetKey.anyOf` includes this additional
++branch, byte-for-byte equivalent to the frozen Agent canonical branch:
++
++```json
++{
++  "type": "string",
++  "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)|occurrence:(?:(?!::)[^/])+/text-binding:(?:prompt|voiceover_script|transcript)(?::[a-z][a-z0-9-]{0,63})?))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$"
++}
++```
++
++This is an additive, closed union member only. It does not admit arbitrary
++scope IDs, alter `ScopedId`, remove reads/selections/authorship, or change
++text identity/order semantics. Runtime should add direct tests for both
++`expect` and `authorship` property names, including the exact key above and a
++prompt slot such as `.../text-binding:prompt:speaker::`; ordinary clip/track
++keys must remain accepted and unrelated broad keys must remain refused.
++
++The Runtime generator should regenerate its normal bundle only after peer
++review. No Agent schema bytes, Runtime DTO, endpoint, lock, release, or frozen
++artifact was changed by this worker.
++
++## Peer request
++
++Runtime manager: please verify the exact committed `a0dca169` bundle, its
++installed validator/import path, and the source/artifact used by the failed
++normal-pair run. If the candidate really rejects the key, apply the narrow
++branch above through normal generation and return the new exact Runtime commit,
++tree, schema/artifact digests, and targeted validator/native results. If it
++accepts the key as the committed source does, correct the qualification command
++or artifact selection instead of changing Agent.
++
++The acceptance lane remains: sealed Agent capture -> normal Runtime validator
++-> real provider first use with UTF-8 and EMPTY -> reload/retry/inverse/clear
++and order preservation -> cross-project and changed-reference refusals before
++writes. The Agent unit lane now proves only the capture/codec half; the Runtime
++normal-pair lane is not claimed green until this source/artifact discrepancy is
++resolved. Existing unsealed positive and history/retry/undo/redo tests remain
++unchanged.
++
++## Tests and gaps
++
++Passed locally after the minimal test addition:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++  /home/user/work/venv-agent/bin/python -m pytest -q \
++  -o addopts= -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_text_binding_native.py \
++  -k 'exact_capture or authorship_key'
++```
++
++Result: 2 passed.
++
++Also directly validated the exact key with `Draft202012Validator` against the
++frozen Agent schema and the frozen `a0dca169` Runtime generated bundle: both
++accepted it. The current integration Runtime bundle omitted the branch and
++rejected it. No full suite, HTTP/browser lane, Runtime edit, release, or
++consumer pin was performed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c6a197acc1cb80cc434c8f8ffb4d285cc9da500
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/commit-msg
+@@ -0,0 +1,4 @@
++fix(timeline): preserve sealed text binding target keys
++
++Add a regression for the occurrence-owned text binding authorship and expect
++key, and document the narrow Runtime TargetKey union gap and peer proposal.
+diff --git a/tests/editing_conformance/test_recipe_text_binding_native.py b/tests/editing_conformance/test_recipe_text_binding_native.py
+index cd3bbd2aa4408057a617422841baa1204aab078a..3f72a7434c0869015c57730ae512d9e5af2e1a1d
+--- a/tests/editing_conformance/test_recipe_text_binding_native.py
++++ b/tests/editing_conformance/test_recipe_text_binding_native.py
+@@ -62,6 +62,20 @@
+     assert again.records[0]['writes'][0]['before'] == again.records[0]['writes'][0]['after']
+ 
+ 
++def test_capture_preserves_text_binding_authorship_key_for_runtime_schema(original):
++    pin = descriptor(b'voice')
++    call = capture_text_binding_set(
++        original, OWNER, VOICE, text=pin, verified_text=[{**pin, 'utf8': True}])
++
++    # The empty property path is part of the stable text-binding identity. Do
++    # not drop authorship or normalize this to a shot/property path: Runtime
++    # uses the same TargetKey when validating the sealed recorder claim.
++    key = REF + '::'
++    assert call['expect'] == {key: ABSENT}
++    assert call['authorship'] == {key: 'direct'}
++    validate_command(call)
++
++
+ def test_empty_clear_and_original_noncanonical_order(original):
+     first = apply(original, TRANSCRIPT)
+     second = apply(first.bundle, VOICE, b'')
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sealed-text-ref-contract-fix.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sealed-text-ref-contract-fix.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..932203008fa128a7e0a5852d4eb7679cbf173746
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sealed-text-ref-contract-fix.md
+@@ -0,0 +1,123 @@
++# Agent sealed text reference contract fix
++
++## Result
++
++No Agent product or canonical-schema change is needed. The Agent capture is
++already the correct sealed form, and the frozen Agent schema is already wide
++enough for it. The minimal Agent-side change is a regression test that keeps
++the exact authored key visible. The remaining integration seam is owned by
++Runtime.
++
++## Exact source and reproduction
++
++- Frozen Agent source: `310e54840fa5fb8eb7e51bb64ed2c34b7a1063b3`
++- Frozen Agent content tree: `c5a8a3ec7e9e01c61c5ae31834da53bed4be406a`
++- Agent canonical schema: `astrid/core/timeline/schema/edit-command.schema.json`
++- Agent schema SHA-256: `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
++- Frozen Runtime candidate: `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`
++- Frozen Runtime tree: `4b7dd0fe44be973c344bab3de568eaf0bdd28476`
++
++The Agent-native capture produces this key for the first occurrence-owned
++voiceover binding:
++
++```text
++occurrence:occurrence-1/text-binding:voiceover_script::
++```
++
++`_recording.finish()` derives it from the whole text-binding entity write. The
++key preserves occurrence identity, compound binding kind, and the empty
++property path; it must not be rewritten to a shot/property key or omitted from
++`expect`/`authorship`.
++
++The direct Agent reproduction is:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++  /home/user/work/venv-agent/bin/python -m pytest -q \
++  -o addopts= -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_text_binding_native.py \
++  -k 'exact_capture or authorship_key'
++```
++
++This reaches Agent `validate_command`; it does not use a schema override,
++prepared history, SQL, or a fake provider.
++
++## Cause classification
++
++1. **Not an Agent codec error.** Agent capture and `_normalize` intentionally
++   canonicalize whole-entity writes to `ref + '::' + spelling(path)`. For this
++   write, `spelling([])` is empty, so the exact key above is generated. The
++   frozen Agent `TargetKey` union admits the text-binding identity followed by
++   the empty path.
++2. **Runtime integration schema gap.** The current Runtime integration tree
++   (`a51af88`, `runtime_protocol/schemas/timeline-commit-bundle.json`) has the
++   older `TargetKey` union and rejects this text-binding identity before the
++   provider. This is the narrow Runtime-owned gap.
++3. **Frozen-candidate discrepancy.** The exact `a0dca169` source tree’s
++   generated `runtime_protocol/schemas/timeline-commit-bundle.json` contains
++   the same text-binding branch and direct validation of the key succeeds.
++   Therefore the reported rejection against `a0dca169` cannot be reproduced
++   from that committed candidate as inspected here; it indicates a stale or
++   mismatched Runtime source/artifact in that run. This must be reconciled by
++   Runtime before any landing or pin decision.
++
++## Exact narrow Runtime proposal
++
++Runtime should ensure its generated `TargetKey.anyOf` includes this additional
++branch, byte-for-byte equivalent to the frozen Agent canonical branch:
++
++```json
++{
++  "type": "string",
++  "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)|occurrence:(?:(?!::)[^/])+/text-binding:(?:prompt|voiceover_script|transcript)(?::[a-z][a-z0-9-]{0,63})?))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$"
++}
++```
++
++This is an additive, closed union member only. It does not admit arbitrary
++scope IDs, alter `ScopedId`, remove reads/selections/authorship, or change
++text identity/order semantics. Runtime should add direct tests for both
++`expect` and `authorship` property names, including the exact key above and a
++prompt slot such as `.../text-binding:prompt:speaker::`; ordinary clip/track
++keys must remain accepted and unrelated broad keys must remain refused.
++
++The Runtime generator should regenerate its normal bundle only after peer
++review. No Agent schema bytes, Runtime DTO, endpoint, lock, release, or frozen
++artifact was changed by this worker.
++
++## Peer request
++
++Runtime manager: please verify the exact committed `a0dca169` bundle, its
++installed validator/import path, and the source/artifact used by the failed
++normal-pair run. If the candidate really rejects the key, apply the narrow
++branch above through normal generation and return the new exact Runtime commit,
++tree, schema/artifact digests, and targeted validator/native results. If it
++accepts the key as the committed source does, correct the qualification command
++or artifact selection instead of changing Agent.
++
++The acceptance lane remains: sealed Agent capture -> normal Runtime validator
++-> real provider first use with UTF-8 and EMPTY -> reload/retry/inverse/clear
++and order preservation -> cross-project and changed-reference refusals before
++writes. The Agent unit lane now proves only the capture/codec half; the Runtime
++normal-pair lane is not claimed green until this source/artifact discrepancy is
++resolved. Existing unsealed positive and history/retry/undo/redo tests remain
++unchanged.
++
++## Tests and gaps
++
++Passed locally after the minimal test addition:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++  /home/user/work/venv-agent/bin/python -m pytest -q \
++  -o addopts= -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_text_binding_native.py \
++  -k 'exact_capture or authorship_key'
++```
++
++Result: 2 passed.
++
++Also directly validated the exact key with `Draft202012Validator` against the
++frozen Agent schema and the frozen `a0dca169` Runtime generated bundle: both
++accepted it. The current integration Runtime bundle omitted the branch and
++rejected it. No full suite, HTTP/browser lane, Runtime edit, release, or
++consumer pin was performed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c6a197acc1cb80cc434c8f8ffb4d285cc9da500
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/commit-msg
+@@ -0,0 +1,4 @@
++fix(timeline): preserve sealed text binding target keys
++
++Add a regression for the occurrence-owned text binding authorship and expect
++key, and document the narrow Runtime TargetKey union gap and peer proposal.
+diff --git a/tests/editing_conformance/test_recipe_text_binding_native.py b/tests/editing_conformance/test_recipe_text_binding_native.py
+index cd3bbd2aa4408057a617422841baa1204aab078a..3f72a7434c0869015c57730ae512d9e5af2e1a1d
+--- a/tests/editing_conformance/test_recipe_text_binding_native.py
++++ b/tests/editing_conformance/test_recipe_text_binding_native.py
+@@ -62,6 +62,20 @@
+     assert again.records[0]['writes'][0]['before'] == again.records[0]['writes'][0]['after']
+ 
+ 
++def test_capture_preserves_text_binding_authorship_key_for_runtime_schema(original):
++    pin = descriptor(b'voice')
++    call = capture_text_binding_set(
++        original, OWNER, VOICE, text=pin, verified_text=[{**pin, 'utf8': True}])
++
++    # The empty property path is part of the stable text-binding identity. Do
++    # not drop authorship or normalize this to a shot/property path: Runtime
++    # uses the same TargetKey when validating the sealed recorder claim.
++    key = REF + '::'
++    assert call['expect'] == {key: ABSENT}
++    assert call['authorship'] == {key: 'direct'}
++    validate_command(call)
++
++
+ def test_empty_clear_and_original_noncanonical_order(original):
+     first = apply(original, TRANSCRIPT)
+     second = apply(first.bundle, VOICE, b'')
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- markers ---'; wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/DONE; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/commit-msg; printf '%s\\n' '--- worktree ---'; git status --short; git diff --stat; printf '%s\\n' '--- pycache check ---'; find . -type d -name __pycache__ -prune -print | head -20" in /home/user/work/wt/agt-m2-sealed-text-ref-contract-fix
+ succeeded in 611ms:
+--- markers ---
+210 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/commit-msg
+  0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sealed-text-ref-contract-fix/DONE
+210 total
+fix(timeline): preserve sealed text binding target keys
+
+Add a regression for the occurrence-owned text binding authorship and expect
+key, and document the narrow Runtime TargetKey union gap and peer proposal.
+--- worktree ---
+ M tests/editing_conformance/test_recipe_text_binding_native.py
+ .../editing_conformance/test_recipe_text_binding_native.py | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+--- pycache check ---
+
+codex
+Implemented the minimal Agent-side regression and peer proposal.
+
+- Added exact authored-key coverage for `occurrence:occurrence-1/text-binding:voiceover_script::`; authorship and expect claims remain preserved.
+- Confirmed Agent schema `6ba…` accepts the key.
+- Confirmed current Runtime integration rejects it, while frozen Runtime `a0dca169` accepts it—indicating a source/artifact mismatch in the failed qualification.
+- Published proposal and peer request: [agent-sealed-text-ref-contract-fix.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sealed-text-ref-contract-fix.md)
+
+Tests:
+
+```text
+pytest ... tests/editing_conformance/test_recipe_text_binding_native.py
+26 passed
+git diff --check
+passed
+```
+
+No Runtime/schema/product bytes were changed. Commit message and `DONE` marker were written.
+tokens used
+179,397
+Implemented the minimal Agent-side regression and peer proposal.
+
+- Added exact authored-key coverage for `occurrence:occurrence-1/text-binding:voiceover_script::`; authorship and expect claims remain preserved.
+- Confirmed Agent schema `6ba…` accepts the key.
+- Confirmed current Runtime integration rejects it, while frozen Runtime `a0dca169` accepts it—indicating a source/artifact mismatch in the failed qualification.
+- Published proposal and peer request: [agent-sealed-text-ref-contract-fix.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sealed-text-ref-contract-fix.md)
+
+Tests:
+
+```text
+pytest ... tests/editing_conformance/test_recipe_text_binding_native.py
+26 passed
+git diff --check
+passed
+```
+
+No Runtime/schema/product bytes were changed. Commit message and `DONE` marker were written.

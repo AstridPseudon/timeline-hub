@@ -1,0 +1,400 @@
+                          ignore changes to submodules in the diff generation
+    --submodule[=<format>]
+                          specify how differences in submodules are shown
+    --ita-invisible-in-index
+                          hide 'git add -N' entries from the index
+    --ita-visible-in-index
+                          treat 'git add -N' entries as real in the index
+    -S <string>           look for differences that change the number of occurrences of the specified string
+    -G <regex>            look for differences that change the number of occurrences of the specified regex
+    --pickaxe-all         show all changes in the changeset with -S or -G
+    --pickaxe-regex       treat <string> in -S as extended POSIX regular expression
+    -O <file>             control the order in which files appear in the output
+    --rotate-to <path>    show the change in the specified path first
+    --skip-to <path>      skip the output to the specified path
+    --find-object <object-id>
+                          look for differences that change the number of occurrences of the specified object
+    --diff-filter [(A|C|D|M|R|T|U|X|B)...[*]]
+                          select files by diff type
+    --output <file>       output to a specific file
+
+--- candidate diff paths ---
+A	tests/helpers/selected_param_legacy.py
+A	tests/sdk/fixtures/selected-param-legacy/README.md
+A	tests/sdk/fixtures/selected-param-legacy/accepted.zip
+A	tests/sdk/fixtures/selected-param-legacy/generate.py
+M	tests/sdk/test_timeline_selected_schema.py
+M	tests/sdk/test_timeline_selected_schema_runtime.py
+--- product/public artifact unchanged checks ---
+astrid product tree: unchanged
+runtime.lock.json: unchanged
+astrid/sdk/clients: unchanged
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- final diff check from Git repo ---'
+git diff --check 654da693..6868e16a
+printf '%s\\n' '--- forbidden/bypass markers in new fixture/test code ---'
+git diff 654da693..6868e16a --unified=0 | rg -n 'SQL|Prepared|monkeypatch|set_element|element_ref|schema|checkout|HEAD|archive|backup|restore|accept' || true
+printf '%s\\n' '--- candidate commit metadata ---'
+git show -s --format='%H%n%s%n%b' 6868e16a
+printf '%s\\n' '--- working tree status ---'
+git status --short" in /home/user/work/wt/agt-review-authority-legacy-positive
+ succeeded in 523ms:
+--- final diff check from Git repo ---
+--- forbidden/bypass markers in new fixture/test code ---
+7:+"""Portable reads of genuine pre-enforcement PARAM acceptance (see fixture README)."""
+14:+ARCHIVE = Path(__file__).parents[1] / 'sdk/fixtures/selected-param-legacy/accepted.zip'
+17:+def accepted_params():
+18:+    with ZipFile(ARCHIVE) as archive:
+19:+        return json.loads(archive.read('accepted.json'))
+28:+`accepted.zip` contains a normal authenticated Runtime backup and unmodified
+30:+managed snapshot objects, request and acceptance. The operator key is only for
+31:+this test fixture. No rows, accepted records, IDs, clocks or receipts were
+34:+Sources were immutable `git archive` exports:
+42:+this checkout with the dependency-only Agent environment:
+48:+tests/sdk/fixtures/selected-param-legacy/accepted.zip
+53:+old provider and real Runtime acceptance. `elementRef` selects the original
+54:+max10 revision; ignored `element_ref` names the newer admitted max20 revision.
+58:+The detached selected-schema test consumes these genuine accepted facts, then
+62:+restores the untouched backup, verifies the exact accepted history, registers
+65:+rewrites native accepted history.
+66:diff --git a/tests/sdk/fixtures/selected-param-legacy/accepted.zip b/tests/sdk/fixtures/selected-param-legacy/accepted.zip
+69:Binary files /dev/null and b/tests/sdk/fixtures/selected-param-legacy/accepted.zip differ
+76:+"""Run with PYTHONPATH pointing at archived Agent ce363f6d and Runtime b748ae72.
+78:+Produces accepted.json and an authenticated Runtime backup in one portable ZIP.
+79:+No accepted records or persisted state are written outside Runtime's normal API.
+102:+from tests.sdk.test_timeline_selected_schema_runtime import retained_pack
+123:+            definition['schema']['properties']['seed']['maximum'] = 20
+136:+            options = {'schema_source': pin, 'realm_id': 'realm',
+137:+                       'schema_inputs': [({'pin': pin, 'document': document}, objects)]}
+140:+            row['element_ref'] = {key: other[key] for key in ('id', 'kind', 'revision', 'packId')}
+142:+            assert row['element_ref']['revision'] != case.selected['revision']
+148:+            accepted = case.submit(request, 'legacy-params')
+158:+                       'selected': case.selected, 'request': request, 'accepted': accepted}
+159:+            backup = root / 'backup'
+160:+            case.service.backup(backup)
+161:+            with ZipFile(destination, 'w', compression=ZIP_DEFLATED) as archive:
+162:+                archive.writestr('accepted.json', json.dumps(payload, sort_keys=True) + '\n')
+163:+                # A fixture-only operator key; restore still verifies the real backup HMAC.
+164:+                archive.write(case.root / '.operator-backup-key', 'backup-auth.key')
+165:+                for path in sorted(backup.rglob('*')):
+167:+                        archive.write(path, 'backup/' + str(path.relative_to(backup)))
+174:diff --git a/tests/sdk/test_timeline_selected_schema.py b/tests/sdk/test_timeline_selected_schema.py
+176:--- a/tests/sdk/test_timeline_selected_schema.py
+177:+++ b/tests/sdk/test_timeline_selected_schema.py
+179:+from tests.helpers.selected_param_legacy import accepted_params
+182:-def test_inverse_of_older_param_record_uses_only_selected_identity(selected_effect, monkeypatch):
+186:+def test_inverse_of_older_param_record_uses_only_selected_identity(monkeypatch):
+187:+    historical = accepted_params()
+198:+    # real Runtime acceptance, not a newly authorized first PARAM. The native
+199:+    # companion restores its authenticated backup and tests current authority.
+203:+    realm.schema_options = historical['options']
+204:+    verified, realm.snapshot_objects = realm.schema_options['schema_inputs'][0]
+206:+    selected, row, accepted = historical['selected'], historical['row'], historical['accepted']
+208:-    row['element_ref'] = {key: other[key] for key in ('id', 'kind', 'revision')}
+209:-    row['element_ref']['packId'] = selected['packId']
+211:+    assert row['element_ref'] == {**{key: other[key] for key in ('id', 'kind', 'revision')},
+215:-    accepted = commit(realm, [capture_clip_set_params(
+216:-        current(realm), ref, values={'seed': 8}, **realm.schema_options)])
+218:diff --git a/tests/sdk/test_timeline_selected_schema_runtime.py b/tests/sdk/test_timeline_selected_schema_runtime.py
+220:--- a/tests/sdk/test_timeline_selected_schema_runtime.py
+221:+++ b/tests/sdk/test_timeline_selected_schema_runtime.py
+225:+from tests.helpers.selected_param_legacy import ARCHIVE, accepted_params
+227:+def test_pre_enforcement_alias_history_reopens_with_current_authority(tmp_path, monkeypatch):
+229:+    from runtime_protocol.backup import restore_backup
+234:+    historical = accepted_params()
+236:+    with ZipFile(ARCHIVE) as archive:
+237:+        archive.extractall(extracted)
+239:+    restore_backup(extracted / 'backup', root, key=(extracted / 'backup-auth.key').read_bytes())
+264:+    monkeypatch.setattr(RequestCommitPort, 'document_object', read)
+272:+            authorize=lambda: None) == historical['accepted']
+273:+        pin = historical['options']['schema_source']
+274:+        params = {'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': ref,
+275:+                  'args': {'values': {'seed': 16}, 'clear': [], 'schema_source': pin}}
+280:+        undone = submit([inverse(historical['accepted']['receipt']['receipt_id'])], 'legacy-undo')
+283:+        assert redone['data']['canonical_document'] == historical['accepted']['data']['canonical_document']
+284:+        # A genuinely accepted old complete PARAM supplies authority for new edits.
+288:+        admissions = historical['options']['schema_inputs'][0][0]['document']['content']['admissions']
+--- candidate commit metadata ---
+6868e16a590af64fc764159489b8e4ed22f526d0
+test(timeline): restore legacy selected parameter inverse positive
+Use authentic pre-enforcement Agent and Runtime accepted history for the
+alias-bearing inverse fixture without changing selection cleanup or authority.
+Retain the original pre-snapshot inverse and selected-object assertions, and
+verify the untouched authenticated history through the current native provider.
+
+Validate all 447 parameter/history tests and 27 real Runtime selected-schema
+cases, including retained max10, restart, exact retry and inverse/redo.
+
+--- working tree status ---
+
+codex
+The fixture audit shows the only persistent binary payloads are the authenticated Runtime backup, two CAS JSON objects, and the 32-byte fixture operator key; no source/build/Prepared/schema-override payload is bundled. The accepted history’s native record does contain `params.snapshot`; the test does not claim otherwise—it projects only that dependency/binding metadata in a detached in-memory compatibility boundary, while the native companion verifies untouched history. I’m independently regenerating the fixture from the recorded immutable archives to check portability.
+exec
+/bin/bash -lc 'set -o pipefail
+BASE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/recheck-20261020
+mkdir -p "$BASE/old-agent"
+git archive ce363f6d6d60e504dbd4d79803c2d6299f648ade | tar -xf - -C "$BASE/old-agent"
+cd "$BASE/candidate"
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT="$BASE/runtime-source" PYTHONPATH="$BASE/old-agent" /home/user/work/venv-agent/bin/python tests/sdk/fixtures/selected-param-legacy/generate.py "$BASE/regenerated-review.zip"
+sha256sum "$BASE/regenerated-review.zip"
+unzip -l "$BASE/regenerated-review.zip"' in /home/user/work/wt/agt-review-authority-legacy-positive
+ succeeded in 3407ms:
+6393b22a16fe1b095ffd6a9458016b529fcbdb778955cb7466bec457be318c89  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/recheck-20261020/regenerated-review.zip
+Archive:  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/recheck-20261020/regenerated-review.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+    69643  2026-10-20 13:30   accepted.json
+       32  2026-10-20 13:30   backup-auth.key
+     2756  2026-10-20 13:30   backup/cas/sha256/97/8e28d29535b1fdb40807883eaa8d205a3bb962969ecc4ae3239f43752c84e5
+     2756  2026-10-20 13:30   backup/cas/sha256/f2/d76cb5c17cbd826ee2fd600a96acd7c288007c7f06e97359f3a7ea837205f0
+      646  2026-10-20 13:30   backup/cas-manifest.json
+      855  2026-10-20 13:30   backup/manifest.json
+   724992  2026-10-20 13:30   backup/realm.sqlite3
+---------                     -------
+   801680                     7 files
+
+codex
+Independent regeneration succeeded from the recorded `ce363f6d…` Agent archive and `b748ae72…` Runtime archive, producing the same seven-member/801,680-byte fixture shape; differing ZIP hash/timestamps are expected from fresh IDs and backup metadata. The review outcome is approval of this bounded test/fixture repair only, with the prior F1 finding and Runtime/App qualification gates kept separate. I’m writing that decision and the required completion artifacts, then cleaning only my temporary archive directory.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-authority-legacy-positive.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-authority-legacy-positive.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-authority-legacy-positive.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..79de1edcf005ddeddbb6b4cd98dd56db072ed789
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-authority-legacy-positive.md
+@@ -0,0 +1,72 @@
++# Independent review: legacy selected PARAM positive
++
++## Verdict
++
++**APPROVE_BOUNDED_TEST_FIX.** Candidate `tl/agt-m2-authority-legacy-alias-positive`
++(`6868e16a590af64fc764159489b8e4ed22f526d0`) restores the original positive with
++an authentic pre-enforcement acceptance fixture and preserves the original
++inverse, alias, opaque-data, and exact selected-object assertions. It makes no
++product, provider, public S2, generated-client, Runtime artifact, or lockfile
++change.
++
++This is not compatible-integration approval. The independent authority review's
++F1 same-batch inverse gap remains inherited from base, and Runtime port ACK plus
++App authenticated/browser gates remain separate qualifications. They are not
++introduced or repaired by this test-only change.
++
++## What was verified
++
++- The original `test_inverse_of_older_param_record_uses_only_selected_identity`
++  passed from an immutable candidate archive: **1 passed in 1.06s**.
++- The selected-schema neighbor pair, including the native companion,
++  passed: **59 passed in 53.94s** using the frozen real Runtime archive.
++- The native companion passed independently: **1 passed in 1.76s**. It restores
++  an authenticated backup, checks exact persisted history, retries the original
++  ledger request, refuses `seed=16` against retained max-10 authority despite
++  the ignored max-20 alias, performs inverse/redo, and accepts a new `seed=9`
++  after restart. Its object-read observer saw only the selected revision's
++  object. The monkeypatch is observation-only; it does not authorize acceptance.
++- The implementing worker's final lanes were also inspected: parameter/history
++  lane **447 passed**, native Runtime lane **27 passed**, and the original
++  positive passed with `--runxfail` before its marker was removed.
++- Ruff passed on all changed Python files (`All checks passed!`), and
++  `git diff --check 654da693..6868e16a` passed.
++
++## Fixture and boundary review
++
++The fixture records immutable source identities in its README and generator:
++
++- Agent old provider: `ce363f6d6d60e504dbd4d79803c2d6299f648ade`, tree
++  `78af007de1d7c5a59f86fffacd9823de355cd260`.
++- Runtime: `b748ae723b51c6d578ba7a393209ce37d6e2b0c3`, tree
++  `1711b198be7f693f11ee4640eb0922ec0d0da952`.
++
++The generator uses private `git archive` exports and the normal old provider,
++Runtime admission, commit, and backup APIs. It does not check out a moving
++worktree or guess at `HEAD`. Independent regeneration from those archives
++exited 0 and produced the same seven-member, 801,680-byte fixture shape.
++
++The ZIP contains only `accepted.json`, the fixture operator key, the authenticated
++Runtime backup, its manifest, and two CAS JSON objects. No source/build tree,
++SQL write, Prepared provider, validator replacement, schema override, or
++authority-accept monkeypatch is present. The backup is restored and HMAC-checked
++by the native companion.
++
++The detached test reads the genuine accepted facts and changes only its in-memory
++record dependency/binding projection to the old inverse-compatibility shape.
++It does not claim that the untouched native accepted record lacks
++`params.snapshot`; the native record retains that field. No explicit
++`set-element` is used, so the legacy `element_ref` alias is not erased by
++current cleanup semantics. The alias and canonical `elementRef` point to
++distinct genuine admitted revisions, and opaque `params` values remain present.
++
++The source diff from `654da693` contains only the two tests, one JSON reader,
++the fixture, its README, and its generator. Product tree, `runtime.lock.json`,
++and generated-client paths are unchanged. No full or `full*` suite was run or
++requested.
++
++## Required follow-up boundaries
++
++Keep F1's concrete same-batch inverse reproduction and the Runtime ACK/App
++gates in their own reviews. Do not attribute them to this fixture or use this
++bounded approval as release/integration approval.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d0ec0180066d50c3f2f84aa0eaeb5df18d4f1ae8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): independently review legacy alias positive
++
++Approve the bounded test-only repair after verifying authentic history,
++selected-schema assertions, fixture portability, and native restart behavior.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6d4f349932a76fcbaf72463616433a1cf0dc7687
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/notes/report.md
+@@ -0,0 +1,75 @@
++# Review report: legacy selected PARAM positive
++
++## Outcome
++
++**APPROVE_BOUNDED_TEST_FIX** for candidate `6868e16a` (`test(timeline): restore
++legacy selected parameter inverse positive`). No product change is present.
++This approval is limited to the test/fixture repair and is not Runtime/App or
++compatible-integration approval.
++
++## Evidence
++
++Candidate source was inspected as an immutable Git archive. The exact original
++positive passed:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$CANDIDATE \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= \
++  -p no:cacheprovider \
++  tests/sdk/test_timeline_selected_schema.py::test_inverse_of_older_param_record_uses_only_selected_identity
++1 passed in 1.06s
++```
++
++The native companion passed against a private archive of frozen Runtime
++`b748ae723b51c6d578ba7a393209ce37d6e2b0c3`:
++
++```text
++... -m integration \
++  tests/sdk/test_timeline_selected_schema_runtime.py::test_pre_enforcement_alias_history_reopens_with_current_authority
++1 passed in 1.76s
++```
++
++The selected-schema test and native neighbor subset passed together:
++
++```text
++... tests/sdk/test_timeline_selected_schema.py \
++  tests/sdk/test_timeline_selected_schema_runtime.py
++59 passed in 53.94s
++```
++
++Additional evidence from the implementing worker, independently checked against
++its report: parameter/history lane **447 passed**, native Runtime lane **27
++passed**, and the original positive passed with `--runxfail` before marker
++removal. Ruff passed (`All checks passed!`) and `git diff --check` passed.
++
++The fixture generator was independently run from private archives of the
++recorded old Agent and Runtime refs. It exited 0 and emitted the same seven
++members and 801,680 uncompressed bytes as the qualified fixture; fresh IDs,
++timestamps, and ZIP digest are expected.
++
++## Review findings
++
++- The original assertions remain: canonical `elementRef`, ignored legacy
++  `element_ref`, opaque values, inverse behavior, and exact selected-object
++  read. The new setup consumes genuine old accepted history rather than
++  submitting a newly authorized first PARAM.
++- The detached test projects only dependency/binding metadata in memory to the
++  historical inverse shape. The native accepted record is not claimed to be
++  `params.snapshot`-free; it retains its authentic native record.
++- The native companion restores the authenticated backup, verifies exact
++  history, replays the original idempotency key, tests max-10 refusal versus the
++  ignored max-20 alias, inverse/redo, restart-loaded authority, and a new
++  authorized PARAM. Its monkeypatch observes object reads only.
++- The fixture README/generator record immutable source commits/trees and use
++  private `git archive` exports. The ZIP has no source/build payload, SQL or
++  Prepared acceptance path, schema override, or authority-accept monkeypatch.
++- The candidate diff is test/helper/fixture-only. `astrid/`, `runtime.lock.json`,
++  and generated-client paths are unchanged. Shared dependencies were read-only;
++  no full suite, sockets, or browser run was requested.
++
++## Separate qualification boundaries
++
++The prior independent authority review's F1 same-batch inverse gap is inherited
++from base and remains open. Runtime port ACK and App authenticated/browser gates
++also remain open. This bounded test approval must not be misreported as closing
++any of those gates.
+
+exec
+/bin/bash -lc 'set -eu
+WORKER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive
+mkdir -p "$WORKER/notes"
+touch "$WORKER/DONE"
+rm -r "$WORKER/recheck-20261020"
+printf '"'%s\\n' '--- required outputs ---'
+ls -l \""'$WORKER/DONE" "$WORKER/commit-msg" "$WORKER/notes/report.md" /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-authority-legacy-positive.md
+printf '"'%s\\n' '--- repository status ---'
+git status --short
+printf '%s\\n' '--- DONE bytes ---'
+wc -c \""'$WORKER/DONE"' in /home/user/work/wt/agt-review-authority-legacy-positive
+ succeeded in 10010ms:
+--- required outputs ---
+-rw-r--r-- 1 root root 3867 Oct 20 13:31 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-authority-legacy-positive.md
+-rw-r--r-- 1 root root    0 Oct 20 13:31 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/DONE
+-rw-r--r-- 1 root root  210 Oct 20 13:31 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/commit-msg
+-rw-r--r-- 1 root root 3337 Oct 20 13:31 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/notes/report.md
+--- repository status ---
+--- DONE bytes ---
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/DONE
+
+codex
+Review artifacts are written, `DONE` is empty, the repository worktree remains clean, and the private recheck archives were removed. The final disposition is bounded approval of the test-only repair; no blocker was found for this task, but F1, Runtime ACK, and App gates remain explicitly open.
+codex
+## Review report
+
+**Outcome: APPROVE bounded test-only repair.**
+
+- Candidate `6868e16a` preserves legacy alias, canonical `elementRef`, opaque params, inverse, and selected-object assertions.
+- Exact original test: **1 passed**.
+- Selected-schema tests plus native companion: **59 passed**.
+- Worker-reported lanes: **447 parameter/history passed**, **27 native Runtime passed**.
+- Ruff and `git diff --check`: passed.
+- Fixture regenerated successfully from immutable Agent/Runtime archives; no source/build/SQL/Prepared bypasses found.
+- Product, S2/client, Runtime artifacts, and lockfiles are unchanged.
+- Worktree is clean; no full suite requested.
+
+Separate gates remain open: inherited F1 same-batch inverse gap, Runtime ACK, and App authenticated/browser qualification.
+
+Artifacts:
+
+- [Review design](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-authority-legacy-positive.md)
+- [Worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/notes/report.md)
+- `DONE` and commit message written.
+tokens used
+89,446
+## Review report
+
+**Outcome: APPROVE bounded test-only repair.**
+
+- Candidate `6868e16a` preserves legacy alias, canonical `elementRef`, opaque params, inverse, and selected-object assertions.
+- Exact original test: **1 passed**.
+- Selected-schema tests plus native companion: **59 passed**.
+- Worker-reported lanes: **447 parameter/history passed**, **27 native Runtime passed**.
+- Ruff and `git diff --check`: passed.
+- Fixture regenerated successfully from immutable Agent/Runtime archives; no source/build/SQL/Prepared bypasses found.
+- Product, S2/client, Runtime artifacts, and lockfiles are unchanged.
+- Worktree is clean; no full suite requested.
+
+Separate gates remain open: inherited F1 same-batch inverse gap, Runtime ACK, and App authenticated/browser qualification.
+
+Artifacts:
+
+- [Review design](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-authority-legacy-positive.md)
+- [Worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-authority-legacy-positive/notes/report.md)
+- `DONE` and commit message written.

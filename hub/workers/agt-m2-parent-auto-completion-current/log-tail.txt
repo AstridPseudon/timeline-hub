@@ -1,0 +1,400 @@
++    for read in query.record['reads']:
++        if not any(item['ref'] == read['ref'] and item['path'] == read['path']
++                   for item in command['reads']):
++            command['reads'].append(read)
++    command = execute(bundle, [command], verified_media=verified_media).commands[0]
++    return {'commands': [command],
++            'capture': {'owner': 'parent', 'clip': clip_id, 'kind': kind, 'media': dict(media),
++                        'anchor': {'id': anchor, 'state': 'present' if found else 'absent'},
++                        'resolution': resolution, 'lane': lane, 'consumed': consumed,
++                        'fps': {'numerator': fps.numerator, 'denominator': fps.denominator},
++                        'start_frame': frame, 'on': on, 'seconds': length}}
++
++
+ def auto_place_shared(bundle, owner, clip_id, media, *, ownership, verified_media,
+                       frame=None, anchor=None, pooled=False):
+     """Return {'commands': [...], 'capture': {...}} for one media placed into a shared shot.
+diff --git a/astrid/sdk/timeline/native_parent_media_commands.py b/astrid/sdk/timeline/native_parent_media_commands.py
+index b71c28c534fd5556957e454f50f0aecc5bce9b53..433f94a1b3a4f1a5f9bd2aa5c4fa5d344231a557
+--- a/astrid/sdk/timeline/native_parent_media_commands.py
++++ b/astrid/sdk/timeline/native_parent_media_commands.py
+@@ -38,6 +38,18 @@
+     _registry(ctx, 'parent', pin, kind, create=True, alias=row['asset'])
+     after = None if command['select'] == 'parent' else command['select']
+     ctx.create('parent', 'clip', row, after=after)
++    # Automatic builders may add original-state read constraints to this literal
++    # birth. Observe them ourselves; caller snapshots never become record facts.
++    # Ordinary births retain their existing capture and disjoint-edit behavior.
++    for read in command.get('reads', ()):
++        if not any(item['ref'] == read['ref'] and item['path'] == read['path']
++                   for item in ctx.record['reads']):
++            if (not read['ref'].startswith('parent/clip:')
++                    or read['path'] not in [[field] for field in
++                        ('at', 'at_ms', 'track', 'hold', 'from', 'to', 'speed')]
++                    or ctx.command_input.entity(read['ref'], optional=True) is None):
++                raise CommandError('unsupported parent placement read')
++            ctx.read(read['ref'], read['path'])
+ 
+ 
+ def capture_assembled_media(bundle, assembled, media, *, replace_clips, verified_media):
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py b/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+index 6563cc29a801b2c4be86dbd50f30a32ffa80e287..d4306b2181debd447a0f734fa52381fc9bce7002
+--- a/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+@@ -12,12 +12,12 @@
+ from astrid.sdk.timeline import commands
+ from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+ from astrid.sdk.timeline._command_state import State
+-from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
++from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
++from astrid.sdk.timeline.capture import capture_move
+ from astrid.sdk.timeline.commit import bundle_from_document
+ from astrid.sdk.timeline.native_auto_placement import auto_place_completion
+ from tests.editing_conformance import test_commit_runtime_parent_media as parent
+ from tests.editing_conformance.test_next_command_cohort_runtime import reopen
+-from tests.helpers.runtime import use_runtime
+ 
+ pytestmark = pytest.mark.integration
+ 
+@@ -51,7 +51,8 @@
+     def unavailable(*args, **kwargs):
+         pytest.fail('completion used legacy publication or renderer')
+ 
+-    for name in ('publish_parent_composition', 'publish_internal_timeline', 'publish_timeline'):
++    for name in ('publish_parent_composition', 'publish_timeline_render', 'update_timeline',
++                 'replace_timeline_clip', 'replace_parent_composition_media'):
+         if hasattr(RuntimeService, name):
+             monkeypatch.setattr(RuntimeService, name, unavailable)
+     import runtime_protocol.service as service_module
+@@ -114,33 +115,54 @@
+     assert editing.service.store.integrity_report()['ok']
+ 
+ 
+-@pytest.mark.parametrize('change', ['at', 'hold', 'track'])
++@pytest.mark.parametrize('change', ['at', 'hold', 'track-label'])
+ def test_relevant_stale_reads_refuse_before_accept_and_any_persistence(editing, monkeypatch, change):
+     from runtime_protocol.errors import RuntimeErrorBase
+-
+-    from astrid.sdk.timeline.capture import capture_track_create
+ 
+     guards(monkeypatch)
+     anchor(editing)
+-    if change == 'track':
+-        parent.commit(editing, parent.body(editing, [capture_track_create(
+-            bundle_from_document(parent.current(editing)), 'parent', {'id': 'other', 'kind': 'visual'})]),
+-            'other-track')
+     request, _ = completion(editing, {'anchor': 'anchor'})
+-    value = {'at': 9, 'hold': 2, 'track': 'other'}[change]
+-    changed = capture_clip_set(bundle_from_document(parent.current(editing)),
+-                               'parent/clip:anchor', values={change: value})
++    bundle = bundle_from_document(parent.current(editing))
++    if change == 'at':
++        changed = capture_move(bundle, 'parent/clip:anchor', 9)
++    elif change == 'hold':
++        changed = capture_clip_set(bundle, 'parent/clip:anchor', values={'hold': 2})
++    else:
++        changed = capture_track_set(bundle, 'parent/track:visual', values={'label': 'changed saved lane'})
+     parent.commit(editing, parent.body(editing, [changed]), 'relevant')
+     editing.candidates.clear()
+     before, document = parent.rows(editing), copy.deepcopy(parent.current(editing))
+     objects = {str(path.relative_to(editing.root)): path.read_bytes()
+                for path in editing.root.rglob('*') if path.is_file() and
+-               any(part in ('objects', 'staging', 'snapshots') for part in path.parts)}
+-    with pytest.raises(RuntimeErrorBase) as error:
+-        parent.commit(editing, request, 'stale-complete')
++               any(part in ('cas', 'staging', 'snapshots') for part in path.parts)}
++    assert objects
++    traced = []
++    editing.service.store.conn.set_trace_callback(traced.append)
++    try:
++        with pytest.raises(RuntimeErrorBase) as error:
++            parent.commit(editing, request, 'stale-complete')
++    finally:
++        editing.service.store.conn.set_trace_callback(None)
++    assert not [sql for sql in traced if sql.lstrip().split(' ', 1)[0].upper() in
++                ('INSERT', 'UPDATE', 'DELETE', 'REPLACE', 'CREATE', 'DROP', 'ALTER')]
+     assert error.value.details['reason'] == 'dependency_changed'
+     assert editing.candidates == [] and parent.rows(editing) == before
+     assert parent.current(editing) == document
+     assert {str(path.relative_to(editing.root)): path.read_bytes()
+             for path in editing.root.rglob('*') if path.is_file() and
+-            any(part in ('objects', 'staging', 'snapshots') for part in path.parts)} == objects
++            any(part in ('cas', 'staging', 'snapshots') for part in path.parts)} == objects
++
++
++def test_completed_variant_is_exact_even_after_a_new_primary_is_promoted(editing, monkeypatch):
++    guards(monkeypatch)
++    completed = copy.deepcopy(editing.pins['old'])
++    latest = parent.promote_latest_variant(editing)
++    assert latest['new_primary_variant_id'] != completed['variant_id']
++    editing.pins['new'] = completed
++    request, capture = completion(editing, {'anchor': 'absent', 'fallback_at': 22.25})
++    assert capture['media'] == completed
++    result = parent.commit(editing, request, 'complete-old-variant')
++    binding = result['data']['canonical_document']['parent_revision']['payload']['registry']['assets'][
++        completed['asset']]
++    assert (binding['variantId'], binding['media_id']) == (completed['variant_id'], completed['object_id'])
++    assert binding['variantId'] != latest['new_primary_variant_id']
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-auto-completion-current/notes/runtime-private /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_parent_auto_completion.py -k relevant_stale > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-auto-completion-current/notes/stale-final.log 2>&1' in /home/user/work/wt/agt-m2-parent-auto-completion-current
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-parent-auto-completion-current.md <<'MD'
+# Parent automatic completion — private S3 follow-up
+
+Base Agent **537c2ecd28f92b391c79e383e0e045fd71b3258f**. Small separate follow-up to the ongoing S3 review; harness commit pending. No integration edit, public schema freeze/adoption, generated-client pin change, App cutover, or render qualification.
+
+Parent image/video completion now uses the existing "'`auto_place_completion` recipe and **one ordinary `clip.add-media` v1**, with unchanged wire args `{row, media}`. Python callers give `owner='"'parent'"'`, `ownership='"'parent'"'`, an explicit existing raw `track`, and a previously reserved raw clip ID. No display identity or owner inference. The existing `preferred_track` / `fallback_track` parameters carry the saved main `preferred_track_id` / `fallback_track_id`; `fallback_at` is global seconds. No new public command field or operation is needed.
+
+The anchor end, saved fallback, or lane end resolves once against the original supplied bundle. The row stays literal on replay. Present anchor uses its guarded end; missing anchor uses the saved fallback time/lane when supplied; only an unsaved time uses lane end. Missing/invalid saved lanes refuse, including empty/boolean values; they never choose today'"'s default. Completion image is five seconds even with a supplied duration; video defaults to five seconds or uses the supplied completed duration. Existing shared four-second placement is unchanged. Media remains the exact five-field completed pin, even after a newer primary variant is promoted.
+
+## Capture and replay
+
+The builder queries through the existing "'`Recording` and adds its original read constraints to the existing birth capture. **Those provisional query facts are not authoritative records.** The actual `clip.add-media` handler independently calls `ctx.read` for each additional constraint in the SAME recorder that performs birth; normal execution verifies original values before the handler and compares the final complete capture. Extra parent placement constraints are limited to existing raw parent clips and `at`, `at_ms`, `track`, `hold`, `from`, `to`, `speed`. No supplied snapshot is copied into record facts. No new query kind, recorder, operation, policy DTO, coordinator, table, journal, or root replacement is added. Ordinary literal births keep their original captures and disjoint timing behavior.
+
+Existing birth recording supplies fps, source-window, active visual target-track, occurrence-lane exclusion, registry binding, collection membership/order, and reserved-ID guards. Collection membership covers named-anchor absence and insertion. Anchor mode adds only its seven timing/lane field states. Lane-end mode adds every existing clip'"'s lane and timing only for clips on the chosen lane, so another lane's extent can change without a conflict while moving it into the chosen lane refuses. Saved fallback adds no unrelated extent dependency. Opaque clip fields, params, and volume rebase; absent/null timing branch states remain distinct. The selected target track remains a conservative whole-row read, as in the existing birth operation.
+
+A different literal birth or removal of optional query constraints is a **different command/request**, not an exact retry. Upstream durable requester approval must bind the original owner, immutable basis, policy, reserved ID, exact pin, and request bytes. This change does not infer or retroactively approve anonymous old tasks. A conflict requires visible refusal or an explicitly approved new capture, never silent in-flight request replacement.
+
+## Preserved original positives and captures
+
+The four original strict cases passed with "'`--runxfail` **before** their two xfail decorators were removed: **4 passed / 81 deselected**. Both original function bodies are AST-identical to base; no assertions or expected outcomes changed. The complete original parent-media file initially passed **85 tests** with `--runxfail`.
+
+Portable fixture at 30000/1001 fps (exact commands/read arrays: worker notes `portable-captures.json`):
+
+| Media | Policy | Resolution | Frame | Seconds |
+| --- | --- | --- | ---: | ---: |
+| image/video | anchor `ov-a` | anchor-after | 60 | 5 |
+| image/video | absent anchor, saved 22.25 s on overlay | fallback-at | 667 | 5 |
+| image/video | absent anchor, no saved time | lane-end | 210 | 5 |
+
+Each reserves `parent/clip:born` and the exact asset alias once. Provider/native Runtime checks prove the ID remains reserved after undo, redo restores it exactly, and exact retry after reopen returns the original accepted result without invoking semantics again.
+
+## Private normally generated pair
+
+Runtime source **2c4ac180c2220bdad966bc01e95ad230e99ce26a**, archived into this worker'"'s own notes directory. Complete candidate schema supplied ONLY through normal "'`contract/schemas/edit-command.json`; normal generation/check and artifact-manifest generation/check all passed. Runtime source deltas are only that input and expected generated artifacts/manifest (`private-runtime-delta.json`). No shared venv or node_modules changes, generated-file hand edits, embedded-schema patch, synthetic accepted history, prepared-provider bypass, direct SQL mutation, daemon, socket, or browser.
+
+Agent canonical schema SHA256 **8a55a9fd84d6fc188e48f63976dacc1c27ea25c7747ea88e7eba7589974dd85a**, unchanged **54 definitions / 28 operations**. The normally generated Runtime embedded schema equals that complete JSON object. Public `runtime.lock.json`, `artifacts.json`, schemas, generated clients, and source pin remain unchanged. Exact file hashes: worker notes `source-facts.json`.
+
+Real managed image/video settlement and normally loaded Agent provider passed anchor, saved fallback, and lane-end births after a disjoint accepted params edit; reload/reopen, original request retry, exact undo to the disjoint head, reserved-ID refusal and redo; exact completed variant after primary promotion. Every automatic test makes legacy publication and renderer methods fail if called. Relevant native move, hold edit, and selected-lane label edit refuse before accept, with **zero mutating SQL statements**, unchanged SQL dump, and unchanged nonempty CAS/staging/snapshot file map. No fabricated revisions or baseline publisher is used. The existing pristine S3 initialization → occurrence/media → parent swap → word anchor → grouped inverse/reload/retry journey also passes.
+
+## Validation and limits
+
+- Original strict cases before marker removal: **4 passed**, 1.07 s.
+- Broad targeted portable/source/schema lane: **636 passed**, 262.41 s. Includes original parent, new parent, occurrence automatic reads/defaults/fallback, shared collision/pool behavior, pristine initialization and complete schema/floor checks. This run preceded only the final invalid-saved-lane hardening; the final affected parent lane below covers that change.
+- Final affected parent lane: **188 passed**, 39.52 s (85 original + 103 new).
+- Final private Runtime/S3 lane: **15 passed**, 33.92 s. A final non-vacuous CAS-map assertion was subsequently added to the stale tests; its focused result is recorded in the worker report.
+- Touched-file Ruff and `git diff --check`: pass.
+
+No full/full* suite requested/run. All tests are bounded targeted tests; real Runtime calls are in-process with no live sockets. No public/HTTP/client transport, App submission/outbox/cutover, pixels/audio, registered automatic producer-attempt admission chain, owner film, macOS, or production automatic adoption is qualified. The existing short-video default refusal and existing whole-row target-track conservatism are unchanged; no success requirement is rewritten to refusal. Track kind/deletion/lane movement are covered as changed-head conformance fixtures; the real current command contract exposes track label edits, not those authoring operations.
+
+Next: independent review of this bounded follow-up and its supplemental read constraints, then harness/manager publication of its commit and tree. Keep the S3/public/App/automatic-adoption holds until their separate actual-pair and requester qualification completes.
+
+Exact commands, logs, hashes, patch and remaining limits: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-auto-completion-current/notes/report.md`.
+MD' in /home/user/work/wt/agt-m2-parent-auto-completion-current
+ succeeded in 0ms:
+ succeeded in 5037ms:
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-auto-completion-current/notes/report.md <<'MD'
+# Parent completion follow-up report
+
+Implemented against assigned Agent "'`537c2ecd28f92b391c79e383e0e045fd71b3258f`. Harness commit pending. Changes are confined to `native_auto_placement.py`, `native_parent_media_commands.py`, the two original xfail decorators/comments, and two new main-suite test files. No git mutation, integration edit, dependency installation, shared dependency/cache write, public generation/adoption, App cut, or render claim.
+
+`auto_place_completion(..., owner='"'parent', ownership='parent', track=<existing raw lane>)"'` now emits existing `clip.add-media` v1 with unchanged `{row, media}` args. Anchor-after, saved fallback time/lane, and unsaved lane-end are frozen into a literal row. Exact original timing/lane read constraints are independently observed by the actual birth recorder and verified on replay. Only existing parent clip timing/lane fields can be added as supplemental reads. Literal birth captures remain unchanged. Policy, ownership, defaults, exact variant, reserved ID, narrow unrelated-field rebases and concurrency refusals are detailed in the design report.
+
+Design: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-parent-auto-completion-current.md`.
+
+## Reproduction environment
+
+```sh
+cd /home/user/work/wt/agt-m2-parent-auto-completion-current
+N=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-auto-completion-current/notes
+P=/home/user/work/venv-agent/bin/python
+export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD"
+```
+
+Every pytest command below used `> "$N/<listed-log>" 2>&1` where a log is listed. Direct targeted tests were appropriate: all Runtime operations use the in-process service, with no localhost/browser/live socket. No full/full* suite or central full request was run.
+
+## Commands and results
+
+Original whole parent file, assertions and strict markers still present:
+
+```sh
+"$P" -m pytest -q -o addopts= -p no:cacheprovider --runxfail tests/editing_conformance/test_recipe_m2_parent_media.py
+```
+
+**85 passed in 33.08 s**, exit 0 (direct tool output).
+
+Explicit required four-case checkpoint, still before marker removal (`original-strict-before-marker-removal.log`):
+
+```sh
+"$P" -m pytest -q -o addopts= -p no:cacheprovider --runxfail tests/editing_conformance/test_recipe_m2_parent_media.py -k completion_builder
+```
+
+**4 passed / 81 deselected in 1.07 s**, exit 0. Then removed ONLY their two xfail decorators and restoration comments. Both function bodies compare AST-identically to base (`original-assertions-unchanged.txt`). No passing behavior/assertion was removed or rewritten; no new skip/xfail.
+
+Broad targeted portable/source/schema run (`portable-final.log`):
+
+```sh
+"$P" -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_parent_auto_completion.py tests/editing_conformance/test_recipe_auto_placement_reads.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_pristine_initialize.py tests/sdk/test_timeline_current_union_schema.py
+```
+
+**636 passed in 262.41 s**, exit 0. Includes occurrence automatic/saved fallback, shared extent/start-collision/pool/default guards, original parent behaviors, pristine initialization and complete frozen-floor/inventory checks. It ran before the final parent invalid-saved-lane hardening; final affected lane below covers that change. Counts overlap; do not sum them.
+
+Final affected parent run (`parent-final.log`):
+
+```sh
+"$P" -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_parent_auto_completion.py tests/editing_conformance/test_recipe_m2_parent_media.py
+```
+
+**188 passed in 39.52 s**, exit 0: all 85 original tests plus 103 new tests. Image/video default/explicit duration, saved preferred/fallback lane/time, invalid/deleted target, anchor absence/membership/order, fps, timing/default presence, unrelated opaque/params/volume, lane-end query narrowness, exact replay/reload/undo/redo/IDs, and forged/incomplete required read claims.
+
+Private complete Runtime generation (`private-generation.log`):
+
+```sh
+python3 "$N/prepare_runtime.py"
+# In $N/runtime-private, the script executes exactly:
+/home/user/work/venv-runtime/bin/python generators/generate.py
+/home/user/work/venv-runtime/bin/python generators/generate.py --check
+/home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py
+/home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py --check
+```
+
+**All four passed**, exit 0. Script archives immutable Runtime `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, writes the complete schema only to its normal input, and compares every tracked file to the archive. `private-runtime-delta.json` lists only expected generated files/manifest/input. No manual embedded resource or generated DTO mutation.
+
+Final exact product-source private Runtime and existing S3 joint run (`runtime-exact-final.log`):
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-private" "$P" -m pytest -q -o addopts= -p no:cacheprovider -m integration --basetemp="$N/tmp-runtime-final" tests/editing_conformance/test_commit_runtime_parent_auto_completion.py tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+```
+
+**15 passed in 33.92 s**, exit 0. Native managed image/video, exact selection reads and normally loaded provider, whole generated S3 validation, anchor/fallback/lane-end after accepted disjoint params change, unchanged opaque fields, reload/reopen/exact retry without semantic execution, inverse/redo/reservation, newer-primary exact completed variant, current pristine S3 grouped lifetime. Legacy timeline publishers and rendering methods fail if called during all new automatic cases.
+
+The six stale controls use accepted native move/hold/lane-label commands. They assert no provider accept, zero mutating SQL traced statements, unchanged SQL dump and unchanged CAS/staging/snapshot file bytes. A final assertion was added to require the file map to be nonempty, then only this affected lane was rerun (`stale-final.log`):
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-private" "$P" -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_parent_auto_completion.py -k relevant_stale
+```
+
+Final result recorded below after completion.
+
+Touched-file lint and diff:
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/native_auto_placement.py astrid/sdk/timeline/native_parent_media_commands.py tests/editing_conformance/test_recipe_parent_auto_completion.py tests/editing_conformance/test_commit_runtime_parent_auto_completion.py tests/editing_conformance/test_recipe_m2_parent_media.py
+git diff --check
+```
+
+**Both passed**, exit 0 (`ruff.log`, `diff-check.log`).
+
+## Exact source/schema/captures
+
+- Agent canonical schema raw SHA256 `8a55a9fd84d6fc188e48f63976dacc1c27ea25c7747ea88e7eba7589974dd85a`, unchanged **54 definitions / 28 operations**.
+- Normal generated Runtime embedded schema equals the complete Agent JSON object; source assertion passed. Complete source hashes including unchanged public lock/manifest: `source-facts.json`.
+- Normal private Runtime schema bundle SHA256 `a694f3caf7efcc7c39fa4083742c845761eba9d254f9d2f85e4bb9f5f83a0013`; artifact manifest raw SHA256 `420af466ea8a628cce76adb57857b092b34a9318bcb77f04d2960b4bd8c4bc88`.
+- `portable-captures.json` contains exact six image/video anchor/saved-fallback/lane-end command/read/capture examples over main'"'s deterministic conformance fixture. These are portable fixtures, not claimed real managed media IDs. At 30000/1001: anchor frame 60, saved fallback frame 667, lane end frame 210, completion hold 5 s.
+- "'`followup.patch` is the separate reviewable source/test delta, including new files. Actual commit/tree must come from the harness after exit; no commit was made here.
+
+## Decisions, failures encountered, and gaps
+
+Used existing read guards rather than inventing a new typed policy field or automatic operation. The handler re-reads the constraints; caller-provided snapshot facts never become authority. Existing collection guards cover absence/membership, while saved fallback consumes no unrelated timing. The exact request identity remains the upstream requester/outbox responsibility; stripping optional constraints or changing a row creates a different command, not a retry or an approved re-evaluation. Owner 07:05 old anonymous-task manual recovery policy remains unchanged.
+
+Initial new-test runs exposed test-authoring mistakes: comparing newly serialized inverse revision IDs against original fixture IDs, demanding identical derived whole-mirror before-values after unrelated data changed, and attempting `clip.set` for unsupported `at`/track fields. Corrected the new tests to compare exact authored closure/unchanged authored records and to use actual current `clip.move`, `clip.set(hold)` and `track.set(label)`. No original assertions were weakened and no lost behavior was encoded. Final relevant tests all pass.
+
+The selected-track read remains conservative and whole-row, including label; unrelated clip opaque fields rebase successfully. Actual Runtime stale-lane proof uses current public track-label authoring. Track kind/deletion/clip lane movement are changed-head conformance fixtures because current typed ops do not expose those changes. Existing short-video default refusal is unchanged and this task does not certify that historical behavior gap as solved.
+
+Unverified: full/make-check suites; public generated/client adoption; HTTP/browser transport; App requester durable submit/recovery/cutover; registered automatic producer-attempt admission/approval lifecycle; owner films, rendering/pixels/audio; macOS. All public/S3 review/adoption holds remain. This is a normal private whole-generated in-process pair, not a public release or automatic-production rollout. No blocker remains for the bounded implementation. Next: independent review, harness commit publication, manager-controlled integration and separate requester qualification.
+MD' in /home/user/work/wt/agt-m2-parent-auto-completion-current
+ succeeded in 0ms:
+codex
+All targeted checks are green: 636 broader recipe/schema tests, 188 final parent tests, 15 private Runtime/S3 tests, and the six stale cases rerun with a required nonempty CAS snapshot. The reports and separate patch are ready. I’m recording the final hashes and commit message, then removing the private generated test copy.
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-auto-completion-current/notes/stale-final.log; git diff --check; /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/native_auto_placement.py astrid/sdk/timeline/native_parent_media_commands.py tests/editing_conformance/test_recipe_parent_auto_completion.py tests/editing_conformance/test_commit_runtime_parent_auto_completion.py tests/editing_conformance/test_recipe_m2_parent_media.py; git status --short' in /home/user/work/wt/agt-m2-parent-auto-completion-current
+ succeeded in 577ms:
+......                                                                   [100%]
+6 passed, 8 deselected in 4.44s
+All checks passed!
+ M astrid/sdk/timeline/native_auto_placement.py
+ M astrid/sdk/timeline/native_parent_media_commands.py
+ M tests/editing_conformance/test_recipe_m2_parent_media.py
+?? tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+?? tests/editing_conformance/test_recipe_parent_auto_completion.py
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import hashlib
+import json
+import shutil
+import subprocess
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-auto-completion-current')
+notes = worker / 'notes'
+stale = (notes / 'stale-final.log').read_text().splitlines()[-1]
+assert stale.startswith('6 passed, 8 deselected')
+report = notes / 'report.md'
+s = report.read_text().replace('Final result recorded below after completion.', '**' + stale + '**, exit 0. The nonempty CAS map assertion passed in all six cases.')
+s += '\\nPrivate generated Runtime source and empty test basetemp were removed after verification; "'`prepare_runtime.py` recreates the exact normal pair. Retained logs, delta hashes, captured examples and patch remain in this notes directory.'"\\n'
+report.write_text(s)
+design = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-parent-auto-completion-current.md')
+s = design.read_text().replace('its focused result is recorded in the worker report.', 'its focused result is **' + stale + '**, exit 0.')
+design.write_text(s)
+facts_path = notes / 'source-facts.json'
+facts = json.loads(facts_path.read_text())
+for name in facts['sha256']:
+    facts['sha256'][name] = hashlib.sha256(Path(name).read_bytes()).hexdigest()
+facts_path.write_text(json.dumps(facts, indent=2) + '\\n')
+patch = subprocess.check_output(['git', 'diff', '--binary'])
+for path in ('tests/editing_conformance/test_recipe_parent_auto_completion.py', 'tests/editing_conformance/test_commit_runtime_parent_auto_completion.py'):
+    result = subprocess.run(['git', 'diff', '--no-index', '--binary', '--', '/dev/null', path], capture_output=True)
+    assert result.returncode == 1
+    patch += result.stdout
+(notes / 'followup.patch').write_bytes(patch)
+(worker / 'commit-msg').write_text('fix(timeline): guard parent automatic media completion\\n\\nResolve parent anchor and saved fallback placement through the existing\\nclip.add-media birth, with authoritative timing and lane read constraints.\\nPreserve exact completed media, reserved IDs, defaults and literal retries.\\n\\nRestore all four original parent completion cases and cover narrow rebase,\\nstale refusal, exact inverse and a normally generated private S3 Runtime pair.\\n')
+for path in (notes / 'runtime-private', notes / 'tmp-runtime-final', Path('.ruff_cache')):
+    if path.is_dir():
+        shutil.rmtree(path)
+assert not (worker / 'BLOCKED').exists()
+print('Updated final reports, source facts, patch and commit-msg; removed private temporary source/cache.')
+PY" in /home/user/work/wt/agt-m2-parent-auto-completion-current
+ succeeded in 1865ms:
+Updated final reports, source facts, patch and commit-msg; removed private temporary source/cache.
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import hashlib
+import json
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-auto-completion-current')
+facts = json.loads((worker / 'notes/source-facts.json').read_text())
+assert all(hashlib.sha256(Path(path).read_bytes()).hexdigest() == digest for path, digest in facts['sha256'].items())
+assert (worker / 'notes/report.md').is_file() and (worker / 'commit-msg').is_file()
+(worker / 'DONE').touch()
+print('DONE. Final source hashes match report facts; commit message and both required reports exist.')
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-parent-auto-completion-current
+ succeeded in 436ms:
+DONE. Final source hashes match report facts; commit message and both required reports exist.
+ M astrid/sdk/timeline/native_auto_placement.py
+ M astrid/sdk/timeline/native_parent_media_commands.py
+ M tests/editing_conformance/test_recipe_m2_parent_media.py
+?? tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+?? tests/editing_conformance/test_recipe_parent_auto_completion.py
+
+codex
+Implemented parent anchor/fallback completion through existing `clip.add-media`, preserving saved policy, exact media pins, defaults, IDs, and guarded replay. All four original deferred cases pass unchanged.
+
+Validation: 636 targeted tests, 188 final parent tests, 15 private Runtime/S3 tests, and six final zero-write stale controls passed. Ruff and diff checks passed.
+
+Exact commands, decisions, hashes, and limits: [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-auto-completion-current/notes/report.md). [Design](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-parent-auto-completion-current.md).
+
+No blockers. `commit-msg` and `DONE` written. Next: independent review and harness commit. No full-suite, public-adoption, App, or render qualification claimed.
+tokens used
+197,600
+Implemented parent anchor/fallback completion through existing `clip.add-media`, preserving saved policy, exact media pins, defaults, IDs, and guarded replay. All four original deferred cases pass unchanged.
+
+Validation: 636 targeted tests, 188 final parent tests, 15 private Runtime/S3 tests, and six final zero-write stale controls passed. Ruff and diff checks passed.
+
+Exact commands, decisions, hashes, and limits: [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-auto-completion-current/notes/report.md). [Design](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-parent-auto-completion-current.md).
+
+No blockers. `commit-msg` and `DONE` written. Next: independent review and harness commit. No full-suite, public-adoption, App, or render qualification claimed.

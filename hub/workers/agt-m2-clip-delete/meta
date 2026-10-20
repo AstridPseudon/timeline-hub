@@ -1,0 +1,9 @@
+name=agt-m2-clip-delete
+repo=agent
+base=tl/agt-m2-staged-inverse
+base_sha=e49f422a
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-clip-delete
+started=2026-10-19T23:10:45Z

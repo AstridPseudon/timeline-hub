@@ -1,0 +1,10 @@
+test agent-renderer-peers12-integration-1020105910-4359: pass exit=0 in 105s — renderer-peers12-integration on integration:agent (agent tree 70883dc12d5a18bcf81bb401387b735b0270feda)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 -o addopts= -p no:cacheprovider tests/packs/rendering/test_capture_scene_labels.py tests/packs/rendering/test_scene_host.py tests/packs/rendering/test_scene_source_carry.py
+counts: 94 passed in 94.57s (0:01:34) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-renderer-peers12-integration-1020105910-4359/log.txt ---
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 76%]
+......................                                                   [100%]
+94 passed in 94.57s (0:01:34)

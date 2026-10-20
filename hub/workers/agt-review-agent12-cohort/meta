@@ -1,0 +1,9 @@
+name=agt-review-agent12-cohort
+repo=agent
+base=tl/integration
+base_sha=0e951d68
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-agent12-cohort
+started=2026-10-20T08:45:14Z

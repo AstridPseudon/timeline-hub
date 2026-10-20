@@ -1,0 +1,400 @@
++                if ancestor == ABSENT or ancestor == present(None):
++                    # A missing leaf must not erase its ancestor's tagged presence.
++                    self.read(ref, path[:end])
++                    break
+         before = self.state.get(ref, path)
+         self.record['writes'].append({"ref": ref, "path": list(path),
+                                        "before": before, "after": copy.deepcopy(after)})
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/inverse.py.reviewed	2026-10-20 00:52:39.048966897 +0000
++++ astrid/sdk/timeline/inverse.py	2026-10-20 00:49:24.313338876 +0000
+@@ -20,7 +20,11 @@
+ def _patch(state, path, replacement):
+     if not path:
+         return copy.deepcopy(replacement)
+-    value = copy.deepcopy(state.get('value', {}))
++    if state == ABSENT or state.get('value') is None:
++        if replacement == ABSENT:
++            return copy.deepcopy(state)
++        raise CommandError('patch requires historical container structure', kind='history_unavailable')
++    value = copy.deepcopy(state['value'])
+     node = value
+     for token in path[:-1]:
+         if isinstance(token, tuple):
+@@ -30,8 +34,18 @@
+             node = matches[0]
+         elif isinstance(node, list):
+             node = node[int(token)]
++        elif isinstance(node, dict):
++            if token not in node:
++                if replacement == ABSENT:
++                    return copy.deepcopy(state)
++                raise CommandError('patch requires historical container structure', kind='history_unavailable')
++            node = node[token]
+         else:
+-            node = node.setdefault(token, {})
++            raise CommandError('patch parent must be an object or array', kind='history_unavailable')
++        if node is None:
++            if replacement == ABSENT:
++                return copy.deepcopy(state)
++            raise CommandError('patch requires historical container structure', kind='history_unavailable')
+     if isinstance(path[-1], tuple):
+         identity = path[-1][1]
+         indices = [i for i, row in enumerate(node) if row.get('id') == identity]
+@@ -52,6 +66,8 @@
+         else:
+             node[index] = copy.deepcopy(replacement['value'])
+         return present(value)
++    if not isinstance(node, dict):
++        raise CommandError('patch parent must be an object or array', kind='history_unavailable')
+     if replacement['state'] == 'absent':
+         node.pop(path[-1], None)
+     else:
+@@ -263,7 +279,8 @@
+                     raise CommandError('created track has surviving dependents', kind='surviving_dependents',
+                                        ref=write['ref'])
+             root = root_identity(write['ref'])
+-            if root is not None and not write['path'] and write['after'] == ABSENT:
++            if (root is not None and not write['path'] and write['after'] == ABSENT
++                    and write['before']['state'] == 'present'):
+                 staged.create_entity(write['ref'], kind=root[0],
+                                      owner=None if root[0] == 'shot' else 'parent',
+                                      value=write['before']['value'], restoring=True)
+@@ -284,7 +301,9 @@
+             ctx.select(selected['key'], selected['owner'], selected['members'])
+     for write in reversed(changes):
+         ctx.read(write['ref'], write['path'])
+-        if not write['path'] and write['after'] == ABSENT:
++        # An absent-to-absent edge still records authored intent, but restores
++        # no entity and must not allocate an identity or dereference a value.
++        if not write['path'] and write['after'] == ABSENT and write['before']['state'] == 'present':
+             root = root_identity(write['ref'])
+             if root is not None:
+                 ctx.create_entity(write['ref'], kind=root[0],
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580 0' in /home/user/work/wt/agt-m2-foundation-recover
+ exited 124 in 52ms:
+still running after 0 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'tail -7 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/nonnetwork.log; tail -10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580/log.txt; git -C /home/user/work/wt/agt-m2-foundation-compose diff --stat HEAD; git diff --check; git rev-parse tl/agt-m2-bundle1-pin' in /home/user/work/wt/agt-m2-foundation-recover
+ succeeded in 50ms:
+........................................................................ [ 13%]
+........................................................................ [ 20%]
+.........................................................ssss........... [ 27%]
+........................................................................ [ 34%]
+........................................................................ [ 41%]
+........................................................................ [ 48%]
+............................... astrid/core/timeline/authoring_bundle.py           |  24 +-
+ .../core/timeline/schema/edit-command.schema.json  | 170 ++++++++-
+ astrid/sdk/timeline/_command_state.py              | 147 +++++++-
+ astrid/sdk/timeline/_recording.py                  |  88 ++++-
+ astrid/sdk/timeline/_track_commands.py             |  46 +--
+ astrid/sdk/timeline/capture.py                     |   6 +
+ astrid/sdk/timeline/commands.py                    |  16 +-
+ astrid/sdk/timeline/commit.py                      | 211 +++++++++--
+ astrid/sdk/timeline/inverse.py                     | 268 +++++++++++---
+ .../editing_conformance/test_parent_track_label.py |  23 +-
+ .../editing_conformance/test_recipe_m1_commands.py | 357 ++++++++++++++++++
+ tests/sdk/test_timeline_commit_provider.py         | 406 +++++++++++++++++++++
+ 12 files changed, 1589 insertions(+), 173 deletions(-)
+3bf9e5368a956ef562c77e1beb0a745addf23daf
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_semantic_reservations.py::test_implicit_children_cannot_be_reallocated_within_one_batch' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-compose/notes/reservations-base
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_parent_track_label.py' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-compose/notes/base
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib,json,subprocess,shutil
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes')
+old=Path('/home/user/work/wt/agt-m2-foundation-compose')
+manifest=json.loads((notes/'preserved-manifest.json').read_text())
+assert all(hashlib.sha256((old/p).read_bytes()).hexdigest()==h for p,h in manifest.items())
+assert subprocess.check_output(['git','diff','--binary','HEAD'],cwd=old)==(notes/'surviving.patch').read_bytes()
+print('Old worktree source and binary diff remain exact preserved originals.')
+for p in list(Path.cwd().rglob('__pycache__')):
+ shutil.rmtree(p)
+p=Path('.ruff_cache')
+if p.exists(): shutil.rmtree(p)
+print('Own worktree Python/Ruff caches removed.')
+PY" in /home/user/work/wt/agt-m2-foundation-recover
+ succeeded in 343ms:
+Old worktree source and binary diff remain exact preserved originals.
+Own worktree Python/Ruff caches removed.
+
+ succeeded in 3261ms:
+..                                                                       [100%]
+2 passed in 1.39s
+
+ succeeded in 2455ms:
+.....................                                                    [100%]
+21 passed in 1.34s
+
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/nonnetwork.log; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580/status; tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580/log.txt' in /home/user/work/wt/agt-m2-foundation-recover
+ succeeded in 74ms:
+........................................................................ [ 41%]
+........................................................................ [ 48%]
+........................................................................ [ 55%]
+................................xx...................................... [ 62%]
+........................................................................ [ 69%]
+.....................................................running
+........
+exec
+/bin/bash -lc 'git diff --numstat; git status --short --untracked-files=all; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580/request; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580/meta' in /home/user/work/wt/agt-m2-foundation-recover
+ exited 1 in 24ms:
+15	9	astrid/core/timeline/authoring_bundle.py
+165	5	astrid/core/timeline/schema/edit-command.schema.json
+144	7	astrid/sdk/timeline/_command_state.py
+75	13	astrid/sdk/timeline/_recording.py
+3	43	astrid/sdk/timeline/_track_commands.py
+6	0	astrid/sdk/timeline/capture.py
+10	6	astrid/sdk/timeline/commands.py
+174	37	astrid/sdk/timeline/commit.py
+219	49	astrid/sdk/timeline/inverse.py
+19	4	tests/editing_conformance/test_parent_track_label.py
+357	0	tests/editing_conformance/test_recipe_m1_commands.py
+406	0	tests/sdk/test_timeline_commit_provider.py
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_track_commands.py
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_parent_track_label.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+ M tests/sdk/test_timeline_commit_provider.py
+?? astrid/sdk/timeline/_clip_commands.py
+?? astrid/sdk/timeline/_collections.py
+?? astrid/sdk/timeline/_delete_commands.py
+?? astrid/sdk/timeline/_scalar_commands.py
+?? tests/editing_conformance/fixtures/recipe_clip_delete.json
+?? tests/editing_conformance/fixtures/recipe_m2_clip_add.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_track.json
+?? tests/editing_conformance/staging_recipes.py
+?? tests/editing_conformance/test_commit_runtime_first_clip.py
+?? tests/editing_conformance/test_commit_runtime_scalar.py
+?? tests/editing_conformance/test_inverse_clear_batches.py
+?? tests/editing_conformance/test_recipe_add_delete_composition.py
+?? tests/editing_conformance/test_recipe_clip_delete.py
+?? tests/editing_conformance/test_recipe_internal_stages.py
+?? tests/editing_conformance/test_recipe_m2_clip_add.py
+?? tests/editing_conformance/test_recipe_scalar_commands.py
+?? tests/editing_conformance/test_recorded_graph_roots.py
+?? tests/editing_conformance/test_recording_clear.py
+?? tests/sdk/test_timeline_clip_add_provider.py
+?? tests/sdk/test_timeline_commit_graph_roots.py
+?? tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+?? tests/sdk/test_timeline_commit_provider_scalar.py
+?? tests/sdk/test_timeline_selected_schema.py
+?? tests/sdk/test_timeline_semantic_reservations.py
+target=agt-m2-foundation-recover
+repo=agent
+suite=bundle1-runtime6be9706-integration
+files=tests/editing_conformance/test_commit_runtime_scalar.py\ tests/editing_conformance/test_commit_runtime_first_clip.py\ tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+nocache=0
+requested=2026-10-20T00:51:51Z
+cat: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580/meta: No such file or directory
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580 1' in /home/user/work/wt/agt-m2-foundation-recover
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/nonnetwork.log; ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580' in /home/user/work/wt/agt-m2-foundation-recover
+ succeeded in 0ms:
+................................xx...................................... [ 62%]
+........................................................................ [ 69%]
+........................................................................ [ 76%]
+........................................................................ [ 83%]
+....................................................................xxx. [ 90%]
+...............ext
+log.txt
+request
+runner.log
+running
+snap
+status
+
+ succeeded in 113776ms:
+exec
+/bin/bash -lc 'tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/nonnetwork.log; tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580/log.txt; tail -12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580/runner.log' in /home/user/work/wt/agt-m2-foundation-recover
+ succeeded in 52ms:
+................................xx...................................... [ 62%]
+........................................................................ [ 69%]
+........................................................................ [ 76%]
+........................................................................ [ 83%]
+....................................................................xxx. [ 90%]
+........................................................................ [ 97%]
+..............................                                           [100%]
+1029 passed, 4 skipped, 14 deselected, 5 xfailed in 112.98s (0:01:52)
+.............................................
+codex
+The bounded non-network run finished with **1,029 passed, 4 skipped, 14 deselected and 5 strict xfails**. Those xfails are the three unchanged selected-schema cases and the two new root-composition inverse probes.
+
+The composed schema SHA256 is `394e195332ad47fc1a355237b1020634a2adc088f4bb309f7bcb53fc06719d4e`. The socket qualification is still running on the same result ID. I’ll include its result before handing this back.
+
+exec
+/bin/bash -lc "rg -n 'skip|skipif|xfail' tests/editing_conformance tests/sdk/test_timeline_sync*.py tests/sdk/test_timeline_commit_provider*.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_semantic_reservations.py tests/sdk/test_timeline_selected_schema.py tests/packs/timeline/test_cli_native.py; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/nonnetwork.log | tail -2; git diff --check" in /home/user/work/wt/agt-m2-foundation-recover
+ succeeded in 89ms:
+tests/sdk/test_timeline_selected_schema.py:88:@pytest.mark.xfail(strict=True, reason='selected admitted seed maximum is ignored by new parameter edits')
+tests/editing_conformance/test_recorded_graph_roots.py:85:    pytest.param('selection', marks=pytest.mark.xfail(
+tests/editing_conformance/test_recorded_graph_roots.py:87:    pytest.param('edit', marks=pytest.mark.xfail(
+tests/editing_conformance/README.md:31:- At least one path must be declared, and each declared path must be runnable. Unknown keys, including `missing` and `xfail`, are a `ScenarioError` at the scenario level and inside the sheet mapping. CLI paths accept command strings or lists of them; Python paths accept a snippet string. Both reject mapping-shaped gap declarations.
+tests/editing_conformance/test_platform_safety_net.py:12:(c) A preview-vs-render parity harness: structure only, skipped until the F2 journey wires the App preview
+tests/editing_conformance/test_platform_safety_net.py:145:@pytest.mark.skip(reason=(
+tests/editing_conformance/test_runner_selftest.py:92:    ("xfail", "known gap"),
+tests/editing_conformance/test_runner_selftest.py:93:    ("xfail", [{"path": "python", "check": "steps", "reason": "known gap"}]),
+tests/editing_conformance/test_runner_selftest.py:95:def test_missing_and_xfail_declarations_are_scenario_errors(declaration, value):
+tests/editing_conformance/test_runner_selftest.py:103:    ("cli", "missing"), ("cli", "xfail"),
+tests/editing_conformance/test_runner_selftest.py:104:    ("sheet", "missing"), ("sheet", "xfail"),
+tests/editing_conformance/test_runner_selftest.py:105:    ("python", "missing"), ("python", "xfail"),
+tests/editing_conformance/test_runner_selftest.py:107:def test_missing_and_xfail_path_declarations_are_scenario_errors(path, declaration):
+tests/editing_conformance/test_commit_runtime_first_clip.py:23:@pytest.mark.parametrize('nullable_speed', [False, pytest.param(True, marks=pytest.mark.xfail(
+..............................                                           [100%]
+1029 passed, 4 skipped, 14 deselected, 5 xfailed in 112.98s (0:01:52)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+message='''\\n\\n## Agent foundation recovery — agt-m2-foundation-recover, 2026-10-20\\n\\nSurviving agt-m2-foundation-compose source was preserved and transferred exactly\\nonto frozen Bundle1 base 3bf9e536; old worktree/ref untouched. Reviewed native\\nfoundation composition is in /home/user/work/wt/agt-m2-foundation-recover, pending\\nharness commit/manager review. Canonical edit-command.schema.json SHA256:\\n394e195332ad47fc1a355237b1020634a2adc088f4bb309f7bcb53fc06719d4e.\\nRegistered native ops: clip.move, clip.delete, clip.add, clip.set-params,\\ntrack.create, track.set; inverse/restore remain provider-managed commands.\\nSchema is exactly 8fe7a42f plus the four reviewed db5fc8a6 root-reference patterns.\\nNo generated Runtime artifacts/pins changed; Bundle1 3bf9e536 + 6be9706 remains frozen.\\n\\nCurrent direct evidence: 1029 passed / 4 existing skips / 14 integration deselections /\\n5 strict xfails in 112.98s for bounded conformance/provider/sync/native-CLI tests;\\n4 actual direct Runtime service tests passed on 9f9b25c0 in 9.20s. Original three\\nselected-schema strict xfails remain byte-identical to 32332d70: PARAMS NOT READY.\\nTwo additional strict xfails preserve newly exposed generic root composition\\nrequirements: inverse of created-root child selection loses reconstructed shot\\nsource-free identity (KeyError new-shot); inverse of created-root then child write\\nfails root/occurrence alias coalescing (inverse_conflict). Those custom fixture\\nrecipes need follow-up before root-based recipe release, not alternate schema/ports.\\nOrdinary M1/parent-label capture+records+after_bundle parity against frozen base\\nis exact: 87776 bytes, sha256 b7f84a929716c9fc479fff1ea99e26daeeeb49b72ddc7594562b929f0feb3ff8.\\n\\nSocket qualification was re-requested ONCE after edits, replacing the interrupted\\nrun: agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580.\\nFinal report/result goes to workers/agt-m2-foundation-recover/notes/report.md.\\nRuntime manager may use the canonical source above for NORMAL generation on a\\nnew candidate after review; this worker does not freeze a new bundle or move pins.\\nPack custody remains exactly the manager-ACKed snapshot_object/portable bytes/\\ndocument_object seam in pack-snapshot-custody.md; product ownership stays with\\nthe pack custody workers. Completed-cancel and PIN-ONLY numeric forwarding\\ndecisions read and respected; no producer or host-helper changes in this task.\\nM2 integration remains HELD until PLAN records M1; host-helper bounded startup\\ncancellation/safe child ownership is still mandatory before Viewing handoff.\\n'''
+with (orch/'design/runtime-coordination.md').open('a') as f: f.write(message)
+print('Appended bounded foundation source handoff to runtime-coordination.md; no product pin/artifact change.')
+PY" in /home/user/work/wt/agt-m2-foundation-recover
+ succeeded in 0ms:
+Appended bounded foundation source handoff to runtime-coordination.md; no product pin/artifact change.
+
+ succeeded in 60050ms:
+test agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580: pass exit=0 in 115s — bundle1-runtime6be9706-integration on agt-m2-foundation-recover (agent tree 1899c4e20dda503e07487bfba81d0a815078d20e)
+cmd: test "$(git -C /home/user/work/wt/rt-m2-track-public-export rev-parse HEAD)" = 6be970633cc82ab412428151e6bf42f3e7fc3081 && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/stage1/test_runtime_client_cutover.py tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+counts: 52 passed, 1 xfailed in 112.69s (0:01:52) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580/log.txt ---
+..................................................x..                    [100%]
+52 passed, 1 xfailed in 112.69s (0:01:52)
+
+codex
+The socket qualification passed: **52 passed, 1 existing strict xfail**, covering the real M1 path, permanent identity checks, parent labels, scalar handoff, first clip, add/delete, restart and client cutover against the pinned Runtime.
+
+I’m writing the recovery report and both commit-message files now. The report will flag the selected-schema and root-inverse gaps; the frozen Bundle1 refs and pins remain unchanged.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import json,hashlib,subprocess
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=orch/'workers/agt-m2-foundation-recover'; notes=worker/'notes'
+report=f'''Recovered and composed the reviewed native editing foundation on "'`tl/agt-m2-foundation-recover`, based on frozen Agent `3bf9e5368a956ef562c77e1beb0a745addf23daf`. **Bounded tests pass with explicit gaps; M2 integration remains HELD until PLAN records M1.** No commit/merge/push/ref movement, install, full suite, artifact freeze or Runtime pin refresh was performed.
+
+- Inspected predecessor worktree read-only (`git status --short`, `git diff --binary HEAD`, relevant untracked product/tests). Preserved all 40 changed files and the binary patch before any fix, applied the patch here and copied only 28 relevant untracked files. Verified every transferred byte and the entire tracked diff. Rechecked that the predecessor remains unchanged. Preservation: `{notes}/preserved-source/`, `preserved-manifest.json`, `surviving.patch`.
+- Retained exact reviewed source for native order/staged inverse/roots/scalar/add, semantic reservations, parent delete/net-zero inverse, own-write public input capture, scalar basis and missing-clear/ancestor presence. Exact file comparisons and composed hunk diffs are in `{notes}/source-audit.txt` and adjacent `*.diff` files. Retained fc324 permanent identity tests, Bundle1 ingress/equality, vendor 0.2.2 and lock, and every parent golden unchanged.
+- Kept `_track_commands.capture_track_set` and `track_set` as a thin re-export of the sole `_scalar_commands` implementation. Existing parent-label tests now acknowledge the reviewed occurrence-label widening and still reject unsupported shot-owned track scope; added accepted occurrence replay/exact inverse coverage. No passing behavior expectation was changed into refusal or absence.
+- Finished the predecessor'"'s missing-owner integration correction: optional occurrence-scoped reads return absent when their owner does not exist in the original recipe input. This adds four product lines beyond the recovered source and restores the original semantic retirement collision assertion. Added missing-owner/duplicate-owner tests and a positive create-root/read-child replay/inverse case. Total glue beyond reviewed sources stays below 30 product lines (optional scoped reads, absent collection/query handling, thin re-export).
+
+Canonical schema: "'`{Path.cwd()}/astrid/core/timeline/schema/edit-command.schema.json`, **SHA256 `394e195332ad47fc1a355237b1020634a2adc088f4bb309f7bcb53fc06719d4e`**. Parsed equality proves it is exactly reviewed `8fe7a42f` plus ONLY four `db5fc8a6` root-reference patterns (`ScopedId`, `EntityRef`, `TargetKey`, `AnchorIdentity`). Registered native operations: `clip.move`, `clip.delete`, `clip.add`, `clip.set-params`, `track.create`, `track.set`; `timeline.inverse`/`timeline.restore` remain engine/provider commands. No new public root-create recipe, ordered-create-after split or media-manifest provenance WIP was pulled in. This is source for manager review/normal Runtime generation on a NEW candidate, not a replacement for frozen Bundle1.
+
+Commands and results (all direct tests use dependency-only shared venv-agent and this worktree via PYTHONPATH):
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m '"'not integration' tests/editing_conformance tests/sdk/test_timeline_commit_provider*.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_semantic_reservations.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_sync*.py tests/packs/timeline/test_cli_native.py
+"'```
+
+**1029 passed, 4 skipped, 14 deselected, 5 strict xfailed in 112.98s.** Four existing platform safety-net skips were untouched; integration tests are deselected in this direct lane. Log: `{notes}/nonnetwork.log`. Tests cover unchanged writes, ABA, surviving dependents, explicit null/absent/clears, staged inverse, scalar basis, semantic reservations, original capture claims, opaque/source closure preservation, sync and native CLI.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+**4 passed in 9.20s**, actual direct service/SQLite/CAS tests without socket listeners against Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316`. Includes net-zero and replacement batches, retirement, guarded inverse/redo, complete readback, restart and exact retry. Log: `{notes}/runtime-direct-9f.log`. This is not an HTTP contract-pair claim on 9f: vendored producer remains 6be.
+
+```bash
+{orch}/bin/request-test agt-m2-foundation-recover bundle1-runtime6be9706-integration --files '"'tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py'
+{orch}/bin/wait-test agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580 1
+"'```
+
+**52 passed, 1 existing strict xfailed in 112.69s; service exit 0 / 115s.** Source snapshot tree `1899c4e20dda503e07487bfba81d0a815078d20e`. Exact paired Runtime `6be970633cc82ab412428151e6bf42f3e7fc3081` is asserted by the suite. It runs parent-track-label + M1 + permanent identity + provider Runtime + client cutover + the three additional files above. Includes real lost ACK/restart/retry, reload, inverse/redo and renderer tripwires. Existing nullable-speed first-clip xfail stays visible. Result: `{orch}/tests/agt-m2-foundation-recover-bundle1-runtime6be9706-integration-1020005151-21580/`. Re-requested the INTERRUPTED predecessor exactly once after final edits; used this one ID to completion. Did not rerun the predecessor'"'s completed failing mixed 9f/client0.2.2 HTTP lane or count interruption as a pass.
+
+Additional bounded checks:
+
+"'```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_semantic_reservations.py tests/editing_conformance/test_recipe_internal_stages.py tests/editing_conformance/test_parent_track_label.py
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/_command_state.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_parent_track_label.py
+git diff --check
+```
+
+**86 passed, 2 strict xfailed in 2.41s; Ruff PASS; diff check PASS.** Baseline comparison: the exact predecessor-exported `5b51b936` source snapshot at `{orch}/workers/agt-m2-foundation-compose/notes/reservations-base` passes both original same-batch implicit-child retirement cases (same pytest node command, **2 passed in 1.39s**). Frozen `3bf9e536` snapshot at the predecessor'"'s "'`notes/base` passes original parent-label file (**21 passed in 1.34s**). No fixture error is declared pre-existing without comparison.
+
+Pure capture parity command, run in both that frozen `notes/base` snapshot and this worktree with `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD`:
+
+```bash
+/home/user/work/venv-agent/bin/python {notes}/capture-parity.py
+```
+
+**PASS**, all three M1 goldens plus published parent-label golden equal their exact commands and output bundles; aggregate serialized commands + records + after bundles match byte-for-byte: **87776 bytes**, SHA256 `b7f84a929716c9fc479fff1ea99e26daeeeb49b72ddc7594562b929f0feb3ff8`. All four fixture hashes match frozen source. Outputs: `{notes}/parity-base.txt`, `parity-composed.txt`.
+
+Decisions, gaps and next steps:
+
+- **PARAMS NOT RELEASE-READY.** `tests/sdk/test_timeline_selected_schema.py` is byte-identical to `32332d70`; its three required invalid selected-schema cases remain strict xfails. Actual retained selected-pack CAS validation/replay/undo was not implemented or qualified here. Read latest INBOX completed-cancel, PIN-ONLY numeric forwarding, pack custody and manager ACK. Use only the agreed `snapshot_object` / portable serialization / `document_object(pin,object_id)` seam in `design/pack-snapshot-custody.md`. Agent/Runtime custody workers retain implementation ownership; no alternate port or local-cache fallback was introduced.
+- Two NEW strict xfails preserve positive requirements uncovered while extending the generic regression: `test_one_recipe_creates_roots_then_reads_and_edits_their_children[selection]` fails inverse because stage reconstruction loses created shot `_created` identity and raises `KeyError('"'new-shot')"'`; `[edit]` fails inverse with `inverse_conflict` because created shot-root and occurrence-child alias writes do not coalesce. Capture and replay succeed; read-only child observation inverse succeeds. These custom root recipes are not public registered operations. Do not claim broader root-recipe completeness; manager should assign focused staged-root/alias follow-up before releasing those recipes. No claim these findings are pre-existing on a tested baseline, and no large generic rewrite was added to this bounded composition.
+- Runtime handoff/source/tests were appended to `{orch}/design/runtime-coordination.md`. Manager can request normal official root-aware generation from this source on a new branch after review. Keep frozen Bundle1 Agent 3bf9e536 / Runtime 6be9706 and pins unchanged; integrate nothing until PLAN records M1. Resolve the root experiment gaps before widening root-based recipes, and couple params only after actual custody proof.
+- Host-helper bounded startup cancellation and safe child ownership remain mandatory before Viewing handoff; no host-helper edits or qualification are claimed. No full suite/make check, browser/App journey, renderer parity, macOS or new generated-artifact release was run/claimed here. Worktree contains only product/tests, with own caches/build outputs removed. Harness owns the commit; both required conventional commit-message files are written.
+'"'''
+(notes/'report.md').write_text(report)
+message='''feat(timeline): compose reviewed native editing foundation
+
+Preserve the frozen Bundle1 client, ingress and capture goldens while composing
+reviewed order, staged inverse, root, scalar, add/delete and reservation changes.
+Keep the published track capture as a thin export of the scalar handler.
+
+Capture absent occurrence scopes correctly for recipes observing their own
+created children. Preserve selected-schema and root-composition inverse gaps as
+strict expected failures; keep artifact generation and M2 integration held.
+
+Validation: 1029 bounded tests passed (5 strict xfails), 4 direct Runtime tests
+passed, and 52 paired Runtime socket tests passed (1 existing strict xfail).
+Capture commands, records and output bundles retain byte parity with Bundle1.
+'''
+(worker/'commit-msg').write_text(message); (worker/'commit-msg.txt').write_text(message)
+with (orch/'design/runtime-coordination.md').open('a') as f:
+ f.write('\\nFoundation recovery final central result: the SAME result ID above completed PASS, 52 passed / 1 existing strict xfail in 112.69s; exit0/115s, tested Agent tree1899c4e20dda503e07487bfba81d0a815078d20e against exact Runtime6be9706. Final report: '+str(notes/'report.md')+'. No additional run requested.\\n')
+manifest=json.loads((notes/'final-manifest.json').read_text())
+assert all(hashlib.sha256(Path(p).read_bytes()).hexdigest()==h for p,h in manifest.items())
+assert (worker/'commit-msg').read_bytes()==(worker/'commit-msg.txt').read_bytes()
+assert subprocess.check_output(['git','rev-parse','HEAD']).decode().strip()=='3bf9e5368a956ef562c77e1beb0a745addf23daf'
+print('Wrote',notes/'report.md')
+print('Wrote both conventional commit messages; final source manifest remains exact.')
+PY" in /home/user/work/wt/agt-m2-foundation-recover
+ succeeded in 0ms:
+Wrote /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/report.md
+Wrote both conventional commit messages; final source manifest remains exact.
+
+codex
+Recovered and verified all 40 surviving files; completed the bounded composition and wrote both commit-message files.
+
+- Non-network: **1,029 passed**, 5 strict xfails.
+- Direct Runtime: **4 passed**.
+- Central socket qualification: **52 passed**, 1 existing strict xfail.
+- Capture/golden byte parity and scoped lint passed.
+
+Selected-schema validation and two newly exposed root-inverse cases remain held. Frozen Bundle1 refs/pins are unchanged; M2 integration remains held.
+
+[Full report with exact commands, schema digest and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/report.md).
+tokens used
+167,355
+Recovered and verified all 40 surviving files; completed the bounded composition and wrote both commit-message files.
+
+- Non-network: **1,029 passed**, 5 strict xfails.
+- Direct Runtime: **4 passed**.
+- Central socket qualification: **52 passed**, 1 existing strict xfail.
+- Capture/golden byte parity and scoped lint passed.
+
+Selected-schema validation and two newly exposed root-inverse cases remain held. Frozen Bundle1 refs/pins are unchanged; M2 integration remains held.
+
+[Full report with exact commands, schema digest and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/report.md).

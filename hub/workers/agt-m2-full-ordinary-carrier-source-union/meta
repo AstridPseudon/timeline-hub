@@ -1,0 +1,9 @@
+name=agt-m2-full-ordinary-carrier-source-union
+repo=agent
+base=tl/agt-m2-ordinary014-current-init-source
+base_sha=3c4f6de4
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+started=2026-10-20T16:40:25Z

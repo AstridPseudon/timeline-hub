@@ -1,0 +1,400 @@
+- The 63 persisted nodes classify as 15 external VibeComfy fixture errors, 7 uninstalled-source child probes, 1 missing Runtime package, 1 xdist serialization failure, 34 pre-existing RunPod path-drift nodes, 3 test-code `signal` import failures, 1 inherited generic-host contract mismatch, and 1 mixed structure-inventory node.
+- The structure node cannot be called wholly inherited: generic-host metadata is inherited and source-identical, but changed `remotion_runtime.py` has a new 106-line rationale mismatch hidden behind the first assertion. This is reported as a Viewing follow-up; no fix was made under the evidence-only scope.
+- The four latest consumer nodes remain explicit NEW/not closed, with owners and causes taken from `agent-20261019T223054Z-consumer-full-four.md`.
+- The later `4ffbb8b0` environment-only change and separate 2-pass result were kept outside the authoritative full snapshot.
+
+## Tests / blockers / next steps
+
+- Tests run by this worker: none, intentionally. The task prohibited targeted/full reruns and required using saved logs.
+- No full-green or M1-complete claim is made.
+- Next: Viewing should correct the `remotion_runtime.py` rationale and close its consumer failures; Agent should handle the pinned `render_status` fixture; then re-audit the structure node.
+
+-- commit msg --
+docs(agent): classify latest full-suite failures
+
+Append the final inherited-cause classification for the authoritative Agent
+full run, including exact node-set comparisons, traceback families, and the
+giant-file inventory follow-up.
+
+-- review tail --
+## Post-consumer and restore full — 2026-10-19T22:30Z
+ONE meaningful new-batch run agent-full-1019214054-26553, `/home/user/work/venv-agent/bin/python -m pytest -q -n 3`, exact Agenttree36d86ed3/ddc1bac3: **11746passed52failed15errors456skipped563subtestspassed**,75warnings/2844.65s. Exact node sets: baseline63, previous131, current67; **ALL68previouslyadded nodes now resolved**, no originalnode resolved, fournewnodes afterpackageconsumer batch. Fourcauses/owners recorded in escalations/agent-20261019T223054Z-consumer-full-four.md: stale normal elementcatalog generatedoutput, localtextcard-source test versus publicpackage delegation (actualvisiblemarkup mustbe proven), currentdefaultcomposition0.0.6fixture versus0.0.8pin, emptyfake readiness manifests versus stricterreal package admission. Agent handles ownclip_fields defaultcase; Viewing/explicitjourneygrant handles others. All63remainingoriginalnodes stillneed final causeconfirmation (notjustIDset); no fullgreenclaim. Later4ffbb8b0envone-entryfix EXCLUDED fromfullsnapshot, independently2PASS. No second full requested.
+
+## Final inherited-cause classification — 2026-10-19
+
+Authoritative source/run: Agent `ddc1bac3` / tree `36d86ed3`, command
+`/home/user/work/venv-agent/bin/python -m pytest -q -n 3`, saved log
+`tests/agent-full-1019214054-26553/log.txt`: **11,746 passed, 52 failed,
+15 errors, 456 skipped, 75 warnings, 563 subtests, 2,844.65s**. The later
+`4ffbb8b0` one-entry environment fix was excluded (separate 2-pass check).
+Parsing exact `FAILED ` / `ERROR ` node lines independently gives baseline 63,
+previous full 131, latest 67: baseline∩latest **63**, baseline\latest **0**;
+previous\latest **68**, latest\previous **4**. Thus all 68 previous-added
+nodes are corrected; no original node is resolved.
+
+The complete partition of the 63 persisted original nodes is:
+
+| count | exact node family | current traceback and classification |
+|---:|---|---|
+| 15 errors | `tests/packs/runpod/test_worker_staging.py::*` (the 15 baseline IDs) | Fixture `copytree` raises `FileNotFoundError: /home/vibecomfy/vibecomfy`; external fixture/setup, unchanged test and `worker_staging.py` blobs. |
+| 7 | `tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[...]` | isolated child `python -I -c` raises `ModuleNotFoundError: astrid`; dependency-only venv/source-not-installed setup, unchanged test/source blobs. |
+| 1 | `tests/packs/runpod/test_worker_preparation.py::test_runtime_activation_checkpoints_restore_only_the_exact_process` | `ModuleNotFoundError: runtime_protocol` at `worker_owner.py:1293`; Runtime checkout/package exposure, unchanged test/owner blobs. |
+| 1 | `tests/packs/test_vibecomfy_metadata.py::VibeComfyStructuredMetadataTest::test_run_rejects_missing_or_empty_engine_inventory` | xdist `execnet.gateway_base.DumpError: can't serialize pathlib.PosixPath`; test/toolchain reporting, unchanged test blob. |
+| 34 | `test_ensure_storage.py` (2), `test_pack_executors.py` (30), `test_provision_ports.py` (2) | test imports/read `astrid.packs.runpod.executors[...]`, but current source has `runpod/actions/`; `FileNotFoundError`/`ModuleNotFoundError`, unchanged test blobs and unchanged RunPod source. |
+| 3 | `tests/packs/runpod/test_worker_process.py::{test_stop_pins_process_and_never_signals_after_identity_drift,test_stop_requires_pinned_exit_proof_before_stopped_receipt[True|False]}` | test raises `NameError: signal is not defined`; test-code import defect, unchanged test and `worker_process.py` blobs. |
+| 1 | `tests/test_generic_host.py::test_failed_worker_release_retains_original` | unchanged `generic_host.py` raises `CommandCleanupUnresolved` at line 8393 after the test's `CleanupUncertainError`; inherited contract mismatch. |
+| 1 | `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale` | current first assertion is inherited `generic_host.py` rationale 13,598 vs exact 13,798; the node is not wholly inherited: changed-file inventory audit below finds one new hidden mismatch. |
+
+The 68 resolved prior-added nodes partition as 61 bridge/client fixture
+parameterizations, 1 visualize summary fixture, 3 cut/read fixtures, 2 CLI
+artifact nodes, and 1 timeout seam; no assertion was weakened. The four
+current additions remain **NEW / not closed**, per the consumer escalation:
+stale generated `elements/catalog.ts` (Viewing), local text-card source test
+versus public package markup (Viewing), `render_status` default 0.0.6 fixture
+versus pinned 0.0.8 (Agent), and empty fake renderer manifests versus strict
+readiness (Viewing/explicit journey grant). No independent fix was made here.
+
+Giant-file audit against baseline `a6502806` and current `ddc1bac3` counted
+every changed oversized Python file: `cli.py` 3993→4045 (rationale 4045),
+`workspace_client.py` 1191→1243 (rationale 1243), `remotion_runtime.py`
+1261→1353 (rationale 1247, **new 106-line mismatch**), filmstrip
+`cards.py` 1920→1955 (rationale 1917, within 50), filmstrip `execution.py`
+2023→2061 (2015, within 50), `remote.py` 2727→2773 (2727, within 50),
+`timeline_filmstrip.py` 1251→1272 (1251, within 50), and Remotion `run.py`
+1868→1851 (rationale 2158, pre-existing stale metadata; source changed).
+No current oversized file lacks an entry. Exact unchanged source proof for
+the inherited categories: `generic_host.py` blob
+`8df06fd4c739f049070e01ee59786472c14b8e9a` and `host_bootstrap.py` blob
+`32cdd1f8ed64595a5915c4097cb6ec15d2b78c84` are identical baseline/current;
+RunPod fixture/consumer source and tests are also identical by blob. Therefore
+the structure node needs the `remotion_runtime.py` rationale owner follow-up
+in addition to inherited generic-host metadata; it is not a green gate.
+
+No tests, full suites, fixtures, product files, or generated outputs were
+changed or rerun by this audit. This classification makes no full-green or
+M1-complete claim. Recommended next steps: Viewing correct the hidden
+`remotion_runtime.py` inventory entry and close its three consumer failures;
+Agent handles the `render_status` fixture; then re-audit the structure node.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md
+index bd69442dc1852edbe74aba8d63302802019dfc37..70d34a0be6500fd3c94137a1f197727641a34dce
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md
+@@ -136,3 +136,66 @@
+ 
+ ## Post-consumer and restore full — 2026-10-19T22:30Z
+ ONE meaningful new-batch run agent-full-1019214054-26553, `/home/user/work/venv-agent/bin/python -m pytest -q -n 3`, exact Agenttree36d86ed3/ddc1bac3: **11746passed52failed15errors456skipped563subtestspassed**,75warnings/2844.65s. Exact node sets: baseline63, previous131, current67; **ALL68previouslyadded nodes now resolved**, no originalnode resolved, fournewnodes afterpackageconsumer batch. Fourcauses/owners recorded in escalations/agent-20261019T223054Z-consumer-full-four.md: stale normal elementcatalog generatedoutput, localtextcard-source test versus publicpackage delegation (actualvisiblemarkup mustbe proven), currentdefaultcomposition0.0.6fixture versus0.0.8pin, emptyfake readiness manifests versus stricterreal package admission. Agent handles ownclip_fields defaultcase; Viewing/explicitjourneygrant handles others. All63remainingoriginalnodes stillneed final causeconfirmation (notjustIDset); no fullgreenclaim. Later4ffbb8b0envone-entryfix EXCLUDED fromfullsnapshot, independently2PASS. No second full requested.
++
++## Final inherited-cause classification — 2026-10-19
++
++Authoritative source/run: Agent `ddc1bac3` / tree `36d86ed3`, command
++`/home/user/work/venv-agent/bin/python -m pytest -q -n 3`, saved log
++`tests/agent-full-1019214054-26553/log.txt`: **11,746 passed, 52 failed,
++15 errors, 456 skipped, 75 warnings, 563 subtests, 2,844.65s**. The later
++`4ffbb8b0` one-entry environment fix was excluded (separate 2-pass check).
++Parsing exact `FAILED ` / `ERROR ` node lines independently gives baseline 63,
++previous full 131, latest 67: baseline∩latest **63**, baseline\latest **0**;
++previous\latest **68**, latest\previous **4**. Thus all 68 previous-added
++nodes are corrected; no original node is resolved.
++
++The complete partition of the 63 persisted original nodes is:
++
++| count | exact node family | current traceback and classification |
++|---:|---|---|
++| 15 errors | `tests/packs/runpod/test_worker_staging.py::*` (the 15 baseline IDs) | Fixture `copytree` raises `FileNotFoundError: /home/vibecomfy/vibecomfy`; external fixture/setup, unchanged test and `worker_staging.py` blobs. |
++| 7 | `tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[...]` | isolated child `python -I -c` raises `ModuleNotFoundError: astrid`; dependency-only venv/source-not-installed setup, unchanged test/source blobs. |
++| 1 | `tests/packs/runpod/test_worker_preparation.py::test_runtime_activation_checkpoints_restore_only_the_exact_process` | `ModuleNotFoundError: runtime_protocol` at `worker_owner.py:1293`; Runtime checkout/package exposure, unchanged test/owner blobs. |
++| 1 | `tests/packs/test_vibecomfy_metadata.py::VibeComfyStructuredMetadataTest::test_run_rejects_missing_or_empty_engine_inventory` | xdist `execnet.gateway_base.DumpError: can't serialize pathlib.PosixPath`; test/toolchain reporting, unchanged test blob. |
++| 34 | `test_ensure_storage.py` (2), `test_pack_executors.py` (30), `test_provision_ports.py` (2) | test imports/read `astrid.packs.runpod.executors[...]`, but current source has `runpod/actions/`; `FileNotFoundError`/`ModuleNotFoundError`, unchanged test blobs and unchanged RunPod source. |
++| 3 | `tests/packs/runpod/test_worker_process.py::{test_stop_pins_process_and_never_signals_after_identity_drift,test_stop_requires_pinned_exit_proof_before_stopped_receipt[True|False]}` | test raises `NameError: signal is not defined`; test-code import defect, unchanged test and `worker_process.py` blobs. |
++| 1 | `tests/test_generic_host.py::test_failed_worker_release_retains_original` | unchanged `generic_host.py` raises `CommandCleanupUnresolved` at line 8393 after the test's `CleanupUncertainError`; inherited contract mismatch. |
++| 1 | `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale` | current first assertion is inherited `generic_host.py` rationale 13,598 vs exact 13,798; the node is not wholly inherited: changed-file inventory audit below finds one new hidden mismatch. |
++
++The 68 resolved prior-added nodes partition as 61 bridge/client fixture
++parameterizations, 1 visualize summary fixture, 3 cut/read fixtures, 2 CLI
++artifact nodes, and 1 timeout seam; no assertion was weakened. The four
++current additions remain **NEW / not closed**, per the consumer escalation:
++stale generated `elements/catalog.ts` (Viewing), local text-card source test
++versus public package markup (Viewing), `render_status` default 0.0.6 fixture
++versus pinned 0.0.8 (Agent), and empty fake renderer manifests versus strict
++readiness (Viewing/explicit journey grant). No independent fix was made here.
++
++Giant-file audit against baseline `a6502806` and current `ddc1bac3` counted
++every changed oversized Python file: `cli.py` 3993→4045 (rationale 4045),
++`workspace_client.py` 1191→1243 (rationale 1243), `remotion_runtime.py`
++1261→1353 (rationale 1247, **new 106-line mismatch**), filmstrip
++`cards.py` 1920→1955 (rationale 1917, within 50), filmstrip `execution.py`
++2023→2061 (2015, within 50), `remote.py` 2727→2773 (2727, within 50),
++`timeline_filmstrip.py` 1251→1272 (1251, within 50), and Remotion `run.py`
++1868→1851 (rationale 2158, pre-existing stale metadata; source changed).
++No current oversized file lacks an entry. Exact unchanged source proof for
++the inherited categories: `generic_host.py` blob
++`8df06fd4c739f049070e01ee59786472c14b8e9a` and `host_bootstrap.py` blob
++`32cdd1f8ed64595a5915c4097cb6ec15d2b78c84` are identical baseline/current;
++RunPod fixture/consumer source and tests are also identical by blob. Therefore
++the structure node needs the `remotion_runtime.py` rationale owner follow-up
++in addition to inherited generic-host metadata; it is not a green gate.
++
++Exact unchanged inherited blobs checked: staging test/source
++`136f924a/0ea7fce`, H3 boundary/owner `b282709/ea02556`, Runtime-prep
++`133f92a`, VibeComfy metadata `ec15ebc`, executor tests
++`c2e8382/5500de6/23beda8`, worker-process test/source
++`e7215c9/3f0a661`, and structure test `06af607` (prefixes of the full
++SHA-1s recorded in the audit report).
++
++No tests, full suites, fixtures, product files, or generated outputs were
++changed or rerun by this audit. This classification makes no full-green or
++M1-complete claim. Recommended next steps: Viewing correct the hidden
++`remotion_runtime.py` inventory entry and close its three consumer failures;
++Agent handles the `render_status` fixture; then re-audit the structure node.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..de121fca47819dcaa9c6a0b9c70a96653e32e7a6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg
+@@ -0,0 +1,5 @@
++docs(agent): classify latest full-suite failures
++
++Append the final inherited-cause classification for the authoritative Agent
++full run, including exact node-set comparisons, traceback families, and the
++giant-file inventory follow-up.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..de121fca47819dcaa9c6a0b9c70a96653e32e7a6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg.txt
+@@ -0,0 +1,5 @@
++docs(agent): classify latest full-suite failures
++
++Append the final inherited-cause classification for the authoritative Agent
++full run, including exact node-set comparisons, traceback families, and the
++giant-file inventory follow-up.
+diff --git a/workers/agt-m1-final-full-audit/notes/report b/workers/agt-m1-final-full-audit/notes/report
+new file mode 100644
+index 0000000000000000000000000000000000000000..b3499ab23a4ee2323c1e57f28351c5050da360b8
+--- /dev/null
++++ b/workers/agt-m1-final-full-audit/notes/report
+@@ -0,0 +1,31 @@
++# Final Agent full-suite cause audit
++
++## What I did
++
++- Read `PLAN.md`, `design/agent-baseline.md`, and the existing full review.
++- Parsed exact `FAILED`/`ERROR` node sets from the three saved Agent full logs.
++- Independently confirmed: baseline 63, previous full 131, latest 67; 0/63 baseline nodes resolved; all 68 previous-added nodes resolved; four latest nodes are new consumers.
++- Re-read current tracebacks for all 63 persisted nodes and partitioned them by exact family and cause.
++- Audited every changed oversized Python file against baseline/current physical line counts and the current giant-file rationale. Confirmed `workspace_client.py` and `cli.py` entries are fixed, and found the hidden `remotion_runtime.py` rationale mismatch (1,353 actual vs 1,247 documented).
++- Appended the final classification section to the shared review document. No product, test, fixture, or generated output was changed.
++
++## Evidence and commands
++
++- Saved authoritative run: `/home/user/work/venv-agent/bin/python -m pytest -q -n 3` from Agent tree `ddc1bac3` / source tree `36d86ed3`; result: `11746 passed, 52 failed, 15 errors, 456 skipped, 75 warnings, 563 subtests passed in 2844.65s`.
++- Baseline saved result: `11503 passed, 48 failed, 15 errors, 456 skipped, 13 warnings, 563 subtests passed in 3433.42s`.
++- Previous full saved result: `11652 passed, 116 failed, 15 errors, 456 skipped, 13 warnings, 563 subtests passed in 2392.19s`.
++- Exact set parsing used the saved `log.txt` files and lines beginning `FAILED ` or `ERROR `; no test command was rerun.
++- Source proof used `git diff --quiet a6502806 ddc1bac3 -- <path>`, `git rev-parse <ref>:<path>`, and `git show <ref>:<path> | wc -l`.
++
++## Decisions / findings
++
++- The 63 persisted nodes classify as 15 external VibeComfy fixture errors, 7 uninstalled-source child probes, 1 missing Runtime package, 1 xdist serialization failure, 34 pre-existing RunPod path-drift nodes, 3 test-code `signal` import failures, 1 inherited generic-host contract mismatch, and 1 mixed structure-inventory node.
++- The structure node cannot be called wholly inherited: generic-host metadata is inherited and source-identical, but changed `remotion_runtime.py` has a new 106-line rationale mismatch hidden behind the first assertion. This is reported as a Viewing follow-up; no fix was made under the evidence-only scope.
++- The four latest consumer nodes remain explicit NEW/not closed, with owners and causes taken from `agent-20261019T223054Z-consumer-full-four.md`.
++- The later `4ffbb8b0` environment-only change and separate 2-pass result were kept outside the authoritative full snapshot.
++
++## Tests / blockers / next steps
++
++- Tests run by this worker: none, intentionally. The task prohibited targeted/full reruns and required using saved logs.
++- No full-green or M1-complete claim is made.
++- Next: Viewing should correct the `remotion_runtime.py` rationale and close its consumer failures; Agent should handle the pinned `render_status` fixture; then re-audit the structure node.
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m1-final-full-audit/workers/agt-m1-final-full-audit/notes/report
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md
+index bd69442dc1852edbe74aba8d63302802019dfc37..70d34a0be6500fd3c94137a1f197727641a34dce
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md
+@@ -136,3 +136,66 @@
+ 
+ ## Post-consumer and restore full — 2026-10-19T22:30Z
+ ONE meaningful new-batch run agent-full-1019214054-26553, `/home/user/work/venv-agent/bin/python -m pytest -q -n 3`, exact Agenttree36d86ed3/ddc1bac3: **11746passed52failed15errors456skipped563subtestspassed**,75warnings/2844.65s. Exact node sets: baseline63, previous131, current67; **ALL68previouslyadded nodes now resolved**, no originalnode resolved, fournewnodes afterpackageconsumer batch. Fourcauses/owners recorded in escalations/agent-20261019T223054Z-consumer-full-four.md: stale normal elementcatalog generatedoutput, localtextcard-source test versus publicpackage delegation (actualvisiblemarkup mustbe proven), currentdefaultcomposition0.0.6fixture versus0.0.8pin, emptyfake readiness manifests versus stricterreal package admission. Agent handles ownclip_fields defaultcase; Viewing/explicitjourneygrant handles others. All63remainingoriginalnodes stillneed final causeconfirmation (notjustIDset); no fullgreenclaim. Later4ffbb8b0envone-entryfix EXCLUDED fromfullsnapshot, independently2PASS. No second full requested.
++
++## Final inherited-cause classification — 2026-10-19
++
++Authoritative source/run: Agent `ddc1bac3` / tree `36d86ed3`, command
++`/home/user/work/venv-agent/bin/python -m pytest -q -n 3`, saved log
++`tests/agent-full-1019214054-26553/log.txt`: **11,746 passed, 52 failed,
++15 errors, 456 skipped, 75 warnings, 563 subtests, 2,844.65s**. The later
++`4ffbb8b0` one-entry environment fix was excluded (separate 2-pass check).
++Parsing exact `FAILED ` / `ERROR ` node lines independently gives baseline 63,
++previous full 131, latest 67: baseline∩latest **63**, baseline\latest **0**;
++previous\latest **68**, latest\previous **4**. Thus all 68 previous-added
++nodes are corrected; no original node is resolved.
++
++The complete partition of the 63 persisted original nodes is:
++
++| count | exact node family | current traceback and classification |
++|---:|---|---|
++| 15 errors | `tests/packs/runpod/test_worker_staging.py::*` (the 15 baseline IDs) | Fixture `copytree` raises `FileNotFoundError: /home/vibecomfy/vibecomfy`; external fixture/setup, unchanged test and `worker_staging.py` blobs. |
++| 7 | `tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[...]` | isolated child `python -I -c` raises `ModuleNotFoundError: astrid`; dependency-only venv/source-not-installed setup, unchanged test/source blobs. |
++| 1 | `tests/packs/runpod/test_worker_preparation.py::test_runtime_activation_checkpoints_restore_only_the_exact_process` | `ModuleNotFoundError: runtime_protocol` at `worker_owner.py:1293`; Runtime checkout/package exposure, unchanged test/owner blobs. |
++| 1 | `tests/packs/test_vibecomfy_metadata.py::VibeComfyStructuredMetadataTest::test_run_rejects_missing_or_empty_engine_inventory` | xdist `execnet.gateway_base.DumpError: can't serialize pathlib.PosixPath`; test/toolchain reporting, unchanged test blob. |
++| 34 | `test_ensure_storage.py` (2), `test_pack_executors.py` (30), `test_provision_ports.py` (2) | test imports/read `astrid.packs.runpod.executors[...]`, but current source has `runpod/actions/`; `FileNotFoundError`/`ModuleNotFoundError`, unchanged test blobs and unchanged RunPod source. |
++| 3 | `tests/packs/runpod/test_worker_process.py::{test_stop_pins_process_and_never_signals_after_identity_drift,test_stop_requires_pinned_exit_proof_before_stopped_receipt[True|False]}` | test raises `NameError: signal is not defined`; test-code import defect, unchanged test and `worker_process.py` blobs. |
++| 1 | `tests/test_generic_host.py::test_failed_worker_release_retains_original` | unchanged `generic_host.py` raises `CommandCleanupUnresolved` at line 8393 after the test's `CleanupUncertainError`; inherited contract mismatch. |
++| 1 | `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale` | current first assertion is inherited `generic_host.py` rationale 13,598 vs exact 13,798; the node is not wholly inherited: changed-file inventory audit below finds one new hidden mismatch. |
++
++The 68 resolved prior-added nodes partition as 61 bridge/client fixture
++parameterizations, 1 visualize summary fixture, 3 cut/read fixtures, 2 CLI
++artifact nodes, and 1 timeout seam; no assertion was weakened. The four
++current additions remain **NEW / not closed**, per the consumer escalation:
++stale generated `elements/catalog.ts` (Viewing), local text-card source test
++versus public package markup (Viewing), `render_status` default 0.0.6 fixture
++versus pinned 0.0.8 (Agent), and empty fake renderer manifests versus strict
++readiness (Viewing/explicit journey grant). No independent fix was made here.
++
++Giant-file audit against baseline `a6502806` and current `ddc1bac3` counted
++every changed oversized Python file: `cli.py` 3993→4045 (rationale 4045),
++`workspace_client.py` 1191→1243 (rationale 1243), `remotion_runtime.py`
++1261→1353 (rationale 1247, **new 106-line mismatch**), filmstrip
++`cards.py` 1920→1955 (rationale 1917, within 50), filmstrip `execution.py`
++2023→2061 (2015, within 50), `remote.py` 2727→2773 (2727, within 50),
++`timeline_filmstrip.py` 1251→1272 (1251, within 50), and Remotion `run.py`
++1868→1851 (rationale 2158, pre-existing stale metadata; source changed).
++No current oversized file lacks an entry. Exact unchanged source proof for
++the inherited categories: `generic_host.py` blob
++`8df06fd4c739f049070e01ee59786472c14b8e9a` and `host_bootstrap.py` blob
++`32cdd1f8ed64595a5915c4097cb6ec15d2b78c84` are identical baseline/current;
++RunPod fixture/consumer source and tests are also identical by blob. Therefore
++the structure node needs the `remotion_runtime.py` rationale owner follow-up
++in addition to inherited generic-host metadata; it is not a green gate.
++
++Exact unchanged inherited blobs checked: staging test/source
++`136f924a/0ea7fce`, H3 boundary/owner `b282709/ea02556`, Runtime-prep
++`133f92a`, VibeComfy metadata `ec15ebc`, executor tests
++`c2e8382/5500de6/23beda8`, worker-process test/source
++`e7215c9/3f0a661`, and structure test `06af607` (prefixes of the full
++SHA-1s recorded in the audit report).
++
++No tests, full suites, fixtures, product files, or generated outputs were
++changed or rerun by this audit. This classification makes no full-green or
++M1-complete claim. Recommended next steps: Viewing correct the hidden
++`remotion_runtime.py` inventory entry and close its three consumer failures;
++Agent handles the `render_status` fixture; then re-audit the structure node.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..de121fca47819dcaa9c6a0b9c70a96653e32e7a6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg
+@@ -0,0 +1,5 @@
++docs(agent): classify latest full-suite failures
++
++Append the final inherited-cause classification for the authoritative Agent
++full run, including exact node-set comparisons, traceback families, and the
++giant-file inventory follow-up.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..de121fca47819dcaa9c6a0b9c70a96653e32e7a6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-final-full-audit/commit-msg.txt
+@@ -0,0 +1,5 @@
++docs(agent): classify latest full-suite failures
++
++Append the final inherited-cause classification for the authoritative Agent
++full run, including exact node-set comparisons, traceback families, and the
++giant-file inventory follow-up.
+diff --git a/workers/agt-m1-final-full-audit/notes/report b/workers/agt-m1-final-full-audit/notes/report
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f0b1c5ad7db9018a9a9c08cb2839ee4ae16fd8c
+--- /dev/null
++++ b/workers/agt-m1-final-full-audit/notes/report
+@@ -0,0 +1,32 @@
++# Final Agent full-suite cause audit
++
++## What I did
++
++- Read `PLAN.md`, `design/agent-baseline.md`, and the existing full review.
++- Parsed exact `FAILED`/`ERROR` node sets from the three saved Agent full logs.
++- Independently confirmed: baseline 63, previous full 131, latest 67; 0/63 baseline nodes resolved; all 68 previous-added nodes resolved; four latest nodes are new consumers.
++- Re-read current tracebacks for all 63 persisted nodes and partitioned them by exact family and cause.
++- Audited every changed oversized Python file against baseline/current physical line counts and the current giant-file rationale. Confirmed `workspace_client.py` and `cli.py` entries are fixed, and found the hidden `remotion_runtime.py` rationale mismatch (1,353 actual vs 1,247 documented).
++- Appended the final classification section to the shared review document. No product, test, fixture, or generated output was changed.
++
++## Evidence and commands
++
++- Saved authoritative run: `/home/user/work/venv-agent/bin/python -m pytest -q -n 3` from Agent tree `ddc1bac3` / source tree `36d86ed3`; result: `11746 passed, 52 failed, 15 errors, 456 skipped, 75 warnings, 563 subtests passed in 2844.65s`.
++- Baseline saved result: `11503 passed, 48 failed, 15 errors, 456 skipped, 13 warnings, 563 subtests passed in 3433.42s`.
++- Previous full saved result: `11652 passed, 116 failed, 15 errors, 456 skipped, 13 warnings, 563 subtests passed in 2392.19s`.
++- Exact set parsing used the saved `log.txt` files and lines beginning `FAILED ` or `ERROR `; no test command was rerun.
++- Source proof used `git diff --quiet a6502806 ddc1bac3 -- <path>`, `git rev-parse <ref>:<path>`, and `git show <ref>:<path> | wc -l`.
++- Unchanged inherited blob proofs: staging test/source `136f924a2e8b491e676e88c0cd7cb056061e597f`/`0ea7fce0ed5ef28161eae840390f89ce3570c2a0`; H3 boundary/owner `b28270908c3eedc963b16ec3ba4344888f9a2670`/`ea0255614c40e74532238669cd39bba9c330eecd`; Runtime-prep `133f92a6a4e524317fddf10eeaf7529e0ece1d7f`; VibeComfy metadata `ec15ebc4f3f6f4e2b66288b61142b00da836f928`; executor tests `c2e8382f13ba3883e6115eea3e8a97df7dfc69f3`/`5500de6c8a4d3e98729d90994068011e73626cf5`/`23beda8d57cb53e4cf4c2b6a6a0ee60091e45a6a`; worker-process test/source `e7215c95cd35abbb08f32d659e64fd4303e8a7c2`/`3f0a66149474ef1bf2c7139d41d694efc0601d64`; structure test `06af60745273bef70b8833f12f5eaa2f4ce09bce`.
++
++## Decisions / findings
++
++- The 63 persisted nodes classify as 15 external VibeComfy fixture errors, 7 uninstalled-source child probes, 1 missing Runtime package, 1 xdist serialization failure, 34 pre-existing RunPod path-drift nodes, 3 test-code `signal` import failures, 1 inherited generic-host contract mismatch, and 1 mixed structure-inventory node.
++- The structure node cannot be called wholly inherited: generic-host metadata is inherited and source-identical, but changed `remotion_runtime.py` has a new 106-line rationale mismatch hidden behind the first assertion. This is reported as a Viewing follow-up; no fix was made under the evidence-only scope.
++- The four latest consumer nodes remain explicit NEW/not closed, with owners and causes taken from `agent-20261019T223054Z-consumer-full-four.md`.
++- The later `4ffbb8b0` environment-only change and separate 2-pass result were kept outside the authoritative full snapshot.
++
++## Tests / blockers / next steps
++
++- Tests run by this worker: none, intentionally. The task prohibited targeted/full reruns and required using saved logs.
++- No full-green or M1-complete claim is made.
++- Next: Viewing should correct the `remotion_runtime.py` rationale and close its consumer failures; Agent should handle the pinned `render_status` fixture; then re-audit the structure node.
+
+codex
+The report and both `commit-msg` variants are written. The only worktree change is the permitted `workers/agt-m1-final-full-audit/notes/report`; the product tree remains untouched. I’m doing one final scope check now, then I’ll hand back the classification and the unresolved owner follow-ups.
+exec
+/bin/bash -lc "git status --short; printf '\\n-- permitted worktree files --\\n'; find workers/agt-m1-final-full-audit -maxdepth 3 -type f -print; printf '\\n-- review section checks --\\n'; rg -n '"'^## Final inherited-cause classification|new 106-line mismatch|ALL68|latest additions remain|No tests, full suites'"' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md; printf '\\n-- forbidden code/test changes in worktree status --\\n'; git status --short | rg -v '"'^'"\\?\\? workers/"'$'"' || true" in /home/user/work/wt/agt-m1-final-full-audit
+ succeeded in 598ms:
+?? workers/
+
+-- permitted worktree files --
+workers/agt-m1-final-full-audit/notes/report
+
+-- review section checks --
+138:ONE meaningful new-batch run agent-full-1019214054-26553, `/home/user/work/venv-agent/bin/python -m pytest -q -n 3`, exact Agenttree36d86ed3/ddc1bac3: **11746passed52failed15errors456skipped563subtestspassed**,75warnings/2844.65s. Exact node sets: baseline63, previous131, current67; **ALL68previouslyadded nodes now resolved**, no originalnode resolved, fournewnodes afterpackageconsumer batch. Fourcauses/owners recorded in escalations/agent-20261019T223054Z-consumer-full-four.md: stale normal elementcatalog generatedoutput, localtextcard-source test versus publicpackage delegation (actualvisiblemarkup mustbe proven), currentdefaultcomposition0.0.6fixture versus0.0.8pin, emptyfake readiness manifests versus stricterreal package admission. Agent handles ownclip_fields defaultcase; Viewing/explicitjourneygrant handles others. All63remainingoriginalnodes stillneed final causeconfirmation (notjustIDset); no fullgreenclaim. Later4ffbb8b0envone-entryfix EXCLUDED fromfullsnapshot, independently2PASS. No second full requested.
+140:## Final inherited-cause classification — 2026-10-19
+177:1261→1353 (rationale 1247, **new 106-line mismatch**), filmstrip
+197:No tests, full suites, fixtures, product files, or generated outputs were
+
+-- forbidden code/test changes in worktree status --
+
+codex
+## Report
+
+Updated [agent-m1-full-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md) with the final classification.
+
+- Confirmed baseline 63 persisted nodes; all 68 prior-added nodes resolved; 4 new consumer failures remain NEW.
+- Classified all 63 by traceback and source evidence.
+- Audited giant-file counts; found a hidden `remotion_runtime.py` rationale mismatch requiring Viewing follow-up.
+- No product or test changes made.
+
+Saved the detailed report to [workers/.../report](/home/user/work/wt/agt-m1-final-full-audit/workers/agt-m1-final-full-audit/notes/report) and both required commit-message files.
+
+Tests were not rerun per task constraints. Saved authoritative results:
+
+`11746 passed, 52 failed, 15 errors, 456 skipped, 75 warnings, 563 subtests` in `2844.65s`.
+
+No full-green or M1-complete claim.
+tokens used
+127,878
+## Report
+
+Updated [agent-m1-full-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m1-full-review.md) with the final classification.
+
+- Confirmed baseline 63 persisted nodes; all 68 prior-added nodes resolved; 4 new consumer failures remain NEW.
+- Classified all 63 by traceback and source evidence.
+- Audited giant-file counts; found a hidden `remotion_runtime.py` rationale mismatch requiring Viewing follow-up.
+- No product or test changes made.
+
+Saved the detailed report to [workers/.../report](/home/user/work/wt/agt-m1-final-full-audit/workers/agt-m1-final-full-audit/notes/report) and both required commit-message files.
+
+Tests were not rerun per task constraints. Saved authoritative results:
+
+`11746 passed, 52 failed, 15 errors, 456 skipped, 75 warnings, 563 subtests` in `2844.65s`.
+
+No full-green or M1-complete claim.

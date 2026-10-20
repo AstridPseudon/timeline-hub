@@ -1,0 +1,400 @@
+    values={"opacity": 0.4},
+)
+clear_opacity = capture_clip_set(
+    bundle,
+    "occurrence:occ-1/clip:picture-1",
+    clear=["opacity"],
+)
+```
+
+The Main-shaped SET is `op: "clip.set"` with
+`args: {"values": {"opacity": 0.4}, "clear": []}` and an exact original
+`<selector>::opacity` expectation. Clear is
+`{"values": {}, "clear": ["opacity"]}`.
+
+## Agent evidence
+
+Added only the closed schema member, the existing capture docstring update,
+and compact conformance in the existing scalar-field test module. The tests
+cover Main-parity top-level capture (including a hostile `params.opacity` that
+must remain unchanged), occurrence isolation/direct neighbors, absent/null/0/
+value presence, exact inverse/redo, invalid values and params bypass, strict
+ABA, and disjoint parameter rebase.
+
+Passed:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_clip_scalar_fields.py
+111 passed, 2 warnings
+
+python3 -m json.tool astrid/core/timeline/schema/edit-command.schema.json
+ruff check astrid/sdk/timeline/_clip_scalar_commands.py tests/editing_conformance/test_recipe_clip_scalar_fields.py
+git diff --check
+```
+
+The neighboring schema/registry command was also run. It produced 178 passed
+and 7 failures in exact frozen-schema/hash assertions, all caused by the
+intentional new candidate schema bytes; no frozen artifact test or hash was
+edited. Those failures are not evidence that the opacity command semantics
+failed, and they must not be “fixed” by relabeling the old 613/6ba refs.
+
+No full/full-* suite, root pytest, Runtime service, browser/socket journey,
+generation, pin, merge, or consumer activation was run.
+
+## ACK gate
+
+Runtime and App2 should ACK this exact candidate tree/schema and the
+top-level-`clip.opacity` contract before any private generation or native App
+consumer activation. This handoff does not claim whole-writer deletion or
+that the old App consumer is retired; those require the separately owned
+normal matched-native gate.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-private-source-proposal.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-private-source-proposal.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..d96c3fcc256714ac05265425b5f8601641dbf114
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-private-source-proposal.md
+@@ -0,0 +1,116 @@
++# Agent bounded clip opacity private source proposal
++
++Status: **SOURCE ONLY — Runtime/App2 ACK required before generation or native
++consumer activation.** No generated client, Runtime/App pin, public artifact,
++integration change, or writer deletion is included.
++
++## Exact source identity
++
++- Agent worktree: `/home/user/work/wt/agt-m2-opacity-private-source-proposal`
++- Base commit: `e010e6a3868e963471244491bb6672c3e4a5135e`
++- Base tree: `70414cf6875d2c97c45f33e0a5158c80bd7391d9`
++- Candidate tree with this uncommitted source proposal: `ff2a0144563bb27b7a1169ae0276c3e3d1b7b195`
++- Final commit SHA: **pending harness commit**; the candidate patch SHA-256 is
++  `465c423fc51bf7a8a4100e359f87aedff9112f4f47d71e7caeefec4905a33a29`.
++- Canonical schema:
++  `astrid/core/timeline/schema/edit-command.schema.json`
++- Candidate schema SHA-256:
++  `110165ab9f7e4be3e9766d06b5ceacab8c5e8c7cc12e7180929005b67bcc82d6`
++- Changed source file SHA-256 values:
++  - `astrid/sdk/timeline/_clip_scalar_commands.py`:
++    `ceff9398a45b00888c41a984913a497b11b1339370f3e18b3bbfaa6af51d00f5`
++  - `tests/editing_conformance/test_recipe_clip_scalar_fields.py`:
++    `c0e5466d9e036064d73327ff5f41cf7a6d3b0643618378e6d3d01e514cfe178b`
++
++The frozen project-data/private-carrier source and ordinary floor are not
++relabeled: the existing `613123b2...` and `6ba7b51e...` bytes/refs remain
++immutable. This is a distinct additive schema candidate over e010's 56/30/12
++source.
++
++## Main evidence and semantic floor
++
++The reviewed Main App path is the ordinary clip property control in
++`ClipPanelBody` (the Appcensus row identifies the opacity path at the cited
++Main body location). The current checked source reads `clip.opacity ?? 1` and
++emits the Slider's raw numeric value; it does not read or write
++`params.opacity`. Agent's current timeline model likewise declares opacity as
++a top-level numeric clip field in `timeline-config.schema.json` and the
++canonical clip allowlist.
++
++This proposal therefore admits only the existing closed `clip.set@1` family:
++
++- Stable selectors remain exactly `parent/clip:<raw-id>` and
++  `occurrence:<occurrence-id>/clip:<raw-id>`; selector ownership is retained.
++- `args.values.opacity` is a JSON number in the inclusive raw fraction range
++  `0..1`. Boolean, null, string, non-finite, and out-of-range values refuse.
++- `args.clear` additionally admits `"opacity"`; clearing removes the leaf and
++  never writes null, an empty string, a default, or a percentage conversion.
++- The handler writes/clears only `clip["opacity"]`. It does not alias to
++  `params.opacity`, manufacture a selected-pack schema, add an operation, or
++  rewrite a container.
++- Existing `_target`/`_clip_basis` reads and the generic recorder continue to
++  supply original identity/source/media guards, exact leaf expectations,
++  authorship, unchanged writes, inverse/redo, strict A→B→A refusal, and
++  disjoint-property rebase. Opaque fields, direct neighboring fields, and
++  other occurrences remain untouched.
++- Existing hold, asset-clear, and transition-clear meanings and their recorded
++  original pin remain unchanged. No other look property is admitted here.
++
++The exact capture shape is:
++
++```python
++from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
++
++set_opacity = capture_clip_set(
++    bundle,
++    "parent/clip:f2-app-clip",
++    values={"opacity": 0.4},
++)
++clear_opacity = capture_clip_set(
++    bundle,
++    "occurrence:occ-1/clip:picture-1",
++    clear=["opacity"],
++)
++```
++
++The Main-shaped SET is `op: "clip.set"` with
++`args: {"values": {"opacity": 0.4}, "clear": []}` and an exact original
++`<selector>::opacity` expectation. Clear is
++`{"values": {}, "clear": ["opacity"]}`.
++
++## Agent evidence
++
++Added only the closed schema member, the existing capture docstring update,
++and compact conformance in the existing scalar-field test module. The tests
++cover Main-parity top-level capture (including a hostile `params.opacity` that
++must remain unchanged), occurrence isolation/direct neighbors, absent/null/0/
++value presence, exact inverse/redo, invalid values and params bypass, strict
++ABA, and disjoint parameter rebase.
++
++Passed:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_clip_scalar_fields.py
++111 passed, 2 warnings
++
++python3 -m json.tool astrid/core/timeline/schema/edit-command.schema.json
++ruff check astrid/sdk/timeline/_clip_scalar_commands.py tests/editing_conformance/test_recipe_clip_scalar_fields.py
++git diff --check
++```
++
++The neighboring schema/registry command was also run. It produced 178 passed
++and 7 failures in exact frozen-schema/hash assertions, all caused by the
++intentional new candidate schema bytes; no frozen artifact test or hash was
++edited. Those failures are not evidence that the opacity command semantics
++failed, and they must not be “fixed” by relabeling the old 613/6ba refs.
++
++No full/full-* suite, root pytest, Runtime service, browser/socket journey,
++generation, pin, merge, or consumer activation was run.
++
++## ACK gate
++
++Runtime and App2 should ACK this exact candidate tree/schema and the
++top-level-`clip.opacity` contract before any private generation or native App
++consumer activation. This handoff does not claim whole-writer deletion or
++that the old App consumer is retired; those require the separately owned
++normal matched-native gate.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..fcf6da4f224e3d00f894405b0f0f673bd95e155e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/commit-msg
+@@ -0,0 +1,6 @@
++feat(timeline): propose bounded clip opacity source
++
++Extend the existing closed clip.set contract with literal top-level opacity
++set/clear semantics and focused conformance for presence, isolation, inverse,
++ABA, and disjoint rebase. Publish the distinct private source proposal for
++Runtime/App2 ACK without changing generated clients or frozen artifacts.
+diff --git a/astrid/core/timeline/schema/edit-command.schema.json b/astrid/core/timeline/schema/edit-command.schema.json
+index 27491fe1e46c0f807f58edfb86f0de0290279e30..9fa451deb392bcfd1bd440da1b041bcf0c3055b4
+--- a/astrid/core/timeline/schema/edit-command.schema.json
++++ b/astrid/core/timeline/schema/edit-command.schema.json
+@@ -2468,6 +2468,12 @@
+               "type": "number",
+               "exclusiveMinimum": 0,
+               "description": "Positive finite source seconds; timeline duration is hold/speed."
++            },
++            "opacity": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 1,
++              "description": "Raw visual opacity fraction in the inclusive range 0..1."
+             }
+           },
+           "additionalProperties": false
+@@ -2478,7 +2484,8 @@
+             "enum": [
+               "hold",
+               "asset",
+-              "transition"
++              "transition",
++              "opacity"
+             ]
+           },
+           "uniqueItems": true
+@@ -2505,7 +2512,7 @@
+           }
+         }
+       ],
+-      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
++      "description": "Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; explicitly remove hold, asset, incoming transition or opacity. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
+     },
+     "ProjectDataWriteArgs": {
+       "type": "object",
+diff --git a/astrid/sdk/timeline/_clip_scalar_commands.py b/astrid/sdk/timeline/_clip_scalar_commands.py
+index 214ee593bbfda1f4b09ea0e55bfb27a81884e9d2..5700faf57ed05a2602fddc77690994935d676a81
+--- a/astrid/sdk/timeline/_clip_scalar_commands.py
++++ b/astrid/sdk/timeline/_clip_scalar_commands.py
+@@ -107,7 +107,7 @@
+ 
+ 
+ def capture_clip_set(bundle, select, *, values=None, clear=()):
+-    """Capture source hold set/clear and explicit raw asset/transition removal."""
++    """Capture bounded raw hold/opacity writes and explicit field removal."""
+     return _capture(bundle, 'clip.set', select, values, clear)
+ 
+ 
+diff --git a/tests/editing_conformance/test_recipe_clip_scalar_fields.py b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+index 1773269f8b1a600e049f89b2dda5e9af65db6011..2f99ccfa7b9033a59b9260bd54f5f08207656f0f
+--- a/tests/editing_conformance/test_recipe_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+@@ -130,6 +130,84 @@
+         capture_clip_set(bundle(), REF, values=values, clear=clear)
+ 
+ 
++@pytest.mark.parametrize('before', [ABSENT, present(None), present(0), present(0.4)])
++def test_opacity_set_preserves_exact_presence_and_inverse(before):
++    original = bundle()
++    if before != ABSENT:
++        clip(original, REF)['opacity'] = copy.deepcopy(before['value'])
++    command = capture_clip_set(original, REF, values={'opacity': 0.4})
++    assert command['expect'] == {REF + '::opacity': before}
++    plan = execute(original, [command])
++    assert State(plan.bundle).get(REF, ['opacity']) == present(0.4)
++    assert plan.records[0]['writes'] == [
++        {'ref': REF, 'path': ['opacity'], 'before': before, 'after': present(0.4)}]
++    assert inverse(plan.bundle, plan.records).bundle == original
++    assert inverse(inverse(plan.bundle, plan.records).bundle,
++                   inverse(plan.bundle, plan.records).records).bundle == plan.bundle
++
++
++def test_main_app_opacity_capture_uses_top_level_clip_set_shape():
++    original = app_bundle()
++    ref = 'parent/clip:f2-app-clip'
++    clip(original, ref).update(opacity=0.9, params={'opacity': 0.8, 'opaque': {'keep': True}},
++                               app={'opaque': {'keep': [None, False]}})
++    before = copy.deepcopy(original)
++    command = capture_clip_set(original, ref, values={'opacity': 0.4})
++    assert command['op'] == 'clip.set'
++    assert command['select'] == ref
++    assert command['args'] == {'values': {'opacity': 0.4}, 'clear': []}
++    assert command['expect'] == {ref + '::opacity': present(0.9)}
++    assert set(command['authorship']) == {ref + '::opacity'}
++    assert command['resolved'] == [ref]
++    plan = execute(original, [command])
++    assert clip(plan.bundle, ref)['opacity'] == 0.4
++    assert clip(plan.bundle, ref)['params'] == before['parent']['clips'][0]['params']
++    assert clip(plan.bundle, ref)['app'] == before['parent']['clips'][0]['app']
++    assert original == before
++
++
++def test_opacity_clear_is_occurrence_local_and_preserves_direct_neighbors():
++    original = bundle()
++    target = clip(original, REF)
++    target.update(opacity=None, params={'opacity': 0.8, 'opaque': [None, False]},
++                  app={'opaque': {'keep': [None, False]}})
++    sibling_ref = 'occurrence:occ-2/clip:picture-1'
++    clip(original, sibling_ref)['opacity'] = 0.2
++    sibling = copy.deepcopy(clip(original, sibling_ref))
++    plan = execute(original, [capture_clip_set(original, REF, clear=['opacity'])])
++    assert State(plan.bundle).get(REF, ['opacity']) == ABSENT
++    assert clip(plan.bundle, REF)['params'] == target['params']
++    assert clip(plan.bundle, REF)['app'] == target['app']
++    assert clip(plan.bundle, REF)['hold'] == target['hold']
++    assert clip(plan.bundle, sibling_ref) == sibling
++    assert inverse(plan.bundle, plan.records).bundle == original
++
++
++@pytest.mark.parametrize('values,clear', [
++    ({'opacity': None}, []), ({'opacity': False}, []), ({'opacity': ''}, []),
++    ({'opacity': -0.01}, []), ({'opacity': 1.01}, []),
++    ({'params': {'opacity': 0.4}}, []), ({'opacity': 0.4}, ['opacity']),
++    ({'unknown': 0.4}, []), ({}, ['unknown']),
++])
++def test_opacity_closed_contract_refuses_invalid_values_and_params_bypass(values, clear):
++    with pytest.raises(CommandError):
++        capture_clip_set(bundle(), REF, values=values, clear=clear)
++
++
++def test_opacity_strict_aba_and_disjoint_parameter_rebase():
++    original = bundle()
++    command = capture_clip_set(original, REF, values={'opacity': 0.4})
++    plan = execute(original, [command])
++    changed = execute(plan.bundle, [capture_clip_set(plan.bundle, REF, values={'opacity': 0.6})])
++    back = execute(changed.bundle, [capture_clip_set(changed.bundle, REF, values={'opacity': 0.4})])
++    with pytest.raises(CommandError):
++        inverse(back.bundle, plan.records, [later(REF, ['opacity'], 0.4)])
++    other = execute(original, [capture_clip_set_params(original, REF, values={'opaque': {'keep': 1}})])
++    rebased = replay(plan, other.bundle, intervening_records=other.records)
++    assert State(rebased.bundle).get(REF, ['opacity']) == present(0.4)
++    assert State(rebased.bundle).get(REF, ['params', 'opaque']) == present({'keep': 1})
++
++
+ @pytest.mark.parametrize('fps', [30, {'numerator': 30000, 'denominator': 1001}])
+ def test_source_hold_speed_two_rational_fps_boundary_and_no_implicit_rewrites(fps):
+     original = bundle(fps=fps)
+
+codex
+The required handoff is published with the candidate tree `ff2a0144…`, schema hash, patch fingerprint, exact capture shape, and the pre-generation ACK gate. I’ve written the conventional commit message and completion marker; I’m doing the final cleanliness check now.
+exec
+/bin/bash -lc "set -eu
+printf '%s\\n' '--- repo status ---'
+git status --short --untracked-files=all
+printf '%s\\n' '--- unexpected build/cache files ---'
+find . -type d \\( -name __pycache__ -o -name .pytest_cache -o -name .mypy_cache -o -name .ruff_cache \\) -print | sed -n '1,80p'
+printf '%s\\n' '--- handoff/worker markers ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-private-source-proposal.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/DONE
+printf '%s\\n' '--- final diff check ---'
+git diff --check" in /home/user/work/wt/agt-m2-opacity-private-source-proposal
+ succeeded in 388ms:
+--- repo status ---
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M tests/editing_conformance/test_recipe_clip_scalar_fields.py
+--- unexpected build/cache files ---
+./.ruff_cache
+--- handoff/worker markers ---
+-rw-r--r-- 1 root root 5359 Oct 20 19:36 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-private-source-proposal.md
+-rw-r--r-- 1 root root    0 Oct 20 19:36 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/DONE
+-rw-r--r-- 1 root root  355 Oct 20 19:36 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-private-source-proposal/commit-msg
+--- final diff check ---
+
+exec
+/bin/bash -lc "rm -r -- .ruff_cache && git status --short --untracked-files=all && find . -type d \\( -name __pycache__ -o -name .pytest_cache -o -name .mypy_cache -o -name .ruff_cache \\) -print | sed -n '1,80p'" in /home/user/work/wt/agt-m2-opacity-private-source-proposal
+ succeeded in 228ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M tests/editing_conformance/test_recipe_clip_scalar_fields.py
+
+codex
+## Report
+
+Implemented bounded top-level `clip.opacity` support through existing closed `clip.set` SET/CLEAR semantics.
+
+- Added schema support for raw opacity `0..1`; no alias, params bypass, clamp, DTO, or new operation.
+- Added conformance for Main-shaped capture, presence/null/zero, inverse/redo, occurrence isolation, opaque-neighbor preservation, strict ABA, and disjoint rebase.
+- Published handoff: [agent-opacity-private-source-proposal.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-private-source-proposal.md)
+- Candidate tree: `ff2a0144563bb27b7a1169ae0276c3e3d1b7b195`
+- Schema SHA-256: `110165ab9f7e4be3e9766d06b5ceacab8c5e8c7cc12e7180929005b67bcc82d6`
+
+Tests:
+
+- Targeted opacity suite: `111 passed`
+- JSON validation, Ruff, and `git diff --check`: passed
+- Neighbor schema suite: `178 passed, 7 expected frozen-schema/hash mismatches`; frozen 613/6ba artifacts were intentionally unchanged.
+
+No full suite, generation, pin, integration, or consumer activation was performed. Commit message and `DONE` marker written.
+tokens used
+223,133
+## Report
+
+Implemented bounded top-level `clip.opacity` support through existing closed `clip.set` SET/CLEAR semantics.
+
+- Added schema support for raw opacity `0..1`; no alias, params bypass, clamp, DTO, or new operation.
+- Added conformance for Main-shaped capture, presence/null/zero, inverse/redo, occurrence isolation, opaque-neighbor preservation, strict ABA, and disjoint rebase.
+- Published handoff: [agent-opacity-private-source-proposal.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-private-source-proposal.md)
+- Candidate tree: `ff2a0144563bb27b7a1169ae0276c3e3d1b7b195`
+- Schema SHA-256: `110165ab9f7e4be3e9766d06b5ceacab8c5e8c7cc12e7180929005b67bcc82d6`
+
+Tests:
+
+- Targeted opacity suite: `111 passed`
+- JSON validation, Ruff, and `git diff --check`: passed
+- Neighbor schema suite: `178 passed, 7 expected frozen-schema/hash mismatches`; frozen 613/6ba artifacts were intentionally unchanged.
+
+No full suite, generation, pin, integration, or consumer activation was performed. Commit message and `DONE` marker written.

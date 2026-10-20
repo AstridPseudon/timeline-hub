@@ -1,0 +1,400 @@
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:984:                              moved[edit.project]["data"]["canonical_document"]["parent_revision"]["payload"])
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:987:                "content_digest": moved[edit.project]["data"]["canonical_document"]["parent_revision"]["content_digest"],
+{
+  "files": {
+    "astrid/core/timeline/schema/timeline-config.schema.json": {
+      "from": "contract/schemas/timeline-config.schema.json",
+      "sha256": "sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
+    },
+    "astrid_runtime_client/__init__.py": {
+      "from": "packages/python/astrid_runtime_client/__init__.py",
+      "sha256": "sha256:0ec98414f0410da5db816e2dcb3204207046902026902db5283251c168a19c6d"
+    },
+ .../core/timeline/schema/edit-command.schema.json  | 61 ++++++++++++++++++++++
+ astrid/sdk/timeline/_collections.py                |  2 +-
+ astrid/sdk/timeline/_recording.py                  | 20 +++++--
+ astrid/sdk/timeline/capture.py                     | 20 ++++---
+ astrid/sdk/timeline/commands.py                    |  5 +-
+ astrid/sdk/timeline/commit.py                      |  3 +-
+ astrid/sdk/timeline/inverse.py                     | 38 ++++++++++++--
+ astrid/sdk/timeline/rebase.py                      |  3 +-
+ 8 files changed, 132 insertions(+), 20 deletions(-)
+
+ succeeded in 11661ms:
+........................................................................ [ 30%]
+........................................................................ [ 61%]
+........................................................................ [ 91%]
+...................                                                      [100%]
+235 passed in 10.42s
+
+exec
+/bin/bash -lc "sed -n '750,850p' /home/user/work/runtime/tests/test_timeline_commit_acceptance.py; sed -n '1,125p' /home/user/work/runtime/tests/test_timeline_commit_input_integration.py; rg -n 'bootstrap|fixture|seed|publish' tests/sdk/test_timeline_commit_provider_runtime.py /home/user/work/runtime/tests/test_timeline_commit_acceptance.py | head -35; sed -n '1,100p' tests/conftest.py; rg -n 'schema.*edit|validate.*command|op.*enum' /home/user/work/runtime/runtime_protocol/timeline_commit*" in /home/user/work/wt/agt-m2-occurrence-retrack
+ exited 1 in 0ms:
+        accept(commits, ctx, value)
+    assert error.value.failure["details"]["reason"] == "dependency_unavailable"
+    assert counts(service) == before
+    assert commits.head(project, "main") == head
+
+
+@pytest.mark.integration
+def test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated(film, request):
+    from types import SimpleNamespace
+
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.timeline_commit_port import route_path
+    from test_timeline_commit_integration import Editing, assert_json_equal, inverse, rows
+    from timeline_commit_film_fixture import _publication, _transcript, read_object_from_realm
+
+    service = RuntimeService(film.fixture.duplicate_root)
+    try:
+        project = service.create_project({"slug": "isolated-film", "name": "Isolated Film"},
+                                         idempotency_key="isolated-project")["id"]
+        timeline = "isolated-film"
+        service.create_timeline(project, timeline, name="Film Assembly", idempotency_key="isolated-timeline")
+        media = []
+        for index, media_id in enumerate(film.fixture.media_ids[:4]):
+            imported = service.ingest(
+                project, read_object_from_realm(film.fixture.duplicate_root, media_id),
+                media_type="video/mp4" if index < 3 else "audio/wav",
+                idempotency_key=f"isolated-media-{index}",
+            )["data"]["object_id"]
+            assert imported == media_id
+            media.append(imported)
+        transcript = _transcript(media[0])
+        transcript_id = service._transcript_document_id(project, media[0], transcript["source_id"])
+        service.create_document(project, {"document_id": transcript_id, "kind": "media.transcript", "content": transcript},
+                                idempotency_key="isolated-transcript")
+        shots = tuple(service.create_project_shot(
+            project, {"shot_id": f"isolated-shot-{index}", "name": f"Shot {index}", "metadata": {"scene": index}},
+            idempotency_key=f"isolated-shot-{index}",
+        )["data"] for index in range(1, 4))
+        binding = service.set_project_shot_text_binding(
+            project, {"shot_id": shots[0]["shot_id"], "kind": "transcript", "text": "Open on the river", "expected_head": 0},
+            idempotency_key="isolated-binding",
+        )["data"]
+        seed = _publication(project, timeline, video_ids=tuple(media[:3]), music_id=media[3],
+                            shots=shots, binding=binding, transcript_document_id=transcript_id)
+        # Allocate global identities at fixture construction, never in a retry.
+        seed["parent_revision_id"] = "isolated-parent-v1"
+        for index, (internal, shot, occurrence) in enumerate(zip(
+                seed["internal_timeline_revisions"], seed["shot_revisions"],
+                seed["parent_composition"]["occurrences"]), 1):
+            internal["revision_id"] = f"isolated-internal-{index}"
+            shot["revision_id"] = f"isolated-shot-revision-{index}"
+            shot["internal_timeline_revision_id"] = internal["revision_id"]
+            occurrence["shot_revision_id"] = shot["revision_id"]
+        parent = service.get_project_parent_composition_revision(
+            film.fixture.project_id, film.fixture.timeline_id, film.publication["data"]["new_head"],
+        )["payload"]
+        for field in ("config", "registry", "clips"):
+            seed["parent_composition"][field] = copy.deepcopy(parent[field])
+        publication = service.publish_parent_composition(project, timeline, seed, idempotency_key="isolated-publication")
+
+        # The shared Agent fixture disables rendering only after both Main API seeds.
+        actual_agent = request.getfixturevalue("agent")
+        service.register_timeline_commit_provider(actual_agent.provider())
+        a = Editing(service, film, actual_agent)
+        b = Editing(service, SimpleNamespace(fixture=SimpleNamespace(project_id=project, timeline_id=timeline)), actual_agent)
+        a.assert_baseline()
+        assert b.history()[0]["receipt"] == publication["receipt"]
+        originals = {edit.project: edit.document() for edit in (a, b)}
+        original_a, original_b = originals[a.project], originals[b.project]
+        assert original_a["parent_revision"]["payload"]["clips"] == original_b["parent_revision"]["payload"]["clips"]
+        assert [row["occurrence_id"] for row in original_a["parent_revision"]["payload"]["occurrences"]] == [
+            row["occurrence_id"] for row in original_b["parent_revision"]["payload"]["occurrences"]]
+        for family, identity in (("shot_revisions", "shot_id"), ("shot_revisions", "revision_id"),
+                                 ("internal_timeline_revisions", "revision_id")):
+            assert {row[identity] for row in original_a[family]}.isdisjoint(row[identity] for row in original_b[family])
+        for left, right in zip(original_a["internal_timeline_revisions"], original_b["internal_timeline_revisions"]):
+            left_clips, right_clips = copy.deepcopy(left["payload"]["clips"]), copy.deepcopy(right["payload"]["clips"])
+            for clips in (left_clips, right_clips):
+                for clip in clips:
+                    if "elementRef" in clip:
+                        clip["elementRef"]["binding_id"] = "project-owned-binding"
+                        clip["elementRef"]["anchor"]["document_id"] = "project-owned-transcript"
+            assert left_clips == right_clips
+
+        def state(edit):
+            # Complete project-owned rows, plus tables whose ownership is indirect.
+            conn = service.store.conn
+            tables = [row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+            scoped = {}
+            for table in tables:
+                columns = {row[1] for row in conn.execute(f'PRAGMA table_info("{table}")')}
+                if "project_id" in columns:
+                    scoped[table] = sorted(tuple(row) for row in conn.execute(
+                        f'SELECT * FROM "{table}" WHERE project_id=?', (edit.project,)))
+            scoped["timeline_events"] = [tuple(row) for row in conn.execute(
+                "SELECT * FROM timeline_events WHERE timeline_id=? ORDER BY id", (edit.timeline,))]
+            scoped["command_idempotency"] = [tuple(row) for row in conn.execute(
+                "SELECT * FROM command_idempotency WHERE primary_stream_id=? OR aggregate_id=? ORDER BY txn_id",
+                (edit.timeline, canonical_json([edit.project, edit.timeline])))]
+            scoped["shot_items"] = [tuple(row) for row in conn.execute(
+                "SELECT i.* FROM shot_items i JOIN project_shots s ON s.id=i.shot_id WHERE s.project_id=? ORDER BY i.id",
+"""Retained inputs through the installed Agent, not a semantic test double.
+
+Only the initial input pin uses prepared-provider acceptance: M1 has no first
+source-authoring command. This seed proves Runtime retention, not end-to-end
+authoring. All measured moves, inverse, replay and compilation use real Agent.
+"""
+from __future__ import annotations
+
+import copy
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+from runtime_protocol.contract_metadata import SCHEMA_DIGEST
+from runtime_protocol.errors import AuthorizationError, RuntimeErrorBase
+from runtime_protocol.service import RuntimeService
+from runtime_protocol.timeline_commit_port import RequestCommitPort, digest, route_path
+from timeline_commit_film_fixture import build_film_fixture
+
+pytestmark = pytest.mark.integration
+
+
+def head(service, film):
+    value = service.get_project_timeline(film.project_id, film.timeline_id)
+    return {"revision_id": value["head_revision_id"],
+            "publication_id": value["head_publication_id"]}
+
+
+def body(film, base, commands):
+    return {"api_version": 1, "project_id": film.project_id, "timeline_id": film.timeline_id,
+            "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
+            "commands": copy.deepcopy(commands), "source": {"via": "python"}}
+
+
+def commit(service, film, request, key, authorize=lambda: None):
+    return service.commit_timeline(
+        film.project_id, film.timeline_id, request, idempotency_key=key,
+        publisher="retained-input-editor", invocation_path=route_path(film.project_id, film.timeline_id),
+        authorize=authorize,
+    )
+
+
+def document(service, film):
+    return service._timeline_commits()[0].revision_closure(
+        film.project_id, film.timeline_id, head(service, film)["revision_id"],
+    )
+
+
+def history(service, film):
+    return service.list_timeline_commits(film.project_id, film.timeline_id, authorize=lambda: None)["items"]
+
+
+def snapshot(service):
+    return tuple(service.store.conn.iterdump())
+
+
+@pytest.fixture(params=["transcript", "config"])
+def retained(request, tmp_path, astrid_importable, monkeypatch):
+    # Import Agent only inside this explicitly selected integration fixture.
+    from astrid.sdk.timeline import commands as core
+    from astrid.sdk.timeline import commit as agent
+    from astrid.sdk.timeline.capture import capture_move, capture_track_create
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    assert Path(agent.__file__).resolve().is_relative_to(astrid_importable)
+    film = build_film_fixture(tmp_path)
+    service = RuntimeService(film.duplicate_root)
+    try:
+        transcript = service.get_document(film.project_id, film.transcript_document_id)
+        config = service.create_document(
+            film.project_id, {"document_id": "film.config", "kind": "film.config", "content": {
+                "schema": "film.config/v1", "enabled": True, "opaque": [None, {"keep": True}],
+                "source": {"media_id": transcript["content"]["media_id"],
+                           "source_id": transcript["content"]["source_id"], "word_id": "word-1"},
+                "time_map": {"source_offset": 0, "speed": 1},
+            }}, idempotency_key="config-v1",
+        )["data"]
+        sources = [config, transcript]
+        captures = [{"pin": {"document_id": source["document_id"], "version": source["version"],
+                              "content_digest": digest(source["content"])}, "document": source}
+                    for source in sources]
+        selected = captures[1 if request.param == "transcript" else 0]
+        source, pin = selected["document"], selected["pin"]
+        parent = service.get_project_parent_composition_revision(
+            film.project_id, film.timeline_id, film.parent_revision_id,
+        )["payload"]
+        # Keep a real authored word anchor, including both legacy intent spellings.
+        parent["clips"][0]["at"] = 0.25
+        parent["clips"][0]["app"] = {
+            "on": "word:word-1", "astrid": {"on": "word:word-1", "fixed_start": False, "for": 5.5},
+        }
+        parent["config"]["clips"] = copy.deepcopy(parent["clips"])
+        service.publish_parent_composition(
+            film.project_id, film.timeline_id,
+            {"project_id": film.project_id, "timeline_id": film.timeline_id,
+             "expected_head": film.parent_revision_id, "parent_revision_id": "input-anchor-baseline",
+             "parent_composition": parent}, idempotency_key="input-anchor-baseline",
+        )
+
+        class InitialInputAcceptance:
+            provider_id = "astrid-v1"
+            interface_version = 1
+            contract_digest = SCHEMA_DIGEST
+
+            def commit(self, context, port):
+                base = port.head()
+                candidate = port.revision_closure(base["revision_id"])
+                dependencies = []
+                for capture in captures:
+                    transcript_input = capture["document"]["kind"] == "media.transcript"
+                    read = port.transcript_source if transcript_input else port.config_source
+                    assert read(capture["pin"]) == capture
+                    dependencies.append({"key": "fixture.initial-input:" + capture["pin"]["document_id"],
+                                         "kind": "transcript" if transcript_input else "source",
+                                         "pin": capture["pin"], "policy": "exact"})
+                candidate["parent_revision"]["revision_id"] = "input-retained-v1"
+                candidate["dependency_manifest"]["documents"] = [capture["pin"] for capture in captures]
+                record = {"ordinal": 0, "command": context["request"]["commands"][0],
+                          "writes": [], "reads": [], "selections": [], "bindings": [], "created": [],
+                          "derived_writes": [], "dependencies": dependencies}
+                return port.accept({
+                    "expected_head": base, "canonical_document": candidate, "document_digest": digest(candidate),
+                    "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None},
+                    "id_map": {}, "semantic_events": [],
+tests/sdk/test_timeline_commit_provider_runtime.py:43:            project, "film", body, idempotency_key=key, publisher="author",
+tests/sdk/test_timeline_commit_provider_runtime.py:123:            project, "film", body, idempotency_key=key, publisher="author",
+tests/sdk/test_timeline_commit_provider_runtime.py:144:            idempotency_key="restore-original", publisher="author", invocation_path=path,
+tests/sdk/test_timeline_commit_provider_runtime.py:171:                idempotency_key="restore-original", publisher="author", invocation_path=path,
+tests/sdk/test_timeline_commit_provider_runtime.py:187:                idempotency_key="stale-publication", publisher="author", invocation_path=path,
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:19:from test_timeline_commit_integration import agent, film  # noqa: F401 (shared fixtures)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:23:    # Consume the wire owner's actual schema; never mirror its DTOs in fixtures.
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:33:@pytest.fixture
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:42:    head = commits.bootstrap(project, "main", authorize=lambda: None)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:54:             "idempotency_key": key, "realm_id": service.realm["id"], "publisher": "author"}
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:77:            "id_map": {"clip": "clip"}, "semantic_events": [], "provider_version": "fixture-1", "compiler_version": "fixture-1"}
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:96:    content = {"schema": "fixture.config/v1", "value": 1}
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:97:    service.create_document(project, {"document_id": "config", "kind": "fixture.config", "content": content}, idempotency_key="config")
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:99:    capture = capture_document_input(service.store.conn, project, pin, expected_kind="fixture.config", expected_schema=content["schema"])
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:204:    events = [{"command_ordinal": 0, "kind": "fixture.clip.moved", "subject_ref": "parent/clip:clip", "payload": {"on": 2}}]
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:375:        receipt = service.committed_receipt("parent_composition.publish", "main", "publish", project_id=project)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:383:        assert entry["publisher"] is None
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:636:        document_id, document_kind = "editing-config", "fixture.config"
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:637:        content = {"schema": "fixture.config/v1", "value": 1, "opaque": {"clear": None}}
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:683:    content = {"schema": "fixture.config/v1", "value": 1}
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:684:    service.create_document(project, {"document_id": "config", "kind": "fixture.config", "content": content}, idempotency_key="config")
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:686:    capture = capture_document_input(service.store.conn, project, pin, expected_kind="fixture.config", expected_schema=content["schema"])
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:707:    ctx = context(service, project, head, op="fixture.add-shot")
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:763:    from timeline_commit_film_fixture import _publication, _transcript, read_object_from_realm
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:765:    service = RuntimeService(film.fixture.duplicate_root)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:772:        for index, media_id in enumerate(film.fixture.media_ids[:4]):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:774:                project, read_object_from_realm(film.fixture.duplicate_root, media_id),
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:792:        seed = _publication(project, timeline, video_ids=tuple(media[:3]), music_id=media[3],
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:794:        # Allocate global identities at fixture construction, never in a retry.
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:795:        seed["parent_revision_id"] = "isolated-parent-v1"
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:797:                seed["internal_timeline_revisions"], seed["shot_revisions"],
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:798:                seed["parent_composition"]["occurrences"]), 1):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:804:            film.fixture.project_id, film.fixture.timeline_id, film.publication["data"]["new_head"],
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:807:            seed["parent_composition"][field] = copy.deepcopy(parent[field])
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:808:        publication = service.publish_parent_composition(project, timeline, seed, idempotency_key="isolated-publication")
+from __future__ import annotations
+
+import atexit
+import os
+import shutil
+import sys
+import tempfile
+from collections.abc import Iterator
+from pathlib import Path
+
+import pytest
+
+os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
+sys.dont_write_bytecode = True
+if sys.pycache_prefix is None:
+    _pycache_prefix = Path(tempfile.mkdtemp(prefix="astrid-pycache-"))
+    sys.pycache_prefix = str(_pycache_prefix)
+    os.environ.setdefault("PYTHONPYCACHEPREFIX", str(_pycache_prefix))
+    atexit.register(lambda: shutil.rmtree(_pycache_prefix, ignore_errors=True))
+
+from astrid.core.foundation import project_paths as paths
+from astrid.core.pack import source_setup
+from astrid.core.subprocess_env import (
+    TASK_ITEM_ID_ENV,
+    TASK_ITERATION_ENV,
+    TASK_PROJECT_ENV,
+    TASK_RUN_ID_ENV,
+    TASK_STEP_ID_ENV,
+)
+from tests.lanes import pytest_collection_modifyitems, pytest_configure  # noqa: F401  (lanes, import and fd guards)
+from tests.process_groups import ProcessGroups
+
+
+@pytest.fixture
+def owned_process_groups():
+    """Own process groups explicitly launched by this test until teardown."""
+    owner = ProcessGroups()
+    try:
+        yield owner
+    finally:
+        owner.terminate_all()
+
+
+@pytest.fixture
+def real_runtime(tmp_path, owned_process_groups):
+    """Start a real Runtime daemon on a temp realm; the one way a test gets one (testing plan AT-1).
+
+    ``real_runtime()`` starts the daemon at ``tmp_path/realm`` with its support root at ``tmp_path/support``.
+    ``real_runtime(realm, support_root=..., **daemon_options)`` starts one at a given realm (a restart reuses
+    it); ``commit=`` runs the Runtime as of that commit. The Runtime comes from ``tests.helpers.runtime``'s
+    locator (``ASTRID_RUNTIME_CHECKOUT``). Every daemon is stopped at teardown.
+    """
+    from tests.helpers.runtime import new_runtime_daemon
+
+    def start(realm=None, *, support_root=None, commit=None, **daemon_options):
+        if realm is None:
+            realm, support_root = tmp_path / "realm", support_root or tmp_path / "support"
+        if support_root is not None:
+            daemon_options["support_root"] = support_root
+        daemon = new_runtime_daemon(realm, commit=commit, **daemon_options).start()
+        owned_process_groups.add_cleanup(daemon.stop)
+        return daemon
+
+    return start
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Fail after killing runtime daemons/hosts rooted in pytest basetemp."""
+    _ = exitstatus
+    import signal
+    import subprocess
+    import time
+
+    try:
+        basetemp = Path(session.config._tmp_path_factory.getbasetemp()).resolve()
+        listing = subprocess.run(["ps", "-axo", "pid=,pgid=,command="], capture_output=True, text=True, check=True).stdout
+    except (AttributeError, OSError, subprocess.CalledProcessError) as exc:
+        reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+        if reporter is not None:
+            reporter.write_line(f"WARNING: daemon/host session guard could not inspect processes: {exc}")
+        return
+    leaked = []
+    for line in listing.splitlines():
+        fields = line.strip().split(None, 2)
+        if len(fields) != 3:
+            continue
+        try:
+            pid, pgid = int(fields[0]), int(fields[1])
+        except ValueError:
+            continue
+        command = fields[2]
+        is_runtime = "runtime_protocol" in command and "start" in command and "--root" in command
+        is_host = "generic_host" in command and "--support-root" in command
+        if not (is_runtime or is_host):
+            continue
+        tokens = command.split()
+        roots = []
+        for option in ("--root", "--support-root"):
+            if option in tokens and tokens.index(option) + 1 < len(tokens):
+                roots.append(tokens[tokens.index(option) + 1].strip("'\""))
+
+2026-10-20T00:43:24.080609Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: Connection refused (os error 111), url: wss://chatgpt.com/backend-api/codex/responses
+ERROR: Reconnecting... 2/5
+2026-10-20T00:43:24.490997Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: Connection refused (os error 111), url: wss://chatgpt.com/backend-api/codex/responses
+ERROR: Reconnecting... 3/5
+2026-10-20T00:43:25.285048Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: Connection refused (os error 111), url: wss://chatgpt.com/backend-api/codex/responses
+ERROR: Reconnecting... 4/5

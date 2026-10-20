@@ -1,0 +1,400 @@
+pytestmark = pytest.mark.integration
+
+
+@pytest.fixture(params=[3, 1], ids=["original-third", "authored-first"])
+def shared_editing(request, tmp_path, monkeypatch):
+    runtime = use_runtime()
+    monkeypatch.syspath_prepend(str(runtime / "tests"))
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+    from test_timeline_commit_integration import Editing
+    from timeline_commit_film_fixture import build_film_fixture
+
+    from astrid.sdk.timeline.capture import capture_move
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    fixture = build_film_fixture(tmp_path)
+    service = RuntimeService(fixture.duplicate_root)
+    edit = Editing(service, SimpleNamespace(fixture=fixture),
+                   SimpleNamespace(move=capture_move, bundle=bundle_from_document))
+    try:
+        original = edit.document()
+        parent = copy.deepcopy(original["parent_revision"]["payload"])
+        index = request.param
+        children = {}
+        if index == 1:
+            _, shot, internal = copy.deepcopy(occurrence_image(original, "occurrence-1"))
+            shot.update(revision_id="authored-shot", internal_timeline_revision_id="authored-internal")
+            shot["payload"].update(unknown={"literal": [None, False, 0, {}, []]}, items=[{
+                "item_id": "shared-source-item", "media_id": fixture.media_ids[0],
+                "metadata": {"literal": "shared-source-item", "keep": [None, False]},
+            }])
+            internal["revision_id"] = "authored-internal"
+            internal["payload"].update(source_window={"start": 4, "end": 9},
+                                       unknown={"literal": [None, False, 0, {}, []]})
+            internal["payload"]["clips"][0]["extension"] = {"literal": "shared-source-item", "clear": None}
+            for image in (shot, internal):
+                image.pop("content_digest")
+            parent["occurrences"][0]["shot_revision_id"] = shot["revision_id"]
+            for ordinal, occurrence in enumerate(parent["occurrences"][1:]):
+                occurrence["placement"]["start_ms"] = 8000 + ordinal * 2000
+            parent["unknown"] = {"literal": [None, False, 0, {}, []]}
+            children = {"shot_revisions": [shot], "internal_timeline_revisions": [internal]}
+        repeated = copy.deepcopy(parent["occurrences"][index - 1])
+        repeated.update(occurrence_id="repeated-third",
+                        placement={"start_ms": 13000 if index == 1 else 6000, "track": "picture"})
+        parent["occurrences"].append(repeated)
+        service.publish_parent_composition(edit.project, edit.timeline, {
+            "project_id": edit.project, "timeline_id": edit.timeline,
+            "expected_head": fixture.parent_revision_id,
+            "parent_revision_id": "shared-inverse-baseline", "parent_composition": parent, **children,
+        }, idempotency_key="shared-inverse-baseline")
+
+        def unavailable(*args, **kwargs):
+            raise AssertionError("save evaluated a scene")
+
+        import runtime_protocol.service as service_module
+        import runtime_protocol.visual_seam as visual_seam
+        monkeypatch.setattr(service_module, "evaluate_closure", unavailable)
+        monkeypatch.setattr(visual_seam, "evaluate_closure", unavailable)
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        yield edit, index
+    finally:
+        edit.service.close()
+
+
+def test_shared_slot_move_inverse_redo_and_rematerialization(shared_editing):
+    from test_timeline_commit_integration import inverse
+
+    edit, index = shared_editing
+    original = edit.document()
+    baseline_history = copy.deepcopy(edit.history())
+    baseline_closures = [edit.document(entry["revision_id"]) for entry in baseline_history]
+    transcript = edit.service.get_document(edit.project, edit.film.fixture.transcript_document_id)
+    binding = edit.service.get_project_shot_text_binding(edit.project, edit.film.fixture.text_binding_id)
+    owner = f"occurrence:occurrence-{index}/clip:clip-{index}"
+    move = edit.agent.move(edit.agent.bundle(original), owner, 3.5)
+    first = edit.commit(edit.body([move]), "shared-first-move")
+    edit.assert_readback(first)
+    undone = edit.commit(edit.body([inverse(first["receipt"]["receipt_id"])]), "shared-undo")
+    assert undone["data"]["canonical_document"] == original
+    redone = edit.commit(edit.body([inverse(undone["receipt"]["receipt_id"])]), "shared-redo")
+    assert redone["data"]["canonical_document"] == first["data"]["canonical_document"]
+    undone_again = edit.commit(edit.body([inverse(redone["receipt"]["receipt_id"])]), "shared-undo-again")
+    assert undone_again["data"]["canonical_document"] == original
+    move = edit.agent.move(edit.agent.bundle(edit.document()), owner, 3.6)
+    rematerialized = edit.commit(edit.body([move]), "shared-rematerialize")
+    assert {s["shot_id"] for s in rematerialized["data"]["canonical_document"]["shot_revisions"]} == {
+        s["shot_id"] for s in first["data"]["canonical_document"]["shot_revisions"]}
+    for accepted in (first, undone, redone, undone_again, rematerialized):
+        edit.assert_readback(accepted)
+        for sibling in [*(f"occurrence-{n}" for n in range(1, 4) if n != index), "repeated-third"]:
+            assert occurrence_image(accepted["data"]["canonical_document"], sibling) == occurrence_image(original, sibling)
+    history = edit.history()
+    assert history[:len(baseline_history)] == baseline_history
+    assert [edit.document(entry["revision_id"]) for entry in baseline_history] == baseline_closures
+    accepted_results = (first, undone, redone, undone_again, rematerialized)
+    assert len(history) == len(baseline_history) + len(accepted_results)
+    for entry, accepted in zip(history[len(baseline_history):], accepted_results):
+        assert entry["receipt"] == accepted["receipt"]
+        assert entry["revision_id"] == accepted["data"]["accepted_revision_id"]
+        assert edit.document(entry["revision_id"]) == accepted["data"]["canonical_document"]
+    assert edit.service.get_document(edit.project, edit.film.fixture.transcript_document_id) == transcript
+    assert edit.service.get_project_shot_text_binding(edit.project, edit.film.fixture.text_binding_id) == binding
+
+
+def test_shared_inverse_preserves_newer_disjoint_parent_edit(shared_editing):
+    from test_timeline_commit_integration import inverse
+
+    edit, index = shared_editing
+    original = edit.document()
+    owner = f"occurrence:occurrence-{index}/clip:clip-{index}"
+    moved = edit.commit(edit.body([edit.agent.move(edit.agent.bundle(original), owner, 3.5)]), "shared-move")
+    parent_move = edit.agent.move(edit.agent.bundle(edit.document()), "parent/clip:music-bed", 1)
+    disjoint = edit.commit(edit.body([parent_move]), "disjoint-parent-move")
+    before = copy.deepcopy(edit.history())
+    undone = edit.commit(edit.body([inverse(moved["receipt"]["receipt_id"])]), "shared-disjoint-undo")
+    document = undone["data"]["canonical_document"]
+    expected_parent = copy.deepcopy(disjoint["data"]["canonical_document"]["parent_revision"]["payload"])
+    expected_parent["occurrences"] = original["parent_revision"]["payload"]["occurrences"]
+
+ exited 1 in 37739ms:
+...................FF......F                                             [100%]
+=================================== FAILURES ===================================
+___ test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo] ___
+tests/editing_conformance/test_commit_runtime_m1.py:216: in test_cli_python_outbox_restart_and_guarded_inverse
+    daemon = start()
+             ^^^^^^^
+tests/editing_conformance/test_commit_runtime_m1.py:213: in start
+    return real_runtime(fixture.duplicate_root, support_root=support,
+tests/conftest.py:60: in start
+    daemon = new_runtime_daemon(realm, commit=commit, **daemon_options).start()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/astrid-runtime-archive-0vptcgx9/runtime_protocol/daemon.py:123: in start
+    self._start(rotate_credentials=False)
+/tmp/astrid-runtime-archive-0vptcgx9/runtime_protocol/daemon.py:269: in _start
+    self.httpd = RuntimeHTTPServer((self.host, self.port), RuntimeHandler)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/socketserver.py:453: in __init__
+    self.socket = socket.socket(self.address_family,
+/usr/lib/python3.13/socket.py:233: in __init__
+    _socket.socket.__init__(self, family, type, proto, fileno)
+E   PermissionError: [Errno 1] Operation not permitted
+__ test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict] __
+tests/editing_conformance/test_commit_runtime_m1.py:216: in test_cli_python_outbox_restart_and_guarded_inverse
+    daemon = start()
+             ^^^^^^^
+tests/editing_conformance/test_commit_runtime_m1.py:213: in start
+    return real_runtime(fixture.duplicate_root, support_root=support,
+tests/conftest.py:60: in start
+    daemon = new_runtime_daemon(realm, commit=commit, **daemon_options).start()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/astrid-runtime-archive-0vptcgx9/runtime_protocol/daemon.py:123: in start
+    self._start(rotate_credentials=False)
+/tmp/astrid-runtime-archive-0vptcgx9/runtime_protocol/daemon.py:269: in _start
+    self.httpd = RuntimeHTTPServer((self.host, self.port), RuntimeHandler)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/socketserver.py:453: in __init__
+    self.socket = socket.socket(self.address_family,
+/usr/lib/python3.13/socket.py:233: in __init__
+    _socket.socket.__init__(self, family, type, proto, fileno)
+E   PermissionError: [Errno 1] Operation not permitted
+_______ test_move_then_scalar_outbox_handoff_reload_and_guarded_inverse ________
+tests/editing_conformance/test_commit_runtime_scalar.py:32: in test_move_then_scalar_outbox_handoff_reload_and_guarded_inverse
+    daemon = real_runtime(fixture.duplicate_root, support_root=support, authoring_profile='astrid')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/conftest.py:60: in start
+    daemon = new_runtime_daemon(realm, commit=commit, **daemon_options).start()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/astrid-runtime-archive-0vptcgx9/runtime_protocol/daemon.py:123: in start
+    self._start(rotate_credentials=False)
+/tmp/astrid-runtime-archive-0vptcgx9/runtime_protocol/daemon.py:269: in _start
+    self.httpd = RuntimeHTTPServer((self.host, self.port), RuntimeHandler)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/socketserver.py:453: in __init__
+    self.socket = socket.socket(self.address_family,
+/usr/lib/python3.13/socket.py:233: in __init__
+    _socket.socket.__init__(self, family, type, proto, fileno)
+E   PermissionError: [Errno 1] Operation not permitted
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]
+FAILED tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict]
+FAILED tests/editing_conformance/test_commit_runtime_scalar.py::test_move_then_scalar_outbox_handoff_reload_and_guarded_inverse
+3 failed, 25 passed in 35.73s
+
+codex
+The numeric tests and all 190 provider/converter neighbors pass, as do the real-service shared-inverse checks. I mistakenly included three daemon tests in a broader neighbor command; they failed at sandbox socket creation. I’ll report that lane as unverified and finish with service-only checks.
+
+exec
+/bin/bash -lc 'PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py --tb=short' in /home/user/work/wt/agt-m2-numeric-revision-integrity
+exec
+/bin/bash -lc 'PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_commit_provider_document.py --tb=short' in /home/user/work/wt/agt-m2-numeric-revision-integrity
+exec
+/bin/bash -lc 'git diff --check && /home/user/work/venv-agent/bin/python -m ruff check astrid/core/timeline/authoring_bundle.py astrid/sdk/timeline/commit.py tests/sdk/test_timeline_numeric_revision_runtime.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py && git diff --numstat -- astrid/core/timeline/authoring_bundle.py astrid/sdk/timeline/commit.py' in /home/user/work/wt/agt-m2-numeric-revision-integrity
+ succeeded in 143ms:
+All checks passed!
+2	2	astrid/core/timeline/authoring_bundle.py
+9	8	astrid/sdk/timeline/commit.py
+
+exec
+/bin/bash -lc "rg --files astrid | rg 'edit-command.schema|edit_command.schema' && git diff --stat && git status --short && du -sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/notes/probe-*" in /home/user/work/wt/agt-m2-numeric-revision-integrity
+ succeeded in 363ms:
+astrid/core/timeline/schema/edit-command.schema.json
+ astrid/core/timeline/authoring_bundle.py           |  4 +--
+ astrid/sdk/timeline/commit.py                      | 17 ++++++------
+ .../sdk/test_timeline_commit_provider_document.py  | 31 ++++++++++++++++++++++
+ 3 files changed, 42 insertions(+), 10 deletions(-)
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/sdk/timeline/commit.py
+ M tests/sdk/test_timeline_commit_provider_document.py
+?? tests/editing_conformance/test_commit_runtime_numeric_move.py
+?? tests/editing_conformance/test_commit_runtime_numeric_params.py
+?? tests/sdk/test_timeline_numeric_revision_runtime.py
+108M	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/notes/probe-1e1dcc64
+108M	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/notes/probe-875a9aff
+108M	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/notes/probe-f6fbe741
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib, subprocess
+paths=['astrid/sdk/timeline/commit.py','astrid/core/timeline/authoring_bundle.py','astrid/core/timeline/schema/edit-command.schema.json']
+for path in paths:
+    print(path, hashlib.sha256(Path(path).read_bytes()).hexdigest())
+patch=subprocess.run(['git','diff','--binary'],capture_output=True,check=True).stdout
+print('tracked diff SHA256',hashlib.sha256(patch).hexdigest())
+PY" in /home/user/work/wt/agt-m2-numeric-revision-integrity
+ succeeded in 191ms:
+astrid/sdk/timeline/commit.py 85c84b7e8cbac50579bcb954f18fcaf894936026202dda3cfb5ae3544b9e8771
+astrid/core/timeline/authoring_bundle.py 769854dee8806d3941366b27e5dab5d7ca79dfde948085a9641decc3871afc1e
+astrid/core/timeline/schema/edit-command.schema.json 472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9
+tracked diff SHA256 0a5b6ca55a9e19472d8934b90163a896df614710db7c3b42248fc4ec763f39d4
+
+ succeeded in 30846ms:
+........................................................................ [ 28%]
+........................................................................ [ 57%]
+........................................................................ [ 86%]
+.................................                                        [100%]
+249 passed in 26.54s
+
+ succeeded in 37268ms:
+.........................                                                [100%]
+25 passed in 35.56s
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/notes/report.md <<'EOF'
+# Exact immutable numeric revision integrity
+
+Source: "'`/home/user/work/wt/agt-m2-numeric-revision-integrity`, branch `tl/agt-m2-numeric-revision-integrity`, base `d4743e2984cef0908fa0b6bef166aa801f2bde8f`. Harness commit pending. M2 integration remains HELD.
+
+## Result and bounded decision
+
+Confirmed provider defects, with no evidence of a Runtime defect. Runtime correctly refuses an existing immutable revision ID carrying different exact payload bytes/digest. Agent `document_from_bundle` reused that ID using Python equality (or historical JSON *value* equality); `2 == 2.0` and Python `1 == True` made the new digest incompatible. Shot/internal reuse also silently discarded new values. `authoring_bundle.compile_authoring_candidate` had the same two materialization comparisons, so fixing only the provider converter would still discard child edits.
+
+Product change: **11 added / 10 removed lines, 21 touched lines**, in only `commit.py` and the two materialization comparisons in `authoring_bundle.py`. Compare exact existing canonical JSON encodings for shot/internal authored content; compare the already validated exact parent content digest and encoded complete manifest before reusing parent IDs, including authenticated historical reuse. Keep complete unchanged image reuse. Removed the converter'"'s now-unused value-equality import. No hash algorithm/encoding, coercion, normalization, stored-film rewrite, schema, argument, model, registry, Runtime, generated artifact, consumer pin, or guard change. The core helper adjustment is a materialization bug fix, not a compiler feature expansion.
+
+Canonical schema SHA256 remains "'`472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9`.
+Final source SHA256:
+
+- `astrid/sdk/timeline/commit.py`: `85c84b7e8cbac50579bcb954f18fcaf894936026202dda3cfb5ae3544b9e8771`
+- `astrid/core/timeline/authoring_bundle.py`: `769854dee8806d3941366b27e5dab5d7ca79dfde948085a9641decc3871afc1e`
+
+Four test files add permanent positive coverage: nine converter parent/shot/internal cases, official admitted-pack native PARAM publication, numeric-equivalent versus boolean-distinct original guards, ordinary film PARAM at both scopes, and native M1 moves. Tests assert exact encodings/types, recorded unchanged writes and distinct accepted history edges, immutable historical readback, retained opaque/media/source pins, restart/readback/exact retry without provider execution, inverse/redo exact closures, source/value refusals, and unchanged head on refusal. No existing tests/expectations were removed, weakened, skipped, or marked xfail.
+
+## Actual source and Runtime qualification
+
+Native admitted-pack tests use existing main `retained_pack` fixture and normal admission/public commit, exact official Runtime **`d691ddadb4ef3f5881a25fa893b4fb812211f102` (0.2.3)** through `use_runtime(commit)`. No patched schema or generated client. Film move/PARAM tests use main'"'s API-built synthetic film duplicate and exact frozen Runtime **"'`6be970633cc82ab412428151e6bf42f3e7fc3081`** for compatible operations. Normal canonical provider, public baseline publication, Runtime service and exact immutable closure reads; no fake acceptance/provider, SQL seeding, socket, renderer, or schema bypass in the new tests. Original number-by-value guards still accept `2` after `2.0`; original boolean/number guards refuse both `1→true` and `true→1` with `dependency_changed`.
+
+Before product changes:
+
+```sh
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider_document.py -k exact_encoded --tb=short
+# 9 FAILED, 18 deselected, 0.25s: parent reused old ID; shot/internal retained old type.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/sdk/test_timeline_numeric_revision_runtime.py --tb=short
+# 6 FAILED, 5.66s: three actual 2→2.0/1→true/true→1 edits refused revision_identity_mismatch;
+# three unchanged controls reached a new test'"'s incorrect result['records'] lookup.
+"'```
+
+Corrected that test lookup to the public accepted history entry'"'s records. All original positive publication/retry/inverse requirements retained.
+
+Final targeted commands (dependency-only shared venv; no install):
+
+"'```sh
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_parent_track_label.py tests/timeline/test_authoring_bundle.py --tb=short
+# 190 PASS, 1 integration deselected by ordinary lane, 29.71s.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/sdk/test_timeline_numeric_revision_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py --tb=short
+# 22 PASS, 24.92s; exact official d691, includes all source/retained-schema negatives.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_commit_provider_document.py --tb=short
+# 249 PASS, 26.54s.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py --tb=short
+# Final result below.
+/home/user/work/venv-agent/bin/python -m ruff check astrid/core/timeline/authoring_bundle.py astrid/sdk/timeline/commit.py tests/sdk/test_timeline_numeric_revision_runtime.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py
+# All checks passed.
+git diff --check
+# PASS.
+```
+
+Earlier focused passes: converter 27 PASS/1.30s; official numeric six cases 6 PASS/5.23s; film numeric PARAM + move 16 PASS/14.00s. Initial occurrence move fixture correctly refused due to the main film'"'s overlapping 1.8s clip/1.65s next occurrence; the public baseline now uses a legal 0.25s hold. Initial boolean guard assertions named "'`value_conflict`, corrected to the unchanged guard'"'s actual "'`dependency_changed`; assertions still require atomic refusal and exact original claims.
+
+## M1 classification: executable evidence, independent of redo
+
+Read-only `git archive` snapshots of exact Agent sources:
+
+- `f6fbe741a256e2756a1d686350f8a38e37c015ee`: **2 FAILED / 4 PASS**, 3.43s.
+- `875a9aff4e658def3fa912cacd13f28a911fe89a`: **2 FAILED / 4 PASS**, 3.13s.
+- `1e1dcc64012caf68db7ac1e1709b8908348e3534`: **2 FAILED / 4 PASS**, 3.15s.
+
+Each snapshot received only the identical new `tests/editing_conformance/test_commit_runtime_numeric_move.py`, then ran, from that archive root:
+
+```sh
+PYTHONPATH="$ARCHIVE_ROOT" PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_numeric_move.py --tb=short
+```
+
+`ARCHIVE_ROOT` was `workers/agt-m2-numeric-revision-integrity/notes/probe-<8-char-sha>` (absolute prefix as this report); archives are removed after testing, logs retained here as `m1-f6fbe741.log`, `m1-875a9aff.log`, `m1-1e1dcc64.log`. Runtime is explicitly pinned in the test to official frozen6be. No checkout/ref mutation, source edit in another worker, new client pin or schema override.
+
+For all three M1 sources, public baseline sets existing fixed-start app metadata and `at=0` integer. The ordinary real `clip.move(on=0)` records `at=0.0` float. **Parent refuses `revision_identity_mismatch`; occurrence accepts but silently retains old integer `0`.** Existing float→same float and genuine 0→1 controls pass at both scopes. No inverse/redo is involved, so this finding is independent of the active M1 redo correction. Current patch passes the exact six-case probe. This is an actual M1 move bug, not automatic escalation of a scalar-only old bug; evidence and proposed narrow port were published to absolute `design/runtime-coordination.md` for the composer/M1 owner.
+
+## Limits and mistakes disclosed
+
+No full suite, make check, installs, browser, manual commit, merge, push, integration worktree write, Runtime patch, schema release, or M2 integration was performed. No central full request was submitted.
+
+One overly broad neighbor command mistakenly included daemon/socket files:
+
+```sh
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_scalar.py --tb=short
+# 25 PASS / 3 FAILED, 35.73s. All failures at socket.socket creation: PermissionError [Errno 1].
+```
+
+The two parameterizations in `test_commit_runtime_m1.py` and the outbox case in `test_commit_runtime_scalar.py` are **unverified**, not product failures or passes. Socket creation was denied before bind; no live daemon ran. This violated the intended service-only selection; no local retry or test weakening. The final service-only command explicitly names only direct-service files. If required, the orchestrator can qualify those existing daemon lanes centrally on the final composed source; this task'"'s no-socket/full scope remains unchanged.
+
+Recommended next steps: composer takes the harness commit from this worker (exact product hashes above) onto the reviewed Bundle2 successor, preserving schema freeze. M1 owner reviews/ports only matching exact-reuse/materialization comparisons and the native move regression, independently of redo work; then centrally qualifies its composed candidate as authorized. Runtime needs no patch. No migration/normalization of existing numeric films is appropriate. All M2 integration remains held.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/commit-msg <<'EOF'
+fix(timeline): preserve exact numeric revision content
+
+Require exact encoded content and manifests before reusing immutable revision
+identities. Materialize boolean and numeric encoding edits in shot children
+without changing ordinary value guards, hashes, schemas or stored films.
+
+Cover native PARAM publication, history, reload, retry and inverse against the
+official Runtime, plus parent and occurrence clip.move numeric regressions.
+EOF
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/commit-msg.txt" in /home/user/work/wt/agt-m2-numeric-revision-integrity
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'git diff --check && git status --short && git diff --numstat -- astrid/core/timeline/authoring_bundle.py astrid/sdk/timeline/commit.py' in /home/user/work/wt/agt-m2-numeric-revision-integrity
+ succeeded in 115ms:
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/sdk/timeline/commit.py
+ M tests/sdk/test_timeline_commit_provider_document.py
+?? tests/editing_conformance/test_commit_runtime_numeric_move.py
+?? tests/editing_conformance/test_commit_runtime_numeric_params.py
+?? tests/sdk/test_timeline_numeric_revision_runtime.py
+2	2	astrid/core/timeline/authoring_bundle.py
+9	8	astrid/sdk/timeline/commit.py
+
+codex
+Final focused checks pass: 22 official Runtime PARAM tests, 25 film and identity tests, 190 provider/converter neighbors, and 249 recipe/conversion tests. Ruff and diff checks are clean. I’m writing the handoff with exact source hashes, the M1 findings, and the three unverified daemon cases.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+base = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/notes')
+p = base / 'report.md'
+s = p.read_text().replace('# Final result below.', '# 25 PASS, 35.56s; exact frozen6be. Shared inverse/redo, projection identity and media retention neighbors pass.')
+p.write_text(s)
+for sha in ('f6fbe741','875a9aff','1e1dcc64'):
+    shutil.rmtree(base / ('probe-' + sha))
+for cache in ('.pytest_cache', '.ruff_cache'):
+    path = Path(cache)
+    if path.exists():
+        shutil.rmtree(path)
+PY
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md <<'EOF'
+
+## agt-m2-numeric-revision-integrity — final source READY for composer review
+Source /home/user/work/wt/agt-m2-numeric-revision-integrity, branch tl/agt-m2-numeric-revision-integrity, base d4743e2984cef0908fa0b6bef166aa801f2bde8f; harness commit pending. Final product11added/10removed (21touchedlines, <=25), ONLY commit.py + two authoring_bundle.py materialization comparisons. commit.py SHA25685c84b7e8cbac50579bcb954f18fcaf894936026202dda3cfb5ae3544b9e8771; authoring_bundle.py SHA256769854dee8806d3941366b27e5dab5d7ca79dfde948085a9641decc3871afc1e. Canonicalschema472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9 UNCHANGED. No Runtime/pins/generated/model/registry/guard/hash/args/coercion/normalization/stored-film change. Exact encoded authored child comparisons and exact parent digest+complete encoded manifest govern current/historical immutable reuse; unchanged images still reused. Runtime immutable checks were correct, no patch needed.
+Final commands/results in workers/agt-m2-numeric-revision-integrity/notes/report.md: official d691/0.2.3 admitted PARAM+source controls22PASS24.92s; exact6be film numeric moves+PARAM+identity/sharedinverse/media retention25PASS35.56s; provider/converter neighbors190PASS1ordinary-lane integrationdeselected29.71s; recipe/root/converter249PASS26.54s. All six touched files RuffPASS; diffcheckPASS. Newtests require exact number/bool JSON, original number-by-value/booldistinct guards, unchanged recorded writes/accepted history edges, readback/restart/exactretry/inverse/redo/source-refusal. No passing behavior rewritten/xfail/skipped.
+M1 f6/875/1e1 move classification remains as prior executable note: EACH2FAIL/4PASS on identical6be probe, parent numeric-only0→0.0 refused and occurrence numeric-only edit accepted but retainedint0; ordinary0→1 and unchangedfloat controls pass. Independent of redo. M1 owner should review/port ONLY relevant exact-reuse/materialization comparisons + native move test, no M2schema/registry import. Composer should consume this harnesscommit for Bundle2 reviewed successor; exact product hashes above, integration still HELD.
+Disclosure: one overly broad neighbor command accidentally included three daemon tests (two M1 parameterizations + scalar outbox), all failed at sandbox socket creation PermissionError before bind; no live daemon ran. Not retried locally, no test weakened, those existing socket lanes remain UNVERIFIED pending authorized central qualification. Final service-only25PASS command excludes daemon files explicitly. No full/install/browser/commit/merge/push/integration write or central full request. Temporary git archives removed; three M1 logs retained beside report; both commit-msg and commit-msg.txt ready.
+EOF
+git diff --check" in /home/user/work/wt/agt-m2-numeric-revision-integrity
+ succeeded in 5497ms:
+codex
+Fixed exact revision reuse with 11 added / 10 removed product lines. Hashes, schemas, pins, and value guards remain unchanged.
+
+- Focused test runs: **190, 22, 249, and 25 passed**. Ruff and diff checks passed.
+- Confirmed M1 move defects on f6/875/1e1: parent numeric edits refused; child edits accepted with the old type retained.
+- Three daemon cases remain unverified after accidental sandbox socket failures.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/notes/report.md). Coordination notes and both commit-message files are ready. Integration remains held.
+tokens used
+141,955
+Fixed exact revision reuse with 11 added / 10 removed product lines. Hashes, schemas, pins, and value guards remain unchanged.
+
+- Focused test runs: **190, 22, 249, and 25 passed**. Ruff and diff checks passed.
+- Confirmed M1 move defects on f6/875/1e1: parent numeric edits refused; child edits accepted with the old type retained.
+- Three daemon cases remain unverified after accidental sandbox socket failures.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-numeric-revision-integrity/notes/report.md). Coordination notes and both commit-message files are ready. Integration remains held.

@@ -1,0 +1,9 @@
+name=agt-visual-contract-correct
+repo=agent
+base=tl/agt-viewing-reviews
+base_sha=ce9307d4
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-visual-contract-correct
+started=2026-10-20T04:45:31Z

@@ -1,0 +1,400 @@
++                "event_ids": ["event-1"], "result": data, "created_at": "now",
++            }
++            return {"data": data, "receipt": receipt}
++
++    return TimelineSession, Session()
++
++
++def test_pending_unrelated_or_ambiguous_swap_refuses_without_flush(monkeypatch):
++    command, old, new = _pending_occurrence_swap()
++    TimelineSession, session = _pending_session(command)
++    before = copy.deepcopy(session.state)
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
++
++    result = RemoteTimelines(object()).replace_parent_media(
++        "project-1", "main", occurrence_id="other-occ", clip_id="other-clip",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=old, media=new,
++        idempotency_key="other-key",
++    )
++
++    assert not result.ok and "pending native replacement" in result.error.message
++    assert session.flush_calls == [] and session.state == before
++
++    session.state["pending"].append(copy.deepcopy(command))
++    before = copy.deepcopy(session.state)
++    result = RemoteTimelines(object()).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=old, media=new,
++        idempotency_key="original-key",
++    )
++    assert not result.ok and session.flush_calls == [] and session.state == before
++
++
++@pytest.mark.parametrize("change", ["source", "selection", "owner", "head", "publication"])
++def test_pending_swap_identity_controls_refuse_without_post(monkeypatch, change):
++    command, old, new = _pending_occurrence_swap()
++    TimelineSession, session = _pending_session(command)
++    before = copy.deepcopy(session.state)
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
++    kwargs = {
++        "occurrence_id": "occ-a", "clip_id": "clip-a", "source_object_id": new["object_id"],
++        "expected_head": "parent-1", "expected_publication": "publication-1",
++        "old_media": old, "media": new, "idempotency_key": "original-key",
++    }
++    if change == "source":
++        kwargs["source_object_id"] = old["object_id"]
++    elif change == "selection":
++        kwargs["media"] = {**new, "catalog_digest": old["catalog_digest"]}
++    elif change == "owner":
++        kwargs["occurrence_id"] = None
++    elif change == "head":
++        kwargs["expected_head"] = "later-head"
++    else:
++        kwargs["expected_publication"] = "later-publication"
++
++    result = RemoteTimelines(object()).replace_parent_media("project-1", "main", **kwargs)
++    assert not result.ok and session.flush_calls == [] and session.state == before
++
++
++def test_exact_pending_swap_retry_survives_restart_and_keeps_opaque_body(monkeypatch):
++    command, old, new = _pending_occurrence_swap()
++    TimelineSession, first = _pending_session(command, fail_flush=True)
++    restored = _pending_session(command)[1]
++    sessions = iter((first, restored))
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: next(sessions))
++    transport = object()
++
++    failed = RemoteTimelines(transport).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=old, media=new,
++        idempotency_key="original-key",
++    )
++    assert not failed.ok
++    assert first.flush_calls == [("original-key", [command])]
++
++    retried = RemoteTimelines(transport).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=old, media=new,
++    )
++    assert retried.ok and retried.idempotency_key == "original-key"
++    assert restored.flush_calls == [(None, [command])]
++
++
++@pytest.mark.parametrize("kind", ["bool", "list", "str", "number", "nullmix"])
++def test_pending_swap_rejects_non_mapping_selections_without_flush(monkeypatch, kind):
++    command, _, new = _pending_occurrence_swap()
++    TimelineSession, session = _pending_session(command)
++    before = copy.deepcopy(session.state)
++    outbox_before = copy.deepcopy(session.outbox.state)
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
++    invalid = {
++        "bool": (True, False),
++        "list": ([], []),
++        "str": ("bad", "bad"),
++        "number": (7, 7),
++        "nullmix": (None, new),
++    }[kind]
++
++    result = RemoteTimelines(object()).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=invalid[0], media=invalid[1],
++        idempotency_key="original-key",
++    )
++
++    assert (not result.ok and session.flush_calls == [] and session.state == before
++            and session.outbox.state == outbox_before)
++
++
++@pytest.mark.parametrize("supplied", [False, True], ids=["none-pair", "exact-mapping-pair"])
++def test_pending_swap_accepts_only_omitted_or_exact_selections(monkeypatch, supplied):
++    command, old, new = _pending_occurrence_swap()
++    TimelineSession, session = _pending_session(command)
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
++    selections = {"old_media": old, "media": new} if supplied else {}
++
++    result = RemoteTimelines(object()).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", idempotency_key="original-key",
++        **selections,
++    )
++
++    assert result.ok, result.error
++    assert session.flush_calls == [("original-key", [command])]
++
++
+ def test_remote_timelines_replace_clip_is_typed_410() -> None:
+     class Transport:
+         def replace_timeline_clip(self, *args, **kwargs):
+@@ -32,19 +226,7 @@
+     assert "retime-clip" not in choices
+ 
+ 
+-def test_remote_parent_media_replacement_publishes_exact_closure_once() -> None:
+-    from tests.timeline.test_authoring_bundle import NEW, _closure, _digest
+-
+-    parent, shots, internals = _closure(shared=False)
+-    internal = internals[0]
+-    internal["payload"]["registry"]["assets"]["new-picture"] = {
+-        "media_id": NEW,
+-        "type": "image",
+-    }
+-    internal["content_digest"] = _digest(internal["payload"])
+-    shot = shots[0]
+-    parent["content_digest"] = _digest(parent["payload"])
+-
++def test_remote_parent_media_replacement_does_not_publish_a_whole_closure() -> None:
+     class Transport:
+         def __init__(self):
+             self.published = []
+@@ -52,24 +234,8 @@
+         def list_timelines(self, project, *, cursor=None, limit=50):
+             return ([{"project_id": project, "timeline_id": "main", "slug": "main"}], None)
+ 
+-        def get_timeline(self, timeline_id, *, project_id=None):
+-            raise AssertionError("canonical parent replacement must not read the legacy timeline document")
+-
+-        def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+-            assert (project_id, timeline_id, revision) == ("project-1", "main", "parent-1")
+-            return parent
+-
+-        def get_project_shot_revision(self, project_id, shot_id, revision):
+-            assert (project_id, shot_id, revision) == ("project-1", "shot-shared", "shot-rev-1")
+-            return shot
+-
+-        def get_project_timeline_revision(self, project_id, timeline_id, revision):
+-            assert (project_id, timeline_id, revision) == ("project-1", "main", "internal-1")
+-            return internal
+-
+         def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
+             self.published.append((project_id, timeline_id, publication, idempotency_key))
+-            return {"data": {"new_head": publication["parent_revision_id"]}, "receipt": None}
+ 
+     transport = Transport()
+     result = RemoteTimelines(transport).replace_parent_media(
+@@ -77,20 +243,14 @@
+         "main",
+         occurrence_id="occ-1",
+         clip_id="picture-1",
+-        source_object_id=NEW,
++        source_object_id="sha256:" + "2" * 64,
+         expected_head="parent-1",
+         idempotency_key="parent-replace-1",
+     )
+ 
+-    assert result.ok, result.error
+-    assert len(transport.published) == 1
+-    _project, _timeline, publication, key = transport.published[0]
+-    assert key == "parent-replace-1"
+-    child = publication["internal_timeline_revisions"][0]["payload"]
+-    selected = next(clip for clip in child["clips"] if clip["id"] == "picture-1")
+-    assert selected["asset"] == "new-picture"
+-    assert selected["at"] == 0 and selected["hold"] == 1
+-    assert publication["expected_head"] == "parent-1"
++    assert not result.ok
++    assert result.error.code == "validation_error"
++    assert transport.published == []
+ 
+ 
+ def test_parent_media_cli_forwards_exact_locator_and_head(capsys) -> None:
+@@ -128,44 +288,85 @@
+     ]
+ 
+ 
+-def test_selected_parent_and_occurrence_replacement_use_the_commit_door() -> None:
++def test_selected_occurrence_replacement_uses_the_session_commit_door(monkeypatch) -> None:
++    from astrid.sdk.timeline.commit import bundle_from_document
++    from astrid.sdk.timeline.sync import TimelineSession
+     from tests.editing_conformance.test_recipe_occurrence_media import inputs
+ 
+-    _, old, new, _ = inputs()
++    document, old, new, _ = inputs()
++    bundle = bundle_from_document(document)
++    next(iter(bundle['shots'].values()))['internal_timeline']['registry']['assets']['picture'].update(
++        generationId=old['generation_id'], variantId=old['variant_id'])
+ 
+     class Transport:
++        def list_timelines(self, project, *, cursor=None, limit=50):
++            return ([{'project_id': project, 'timeline_id': 'main', 'slug': 'main'}], None)
++
++        def get_project_media_selection(self, project, selector):
++            return next(pin for pin in (old, new)
++                        if all(pin[key] == selector[key]
++                               for key in ('asset', 'generation_id', 'variant_id')))
++
++        def get_project_verified_media(self, project, selection):
++            return {'selection': selection, 'media_type': 'image/fixture', 'size': 123}
++
++    class Outbox:
+         def __init__(self):
+-            self.committed = []
++            self.state = None
++
++        class _Lock:
++            def __enter__(self):
++                return self
++
++            def __exit__(self, *args):
++                return False
++
++        def locked(self):
++            return self._Lock()
++
++        def write(self, state):
++            self.state = state
+ 
+-        def list_timelines(self, project, *, cursor=None, limit=50):
+-            return ([{'project_id': project, 'timeline_id': 'main', 'slug': 'main'}], None)
++    class Session:
++        def __init__(self):
++            self.project_id, self.timeline_id = 'project-1', 'main'
++            self.outbox = Outbox()
++            self.state = {'base': {'revision_id': 'parent-1', 'publication_id': 'publication-1'},
++                          'pending': [], 'flight': None}
+ 
+-        def publish_parent_composition(self, *args, **kwargs):
+-            raise AssertionError('selected replacements must use native commands')
++        def _state(self):
++            return self.state
+ 
+-        def commit_timeline(self, project, timeline, body, *, idempotency_key):
+-            self.committed.append((project, timeline, body, idempotency_key))
+-            return {'data': {'accepted': True}, 'receipt': None}
++        def _bundle(self, state):
++            return bundle
+ 
++        def flush(self, *, idempotency_key):
++            data = {'status': 'accepted', 'accepted_revision_id': 'parent-2',
++                    'base_revision_id': 'parent-1', 'base_publication_id': 'publication-1',
++                    'commands': self.state['pending']}
++            receipt = {'receipt_id': 'publication-2', 'command_kind': 'timeline.commit',
++                       'idempotency_key': idempotency_key, 'request_hash': 'hash',
++                       'project_id': 'project-1', 'project_seq': [1, 1],
++                       'event_ids': ['event-1'], 'result': data, 'created_at': 'now'}
++            return {'data': data, 'receipt': receipt}
++
++    session = Session()
++    monkeypatch.setattr(TimelineSession, 'open', lambda *args, **kwargs: session)
++
+     transport = Transport()
+     timelines = RemoteTimelines(transport)
+-    for occurrence in (None, 'occ-1'):
+-        result = timelines.replace_parent_media(
+-            'project-1', 'main', occurrence_id=occurrence, clip_id='picture-1',
+-            source_object_id=new['object_id'], expected_head='parent-1',
+-            expected_publication='publication-1', old_media=old, media=new,
+-            idempotency_key='selected-' + str(occurrence),
+-        )
+-        assert result.ok, result.error
+-        project, timeline, body, key = transport.committed[-1]
+-        assert (project, timeline, key) == ('project-1', 'main', 'selected-' + str(occurrence))
+-        assert body['base_revision_id'] == 'parent-1'
+-        assert body['base_publication_id'] == 'publication-1'
+-        call = body['commands'][0]
+-        assert call['select'] == ('parent' if occurrence is None else 'occurrence:occ-1') + '/clip:picture-1'
+-        assert call['op'] == ('clip.swap-media' if occurrence is None else 'occurrence.swap-media')
+-        assert call['args'] == {'old_media': old, 'media': new}
+-    assert len(transport.committed) == 2
++    result = timelines.replace_parent_media(
++        'project-1', 'main', occurrence_id='occ-a', clip_id='clip-a',
++        source_object_id=new['object_id'], expected_head='parent-1',
++        expected_publication='publication-1', old_media=old, media=new,
++        idempotency_key='selected-occurrence',
++    )
++
++    assert result.ok, result.error
++    command = session.state['pending'][0]
++    assert command['select'] == 'occurrence:occ-a/clip:clip-a'
++    assert command['op'] == 'occurrence.swap-media'
++    assert command['args'] == {'old_media': old, 'media': new}
+ 
+ 
+ def test_incomplete_or_mismatched_selection_never_falls_back_to_publication() -> None:
+
+exec
+/bin/bash -lc "git status --short --untracked-files=all; printf '%s\\n' '--- final diff stat/check ---'; git diff --stat; git diff --check; printf '%s\\n' '--- final method and helper checks ---'; rg -n \"def replace_parent_media|def replace_selected_media|def _pending_matches|open_authoring_bundle|publish_authoring_candidate|preview_authoring_candidate|diff_authoring_candidate|validate_authoring_candidate\" astrid/sdk/remote.py astrid/sdk/timeline_media_replacement.py; python3 - <<'PY'
+from pathlib import Path
+start = Path('astrid/sdk/remote.py').read_text().index('    def replace_parent_media(')
+end = Path('astrid/sdk/remote.py').read_text().index('    def commit(', start)
+print('replace_parent_media_lines=', Path('astrid/sdk/remote.py').read_text()[start:end].count('\\n'))
+PY
+printf '%s\\n' '--- handoff markers ---'; stat -c '%n %s bytes' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current-cut-gate/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current-cut-gate/DONE; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current-cut-gate/commit-msg" in /home/user/work/wt/agt-m2-wc3-current-cut-gate
+ succeeded in 483ms:
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline_media_replacement.py
+ M tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+ M tests/sdk/test_timeline_sync.py
+ M tests/test_timeline_clip_replacement.py
+--- final diff stat/check ---
+ astrid/sdk/remote.py                               | 242 +-------------
+ astrid/sdk/timeline_media_replacement.py           | 357 +++++++++++++++++++--
+ .../test_commit_runtime_parent_media_swap.py       | 249 ++++++++++++++
+ tests/sdk/test_timeline_sync.py                    |   4 +-
+ tests/test_timeline_clip_replacement.py            | 333 +++++++++++++++----
+ 5 files changed, 861 insertions(+), 324 deletions(-)
+--- final method and helper checks ---
+astrid/sdk/remote.py:1199:        from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+astrid/sdk/remote.py:1240:            bundle = open_authoring_bundle(
+astrid/sdk/remote.py:1278:    def replace_parent_media(
+astrid/sdk/timeline_media_replacement.py:200:def _pending_matches(command, *, owner, clip_id, source_object_id, old_media, media):
+astrid/sdk/timeline_media_replacement.py:226:def replace_selected_media(timelines, project, ref, *, occurrence_id, clip_id, source_object_id,
+replace_parent_media_lines= 31
+--- handoff markers ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current-cut-gate/commit-msg 241 bytes
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current-cut-gate/DONE 0 bytes
+fix(timeline): delete legacy parent media writer
+
+Route parent media replacement through the durable native TimelineSession
+adapter, bind retries to the exact pending intent, and retain direct and
+real-HTTP coverage for guarded media swaps.
+
+codex
+Implemented WC3 in `/home/user/work/wt/agt-m2-wc3-current-cut-gate`.
+
+Changes:
+
+- Removed the 226-line legacy `replace_parent_media` writer.
+- Routed replacement through `TimelineSession`/outbox.
+- Preserved exact media pins, opaque/order/mirror fields, retry guards, and native undo/reload behavior.
+- Added donor `593c2fd3` direct and real-HTTP coverage.
+- No P1/F1/init/pin/schema/generated-client files changed.
+
+Tests:
+
+- WC3 + sync: **83 passed**
+- Parent/occurrence/native neighbors: **91 passed**
+- Focused Ruff: **passed**
+- Central Runtime 7d HTTP lane: **24 passed, 1 deselected, 2 unrelated publication-chain failures**. WC3 image/video lost-ACK, restart, exact replay, reload, undo/redo cases passed.
+- `git diff --check`: **passed**
+
+Remaining consumer: CLI `replace-parent-media` calls the retained public SDK method; no legacy replacement writer remains.
+
+Commit message written to `commit-msg`; `DONE` marker created. Harness should commit this unit. WC3 integration adoption still requires the App same-cohort qualification and owner normal014 release; not claimed complete.
+tokens used
+182,394
+Implemented WC3 in `/home/user/work/wt/agt-m2-wc3-current-cut-gate`.
+
+Changes:
+
+- Removed the 226-line legacy `replace_parent_media` writer.
+- Routed replacement through `TimelineSession`/outbox.
+- Preserved exact media pins, opaque/order/mirror fields, retry guards, and native undo/reload behavior.
+- Added donor `593c2fd3` direct and real-HTTP coverage.
+- No P1/F1/init/pin/schema/generated-client files changed.
+
+Tests:
+
+- WC3 + sync: **83 passed**
+- Parent/occurrence/native neighbors: **91 passed**
+- Focused Ruff: **passed**
+- Central Runtime 7d HTTP lane: **24 passed, 1 deselected, 2 unrelated publication-chain failures**. WC3 image/video lost-ACK, restart, exact replay, reload, undo/redo cases passed.
+- `git diff --check`: **passed**
+
+Remaining consumer: CLI `replace-parent-media` calls the retained public SDK method; no legacy replacement writer remains.
+
+Commit message written to `commit-msg`; `DONE` marker created. Harness should commit this unit. WC3 integration adoption still requires the App same-cohort qualification and owner normal014 release; not claimed complete.

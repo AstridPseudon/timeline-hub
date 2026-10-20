@@ -1,0 +1,9 @@
+name=agt-m3-accounted-short-current-port
+repo=agent
+base=f82da322077ed0ac0c58966a0815b5ffc02fc0cc
+base_sha=f82da322
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-accounted-short-current-port
+started=2026-10-20T19:49:05Z

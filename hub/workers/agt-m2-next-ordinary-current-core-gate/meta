@@ -1,0 +1,9 @@
+name=agt-m2-next-ordinary-current-core-gate
+repo=agent
+base=tl/agt-m2-next-ordinary-source-union
+base_sha=ce3e647f
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-next-ordinary-current-core-gate
+started=2026-10-20T13:49:14Z

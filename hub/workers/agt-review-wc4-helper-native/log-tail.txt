@@ -1,0 +1,400 @@
+   109	        calls = _calls(clip_id, element, duration, params, clear_params)
+   110	        with session.outbox.locked():
+   111	            state = session._state()
+   112	            key = key or (state['flight']['key'] if state['flight'] else f'element-{uuid.uuid4().hex}')
+   113	        # Acknowledged identities belong to Runtime history, never a client cache.
+   114	        # Return its original result without recapturing against a newer head/pin.
+   115	        cursor = None
+   116	        while state['flight'] is None and idempotency_key is not None:
+   117	            history = owner.history(session.project_id, session.timeline_id, cursor=cursor, limit=100)
+   118	            if not history.ok:
+   119	                return history
+   120	            for entry in history.data['items']:
+   121	                receipt = entry['receipt']
+   122	                if receipt['idempotency_key'] == key and entry['publisher'] == session.identity['actor_id']:
+   123	                    data = receipt['result']
+   124	                    if (receipt['command_kind'] != 'timeline.commit'
+   125	                            or data['base_revision_id'] != expected_head
+   126	                            or not _matches(data['commands'], calls)):
+   127	                        raise ValueError('Acknowledged request identity has different original intent')
+   128	                    opened = owner.open_bundle(session.project_id, session.timeline_id, revision_id=expected_head)
+   129	                    if not opened.ok:
+   130	                        return opened
+   131	                    return _result(session, data, receipt, _clip(opened.data['bundle'], clip_id),
+   132	                                   clip_id, expected_head, key)
+   133	            cursor = history.data['next_cursor']
+   134	            if cursor is None:
+   135	                break
+   136	        if state['base']['revision_id'] != expected_head:
+   137	            return DomainResult.failure(ErrorObject(
+   138	                'conflict', 'Timeline head changed; inspect before making a fresh edit',
+   139	                {'expected_head': expected_head, 'actual_head': state['base']['revision_id']}),
+   140	                idempotency_key=key)
+   141	        opened = owner.open_bundle(session.project_id, session.timeline_id, revision_id=expected_head)
+   142	        if not opened.ok:
+   143	            return opened
+   144	        before = _clip(opened.data['bundle'], clip_id)
+   145	
+   146	        def capture(state):
+   147	            if state['base']['revision_id'] != expected_head:
+   148	                raise ValueError('Session base changed before element capture')
+   149	            current = owner.history(session.project_id, session.timeline_id, limit=1)
+   150	            if not current.ok:
+   151	                raise ValueError(current.error.message)
+   152	            if current.data['head']['revision_id'] != expected_head:
+   153	                raise CommitConflict({'code': 'conflict', 'message': 'Timeline head changed before element capture',
+   154	                                      'details': {'expected_head': expected_head,
+   155	                                                  'actual_head': current.data['head']['revision_id']}})
+   156	            old_ref = before.get('elementRef') or before.get('element_ref')
+   157	            if (not isinstance(old_ref, dict) or old_ref.get('kind') != 'effect'
+   158	                    or before.get('clipType') != old_ref.get('id')
+   159	                    or isinstance(before.get('hold'), bool) or not isinstance(before.get('hold'), (int, float))
+   160	                    or any(k in before for k in ('asset', 'file', 'src', 'source', 'from', 'to'))):
+   161	                raise ValueError('Update requires an existing generated hold effect without media source trimming')
+   162	            if (not isinstance(element, dict) or element.get('kind') != 'effect'
+   163	                    or element.get('id') != old_ref.get('id')
+   164	                    or old_ref.get('packId') is not None and old_ref['packId'] != element.get('packId')):
+   165	                raise ValueError('Update must preserve the existing effect identity and pack owner')
+   166	            document_id, document = _read_document(client, realm, session.project_id)
+   167	            if document is None or document['content']['pack_id'] != element.get('packId'):
+   168	                document_id, document = _read_document(client, realm, session.project_id, element.get('packId'))
+   169	            if document is None or document['content']['pack_id'] != element.get('packId'):
+   170	                raise ValueError('Element owner/revision is not admitted for this project')
+   171	            admissions = [row for row in document['content']['admissions'] if all(
+   172	                row.get(k) == element.get(k) for k in ('id', 'kind', 'revision'))]
+   173	            if len(admissions) != 1 or 'snapshot_object' not in admissions[0]:
+   174	                raise ValueError('pack snapshot unavailable; re-admit pack')
+   175	            pin = {'document_id': document_id, 'version': document['version'],
+   176	                   'content_digest': _json_digest(document['content'])}
+   177	            descriptor = admissions[0]['snapshot_object']
+   178	            snapshot = {**descriptor, 'bytes_base64': base64.b64encode(
+   179	                client.media.read_bytes(descriptor['object_id'])).decode('ascii')}
+   180	            inputs = [({'pin': pin, 'document': document}, {descriptor['object_id']: snapshot})]
+   181	            return execute(opened.data['bundle'], _calls(
+   182	                clip_id, element, duration, params, clear_params, pin),
+   183	                schema_inputs=inputs, realm_id=realm).commands
+   184	
+   185	        session._stage(capture, lambda pending: _matches(pending, calls))
+   186	        committed = session.flush(idempotency_key=key)
+   187	        return _result(session, committed['data'], committed['receipt'], before, clip_id, expected_head, key)
+   188	    except CommitConflict as exc:
+   189	        failure = exc.failure
+   190	        return DomainResult.failure(ErrorObject(failure['code'], failure['message'], failure['details']),
+   191	                                    idempotency_key=key)
+   192	    except WorkspaceClientError as exc:
+   193	        return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
+   194	    except ServiceError as exc:
+   195	        return DomainResult.failure(exc.to_error_object(), idempotency_key=key)
+   196	    except (ValueError, KeyError, TypeError) as exc:
+   197	        return DomainResult.failure(ErrorObject('validation_error', str(exc), {}),
+   198	                                    idempotency_key=key or f'element-{uuid.uuid4().hex}')
+"""clip.set-element: one recorded elementRef write, same element identity, guarded inverse."""
+from __future__ import annotations
+
+import copy
+import json
+from functools import partial
+from pathlib import Path
+
+import pytest
+from jsonschema import Draft202012Validator
+
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set_element
+from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
+from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.test_recipe_m1_commands import bundle as _bundle
+from tests.editing_conformance.test_recipe_m1_commands import clip, inverse, later
+
+FIXTURES = Path(__file__).parent / 'fixtures'
+REF = 'occurrence:occ-1/clip:picture-1'
+PATH = ['elementRef']
+DRAFT = {'id': 'reveal', 'kind': 'effect', 'revision': 'draft-reveal'}
+GOLDEN = json.loads((FIXTURES / 'recipe_m2_clip_set_element.json').read_text())
+ADMITTED = GOLDEN['request']['args']['elementRef']
+PIN = GOLDEN['request']['args']['schema_source']
+INPUTS = {'schema_inputs': GOLDEN['schema_inputs'], 'realm_id': 'realm'}
+execute = partial(execute, **INPUTS)
+replay = partial(replay, **INPUTS)
+capture_clip_set_element = partial(capture_clip_set_element, schema_source=PIN, **INPUTS)
+OTHER = {**ADMITTED, 'revision': 'sha256:' + 'b' * 64}
+
+
+def call(element, ref=REF):
+    return {'schema_version': 1, 'op': 'clip.set-element', 'version': '1',
+            'select': ref, 'args': {'elementRef': copy.deepcopy(element), 'schema_source': PIN}}
+
+
+def bundle():
+    original = _bundle()
+    original['source_mapping']['pinned_documents'] = [copy.deepcopy(GOLDEN['schema_inputs'][0][0])]
+    return original
+
+
+def seeded(field='elementRef', element=DRAFT):
+    original = bundle()
+    clip(original, REF)[field] = copy.deepcopy(element)
+    return original
+
+
+@pytest.mark.parametrize('field', ['elementRef', 'element_ref'])
+def test_roundtrip_replay_and_alias_drop(field):
+    original = seeded(field)
+    command = capture_clip_set_element(original, REF, element=ADMITTED)
+    assert command['expect'] == (
+        {REF + '::elementRef': present(DRAFT)} if field == 'elementRef'
+        else {REF + '::elementRef': ABSENT, REF + '::element_ref': present(DRAFT)})
+    plan = execute(original, [command])
+    row = clip(plan.bundle, REF)
+    assert row['elementRef'] == ADMITTED and 'element_ref' not in row
+    assert [w['path'] for w in plan.records[0]['writes']] == (
+        [PATH] if field == 'elementRef' else [PATH, ['element_ref']])
+    # Siblings and the other occurrence keep their own rows untouched.
+    assert 'elementRef' not in clip(plan.bundle, 'occurrence:occ-2/clip:picture-1')
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == original
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+    assert replay(plan, original).records == plan.records
+    assert execute(original, [plan.commands[0]]).records == plan.records
+
+
+def test_unchanged_write_stays_history_edge_and_aba_guards_inverse():
+    original = seeded(element=ADMITTED)
+    plan = execute(original, [call(ADMITTED)])
+    assert plan.bundle == original
+    assert plan.records[0]['writes'] == [
+        {'ref': REF, 'path': PATH, 'before': present(ADMITTED), 'after': present(ADMITTED)}]
+    for history in ([later(REF, PATH, ADMITTED)],
+                    [later(REF, PATH, OTHER), later(REF, PATH, ADMITTED)]):
+        with pytest.raises(CommandError, match='intervening'):
+            inverse(plan.bundle, plan.records, history)
+        assert replay(plan, original, intervening_records=history).records == plan.records
+
+
+def test_changed_write_aba_refuses_inverse_but_rebases():
+    original = seeded()
+    plan = execute(original, [call(ADMITTED)])
+    history = [later(REF, PATH, OTHER), later(REF, PATH, ADMITTED)]
+    with pytest.raises(CommandError, match='intervening'):
+        inverse(plan.bundle, plan.records, history)
+    head = copy.deepcopy(original)
+    clip(head, REF)['elementRef'] = copy.deepcopy(OTHER)
+    snapshot = copy.deepcopy(head)
+    with pytest.raises(CommandError):
+        replay(plan, head)
+    assert head == snapshot
+
+
+@pytest.mark.parametrize('element', [
+    {**ADMITTED, 'id': 'other'}, {**ADMITTED, 'kind': 'transition'},
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/test_review_wc4.py')
+s=p.read_text().replace('from astrid.sdk.timeline import commands, commit','from astrid.sdk.timeline import commit').replace('from astrid.sdk.timeline._command_state import equal\\n','').replace('from unittest.mock import Mock\\n','')
+s=s.replace(\"    assert len(client.calls) == 1\\n\\n\\n@pytest.mark.parametrize\", \"\"\"    assert len(client.calls) == 1
+    recovered = update_parent_element(owner, case.project, 'film', **kwargs)
+    assert recovered.ok, recovered.error
+    from runtime_protocol.errors import RuntimeErrorBase
+    changed_body = json.loads(flight['body'])
+    changed_body['commands'][0]['args']['schema_source']['version'] += 1
+    head = case.head()
+    with pytest.raises(RuntimeErrorBase):
+        case.submit(changed_body, 'review-pinned')
+    assert case.head() == head
+
+
+@pytest.mark.parametrize\"\"\")
+p.write_text(s)
+PY
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -c pyproject.toml -o addopts= -p no:cacheprovider /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/test_review_wc4.py' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/source
+ exited 1 in 5498ms:
+...F                                                                     [100%]
+=================================== FAILURES ===================================
+___ test_digest_only_admission_preserves_original_helper_success[candidate] ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f40b7f5f350>
+configured_project_pack = <tests.core.test_project_packs.FakeDocuments object at 0x7f40b8278d60>
+implementation = 'candidate'
+
+    @pytest.mark.parametrize('implementation', ['original', 'candidate'])
+    def test_digest_only_admission_preserves_original_helper_success(monkeypatch, configured_project_pack, implementation):
+        configured = configured_project_pack
+        owner, bundle, ref = unit.setup_owner(monkeypatch, configured)
+        # Real admitted local artifact/build receipt remain intact. Only the optional
+        # portable-object field is absent, as in supported historic admissions.
+        for row in configured.rows.values():
+            for admission in row['content']['admissions']:
+                admission.pop('snapshot_object', None)
+        resolved = packs.resolve_admitted_element('realm', 'project', ref,
+            client=SimpleNamespace(documents=configured))
+        assert resolved['descriptor']['revision'] == ref['revision']
+        if implementation == 'original':
+            spec = importlib.util.spec_from_file_location('original_helper', Path(__file__).with_name('original_helper.py'))
+            original = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(original)
+            monkeypatch.setattr(original, 'Documents', lambda client: configured)
+            owner._typed.side_effect = lambda operation, project, timeline, publication, **kw: DomainResult.success({
+                'new_head': publication['parent_revision_id']})
+            function = original.update_parent_element
+        else:
+            function = update_parent_element
+        result = function(owner, 'project', 'timeline', realm='realm', clip_id='effect',
+            element=ref, expected_head='head', duration=6, idempotency_key='review-legacy')
+>       assert result.ok, result.error
+E       AssertionError: ErrorObject(code='validation_error', message='pack snapshot unavailable; re-admit pack', details={})
+E       assert False
+E        +  where False = DomainResult(ok=False, data=None, error=ErrorObject(code='validation_error', message='pack snapshot unavailable; re-admit pack', details={}), receipt=None, idempotency_key='review-legacy').ok
+
+../test_review_wc4.py:133: AssertionError
+=============================== warnings summary ===============================
+tests/sdk/test_timeline_selected_schema_runtime.py:25
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/source/tests/sdk/test_timeline_selected_schema_runtime.py:25: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+tests/core/test_timeline_element_publication_runtime.py:30
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/source/tests/core/test_timeline_element_publication_runtime.py:30: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ::test_digest_only_admission_preserves_original_helper_success[candidate]
+1 failed, 3 passed, 2 warnings in 4.59s
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline_elements.py astrid/sdk/timeline/_clip_scalar_commands.py astrid/sdk/timeline/_recording.py && python3 - <<'"'PY'
+import hashlib,json
+from pathlib import Path
+lock=json.loads(Path('runtime.lock.json').read_text())
+print('Runtime source:',lock['source_commit'])
+print('Agent command schema:',hashlib.sha256(Path('astrid/core/timeline/schema/edit-command.schema.json').read_bytes()).hexdigest())
+PY" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/source
+ succeeded in 20ms:
+All checks passed!
+Runtime source: 2c4ac180c2220bdad966bc01e95ad230e99ce26a
+Agent command schema: a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef
+
+codex
+The review is ready to record as a hold on WC4 deletion. The retry design passed the additional checks without a second journal or guessed request base. The remaining compatibility gap is the digest-only admission case. I’ll also leave same-element PARAM source selection held for the separate owner rule; the helper currently captures the current admission pin, and I found no manifest-order inference in this branch.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/report.md <<'MD'
+# WC4 helper final owner review
+
+**HOLD whole-writer deletion / WC4 closure.** One original helper compatibility regression is reproduced. The portable-admission native helper and its retry machinery otherwise pass the inspected targeted scope. This is a completed read-only review, not a blocked review task. No fixes, integration changes, Git mutation, schema/pin edits or ledger deletion were made.
+
+Reviewed "'`tl/agt-m2-wc4-helper-native-finish` at **a6098b5ddd1f3621e4467343875f705aab6c339e**, its authored delta from **905a4f0f**, original whole-parent helper, approved `98c38a7c` source, prior review and worker reports, PLAN and repository AGENTS. Review worktree HEAD is d8749a9c; tests deliberately use an exact private archive of a6098b5d, not that different worktree tree. Runtime tests select the immutable normal **2c4ac180c2220bdad966bc01e95ad230e99ce26a / contract 0.2.13** using `use_runtime(commit=vendored_runtime_commit())`; `/home/user/work/runtime` is only the Git locator. Agent command-schema SHA256 is `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`.
+
+## Finding requiring the hold
+
+**P1 — preserve the original digest-only admission success before deleting its writer.** Candidate `astrid/sdk/timeline_elements.py:171–174` requires `snapshot_object` for every update, including an element-only/hold update. Original `905a4f0f` calls `resolve_admitted_element`, whose verified local artifact/build-receipt path supports an admission containing only `id`, `kind`, `revision`, `snapshot_digest`. Its parser explicitly permits that shape (`core/element/project_packs.py:90–92`). Validity of those historic artifacts does not supply the new Runtime portable-object authority, so an ad hoc client authority bypass would be wrong; it also does not justify claiming compatible deletion.
+
+The supplementary comparison creates an admission and build artifacts using the existing project-pack fixture, removes only the optional portable descriptor, independently verifies that the real `resolve_admitted_element` still resolves the exact revision, and invokes each helper with identical explicit head/clip/element/hold inputs. **Original succeeds; candidate returns `validation_error: pack snapshot unavailable; re-admit pack`.** The original comparison uses its real resolver, validator and publisher preparation with a mocked publication transport; it is not a live old-endpoint acceptance claim. The candidate refuses before POST. The original success expectation stays an ordinary assertion; no test was changed to expect refusal or marked skip/xfail.
+
+The 89 helper/session and 266 neighbor evidence therefore does not establish *all original helper positives*: its unit setup always supplies `snapshot_object`, while actual-service legacy-shape negatives exercise native authority refusal, not old-helper compatibility. Keep WC4 held until a bounded compatible migration is qualified, or the orchestrator/owner explicitly settles the behavior change. Do not silently re-admit during save, weaken snapshot authority, or label this gap pre-existing in the public helper. The earlier decision allowing old-field PARAM refusal does not establish that this broader public-helper success may be removed under this brief.
+
+## Source and behavior assessment
+
+- The helper emits only `clip.set-element`, optional hold `clip.set`, optional nonempty-values/clear `clip.set-params`. It no longer calls the parent publisher or embeds a timing compiler. `RemoteTimelines.update_parent_element` forwards the additive `session`/`clear_params` arguments; existing positional/keyword parameters and public result/receipt/key fields remain.
+- Scope is explicit: helper target is always `parent/clip:<actual-id>`; native `_target` accepts explicit parent or occurrence references, records `scalar.images`/`scalar.target`, and binds occurrence identity/shot ownership when relevant. It does not infer a raw ID from a displayed ID. Helper and native command both preserve id/kind and an already selected pack owner; owner-less drafts can still adopt a real admitted owner. Existing actual second-owner admission/refusal coverage passed.
+- `element.targets` records actual scoped clip membership **and order**, with `query_version=1` and `guard-membership`. `check_mirrors=False` keeps scalar compatibility with divergent legacy mirrors. Permanent occurrence membership/order replay/inverse tests pass; actual helper requests also assert parent selection capture. Relevant generated-hold/raw-media preconditions are recorded as reads. This is not a claim that every unchanged sibling property conflicts: the selection concerns membership/order.
+- `_selected_schema` records exact `params.schema`, `params.snapshot`, and `params.element` relationships and retains the chosen verified document. Actual service tests prove selected V1 after V2/removal, deleted source/cache, restart, replay, inverse and redo through exact object custody. Existing missing/corrupt/foreign/unadmitted-source negatives remain passing.
+- Authored absence versus empty params remains distinct. `None`/empty requested patch does not manufacture params writes; explicit `clear_params` emits native clears; known changed properties validate without retroactively rejecting opaque stored values. Inverse/redo, ABA refusal, sibling/registry/transcript/shot/internal preservation pass. Existing equal raw mirrors are derived by recorder/compiler; opaque config/app fields remain intact. The legacy app element catalog is preserved rather than pruned, as in the previously approved native source.
+- Pending requests use the **existing** `TimelineSession._stage`, outbox format, fsynced atomic write and `flush`. Exact original request body/key are durable before POST. Retry matches existing pending intent before capture, never refreshes original guards/schema pin, and retains flight on ambiguous failure. No extra request journal/cache or fabricated accepted history was introduced.
+- Acknowledged identities are looked up in real paginated Runtime history, scoped to actor and key; receipt result supplies original request `base_revision_id`, not accepted `previous_revision_id`. Original before-state is reopened at that original base; result is built from the original accepted canonical image. No recapture/POST/admission read occurs. The added probe proves this even when **the initial acceptance was rebased** (`previous_revision_id != base_revision_id`), after lost ACK, Runtime/client restart and another disjoint head; forced real one-item history pages exercise pagination. Full public result and receipt equal the recovered result.
+- `_matches` uses recursive JSON `equal`, which distinguishes bool from number while allowing numeric equivalence. The probe accepts duration `3.0` for original `3`, refuses nested `True/False` changed to `1/0`, and preserves current head. Existing tests cover changed duration/target/key/base while pending and changed acknowledged intent.
+- Explicit source pins remain immutable through native session matching and Runtime idempotency: the supplementary probe changes a persisted command'"'s pin and confirms refusal before another POST with the original flight intact; after helper recovery it changes the same-key body pin and confirms real Runtime refusal with head unchanged. The public helper itself has no caller "'`schema_source` argument; its matching deliberately removes the internally captured pin. Do not describe this as qualification of a public explicit-pin argument.
+
+## Owner 12:16 original selected-PARAM source boundary
+
+Read `design/app-selected-param-original-pin-authority.md` and the separately assigned rule/fixture brief. No authority policy is invented here. The bounded helper does **not** choose first/last/latest matching entries from `dependency_manifest.documents`; it reads the current default/named admission document and captures its exact pin, always emitting `clip.set-element` before PARAM. That gives explicit recorded provenance for this invocation, but does not recover a target'"'s original historical PARAM source.
+
+**Hold the same-element PARAM/reselection interpretation and general original-pin production binding for the separate freeze.** A params-oriented helper call still includes the required element argument and always emits set-element, even if canonical element JSON is unchanged. Whether that constitutes the owner's required *explicit reselection* cannot be inferred merely from the presence of the generated op. This review neither authorizes silently selecting current metadata for ordinary PARAM nor chooses a manifest-order winner. No new accessor/endpoint/DTO/history policy was added. Historical recovery of this helper's already captured flight does preserve its original pin, independently of that fresh-edit policy question.
+
+## Independently executed evidence
+
+Exact source preparation, from "'`/home/user/work/wt/agt-review-wc4-helper-native`:
+
+```sh
+mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/source
+git archive tl/agt-m2-wc4-helper-native-finish | tar -x -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/source
+git show 905a4f0f:astrid/sdk/timeline_elements.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/original_helper.py
+```
+
+All following pytest/Ruff commands ran from that private `notes/source` archive; shared dependencies were read-only. The temporary source archive is removed after reporting; the supplementary probe and original helper source remain alongside this report for reproduction.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+```
+
+**63 passed in 87.21s, exit 0.** This reruns the final adapter form, including all 16 public-helper cases; it does not merely cite the earlier 63-before-cleanup result. RuntimeService only, no daemon/socket/browser.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/test_timeline_element_publication.py tests/sdk/test_timeline_sync.py tests/editing_conformance/test_recipe_clip_set_element.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_commit_provider_scalar.py
+```
+
+**355 passed in 80.00s, exit 0**, combining the prior 89 helper/session and 266 neighboring recipe/provider cases.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_current_union_schema.py
+```
+
+**24 passed in 98.50s, exit 0.** No schema or generated pin change by this candidate/review.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -c pyproject.toml -o addopts= -p no:cacheprovider /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/test_review_wc4.py
+```
+
+**3 passed / 1 failed / 2 unknown-integration-marker warnings in 4.59s, exit 1.** Passes: combined rebased/lost-ACK/restart/pagination/typed-intent probe, explicit-pin pending+acknowledged refusal, original helper digest-only success. Failure is the unchanged candidate success expectation described above. These are supplementary probes, not newly landed main-suite evidence. The external test'"'s imported modules emit marker warnings because its collection does not load repository "'`tests/conftest.py` registration. An initial probe version had duplicate aliases of the same configured fixture (2 setup failures, 2 passes); this was corrected only in private probe code. An attempted `-c pytest.ini` invocation failed because this repository uses pyproject.toml. Neither was classified as a product failure. The penultimate corrected probe also gave 3 pass / 1 same product failure; the final run added the acknowledged explicit-pin check.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline_elements.py astrid/sdk/timeline/_clip_scalar_commands.py astrid/sdk/timeline/_recording.py
+```
+
+**All checks passed, exit 0.** From the review Git worktree, `git diff --check 905a4f0f a6098b5d` passed and `git status --porcelain` was empty.
+
+No full/full* request, make check, HTTP/authentication/local-door journey, App/browser, renderer/pixel/audio, macOS or composed integration-tree qualification was performed. No passing behavior test was weakened, disabled, skipped or rewritten to assert refusal. No shared dependency/runtime/fixture was changed. The unresolved public-helper compatibility finding and separately frozen PARAM-source rule prevent an unconditional writer-deletion approval; they do not block completion of this review. Recommended next action: orchestrator sends the bounded compatibility counterexample to the implementation owner, retains WC4'"'s existing held ledger state, then requests review of the corrected migration together with the settled original-pin boundary.
+MD
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-helper-native.md
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/commit-msg <<'MSG'
+docs(timeline): review WC4 native helper compatibility
+
+Record targeted qualification and the digest-only admission compatibility
+regression. Hold whole-writer deletion and the separate original PARAM pin
+boundary. No repository files changed.
+MSG
+python3 - <<'PY'
+from pathlib import Path
+import shutil
+source=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/source')
+shutil.rmtree(source)
+PY
+git status --porcelain" in /home/user/work/wt/agt-review-wc4-helper-native
+ succeeded in 679ms:
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/DONE && wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/DONE && git status --short' in /home/user/work/wt/agt-review-wc4-helper-native
+ succeeded in 73ms:
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/DONE
+
+codex
+**HOLD WC4 writer deletion.** Reviewed `a6098b5d` read-only and reproduced one compatibility regression: the original helper succeeds with a digest-only admission and verified local artifacts; the candidate refuses it with “pack snapshot unavailable; re-admit pack.”
+
+Existing targeted suites passed: **442 tests**. Additional probes confirmed rebased acceptance, lost-ACK/restart recovery, pagination, bool/number-safe intent matching, and explicit-pin refusal. Supplementary result: **3 passed, 1 failed**—the failure preserves the original legacy-success expectation.
+
+Exact test commands, results, source references, and reproduction steps are recorded in the [detailed report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/report.md) and [flat review](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-helper-native.md).
+
+Keep same-element PARAM source selection held for the separate owner rule. No manifest-order inference was found. No repository changes, fixes, ledger edits, HTTP/browser tests, or full suites were performed.
+
+Next: resolve the compatibility gap, then review the corrected migration against the settled pin rule. Review complete; `commit-msg` and empty `DONE` written.
+tokens used
+159,656
+**HOLD WC4 writer deletion.** Reviewed `a6098b5d` read-only and reproduced one compatibility regression: the original helper succeeds with a digest-only admission and verified local artifacts; the candidate refuses it with “pack snapshot unavailable; re-admit pack.”
+
+Existing targeted suites passed: **442 tests**. Additional probes confirmed rebased acceptance, lost-ACK/restart recovery, pagination, bool/number-safe intent matching, and explicit-pin refusal. Supplementary result: **3 passed, 1 failed**—the failure preserves the original legacy-success expectation.
+
+Exact test commands, results, source references, and reproduction steps are recorded in the [detailed report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/report.md) and [flat review](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-helper-native.md).
+
+Keep same-element PARAM source selection held for the separate owner rule. No manifest-order inference was found. No repository changes, fixes, ledger edits, HTTP/browser tests, or full suites were performed.
+
+Next: resolve the compatibility gap, then review the corrected migration against the settled pin rule. Review complete; `commit-msg` and empty `DONE` written.

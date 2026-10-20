@@ -1,0 +1,400 @@
++        clip("b", 0.1, 0.2, transition={"id": "fade", "duration": 2}),
++        clip("c", 0.3, 3),
++    ])
++    validate_timeline(timeline, document_kind="canonical")
++    with pytest.raises(ValueError, match="fit both adjacent"):
++        validate_timeline(timeline, document_kind="compiled")
++
++
++@pytest.mark.parametrize("at,frames", [(1, 12), (2, 12), (0.5, 12), (1, 60)])
++@pytest.mark.parametrize("transition_id", ["fade", "crossfade", "cross-fade"])
++def test_canonical_adjacent_gap_overlap_and_oversized_windows(at, frames, transition_id):
++    timeline = config([
++        clip("a", 0, 1),
++        clip("b", at, 1, transition={"type": transition_id, "durationFrames": frames}),
++    ])
++    before = deepcopy(timeline)
++    validate_timeline(timeline, document_kind="canonical")
++    # Validation does not move ownership, clamp windows, or add an endpoint.
++    assert timeline == before
++
++
++@pytest.mark.parametrize("at", [0, 2])
++@pytest.mark.parametrize("transition", ["fade", {"id": "crossfade", "duration": 2}])
++def test_first_clip_accepts_incoming_transition_without_predecessor(at, transition):
++    validate_timeline(
++        config([clip("first", at, 1, transition=transition)]),
++        document_kind="canonical",
++    )
++
++
++def test_track_order_and_original_indices_are_preserved():
++    timeline = config([
++        clip("c", 3, 0.1),
++        clip("overlay", 1.9, 0.01, track="v2"),
++        clip("b", 2, 1, transition={"id": "fade", "duration": 0.4}),
++        clip("a", 0, 2),
++    ])
++    before = deepcopy(timeline)
++    validate_timeline(timeline, document_kind="canonical")
++    with pytest.raises(ValueError, match=r"clips\[2\].transition.*fit both adjacent"):
++        validate_timeline(timeline, document_kind="compiled")
++    assert timeline == before
++
++
++def test_native_successor_is_chosen_by_time_on_same_track():
++    timeline = config([
++        clip("b", 2, 1, transition={"id": "fade", "duration": 0.4}),
++        clip("other-track", 2.1, 0.01, track="v2"),
++        clip("c", 3, 2),
++        clip("a", 0, 0.1),
++    ])
++    # Neither the short predecessor nor the interleaved track owns native b's pair.
++    validate_timeline(timeline, document_kind="compiled")
++    validate_timeline(timeline, document_kind="canonical")
++
++
++@pytest.mark.parametrize("document_kind", ["canonical", "compiled"])
++@pytest.mark.parametrize("fps", [24, 30, 60, 30000 / 1001])
++def test_frames_and_seconds_at_exact_half_open_cut(document_kind, fps):
++    seconds = 12 / fps
++    for duration in ({"duration": seconds}, {"durationFrames": 12}):
++        timeline = config([
++            clip("a", 0, seconds, transition={"id": "fade", **duration}),
++            clip("b", seconds, seconds),
++        ], fps=fps)
++        before = deepcopy(timeline)
++        validate_timeline(timeline, document_kind=document_kind)
++        assert timeline == before
++
++
++def test_native_frame_duration_has_precedence_over_seconds():
++    timeline = config([
++        clip("a", 0, 1, transition={"id": "fade", "durationFrames": 12, "duration": 2}),
++        clip("b", 1, 1),
++    ])
++    validate_timeline(timeline, document_kind="compiled")
++    del timeline["clips"][0]["transition"]["durationFrames"]
++    with pytest.raises(ValueError, match="fit both adjacent"):
++        validate_timeline(timeline, document_kind="compiled")
++
++
++@pytest.mark.parametrize("document_kind", ["canonical", "compiled"])
++def test_from_alias_remains_valid_without_mutating_source(document_kind):
++    timeline = config([
++        {"id": "a", "at": 0, "track": "v1", "from_": 2, "to": 3,
++         "transition": {"id": "fade", "durationFrames": 12}},
++        clip("b", 1, 1),
++    ])
++    before = deepcopy(timeline)
++    validate_timeline(timeline, document_kind=document_kind)
++    assert timeline == before
++
++
++@pytest.mark.parametrize("document_kind", ["canonical", "compiled"])
++@pytest.mark.parametrize("field", ["duration", "durationFrames"])
++@pytest.mark.parametrize("value", [0, -1, True, False, None, "1", float("nan"), float("inf"), -float("inf")])
++def test_rejects_malformed_or_nonfinite_duration(document_kind, field, value):
++    # Include a valid preferred duration so malformed secondary fields cannot hide.
++    transition = {"id": "fade", "durationFrames": 12, field: value}
++    with pytest.raises((ValueError, jsonschema.ValidationError)):
++        validate_timeline(
++            config([clip("a", 0, 1, transition=transition)]),
++            document_kind=document_kind,
++        )
++
++
++@pytest.mark.parametrize("document_kind", ["canonical", "compiled"])
++@pytest.mark.parametrize("transition", ["", {"id": ""}, {"id": "fade", "params": []}, {"id": "fade", "extra": 1}, 42])
++def test_rejects_malformed_reference(document_kind, transition):
++    with pytest.raises((ValueError, jsonschema.ValidationError)):
++        validate_timeline(
++            config([clip("a", 0, 1, transition=transition)]),
++            document_kind=document_kind,
++        )
++
++
++@pytest.mark.parametrize("document_kind", ["canonical", "compiled"])
++def test_unknown_id_retains_original_index_in_error(document_kind):
++    with pytest.raises(ValueError, match=r"clips\[0\].transition.*transitions catalog"):
++        validate_timeline(
++            config([clip("b", 1, 1, transition="unknown"), clip("a", 0, 1)]),
++            document_kind=document_kind,
++        )
++
++
++def test_canonical_alias_does_not_widen_native_catalog():
++    timeline = config([clip("a", 0, 1, transition="crossfade")])
++    validate_timeline(timeline, document_kind="canonical")
++    with pytest.raises(ValueError, match="transitions catalog"):
++        validate_timeline(timeline, document_kind="compiled")
++
++
++def test_unknown_document_kind_is_refused():
++    with pytest.raises(ValueError, match="document_kind"):
++        validate_timeline(config([]), document_kind="guess")
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/timeline/test_transition_validation.py tests/test_schema_contract.py' in /home/user/work/wt/agt-m2-transition-validator
+exec
+/bin/bash -lc 'git status --short; /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/core/timeline/validators/timeline.py tests/core/timeline/test_transition_validation.py; git diff --check' in /home/user/work/wt/agt-m2-transition-validator
+ succeeded in 596ms:
+ M astrid/core/timeline/validators/timeline.py
+?? tests/core/timeline/test_transition_validation.py
+All checks passed!
+
+codex
+The new tests distinguish canonical incoming validation from native outgoing validation using unequal predecessor, owner, and successor lengths. They also cover first clips, ordering, gaps, overlaps, oversized windows, aliases, duration units, and malformed values.
+
+One new test exposed an existing native floating-point boundary quirk at 24 fps. I changed that test’s input to an exact 12-frame cut, preserving the native validator’s behavior. The remaining handoff is explicit: canonical callers need the new document-kind argument when the paired conversion is reviewed.
+ succeeded in 13472ms:
+........................................................................ [ 68%]
+.................................                                  [100%]
+105 passed, 6 subtests passed in 12.95s
+
+exec
+/bin/bash -lc "ls -ld --time-style=long-iso .ruff_cache .pytest_cache 2>/dev/null; ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-validator; nl -ba astrid/core/timeline/validators/timeline.py | sed -n '100,240p'; rg -n 'validate_timeline\\(' astrid/core/timeline/banodoco_composer.py astrid/core/timeline/banodoco_schema.py astrid/packs/rendering/actions/render/managed_timeline.py" in /home/user/work/wt/agt-m2-transition-validator
+ succeeded in 0ms:
+drwxr-xr-x 3 root root 4096 2026-10-19 23:05 .pytest_cache
+drwxr-xr-x 3 root root 4096 2026-10-19 23:07 .ruff_cache
+brief.md
+log.txt
+meta
+running
+   100	    schema = effects_catalog.read_effect_schema(effect_id)
+   101	    jsonschema.validate(_schema_params_for_animation_refs(schema, params), schema)
+   102	
+   103	
+   104	def _transition_reference(value: Any, path: str) -> tuple[str, float | None]:
+   105	    if isinstance(value, str):
+   106	        if not value:
+   107	            raise ValueError(f"{path}.id must be a non-empty string")
+   108	        return value, None
+   109	    if not isinstance(value, dict):
+   110	        raise ValueError(f"{path} must be a transition id string or object")
+   111	    _raise_unknown_keys(path, value, frozenset({"id", "type", "duration", "durationFrames", "params"}))
+   112	    transition_id = value.get("id", value.get("type"))
+   113	    if not isinstance(transition_id, str) or not transition_id:
+   114	        raise ValueError(f"{path}.id must be a non-empty string")
+   115	    if "params" in value and not isinstance(value.get("params"), dict):
+   116	        raise ValueError(f"{path}.params must be an object")
+   117	    duration_frames = value.get("durationFrames")
+   118	    for field in ("durationFrames", "duration"):
+   119	        if field in value:
+   120	            duration = value[field]
+   121	            if (
+   122	                isinstance(duration, bool)
+   123	                or not isinstance(duration, (int, float))
+   124	                or not math.isfinite(duration)
+   125	                or duration <= 0
+   126	            ):
+   127	                raise ValueError(f"{path}.{field} must be a positive finite number")
+   128	    if duration_frames is not None:
+   129	        return transition_id, float(duration_frames)
+   130	    return transition_id, None
+   131	
+   132	
+   133	def _clip_duration_seconds(clip: dict[str, Any]) -> float | None:
+   134	    hold = clip.get("hold")
+   135	    if isinstance(hold, (int, float)) and float(hold) >= 0:
+   136	        return float(hold)
+   137	    start = clip.get("from", 0)
+   138	    end = clip.get("to")
+   139	    if isinstance(start, (int, float)) and isinstance(end, (int, float)) and float(end) >= float(start):
+   140	        return float(end) - float(start)
+   141	    return None
+   142	
+   143	
+   144	def _validate_clip_transitions(
+   145	    clips: list[dict[str, Any]],
+   146	    fps: float,
+   147	    *,
+   148	    document_kind: Literal["canonical", "compiled"] = "compiled",
+   149	) -> None:
+   150	    if document_kind not in ("canonical", "compiled"):
+   151	        raise ValueError("document_kind must be 'canonical' or 'compiled'")
+   152	    from astrid.core.timeline.banodoco_schema import _transition_ids
+   153	    known_ids = _transition_ids()
+   154	    by_track: dict[str, list[tuple[int, dict[str, Any]]]] = {}
+   155	    for index, clip in enumerate(clips):
+   156	        track = clip.get("track")
+   157	        if isinstance(track, str):
+   158	            by_track.setdefault(track, []).append((index, clip))
+   159	    for track_clips in by_track.values():
+   160	        track_clips.sort(key=lambda item: float(item[1].get("at", 0)))
+   161	        for position, (index, clip) in enumerate(track_clips):
+   162	            if "transition" not in clip:
+   163	                continue
+   164	            transition_id, duration_frames = _transition_reference(clip["transition"], f"clips[{index}].transition")
+   165	            catalog_id = (
+   166	                "cross-fade"
+   167	                if document_kind == "canonical" and transition_id == "crossfade"
+   168	                else transition_id
+   169	            )
+   170	            if known_ids and catalog_id not in known_ids:
+   171	                raise ValueError(
+   172	                    f"clips[{index}].transition id {transition_id!r} is not present in the transitions catalog"
+   173	                )
+   174	            # Canonical declarations belong to this clip, with preroll from
+   175	            # its same-track predecessor (none for the first clip). The planner
+   176	            # permits gaps, overlaps and oversized windows; no pair-fit limit
+   177	            # applies. Native compiled declarations still belong to the outgoing
+   178	            # clip and retain their existing successor-fit validation below.
+   179	            if document_kind == "canonical":
+   180	                continue
+   181	            next_clip = track_clips[position + 1][1] if position + 1 < len(track_clips) else None
+   182	            current_duration = _clip_duration_seconds(clip)
+   183	            next_duration = _clip_duration_seconds(next_clip) if next_clip is not None else None
+   184	            duration_seconds = duration_frames / fps if duration_frames is not None else None
+   185	            if duration_seconds is None and isinstance(clip.get("transition"), dict):
+   186	                raw_duration = clip["transition"].get("duration")
+   187	                duration_seconds = float(raw_duration) if isinstance(raw_duration, (int, float)) else None
+   188	            if duration_seconds is None or current_duration is None or next_duration is None:
+   189	                continue
+   190	            if duration_seconds > current_duration or duration_seconds > next_duration:
+   191	                raise ValueError(
+   192	                    f"clips[{index}].transition duration {duration_seconds:.3f}s must fit both adjacent same-track clips"
+   193	                )
+   194	
+   195	
+   196	def _timeline_fps(config: dict[str, Any]) -> float:
+   197	    """Best-effort fps for timeline-internal validation (transitions, etc.).
+   198	
+   199	    The authoritative fps comes from theme.visual.canvas at render time. This helper
+   200	    looks for a theme_overrides override; otherwise it returns a sentinel default
+   201	    (30) used only for clip-transition duration checks.
+   202	    """
+   203	    overrides = config.get("theme_overrides")
+   204	    if isinstance(overrides, dict):
+   205	        visual = overrides.get("visual")
+   206	        if isinstance(visual, dict):
+   207	            canvas = visual.get("canvas")
+   208	            if isinstance(canvas, dict):
+   209	                fps_value = canvas.get("fps")
+   210	                if isinstance(fps_value, (int, float)) and float(fps_value) > 0:
+   211	                    return float(fps_value)
+   212	    return 30.0
+   213	
+   214	
+   215	def validate_timeline(
+   216	    config: Any,
+   217	    *,
+   218	    strict: bool = True,
+   219	    document_kind: Literal["canonical", "compiled"] = "compiled",
+   220	) -> None:
+   221	    """Validate a Banodoco timeline.
+   222	
+   223	    `clipType` is an open string for editor compatibility. Built-in media/text
+   224	    clips and registered effects get semantic checks where Astrid knows how;
+   225	    unknown clip types stay valid and classify as opaque at runtime.
+   226	
+   227	    Callers that need to accept legacy/under-construction timelines (e.g.
+   228	    in-flight pipeline outputs that reference theme content not yet on
+   229	    disk) can opt into `strict=False`.
+   230	
+   231	    Canonical parent/internal documents use ``document_kind="canonical"``:
+   232	    ``clip.transition`` is incoming and its window may exceed either clip.
+   233	    Raw/native compiled TimelineConfig retains outgoing transition validation
+   234	    by default. The document layer must be supplied by the owning boundary;
+   235	    it cannot be inferred from fields shared by both formats. This only checks
+   236	    validity; canonical-to-compiled conversion belongs to the compiler.
+   237	    """
+   238	    if not isinstance(config, dict):
+   239	        raise ValueError("Timeline must be a JSON object")
+   240	    theme = config.get("theme")
+astrid/packs/rendering/actions/render/managed_timeline.py:787:        timeline.validate_timeline(config)
+astrid/core/timeline/banodoco_composer.py:185:            validate_timeline(data)
+astrid/core/timeline/banodoco_composer.py:271:        validate_timeline(payload)
+astrid/core/timeline/banodoco_schema.py:581:    validate_timeline(data)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+
+root = Path('/home/user/work/wt/agt-m2-transition-validator')
+for name in ('.pytest_cache', '.ruff_cache'):
+    shutil.rmtree(root / name, ignore_errors=True)
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-validator')
+message = '''fix(timeline): distinguish canonical incoming transition validation
+
+Add an explicit canonical document validation mode while retaining the native
+compiled outgoing default and its successor-fit checks. Canonical incoming
+windows permit first clips, gaps, overlaps and oversized durations, and accept
+the crossfade alias without rewriting authored data.
+
+Reject malformed and nonfinite durations in both layers. Cover unequal
+neighbour lengths, ordering, aliases, duration units and native compatibility.
+Canonical boundary callers must select the document layer alongside the paired
+compiler conversion before integration.
+
+Validation: targeted transition and schema suites, 105 passed and 6 subtests;
+ruff and git diff --check passed. No full or socket suites run.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message, encoding='utf-8')
+PY
+" in /home/user/work/wt/agt-m2-transition-validator
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'git diff --check; git status --short; wc -l tests/core/timeline/test_transition_validation.py; cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-validator/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-validator/commit-msg.txt' in /home/user/work/wt/agt-m2-transition-validator
+ succeeded in 527ms:
+ M astrid/core/timeline/validators/timeline.py
+?? tests/core/timeline/test_transition_validation.py
+186 tests/core/timeline/test_transition_validation.py
+
+codex
+Implemented branch-only changes in the validator and direct tests.
+
+- Added `document_kind="canonical"` for incoming declarations. Native compiled outgoing validation remains the default.
+- Canonical validation permits first clips, gaps, overlaps, oversized windows, and aliases. It rejects malformed and nonfinite durations.
+- Existing behavior tests remain unchanged.
+
+**Contract finding:** a predecessor-fit restriction would also reject ratified oversized windows. Canonical validation therefore imposes no pair-fit limit; predecessor/preroll pairing remains the compiler’s responsibility.
+
+**Caller seam remains open:** canonical admission at `managed_timeline.py:787` shares `validate_timeline` with raw/native serialization at `banodoco_composer.py:185,271` and container validation at `banodoco_schema.py:581`. Canonical boundaries must explicitly select the layer alongside the paired conversion. Those caller edits exceed this task’s scope.
+
+Validation:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/timeline/test_transition_validation.py tests/test_schema_contract.py
+```
+
+105 passed; 6 subtests passed.
+
+```bash
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/core/timeline/validators/timeline.py tests/core/timeline/test_transition_validation.py
+git diff --check
+```
+
+Both passed. No full/socket tests or render parity verification ran.
+
+Wrote both required `commit-msg` and `commit-msg.txt` files. No commit or merge performed. Next: review paired conversion and canonical caller wiring; merge only after PLAN records M1.
+tokens used
+81,237
+Implemented branch-only changes in the validator and direct tests.
+
+- Added `document_kind="canonical"` for incoming declarations. Native compiled outgoing validation remains the default.
+- Canonical validation permits first clips, gaps, overlaps, oversized windows, and aliases. It rejects malformed and nonfinite durations.
+- Existing behavior tests remain unchanged.
+
+**Contract finding:** a predecessor-fit restriction would also reject ratified oversized windows. Canonical validation therefore imposes no pair-fit limit; predecessor/preroll pairing remains the compiler’s responsibility.
+
+**Caller seam remains open:** canonical admission at `managed_timeline.py:787` shares `validate_timeline` with raw/native serialization at `banodoco_composer.py:185,271` and container validation at `banodoco_schema.py:581`. Canonical boundaries must explicitly select the layer alongside the paired conversion. Those caller edits exceed this task’s scope.
+
+Validation:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/timeline/test_transition_validation.py tests/test_schema_contract.py
+```
+
+105 passed; 6 subtests passed.
+
+```bash
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/core/timeline/validators/timeline.py tests/core/timeline/test_transition_validation.py
+git diff --check
+```
+
+Both passed. No full/socket tests or render parity verification ran.
+
+Wrote both required `commit-msg` and `commit-msg.txt` files. No commit or merge performed. Next: review paired conversion and canonical caller wiring; merge only after PLAN records M1.

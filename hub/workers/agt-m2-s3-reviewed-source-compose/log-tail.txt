@@ -1,0 +1,400 @@
+from __future__ import annotations
+
+import base64
+import copy
+import json
+import shutil
+from contextlib import contextmanager
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+import yaml
+
+from astrid.core.element import project_packs as packs
+from astrid.sdk.contracts import DomainResult, ErrorObject
+from astrid.sdk.timeline import commands, commit
+from astrid.sdk.timeline._clip_commands import capture_clip_add
+from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
+from astrid.sdk.timeline.capture import capture_track_create
+from tests.core import test_project_packs
+from tests.helpers.runtime import use_runtime
+
+pytestmark = pytest.mark.integration
+REF = 'parent/clip:effect'
+configured_project_pack = test_project_packs.configured
+
+
+@pytest.fixture
+def retained_pack(configured_project_pack, tmp_path, monkeypatch):
+    use_runtime()
+    from runtime_protocol.errors import NotFoundError
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_port import route_path
+
+    root = tmp_path / 'realm'
+    RealmStore.initialize(root, realm_id='realm').close()
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    project = service.create_project({'slug': 'selected-schema', 'name': 'Selected schema'})['id']
+    service.create_timeline(project, 'film', idempotency_key='create-film')
+    case = SimpleNamespace(service=service, project=project, root=root)
+
+    class Documents:
+        def _identity(self):
+            return {'realm_id': 'realm'}
+
+        def show(self, document, *, project):
+............                                                                       [100%]
+2 passed in 16.60s
+
+exec
+/bin/bash -lc 'git -C /home/user/work/runtime rev-parse HEAD && git diff --exit-code HEAD -- tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py && tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes/runtime-final.log' in /home/user/work/wt/agt-m2-s3-reviewed-source-compose
+ succeeded in 35ms:
+129493b2aff614560d9b7ac2577957e799cf30ec
+................
+ succeeded in 145385ms:
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes/write_report.py <<'PY'
+from pathlib import Path
+import json
+
+N = Path(__file__).resolve().parent
+ROOT = N.parent
+ORCH = ROOT.parent.parent
+s = json.loads((N / 'schema-summary.json').read_text())
+report = '''# S3 reviewed native source candidate
+
+Prepared on assigned CURRENTsafeS2 base "'`9cb10904`; branch preparation only. The harness/manager must publish the actual final commit SHA and tree. No integration merge, public freeze, published schema/client generation, pin change, producer-action import, text-handler/carrier-map recovery, legacy cutover, or shared dependency write occurred.
+
+## Exact schema and scope
+
+Canonical candidate: `astrid/core/timeline/schema/edit-command.schema.json`.
+
+- Raw SHA256: `CANDIDATE_HASH`.
+- **54 definitions / 28 operations.** The brief'"'s expected **55/28 is inconsistent with approved source "'`7afcd2da`**: parent swap reuses `OccurrenceSwapMediaArgs` and introduces no definition. I retained that approved shape instead of inventing a redundant definition.
+- Full base S2 raw SHA256: `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`, 48 definitions / 22 operations. No definition or operation removed; all original 22 operation clauses are unchanged.
+- Six added definitions: `AssembledTargetArgs`, `ClipAddMediaArgs`, `TimelineInitArgs`, `WordAnchor`, `ClipAnchorArgs`, `OccurrenceCreateArgs`.
+- Six added operations: `timeline.assembled-target`, `clip.add-media`, `timeline.init`, `clip.anchor`, `occurrence.create`, `clip.swap-media`.
+- Existing-definition changes are exactly swap'"'s approved "'`Intent.ownership += parent` and the `ClipSetArgs` description naming both scoped swap operations. Removing the six additions and reversing those two exact changes yields complete frozen S2 exactly. Frozen S1, current/word and all previously recorded published floors remain guarded. Exact source slices and registry inventory are asserted in the main SDK suite.
+
+Sources were read with git show/diff/archive and applied as bounded working-file deltas: `b5cfce50` (only its reviewed parent `905cdcfa`, init `487ca1e0`, word `9f474fec` cohort; already-current producer/selected-element infrastructure retained), grouped cache `9ccf10ec`, independently identified pin repair `826fa683`, first occurrence `206f40fe` plus quantizer `7f3fc728`, and ONLY native parent-swap feature `7afcd2da`. No partial older schema replaced current S2. The occurrence pin repair was inspected first: the actual product delta adds placements to the existing surviving-pin scan.
+
+Current compiler facade, CLI/native video paths, checkout/history, duplicate reload/root-identity repair, placement/pool logic, producer module, rebase/session, public generated clients, `runtime.lock.json`, `artifacts.json` and CLI surface compare unchanged to assigned base. The eight-line reviewed timing evaluator delta retains current numeric helpers. Parent swaps preserve raw media aliases, source windows/hold/speed, incoming transition and opaque fields; source tests retain all original occurrence positives.
+
+## Composition decisions requiring independent review
+
+1. `_inverse_media_removals` retains BOTH authenticated `Recording.create_entity(..., restoring=True)` replay markers AND per-record `restoration_orders` / `arrange`. Neither source'"'s proof is discarded.
+2. Combining grouped-cache staging with occurrence birth initially raised "'`KeyError: selections`: the cache guard coalescer used synthetic write-only records, while the new child-insertion logic requires authentic collection order/created facts. `coalesce(..., cache_stages=...)` now stages those cache writes while retaining the original records, identities and accepted-boundary access. The original grouped-birth recipe and the new real joint lifecycle both catch this overlap.
+3. The full pristine chain'"'s grouped redo initially refused "'`invalid transcript source identity`, because undo removed the source occurrence/media together with its anchored clip. Hydration now permits that restored pin/media pair only when BOTH appear together in an authenticated accepted closure already loaded by the provider. Exact pin/digest/project/media checks, Runtime reads and final compiler validation remain. No current/foreign/transcript-only assertion grants authority.
+4. Parent swap'"'s authoritative raw-parent scan and parent's bounded declared-reference scan overlap. The first join missed "'`parent.config.effects` and failed three original producer-insertion dependent-refusal cases. Both raw parent and its config are now scanned, using authoritative raw clips for their mirrors; occurrence/shot scans remain. All three original refusal assertions are unchanged and pass in the final affected lane.
+5. Independent parent-birth and parent-swap Runtime sources both introduced the same test filename with different fixtures. Birth remains `test_commit_runtime_parent_media.py`; swap is preserved as `test_commit_runtime_parent_media_swap.py`, with its fixture subprocess import updated. No positive was removed.
+6. The occurrence Runtime test'"'s private generator fixture now also runs the normal artifact-manifest generator/check before service acceptance. This fixes stale private manifests, without changing public artifacts or weakening any test.
+
+These are actual source interactions, not approvals to widen beyond the reviewed recipes. Grouped authored/cache ABA, before/after provenance, surviving opaque occurrence pins, explicit stable word identity and transcript pin, references and reserved IDs remain required. No new xfail/skip/refusal expectation was introduced.
+
+## Validation and exact commands
+
+Commands ran directly because these targeted suites use in-process services without localhost/browser/live sockets. No full/full* suite or make check was requested/run. Counts overlap and must not be summed as unique behaviors.
+
+"'```sh
+W=/home/user/work/wt/agt-m2-s3-reviewed-source-compose
+N=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes
+P=/home/user/work/venv-agent/bin/python
+cd "$W"
+export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$W"
+```
+
+Private whole-candidate Runtime provenance: immutable `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, normal complete candidate schema at ordinary `contract/schemas/edit-command.json`, with normal generation and artifact manifest generation/check. Historical word seed is `80973d34ae10e498d7213c30287012c9876f4b1a`; historical swap seed is `b2a1d9fd82121a5509769531a2e91aece97d78b9`. These use real public historical admission/settlement/storage, then reopen current private Runtime; no fabricated history, SQL, prepared provider, renderer, raw override, or manual generated edits. `private-runtime-delta.json` compares every tracked Runtime file against that immutable source: only the ordinary input, expected generated artifacts and manifest differ. Private source archives/temp realms are removed after use; `prepare_sources.py` recreates them.
+
+```sh
+python3 "$N/prepare_sources.py"
+# Normal script commands performed inside private runtime-s2:
+/home/user/work/venv-runtime/bin/python generators/generate.py
+/home/user/work/venv-runtime/bin/python generators/generate.py --check
+/home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py
+/home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py --check
+```
+
+All four commands pass (`private-generation.log`). Public 0.2.13 inputs/clients and normal producer/client lock remain unchanged. Birth'"'s separate self-generating fixture archived current Runtime "'`129493b2aff614560d9b7ac2577957e799cf30ec` and also ran those normal generation/manifest checks; this is additional private proof, not a published pair.
+
+Final source/schema floor selection: **10 passed / 20 deselected**, exit 0 (`schema-floor-final.log`). The 20 conservative mutation controls were also all green in the initial broader run described below.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/sdk/test_timeline_current_union_schema.py -k '"'full_current_candidate or next_successor or each_added or all_published or inventory'
+"'```
+
+Exact-count/floor/source/inventory follow-up: **4 passed**, exit 0.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_pristine_initialize.py::test_complete_s2_schema_is_retained_additively tests/sdk/test_timeline_current_union_schema.py::test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions tests/sdk/test_timeline_current_union_schema.py::test_each_added_definition_and_operation_matches_its_approved_source tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort
+```
+
+Portable recipe lane: **565 passed / 4 original strict xfailed**, exit 0 (`portable-final.log`).
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q --basetemp="$N/tmp-portable-final" tests/sdk/test_timeline_composed_schema.py tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_native_word_anchor_vectors.py tests/sdk/test_timeline_pristine_initialize_provider.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_clip_delete.py tests/test_timeline_clip_replacement.py
+```
+
+After the last parent-config scan correction, all affected source/media/inverse files: **249 passed / 4 original strict xfailed**, exit 0 (`inverse-final.log`). This includes the three previously failing original declared-dependent controls.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q --basetemp="$N/tmp-inverse-final" tests/editing_conformance/test_producer_insertion.py tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_recipe_occurrence_create.py
+```
+
+Current-behavior lane: **1,173 passed / 3 failed before the config scan correction**, exit 1 (`current-neighbors.log`). The three failures are exactly the repaired declared-dependent controls above. The other 1,173 were not rerun as a whole after that bounded correction; final affected tests were rerun instead. No current CLI/native video/duplicate/history test failed.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q --basetemp="$N/tmp-current" tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/sdk/test_native_timeline_facades.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_restore_recovery.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m2_video_unplace.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_auto_placement_reads.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_clip_set_element.py tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py tests/editing_conformance/test_producer_insertion.py tests/packs/timeline/test_cli_commit_trim.py tests/packs/timeline/test_cli_native_sheet.py tests/sdk/test_timeline_native_checkout.py tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_sheet_native.py
+```
+
+Real-service full focused source cohort: **142 passed / exactly 2 original fixture import failures**, exit 1 (`runtime.log`). Runs before the last config-scan correction, which is covered by final affected tests and final Runtime lane below.
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2" ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-word" ASTRID_PARENT_MEDIA_SEED_RUNTIME="$N/historical-parent" "$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration --basetemp="$N/tmp-runtime" tests/editing_conformance/test_commit_runtime_parent_media.py tests/editing_conformance/test_commit_runtime_parent_media_swap.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_next_command_cohort_runtime.py tests/editing_conformance/test_s3_reviewed_cohort_runtime.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_timing_retained_inputs.py
+```
+
+Final current-S2/native-swap/joint/retained-PARAM/producer service lane: **RUNTIME_FINAL_RESULT**, exit RUNTIME_FINAL_EXIT (`runtime-final.log`). `--runxfail` deliberately executes the original producer positive on the private successor rather than treating its old-public-pin marker as success.
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2" ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-word" ASTRID_PARENT_MEDIA_SEED_RUNTIME="$N/historical-parent" "$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration --runxfail --basetemp="$N/tmp-runtime-final" tests/editing_conformance/test_commit_runtime_parent_media_swap.py tests/editing_conformance/test_next_command_cohort_runtime.py tests/editing_conformance/test_s3_reviewed_cohort_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_producer_guard_runtime.py
+```
+
+Final original normally generated birth/reservation/quantizer controls: **BIRTH_FINAL_RESULT**, exit BIRTH_FINAL_EXIT (`birth-runtime-final.log`).
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime "$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration --basetemp="$N/tmp-birth-runtime-final" tests/editing_conformance/test_commit_runtime_occurrence_create.py
+```
+
+The new `test_s3_reviewed_cohort_runtime.py` proves pristine init → first semantic occurrence/shot/internal birth → child track/video → parent media add/swap/delete → explicit second-of-same-text word identity+pin → exact whole-group undo/redo → immutable reload/restart/exact retries; an independently attempted referenced birth undo refuses without writes. It has no historical authored baseline. Original occurrence birth controls cover reserved/occupied/retired identities and project-wide shot reservation; original grouped/word controls cover author-vs-cache writes, ABA and surviving opaque parent/shot/occurrence pins. Swap'"'s real fixture retains decodable PNG/MP4 sources and renderer traps.
+
+Product Ruff and all changed/new test E4/E7/E9/F/I checks pass. Exact expanded commands are in "'`lint-product-final-command.txt` and `lint-tests-final-command.txt`; all use `--no-cache`. Twelve inherited test import-order diagnostics were corrected without assertion changes. `remote.py` baseline and candidate each have the same 121 existing Ruff diagnostics, zero additions (`remote-lint-baseline.json`). `git diff --check` passes. Read-only Agent `python scripts/artifact_manifest.py --check` passes with public manifest unchanged.
+
+## Exact remaining gaps
+
+The two original failing nodes remain unchanged, with no skip/xfail/expectation rewrite:
+
+- `tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[add]`
+- `tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[swap]`
+
+Both fail at line 26 importing retired `_binding_descriptor` from Runtime'"'s "'`timeline_commit_film_fixture`, before Agent execution/admission. The file is byte-identical to assigned base; the independent grouped review already reproduced the same baseline pair. That fixture also depends on retired text-binding/publication setup. I did not substitute untrusted authored history or broaden this composition into its admission migration. Those original positive requirements remain live and unqualified by those nodes; genuine native acceptance is covered separately above.
+
+Four inherited strict expected failures remain live in `test_recipe_m2_parent_media.py`: three parameterizations of `test_completion_builder_places_a_parent_clip_after_the_anchor_or_at_the_track_end` (`image/ov-a/anchor-after/60`, `video/None/lane-end/210`, `image/gone/lane-end/210`), and `test_completion_builder_needs_a_parent_track_and_matching_ownership`. Parent saved-policy/consumed timing/track auto-placement recovery is not claimed.
+
+No full suite, HTTP/socket/browser/App journey, released client pair, authentic requester/producer-action cutover, writer retirement, renderer/pixel/audio parity, actual owner film or macOS qualification is claimed. Public publication/generation/freeze/pins remain held. Independent review must inspect the composed working tree, particularly the three actual inverse/hydration overlaps and the 54-vs-55 count discrepancy, before any manager gate. Then the manager publishes the harness SHA/tree and chooses the coordinated release/consumer step. No execution blocker remains for this bounded branch preparation.
+
+## Product-path delta
+
+Net lines are against assigned base (generated schema is shown separately from authored Python). All added code is in the assigned Agent source tree.
+
+PRODUCT_DELTA
+'"'''
+report = report.replace('CANDIDATE_HASH', s['candidate_raw_sha256']).replace('PRODUCT_DELTA', (N / 'product-delta.md').read_text())
+for placeholder, filename in [('RUNTIME_FINAL', 'runtime-final.log'), ('BIRTH_FINAL', 'birth-runtime-final.log')]:
+    lines = (N / filename).read_text().splitlines()
+    result = next((line for line in reversed(lines) if ' passed' in line and ' in ' in line), 'PENDING')
+    failed = any(line.startswith('FAILED ') for line in lines)
+    report = report.replace(placeholder + '_RESULT', result).replace(placeholder + '_EXIT', '1' if failed else '0')
+(N / 'report.md').write_text(report)
+summary = f'''# Agent S3 reviewed native source candidate
+
+Prepared only on CURRENTsafeS2 "'`9cb10904`; the manager/harness must supply the actual committed SHA/tree. No integration merge, freeze, public generation/pin, public 0.2.13 mutation or requester/text recovery.
+
+Canonical schema SHA256: `{s['"'candidate_raw_sha256']}"'` — **54 definitions / 28 operations**. The brief'"'s 55/28 expectation does not match approved parent-swap source "'`7afcd2da`, which reuses `OccurrenceSwapMediaArgs`; no extra definition was invented. Complete S2 48/22 (`a6f1aaa9…`) survives, with no removed definitions/operations and every original operation clause unchanged. Exact additions: {'"', '.join('"'`'"'+x+'"'`'"' for x in s['added_definitions'])}; operations {', '.join('"'`'"'+x+'"'`'"' for x in s['added_operations'])}. Only existing-definition updates are approved parent ownership and the ClipSetArgs description.
+
+Composed "'`b5cfce50` reviewed parent/init/word source, `9ccf10ec` cache staging + `826fa683` surviving occurrence pin repair, `206f40fe` birth + `7f3fc728` quantizer fix, and native-only `7afcd2da` parent swap. Current CLI/video/history/duplicate reload fix and producer/client lock remain unchanged. No partial source schema selected.
+
+Actual join fixes for independent review: preserve accepted record metadata while staging cache writes; rehydrate a restored word pin/media pair only from the same authenticated accepted closure; retain parent.config declared dependents together with authoritative raw-parent swap scans. `_inverse_media_removals` keeps BOTH authenticated new-birth replay and restoration orders/arrange. The exact pristine native chain now proves grouped undo/redo/reload/restart and stable second-of-same-echo word identity+pin.
+
+Evidence (overlapping counts): portable **565 pass / 4 original xfail**; final affected inverse **249 pass / 4 original xfail**; current neighbors **1173 pass / 3 initially failing declared-dependent cases, all repaired and passing in final affected lane**; real source cohort **142 pass / 2 exact original fixture-import failures**; schema floor **10 pass** plus **4 exact slice/inventory controls**. Final service and birth outcomes are in the detailed report. Normal private whole-candidate Runtime2c generators and manifest checks pass; generated changes limited to normal input/artifacts. All final changed-file lint and whitespace checks pass.
+
+The two original `_binding_descriptor` nodes ([add], [swap]) remain unchanged and explicitly unqualified; four original parent-auto positives remain strict expected failures. No new expected failures, skips, disabled tests or weakened positives. No full/full*, App/browser/HTTP/public client/owner-film/macOS qualification.
+
+[Detailed report with exact commands, results, product paths and gaps]({N / '"'report.md'}). Independent review is the next gate; do not publish/freeze this as a consumer tuple yet.
+'''
+(ORCH / 'design/agent-s3-reviewed-source-candidate.md').write_text(summary)
+PY" in /home/user/work/wt/agt-m2-s3-reviewed-source-compose
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'git diff -- tests/editing_conformance/test_recorded_graph_roots.py && tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes/runtime-final.log && tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes/birth-runtime-final.log' in /home/user/work/wt/agt-m2-s3-reviewed-source-compose
+ succeeded in 0ms:
+diff --git a/tests/editing_conformance/test_recorded_graph_roots.py b/tests/editing_conformance/test_recorded_graph_roots.py
+index b5dab309..7a7ab3b7 100644
+--- a/tests/editing_conformance/test_recorded_graph_roots.py
++++ b/tests/editing_conformance/test_recorded_graph_roots.py
+@@ -468,10 +468,12 @@ def test_creation_inverse_redo_reuses_exact_roots(root_ops):
+     assert document_from_bundle(redone.bundle) == document_from_bundle(plan.bundle)
+ 
+ 
+-def test_public_registry_and_closed_track_args_are_unchanged():
+-    for op in ('test.create-roots', 'shot.create', 'occurrence.create'):
++def test_fixture_root_ops_stay_private_and_public_create_args_stay_closed():
++    for op in ('test.create-roots', 'shot.create'):
+         with pytest.raises(CommandError, match='unsupported operation'):
+             commands.validate_command({**create_command(), 'op': op})
++    with pytest.raises(CommandError):
++        commands.validate_command({**create_command(), 'op': 'occurrence.create'})
+     with pytest.raises(CommandError):
+         commands.validate_command({'schema_version': 1, 'op': 'track.create', 'version': '1',
+                                    'select': 'parent', 'args': {'row': {'id': 'v', 'kind': 'visual'},
+...........................................................              [100%]
+59 passed in 143.62s (0:02:23)
+..                                                                       [100%]
+2 passed in 16.60s
+
+codex
+Final service checks pass: 59 tests cover parent swap, the joint lifecycle, retained schema/PARAM behavior, and producer guards. The regenerated birth fixture also passes both tests with generator and manifest checks. I’ll record the schema hash and remaining fixture debt, remove the private test trees, and leave the candidate ready for independent review.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes/write_report.py')
+s=p.read_text().replace('## Exact remaining gaps', '''## Initial diagnostics retained honestly
+
+- The initial five-file schema/birth/cache/swap/root run returned **133 passed / 1 failed** (the grouped-birth metadata overlap). All 30 schema tests, including the 20 conservative mutation controls, passed in that run. Exact command: "'`"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/sdk/test_timeline_current_union_schema.py tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recorded_graph_roots.py`.
+- The first large portable command (same selection as final portable, `--basetemp="$N/tmp-portable"`) returned **564 passed / 1 failed / 4 original xfailed**. The sole remaining failure was the inherited pristine test'"'s stale 53-definition count. Its exact S2 semantic digest remains unchanged after removing reviewed additions.
+- Joint probes ("'`-m integration --basetemp="$N/tmp-joint"`, then `tmp-joint-final`, then `tmp-joint-redo`, only `test_s3_reviewed_cohort_runtime.py`, private `runtime-s2`) first exposed missing coalescer metadata, then restored transcript/media hydration; the corrected final probe passed and the final service lane reran it.
+- A separate read-only manifest check of the first self-generated birth Runtime found the stale generated manifest. The fixture now generates/checks it normally before testing; the final original two tests pass with that fixture. The earlier original two tests also passed semantics before this fixture-manifest improvement.
+- No failure was hidden by a skip, weakened assertion or new expected-failure marker.
+
+## Exact remaining gaps'"''')
+s=s.replace('Final service and birth outcomes are in the detailed report.', 'Final service **59 pass** and normally generated birth **2 pass**. Exact commands and limits are in the detailed report.')
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes/write_report.py
+rg -n 'PENDING|RESULT|FINAL_EXIT|54|59 passed|2 passed' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes/report.md" in /home/user/work/wt/agt-m2-s3-reviewed-source-compose
+ succeeded in 234ms:
+10:- **54 definitions / 28 operations.** The brief's expected **55/28 is inconsistent with approved source `7afcd2da`**: parent swap reuses `OccurrenceSwapMediaArgs` and introduces no definition. I retained that approved shape instead of inventing a redundant definition.
+86:Real-service full focused source cohort: **142 passed / exactly 2 original fixture import failures**, exit 1 (`runtime.log`). Runs before the last config-scan correction, which is covered by final affected tests and final Runtime lane below.
+92:Final current-S2/native-swap/joint/retained-PARAM/producer service lane: **59 passed in 143.62s (0:02:23)**, exit 0 (`runtime-final.log`). `--runxfail` deliberately executes the original producer positive on the private successor rather than treating its old-public-pin marker as success.
+98:Final original normally generated birth/reservation/quantizer controls: **2 passed in 16.60s**, exit 0 (`birth-runtime-final.log`).
+127:No full suite, HTTP/socket/browser/App journey, released client pair, authentic requester/producer-action cutover, writer retirement, renderer/pixel/audio parity, actual owner film or macOS qualification is claimed. Public publication/generation/freeze/pins remain held. Independent review must inspect the composed working tree, particularly the three actual inverse/hydration overlaps and the 54-vs-55 count discrepancy, before any manager gate. Then the manager publishes the harness SHA/tree and chooses the coordinated release/consumer step. No execution blocker remains for this bounded branch preparation.
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import shutil
+root=Path('/home/user/work/wt/agt-m2-s3-reviewed-source-compose')
+removed=0
+for path in sorted(root.rglob('__pycache__'),key=lambda p:len(p.parts),reverse=True):
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path);removed+=1
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes')
+for path in notes.iterdir():
+    if path.is_dir() and (path.name.startswith('tmp-') or path.name in ('runtime-s2','historical-word','historical-parent')):
+        shutil.rmtree(path)
+for path in notes.glob('*.rej'):
+    path.unlink()
+for name in ('compose.py','resolve.py','write_report.py'):
+    (notes/name).unlink()
+print(f'Removed {removed} local bytecode cache directories and private test/source trees.')
+worker=notes.parent
+(worker/'commit-msg').write_text('''feat(timeline): prepare reviewed native S3 source cohort
+
+Compose pristine initialization, parent media birth and swap, stable word
+anchors, and first canonical occurrence birth over the complete current S2
+schema. Retain grouped cache provenance, surviving occurrence pins, native
+video behavior, duplicate root identities, and current public client pins.
+
+Preserve authenticated birth replay and restoration order proofs together.
+Keep accepted metadata during cache staging, restore word pin/media pairs
+only from accepted closures, and scan both raw parent and config dependents.
+Add the pristine joint undo/redo/reload/restart journey and exact schema floor.
+
+Leave publication and consumer cutover for independent review. Retain the
+two original legacy manifest fixture failures and deferred parent-auto tests.
+''')
+PY
+git diff --check && git status --short" in /home/user/work/wt/agt-m2-s3-reviewed-source-compose
+ succeeded in 7470ms:
+Removed 18 local bytecode cache directories and private test/source trees.
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline/__init__.py
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_delete_commands.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_root_inverse.py
+ M astrid/sdk/timeline/_timing_evaluators.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M tests/editing_conformance/test_commit_runtime_occurrence_media.py
+ M tests/editing_conformance/test_recipe_clip_delete.py
+ M tests/editing_conformance/test_recorded_graph_roots.py
+ M tests/editing_conformance/test_timing_retained_inputs.py
+ M tests/sdk/test_timeline_current_union_schema.py
+ M tests/test_timeline_clip_replacement.py
+?? astrid/sdk/timeline/native_initialize.py
+?? astrid/sdk/timeline/native_occurrence_create.py
+?? astrid/sdk/timeline/native_parent_media_commands.py
+?? astrid/sdk/timeline/native_word_anchor.py
+?? astrid/sdk/timeline_media_replacement.py
+?? tests/editing_conformance/fixtures/native_word_anchor.json
+?? tests/editing_conformance/fixtures/pristine_initialize.json
+?? tests/editing_conformance/fixtures/recipe_m2_parent_media.json
+?? tests/editing_conformance/fixtures/recipe_parent_media.json
+?? tests/editing_conformance/fixtures/reviewed_native_s3.json
+?? tests/editing_conformance/native_word_anchor_fixture.py
+?? tests/editing_conformance/test_commit_runtime_occurrence_create.py
+?? tests/editing_conformance/test_commit_runtime_parent_media.py
+?? tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+?? tests/editing_conformance/test_grouped_clip_cache_inverse.py
+?? tests/editing_conformance/test_native_word_anchor.py
+?? tests/editing_conformance/test_native_word_anchor_vectors.py
+?? tests/editing_conformance/test_next_command_cohort_runtime.py
+?? tests/editing_conformance/test_pristine_initialize.py
+?? tests/editing_conformance/test_producer_insertion.py
+?? tests/editing_conformance/test_recipe_m2_parent_media.py
+?? tests/editing_conformance/test_recipe_occurrence_create.py
+?? tests/editing_conformance/test_recipe_parent_media.py
+?? tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+?? tests/fixtures/current-union-command-schemas/agent-frozen-s2-26ef2bbb.json
+?? tests/fixtures/current-union-command-schemas/agent-word-caea687e.json
+?? tests/fixtures/current-union-command-schemas/next-command-additions.json
+?? tests/sdk/test_timeline_pristine_initialize_provider.py
+?? tests/sdk/test_timeline_pristine_initialize_runtime.py
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import hashlib,json,subprocess
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=orch/'workers/agt-m2-s3-reviewed-source-compose'
+for path in (worker/'notes/report.md',orch/'design/agent-s3-reviewed-source-candidate.md',worker/'commit-msg'):
+    assert path.is_file() and path.stat().st_size
+    assert 'PENDING' not in path.read_text()
+raw=Path('astrid/core/timeline/schema/edit-command.schema.json').read_bytes()
+assert hashlib.sha256(raw).hexdigest()=='8a55a9fd84d6fc188e48f63976dacc1c27ea25c7747ea88e7eba7589974dd85a'
+s=json.loads(raw)
+assert (len(s['"'$defs'"']),len(s['"'$defs'"']['EditCommand']['allOf']))==(54,28)
+subprocess.run(['git','diff','--check'],check=True)
+(worker/'DONE').touch()
+print('Reports, commit message and empty DONE are present; schema 54/28, final whitespace check passed.')
+PY" in /home/user/work/wt/agt-m2-s3-reviewed-source-compose
+ succeeded in 627ms:
+Reports, commit message and empty DONE are present; schema 54/28, final whitespace check passed.
+
+codex
+Prepared the reviewed S3 candidate; wrote reports, commit message, and `DONE`.
+
+- Schema: **54 definitions / 28 operations**. Approved swap reuses existing args, explaining the brief’s 55-definition discrepancy.
+- Tests: **565 portable passed**, **249 final inverse passed**, **59 final service passed**, **2 birth passed**.
+- Two original fixture failures and four deferred auto expected failures remain explicit.
+- Public pins and integration remain unchanged. Independent review is next.
+
+[Detailed report with exact commands, schema hash, product delta, and gaps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes/report.md).
+tokens used
+256,189
+Prepared the reviewed S3 candidate; wrote reports, commit message, and `DONE`.
+
+- Schema: **54 definitions / 28 operations**. Approved swap reuses existing args, explaining the brief’s 55-definition discrepancy.
+- Tests: **565 portable passed**, **249 final inverse passed**, **59 final service passed**, **2 birth passed**.
+- Two original fixture failures and four deferred auto expected failures remain explicit.
+- Public pins and integration remain unchanged. Independent review is next.
+
+[Detailed report with exact commands, schema hash, product delta, and gaps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-s3-reviewed-source-compose/notes/report.md).

@@ -1,0 +1,400 @@
++                commands.append(capture_text_binding_set(
++                    candidate, f"occurrence:{occurrence_id}",
++                    {"kind": "voiceover_script", "slot": None}, text=descriptor,
++                    verified_text=[{**descriptor, "utf8": True}]))
++            except Exception as exc:
++                gaps.append({"occurrence_id": occurrence_id, "capability": "text-binding.set",
++                             "reason": f"exact pinned text capture failed: {exc}"})
++        else:
++            gaps.append({"occurrence_id": occurrence_id, "capability": "text-binding.set",
++                         "reason": "producer lacks the exact registered UTF-8 text descriptor/order pin"})
++        gaps.append({"occurrence_id": occurrence_id,
++                     "capability": "generated audio media and timing",
++                     "reason": "registered EditCommands accept image/video media only and do not set audio source duration"})
++    return commands, gaps
++
++
++def _commit_voiceover_proposal(client, project: str, timeline: str, proposal: Mapping[str, Any]):
++    """Commit an approved native proposal through the existing durable outbox."""
++    from astrid.sdk.timeline.sync import TimelineSession
++
++    session = TimelineSession.open(project, timeline, client=client)
++    key = "voiceover-" + proposal["proposal_digest"].removeprefix("sha256:")
++    return session.commit_many(
++        proposal["commands"], idempotency_key=key,
++        via="voiceover-proposal:" + proposal["proposal_digest"],
++    )
++
++
+ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
+                          settings=None, occurrence_ids=None, adopt_clip_ids=None,
+                          padding_seconds=0.15, plan_only=False) -> dict:
+@@ -464,14 +544,26 @@
+     prepared = prepare_draft_voiceover(candidate, scripts,
+         synthesize=runtime_synthesizer(client, project_id), timing_policy=timing_policy,
+         padding_seconds=padding_seconds, available_media_ids=available_media_ids, **options)
+-    # Detect edits made while generation was in flight. Publication repeats the
+-    # check and Runtime CAS closes the final race. Never rebase stale speech.
++    # Detect edits made while generation was in flight. The requester/outbox
++    # commit repeats the check and Runtime CAS closes the final race. Never
++    # rebase stale speech.
+     current = _data(client.timelines.open_composition(project_id, timeline_id))
+     if current["summary"]["head_revision_id"] != head:
+         raise VoiceoverSyncError("Timeline changed during synthesis; rerun sync from its new head")
+     bound.validate(prepared["candidate"])
+     diff = bound.diff(prepared["candidate"])
+     frozen = bound.preview(prepared["candidate"])
+-    receipt = bound.publish(prepared["candidate"], idempotency_key=frozen["candidate_digest"])
++    commands, gaps = _voiceover_proposal_commands(
++        prepared["candidate"], scripts, prepared["generated"])
++    proposal = bound.proposal(
++        prepared["candidate"], commands,
++        rationale="draft voiceover generated from the pinned composition script",
++    )
++    if gaps:
++        return {"status": "proposal_open", "published": False, "plan": plan,
++                "diff": diff, "generated": prepared["generated"],
++                "proposal": proposal, "gaps": gaps,
++                "candidate_digest": frozen.get("candidate_digest")}
++    receipt = _commit_voiceover_proposal(client, project_id, timeline_id, proposal)
+     return {"status": "published", "published": True, "plan": plan, "diff": diff,
+-            "generated": prepared["generated"], "receipt": receipt}
++            "generated": prepared["generated"], "proposal": proposal, "receipt": receipt}
+diff --git a/astrid/sdk/authoring_remote.py b/astrid/sdk/authoring_remote.py
+index 0f6624e02bbb1fb5b46b243d5d640808f8daf0be..28bdbffeb984ca0c0783d4ef2f254b834949d3d5
+--- a/astrid/sdk/authoring_remote.py
++++ b/astrid/sdk/authoring_remote.py
+@@ -6,31 +6,29 @@
+ trusted launch input: callers cannot choose a different endpoint, project,
+ timeline, or parent head after the session is opened.
+ 
+-The generic pack worker currently has only task/CAS scopes and does not receive
+-this pinned closure, so it cannot safely use ``publish`` today.  A worker with
+-an explicitly provisioned project-scoped credential may use this seam; the
+-normal pack-host credential must remain read/settle-only until Runtime adds a
+-task-bound authoring capability.
++Producers hand off native EditCommand proposals through this seam.  The
++requester remains responsible for approval and durable-outbox commit; this
++module never acquires a publication writer.
+ """
+ 
+ from __future__ import annotations
+ 
+ from dataclasses import dataclass
+-import re
++import hashlib
+ from typing import Any, Mapping
+ 
++from astrid.core.receipts.canonical import canonical_json
++
+ from astrid.core.timeline.authoring_bundle import (
+     AuthoringBundleError,
+     compile_authoring_candidate,
+     diff_authoring_candidate,
+     open_authoring_bundle,
+     preview_authoring_candidate,
+-    publish_authoring_candidate,
+     validate_authoring_candidate,
+ )
+ 
+ from .workspace_client import WorkspaceClientError, validate_runtime_endpoint
+-from .pagination import paged_rows
+ 
+ __all__ = ["AuthoringRemoteError", "TargetBoundAuthoringBundle"]
+ 
+@@ -62,23 +60,6 @@
+     return value.strip()
+ 
+ 
+-def _transport_idempotency_key(value: str) -> str:
+-    """Normalize a stable caller key to Runtime's transport spelling."""
+-    key = value.strip()
+-    if not key:
+-        raise AuthoringRemoteError("idempotency_key must be a non-empty string")
+-    if key.startswith("sha256:"):
+-        key = "candidate-" + key.removeprefix("sha256:")
+-    key = re.sub(r"[^A-Za-z0-9._~-]", "-", key)
+-    if not key[0].isalnum():
+-        key = f"candidate-{key}"
+-    try:
+-        key.encode("ascii")
+-    except UnicodeEncodeError as exc:
+-        raise AuthoringRemoteError("idempotency_key must contain ASCII characters") from exc
+-    return key[:256]
+-
+-
+ @dataclass(frozen=True)
+ class _Target:
+     endpoint: str
+@@ -88,7 +69,7 @@
+ 
+ 
+ class TargetBoundAuthoringBundle:
+-    """Open and publish one exact parent-composition closure.
++    """Open and propose edits for one exact parent-composition closure.
+ 
+     ``target`` must be the coordinator-issued, read-only target descriptor
+     supplied to a worker.  Candidate dictionaries remain ordinary JSON-shaped
+@@ -227,15 +208,15 @@
+     def preview(candidate: Mapping[str, Any]) -> dict[str, Any]:
+         return preview_authoring_candidate(candidate)
+ 
+-    def publish(self, candidate: Mapping[str, Any], *, idempotency_key: str) -> dict[str, Any]:
+-        """Validate target/head/media ownership, then perform one CAS publish."""
++    def proposal(self, candidate: Mapping[str, Any], commands, *, rationale: str = "") -> dict[str, Any]:
++        """Capture one direct EditCommand proposal for the pinned target.
++
++        This is intentionally a producer-side handoff.  It validates the
++        candidate and registered native commands, but never calls Runtime's
++        publication port.  The requester owns durable-outbox commit and binds
++        approval to the returned proposal digest.
++        """
+         identity = self._identity
+-        if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+-            raise AuthoringRemoteError("idempotency_key must be a non-empty string")
+-        # Runtime's transport contract requires an ASCII key whose first
+-        # character is alphanumeric. Candidate digests conventionally use
+-        # the ``sha256:`` prefix, so normalize that common caller spelling.
+-        transport_idempotency_key = _transport_idempotency_key(idempotency_key)
+         if not isinstance(candidate, Mapping):
+             raise AuthoringRemoteError("authoring candidate must be an object")
+         if candidate.get("project_id") != identity.project_id or candidate.get("timeline_id") != identity.timeline_id:
+@@ -243,84 +224,39 @@
+         base_parent = candidate.get("base_parent")
+         if not isinstance(base_parent, Mapping) or base_parent.get("revision_id") != identity.base_head:
+             raise AuthoringRemoteError("authoring candidate base head is not the trusted target head")
+-        rows = paged_rows(self._client.list_timelines, identity.project_id, limit=50) or []
+-        current = next(
+-            (
+-                row for row in rows
+-                if isinstance(row, Mapping)
+-                and str(row.get("timeline_id") or row.get("id")) == identity.timeline_id
+-            ),
+-            None,
+-        )
+-        if not isinstance(current, Mapping):
+-            raise AuthoringRemoteError("authoring target timeline is not in the canonical project listing")
+-        inspection = _data(
+-            self._client.inspect_timeline(
+-                identity.project_id,
+-                identity.timeline_id,
+-                options={"limit": 1, "detail": False},
+-            ),
+-            "inspect_timeline",
+-        )
+-        if inspection.get("is_current_head") is not True:
+-            raise AuthoringRemoteError("authoring target inspection is not the canonical current head")
+-        # Let Runtime evaluate the immutable expected_head after its durable
+-        # accepted-request replay check.  Comparing this observation with the
+-        # pinned base head here would reject a valid identical retry; the
+-        # compiled publication still carries the original expected_head.
+         try:
+-            compilation = compile_authoring_candidate(candidate)
++            compile_authoring_candidate(candidate)
+         except AuthoringBundleError as exc:
+             raise AuthoringRemoteError(f"authoring candidate validation failed: {exc}") from exc
+-        manifest = compilation.publication.get("dependency_manifest")
+-        media = manifest.get("media") if isinstance(manifest, Mapping) else None
+-        if not isinstance(media, list):
+-            raise AuthoringRemoteError("compiled candidate dependency manifest has no media list")
+-        for index, dependency in enumerate(media):
+-            if not isinstance(dependency, Mapping):
+-                raise AuthoringRemoteError(f"compiled media dependency {index} is not an object")
+-            media_id = dependency.get("media_id") or dependency.get("content_digest")
+-            if not isinstance(media_id, str) or not media_id:
+-                raise AuthoringRemoteError(f"compiled media dependency {index} has no media identity")
+-            location = _data(
+-                self._client.get_project_object_location(
+-                    identity.project_id, media_id.removeprefix("sha256:")
+-                ),
+-                "get_project_object_location",
+-            )
+-            if location.get("verified") is not True:
+-                raise AuthoringRemoteError(f"candidate media is not destination-owned: {media_id}")
+-            observed = location.get("digest") or location.get("object_id")
+-            if isinstance(observed, str) and observed.removeprefix("sha256:") != media_id.removeprefix("sha256:"):
+-                raise AuthoringRemoteError(f"destination-owned media digest differs for {media_id}")
+-
+-        class _Writer:
+-            def __init__(self, owner: WorkspaceClient):
+-                self.owner = owner
+-                self.result: Any = None
+-
+-            def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
+-                self.result = self.owner.publish_parent_composition(
+-                    project_id, timeline_id, publication, idempotency_key=idempotency_key
+-                )
+-                return _data(self.result, "publish_parent_composition")
+-
+-        writer = _Writer(self._client)
+         try:
+-            result = publish_authoring_candidate(
+-                candidate, writer, idempotency_key=transport_idempotency_key
+-            )
+-        except (AuthoringBundleError, WorkspaceClientError) as exc:
+-            raise AuthoringRemoteError(f"authoring candidate publication failed: {exc}") from exc
++            captured = list(commands)
++        except TypeError as exc:
++            raise AuthoringRemoteError("EditCommand proposal requires an iterable command list") from exc
++        if any(not isinstance(command, Mapping) for command in captured):
++            raise AuthoringRemoteError("EditCommand proposal commands must be objects")
++        from .timeline.commands import CommandError, validate_command
++        try:
++            for command in captured:
++                validate_command(command)
++        except CommandError as exc:
++            raise AuthoringRemoteError(f"EditCommand proposal contains an invalid command: {exc}") from exc
++        proposal = {
++            "kind": "edit-proposal",
++            "schema_version": 1,
++            "producer": "astrid.packs.video_editing.shared.draft_voiceover",
++            "admitted_target": {
++                "project_id": identity.project_id,
++                "timeline_id": identity.timeline_id,
++                "base_revision_id": identity.base_head,
++            },
++            "commands": [_plain(command) for command in captured],
++            "rationale": rationale,
++        }
++        proposal_digest = "sha256:" + hashlib.sha256(
++            canonical_json(proposal).encode("utf-8")
++        ).hexdigest()
+         return {
+-            "route": "authoring-bundle validate/commit",
+-            "project_id": identity.project_id,
+-            "timeline_id": identity.timeline_id,
+-            "expected_head": identity.base_head,
+-            "candidate_digest": result.get("candidate_digest"),
+-            "identity_mapping": result.get("identity_mapping"),
+-            "publication": result.get("publication"),
+-            "update": result.get("update"),
+-            "summary": result.get("summary"),
+-            "next_actions": result.get("next_actions"),
++            **proposal,
++            "proposal_digest": proposal_digest,
++            "approval_binding": {"proposal_digest": proposal_digest},
+         }
+diff --git a/tests/packs/video_editing/test_draft_voiceover.py b/tests/packs/video_editing/test_draft_voiceover.py
+index c88a4f7235cd8b01376969234d52a4666345b367..c44522e76a8672b5476c5e5137d8f79ae2d4ca23
+--- a/tests/packs/video_editing/test_draft_voiceover.py
++++ b/tests/packs/video_editing/test_draft_voiceover.py
+@@ -189,14 +189,16 @@
+             return media_bytes
+ 
+     class Bound:
+-        def __init__(self):self.published=False
++        def __init__(self):self.published=False;self.fail_publish=fail_publish
+         def open(self):return copy.deepcopy(c)
+         def validate(self,work):return {}
+         def diff(self,work):return {'changes':['audio']}
+         def preview(self,work):return {'candidate_digest':'sha256:'+'3'*64}
+-        def publish(self,work,**kwargs):
+-            if fail_publish:raise RuntimeError('CAS conflict')
+-            self.published=True;return {'publication':{'head':'new'}}
++        def proposal(self,work,commands,**kwargs):
++            digest='sha256:'+'4'*64
++            return {'kind':'edit-proposal','commands':list(commands),
++                    'proposal_digest':digest,
++                    'approval_binding':{'proposal_digest':digest}}
+     bound=Bound(); calls=[0]
+     def opened(*args,**kwargs):
+         calls[0]+=1
+@@ -208,6 +210,17 @@
+     return client,bound
+ 
+ 
++def enable_fake_requester(monkeypatch, bound):
++    """Keep the original coordinator assertions while isolating the requester seam."""
++    monkeypatch.setattr(vo, '_voiceover_proposal_commands', lambda *args: ([], []))
++    def commit(*args):
++        if bound.fail_publish:
++            raise RuntimeError('CAS conflict')
++        bound.published=True
++        return {'publication': {'head': 'new'}}
++    monkeypatch.setattr(vo, '_commit_voiceover_proposal', commit)
++
++
+ def test_coordinator_noop_and_plan_do_not_synthesize_or_publish(monkeypatch):
+     c,s=fixture();client,bound=coordinator_client(c,s)
+     monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:pytest.fail('No synthesis'))
+@@ -226,6 +239,7 @@
+         vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
+     assert not bound.published
+     client,bound=coordinator_client(c,s,fail_publish=True)
++    enable_fake_requester(monkeypatch, bound)
+     with pytest.raises(RuntimeError,match='CAS conflict'):
+         vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
+     assert not bound.published
+@@ -235,17 +249,31 @@
+     c,s=fixture();s['occurrences'][0]['text']='New'
+     monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:synthesis)
+     client,bound=coordinator_client(c,s)
++    enable_fake_requester(monkeypatch, bound)
+     result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
+     assert result['published'] and bound.published
+     assert result['generated'][0]['text']=='New'
+ 
+ 
++def test_coordinator_emits_open_proposal_when_audio_command_is_unexpressible(monkeypatch):
++    c,s=fixture();s['occurrences'][0]['text']='New'
++    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:synthesis)
++    client,bound=coordinator_client(c,s)
++    result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
++    assert result['status']=='proposal_open' and not result['published']
++    assert result['proposal']['kind']=='edit-proposal'
++    assert result['proposal']['approval_binding']['proposal_digest']==result['proposal']['proposal_digest']
++    assert any(gap['capability']=='generated audio media and timing' for gap in result['gaps'])
++    assert not bound.published
++
++
+ def test_coordinator_regenerates_missing_fresh_audio_and_surfaces_other_read_errors(monkeypatch):
+     c,s=fixture();client,bound=coordinator_client(c,s)
+     monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:synthesis)
+     def missing(_object_id):
+         error=RuntimeError('missing');error.code='not_found';raise error
+     client.media.read_bytes=missing
++    enable_fake_requester(monkeypatch, bound)
+     result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
+     assert result['published'] and len(result['generated'])==2
+ 
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc5-voiceover-proposal-cut.md && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc5-voiceover-proposal-cut/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc5-voiceover-proposal-cut/DONE && git diff --check && git status --short' in /home/user/work/wt/agt-m2-wc5-voiceover-proposal-cut
+ succeeded in 69ms:
+ M astrid/packs/video_editing/shared/draft_voiceover.py
+ M astrid/sdk/authoring_remote.py
+ M tests/packs/video_editing/test_draft_voiceover.py
+
+codex
+Implemented WC5 voiceover proposal cut.
+
+- Replaced `TargetBoundAuthoringBundle.publish` with digest-bound EditCommand proposals.
+- Migrated `draft_voiceover` to proposal/open handling and durable-outbox commit path.
+- Removed `_transport_idempotency_key`.
+- Preserved existing voiceover assertions; added proposal-gap coverage.
+- Generated audio/timing remains explicitly OPEN because current commands cannot express it.
+
+Test:
+
+`23 passed` via targeted voiceover suite.
+
+Design report: [agent-wc5-voiceover-proposal-cut.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc5-voiceover-proposal-cut.md>)
+
+Commit message and `DONE` marker written.
+tokens used
+382,590
+Implemented WC5 voiceover proposal cut.
+
+- Replaced `TargetBoundAuthoringBundle.publish` with digest-bound EditCommand proposals.
+- Migrated `draft_voiceover` to proposal/open handling and durable-outbox commit path.
+- Removed `_transport_idempotency_key`.
+- Preserved existing voiceover assertions; added proposal-gap coverage.
+- Generated audio/timing remains explicitly OPEN because current commands cannot express it.
+
+Test:
+
+`23 passed` via targeted voiceover suite.
+
+Design report: [agent-wc5-voiceover-proposal-cut.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc5-voiceover-proposal-cut.md>)
+
+Commit message and `DONE` marker written.

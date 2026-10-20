@@ -1,0 +1,9 @@
+name=agt-review-group-full-carrier-union
+repo=agent
+base=tl/agt-m2-group-full-carrier-source-compose
+base_sha=c0644cf1
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-group-full-carrier-union
+started=2026-10-20T20:25:34Z

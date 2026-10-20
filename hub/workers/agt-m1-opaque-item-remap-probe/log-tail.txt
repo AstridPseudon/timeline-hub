@@ -1,0 +1,400 @@
++++ b/tests/timeline/test_authoring_bundle.py
+@@ -260,6 +260,63 @@
+     }
+ 
+ 
++@pytest.mark.parametrize("codec", ["item_id", "id", "both", "opaque-id"])
++@pytest.mark.parametrize("descriptor_location", ["metadata", "root"])
++def test_materialization_remaps_only_item_codec_and_declared_source_links(codec, descriptor_location):
++    parent, shots, timelines = _closure(shared=True)
++    payload = shots[0]["payload"]
++    opaque = {"org.example.notes/v1": {
++        "item_id": "item-1", "id": "item-1", "source_item_id": "item-1",
++        "source_item": "item-audio", "foreign_item_id": "item-audio",
++        "foreign_item_ids": ["item-audio", None, "item-1", "item-audio"],
++        "selected_item_id": "item-1", "parent_item_id": "item-audio",
++        "item-1": None, "literal": "item-1", "nested": [{"item_id": "item-1"}],
++    }}
++    for field in ("data", "app", "opaque", "metadata", "provenance", "selected_variants",
++                  "generation_inputs"):
++        payload[field] = copy.deepcopy(opaque)
++    for field in ("pools", "audio_bindings", "text_bindings"):
++        payload[field] = [copy.deepcopy(opaque)]
++    for item in payload["items"]:
++        if codec in ("id", "both", "opaque-id"):
++            item["id"] = item["item_id"] if codec != "opaque-id" else "opaque-identity"
++        if codec == "id":
++            del item["item_id"]
++        for field in ("data", "app", "opaque"):
++            item[field] = copy.deepcopy(opaque)
++        item["metadata"] = copy.deepcopy(opaque)
++        descriptor = item["metadata"] if descriptor_location == "metadata" else item
++        if descriptor_location == "root":
++            del item["metadata"]
++        descriptor.update(source_item_id="item-1", source_item="item-audio")
++    shots[0]["content_digest"] = _digest(payload)
++    original = copy.deepcopy((parent, shots, timelines))
++    bundle = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=timelines)
++    first = bundle["shots"][bundle["placements"][0]["shot_id"]]
++    copied = first["payload"]
++    identity = "id" if codec == "id" else "item_id"
++    remap = {item[identity]: copied_item[identity]
++             for item, copied_item in zip(payload["items"], copied["items"])}
++    expected = copy.deepcopy(payload)
++    for item in expected["items"]:
++        source = item[identity]
++        item[identity] = remap[source]
++        if codec == "both":
++            item["id"] = remap[source]
++        descriptor = item["metadata"] if descriptor_location == "metadata" else item
++        descriptor.update(source_item_id=remap["item-1"], source_item=remap["item-audio"])
++    assert copied == expected
++    assert all(source != target for source, target in remap.items())
++    assert (parent, shots, timelines) == original
++    first["internal_timeline"]["clips"][0]["at"] = 0.25
++    publication = compile_authoring_candidate(bundle).publication
++    materialized = next(row for row in publication["shot_revisions"] if row["shot_id"] == first["shot_id"])
++    # The compiler owns only this derived child revision link.
++    expected["internal_timeline_revision_id"] = materialized["internal_timeline_revision_id"]
++    assert materialized["payload"] == expected
++    assert (parent, shots, timelines) == original
++
++
+ def test_independent_unique_shot_reuses_untouched_revision_and_direct_edits_compile_identically():
+     parent, shots, timelines = _closure(shared=False)
+     helper_candidate = open_authoring_bundle(
+
+exec
+/bin/bash -lc 'env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py --tb=short' in /home/user/work/wt/agt-m1-opaque-item-remap-probe
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/timeline/test_authoring_bundle.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py --tb=short' in /home/user/work/wt/agt-m1-opaque-item-remap-probe
+ succeeded in 6951ms:
+...xxx.....                                                              [100%]
+8 passed, 3 xfailed in 6.36s
+
+exec
+/bin/bash -lc "rg -n '"'^    def (get_project|update_project|patch_project|update_timeline|patch_timeline)'"' /home/user/work/runtime/runtime_protocol/service.py | head -25 && sed -n '2510,2535p' /home/user/work/runtime/runtime_protocol/service.py && /home/user/work/venv-agent/bin/python -m ruff check astrid/core/timeline/authoring_bundle.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_commit_runtime_opaque_items.py" in /home/user/work/wt/agt-m1-opaque-item-remap-probe
+ succeeded in 0ms:
+1314:    def get_project(self, selector):
+1343:    def update_project(self, selector, body, *, idempotency_key=None):
+1680:    def update_timeline(self, timeline_id, body, *, idempotency_key=None):
+2504:    def get_project_shot_revision(self, project_id, shot_id, revision):
+2511:    def get_project_timeline_revision(self, project_id, timeline_id, revision):
+2518:    def get_project_timeline(self, project_id, timeline_id):
+2530:    def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+2731:    def get_project_media_selection(self, project_id, selectors, *, authorize):
+3582:    def get_project_shot(self, project_id, shot_id):
+3589:    def update_project_shot(self, project_id, shot_id, body, *, idempotency_key=None, archived=None):
+4050:    def get_project_shot_text_binding(self, project_id, binding_id):
+4074:    def get_project_reference(self, project_id, reference_id):
+4080:    def update_project_reference(self, project_id, reference_id, body, *, idempotency_key=None, archived=None):
+
+    def get_project_timeline_revision(self, project_id, timeline_id, revision):
+        project = self.store.get_project(project_id)
+        row = self.store.conn.execute("SELECT * FROM internal_timeline_revisions WHERE id=? AND project_id=? AND timeline_id=?", (revision, project["id"], timeline_id)).fetchone()
+        if not row:
+            raise NotFoundError("internal timeline revision not found", details={"timeline_id": timeline_id, "revision": revision})
+        return {"revision_id": row["id"], "project_id": row["project_id"], "timeline_id": row["timeline_id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"]), "created_at": row["created_at"]}
+
+    def get_project_timeline(self, project_id, timeline_id):
+        """Read one timeline only through its project-scoped identity."""
+        project = self.store.get_project(project_id)
+        row = self.store.conn.execute(
+            "SELECT project_id FROM timelines WHERE id=? AND project_id=?",
+            (timeline_id, project["id"]),
+        ).fetchone()
+        if row is None:
+            raise NotFoundError("timeline not found")
+        # Same projection as create/rename/list: retired timeline-document bytes (config/registry) stay unserved.
+        return self._timeline_public_resource(timeline_id)
+
+    def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+        project = self.store.get_project(project_id)
+        row = self.store.conn.execute("SELECT * FROM parent_composition_revisions WHERE id=? AND project_id=? AND timeline_id=?", (revision, project["id"], timeline_id)).fetchone()
+        if not row:
+            raise NotFoundError("parent composition revision not found", details={"timeline_id": timeline_id, "revision": revision})
+        result = {"revision_id": row["id"], "project_id": row["project_id"], "timeline_id": row["timeline_id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"]), "created_at": row["created_at"]}
+All checks passed!
+
+ succeeded in 15580ms:
+........................................................................ [ 40%]
+........................................................................ [ 80%]
+..................................                                       [100%]
+178 passed, 1 deselected in 14.87s
+
+exec
+/bin/bash -lc "env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+p = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-opaque-item-remap-probe/notes/qualify_candidate.py')
+p.write_text('''\"\"\"Run the permanent regression on an isolated frozen candidate export.\"\"\"
+import io
+import os
+from pathlib import Path
+import subprocess
+import tarfile
+import tempfile
+
+root = Path('/home/user/work/wt/agt-m1-opaque-item-remap-probe')
+notes = Path(__file__).parent
+revision = 'd4743e2984cef0908fa0b6bef166aa801f2bde8f'
+with tempfile.TemporaryDirectory(prefix='candidate-', dir=notes) as directory:
+    base = Path(directory)
+    archive = subprocess.run(['git', '-C', str(root), 'archive', revision], check=True, capture_output=True)
+    with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as source:
+        source.extractall(base, filter='data')
+    test = Path('tests/editing_conformance/test_commit_runtime_opaque_items.py')
+    (base / test).write_bytes((root / test).read_bytes())
+    env = {**os.environ, 'PYTHONPATH': str(base), 'PYTHONDONTWRITEBYTECODE': '1',
+           'ASTRID_RUNTIME_CHECKOUT': '/home/user/work/runtime'}
+    command = ['/home/user/work/venv-agent/bin/python', '-m', 'pytest', '-q', '-m', 'integration', '--tb=short']
+    print('BASELINE', revision, flush=True)
+    baseline = subprocess.run([*command, str(test) + '::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[item_id]'], cwd=base, env=env, capture_output=True, text=True)
+    print(baseline.stdout, baseline.stderr, flush=True)
+    (notes / 'candidate-baseline.log').write_text(baseline.stdout + baseline.stderr)
+    assert baseline.returncode == 1 and 'assert_opaque' in baseline.stdout
+    module = Path('astrid/core/timeline/authoring_bundle.py')
+    start, end = 'def _remap_known_item_references(', '\\\\ndef _copy_shot_for_placement('
+    fixed = (root / module).read_text()
+    candidate = (base / module).read_text()
+    candidate = candidate[:candidate.index(start)] + fixed[fixed.index(start):fixed.index(end)] + candidate[candidate.index(end):]
+    (base / module).write_text(candidate)
+    print('CANDIDATE + ONLY APPROVED HELPER', revision, flush=True)
+    result = subprocess.run([*command, '--runxfail', str(test)], cwd=base, env=env, capture_output=True, text=True)
+    print(result.stdout, result.stderr, flush=True)
+    (notes / 'candidate-fixed.log').write_text(result.stdout + result.stderr)
+    raise SystemExit(result.returncode)
+''')
+PY" in /home/user/work/wt/agt-m1-opaque-item-remap-probe
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-opaque-item-remap-probe/notes/qualify_candidate.py' in /home/user/work/wt/agt-m1-opaque-item-remap-probe
+ succeeded in 9474ms:
+BASELINE d4743e2984cef0908fa0b6bef166aa801f2bde8f
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[item_id] _
+tests/editing_conformance/test_commit_runtime_opaque_items.py:144: in test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse
+    assert_preserved(image, materialized=image == document)
+tests/editing_conformance/test_commit_runtime_opaque_items.py:154: in assert_preserved
+    assert_opaque(shot["payload"])
+tests/editing_conformance/test_commit_runtime_opaque_items.py:86: in assert_opaque
+    assert {key: value for key, value in row[field].items() if key != "astrid"} == opaque()
+E   AssertionError: assert {'org.example...5d8138', ...}} == {'org.example...item-1', ...}}
+E     
+E     Differing items:
+E     {'org.example.notes/v1': {'foreign_item_id': 'shot-item-placement-aa8eef55c99a0266dc600e80c2614c3a84e0ba14257ea75e2ab8...item-1': None, 'item_id': 'shot-item-placement-aa8eef55c99a0266dc600e80c2614c3a84e0ba14257ea75e2ab8198d705d8138', ...}} != {'org.example.notes/v1': {'foreign_item_id': 'item-1', 'foreign_item_ids': ['item-2', None, 'item-1'], 'item-1': None, 'item_id': 'item-1', ...}}
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[item_id]
+1 failed in 1.47s
+ 
+CANDIDATE + ONLY APPROVED HELPER d4743e2984cef0908fa0b6bef166aa801f2bde8f
+......                                                                   [100%]
+6 passed in 4.88s
+ 
+
+exec
+/bin/bash -lc 'git diff --check && git diff -- astrid/core/timeline/authoring_bundle.py && git status --short && tail -20 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md' in /home/user/work/wt/agt-m1-opaque-item-remap-probe
+ succeeded in 476ms:
+diff --git a/astrid/core/timeline/authoring_bundle.py b/astrid/core/timeline/authoring_bundle.py
+index 01ba2a3b..0823ce18 100644
+--- a/astrid/core/timeline/authoring_bundle.py
++++ b/astrid/core/timeline/authoring_bundle.py
+@@ -229,32 +229,27 @@ def _authoring_shot_id(
+ 
+ 
+ def _remap_known_item_references(
+-    value: Any, item_ids: Mapping[str, str], *, key: str | None = None
+-) -> Any:
+-    """Remap known item-reference fields without rewriting opaque string data."""
++    payload: Mapping[str, Any], item_ids: Mapping[str, str]
++) -> dict[str, Any]:
++    """Remap the shot item codec and its declared source dependency links."""
+ 
+-    if isinstance(value, Mapping):
+-        result: dict[str, Any] = {}
+-        for child_key, child in value.items():
+-            if not isinstance(child_key, str):
+-                result[child_key] = _copy(child)
+-                continue
+-            if isinstance(child, str) and (
+-                child_key in {"item_id", "source_item_id", "selected_item_id", "parent_item_id"}
+-                or child_key.endswith("_item_id")
+-            ):
+-                result[child_key] = item_ids.get(child, child)
+-            elif isinstance(child, list) and child_key.endswith("_item_ids"):
+-                result[child_key] = [
+-                    item_ids.get(item, item) if isinstance(item, str) else _copy(item)
+-                    for item in child
+-                ]
+-            else:
+-                result[child_key] = _remap_known_item_references(child, item_ids, key=child_key)
+-        return result
+-    if isinstance(value, list):
+-        return [_remap_known_item_references(item, item_ids, key=key) for item in value]
+-    return _copy(value)
++    result = _copy(dict(payload))
++    for item in result.get("items", []):
++        identity = item.get("item_id", item.get("id"))
++        for field in ("item_id", "id"):
++            if field in item and item[field] == identity:
++                item[field] = item_ids.get(identity, identity)
++        # Shot dependency descriptors use metadata, or the item itself when
++        # metadata is absent. Other fields and namespaces carry no reference
++        # authority merely because their keys end in _item_id.
++        descriptor = item.get("metadata")
++        if not isinstance(descriptor, Mapping):
++            descriptor = item
++        for field in ("source_item_id", "source_item"):
++            source = descriptor.get(field)
++            if isinstance(source, str):
++                descriptor[field] = item_ids.get(source, source)
++    return result
+ 
+ 
+ def _copy_shot_for_placement(
+ M astrid/core/timeline/authoring_bundle.py
+ M tests/timeline/test_authoring_bundle.py
+?? tests/editing_conformance/test_commit_runtime_opaque_items.py
+Read-only field audits copied managers/runtime/notes/{reference-lineage-seam,text-binding-projection-seam}. Escalation runtime-20261020T0128-project-catalog-and-text-source asksorchestratorclassifyprojectcatalogauthoring BEFOREanytimeline (existingprojectscopedCRUD,notexpressedbytimelineState) andfirst-useplainUTF8/emptytextselection (currentmediareadrejects,no fake.config/packmethodrepurpose). RecommendedretainingnonTimelinecataloginfra ratherthaninventprojectroot; canonicalfilmselectionsremaincommands; ifownerintendstocutfeature,explicitbehaviorretirementrequired. AllRT02/03cutsheld. C4auditNOTpermissiontorepointglobalshot/itemheadsonhistoricalreuse: mainlinkedreusepositive deliberatelypreservesnewerglobalchildhead,exactpinnedTimelineclosureisrightread. Donotfixthatguardaway. ContinueordinaryBundle2; exactsourcefreeze+normalgenerationstillnextRuntimepriority.
+
+## 2026-10-20 — orchestrator: DECISION on project-catalog-and-text-source (Runtime + Agent)
+1. PROJECT REFERENCE CATALOG: KEEP it, as non-timeline main infrastructure (project-scoped kind/name/version/archive, ordered media associations, primary, links). It isn't timeline state, so it stays OUTSIDE the timeline edit path, like the relational placement metadata. Every film placement or selection of a reference is still a guarded EditCommand, and the direct timeline-reference/placement writers keep retiring. Keep the positive CRUD/lineage tests (test_project_shot_reference_crud_isolated_idempotent_and_restart_durable etc.) exactly as they are. No compatibility writer, no project-root framework. Add a ledger row marked KEEP (not a deletion), with this reason, so the boundary is explicit.
+2. TEXT FIRST USE: KEEP the capability. Exact project-owned UTF-8 text CAS bindings, including empty text, are a real main feature. Narrow design, settled AFTER bundle #2, as part of bundle #3 or #4: Agent owns a text-binding command over the existing immutable descriptor; Runtime adds scoped exact UTF-8 text selection through the EXISTING media-input validation and retention, plus a recorded before/after binding projection for live readers. No new HTTP endpoint or table, no inline text authority, no fake .config. Agent and Runtime agree the exact port/type in design/ first.
+3. HISTORICAL REUSE (C4): agreed. Keep main's behaviour: linking or restoring an older shot revision into a timeline does NOT overwrite the newer project-global child head. The pinned timeline closure stays authoritative, and main's positive test stays.
+RT03 body cuts stay unmerged until (1) and (2) are reflected in their tests.
+
+## Runtime manager01:29 — Bundle2Runtimeprepdispatch, exactfreeze dependency
+rt-m2-bundle2-runtime-artifacts stagesnormalRuntimecandidate onFROZENBundle1base6be (newbranchonly), withreviewedb3packCAS+8947type/Protocol+a6nesting. NOheldcorecut/D13 410/catalogcutsimported: ordinaryclientreleasewon’twaitD13. Candidateversion0.2.3assignedwhenyoufreezeexactcanonicalsource; no consumerpins/officialfrozen tupleyet. WorkerwillNOTcopyprovisionalBundle2schema; pleasepostyourreviewedsourceSHA+schemaSHA viaRuntimeINBOX/runtime-coordinationwhenready. PairedAgentpin/nativecases nextafterRuntimeharnesscommit. Newmaterializationid_map/itemfeature excludedfromthisordinarytupleuntilseparatepairedproof; originalroot/scopedasset supportasyourfrozenBundle2source. 0.2.2ref/qualifiedAppleaseunchanged.
+
+## 2026-10-20 01:40Z — orchestrator: CORRECTION. D13 implementation may start NOW on branches
+My 00:35 line "implementation follows the M1 record" conflicted with the standing 22:35 rule, and the rule wins: ALL M2 implementation, D13 included, proceeds NOW on isolated branches. Only merges into tl/integration wait for the PLAN M1 record. Retiring the old endpoint also waits until the replacement behaviour is qualified.
+Runtime: dispatch your three ready D13 workers now: (1) authoritative settled-attempt read and private capture, with numeric/custody/target tests; (2) atomic one-shot acceptance/checkpoint plus replay/cancel; (3) the historical selector. Get back to 5–7 workers. Agent: build your D13 side (the proposal shape in the recipe, goldens) the same way.
+
+## 2026-10-20 01:45Z — orchestrator: DECISION on opaque-item-reference-rewrite
+- If agt-m1-opaque-item-remap-probe confirms it on the ACTUAL accepted Agent+Runtime path, it is an M1 BLOCKER (gate 1, losslessness): a move must never rewrite unrelated user data. Report the probe result in STATUS straight away, either way.
+- APPROVED fix (bounded, start NOW, don't wait for the probe): replace the key-spelling guess in core/timeline/authoring_bundle.py `_remap_known_item_references` with a SCHEMA/CONTEXT-AWARE remap. Only the KNOWN item-reference fields at their known locations in the canonical schema get remapped. Unknown or namespaced opaque data (e.g. "org.example.notes/v1") is preserved byte-for-byte. Keep the item id/item_id identity and the known item links correct. No change to the ID seed, no blanket strip, no whole-parent restore, and no weakening of the occupancy or source guards. Historical publications are never rewritten.
+- Permanent real regression test: the unknown foreign IDs from your reproduction stay EXACTLY as they were through move → accept → reload → undo, and the known-reference positive controls still remap correctly.
+- Runtime may keep generating the official schema meanwhile.
+
+codex
+The reviewed `d4743e29` candidate reproduces the accepted namespace mutation. In an isolated export, replacing only this helper makes all six real Runtime cases pass with `--runxfail`, including exact closure restoration after undo. On this M1 worktree, the final targeted checks are 178 passed and 8 passed with 3 strict expected failures for the separate undo issue. I’m writing the report and commit messages now.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = root/'workers/agt-m1-opaque-item-remap-probe'
+report = '''# Opaque occurrence item remap
+
+## Result and change
+
+**Actual accepted data loss confirmed** on Agent "'`f6fbe741a256e2756a1d686350f8a38e37c015ee` + unchanged Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316`, then fixed within the orchestrator'"'s Agent INBOX 01:45 authorization. The immediate accepted-result report was written to "'`managers/agent/notes/opaque-remap-probe.md` before any product edit; coordination was appended to the absolute `design/runtime-coordination.md`.
+
+The normal API-built Runtime film fixture was publicly republished with two shared occurrences and shot items. The canonical Astrid provider accepted native occurrence `clip.move`. Shot payload `data["org.example.notes/v1"].foreign_item_id` changed from literal `item-1` to a materialized item ID; `foreign_item_ids` and nested item-like fields also changed. Exact accepted readback contained those changes. The accepted recorder wrote only clip `at` and app timing paths, never those namespaces. Source immutable images and siblings remained unchanged. Restart plus exact persisted request/key retry returned the original acceptance without running provider semantics again.
+
+Only product change: replace recursive suffix guessing in `astrid/core/timeline/authoring_bundle.py::_remap_known_item_references` with explicit item codec and source-link handling. Known locations are `shot.items[].item_id` / `id` (equal alias mirrors only), and `source_item_id` / `source_item` in each item'"'s metadata, or its record fallback when metadata is not a mapping. Explicit consumers: "'`astrid/packs/shots/dependencies.py::_meta/_descriptor` and Runtime `runtime_protocol/shot_dependencies.py::_meta/_descriptor`. No consumer found for arbitrary `selected_item_id`, `parent_item_id`, or suffix lists in shot payload; those spellings alone do not confer reference authority. Opaque `id` alongside a different authoritative `item_id` stays literal.
+
+Eight direct regression cases cover codec and descriptor locations, unknown nested namespaces throughout the shot payload, literal strings/keys, nulls, repeated values and list order, source immutability and compiler publication. Six real Runtime cases cover three codecs, recorded writes, public exact shot/internal reads, unchanged siblings/source revisions, restart/exact retry, namespace preservation through native undo, and full exact inverse equality.
+
+## Exact commands and evidence
+
+All worktree commands ran in `/home/user/work/wt/agt-m1-opaque-item-remap-probe`.
+
+Original unmodified-product M1 probe (before the test gained codec parameters and separate exact-inverse assertions):
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -s -m integration tests/editing_conformance/test_commit_runtime_opaque_items.py --tb=short
+```
+
+**1 failed in 1.09s**, after actual acceptance/readback/restart/retry/undo; preservation assertion exposed the unrequested namespace rewrite. The probe also observed full undo equality false on the M1 base.
+
+Final focused pure tests:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/timeline/test_authoring_bundle.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py --tb=short
+```
+
+**178 passed, 1 deselected in 14.87s**, exit 0. Integration case is deselected by the ordinary lane, not skipped/weakened.
+
+Final actual M1 pair, including occupied destinations and reservation/restore neighbors:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py --tb=short
+```
+
+**8 passed, 3 xfailed in 6.36s**, exit 0. The three strict xfails preserve the full exact-original-closure inverse requirement, one per codec; f6 lacks the independently reviewed historical-image reuse fix. The separate namespace preservation journey PASSES for all three codecs through undo. No passing behavior expectation was changed to expect loss/refusal.
+
+Reviewed candidate qualification:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-opaque-item-remap-probe/notes/qualify_candidate.py
+```
+
+The reproducible script exports exact Agent `d4743e2984cef0908fa0b6bef166aa801f2bde8f` into a temporary worker-notes directory, copies this permanent test only, and runs the `item_id` preservation case on unchanged Runtime9f: **1 failed in 1.47s** at `assert_opaque`, confirming the actual accepted candidate failure too. It then replaces ONLY this approved helper in that isolated export and runs the six permanent cases with `--runxfail`: **6 passed in 4.88s**, exit 0, including full exact original closure undo for all three codecs. No schema/provider override or pin edit. The export is automatically deleted. Logs: `notes/candidate-baseline.log`, `notes/candidate-fixed.log`.
+
+```sh
+/home/user/work/venv-agent/bin/python -m ruff check astrid/core/timeline/authoring_bundle.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_commit_runtime_opaque_items.py
+git diff --check
+```
+
+Both passed. An intermediate test-only error called a nonexistent internal revision accessor; corrected to the public `get_project_timeline_revision` before the final runs above.
+
+## Decisions, limits and next steps
+
+- Approval was read before editing product code. Scope stayed at the one helper and direct/main-suite regression tests; no ID seed, schema, source/occupancy guard, stripping, normalization, whole-parent restore, historical publication rewrite, or Runtime edit.
+- Did not modify the overlapping materialization-map worker. Its equal-id mirror loop after this helper will become redundant; delete that redundant loop during composition, retain this explicit remapper. Exact findings and consumer census are in the absolute coordination file.
+- The full exact undo requirement is still a known M1-base blocker in isolation. The reviewed candidate plus ONLY this helper passes it. Compose with that already-reviewed historical-image reuse fix and remove this file'"'s strict xfail marker when its requirement is restored; then rerun the same actual pair.
+- Legacy "'`astrid/sdk/timeline_editing.py::_remap_authoring_item_refs` has similar suffix logic but is outside this task'"'s approved product scope; it was not changed or claimed fixed.
+- No full suite, "'`make check`, install, network/browser/socket suite, merge, commit, push, artifact build or pin update was run. No release/integration or existing-film repair is claimed. All temporary candidate exports were removed. Both harness commit-message files are ready.
+'"'''
+(worker/'notes/report.md').write_text(report)
+message = '''fix(timeline): preserve opaque item values during materialization
+
+Remap shot item identities and declared source dependency links only at
+known codec locations. Preserve unknown namespaced data without inferring
+reference authority from key suffixes.
+
+Add direct codec regressions and real Runtime occurrence move, readback,
+restart, exact retry and inverse coverage. Keep the independent M1 exact
+historical-image inverse requirement as a strict expected failure.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker/name).write_text(message)
+update = '''\\n## Approved fix and final qualification\\n\\nRead orchestrator Agent INBOX01:45 approval before product edit. Only authoring_bundle.py helper now changes: explicit item_id/id codec (equal mirrors) and source_item_id/source_item dependency descriptor in metadata or record fallback. Unknown namespaces never traversed. Direct neighbors178PASS/1integrationdeselected; actual unchanged M1Runtime9f8PASS/3strictxfail (exact original closure inverse independently missing on f6). All three codec namespace journeys PASS through move/readback/restart/exactretry/undo. Reviewed d474 candidate exported in OWN temporary notes directory reproduces actual preservation failure1FAIL1.47s; replacing ONLY this helper there gives6PASS4.88s with --runxfail, INCLUDING exact full undo closure for all codecs. No schema/provider override, seed, pin, guard, historical publication rewrite, or other-worker edit. Report and reproducible candidate script/logs: workers/agt-m1-opaque-item-remap-probe/notes/. Both commit messages ready; harness commits. Recommend compose helper with reviewed historical-image reuse candidate and remove exact-undo xfail marker upon restoration; all M2 integration remains orchestrator-held.\\n'''
+with (root/'managers/agent/notes/opaque-remap-probe.md').open('a') as f:
+    f.write(update)
+with (root/'design/runtime-coordination.md').open('a') as f:
+    f.write('\\n\\n## agt-m1-opaque-item-remap-probe — final bounded fix ready\\n' + update)
+PY" in /home/user/work/wt/agt-m1-opaque-item-remap-probe
+ succeeded in 0ms:
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m ruff check astrid/core/timeline/authoring_bundle.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_commit_runtime_opaque_items.py && git diff --check && git status --short' in /home/user/work/wt/agt-m1-opaque-item-remap-probe
+ succeeded in 574ms:
+All checks passed!
+ M astrid/core/timeline/authoring_bundle.py
+ M tests/timeline/test_authoring_bundle.py
+?? tests/editing_conformance/test_commit_runtime_opaque_items.py
+
+codex
+Confirmed accepted opaque-data mutation on both M1 and reviewed candidate paths. Applied the authorized context-aware remapper, preserving known identities and source links.
+
+- Focused tests: **178 passed**.
+- Actual M1 Runtime tests: **8 passed, 3 strict xfailed** for the separate exact-undo issue.
+- Reviewed candidate plus this helper: **6 passed**, including exact undo.
+- Ruff and diff checks passed. No full suite run.
+
+[Report with exact commands, decisions, limitations, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-opaque-item-remap-probe/notes/report.md).
+
+Both commit-message files are ready. Next: compose with the reviewed historical-image reuse fix and remove the restored undo xfails.
+tokens used
+115,111
+Confirmed accepted opaque-data mutation on both M1 and reviewed candidate paths. Applied the authorized context-aware remapper, preserving known identities and source links.
+
+- Focused tests: **178 passed**.
+- Actual M1 Runtime tests: **8 passed, 3 strict xfailed** for the separate exact-undo issue.
+- Reviewed candidate plus this helper: **6 passed**, including exact undo.
+- Ruff and diff checks passed. No full suite run.
+
+[Report with exact commands, decisions, limitations, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-opaque-item-remap-probe/notes/report.md).
+
+Both commit-message files are ready. Next: compose with the reviewed historical-image reuse fix and remove the restored undo xfails.

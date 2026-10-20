@@ -1,0 +1,400 @@
++
++
++def _verified_source_duration(ctx, source, expected_kind):
++    """Use request-scoped Runtime metadata when authored duration is absent."""
++    limit = source['duration']
++    if limit is not None:
++        number(limit, 'registry source duration', positive=True)
++        return limit, None
++    object_id = next((source.get(key) for key in
++                      ('object_id', 'media_id', 'digest', 'content_digest')
++                      if source.get(key) is not None), None)
++    if object_id is None:
++        raise CommandError('registry source duration requires an exact media identity',
++                           kind='dependency_changed')
++    matches = [value for value in ctx.verified_media
++               if isinstance(value, dict) and 'selection' not in value
++               and value.get('object_id') == object_id]
++    if not matches or any(value != matches[0] for value in matches):
++        raise CommandError('registry source duration requires exact Runtime-verified media metadata',
++                           kind='dependency_changed')
++    value = matches[0]
++    if value.get('object_id') != object_id or _media_kind(value) != expected_kind \
++            or type(value.get('size')) is not int or value['size'] <= 0:
++        raise CommandError('trim source media metadata is not exact audio media',
++                           kind='unsupported_media')
++    media_id = source.get('media_id') or object_id
++    content_digest = source.get('content_digest') or source.get('digest') or media_id
++    pin = {'media_id': media_id, 'content_digest': content_digest}
++    limit = ctx.read_media(pin, ['duration_seconds'])
++    number(limit, 'intrinsic duration', positive=True)
++    return limit, value
++
++
+ def clip_trim(ctx, command):
+     ref = command['select']
+     if not isinstance(ref, str) or not re.fullmatch(r'parent/clip:[^/]+', ref) or '::' in ref:
+@@ -43,7 +83,7 @@
+                 number(value, 'for', positive=True)
+             elif value is not None:
+                 raise CommandError(f'clip.trim v1 does not support {key}', kind='unsupported_timing', ref=ref)
+-    if clip['clipType'] not in (None, 'media') or clip['clip_type'] not in (None, 'media'):
++    if clip['clipType'] not in (None, 'media', 'audio') or clip['clip_type'] not in (None, 'media', 'audio'):
+         raise CommandError('clip.trim applies to media clips', ref=ref)
+     asset = clip['asset']
+     if not isinstance(asset, str) or not asset or any(clip[key] is not None for key in
+@@ -61,8 +101,15 @@
+                'duration_ms', 'duration_seconds', 'source', 'source_window', 'time_map', 'timeMap')}
+     if any(source[key] is not None for key in ('source', 'source_window', 'time_map', 'timeMap')):
+         raise CommandError('clip.trim v1 does not support a mapped media source', kind='unsupported_map', ref=ref)
+-    limit = source['duration']
+-    number(limit, 'registry source duration', positive=True)
++    source_kind = _media_kind(source)
++    clip_kind = 'audio' if 'audio' in (clip['clipType'], clip['clip_type'], source_kind) else source_kind
++    if clip_kind == 'audio':
++        track = ctx.read('parent/track:' + str(clip['track']))
++        if not isinstance(track, dict) or track.get('kind') != 'audio' or not active(track):
++            raise CommandError('clip.trim requires an active raw audio track', ref=ref)
++        if source_kind != 'audio':
++            raise CommandError('clip.trim audio track requires an audio registry asset', ref=ref)
++    limit, _ = _verified_source_duration(ctx, source, clip_kind)
+     endpoints = []
+     for key, arg, default in (('from', 'in_s', 0), ('to', 'out_s', limit)):
+         current = default if clip[key] is None else clip[key]
+@@ -92,10 +139,10 @@
+         ctx.clear(ref, ['app'])
+ 
+ 
+-def capture_clip_trim(bundle, select, *, in_s=None, out_s=None):
++def capture_clip_trim(bundle, select, *, in_s=None, out_s=None, verified_media=()):
+     """Capture original claims. Null endpoints retain the current/default bound."""
+     from .commands import execute
+ 
+     return execute(bundle, [{'schema_version': 1, 'op': 'clip.trim', 'version': '1',
+                              'select': select, 'args': {'in_s': in_s, 'out_s': out_s},
+-                             'intent': {}}]).commands[0]
++                             'intent': {}}], verified_media=verified_media).commands[0]
+diff --git a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py
+index 051ce19b6c34dce9c4042638908448b7b6a8fd7c..74f6c1e40fa8a041b8727b8f61ab84bdf104c586
+--- a/astrid/sdk/timeline/commands.py
++++ b/astrid/sdk/timeline/commands.py
+@@ -161,7 +161,10 @@
+         ref, path = address(key, command.get('resolved', []))
+         guard(ctx.state, ref, path, expected)
+     for read in command.get('reads', []):
+-        guard(ctx.state, read['ref'], read['path'], read['state'])
++        if read['ref'].startswith('media:'):
++            ctx.verify_media_read(read)
++        else:
++            guard(ctx.state, read['ref'], read['path'], read['state'])
+     for selected in command.get('selections', []):
+         actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
+         if not selection_matches(selected, actual):
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index 2af57641605f61cd8548fc4eb0dc15a7d12f8644..abc3e22a543929386bb771d7a0ba4d8e75ccfe0f
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -404,6 +404,38 @@
+     return bundle_from_document(document)
+ 
+ 
++def _raw_audio_trim_pin(bundle, call):
++    """Return the already-retained raw audio pin needed by a duration read."""
++    if call.get('op') != 'clip.trim' or not isinstance(call.get('select'), str):
++        return None
++    from ._command_state import CommandError, State
++
++    clip = State(bundle).entity(call['select'], optional=True)
++    if not isinstance(clip, Mapping):
++        return None
++    asset = clip.get('asset')
++    try:
++        source = State(bundle).registry('parent').get('assets', {}).get(asset)
++    except (CommandError, AttributeError):
++        return None
++    if not isinstance(source, Mapping) or source.get('duration') is not None:
++        return None
++    source_kind = source.get('type')
++    clip_kind = clip.get('clipType', clip.get('clip_type'))
++    if not (source_kind == 'audio' or clip_kind == 'audio'):
++        return None
++    media_id = source.get('media_id') or source.get('object_id')
++    content_digest = source.get('content_digest') or source.get('digest') or media_id
++    if not isinstance(media_id, str) or content_digest != media_id:
++        return None
++    manifest = bundle.get('source_mapping', {}).get('_runtime_document', {}) \
++        .get('dependency_manifest', {}).get('media', [])
++    pins = [pin for pin in manifest if isinstance(pin, Mapping)
++            and pin.get('media_id') == media_id
++            and pin.get('content_digest') == media_id]
++    return copy.deepcopy(pins[0]) if len(pins) == 1 else None
++
++
+ def _hydrate(port, bundle, calls=(), *, inverse_records=(), inverse_sources=()):
+     captures, schema_inputs = [], []
+     document = bundle["source_mapping"]["_runtime_document"]
+@@ -916,6 +948,15 @@
+                     raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                   base, current))
+             bundle = _load(port, context, base["revision_id"])
++            for call in calls:
++                pin = _raw_audio_trim_pin(bundle, call)
++                if pin is None:
++                    continue
++                media_info = getattr(port, 'media_info', None)
++                if not callable(media_info):
++                    raise CommandError('Runtime raw audio metadata is unavailable',
++                                       kind='dependency_unavailable')
++                verified_media.append(media_info(copy.deepcopy(pin)))
+             current = port.head()
+             base_entry = port.history_entry(base["publication_id"])
+             if base_entry["revision_id"] != base["revision_id"]:
+diff --git a/astrid/sdk/timeline/inverse.py b/astrid/sdk/timeline/inverse.py
+index 2acb3f61f2b721532be086ab7dd75ffa5e8898fc..49b80a6248ce356972a3473fee29b9e053f8792c
+--- a/astrid/sdk/timeline/inverse.py
++++ b/astrid/sdk/timeline/inverse.py
+@@ -347,7 +347,8 @@
+                 else:
+                     stage.set(write['ref'], write['path'], write['after'])
+             reads.extend(read for read in record['reads']
+-                         if stage.matches(read['ref'], read['path'], read['state']))
++                         if read['ref'].startswith('media:')
++                         or stage.matches(read['ref'], read['path'], read['state']))
+             selections.extend(selected for selected in record['selections']
+                               if equal(selection(stage, selected['key'], selected['owner'],
+                                                  selected['members']), selected))
+@@ -356,6 +357,10 @@
+         return reads, selections, bindings
+ 
+     for read in record['reads']:
++        if read['ref'].startswith('media:'):
++            # Media metadata is a request-scoped Runtime read. Undo restores
++            # the recorded authored writes and does not re-probe the source.
++            continue
+         if state.matches(read['ref'], read['path'], read['state']):
+             continue
+         if sites is None:
+@@ -438,7 +443,8 @@
+     # the same address is read after another reversal during installation.
+     for record in records:
+         for read in record['reads']:
+-            ctx.read(read['ref'], read['path'])
++            if not read['ref'].startswith('media:'):
++                ctx.read(read['ref'], read['path'])
+         for selected in record['selections']:
+             if selected['key'].endswith('.after'):
+                 ctx.select(selected['key'].removesuffix('.after'), selected['owner'])
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index 18c0e6de076a6959318affd9167fe1a824d289f9..0f17410f75aa99ab0768510abfe22072230c80e6
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -283,7 +283,36 @@
+         """Capture a literal source trim once, retrying its original flight."""
+         from astrid.sdk.timeline._trim_commands import capture_clip_trim
+ 
+-        self._queue(lambda state: capture_clip_trim(self._bundle(state), select, in_s=in_s, out_s=out_s),
++        def capture(state):
++            bundle = self._bundle(state)
++            # This is only a local convenience for the authoring preflight.
++            # Runtime recomputes the descriptor from the exact manifest pin.
++            from astrid.sdk.timeline.commit import _raw_audio_trim_pin
++
++            pin = _raw_audio_trim_pin(bundle, {
++                'op': 'clip.trim', 'select': select,
++            })
++            verified_media = ()
++            if pin is not None:
++                try:
++                    data = self.client.media.read_bytes(pin['media_id'])
++                    import io
++                    import math
++                    import wave
++
++                    with wave.open(io.BytesIO(data)) as wav:
++                        duration = wav.getnframes() / float(wav.getframerate())
++                    if data and math.isfinite(duration) and duration > 0:
++                        verified_media = ({
++                            'object_id': pin['media_id'], 'media_type': 'audio/wav',
++                            'size': len(data), 'duration_seconds': duration,
++                        },)
++                except Exception:  # noqa: BLE001 - preflight is nonauthoritative
++                    verified_media = ()
++            return capture_clip_trim(bundle, select, in_s=in_s, out_s=out_s,
++                                     verified_media=verified_media)
++
++        self._queue(capture,
+                     lambda pending: len(pending) == 1 and pending[0]["op"] == "clip.trim"
+                     and pending[0]["select"] == select
+                     and pending[0]["args"] == {"in_s": in_s, "out_s": out_s})
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index 62384aad61494c67a614ad1a7122fee4119e0829..092d092e9d91ea291534cf43658bc970d7f92456
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -21,7 +21,12 @@
+ from astrid.sdk.timeline._trim_commands import capture_clip_trim
+ from astrid.sdk.timeline.capture import capture_move
+ from astrid.sdk.timeline.commands import execute
+-from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
++from astrid.sdk.timeline.commit import (
++    _digest,
++    _raw_audio_trim_pin,
++    bundle_from_document,
++    document_from_bundle,
++)
+ from astrid.sdk.timeline.rebase import replay
+ from astrid.sdk.timeline_checkout import Clip
+ from tests.editing_conformance.fixture_loader import load_fixture
+@@ -57,6 +62,17 @@
+     return State(value).entity(REF)
+ 
+ 
++def raw_audio_bundle():
++    value = bundle()
++    pin = 'sha256:' + '3' * 64
++    for rows in (value['parent']['clips'], value['parent']['config']['clips']):
++        rows[0].update({'track': 'music', 'asset': 'voice', 'clipType': 'audio',
++                        'from': 2, 'to': 6, 'hold': 4, 'speed': 2})
++    value['parent']['config']['tracks'].append({'id': 'music', 'kind': 'audio'})
++    value['parent']['registry']['assets']['voice'] = {'media_id': pin, 'type': 'audio'}
++    return value, pin
++
++
+ @pytest.mark.parametrize('changes,args', [({}, {'in_s': 1, 'out_s': 5}),
+     ({'speed': None}, {'in_s': 0, 'out_s': 10}), ({'speed': .5}, {'out_s': 10}),
+     ({}, {'in_s': .000001, 'out_s': 1.000002}),
+@@ -94,6 +110,70 @@
+     assert clip(plan.bundle)['to'] == 5
+ 
+ 
++def test_raw_audio_trim_uses_request_metadata_without_persisting_a_duration():
++    original, pin = raw_audio_bundle()
++    metadata = {'object_id': pin, 'media_type': 'audio/wav', 'size': 1234,
++                'duration_seconds': 8}
++
++    command = capture_clip_trim(original, REF, in_s=1, out_s=5,
++                                verified_media=[metadata])
++    plan = execute(original, [command], verified_media=[metadata])
++    row = clip(plan.bundle)
++    assert (row['from'], row['to'], row['hold']) == (1, 5, 4)
++    assert 'duration' not in plan.bundle['parent']['registry']['assets']['voice']
++    assert command['args'] == {'in_s': 1, 'out_s': 5}
++    assert 'verified_media' not in command
++    assert [read for read in command['reads']
++            if read['ref'] == 'media:' + pin and read['path'] == ['duration_seconds']] == [{
++                'ref': 'media:' + pin, 'path': ['duration_seconds'],
++                'state': {'state': 'present', 'value': 8},
++            }]
++    assert replay(plan, original, verified_media=[metadata]).records == plan.records
++    assert inverse(plan.bundle, plan.records).bundle == original
++
++
++def test_raw_audio_trim_replay_refuses_changed_request_duration_before_writes():
++    original, pin = raw_audio_bundle()
++    captured = {'object_id': pin, 'media_type': 'audio/wav', 'size': 1234,
++                'duration_seconds': 8}
++    command = capture_clip_trim(original, REF, in_s=0, out_s=8,
++                                verified_media=[captured])
++    plan = execute(original, [command], verified_media=[captured])
++    changed = {**captured, 'duration_seconds': 7}
++    with pytest.raises(CommandError, match='original media read changed'):
++        replay(plan, original, verified_media=[changed])
++    assert clip(plan.bundle)['to'] == 8
++
++
++def test_raw_audio_trim_pin_is_the_exact_retained_base_pin():
++    original, pin = raw_audio_bundle()
++    document = original['source_mapping']['_runtime_document']
++    document['dependency_manifest']['media'].append({'media_id': pin, 'content_digest': pin})
++
++    assert _raw_audio_trim_pin(original, {'op': 'clip.trim', 'select': REF}) == {
++        'media_id': pin, 'content_digest': pin,
++    }
++
++
++@pytest.mark.parametrize('metadata', [
++    None,
++    {'object_id': 'sha256:' + '4' * 64, 'media_type': 'audio/wav', 'size': 1234,
++     'duration_seconds': 8},
++    {'object_id': 'sha256:' + '3' * 64, 'media_type': 'audio/wav', 'size': 0,
++     'duration_seconds': 8},
++    {'object_id': 'sha256:' + '3' * 64, 'media_type': 'audio/wav', 'size': 1234,
++     'duration_seconds': None},
++])
++def test_raw_audio_trim_refuses_missing_or_foreign_metadata_without_writes(metadata):
++    original, _pin = raw_audio_bundle()
++    before = copy.deepcopy(original)
++    command = {'schema_version': 1, 'op': 'clip.trim', 'version': '1', 'select': REF,
++               'args': {'in_s': 1, 'out_s': 5}, 'intent': {}}
++    with pytest.raises(CommandError):
++        execute(original, [command], verified_media=(() if metadata is None else [metadata]))
++    assert original == before
++
++
+ def test_native_group_replaces_track_ripple_and_compiles_parent_extension():
+     original = bundle()
+     original['parent']['config']['output'] = {'fps': 30}
+
+codex
+The handoff report, both conventional commit-message files, and `DONE` marker are written. The report includes the exact donor/current trees, seven-file inventory and patch digest, preserved schema/lock/artifact identities, targeted results, and the future `9bf/7d1` paired gate without claiming that gate passed. I’m doing the final worktree and marker audit now.
+exec
+/bin/bash -lc "set -e
+git diff --check
+git diff --exit-code 9bf503f9 -- astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_trim_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/sync.py tests/editing_conformance/test_recipe_m2_clip_trim.py
+test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/report.md
+test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/commit-msg
+test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/commit-msg.txt
+test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/DONE
+printf '%s\\n' '--- final status ---'
+git status --short --branch
+printf '%s\\n' '--- ignored build/temp check ---'
+find . -maxdepth 3 \\( -name '__pycache__' -o -name '.pytest_cache' -o -name '.ruff_cache' \\) -print
+printf '%s\\n' '--- handoff files ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/{report.md,commit-msg,commit-msg.txt,DONE}" in /home/user/work/wt/agt-m2-raw-trim-current014-source
+ succeeded in 832ms:
+--- final status ---
+## tl/agt-m2-raw-trim-current014-source
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_trim_commands.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+--- ignored build/temp check ---
+--- handoff files ---
+-rw-r--r-- 1 root root    0 Oct 20 16:59 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/DONE
+-rw-r--r-- 1 root root  271 Oct 20 16:59 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/commit-msg
+-rw-r--r-- 1 root root  271 Oct 20 16:59 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/commit-msg.txt
+-rw-r--r-- 1 root root 5341 Oct 20 16:59 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/report.md
+
+codex
+Implemented the reviewed raw-audio trim delta from `9bf503f9` onto current `3c4f6de4`.
+
+Changed only seven intended files; blobs match reviewed `9bf503f9`. Preserved schema, client, artifact, and current ordinary-source bytes. Vendor check against `a0dca169` passed.
+
+Tests:
+
+- `test_recipe_m2_clip_trim.py`: 122 passed
+- CLI/provider lane: 126 passed
+- Parent-media lane: 25 passed
+- Ruff, `py_compile`, `git diff --check`: passed
+
+The exact `9bf/7d1` Runtime historical-audio pair remains unqualified and was not duplicated. Runtime authority mismatch is documented as the blocker and future gate in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/report.md).
+
+Wrote `commit-msg`, `commit-msg.txt`, and `DONE`.
+tokens used
+233,242
+Implemented the reviewed raw-audio trim delta from `9bf503f9` onto current `3c4f6de4`.
+
+Changed only seven intended files; blobs match reviewed `9bf503f9`. Preserved schema, client, artifact, and current ordinary-source bytes. Vendor check against `a0dca169` passed.
+
+Tests:
+
+- `test_recipe_m2_clip_trim.py`: 122 passed
+- CLI/provider lane: 126 passed
+- Parent-media lane: 25 passed
+- Ruff, `py_compile`, `git diff --check`: passed
+
+The exact `9bf/7d1` Runtime historical-audio pair remains unqualified and was not duplicated. Runtime authority mismatch is documented as the blocker and future gate in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-current014-source/report.md).
+
+Wrote `commit-msg`, `commit-msg.txt`, and `DONE`.

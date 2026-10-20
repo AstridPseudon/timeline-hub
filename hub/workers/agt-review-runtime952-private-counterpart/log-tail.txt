@@ -1,0 +1,400 @@
++materialization paths, retry/history/inverse/redo paths, and semantic Runtime
++guards are unchanged from the parent.
++
++The generator change recognizes closed empty objects even when they have no
++`properties`: Python emits empty `TypedDict`s and TypeScript emits
++`{ [key: string]: never }`. `clip.delete` therefore rejects an own intent key
++in both languages. Open authored JSON maps remain open. The generated
++`MutationReceipt.project_seq` tuple remains unchanged. The test delta only adds
++positive/negative closed-empty coverage; it weakens no prior assertion.
++
++I bounded the comparison to the cited prior Agent 7b8/d20b/0511 evidence, the
++Runtime a6a review, and the current b893 -> 285 preservation basis. I did not
++reuse the older 7b8/d20b Runtime candidate as current approval and did not do a
++broad review-of-review. The current composition retains the cited CAS, text,
++promotion/C4 catalog-head, global-item, headless, strict-marker,
++producer-task-input-fence, base-plus-declared-pin, single-FD raw-media,
++namespace, and secondary-materialization facts; the 952 delta does not touch
++those paths.
++
++## Commands and results
++
++All commands were read-only against the Runtime checkout; no Agent pin,
++regeneration, publication, release, or integration was performed.
++
++1. Exact checkout identity:
++
++   `git -C /home/user/work/wt/rt-pin-95202c2b rev-parse HEAD HEAD^{tree}`
++
++   **PASS:** `95202c2b09e83aaae028287d6c59b773410141f3`,
++   `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`.
++
++2. Schema byte comparison and inventory probe: **PASS**; the hashes and
++   55/29/12 inventory above matched.
++
++3. `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python generators/generate.py --check`
++
++   **PASS**.
++
++4. `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py --check`
++
++   **PASS:** `contract/artifacts.json is current`.
++
++5. Focused generator/schema lane:
++
++   `python -B -m pytest -q -p no:cacheprovider --basetemp=/tmp/agt-review-runtime952-pytest tests/test_timeline_commit_type_generator.py tests/test_typescript_generator.py tests/test_artifact_manifest.py tests/test_command_schema_compatibility.py`
++
++   **147 passed**.
++
++6. Packed public-client/API lane:
++
++   `python -B -m pytest -q -p no:cacheprovider --basetemp=/tmp/agt-review-runtime952-public-pytest tests/test_timeline_current_union_contract.py tests/test_python_client_public_api.py tests/test_client_parity.py tests/test_client_release.py`
++
++   **71 passed**.
++
++7. Actual semantic guard lane, excluding the four marked integration/live
++   cases that require the central service:
++
++   `python -B -m pytest -q -p no:cacheprovider -m 'not integration' --basetemp=/tmp/agt-review-runtime952-semantic-pytest tests/test_timeline_materialization_join.py tests/test_timeline_materialization_authority_review.py tests/test_timeline_projection_ownership.py tests/test_timeline_projection_occupancy.py`
++
++   **216 passed, 4 deselected**.
++
++8. `git -C /home/user/work/wt/rt-pin-95202c2b diff --check 95202c2b^ 95202c2b`
++
++   **PASS**. The producer checkout and this Agent review worktree are clean.
++
++## Limitations and next step
++
++This is a source/generated-client/private-counterpart review, not native
++qualification. I did not run a full suite, socket/live integration, or the
++one actual Agent357/Runtime952 pair. The semantic tests use Runtime fixtures;
++they do not prove that Agent357 emits, retries, inverses, or refuses every
++corresponding native request. Next: Agent manager records the exact private
++pin ACK, then the orchestrator schedules the single 357/613 native pair with
++ledger-first accepted retry/inverse/redo and the new obsolete-v1 refusal /
++current-v2 success one-to-one cases.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..43ac9d842880c74cd0fb70d05c645b14ab4039b9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/commit-msg.txt
+@@ -0,0 +1,4 @@
++review(runtime): qualify private 952 counterpart
++
++Record the read-only Agent peer review and private-pin ACK/HOLD boundary for
++the exact Runtime 952 / schema 613 tuple.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..973da38ee8880b42a2a414a17ad90347bc4f362d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/report.md
+@@ -0,0 +1,107 @@
++# Agent review of Runtime private 613 / 952 counterpart
++
++Decision: **ACK for the normal Agent PRIVATE pin only. HOLD native-pair,
++public pin, release, adoption, and integration claims.** The exact Runtime
++counterpart is technically qualified for the next Agent private-pin step;
++the one actual native 357/613 pair still needs a fresh coordinated run after
++the Agent owner ACKs this counterpart.
++
++## Exact sources and identities
++
++- Runtime: commit `95202c2b09e83aaae028287d6c59b773410141f3`, tree
++  `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`, checked out read-only at
++  `/home/user/work/wt/rt-pin-95202c2b`.
++- Agent source: commit `357230816c86da65d5f8cc92b10a3a90d29874e0`, tree
++  `94692ec85167d5c606626c4ec678fe2a63ee0aa6`.
++- Runtime and Agent command schemas compare byte-identically at SHA-256
++  `613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3`.
++- Exact schema inventory: 55 definitions, 29 operation clauses, 12 explicit
++  v2 branches. `track.create.version` remains an open `string`, as required.
++- Runtime health/contract digest: `sha256:ddf6396dc32bd54bfeed549a99034693eaed76478b45ad0b7242117f6b734d36`.
++- Raw bundle SHA-256: `4a0779db14b9bbd827e964a495367b465bab5c00ee0b5717b8ff27777010a858`.
++- Artifact manifest version: `sha256:b397e5fdb9fc25502bbda9ad5011e82dd2d63330d5af373834d31e6761276e20`;
++  manifest file SHA-256 `35aa9d247979760b5570f804f30688fb6eaa179d57f5bbca0a41fd6e645deb9d`.
++  The manifest contains 75 artifact identities; the artifact check recomputed
++  them successfully.
++
++## Bounded delta and source review
++
++The 952 parent is Runtime `a6a11a8` (the normal private 613 generation). Its
++delta is exactly seven generated/test paths: the generator, three generated
++DTO modules, the artifact manifest, and two focused fixtures/tests. The source
++schema, wire bundle, provider/authority code, receipt aliases, commit paths,
++materialization paths, retry/history/inverse/redo paths, and semantic Runtime
++guards are unchanged from the parent.
++
++The generator change recognizes closed empty objects even when they have no
++`properties`: Python emits empty `TypedDict`s and TypeScript emits
++`{ [key: string]: never }`. `clip.delete` therefore rejects an own intent key
++in both languages. Open authored JSON maps remain open. The generated
++`MutationReceipt.project_seq` tuple remains unchanged. The test delta only adds
++positive/negative closed-empty coverage; it weakens no prior assertion.
++
++I bounded the comparison to the cited prior Agent 7b8/d20b/0511 evidence, the
++Runtime a6a review, and the current b893 -> 285 preservation basis. I did not
++reuse the older 7b8/d20b Runtime candidate as current approval and did not do a
++broad review-of-review. The current composition retains the cited CAS, text,
++promotion/C4 catalog-head, global-item, headless, strict-marker,
++producer-task-input-fence, base-plus-declared-pin, single-FD raw-media,
++namespace, and secondary-materialization facts; the 952 delta does not touch
++those paths.
++
++## Commands and results
++
++All commands were read-only against the Runtime checkout; no Agent pin,
++regeneration, publication, release, or integration was performed.
++
++1. Exact checkout identity:
++
++   `git -C /home/user/work/wt/rt-pin-95202c2b rev-parse HEAD HEAD^{tree}`
++
++   **PASS:** `95202c2b09e83aaae028287d6c59b773410141f3`,
++   `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`.
++
++2. Schema byte comparison and inventory probe: **PASS**; the hashes and
++   55/29/12 inventory above matched.
++
++3. `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python generators/generate.py --check`
++
++   **PASS**.
++
++4. `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py --check`
++
++   **PASS:** `contract/artifacts.json is current`.
++
++5. Focused generator/schema lane:
++
++   `/home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider --basetemp=/tmp/agt-review-runtime952-pytest tests/test_timeline_commit_type_generator.py tests/test_typescript_generator.py tests/test_artifact_manifest.py tests/test_command_schema_compatibility.py`
++
++   **147 passed**.
++
++6. Packed public-client/API lane:
++
++   `/home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider --basetemp=/tmp/agt-review-runtime952-public-pytest tests/test_timeline_current_union_contract.py tests/test_python_client_public_api.py tests/test_client_parity.py tests/test_client_release.py`
++
++   **71 passed**.
++
++7. Actual semantic guard lane, excluding the four marked integration/live
++   cases that require the central service:
++
++   `/home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider -m 'not integration' --basetemp=/tmp/agt-review-runtime952-semantic-pytest tests/test_timeline_materialization_join.py tests/test_timeline_materialization_authority_review.py tests/test_timeline_projection_ownership.py tests/test_timeline_projection_occupancy.py`
++
++   **216 passed, 4 deselected**.
++
++8. `git -C /home/user/work/wt/rt-pin-95202c2b diff --check 95202c2b^ 95202c2b`
++
++   **PASS**. The producer checkout and this Agent review worktree are clean.
++
++## Limitations and next step
++
++This is a source/generated-client/private-counterpart review, not native
++qualification. I did not run a full suite, socket/live integration, or the
++one actual Agent357/Runtime952 pair. The semantic tests use Runtime fixtures;
++they do not prove that Agent357 emits, retries, inverses, or refuses every
++corresponding native request. Next: Agent manager records the exact private
++pin ACK, then the orchestrator schedules the single 357/613 native pair with
++ledger-first accepted retry/inverse/redo and the new obsolete-v1 refusal /
++current-v2 success one-to-one cases.
+
+exec
+/bin/bash -lc "WORKER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart
+printf '%s\\n' '--- worker artifacts ---'
+ls -l \""'$WORKER/report.md" "$WORKER/commit-msg.txt" "$WORKER/DONE"
+printf '"'%s\\n' '--- commit message ---'
+sed -n '1,80p' \""'$WORKER/commit-msg.txt"
+printf '"'%s\\n' '--- report decision/results tail ---'
+sed -n '1,70p' \""'$WORKER/report.md"
+sed -n '"'70,180p' \""'$WORKER/report.md"
+printf '"'%s\\n' '--- statuses ---'
+git status --short --branch
+git -C /home/user/work/wt/rt-pin-95202c2b status --short --branch
+printf '%s\\n' '--- temp cleanup ---'
+for p in /tmp/agt-review-runtime952-pytest /tmp/agt-review-runtime952-public-pytest /tmp/agt-review-runtime952-semantic-pytest; do if test -e \""'$p"; then echo "left $p"; else echo "clean $p"; fi; done' in /home/user/work/wt/agt-review-runtime952-private-counterpart
+ succeeded in 19ms:
+--- worker artifacts ---
+-rw-r--r-- 1 root root    0 Oct 20 18:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/DONE
+-rw-r--r-- 1 root root  169 Oct 20 18:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/commit-msg.txt
+-rw-r--r-- 1 root root 5641 Oct 20 18:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/report.md
+--- commit message ---
+review(runtime): qualify private 952 counterpart
+
+Record the read-only Agent peer review and private-pin ACK/HOLD boundary for
+the exact Runtime 952 / schema 613 tuple.
+--- report decision/results tail ---
+# Agent review of Runtime private 613 / 952 counterpart
+
+Decision: **ACK for the normal Agent PRIVATE pin only. HOLD native-pair,
+public pin, release, adoption, and integration claims.** The exact Runtime
+counterpart is technically qualified for the next Agent private-pin step;
+the one actual native 357/613 pair still needs a fresh coordinated run after
+the Agent owner ACKs this counterpart.
+
+## Exact sources and identities
+
+- Runtime: commit `95202c2b09e83aaae028287d6c59b773410141f3`, tree
+  `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`, checked out read-only at
+  `/home/user/work/wt/rt-pin-95202c2b`.
+- Agent source: commit `357230816c86da65d5f8cc92b10a3a90d29874e0`, tree
+  `94692ec85167d5c606626c4ec678fe2a63ee0aa6`.
+- Runtime and Agent command schemas compare byte-identically at SHA-256
+  `613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3`.
+- Exact schema inventory: 55 definitions, 29 operation clauses, 12 explicit
+  v2 branches. `track.create.version` remains an open `string`, as required.
+- Runtime health/contract digest: `sha256:ddf6396dc32bd54bfeed549a99034693eaed76478b45ad0b7242117f6b734d36`.
+- Raw bundle SHA-256: `4a0779db14b9bbd827e964a495367b465bab5c00ee0b5717b8ff27777010a858`.
+- Artifact manifest version: `sha256:b397e5fdb9fc25502bbda9ad5011e82dd2d63330d5af373834d31e6761276e20`;
+  manifest file SHA-256 `35aa9d247979760b5570f804f30688fb6eaa179d57f5bbca0a41fd6e645deb9d`.
+  The manifest contains 75 artifact identities; the artifact check recomputed
+  them successfully.
+
+## Bounded delta and source review
+
+The 952 parent is Runtime `a6a11a8` (the normal private 613 generation). Its
+delta is exactly seven generated/test paths: the generator, three generated
+DTO modules, the artifact manifest, and two focused fixtures/tests. The source
+schema, wire bundle, provider/authority code, receipt aliases, commit paths,
+materialization paths, retry/history/inverse/redo paths, and semantic Runtime
+guards are unchanged from the parent.
+
+The generator change recognizes closed empty objects even when they have no
+`properties`: Python emits empty `TypedDict`s and TypeScript emits
+`{ [key: string]: never }`. `clip.delete` therefore rejects an own intent key
+in both languages. Open authored JSON maps remain open. The generated
+`MutationReceipt.project_seq` tuple remains unchanged. The test delta only adds
+positive/negative closed-empty coverage; it weakens no prior assertion.
+
+I bounded the comparison to the cited prior Agent 7b8/d20b/0511 evidence, the
+Runtime a6a review, and the current b893 -> 285 preservation basis. I did not
+reuse the older 7b8/d20b Runtime candidate as current approval and did not do a
+broad review-of-review. The current composition retains the cited CAS, text,
+promotion/C4 catalog-head, global-item, headless, strict-marker,
+producer-task-input-fence, base-plus-declared-pin, single-FD raw-media,
+namespace, and secondary-materialization facts; the 952 delta does not touch
+those paths.
+
+## Commands and results
+
+All commands were read-only against the Runtime checkout; no Agent pin,
+regeneration, publication, release, or integration was performed.
+
+1. Exact checkout identity:
+
+   `git -C /home/user/work/wt/rt-pin-95202c2b rev-parse HEAD HEAD^{tree}`
+
+   **PASS:** `95202c2b09e83aaae028287d6c59b773410141f3`,
+   `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`.
+
+2. Schema byte comparison and inventory probe: **PASS**; the hashes and
+   55/29/12 inventory above matched.
+
+3. `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python generators/generate.py --check`
+
+   **PASS**.
+
+
+4. `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py --check`
+
+   **PASS:** `contract/artifacts.json is current`.
+
+5. Focused generator/schema lane:
+
+   `/home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider --basetemp=/tmp/agt-review-runtime952-pytest tests/test_timeline_commit_type_generator.py tests/test_typescript_generator.py tests/test_artifact_manifest.py tests/test_command_schema_compatibility.py`
+
+   **147 passed**.
+
+6. Packed public-client/API lane:
+
+   `/home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider --basetemp=/tmp/agt-review-runtime952-public-pytest tests/test_timeline_current_union_contract.py tests/test_python_client_public_api.py tests/test_client_parity.py tests/test_client_release.py`
+
+   **71 passed**.
+
+7. Actual semantic guard lane, excluding the four marked integration/live
+   cases that require the central service:
+
+   `/home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider -m 'not integration' --basetemp=/tmp/agt-review-runtime952-semantic-pytest tests/test_timeline_materialization_join.py tests/test_timeline_materialization_authority_review.py tests/test_timeline_projection_ownership.py tests/test_timeline_projection_occupancy.py`
+
+   **216 passed, 4 deselected**.
+
+8. `git -C /home/user/work/wt/rt-pin-95202c2b diff --check 95202c2b^ 95202c2b`
+
+   **PASS**. The producer checkout and this Agent review worktree are clean.
+
+## Limitations and next step
+
+This is a source/generated-client/private-counterpart review, not native
+qualification. I did not run a full suite, socket/live integration, or the
+one actual Agent357/Runtime952 pair. The semantic tests use Runtime fixtures;
+they do not prove that Agent357 emits, retries, inverses, or refuses every
+corresponding native request. Next: Agent manager records the exact private
+pin ACK, then the orchestrator schedules the single 357/613 native pair with
+ledger-first accepted retry/inverse/redo and the new obsolete-v1 refusal /
+current-v2 success one-to-one cases.
+--- statuses ---
+## tl/agt-review-runtime952-private-counterpart
+## HEAD (no branch)
+--- temp cleanup ---
+clean /tmp/agt-review-runtime952-pytest
+clean /tmp/agt-review-runtime952-public-pytest
+clean /tmp/agt-review-runtime952-semantic-pytest
+
+codex
+## Result
+
+ACK for the normal Agent PRIVATE pin of Runtime `95202c2b`; HOLD native-pair, public release, adoption, and integration claims.
+
+Verified:
+
+- Runtime tree: `d438d3e…`
+- Agent357 schema: byte-identical SHA-256 `613123…aaad3`
+- 55 definitions, 29 clauses, 12 explicit v2 branches
+- 75 artifact identities and distinct health/bundle/manifest hashes
+- 952 delta limited to generator/generated DTOs/tests; no semantic Runtime path changes
+
+Tests:
+
+- `generate.py --check`: PASS
+- `artifact_manifest.py --check`: PASS
+- Generator/schema tests: **147 passed**
+- Public client/API tests: **71 passed**
+- Semantic guard tests: **216 passed, 4 deselected** (live integration cases)
+
+No full suite, live sockets, Agent pin, regeneration, publication, or native pair was run.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/report.md)
+
+Wrote the required [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/commit-msg.txt) and `DONE`.
+tokens used
+182,337
+## Result
+
+ACK for the normal Agent PRIVATE pin of Runtime `95202c2b`; HOLD native-pair, public release, adoption, and integration claims.
+
+Verified:
+
+- Runtime tree: `d438d3e…`
+- Agent357 schema: byte-identical SHA-256 `613123…aaad3`
+- 55 definitions, 29 clauses, 12 explicit v2 branches
+- 75 artifact identities and distinct health/bundle/manifest hashes
+- 952 delta limited to generator/generated DTOs/tests; no semantic Runtime path changes
+
+Tests:
+
+- `generate.py --check`: PASS
+- `artifact_manifest.py --check`: PASS
+- Generator/schema tests: **147 passed**
+- Public client/API tests: **71 passed**
+- Semantic guard tests: **216 passed, 4 deselected** (live integration cases)
+
+No full suite, live sockets, Agent pin, regeneration, publication, or native pair was run.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/report.md)
+
+Wrote the required [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/commit-msg.txt) and `DONE`.

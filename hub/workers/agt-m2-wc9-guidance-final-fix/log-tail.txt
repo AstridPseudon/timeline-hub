@@ -1,0 +1,400 @@
+ `client.timelines.script(project, timeline, revision_id=None, occurrence=None)`
+ is the same public reader. It returns names, occurrence identities, declared
+ track/timing, verified text and binding provenance, excludes unplaced shots,
+
+apply patch
+patch: completed
+/tmp/agt-m2-wc9-move-help.txt
+/tmp/agt-m2-wc9-track-label-help.txt
+diff --git a//tmp/agt-m2-wc9-move-help.txt b//tmp/agt-m2-wc9-move-help.txt
+deleted file mode 100644
+index fed8ea8ca750c76ef22d052a466f58942a5974a4..0000000000000000000000000000000000000000
+--- a//tmp/agt-m2-wc9-move-help.txt
++++ /dev/null
+@@ -1,21 +0,0 @@
+-usage: astrid timelines edit move [-h] [--project PROJECT] --clip CLIP
+-                                  --on SECONDS [--dry-run]
+-                                  [--idempotency-key IDEMPOTENCY_KEY] [--json]
+-                                  ref
+-
+-positional arguments:
+-  ref                   Timeline id or slug.
+-
+-options:
+-  -h, --help            show this help message and exit
+-  --project PROJECT     Owning project id or immutable slug. When omitted, use
+-                        the workspace runtime's current project.
+-  --clip CLIP           Stable parent/clip:ID or occurrence:ID/clip:ID
+-                        selector.
+-  --on SECONDS
+-  --dry-run             Validate without accepting a publication.
+-  --idempotency-key IDEMPOTENCY_KEY
+-                        Caller idempotency key (a fresh key is generated when
+-                        absent).
+-  --json                Print the exact SDK envelope
+-                        (ok/data/error/receipt/idempotency_key).
+diff --git a//tmp/agt-m2-wc9-track-label-help.txt b//tmp/agt-m2-wc9-track-label-help.txt
+deleted file mode 100644
+index 6a047a9eca3ce35eec03a00c2fefc37f1cf5d934..0000000000000000000000000000000000000000
+--- a//tmp/agt-m2-wc9-track-label-help.txt
++++ /dev/null
+@@ -1,25 +0,0 @@
+-usage: astrid timelines edit track-label [-h] [--project PROJECT]
+-                                         --track TRACK (--set STRING |
+-                                         --clear) [--dry-run]
+-                                         [--idempotency-key IDEMPOTENCY_KEY]
+-                                         [--json]
+-                                         ref
+-
+-Commit a guarded parent-track label through the native command registry.
+-
+-positional arguments:
+-  ref                   Timeline id or slug.
+-
+-options:
+-  -h, --help            show this help message and exit
+-  --project PROJECT     Owning project id or immutable slug. When omitted, use
+-                        the workspace runtime's current project.
+-  --track TRACK         Stable parent/track:ID selector.
+-  --set STRING          Set label; an empty string is a real value.
+-  --clear               Remove label.
+-  --dry-run             Validate without accepting a publication.
+-  --idempotency-key IDEMPOTENCY_KEY
+-                        Caller idempotency key (a fresh key is generated when
+-                        absent).
+-  --json                Print the exact SDK envelope
+-                        (ok/data/error/receipt/idempotency_key).
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-guidance-final-fix.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-guidance-final-fix.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..22d38b119d77152aee1925f59c9fba4cc606f3f6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-guidance-final-fix.md
+@@ -0,0 +1,68 @@
++# WC9 guidance final fix
++
++Status: complete on worker branch; WC9 remains `IN PROGRESS`/`HELD` pending
++manager rereview and merge. The deletion ledger was not marked deleted.
++
++## Exact delta
++
++Base worker HEAD: `610643820bcb474a7e4c9ce6862d88c70fcfda67`.
++
++Only `astrid/packs/rendering/docs/SKILL.md` changed in the worktree. The four
++requested guidance regions were repaired (current lines 250-267, 278-283,
++673-678, and 721-738):
++
++- Helper-catalog transforms are explicitly read-only/migration preparation.
++- Supported publication is captured commands through the native CLI/session and
++  existing durable outbox, or a settled proposal queued/flushed by its
++  requester.
++- Unsupported intent is refused visibly, with the draft retained and the
++  missing command reported; no automatic checkout/CAS fallback is suggested.
++- Complete composition edits are migration-only/held.
++- The checkout example retains checkout/bind/check and readback capability
++  explanation but no longer runs the held detached `publish` writer.
++
++No product code, script, template, API, schema, CLI flag, signature, pin, R4
++archive, integration worktree, or other WC9 document was changed. Existing
++product docs, native examples, 401-word architecture page, and R4 archive are
++preserved.
++
++## WC9 census
++
++The WC9 scoped set is six documents: the five prior changed product/reference
++docs plus `docs/architecture/timeline.md`. Native command/session/outbox and
++settled-proposal requester guidance remains present across that set. Detached
++checkout, CAS, cut-sheet, and whole-candidate references are explicitly marked
++held, migration/read-only, legacy-draft, or visible-refusal/draft-retention.
++
++There are zero uncaveated detached-publication fallback instructions in the
++four repaired SKILL passages and zero runnable checkout-to-`publish` examples
++remaining in those passages. The separately held guide/reference migration
++sections remain unchanged; they are not presented as the normal writer.
++
++## Evidence
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" python3 scripts/reshape/check_doc_references.py` — PASS: 0 errors, 0 warnings; 193 docs, 547 capability refs, 263 CLI refs.
++- Fenced Python AST probe over `astrid/packs/rendering/docs/SKILL.md` — PASS: 8 blocks parsed.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" python3 -m astrid timelines edit move --help` — PASS.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" python3 -m astrid timelines edit track-label --help` — PASS.
++- Isolated `inspect.signature` probes — PASS for `TimelineSession.open`, `commit`, `commit_many`, `queue_proposal`, `flush`, `undo`, `Checkout.open`, and `RemoteTimelines.open_composition`.
++- `git diff --check` — PASS.
++- No tests, full suite, browser, live-socket, or large-fixture runs were requested or performed.
++
++The first combined signature probe imported `RemoteTimelines`, `Checkout`, and
++`TimelineSession` in an order that exposed an existing circular import between
++`astrid.sdk.timeline.checkout` and the legacy re-export. Each public signature
++validated independently, so this is not an unresolved documentation blocker;
++no source fix was made because the task is docs-only.
++
++## Handoff
++
++Updated shared handoff:
++`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-native-docs-cut.md`.
++
++Updated `WC9` in:
++`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md`.
++
++Recommended next step: manager rereview this one-file docs delta, then merge;
++keep WC9 held until the manager confirms the remaining legacy migration
++surfaces are either retired or command-backed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-native-docs-cut.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-native-docs-cut.md
+index c5a20f3d7a5ef12b24b684d9f73842e1cac6082a..90e2933d813c76ba5f836a0264bb281ccccb4783
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-native-docs-cut.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-native-docs-cut.md
+@@ -1,6 +1,7 @@
+ # WC9 native docs cut
+ 
+-Status: worker cut applied; WC9 remains HELD pending manager review/merge.
++Status: worker cut plus final guidance repair applied; WC9 remains HELD pending
++manager rereview/merge. Do not mark WC9 deleted from this worker branch.
+ 
+ The active Timeline product docs now present `TimelineSession` and the native
+ CLI command adapters as the normal write path. Native sessions capture original
+@@ -29,6 +30,27 @@
+ must not be marked deleted until those remaining paths are retired or every
+ covered operation is command-backed.
+ 
++Final repair delta (this worker): only
++`astrid/packs/rendering/docs/SKILL.md` changed, at the four requested anchors
++(current lines 250-267, 278-283, 673-678, and 721-738; line numbers may move).
++The helper catalog is now explicitly read-only/migration preparation; unsupported
++intent is a visible refusal with the draft retained; complete composition edits
++are migration-only/held; and the checkout example no longer runs `publish`.
++Normal publication is named only as captured commands through the existing
++durable session outbox, or a settled proposal queued/flushed by its requester.
++No flag, signature, product code, script, template, API, schema, pin, R4
++archive, or other WC9 document changed in this repair.
++
++WC9 scoped-doc census after the repair: six documents (the five changed docs
++listed above plus `docs/architecture/timeline.md`) contain native command/
++session/outbox or settled-proposal publication guidance; detached checkout,
++CAS, cut-sheet, and whole-candidate mentions are all explicitly held,
++migration/read-only, or visible-refusal/draft-retention guidance. There are no
++uncaveated detached-publication fallback instructions remaining in the four
++repaired SKILL passages, and no runnable checkout-to-`publish` example remains
++there. The separate guide/reference held migration sections remain intentionally
++unchanged and are not normal write instructions.
++
+ Validation:
+ 
+ - `python3 scripts/reshape/check_doc_references.py` — 0 errors, 0 warnings;
+@@ -39,6 +61,14 @@
+   — documented flags/signatures present.
+ - `wc -w docs/architecture/timeline.md` — 401.
+ 
++Final repair validation on the worker tree:
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" python3 scripts/reshape/check_doc_references.py` — PASS (0 errors, 0 warnings; 193 docs, 547 capability refs, 263 CLI refs).
++- Fenced Python AST probe for `astrid/packs/rendering/docs/SKILL.md` — PASS (8 blocks parsed).
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" python3 -m astrid timelines edit move --help` and `edit track-label --help` — PASS.
++- Isolated `inspect.signature` probes for `TimelineSession`, `Checkout.open`, and `RemoteTimelines.open_composition` — PASS; the first combined import order exposed an existing circular import, so no combined-import pass is claimed.
++- `git diff --check` — PASS.
++
+ No full suite or browser/live-socket suite was run (docs-only task). No product
+ writer code, templates, scripts, R4 archive, integration worktree, or shared
+ dependency was modified.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md
+index 06d6504580c5dbffbb09787baaafed8c93eb3867..47a1763f4ea1c1de2a0938c1f71db4c71ee33179
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md
+@@ -43,7 +43,7 @@
+ | WC6 | Agent `packs/rendering/docs/scripts/timeline_document.py` publish subcommand | whole-candidate publish from a detached JSON file | proposal + commit; `check` kept | agent | M2 | held | `test_authoring_feedback.py:210`, `test_authoring_media.py:227` replacement pending |
+ | WC7 | Agent `sdk/timeline/store.py` `publish_bundle` (:257) with `timeline/publish.py` `publish()` / `_publish_narration` and `timeline_checkout.py` re-export | whole-document checkout publish with three-way merge | `TimelineSession` command commit | agent | M2 | held | after all Checkout edits are command-backed or refused; `test_timeline_publish_connection.py` replacement pending |
+ | WC8 | Agent `sdk/timeline/store.py` `three_way`/`_merge` and `fetch_bundle`/`_units` (whole-document) | whole-document merge | server-side rebase of commands | agent | M2 | held | depends on WC7; shared with `checkout.py:203` and `cli.py:2808` |
+-| WC9 | Docs: `timeline-editing-guide.md`, `timeline-authoring-capabilities.md`, `SKILL.md` (rendering), checkout writer examples (exact surviving docs under census) | docs teach the second writer | native `TimelineSession`/CLI command and settled-proposal commit through the real outbox, with original guards and fresh identity | agent | M2 | held | IN PROGRESS: worker cut updates `docs/timeline-editing-guide.md`, `docs/timeline-authoring-capabilities.md`, `astrid/packs/rendering/docs/SKILL.md`, `astrid/packs/rendering/docs/references/document-checkout.md`, and `astrid/packs/rendering/docs/references/editing.md`; `scripts/timeline_document.py` and legacy detached-draft examples remain unchanged/explicitly held. Exact remaining legacy path: timeline guide's detached working-copy `checkout`/`edit`/`publish` section (including cut-sheet narration), rendering SKILL's held `publish`/`apply --native` migration notes, and the checkout reference's migration-only script/helper catalog. Row stays HELD until those surviving legacy instructions are retired or every covered operation is command-backed. Reference checker after cut: 0 errors, 0 warnings; architecture page is 401 words and guide link is present. |
++| WC9 | Docs: `timeline-editing-guide.md`, `timeline-authoring-capabilities.md`, `SKILL.md` (rendering), checkout writer examples (exact surviving docs under census) | docs teach the second writer | native `TimelineSession`/CLI command and settled-proposal commit through the real outbox, with original guards and fresh identity | agent | M2 | in-progress | IN PROGRESS: worker cut updates `docs/timeline-editing-guide.md`, `docs/timeline-authoring-capabilities.md`, `astrid/packs/rendering/docs/SKILL.md`, `astrid/packs/rendering/docs/references/document-checkout.md`, and `astrid/packs/rendering/docs/references/editing.md`; `scripts/timeline_document.py` and legacy detached-draft examples remain unchanged/explicitly held. Final worker repair changes only the four requested uncaveated passages in `astrid/packs/rendering/docs/SKILL.md`: helper catalog is migration/read-only preparation, unsupported intent refuses visibly with draft retention, complete composition edits are migration-only/held, and the checkout example no longer runs `publish`. Exact remaining legacy path is still the timeline guide's detached working-copy `checkout`/`edit`/`publish` section (including cut-sheet narration), rendering SKILL's separately held `publish`/`apply --native` migration notes, and the checkout reference's migration-only script/helper catalog. Row stays IN PROGRESS/HELD until manager rereview/merge and surviving legacy instructions are retired or every covered operation is command-backed. Final repair evidence: doc-refs 0 errors/0 warnings (193 docs, 547 capability refs, 263 CLI refs), SKILL fenced Python AST 8 blocks parsed, native move/track-label help PASS, isolated public signature probes PASS, and `git diff --check` PASS. |
+ | WC10 | Runtime `runtime_protocol/service.py` `publish_parent_composition` (route restored pending consumers) | legacy composition writer (restored until consumer replacements qualify) | commitTimeline | runtime | M2 | held | delete only after §4 callers (`remote.create_empty`, `reference_realm.py`, `shot_composition_migration.py`) migrate; not re-retired until then (INBOX 06:59Z) |
+ | CT1 | Agent `tests/sdk/test_capture_source_runtime.py::test_missing_candidate_certificate_refuses_before_admission_writes` (candidate-less working copy refused) | Runtime now admits it as explicit UNCERTIFIED | `test_missing_candidate_working_copy_is_admitted_uncertified` + `test_missing_candidate_certificate_without_authority_refuses_before_admission_writes` | agent | M1 | done | refusal kept for markers contradicting capture authority |
+ | AG-CUTOVER-01 | `tests/stage1/test_runtime_client_cutover.py::test_documented_project_cli_mutations_return_committed_receipts`: direct shot create/add/reorder success | Runtime 94114269 retires direct shot writes; PLAN one EditCommand writer | Same named test seeds historical shot/items via `seed_trusted_parent`; CLI reorder asserts exact retired_route/message, failure exit, five-key envelope, original key, no receipt and unchanged shot. Catalog link/set-primary positives retained and receipt/result equality added. Creation/add refusal covered by `test_shot_items_and_reference_associations_use_versioned_routes_and_survive_restart`. | agent | M2 | REJECTED / UNMERGED; positive preservation missing | agt-cutover-retired-writers pin94114269-integration-1020092719-30468: 46 passed, no skips/xfails; source tree f7b3676c8d607c8aa9be9c204af969fa7d149d07 |
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-guidance-final-fix/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-guidance-final-fix/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-guidance-final-fix/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-guidance-final-fix/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d29c646f32cdec33130831534d2fa1c70034dd79
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-guidance-final-fix/commit-msg
+@@ -0,0 +1,5 @@
++docs(rendering): clarify held checkout writer guidance
++
++Mark detached composition edits as migration-only, retain unsupported drafts,
++and direct supported publication through captured commands and the durable
++session outbox or settled proposal requester.
+diff --git a/astrid/packs/rendering/docs/SKILL.md b/astrid/packs/rendering/docs/SKILL.md
+index fe3b1d8f39d0ecf37a1fcf3d9452d6bee2ed9257..3411446ff0f540f9f5541ce56bbd5796fa6f3f7a
+--- a/astrid/packs/rendering/docs/SKILL.md
++++ b/astrid/packs/rendering/docs/SKILL.md
+@@ -250,17 +250,22 @@
+ 4. **Choose the smallest supported edit.** Use a public command for a direct,
+    exact Runtime operation such as replacing admitted media or rendering. Use
+    the [helper catalog](references/document-checkout.md#editing-helper-catalog)
+-   for sequence, reorder, quantize, ripple, layout, or repeated transforms;
+-   those helpers operate on the same detached authoring bundle. That code is a
+-   candidate transform, not a new format or hidden command language. Do not
+-   edit Runtime files directly, call undocumented endpoints, or silently rebase
+-   a stale candidate.
+-5. **Validate and save.** Validate the complete candidate, inspect its diff,
+-   and save through the existing compare-and-swap/idempotent publication boundary.
+-   Preview, rendering, and focused readback are optional unless the request
+-   needs them. For an explicit preview-before-save request, inspect/deliver a
+-   successful unpublished candidate render before saving that same candidate.
+-   Keep the receipt; further corrective edits and saves are allowed.
++   only for read-only or migration preparation of sequence, reorder, quantize,
++   ripple, layout, or repeated transforms; those helpers operate on the same
++   detached authoring bundle. That code is a candidate transform, not a new
++   format or hidden command language. Do not edit Runtime files directly, call
++   undocumented endpoints, silently rebase a stale candidate, or publish it
++   through the held checkout writer.
++5. **Validate and save.** For supported edits, turn the intent into captured
++   commands and commit through the native CLI/session, whose existing durable
++   outbox persists the exact request and retry identity. A settled producer
++   proposal is queued and flushed by that requester through the same boundary.
++   Detached candidates may be validated, diffed, or previewed for migration;
++   they are not a fallback publication route. If the intent is unsupported,
++   refuse visibly, retain the draft, and report the missing command. For an
++   explicit preview-before-save request, inspect/deliver a successful
++   unpublished candidate render before the supported commit. Keep the receipt;
++   further corrective edits and saves are allowed.
+ 6. **Explain the evidence.** Report what was observed, what was changed, and
+    what remains unavailable separately. A successful command, a semantic
+    readback, a decoded media check, and a browser/render proof are different
+@@ -270,10 +275,12 @@
+ 
+ > Open one pinned composition. Find the target in the structural view, carry its
+ > exact identity to the visual view, and expand only as needed. Use the smallest
+-> supported command; otherwise edit a detached same-schema candidate with
+-> ordinary code. Validate, diff, and save. Choose source inspection, rendered
+-> preview, or readback when the request needs it. Keep current, candidate, and
+-> historical evidence distinct.
++> supported command. If the intent is unsupported, refuse visibly, retain the
++> draft, and report the missing command; do not publish through the held
++> checkout writer. Detached same-schema candidates are for migration/read-only
++> preparation only. Choose source inspection, rendered preview, or readback
++> when the request needs it. Keep current, candidate, and historical evidence
++> distinct.
+ 
+ For discovery, `timelines show` answers structural/text questions, and
+ `timelines visualize --mode inputs` answers declared-placement questions. They
+@@ -663,8 +670,12 @@
+ 
+ The supported commands above create, inspect, populate, remove, and reorder
+ project-level shot records. They do not rewrite a timeline document or replace
+-multiple authored clips with a shot. Use the detached checkout recipe for that
+-complete composition edit, with Runtime head comparison at publication.
++multiple authored clips with a shot. A complete composition edit is currently
++migration-only/held: use the detached checkout recipe only to inspect, validate,
++or prepare a migration, never as a fallback publication route. For unsupported
++normal edits, refuse visibly, retain the draft, and report the missing command;
++supported publication is through captured commands and the existing durable
++outbox (or a settled proposal flushed by its requester).
+ 
+ Keep narration in the shot's canonical `voiceover_script` text binding alongside
+ its voiceover media. Do not leave the only copy in a generation script:
+@@ -707,19 +718,25 @@
+ composition's pinned narration. A stale head requires a fresh checkout and explicit
+ reconciliation, never substitution of the latest text.
+ 
+-The runnable checkout example includes this complete path for a registered shot:
++The following checkout example is migration-only/read-only preparation for a
++registered shot; it is not a current publication path:
+ 
+ ```bash
+ python3 scripts/timeline_document.py checkout --project <project> --timeline <timeline> --file /tmp/edit.json
+ python3 scripts/timeline_document.py bind-script --file /tmp/edit.json --shot <registered-shot-id> \
+   --text-file <script.txt> --expected-head 0 --idempotency-key narration-01
+ python3 scripts/timeline_document.py check --file /tmp/edit.json
+-python3 scripts/timeline_document.py publish --file /tmp/edit.json --idempotency-key pin-narration-01
++# Do not send this detached candidate to the held `publish` writer.
+ python3 -m astrid timelines script <timeline> --project <project> --json
+-# Historical read: use the publication receipt's exact parent revision.
++# Historical read: use an existing publication receipt's exact parent revision.
+ python3 -m astrid timelines script <timeline> --project <project> --revision <parent-revision> --json
+ ```
+ 
++For a supported edit, publish captured commands through the native session/CLI
++and its existing durable outbox, or flush a settled proposal through its
++requester. If this intent is not command-backed, refuse visibly and retain the
++draft rather than automatically falling back to checkout/CAS publication.
++
+ `client.timelines.script(project, timeline, revision_id=None, occurrence=None)`
+ is the same public reader. It returns names, occurrence identities, declared
+ track/timing, verified text and binding provenance, excludes unplaced shots,
+
+codex
+The one-file repair, shared handoff, ledger status, report, commit message, and `DONE` marker are in place. I’m doing the final cleanliness check now; the only caveat is the pre-existing combined-import circularity, while each public signature passes independently.
+exec
+/bin/bash -lc "set -o pipefail
+printf '%s\\n' '--- final worktree status ---'
+git status --short
+printf '%s\\n' '--- final whitespace ---'
+git diff --check
+printf '%s\\n' '--- coordination artifacts ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-guidance-final-fix.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-guidance-final-fix/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-guidance-final-fix/DONE
+printf '%s\\n' '--- commit message ---'
+sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-guidance-final-fix/commit-msg
+printf '%s\\n' '--- report status line ---'
+sed -n '1,12p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-guidance-final-fix.md" in /home/user/work/wt/agt-m2-wc9-guidance-final-fix
+ succeeded in 112ms:
+--- final worktree status ---
+ M astrid/packs/rendering/docs/SKILL.md
+--- final whitespace ---
+--- coordination artifacts ---
+-rw-r--r-- 1 root root 3647 Oct 20 14:35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc9-guidance-final-fix.md
+-rw-r--r-- 1 root root    0 Oct 20 14:35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-guidance-final-fix/DONE
+-rw-r--r-- 1 root root  255 Oct 20 14:35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc9-guidance-final-fix/commit-msg
+--- commit message ---
+docs(rendering): clarify held checkout writer guidance
+
+Mark detached composition edits as migration-only, retain unsupported drafts,
+and direct supported publication through captured commands and the durable
+session outbox or settled proposal requester.
+--- report status line ---
+# WC9 guidance final fix
+
+Status: complete on worker branch; WC9 remains `IN PROGRESS`/`HELD` pending
+manager rereview and merge. The deletion ledger was not marked deleted.
+
+## Exact delta
+
+Base worker HEAD: `610643820bcb474a7e4c9ce6862d88c70fcfda67`.
+
+Only `astrid/packs/rendering/docs/SKILL.md` changed in the worktree. The four
+requested guidance regions were repaired (current lines 250-267, 278-283,
+673-678, and 721-738):
+
+codex
+Implemented the WC9 docs repair in [SKILL.md](/home/user/work/wt/agt-m2-wc9-guidance-final-fix/astrid/packs/rendering/docs/SKILL.md):
+
+- Detached checkout edits are migration-only/held.
+- Unsupported intent visibly refuses while retaining the draft.
+- Publication uses captured commands, durable outbox, or settled proposal requester.
+- Removed the runnable detached `publish` fallback.
+
+Validation passed:
+
+- Doc references: 0 errors/warnings.
+- 8 fenced Python blocks parsed.
+- CLI help and public signatures passed.
+- `git diff --check` passed.
+- No full/tests/browser suites run.
+
+Updated handoff, WC9 ledger (`IN PROGRESS`/`HELD`), report, commit message, and `DONE` marker. Combined signature import exposed a pre-existing circular import; isolated probes passed.
+tokens used
+125,834
+Implemented the WC9 docs repair in [SKILL.md](/home/user/work/wt/agt-m2-wc9-guidance-final-fix/astrid/packs/rendering/docs/SKILL.md):
+
+- Detached checkout edits are migration-only/held.
+- Unsupported intent visibly refuses while retaining the draft.
+- Publication uses captured commands, durable outbox, or settled proposal requester.
+- Removed the runnable detached `publish` fallback.
+
+Validation passed:
+
+- Doc references: 0 errors/warnings.
+- 8 fenced Python blocks parsed.
+- CLI help and public signatures passed.
+- `git diff --check` passed.
+- No full/tests/browser suites run.
+
+Updated handoff, WC9 ledger (`IN PROGRESS`/`HELD`), report, commit message, and `DONE` marker. Combined signature import exposed a pre-existing circular import; isolated probes passed.

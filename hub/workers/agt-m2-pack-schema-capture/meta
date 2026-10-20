@@ -1,0 +1,9 @@
+name=agt-m2-pack-schema-capture
+repo=agent
+base=tl/agt-m2-selected-schema-proof
+base_sha=32332d70
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-pack-schema-capture
+started=2026-10-20T00:32:49Z

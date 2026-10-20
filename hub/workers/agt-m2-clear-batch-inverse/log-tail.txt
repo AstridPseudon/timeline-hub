@@ -1,0 +1,400 @@
+    assert current == original, path
+    print(f'{path}: byte-equal to 8600e018, sha256:{hashlib.sha256(current).hexdigest()}')
+PY" in /home/user/work/wt/agt-m2-clear-batch-inverse
+ succeeded in 0ms:
+tests/editing_conformance/fixtures/recipe_m1_move.json: byte-equal to 8600e018, sha256:e1dc5fc72e42fa90aed3e46ccd3bb95e219004bddd2917dc99f0154cf768dba0
+tests/editing_conformance/fixtures/recipe_m1_occurrence.json: byte-equal to 8600e018, sha256:dba00dff12f8322f8613869170abd15cd8c8e330bbbee8a6da675270fda3a7bc
+tests/editing_conformance/fixtures/recipe_m1_shared.json: byte-equal to 8600e018, sha256:0828ae13255897d8bea25ba5fd28445835f374189e837b41b9f818bb017577d7
+
+codex
+The targeted run passed: 576 tests, with no xfails. Ruff and whitespace checks passed, and all three M1 golden fixtures are byte-equal to base `8600e018`. The fix only changes `_patch`; this task did not require the optional structural inverse overlay from `8fe7a42f`. I’m writing the handoff files now.
+exec
+/bin/bash -lc 'ls -ld .pytest_cache .ruff_cache 2>/dev/null; git status --short; git diff --check' in /home/user/work/wt/agt-m2-clear-batch-inverse
+ succeeded in 504ms:
+drwxr-xr-x 3 root root 4096 Oct 20 00:33 .pytest_cache
+drwxr-xr-x 3 root root 4096 Oct 20 00:35 .ruff_cache
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+?? tests/editing_conformance/test_inverse_clear_batches.py
+
+exec
+/bin/bash -lc 'ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse' in /home/user/work/wt/agt-m2-clear-batch-inverse
+ succeeded in 0ms:
+total 360
+drwxr-xr-x   2 root root   4096 Oct 20 00:32 .
+drwxr-xr-x 271 root root  20480 Oct 20 00:34 ..
+-rw-r--r--   1 root root   1256 Oct 20 00:32 brief.md
+-rw-r--r--   1 root root 328079 Oct 20 00:35 log.txt
+-rw-r--r--   1 root root    211 Oct 20 00:32 meta
+-rw-r--r--   1 root root      0 Oct 20 00:32 running
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..8e34f1c8f25e459bb527cd08a09ef50e365c5627
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/commit-msg
+@@ -0,0 +1,8 @@
++fix(timeline): preserve absent and null ancestors in batch inverses
++
++Keep descendant clears from normalizing aggregate absence or null during
++inverse coalescing, and require historical containers for present restoration.
++
++Restore both clear-then-set batch regressions to passing tests and cover nested
++orderings, exact inverse and redo replay, unchanged intent, ABA and disjoint
++guards. All 576 targeted tests pass; original M1 golden fixtures are unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..8e34f1c8f25e459bb527cd08a09ef50e365c5627
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/commit-msg.txt
+@@ -0,0 +1,8 @@
++fix(timeline): preserve absent and null ancestors in batch inverses
++
++Keep descendant clears from normalizing aggregate absence or null during
++inverse coalescing, and require historical containers for present restoration.
++
++Restore both clear-then-set batch regressions to passing tests and cover nested
++orderings, exact inverse and redo replay, unchanged intent, ABA and disjoint
++guards. All 576 targeted tests pass; original M1 golden fixtures are unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..eecbb39057ca6a9444fcf96a151a25bed5f6e19e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/notes/report.md
+@@ -0,0 +1,67 @@
++# agt-m2-clear-batch-inverse
++
++Completed on assigned Agent base `8600e018`. Read PLAN.md and the prior clear-absent report. M2 integration remains HELD pending PLAN M1 exit.
++
++## Changes and decisions
++
++- Corrected shared `inverse._patch`: patching an absent descendant into an absent/null ancestor preserves that ancestor's exact tagged state. This includes missing/null ancestors nested inside aggregate objects, array elements, and existing collection aliases.
++- Removed implicit object creation from aggregate patch traversal. Present descendant restoration requires historical containers; missing/null/scalar containers fail with `CommandError(kind='history_unavailable')`. Existing collection-alias insertion still requires historical order.
++- Both positive clear-then-set strict xfails now pass with their original assertions unchanged.
++- Added 100 generic/native cases covering nested clear/set orderings, clear-set-clear, set-clear from absent/null containers, literal null leaves, exact inverse/redo, deterministic forward/inverse/redo replay, unchanged leaf intent, unchanged publications, ABA refusal, disjoint concurrent edits, historical container requirements, and alias order requirements.
++- No changes to coalescing address semantics, staged inverse validation/installation, State/Recording/scalar handlers, schemas, DTOs, or golden fixtures. No per-operation undo, new record fields, whole-parent restore, or skipped writes. The authorized optional `8fe7a42f` structural net-zero overlay was unnecessary for this task's composition cases and was not applied; newer base semantics remain intact.
++
++## Verification
++
++Final targeted run, exit 0:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recording_clear.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/editing_conformance/test_recorded_graph_roots.py
++```
++
++**576 passed in 22.93s; no skips or xfails.** Includes M1 published golden assertions and neighboring shared inverse/provider coverage.
++
++Focused development runs, exit 0:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py -k clear_then_set_batch
++# 2 passed, 66 deselected in 0.65s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_inverse_clear_batches.py
++# 99 passed in 2.63s, before adding the array-null regression (included in final run)
++```
++
++Checks, exit 0:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-force-exclude astrid/sdk/timeline/inverse.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recipe_scalar_commands.py
++# All checks passed!
++git diff --check
++# clean
++
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
++import hashlib
++import subprocess
++from pathlib import Path
++for path in sorted(Path('tests/editing_conformance/fixtures').glob('recipe_m1_*.json')):
++    original = subprocess.check_output(['git', 'show', f'8600e018:{path}'])
++    current = path.read_bytes()
++    assert current == original, path
++    print(f'{path}: byte-equal to 8600e018, sha256:{hashlib.sha256(current).hexdigest()}')
++PY
++```
++
++All three M1 fixtures are byte-equal to the base:
++
++| Fixture | SHA-256 |
++| --- | --- |
++| recipe_m1_move.json | e1dc5fc72e42fa90aed3e46ccd3bb95e219004bddd2917dc99f0154cf768dba0 |
++| recipe_m1_occurrence.json | dba00dff12f8322f8613869170abd15cd8c8e330bbbee8a6da675270fda3a7bc |
++| recipe_m1_shared.json | 0828ae13255897d8bea25ba5fd28445835f374189e837b41b9f818bb017577d7 |
++
++Not run: full suite, make check, typecheck, central service, live/localhost/browser tests, Runtime/App integration, rendering or pixel parity. No installations, git mutations, integration-worktree edits, other-worker edits, or pushes. Test/lint caches created by this task were removed.
++
++## Handoff
++
++No blocker or different contract gap found within the authorized cases. Review the small generic product diff and retain the M2 integration hold until PLAN records M1 exit. Broader integration evidence remains the manager's later gate; the harness owns committing this work.
++
++Both worker-root `commit-msg` and `commit-msg.txt` contain the same conventional commit message.
+diff --git a/astrid/sdk/timeline/inverse.py b/astrid/sdk/timeline/inverse.py
+index fdcfe37491b92a2adcface370115bbdd865670fa..b238a922450e17e89bc1853daf39203843d6e249
+--- a/astrid/sdk/timeline/inverse.py
++++ b/astrid/sdk/timeline/inverse.py
+@@ -20,7 +20,11 @@
+ def _patch(state, path, replacement):
+     if not path:
+         return copy.deepcopy(replacement)
+-    value = copy.deepcopy(state.get('value', {}))
++    if state == ABSENT or state.get('value') is None:
++        if replacement == ABSENT:
++            return copy.deepcopy(state)
++        raise CommandError('patch requires historical container structure', kind='history_unavailable')
++    value = copy.deepcopy(state['value'])
+     node = value
+     for token in path[:-1]:
+         if isinstance(token, tuple):
+@@ -30,8 +34,18 @@
+             node = matches[0]
+         elif isinstance(node, list):
+             node = node[int(token)]
++        elif isinstance(node, dict):
++            if token not in node:
++                if replacement == ABSENT:
++                    return copy.deepcopy(state)
++                raise CommandError('patch requires historical container structure', kind='history_unavailable')
++            node = node[token]
+         else:
+-            node = node.setdefault(token, {})
++            raise CommandError('patch parent must be an object or array', kind='history_unavailable')
++        if node is None:
++            if replacement == ABSENT:
++                return copy.deepcopy(state)
++            raise CommandError('patch requires historical container structure', kind='history_unavailable')
+     if isinstance(path[-1], tuple):
+         identity = path[-1][1]
+         indices = [i for i, row in enumerate(node) if row.get('id') == identity]
+@@ -52,6 +66,8 @@
+         else:
+             node[index] = copy.deepcopy(replacement['value'])
+         return present(value)
++    if not isinstance(node, dict):
++        raise CommandError('patch parent must be an object or array', kind='history_unavailable')
+     if replacement['state'] == 'absent':
+         node.pop(path[-1], None)
+     else:
+diff --git a/tests/editing_conformance/test_inverse_clear_batches.py b/tests/editing_conformance/test_inverse_clear_batches.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..9c2e9c2aedae4478fc7eb5d4b5ac4b6bc927b209
+--- /dev/null
++++ b/tests/editing_conformance/test_inverse_clear_batches.py
+@@ -0,0 +1,163 @@
++"""Generic clear/aggregate composition keeps tagged presence and guarded intent."""
++from __future__ import annotations
++
++import copy
++
++import pytest
++
++from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.inverse import _patch, coalesce
++from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.staging_recipes import install_staging_operations
++from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse
++
++REF = 'occurrence:occ-1/clip:picture-1'
++PATH = ['params', 'nested', 'leaf']
++CONTAINERS = [ABSENT, present(None), present({}), present({'nested': None}),
++              present({'nested': {'leaf': None, 'sibling': [False, None]}, 'opaque': {}})]
++
++
++def change(path, state, ref=REF):
++    return {'schema_version': 1, 'op': 'fixture.properties', 'version': '1', 'select': ref,
++            'args': {'changes': [{'path': path, 'state': state}]}}
++
++
++def roundtrip(original, plan):
++    snapshot = copy.deepcopy(original)
++    replayed = replay(plan, original)
++    assert replayed.bundle == plan.bundle
++    assert replayed.records == plan.records
++    undone = inverse(plan.bundle, plan.records)
++    assert undone.bundle == original
++    redone = inverse(undone.bundle, undone.records)
++    assert redone.bundle == plan.bundle
++    assert replay(undone, plan.bundle, inverse_records=plan.records).records == undone.records
++    assert replay(redone, original, inverse_records=undone.records).records == redone.records
++    assert original == snapshot
++
++
++@pytest.mark.parametrize('container', CONTAINERS[:4])
++def test_patch_absent_descendant_preserves_aggregate_presence(container):
++    snapshot = copy.deepcopy(container)
++    path = ['nested', 'leaf'] if isinstance(container.get('value'), dict) else ['leaf']
++    patched = _patch(container, path, ABSENT)
++    assert patched == container == snapshot
++    assert patched is not container
++
++
++@pytest.mark.parametrize('container', CONTAINERS[:4])
++def test_patch_present_descendant_requires_historical_containers(container):
++    snapshot = copy.deepcopy(container)
++    path = ['nested', 'leaf'] if isinstance(container.get('value'), dict) else ['leaf']
++    with pytest.raises(CommandError) as error:
++        _patch(container, path, present(None))
++    assert error.value.kind == 'history_unavailable'
++    assert container == snapshot
++
++
++def test_patch_present_leaf_and_collection_alias_keep_historical_structure():
++    container = present({'rows': [{'id': 'a', 'nested': {}}, {'id': 'b', 'nested': None}]})
++    patched = _patch(container, ['rows', ('id', 'a'), 'nested', 'leaf'], present(None))
++    assert patched['value']['rows'][0]['nested'] == {'leaf': None}
++    assert container['value']['rows'][0]['nested'] == {}
++    assert _patch(container, ['rows', ('id', 'b'), 'nested', 'leaf'], ABSENT) == container
++    with pytest.raises(CommandError, match='historical container'):
++        _patch(container, ['rows', ('id', 'b'), 'nested', 'leaf'], present(1))
++    with pytest.raises(CommandError, match='historical order'):
++        _patch(container, ['rows', ('id', 'missing')], present({'id': 'missing'}))
++
++
++def test_patch_null_in_array_preserves_presence_without_inventing_container():
++    container = present({'rows': [None, {'opaque': False}]})
++    assert _patch(container, ['rows', '0', 'leaf'], ABSENT) == container
++    with pytest.raises(CommandError, match='historical container'):
++        _patch(container, ['rows', '0', 'leaf'], present(None))
++
++
++@pytest.mark.parametrize('before', CONTAINERS)
++@pytest.mark.parametrize('after', CONTAINERS)
++@pytest.mark.parametrize('ordering', ['clear-set', 'set-clear', 'clear-set-clear'])
++def test_nested_clear_aggregate_orderings_roundtrip(monkeypatch, before, after, ordering):
++    install_staging_operations(monkeypatch)
++    original = bundle()
++    State(original).set(REF, ['params'], before)
++    clear, aggregate = change(PATH, ABSENT), change(['params'], after)
++    commands = {'clear-set': [clear, aggregate], 'set-clear': [aggregate, clear],
++                'clear-set-clear': [clear, aggregate, clear]}[ordering]
++    plan = execute(original, commands)
++    expected = copy.deepcopy(original)
++    for command in commands:
++        write = command['args']['changes'][0]
++        State(expected).set(REF, write['path'], write['state'])
++    assert plan.bundle == expected
++    combined = coalesce(plan.records)
++    assert combined == [{'ref': REF, 'path': ['params'], 'before': before,
++                         'after': State(expected).get(REF, ['params'])}]
++    assert any(w['path'] == PATH for record in plan.records for w in record['writes'])
++    roundtrip(original, plan)
++
++
++@pytest.mark.parametrize('container', [ABSENT, present(None)])
++@pytest.mark.parametrize('ordering', ['clear-set', 'set-clear', 'clear-set-clear'])
++def test_native_clear_set_orderings_exact_replay_inverse_redo(container, ordering):
++    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
++
++    original = bundle()
++    State(original).set(REF, ['params'], container)
++    clear = {'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': REF,
++             'args': {'values': {}, 'clear': ['x']}}
++    set_value = capture_clip_set_params(original, REF, values={'x': None})
++    commands = {'clear-set': [clear, set_value], 'set-clear': [set_value, clear],
++                'clear-set-clear': [clear, set_value, clear]}[ordering]
++    plan = execute(original, commands)
++    assert clip(plan.bundle, REF)['params'] == ({'x': None} if ordering == 'clear-set' else {})
++    roundtrip(original, plan)
++
++
++@pytest.mark.parametrize('container', CONTAINERS[:4])
++@pytest.mark.parametrize('aba', [False, True])
++def test_noop_batch_keeps_leaf_and_ancestor_publication_guards(monkeypatch, container, aba):
++    install_staging_operations(monkeypatch)
++    original = bundle()
++    State(original).set(REF, ['params'], container)
++    plan = execute(original, [change(PATH, ABSENT), change(PATH, ABSENT)])
++    assert plan.bundle == original
++    assert coalesce(plan.records) == [{'ref': REF, 'path': PATH, 'before': ABSENT, 'after': ABSENT}]
++    roundtrip(original, plan)
++    ancestor = ['params', 'nested'] if isinstance(container.get('value'), dict) else ['params']
++    for path in (PATH, ancestor):
++        before = State(original).get(REF, path)
++        writes = ([{'ref': REF, 'path': path, 'before': before, 'after': present('away')}]
++                  if aba else [])
++        writes.append({'ref': REF, 'path': path,
++                       'before': present('away') if aba else before, 'after': before})
++        history = [{'writes': writes}]
++        for apply in (lambda: replay(plan, original, intervening_records=history),
++                      lambda: inverse(original, plan.records, history)):
++            with pytest.raises(CommandError) as error:
++                apply()
++            assert error.value.kind == 'intervening_write'
++
++
++def test_leaf_batch_preserves_disjoint_concurrent_edits_and_refuses_guarded_changes(monkeypatch):
++    install_staging_operations(monkeypatch)
++    original = bundle()
++    clip(original, REF)['params'] = {'nested': {'sibling': None}, 'opaque': [False]}
++    plan = execute(original, [change(PATH, ABSENT), change(PATH, present(None)), change(PATH, ABSENT)])
++    assert plan.bundle == original
++    assert all(read['path'] == PATH for record in plan.records for read in record['reads'])
++    head = copy.deepcopy(original)
++    clip(head, REF)['params']['nested']['sibling'] = 'concurrent'
++    history = [{'writes': [{'ref': REF, 'path': ['params', 'nested', 'sibling'],
++                           'before': present(None), 'after': present('concurrent')}]}]
++    assert replay(plan, head, intervening_records=history).bundle == head
++    undone = inverse(head, plan.records, history)
++    assert undone.bundle == head
++    assert inverse(undone.bundle, undone.records).bundle == head
++    history[0]['writes'][0]['path'] = PATH
++    for apply in (lambda: replay(plan, original, intervening_records=history),
++                  lambda: inverse(original, plan.records, history)):
++        with pytest.raises(CommandError) as error:
++            apply()
++        assert error.value.kind == 'intervening_write'
+diff --git a/tests/editing_conformance/test_recipe_scalar_commands.py b/tests/editing_conformance/test_recipe_scalar_commands.py
+index 8f3fad71b51fc11cd54bd252fd8337c8a10bb377..16b58d584eac3e28b47c602800357350766c6160
+--- a/tests/editing_conformance/test_recipe_scalar_commands.py
++++ b/tests/editing_conformance/test_recipe_scalar_commands.py
+@@ -116,9 +116,6 @@
+ 
+ 
+ @pytest.mark.parametrize('container', [ABSENT, present(None)])
+-# Requirement: exact generic batch undo must preserve a no-op clear's ancestor
+-# when a later command creates that container. inverse._patch still normalizes it.
+-@pytest.mark.xfail(strict=True, reason='inverse coalescing normalizes absent/null ancestors')
+ def test_clear_then_set_batch_preserves_exact_absent_or_null_inverse(container):
+     original = bundle()
+     if container != ABSENT:
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import shutil
+from pathlib import Path
+for cache in ('.pytest_cache', '.ruff_cache'):
+    shutil.rmtree(cache, ignore_errors=True)
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse')
+assert (root / 'commit-msg').read_bytes() == (root / 'commit-msg.txt').read_bytes()
+assert (root / 'notes/report.md').is_file()
+print('Report and both identical commit-message files verified; task caches removed.')
+PY
+" in /home/user/work/wt/agt-m2-clear-batch-inverse
+ succeeded in 0ms:
+Report and both identical commit-message files verified; task caches removed.
+
+codex
+Implemented the generic `_patch` fix. Both strict xfails now pass; 100 new cases cover nested presence, orderings, replay, exact undo/redo, ABA, and disjoint guards.
+
+- **576 targeted tests passed**; Ruff and `git diff --check` passed.
+- M1 goldens remain byte-equal.
+- Optional structural overlay was unnecessary.
+- No blockers; full/integration suites were not run. M2 integration remains held.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/notes/report.md). Both `commit-msg` and `commit-msg.txt` are written and identical.
+tokens used
+77,314
+Implemented the generic `_patch` fix. Both strict xfails now pass; 100 new cases cover nested presence, orderings, replay, exact undo/redo, ABA, and disjoint guards.
+
+- **576 targeted tests passed**; Ruff and `git diff --check` passed.
+- M1 goldens remain byte-equal.
+- Optional structural overlay was unnecessary.
+- No blockers; full/integration suites were not run. M2 integration remains held.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-batch-inverse/notes/report.md). Both `commit-msg` and `commit-msg.txt` are written and identical.

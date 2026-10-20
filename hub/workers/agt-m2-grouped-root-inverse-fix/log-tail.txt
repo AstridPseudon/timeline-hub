@@ -1,0 +1,400 @@
+    runtime = use_runtime()
+    monkeypatch.syspath_prepend(str(runtime / "tests"))
+    from runtime_protocol.contract_metadata import SCHEMA_DIGEST
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_port import route_path
+    from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
+
+    def effect(project):
+        value = _effect(project, groups=[{"group_key": "voice", "selectors": [
+            {"selector": "take", "ordinal": 0, "variant_key": "take", "output_port": "audio"}]}])
+        value["payload"]["metadata"] = {"params": {"duration_seconds": 6}}
+        return value
+
+    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect, slug="timing")
+    project, root = project["id"], service.store.root
+    _settle(service, attempt, [_output(b"timing-source", output_port="audio", group_key="voice",
+        variant_key="take", ordinal=0, filename="voice.wav", media_type="audio/wav")], effect=admitted)
+    association, = service.managed_outputs(task["task"]["id"])
+    selection = service.get_project_media_selection(project, {
+        "association_id": association["association_id"], "object_id": association["object_id"],
+        "association_id": association["association_id"], "object_id": association["object_id"],
+        "version": association["lifecycle"]["version"]}, authorize=lambda: None)
+    media = selection["object_id"]
+    content = build_transcript(media, "line", "again again stop", [
+        [2, 2.5, "again"], [3, 3.5, "again"], [5.5, 6, "stop"],
+    ])
+    document_id = transcript_document_id(project, media, content["source_id"])
+    source = service.create_document(project, {"document_id": document_id,
+        "kind": "media.transcript", "content": content}, idempotency_key="transcript-v1")["data"]
+    pin = {"document_id": document_id, "version": 1, "content_digest": _digest(content)}
+    voices = [{"id": "voice", "clipType": "media", "track": "vo", "asset": "take",
+               "at": 1, "from": 2, "to": 6, "speed": 2}]
+    if getattr(request, "param", False):
+        voices.append(dict(voices[0], id="other", at=4))
+    # Bounded fixture data only: current Runtime retires direct shot writes.
+    # The prepared provider below seeds it through the real acceptance port.
+    publication = {
+        "internal_timeline_revisions": [{"timeline_id": "film", "revision_id": "internal",
+            "payload": {"tracks": [{"id": "vo", "kind": "audio"}],
+                "clips": voices, "effects": [], "audio": [], "layout": {}, "assets": [],
+                "registry": {"assets": {"take": {"media_id": media, "type": "audio"}}}}}],
+        "shot_revisions": [{"shot_id": "shot", "revision_id": "shot-revision",
+            "internal_timeline_revision_id": "internal",
+            "payload": {"items": [], "internal_timeline_revision_id": "internal"}}],
+        # Keep the exact rational clock in current output and canvas settings.
+        "parent_composition": {"registry": {}, "config": {"output": {"fps": FPS},
+            "theme_overrides": {"visual": {"canvas": {"fps": FPS}}},
+            "tracks": [{"id": "picture", "kind": "visual"}]},
+            "clips": [{"id": "card", "clipType": "am-type", "track": "picture", "at": 0,
+                       "hold": 1, "app": {"astrid": {"on": DECLARATION, "for": 0.5}}}],
+            "occurrences": [{"occurrence_id": "occ", "shot_id": "shot",
+                "shot_revision_id": "shot-revision", "placement": {"start_ms": 2000, "track": "picture"},
+                "duration_ms": 10000, "track": "picture", "source_offset": 0, "speed": 1,
+                "gain": 1, "muted": False, "transform": {}, "provenance": {}}]}}
+
+    case = SimpleNamespace(service=service, root=root, project=project, pin=pin, source=source,
+                           hydrated=[], documents={})
+
+    def head():
+        value = case.service.get_project_timeline(project, "film")
+        return {"revision_id": value["head_revision_id"], "publication_id": value["head_publication_id"]}
+
+    def request(commands, base=None):
+        base = base or head()
+        return {"api_version": 1, "project_id": project, "timeline_id": "film",
+                "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
+........................................................................ [ 61%]
+.......................
+exec
+/bin/bash -lc "rg -n '"'^def test'"' tests/editing_conformance/test_commit_runtime_parent_media.py; rg -n '"'^def test'"' tests/editing_conformance/test_recipe_m2_parent_media.py | head -20; rg -n 'depend|ABA|interven|same' tests/editing_conformance/test_commit_runtime_parent_media.py" in /home/user/work/wt/agt-m2-grouped-root-inverse-fix
+ succeeded in 0ms:
+188:def test_fresh_film_first_media_birth_and_exact_inverse(custody, monkeypatch):
+196:def test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry(editing, monkeypatch, replace):
+315:def test_invalid_media_or_reserved_identity_refuses_before_accept_and_writes(editing, damage):
+319:def test_fresh_foreign_media_refuses_before_container_creation_and_accept(custody):
+359:def test_runtime_rejects_obsolete_scalar_shape_before_reads_and_writes(editing):
+385:def test_stale_explicit_replacement_membership_refuses_before_accept_and_writes(editing):
+406:def test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes(editing, replace, interference):
+466:def test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse(editing):
+491:def test_ordered_replacement_preserves_unrelated_historical_transition(editing):
+117:def test_exact_capture_replay_scoped_birth_and_inverse(kind):
+142:def test_portable_golden():
+150:def test_existing_binding_is_required_exactly_without_birth():
+166:def test_missing_registry_containers_are_guarded_writes_with_exact_inverse_redo(kind, storage):
+216:def test_explicit_malformed_asset_containers_refuse_untouched(path, value):
+233:def test_refusals_preserve_input(damage):
+296:def test_replace_removes_the_populated_clip_and_inverse_restores_its_slot():
+324:def test_replace_first_middle_last_exact_reload_inverse_redo_and_replay(kind, target):
+346:def test_replace_preserves_equal_z_order_in_composition_input():
+361:def test_replace_keeps_order_and_membership_guards(damage, undo):
+382:def test_replace_refuses_corrupt_insertion_proof(field):
+395:def test_replacement_composes_with_create_remove_neighbors(create_first):
+413:def test_replace_refuses_without_a_populated_same_track_target(damage):
+434:def test_asset_alias_inverse_is_guarded_by_dependents_and_aba(replace):
+446:def test_disjoint_edit_rebases_and_a_taken_id_conflicts():
+462:def test_provider_exact_reload_inverse_redo_and_retired_ids(replace):
+480:def test_completion_builder_places_a_parent_clip_after_the_anchor_or_at_the_track_end(
+496:def test_completion_builder_needs_a_parent_track_and_matching_ownership():
+508:def test_ordered_provider_reload_inverse_redo_and_retired_ids(kind, target):
+533:def test_literal_completion_uses_only_the_row_media_birth_and_preserves_source_units(kind, speed):
+243:    assert all(pin in document['dependency_manifest']['media'] for pin in baseline['dependency_manifest']['media'])
+244:    assert document['dependency_manifest']['documents'] == baseline['dependency_manifest']['documents']
+252:    assert record['dependencies'][-1]['pin'] == editing.pins['new']
+253:    assert all(not dependency['key'].startswith('producer_attempt:')
+254:               for record in editing.candidates[-1]['records']['commands'] for dependency in record['dependencies'])
+405:@pytest.mark.parametrize('interference', ['dependent', 'ABA'])
+406:def test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes(editing, replace, interference):
+417:    if interference == 'dependent':
+418:        dependent = commit(editing, body(editing, [birth(editing, row(editing, 'dependent'))]), 'dependent')
+419:        state = State(bundle_from_document(dependent['data']['canonical_document']))
+420:        assert state.entity('parent/clip:dependent')['asset'] == state.entity('parent/clip:reserved-row')['asset']
+433:    # refusal can precede the structural surviving-dependent check.
+434:    assert error.value.details['reason'] == 'intervening_write'
+485:    assert {'media_id': old['object_id'], 'content_digest': old['object_id']} in document['dependency_manifest']['media']
+
+ exited 1 in 260825ms:
+exec
+/bin/bash -lc "env PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix')
+base.joinpath('commit-msg').write_text('''fix(timeline): stage grouped clip inverse cache guards
+
+Verify word-owned timing cache stages against accepted before/after roots
+before reversing grouped media births and word-anchor edits. Keep authored,
+identity, order, intervening-write, dependency and ABA guards intact.
+
+Release only first-use transcript pins owned by removed created clips and
+reopen their exact accepted inputs on redo. Cover raw root changes, cache
+corruption, pin retention, immutable A/B revisions and restart retries.
+''')
+p=base/'notes/report.md'
+s=p.read_text().replace('These are in-process real Runtime services with actual storage, immutable reads, startup-loaded Agent semantics, and normal acceptance. No daemon, browser, socket, fabricated receipt, inline schema replacement, or PreparedProvider is involved.', 'The native joint/parent/word journeys use in-process real Runtime services with actual storage, immutable reads, startup-loaded Agent semantics, and normal acceptance. No daemon, browser, socket, fabricated receipt, inline schema replacement, or PreparedProvider is involved in those journeys. The older "'`test_timing_retained_inputs.py` neighbour retains its existing bounded prepared-provider seed fixture; it is preservation coverage, not proof of a new authoring operation.'"')
+p.write_text(s)
+PY" in /home/user/work/wt/agt-m2-grouped-root-inverse-fix
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/runtime-neighbors-final.log' in /home/user/work/wt/agt-m2-grouped-root-inverse-fix
+ succeeded in 0ms:
+>       from timeline_commit_film_fixture import _binding_descriptor
+E       ImportError: cannot import name '_binding_descriptor' from 'timeline_commit_film_fixture' (/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/runtime-s2-base/tests/timeline_commit_film_fixture.py)
+
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:26: ImportError
+2 failed, 116 passed in 258.82s (0:04:18)
+
+codex
+The private Runtime run finished with 116 passed and two fixture-import failures. Both failures are in the older manifest-inverse neighbour test, before it reaches Agent semantics: the archived Runtime fixture no longer exports `_binding_descriptor`. I’ll confirm that this predates the fix and check how the original test can run against the candidate.
+
+exec
+/bin/bash -lc "rg -n '_binding_descriptor' tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py; rg -n 'binding|descriptor' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/runtime-s2-base/tests/timeline_commit_film_fixture.py | head -40; sed -n '90,160p' tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py; git -C /home/user/work/runtime log --all --oneline -S 'def _binding_descriptor' -- tests/timeline_commit_film_fixture.py | head -10; git diff b5cfce50 -- tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py" in /home/user/work/wt/agt-m2-grouped-root-inverse-fix
+ succeeded in 68ms:
+26:    from timeline_commit_film_fixture import _binding_descriptor
+136:        document['shot_revisions'][0]['payload']['text_bindings'] = [_binding_descriptor(binding, 'A chapter')]
+25:    text_binding_id: str
+44:        text_binding_id=pins["text_binding_id"],
+59:    binding = service.get_project_shot_text_binding(fixture.project_id, fixture.text_binding_id)
+63:        "binding": binding,
+                'commands': calls, 'dry_run': dry_run, 'source': {'via': 'python'}}
+
+    def submit(request, key):
+        return service.commit_timeline(project, 'film', request, idempotency_key=key, publisher='media-editor',
+                                       invocation_path=route_path(project, 'film'), authorize=authorize)
+
+    def inverse(result):
+        return {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
+                'args': {'publications': [result['receipt']['receipt_id']]}}
+
+    try:
+        outputs = [_output(name.encode(), output_port='image', group_key='main', variant_key=name,
+                           ordinal=index, filename=name + '.png', media_type='image/png')
+                   for index, name in enumerate(('old', 'new'))]
+        _settle(service, attempt, outputs, effect=admitted)
+        selections = {row['variant_key']: service.get_project_media_selection(project, {
+            'association_id': row['association_id'], 'object_id': row['object_id'],
+            'version': row['lifecycle']['version']}, authorize=authorize)
+            for row in service.managed_outputs(task['task']['id'])}
+        old, new = selections['old'], selections['new']
+
+        def replace(value):
+            if value == MEDIA:
+                return old['object_id']
+            if isinstance(value, dict):
+                return {key: replace(child) for key, child in value.items()}
+            if isinstance(value, list):
+                return [replace(child) for child in value]
+            return value
+
+        document = replace(document_fixture())
+        internal = document['internal_timeline_revisions'][0]
+        internal['payload'].pop('source_window')
+        internal['timeline_id'] = 'film'
+        # Legacy seed publication's visual seam accepts numeric fps only.
+        # Rational fps/source preservation remains in the detached proof.
+        document['parent_revision']['payload']['config']['output']['fps'] = 24
+        internal['payload']['output']['fps'] = 24
+        for occurrence in document['parent_revision']['payload']['occurrences']:
+            occurrence.update(source_offset=0, speed=1)
+        document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
+        service.create_project_shot(project, {'shot_id': 'chapter-shot', 'name': 'Chapter One'},
+                                    idempotency_key='chapter-shot')
+        binding = service.set_project_shot_text_binding(project, {
+            'shot_id': 'chapter-shot', 'kind': 'transcript', 'text': 'A chapter', 'expected_head': 0,
+        }, idempotency_key='chapter-text')['data']
+        document['shot_revisions'][0]['payload']['text_bindings'] = [_binding_descriptor(binding, 'A chapter')]
+        service.publish_parent_composition(project, 'film', {
+            'project_id': project, 'timeline_id': 'film', 'expected_head': None,
+            'parent_revision_id': 'media-baseline', 'parent_composition': document['parent_revision']['payload'],
+            'shot_revisions': [{key: value for key, value in row.items() if key != 'content_digest'}
+                               for row in document['shot_revisions']],
+            'internal_timeline_revisions': [{key: value for key, value in internal.items()
+                                             if key != 'content_digest'}],
+        }, idempotency_key='media-baseline')
+        register()
+        request = body([{'schema_version': 1, 'op': 'test.media-provenance', 'version': '1',
+                         'select': 'occurrence:occ-a', 'args': {'media': new}}])
+        created = submit(request, 'introduce')
+        baseline = next(row for row in captured if row['parent_revision']['revision_id'] == 'media-baseline')
+        assert new['object_id'] not in {pin['media_id'] for pin in baseline['dependency_manifest']['media']}
+        assert new['object_id'] in {pin['media_id'] for pin in created['data']['canonical_document']['dependency_manifest']['media']}
+        undo_request = body([inverse(created)])
+        preview = submit(dict(undo_request, dry_run=True), 'undo-preview')
+        assert preview['data']['canonical_document'] == baseline
+        captured.clear()
+        undone = submit(undo_request, 'undo')
+        assert undone['data']['canonical_document'] == baseline
+        # Acceptance captured and validated the introduced media in the target
+        # closure, while its result manifest omits it. History remains immutable.
+        assert created['data']['canonical_document'] in captured
+fa4f9cc refactor(runtime): retire legacy canonical timeline write bodies
+2383406 refactor(runtime): retire legacy canonical timeline write bodies
+859c751 fix(runtime): compose reviewed timeline authority and effect cuts
+2b7be58 fix(timeline): compose reviewed authority restrictions on M2
+4c65c3e tl/rt-m1-film-fixture: # Result: one API-built film-like duplicate realm for provenance verif
+
+exec
+/bin/bash -lc "env PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import io, subprocess, tarfile
+from pathlib import Path
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes')
+target=notes/'agent-baseline'
+target.mkdir()
+raw=subprocess.check_output(['git','archive','b5cfce50'])
+with tarfile.open(fileobj=io.BytesIO(raw), mode='r:') as archive:
+    archive.extractall(target, filter='data')
+PY" in /home/user/work/wt/agt-m2-grouped-root-inverse-fix
+ succeeded in 1323ms:
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/agent-baseline ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/runtime-s2-base /home/user/work/venv-agent/bin/python -m pytest -o addopts= -p no:cacheprovider -q -m integration tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/baseline-manifest.log 2>&1' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/agent-baseline
+exec
+/bin/bash -lc 'tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/baseline-manifest.log; git status --short; git diff --check' in /home/user/work/wt/agt-m2-grouped-root-inverse-fix
+ succeeded in 418ms:
+>       from timeline_commit_film_fixture import _binding_descriptor
+E       ImportError: cannot import name '_binding_descriptor' from 'timeline_commit_film_fixture' (/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/runtime-s2-base/tests/timeline_commit_film_fixture.py)
+
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:26: ImportError
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[add]
+FAILED tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[swap]
+2 failed in 0.88s
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_root_inverse.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/native_word_anchor_fixture.py
+ M tests/editing_conformance/test_next_command_cohort_runtime.py
+ M tests/editing_conformance/test_timing_retained_inputs.py
+?? tests/editing_conformance/test_grouped_clip_cache_inverse.py
+
+codex
+Both manifest fixture failures reproduce on untouched `b5cfce50` with the same private Runtime. The scoped repair is complete: the original grouped case and its new controls pass, and the native ordered-media, word/source-window, parent, shared-inverse, and retained-input neighbours passed. I’ll record the exact results and the two baseline fixture limits, then remove the private test archives.
+
+ exited 1 in 34422ms:
+exec
+/bin/bash -lc "env PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes')
+p=notes/'report.md'
+s=p.read_text().replace('Final results are appended below once all commands finish.', '''Product code was final for all final runs below. One additional portable test was added after the broader portable run collected its tests; the final dedicated 10-test run covers that addition. Counts overlap and must not be summed as unique tests.
+
+**Portable inverse / structural / ordered-media / word / schema floors:** exit 0, **503 passed / 4 existing strict xfailed in 228.96s**, "'`portable-final.log`. The four existing parent automatic-placement xfails are unchanged.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_native_word_anchor_vectors.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_composed_schema.py
+```
+
+**Final dedicated adversarial and single-batch controls:** exit 0, **10 passed in 3.33s**, `cache-controls-final.log`.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_grouped_clip_cache_inverse.py
+```
+
+**Exact original real-service case before removing strict xfail:** exit 0, **1 passed in 5.19s**, `joint-fourth.log`.
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2-base" ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-runtime" "$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration --runxfail '"'tests/editing_conformance/test_next_command_cohort_runtime.py::test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_and_retry[True]'
+"'```
+
+**Final real-service joint and pin-retention controls, without runxfail:** exit 0, **8 passed in 26.57s**, `joint-pin-final.log`.
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2-base" ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-runtime" "$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration tests/editing_conformance/test_next_command_cohort_runtime.py
+```
+
+**Private complete-candidate Runtime neighbours:** exit 1, **116 passed / 2 preexisting fixture-import failures in 258.82s**, `runtime-neighbors-final.log`.
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2-base" ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-runtime" "$P" -m pytest -o addopts= -p no:cacheprovider -q -rx -m integration tests/editing_conformance/test_commit_runtime_parent_media.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_next_command_cohort_runtime.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_timing_retained_inputs.py
+```
+
+Both failures are `[add]` and `[swap]` in `test_real_media_manifest_inverse_retry_restart_and_history`, at its initial import of `_binding_descriptor` from the private Runtime'"'s "'`timeline_commit_film_fixture`. The current Runtime fixture no longer exports that legacy helper. Neither reaches the Agent implementation. The test file is byte-unchanged from `b5cfce50`; it also still uses retired direct shot/binding/publication seed APIs later in its setup. I did not rewrite, skip, xfail, delete, or weaken it. Native parent-media tests (including actual accepted dependents/ABA, ordered replacement and exact media inverse) and portable occurrence-manifest tests passed on their stated paths.
+
+**Untouched baseline confirmation:** exit 1, **the identical 2 import failures in 0.88s**, `baseline-manifest.log`. Created `$N/agent-baseline` from read-only `git archive b5cfce50`, then from that directory ran:
+
+```sh
+cd "$N/agent-baseline"
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$N/agent-baseline" ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2-base" "$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+```
+
+This baseline archive is removed after validation. No alternative fixture adapter was introduced to turn the old test green.
+
+**Lint and whitespace:** exit 0, `All checks passed!`; `git diff --check` exit 0.
+
+```sh
+"$P" -m ruff check --no-cache astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_root_inverse.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_next_command_cohort_runtime.py tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_timing_retained_inputs.py
+git diff --check
+```
+
+The two existing hydration observers only gained keyword forwarding for accepted inverse context; no expected behaviour changed.
+
+Earlier diagnostic runs are retained honestly: the exact single-node command above initially gave **1 failed in 8.07s** (`joint-first.log`, guard fixed but the expected baseline transcript manifest was not yet restored), then **1 failed in 8.47s** (`joint-second.log`, Runtime correctly rejected post-hydration pin dropping), then **1 setup error in 4.92s** (`joint-third.log`, old observer lacked keyword forwarding). The fourth run passed. The joint-file command later gave **1 failed / 7 passed in 27.72s** (`joint-pin-controls.log`), identifying the missing recorded dependency when redo reopened a pin absent from the head; normal inverse input recording fixes it and the final 8-test run passes. The first portable control run gave **9 passed in 1.33s** (`cache-controls.log`), before the single-batch test was added.
+'"''')
+s=s.replace('First-occurrence birth remains separately in flight;', 'No blocker remains for the scoped grouped-root repair. The two baseline manifest fixture failures remain unqualified on this candidate and require a separate fixture migration; they were not hidden. First-occurrence birth remains separately in flight;')
+p.write_text(s)
+PY" in /home/user/work/wt/agt-m2-grouped-root-inverse-fix
+ succeeded in 36ms:
+exec
+/bin/bash -lc "env PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import shutil
+from pathlib import Path
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix')
+notes=base/'notes'
+p=notes/'report.md'
+p.write_text(p.read_text().replace('startup-loaded Agent semantics', 'the normal registered Agent semantic provider'))
+for name in ('runtime-s2-base','historical-runtime','agent-baseline'):
+    shutil.rmtree(notes/name)
+print('Removed only this worker\\'s three private source archives.')
+print('Report:',p)
+print('Commit message:',base/'commit-msg')
+PY
+git diff --check; git status --short" in /home/user/work/wt/agt-m2-grouped-root-inverse-fix
+ succeeded in 8633ms:
+Removed only this worker's three private source archives.
+Report: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/report.md
+Commit message: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/commit-msg
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_root_inverse.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/native_word_anchor_fixture.py
+ M tests/editing_conformance/test_next_command_cohort_runtime.py
+ M tests/editing_conformance/test_timing_retained_inputs.py
+?? tests/editing_conformance/test_grouped_clip_cache_inverse.py
+
+exec
+/bin/bash -lc "env PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix')
+assert (base/'notes/report.md').is_file()
+assert (base/'commit-msg').is_file()
+assert not (base/'BLOCKED').exists()
+(base/'DONE').touch()
+print('DONE created; commit remains owned by the harness.')
+PY" in /home/user/work/wt/agt-m2-grouped-root-inverse-fix
+ succeeded in 0ms:
+DONE created; commit remains owned by the harness.
+
+codex
+Fixed grouped inverse refusal; removed the strict xfail after actual success. Authored guards remain intact; schema remains 53 definitions / 26 operations.
+
+- Portable neighbours: **503 passed, 4 existing xfailed**.
+- Adversarial controls: **10 passed**.
+- Real-service joint controls: **8 passed**.
+- Runtime neighbours: **116 passed, 2 fixture-import failures**, reproduced on untouched `b5cfce50`.
+- Ruff and whitespace checks passed.
+
+[Detailed report with exact commands, results, decisions, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/report.md).
+
+Commit message and `DONE` written. Private archives removed. No full suite or public freeze requested. Next: review the repair; migrate the two legacy fixtures separately.
+tokens used
+207,094
+Fixed grouped inverse refusal; removed the strict xfail after actual success. Authored guards remain intact; schema remains 53 definitions / 26 operations.
+
+- Portable neighbours: **503 passed, 4 existing xfailed**.
+- Adversarial controls: **10 passed**.
+- Real-service joint controls: **8 passed**.
+- Runtime neighbours: **116 passed, 2 fixture-import failures**, reproduced on untouched `b5cfce50`.
+- Ruff and whitespace checks passed.
+
+[Detailed report with exact commands, results, decisions, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-root-inverse-fix/notes/report.md).
+
+Commit message and `DONE` written. Private archives removed. No full suite or public freeze requested. Next: review the repair; migrate the two legacy fixtures separately.

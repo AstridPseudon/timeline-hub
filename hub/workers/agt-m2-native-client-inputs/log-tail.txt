@@ -1,0 +1,400 @@
++        self.media, self.schemas = [], []
++        self.schema_resolver = _schema_resolver(self, self.schemas, ())
++
++    def document_object(self, pin, object_id):
++        verified = next(row for row, _ in self.schemas if equal(row['pin'], pin))
++        descriptors = [a['snapshot_object'] for a in verified['document']['content']['admissions']
++                       if a.get('snapshot_object', {}).get('object_id') == object_id]
++        if not descriptors or any(not equal(row, descriptors[0]) for row in descriptors):
++            raise CommandError('selected pack snapshot descriptor unavailable')
++        data = self.transport.get_object(object_id)['data']
++        return {**copy.deepcopy(descriptors[0]), 'bytes_base64': base64.b64encode(data).decode('ascii')}
++
++    def resolve(self, ctx):
++        args = ctx.record['command']['args']
++        for key in ('old_media', 'media'):
++            pin = args.get(key)
++            if pin is not None and not any(equal(row['selection'], pin) for row in self.media):
++                value = self.transport.get_project_verified_media(self.project_id, copy.deepcopy(pin))
++                if not equal(value.get('selection'), pin):
++                    raise CommandError('Runtime returned a different media selection')
++                self.media.append(value)
++        ctx.verified_media = self.media
++        pin = args.get('schema_source')
++        if pin is not None and not any(equal(row['pin'], pin) for row, _ in self.schemas):
++            pin = _document_pin(pin)
++            row = self.transport.get_document(self.project_id, pin['document_id'])
++            # Public Document reads expose the current version only. An older
++            # pin must refuse here, never fall forward to its replacement schema.
++            if (row.get('project_id') != self.project_id or row.get('kind') != 'astrid.project-pack'
++                    or not equal(row.get('version'), pin['version'])
++                    or row.get('document_id') != pin['document_id']
++                    or _digest(row.get('content')) != pin['content_digest']):
++                raise CommandError('exact selected pack document version unavailable')
++            self.schemas.append(({'pin': copy.deepcopy(pin), 'document': row}, {}))
++        return self.schema_resolver(ctx)
++
++    def execute(self, bundle, commands):
++        from .commands import execute
++
++        return execute(bundle, commands, realm_id=self.realm_id, resolve_inputs=self.resolve)
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index a65a57af67c4b5cced0d797f2d557b3a816b09e0..03a2b4ebf2f86bd5a5236ddce23976a94ac334e2
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -175,12 +175,16 @@
+         return state
+ 
+     def _bundle(self, state):
+-        from astrid.sdk.timeline.commands import execute
+         from astrid.sdk.timeline.store import fetch_bundle
+ 
+         bundle = fetch_bundle(self.project_id, self.timeline_id,
+                               revision_id=state["base"]["revision_id"], client=self.client)
+-        return execute(bundle, state["pending"]).bundle if state["pending"] else bundle
++        return self._inputs().execute(bundle, state["pending"]).bundle if state["pending"] else bundle
++
++    def _inputs(self):
++        from astrid.sdk.timeline._client_inputs import CaptureInputs
++
++        return CaptureInputs(self.client, self.project_id, self.identity["realm_id"])
+ 
+     def queue_move(self, select, on):
+         """Capture once against the original state plus earlier local commands."""
+@@ -201,10 +205,8 @@
+         Commands are registered EditCommands; supplied claims are never refreshed.
+         Missing capture inputs fail before any command is added to the outbox.
+         """
+-        from astrid.sdk.timeline.commands import execute
+-
+         commands = [_native_command(command) for command in commands]
+-        return self._stage(lambda state: execute(self._bundle(state), commands).commands)
++        return self._stage(lambda state: self._inputs().execute(self._bundle(state), commands).commands)
+ 
+     def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
+         """Capture and flush one native command, or retry its original flight."""
+@@ -213,10 +215,9 @@
+     def commit_many(self, commands, *, idempotency_key=None, dry_run=False, via="python"):
+         """Capture and flush a batch, or retry its exact flight before a suffix."""
+         from astrid.sdk.timeline._command_state import equal
+-        from astrid.sdk.timeline.commands import execute
+ 
+         commands = [_native_command(command) for command in commands]
+-        self._stage(lambda state: execute(self._bundle(state), commands).commands,
++        self._stage(lambda state: self._inputs().execute(self._bundle(state), commands).commands,
+                     lambda pending: len(pending) == len(commands) and all(
+                         all(equal(saved.get(key), value) for key, value in command.items() if key != "intent")
+                         and all(equal(saved["intent"].get(key), value)
+diff --git a/astrid/sdk/workspace_client.py b/astrid/sdk/workspace_client.py
+index fe206c9548331df76c3ee5818559b343c75ddc18..fd144eb999334da0bcd96d79c22df64adc157d0d
+--- a/astrid/sdk/workspace_client.py
++++ b/astrid/sdk/workspace_client.py
+@@ -257,7 +257,7 @@
+                 "link_references", "create_document", "list_documents", "get_document",
+                 "update_document", "ingest_object", "ingest_project_object",
+                 "get_preferences", "update_preferences",
+-                "import_project_media", "get_project_media_import",
++                "import_project_media", "get_project_media_import", "get_project_verified_media",
+                 "list_project_objects", "get_project_object_location", "create_media_relation", "list_media_relations",
+                 "get_object", "head_object", "admit_task", "get_task", "list_project_tasks",
+                 "cancel_task", "retry_task", "cancel_run", "retry_run", "get_run",
+@@ -745,6 +745,9 @@
+     def get_document(self, project_id: str, document_id: str) -> Any:
+         return self._call_generated("get_document", project_id, document_id)
+ 
++    def get_project_verified_media(self, project_id: str, selection: Mapping[str, Any]) -> Any:
++        return self._call_generated("get_project_verified_media", project_id, selection)
++
+     def update_document(
+         self,
+         project_id: str,
+diff --git a/tests/editing_conformance/test_native_batch_ingress.py b/tests/editing_conformance/test_native_batch_ingress.py
+index a1c47759b558c771765dd22d7f327492f736806e..0cd303a07cf618f0f7baff8fae07eb984082b0fa
+--- a/tests/editing_conformance/test_native_batch_ingress.py
++++ b/tests/editing_conformance/test_native_batch_ingress.py
+@@ -42,7 +42,7 @@
+ 
+ 
+ @pytest.fixture
+-def runtime(tmp_path, monkeypatch):
++def runtime(tmp_path, monkeypatch, request):
+     use_runtime(vendored_runtime_commit())
+     from runtime_protocol.auth import CredentialStore
+     from runtime_protocol.server import RuntimeHandler
+@@ -60,7 +60,7 @@
+     token, _ = credentials.provision('owner', ['admin', 'handshake', 'projects:read',
+                                              'projects:write', 'objects:read', 'objects:write',
+                                              'tasks:read', 'tasks:write'])
+-    world = SimpleNamespace(calls=[], lost=set(), reads=[])
++    world = SimpleNamespace(calls=[], lost=set(), reads=[], input_reads=[])
+     server = SimpleNamespace(credentials=credentials,
+                              daemon_runtime=SimpleNamespace(instance_id=uuid.uuid4().hex))
+ 
+@@ -88,6 +88,8 @@
+                 raise URLError('lost ACK after Runtime acceptance')
+         if '/composition-revisions/' in path and method == 'GET':
+             world.reads.append(path)
++        if method == 'GET' and any(part in path for part in ('/verified?', '/documents/', '/objects/')):
++            world.input_reads.append(path)
+         return response.status, dict(response.headers), data
+ 
+     monkeypatch.setattr(workspace_client, 'GeneratedWorkspaceClient',
+@@ -95,7 +97,9 @@
+     monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client'))
+     restart()
+     world.project = server.runtime.create_project({'slug': 'batch', 'name': 'Batch'})['id']
+-    server.runtime.create_timeline(world.project, 'film', idempotency_key='bootstrap')
++    unpublished = getattr(request, 'param', None) == 'unpublished'
++    if not unpublished:
++        server.runtime.create_timeline(world.project, 'film', idempotency_key='bootstrap')
+ 
+     def client():
+         return AstridClient.open(endpoint='http://127.0.0.1:1', credential=token,
+@@ -107,9 +111,10 @@
+                                     outbox_path=tmp_path / (name + '.json'), **(base or {}))
+ 
+     world.client, world.session, world.restart = client, session, restart
++    world.service = lambda: server.runtime
+     world.history = lambda: server.runtime.list_timeline_commits(world.project, 'film', authorize=lambda: None)
+-    head = world.history()['head']
+-    world.base = {'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id']}
++    head = world.history()['head'] if not unpublished else None
++    world.base = {'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id']} if head else None
+     world.path = tmp_path / 'outbox.json'
+     try:
+         yield world
+diff --git a/tests/editing_conformance/test_native_client_inputs.py b/tests/editing_conformance/test_native_client_inputs.py
+index d5466c4c9b236882e7e1f9d1452b91948c0bfa82..01e04074c90deeaf16c4381b5890a7d9bbde6739
+--- a/tests/editing_conformance/test_native_client_inputs.py
++++ b/tests/editing_conformance/test_native_client_inputs.py
+@@ -191,11 +191,13 @@
+ 
+         def racing(*args):
+             value = read(*args)
+-            session.flush()  # ACK while capture is outside the lock.
++            if not media.calls:
++                session.flush()  # One ACK while capture is outside the lock.
+             return value
+ 
+         monkeypatch.setattr(transport, 'get_project_verified_media', racing)
+-    with pytest.raises((TimelineEditError, WorkspaceClientError)):
++    with pytest.raises((TimelineEditError, WorkspaceClientError),
++                       match='outbox changed during capture' if failure == 'race' else None):
+         session.queue_many(calls)
+     if failure == 'race':
+         assert json.loads(media.path.read_bytes())['pending'] == []
+
+exec
+/bin/bash -lc 'env ASTRID_RUNTIME_CHECKOUT=/home/user/banodoco/banodoco-workspace-runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_native_client_inputs.py -k media_capture_refusal' in /home/user/work/wt/agt-m2-native-client-inputs
+codex
+The central integration run is progressing, and the full default suite has started. During review, I tightened the media race test to assert the specific “outbox changed during capture” refusal after one ACK. That test-only change is being checked locally; the central snapshot contains the same product code. The repository-wide quality checks hit existing issues: Ruff’s baseline needs an improvement update, and mypy stops on missing YAML stubs and the installed NumPy stub syntax.
+ succeeded in 19846ms:
+........                                                                 [100%]
+8 passed, 38 deselected in 4.00s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import collections,json,subprocess
+from pathlib import Path
+python='/home/user/work/venv-agent/bin/python'
+for name in ('astrid/sdk/timeline/sync.py','astrid/sdk/workspace_client.py','astrid_runtime_client/generated.py'):
+ old=subprocess.run(['git','show','HEAD:'+name],check=True,capture_output=True).stdout
+ def findings(data):
+  out=subprocess.run([python,'-m','ruff','check','--no-cache','--output-format=json','--stdin-filename',name,'-'],input=data,capture_output=True)
+  return collections.Counter((i['code'],i['message']) for i in json.loads(out.stdout))
+ before,after=findings(old),findings(Path(name).read_bytes())
+ print(name, 'before',sum(before.values()), 'after',sum(after.values()),'added',dict(after-before))
+PY" in /home/user/work/wt/agt-m2-native-client-inputs
+ succeeded in 113ms:
+astrid/sdk/timeline/sync.py before 0 after 0 added {}
+astrid/sdk/workspace_client.py before 0 after 0 added {}
+astrid_runtime_client/generated.py before 61 after 61 added {}
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-native-client-inputs-commit-integration-1020024655-22646 1' in /home/user/work/wt/agt-m2-native-client-inputs
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-native-client-inputs-full-1020024655-7961 1' in /home/user/work/wt/agt-m2-native-client-inputs
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests')
+for name in ('agt-m2-native-client-inputs-commit-integration-1020024655-22646','agt-m2-native-client-inputs-full-1020024655-7961'):
+ p=root/name; print(name, (p/'status').read_text().strip())
+ if (p/'log.txt').exists():
+  log=(p/'log.txt').read_text(errors='replace');print(len(log),log[-800:])
+PY" in /home/user/work/wt/agt-m2-native-client-inputs
+ succeeded in 0ms:
+agt-m2-native-client-inputs-commit-integration-1020024655-22646 pass
+352 ........................................................................ [ 28%]
+........................................................................ [ 56%]
+........................................................................ [ 85%]
+.....................................                                    [100%]
+253 passed in 187.12s (0:03:07)
+
+agt-m2-native-client-inputs-full-1020024655-7961 running
+1809 .................................................................. [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 11%]
+......
+
+ succeeded in 29923ms:
+test agt-m2-native-client-inputs-commit-integration-1020024655-22646: pass exit=0 in 189s — commit-integration on agt-m2-native-client-inputs (agent tree c595384abc6b1c2b67e18a487c76ddead745beb2)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py tests/sdk/test_timeline_numeric_revision_runtime.py tests/editing_conformance/test_native_batch_ingress.py tests/stage1/test_runtime_client_cutover.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/editing_conformance/test_native_client_inputs.py
+counts: 253 passed in 187.12s (0:03:07) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-native-client-inputs-commit-integration-1020024655-22646/log.txt ---
+........................................................................ [ 28%]
+........................................................................ [ 56%]
+........................................................................ [ 85%]
+.....................................                                    [100%]
+253 passed in 187.12s (0:03:07)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+snapshot='c595384abc6b1c2b67e18a487c76ddead745beb2'
+paths=['astrid/sdk/timeline/_client_inputs.py','astrid/sdk/timeline/sync.py','astrid/sdk/workspace_client.py','astrid_runtime_client/__init__.py','astrid_runtime_client/contract_metadata.py','astrid_runtime_client/generated.py','runtime.lock.json','tests/editing_conformance/test_native_batch_ingress.py']
+for p in paths:
+ assert subprocess.run(['git','show',snapshot+':'+p],check=True,capture_output=True).stdout==Path(p).read_bytes(),p
+print('All product/vendor/pin files and existing batch tests exactly match central snapshot',snapshot)
+PY
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-native-client-inputs-commit-integration-1020024655-22646 1" in /home/user/work/wt/agt-m2-native-client-inputs
+ succeeded in 0ms:
+All product/vendor/pin files and existing batch tests exactly match central snapshot c595384abc6b1c2b67e18a487c76ddead745beb2
+test agt-m2-native-client-inputs-commit-integration-1020024655-22646: pass exit=0 in 189s — commit-integration on agt-m2-native-client-inputs (agent tree c595384abc6b1c2b67e18a487c76ddead745beb2)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py tests/sdk/test_timeline_numeric_revision_runtime.py tests/editing_conformance/test_native_batch_ingress.py tests/stage1/test_runtime_client_cutover.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/editing_conformance/test_native_client_inputs.py
+counts: 253 passed in 187.12s (0:03:07) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-native-client-inputs-commit-integration-1020024655-22646/log.txt ---
+........................................................................ [ 28%]
+........................................................................ [ 56%]
+........................................................................ [ 85%]
+.....................................                                    [100%]
+253 passed in 187.12s (0:03:07)
+
+ exited 124 in 60044ms:
+still running after 1 min ; rerun wait-test
+
+codex
+Central integration passed all 253 cases: the preserved 207 plus 46 new input-adapter cases. The tightened race checks also passed locally. I’m preparing the handoff with the historical Document-read gap and release hold explicit. The full default run is still active, so it remains unverified.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-m2-native-client-inputs'
+central=root/'tests/agt-m2-native-client-inputs-commit-integration-1020024655-22646'
+full=root/'tests/agt-m2-native-client-inputs-full-1020024655-7961'
+summary=(central/'summary').read_text()
+command=next(line.removeprefix('cmd: ') for line in summary.splitlines() if line.startswith('cmd: '))
+validation='''## Validation
+
+All commands ran in the assigned worktree with dependency-only shared venv. No direct socket/daemon/browser/network/install run. No commit/merge/checkout/push or other worktree changes.
+
+"'```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/banodoco/banodoco-workspace-runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_native_client_inputs.py tests/editing_conformance/test_native_batch_ingress.py
+```
+**86 passed in 47.73s, exit 0** (46 new + original 40). Official generated client, real Runtime HTTP handlers via injected in-memory transport, normal source selected from vendor lock. Covers image/video raw/captured add+swap, Python queue/commit/CLI, atomic input refusal and preserved files/pending, same-batch and pending-prefix created/source dependencies, exact retry body/key through restart with read tripwires, lifecycle change before capture and after capture, server retained original schema after current source removal, known values, unknown/unchanged literal params, and original guard refusal.
+
+After submitting the central snapshot, review strengthened ONLY the media race test: its hook now sends one ACK, and the assertion requires the specific `outbox changed during capture` message (rather than accepting any refusal). No product/pin/vendor/existing-test change followed central submission. The final stronger test was checked with:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/banodoco/banodoco-workspace-runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_native_client_inputs.py -k media_capture_refusal
+```
+**8 passed, 38 deselected in 4.00s, exit 0**. These are additional verification of the same cases, not eight additional scenarios. Every product/vendor/pin byte and existing batch fixture was explicitly compared against central tree `c595384abc6b1c2b67e18a487c76ddead745beb2` and matched. Thus central results cover the product exactly; the final stronger race assertion is separately proven locally.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_native_timeline_facades.py tests/packs/timeline/test_cli_native.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_occurrence_media.py
+```
+**156 passed in 11.97s, exit 0**, including unchanged native surface assertions/goldens.
+
+Central request (one bounded request; not a direct daemon run):
+
+```sh
+'"'''+str(root)+'''/bin/request-test agt-m2-native-client-inputs commit-integration --files \"tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py tests/sdk/test_timeline_numeric_revision_runtime.py tests/editing_conformance/test_native_batch_ingress.py tests/stage1/test_runtime_client_cutover.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/editing_conformance/test_native_client_inputs.py\"
+'''+str(root)+'''/bin/wait-test agt-m2-native-client-inputs-commit-integration-1020024655-22646 1
+"'```
+**253 passed in 187.12s, exit 0**; complete preserved 207-case cohort plus 46 new cases. Wait exits 124 only while running; same ID was waited, never resubmitted. Expanded exact service command:
+
+```sh
+'"'''+command+'''
+"'```
+Although the service default env points at integration Runtime, `test_runtime_client_cutover` collection uses the normal vendor lock through `use_runtime(vendored_runtime_commit())`, exposing exact reviewed `a9a81078` source to all fixtures. No schema override or synthetic accepted request. Result directory: `'"'''+str(central)+'''"'`.
+
+Exactly one full default-suite request was made:
+
+```sh
+'"'''+str(root)+'''/bin/request-test agt-m2-native-client-inputs full
+'''+str(root)+'''/bin/wait-test agt-m2-native-client-inputs-full-1020024655-7961 1
+"'```
+Status at handoff: **'"'''+(full/'status').read_text().strip().upper()+'''**, no final result claimed. Exact command "'`/home/user/work/venv-agent/bin/python -m pytest -q -n 3`. Snapshot tree is the same `c595384abc6b1c2b67e18a487c76ddead745beb2` (before the test-only race assertion strengthening). Continue waiting on the existing ID; do not resubmit. Logs: `'"'''+str(full/'log.txt')+'''"'`. Per task rule, the worker stops after obtaining bounded evidence; full/default-wide clearance is not claimed.
+
+```sh
+python3 scripts/vendor_lock.py update runtime.lock.json --producer /home/user/work/wt/rt-m2-popup-read-release-cohort
+python3 scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-popup-read-release-cohort
+/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_client_inputs.py tests/editing_conformance/test_native_client_inputs.py tests/editing_conformance/test_native_batch_ingress.py
+git diff --check
+```
+All **exit 0**. A read-only Ruff diagnostic comparison against HEAD found sync.py 0 -> 0, workspace_client.py 0 -> 0, generated.py 61 -> 61, with **zero added findings**. Vendored files remain exact producer bytes.
+
+Repository-wide quality checks attempted (no baseline changes/install):
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD RUFF_CACHE_DIR=/tmp/agt-m2-native-client-inputs-ruff-cache /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_ruff_baseline
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD MYPY_CACHE_DIR=/tmp/agt-m2-native-client-inputs-mypy-cache /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_mypy_baseline
+```
+Ruff baseline **exit 1**, current 2212 vs baseline 2220: fails because eight improvements need locking, not a new finding. Mypy **exit 2**: shared environment lacks types-PyYAML and NumPy'"'s installed stub uses a Python >=3.12 type statement while repo mypy targets 3.11; checking stops before completion. No install or suppression. Full "'`make check`, renderer/browser checks, owner film and macOS were not run or claimed.
+
+## Handoff
+
+Candidate remains review-only, M2 integration HELD. Runtime owner must settle exact public historical DocumentPin reads and publish the reviewed compatible source/client tuple before final adoption. Sheet grammar coverage remains separate. Conventional messages are written to worker `commit-msg` and `commit-msg.txt`; harness owns the commit. Only product/test/vendor/lock source files remain in the worktree; no build/temp output is part of the change.
+'"'''
+p=worker/'notes/report.md'
+s=p.read_text().split('## Validation (in progress)',1)[0]+validation
+p.write_text(s)
+update='''\\n## Validation handoff — agt-m2-native-client-inputs\\n\\nCentral "'`agt-m2-native-client-inputs-commit-integration-1020024655-22646`: **253 PASS** (187.12s, exit0; original207 + new46), tree `c595384abc6b1c2b67e18a487c76ddead745beb2`, exact normal Runtime a9a81078 via lock. Local in-memory **86 PASS**, neighboring/native-golden **156 PASS**. Test-only final race strengthening additionally **8 PASS**; product/pin/vendor bytes exactly match central snapshot. One full default run `agt-m2-native-client-inputs-full-1020024655-7961` remains active/unverified; wait existing ID, do not resubmit. Source pin/check/new-file Ruff/whitespace PASS. Repo Ruff baseline needs shrink (2212 vs2220); mypy blocked by YAML/NumPy stub environment. No make-check/full/release/M2/Gate1 clearance claimed. Details and exact commands: `'"'''+str(worker/'notes/report.md')+'''"'`. Historical NEW schema capture still refuses; captured retained-source requests continue through server authority unchanged.'"\\n'''
+for p in (root/'design/m2-native-ingress.md',root/'design/runtime-coordination.md'):
+ with p.open('a') as f:f.write(update)
+for p in (Path('.ruff_cache'),Path('/tmp/agt-m2-native-client-inputs-mypy-cache'),Path('/tmp/agt-m2-native-client-inputs-ruff-cache')):
+ if p.exists(): shutil.rmtree(p)
+PY
+env RUFF_CACHE_DIR=/tmp/agt-m2-native-client-inputs-final-ruff /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/_client_inputs.py tests/editing_conformance/test_native_client_inputs.py tests/editing_conformance/test_native_batch_ingress.py
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-native-client-inputs
+ succeeded in 200ms:
+All checks passed!
+ M astrid/sdk/timeline/sync.py
+ M astrid/sdk/workspace_client.py
+ M astrid_runtime_client/__init__.py
+ M astrid_runtime_client/contract_metadata.py
+ M astrid_runtime_client/generated.py
+ M runtime.lock.json
+ M tests/editing_conformance/test_native_batch_ingress.py
+?? astrid/sdk/timeline/_client_inputs.py
+?? tests/editing_conformance/test_native_client_inputs.py
+
+codex
+Implemented bounded native capture inputs using the normal Runtime 0.2.6 candidate client, preserving original guards and exact retries.
+
+- Central: **253 passed** — preserved 207 plus 46 new cases.
+- Local: **86 ingress**, **156 neighboring**, and **8 strengthened refusal checks** passed.
+- Full default suite remains running; mypy is blocked by shared stub issues. Ruff baseline requires an improvement update.
+- Historical new PARAM capture still refuses unavailable old Document versions. M2 remains held.
+
+[Report with exact commands, API limits, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-client-inputs/notes/report.md). Design/coordination notes and both commit-message files are written.
+tokens used
+186,359
+Implemented bounded native capture inputs using the normal Runtime 0.2.6 candidate client, preserving original guards and exact retries.
+
+- Central: **253 passed** — preserved 207 plus 46 new cases.
+- Local: **86 ingress**, **156 neighboring**, and **8 strengthened refusal checks** passed.
+- Full default suite remains running; mypy is blocked by shared stub issues. Ruff baseline requires an improvement update.
+- Historical new PARAM capture still refuses unavailable old Document versions. M2 remains held.
+
+[Report with exact commands, API limits, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-client-inputs/notes/report.md). Design/coordination notes and both commit-message files are written.

@@ -1,0 +1,400 @@
+| Artifact manifest | `sha256:3b805d6946fd73c44144009021f44153b78ceeb5e5b1298cd2397a1f2dc19730` |
+| Copied Agent schema | `tl/agt-m2-parent-label-proof` / `86bfe1860cd2b4fe661bde88051ed4b690b94ce1` (owner CONFIRMED label-only first in runtime-coordination.md) |
+| EditCommand file SHA256 | `460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388` |
+
+This slice adds the official parent `track.set` label/clear schema. No roots/group draft, ABI/envelope/endpoint/table expansion or authority-cut cohort is included. Its Runtime product base includes the qualified M1 destination-occupancy guard. Agent decides whether later reviewed operations enter a later bundle; do not silently mix schemas.
+
+`TrackSetArgs` requires BOTH `values` and `clear`; additive `anyOf` requires a nonempty set or clear. The generic generator now retains shared/nested fields and refinements, and the TypeScript package public root exports `TrackSetArgs`. Wire command arrays are unchanged; improved TypeScript minItems typing makes command batches/inverse publications nonempty tuples, so builders may need truthful narrowing.
+
+Evidence: generator/artifact/conformance checks and TS typecheck PASS; focused contracts/schema/client/release115PASS (all19 label cases included); central generated clients/second-client/release80PASS/1existing deselection. Actual isolated0.2.2 Python wheel imports/metadata/forwardrefs PASS; packed TS consumer positive/negative compile PASS. Root export descendant separately rebuilt/packed and compiled through `@astrid/runtime-client`, with public negative guards; artifact/schema parity checks PASS. Literal package `npm test` has existing global TypeScript6 TS5112 config-discovery behavior; equivalent explicit build/typecheck/client-node tests ran. No full suite or updated-pin cross-product label semantics claimed.
+
+Agent next: import official Python artifacts from EXACT6be9706 into the confirmed registry candidate, refresh `runtime.lock.json`, check byte parity and real provider compatibility. App next: build/pin the TypeScript package from the SAME6be9706 and use the paired Agent candidate for actual browser label success/reload/undo. Previous946bdff/fe0dd04 and artifact9ab13c/8612 are superseded; do not pin them.
+
+Agent capture/golden source for this slice: `tests/editing_conformance/fixtures/recipe_m2_app_track_label.json` on86bfe186. Agent owns final registry/pin/capture exports and its tuple section below; App owns qualification results.
+
+exec
+/bin/bash -lc 'git -C /home/user/work/wt/rt-m2-trusted-bootstrap status --short && git -C /home/user/work/wt/rt-m2-trusted-bootstrap rev-parse HEAD HEAD''^{tree}
+cat /home/user/work/wt/rt-m2-trusted-bootstrap/runtime_protocol/contract_metadata.py | head -30
+cat runtime.lock.json
+sha256sum /home/user/work/wt/rt-m2-trusted-bootstrap/tests/timeline_trusted_bootstrap.py schemas/timeline/edit-command.schema.json
+ls -la /tmp/pytest-of-root/pytest-468' in /home/user/work/wt/agt-m2-group-real-source
+ succeeded in 0ms:
+7c6e4eabf88d914d9c98c0097b06ea298ba11866
+c6e5306a7ba8a88c4c7675bed78cbc7f0cbdeee8
+"""Generated contract metadata; do not edit by hand."""
+
+PROTOCOL = "workspace.v1"
+COMPONENT_MANIFEST_SHA256 = 'sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5'
+SCHEMA_DIGEST = 'sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d'
+OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+{
+  "files": {
+    "astrid/core/timeline/schema/timeline-config.schema.json": {
+      "from": "contract/schemas/timeline-config.schema.json",
+      "sha256": "sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
+    },
+    "astrid_runtime_client/__init__.py": {
+      "from": "packages/python/astrid_runtime_client/__init__.py",
+      "sha256": "sha256:0ec98414f0410da5db816e2dcb3204207046902026902db5283251c168a19c6d"
+    },
+    "astrid_runtime_client/contract_metadata.py": {
+      "from": "packages/python/astrid_runtime_client/contract_metadata.py",
+      "sha256": "sha256:d009690b5b9d812a51433fa747ece4a83a6db762a91063c9aafdecd3e27f0cbb"
+    },
+    "astrid_runtime_client/generated.py": {
+      "from": "packages/python/astrid_runtime_client/generated.py",
+      "sha256": "sha256:94a941696abe0bc13d8c46d622fe58529424d9eaabdca6e11e8ccb863c600439"
+    },
+    "astrid_runtime_client/timeline_commit_types.py": {
+      "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
+      "sha256": "sha256:9bd6bbad5741bfc73d57418c17654f0dae7fd19a5d0bb4ed44fea0f130375a70"
+    },
+    "tests/fixtures/runtime-responses/events_page_1_200.json": {
+      "from": "conformance/responses/events_page_1_200.json",
+      "sha256": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"
+    },
+    "tests/fixtures/runtime-responses/events_page_2_200.json": {
+      "from": "conformance/responses/events_page_2_200.json",
+      "sha256": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2"
+    },
+    "tests/fixtures/runtime-responses/invalid_cursor_400.json": {
+      "from": "conformance/responses/invalid_cursor_400.json",
+      "sha256": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff"
+    },
+    "tests/fixtures/runtime-responses/managed_outputs_200.json": {
+      "from": "conformance/responses/managed_outputs_200.json",
+      "sha256": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d"
+    },
+    "tests/fixtures/runtime-responses/not_found_404.json": {
+      "from": "conformance/responses/not_found_404.json",
+      "sha256": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6"
+    },
+    "tests/fixtures/runtime-responses/publish_conflict_409.json": {
+      "from": "conformance/responses/publish_conflict_409.json",
+      "sha256": "sha256:19d664d035691202da03b22b858456c49983e253c7485a6347baa1cf350eea57"
+    },
+    "tests/fixtures/runtime-responses/task_admission_201.json": {
+      "from": "conformance/responses/task_admission_201.json",
+      "sha256": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c"
+    },
+    "tests/fixtures/runtime-responses/task_read_200.json": {
+      "from": "conformance/responses/task_read_200.json",
+      "sha256": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829"
+    },
+    "tests/fixtures/runtime-responses/validation_error_422.json": {
+      "from": "conformance/responses/validation_error_422.json",
+      "sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"
+    },
+    "tests/fixtures/visual-boundary-v1.json": {
+      "from": "conformance/fixtures/visual-boundary-v1.json",
+      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+    }
+  },
+  "manifest": "contract/artifacts.json",
+  "producer": "astrid-runtime",
+  "producer_version": "sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d",
+  "source_commit": "45d3b81c426e3c941c9abb9ab7fc140866b68534"
+}
+c3cdaa6b904f374cee7c17f6d61ba196909bca1e9bab0f6e200d8efe6e227c82  /home/user/work/wt/rt-m2-trusted-bootstrap/tests/timeline_trusted_bootstrap.py
+sha256sum: schemas/timeline/edit-command.schema.json: No such file or directory
+total 28
+drwx------  5 root root 4096 Oct 20 00:09 .
+drwx------ 13 root root 4096 Oct 20 00:09 ..
+drwx------  8 root root 4096 Oct 20 00:09 test_official_runtime_schema_a0
+lrwxrwxrwx  1 root root   62 Oct 20 00:09 test_official_runtime_schema_acurrent -> /tmp/pytest-of-root/pytest-468/test_official_runtime_schema_a0
+drwx------  9 root root 4096 Oct 20 00:09 test_real_migration_accepted_r0
+drwx------  9 root root 4096 Oct 20 00:09 test_real_migration_accepted_r1
+lrwxrwxrwx  1 root root   62 Oct 20 00:09 test_real_migration_accepted_rcurrent -> /tmp/pytest-of-root/pytest-468/test_real_migration_accepted_r1
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/sdk/test_timeline_group_migration_runtime.py tests/editing_conformance/test_recipe_m2_group_migration.py && git diff --check' in /home/user/work/wt/agt-m2-group-real-source
+ succeeded in 256ms:
+All checks passed!
+
+exec
+/bin/bash -lc "git log -1 --format='%H %s' tl/agt-m2-root-schema-slice
+sha256sum astrid/core/timeline/schema/edit-command.schema.json tests/editing_conformance/fixtures/recipe_m2_group_migration.json
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import base64
+from astrid.sdk.timeline.commit import _digest
+from astrid.sdk.media_transcript import transcript_document_id
+from astrid.core.storage.hashing import hash_bytes
+png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j1ioAAAAASUVORK5CYII=')
+media = hash_bytes(png)
+content = {'schema': 'media.transcript/v1', 'media_id': media, 'source_id': 'whisper',
+           'segments': [{'id': 'line-1', 'start': 4, 'end': 5, 'text': 'original',
+                         'words': [{'id': 'word-1', 'start': 4, 'end': 5, 'text': 'original'}]}]}
+print(media)
+print(_digest(content))
+print(transcript_document_id('project-1', media, 'whisper'))
+PY" in /home/user/work/wt/agt-m2-group-real-source
+ exited 1 in 189ms:
+cae76eba3ffaee618ddc15dde0a4a8595b4b2d85 feat(timeline): admit canonical shot-root references
+6d93554edb3745c43013417e0c6cdf9081a65ab9848176efc9343f551f2be991  astrid/core/timeline/schema/edit-command.schema.json
+0b7dea75702cd909ba645970ac3ee9b370aad70396505ba4e9e3d781ab7f55a6  tests/editing_conformance/fixtures/recipe_m2_group_migration.json
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+ModuleNotFoundError: No module named 'astrid.core.storage'
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-trusted-bootstrap /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider -m '"'integration or not integration' tests/sdk/test_timeline_group_migration_runtime.py tests/sdk/test_timeline_group_migration_provider.py tests/editing_conformance/test_recipe_m2_group_migration.py" in /home/user/work/wt/agt-m2-group-real-source
+ exited 1 in 4658ms:
+...FF...x..................................................              [100%]
+=================================== FAILURES ===================================
+_ test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids[golden-parent] _
+../rt-m2-trusted-bootstrap/runtime_protocol/timeline_commit_validation.py:85: in validate_commit_value
+    _validator(definition).validate(value)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:450: in validate
+    raise error
+E   jsonschema.exceptions.ValidationError: 'shot:new-shot::' does not match '^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])*)?$'
+E   
+E   Failed validating 'pattern' in schema['properties']['commands']['items']['properties']['authorship']['propertyNames']:
+E       {'description': 'R4 id::path or bare path (including empty); bare form '
+E                       'requires exactly one resolved target. Provider parses '
+E                       'and checks identity/path ambiguity, including :: '
+E                       'inside a quoted property token.',
+E        'pattern': '^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])*)?$',
+E        'type': 'string'}
+E   
+E   On instance['commands'][0]['authorship']:
+E       'shot:new-shot::'
+
+The above exception was the direct cause of the following exception:
+tests/sdk/test_timeline_group_migration_runtime.py:194: in test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids
+    migrated = submit(service, capture_migrate_groups(original, GROUPS), 'migrate')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/sdk/test_timeline_group_migration_runtime.py:189: in submit
+    return runtime.commit_timeline(project, timeline, body, idempotency_key=key, publisher='author',
+../rt-m2-trusted-bootstrap/runtime_protocol/service.py:2637: in commit_timeline
+    validate_request(body)
+../rt-m2-trusted-bootstrap/runtime_protocol/timeline_commit_port.py:62: in validate_request
+    validate_commit_value(request, "CommitRequest")
+../rt-m2-trusted-bootstrap/runtime_protocol/timeline_commit_validation.py:87: in validate_commit_value
+    raise ValidationError(f"invalid {definition}: {exc.message}") from exc
+E   runtime_protocol.errors.ValidationError: invalid CommitRequest: 'shot:new-shot::' does not match '^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])*)?$'
+_ test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids[opaque-parent] _
+../rt-m2-trusted-bootstrap/runtime_protocol/timeline_commit_validation.py:85: in validate_commit_value
+    _validator(definition).validate(value)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:450: in validate
+    raise error
+E   jsonschema.exceptions.ValidationError: 'shot:new-shot::' does not match '^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])*)?$'
+E   
+E   Failed validating 'pattern' in schema['properties']['commands']['items']['properties']['authorship']['propertyNames']:
+E       {'description': 'R4 id::path or bare path (including empty); bare form '
+E                       'requires exactly one resolved target. Provider parses '
+E                       'and checks identity/path ambiguity, including :: '
+E                       'inside a quoted property token.',
+E        'pattern': '^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])*)?$',
+E        'type': 'string'}
+E   
+E   On instance['commands'][0]['authorship']:
+E       'shot:new-shot::'
+
+The above exception was the direct cause of the following exception:
+tests/sdk/test_timeline_group_migration_runtime.py:194: in test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids
+    migrated = submit(service, capture_migrate_groups(original, GROUPS), 'migrate')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/sdk/test_timeline_group_migration_runtime.py:189: in submit
+    return runtime.commit_timeline(project, timeline, body, idempotency_key=key, publisher='author',
+../rt-m2-trusted-bootstrap/runtime_protocol/service.py:2637: in commit_timeline
+    validate_request(body)
+../rt-m2-trusted-bootstrap/runtime_protocol/timeline_commit_port.py:62: in validate_request
+    validate_commit_value(request, "CommitRequest")
+../rt-m2-trusted-bootstrap/runtime_protocol/timeline_commit_validation.py:87: in validate_commit_value
+    raise ValidationError(f"invalid {definition}: {exc.message}") from exc
+E   runtime_protocol.errors.ValidationError: invalid CommitRequest: 'shot:new-shot::' does not match '^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])*)?$'
+=========================== short test summary info ============================
+FAILED tests/sdk/test_timeline_group_migration_runtime.py::test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids[golden-parent]
+FAILED tests/sdk/test_timeline_group_migration_runtime.py::test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids[opaque-parent]
+2 failed, 56 passed, 1 xfailed in 4.06s
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import base64
+import hashlib
+from astrid.sdk.timeline.commit import _digest
+png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j1ioAAAAASUVORK5CYII=')
+media = 'sha256:' + hashlib.sha256(png).hexdigest()
+content = {'schema': 'media.transcript/v1', 'media_id': media, 'source_id': 'whisper',
+           'segments': [{'id': 'line-1', 'start': 4, 'end': 5, 'text': 'original',
+                         'words': [{'id': 'word-1', 'start': 4, 'end': 5, 'text': 'original'}]}]}
+print('media_id=' + media)
+print('content_digest=' + _digest(content))
+PY" in /home/user/work/wt/agt-m2-group-real-source
+ succeeded in 145ms:
+media_id=sha256:081b627cac8d3d4e337ee059fcf2696e8e14c3247021f9fab4ed44578bbbc9ec
+content_digest=sha256:80844ddc3598d47fd7693b0ba3504037a12e89f300076ade732b3d527a497163
+
+exec
+/bin/bash -lc "git show tl/agt-m2-root-schema-slice:astrid/core/timeline/schema/edit-command.schema.json | sha256sum
+find /tmp/pytest-of-root -maxdepth 2 -name 'test_real_migration_accepted_r*' -type d
+ git diff -- tests/editing_conformance/test_recipe_m2_group_migration.py
+ git status --short" in /home/user/work/wt/agt-m2-group-real-source
+ succeeded in 268ms:
+a92aaadf2d98f37e304769c8e5f779274aafafab83e81e83ed6bd40752d3b47a  -
+/tmp/pytest-of-root/pytest-470/test_real_migration_accepted_r0
+/tmp/pytest-of-root/pytest-470/test_real_migration_accepted_r1
+diff --git a/tests/editing_conformance/test_recipe_m2_group_migration.py b/tests/editing_conformance/test_recipe_m2_group_migration.py
+index 47912c98..ed4074d2 100644
+--- a/tests/editing_conformance/test_recipe_m2_group_migration.py
++++ b/tests/editing_conformance/test_recipe_m2_group_migration.py
+@@ -26,7 +26,8 @@ FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_group_migration.json'
+ GROUPS = [{'legacy_shot_id': 'legacy', 'shot_id': 'new-shot', 'occurrence_id': 'new-occ'}]
+ 
+ 
+-def legacy_document(*, opaque_variant=False):
++def legacy_document(*, opaque_variant=False, project_id='project-1', media_id=MEDIA,
++                    transcript_pin=None):
+     clips = [{'id': 'before', 'track': 'V1', 'at': 10, 'hold': 1, 'text': 'ungrouped'},
+              {'id': 'c1', 'track': 'V1', 'at': 0, 'hold': 2, 'asset': 'image',
+               'clipType': 'media', 'params': None, 'app': {'astrid': None},
+@@ -51,14 +52,14 @@ def legacy_document(*, opaque_variant=False):
+                'output': {'fps': {'numerator': 30000, 'denominator': 1001}, 'opaque': None},
+                'pinnedShotGroups': [group], 'parent_only': {'audio': [None]}},
+                'clips': clips, 'occurrences': [], 'opaque': {'keep': None},
+-               'registry': {'assets': {'image': {'media_id': MEDIA, 'type': 'image', 'unknown': None}},
++               'registry': {'assets': {'image': {'media_id': media_id, 'type': 'image', 'unknown': None}},
+                             'unknown': [False, None]}}
+-    pin = source_fixture('transcript')['pin']
+-    return {'schema_version': 1, 'project_id': 'project-1', 'timeline_id': 'film',
++    pin = source_fixture('transcript')['pin'] if transcript_pin is None else copy.deepcopy(transcript_pin)
++    return {'schema_version': 1, 'project_id': project_id, 'timeline_id': 'film',
+             'parent_revision': {'revision_id': 'legacy-parent', 'payload': payload,
+                                 'content_digest': _digest(payload)},
+             'shot_revisions': [], 'internal_timeline_revisions': [],
+-            'dependency_manifest': _manifest([], [], [{'media_id': MEDIA, 'content_digest': MEDIA}], [pin])}
++            'dependency_manifest': _manifest([], [], [{'media_id': media_id, 'content_digest': media_id}], [pin])}
+ 
+ 
+ def plan_for(document=None):
+ M tests/editing_conformance/test_recipe_m2_group_migration.py
+ M tests/sdk/test_timeline_group_migration_runtime.py
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+import shutil
+
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-real-source')
+(worker / 'notes').mkdir(exist_ok=True)
+report = '''# agt-m2-group-real-source
+
+Changed only the real Runtime integration test and its adjacent legacy fixture factory. The factory now accepts project/media/transcript-pin inputs before constructing the parent. The original detached "'`lines` JSON golden is unchanged. Both authored-parent variants retain rational 30000/1001 fps, pinnedShotGroups, opaque/null fields, ordering, and full exact DocumentPins. No product/schema/Runtime code changed.
+
+The integration fixture ingests a real PNG into CAS and creates an ordinary `media.transcript/v1` Document with `segments` before parent construction. Trusted bootstrap is setup only. Real migration uses `RuntimeService.commit_timeline` and the actual Agent provider; no SQL, fake history, schema patching, or acceptance bypass was added.
+
+## Exact Runtime/helper/source tuple
+
+- Runtime checkout: `/home/user/work/wt/rt-m2-trusted-bootstrap`, branch `tl/rt-m2-trusted-bootstrap`, clean commit `7c6e4eabf88d914d9c98c0097b06ea298ba11866`, tree `c6e5306a7ba8a88c4c7675bed78cbc7f0cbdeee8`.
+- Helper: `tests/timeline_trusted_bootstrap.py`, `seed_trusted_legacy_parent(service, document, *, idempotency_key)`, SHA-256 `c3cdaa6b904f374cee7c17f6d61ba196909bca1e9bab0f6e200d8efe6e227c82`. Imported from the selected Runtime checkout'"'s "'`tests` directory, without copying it into Agent.
+- Runtime schema digest: `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`.
+- Agent base: `99d5eea6` (`tl/agt-m2-migration-roundtrip`); test source is this worker'"'s uncommitted test-only diff. Existing runtime.lock.json remains at "'`45d3b81c426e3c941c9abb9ab7fc140866b68534`; no generated client pin was changed.
+- Source kind/schema: `media.transcript` / `media.transcript/v1`, source_id `whisper`, Document version 1. Document ID comes from `transcript_document_id(actual_project, actual_media, '"'whisper')"'` before construction.
+- Real media ID: `sha256:081b627cac8d3d4e337ee059fcf2696e8e14c3247021f9fab4ed44578bbbc9ec`.
+- Source content digest: `sha256:80844ddc3598d47fd7693b0ba3504037a12e89f300076ade732b3d527a497163`. Its sole segment is `line-1`, start 4/end 5/text `original`, containing word `word-1` with the same timing/text. The full resulting document_id/version/content_digest pin is retained exactly.
+
+## Evidence
+
+Final targeted command, from `/home/user/work/wt/agt-m2-group-real-source`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-trusted-bootstrap /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider -m '"'integration or not integration' tests/sdk/test_timeline_group_migration_runtime.py tests/sdk/test_timeline_group_migration_provider.py tests/editing_conformance/test_recipe_m2_group_migration.py
+"'```
+
+**56 passed, 2 failed, 1 xfailed in 4.06s; exit 1.** An earlier run of the same files without `--tb=short` gave 56 passed, 2 failed, 1 xfailed in 4.40s. Only import ordering changed between runs.
+
+- PASS: both exact legacy setup variants through normal timeline GET, immutable revision GET, closure read, inspect, retained v1 source capture after live source v2, close/reopen, and integrity report. Inspect preserves fps and authored clip order/times. Scene evaluation is forbidden in these tests.
+- PASS: unchanged detached unit golden and provider-only neighbours. They remain unit/provider evidence, not Runtime acceptance.
+- PASS: literal detached `lines` source is refused with `transcript content must have the canonical media.transcript/v1 fields`. This negative test does not cover migration.
+- RED: both positive actual migration variants at the FIRST commit request. Runtime rejects `commands[0].authorship` property name `shot:new-shot::` under official `TargetKey`. Failure path: `RuntimeService.commit_timeline` -> `validate_request` -> `validate_commit_value(..., '"'CommitRequest')"'`. Provider execution/accepted reload/inverse/redo have not been reached.
+- The one strict xfail is the pre-existing narrow schema-admission test. No new xfail/skip or refusal expectation was added to the positive migration tests.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/sdk/test_timeline_group_migration_runtime.py tests/editing_conformance/test_recipe_m2_group_migration.py
+# All checks passed.
+git diff --check
+# exit 0
+```
+
+No full suite, socket/browser suite, installation, or external network operation ran. Failed pytest realm output was removed; no build output or temporary files remain in the worktree.
+
+## Decisions, blocker, next step
+
+Followed the settled `segments` source decision. The fixture'"'s optional inputs preserve the detached golden while binding real identities before authoring; no JSON replacement or post-construction pin repair. Kept setup/readback separate so that the observed wire blocker cannot mask valid setup evidence. This synthetic trusted setup establishes no historical compatibility claim.
+
+Bundle 2 must include the reviewed shot-root canonical schema and migration registry source, followed by Runtime's normal official schema/generated-artifact regeneration and coordinated consumer pins. The existing root-schema slice is "'`tl/agt-m2-root-schema-slice` / `cae76eba3ffaee618ddc15dde0a4a8595b4b2d85`, `astrid/core/timeline/schema/edit-command.schema.json` SHA-256 `a92aaadf2d98f37e304769c8e5f779274aafafab83e81e83ed6bd40752d3b47a` (verified with git show). That slice alone proves envelope admission; it is not a registered migration handler or final combined bundle source. Label-only bundle 1 does not supply this prerequisite.
+
+Once the official root/group artifact and helper-bearing Runtime are available together, rerun the positive tests unchanged. Accepted reload, exact inverse to the raw legacy document, redo with the same shot/occurrence IDs, and retained-source behavior across those accepted edits remain unverified beyond the first request. No later failure is inferred. All M2 merges remain HELD; no commit/merge/push was run.
+'"'''
+(worker / 'notes' / 'report.md').write_text(report)
+message = '''test(timeline): bind real sources for legacy group integration
+
+Bind managed media and an admitted segments transcript before authoring the
+exact legacy parent and DocumentPin. Reuse Runtime's trusted setup helper,
+prove normal reads and retained v1 sources across source updates/reopen,
+and preserve the detached lines golden with an explicit admission refusal.
+
+Add positive real-provider migration/reload/inverse/redo expectations without
+masking the observed official shot-root TargetKey schema blocker. Targeted
+validation: 56 passed, 2 genuine migration failures, 1 existing schema xfail.
+All M2 merges remain held pending the coordinated root/group artifact.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+for name in ('pytest-468', 'pytest-470'):
+    path = Path('/tmp/pytest-of-root') / name
+    if path.is_dir():
+        shutil.rmtree(path)
+print(worker / 'notes' / 'report.md')
+print('Wrote both commit messages; removed task pytest output.')
+PY
+ git diff --check && git status --short" in /home/user/work/wt/agt-m2-group-real-source
+ succeeded in 665ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-real-source/notes/report.md
+Wrote both commit messages; removed task pytest output.
+ M tests/editing_conformance/test_recipe_m2_group_migration.py
+ M tests/sdk/test_timeline_group_migration_runtime.py
+
+codex
+Implemented real CAS media and admitted `segments` source binding before legacy-parent construction. Preserved the detached golden, rational fps, groups, opaque fields, ordering, and exact pins.
+
+Validation:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-trusted-bootstrap /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider -m 'integration or not integration' tests/sdk/test_timeline_group_migration_runtime.py tests/sdk/test_timeline_group_migration_provider.py tests/editing_conformance/test_recipe_m2_group_migration.py
+```
+
+**56 passed, 2 failed, 1 existing xfailed.** Both setup variants pass GET/inspect, retained v1 reads after source v2, and reopen. Both positive migration tests remain red: Runtime rejects `shot:new-shot::` in authorship before provider execution. Accepted reload/inverse/redo remain unverified.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/sdk/test_timeline_group_migration_runtime.py tests/editing_conformance/test_recipe_m2_group_migration.py
+git diff --check
+```
+
+Both passed. No full/network suite ran.
+
+Next: officially regenerate and pin the bundle-2 root/group artifacts, then rerun unchanged positives. All M2 merges remain held.
+
+[Detailed report and exact helper/source tuple](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-real-source/notes/report.md). Both commit-message files written; temporary output cleaned.
+tokens used
+93,680
+Implemented real CAS media and admitted `segments` source binding before legacy-parent construction. Preserved the detached golden, rational fps, groups, opaque fields, ordering, and exact pins.
+
+Validation:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-trusted-bootstrap /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider -m 'integration or not integration' tests/sdk/test_timeline_group_migration_runtime.py tests/sdk/test_timeline_group_migration_provider.py tests/editing_conformance/test_recipe_m2_group_migration.py
+```
+
+**56 passed, 2 failed, 1 existing xfailed.** Both setup variants pass GET/inspect, retained v1 reads after source v2, and reopen. Both positive migration tests remain red: Runtime rejects `shot:new-shot::` in authorship before provider execution. Accepted reload/inverse/redo remain unverified.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/sdk/test_timeline_group_migration_runtime.py tests/editing_conformance/test_recipe_m2_group_migration.py
+git diff --check
+```
+
+Both passed. No full/network suite ran.
+
+Next: officially regenerate and pin the bundle-2 root/group artifacts, then rerun unchanged positives. All M2 merges remain held.
+
+[Detailed report and exact helper/source tuple](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-real-source/notes/report.md). Both commit-message files written; temporary output cleaned.

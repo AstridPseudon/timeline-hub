@@ -1,0 +1,9 @@
+name=agt-d09-caller-join
+repo=agent
+base=tl/integration
+base_sha=4a75f68f
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-d09-caller-join
+started=2026-10-20T04:45:30Z

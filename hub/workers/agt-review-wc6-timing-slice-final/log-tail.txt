@@ -1,0 +1,400 @@
++
++No generated client, runtime pin, or schema changed in the successor. Protected
++schema/pin files are byte-unchanged; the edit-command schema remains
++`6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
++
++## Evidence
++
++Fresh bounded local command, run once:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/timeline/test_authoring_media.py \
++  tests/editing_conformance/test_recipe_clip_scalar_fields.py \
++  tests/editing_conformance/test_producer_insertion.py \
++  tests/editing_conformance/test_recipe_parent_media.py \
++  -k 'not real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba and (selected_content_sha_and_opaque_registry_siblings_are_independent or move_then_hold_compiles_source_units_and_roundtrips_own_write_stages or disjoint_rebase_unchanged_write_history_aba_and_inverse or registry_create_or_require_never_upserts_or_removes_reused_binding or parent_source_window_and_disjoint_opaque_edit_survive_replay_and_inverse or intervening_aba_and_later_created_asset_dependents_refuse_undo or scoped_capture_reload_inverse_and_exact_existing_alias or provider_manifest_reload_undo_and_redo or test_unchanged_json_roundtrip_has_empty_diff or test_local_registry_replacement_is_readonly_and_strips_stale_authority or test_import_reuses_catalog_across_retry_keys_and_preserves_distinct_names or test_all_sources_preflight_before_any_import_or_publication or test_audio_local_selector_is_probed_and_keeps_audio_mirror or test_changed_file_after_preflight_imports_nothing or test_import_failure_cannot_reach_publication or test_document_publish_forwards_new_stale_head_to_runtime or test_real_runtime_import_and_parent_publication_roundtrip or test_inherited_explicit_local_path_remains_an_active_request or test_local_shot_item_intent_matches_selected_internal_replacement or test_unchanged_historical_and_opaque_paths_survive_without_import or test_historical_path_rows_match_by_identity_after_reorder or test_duplicate_asset_row_with_one_live_locator_refuses_in_both_orders or test_renamed_or_duplicate_media_row_cannot_borrow_a_historical_baseline or test_changed_unconsumed_live_locators_fail_during_planning or test_changed_remote_live_locator_refuses_while_opaque_remote_url_survives or test_nonstring_registry_locator_is_malformed_even_when_falsy or test_nonstring_clip_selector_has_field_specific_refusal or test_effective_parent_alias_needs_no_local_file_or_import or test_parent_config_clip_uses_effective_parent_registry_alias or test_explicit_parent_registry_replacement_normalizes_stale_declarations or test_persistent_parent_registry_conflict_refuses_after_explicit_projection or test_removed_local_alias_is_not_resurrected_from_baseline or test_unsupported_secondary_clip_selector_refuses_with_valid_primary or test_nonstring_shot_item_selector_has_field_specific_refusal or test_cleared_shot_item_selector_never_requests_local_input or test_cleared_optional_path_is_not_a_new_import_request or test_equal_changed_sources_choose_one_file_but_conflicts_fail or test_canonical_file_uri_is_supported_and_malformed_or_remote_forms_fail or test_explicit_local_replacement_strips_stale_remote_descriptor or test_supplied_plan_is_rechecked_before_catalog_read_or_import or test_catalog_import_remains_reusable_after_later_parent_cas_conflict or test_public_document_refuses_unsupported_locator_before_artifacts_or_connection)'
++```
++
++Result: **90 passed, 166 deselected in 9.63s**.
++
++The supplied current014 packet also reports the inherited real a0 HTTP consumer
++proof (Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`) and its local evidence.
++I did not rerun the live-socket case or any full suite.
++
++`git diff --check HEAD^ HEAD` passed. No source edits were made by this review; no
++new tests, skips, xfails, matrix changes, generated artifacts, or product changes
++were introduced.
++
++## Remaining debt / next steps
++
++- Perform the later current3c4/private014 join against the current integration
++  source, then repeat the manager-controlled qualification.
++- Complete the App gate before merge/release.
++- Keep `publish_authoring_candidate` and its WC1/WC2 positives distinct from this
++  WC6 view until their consumers are migrated and the old route is deliberately
++  retired.
++- Continue holding SDK legacy timing/narration writers (`Checkout`/legacy editing,
++  sheet/publish paths and related derived-timing consumers) and arbitrary
++  document-structure edits; this slice does not delete or certify them.
++- Do not mark the broader WC6 row `DELETED` from this bounded timing/media proof.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worker artifacts ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final; printf '%s\\n' '--- commit msg ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/commit-msg.txt; printf '%s\\n' '--- report head ---'; sed -n '1,280p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/report.md; printf '%s\\n' '--- design ---'; sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-timing-slice-final.md; printf '%s\\n' '--- worktree ---'; git status --short --branch" in /home/user/work/wt/agt-review-wc6-timing-slice-final
+ succeeded in 451ms:
+--- worker artifacts ---
+total 1412
+-rw-r--r-- 1 root root       0 Oct 20 17:18 DONE
+-rw-r--r-- 1 root root    1060 Oct 20 17:15 brief.md
+-rw-r--r-- 1 root root     204 Oct 20 17:18 commit-msg.txt
+-rw-r--r-- 1 root root 1423601 Oct 20 17:18 log.txt
+-rw-r--r-- 1 root root     241 Oct 20 17:15 meta
+-rw-r--r-- 1 root root    7398 Oct 20 17:18 report.md
+-rw-r--r-- 1 root root       0 Oct 20 17:15 running
+--- commit msg ---
+review(timeline): approve bounded WC6 timing slice
+
+Approve the minimal media-before-timing document-view successor for private
+qualification. Hold merge pending the current/private014 join and App gate.
+--- report head ---
+# WC6 timing/narration slice final review
+
+## Decision
+
+**APPROVE** the bounded successor for private qualification; **HOLD** merge/release
+until the required later current3c4/private014 join and App gate are complete.
+
+Reviewed exactly:
+
+- Commit: `5962d5791be0463700e04d5dd526eb5554c83fda`
+- Tree: `9dd8f59f0468e42b1fa3074271067a3fbea7c67`
+- Parent/current014 consumer: `a4c1307734d620cee81640cab6b25f7b198f0c17`
+- Parent tree: `49b77c93b181ec1b20f0230a6cdbfa1518ad55ab`
+- Successor scope: two files, `astrid/sdk/timeline/document_diff.py` and
+  `tests/timeline/test_authoring_media.py` (39 additions, 15 deletions).
+
+## What was verified
+
+The successor moves same-alias media capture/execution before the per-clip timing
+loop. `working` starts as a deep copy of the exact Runtime base; media capture is
+performed on that state, its result is executed into `working`, and each subsequent
+`clip.move`, `clip.trim`, `clip.set`, or parameter command is captured and executed
+against the staged result. This preserves each command's exact prior-command source
+and does not refresh or discard the original media guards.
+
+The existing media path remains unchanged and strict:
+
+- `_registry` still observes original registry presence, requires an authored
+  registry, and uses exact existing-binding checks for rebinds.
+- `_verified` still requires the exact authenticated Runtime selection and valid
+  image/video metadata.
+- The same-alias swap still validates every affected consumer, records exact
+  `media.old`/`media.new` dependencies, and rewrites only bounded payload mirrors.
+- Clip shape/baseline checks still reject media-selector, unsupported, opaque, and
+  changed-baseline fields; the final explicit-row/payload comparisons remain.
+- `inverse.py`, `_recording.py`, scalar `MediaRef`/registry guards, and the
+  authenticated accepted-payload path are outside this successor diff. There is no
+  `own_materialized_read` exemption anywhere in the tree.
+
+The strengthened real-body test now asserts the ordered command batch
+`occurrence.swap-media`, `clip.move`, `clip.set`; changed `at`/`hold`; unchanged
+`from`/`to`/`source_window`; narration and metadata preservation; opaque registry,
+alias order, clip identity/order, payload mirrors, sibling isolation; checkout
+reload; lost-ACK undo across Runtime restart; disjoint rebase; exact redo after
+re-reading verified media; and strict A→B→A/intervening-write undo refusal.
+
+The original SDK `publish_authoring_candidate` positives remain intact. They are
+the older WC1/WC2 authoring-candidate path, not this WC6 detached-document view;
+this review makes no claim that the old path or its row was deleted. Narration,
+arbitrary structural fields, and whole-document fallback publication remain held
+by the WC6 view as before.
+
+No generated client, runtime pin, or schema changed in the successor. Protected
+schema/pin files are byte-unchanged; the edit-command schema remains
+`6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
+
+## Evidence
+
+Fresh bounded local command, run once:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
+  tests/timeline/test_authoring_media.py \
+  tests/editing_conformance/test_recipe_clip_scalar_fields.py \
+  tests/editing_conformance/test_producer_insertion.py \
+  tests/editing_conformance/test_recipe_parent_media.py \
+  -k 'not real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba and (selected_content_sha_and_opaque_registry_siblings_are_independent or move_then_hold_compiles_source_units_and_roundtrips_own_write_stages or disjoint_rebase_unchanged_write_history_aba_and_inverse or registry_create_or_require_never_upserts_or_removes_reused_binding or parent_source_window_and_disjoint_opaque_edit_survive_replay_and_inverse or intervening_aba_and_later_created_asset_dependents_refuse_undo or scoped_capture_reload_inverse_and_exact_existing_alias or provider_manifest_reload_undo_and_redo or test_unchanged_json_roundtrip_has_empty_diff or test_local_registry_replacement_is_readonly_and_strips_stale_authority or test_import_reuses_catalog_across_retry_keys_and_preserves_distinct_names or test_all_sources_preflight_before_any_import_or_publication or test_audio_local_selector_is_probed_and_keeps_audio_mirror or test_changed_file_after_preflight_imports_nothing or test_import_failure_cannot_reach_publication or test_document_publish_forwards_new_stale_head_to_runtime or test_real_runtime_import_and_parent_publication_roundtrip or test_inherited_explicit_local_path_remains_an_active_request or test_local_shot_item_intent_matches_selected_internal_replacement or test_unchanged_historical_and_opaque_paths_survive_without_import or test_historical_path_rows_match_by_identity_after_reorder or test_duplicate_asset_row_with_one_live_locator_refuses_in_both_orders or test_renamed_or_duplicate_media_row_cannot_borrow_a_historical_baseline or test_changed_unconsumed_live_locators_fail_during_planning or test_changed_remote_live_locator_refuses_while_opaque_remote_url_survives or test_nonstring_registry_locator_is_malformed_even_when_falsy or test_nonstring_clip_selector_has_field_specific_refusal or test_effective_parent_alias_needs_no_local_file_or_import or test_parent_config_clip_uses_effective_parent_registry_alias or test_explicit_parent_registry_replacement_normalizes_stale_declarations or test_persistent_parent_registry_conflict_refuses_after_explicit_projection or test_removed_local_alias_is_not_resurrected_from_baseline or test_unsupported_secondary_clip_selector_refuses_with_valid_primary or test_nonstring_shot_item_selector_has_field_specific_refusal or test_cleared_shot_item_selector_never_requests_local_input or test_cleared_optional_path_is_not_a_new_import_request or test_equal_changed_sources_choose_one_file_but_conflicts_fail or test_canonical_file_uri_is_supported_and_malformed_or_remote_forms_fail or test_explicit_local_replacement_strips_stale_remote_descriptor or test_supplied_plan_is_rechecked_before_catalog_read_or_import or test_catalog_import_remains_reusable_after_later_parent_cas_conflict or test_public_document_refuses_unsupported_locator_before_artifacts_or_connection)'
+```
+
+Result: **90 passed, 166 deselected in 9.63s**.
+
+The supplied current014 packet also reports the inherited real a0 HTTP consumer
+proof (Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`) and its local evidence.
+I did not rerun the live-socket case or any full suite.
+
+`git diff --check HEAD^ HEAD` passed. No source edits were made by this review; no
+new tests, skips, xfails, matrix changes, generated artifacts, or product changes
+were introduced.
+
+## Remaining debt / next steps
+
+- Perform the later current3c4/private014 join against the current integration
+  source, then repeat the manager-controlled qualification.
+- Complete the App gate before merge/release.
+- Keep `publish_authoring_candidate` and its WC1/WC2 positives distinct from this
+  WC6 view until their consumers are migrated and the old route is deliberately
+  retired.
+- Continue holding SDK legacy timing/narration writers (`Checkout`/legacy editing,
+  sheet/publish paths and related derived-timing consumers) and arbitrary
+  document-structure edits; this slice does not delete or certify them.
+- Do not mark the broader WC6 row `DELETED` from this bounded timing/media proof.
+--- design ---
+# Agent WC6 timing/narration slice review
+
+**Decision: APPROVE bounded private qualification; HOLD merge/release.**
+
+Reviewed candidate:
+
+- Commit `5962d5791be0463700e04d5dd526eb5554c83fda`
+- Tree `9dd8f59f0468e42b1fa3074271067a3fbea7c67`
+- Parent/current014 consumer `a4c1307734d620cee81640cab6b25f7b198f0c17`
+- Parent tree `49b77c93b181ec1b20f0230a6cdbfa1518ad55ab`
+
+The successor is minimal: two changed files only. `document_diff_to_commands`
+now captures and stages same-alias `occurrence.swap-media` before the clip timing
+loop. The media command is captured from the exact base and executed into the
+working bundle; every next timing command is then captured from the staged bundle.
+The source-level guards remain intact: exact authenticated media selection,
+original registry binding, all affected consumers, old/new media dependencies,
+clip baseline/shape checks, and final explicit-row/payload comparisons. The
+authenticated inverse and scalar media-reference machinery is outside the diff,
+and the tree has no `own_materialized_read` exemption.
+
+The updated real-body test asserts ordered media→move→set commands, timing edits,
+source-window/narration/metadata/opaque/order/mirror preservation, reload, lost-ACK
+undo after restart, disjoint rebase, redo, and strict intervening A→B→A refusal.
+The inherited a0 Runtime HTTP proof is the live evidence; the fresh bounded local
+lane passed **90 tests** with **166 deselected**. No full suite or live-socket rerun
+was performed.
+
+The older `publish_authoring_candidate` positives are WC1/WC2 authoring-candidate
+behavior and remain unchanged. They must not be described as deleted by this WC6
+document-view change. Narration, arbitrary structural rows, and whole-document
+fallback publication remain held; the broader SDK legacy timing/narration writers
+also remain open.
+
+No generated pin/client/schema files changed. Merge remains conditional on the
+later current3c4/private014 join and App gate. Do not mark the entire WC6 row
+`DELETED` based on this bounded proof.
+--- worktree ---
+## tl/agt-review-wc6-timing-slice-final
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-timing-slice-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-timing-slice-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..a6510ceca10bbb25daec89f2ec70c329000a26bf
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-timing-slice-final.md
+@@ -0,0 +1,37 @@
++# Agent WC6 timing/narration slice review
++
++**Decision: APPROVE bounded private qualification; HOLD merge/release.**
++
++Reviewed candidate:
++
++- Commit `5962d5791be0463700e04d5dd526eb5554c83fda`
++- Tree `9dd8f59f0468e42b1fa3074271067a3fbea7c67`
++- Parent/current014 consumer `a4c1307734d620cee81640cab6b25f7b198f0c17`
++- Parent tree `49b77c93b181ec1b20f0230a6cdbfa1518ad55ab`
++
++The successor is minimal: two changed files only. `document_diff_to_commands`
++now captures and stages same-alias `occurrence.swap-media` before the clip timing
++loop. The media command is captured from the exact base and executed into the
++working bundle; every next timing command is then captured from the staged bundle.
++The source-level guards remain intact: exact authenticated media selection,
++original registry binding, all affected consumers, old/new media dependencies,
++clip baseline/shape checks, and final explicit-row/payload comparisons. The
++authenticated inverse and scalar media-reference machinery is outside the diff,
++and the tree has no `own_materialized_read` exemption.
++
++The updated real-body test asserts ordered media→move→set commands, timing edits,
++source-window/narration/metadata/opaque/order/mirror preservation, reload, lost-ACK
++undo after restart, disjoint rebase, redo, and strict intervening A→B→A refusal.
++The inherited a0 Runtime HTTP proof is the live evidence; the fresh bounded local
++lane passed **90 tests** with **166 deselected**. No full suite or live-socket rerun
++was performed.
++
++The older `publish_authoring_candidate` positives are WC1/WC2 authoring-candidate
++behavior and remain unchanged. They must not be described as deleted by this WC6
++document-view change. Narration, arbitrary structural rows, and whole-document
++fallback publication remain held; the broader SDK legacy timing/narration writers
++also remain open.
++
++No generated pin/client/schema files changed. Merge remains conditional on the
++later current3c4/private014 join and App gate. Do not mark the entire WC6 row
++`DELETED` based on this bounded proof.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..a0c2b2f723dd751826206ca8ee19605c577d1b23
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/commit-msg.txt
+@@ -0,0 +1,4 @@
++review(timeline): approve bounded WC6 timing slice
++
++Approve the minimal media-before-timing document-view successor for private
++qualification. Hold merge pending the current/private014 join and App gate.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..523b83972d808d2345688a4305f289b7bb0671f1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/report.md
+@@ -0,0 +1,92 @@
++# WC6 timing/narration slice final review
++
++## Decision
++
++**APPROVE** the bounded successor for private qualification; **HOLD** merge/release
++until the required later current3c4/private014 join and App gate are complete.
++
++Reviewed exactly:
++
++- Commit: `5962d5791be0463700e04d5dd526eb5554c83fda`
++- Tree: `9dd8f59f0468e42b1fa3074271067a3fbea7c67`
++- Parent/current014 consumer: `a4c1307734d620cee81640cab6b25f7b198f0c17`
++- Parent tree: `49b77c93b181ec1b20f0230a6cdbfa1518ad55ab`
++- Successor scope: two files, `astrid/sdk/timeline/document_diff.py` and
++  `tests/timeline/test_authoring_media.py` (39 additions, 15 deletions).
++
++## What was verified
++
++The successor moves same-alias media capture/execution before the per-clip timing
++loop. `working` starts as a deep copy of the exact Runtime base; media capture is
++performed on that state, its result is executed into `working`, and each subsequent
++`clip.move`, `clip.trim`, `clip.set`, or parameter command is captured and executed
++against the staged result. This preserves each command's exact prior-command source
++and does not refresh or discard the original media guards.
++
++The existing media path remains unchanged and strict:
++
++- `_registry` still observes original registry presence, requires an authored
++  registry, and uses exact existing-binding checks for rebinds.
++- `_verified` still requires the exact authenticated Runtime selection and valid
++  image/video metadata.
++- The same-alias swap still validates every affected consumer, records exact
++  `media.old`/`media.new` dependencies, and rewrites only bounded payload mirrors.
++- Clip shape/baseline checks still reject media-selector, unsupported, opaque, and
++  changed-baseline fields; the final explicit-row/payload comparisons remain.
++- `inverse.py`, `_recording.py`, scalar `MediaRef`/registry guards, and the
++  authenticated accepted-payload path are outside this successor diff. There is no
++  `own_materialized_read` exemption anywhere in the tree.
++
++The strengthened real-body test now asserts the ordered command batch
++`occurrence.swap-media`, `clip.move`, `clip.set`; changed `at`/`hold`; unchanged
++`from`/`to`/`source_window`; narration and metadata preservation; opaque registry,
++alias order, clip identity/order, payload mirrors, sibling isolation; checkout
++reload; lost-ACK undo across Runtime restart; disjoint rebase; exact redo after
++re-reading verified media; and strict A→B→A/intervening-write undo refusal.
++
++The original SDK `publish_authoring_candidate` positives remain intact. They are
++the older WC1/WC2 authoring-candidate path, not this WC6 detached-document view;
++this review makes no claim that the old path or its row was deleted. Narration,
++arbitrary structural fields, and whole-document fallback publication remain held
++by the WC6 view as before.
++
++No generated client, runtime pin, or schema changed in the successor. Protected
++schema/pin files are byte-unchanged; the edit-command schema remains
++`6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
++
++## Evidence
++
++Fresh bounded local command, run once:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/timeline/test_authoring_media.py \
++  tests/editing_conformance/test_recipe_clip_scalar_fields.py \
++  tests/editing_conformance/test_producer_insertion.py \
++  tests/editing_conformance/test_recipe_parent_media.py \
++  -k 'not real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba and (selected_content_sha_and_opaque_registry_siblings_are_independent or move_then_hold_compiles_source_units_and_roundtrips_own_write_stages or disjoint_rebase_unchanged_write_history_aba_and_inverse or registry_create_or_require_never_upserts_or_removes_reused_binding or parent_source_window_and_disjoint_opaque_edit_survive_replay_and_inverse or intervening_aba_and_later_created_asset_dependents_refuse_undo or scoped_capture_reload_inverse_and_exact_existing_alias or provider_manifest_reload_undo_and_redo or test_unchanged_json_roundtrip_has_empty_diff or test_local_registry_replacement_is_readonly_and_strips_stale_authority or test_import_reuses_catalog_across_retry_keys_and_preserves_distinct_names or test_all_sources_preflight_before_any_import_or_publication or test_audio_local_selector_is_probed_and_keeps_audio_mirror or test_changed_file_after_preflight_imports_nothing or test_import_failure_cannot_reach_publication or test_document_publish_forwards_new_stale_head_to_runtime or test_real_runtime_import_and_parent_publication_roundtrip or test_inherited_explicit_local_path_remains_an_active_request or test_local_shot_item_intent_matches_selected_internal_replacement or test_unchanged_historical_and_opaque_paths_survive_without_import or test_historical_path_rows_match_by_identity_after_reorder or test_duplicate_asset_row_with_one_live_locator_refuses_in_both_orders or test_renamed_or_duplicate_media_row_cannot_borrow_a_historical_baseline or test_changed_unconsumed_live_locators_fail_during_planning or test_changed_remote_live_locator_refuses_while_opaque_remote_url_survives or test_nonstring_registry_locator_is_malformed_even_when_falsy or test_nonstring_clip_selector_has_field_specific_refusal or test_effective_parent_alias_needs_no_local_file_or_import or test_parent_config_clip_uses_effective_parent_registry_alias or test_explicit_parent_registry_replacement_normalizes_stale_declarations or test_persistent_parent_registry_conflict_refuses_after_explicit_projection or test_removed_local_alias_is_not_resurrected_from_baseline or test_unsupported_secondary_clip_selector_refuses_with_valid_primary or test_nonstring_shot_item_selector_has_field_specific_refusal or test_cleared_shot_item_selector_never_requests_local_input or test_cleared_optional_path_is_not_a_new_import_request or test_equal_changed_sources_choose_one_file_but_conflicts_fail or test_canonical_file_uri_is_supported_and_malformed_or_remote_forms_fail or test_explicit_local_replacement_strips_stale_remote_descriptor or test_supplied_plan_is_rechecked_before_catalog_read_or_import or test_catalog_import_remains_reusable_after_later_parent_cas_conflict or test_public_document_refuses_unsupported_locator_before_artifacts_or_connection)'
++```
++
++Result: **90 passed, 166 deselected in 9.63s**.
++
++The supplied current014 packet reports **88 local checks plus 1 actual a0 HTTP
++consumer pass** (Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`); its worker
++breakout includes the 71 authoring-media unit passes. I did not rerun the
++live-socket case or any full suite.
++
++`git diff --check HEAD^ HEAD` passed. No source edits were made by this review; no
++new tests, skips, xfails, matrix changes, generated artifacts, or product changes
++were introduced.
++
++## Remaining debt / next steps
++
++- Perform the later current3c4/private014 join against the current integration
++  source, then repeat the manager-controlled qualification.
++- Complete the App gate before merge/release.
++- Keep `publish_authoring_candidate` and its WC1/WC2 positives distinct from this
++  WC6 view until their consumers are migrated and the old route is deliberately
++  retired.
++- Continue holding SDK legacy timing/narration writers (`Checkout`/legacy editing,
++  sheet/publish paths and related derived-timing consumers) and arbitrary
++  document-structure edits; this slice does not delete or certify them.
++- Do not mark the broader WC6 row `DELETED` from this bounded timing/media proof.
+
+codex
+## Review report
+
+**APPROVE** bounded private qualification; **HOLD** merge/release pending the later current3c4/private014 join and App gate.
+
+- Candidate: `5962d579`, tree `9dd8f59f`
+- Scope: two files only; no schema, generated pin, skip/xfail, or product changes.
+- Verified media swap occurs before timing commands, with staged exact-source captures and original media guards preserved.
+- Narration, source windows, opaque fields, ordering, inverse/reload/redo, and strict ABA behavior remain protected.
+- WC1/2 `publish_authoring_candidate` positives remain distinct and unchanged; no broad `DELETED` claim.
+
+Tests:
+
+```text
+90 passed, 166 deselected in 9.63s
+git diff --check HEAD^ HEAD: passed
+```
+
+Inherited evidence: 88 local checks plus 1 actual Runtime a0 HTTP pass. No full suite or live-socket rerun.
+
+Artifacts:
+
+- [Review report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/report.md>)
+- [Orchestrator design](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-timing-slice-final.md>)
+- Commit message and `DONE` marker created.
+tokens used
+189,492
+## Review report
+
+**APPROVE** bounded private qualification; **HOLD** merge/release pending the later current3c4/private014 join and App gate.
+
+- Candidate: `5962d579`, tree `9dd8f59f`
+- Scope: two files only; no schema, generated pin, skip/xfail, or product changes.
+- Verified media swap occurs before timing commands, with staged exact-source captures and original media guards preserved.
+- Narration, source windows, opaque fields, ordering, inverse/reload/redo, and strict ABA behavior remain protected.
+- WC1/2 `publish_authoring_candidate` positives remain distinct and unchanged; no broad `DELETED` claim.
+
+Tests:
+
+```text
+90 passed, 166 deselected in 9.63s
+git diff --check HEAD^ HEAD: passed
+```
+
+Inherited evidence: 88 local checks plus 1 actual Runtime a0 HTTP pass. No full suite or live-socket rerun.
+
+Artifacts:
+
+- [Review report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-timing-slice-final/report.md>)
+- [Orchestrator design](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-timing-slice-final.md>)
+- Commit message and `DONE` marker created.

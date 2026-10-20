@@ -1,0 +1,400 @@
+counts: 10 passed in 32.39s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020162203-5248/log.txt ---
+..........                                                               [100%]
+10 passed in 32.39s
+
+ succeeded in 268ms:
+--- worktree status ---
+ M astrid/sdk/timeline_sheet.py
+ M tests/editing_conformance/test_native_sheet_current_runtime.py
+ M tests/packs/timeline/test_cli_assets.py
+ M tests/packs/timeline/test_cli_native_sheet.py
+ M tests/packs/timeline/test_cli_voice_bindings.py
+ M tests/sdk/test_timeline_sheet_native.py
+--- diff check ---
+--- exact delta check ---
+exact delta: passed
+--- stale hash scan ---
+stale hash scan: passed
+--- commit message ---
+test(timeline): compose ordinary014 current source
+
+Carry the approved initializer regression onto current Agent integration with
+the NativeSheet omission and CLI fixture fixes only.
+--- expected candidate tree ---
+40300cd26c1bdead0895a47b3928f0e1fb11f6cc
+
+codex
+All final evidence is now green: the current M1 baseline added 10 passes, giving 16 actual HTTP passes in aggregate with the six NativeSheet runtime nodes already run once. The composed worktree still matches exactly the six-file `30fc8dd1..f133a879` delta, and the published candidate tree hash is corrected.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary014-current-init-source.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary014-current-init-source.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f62520fedcf139ab01328cb92b53576cc0904ba5
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary014-current-init-source.md
+@@ -0,0 +1,154 @@
++# Agent ordinary014 current initializer/source candidate
++
++Status: **APP source candidate only; not an integration pin, release, activation,
++or App/browser qualification.** This is a routine merge-forward composition of
++the approved initializer source with the current Agent integration delta.
++
++## Exact source identity
++
++| Item | Value |
++| --- | --- |
++| Approved initializer parent | `2585e01cd2a198d3a091066848bd72152955bb0a` (`tl/agt-review-init-opaque-inverse-real`) |
++| Approved initializer parent tree | `5b314600becfbfc13c36b0183e4b07d7ad064ecb` |
++| Current integration merge parent | `f133a87986d839d7716d3efac2c2ba25fe036098` (`tl/integration`) |
++| Current integration tree | `3f38f816181d7564e5cd7db4d9672a0d6dea9ac3` |
++| Common base for the forward delta | `30fc8dd154015a7c58cf4ce7b065ccc46f470ee8` |
++| Expected candidate tree before harness commit | `40300cd26c1bdead0895a47b3928f0e1fb11f6cc` |
++| Candidate HEAD | Harness-assigned two-parent commit after worker exit; first parent is the approved initializer parent and merge parent is `f133a879` |
++
++The expected tree was calculated from the clean approved parent plus the exact
++`git diff 30fc8dd1 f133a879` patch. The harness owns the commit, so this worker
++does not invent a commit SHA or run `git merge`.
++
++## Composed delta and boundaries
++
++Only the six paths in `30fc8dd1..f133a879` were applied:
++
++```text
++astrid/sdk/timeline_sheet.py
++tests/editing_conformance/test_native_sheet_current_runtime.py
++tests/packs/timeline/test_cli_assets.py
++tests/packs/timeline/test_cli_native_sheet.py
++tests/packs/timeline/test_cli_voice_bindings.py
++tests/sdk/test_timeline_sheet_native.py
++```
++
++NativeSheet now maps omission of an addressed `parent/clip:<id>` row to the
++existing captured `clip.delete` command, while track/occurrence omissions and
++row additions remain refused. The tests cover sibling/opaque/order retention,
++lost-ACK restart retry, guarded undo/redo, disjoint rebase, and membership or
++already-deleted selection conflicts. The two CLI fake-checkout fixtures retain
++their `_check_core` seam; the CLI native-sheet test covers the omission path.
++
++No WC3, WC6, D13, audio, private carrier, project-data, Mouth, schema, Runtime
++source, generated client, lock, Composition, App, or public013 changes were
++included. Existing normal014 bytes from `e86f44d0` and ordinary current-source
++bytes from `ee896821` remain untouched.
++
++## Immutable normal014 tuple
++
++- Runtime producer checkout: `/home/user/work/wt/rt-pin-a0dca169`
++- Producer commit/tree: `a0dca16975dfe8f5e762703b99d9791a16cf7fd7` /
++  `4b7dd0fe44be973c344bab3de568eaf0bdd28476`
++- Package: `0.2.14` (unpublished)
++- Frozen Agent schema source: SHA-256
++  `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
++  (`$defs`: 55; command operations: 29)
++- Runtime wire schema digest: `sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59`
++- Runtime artifact version: `sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0`
++- Runtime `contract/artifacts.json` SHA-256:
++  `ecda762ebe682f266395161af055921c3db33ee9914fb00860626e7e4852d815`
++- Agent `artifacts.json` SHA-256 (unchanged):
++  `6963e3393d22b8e46d1df5f2cb81f401bee7080407bd3f61f108560a2ef9a176`
++
++`scripts/vendor_lock.py check runtime.lock.json --producer
++/home/user/work/wt/rt-pin-a0dca169` passed. The lock, generated client files,
++schema, and artifact manifest compare byte-for-byte with the approved `e86f44d0`
++parent. No source refresh or artifact regeneration was performed.
++
++## Tests
++
++Initializer pure/provider lane:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/editing_conformance/test_pristine_initialize.py \
++  tests/sdk/test_timeline_pristine_initialize_provider.py
++```
++
++Result: **31 passed in 1.25s**.
++
++NativeSheet unit lane (no bytecode or pytest-cache writes):
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/sdk/test_timeline_sheet_native.py \
++  tests/editing_conformance/test_native_sheet_current.py
++```
++
++Result: **83 passed in 12.38s**.
++
++CLI fixture lane:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/packs/timeline/test_cli_assets.py \
++  tests/packs/timeline/test_cli_voice_bindings.py
++```
++
++Result: **4 passed in 0.74s**. The NativeSheet CLI omission regression was
++also included in the changed-neighbor local run before the 83-test lane.
++
++Central exact generated014 HTTP lane, requested once on this combined source:
++
++```text
++agent ordinary014-consumer-integration
++  tests/sdk/test_timeline_pristine_initialize_runtime.py
++  tests/editing_conformance/test_native_sheet_current_runtime.py
++```
++
++Result: **8 passed in 18.53s**, central request
++`agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020161841-3807`,
++tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`.
++
++The initializer/birth neighbor requested by the approved initializer proof was
++also rerun against the same combined source and exact producer:
++
++```text
++tests/editing_conformance/test_next_command_cohort_runtime.py::test_pristine_init_first_birth_reload_undo_and_missing_word_source
++```
++
++Result: **2 passed in 4.16s**, request
++`agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020161926-7107`,
++same snapshot tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`. Together the
++initializer/retry, new opaque regression, and birth-neighbor evidence is the
++requested **4 passed**; the NativeSheet HTTP file contributes the six runtime
++nodes in the 8-test lane.
++
++The current M1 HTTP baseline was also run once against the same combined source
++and producer:
++
++```text
++tests/editing_conformance/test_commit_runtime_m1.py
++```
++
++Result: **10 passed in 32.39s**, request
++`agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020162203-5248`,
++same snapshot tree. Combined with the six NativeSheet HTTP nodes above, this
++provides the requested **16 actual HTTP passes** without rerunning the
++NativeSheet runtime file.
++
++No full suite, App/browser journey, release, integration pin, or renderer/audio
++qualification was run or claimed. The earlier 143-test `e86f44d0` actual-provider
++proof remains historical evidence and is not relabeled as this candidate's
++qualification.
++
++## Next step
++
++The orchestrator may review this source candidate as the normal App2/Runtime
++cohort input. App2 and Runtime must retain
++the exact producer/schema/artifact tuple above; `e86f44d0` and `310e5484` remain
++immutable.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..32afa5cc3099837b3721c1f4cb9e9a24830b2921
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): compose ordinary014 current source
++
++Carry the approved initializer regression onto current Agent integration with
++the NativeSheet omission and CLI fixture fixes only.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..32afa5cc3099837b3721c1f4cb9e9a24830b2921
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(timeline): compose ordinary014 current source
++
++Carry the approved initializer regression onto current Agent integration with
++the NativeSheet omission and CLI fixture fixes only.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0eeced0a26d63762b4d2d416974a27110b81bf93
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/report.md
+@@ -0,0 +1,113 @@
++# Worker report — ordinary014 current initializer/source candidate
++
++## Outcome
++
++Composed the approved initializer source (`2585e01cd2a198d3a091066848bd72152955bb0a`, based on the `4296` initializer fix and real-provider opaque regression) with only the current integration delta `30fc8dd1..f133a879`. The six changed paths are the NativeSheet parent-clip omission implementation/tests and the two CLI fake-checkout fixture repairs plus the CLI omission regression.
++
++Expected worktree tree: `40300cd26c1bdead0895a47b3928f0e1fb11f6cc`. The harness must create the true two-parent commit with first parent `2585e01c` and `--merge-parent f133a879`; I did not run Git merge, commit, rebase, checkout, or ref mutation.
++
++No WC3/WC6/D13/audio/private-carrier/project-data/Mouth changes were brought forward. `e86f44d0` normal014 pin bytes, current `ee896821` source bytes, frozen Agent `310e5484`, schema `6ba7…`, generated clients, lock, and artifacts remain unchanged.
++
++## Exact checks
++
++Initializer pure/provider lane:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/editing_conformance/test_pristine_initialize.py \
++  tests/sdk/test_timeline_pristine_initialize_provider.py
++```
++
++Result: **31 passed in 1.25s**.
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/sdk/test_timeline_sheet_native.py \
++  tests/editing_conformance/test_native_sheet_current.py
++```
++
++Result: **83 passed in 12.38s**.
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/packs/timeline/test_cli_assets.py tests/packs/timeline/test_cli_voice_bindings.py
++```
++
++Result: **4 passed in 0.74s**. The changed NativeSheet CLI omission node was
++also covered in the earlier local changed-neighbor run.
++
++```text
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python \
++  scripts/vendor_lock.py check runtime.lock.json \
++  --producer /home/user/work/wt/rt-pin-a0dca169
++```
++
++Result: **ok** (`runtime.lock.json` matches producer manifest).
++
++`git diff --check`: **passed**.
++
++Central request (one run, exact generated014 Runtime producer):
++
++```text
++request-test integration:agent ordinary014-consumer-integration \
++  --files "tests/sdk/test_timeline_pristine_initialize_runtime.py \
++  tests/editing_conformance/test_native_sheet_current_runtime.py"
++```
++
++Result: **8 passed in 18.53s**, request
++`agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020161841-3807`,
++central snapshot tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`.
++
++The matching birth-neighbor node was then run once on the same candidate and
++producer:
++
++```text
++tests/editing_conformance/test_next_command_cohort_runtime.py::test_pristine_init_first_birth_reload_undo_and_missing_word_source
++```
++
++Result: **2 passed in 4.16s**, request
++`agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020161926-7107`,
++same central tree. This completes the requested actual initializer/retry,
++opaque-regression, and birth-neighbor count of **4 passed**. No local live-socket
++run was performed.
++
++The current M1 HTTP baseline was also run once on the same combined source and
++producer:
++
++```text
++tests/editing_conformance/test_commit_runtime_m1.py
++```
++
++Result: **10 passed in 32.39s**, request
++`agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020162203-5248`,
++same central tree. Together with the six NativeSheet HTTP nodes above, this is
++the requested **16 actual HTTP passes**, without rerunning the NativeSheet
++runtime file.
++
++## Immutable tuple
++
++- Runtime producer: `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`, tree `4b7dd0fe44be973c344bab3de568eaf0bdd28476`, checkout `/home/user/work/wt/rt-pin-a0dca169`.
++- Runtime package: `0.2.14` unpublished.
++- Raw Agent schema: `sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`; 55 `$defs`, 29 command operations.
++- Runtime wire schema: `sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59`.
++- Runtime artifact version: `sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0`.
++- Runtime `contract/artifacts.json`: `ecda762ebe682f266395161af055921c3db33ee9914fb00860626e7e4852d815`.
++- Agent `artifacts.json` (unchanged): `6963e3393d22b8e46d1df5f2cb81f401bee7080407bd3f61f108560a2ef9a176`.
++
++Protected files compare byte-for-byte with `e86f44d0`: `runtime.lock.json`,
++`astrid_runtime_client/{__init__.py,contract_metadata.py,generated.py,timeline_commit_types.py}`,
++and the frozen command schema. Existing `143 passed` actual-provider evidence
++from e86 is historical and is not relabeled as this candidate.
++
++## Blocked orchestration append
++
++The requested writes to `/home/user/timeline-hub/hub/inbox/{app2.md,app.md,runtime.md}`
++could not be performed: that shared hub is mounted read-only in this worker
++(`OSError: [Errno 30] Read-only file system`). The handoff is complete in
++`design/agent-ordinary014-current-init-source.md`; the orchestrator should
++append the same source-only notice to those three inboxes.
++
++No full/App/browser/release/integration-pin qualification was run or claimed.
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/BLOCKED && echo '"'completion markers: passed'" in /home/user/work/wt/agt-m2-ordinary014-current-init-source
+ succeeded in 0ms:
+completion markers: passed
+
+ succeeded in 59957ms:
+test agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020162203-5248: pass exit=0 in 41s — ordinary014-consumer-integration on agt-m2-ordinary014-current-init-source (agent tree aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_PARENT_MEDIA_SEED_RUNTIME=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py
+counts: 10 passed in 32.39s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-ordinary014-current-init-source-ordinary014-consumer-integration-1020162203-5248/log.txt ---
+..........                                                               [100%]
+10 passed in 32.39s
+
+codex
+## Completed
+
+- Composed approved initializer `2585e01c` with only `30fc8dd1..f133a879`.
+- Exact six-file delta verified; expected tree: `40300cd26c1bdead0895a47b3928f0e1fb11f6cc`.
+- Preserved normal014/runtime/schema/artifact bytes.
+- Commit message written; `DONE` marker created.
+
+## Tests
+
+- Pure initializer/provider: **31 passed**
+- NativeSheet unit/conformance: **83 passed**
+- CLI fixtures: **4 passed**
+- Central initializer/native HTTP: **8 passed**
+- Birth-neighbor HTTP: **2 passed**
+- M1 HTTP baseline: **10 passed**
+- Aggregate actual HTTP evidence: **16 passed**
+- Vendor lock check: **ok**
+- `git diff --check`: **passed**
+- Exact delta comparison: **passed**
+
+No full, App/browser, release, or integration-pin suite was run.
+
+## Blocked
+
+Could not append `/home/user/timeline-hub/hub/inbox/{app2.md,app.md,runtime.md}` because the shared hub is read-only. The handoff is documented in [agent-ordinary014-current-init-source.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary014-current-init-source.md).
+tokens used
+311,212
+## Completed
+
+- Composed approved initializer `2585e01c` with only `30fc8dd1..f133a879`.
+- Exact six-file delta verified; expected tree: `40300cd26c1bdead0895a47b3928f0e1fb11f6cc`.
+- Preserved normal014/runtime/schema/artifact bytes.
+- Commit message written; `DONE` marker created.
+
+## Tests
+
+- Pure initializer/provider: **31 passed**
+- NativeSheet unit/conformance: **83 passed**
+- CLI fixtures: **4 passed**
+- Central initializer/native HTTP: **8 passed**
+- Birth-neighbor HTTP: **2 passed**
+- M1 HTTP baseline: **10 passed**
+- Aggregate actual HTTP evidence: **16 passed**
+- Vendor lock check: **ok**
+- `git diff --check`: **passed**
+- Exact delta comparison: **passed**
+
+No full, App/browser, release, or integration-pin suite was run.
+
+## Blocked
+
+Could not append `/home/user/timeline-hub/hub/inbox/{app2.md,app.md,runtime.md}` because the shared hub is read-only. The handoff is documented in [agent-ordinary014-current-init-source.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary014-current-init-source.md).

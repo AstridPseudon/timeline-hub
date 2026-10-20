@@ -1,0 +1,400 @@
+    except OSError:
+        common = None
+    if common is not None and common.returncode == 0 and common.stdout.strip():
+        roots.append(Path(common.stdout.strip()).parent.parent)
+    return [root / "astrid-runtime" for root in dict.fromkeys(roots)]
+
+
+def locate_runtime() -> Path | None:
+    """The Runtime source tree, or None when there is none."""
+    for candidate in _candidates():
+        if (candidate / "runtime_protocol").is_dir():
+            return candidate.resolve()
+    return None
+
+
+def runtime_checkout(commit: str | None = None) -> Path:
+    """The Runtime source tree (as of ``commit`` when given); the one locator tests use."""
+    root = locate_runtime()
+    if root is None:
+        unavailable(f"no Runtime checkout: set {ENV} to one (looked at {[str(c) for c in _candidates()]})")
+    if commit is None:
+        return root
+    if commit not in _ARCHIVES:
+        pinned = subprocess.run(["git", "-C", str(root), "cat-file", "-e", f"{commit}^{{commit}}"],
+                                check=False, capture_output=True)
+        archive = subprocess.run(["git", "-C", str(root), "archive", "--format=tar", commit],
+                                 check=False, capture_output=True) if pinned.returncode == 0 else pinned
+        if archive.returncode != 0:
+            unavailable(f"the Runtime checkout {root} has no commit {commit}")
+        target = Path(tempfile.mkdtemp(prefix="astrid-runtime-archive-"))
+        atexit.register(shutil.rmtree, target, ignore_errors=True)
+        with tarfile.open(fileobj=io.BytesIO(archive.stdout), mode="r:") as tar:
+            tar.extractall(target, **({"filter": "data"} if hasattr(tarfile, "data_filter") else {}))
+        _ARCHIVES[commit] = target
+    return _ARCHIVES[commit]
+
+
+def use_runtime(commit: str | None = None) -> Path:
+    """Locate the Runtime and make ``runtime_protocol`` importable from it.
+
+    Without ``commit`` an already exposed tree is reused, so a pinned module and the fixtures it uses agree.
+    """
+    global _exposed
+    if commit is None and _exposed is not None:
+        return _exposed
+    root = runtime_checkout(commit)
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+    _exposed = _exposed or root
+    return root
+
+
+def initialize_runtime_realm(root: str | Path) -> Path:
+    """Provision a missing fixture root through Runtime's canonical creator."""
+    root = Path(root)
+    if not root.exists():
+        from runtime_protocol.store import RealmStore
+
+        RealmStore.initialize(root).close()
+    return root
+
+
+def new_runtime_daemon(root: str | Path, *, commit: str | None = None, **kwargs: Any) -> Any:
+    """A daemon, not yet started, on a realm provisioned through Runtime's creator."""
+    use_runtime(commit)
+    from runtime_protocol.daemon import RuntimeDaemon
+
+    initialize_runtime_realm(root)
+    return RuntimeDaemon(root, **kwargs)
+rg: tests/sdk/test_timeline_commit.py: No such file or directory (os error 2)
+rg: tests/sdk/test_timeline_capture.py: No such file or directory (os error 2)
+    if authoring_shot_id == source_shot_id:
+        return result, {}
+    items = result.get("items", [])
+    if not isinstance(items, list):
+        raise AuthoringBundleError("shot revision payload.items must be a list")
+    remap: dict[str, str] = {}
+    for index, raw_item in enumerate(items):
+        item = _mapping(raw_item, f"shot payload.items[{index}]")
+        source_item_id = item.get("item_id", item.get("id"))
+        source_item_id = _string(source_item_id, f"shot payload.items[{index}].item_id")
+        if source_item_id in remap:
+            raise AuthoringBundleError(
+                f"shot payload contains duplicate item identity {source_item_id!r}"
+            )
+        remap[source_item_id] = _identity(
+            "shot-item-placement",
+            project_id,
+            timeline_id,
+            occurrence_id,
+            authoring_shot_id,
+            source_item_id,
+        )
+    result = _remap_known_item_references(result, remap)
+    return result, remap
+
+
+def open_authoring_bundle(
+    parent_revision: Mapping[str, Any],
+    *,
+    shot_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+    internal_timeline_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:30:def validator(name):
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:52:def command():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:62:def request():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:73:def document():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:97:def test_schema_pin_and_generated_dtos_are_identical():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:119:def test_command_opaque_values_null_and_absence_round_trip():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:156:def test_closed_request_rejects_unknown_missing_or_invalid_fields(mutate):
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:162:def test_restore_is_sole_command_and_requires_both_head_guards():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:186:def test_recorders_retain_execution_ordinal_and_all_leaf_families():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:227:def test_detached_errors_and_port_signatures():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:265:def test_generated_python_commit_preserves_exact_envelope_and_retry(preview):
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:291:def test_generated_python_refuses_nonfinite_even_in_opaque_values(number):
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:304:def test_generated_python_rejects_mismatched_preview_and_preserves_errors():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:326:def test_generated_python_history_media_and_restore_adapters():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:389:def test_media_selection_requires_exactly_one_selector_form(value):
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:393:def test_generated_typescript_commit_contract(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:447:def test_prepared_and_response_shapes_share_closure_and_main_receipt():
+/home/user/work/runtime/tests/test_timeline_commit_contract.py:512:def test_all_generated_dto_annotations_resolve():
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:11:from runtime_protocol.service import RuntimeService
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:26:def service(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:29:    value = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:35:def _project(service, name):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:39:def _media(service, project_id, payload=b"source media"):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:48:def _transcript(service, project_id, media_id, text="hello"):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:61:    document_id = RuntimeService._transcript_document_id(project_id, media_id, "default")
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:70:def _pin(resource):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:78:def _retain(service, project_id, resource, *, publication, revision, kind="transcript", timeline="timeline-1"):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:97:def _counts(connection):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:108:def test_transcript_v1_is_retained_after_v2_and_database_reopen(service):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:148:def test_config_input_retention_reuses_identical_content_bytes(service):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:185:def test_first_use_capture_rejects_update_race_without_snapshots(service):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:209:def test_rejected_batch_rolls_back_all_content_bindings_and_links(service):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:228:def test_foreign_guessed_and_revoked_source_pins_are_denied(service):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:256:def test_retained_lookup_requires_reachability_and_rejects_missing_or_corrupt_bytes(service):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:283:def test_retained_capture_does_not_heal_missing_or_corrupt_content(service, corruption, message):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:334:def test_stored_source_header_mismatch_is_refused_at_accept(service):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:366:def test_first_use_capture_rechecks_exact_header(service, column, value):
+/home/user/work/runtime/tests/test_timeline_commit_inputs.py:392:def test_document_input_link_instance_is_strictly_validated(service):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:10:from runtime_protocol.service import RuntimeService
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:19:def _canonical_from_public_reads(service, project_id, timeline_id, page):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:71:def _assert_public_read_equals_store(service, commits, project_id, timeline_id, page):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:79:def bootstrapped(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:82:    service = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:97:def _accept_recorded_revision(service, project_id, *, key, opaque=None):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:121:def test_bootstrap_manifest_is_the_exact_empty_read_basis(bootstrapped):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:138:def test_recorded_read_keeps_unknown_payload_fields_and_explicit_null(bootstrapped):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:159:def test_pinned_head_stays_readable_after_disjoint_advance(bootstrapped):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:177:def test_verified_legacy_baseline_exposes_manifest_without_replaying_compacted_result(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:206:def test_unverified_or_missing_manifest_is_not_defaulted(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:229:def test_foreign_scope_and_consumer_reads_do_not_write_or_invoke_provider(bootstrapped, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:257:def test_real_service_rejects_invalid_public_commit_limits(bootstrapped, limit):
+/home/user/work/runtime/tests/test_timeline_commit_read_basis.py:265:def test_generated_python_client_lists_commits_over_real_http(bootstrapped):
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:30:def command():
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:40:def request():
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:51:def prepared():
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:119:def failure():
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:143:def test_schema_owned_values_preserve_opaque_null_absence_and_defaults():
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:189:def test_bad_requests_use_the_authoritative_command_schema(mutate):
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:197:def test_schema_rejects_invalid_record_ordinals_and_derived_causes(number):
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:232:def test_non_json_is_rejected_even_inside_untyped_payloads(value):
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:239:def test_cyclic_json_is_rejected():
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:246:def test_transitive_config_schema_rejects_bool_as_number_without_inserting_defaults():
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:259:def test_closed_prepared_failure_and_restore_envelopes():
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:290:def test_bundle_matches_canonical_resources_and_generator():
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:335:def test_every_reference_is_local_and_unknown_uris_fail_closed(monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:369:def test_installed_wheel_validates_outside_checkout_and_abi_is_stdlib_only(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_validation.py:467:def forbidden(*args, **kwargs):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:31:def _renderer_unavailable(*args, **kwargs):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:35:def _disable_renderer(monkeypatch, service):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:49:def _verify(service, project_id):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:53:def _refused(call):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:62:def published(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:72:def test_main_publication_is_verified_read_only_and_detached(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:93:def test_latest_same_content_publication_keeps_its_own_receipt(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:111:def test_old_missing_receipt_becomes_an_explicit_baseline_boundary(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:150:def test_corrupt_or_missing_current_proof_fails_closed(published, sql):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:158:def test_manifest_mismatch_even_with_valid_event_hash_and_matching_receipt(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:169:def test_later_same_value_write_invalidates_head(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:176:def test_later_document_write_without_parent_event_invalidates_head(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:182:def test_later_display_rename_is_not_an_authored_write(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:189:def test_compacted_publication_requires_complete_paired_proof(published, damage):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:211:def test_install_plan_rechecks_facts_and_is_idempotent(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:231:def test_install_plan_refuses_replacement_same_revision_publication(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:243:def test_foreign_scope_and_foreign_child_are_refused(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:251:def test_explicit_media_uses_duplicate_database_and_cas_read_only(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:281:def test_empty_bootstrap_candidate_requires_real_parent_receipt(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:288:        # Existing main publication is used only to seed a real ledger. The
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:306:def test_empty_bootstrap_uses_authoritative_timeline_config_schema():
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:330:def test_bootstrap_requires_exact_canonical_empty_payload(tmp_path, monkeypatch, field, value):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:348:def test_nonempty_head_cannot_be_relabelled_bootstrap(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:354:def test_synthetic_film_duplicate_preserves_shared_shots_music_transition_and_transcript(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:430:def test_latest_event_must_select_current_head_even_when_content_matches(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:442:def test_extra_dependency_and_raw_projection_write_fail_closed(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:452:def test_plausible_but_wrong_project_sequence_is_refused(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:458:def test_corrupt_old_head_is_not_guessed_from_equal_content(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:476:def test_unrelated_project_and_timeline_writes_do_not_invalidate_baseline(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:484:def test_declared_document_pin_is_not_silently_labelled_an_empty_dependency_closure(published):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:502:def test_pin_shaped_opaque_values_are_preserved(tmp_path, monkeypatch, location):
+/home/user/work/runtime/tests/test_timeline_commit_baseline.py:542:def test_reference_only_media_is_not_current_managed_ownership(tmp_path, monkeypatch, relation):
+/home/user/work/runtime/tests/test_timeline_commit_provider.py:19:def test_provider_abi_requires_exact_identity_digest_and_sync_signature():
+/home/user/work/runtime/tests/test_timeline_commit_provider.py:40:def test_authoring_loader_is_fixed_zero_argument_factory(monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_provider.py:64:def test_neutral_loader_does_not_import_agent(monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_provider.py:73:def test_missing_provider_is_a_neutral_503():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:17:def request_body(*, project_id=PROJECT, timeline_id=TIMELINE, **overrides):
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:36:def restore_body(**overrides):
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:51:def make_handler(runtime, body, *, path=None, headers=None, command="POST", actor="publisher-1"):
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:64:def test_commit_route_passes_exact_service_shape_and_rechecks_authority():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:83:def test_commit_route_leaves_semantic_schema_validation_to_service():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:96:def test_commit_route_rejects_path_mismatch_before_service():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:105:def test_commit_route_rejects_duplicate_fields_and_nonfinite_overflow():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:120:def test_commit_route_preserves_opaque_json_and_encoded_identity():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:146:def test_history_route_passes_authorize_callback_and_exact_shape():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:163:def test_history_authorize_callback_rejects_actor_change():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:179:def test_media_selection_route_passes_selectors_mapping_and_authorize():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:196:def test_restore_route_passes_original_body_identity_and_canonical_path():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:224:def test_restore_route_rejects_duplicate_or_nonfinite_original_body(raw):
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:236:def test_restore_route_enforces_one_megabyte_limit_before_read():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:249:def test_restore_dispatch_runs_without_store_mutex_or_response_lock():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:277:def test_commit_route_rejects_duplicate_idempotency_headers_and_neutral_runtime_is_503():
+/home/user/work/runtime/tests/test_timeline_commit_routes.py:299:def test_new_door_routes_are_exact():
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:4:source-authoring command. This seed proves Runtime retention, not end-to-end
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:17:from runtime_protocol.service import RuntimeService
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:24:def head(service, film):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:30:def body(film, base, commands):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:36:def commit(service, film, request, key, authorize=lambda: None):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:44:def document(service, film):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:50:def history(service, film):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:54:def snapshot(service):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:59:def retained(request, tmp_path, astrid_importable, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:68:    service = RuntimeService(film.duplicate_root)
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:131:        seed_body = body(film, head(service, film), [{
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:135:        seed = commit(service, film, seed_body, "initial-input-v1")
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:136:        original = seed["data"]["canonical_document"]
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:185:                            current=current, seed=seed, seed_body=seed_body, original=original,
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:191:        value.service = RuntimeService(film.duplicate_root)
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:202:def captured_move(case, on=1):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:207:def assert_retained(case, accepted):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:242:def assert_retry(case, request, key, accepted):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:250:def moved_and_undone(case):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:267:def test_retained_input_real_move_inverse_replay_after_restart(retained):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:269:    assert_retry(case, case.seed_body, "initial-input-v1", case.seed)
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:292:    assert len(items) == 7  # Two legacy edges, seed, move, inverse, track, replay.
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:302:def test_move_from_corrupt_local_timing_cache_conflicts_without_writes(retained):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:339:    assert_retry(case, case.seed_body, "initial-input-v1", case.seed)
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:343:def test_semantic_read_refuses_damaged_retained_source_but_exact_retry_uses_ledger(retained, damage):
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:369:    assert_retry(case, case.seed_body, "initial-input-v1", case.seed)
+/home/user/work/runtime/tests/test_timeline_commit_input_integration.py:380:        commit(case.service, case.film, case.seed_body, "initial-input-v1", authorize=denied)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:14:from runtime_protocol.service import RuntimeService
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:21:def validate_prepared(prepared):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:33:def realm(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:36:    service = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:46:def context(service, project, head, key="move", *, dry_run=False, op="clip.move"):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:58:def prepared(commits, ctx, *, expected=None, revision="parent-moved", on=2, reuse=False):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:79:def counts(service):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:87:def accept(commits, ctx, value):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:91:def accepted_recorder(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:141:def corrupt_recorder(service, value, result, path, replacement):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:152:def test_atomic_acceptance_exact_recorder_projection_and_same_content_edge(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:180:def test_identical_retry_after_restart_and_head_advance(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:189:    restarted = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:199:def test_recorder_digest_preserves_main_event_ids_and_stream_sequence(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:222:def test_changed_payload_and_publication_only_cas_refuse_without_writes(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:248:def test_invalid_prepared_values_are_atomic(realm, bad):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:278:def test_failure_after_receipt_rolls_back_every_row(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:294:def test_preview_is_validated_and_reserves_nothing(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:309:def test_history_pages_keep_fixed_bounds_and_reject_foreign_cursor(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:328:def test_nested_acceptance_is_refused(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:336:def test_timeline_commit_retention_survives_online_and_offline_compaction(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:358:    reopened = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:368:def test_verified_baseline_keeps_main_receipt_event_and_unknown_intent(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:391:def test_unproven_baseline_and_same_content_legacy_write_fail_closed(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:404:def test_commit_integrity_detects_missing_history_and_corrupt_record(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:417:def assert_corrupt_acceptance(service, commits, ctx, value, result):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:436:def assert_corrupt_restart(service, root):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:445:        RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:451:def test_complete_recorder_roundtrip_and_replay_after_restart(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:456:    reopened = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:470:def test_valid_json_recorder_corruption_fails_every_durable_read_after_restart(realm, path, replacement):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:480:def test_corrupt_acceptance_event_and_receipt_facts_fail_closed_after_restart(realm, bad):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:518:def test_retry_checks_accepted_event_prefix_without_repair(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:533:def test_original_retry_ignores_corrupt_later_acceptance(realm, column, replacement):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:583:def test_v30_schema_migration_installs_empty_history_without_invented_baselines(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:622:def test_real_acceptance_links_consumed_inputs_and_keeps_old_bytes_after_restart(realm, kind):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:629:        document_id = RuntimeService._transcript_document_id(project, media_id, "default")
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:664:    reopened = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:678:def test_live_capture_accept_race_rolls_back_history_receipt_and_input_links(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:704:def test_complete_detached_child_closure_projects_and_reuses_exact_rows(realm):
+/home/user/work/runtime/tests/test_timeline_commit_acceptance.py:739:def test_nonmanaged_project_media_relation_cannot_authorize_commit(realm):
+/home/user/work/runtime/tests/test_timeline_commit_film_fixture.py:10:from runtime_protocol.service import RuntimeService
+/home/user/work/runtime/tests/test_timeline_commit_film_fixture.py:22:def _open_duplicate(fixture):
+/home/user/work/runtime/tests/test_timeline_commit_film_fixture.py:23:    return RuntimeService(fixture.duplicate_root)
+/home/user/work/runtime/tests/test_timeline_commit_film_fixture.py:26:def _verify(baseline, service, fixture):
+/home/user/work/runtime/tests/test_timeline_commit_film_fixture.py:35:def test_fixture_is_api_built_and_duplicate_contains_real_closure(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_film_fixture.py:92:def test_baseline_verifies_valid_scoped_head_and_survives_reopen(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_film_fixture.py:112:def test_baseline_fails_closed_on_duplicate_provenance_corruption(tmp_path, corruption):
+/home/user/work/runtime/tests/test_timeline_commit_film_fixture.py:136:def test_handoff_invocation_uses_read_only_sqlite_and_duplicate_cas(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:12:from runtime_protocol.service import RuntimeService
+/home/user/work/runtime/tests/test_timeline_commit_port.py:21:def service(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:24:    runtime = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_port.py:36:def request(service, **changes):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:44:def commit(service, body, *, key="edit-1", publisher="editor", authorize=lambda: None):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:50:def prepared(context, port, *, same=False):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:96:def use_provider(service, provider):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:101:def rows(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:108:def test_create_has_real_atomic_empty_bootstrap(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:118:def test_created_timeline_provenance_and_exact_retry_survive_restart(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:147:    restarted = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_port.py:165:def test_bootstrap_failure_rolls_back_creation_and_both_receipts(service, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:185:def test_history_remains_read_only_when_mutation_admission_revoked(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:194:def test_editable_create_has_one_outer_commit(service, key):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:209:def test_revoked_admission_prevents_startup_baseline_migration_and_history_writes(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:212:    runtime = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_port.py:236:def test_neutral_runtime_refuses_without_writes(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:239:    service = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_port.py:253:def test_provider_runs_without_store_mutex_and_port_closes(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:268:def test_original_body_hash_does_not_insert_defaults(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:285:def test_exact_retry_rechecks_authority_without_provider(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:301:def test_authority_revoked_during_provider_rolls_back(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:318:def test_preview_has_no_writes_or_key_reservation(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:330:def test_provider_cannot_forge_preview(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:342:def test_same_revision_still_accepts_recorded_write_edge(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:354:def test_opaque_foreign_looking_json_is_preserved(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:364:def test_foreign_revision_and_undeclared_shot_pins_refuse(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:381:def test_canonical_project_and_path_body_identity(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:393:def test_restore_maps_only_after_lookup_preserving_original_invocation(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:418:def test_restore_does_not_rebase_on_same_revision_new_publication(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:432:def test_commit_receipt_replay_outlives_generic_window(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:446:def test_history_pagination_keeps_original_head(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:457:def test_retained_config_is_exact_after_live_kind_and_content_update(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:495:def test_first_use_config_capture_race_does_not_accept(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:522:def test_tracked_legacy_publication_rejected_before_writes(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:534:def test_request_validation_uses_frozen_schema(service, overrides):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:541:def test_nonfinite_json_refuses_before_provider(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:550:def test_media_selection_uses_main_settlement_identity_and_rechecks_lifecycle(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:601:def test_exact_commit_replay_after_restart_needs_no_provider(service):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:606:    restarted = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_port.py:616:def test_existing_head_installs_only_verified_original_baseline_before_requests(tmp_path, corrupt):
+/home/user/work/runtime/tests/test_timeline_commit_port.py:619:    service = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:16:from runtime_protocol.service import RuntimeService
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:23:def film(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:25:    # Main's neutral publication API seeds a second, independent music clip.
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:27:    service = RuntimeService(fixture.duplicate_root)
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:57:def agent(film, astrid_importable, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:72:    # The seed publication happened before rendering became unavailable.
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:158:def editing(film, agent):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:159:    service = RuntimeService(film.fixture.duplicate_root)
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:169:def inverse(publication):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:174:def positions(document):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:178:def assert_json_equal(actual, expected):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:195:def rows(service):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:201:def test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip(editing):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:231:def test_real_inverse_preserves_newer_disjoint_work_and_original_recorders(editing):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:263:def test_real_same_value_publication_is_recorded_and_blocks_older_undo(editing):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:281:def test_real_track_create_and_inverse_keep_complete_film_closure(editing):
+/home/user/work/runtime/tests/test_timeline_commit_integration.py:298:def test_real_door_lost_ack_restart_exact_retry_never_executes_provider(film, agent, tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:42:def test_commit_duplicate_move_winner_between_lookup_and_execution(realm):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:46:def test_commit_duplicate_add_winner_between_lookup_and_execution(realm):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:50:def _winner_before_lock(realm, op):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:79:def test_equal_waiters_share_entry_and_never_hold_store_mutex(realm):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:120:def test_all_provider_completions_reconcile_a_durable_winner(realm, completion):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:145:def test_active_hash_mismatch_does_no_provider_work(realm):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:171:def test_claimed_acceptance_without_ledger_is_protocol_failure(realm):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:183:def test_readback_failure_is_unknown_outcome(realm, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:205:def test_authority_is_rechecked_before_disclosing_acceptance(realm):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:225:def test_concurrent_different_keys_cas_one_winner(realm):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:248:def test_durable_original_wins_while_changed_hash_is_active_before_lookup(realm, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_execution.py:282:def test_corrupt_durable_recorder_never_reruns_provider_even_after_restart(realm, path, replacement):
+/home/user/work/runtime/tests/test_timeline_commit_restore_integration.py:38:def test_original_restore_behaviour_with_real_agent(case, admission_seconds, tmp_path, monkeypatch, real_provider):
+/home/user/work/runtime/tests/test_timeline_commit_restore_integration.py:47:def restore(case, source, guards, key):
+/home/user/work/runtime/tests/test_timeline_commit_restore_integration.py:56:def assert_closure(accepted, expected):
+/home/user/work/runtime/tests/test_timeline_commit_restore_integration.py:66:def test_real_restore_retained_inputs_inverse_redo_and_restart_retry(retained, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_restore_integration.py:71:    # The neutral fixture is already seeded. Every measured edit uses Agent,
+/home/user/work/runtime/tests/test_timeline_commit_restore_integration.py:110:        case.seed["receipt"]["receipt_id"], moved["receipt"]["receipt_id"],
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:1:"""Restore admission/persistence with main seeds and an explicit prepared fixture.
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:13:from runtime_protocol.service import RuntimeService
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:23:def _seed(tmp_path):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:38:def selected(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:39:    service, first, second = _seed(tmp_path)
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:49:def _restore(service, source, *, direct=False, key="restore", content_digest=None, authorize=lambda: None):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:63:def _assert_source(service, first, document):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:75:def test_old_main_null_manifest_read_verifies_exact_source_without_installation(tmp_path, monkeypatch):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:76:    service, first, _ = _seed(tmp_path)
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:93:def test_selected_scoped_source_read_is_detached_and_does_not_require_source_accepted_edge(selected):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:128:def test_main_source_restore_uses_selected_budget_and_exact_closure(selected, monkeypatch, direct, seconds):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:149:def test_restore_rejects_damaged_exact_source_before_provider_or_writes(selected, direct, damage):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:189:def test_incomplete_integrity_refuses_before_provider_or_writes(selected, monkeypatch, direct, report):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:206:def test_missing_or_foreign_source_refuses_without_provider_or_writes(selected, direct):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:218:def test_direct_restore_wrong_digest_is_never_normalized(selected):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:228:def test_restart_exact_retry_is_ledger_only_but_authorized(selected, monkeypatch, direct):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:235:    restarted = RuntimeService(root)
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:261:def test_null_manifest_source_requires_original_main_publication_proof(tmp_path, monkeypatch, missing_proof):
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:262:    service, _, _ = _seed(tmp_path)
+/home/user/work/runtime/tests/test_timeline_commit_restore_port.py:284:def test_restore_retains_exact_document_v1_after_mutable_producer_v2(selected, damage):
+
+ERROR: This content was flagged for possible cybersecurity risk. If this seems wrong, try rephrasing your request. If you’re doing authorized security work that requires more cyber permissive safeguards, apply for Daybreak access via https://platform.openai.com/settings/organization/status-and-access before retrying.
+ERROR: This content was flagged for possible cybersecurity risk. If this seems wrong, try rephrasing your request. If you’re doing authorized security work that requires more cyber permissive safeguards, apply for Daybreak access via https://platform.openai.com/settings/organization/status-and-access before retrying.
+tokens used
+38,904

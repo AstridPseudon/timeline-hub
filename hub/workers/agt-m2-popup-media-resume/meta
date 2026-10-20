@@ -1,0 +1,9 @@
+name=agt-m2-popup-media-resume
+repo=agent
+base=tl/agt-m2-media-manifest-provenance
+base_sha=2f77310e
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-popup-media-resume
+started=2026-10-20T00:43:25Z

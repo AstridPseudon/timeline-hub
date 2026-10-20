@@ -1,0 +1,400 @@
++            **(opaque if opaque_pin_scope == "parent" else {}),
+             "occurrences": [{"occurrence_id": "occ", "shot_id": "shot",
+                 "shot_revision_id": "shot-revision", "placement": {"start_ms": 2000, "track": "picture"},
+-                "duration_ms": duration_ms, "source_offset": 0, "speed": 1}]}},
++                "duration_ms": duration_ms, "source_offset": 0, "speed": 1,
++                **(opaque if opaque_pin_scope == "occurrence" else {})}]}},
+         idempotency_key="initial-publication")
+ 
+     service.close()
+diff --git a/tests/editing_conformance/test_next_command_cohort_runtime.py b/tests/editing_conformance/test_next_command_cohort_runtime.py
+index 081b646594f0f115ddc06177081a2974d40e4cdf..7db7b173450efc10c4d5875f928cd6a0b0d231dd
+--- a/tests/editing_conformance/test_next_command_cohort_runtime.py
++++ b/tests/editing_conformance/test_next_command_cohort_runtime.py
+@@ -181,6 +181,43 @@
+     assert case.service.store.integrity_report()['ok']
+ 
+ 
++@pytest.mark.parametrize('retained,scope', [
++    ({'opaque_pin_scope': scope}, scope) for scope in ('parent', 'shot', 'occurrence')
++], indirect=['retained'])
++def test_grouped_inverse_retains_surviving_opaque_transcript_pin(retained, scope):
++    case = retained
++    baseline = copy.deepcopy(case.documents[case.head()['revision_id']])
++    payload = baseline['parent_revision']['payload']
++    owner = (payload if scope == 'parent' else payload['occurrences'][0] if scope == 'occurrence'
++             else baseline['shot_revisions'][0]['payload'])
++    opaque = owner['opaque_transcript']
++    assert opaque == {'pin': case.pin, 'raw': [None, False, 0, 0.0, {}, [], '']}
++    assert baseline['dependency_manifest']['documents'] == []
++    born = case.submit(case.request([parent.call('clip.add', {'row': {
++        'id': 'born', 'clipType': 'am-type', 'track': 'picture', 'at': 0, 'hold': .5}}, 'parent')]),
++        'opaque-pin-birth')
++    anchored = case.submit(case.request([parent.call('clip.anchor', {
++        'field': 'on', 'declaration': 'again', 'choice': {
++            'source': 'occurrence:occ/clip:voice', 'document': case.pin,
++            'word_ids': [case.source['content']['segments'][0]['words'][0]['id']]}
++        }, 'parent/clip:born')]), 'opaque-pin-anchor')
++    assert anchored['data']['canonical_document']['dependency_manifest']['documents'] == [case.pin]
++    request = case.request([parent.call('timeline.inverse', {'publications': [
++        result['receipt']['receipt_id'] for result in (born, anchored)]}, None)])
++    undone = case.submit(request, 'opaque-pin-undo')
++    document = undone['data']['canonical_document']
++    assert document['dependency_manifest']['documents'] == [case.pin]
++    assert json.dumps(document['parent_revision']['payload'], sort_keys=True) == json.dumps(
++        baseline['parent_revision']['payload'], sort_keys=True)
++    for key in ('shot_revisions', 'internal_timeline_revisions'):
++        assert json.dumps(document[key], sort_keys=True) == json.dumps(baseline[key], sort_keys=True)
++    redone = word.undo(case, undone, 'opaque-pin-redo')
++    assert json.dumps(redone['data']['canonical_document'], sort_keys=True) == json.dumps(
++        anchored['data']['canonical_document'], sort_keys=True)
++    case.restart()
++    assert case.submit(request, 'opaque-pin-undo') == undone
++
++
+ @pytest.mark.parametrize('retention', ['introduced', 'preexisting', 'surviving', 'opaque'])
+ def test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins(retained, retention):
+     case = retained
+
+exec
+/bin/bash -lc 'tail -c 800 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes/runtime-neighbors.log' in /home/user/work/wt/agt-m2-grouped-occurrence-pin-fix
+ succeeded in 0ms:
+........................................................................ [ 59%]
+.............................FF
+codex
+The new occurrence, parent, and shot controls pass in the Runtime-neighbor run. That run has reached the two known `_binding_descriptor` import failures; I’ve left those tests unchanged. I’m waiting for the final summary before completing the report and worker handoff.
+ exited 1 in 160983ms:
+........................................................................ [ 59%]
+.............................FF..................                        [100%]
+=================================== FAILURES ===================================
+_______ test_real_media_manifest_inverse_retry_restart_and_history[add] ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-2349/test_real_media_manifest_inver0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f93ad552740>
+operation = 'add'
+
+    @pytest.mark.parametrize('operation', ['add', 'swap'])
+    def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeypatch, operation):
+        runtime = use_runtime()
+        monkeypatch.syspath_prepend(str(runtime / 'tests'))
+        from runtime_protocol.auth import CredentialStore
+        from runtime_protocol.errors import RuntimeErrorBase
+        from runtime_protocol.service import RuntimeService
+        from runtime_protocol.timeline_commit_port import RequestCommitPort, route_path
+        from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
+>       from timeline_commit_film_fixture import _binding_descriptor
+E       ImportError: cannot import name '_binding_descriptor' from 'timeline_commit_film_fixture' (/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes/runtime-s2/tests/timeline_commit_film_fixture.py)
+
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:26: ImportError
+_______ test_real_media_manifest_inverse_retry_restart_and_history[swap] _______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-2349/test_real_media_manifest_inver1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f93ad6c0980>
+operation = 'swap'
+
+    @pytest.mark.parametrize('operation', ['add', 'swap'])
+    def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeypatch, operation):
+        runtime = use_runtime()
+        monkeypatch.syspath_prepend(str(runtime / 'tests'))
+        from runtime_protocol.auth import CredentialStore
+        from runtime_protocol.errors import RuntimeErrorBase
+        from runtime_protocol.service import RuntimeService
+        from runtime_protocol.timeline_commit_port import RequestCommitPort, route_path
+        from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
+>       from timeline_commit_film_fixture import _binding_descriptor
+E       ImportError: cannot import name '_binding_descriptor' from 'timeline_commit_film_fixture' (/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes/runtime-s2/tests/timeline_commit_film_fixture.py)
+
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:26: ImportError
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[add]
+FAILED tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[swap]
+2 failed, 119 passed in 160.16s (0:02:40)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..8038dcd7c24773f2516c12fb94f6c6cf7ea183f4
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/commit-msg
+@@ -0,0 +1,9 @@
++fix(timeline): retain transcript pins referenced by surviving occurrences
++
++Include authored placements in the existing inverse transcript-pin retention
++scan alongside parent and shot data. Preserve introduced pins when surviving
++occurrence opaque data still references them.
++
++Add real Runtime conformance controls for parent, shot and occurrence opaque
++references, exact authored-value preservation, grouped undo/redo and restart
++retry. Keep the full command schema and authored inverse guards unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f92ec7387c3154e6e16847a8f3a0577a857852e9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes/report.md
+@@ -0,0 +1,110 @@
++# Surviving occurrence transcript-pin repair
++
++Base: `9ccf10ec23d292fc7b25b4c4cc5fe91ef36c08b5`. Read PLAN.md, the grouped-root inverse review and its independent reproduction scripts/logs. Repair is limited to `_inverse_clip_transcripts` and direct editing-conformance coverage.
++
++## Change and decisions
++
++Added `bundle['placements']` to the existing surviving-reference scan alongside parent and shot data. This applies to both pending hydration and final inverse output. Authored occurrences are separated from the parent when opening the authoring bundle; their opaque references need the same conservative retention policy as other authored scopes. No scan rewrite, normalization, dependency-removal expansion, whole-document restoration or inverse-guard change.
++
++Added three permanent main-suite controls, seeded through the original public historical publication API with an opaque pin on the parent, shot or occurrence. They submit ordinary clip birth, word anchoring, grouped inverse and redo to the actual current Runtime/provider. They assert pin retention, exact sorted-JSON parent payload and immutable shot/internal images after undo, exact canonical-document redo, and original undo retry after restart. Mixed opaque values include null, false, integer zero, floating zero, empty objects/arrays and an empty string. A small optional fixture argument supplies those authored historical fields; existing fixture defaults and all existing tests/assertions are unchanged.
++
++The retained pin legitimately changes the manifest relative to the pre-anchor baseline, so the new test compares exact parent payload rather than requiring the earlier parent revision identity. An initial draft incorrectly asserted identical revision IDs; this was corrected before the production fix. `baseline-main-controls.log` retains that initial diagnostic; `baseline-main-controls-final.log` is the authoritative baseline run.
++
++Source/schema stays byte-identical to base: SHA256 `fafb1985a326e6121aa8c9fb34bbda196edc3dfaf462352070372e631bea1f52`, **53 definitions / 26 operations**. Changed product code: one line; total diff: three files, 45 insertions / 4 deletions.
++
++## Environment
++
++Only this assigned worktree and this worker's notes directory were written. Shared dependencies were read through `/home/user/work/venv-agent` and `/home/user/work/venv-runtime`; bytecode and pytest/Ruff caches were disabled. No installation, shared runtime modification, git mutation, integration, release or public pin change.
++
++Private Runtime archives were extracted with `git -C /home/user/work/runtime archive <revision>`:
++
++- `runtime-s2`: `f7081c14efd9a5b834987e7a1e2abf597b66313b`.
++- `historical-runtime`: `80973d34ae10e498d7213c30287012c9876f4b1a` (original public seed API only).
++
++Copied the complete candidate `astrid/core/timeline/schema/edit-command.schema.json` to the private Runtime's ordinary `contract/schemas/edit-command.json`, then ran normal generation. No schema subset, forged history or acceptance bypass. Private archives are removed after qualification; logs and the independent probe remain here.
++
++Commands below ran from `/home/user/work/wt/agt-m2-grouped-occurrence-pin-fix`, using these environment values on every pytest invocation:
++
++```sh
++N=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes
++P=/home/user/work/venv-agent/bin/python
++export PYTHONDONTWRITEBYTECODE=1
++export PYTHONPATH="$PWD"
++export ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2"
++export ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-runtime"
++```
++
++## Exact commands and results
++
++Normal generation and verification: both **exit 0**; generation produced the normal 13 outputs. `generator-check.log` is empty on success.
++
++```sh
++/home/user/work/venv-runtime/bin/python "$N/runtime-s2/generators/generate.py"
++/home/user/work/venv-runtime/bin/python "$N/runtime-s2/generators/generate.py" --check
++```
++
++Before the production change, independent occurrence probe: **1 failed in 2.71s**, exit 1, exactly reproducing the missing retained pin (`baseline-occurrence.log`). Opaque data survived; the manifest was `[]` instead of `[pin]`.
++
++```sh
++"$P" -m pytest -o addopts= -p no:cacheprovider -q "$N/test_review_controls.py::test_occurrence_opaque_pin_is_retained[occurrence]"
++```
++
++Before the production change, final permanent controls: **2 passed / 1 failed / 8 deselected in 5.81s**, exit 1 (`baseline-main-controls-final.log`). Parent and shot passed; occurrence failed at the pin-retention assertion.
++
++```sh
++"$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration tests/editing_conformance/test_next_command_cohort_runtime.py -k surviving_opaque
++```
++
++After the fix, portable grouped-cache, raw-value, inverse, graph-root, source-binding and occurrence-manifest controls: **249 passed in 9.46s**, exit 0 (`portable.log`). Includes all 10 existing grouped-cache controls and their authored-write, same-value, ABA and unauthenticated-history refusals.
++
++```sh
++"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_native_word_anchor_vectors.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py
++```
++
++After the fix, real-service main-suite neighbors: **119 passed / 2 preexisting failures in 160.16s**, exit 1 (`runtime-neighbors.log`). All 11 joint cases pass, including the three new scope controls and the original actual birth/anchor/grouped inverse/redo/restart cases. The only failures are the unchanged `test_real_media_manifest_inverse_retry_restart_and_history[add]` and `[swap]`, both importing retired `_binding_descriptor` at line 26, before Agent semantics execute. These are the same baseline fixture-import failures independently reproduced in the prior review; their requirements remain live and unqualified.
++
++```sh
++"$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration tests/editing_conformance/test_next_command_cohort_runtime.py tests/editing_conformance/test_commit_runtime_parent_media.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_timing_retained_inputs.py
++```
++
++After the fix, independent review probes copied unchanged to this worker's notes: **5 passed in 10.53s**, exit 0 (`review-controls.log`). These cover occurrence/parent pin retention, actual accepted authored `at` and `hold` writes subsequently masked by compiler writes (both still refuse `intervening_write` atomically), and the exact original media group undo → full redo → restart/original undo retry. External probe collection emits three unknown-integration-mark warnings; no tests skipped.
++
++```sh
++"$P" -m pytest -o addopts= -p no:cacheprovider -q "$N/test_review_controls.py"
++```
++
++Changed-file lint: **All checks passed**, exit 0. Diff whitespace: **exit 0**.
++
++```sh
++"$P" -m ruff check --no-cache astrid/sdk/timeline/commit.py tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_next_command_cohort_runtime.py
++git diff --check
++```
++
++Schema verification: **exit 0**, all assertions passed; printed the SHA256 and counts recorded above.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
++import hashlib
++import json
++import subprocess
++from pathlib import Path
++path = 'astrid/core/timeline/schema/edit-command.schema.json'
++source = Path(path).read_bytes()
++baseline = subprocess.check_output(['git', 'show', '9ccf10ec:' + path])
++schema = json.loads(source)
++print('Schema byte-identical to base:', source == baseline)
++print('SHA256:', hashlib.sha256(source).hexdigest())
++print('Definitions:', len(schema['$defs']))
++print('EditCommand keys:', list(schema['$defs']['EditCommand']))
++print('Operation conditions:', len(schema['$defs']['EditCommand']['allOf']))
++assert source == baseline
++assert len(schema['$defs']) == 53
++assert len(schema['$defs']['EditCommand']['allOf']) == 26
++PY
++```
++
++## Limits and next steps
++
++Task complete. No execution blocker or decision change needed. All requested occurrence-pin, grouped-cache and genuine authored-write refusal controls pass. The Runtime-neighbor lane remains non-green solely because of the two already-classified fixture-import failures; this repair does not claim those scenarios passed.
++
++No full suite or full-suite request, live socket/browser/App journey, renderer parity, pristine occurrence birth, macOS or release qualification was performed. No tests were skipped, weakened, removed or converted to xfail. Recommend review and harness commit of this bounded repair; the two preexisting `_binding_descriptor` fixture-import failures remain separate migration work.
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index 25f48da9f98daa5b0a4a8784272e7539983234d0..da9d5554a8c6085f1ec7d7ce42b78e75762860a7
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -253,7 +253,7 @@
+         for pin in accepted:
+             if (pin not in prior and pin['document_id'].startswith('transcript:')
+                     and any(isinstance(choice, dict) and choice.get('document') == pin for choice in choices)
+-                    and not contains([parent, bundle['shots']], pin)):
++                    and not contains([parent, bundle['shots'], bundle['placements']], pin)):
+                 result.append(pin)
+     return result
+ 
+diff --git a/tests/editing_conformance/native_word_anchor_fixture.py b/tests/editing_conformance/native_word_anchor_fixture.py
+index bcb5fb86c44378df0e297a622aa49f8dc5de7cd0..46da43a02e655f80d5235a36efbdbbc85c5ef860
+--- a/tests/editing_conformance/native_word_anchor_fixture.py
++++ b/tests/editing_conformance/native_word_anchor_fixture.py
+@@ -64,7 +64,7 @@
+                        pin["version"], pin["content_digest"], tuple(word.id for word in chosen))
+ 
+ 
+-def seed(root, reused, *, duration_ms=10000, source_window=None):
++def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scope=None):
+     # Historical data is authored with the pre-cut public API; measured edits
+     # use the current Runtime and normal provider after reopening this realm.
+     from runtime_protocol.service import RuntimeService
+@@ -83,6 +83,7 @@
+     source = service.create_document(project, {"document_id": document_id,
+         "kind": "media.transcript", "content": content}, idempotency_key="transcript-v1")["data"]
+     pin = {"document_id": document_id, "version": 1, "content_digest": _digest(content)}
++    opaque = {"opaque_transcript": {"pin": pin, "raw": [None, False, 0, 0.0, {}, [], ""]}}
+     service.create_project_shot(project, {"shot_id": "shot", "name": "Voice"},
+                                 idempotency_key="shot")
+     voices = [{"id": "voice", "clipType": "media", "track": "vo", "asset": "take",
+@@ -101,7 +102,8 @@
+                 "clips": voices,
+                 "registry": {"assets": {"take": {"media_id": media, "type": "audio"}}}}}],
+         "shot_revisions": [{"shot_id": "shot", "revision_id": "shot-revision",
+-            "internal_timeline_revision_id": "internal", "payload": {"items": []}}],
++            "internal_timeline_revision_id": "internal", "payload": {"items": [],
++                **(opaque if opaque_pin_scope == "shot" else {})}}],
+         # The legacy publication seam only accepts numeric output.fps; main's
+         # canvas retains the exact rational consumed by the timing compiler.
+         "parent_composition": {"config": {"output": {"fps": 30000 / 1001},
+@@ -109,9 +111,11 @@
+             "tracks": [{"id": "picture", "kind": "visual"}]},
+             "clips": [{"id": "card", "clipType": "am-type", "track": "picture", "at": 0,
+                        "hold": 1, "app": {"astrid": {"on": DECLARATION, "for": 0.5}}}],
++            **(opaque if opaque_pin_scope == "parent" else {}),
+             "occurrences": [{"occurrence_id": "occ", "shot_id": "shot",
+                 "shot_revision_id": "shot-revision", "placement": {"start_ms": 2000, "track": "picture"},
+-                "duration_ms": duration_ms, "source_offset": 0, "speed": 1}]}},
++                "duration_ms": duration_ms, "source_offset": 0, "speed": 1,
++                **(opaque if opaque_pin_scope == "occurrence" else {})}]}},
+         idempotency_key="initial-publication")
+ 
+     service.close()
+diff --git a/tests/editing_conformance/test_next_command_cohort_runtime.py b/tests/editing_conformance/test_next_command_cohort_runtime.py
+index 081b646594f0f115ddc06177081a2974d40e4cdf..7db7b173450efc10c4d5875f928cd6a0b0d231dd
+--- a/tests/editing_conformance/test_next_command_cohort_runtime.py
++++ b/tests/editing_conformance/test_next_command_cohort_runtime.py
+@@ -181,6 +181,43 @@
+     assert case.service.store.integrity_report()['ok']
+ 
+ 
++@pytest.mark.parametrize('retained,scope', [
++    ({'opaque_pin_scope': scope}, scope) for scope in ('parent', 'shot', 'occurrence')
++], indirect=['retained'])
++def test_grouped_inverse_retains_surviving_opaque_transcript_pin(retained, scope):
++    case = retained
++    baseline = copy.deepcopy(case.documents[case.head()['revision_id']])
++    payload = baseline['parent_revision']['payload']
++    owner = (payload if scope == 'parent' else payload['occurrences'][0] if scope == 'occurrence'
++             else baseline['shot_revisions'][0]['payload'])
++    opaque = owner['opaque_transcript']
++    assert opaque == {'pin': case.pin, 'raw': [None, False, 0, 0.0, {}, [], '']}
++    assert baseline['dependency_manifest']['documents'] == []
++    born = case.submit(case.request([parent.call('clip.add', {'row': {
++        'id': 'born', 'clipType': 'am-type', 'track': 'picture', 'at': 0, 'hold': .5}}, 'parent')]),
++        'opaque-pin-birth')
++    anchored = case.submit(case.request([parent.call('clip.anchor', {
++        'field': 'on', 'declaration': 'again', 'choice': {
++            'source': 'occurrence:occ/clip:voice', 'document': case.pin,
++            'word_ids': [case.source['content']['segments'][0]['words'][0]['id']]}
++        }, 'parent/clip:born')]), 'opaque-pin-anchor')
++    assert anchored['data']['canonical_document']['dependency_manifest']['documents'] == [case.pin]
++    request = case.request([parent.call('timeline.inverse', {'publications': [
++        result['receipt']['receipt_id'] for result in (born, anchored)]}, None)])
++    undone = case.submit(request, 'opaque-pin-undo')
++    document = undone['data']['canonical_document']
++    assert document['dependency_manifest']['documents'] == [case.pin]
++    assert json.dumps(document['parent_revision']['payload'], sort_keys=True) == json.dumps(
++        baseline['parent_revision']['payload'], sort_keys=True)
++    for key in ('shot_revisions', 'internal_timeline_revisions'):
++        assert json.dumps(document[key], sort_keys=True) == json.dumps(baseline[key], sort_keys=True)
++    redone = word.undo(case, undone, 'opaque-pin-redo')
++    assert json.dumps(redone['data']['canonical_document'], sort_keys=True) == json.dumps(
++        anchored['data']['canonical_document'], sort_keys=True)
++    case.restart()
++    assert case.submit(request, 'opaque-pin-undo') == undone
++
++
+ @pytest.mark.parametrize('retention', ['introduced', 'preexisting', 'surviving', 'opaque'])
+ def test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins(retained, retention):
+     case = retained
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import shutil
+from pathlib import Path
+notes = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes')
+for name in ('runtime-s2', 'historical-runtime'):
+    shutil.rmtree(notes / name)
+PY
+git diff --check && git status --short" in /home/user/work/wt/agt-m2-grouped-occurrence-pin-fix
+ succeeded in 184ms:
+ M astrid/sdk/timeline/commit.py
+ M tests/editing_conformance/native_word_anchor_fixture.py
+ M tests/editing_conformance/test_next_command_cohort_runtime.py
+
+codex
+Validation finished: 119 Runtime-neighbor tests passed, with only the two known import failures. All 249 portable checks and five independent probes passed. The report and commit message are written, private Runtime archives are removed, and I’m marking the worker complete.
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix')
+assert worker.joinpath('commit-msg').read_text().startswith('fix(timeline):')
+report = worker.joinpath('notes/report.md').read_text()
+assert 'RESULT_PENDING' not in report and 'FINAL_STATUS_PENDING' not in report
+assert not worker.joinpath('notes/runtime-s2').exists()
+assert not worker.joinpath('notes/historical-runtime').exists()
+worker.joinpath('DONE').touch()
+print('Report and commit message ready; DONE created.')
+PY" in /home/user/work/wt/agt-m2-grouped-occurrence-pin-fix
+ succeeded in 0ms:
+Report and commit message ready; DONE created.
+
+codex
+Repaired the occurrence-pin scan and added permanent occurrence/parent/shot controls. Schema unchanged: 53 definitions / 26 operations.
+
+Validation: 249 portable checks, 119 Runtime-neighbor tests, and five independent probes passed. Two known `_binding_descriptor` import failures remain unchanged. No blockers or decision changes.
+
+Exact commands and results: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes/report.md).
+
+Commit message and `DONE` written. Ready for orchestrator review and harness commit.
+tokens used
+73,978
+Repaired the occurrence-pin scan and added permanent occurrence/parent/shot controls. Schema unchanged: 53 definitions / 26 operations.
+
+Validation: 249 portable checks, 119 Runtime-neighbor tests, and five independent probes passed. Two known `_binding_descriptor` import failures remain unchanged. No blockers or decision changes.
+
+Exact commands and results: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-grouped-occurrence-pin-fix/notes/report.md).
+
+Commit message and `DONE` written. Ready for orchestrator review and harness commit.

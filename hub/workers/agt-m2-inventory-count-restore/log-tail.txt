@@ -1,0 +1,400 @@
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 tests/sdk/test_host_bootstrap_source_identity.py tests/core/rendering/test_remotion_registry_context_key.py tests/core/rendering/test_remotion_registry_git_env.py
+counts: 80 passed in 937.74s (0:15:37) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-inventory-count-restore-remotion-0012-nodes-1020100200-3144/log.txt ---
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 90%]
+........                                                                 [100%]
+80 passed in 937.74s (0:15:37)
+
+codex
+The final current12 named run is green: 80 passed in 937.74s, including the Remotion-enabled exact inventory sequence. I’m doing the final diff/status check now, then I’ll write the conventional commit message, worker report, and `DONE` marker.
+exec
+/bin/bash -lc "git diff --check && git status --short && git diff --stat && git diff -- tests/sdk/test_host_bootstrap_source_identity.py && printf '\\n--- shared cutlist tail ---\\n' && sed -n '1,34p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-baseline-109-cutlist.md" in /home/user/work/wt/agt-m2-inventory-count-restore
+ succeeded in 667ms:
+ M tests/sdk/test_host_bootstrap_source_identity.py
+ tests/sdk/test_host_bootstrap_source_identity.py | 21 ++++++++++++++++-----
+ 1 file changed, 16 insertions(+), 5 deletions(-)
+diff --git a/tests/sdk/test_host_bootstrap_source_identity.py b/tests/sdk/test_host_bootstrap_source_identity.py
+index 614a7b9d..7e27a425 100644
+--- a/tests/sdk/test_host_bootstrap_source_identity.py
++++ b/tests/sdk/test_host_bootstrap_source_identity.py
+@@ -212,12 +212,15 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
+     monkeypatch.setattr(host_bootstrap, "_registered_host_status", lambda state: "ours")
+     monkeypatch.setattr(host_bootstrap, "_IDLE_CHECK_INTERVAL_SECONDS", 0.0)
+     monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda current: terminated.append(dict(current)))
++    # The explicit bootstrap read is joined by one Remotion registry-context
++    # read when the supported renderer is provisioned in the environment.
++    inventory_reads_per_launch = 2 if os.environ.get("ASTRID_REMOTION_PROJECT_DIR") else 1
+ 
+     result = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+     assert result["host_status"] == "ready"
+     assert result["host_source_inventory_identity"] == "inventory-1"
+-    # The probe may re-verify the inventory, so count is not pinned; every read must see the launched identity.
+-    assert inventory_calls and set(inventory_calls) == {"inventory-1"}
++    assert len(inventory_calls) == inventory_reads_per_launch
++    assert inventory_calls == ["inventory-1"] * inventory_reads_per_launch
+     assert "--source-inventory-identity" in launches[0]
+     assert launches[0][launches[0].index("--source-inventory-identity") + 1] == "inventory-1"
+     assert launches[0][launches[0].index("--runtime-discovery-file") + 1] == str(
+@@ -240,8 +243,11 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
+     assert result2["host_status"] == "ready"
+     assert len(launches) == 2
+     assert "launch_argv" not in state
+-    assert inventory_calls[-1] == "inventory-2"
+-    assert set(inventory_calls) == {"inventory-1", "inventory-2"}
++    assert len(inventory_calls) == inventory_reads_per_launch * 2
++    assert inventory_calls == (
++        ["inventory-1"] * inventory_reads_per_launch
++        + ["inventory-2"] * inventory_reads_per_launch
++    )
+     assert terminated, "changed source inventory must not reuse the old ready host"
+ 
+     # Disabling the last managed source must not reuse a host that still
+@@ -252,7 +258,12 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
+     result3 = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+     assert result3["host_status"] == "ready"
+     assert len(launches) == 3
+-    assert inventory_calls[-1] == ""
++    assert len(inventory_calls) == inventory_reads_per_launch * 3
++    assert inventory_calls == (
++        ["inventory-1"] * inventory_reads_per_launch
++        + ["inventory-2"] * inventory_reads_per_launch
++        + [""] * inventory_reads_per_launch
++    )
+ 
+ 
+ def test_bootstrap_stops_on_correlated_terminal_registration_failure(
+
+--- shared cutlist tail ---
+# Agent supported-env baseline: 109-node cut list
+
+## Inventory-read count follow-up (2026-10-20)
+
+The bootstrap identity regression retains exact counts, conditional on the
+supported launch environment: one `active_source_inventory()` read per
+`ensure_pack_host()` launch without Remotion, and two with the current12
+Remotion environment. The first is the explicit bootstrap admission read in
+`astrid/sdk/host_bootstrap.py:1355`. The second is intentional launch-time
+registry-context projection: `_prepare_render_validation()` calls the
+Remotion validation transaction, whose worker-context/registry settling path
+normalizes managed pack roots through `active_source_inventory(verify=False)`
+(`astrid/core/rendering/remotion_runtime.py:526-528`). This is a bounded,
+precise extra read, not an unbounded inventory scan; the identity sequence is
+still asserted for every read, including restart and empty-inventory cases.
+
+Worker: agt-baseline-109-cutlist (read-only analysis; no product or test changes; no suite requested).
+Set analysed: the 109 non-passing nodes of `agent full-remotion-integration` (79 FAILED, 30 ERROR) from `tests/agent-full-remotion-integration-1020031037-28578/log.txt`, identical to the f6 baseline (1020030741-1883) and to the M1 a610 run (`full-a610-classification.json`).
+Code read at: worktree `/home/user/work/wt/agt-baseline-109-cutlist` (HEAD `ef6eec55`). File:line references are into that tree. The traces were produced on the 8f046 / 4a75f68f trees; a610 recorded identical blobs for the pixel, host-bootstrap, worker-process, stage1, host-recovery and runpod-staging files, but I did not diff every cited file against 8f046.
+
+## Method and confidence
+
+- Every node ID comes from the log's short summary, so the 109 IDs are exact.
+- Causes come from the traceback in the log where one was kept (pytest only kept a subset of tracebacks, so for the rest the cluster evidence applies), then from reading the cited code.
+- I did **not** run any node. The central runner builds its environment from a fixed command, and the code-level causes below do not need a run to establish. The three items marked *hypothesis* need one confirming run.
+- Classification rules: **FIX** = the product is right and the test (or its fixture, harness or doc) is wrong or stale. **ENVIRONMENT** = the supported env lacks a prerequisite the test assumes. **DELETE** = the behaviour is gone; none found.
+
+## Summary
+
+| class | nodes | groups |
+|---|---:|---|
+| FIX | 86 | A, B, C, D, E, F, I, J, K, L |
+| ENVIRONMENT | 23 | G (1, provisional), H (7), M (15) |
+| DELETE | 0 | none; no node tests behaviour that has been removed |
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-baseline-109-cutlist.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-baseline-109-cutlist.md
+index f01c2bc3d77bbc3b8f3bbdfe9fb30d6db9f16132..4be354b19cb5ef77cedc7bfbe9ddc7a45d668d10
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-baseline-109-cutlist.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-baseline-109-cutlist.md
+@@ -1,5 +1,19 @@
+ # Agent supported-env baseline: 109-node cut list
+ 
++## Inventory-read count follow-up (2026-10-20)
++
++The bootstrap identity regression retains exact counts, conditional on the
++supported launch environment: one `active_source_inventory()` read per
++`ensure_pack_host()` launch without Remotion, and two with the current12
++Remotion environment. The first is the explicit bootstrap admission read in
++`astrid/sdk/host_bootstrap.py:1355`. The second is intentional launch-time
++registry-context projection: `_prepare_render_validation()` calls the
++Remotion validation transaction, whose worker-context/registry settling path
++normalizes managed pack roots through `active_source_inventory(verify=False)`
++(`astrid/core/rendering/remotion_runtime.py:526-528`). This is a bounded,
++precise extra read, not an unbounded inventory scan; the identity sequence is
++still asserted for every read, including restart and empty-inventory cases.
++
+ Worker: agt-baseline-109-cutlist (read-only analysis; no product or test changes; no suite requested).
+ Set analysed: the 109 non-passing nodes of `agent full-remotion-integration` (79 FAILED, 30 ERROR) from `tests/agent-full-remotion-integration-1020031037-28578/log.txt`, identical to the f6 baseline (1020030741-1883) and to the M1 a610 run (`full-a610-classification.json`).
+ Code read at: worktree `/home/user/work/wt/agt-baseline-109-cutlist` (HEAD `ef6eec55`). File:line references are into that tree. The traces were produced on the 8f046 / 4a75f68f trees; a610 recorded identical blobs for the pixel, host-bootstrap, worker-process, stage1, host-recovery and runpod-staging files, but I did not diff every cited file against 8f046.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..871f683192ba02d3ec38241233ddc5d8d80467b0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/commit-msg
+@@ -0,0 +1,4 @@
++test: restore exact host inventory read counts
++
++Pin source-inventory read counts across plain and current12 Remotion bootstrap
++launches while retaining identity, restart, and empty-inventory assertions.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..55c79b7fa1ec1898a460295ac74c762722f3374d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/report.md
+@@ -0,0 +1,28 @@
++# agt-m2-inventory-count-restore
++
++Restored exact `active_source_inventory()` call-count and ordered-identity
++assertions in `tests/sdk/test_host_bootstrap_source_identity.py`. The test pins
++one read per launch without Remotion and two reads per launch when the supported
++current12 Remotion environment is provisioned. Identity, restart-on-change,
++and empty-inventory checks remain intact. No production code changed.
++
++The extra current12 read is intentional and bounded: bootstrap admission reads
++the inventory once, then Remotion registry-context normalization reads it once
++more while preparing the launch worker context. This is documented in the
++append-only cutlist note at `design/agent-baseline-109-cutlist.md`.
++
++Tests:
++
++- `PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_host_bootstrap_source_identity.py` — **69 passed**.
++- `PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/core/rendering/test_remotion_registry_context_key.py tests/core/rendering/test_remotion_registry_git_env.py` — **11 passed**.
++- Central named `remotion-0012-nodes` with explicit files `tests/sdk/test_host_bootstrap_source_identity.py tests/core/rendering/test_remotion_registry_context_key.py tests/core/rendering/test_remotion_registry_git_env.py` — **80 passed** in 937.74s (15:37), including the current12 Remotion count path.
++
++Additional local baseline context: the combined target plus
++`tests/test_generic_host.py` run reached 306 passed and 1 deselected, with 6
++unrelated sandbox socket/control-thread failures (`EPERM` when wrapping socket
++descriptors). No full suite was requested.
++
++Decision: use an exact environment-conditioned count (1 or 2 per launch), not
++an `all()`-only assertion, because the central current12 run observed the
++intentional second call. The shared cutlist explains the old/new call sites.
++No blockers.
+diff --git a/tests/sdk/test_host_bootstrap_source_identity.py b/tests/sdk/test_host_bootstrap_source_identity.py
+index 614a7b9d69247170a237efafd1c6de71d18b0587..7e27a4251deb9e7dacfac7cec2112e1f6afc4698
+--- a/tests/sdk/test_host_bootstrap_source_identity.py
++++ b/tests/sdk/test_host_bootstrap_source_identity.py
+@@ -212,12 +212,15 @@
+     monkeypatch.setattr(host_bootstrap, "_registered_host_status", lambda state: "ours")
+     monkeypatch.setattr(host_bootstrap, "_IDLE_CHECK_INTERVAL_SECONDS", 0.0)
+     monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda current: terminated.append(dict(current)))
++    # The explicit bootstrap read is joined by one Remotion registry-context
++    # read when the supported renderer is provisioned in the environment.
++    inventory_reads_per_launch = 2 if os.environ.get("ASTRID_REMOTION_PROJECT_DIR") else 1
+ 
+     result = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+     assert result["host_status"] == "ready"
+     assert result["host_source_inventory_identity"] == "inventory-1"
+-    # The probe may re-verify the inventory, so count is not pinned; every read must see the launched identity.
+-    assert inventory_calls and set(inventory_calls) == {"inventory-1"}
++    assert len(inventory_calls) == inventory_reads_per_launch
++    assert inventory_calls == ["inventory-1"] * inventory_reads_per_launch
+     assert "--source-inventory-identity" in launches[0]
+     assert launches[0][launches[0].index("--source-inventory-identity") + 1] == "inventory-1"
+     assert launches[0][launches[0].index("--runtime-discovery-file") + 1] == str(
+@@ -240,8 +243,11 @@
+     assert result2["host_status"] == "ready"
+     assert len(launches) == 2
+     assert "launch_argv" not in state
+-    assert inventory_calls[-1] == "inventory-2"
+-    assert set(inventory_calls) == {"inventory-1", "inventory-2"}
++    assert len(inventory_calls) == inventory_reads_per_launch * 2
++    assert inventory_calls == (
++        ["inventory-1"] * inventory_reads_per_launch
++        + ["inventory-2"] * inventory_reads_per_launch
++    )
+     assert terminated, "changed source inventory must not reuse the old ready host"
+ 
+     # Disabling the last managed source must not reuse a host that still
+@@ -252,7 +258,12 @@
+     result3 = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+     assert result3["host_status"] == "ready"
+     assert len(launches) == 3
+-    assert inventory_calls[-1] == ""
++    assert len(inventory_calls) == inventory_reads_per_launch * 3
++    assert inventory_calls == (
++        ["inventory-1"] * inventory_reads_per_launch
++        + ["inventory-2"] * inventory_reads_per_launch
++        + [""] * inventory_reads_per_launch
++    )
+ 
+ 
+ def test_bootstrap_stops_on_correlated_terminal_registration_failure(
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-baseline-109-cutlist.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-baseline-109-cutlist.md
+index f01c2bc3d77bbc3b8f3bbdfe9fb30d6db9f16132..4be354b19cb5ef77cedc7bfbe9ddc7a45d668d10
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-baseline-109-cutlist.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-baseline-109-cutlist.md
+@@ -1,5 +1,19 @@
+ # Agent supported-env baseline: 109-node cut list
+ 
++## Inventory-read count follow-up (2026-10-20)
++
++The bootstrap identity regression retains exact counts, conditional on the
++supported launch environment: one `active_source_inventory()` read per
++`ensure_pack_host()` launch without Remotion, and two with the current12
++Remotion environment. The first is the explicit bootstrap admission read in
++`astrid/sdk/host_bootstrap.py:1355`. The second is intentional launch-time
++registry-context projection: `_prepare_render_validation()` calls the
++Remotion validation transaction, whose worker-context/registry settling path
++normalizes managed pack roots through `active_source_inventory(verify=False)`
++(`astrid/core/rendering/remotion_runtime.py:526-528`). This is a bounded,
++precise extra read, not an unbounded inventory scan; the identity sequence is
++still asserted for every read, including restart and empty-inventory cases.
++
+ Worker: agt-baseline-109-cutlist (read-only analysis; no product or test changes; no suite requested).
+ Set analysed: the 109 non-passing nodes of `agent full-remotion-integration` (79 FAILED, 30 ERROR) from `tests/agent-full-remotion-integration-1020031037-28578/log.txt`, identical to the f6 baseline (1020030741-1883) and to the M1 a610 run (`full-a610-classification.json`).
+ Code read at: worktree `/home/user/work/wt/agt-baseline-109-cutlist` (HEAD `ef6eec55`). File:line references are into that tree. The traces were produced on the 8f046 / 4a75f68f trees; a610 recorded identical blobs for the pixel, host-bootstrap, worker-process, stage1, host-recovery and runpod-staging files, but I did not diff every cited file against 8f046.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..871f683192ba02d3ec38241233ddc5d8d80467b0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/commit-msg
+@@ -0,0 +1,4 @@
++test: restore exact host inventory read counts
++
++Pin source-inventory read counts across plain and current12 Remotion bootstrap
++launches while retaining identity, restart, and empty-inventory assertions.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..55c79b7fa1ec1898a460295ac74c762722f3374d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/report.md
+@@ -0,0 +1,28 @@
++# agt-m2-inventory-count-restore
++
++Restored exact `active_source_inventory()` call-count and ordered-identity
++assertions in `tests/sdk/test_host_bootstrap_source_identity.py`. The test pins
++one read per launch without Remotion and two reads per launch when the supported
++current12 Remotion environment is provisioned. Identity, restart-on-change,
++and empty-inventory checks remain intact. No production code changed.
++
++The extra current12 read is intentional and bounded: bootstrap admission reads
++the inventory once, then Remotion registry-context normalization reads it once
++more while preparing the launch worker context. This is documented in the
++append-only cutlist note at `design/agent-baseline-109-cutlist.md`.
++
++Tests:
++
++- `PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_host_bootstrap_source_identity.py` — **69 passed**.
++- `PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/core/rendering/test_remotion_registry_context_key.py tests/core/rendering/test_remotion_registry_git_env.py` — **11 passed**.
++- Central named `remotion-0012-nodes` with explicit files `tests/sdk/test_host_bootstrap_source_identity.py tests/core/rendering/test_remotion_registry_context_key.py tests/core/rendering/test_remotion_registry_git_env.py` — **80 passed** in 937.74s (15:37), including the current12 Remotion count path.
++
++Additional local baseline context: the combined target plus
++`tests/test_generic_host.py` run reached 306 passed and 1 deselected, with 6
++unrelated sandbox socket/control-thread failures (`EPERM` when wrapping socket
++descriptors). No full suite was requested.
++
++Decision: use an exact environment-conditioned count (1 or 2 per launch), not
++an `all()`-only assertion, because the central current12 run observed the
++intentional second call. The shared cutlist explains the old/new call sites.
++No blockers.
+diff --git a/tests/sdk/test_host_bootstrap_source_identity.py b/tests/sdk/test_host_bootstrap_source_identity.py
+index 614a7b9d69247170a237efafd1c6de71d18b0587..7e27a4251deb9e7dacfac7cec2112e1f6afc4698
+--- a/tests/sdk/test_host_bootstrap_source_identity.py
++++ b/tests/sdk/test_host_bootstrap_source_identity.py
+@@ -212,12 +212,15 @@
+     monkeypatch.setattr(host_bootstrap, "_registered_host_status", lambda state: "ours")
+     monkeypatch.setattr(host_bootstrap, "_IDLE_CHECK_INTERVAL_SECONDS", 0.0)
+     monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda current: terminated.append(dict(current)))
++    # The explicit bootstrap read is joined by one Remotion registry-context
++    # read when the supported renderer is provisioned in the environment.
++    inventory_reads_per_launch = 2 if os.environ.get("ASTRID_REMOTION_PROJECT_DIR") else 1
+ 
+     result = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+     assert result["host_status"] == "ready"
+     assert result["host_source_inventory_identity"] == "inventory-1"
+-    # The probe may re-verify the inventory, so count is not pinned; every read must see the launched identity.
+-    assert inventory_calls and set(inventory_calls) == {"inventory-1"}
++    assert len(inventory_calls) == inventory_reads_per_launch
++    assert inventory_calls == ["inventory-1"] * inventory_reads_per_launch
+     assert "--source-inventory-identity" in launches[0]
+     assert launches[0][launches[0].index("--source-inventory-identity") + 1] == "inventory-1"
+     assert launches[0][launches[0].index("--runtime-discovery-file") + 1] == str(
+@@ -240,8 +243,11 @@
+     assert result2["host_status"] == "ready"
+     assert len(launches) == 2
+     assert "launch_argv" not in state
+-    assert inventory_calls[-1] == "inventory-2"
+-    assert set(inventory_calls) == {"inventory-1", "inventory-2"}
++    assert len(inventory_calls) == inventory_reads_per_launch * 2
++    assert inventory_calls == (
++        ["inventory-1"] * inventory_reads_per_launch
++        + ["inventory-2"] * inventory_reads_per_launch
++    )
+     assert terminated, "changed source inventory must not reuse the old ready host"
+ 
+     # Disabling the last managed source must not reuse a host that still
+@@ -252,7 +258,12 @@
+     result3 = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+     assert result3["host_status"] == "ready"
+     assert len(launches) == 3
+-    assert inventory_calls[-1] == ""
++    assert len(inventory_calls) == inventory_reads_per_launch * 3
++    assert inventory_calls == (
++        ["inventory-1"] * inventory_reads_per_launch
++        + ["inventory-2"] * inventory_reads_per_launch
++        + [""] * inventory_reads_per_launch
++    )
+ 
+ 
+ def test_bootstrap_stops_on_correlated_terminal_registration_failure(
+
+exec
+/bin/bash -lc "git diff --check && git status --short && printf '\\n--- markers ---\\n' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/DONE && printf '\\n--- commit message ---\\n' && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/commit-msg" in /home/user/work/wt/agt-m2-inventory-count-restore
+ succeeded in 280ms:
+ M tests/sdk/test_host_bootstrap_source_identity.py
+
+--- markers ---
+-rw-r--r-- 1 root root    0 Oct 20 10:19 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/DONE
+-rw-r--r-- 1 root root  203 Oct 20 10:19 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/commit-msg
+-rw-r--r-- 1 root root 1974 Oct 20 10:19 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inventory-count-restore/report.md
+
+--- commit message ---
+test: restore exact host inventory read counts
+
+Pin source-inventory read counts across plain and current12 Remotion bootstrap
+launches while retaining identity, restart, and empty-inventory assertions.
+
+codex
+Implemented test-only inventory count restoration.
+
+- Exact counts: 1 read without Remotion; 2 reads with current12 Remotion, preserving identity/restart/empty checks.
+- Appended call-site explanation to `design/agent-baseline-109-cutlist.md`.
+- No production changes.
+
+Tests:
+
+- Bootstrap identity file: **69 passed**
+- Remotion registry neighbors: **11 passed**
+- Named `remotion-0012-nodes`: **80 passed**
+- Broader local run had 6 unrelated sandbox socket failures.
+
+Wrote `commit-msg`, `report.md`, and `DONE`.
+tokens used
+207,671
+Implemented test-only inventory count restoration.
+
+- Exact counts: 1 read without Remotion; 2 reads with current12 Remotion, preserving identity/restart/empty checks.
+- Appended call-site explanation to `design/agent-baseline-109-cutlist.md`.
+- No production changes.
+
+Tests:
+
+- Bootstrap identity file: **69 passed**
+- Remotion registry neighbors: **11 passed**
+- Named `remotion-0012-nodes`: **80 passed**
+- Broader local run had 6 unrelated sandbox socket failures.
+
+Wrote `commit-msg`, `report.md`, and `DONE`.

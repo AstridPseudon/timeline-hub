@@ -1,0 +1,400 @@
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+    _exposed = _exposed or root
+    return root
+
+
+def initialize_runtime_realm(root: str | Path) -> Path:
+    """Provision a missing fixture root through Runtime's canonical creator."""
+    root = Path(root)
+    if not root.exists():
+        from runtime_protocol.store import RealmStore
+
+        RealmStore.initialize(root).close()
+    return root
+
+
+def new_runtime_daemon(root: str | Path, *, commit: str | None = None, **kwargs: Any) -> Any:
+    """A daemon, not yet started, on a realm provisioned through Runtime's creator."""
+    use_runtime(commit)
+    from runtime_protocol.daemon import RuntimeDaemon
+
+    initialize_runtime_realm(root)
+    return RuntimeDaemon(root, **kwargs)
+
+codex
+The Runtime inspection settles the branch: current `Checkout.publish` compiles to `publish_parent_composition`, whose publication body has only head/revision/content/closure fields; the Runtime’s legacy publication history has no label/rationale carrier. The authenticated Runtime commit history does carry rationale, but this path does not use that commit route. I’ll therefore restore the existing local publish note and its original reason/evidence assertions, while keeping the Runtime-backed sheet-basis fallback deletion and all local draft recovery behavior unchanged.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut/astrid/sdk/timeline/publish.py
+/home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut/tests/sdk/test_timeline_journal.py
+diff --git a/astrid/sdk/timeline/publish.py b/astrid/sdk/timeline/publish.py
+index e96e6073c7c6a49678ab677a98c1742dbc5cc563..d8f2a019d6d8b9dbcc0b3fa70f4d29f8cfb27054
+--- a/astrid/sdk/timeline/publish.py
++++ b/astrid/sdk/timeline/publish.py
+@@ -15,6 +15,7 @@
+ from astrid.sdk import (
+     timeline_transcripts as _transcripts,  # module access: its functions resolve at call time
+ )
++from astrid.sdk.timeline import journal as _journal
+ from astrid.sdk.timeline import store as _store
+ from astrid.sdk.timeline._common import EDITABLE_NOTE, TimelineEditError, _num, _r
+ from astrid.sdk.timeline.doc import _row_start, _set_length, _strip_derived
+@@ -77,7 +78,16 @@
+             if item["status"] == "skipped":
+                 print(f"note: narration transcript {item['label']}: {item.get('reason', 'skipped')}", file=sys.stderr)
+         if self.path:  # publish resets the base: this working copy is the new head, with no changes (AUDIT bug 6)
++            # WC7's legacy whole-document publisher has no reason/rationale
++            # carrier in the Runtime publication history. Keep this local
++            # publish note until that consumer migrates; accepted ancestry and
++            # sheet bases still come from authenticated Runtime history.
++            before = _journal.document_digest(self.document())
+             self._reset_base(client=client)
++            _journal.record_or_note(self, Path(self.path), kind="publish", outcome="changed", label="publish",
++                                    reason=message or None, before=before,
++                                    after=_journal.document_digest(self.document()),
++                                    evidence=({"kind": "revision", "id": receipt.get("new_head")},))
+         receipt["message"] = message
+         return receipt
+ 
+diff --git a/tests/sdk/test_timeline_journal.py b/tests/sdk/test_timeline_journal.py
+index 7793b514de412a526d04c93cf44e58da04cc47db..531268d1abaa8c791502b3e16eeb7411707715d5
+--- a/tests/sdk/test_timeline_journal.py
++++ b/tests/sdk/test_timeline_journal.py
+@@ -157,7 +157,7 @@
+     assert _text(draft) == text
+ 
+ 
+-def test_publish_does_not_duplicate_accepted_history_in_the_local_journal(draft, monkeypatch):
++def test_publish_records_the_message_as_reason_and_the_new_head_as_evidence(draft, monkeypatch):
+     with draft.edit("move"):
+         draft.clip("c1.rocket").set(x=90)
+     published: dict = {}
+@@ -179,9 +179,11 @@
+     monkeypatch.setattr(_store, "publish_bundle", fake_publish)
+     monkeypatch.setattr(_store, "fetch_bundle", fake_fetch)
+     monkeypatch.setattr(draft, "_publish_narration", lambda key, client=None: {})
+-    receipt = draft.publish("move the rocket")
+-    assert receipt["new_head"] == "rev-1"
+-    assert [record.kind for record in _records()] == ["checkout", "save"]
++    draft.publish("move the rocket")
++    rec = _records()[-1]
++    assert (rec.kind, rec.outcome, rec.label) == ("publish", "changed", "publish")
++    assert rec.reason == "move the rocket"
++    assert rec.evidence == ({"kind": "revision", "id": "rev-1"},)
+ 
+ 
+ def test_the_actor_comes_from_astrid_actor_and_astrid_session(draft, monkeypatch):
+
+exec
+/bin/bash -lc "git diff --check && git diff --stat && git diff -- astrid/sdk/timeline/publish.py tests/sdk/test_timeline_journal.py && printf '\\n--- suite names ---\\n' && rg -n -C 2 'native-script-current-integration' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test" in /home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut
+ succeeded in 753ms:
+ astrid/sdk/timeline/publish.py     | 10 ++++++++++
+ tests/sdk/test_timeline_journal.py | 10 ++++++----
+ 2 files changed, 16 insertions(+), 4 deletions(-)
+diff --git a/astrid/sdk/timeline/publish.py b/astrid/sdk/timeline/publish.py
+index e96e6073..d8f2a019 100644
+--- a/astrid/sdk/timeline/publish.py
++++ b/astrid/sdk/timeline/publish.py
+@@ -15,6 +15,7 @@ from astrid.sdk import timeline_intent as intent
+ from astrid.sdk import (
+     timeline_transcripts as _transcripts,  # module access: its functions resolve at call time
+ )
++from astrid.sdk.timeline import journal as _journal
+ from astrid.sdk.timeline import store as _store
+ from astrid.sdk.timeline._common import EDITABLE_NOTE, TimelineEditError, _num, _r
+ from astrid.sdk.timeline.doc import _row_start, _set_length, _strip_derived
+@@ -77,7 +78,16 @@ class _PublishMixin:
+             if item["status"] == "skipped":
+                 print(f"note: narration transcript {item['label']}: {item.get('reason', 'skipped')}", file=sys.stderr)
+         if self.path:  # publish resets the base: this working copy is the new head, with no changes (AUDIT bug 6)
++            # WC7's legacy whole-document publisher has no reason/rationale
++            # carrier in the Runtime publication history. Keep this local
++            # publish note until that consumer migrates; accepted ancestry and
++            # sheet bases still come from authenticated Runtime history.
++            before = _journal.document_digest(self.document())
+             self._reset_base(client=client)
++            _journal.record_or_note(self, Path(self.path), kind="publish", outcome="changed", label="publish",
++                                    reason=message or None, before=before,
++                                    after=_journal.document_digest(self.document()),
++                                    evidence=({"kind": "revision", "id": receipt.get("new_head")},))
+         receipt["message"] = message
+         return receipt
+ 
+diff --git a/tests/sdk/test_timeline_journal.py b/tests/sdk/test_timeline_journal.py
+index 7793b514..531268d1 100644
+--- a/tests/sdk/test_timeline_journal.py
++++ b/tests/sdk/test_timeline_journal.py
+@@ -157,7 +157,7 @@ def test_an_exception_is_an_edit_record_rolled_back_with_its_message(draft):
+     assert _text(draft) == text
+ 
+ 
+-def test_publish_does_not_duplicate_accepted_history_in_the_local_journal(draft, monkeypatch):
++def test_publish_records_the_message_as_reason_and_the_new_head_as_evidence(draft, monkeypatch):
+     with draft.edit("move"):
+         draft.clip("c1.rocket").set(x=90)
+     published: dict = {}
+@@ -179,9 +179,11 @@ def test_publish_does_not_duplicate_accepted_history_in_the_local_journal(draft,
+     monkeypatch.setattr(_store, "publish_bundle", fake_publish)
+     monkeypatch.setattr(_store, "fetch_bundle", fake_fetch)
+     monkeypatch.setattr(draft, "_publish_narration", lambda key, client=None: {})
+-    receipt = draft.publish("move the rocket")
+-    assert receipt["new_head"] == "rev-1"
+-    assert [record.kind for record in _records()] == ["checkout", "save"]
++    draft.publish("move the rocket")
++    rec = _records()[-1]
++    assert (rec.kind, rec.outcome, rec.label) == ("publish", "changed", "publish")
++    assert rec.reason == "move the rocket"
++    assert rec.evidence == ({"kind": "revision", "id": "rev-1"},)
+ 
+ 
+ def test_the_actor_comes_from_astrid_actor_and_astrid_session(draft, monkeypatch):
+
+--- suite names ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-86-agent root-prep-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-87-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:88:agent native-script-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-89-agent ordinary014-consumer-integration env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_PARENT_MEDIA_SEED_RUNTIME=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf-90-agent registered014-render-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+
+exec
+/bin/bash -lc 'env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/bin:/bin /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_journal.py::test_publish_records_the_message_as_reason_and_the_new_head_as_evidence tests/sdk/test_timeline_journal.py::test_an_api_save_writes_one_save_record_with_digests_and_the_step_name tests/sdk/test_timeline_journal.py::test_a_transaction_with_no_change_is_an_edit_record_with_equal_digests' in /home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut
+ succeeded in 1854ms:
+...                                                                      [100%]
+3 passed in 0.80s
+
+codex
+The restored note is a narrow compatibility path: it records only the local publish event’s existing `reason` and revision evidence, while Runtime remains authoritative for accepted ancestry and retained sheet bases. The focused journal checks pass (3/3). I’m requesting the mandated central `native-script-current-integration` run for only `tests/sdk/test_timeline_checkout_history_runtime.py` now.
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-ag01-reason-preserving-final-cut '"'native-script-current-integration --files \"tests/sdk/test_timeline_checkout_history_runtime.py\"') && echo \""'$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut
+ exited 2 in 0ms:
+awk: not an option: --files
+
+exec
+/bin/bash -lc "sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test; printf '\\n--- suites entry ---\\n'; sed -n '75,95p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf" in /home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut
+ succeeded in 0ms:
+#!/bin/bash
+# request-test WORKER|integration:REPO SUITE [--files "a b c"] [--no-cache]  — queue a test run (done by the dispatcher OUTSIDE the
+# sandbox, so localhost/browsers work). SUITE: full | targeted (needs --files) | a named suite from $ORCH/tests/suites.conf.
+# Prints the result dir $ORCH/tests/<id>/ ; then: $ORCH/bin/wait-test <id>. Only writes under $ORCH.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+T=$1; S=$2; shift 2 || { sed -n 2,4p $0; exit 2; }; F=; NC=0
+while [ $# -gt 0 ]; do case $1 in --files) F=$2; shift 2;; --no-cache) NC=1; shift;; *) echo "unknown arg $1"; exit 2;; esac; done
+case $T in integration:*) R=${T#integration:}; [ -d /home/user/work/$R ] || { echo "no repo $R"; exit 2; };;
+  *) [ -f $O/workers/$T/meta ] || { echo "no worker $T"; exit 2; }; R=$(sed -n 's/^repo=//p' $O/workers/$T/meta);; esac
+awk -v r=$R -v s=$S '$1==r && $2==s {f=1} END {exit !f}' $O/tests/suites.conf || { echo "suite '$S' not in suites.conf for $R:"; awk -v r=$R '$1==r {print "  " $2}' $O/tests/suites.conf; exit 2; }
+[ $S = targeted ] && [ -z "$F" ] && { echo "targeted needs --files"; exit 2; }
+case $S in *-nodes) [ -z "$F" ] && { echo "REFUSED: *-nodes suites need --files (they otherwise run the whole default suite)"; exit 2; };; esac
+ID=$(echo "${T#integration:}" | tr -c 'a-zA-Z0-9-\n' -)-$S-$(date -u +%m%d%H%M%S)-$RANDOM; D=$O/tests/$ID; mkdir -p $D
+printf 'target=%q\nrepo=%q\nsuite=%q\nfiles=%q\nnocache=%s\nrequested=%s\n' "$T" "$R" "$S" "$F" $NC $(date -u +%FT%TZ) > $D/request
+echo queued > $D/status; echo "TEST $ID" > $O/queue/pending/.test-$ID.tmp && mv $O/queue/pending/.test-$ID.tmp $O/queue/pending/test-$ID
+echo "$D/"; echo "wait: $O/bin/wait-test $ID" >&2
+
+--- suites entry ---
+runtime delivery-final-ref-integration env TIMELINE_DELIVERY_SCRIPT_SHA=cee29952d65b306414c9c5492b6be594a5b47d8a091f307bbb525bc42a4db81e python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build --dry-run --repos "agent runtime app composition"
+
+runtime registered-assembler-canonical-target bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-registered-render-canonical-target/run-registered-probe "$PWD"
+
+runtime text-native-private-pair-integration cd /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-native-private-pair/agent-source && env ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-native-private-pair/runtime-candidate ASTRID_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-native-private-pair/agent-source PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-native-private-pair/agent-source:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-native-private-pair/runtime-candidate /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --runxfail
+agent full-remotion12-s2-integration env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent-child-s2/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -n 3
+
+runtime public-s2-literal-current-integration test "$(git -C /home/user/work/runtime rev-parse HEAD)" = 388eff42a644aeafa5d4605d0bb235e1ca849741 && test -z "$(git -C /home/user/work/runtime status --porcelain)" && env ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=/home/user/work/runtime:$PWD:/home/user/work/agent PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -P -c 'import runtime_protocol, pytest, sys; assert runtime_protocol.__file__ == "/home/user/work/runtime/runtime_protocol/__init__.py"; print("Runtime source:", runtime_protocol.__file__, flush=True); raise SystemExit(pytest.main(sys.argv[1:]))' -q -p no:cacheprovider -m integration
+
+agent registered-native-render-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+
+agent root-prep-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+
+agent native-script-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+agent ordinary014-consumer-integration env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_PARENT_MEDIA_SEED_RUNTIME=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration
+agent registered014-render-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+
+agent native014-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+
+runtime cli-agent2f8-integration env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-2f8b9cc5 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-2f8b9cc5 /home/user/work/venv-agent/bin/python -m pytest -q -m integration /home/user/work/wt/agt-pin-2f8b9cc5/tests/sdk/test_timeline_commit_provider_runtime.py
+runtime current-http-cli-durability bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-current-http-cli.sh
+
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-ag01-reason-preserving-final-cut native-script-current-integration --files '"'tests/sdk/test_timeline_checkout_history_runtime.py') && echo \""'$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut
+codex
+The central run is queued and still executing; no result has been emitted yet. While it runs, I’m checking the exact changed source and test tree only, with no additional suite requests.
+exec
+/bin/bash -lc "D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-ag01-reason-preserving-final-cut-native-script-current-integration-1020182314-19789; stat -c '%y %s bytes' \""'$D/log.txt" 2>/dev/null || true; tail -30 "$D/log.txt" 2>/dev/null || true; cat "$D/status" 2>/dev/null || true' in /home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut
+ succeeded in 46ms:
+2026-10-20 18:23:44.900821294 +0000 98 bytes
+..                                                                       [100%]
+2 passed in 9.43s
+pass
+
+ succeeded in 60161ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-ag01-reason-preserving-final-cut-native-script-current-integration-1020182314-19789
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-ag01-reason-preserving-final-cut-native-script-current-integration-1020182314-19789/
+test agt-m2-ag01-reason-preserving-final-cut-native-script-current-integration-1020182314-19789: pass exit=0 in 12s — native-script-current-integration on agt-m2-ag01-reason-preserving-final-cut (agent tree be20a9209b92d836d2c3ecd867fd9083d7437ded)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_checkout_history_runtime.py
+counts: 2 passed in 9.43s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-ag01-reason-preserving-final-cut-native-script-current-integration-1020182314-19789/log.txt ---
+..                                                                       [100%]
+2 passed in 9.43s
+
+codex
+The mandated current-integration run passed 2/2 for `tests/sdk/test_timeline_checkout_history_runtime.py`. I’m doing the final hygiene check now: confirm only the intended two files changed, no cache/build artifacts were created, and write the harness commit message plus `DONE`.
+exec
+/bin/bash -lc "git status --short && git diff --check && printf '\\n--- changed paths ---\\n' && git diff --name-only && printf '\\n--- source references ---\\n' && rg -n 'WC7|record_or_note|test_publish_records' astrid/sdk/timeline/publish.py tests/sdk/test_timeline_journal.py && printf '\\n--- artifacts ---\\n' && find . -type d \\( -name '__pycache__' -o -name '.pytest_cache' -o -name 'out' \\) -prune -print" in /home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut
+ succeeded in 1515ms:
+ M astrid/sdk/timeline/publish.py
+ M tests/sdk/test_timeline_journal.py
+
+--- changed paths ---
+astrid/sdk/timeline/publish.py
+tests/sdk/test_timeline_journal.py
+
+--- source references ---
+tests/sdk/test_timeline_journal.py:160:def test_publish_records_the_message_as_reason_and_the_new_head_as_evidence(draft, monkeypatch):
+astrid/sdk/timeline/publish.py:81:            # WC7's legacy whole-document publisher has no reason/rationale
+astrid/sdk/timeline/publish.py:87:            _journal.record_or_note(self, Path(self.path), kind="publish", outcome="changed", label="publish",
+
+--- artifacts ---
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..fe4f6eba4ad48c40374ed31bead52239290f18e0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/commit-msg
+@@ -0,0 +1,5 @@
++fix(timeline): preserve legacy publish rationale
++
++Keep the existing local publish note for WC7's legacy whole-document publisher,
++whose Runtime carrier has no reason or rationale field, while retaining the
++Runtime-authenticated history migration for accepted sheet bases.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..b16b12a808cb2f75b71b79640aa3918321e03456
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/report.md
+@@ -0,0 +1,20 @@
++# AG01 reason-preserving final cut
++
++## Source and decision
++
++- Agent tree at completion: `be20a9209b92d836d2c3ecd867fd9083d7437ded` (central test snapshot).
++- Current Runtime source inspected at `/home/user/work/runtime`, locked client source commit `2c4ac180c2220bdad966bc01e95ad230e99ce26a`.
++- Traced `Checkout.publish(message)` through `astrid/sdk/timeline/publish.py` and `astrid/sdk/timeline/store.py` into `astrid/core/timeline/authoring_bundle.py:publish_authoring_candidate`, which sends the existing `publish_parent_composition` publication.
++- The current Runtime legacy whole-document publisher (`runtime_protocol/service.py:2765`) accepts the publication closure but has no message/rationale field in that carrier or in its returned accepted publication. Runtime command-history metadata (`source`, `label`, `rationale`, `group_id`) belongs to the separate authenticated commit route and cannot be smuggled into this legacy publication.
++- Restored the existing local publish note in `astrid/sdk/timeline/publish.py`, with the original reason and revision evidence assertions in `tests/sdk/test_timeline_journal.py`. The comment records the exact WC7 dependency: retain this note until the legacy whole-document publisher consumer migrates.
++- Kept the migrated Runtime-authenticated retained-sheet basis path and did not alter local unsent draft journal, outbox, or recovery behavior.
++
++## Tests
++
++- `env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/bin:/bin /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_journal.py::test_publish_records_the_message_as_reason_and_the_new_head_as_evidence tests/sdk/test_timeline_journal.py::test_an_api_save_writes_one_save_record_with_digests_and_the_step_name tests/sdk/test_timeline_journal.py::test_a_transaction_with_no_change_is_an_edit_record_with_equal_digests` — **3 passed**.
++- Central named run: `native-script-current-integration --files "tests/sdk/test_timeline_checkout_history_runtime.py"` — **2 passed** in 9.43s; result tree `be20a9209b92d836d2c3ecd867fd9083d7437ded`.
++- `git diff --check` — passed.
++
++## Limits
++
++No full suite, broad-root pytest, browser suite, or unrelated retired client-cutover tests were run. No Runtime files or shared dependencies were modified. The legacy WC7 publication remains intentionally unported; its reason is preserved only in the local publish note until that consumer moves to the authenticated command route.
+diff --git a/astrid/sdk/timeline/publish.py b/astrid/sdk/timeline/publish.py
+index e96e6073c7c6a49678ab677a98c1742dbc5cc563..d8f2a019d6d8b9dbcc0b3fa70f4d29f8cfb27054
+--- a/astrid/sdk/timeline/publish.py
++++ b/astrid/sdk/timeline/publish.py
+@@ -15,6 +15,7 @@
+ from astrid.sdk import (
+     timeline_transcripts as _transcripts,  # module access: its functions resolve at call time
+ )
++from astrid.sdk.timeline import journal as _journal
+ from astrid.sdk.timeline import store as _store
+ from astrid.sdk.timeline._common import EDITABLE_NOTE, TimelineEditError, _num, _r
+ from astrid.sdk.timeline.doc import _row_start, _set_length, _strip_derived
+@@ -77,7 +78,16 @@
+             if item["status"] == "skipped":
+                 print(f"note: narration transcript {item['label']}: {item.get('reason', 'skipped')}", file=sys.stderr)
+         if self.path:  # publish resets the base: this working copy is the new head, with no changes (AUDIT bug 6)
++            # WC7's legacy whole-document publisher has no reason/rationale
++            # carrier in the Runtime publication history. Keep this local
++            # publish note until that consumer migrates; accepted ancestry and
++            # sheet bases still come from authenticated Runtime history.
++            before = _journal.document_digest(self.document())
+             self._reset_base(client=client)
++            _journal.record_or_note(self, Path(self.path), kind="publish", outcome="changed", label="publish",
++                                    reason=message or None, before=before,
++                                    after=_journal.document_digest(self.document()),
++                                    evidence=({"kind": "revision", "id": receipt.get("new_head")},))
+         receipt["message"] = message
+         return receipt
+ 
+diff --git a/tests/sdk/test_timeline_journal.py b/tests/sdk/test_timeline_journal.py
+index 7793b514de412a526d04c93cf44e58da04cc47db..531268d1abaa8c791502b3e16eeb7411707715d5
+--- a/tests/sdk/test_timeline_journal.py
++++ b/tests/sdk/test_timeline_journal.py
+@@ -157,7 +157,7 @@
+     assert _text(draft) == text
+ 
+ 
+-def test_publish_does_not_duplicate_accepted_history_in_the_local_journal(draft, monkeypatch):
++def test_publish_records_the_message_as_reason_and_the_new_head_as_evidence(draft, monkeypatch):
+     with draft.edit("move"):
+         draft.clip("c1.rocket").set(x=90)
+     published: dict = {}
+@@ -179,9 +179,11 @@
+     monkeypatch.setattr(_store, "publish_bundle", fake_publish)
+     monkeypatch.setattr(_store, "fetch_bundle", fake_fetch)
+     monkeypatch.setattr(draft, "_publish_narration", lambda key, client=None: {})
+-    receipt = draft.publish("move the rocket")
+-    assert receipt["new_head"] == "rev-1"
+-    assert [record.kind for record in _records()] == ["checkout", "save"]
++    draft.publish("move the rocket")
++    rec = _records()[-1]
++    assert (rec.kind, rec.outcome, rec.label) == ("publish", "changed", "publish")
++    assert rec.reason == "move the rocket"
++    assert rec.evidence == ({"kind": "revision", "id": "rev-1"},)
+ 
+ 
+ def test_the_actor_comes_from_astrid_actor_and_astrid_session(draft, monkeypatch):
+
+exec
+/bin/bash -lc "rg -n 'source commit|locked client|2c4' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/report.md; rg -n 'source_commit' runtime.lock.json; git rev-parse HEAD"'^{tree}' in /home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut
+ succeeded in 37ms:
+6:- Current Runtime source inspected at `/home/user/work/runtime`, locked client source commit `2c4ac180c2220bdad966bc01e95ad230e99ce26a`.
+67:  "source_commit": "2c4ac180c2220bdad966bc01e95ad230e99ce26a"
+3f171d0d884dc788232204f9ab9e3ba434d99ed8
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/DONE && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-reason-preserving-final-cut/commit-msg && echo DONE && git status --short' in /home/user/work/wt/agt-m2-ag01-reason-preserving-final-cut
+ succeeded in 627ms:
+DONE
+ M astrid/sdk/timeline/publish.py
+ M tests/sdk/test_timeline_journal.py
+
+codex
+Implemented the reason-preserving AG01 cut.
+
+- Confirmed legacy `Checkout.publish()` → Runtime whole-document publication carries no reason/rationale field.
+- Restored the existing local publish note and original `reason`/revision `evidence` assertions, documenting the WC7 dependency.
+- Kept Runtime-authenticated sheet history migration and local draft recovery intact.
+- No DTO/API or shared dependency changes.
+
+Tests:
+
+- Targeted journal tests: **3 passed**
+- Central `native-script-current-integration --files "tests/sdk/test_timeline_checkout_history_runtime.py"`: **2 passed**
+- `git diff --check`: passed
+
+Report and commit message written; `DONE` created.
+tokens used
+210,264
+Implemented the reason-preserving AG01 cut.
+
+- Confirmed legacy `Checkout.publish()` → Runtime whole-document publication carries no reason/rationale field.
+- Restored the existing local publish note and original `reason`/revision `evidence` assertions, documenting the WC7 dependency.
+- Kept Runtime-authenticated sheet history migration and local draft recovery intact.
+- No DTO/API or shared dependency changes.
+
+Tests:
+
+- Targeted journal tests: **3 passed**
+- Central `native-script-current-integration --files "tests/sdk/test_timeline_checkout_history_runtime.py"`: **2 passed**
+- `git diff --check`: passed
+
+Report and commit message written; `DONE` created.

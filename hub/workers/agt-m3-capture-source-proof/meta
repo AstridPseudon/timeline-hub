@@ -1,0 +1,9 @@
+name=agt-m3-capture-source-proof
+repo=agent
+base=tl/agt-m3-verified-source-handoff
+base_sha=62e6d2c2
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-capture-source-proof
+started=2026-10-20T01:55:21Z

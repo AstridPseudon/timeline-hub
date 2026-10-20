@@ -1,0 +1,9 @@
+name=agt-m2-trim-current-gate
+repo=agent
+base=tl/integration
+base_sha=86405964
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-trim-current-gate
+started=2026-10-20T10:59:13Z

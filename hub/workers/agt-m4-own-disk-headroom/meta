@@ -1,0 +1,9 @@
+name=agt-m4-own-disk-headroom
+repo=agent
+base=tl/integration
+base_sha=d0a5072b
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m4-own-disk-headroom
+started=2026-10-20T20:08:13Z

@@ -1,0 +1,9 @@
+name=agt-m2-wc3-current-cut-gate
+repo=agent
+base=3c4f6de4fa777323b3386c01c7266b619b86af6d
+base_sha=3c4f6de4
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-wc3-current-cut-gate
+started=2026-10-20T18:12:05Z

@@ -1,0 +1,9 @@
+name=agt-m3-capture-projection-exact
+repo=agent
+base=tl/agt-m3-capture-projector
+base_sha=bb0161c3
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-capture-projection-exact
+started=2026-10-20T02:54:49Z

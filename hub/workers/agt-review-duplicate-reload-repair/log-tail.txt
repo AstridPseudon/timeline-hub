@@ -1,0 +1,400 @@
+283-            # Authored content in published identities, never the materialized alias.
+284-            from astrid.core.timeline.authoring_bundle import _remap_known_item_references
+285-            owner = ref.removesuffix('/shot')
+286-            shot = self.occurrence(owner)['shot_id']
+287-            mapping = self.bundle['source_mapping']['shots'].get(shot, {}).get('item_id_map', {})
+288-            value = {'payload': _remap_known_item_references(self.bundle['shots'][shot]['payload'],
+289-                                                           {v: k for k, v in mapping.items()})}
+290-        for key in path:
+291-            if isinstance(value, dict) and key in value:
+292-                value = value[key]
+293-            elif isinstance(value, list) and key.isdecimal() and int(key) < len(value):
+294-                value = value[int(key)]
+295-            else:
+296-                return copy.deepcopy(ABSENT)
+297-        return present(value)
+298-
+299-    def matches(self, ref, path, expected):
+300-        actual = self.get(ref, path)
+301-        if equal(actual, expected):
+302-            return True
+303-        if (root_identity(ref) is not None and ref.startswith('occurrence:')
+304-                and expected['state'] == actual['state'] == 'present'):
+305-            if not path and isinstance(expected['value'], dict):
+306-                before = copy.deepcopy(expected['value'])
+307-                if not self.matches(ref, ['shot_id'], present(before.get('shot_id'))):
+308-                    return False
+309-                before['shot_id'] = actual['value']['shot_id']
+310-                return equal(before, actual['value'])
+311-            if list(path) == ['shot_id']:
+312-                from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+313-                source = self.entity(ref + '/shot')['shot_id']
+314-                materialized = _authoring_shot_id(self.bundle['project_id'], self.bundle['timeline_id'],
+315-                                                ref.removeprefix('occurrence:'), source, shared=True)
+316-                return expected['value'] in (source, materialized) and actual['value'] in (source, materialized)
+317-        if (root_identity(ref) is not None and ref.startswith('shot:') and not path
+318-                and expected['state'] == actual['state'] == 'present'):
+319-            # The verified source link is compiler output, not authored root data.
+320-            source = self.bundle['source_mapping']['shots'].get(ref[5:], {})
+321-            link = actual['value']['payload'].get('internal_timeline_revision_id')
+322-            if link is not None and link == source.get('internal_timeline_revision_id'):
+323-                before, after = copy.deepcopy(expected['value']), copy.deepcopy(actual['value'])
+324-                before['payload'].pop('internal_timeline_revision_id', None)
+325-                after['payload'].pop('internal_timeline_revision_id', None)
+326-                return equal(before, after)
+327-        if (ref.endswith('/shot') and list(path) == ['shot_id']
+328-                and expected['state'] == actual['state'] == 'present'
+329-                and isinstance(expected.get('value'), str)):
+330-            from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+331-            # The only admitted source change is this occurrence's exact main
+332-            # materialization of the original source, never a prefix heuristic.
+333-            occurrence = self.occurrence(ref.removesuffix('/shot'))
+334-            def materialized(source):
+335-                return _authoring_shot_id(self.bundle['project_id'], self.bundle['timeline_id'],
+336-                                          occurrence['occurrence_id'], source, shared=True)
+337-            return (actual['value'] == materialized(expected['value'])
+338-                    or expected['value'] == occurrence['shot_id'] == materialized(actual['value']))
+339-        return False
+340-
+341-    def set(self, ref, path, state):
+342-        if '/asset:' in ref and not path:
+217:            return {key: copy.deepcopy(shot[key]) for key in ('payload', 'internal_timeline')}
+253:            if (set(value) != {'payload', 'internal_timeline'}
+255:                raise CommandError('shot root requires payload and internal_timeline objects', ref=ref)
+282:        if ref.endswith('/shot') and tuple(path[:1]) == ('payload',):
+288:            value = {'payload': _remap_known_item_references(self.bundle['shots'][shot]['payload'],
+321:            link = actual['value']['payload'].get('internal_timeline_revision_id')
+324:                before['payload'].pop('internal_timeline_revision_id', None)
+325:                after['payload'].pop('internal_timeline_revision_id', None)
+424:        if ref.endswith('/shot') and tuple(path[:1]) == ('payload',) and len(path) > 1:
+427:            value, path = self.bundle['shots'][shot]['payload'], tuple(path[1:])
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/test_published_s2_duplicate.py')
+s=p.read_text().replace(\"State(bundle_from_document(case.document())).entity('occurrence:' + owner + '/shot')['payload']['name']\", \"State(bundle_from_document(case.document())).get('occurrence:' + owner + '/shot', ['payload', 'name'])['value']\")
+p.write_text(s)
+PY" in /home/user/work/wt/agt-review-duplicate-reload-repair
+ succeeded in 0ms:
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/published-s2:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/published-s2/packages/python:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/candidate /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts='' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/test_published_s2_duplicate.py --tb=short > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/runtime-final.log 2>&1" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes
+ succeeded in 13764ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess, tarfile, io
+from pathlib import Path
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes')
+dest=notes/'parent'; dest.mkdir(exist_ok=True)
+with tarfile.open(fileobj=io.BytesIO(subprocess.check_output(['git','archive','cf7448ed']))) as tf: tf.extractall(dest,filter='data')
+p=notes/'test_published_s2_duplicate.py'
+s=p.read_text().replace('import json\\n','import json\\nimport os\\n').replace(\"notes / 'candidate'\", \"notes / os.environ.get('AGENT_REVIEW_SOURCE', 'candidate')\")
+p.write_text(s)
+PY" in /home/user/work/wt/agt-review-duplicate-reload-repair
+ succeeded in 1162ms:
+exec
+/bin/bash -lc 'tail -45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/runtime-final.log; PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/candidate/astrid/sdk/timeline/native_occurrence_duplicate.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/candidate/tests/editing_conformance/test_recipe_occurrence_duplicate.py' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 AGENT_REVIEW_SOURCE=parent PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/published-s2:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/published-s2/packages/python:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/parent /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts='' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/test_published_s2_duplicate.py -k restart_inverse_redo --tb=short > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/runtime-parent-red.log 2>&1" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes
+ succeeded in 40ms:
+................                                                         [100%]
+16 passed in 10.39s
+All checks passed!
+
+ exited 1 in 5094ms:
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/published-s2:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/published-s2/packages/python:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/candidate /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts='' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/test_published_s2_duplicate.py --tb=short > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/runtime-candidate-final.log 2>&1" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes
+ succeeded in 10295ms:
+codex
+All 16 Runtime controls passed, including equal-value/ABA writes, retired-ID reuse refusals, and changed-payload retry refusal. I haven’t found a defect in the bounded repair. I’m checking the unchanged parent as a negative control and finishing the report; this evidence does not qualify App activation or a browser journey.
+
+exec
+/bin/bash -lc 'tail -45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/runtime-parent-red.log; tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/runtime-candidate-final.log; ls -lah /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes; git status --short' in /home/user/work/wt/agt-review-duplicate-reload-repair
+ succeeded in 70ms:
+E     + %25/shot/shot-copy/revision/authoring-shot-revision-fe30db1b3f1c799f8a0a35df77b81dbc13eed3e2af94955c0ac631ee68cf4824/occurrence/occ-copy
+_________ test_published_s2_duplicate_restart_inverse_redo[fields2-1] __________
+test_published_s2_duplicate.py:137: in test_published_s2_duplicate_restart_inverse_redo
+    assert copied[key] == recorded[key] == derived[key]
+E   AssertionError: assert 'project/d76c...t/final-video' == 'project/d76c...t/final-video'
+E     
+E     Skipping 71 identical leading characters in diff, use -v to show
+E     - rence/occ-0/output/final-video
+E     ?           ^
+E     + rence/occ-copy/output/final-video
+E     ?           ^^^^
+_________ test_published_s2_duplicate_restart_inverse_redo[fields2-2] __________
+test_published_s2_duplicate.py:137: in test_published_s2_duplicate_restart_inverse_redo
+    assert copied[key] == recorded[key] == derived[key]
+E   AssertionError: assert 'project/e3e3...t/final-video' == 'project/e3e3...t/final-video'
+E     
+E     Skipping 71 identical leading characters in diff, use -v to show
+E     - rence/occ-0/output/final-video
+E     ?           ^
+E     + rence/occ-copy/output/final-video
+E     ?           ^^^^
+_________ test_published_s2_duplicate_restart_inverse_redo[fields3-1] __________
+test_published_s2_duplicate.py:137: in test_published_s2_duplicate_restart_inverse_redo
+    assert copied[key] == recorded[key] == derived[key]
+E   AssertionError: assert 'project/85c1...ence/occ-copy' == 'project/85c1...urrence/occ-0'
+E     
+E     Skipping 62 identical leading characters in diff, use -v to show
+E     - %25/shot/source-shot/revision/source-shot-v1/occurrence/occ-0
+E     + %25/shot/shot-copy/revision/authoring-shot-revision-fb30cf13975f63de87e2a0521390726d722a8eb888f482f5195cd78c8f6a5555/occurrence/occ-copy
+_________ test_published_s2_duplicate_restart_inverse_redo[fields3-2] __________
+test_published_s2_duplicate.py:137: in test_published_s2_duplicate_restart_inverse_redo
+    assert copied[key] == recorded[key] == derived[key]
+E   AssertionError: assert 'project/6e34...ence/occ-copy' == 'project/6e34...urrence/occ-0'
+E     
+E     Skipping 62 identical leading characters in diff, use -v to show
+E     - %25/shot/source-shot/revision/source-shot-v1/occurrence/occ-0
+E     + %25/shot/shot-copy/revision/authoring-shot-revision-f6a3219c9d2eab1817607ad685dad5e6630a67775c473c59c44fefe57a40daf3/occurrence/occ-copy
+=========================== short test summary info ============================
+FAILED test_published_s2_duplicate.py::test_published_s2_duplicate_restart_inverse_redo[fields1-1]
+FAILED test_published_s2_duplicate.py::test_published_s2_duplicate_restart_inverse_redo[fields1-2]
+FAILED test_published_s2_duplicate.py::test_published_s2_duplicate_restart_inverse_redo[fields2-1]
+FAILED test_published_s2_duplicate.py::test_published_s2_duplicate_restart_inverse_redo[fields2-2]
+FAILED test_published_s2_duplicate.py::test_published_s2_duplicate_restart_inverse_redo[fields3-1]
+FAILED test_published_s2_duplicate.py::test_published_s2_duplicate_restart_inverse_redo[fields3-2]
+6 failed, 2 passed, 8 deselected in 4.32s
+................                                                         [100%]
+16 passed in 9.70s
+total 68K
+drwxr-xr-x  5 root root 4.0K Oct 20 12:30 .
+drwxr-xr-x  3 root root 4.0K Oct 20 12:26 ..
+drwxr-xr-x 20 root root 4.0K Oct 20 12:26 candidate
+drwxr-xr-x 20 root root 4.0K Oct 20 12:30 parent
+drwxr-xr-x 13 root root 4.0K Oct 20 12:26 published-s2
+-rw-r--r--  1 root root   99 Oct 20 12:30 runtime-candidate-final.log
+-rw-r--r--  1 root root  100 Oct 20 12:30 runtime-final.log
+-rw-r--r--  1 root root 1.6K Oct 20 12:27 runtime-first.log
+-rw-r--r--  1 root root 4.3K Oct 20 12:30 runtime-parent-red.log
+-rw-r--r--  1 root root 2.5K Oct 20 12:27 runtime-seed.log
+-rw-r--r--  1 root root   98 Oct 20 12:28 runtime-service.log
+-rw-r--r--  1 root root  685 Oct 20 12:27 targeted.log
+-rw-r--r--  1 root root  13K Oct 20 12:30 test_published_s2_duplicate.py
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/repro_parent_inverse.py <<'PY'
+\"\"\"Required-success undo on the unchanged parent, using real published S2 history.\"\"\"
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from test_published_s2_duplicate import Case, FIELDS
+from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.native_occurrence_duplicate import capture_occurrence_duplicate
+import astrid.sdk.timeline.native_occurrence_duplicate as native
+
+notes = Path(__file__).resolve().parent
+assert Path(native.__file__).is_relative_to(notes / 'parent')
+with TemporaryDirectory(prefix='parent-inverse-', dir=notes) as temp:
+    case = Case(Path(temp) / 'realm', 2, FIELDS)
+    try:
+        original = case.document()
+        command = capture_occurrence_duplicate(bundle_from_document(original), 'occurrence:occ-0', 'occ-copy', 'shot-copy')
+        result = case.commit(case.body([command]), 'duplicate')
+        case.restart()
+        assert case.document()['parent_revision']['payload']['occurrences'][:-1] == original['parent_revision']['payload']['occurrences']
+        try:
+            undo = case.inverse(result['receipt']['receipt_id'], 'undo')
+        except Exception as exc:
+            print(type(exc).__name__, str(exc), getattr(exc, 'details', None), flush=True)
+            raise
+        assert undo['data']['canonical_document'] == original
+    finally:
+        case.service.close()
+PY" in /home/user/work/wt/agt-review-duplicate-reload-repair
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/published-s2:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/published-s2/packages/python:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/parent /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/repro_parent_inverse.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/runtime-parent-inverse.log 2>&1' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes
+ exited 1 in 1192ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess, hashlib, json
+from pathlib import Path
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes')
+result={}
+for name,repo,ref in [('candidate','/home/user/work/wt/agt-review-duplicate-reload-repair','68a51203'),('parent','/home/user/work/wt/agt-review-duplicate-reload-repair','cf7448ed'),('published-s2','/home/user/work/runtime','2c4ac180')]:
+    entries=subprocess.check_output(['git','-C',repo,'ls-tree','-r','-z',ref]).split(b'\\0')
+    mismatches=[]; missing=[]; verified=0
+    for entry in entries:
+        if not entry: continue
+        metadata,path=entry.split(b'\\t',1)
+        mode,kind,blob=metadata.split()
+        if kind "'!= b'"'blob': continue
+        path=path.decode(); file=notes/name/path
+        if not file.exists() and not file.is_symlink(): missing.append(path); continue
+        data=file.readlink().as_posix().encode() if file.is_symlink() else file.read_bytes()
+        actual=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\\0'+data).hexdigest()
+        if actual "'!= blob.decode(): mismatches.append(path)
+        else: verified+=1
+    result[name]={'"'commit':subprocess.check_output(['git','-C',repo,'rev-parse',ref],text=True).strip(),'tree':subprocess.check_output(['git','-C',repo,'rev-parse',ref+'"'^{tree}'"'],text=True).strip(),'verified_blobs':verified,'mismatches':mismatches,'missing':missing}
+    print(name,verified,'verified',len(mismatches),'mismatched',len(missing),'missing')
+(notes/'source-audit.json').write_text(json.dumps(result,indent=2)+'\\n')
+PY
+head -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/runtime-parent-inverse.log" in /home/user/work/wt/agt-review-duplicate-reload-repair
+ succeeded in 1085ms:
+candidate 3057 verified 0 mismatched 0 missing
+parent 3057 verified 0 mismatched 0 missing
+published-s2 413 verified 0 mismatched 0 missing
+RuntimeErrorBase original authored guard changed {'status': 'conflict', 'reason': 'inverse_conflict', 'base': {'revision_id': 'authoring-parent-revision-7747253992b39de935e303bfd5b8c7f8b6de42680f50f5af048d90cad7d05e03', 'publication_id': 'txn-672a146301244dea9b5b88d3d0dd1682'}, 'current': {'revision_id': 'authoring-parent-revision-7747253992b39de935e303bfd5b8c7f8b6de42680f50f5af048d90cad7d05e03', 'publication_id': 'txn-672a146301244dea9b5b88d3d0dd1682'}, 'conflicts': [{'kind': 'inverse_conflict', 'ref': 'occurrence:occ-copy', 'path': [], 'base': {'state': 'present', 'value': {'app': {'org.example/v1': {'occurrence_id': 'occ-0', 'ordered': [None, False, 0, 1.0, {}, []], 'output_identity': 'out:occ-0', 'shot_id': 'source-shot', 'stable_deep_link': 'deep:occ-0'}}, 'associations': [{'occurrence_id': 'occ-0', 'ordered': [None, False, 0, 1.0, {}, []], 'output_identity': 'out:occ-0', 'shot_id': 'source-shot', 'stable_deep_link': 'deep:occ-0'}], 'duration_ms': 2000, 'gain': 1, 'metadata': None, 'muted': False, 'occurrence_id': 'occ-copy', 'output_identity': 'project/fb37250a491a4e6a900af197e82e202c/document/doc%20%2F%3F%25/occurrence/occ-0/output/final-video', 'output_records': [{'occurrence_id': 'occ-0', 'ordered': [None, False, 0, 1.0, {}, []], 'output_identity': 'out:occ-0', 'shot_id': 'source-shot', 'stable_deep_link': 'deep:occ-0'}], 'parent_document_id': 'doc /?%', 'placement': {'start_ms': 0, 'track': 'picture'}, 'provenance': {}, 'shot_id': 'shot-copy', 'source_offset': 0, 'speed': 1, 'stable_deep_link': 'project/fb37250a491a4e6a900af197e82e202c/document/doc%20%2F%3F%25/shot/source-shot/revision/source-shot-v1/occurrence/occ-0', 'task': {'occurrence_id': 'occ-0', 'ordered': [None, False, 0, 1.0, {}, []], 'output_identity': 'out:occ-0', 'shot_id': 'source-shot', 'stable_deep_link': 'deep:occ-0'}, 'track': 'picture', 'transform': {}, 'unknown': {'occurrence_id': 'occ-0', 'ordered': [None, False, 0, 1.0, {}, []], 'output_identity': 'out:occ-0', 'shot_id': 'source-shot', 'stable_deep_link': 'deep:occ-0'}}}, 'theirs': {'state': 'present', 'value': {'app': {'org.example/v1': {'occurrence_id': 'occ-0', 'ordered': [None, False, 0, 1.0, {}, []], 'output_identity': 'out:occ-0', 'shot_id': 'source-shot', 'stable_deep_link': 'deep:occ-0'}}, 'associations': [{'occurrence_id': 'occ-0', 'ordered': [None, False, 0, 1.0, {}, []], 'output_identity': 'out:occ-0', 'shot_id': 'source-shot', 'stable_deep_link': 'deep:occ-0'}], 'duration_ms': 2000, 'gain': 1, 'metadata': None, 'muted': False, 'occurrence_id': 'occ-copy', 'output_identity': 'project/fb37250a491a4e6a900af197e82e202c/document/doc%20%2F%3F%25/occurrence/occ-copy/output/final-video', 'output_records': [{'occurrence_id': 'occ-0', 'ordered': [None, False, 0, 1.0, {}, []], 'output_identity': 'out:occ-0', 'shot_id': 'source-shot', 'stable_deep_link': 'deep:occ-0'}], 'parent_document_id': 'doc /?%', 'placement': {'start_ms': 0, 'track': 'picture'}, 'provenance': {}, 'shot_id': 'shot-copy', 'source_offset': 0, 'speed': 1, 'stable_deep_link': 'project/fb37250a491a4e6a900af197e82e202c/document/doc%20%2F%3F%25/shot/shot-copy/revision/authoring-shot-revision-5ff87e170bb6b3ef9a78dbe7ee59fc40d523fc064993a60e00ae65d699e230a6/occurrence/occ-copy', 'task': {'occurrence_id': 'occ-0', 'ordered': [None, False, 0, 1.0, {}, []], 'output_identity': 'out:occ-0', 'shot_id': 'source-shot', 'stable_deep_link': 'deep:occ-0'}, 'track': 'picture', 'transform': {}, 'unknown': {'occurrence_id': 'occ-0', 'ordered': [None, False, 0, 1.0, {}, []], 'output_identity': 'out:occ-0', 'shot_id': 'source-shot', 'stable_deep_link': 'deep:occ-0'}}}, 'ours': {'state': 'absent'}, 'choices': []}]}
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/parent/astrid/sdk/timeline/commit.py", line 887, in commit
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import json
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=orch/'workers/agt-review-duplicate-reload-repair'
+notes=worker/'notes'
+report='''# Independent duplicate reload repair review
+
+**APPROVE the bounded Agent source repair. No concrete blocking defect found.** Reviewed "'`tl/agt-m2-duplicate-reload-inverse-fix` at `68a51203310eb7c1bad343e50a42cf75c46c5321`, tree `710a4b8e6b04844f90c4490ce3ac74833b2a457b`, parent `cf7448ed6c1298b172d004914cfe2bb8c99048e7`.
+
+## Scope and findings
+
+Read PLAN, repository AGENTS, the original repair report and the shared duplicate identity/source-port analyses. Inspected both changed files and the surrounding compiler, recorder, State matching, guarded inverse, rebase, history-boundary and reservation paths. Product diff is exactly two files, +122/-5; no inverse implementation, schema, DTO, public pin or grouped-root-cache change.
+
+The handler first creates the copied shot using the existing deterministic item remapping. For an unoccupied destination occurrence carrying either approved root field, it compiles a detached provisional candidate and takes only the present `stable_deep_link`/`output_identity` from that candidate'"'s final destination occurrence. This reaches the existing "'`_rederive_root_identity` and `stable_occurrence_deep_link`/`stable_output_identity` factories, including the actual content-derived destination shot revision and escaped parent document identity. It records those values before `create_entity`. Compilation preserves append order, so selecting the final row here is valid. The occupied-ID bypass keeps the existing authoritative collision validation.
+
+Capture/preview/root-create after.values, raw immutable parent, actual document reload and authenticated undo/redo now agree. No suffix rewriting, recursive normalization or new root exemption was introduced. Opaque nested and namespaced fields and historical output/task/association values remain literal; missing root fields stay missing. Existing source identity aliases and verified internal-revision normalization were not changed by this repair. Source tests retain strict value/history/ABA/order/dependency guards and collision checks. Real service controls independently retain equal-write/ABA refusal and historical ID reservations.
+
+## Fresh verification
+
+All commands used dependency-only `/home/user/work/venv-agent` read-only, `PYTHONDONTWRITEBYTECODE=1`, and disabled pytest/Ruff caches. All source archives, scripts and logs are outside the repository in this worker'"'s notes directory. No localhost/socket/browser/full suite was run or requested.
+
+Use these exact path variables to reproduce:
+
+"'```bash
+N=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes
+A=$N/candidate
+R=$N/published-s2
+P=/home/user/work/venv-agent/bin/python
+```
+
+Source/neighbors, cwd `$A`:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$A $P -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_occurrence_delete.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/timeline/test_authoring_bundle.py tests/timeline/test_shot_composition.py --tb=short
+```
+
+**570 passed, 1 deselected in 68.50s**, exit 0 (`targeted.log`). The one deselection is the unchanged integration-marked authoring publication test excluded by the repository'"'s normal marker expression. Combined raw compile/reload/undo/redo cases and strict guard cases are included; no behavior expectation was weakened.
+
+External actual Runtime service/provider reproduction, cwd "'`$N`:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$R:$R/packages/python:$A $P -m pytest -q -p no:cacheprovider -o addopts='"'' "'$N/test_published_s2_duplicate.py --tb=short
+```
+
+**16 passed in 9.70s**, exit 0 (`runtime-candidate-final.log`, final script bytes). Earlier successful service runs were 8 passed/6.44s for the original matrix and 16 passed/10.39s after the history controls. Final script source assertions verify the imported Agent handler and RuntimeService paths. Runtime is the exact published producer **2c4ac180c2220bdad966bc01e95ad230e99ce26a**, tree **7ab412cc4bcbe517efcfa806e092336390312e18**, official generated Python package from that same archive, version **0.2.13**, digest **sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4**. No schema file or validator was replaced, and no fake provider, prepared acceptance, SQL/history insertion, provider monkeypatch or history override was used.
+
+The external fixture creates a private realm/project/timelines through normal service APIs, seeds an empty headless timeline using the still-supported `publish_parent_composition` API, and then loads the real `astrid` provider through `load_timeline_commit_provider`. Every measured preview, duplicate, inverse and redo goes through `RuntimeService.commit_timeline` and the real RequestCommitPort, SQLite/CAS persistence, acceptance validation and accepted history. The fixture is synthetic, with a raw title clip and empty media/items collections; its output/task/association fields are opaque historic-shaped JSON, not created task lifecycle records. It does not override the legacy seed'"'s evaluator/validation.
+
+Eight cases cover one/two shared source occurrences and neither/link/output/both roots. They assert reserved IDs; no-write dry run; exact preview/immutable accepted closure; complete source occurrence preservation; nested JSON byte spelling, including 0 versus 1.0 and null; root factory equality; durable recorded after.values against preview and reopened authored rows; restart/readback; exact retry; authenticated undo to the full original immutable document; restart; authenticated redo to the full duplicate immutable document; and store integrity. Eight additional controls cover source/destination equal-value and A→B→A shot-name writes refusing duplicate undo (four), reuse of retired occurrence/shot/both IDs after undo refusing atomically (three), and changed payload under the duplicate key refusing atomically (one). Atomic refusal comparisons use read-only "'`iterdump` snapshots only.
+
+Negative control on the exact unchanged parent, same published Runtime, cwd `$N`:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 AGENT_REVIEW_SOURCE=parent PYTHONPATH=$R:$R/packages/python:$N/parent $P -m pytest -q -p no:cacheprovider -o addopts='"'' "'$N/test_published_s2_duplicate.py -k restart_inverse_redo --tb=short
+```
+
+**6 failed, 2 passed, 8 deselected in 4.32s**, exit 1 (`runtime-parent-red.log`). All six identity-bearing cases fail the required equality between the actual accepted raw root and durable creation record; both no-root controls complete undo/redo. These are diagnostic runs against old source, not candidate failures.
+
+A separate required-success parent probe proceeds through real acceptance and restart to the original undo failure:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$R:$R/packages/python:$N/parent $P $N/repro_parent_inverse.py
+```
+
+Exit **1**, **RuntimeErrorBase: original authored guard changed**, reason `inverse_conflict`, ref `occurrence:occ-copy`, path `[]` (`runtime-parent-inverse.log`). Base and current head pairs are equal; there is no intervening edit. The unchanged source occurrences are asserted before undo. Thus the old bug is reproduced at the real Runtime boundary, and the candidate'"'s 16-case pass repairs it without any test double or relaxed validator.
+
+Lint/whitespace:
+
+"'```bash
+PYTHONDONTWRITEBYTECODE=1 $P -m ruff check --no-cache $A/astrid/sdk/timeline/native_occurrence_duplicate.py $A/tests/editing_conformance/test_recipe_occurrence_duplicate.py
+git diff --check cf7448ed 68a51203
+git status --short
+```
+
+Ruff: **All checks passed**, exit 0. Whitespace: exit 0. Review worktree status: empty. Source provenance was also verified after testing against every tracked blob: candidate **3057/3057**, parent **3057/3057**, published Runtime **413/413**; no changed or missing blob (`source-audit.json`). No build/temp output was created in the worktree.
+
+During external harness development, setup errors were corrected in the external script only: import client version from official client metadata; use numeric fps for the legacy seed'"'s existing visual seam; supply matching parent registry mirrors; read shot content through State.get rather than its identity-only entity view. These were harness/interface setup errors, not product findings; the final complete service run above is the qualification result. No product/fixture source was altered to make it pass.
+
+## Decisions, limits and next step
+
+No product fixes or orchestration/integration/ledger edits. No commit, merge, checkout, rebase, push, ref deletion, dependency install or shared dependency/cache write. The separate grouped-root-cache repair remains outside this review. Reports/scripts only are written to the authorized shared review/worker paths.
+
+Approval is for this exact bounded Agent source patch, with fresh real published-S2 **source-pair service acceptance**. Source is imported from private byte-exact archives with official generated client bytes; this is not an installed production pair, HTTP/door/browser test, current integration tuple qualification, App source activation, owner-film test, renderer-off test or public journey. No full suite or App tests were requested. In particular the legacy writer retirement and App durable outbox/lost-ACK/newer-suffix/restart journey remain with their owners.
+
+Nothing is blocked. Recommend the orchestrator accept this narrow source repair, then coordinate the normal paired consumer qualification and bounded App duplicate port. Preserve actual App raw-closure/reload/undo/redo/retry and zero-legacy-traffic gates before activation/retirement claims.
+'''
+(notes/'report.md').write_text(report)
+flat=f'''# Duplicate reload identity repair — APPROVE
+
+No concrete blocking defect found in "'`tl/agt-m2-duplicate-reload-inverse-fix` at **68a51203310eb7c1bad343e50a42cf75c46c5321**, parent **cf7448ed6c1298b172d004914cfe2bb8c99048e7**. This approves the bounded Agent source patch, not App activation.
+
+The two-file repair (+122/-5) records exactly present root `stable_deep_link` and `output_identity` from a detached compilation using the existing destination factories and final destination shot revision. Raw immutable row, creation record, preview and actual reload agree. Unknown/nested/namespaced and historical output/task/association JSON stays literal; missing root fields stay missing. No suffix remap, broad root exemption, inverse change, DTO/schema/pin change or separate grouped-root-cache repair.
+
+Fresh source/neighbors: **570 passed, 1 normal integration deselection**. External real **published S2 2c4ac180 / 0.2.13** RuntimeService + startup-loaded real provider: **16 passed**. Eight cases cover single/shared sources × neither/either/both roots through no-write dry run, acceptance, durable root-record/raw equality, restart/readback/exact retry, authenticated undo and redo with full immutable document equality and integrity checks. Eight more retain source/destination equal-write/ABA refusal, historical occurrence/shot reservations and changed-payload retry refusal. Only the initial empty-headless seed uses the existing public publication API; all measured operations use real RequestCommitPort acceptance/history, with no fake SQL/history/prepared provider/validator override.
+
+Unchanged parent negative control against the same real S2 service: **6 identity cases fail / 2 no-root controls pass**. Separate parent required-success undo reaches **inverse_conflict: original authored guard changed**, `occurrence:occ-copy`, path `[]`, after acceptance/restart with identical base/current heads and no intervening edit. Candidate fixes this actual boundary, not merely an in-memory mock. Ruff and whitespace pass; review repo unchanged. Post-test tracked-blob audit: candidate3057/parent3057/Runtime413 all byte-exact.
+
+Limits: private source-pair service qualification with official generated client bytes; synthetic raw-title/no-media seed and opaque historical-shaped metadata. No installed production pair, HTTP/browser/App/owner-film/renderer-off/full-suite claim. App outbox/lost-ACK/newer-suffix/restart and zero-legacy-traffic activation gates remain separate. Nothing blocked; recommend source acceptance, followed by normal consumer pairing and App duplicate qualification.
+
+[Exact commands, results, probe scripts and limitations]({notes}/report.md).
+'"'''
+(orch/'design/agent-review-duplicate-reload-repair.md').write_text(flat)
+(worker/'commit-msg').write_text('docs(review): approve duplicate reload identity repair\\n\\nReview the exact two-root identity recording repair and verify real published S2 acceptance, restart, inverse, redo and strict history reservations.\\n\\nKeep App activation and public journey qualification separate.\\n')
+print('Wrote detailed report, flat review and commit message.')
+PY" in /home/user/work/wt/agt-review-duplicate-reload-repair
+ succeeded in 0ms:
+Wrote detailed report, flat review and commit message.
+
+codex
+The negative control reproduced the original bug through real S2 acceptance and restart: undo refused its unchanged duplicate at `occurrence:occ-copy`, path `[]`. The candidate passes that boundary. The reports are written with source approval and the remaining App/public-journey limits stated explicitly.
+
+exec
+/bin/bash -lc "git status --short; git diff --check; python3 - <<'PY'
+from pathlib import Path
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=orch/'workers/agt-review-duplicate-reload-repair'
+for file in [w/'notes/report.md',w/'commit-msg',orch/'design/agent-review-duplicate-reload-repair.md']:
+    assert file.is_file() and file.stat().st_size
+assert not (w/'BLOCKED').exists()
+(w/'DONE').touch()
+print('Reports and commit message present; DONE created; repository unchanged.')
+PY" in /home/user/work/wt/agt-review-duplicate-reload-repair
+ succeeded in 286ms:
+Reports and commit message present; DONE created; repository unchanged.
+
+codex
+Approved `68a51203`: no concrete blocking defects. The two root identities remain consistent through capture, immutable compilation, Runtime reload, undo and redo. No product files changed.
+
+Fresh results:
+
+- Targeted source/neighbors: **570 passed, 1 normal deselection**.
+- Real published S2 RuntimeService/provider: **16 passed**, including restart, retry, ABA guards and reserved IDs.
+- Unchanged-parent probe reproduced the original inverse failure.
+- Ruff and whitespace checks passed.
+
+[Flat review](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-duplicate-reload-repair.md) · [Detailed report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/report.md)
+
+Approval covers the bounded Agent source repair and private source-pair service testing. App activation, installed production pairing and HTTP/browser journeys remain unverified; no full suite ran. Recommend source acceptance followed by normal consumer/App qualification.
+
+Nothing blocked. `commit-msg` and `DONE` written.
+tokens used
+172,598
+Approved `68a51203`: no concrete blocking defects. The two root identities remain consistent through capture, immutable compilation, Runtime reload, undo and redo. No product files changed.
+
+Fresh results:
+
+- Targeted source/neighbors: **570 passed, 1 normal deselection**.
+- Real published S2 RuntimeService/provider: **16 passed**, including restart, retry, ABA guards and reserved IDs.
+- Unchanged-parent probe reproduced the original inverse failure.
+- Ruff and whitespace checks passed.
+
+[Flat review](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-duplicate-reload-repair.md) · [Detailed report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes/report.md)
+
+Approval covers the bounded Agent source repair and private source-pair service testing. App activation, installed production pairing and HTTP/browser journeys remain unverified; no full suite ran. Recommend source acceptance followed by normal consumer/App qualification.
+
+Nothing blocked. `commit-msg` and `DONE` written.

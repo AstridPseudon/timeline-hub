@@ -1,0 +1,400 @@
++  the registered file port already exists. No new output type/endpoint is needed.
++- [/home/user/work/wt/agt-m2-producer-registered-real-probe/astrid/core/execution/generic_host.py:6620](/home/user/work/wt/agt-m2-producer-registered-real-probe/astrid/core/execution/generic_host.py:6620):
++  materialized resolved-children.json contains family, continuation_id,
++  resolved_children, edges and aggregation only. No original publication target,
++  original canonical closure, registered selections/VerifiedMedia or host-owned
++  attempt/executor/epoch capture reaches the action.
++- [/home/user/work/wt/agt-m2-producer-registered-real-probe/astrid/packs/rendering/actions/assemble_timeline/run.py:309](/home/user/work/wt/agt-m2-producer-registered-real-probe/astrid/packs/rendering/actions/assemble_timeline/run.py:309):
++  current action emits whole timeline/registry plus legacy publication metadata.
++  It never calls native capture_assembled_media, and writes no SettledProducerProposal.
++  The `expected_head: runtime-current` label is not the original revision/publication pair.
++
++Read-only `git rev-parse REF:path` established that both approved candidates still
++have byte-identical assembler source (`c8956bf7e8624e89691e4e3402f2a95d84be8493`)
++and runtime_stitch source (`f54776a205610ce60b50dd13ec9df6d758832da5`) to this base.
++The native parent and S2 guard work therefore does not close this producer seam.
++No private release was generated or substituted: this report does not claim
++S2/public-schema qualification or acceptance using those candidates.
++
++An additional **source-inferred native acceptance hazard**, not an executed
++acceptance claim: Runtime `timeline_commit_producer.py` `_continuation` compares
++aggregation.order (or defaults to the unique input_object_ids list) with the
++two ordinal visual digests. The duplicate-CAS trace has one authorized input ID
++but two ordinal child outputs. Without an explicit duplicate-preserving order,
++the new guard would refuse even after the host blocker is fixed. Meanwhile the
++current stitch builder rejects duplicate input_object_ids and uses them as
++aggregation.order. Keep unique authorization IDs separate from ordered child
++output identities. Runtime/producer owners must resolve this through the
++existing continuation contract, not collapse the children or aliases. No
++handcrafted artifact was used to manufacture a purported positive here.
++
++## Live preservation counterexample
++
++First, the unchanged existing positive
++`test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task` fails
++at `create_timeline_document` with RetiredRouteError / timeline_commit_required.
++This is before action execution, not evidence of a safely denied producer.
++
++The new probe uses normal create_timeline plus the normal authenticated history
++read to establish a real, non-null original revision/publication pair. The
++daemon loads the actual Agent provider using authoring_profile=astrid. Owner
++credentials remain on the requester side; the host has the normal worker token,
++without projects:write or tasks:write. It then admits the same direct assembler
++task shape as the existing host chain test, without test-only target/output
++enrichment, and runs the actual registered host.
++
++Observed for both distinct objects and two child tasks sharing one CAS object:
++
++1. Runtime resolves ordered children from real settled input fixtures.
++2. Host materializes resolved-children.json; the registered subprocess writes
++   timeline.json, assets.json, authoring-proposal.json and manifest.json.
++3. The actual proposal retains child ordinal order, two clip IDs, two aliases,
++   and offsets 0 / 1.0 despite reverse completion and duplicate CAS.
++4. `_publish_assembled_timeline` calls the real worker client's
++   publish_timeline_render before `_upload_outputs` and settle.
++5. Runtime returns `not_found: timeline document not found`; the host records
++   task failure. Observed calls are exactly `[publish_timeline_render]`, and
++   managed_outputs is `[]`. Upload/normal settlement is not reached.
++
++**Precise route finding:** publishTimelineRender itself is still reachable. It
++is not a 410 from that route. Runtime
++[/home/user/work/runtime/runtime_protocol/service.py:6780](/home/user/work/runtime/runtime_protocol/service.py:6780)
++requires project_documents[id=timeline:main], while the normal writer of that
++row, create_timeline_document, is retired. The public create_timeline/history
++path does not create that legacy document. The old host depends on a retired
++writer before settling. Retiring consumers' prerequisites before a qualified
++replacement contradicts PLAN's route-retirement sequencing decision.
++
++Raw trace with real non-null original pairs, immutable spec, materialized
++envelope, proposal keys, failed task state and empty managed outputs:
++[/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-producer-registered-real-probe-parent-label-proof-1020112226-16699/log.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-producer-registered-real-probe-parent-label-proof-1020112226-16699/log.txt).
++Its --runxfail run exposes the retained positive failures deliberately. Original
++pairs exist on the requester, but are absent from the immutable assembler spec
++and materialized action input. No final artifact or completion-time head can
++reconstruct that lost admission authority.
++
++## Tests: exact commands and results
++
++Local bounded Agent tests:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_assemble_timeline.py tests/packs/rendering/test_runtime_stitch.py tests/packs/video_editing/test_runtime_publication_chain.py::test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke
++```
++
++**14 passed in 4.94s.** The stubbed hook test is an ordinary unit test, not the
++registered Runtime positive. It is unchanged.
++
++Existing Runtime preservation controls, directly (no sockets/full suite):
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/runtime /home/user/work/venv-runtime/bin/python -m pytest -q -p no:cacheprovider /home/user/work/runtime/tests/test_timeline_render_publication.py::test_publication_is_fenced_atomic_and_exactly_replayable /home/user/work/runtime/tests/test_timeline_render_publication.py::test_prepared_checkpoint_cannot_publish_after_cancel_or_stale_fence /home/user/work/runtime/tests/test_timeline_render_publication.py::test_prepared_checkpoint_resumes_on_retried_attempt_after_runtime_restart
++```
++
++**3 passed in 1.04s.** These unchanged Runtime tests explicitly SQL-seed the
++legacy project document. They retain old fenced publication/cancellation/retry
++history behavior, but do not prove normal current admission or native proposals.
++
++All socket runs used central request-test/wait-test; no full* requested. Prefix:
++`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/`.
++
++- `request-test agt-m2-producer-registered-real-probe commit-integration --files tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task`, then `wait-test agt-m2-producer-registered-real-probe-commit-integration-1020111847-13828`:
++  **3 failed in 4.30s**. Existing chain: retired creation route. Two named suite's
++  M1 cases: Agent client schema digest 8d7f2987 versus current Runtime 3e5e78d0.
++- `request-test agt-m2-producer-registered-real-probe parent-label-proof --files tests/packs/rendering/test_registered_assembler_producer.py`, then `wait-test agt-m2-producer-registered-real-probe-parent-label-proof-1020112226-16699`:
++  expanded command below; **3 failed in 16.96s**, including the two intentionally
++  exposed assembler preservation failures. The named lane's unrelated parent
++  label case also fails. The lane includes --runxfail; neither assembler case
++  is treated as green evidence. That parent label failure is the same public
++  client/Runtime schema mismatch.
++
++```sh
++env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration --runxfail -rx tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move tests/packs/rendering/test_registered_assembler_producer.py
++```
++
++Final-tree central result is appended below. Earlier development runs are not
++qualification: 1020111725-23824 was rejected without execution because request-test
++does not allow `-m` in --files; 1020111955-30364 exposed a removed daemon constructor
++argument copied from the old host test, corrected to current startup;
++1020112028-18292 reached 2 narrow xfails plus the 2 schema-mismatched M1 failures;
++1020112119-26867 exposed the same host failure before adding the real authenticated
++history read, so its original target was null and is not pin evidence.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check --no-cache tests/packs/rendering/test_registered_assembler_producer.py
++git diff --check
++```
++
++Both passed. No product files changed; no integration edits, shared dependency
++modifications, git mutation, generated pins, installs or old writer deletions.
++
++## Decision and smallest next unit
++
++Do not bypass `_publish_assembled_timeline` or settle the legacy artifact and
++label that a native positive. That would still lack the original target,
++captured native records and exact registered media authority. Do not loan owner
++credentials, infer authority from CAS/provenance, or add a caller toggle.
++
++The smallest coherent next producer unit needs the requester owner and producer
++owner to agree the actual registered assembler admission, not an unused
++parameter on the render-mapped stitch builder:
++
++1. An authorized requesting TimelineSession freezes its real original target
++   and the existing declared file port in the actual assembler task spec before
++   slow work. Freeze/select the original canonical closure and exact ordered
++   child association selections through existing read ports; identify the
++   authority and lifecycle for supplying those detached capture inputs to the
++   subprocess. Numeric expected_version is insufficient.
++2. Host materializes that admitted data plus its own exact task/attempt/executor/
++   fence/epoch. The real action uses reviewed native capture_assembled_media
++   against that original closure; no recapture at completion. Preserve ordered
++   children, duplicate-CAS aliases, exact registry storage, old pins and numeric
++   values/rationale. Return/hash the approved SettledProducerProposal via the
++   existing declared file, normal host upload and settlement. Qualify that
++   positive before removing the old committing hook.
++3. Requester reads authoritative settled output and queues it unchanged using
++   the existing S2 queue_proposal/outbox. Exercise actual Runtime capture and
++   acceptance under the paired normally generated S2+parent candidate.
++
++This is a cross-owner composition prerequisite, not a request for a new endpoint,
++coordinator, framework or schema-pin bypass. The immediate preservation repair
++for the legacy document prerequisite belongs to Runtime/orchestrator and should
++follow PLAN's already settled narrow restoration sequencing; this worker made
++no Runtime edits.
++
++Unverified: registered generation selections/custody through this producer,
++native artifact settlement, requester queue/commit, rationale/numeric forwarding
++on this real path, one-shot/restart acceptance, pending-requester recovery, D13
++cutover, renderer execution/historical render, and full gates. Ordinary guard
++tests or normal file-upload experiments cannot discharge these gaps. BLOCKED
++records this precise producer/requester contract dependency.
++
++## Final-tree central results
++
++Final Agent source tree (central snapshot):
++`bcc32f4301a03a7e1ce91b09d25c7ebe614878de`.
++
++```sh
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-producer-registered-real-probe commit-integration --files tests/packs/rendering/test_registered_assembler_producer.py
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-producer-registered-real-probe-commit-integration-1020112308-28637
++```
++
++Expanded:
++
++```sh
++env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/packs/rendering/test_registered_assembler_producer.py
++```
++
++Runtime `8609333`: **2 failed, 2 xfailed in 22.26s**, exit 1. New registered
++assembler cases reach the specifically observed missing-document failure;
++two unchanged M1 cases fail only at the client/Runtime schema-digest check.
++
++Runtime's S2 release merged as `2c4ac18` at 11:23:49Z, after this test. The
++same exact request on unchanged final Agent source was repeated against the
++new head (central external key records `2c4ac180c2220bdad966bc01e95ad230e99ce26a`):
++
++```sh
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-producer-registered-real-probe commit-integration --files tests/packs/rendering/test_registered_assembler_producer.py
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-producer-registered-real-probe-commit-integration-1020112514-6273
++```
++
++**2 failed, 2 xfailed in 37.90s**, exit 1; same preservation defect, with current
++Runtime schema `sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4`
++versus this Agent's `sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf`
++causing the two accompanying M1 failures. No health/provider/schema checks were
++patched or weakened. This repeated bounded run was justified by the Runtime
++release change, not represented as an additional positive.
++
++Final log:
++[/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-producer-registered-real-probe-commit-integration-1020112514-6273/log.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-producer-registered-real-probe-commit-integration-1020112514-6273/log.txt).
++
++Final ruff --no-cache and git diff --check passed again. Worker-created ruff
++cache was removed; no build output remains. Commit message and precise BLOCKED
++file are present in this worker directory. No DONE file: native registered
++producer settlement/requester queueing remain unproved.
+diff --git a/tests/packs/rendering/test_registered_assembler_producer.py b/tests/packs/rendering/test_registered_assembler_producer.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..a7a147e62007a26eed53a46efe7a2b3b18749b16
+--- /dev/null
++++ b/tests/packs/rendering/test_registered_assembler_producer.py
+@@ -0,0 +1,143 @@
++"""Actual registered assembler, without a synthetic proposal or legacy SQL seed.
++
++Child settlements are input fixtures, not registered generation qualification.
++The assembler itself runs through GenericPackHost and the real Runtime door.
++"""
++from __future__ import annotations
++
++import base64
++import hashlib
++import json
++from dataclasses import asdict
++from pathlib import Path
++
++import pytest
++
++from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
++
++
++class UnsettledRegisteredAssembly(AssertionError):
++    pass
++
++
++@pytest.mark.integration
++@pytest.mark.parametrize("duplicate_cas", [False, True])
++@pytest.mark.xfail(
++    strict=True,
++    raises=UnsettledRegisteredAssembly,
++    reason="D13: preserve registered assembly while migrating pre-settlement publication to a native proposal",
++)
++def test_registered_assembler_settles_on_normally_created_timeline(
++    tmp_path, monkeypatch, real_runtime, duplicate_cas,
++):
++    daemon = real_runtime(authoring_profile="astrid")
++    service = daemon.service
++    client = RuntimeProtocolClient(daemon.endpoint, daemon.worker_token)
++    client.executor_id = "astrid-pack-host"
++    attempt_root = tmp_path / "assembly"
++    host = GenericPackHost(
++        pack_roots=[Path(__file__).resolve().parents[3] / "astrid/packs/rendering"],
++        client=client, executor_id=client.executor_id, attempt_root=attempt_root,
++    )
++    try:
++        host.discover()
++        host.preflight("rendering.assemble_timeline")
++        record = host.capabilities["rendering.assemble_timeline"]
++        render_record = host.capabilities["rendering.render"]
++        project = service.create_project({"slug": "registered", "name": "Registered"})["id"]
++        service.create_timeline(project, "main", idempotency_key="timeline")
++        service.list_timeline_commits(project, "main", authorize=lambda: daemon.credentials.require(
++            daemon.token, "projects:read"))
++        head = service.get_project_timeline(project, "main")
++        original_target = {"project_id": project, "timeline_id": "main",
++                           "base_revision_id": head["head_revision_id"],
++                           "base_publication_id": head["head_publication_id"]}
++        assert all(isinstance(value, str) and value for value in original_target.values())
++        child_capability = "fixture.visual-input"
++        child_digest = "sha256:" + hashlib.sha256(child_capability.encode()).hexdigest()
++        for capability, digest in ((child_capability, child_digest), (record.id, record.capability_digest),
++                                   (render_record.id, render_record.capability_digest)):
++            service.register_capability({"capability_id": capability, "definition_digest": digest})
++        service.register_executor({"executor_id": client.executor_id,
++            "capabilities": [child_capability, record.id], "max_concurrency": 3},
++            idempotency_key="executor")
++        children = [service.create_task({"project": project, "capability_id": child_capability,
++            "capability_digest": child_digest, "input_object_ids": [], "spec": {"index": index},
++            "idempotency_key": f"child-{index}"})["task"]["id"] for index in range(2)]
++        claims = [service.claim_next({"executor_id": client.executor_id,
++            "capability_ids": [child_capability], "runtime_epoch": service.health()["runtime_epoch"]},
++            idempotency_key=f"claim-child-{index}") for index in range(2)]
++        by_task = {claim["task_id"]: claim for claim in claims}
++        # Input fixtures deliberately finish in reverse. No producer artifact,
++        # accepted command record, catalog selection or history is fabricated.
++        for index in (1, 0):
++            claim = by_task[children[index]]
++            raw = b"shared visual input" if duplicate_cas else f"visual input {index}".encode()
++            service.settle_attempt(claim["attempt_id"], {
++                **{key: claim[key] for key in ("lease_id", "fence", "runtime_epoch")},
++                "outputs": [{"name": "primary", "role": "primary", "is_primary": True,
++                    "digest": "sha256:" + hashlib.sha256(raw).hexdigest(),
++                    "data_base64": base64.b64encode(raw).decode(), "media_type": "video/mp4",
++                    "duration_seconds": index + 1.0}]}, idempotency_key=f"settle-child-{index}")
++        # Match the existing registered host requester. Do not enrich its spec
++        # with a test-only admitted target, output declaration or native commands.
++        author = service.create_task({"project": project, "capability_id": record.id,
++            "capability_digest": record.capability_digest, "input_object_ids": [],
++            "idempotency_key": "assembly", "spec": {"runtime_dependencies": {
++                "edges": [{"from_task_id": child, "to": "self", "requires_event": "task.succeeded",
++                           "fence": "runtime_task"} for child in children],
++                "aggregation": {"kind": "ordered_cas_inputs"},
++                "publication": {"timeline_id": "main", "expected_version": 1, "render": {
++                    "capability_id": "rendering.render", "capability_digest": render_record.capability_digest,
++                    "spec": {"capability_id": "rendering.render", "kind": "executor",
++                             "inputs": {}, "outputs": {}}}}}}})["task"]["id"]
++        claim = asdict(client.claim_next(executor_id=client.executor_id,
++            capability_ids=[record.id], idempotency_key="claim-assembly"))
++        assert claim["task_id"] == author
++        task = {**service.task(author)["task"], "project_id": project,
++                "run_id": claim["run_id"], "runtime_epoch": claim["runtime_epoch"]}
++        calls = []
++
++        def observe(name):
++            operation = getattr(client, name)
++
++            def delegated(*args, **kwargs):
++                calls.append(name)
++                return operation(*args, **kwargs)
++
++            monkeypatch.setattr(client, name, delegated)
++
++        for name in ("publish_timeline_render", "upload_object", "settle"):
++            observe(name)
++        failure = None
++        try:
++            host.run_task({"task": task}, lease_token=claim["lease_id"],
++                          attempt_id=claim["attempt_id"], fence=claim["fence"], keep_attempt=True)
++        except RuntimeError as exc:
++            failure = exc
++        proposal = json.loads((attempt_root / "outputs/authoring-proposal.json").read_text())
++        materialized = json.loads((attempt_root / "inputs/resolved-children.json").read_text())
++        assert [child["task_id"] for child in proposal["children"]] == children
++        assert len({row["id"] for row in proposal["timeline"]["clips"]}) == 2
++        assert len({row["asset"] for row in proposal["timeline"]["clips"]}) == 2
++        assert proposal["timeline"]["clips"][1]["at"] == 1.0
++        if failure is not None:
++            # Only this observed live preservation defect is expected to fail;
++            # fixture, preflight, transport and action failures remain failures.
++            assert calls == ["publish_timeline_render"], (calls, repr(failure))
++            assert "timeline document not found" in str(failure), repr(failure)
++            raise UnsettledRegisteredAssembly(json.dumps({
++                "failure": str(failure), "calls": calls,
++                "immutable_spec": task["spec"], "materialized": materialized,
++                "proposal_keys": sorted(proposal), "original_target": original_target,
++                "task_state": service.task(author)["task"]["status"],
++                "managed_outputs": service.managed_outputs(author),
++            }, sort_keys=True))
++        settled = service.task(author)["task"]
++        assert settled["status"] == "completed"
++        output = next(row for row in settled["result"]["outputs"] if row["name"] == "authoring_proposal")
++        raw = service.object(output["digest"])[1]
++        assert json.loads(raw) == proposal
++    finally:
++        host.shutdown()
++        daemon.stop()
+
+exec
+/bin/bash -lc 'git diff --check; git status --short; test ! -d .ruff_cache; test ! -d .pytest_cache; wc -l tests/packs/rendering/test_registered_assembler_producer.py' in /home/user/work/wt/agt-m2-producer-registered-real-probe
+ succeeded in 273ms:
+?? tests/packs/rendering/test_registered_assembler_producer.py
+143 tests/packs/rendering/test_registered_assembler_producer.py
+
+codex
+Blocked on the actual producer seam. The registered assembler writes its artifact, then `publishTimelineRender` fails **before upload/settlement** because it requires a legacy document whose creation route is retired. The route itself remains reachable.
+
+Added two narrow strict xfails preserving completion expectations, covering distinct and duplicate CAS inputs. Existing positives and product code remain unchanged.
+
+Validation:
+
+- Targeted assembler/stitch/hook tests: **14 passed**.
+- Existing Runtime publication/cancellation/restart controls: **3 passed**; these SQL-seed the legacy document.
+- Central command `request-test agt-m2-producer-registered-real-probe commit-integration --files tests/packs/rendering/test_registered_assembler_producer.py`: **2 xfailed, 2 failed** against Runtime `2c4ac18`. The failures are accompanying M1 schema mismatches.
+- Ruff and `git diff --check`: passed.
+
+Native proposal settlement and authorized requester queueing remain unverified. Child outputs are fixtures, not generation qualification.
+
+[Detailed report with exact commands, trace, limits, and smallest next unit](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-registered-real-probe/notes/report.md). Cross-owner handoff, `commit-msg`, and precise `BLOCKED` file written; no `DONE`.
+tokens used
+175,571
+Blocked on the actual producer seam. The registered assembler writes its artifact, then `publishTimelineRender` fails **before upload/settlement** because it requires a legacy document whose creation route is retired. The route itself remains reachable.
+
+Added two narrow strict xfails preserving completion expectations, covering distinct and duplicate CAS inputs. Existing positives and product code remain unchanged.
+
+Validation:
+
+- Targeted assembler/stitch/hook tests: **14 passed**.
+- Existing Runtime publication/cancellation/restart controls: **3 passed**; these SQL-seed the legacy document.
+- Central command `request-test agt-m2-producer-registered-real-probe commit-integration --files tests/packs/rendering/test_registered_assembler_producer.py`: **2 xfailed, 2 failed** against Runtime `2c4ac18`. The failures are accompanying M1 schema mismatches.
+- Ruff and `git diff --check`: passed.
+
+Native proposal settlement and authorized requester queueing remain unverified. Child outputs are fixtures, not generation qualification.
+
+[Detailed report with exact commands, trace, limits, and smallest next unit](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-registered-real-probe/notes/report.md). Cross-owner handoff, `commit-msg`, and precise `BLOCKED` file written; no `DONE`.

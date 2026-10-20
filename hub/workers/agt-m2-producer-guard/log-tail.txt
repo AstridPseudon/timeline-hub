@@ -1,0 +1,400 @@
++        create_runtime_commit_service().commit(context, port)
++    assert not realm.prepared and not realm.accepted
++
++
++def test_provider_rebase_retains_original_admitted_base_and_capture():
++    realm, context = provider_request()
++    original_base = copy.deepcopy(realm.head)
++    realm.call([realm.move('parent/clip:clip-b', 8)])
++    port = CapturePort(realm, context)
++    prepared = create_runtime_commit_service().commit(context, port)
++    assert prepared['expected_head'] == realm.head != original_base
++    target = port.producer_capture['admitted_target']
++    assert target['base_revision_id'] == original_base['revision_id']
++    assert target['base_publication_id'] == original_base['publication_id']
++    assert prepared['records']['commands'][1]['command'] == context['request']['commands'][1]
++
++
++def test_proposal_uses_existing_outbox_original_base_reason_and_exact_flight(connected):
++    client, generated, path = connected
++    session = open_session(connected)
++    from astrid.sdk.timeline.capture import capture_move
++    target = {'project_id': 'p', 'timeline_id': 't', 'base_revision_id': 'r0',
++              'base_publication_id': 'pub0'}
++    proposal = proposal_for(target, [capture_move(initial_bundle(), 'parent/clip:a', 3)])
++    generated.head = {'revision_id': 'new-head', 'publication_id': 'new-publication'}
++    # Reopening a clean session observes the newer head, but proposal queueing
++    # must retain the producer's original admission pair and captured claims.
++    session = open_session(connected)
++    queued = session.queue_proposal(proposal)
++    assert queued == build_producer_batch(proposal)['commands']
++    assert session.outbox.read()['base'] == {'revision_id': 'r0', 'publication_id': 'pub0'}
++    with pytest.raises(TimelineEditError, match='producer proposal'):
++        session.queue_move('parent/clip:b', 4)
++    with pytest.raises(TimelineEditError, match='pending intent'):
++        session.queue_proposal(proposal)
++    bodies = []
++    def lost_ack(project, timeline, body, *, idempotency_key):
++        flight = json.loads(path.read_text())['flight']
++        assert json.loads(flight['body']) == body
++        bodies.append((copy.deepcopy(body), idempotency_key))
++        raise ConnectionError('outcome unknown')
++    generated.commit_timeline = lost_ack
++    with pytest.raises(WorkspaceClientError, match='outcome unknown'):
++        session.flush()
++    flight = session.outbox.read()['flight']
++    assert flight['key'].startswith('timeline-edit-')
++    session = TimelineSession.open('p', 't', client=client, outbox_path=path)
++    with pytest.raises(WorkspaceClientError, match='outcome unknown'):
++        session.flush()
++    assert bodies[0] == bodies[1]
++    body = bodies[0][0]
++    assert body['rationale'] == proposal['rationale']
++    assert body['commands'][1:] == proposal['commands']
++    assert body['base_revision_id'] == 'r0' and body['base_publication_id'] == 'pub0'
++
++
++def test_queue_proposal_cannot_mix_with_another_pending_edit(connected):
++    session = open_session(connected)
++    session.queue_move('parent/clip:a', 2)
++    proposal = proposal_for({'project_id': 'p', 'timeline_id': 't', 'base_revision_id': 'r0',
++                            'base_publication_id': 'pub0'}, session.outbox.read()['pending'])
++    before = session.outbox.read()
++    with pytest.raises(TimelineEditError):
++        session.queue_proposal(proposal)
++    assert session.outbox.read() == before
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_settled_proposal_contract.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_producer_guard.py tests/sdk/test_timeline_producer_guard.py tests/packs/rendering/test_assemble_timeline.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_semantic_reservations.py' in /home/user/work/wt/agt-m2-producer-guard
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/producer.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/__init__.py tests/sdk/test_timeline_producer_guard.py tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py; git diff --check; sha256sum astrid/core/timeline/schema/edit-command.schema.json; git diff --numstat' in /home/user/work/wt/agt-m2-producer-guard
+ succeeded in 513ms:
+All checks passed!
+1bffd6556396ca8c3d451d2889185f505254815422bca7be851cd00d441e0bd8  astrid/core/timeline/schema/edit-command.schema.json
+180	0	astrid/core/timeline/schema/edit-command.schema.json
+4	1	astrid/sdk/timeline/__init__.py
+2	1	astrid/sdk/timeline/_recording.py
+12	3	astrid/sdk/timeline/commands.py
+5	2	astrid/sdk/timeline/commit.py
+3	2	astrid/sdk/timeline/rebase.py
+22	0	astrid/sdk/timeline/sync.py
+
+exec
+/bin/bash -lc "git status --short --untracked-files=normal; wc -l astrid/sdk/timeline/producer.py; sed -n '1,35p' tests/sdk/test_timeline_producer_guard.py; tail -27 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-render-producer-contract.md" in /home/user/work/wt/agt-m2-producer-guard
+ succeeded in 141ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/__init__.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/rebase.py
+ M astrid/sdk/timeline/sync.py
+?? astrid/sdk/timeline/producer.py
+?? tests/editing_conformance/fixtures/settled_proposal_move.artifact.json
+?? tests/editing_conformance/fixtures/settled_proposal_move.json
+?? tests/editing_conformance/fixtures/settled_proposal_numeric.artifact.json
+?? tests/editing_conformance/test_producer_guard.py
+?? tests/editing_conformance/test_settled_proposal_contract.py
+?? tests/sdk/test_timeline_producer_guard.py
+63 astrid/sdk/timeline/producer.py
+"""Provider capture and requester durability; these tests claim no Runtime acceptance."""
+from __future__ import annotations
+
+import copy
+import json
+
+import pytest
+
+from astrid.sdk.timeline import build_producer_batch
+from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline.commit import create_runtime_commit_service
+from astrid.sdk.timeline.sync import TimelineSession
+from astrid.sdk.workspace_client import WorkspaceClientError
+from tests.sdk import test_timeline_sync as session_fixtures
+from tests.sdk.test_timeline_commit_provider import (
+    CommitRejected,
+    DetachedPort,
+    DetachedRealm,
+)
+from tests.sdk.test_timeline_commit_provider import (
+    runtime_abi as runtime_abi,
+)
+from tests.sdk.test_timeline_sync import initial_bundle, open_session
+
+connected = session_fixtures.connected
+
+
+def proposal_for(target, commands):
+    return {'schema_version': 1, 'producer': {
+        'task_id': 'task', 'attempt_id': 'attempt', 'executor_id': 'worker',
+        'fence': 1, 'runtime_epoch': 2}, 'admitted_target': copy.deepcopy(target),
+        'proposal_digest': 'sha256:' + 'a' * 64, 'commands': commands,
+        'rationale': 'Reviewed café'}
+
+
+PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_settled_proposal_contract.py tests/editing_conformance/test_recipe_m1_commands.py
+```
+
+From `/home/user/work/wt/agt-m2-proposal-forward-goldens`: **121 passed in 3.54s**
+(the original 86 plus 35 forwarding cases). The exact 83-case render/orchestration/
+session command recorded above, with PYTHONPATH set to this worktree: **83 passed
+in 8.65s**. Scoped Ruff and `git diff --check` passed. No behavior test was removed,
+weakened, skipped or marked xfail. No full suite, install, socket/browser lane,
+actual Runtime producer acceptance/lifecycle race, historical admission or builder
+qualification. Product implementation, all M2 merges and D13 cutover remain held
+pending PLAN M1.
+
+## Bundle3 Agent implementation handoff (agt-m2-producer-guard, in progress)
+
+Source worktree: `/home/user/work/wt/agt-m2-producer-guard`, base `d4743e29`;
+only the four proposal/golden test files are overlaid from `bdebad36`.
+Agent is wiring exactly `producer_attempt(pin) -> {pin}` (closed result), ABI 1.
+Provider checks returned pin and request project/timeline/ORIGINAL base pair;
+Runtime must capture privately and validate whole suffix/rationale against its
+verified CAS artifact, then enforce capture/authority-record bijection at accept.
+Pure execution can declare a dependency without granting acceptance authority.
+No caller proposal digest recomputation. No renderer changes or generated pins.
+Planned export: `astrid.sdk.timeline.producer.build_producer_batch(proposal)`;
+returns original target fields plus `commands` (PIN-only guard + untouched suffix)
+and `rationale`, without request identity/source. Requester owns fresh identities.
+`TimelineSession.queue_proposal` will persist this batch in its existing outbox,
+retain the original admission pair and reason, and refuse mixing pending edits.
+
+ succeeded in 32780ms:
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 49%]
+........................................................................ [ 65%]
+........................................................................ [ 81%]
+........................................................................ [ 98%]
+........                                                                 [100%]
+440 passed in 32.12s
+
+exec
+/bin/bash -lc "sed -n '288,310p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-render-producer-contract.md; ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-guard" in /home/user/work/wt/agt-m2-producer-guard
+ succeeded in 0ms:
+   changed command/guard/identity/rationale, missing/extra/reordered siblings,
+   substituted or recomputed digest, nested guard/inverse/restore, missing original
+   base pair, wrong project/timeline and old-port support all refuse. Actual
+   provider dry-run records authority without consuming; replay preserves original
+   guards. Guarded grouped inverse/redo never consumes again.
+3. Runtime existing port/acceptance suites: real settled artifact success; running,
+   unsettled, failed, cancelled, superseded/current-attempt-NULL refusal; wrong
+   executor/fence/epoch/target, missing/ambiguous/foreign artifact, raw/CAS/canonical
+   digest mismatch and missing/extra/forged authority record refusal. Completed
+   cancellation is a NO-OP; pre-settlement cancellation and supersession refuse.
+   Race supersession after capture/inside acceptance: zero partial revision/
+   history/receipt/checkpoint/task. Test both serialization orders. Real Node
+   JSON.parse/stringify of ordinary 1.0 MUST accept; 1.5, boolean substitution,
+   reordered commands/claims, changed IDs/rationale and artifact tampering refuse.
+4. One-shot: two different commit keys/actors race for the same proposal, only one
+   accepts; another commit after undo still refuses. Exact accepted commit retry
+   returns original result after cancel/lease expiry/boot/head C without producer
+   reads, while changed payload at the same key refuses. Failure before/after
+   checkpoint persistence rolls back consumption WITH the receipt. Preview never
+   consumes; an unconsumed completed proposal survives boot through its exact
+   persisted task/attempt epoch. Declining unsent intent does not revoke it.
+5. Paired real worker/requester lane with renderer stopped: worker retains denied
+   commit/admission write scopes, requester commits under its own attribution,
+brief.md
+log.txt
+meta
+running
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+contract=root/'design/m2-render-producer-contract.md'
+text=contract.read_text()
+marker='## Bundle3 Agent implementation handoff (agt-m2-producer-guard, in progress)'
+assert text.count(marker)==1
+text=text[:text.index(marker)]+'''## Bundle3 Agent implementation handoff (agt-m2-producer-guard)
+
+Implemented on "'`/home/user/work/wt/agt-m2-producer-guard` / branch
+`tl/agt-m2-producer-guard`, base `d4743e29`; harness supplies the final commit.
+Only the four proposal/golden test files are overlaid from `bdebad36`, with no
+older core. This section supersedes earlier design-only/product-hold statements
+for this worker'"'s branch source under INBOX 01:40; integration still awaits M1.
+
+* Canonical NEW Bundle3 schema:
+  "'`/home/user/work/wt/agt-m2-producer-guard/astrid/core/timeline/schema/edit-command.schema.json`.
+  Raw file SHA-256 `1bffd6556396ca8c3d451d2889185f505254815422bca7be851cd00d441e0bd8`.
+  Definitions `ProducerIdentity`, `ProducerAdmittedTarget`, `ProducerAttemptPin`,
+  `ProducerGuardArgs`, `SettledProducerProposal`; registered `producer.guard`
+  v1, select:null, CLOSED args:{pin}, empty intention. Positive non-bool integer
+  fence/epoch, nonblank IDs, closed target and pin, exact digest length.
+  Frozen Bundle2 refs and Runtime/client generated pins were not modified.
+* Implementation:
+  `/home/user/work/wt/agt-m2-producer-guard/astrid/sdk/timeline/producer.py`:
+  `capture_producer(port, request)` calls exactly `producer_attempt(pin) -> {pin}`
+  with closed result, compares detached verified pin and original scoped target.
+  Missing/noncallable old ports refuse only this feature. Runtime remains
+  responsible for CAS artifact bytes/hash, suffix/rationale value equality and
+  private capture/authority-record bijection at preview/atomic acceptance.
+* Pure `producer_guard(ctx, command)` records existing dependency
+  `{key:"producer_attempt:"+task_id,kind:"authority",policy:"exact",pin}`;
+  it makes no authored writes. Provider passes `verified_producer` privately
+  through `commands.execute`, `Recording` and `rebase.replay`. Pure capture can
+  declare the dependency without authority; Runtime must refuse uncaptured
+  acceptance. First/unique guard and ordinary nonempty suffix are mandatory;
+  inverse/restore/nested guard suffixes refuse. Accepted inverse/redo execute
+  authored writes without consuming or revalidating the historical producer.
+* Public builder:
+  `from astrid.sdk.timeline import build_producer_batch`
+  (also `astrid.sdk.timeline.producer.build_producer_batch(proposal)`). Returns
+  `{project_id,timeline_id,base_revision_id,base_publication_id,commands,rationale}`;
+  commands are PIN-only guard plus unchanged proposal commands/claims/metadata.
+  It does not rehash caller-reserialized values or supply request identities.
+* Requester entry:
+  `/home/user/work/wt/agt-m2-producer-guard/astrid/sdk/timeline/sync.py`:
+  `TimelineSession.queue_proposal(proposal)` followed by ordinary `flush()`.
+  Existing outbox atomically stores original admitted base, exact batch and
+  rationale. Unrelated pending/flight must finish first; no sibling edits can
+  join the producer batch. Normal flush creates a fresh request key and persists
+  exact in-flight bytes, including rationale, for restart/unknown-outcome retry.
+  Server rebase may advance expected_head without replacing original admission.
+
+Golden source:
+`/home/user/work/wt/agt-m2-producer-guard/tests/editing_conformance/fixtures/settled_proposal_move.json`
+and adjacent `settled_proposal_move.artifact.json`,
+`settled_proposal_numeric.artifact.json`; unchanged authoritative proposal digests
+`sha256:a4939d8873bd3bdc4f8eb79fc973267b0b1e37bb468d89f9ea9ca3d635de0a1b`
+and `sha256:a2669f27bcf2cabb6705215a1d694e08efbfb051303ce5cc2c847463865d4052`.
+
+Final targeted Agent verification: **440 passed in 32.12s**, including unchanged
+Node numeric/custody goldens, installed native guard/schema/claims/metadata,
+provider capture refusals/rebase, inverse/redo and outbox restart tests. Touched
+Ruff and `git diff --check` passed. Exact commands and scope are in
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-guard/notes/report.md`.
+
+Pairing blocker: `/home/user/work/runtime` is `9f9b25c`; neither RuntimeCommitPort
+nor RequestCommitPort implements producer_attempt (checked by importing both).
+No actual producer acceptance, one-shot/checkpoint/race, cancellation, completed
+epoch/restart or accepted replay proof is claimed. Runtime owns these tests; its
+prior prepared-provider tests are not Agent acceptance qualification. Pair this
+Agent schema/provider with Runtime'"'s implementation and official generation,
+then run the real artifact numeric and lifecycle acceptance lanes.
+
+This guard does not convert the assembler. Keep the existing rendering writer
+until parent insertion/replacement, admitted task target builder, requester
+receipt-to-historical-render ACK retention and paired handoff qualify. No render
+files, endpoints, DTOs, ABI version, tables, coordinator or journal were changed.
+'''
+contract.write_text(text)
+worker=root/'workers/agt-m2-producer-guard'
+(worker/'notes').mkdir(exist_ok=True)
+(worker/'notes/report.md').write_text('''# Settled producer guard
+
+Implemented Bundle3 Agent source on "'`tl/agt-m2-producer-guard`, base `d4743e29`.
+Overlaid exactly four proposal/golden test files from `bdebad36`, without older core.
+
+- Registered native `producer.guard` v1 with closed PIN-only schema, null selection,
+  empty intentions, positive non-bool fence/epoch and closed original target.
+- Pure handler records an existing authority dependency with no authored writes;
+  provider independently requires Runtime capture, validates returned pin/target,
+  and preserves it across semantic rebase. Old ports refuse only producer batches.
+- Exported `build_producer_batch(proposal)` and added `TimelineSession.queue_proposal`.
+  Normal durable outbox retains exact original commands/claims/rationale/base;
+  normal flush supplies fresh identities and exact restart-safe retry bytes.
+- Guard is first/unique with a nonempty ordinary suffix; nested guard, inverse and
+  restore suffixes refuse. Accepted authored inverse/redo need no old producer.
+- No renderer, frozen Bundle2 ref, generated pin, DTO, endpoint, ABI2, table,
+  coordinator or second journal changes. About 110 added product lines plus schema/tests.
+
+## Final verification
+
+Run from `/home/user/work/wt/agt-m2-producer-guard`:
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_settled_proposal_contract.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_producer_guard.py tests/sdk/test_timeline_producer_guard.py tests/packs/rendering/test_assemble_timeline.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_semantic_reservations.py
+```
+
+**440 passed in 32.12s**. Includes original Node forwarding/custody vectors,
+new guard schema/claims/metadata and provider capture refusals, original-base
+rebase, pure inverse/redo, and durable outbox restart/unknown-outcome retry.
+Provider tests observe preparation or refusal, never fake producer acceptance.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/producer.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/__init__.py tests/sdk/test_timeline_producer_guard.py tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py
+git diff --check
+```
+
+**Both passed.** Intermediate new-test run had one incorrect test expectation
+(`ConnectionError` instead of the existing transport'"'s "'`WorkspaceClientError`);
+corrected without weakening behavior. An exploratory directory-wide Ruff run
+included 22 existing untouched-file violations and six new-test lint issues;
+the new-test issues were fixed and all touched files pass the final command.
+No tests removed, skipped, weakened, or marked xfail. Full/make-check, socket,
+browser, install and network lanes were not run, per task constraints.
+
+## Decisions and remaining qualification
+
+No settled decision was changed. Pure execution may declare a dependency, while
+provider/Runtime capture remains mandatory for acceptance. The builder forwards
+values without recomputing proposal_digest, preserving Node number compatibility;
+Runtime alone owns authoritative artifact/hash and whole suffix/rationale checks.
+Queueing requires an empty outbox prefix instead of combining unrelated intent;
+this preserves the exact proposal and the original admission pair.
+
+Runtime availability probe:
+
+```sh
+PYTHONPATH=$PWD:/home/user/work/runtime /home/user/work/venv-agent/bin/python - <<'"'PROBE'
+from runtime_protocol.timeline_commit import RuntimeCommitPort
+from runtime_protocol.timeline_commit_port import RequestCommitPort
+print('RuntimeCommitPort.producer_attempt:', callable(getattr(RuntimeCommitPort, 'producer_attempt', None)))
+print('RequestCommitPort.producer_attempt:', callable(getattr(RequestCommitPort, 'producer_attempt', None)))
+PROBE
+"'```
+
+**Both False** on Runtime `9f9b25c`. Paired actual producer acceptance, one-shot,
+checkpoint rollback/races, cancellation policy, persisted completed epoch/restart,
+accepted replay after expiry/cancellation and Node numeric acceptance are therefore
+unverified, blocked on Runtime implementation. Existing bounded Node goldens pass;
+they are not real Runtime acceptance evidence.
+
+Next: pair Runtime'"'s additive port and atomic acceptance with this exact new schema,
+regenerate official artifacts normally, then run the real lifecycle/numeric lane.
+Keep the current rendering writer until insertion/replacement, admitted-target task
+builder and requester receipt-to-render recovery qualify. M2 integration waits M1.
+Exact absolute source/schema/export/golden handoff is appended to
+"'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-render-producer-contract.md`.
+'"''')
+msg='''feat(timeline): guard settled producer proposals
+
+Register a PIN-only producer guard and require request-scoped Runtime capture
+before provider preparation. Preserve the original admitted base and proposal
+commands through semantic rebase and the requesting session's durable outbox.
+
+Add the proposal batch export, closed schema, native recipe/provider tests and
+unchanged numeric forwarding goldens. Keep inverse and redo independent of the
+historical producer and retain the existing rendering writer.
+
+Validation: 440 targeted tests passed; touched Ruff and diff checks passed.
+Paired acceptance remains blocked on Runtime producer_attempt implementation.
+'''
+for name in ('commit-msg','commit-msg.txt'):
+ (worker/name).write_text(msg)
+PY
+git diff --check" in /home/user/work/wt/agt-m2-producer-guard
+ succeeded in 204ms:
+codex
+Implemented PIN-only guard, provider capture validation, proposal builder, and durable outbox queueing.
+
+- **440 targeted tests passed**; touched Ruff and `git diff --check` passed.
+- Paired acceptance remains blocked: Runtime lacks `producer_attempt`.
+- Rendering writer remains unchanged. Next: pair Runtime and qualify lifecycle/numeric acceptance.
+- Handoff and both commit-message files written.
+
+[Report with exact commands, decisions, and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-guard/notes/report.md)
+tokens used
+139,318
+Implemented PIN-only guard, provider capture validation, proposal builder, and durable outbox queueing.
+
+- **440 targeted tests passed**; touched Ruff and `git diff --check` passed.
+- Paired acceptance remains blocked: Runtime lacks `producer_attempt`.
+- Rendering writer remains unchanged. Next: pair Runtime and qualify lifecycle/numeric acceptance.
+- Handoff and both commit-message files written.
+
+[Report with exact commands, decisions, and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-guard/notes/report.md)

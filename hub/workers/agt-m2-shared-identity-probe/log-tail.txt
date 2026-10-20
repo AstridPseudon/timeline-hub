@@ -1,0 +1,18 @@
+Blocked: I wrote the probe but never ran it, so no shared-shot identity bug is proven or ruled out.
+
+Every attempt to run Python was refused with "This command requires approval", including a trivial `python3 -B -c "print(1)"`. There was no approval path in this session. I didn't try `dangerouslyDisableSandbox` or any other way around it, since the task didn't authorise that.
+
+**Written, not run:**
+- **Probe:** `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-identity-probe/notes/probe.py`. It builds a temporary realm in `/tmp` with the real `RuntimeService` and the real Agent commit provider and `capture_move`. No sockets, no repository writes.
+- **Fixture:** project p1 has `t-main` (`shot-a` shared by `occ-1` and `occ-2`, `shot-b` on `occ-3`) and `t-alt` (its own `occ-1`, same occurrence and clip ids). Project p2 reuses the same occurrence and clip ids.
+- **Scenarios:** S1 moves `occ-1/c1` and compares the sibling, unrelated occurrence, other timeline, other project, shot heads and history before and after. S2 covers cross-timeline same ids plus undo after the other timeline's activity. S3 covers rematerialisation, S4 duplicate ids across projects, and S5 is a stub.
+- **Report:** `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-identity-probe/report.md`.
+- **Likely fixes:** the probe may need small API-shape fixes, likely the `list_project_shots` row keys and the exact `publish_parent_composition` body fields.
+- **Repository:** untouched. I wrote no commit-msg file because there are no repository changes.
+
+**Static leads from reading the code (none confirmed):**
+- A shared shot's authoring id is a hash of project, timeline, occurrence and source shot, and its item ids are remapped the same way. Opening refuses on any resulting collision, so the user-visible effect would be a refusal to open, not silent aliasing.
+- The Runtime holds timeline and shot ids as realm-global: `create_timeline` and `create_project_shot` reject an existing id even from another project. Project isolation of these ids is by uniqueness, not scoping.
+- The remaining question is S3: the authoring id flips from hash to source id when a sibling occurrence is removed. A tracked head also refuses non-commit publication (`timeline_commit_required`), so removing a sibling may not be reachable through supported M1 operations.
+
+To get real evidence, someone with Python execution rights runs `/home/user/work/venv-agent/bin/python -B <probe>` and pastes the output, or this task is re-dispatched with execution allowed.

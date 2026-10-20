@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-current014-consumer-proof/log.txt-22409-+    # Re-read the exact Runtime-verified inputs after restart; this preserves
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-current014-consumer-proof/log.txt:22410:+    # the F1 media guard while replaying the unchanged command record.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-current014-consumer-proof/log.txt-22411-+    redo_verified_media = [
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-current014-consumer-proof/log.txt-22412-+        transport.get_project_verified_media(project, record['args'][key])
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-current014-consumer-proof/log.txt-22413-+        for key in ('old_media', 'media')
+
+codex
+The focused guard passed 6/6. The final audit also confirms the ordinary014 generated-client/runtime-lock bytes are byte-identical to `e86f44d0`, `commands.py` (including P1/F1 authority/staging behavior) is unchanged, and the original narration/structural positives remain ordinary strict tests. The only neighboring failure is the known fixture-import `ModuleNotFoundError` before Runtime helper setup.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-current014-final.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-current014-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-current014-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c46c50879fe27b1e6bc1e6bd0dee20513dbf6242
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-current014-final.md
+@@ -0,0 +1,37 @@
++# WC6 current014 final review handoff
++
++**Disposition: APPROVE bounded merge.** Exact reviewed Agent branch/tree:
++`tl/agt-review-wc6-current014-final` at commit
++`a4c1307734d620cee81640cab6b25f7b198f0c17`, tree
++`49b77c93b181ec1b20f0230a6cdbfa1518ad55ab`.
++
++The tree is the reviewed source `74fa9c67` composed onto current candidate
++`e86f44d0` with the exact ordinary014 Runtime fixture pin. The composition
++preserves current P1/F1/Scene/Root/ordinary-media behavior; `commands.py` is
++unchanged versus e86, including `prior_records` and `staged_records`. The
++ordinary014 generated client and `runtime.lock.json` are byte-identical to
++e86.
++
++The accepted-boundary inverse proof is strict: no `own_materialized_read` or
++absent-ancestor exemption exists. The only materialized-payload allowance is
++authenticated `AcceptedRecords` with exact accepted command identity and
++verified item/link remapping; all other payload fields remain exact. Same-alias
++rebind validates all consumers and preserves raw opaque data, order, bounded
++mirrors, clip identities/order, and sibling isolation.
++
++Original narration/structural positives remain strict/open, including the
++narration hold and the legacy whole-document/import/structural tests. This
++review does not claim whole WC6 deletion or closure. No product files were
++changed by this review.
++
++Evidence: focused guard on this tree passed **6/6**; existing exact-composition
++evidence remains **71 unit passes, 1 HTTP pass**, with prior focused WC6 checks
++at **12 passes**. The neighboring unfiltered integration failure is only the
++known fixture/setup `ModuleNotFoundError` for `runtime_protocol` before Runtime
++helper setup, not a product-green result; it remains untouched. No full suite
++was run.
++
++Merge condition: merge only this bounded tree while e86's current P1/F1/
++Scene/Root/AM behavior and ordinary014 pin bytes remain unchanged. Continue to
++hold narration/text and arbitrary structural document publication for separate
++qualification.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2dd76e9384547d86353c79a95d1d68f691e887dc
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg
+@@ -0,0 +1,5 @@
++docs(review): approve bounded WC6 current014 composition
++
++Record the final narrow review verdict for the authenticated same-alias,
++inverse, and native document consumer slice. Preserve the current P1/F1
++behavior, ordinary014 pin bytes, and open narration/structural positives.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..2dd76e9384547d86353c79a95d1d68f691e887dc
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg.txt
+@@ -0,0 +1,5 @@
++docs(review): approve bounded WC6 current014 composition
++
++Record the final narrow review verdict for the authenticated same-alias,
++inverse, and native document consumer slice. Preserve the current P1/F1
++behavior, ordinary014 pin bytes, and open narration/structural positives.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5a98dfb953ddc9e6be893172e8393acd2161002c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md
+@@ -0,0 +1,78 @@
++# WC6 current014 final narrow review
++
++## Verdict
++
++**APPROVE bounded merge** for the exact Agent branch/tree:
++
++- branch: `tl/agt-review-wc6-current014-final`
++- commit: `a4c1307734d620cee81640cab6b25f7b198f0c17`
++- tree: `49b77c93b181ec1b20f0230a6cdbfa1518ad55ab`
++- current-candidate parent: `e86f44d04e0a5f183d82d4d1ac307951dd32c44e`
++- reviewed source slice: `74fa9c67a67b6cfe0979b00a4d75fb44b3124b25`
++
++Merge is bounded to this same-alias/native document consumer and authenticated
++inverse slice. The condition is that the target retains the current e86
++P1/F1/Scene/Root/ordinary-media behavior and the exact ordinary014 generated
++client/runtime pin bytes. This is not approval of whole WC6 closure.
++
++## Review findings
++
++- The source composition is minimal: `a4c13077` is e86 plus the reviewed
++  `74fa` slice and the exact ordinary014 fixture-pin update. No Runtime, App,
++  Composition, shared dependency, or unrelated worktree was modified.
++- Current P1/F1 authority is preserved. `astrid/sdk/timeline/commands.py`
++  is byte-identical to e86, including `prior_records` and
++  `staged_records`; the current source-side helper files used by those paths
++  remain unchanged.
++- The inverse path has no `own_materialized_read` or absent-ancestor
++  exemption. Its materialized-payload allowance is limited to authenticated
++  `AcceptedRecords`, exact accepted command identity, verified source item
++  mapping, the exact internal-timeline link, and full payload equality for all
++  other fields. The scalar media manifest check retains the address leaf.
++- Same-alias replacement validates every alias consumer and only updates the
++  bounded registry/payload mirrors. The reviewed assertions retain raw opaque
++  data, alias order, clip order/identity, sibling-shot isolation, and the
++  intentionally untouched opaque namespace mirror.
++- The exact ordinary014 pin bytes are unchanged from e86: there is no diff in
++  `astrid_runtime_client/` or `runtime.lock.json` between e86 and a4c.
++- Original narration and structural positives remain present and strict:
++  `test_document_view_adapter_holds_narration_and_same_alias_media_changes`,
++  `test_real_runtime_import_and_parent_publication_roundtrip`,
++  `test_catalog_import_remains_reusable_after_later_parent_cas_conflict`,
++  `test_publish_uses_one_compilation_and_returns_complete_mapping`,
++  `test_group_move_compiles_and_uses_existing_publication_boundary`, and
++  `test_full_authored_field_edits_compile_without_normalizing_opaque_fields`.
++  No new skip/xfail or deleted assertion was introduced. No whole-WC6
++  deletion claim is made.
++
++## Evidence
++
++Focused guard run directly on this tree:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_inverse_clear_batches.py::test_matching_child_write_cannot_prove_absent_ancestor_read tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry_fields tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_materialized_payload_still_guards_all_other_input
++6 passed in 1.47s
++```
++
++Previously recorded evidence for this exact composition was not repeated:
++
++- targeted `tests/timeline/test_authoring_media.py`: **71 passed, 1
++  deselected**;
++- exact native current014 HTTP lifecycle node against Runtime `a0dca169…`:
++  **1 passed**;
++- prior focused WC6 command: **12 passed**; Ruff and `git diff --check`:
++  **passed**.
++
++The no-filter neighbor run also exposed one known pre-existing fixture/setup
++failure, not product evidence:
++`test_real_runtime_import_and_parent_publication_roundtrip` imports
++`runtime_protocol` before the lane's Runtime helper setup and raises
++`ModuleNotFoundError: No module named 'runtime_protocol'`. It was not changed,
++skipped, weakened, or used as green evidence. No full suite was run.
++
++## Next step
++
++Merge only the exact bounded tree above after the manager confirms the target
++still has the e86 ordinary014 pin and current P1/F1/Scene/Root/AM behavior.
++Keep narration/text and arbitrary structural document publication as open
++follow-up qualification items.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-current014-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-current014-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c46c50879fe27b1e6bc1e6bd0dee20513dbf6242
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-current014-final.md
+@@ -0,0 +1,37 @@
++# WC6 current014 final review handoff
++
++**Disposition: APPROVE bounded merge.** Exact reviewed Agent branch/tree:
++`tl/agt-review-wc6-current014-final` at commit
++`a4c1307734d620cee81640cab6b25f7b198f0c17`, tree
++`49b77c93b181ec1b20f0230a6cdbfa1518ad55ab`.
++
++The tree is the reviewed source `74fa9c67` composed onto current candidate
++`e86f44d0` with the exact ordinary014 Runtime fixture pin. The composition
++preserves current P1/F1/Scene/Root/ordinary-media behavior; `commands.py` is
++unchanged versus e86, including `prior_records` and `staged_records`. The
++ordinary014 generated client and `runtime.lock.json` are byte-identical to
++e86.
++
++The accepted-boundary inverse proof is strict: no `own_materialized_read` or
++absent-ancestor exemption exists. The only materialized-payload allowance is
++authenticated `AcceptedRecords` with exact accepted command identity and
++verified item/link remapping; all other payload fields remain exact. Same-alias
++rebind validates all consumers and preserves raw opaque data, order, bounded
++mirrors, clip identities/order, and sibling isolation.
++
++Original narration/structural positives remain strict/open, including the
++narration hold and the legacy whole-document/import/structural tests. This
++review does not claim whole WC6 deletion or closure. No product files were
++changed by this review.
++
++Evidence: focused guard on this tree passed **6/6**; existing exact-composition
++evidence remains **71 unit passes, 1 HTTP pass**, with prior focused WC6 checks
++at **12 passes**. The neighboring unfiltered integration failure is only the
++known fixture/setup `ModuleNotFoundError` for `runtime_protocol` before Runtime
++helper setup, not a product-green result; it remains untouched. No full suite
++was run.
++
++Merge condition: merge only this bounded tree while e86's current P1/F1/
++Scene/Root/AM behavior and ordinary014 pin bytes remain unchanged. Continue to
++hold narration/text and arbitrary structural document publication for separate
++qualification.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2dd76e9384547d86353c79a95d1d68f691e887dc
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg
+@@ -0,0 +1,5 @@
++docs(review): approve bounded WC6 current014 composition
++
++Record the final narrow review verdict for the authenticated same-alias,
++inverse, and native document consumer slice. Preserve the current P1/F1
++behavior, ordinary014 pin bytes, and open narration/structural positives.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..2dd76e9384547d86353c79a95d1d68f691e887dc
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg.txt
+@@ -0,0 +1,5 @@
++docs(review): approve bounded WC6 current014 composition
++
++Record the final narrow review verdict for the authenticated same-alias,
++inverse, and native document consumer slice. Preserve the current P1/F1
++behavior, ordinary014 pin bytes, and open narration/structural positives.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5a98dfb953ddc9e6be893172e8393acd2161002c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md
+@@ -0,0 +1,78 @@
++# WC6 current014 final narrow review
++
++## Verdict
++
++**APPROVE bounded merge** for the exact Agent branch/tree:
++
++- branch: `tl/agt-review-wc6-current014-final`
++- commit: `a4c1307734d620cee81640cab6b25f7b198f0c17`
++- tree: `49b77c93b181ec1b20f0230a6cdbfa1518ad55ab`
++- current-candidate parent: `e86f44d04e0a5f183d82d4d1ac307951dd32c44e`
++- reviewed source slice: `74fa9c67a67b6cfe0979b00a4d75fb44b3124b25`
++
++Merge is bounded to this same-alias/native document consumer and authenticated
++inverse slice. The condition is that the target retains the current e86
++P1/F1/Scene/Root/ordinary-media behavior and the exact ordinary014 generated
++client/runtime pin bytes. This is not approval of whole WC6 closure.
++
++## Review findings
++
++- The source composition is minimal: `a4c13077` is e86 plus the reviewed
++  `74fa` slice and the exact ordinary014 fixture-pin update. No Runtime, App,
++  Composition, shared dependency, or unrelated worktree was modified.
++- Current P1/F1 authority is preserved. `astrid/sdk/timeline/commands.py`
++  is byte-identical to e86, including `prior_records` and
++  `staged_records`; the current source-side helper files used by those paths
++  remain unchanged.
++- The inverse path has no `own_materialized_read` or absent-ancestor
++  exemption. Its materialized-payload allowance is limited to authenticated
++  `AcceptedRecords`, exact accepted command identity, verified source item
++  mapping, the exact internal-timeline link, and full payload equality for all
++  other fields. The scalar media manifest check retains the address leaf.
++- Same-alias replacement validates every alias consumer and only updates the
++  bounded registry/payload mirrors. The reviewed assertions retain raw opaque
++  data, alias order, clip order/identity, sibling-shot isolation, and the
++  intentionally untouched opaque namespace mirror.
++- The exact ordinary014 pin bytes are unchanged from e86: there is no diff in
++  `astrid_runtime_client/` or `runtime.lock.json` between e86 and a4c.
++- Original narration and structural positives remain present and strict:
++  `test_document_view_adapter_holds_narration_and_same_alias_media_changes`,
++  `test_real_runtime_import_and_parent_publication_roundtrip`,
++  `test_catalog_import_remains_reusable_after_later_parent_cas_conflict`,
++  `test_publish_uses_one_compilation_and_returns_complete_mapping`,
++  `test_group_move_compiles_and_uses_existing_publication_boundary`, and
++  `test_full_authored_field_edits_compile_without_normalizing_opaque_fields`.
++  No new skip/xfail or deleted assertion was introduced. No whole-WC6
++  deletion claim is made.
++
++## Evidence
++
++Focused guard run directly on this tree:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_inverse_clear_batches.py::test_matching_child_write_cannot_prove_absent_ancestor_read tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry_fields tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_materialized_payload_still_guards_all_other_input
++6 passed in 1.47s
++```
++
++Previously recorded evidence for this exact composition was not repeated:
++
++- targeted `tests/timeline/test_authoring_media.py`: **71 passed, 1
++  deselected**;
++- exact native current014 HTTP lifecycle node against Runtime `a0dca169…`:
++  **1 passed**;
++- prior focused WC6 command: **12 passed**; Ruff and `git diff --check`:
++  **passed**.
++
++The no-filter neighbor run also exposed one known pre-existing fixture/setup
++failure, not product evidence:
++`test_real_runtime_import_and_parent_publication_roundtrip` imports
++`runtime_protocol` before the lane's Runtime helper setup and raises
++`ModuleNotFoundError: No module named 'runtime_protocol'`. It was not changed,
++skipped, weakened, or used as green evidence. No full suite was run.
++
++## Next step
++
++Merge only the exact bounded tree above after the manager confirms the target
++still has the e86 ordinary014 pin and current P1/F1/Scene/Root/AM behavior.
++Keep narration/text and arbitrary structural document publication as open
++follow-up qualification items.
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/DONE && echo DONE=present; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md && echo report=present; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg.txt && echo commit-msg=present; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-current014-final.md && echo design=present; git status --short --branch; git rev-parse HEAD''^{tree}; printf '"'\\n--- report tail ---\\n'; tail -35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md" in /home/user/work/wt/agt-review-wc6-current014-final
+ succeeded in 230ms:
+DONE=present
+report=present
+commit-msg=present
+design=present
+## tl/agt-review-wc6-current014-final
+49b77c93b181ec1b20f0230a6cdbfa1518ad55ab
+
+--- report tail ---
+  `test_full_authored_field_edits_compile_without_normalizing_opaque_fields`.
+  No new skip/xfail or deleted assertion was introduced. No whole-WC6
+  deletion claim is made.
+
+## Evidence
+
+Focused guard run directly on this tree:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_inverse_clear_batches.py::test_matching_child_write_cannot_prove_absent_ancestor_read tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry_fields tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_materialized_payload_still_guards_all_other_input
+6 passed in 1.47s
+```
+
+Previously recorded evidence for this exact composition was not repeated:
+
+- targeted `tests/timeline/test_authoring_media.py`: **71 passed, 1
+  deselected**;
+- exact native current014 HTTP lifecycle node against Runtime `a0dca169…`:
+  **1 passed**;
+- prior focused WC6 command: **12 passed**; Ruff and `git diff --check`:
+  **passed**.
+
+The no-filter neighbor run also exposed one known pre-existing fixture/setup
+failure, not product evidence:
+`test_real_runtime_import_and_parent_publication_roundtrip` imports
+`runtime_protocol` before the lane's Runtime helper setup and raises
+`ModuleNotFoundError: No module named 'runtime_protocol'`. It was not changed,
+skipped, weakened, or used as green evidence. No full suite was run.
+
+## Next step
+
+Merge only the exact bounded tree above after the manager confirms the target
+still has the e86 ordinary014 pin and current P1/F1/Scene/Root/AM behavior.
+Keep narration/text and arbitrary structural document publication as open
+follow-up qualification items.
+
+codex
+APPROVE bounded merge.
+
+- Exact tree: `a4c13077`, tree `49b77c93b181ec1b20f0230a6cdbfa1518ad55ab`
+- Strict inverse, opaque/order/mirror guard: **6 passed**
+- Existing evidence retained: **71 unit passes**, **1 HTTP pass**
+- Ordinary014 pin bytes and P1/F1 behavior unchanged.
+- Narration/structural positives remain strict/open; no whole-WC6 closure claimed.
+- Known neighbor `ModuleNotFoundError` is fixture setup only, not product green evidence.
+- No product changes made; worktree clean.
+
+Artifacts:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md)
+- [design note](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-current014-final.md)
+- `DONE` marker and commit message written.
+tokens used
+168,573
+APPROVE bounded merge.
+
+- Exact tree: `a4c13077`, tree `49b77c93b181ec1b20f0230a6cdbfa1518ad55ab`
+- Strict inverse, opaque/order/mirror guard: **6 passed**
+- Existing evidence retained: **71 unit passes**, **1 HTTP pass**
+- Ordinary014 pin bytes and P1/F1 behavior unchanged.
+- Narration/structural positives remain strict/open; no whole-WC6 closure claimed.
+- Known neighbor `ModuleNotFoundError` is fixture setup only, not product green evidence.
+- No product changes made; worktree clean.
+
+Artifacts:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/report.md)
+- [design note](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc6-current014-final.md)
+- `DONE` marker and commit message written.

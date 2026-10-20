@@ -1,0 +1,9 @@
+name=agt-qual-d05
+repo=agent
+base=tl/agt-m2-delete-core-inverse
+base_sha=fc33e0e7
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-qual-d05
+started=2026-10-20T04:13:03Z

@@ -1,0 +1,400 @@
+        "default": 8,
+        "description": "",
+        "label": "Duration Frames",
+        "min": 1,
+        "name": "durationFrames",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "supported",
+      "preview": "supported",
+      "workerExport": "supported"
+    },
+    "revision": "sha256:30fa91cf8af7aa9460e05e90a8f9bf058974d6f0164dd8ec34d412d54342bfe1",
+    "runtime": {
+      "adapter": "remotion"
+    },
+    "schema": {
+      "properties": {
+        "durationFrames": {
+          "minimum": 1,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Cross fade transition.",
+    "source": "pack:rendering"
+  },
+  {
+    "componentPath": "packs/rendering/rendering/elements/transitions/fade/component.tsx",
+    "defaults": {
+      "durationFrames": 8
+    },
+    "description": "Fade transition through black between two clips.",
+    "id": "fade",
+    "keywords": [
+      "fade",
+      "transition",
+      "black"
+    ],
+    "kind": "transition",
+    "label": "Fade",
+    "packId": "rendering",
+    "parameters": [
+      {
+        "default": 8,
+        "description": "",
+        "label": "Duration Frames",
+        "min": 1,
+        "name": "durationFrames",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "supported",
+      "preview": "supported",
+      "workerExport": "supported"
+    },
+    "revision": "sha256:e68bac9cac9d42bc5827e39e8266bbecabfbaf54c0cf7fe9c22fe6c2e7d031d3",
+    "runtime": {
+      "adapter": "remotion"
+    },
+    "schema": {
+      "properties": {
+        "durationFrames": {
+          "minimum": 1,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Fade-through-black transition.",
+    "source": "pack:rendering"
+  }
+]
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, subprocess
+for label,text in [('old',subprocess.check_output(['git','show','da9a5bd86"'^:astrid/packs/rendering/elements/catalog.ts'"'],text=True)),('new',open('astrid/packs/rendering/elements/catalog.ts').read())]:
+ p=text.split('Object.freeze(\\n',1)[1].split('\\n);',1)[0]
+ rows=json.loads(p)
+ print(label,len(rows),sum(row['id']=='text-card' for row in rows),[row['id'] for row in rows if row['id']=='text-card'])
+ print([row['revision'] for row in rows if row['id']=='text-card'])
+PY" in /home/user/work/wt/agt-m2-d10-custom-owner-preservation
+ succeeded in 325ms:
+old 45 2 ['text-card', 'text-card']
+['sha256:05749d28c818f8894770884cf52933cceed0e58a6d7d8702033ab4b869d1304b', 'sha256:eea7fdd338804aabfd46dd081c806fe5e0b190d1e0d629d7d93029d154eefba8']
+new 45 2 ['text-card', 'text-card']
+['sha256:6575848081267d8ac02b802f109dd8fedb4bddb94469b914190f83b2e73be56f', 'sha256:eea7fdd338804aabfd46dd081c806fe5e0b190d1e0d629d7d93029d154eefba8']
+
+codex
+Final verification is green: the required targeted suites pass 20/20, and normal catalog freshness passes. The source/revision audit confirms the nine deleted wrapper sources and nine pack resource rows are unchanged by this worker; the existing catalog revisions remain governed by `_element_revision`’s executable-source bytes, so I did not relabel or fake any digest. I’m recording the handoff metadata now.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..82ba1a096dfabfc97ccc3e6d7a2f8226661179fd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/commit-msg
+@@ -0,0 +1,4 @@
++fix(rendering): preserve source-less public effect owners
++
++Keep the canonical Composition effect in the generated host map while
++carrying valid shadowed owners through the existing owner selector.
+diff --git a/scripts/gen_effect_registry.py b/scripts/gen_effect_registry.py
+index b3955da5d7b14da8befbaf8f2503225eb3e419b2..225a403d705d148c5463dcef29a38d1be1b544fa
+--- a/scripts/gen_effect_registry.py
++++ b/scripts/gen_effect_registry.py
+@@ -446,17 +446,56 @@
+     *,
+     include_local: bool = True,
+ ) -> str:
++    registry = _element_registry()
+     effects = discover_effects(include_local=include_local)
++    all_elements = registry.list(kind="effects", include_shadowed=True)
++
++    # A source-less public winner is still the canonical registry entry.  If a
++    # valid shadow exists, retain that winner in the host map so the existing
++    # owner selector can route the qualified local reference without changing
++    # canonical registry precedence.
++    for element in all_elements:
++        if element.id in effects or (not include_local and element.source == "pack:local"):
++            continue
++        winner = registry.get("effects", element.id)
++        if element is winner:
++            continue
++        if (
++            winner.source == "pack:rendering"
++            and not winner.component.is_file()
++            and element.id in _public_registry_ids()["effects"]
++        ):
++            _component_is_host_importable(element)
++            effects[element.id] = _plugin_from_element(winner)
++
+     effect_ids = sorted(effects)
++    public_effects = {
++        effect_id: effect
++        for effect_id, effect in effects.items()
++        if effect.scope == "pack:rendering"
++        and not effect.root.joinpath("component.tsx").is_file()
++    }
+     imports = [
+         f"import {_component_name(effect_id)} from '{_import_path(effects[effect_id])}';"
+         for effect_id in effect_ids
++        if effect_id not in public_effects
+     ]
++    winner_symbols = {
++        effect_id: (
++            f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
++            if effect_id in public_effects
++            else _component_name(effect_id)
++        )
++        for effect_id in effect_ids
++    }
+     # Keep public IDs and the unqualified winner. Components receive the
+     # existing editor ref through their clip props, so no composition schema
+     # or second dispatch identity is needed for retained owner candidates.
+     owners: dict[str, dict[str, str]] = {effect_id: {} for effect_id in effect_ids}
+-    for element in _element_registry().list(kind="effects", include_shadowed=True):
++    for effect_id, effect in public_effects.items():
++        pack_id = effect.meta.get("pack_id") or effect.scope.removeprefix("pack:")
++        owners[effect_id][pack_id] = winner_symbols[effect_id]
++    for element in all_elements:
+         if not include_local and element.source == "pack:local":
+             continue
+         if element.id not in effects:
+@@ -476,7 +515,7 @@
+         owners[element.id].setdefault(pack_id, symbol)
+     registry_entries = [
+         f"  {_ts_string(effect_id)}: selectOwnedEffect({_ts_string(effect_id)}, "
+-        f"{_component_name(effect_id)}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
++        f"{winner_symbols[effect_id]}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
+         for effect_id in effect_ids
+     ]
+     fingerprint_entries = [
+@@ -495,6 +534,16 @@
+         "import {createElement} from 'react';",
+         "",
+         "import type {SceneCapableComponent, ComponentCapabilityContext} from '@banodoco/timeline-composition/evaluation';",
++        *(
++            [
++                "import {DEFAULT_THEME} from '@banodoco/timeline-composition/theme-api';",
++                "import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';",
++                "",
++                "const PUBLIC_EFFECT_REGISTRY = resolveElementRegistries(DEFAULT_THEME).effects;",
++            ]
++            if public_effects
++            else []
++        ),
+         "",
+         "function selectOwnedEffect(id: string, winner: EffectComponent, owners: Record<string, EffectComponent>): EffectComponent {",
+         "  const select = (clip: {elementRef?: {id: string; kind: string; packId?: string}}): EffectComponent & SceneCapableComponent => {",
+diff --git a/tests/packs/rendering/test_remotion_element_generation.py b/tests/packs/rendering/test_remotion_element_generation.py
+index 1680794f114d7bdda626e732a11936baefbf39b1..9464e57121fa2b672316d531063c2380994bfad4
+--- a/tests/packs/rendering/test_remotion_element_generation.py
++++ b/tests/packs/rendering/test_remotion_element_generation.py
+@@ -70,7 +70,7 @@
+         self.assertIn("@pack-rendering-elements-animations/fade/component", generated)
+         self.assertNotIn("@pack-local-elements-animations/fade/component", generated)
+ 
+-    def test_public_composition_supplies_source_less_builtin(self) -> None:
++    def test_public_source_less_winner_preserves_local_owner(self) -> None:
+         from astrid.core.element.registry import load_default_registry
+ 
+         registry = load_default_registry(project_root=ROOT)
+@@ -82,7 +82,10 @@
+         public_ids = gen_effect_registry._public_registry_ids()
+         self.assertIn("text-card", public_ids["effects"])
+         generated = gen_effect_registry.generate_element_registry("effects")
+-        self.assertNotIn("'text-card':", generated)
++        self.assertIn("'text-card': selectOwnedEffect(", generated)
++        self.assertIn("PUBLIC_EFFECT_REGISTRY['text-card']", generated)
++        self.assertIn("'local': OwnerElement", generated)
++        self.assertIn("'rendering': PUBLIC_EFFECT_REGISTRY['text-card']", generated)
+         self.assertNotIn("@pack-rendering-elements-effects/text-card/component", generated)
+ 
+     def test_public_membership_uses_composition_registry_api(self) -> None:
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..82ba1a096dfabfc97ccc3e6d7a2f8226661179fd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/commit-msg
+@@ -0,0 +1,4 @@
++fix(rendering): preserve source-less public effect owners
++
++Keep the canonical Composition effect in the generated host map while
++carrying valid shadowed owners through the existing owner selector.
+diff --git a/scripts/gen_effect_registry.py b/scripts/gen_effect_registry.py
+index b3955da5d7b14da8befbaf8f2503225eb3e419b2..225a403d705d148c5463dcef29a38d1be1b544fa
+--- a/scripts/gen_effect_registry.py
++++ b/scripts/gen_effect_registry.py
+@@ -446,17 +446,56 @@
+     *,
+     include_local: bool = True,
+ ) -> str:
++    registry = _element_registry()
+     effects = discover_effects(include_local=include_local)
++    all_elements = registry.list(kind="effects", include_shadowed=True)
++
++    # A source-less public winner is still the canonical registry entry.  If a
++    # valid shadow exists, retain that winner in the host map so the existing
++    # owner selector can route the qualified local reference without changing
++    # canonical registry precedence.
++    for element in all_elements:
++        if element.id in effects or (not include_local and element.source == "pack:local"):
++            continue
++        winner = registry.get("effects", element.id)
++        if element is winner:
++            continue
++        if (
++            winner.source == "pack:rendering"
++            and not winner.component.is_file()
++            and element.id in _public_registry_ids()["effects"]
++        ):
++            _component_is_host_importable(element)
++            effects[element.id] = _plugin_from_element(winner)
++
+     effect_ids = sorted(effects)
++    public_effects = {
++        effect_id: effect
++        for effect_id, effect in effects.items()
++        if effect.scope == "pack:rendering"
++        and not effect.root.joinpath("component.tsx").is_file()
++    }
+     imports = [
+         f"import {_component_name(effect_id)} from '{_import_path(effects[effect_id])}';"
+         for effect_id in effect_ids
++        if effect_id not in public_effects
+     ]
++    winner_symbols = {
++        effect_id: (
++            f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
++            if effect_id in public_effects
++            else _component_name(effect_id)
++        )
++        for effect_id in effect_ids
++    }
+     # Keep public IDs and the unqualified winner. Components receive the
+     # existing editor ref through their clip props, so no composition schema
+     # or second dispatch identity is needed for retained owner candidates.
+     owners: dict[str, dict[str, str]] = {effect_id: {} for effect_id in effect_ids}
+-    for element in _element_registry().list(kind="effects", include_shadowed=True):
++    for effect_id, effect in public_effects.items():
++        pack_id = effect.meta.get("pack_id") or effect.scope.removeprefix("pack:")
++        owners[effect_id][pack_id] = winner_symbols[effect_id]
++    for element in all_elements:
+         if not include_local and element.source == "pack:local":
+             continue
+         if element.id not in effects:
+@@ -476,7 +515,7 @@
+         owners[element.id].setdefault(pack_id, symbol)
+     registry_entries = [
+         f"  {_ts_string(effect_id)}: selectOwnedEffect({_ts_string(effect_id)}, "
+-        f"{_component_name(effect_id)}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
++        f"{winner_symbols[effect_id]}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
+         for effect_id in effect_ids
+     ]
+     fingerprint_entries = [
+@@ -495,6 +534,16 @@
+         "import {createElement} from 'react';",
+         "",
+         "import type {SceneCapableComponent, ComponentCapabilityContext} from '@banodoco/timeline-composition/evaluation';",
++        *(
++            [
++                "import {DEFAULT_THEME} from '@banodoco/timeline-composition/theme-api';",
++                "import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';",
++                "",
++                "const PUBLIC_EFFECT_REGISTRY = resolveElementRegistries(DEFAULT_THEME).effects;",
++            ]
++            if public_effects
++            else []
++        ),
+         "",
+         "function selectOwnedEffect(id: string, winner: EffectComponent, owners: Record<string, EffectComponent>): EffectComponent {",
+         "  const select = (clip: {elementRef?: {id: string; kind: string; packId?: string}}): EffectComponent & SceneCapableComponent => {",
+diff --git a/tests/packs/rendering/test_remotion_element_generation.py b/tests/packs/rendering/test_remotion_element_generation.py
+index 1680794f114d7bdda626e732a11936baefbf39b1..9464e57121fa2b672316d531063c2380994bfad4
+--- a/tests/packs/rendering/test_remotion_element_generation.py
++++ b/tests/packs/rendering/test_remotion_element_generation.py
+@@ -70,7 +70,7 @@
+         self.assertIn("@pack-rendering-elements-animations/fade/component", generated)
+         self.assertNotIn("@pack-local-elements-animations/fade/component", generated)
+ 
+-    def test_public_composition_supplies_source_less_builtin(self) -> None:
++    def test_public_source_less_winner_preserves_local_owner(self) -> None:
+         from astrid.core.element.registry import load_default_registry
+ 
+         registry = load_default_registry(project_root=ROOT)
+@@ -82,7 +82,10 @@
+         public_ids = gen_effect_registry._public_registry_ids()
+         self.assertIn("text-card", public_ids["effects"])
+         generated = gen_effect_registry.generate_element_registry("effects")
+-        self.assertNotIn("'text-card':", generated)
++        self.assertIn("'text-card': selectOwnedEffect(", generated)
++        self.assertIn("PUBLIC_EFFECT_REGISTRY['text-card']", generated)
++        self.assertIn("'local': OwnerElement", generated)
++        self.assertIn("'rendering': PUBLIC_EFFECT_REGISTRY['text-card']", generated)
+         self.assertNotIn("@pack-rendering-elements-effects/text-card/component", generated)
+ 
+     def test_public_membership_uses_composition_registry_api(self) -> None:
+
+exec
+/bin/bash -lc 'git status --short --branch; git diff --check; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/DONE && echo DONE=empty; sed -n '"'1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d10-custom-owner-preservation/commit-msg" in /home/user/work/wt/agt-m2-d10-custom-owner-preservation
+ succeeded in 745ms:
+## tl/agt-m2-d10-custom-owner-preservation
+ M scripts/gen_effect_registry.py
+ M tests/packs/rendering/test_remotion_element_generation.py
+DONE=empty
+fix(rendering): preserve source-less public effect owners
+
+Keep the canonical Composition effect in the generated host map while
+carrying valid shadowed owners through the existing owner selector.
+
+codex
+Implemented D10 owner-preservation fix.
+
+- Updated `scripts/gen_effect_registry.py` to retain source-less Composition winners and route valid shadow owners through the existing selector.
+- Added permanent `text-card` public-winner/local-override regression coverage; unknown missing components still fail closed.
+- No catalog changes; freshness remains truthful.
+
+Tests:
+
+```text
+20 passed
+normal catalog freshness: PASS
+git diff --check: PASS
+```
+
+Used pinned Composition `0.0.13` in a private overlay with Node `v20.19.4`; shared dependencies were untouched.
+
+The nine source deletions and their existing revision changes remain held for orchestrator/App provenance refresh. Commit message and `DONE` marker written.
+tokens used
+182,226
+Implemented D10 owner-preservation fix.
+
+- Updated `scripts/gen_effect_registry.py` to retain source-less Composition winners and route valid shadow owners through the existing selector.
+- Added permanent `text-card` public-winner/local-override regression coverage; unknown missing components still fail closed.
+- No catalog changes; freshness remains truthful.
+
+Tests:
+
+```text
+20 passed
+normal catalog freshness: PASS
+git diff --check: PASS
+```
+
+Used pinned Composition `0.0.13` in a private overlay with Node `v20.19.4`; shared dependencies were untouched.
+
+The nine source deletions and their existing revision changes remain held for orchestrator/App provenance refresh. Commit message and `DONE` marker written.

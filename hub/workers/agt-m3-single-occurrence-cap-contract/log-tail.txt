@@ -1,0 +1,400 @@
+
+lock-validate:
+	@$(PY) -c "from scripts.reshape.release_reproducibility import validate_dependency_locks; validate_dependency_locks(); print('✓ hashed dependency locks')"
+
+toolchain-record:
+	@$(PY) -m scripts.reshape.release_reproducibility --output out/release-toolchain.json >/dev/null
+	@echo "✓ release toolchain recorded in out/release-toolchain.json"
+
+ succeeded in 26814ms:
+...............                                                          [100%]
+15 passed in 26.19s
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/editing_conformance/test_compile_contracts.py' in /home/user/work/wt/agt-m3-single-occurrence-cap-contract
+exec
+/bin/bash -lc 'git diff -- tests/editing_conformance/test_compile_contracts.py && git diff --check && git status --short' in /home/user/work/wt/agt-m3-single-occurrence-cap-contract
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import json,subprocess,hashlib
+from pathlib import Path
+old=json.loads(subprocess.check_output(['git','show','HEAD:tests/editing_conformance/fixtures/visual_compile_contract.json']))
+new=json.loads(Path('tests/editing_conformance/fixtures/visual_compile_contract.json').read_text())
+assert all(new[k]==v for k,v in old.items() if k "'!= '"'schema_version')
+for p in ['tests/timeline/test_shot_composition_projection.py','tests/core/timeline/test_shot_composition_projection_volume.py']:
+    assert Path(p).read_bytes()==subprocess.check_output(['git','show','HEAD:'+p])
+assert new['cap_fade_closure']['editor_projection']==json.loads(subprocess.check_output(['git','show','6749e542:tests/editing_conformance/fixtures/visual_compile_contract.json']))['cap_fade_closure']['editor_projection']
+print('Original native A8/B10, overhang, rational clock and all existing fixture fields unchanged; editor projection expectations unchanged from candidate6749; projection neighbor tests byte-identical to HEAD.')
+for p in ['tests/editing_conformance/fixtures/visual_compile_contract.json','tests/editing_conformance/fixtures/main_image_cap_raw_closure.json']:
+    print(hashlib.sha256(Path(p).read_bytes()).hexdigest(),p)
+PY" in /home/user/work/wt/agt-m3-single-occurrence-cap-contract
+ succeeded in 56ms:
+All checks passed!
+
+ succeeded in 172ms:
+Original native A8/B10, overhang, rational clock and all existing fixture fields unchanged; editor projection expectations unchanged from candidate6749; projection neighbor tests byte-identical to HEAD.
+43783e0f40ef1922b54af855379c8538074c8b1df3a7abd4472a8db93877a484 tests/editing_conformance/fixtures/visual_compile_contract.json
+ad3d0ad35876665489080703c2323a8840c9187428dbe28a913e8ab4ada53f04 tests/editing_conformance/fixtures/main_image_cap_raw_closure.json
+
+ succeeded in 809ms:
+diff --git a/tests/editing_conformance/test_compile_contracts.py b/tests/editing_conformance/test_compile_contracts.py
+index 19d888b9..5dbe1a45 100644
+--- a/tests/editing_conformance/test_compile_contracts.py
++++ b/tests/editing_conformance/test_compile_contracts.py
+@@ -1,12 +1,16 @@
+-"""Shared compile-contract vectors: occurrence -> clip, as main's projection emits them.
++"""Shared compile-contract vectors for projected timing and public source clocks.
+ 
+ The vectors are fixtures/audio_compile_contract.json and fixtures/visual_compile_contract.json;
+ the design is docs/design/audio-compile-contract.md and docs/design/visual-compile-contract.md.
+ """
+ from __future__ import annotations
+ 
++import hashlib
+ import json
+ import re
++import subprocess
++import tarfile
++from copy import deepcopy
+ from fractions import Fraction
+ from pathlib import Path
+ 
+@@ -155,6 +159,156 @@ def test_overhang_child_is_clamped_to_its_occurrence_end():
+     assert clip['at'] + clip_timeline_duration(clip) == pytest.approx(3.5)
+ 
+ 
++def test_cap_fade_editor_projection_keeps_clamped_timing_and_authored_source():
++    vector = VISUAL['cap_fade_closure']
++    graph = deepcopy(vector['app_fixture'])
++    occurrence = next(o for o in graph['occurrences']
++                      if o['occurrence_id'] == vector['base']['occurrence_id'])
++    # App derives this cap from the next same-lane cut. This Agent analog
++    # receives that cap explicitly; it does not implement App's lane policy.
++    occurrence.update(at_ms=vector['occurrence_cap']['start_ms'],
++                      duration_ms=vector['occurrence_cap']['duration_ms'])
++    revision = _revision(graph, vector['base']['shot_id'], vector['base']['revision_id'])
++    revision['internal_timeline_revision']['timeline']['clips'] = [deepcopy(vector['child'])]
++    before = deepcopy(graph)
++    projection = project_shot_composition(graph)
++    clip = _source_clip(projection, occurrence['occurrence_id'], vector['child']['id'])
++    editor = vector['editor_projection']
++    for field in ('id', 'at', 'track', 'clipType', 'asset', 'hold', 'effects'):
++        assert clip[field] == editor[field]
++    assert clip_end_frame(clip, vector['fps']) == vector['end_frame']
++    assert graph == before
++    assert _clips(_revision(projection.graph, vector['base']['shot_id'],
++                            vector['base']['revision_id'])) == [vector['child']]
++
++
++@pytest.fixture(scope='module')
++def public_visual_evaluation(tmp_path_factory):
++    package = json.loads((REPO / 'remotion/package.json').read_text(encoding='utf-8'))
++    pin = package['dependencies']['@banodoco/timeline-composition']
++    assert pin.startswith('file:')
++    # Evaluate the shipped public package in a private temp directory. Its
++    # pure evaluation entry needs no install, shared dependencies or cache.
++    with tarfile.open(REPO / 'remotion' / pin.removeprefix('file:')) as archive:
++        destination = tmp_path_factory.mktemp('visual-contract-package')
++        members = [m for m in archive.getmembers() if m.isfile() and (
++            m.name == 'package/package.json' or m.name.startswith('package/dist/'))]
++        archive.extractall(destination, members=members, filter='data')
++    return (destination / 'package/dist/evaluation.js').as_uri()
++
++
++def _public_visual_result(module, clip, vector):
++    result = subprocess.run(
++        ['node', '--input-type=module', '-e', '''
++import {readFileSync} from 'node:fs';
++const {clipOpacity, prepareScene, queryTrackFrame} = await import(process.argv[1]);
++const {clip, fps, sample, last, end} = JSON.parse(readFileSync(0, 'utf8'));
++const scene = prepareScene([{track: {id: clip.track, kind: 'visual'}, clips: [clip],
++  transitions: [], incomingTransitions: [null]}], {assets: {}}, fps, 1920, 1080);
++const prepared = scene.tracks[0].prepared;
++const plan = prepared.plans[0];
++console.log(JSON.stringify({opacity: clipOpacity(clip, sample, fps),
++  own_duration_frames: plan.ownDuration, draw_duration_frames: plan.drawDuration,
++  last_clip_indices: queryTrackFrame(prepared, last).layers.map(l => l.clipIndex),
++  end_layers: queryTrackFrame(prepared, end).layers}));
++''', module],
++        input=json.dumps({'clip': clip, 'fps': vector['fps'], 'sample': vector['sample_frame'],
++                          'last': vector['last_draw_frame'], 'end': vector['end_frame']}),
++        text=True, capture_output=True, check=True, timeout=30,
++    )
++    return json.loads(result.stdout)
++
++
++@pytest.mark.parametrize('case', ['clamped-analog', 'editor', 'raw-diagnostic'])
++def test_cap_fade_public_source_clock_and_half_open_draw_cap(case, public_visual_evaluation):
++    vector = VISUAL['cap_fade_closure']
++    input_key, expect_key = {
++        'clamped-analog': ('editor_projection', 'render'),
++        'editor': ('editor_projection', 'editor'),
++        'raw-diagnostic': ('render_input', 'diagnostic_raw'),
++    }[case]
++    result = _public_visual_result(public_visual_evaluation, vector[input_key], vector)
++    assert result == {
++        **vector['expect'][expect_key], 'last_clip_indices': [0], 'end_layers': [],
++    }
++
++
++def test_single_occurrence_cap_through_normal_managed_projection(tmp_path, public_visual_evaluation):
++    from astrid.packs.rendering.actions.render.managed_timeline import (
++        materialize_managed_render_snapshot,
++        resolve_managed_render_snapshot,
++        validate_managed_render_snapshot,
++    )
++    from astrid.packs.rendering.shared.rendering_backend import _serialize_timeline
++    from tests.packs.rendering.test_managed_timeline_render import _Runtime
++
++    vector = VISUAL['single_occurrence_cap_closure']
++    path = FIXTURES / vector['raw_fixture']
++    raw_bytes = path.read_bytes()
++    assert hashlib.sha256(raw_bytes).hexdigest() == vector['raw_fixture_sha256']
++    closure = json.loads(raw_bytes)
++    before = deepcopy(closure)
++    parent = closure['parent_revision']
++    assert len(parent['payload']['occurrences']) == 1
++    assert parent['payload']['occurrences'][0]['duration_ms'] == 4000
++    child = closure['internal_timeline_revisions'][0]['payload']['clips'][0]
++    assert child['hold'] == 5
++    assert child['effects'] == {'fade_out': 1}
++    asset = closure['internal_timeline_revisions'][0]['payload']['registry']['assets']['image']
++    runtime = _Runtime(media=[{'media_id': asset['media_id'], 'digest': asset['content_sha256'],
++                               'project_id': parent['project_id']}])
++    runtime.timeline['head_revision_id'] = parent['revision_id']
++    runtime.parent_revisions[parent['revision_id']] = parent
++    runtime.exact_shot_revisions = {(r['shot_id'], r['revision_id']): r for r in closure['shot_revisions']}
++    runtime.internal_revisions = {r['revision_id']: r for r in closure['internal_timeline_revisions']}
++    snapshot = resolve_managed_render_snapshot(
++        project_ref='demo', timeline_ref='main', expected_version=1, client=runtime,
++    )
++    validate_managed_render_snapshot(snapshot)
++    projected = project_runtime_parent_composition(
++        parent, shot_revisions=closure['shot_revisions'],
++        internal_timeline_revisions=closure['internal_timeline_revisions'],
++    )
++    assert snapshot.config == projected.config == vector['projected_config']
++    assert snapshot.registry == projected.registry == vector['registry']
++    timeline_path, _, _ = materialize_managed_render_snapshot(tmp_path, snapshot)
++    timeline = _serialize_timeline(timeline_path)
++    assert timeline == vector['serialized_timeline']
++    assert timeline['clips'][0]['hold'] == 4
++    assert clip_end_frame(timeline['clips'][0], vector['fps']) == vector['end_frame']
++    assert closure == before
++    assert path.read_bytes() == raw_bytes
++
++    # Evaluate the actual serialized output, with no synthetic cap/next cut or
++    # canonicalTiming added. No-transition preparation is sufficient for this closure.
++    result = subprocess.run(
++        ['node', '--input-type=module', '-e', '''
++import {readFileSync} from 'node:fs';
++const {clipOpacity, prepareScene, queryTrackFrame} = await import(process.argv[1]);
++const {timeline, assets, vector, raw} = JSON.parse(readFileSync(0, 'utf8'));
++const fps = timeline.output.fps;
++const scene = prepareScene(timeline.tracks.map(track => ({track,
++  clips: timeline.clips.filter(c => c.track === track.id), transitions: []})),
++  assets, fps, 1920, 1080);
++const {clips, prepared} = scene.tracks[0];
++const plan = prepared.plans[0];
++console.log(JSON.stringify({opacity: clipOpacity(clips[0], vector.sample_frame, fps),
++  control_opacity: clipOpacity(clips[0], vector.control_frame, fps),
++  last_opacity: clipOpacity(clips[0], vector.last_draw_frame, fps),
++  own_duration_frames: plan.ownDuration, draw_duration_frames: plan.drawDuration,
++  last_clip_indices: queryTrackFrame(prepared, vector.last_draw_frame).layers.map(l => l.clipIndex),
++  end_layers: queryTrackFrame(prepared, vector.end_frame).layers,
++  raw_diagnostic_opacity: clipOpacity(raw, vector.sample_frame, fps)}));
++''', public_visual_evaluation],
++        input=json.dumps({'timeline': timeline, 'assets': snapshot.registry, 'vector': vector, 'raw': child}),
++        text=True, capture_output=True, check=True, timeout=30,
++    )
++    observed = json.loads(result.stdout)
++    assert observed.pop('raw_diagnostic_opacity') == 1
++    assert observed.pop('last_opacity') == pytest.approx(vector['expect']['last_opacity'])
++    assert observed == {key: value for key, value in vector['expect'].items() if key != 'last_opacity'}
++
++
+ def test_render_pin_gives_element_clips_the_clip_look():
+     # origin/main pins Composition 0.0.6, which mounts effect clips bare (docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx:121-132).
+     # 0.0.7 added the ClipLook on element clips (composition 6bd784d); the intended change is already in this tree's pin.
+ M docs/design/visual-compile-contract.md
+ M tests/editing_conformance/fixtures/visual_compile_contract.json
+ M tests/editing_conformance/test_compile_contracts.py
+?? tests/editing_conformance/fixtures/main_image_cap_raw_closure.json
+
+codex
+Targeted verification is green: 152 passed with the two unchanged audio xfails, plus 15 public12 host tests passed. The native A8/B10, overhang and rational-clock vectors remain unchanged, as do the editor projection expectations. I’m writing the App handoff with exact fixture hashes and the source path for the stored-duration cap.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-single-occurrence-cap-contract.md <<'EOF'
+# Exact single-occurrence cap contract
+
+Agent preparation/evaluation is resolved with **no product change**. The stored occurrence "'`duration_ms=4000` is already the normal Agent render cap for the exact original MAIN closure. Authored image hold5/fade_out1 is preserved in the pinned child, while the ordinary projected/serialized clip is hold4/fade_out1 and public12 evaluates f105 to opacity0.5. No next occurrence is present or added.
+
+## Exact inputs and App handoff
+
+Worktree: `/home/user/work/wt/agt-m3-single-occurrence-cap-contract`, base `d8749a9c` (Agent). Candidate6749e542'"'s editor/read and raw diagnostic vectors are retained; its purported production strict xfail is replaced by a real normal-pipeline regression. That xfail sent raw hold5 straight to public "'`clipOpacity`, bypassing the cap-owning projector, so it was not production join evidence.
+
+The byte-identical captured closure is now:
+
+- Agent `tests/editing_conformance/fixtures/main_image_cap_raw_closure.json`.
+- SHA256 **`ad3d0ad35876665489080703c2323a8840c9187428dbe28a913e8ab4ada53f04`**.
+- Source: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-raw-closure.json`.
+- One `image-occurrence`, shot pin `image-shot/image-shot-revision`, internal pin `image-internal`, parent `image-cap-parent`. Placement start0, duration4000ms, speed1, source_offset0. Child `image`: at0, hold5, fade_out1. No next occurrence, extra cap field, DTO, renderConfig, altered asset or pin.
+
+The complete shared corpus is `tests/editing_conformance/fixtures/visual_compile_contract.json`, schema5, SHA256 **`43783e0f40ef1922b54af855379c8538074c8b1df3a7abd4472a8db93877a484`**. App should copy/compare the raw fixture by its exact byte hash and consume key `single_occurrence_cap_closure`, containing the full actual projected_config, registry, serialized_timeline and expected public observations. No fields are filtered. `cap_fade_closure` remains the explicitly different prepared-editor analog (stored2000ms plus next cut4000ms); it is not evidence for deriving this single-occurrence cap. Existing native A8/B10, overhang, rational30000/1001 and editor projection values are preserved.
+
+## Existing authority and normal path
+
+1. `astrid/packs/rendering/actions/render/managed_timeline.py:1012` `resolve_managed_render_snapshot` resolves an immutable canonical head. `_project_exact_parent_head` at893 reads the pinned parent/shot/internal records and calls the existing `project_runtime_parent_composition` at963.
+2. `astrid/core/timeline/shot_composition_projection.py:272` `_occurrence_window` reads placement.start_ms and occurrence.duration_ms. For these exact bytes the occurrence window is [0,4)s. It does not infer duration from child content or another occurrence.
+3. The same module'"'s "'`project_runtime_parent_composition` at454 passes that end into `_project_clip` at291. `_project_clip` uses `clipped_end=min(child end, occurrence end)` and writes hold=visible_duration*child_speed on its detached copy. Here min(5,4)=4, speed1. Effects remain fade_out1; authored hold5 stays intact. The provider also uses this same projector in `astrid/sdk/timeline/commit.py:739`.
+4. Normal `validate_managed_render_snapshot` and `materialize_managed_render_snapshot` (at1168) accept/write this snapshot in a private test directory. `_serialize_timeline` in `astrid/packs/rendering/shared/rendering_backend/__init__.py:52` calls `Timeline.load(...).for_render(...).to_json_data()`. Serialized hold remains4; metadata output fps remains numeric30.
+5. The actual serialized clips and managed registry enter pinned public Composition0.0.12 `prepareScene`, `queryTrackFrame`, `clipOpacity`. This one-clip/no-transition closure needs no synthesized incoming transition/cap metadata. No second compiler or private fade equation is introduced.
+
+| Public12 result from actual normal serialized output | Value |
+| --- | --- |
+| own duration / draw duration | 120 / 120 frames |
+| frame90 clip opacity | 1 |
+| frame105 clip opacity | **0.5** |
+| frame119 | layer0 present, clip opacity1/30 |
+| frame120 | no layers |
+| raw hold5 direct clipOpacity at105 | 1, diagnostic only |
+
+Executable proof: `tests/editing_conformance/test_compile_contracts.py::test_single_occurrence_cap_through_normal_managed_projection`. It starts with the exact hash-checked closure, uses existing `_Runtime` in-process exact reads, executes the real helpers above, compares full direct/managed projections and serialization with the shared fixture, asserts input bytes/objects unchanged, then evaluates those actual output clips using public12 extracted privately. It asserts ordinary success, with no xfail. Existing prepared-editor positive stays positive. The SDK timing compiler needs no change for this defect question; this does not claim the entire one-compiler migration is complete.
+
+## Evidence and limits
+
+Targeted compile/projector/managed/timing/golden neighbors: **152 passed, 2 xfailed**, 9.83s. The only xfails are the existing audio vectors10–11. Public12 normal-host neighbors: **15 passed**, 26.19s. Ruff on the touched Python file: pass. `git diff --check`: pass. Exact commands and preservation checks are in the worker report at `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-single-occurrence-cap-contract/notes/report.md`.
+
+MAIN pixels are cited, **not rerun**: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-main-image-cap-actual-reference.md`, central operation `vw-m3-main-cap-locked-theme-stage-e2e-viewing-main6-locked-theme-image-cap-three-stills-1020115023-5447`, original MAINa411628f, locked Composition0.0.6. Frame90 RGB240 PNG SHA256 `7640face10c33eb4c8682b890ddcc6faacaf0e57c0810e9438e4b2df8a88444a`; frame105 RGB122/124/130 PNG SHA256 `c0b0adc7856e2750137315451a9657661925436746d0da1e9cd6a2527d14431b`; background5/8/20 gives median source-over fraction0.5. Frame119 PNG SHA256 `128017371420be346796916879dc2e5faac0f2761d5025018e392913abea63be` is a quantized near-end control. MAIN metadata duration120 excludes frame120; no nonexistent frame120 PNG is claimed. PNG alpha255 is not layer opacity. The media fixture/reference is a static-public executable analog, not an owner film.
+
+No full suite requested or run; no browser/render/socket/server or live Runtime acceptance. No unified pixel/audio parity or Gate6 closure. Public pure evaluation and host neighbors do not establish render-source admission. Shared dependencies/caches untouched; no installs, git mutation or writes to integration/other worker worktrees.
+
+## Cross-owner App question
+
+`app-main-cap-half-golden.md` reports the exact App counterexample: `shotCompositionTiming.ts:135–143` `timelineOccurrenceEffectiveDurationMs` derives content extent capped only by the next same-lane occurrence. For this one-occurrence closure it replaces stored4000ms with5000ms, producing hold5/f1051/frame120 present. Agent'"'s normal path above instead uses the existing stored4000ms authority. That difference is established by the App report plus executable Agent proof, not a reason to invent a cap in Agent or activate renderConfig.
+
+Orchestrator was asked to assign App policy reconciliation against these exact bytes while preserving its original stored2000ms/content5000ms/next4000ms → effective4000ms editor positive. A blanket min(stored,content) change would violate that original positive. No cross-owner App edit or policy guess was made here. Agent task is complete; App reconciliation remains an external follow-up unless already assigned by the orchestrator.
+EOF" in /home/user/work/wt/agt-m3-single-occurrence-cap-contract
+ succeeded in 0ms:
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-single-occurrence-cap-contract/notes/report.md <<'EOF'
+# Single-occurrence cap: completed Agent contract
+
+## Result
+
+The exact captured MAIN closure already gives opacity0.5 at frame105 through the existing normal Python managed projector/materializer/serializer and pinned public12 evaluation. **No product changes needed.** Stored occurrence.duration_ms4000 is the existing Agent render-cap authority; the pinned child stays authored hold5/fade_out1, and its detached projected clip becomes hold4/fade_out1. There is one occurrence and no next-cut inference or fabricated cap.
+
+Base: d8749a9c, branch tl/agt-m3-single-occurrence-cap-contract. All writes are confined to the assigned worktree, assigned worker folder, and requested absolute design handoff. No git mutation, push, install, shared dependency/cache write, or other worker/integration edit.
+
+## Changes
+
+- Retained candidate6749e542's full prepared App editor vector and public diagnostic expectations; labelled it explicitly as a different analog. Replaced the candidate's fake strict production xfail (raw hold5 sent directly to clipOpacity) with ordinary real assertions from the exact normal pipeline. No passing behavior test was weakened or changed to refusal.
+- Added byte-identical "'`tests/editing_conformance/fixtures/main_image_cap_raw_closure.json`: SHA256 `ad3d0ad35876665489080703c2323a8840c9187428dbe28a913e8ab4ada53f04`.
+- Extended shared `visual_compile_contract.json` to schema5 with `single_occurrence_cap_closure`, containing full actual projected_config, registry, serialized_timeline, observations and cited MAIN hashes. Final SHA256 `43783e0f40ef1922b54af855379c8538074c8b1df3a7abd4472a8db93877a484`.
+- Added `test_single_occurrence_cap_through_normal_managed_projection`: raw bytes/hash → existing in-process `_Runtime` exact records → real resolve/validate/project/materialize/serialize helpers → actual serialized clips/registry into public12 pure prepareScene/queryTrackFrame/clipOpacity. No added canonicalTiming or incoming cap in the actual single-occurrence proof. Asserts f90=1, f105=0.5, f119 layer present/opacity1/30, f120 absent, 120-frame own/draw durations, full output equality, and raw closure unchanged. Raw direct hold5/opacity1 remains explicitly diagnostic.
+- Updated `docs/design/visual-compile-contract.md` with exact authority and proof limits.
+- Published requested absolute handoff `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-single-occurrence-cap-contract.md` for App, with exact hashes, source paths, normal helper join, cross-owner discrepancy and test evidence.
+
+Existing native A8/B10 overlap, overhang closure, rational30000/1001, all original vector fields and prepared editor expectations remain unchanged. Both projection neighbor test files are byte-identical to HEAD. No SDK timing compiler change, new compiler, renderConfig, field, DTO, pin, default flip or invented occurrence.
+
+## Source trace
+
+- `astrid/packs/rendering/actions/render/managed_timeline.py:1012` resolve_managed_render_snapshot → `_project_exact_parent_head`:893 → existing projector call:963. The current exact-read Runtime is an in-process test fixture, not a live service/acceptance claim.
+- `astrid/core/timeline/shot_composition_projection.py:272` `_occurrence_window` reads stored duration_ms4000 and start0. `project_runtime_parent_composition`:454 sends end4 to `_project_clip`:291. That helper clips min(child end5, occurrence end4), writing hold4 on a copy with unchanged fade_out1; it does not consult next occurrences. Provider uses same projector at `astrid/sdk/timeline/commit.py:739`.
+- Real materialize_managed_render_snapshot:1168 and `_serialize_timeline` in `astrid/packs/rendering/shared/rendering_backend/__init__.py:52` / Timeline.for_render retain hold4. The public evaluator then evaluates the actual serialized output. This is enough to settle this cap question, not the whole project'"'s one-compiler migration.
+
+## Exact commands and results
+
+Working directory for every command: "'`/home/user/work/wt/agt-m3-single-occurrence-cap-contract`.
+
+Initial focused compile run:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_compile_contracts.py
+```
+
+Exit0: **32 passed, 2 xfailed in4.48s**. No visual xfail; only pre-existing audio vectors10–11.
+
+Required targeted compiler/golden/managed/projector neighbors:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_compile_contracts.py tests/timeline/test_shot_composition_projection.py tests/core/timeline/test_shot_composition_projection_volume.py tests/sdk/test_timing_compiler.py tests/sdk/test_timeline_reflow_golden.py tests/packs/rendering/test_managed_timeline_render.py
+```
+
+Exit0: **152 passed, 2 xfailed in9.83s**. Same unchanged two audio xfails. Normal managed render helpers are exercised without sockets/browser/renderer. Unmodified projector editor/read/source-window/speed/volume expectations passed. After this run only fixture descriptive labels/notes were clarified; executable fixture values and test code were unchanged.
+
+Public12 normal-host/evaluation neighbors:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_host.py
+```
+
+Exit0: **15 passed in26.19s**. Pure Node host, no localhost/browser. Public12 extracted to the test'"'s private directory; coherent shared peers read-only. Includes rational half-open clock, actual host compiled-transition handoff, asset/theme, painter-order and unknown-coverage neighbors. This is supplied-input host preparation, not render-source admission/pixels.
+
+"'```sh
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/editing_conformance/test_compile_contracts.py
+git diff --check
+sha256sum tests/editing_conformance/fixtures/visual_compile_contract.json tests/editing_conformance/fixtures/main_image_cap_raw_closure.json
+```
+
+All exit0. Ruff: `All checks passed!`; whitespace clean; hashes above. Additional read-only Python assertions compared all pre-existing shared fixture keys except schema_version against HEAD, both projection neighbor test bytes against HEAD, and editor_projection against candidate6749e542: all pass. The exact raw fixture hash is also checked by the executable test.
+
+No full* request/run, make check, browser/render/pixel/audio rerun, live Runtime acceptance, install or network. No build output or temporary runner files left in the worktree.
+
+## Decisions and remaining external work
+
+Used current product code unchanged because exact closure proof demonstrates no supported-contract Agent defect. The bad candidate xfail was replaced rather than merged: it tested an input that bypassed the production cap-owning join. Retained all editor/raw diagnostics as labelled positives. Full output fields were kept because App needs an exact shared fixture, with no lossy filtering. The SDK timing compiler was not broadened unnecessarily.
+
+No Agent blocker. App'"'s "'`app-main-cap-half-golden.md` reports a real different consumer policy: `shotCompositionTiming.ts:135–143` timelineOccurrenceEffectiveDurationMs derives content extent, capped only by the next same-lane occurrence. For this exact single-occurrence input it produces5000ms instead of stored4000ms. The earlier stored2000/content5000/next4000 editor positive legitimately expects effective4000; a blanket min(stored,content) change would break it. Asked the orchestrator asynchronously to assign this precise reconciliation to App'"'s owner, preserving both positives, and published all evidence in the absolute contract. No App edits or policy inventions were made. That cross-owner question does not block this completed Agent handoff.
+
+Next: integrate this contract/test branch in place of candidate6749e542's fake production xfail; App owner copies exact ad3d0ad3 closure, reconciles its single-occurrence duration policy under orchestrator direction, and qualifies the existing exact-closure regression while keeping the old editor positive. Reuse the cited MAIN reference rather than claiming another capture.
+
+## Pixel reference limits
+
+Accepted original MAIN reference: "'`viewing-main-image-cap-actual-reference.md`, central operation `vw-m3-main-cap-locked-theme-stage-e2e-viewing-main6-locked-theme-image-cap-three-stills-1020115023-5447` (MAINa411628f/Composition0.0.6). Cited only, not rerun here. Frame90 RGBA240/240/240/255 control; frame105 RGBA122/124/130/255 against background5/8/20 supports median source-over fraction0.5; f119 quantized near-end control; metadata duration120 excludes120. Exact PNG hashes in shared fixture/absolute contract. PNG alpha255 is not layer opacity. Synthetic static-public media analog, not owner-film output. No App preview/export parity, unified pixel/audio parity, live Runtime acceptance or Gate6 closure claimed.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-single-occurrence-cap-contract/commit-msg <<'"'EOF'
+test(timeline): prove stored single-occurrence render cap
+
+Publish the exact MAIN image closure and full normal projected/serialized
+outputs. Prove the existing managed pipeline honors duration_ms=4000,
+keeps authored hold5 unchanged and evaluates frame105 to opacity0.5.
+
+Retain editor and raw diagnostics and replace the candidate's raw-input
+production xfail with real pipeline assertions. Preserve native overlap,
+overhang and rational-clock vectors without changing product code.
+EOF
+git diff --check
+git status --short" in /home/user/work/wt/agt-m3-single-occurrence-cap-contract
+ succeeded in 749ms:
+ M docs/design/visual-compile-contract.md
+ M tests/editing_conformance/fixtures/visual_compile_contract.json
+ M tests/editing_conformance/test_compile_contracts.py
+?? tests/editing_conformance/fixtures/main_image_cap_raw_closure.json
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-single-occurrence-cap-contract/DONE
+sha256sum tests/editing_conformance/fixtures/visual_compile_contract.json tests/editing_conformance/fixtures/main_image_cap_raw_closure.json' in /home/user/work/wt/agt-m3-single-occurrence-cap-contract
+ succeeded in 0ms:
+43783e0f40ef1922b54af855379c8538074c8b1df3a7abd4472a8db93877a484  tests/editing_conformance/fixtures/visual_compile_contract.json
+ad3d0ad35876665489080703c2323a8840c9187428dbe28a913e8ab4ada53f04  tests/editing_conformance/fixtures/main_image_cap_raw_closure.json
+
+codex
+Completed without product changes. The exact closure’s stored `duration_ms=4000` already caps normal Agent output at hold4, producing f105 opacity **0.5** while preserving authored hold5.
+
+- Replaced candidate6749’s raw-input xfail with real managed-pipeline assertions.
+- Targeted tests: **152 passed, 2 unchanged audio xfails**; public12 host neighbors: **15 passed**. Ruff and diff checks passed.
+- Published [exact contract and fixture hashes](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-single-occurrence-cap-contract.md).
+- [Detailed report with exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-single-occurrence-cap-contract/notes/report.md).
+
+App’s duration-policy discrepancy remains an external follow-up. No pixel rerun claimed. Commit message and `DONE` written.
+tokens used
+124,586
+Completed without product changes. The exact closure’s stored `duration_ms=4000` already caps normal Agent output at hold4, producing f105 opacity **0.5** while preserving authored hold5.
+
+- Replaced candidate6749’s raw-input xfail with real managed-pipeline assertions.
+- Targeted tests: **152 passed, 2 unchanged audio xfails**; public12 host neighbors: **15 passed**. Ruff and diff checks passed.
+- Published [exact contract and fixture hashes](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-single-occurrence-cap-contract.md).
+- [Detailed report with exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-single-occurrence-cap-contract/notes/report.md).
+
+App’s duration-policy discrepancy remains an external follow-up. No pixel rerun claimed. Commit message and `DONE` written.

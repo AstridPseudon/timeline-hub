@@ -1,0 +1,400 @@
++    document = created['data']['canonical_document']
++    created_row = next(clip for clip in document['parent_revision']['payload']['clips']
++                       if clip['id'] == 'voiceover-new')
++    assert created_row == value
++    assert created_row['clipType'] == 'media' and created_row['track'] == 'voiceover'
++    assert document['parent_revision']['payload']['registry']['assets'][value['asset']]['type'] == 'audio'
++    raw = real_audio.service.cas.read(real_audio.pins['new']['object_id'].removeprefix('sha256:'))
++    with wave.open(io.BytesIO(raw), 'rb') as source:
++        assert (source.getnchannels(), source.getframerate(), source.getnframes()) == (1, 8000, 2000)
++
++    reopen(real_audio)
++    assert current(real_audio) == document
++    with monkeypatch.context() as retry:
++        from astrid.sdk.timeline import commands
++        retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('exact retry executed semantics'))
++        assert commit(real_audio, request, 'real-audio-birth') == created
++    undone = undo(real_audio, created, 'real-audio-undo')
++    assert current(real_audio) == undone['data']['canonical_document'] == baseline
++    redone = undo(real_audio, undone, 'real-audio-redo')
++    assert current(real_audio) == redone['data']['canonical_document'] == document
++    assert real_audio.service.store.integrity_report()['ok']
++
++
+ @pytest.mark.parametrize('replace', [False, True])
+ def test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry(editing, monkeypatch, replace):
+     ordinary_roundtrip(editing, monkeypatch, replace=replace)
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_parent_media.py && ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_commit_runtime_parent_media.py -k real_managed_audio -m integration && git diff --check' in /home/user/work/wt/agt-m2-audio-real-source-qualification
+ succeeded in 3606ms:
+All checks passed!
+.                                                                        [100%]
+1 passed, 36 deselected in 2.12s
+
+codex
+The real-source proof now passes: one valid WAV is settled into managed CAS/catalog authority, admitted by the normal Agent provider as `clip.add-media` on an explicit audio track, verified after reload, and round-tripped through guarded undo/redo. The neighboring parent-media suite and all 117 trim semantics tests pass; I’m finishing the handoff artifacts and checking the final diff.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-audio-real-source-qualification.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-audio-real-source-qualification.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..84e43e6f626e52cbf247f06f53709666886383fb
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-audio-real-source-qualification.md
+@@ -0,0 +1,64 @@
++# Agent M2 audio real-source qualification
++
++## Exact source
++
++The qualification adds `tests/editing_conformance/test_commit_runtime_parent_media.py`.
++Its `tiny_wav()` helper creates a valid 8 kHz mono PCM WAV with 2,000 frames. The
++existing main settlement fixture is used unchanged as the admission boundary:
++`test_generation_publish_v1_settlement._fixture`, `_settle`, and `_output`.
++The normal private generation settles three managed `audio/wav` outputs with
++`duration_seconds: 0.25`; the test obtains the exact five-field selections from
++`get_project_media_selection`, then sends the normal Agent provider
++`clip.add-media` command.
++
++The producer row is deliberately the main audio shape: `clipType: "media"`,
++`track: "voiceover"`, `from: 0`, `to: 0.25`, and `hold: 0.25`. The setup creates
++that explicit audio track through `capture_track_create`. The test also reads
++the settled CAS bytes as a WAV, reloads Runtime, retries the exact request,
++then performs guarded undo and redo. It does not add a schema, operation,
++DTO, proposal API, import path, SQL write, or metadata override.
++
++## Runtime and selection authority
++
++Runtime's `runtime_protocol/timeline_commit_port.py:79-86` recursively walks
++all dictionaries and lists with `objects()`. `RequestCommitPort.__init__` at
++`:124` stores those objects in `__declared`; `selected_media()` at `:267-274`
++requires exact dictionary membership and then reconstructs the verified record
++from managed generation/variant/object authority. The Agent provider currently
++calls `selected_media` only for media-bearing operation arguments at
++`astrid/sdk/timeline/commit.py:876-887`.
++
++## Duration and historical carrier investigation
++
++Agent trim already handles a missing registry duration without a new wire field.
++`astrid/sdk/timeline/_trim_commands.py:25-48` requires an exact matching
++Runtime-verified media record, checks MIME family and size, and uses the server
++carried `duration_seconds`. It records that complete verified record inside the
++existing accepted dependency at `:123-127` as
++`dependencies[].pin.source` plus `dependencies[].pin.verified_media.selection`.
++The existing pure test `tests/editing_conformance/test_recipe_m2_clip_trim.py:71-82`
++proves the carrier and inverse/replay semantics.
++
++The historical pre-cut film is a separate counterexample. Its original
++`music-bed` registry entry is `type: audio` with an object identity but no
++duration, and its object has no managed generation/variant tuple. Therefore no
++valid five-field `MediaSelection` exists for that old object and Runtime
++`selected_media` cannot establish authority for it. This is the distinct
++unregistered-object gap; fabricating generation/catalog adoption would violate
++the M2 boundary.
++
++## Remaining gap and smallest peer proposal
++
++The real managed authoring capability is qualified by the new integration test.
++The historical original-audio trim journey remains unqualified. The smallest
++Runtime/Agent coordination proposal is to have the Agent provider, only for a
++`clip.trim` record whose existing `trim.source` dependency contains an exact
++five-field `verified_media.selection`, collect that declared selection and call
++the actual `port.selected_media` before semantic execution. Runtime already
++accepts recursively declared selections; no DTO or public wire change is
++needed. The provider must rebuild duration/MIME/size from that server response,
++never trust forwarded metadata, and guard the original asset/object, the whole
++selection, source range, speed, and frame/interior rounding. This proposal is
++not implemented here because the exact carrier/API decision belongs with the
++Runtime peer. It also cannot solve the old `music-bed` case until that object
++has a real managed tuple.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..21f8b9cb1cf7d409824e46c19772d24f68a6fa73
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): qualify managed audio source authoring
++
++Prove a real PCM WAV through generation settlement, managed media selection,
++clip.add-media on an explicit audio track, reload, and guarded undo/redo.
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_media.py b/tests/editing_conformance/test_commit_runtime_parent_media.py
+index de7bbd754076797f4287e0a8237ebcf10ed39d19..022110525953f2ad429a495065c3463b3cac1472
+--- a/tests/editing_conformance/test_commit_runtime_parent_media.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_media.py
+@@ -8,6 +8,8 @@
+ 
+ import copy
+ import hashlib
++import io
++import wave
+ from types import SimpleNamespace
+ 
+ import pytest
+@@ -24,6 +26,18 @@
+ pytestmark = pytest.mark.integration
+ 
+ 
++def tiny_wav(seed):
++    """Return a small, valid PCM WAV with a content-distinct first sample."""
++    samples = bytes((seed, 0)) + b'\x00\x00' * 1999
++    stream = io.BytesIO()
++    with wave.open(stream, 'wb') as output:
++        output.setnchannels(1)
++        output.setsampwidth(2)
++        output.setframerate(8000)
++        output.writeframes(samples)
++    return stream.getvalue()
++
++
+ def call(op, args, select='parent'):
+     return {'schema_version': 1, 'op': op, 'version': '1', 'select': select, 'args': args}
+ 
+@@ -54,13 +68,18 @@
+     return tuple(editing.service.store.conn.iterdump())
+ 
+ 
+-def row(editing, identity='reserved-row', *, asset=None, track='visual'):
+-    value = {'id': identity, 'clipType': editing.kind, 'track': track,
++def row(editing, identity='reserved-row', *, asset=None, track=None):
++    track = track or ('voiceover' if editing.kind == 'audio' else 'visual')
++    clip_type = 'media' if editing.kind == 'audio' else editing.kind
++    hold = .25 if editing.kind == 'audio' else 4 if editing.kind == 'video' else 1.25
++    value = {'id': identity, 'clipType': clip_type, 'track': track,
+              'asset': asset or editing.pins['new']['asset'], 'at': .125,
+-             'hold': 4 if editing.kind == 'video' else 1.25, 'params': None,
++             'hold': hold, 'params': None,
+              'opaque': {'values': [None, False, {}, []], 'literal': 'target'}}
+     if editing.kind == 'video':
+         value.update({'from': 2, 'to': 6, 'speed': 2})
++    elif editing.kind == 'audio':
++        value.update({'from': 0, 'to': hold})
+     else:
+         value['speed'] = None
+     return value
+@@ -106,7 +125,8 @@
+             {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': kind}
+             for index, name in enumerate(('old', 'new', 'unrelated'))]}])
+         value['payload']['metadata'] = {'prompt': 'parent media source',
+-                                       'params': {'duration_seconds': 6} if kind == 'video' else {}}
++                                       'params': {'duration_seconds': 6} if kind == 'video' else
++                                                 {'duration_seconds': .25} if kind == 'audio' else {}}
+         return value
+ 
+     if historical:
+@@ -147,9 +167,13 @@
+     monkeypatch.setattr(RequestCommitPort, 'selected_media', selected)
+     monkeypatch.setattr(RequestCommitPort, 'accept', accepted)
+     try:
+-        outputs = [_output(name.encode(), output_port=kind, group_key='main', variant_key=name,
+-                           ordinal=index, filename=name + ('.mp4' if kind == 'video' else '.png'),
+-                           media_type=kind + ('/mp4' if kind == 'video' else '/png'))
++        outputs = [_output(tiny_wav(index + 1) if kind == 'audio' else name.encode(),
++                           output_port=kind, group_key='main', variant_key=name,
++                           ordinal=index, filename=name + ('.wav' if kind == 'audio' else
++                                                           '.mp4' if kind == 'video' else '.png'),
++                           media_type='audio/wav' if kind == 'audio' else
++                                      kind + ('/mp4' if kind == 'video' else '/png'),
++                           **({'duration_seconds': .25} if kind == 'audio' else {}))
+                    for index, name in enumerate(('old', 'new', 'unrelated'))]
+         _settle(service, attempt, outputs, effect=admitted)
+         editing.associations = service.managed_outputs(task['task']['id'])
+@@ -165,8 +189,10 @@
+             # authenticated pre-cut backup, through the normal history read.
+             service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize)
+         if not pristine:
+-            tracked = capture_track_create(bundle_from_document(current(editing)), 'parent', {
+-                'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False]})
++            tracked = capture_track_create(bundle_from_document(current(editing)), 'parent',
++                                           {'id': 'voiceover', 'kind': 'audio'} if kind == 'audio' else {
++                                               'id': 'visual', 'kind': 'visual', 'role': 'output',
++                                               'opaque': [None, False]})
+             commit(editing, body(editing, [tracked]), 'visual-track')
+         editing.selected.clear()
+         editing.candidates.clear()
+@@ -185,6 +211,11 @@
+     yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+ 
+ 
++@pytest.fixture
++def real_audio(tmp_path, monkeypatch):
++    yield from media_realm(tmp_path, monkeypatch, 'audio', historical=False)
++
++
+ def test_fresh_film_first_media_birth_and_exact_inverse(custody, monkeypatch):
+     baseline = current(custody)
+     assert baseline['parent_revision']['payload']['registry'] == {}
+@@ -192,6 +223,46 @@
+     assert current(custody) == baseline
+ 
+ 
++def test_real_managed_audio_birth_reload_guarded_undo_and_redo(real_audio, monkeypatch):
++    from runtime_protocol.timeline_commit_validation import validate_commit_value
++
++    from tests.editing_conformance.test_next_command_cohort_runtime import reopen
++
++    baseline = current(real_audio)
++    value = row(real_audio, 'voiceover-new')
++    request = body(real_audio, [birth(real_audio, value)], dry_run=True)
++    validate_commit_value(request, 'CommitRequest')
++    preview = commit(real_audio, request, 'real-audio-preview')
++    assert preview['receipt'] is None
++    assert real_audio.selected[-1]['selection'] == real_audio.pins['new']
++    assert real_audio.selected[-1]['media_type'] == 'audio/wav'
++    assert real_audio.selected[-1]['duration_seconds'] == pytest.approx(.25)
++
++    request['dry_run'] = False
++    created = commit(real_audio, request, 'real-audio-birth')
++    document = created['data']['canonical_document']
++    created_row = next(clip for clip in document['parent_revision']['payload']['clips']
++                       if clip['id'] == 'voiceover-new')
++    assert created_row == value
++    assert created_row['clipType'] == 'media' and created_row['track'] == 'voiceover'
++    assert document['parent_revision']['payload']['registry']['assets'][value['asset']]['type'] == 'audio'
++    raw = real_audio.service.cas.read(real_audio.pins['new']['object_id'].removeprefix('sha256:'))
++    with wave.open(io.BytesIO(raw), 'rb') as source:
++        assert (source.getnchannels(), source.getframerate(), source.getnframes()) == (1, 8000, 2000)
++
++    reopen(real_audio)
++    assert current(real_audio) == document
++    with monkeypatch.context() as retry:
++        from astrid.sdk.timeline import commands
++        retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('exact retry executed semantics'))
++        assert commit(real_audio, request, 'real-audio-birth') == created
++    undone = undo(real_audio, created, 'real-audio-undo')
++    assert current(real_audio) == undone['data']['canonical_document'] == baseline
++    redone = undo(real_audio, undone, 'real-audio-redo')
++    assert current(real_audio) == redone['data']['canonical_document'] == document
++    assert real_audio.service.store.integrity_report()['ok']
++
++
+ @pytest.mark.parametrize('replace', [False, True])
+ def test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry(editing, monkeypatch, replace):
+     ordinary_roundtrip(editing, monkeypatch, replace=replace)
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worktree status ---'; git status --short; printf '%s\\n' '--- recent generated cache files ---'; find astrid/sdk/timeline tests/editing_conformance -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -mmin -15 -print | sed -n '1,160p'; printf '%s\\n' '--- handoff artifacts ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-audio-real-source-qualification.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/DONE" in /home/user/work/wt/agt-m2-audio-real-source-qualification
+ succeeded in 254ms:
+--- worktree status ---
+ M tests/editing_conformance/test_commit_runtime_parent_media.py
+--- recent generated cache files ---
+astrid/sdk/timeline/__pycache__/outbox.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_checkout.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/store.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/api.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_media_inputs.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/publish.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/capture.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_text_binding.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/check.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/units.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/doc.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_command_state.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_timing_evaluators.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_occurrence_create.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_collections.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_trim_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_common.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/commit.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_occurrence_media_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_parent_media_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_clip_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_auto_placement.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_clip_scalar_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_split_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_shot_pool_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/compiler.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_word_anchor.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/producer.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/journal.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/revisions.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/edits.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_initialize.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_root_inverse.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/inverse.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/model.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/checkout.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_occurrence_duplicate.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_placement_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/look.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_scalar_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/lookup.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/__init__.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_occurrence_delete.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/rebase.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/selection.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_delete_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_track_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_recording.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/transaction.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/reflow.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/sync.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_shot_commands.cpython-313.pyc
+tests/editing_conformance/__pycache__/test_commit_runtime_parent_media.cpython-313.pyc
+--- handoff artifacts ---
+-rw-r--r-- 1 root root 3722 Oct 20 15:04 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-audio-real-source-qualification.md
+-rw-r--r-- 1 root root    0 Oct 20 15:04 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/DONE
+-rw-r--r-- 1 root root  207 Oct 20 15:04 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/commit-msg
+
+exec
+/bin/bash -lc "find astrid/sdk/timeline/__pycache__ tests/editing_conformance/__pycache__ -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -delete 2>/dev/null || true
+find astrid/sdk/timeline/__pycache__ tests/editing_conformance/__pycache__ -type d -empty -delete 2>/dev/null || true
+git status --short" in /home/user/work/wt/agt-m2-audio-real-source-qualification
+ succeeded in 244ms:
+ M tests/editing_conformance/test_commit_runtime_parent_media.py
+
+exec
+/bin/bash -lc 'ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_commit_runtime_parent_media.py -m integration' in /home/user/work/wt/agt-m2-audio-real-source-qualification
+ succeeded in 100755ms:
+.....................................                                    [100%]
+37 passed in 99.34s (0:01:39)
+
+exec
+/bin/bash -lc "find astrid/sdk/timeline tests/editing_conformance -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -delete 2>/dev/null || true
+find astrid/sdk/timeline tests/editing_conformance -type d -name __pycache__ -empty -delete 2>/dev/null || true
+git diff --check && git status --short && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-audio-real-source-qualification/DONE && echo DONE" in /home/user/work/wt/agt-m2-audio-real-source-qualification
+ succeeded in 683ms:
+ M tests/editing_conformance/test_commit_runtime_parent_media.py
+DONE
+
+codex
+## Report
+
+Implemented real managed-audio qualification using a valid PCM WAV and the existing settlement fixture.
+
+- Added `clip.add-media` test for `clipType: "media"` on explicit `voiceover` audio track.
+- Proves managed selection, CAS WAV validity, reload, exact retry, guarded undo/redo.
+- Documented historical audio gap and smallest Runtime peer proposal:
+  [agent-audio-real-source-qualification.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-audio-real-source-qualification.md)
+
+Tests:
+
+- `...pytest ...test_commit_runtime_parent_media.py -m integration` — 37 passed
+- `...pytest ...test_recipe_m2_clip_trim.py` — 117 passed
+- `ruff check tests/editing_conformance/test_commit_runtime_parent_media.py` — passed
+- `git diff --check` — passed
+
+No full suite run. Historical original-audio journey remains unqualified because the old object lacks a managed generation/variant tuple. Commit message and `DONE` marker created.
+tokens used
+239,484
+## Report
+
+Implemented real managed-audio qualification using a valid PCM WAV and the existing settlement fixture.
+
+- Added `clip.add-media` test for `clipType: "media"` on explicit `voiceover` audio track.
+- Proves managed selection, CAS WAV validity, reload, exact retry, guarded undo/redo.
+- Documented historical audio gap and smallest Runtime peer proposal:
+  [agent-audio-real-source-qualification.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-audio-real-source-qualification.md)
+
+Tests:
+
+- `...pytest ...test_commit_runtime_parent_media.py -m integration` — 37 passed
+- `...pytest ...test_recipe_m2_clip_trim.py` — 117 passed
+- `ruff check tests/editing_conformance/test_commit_runtime_parent_media.py` — passed
+- `git diff --check` — passed
+
+No full suite run. Historical original-audio journey remains unqualified because the old object lacks a managed generation/variant tuple. Commit message and `DONE` marker created.

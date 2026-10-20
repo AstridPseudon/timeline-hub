@@ -1,0 +1,400 @@
+    accepted = submit(editing, preview_body, 'birth-rebase')
+    assert accepted['data']['commands'] == [captured]
+    shot = next(row for row in accepted['data']['canonical_document']['shot_revisions'] if row['shot_id'] == 'shot-1')
+    assert [row['kind'] for row in shot['payload']['text_bindings']] == ['transcript', 'prompt', 'voiceover_script']
+    entries = editing.service.list_timeline_commits(editing.project, editing.timeline, authorize=lambda: None)['items']
+    record = entries[-1]['records']['commands'][0]
+    selected = next(row for row in record['selections'] if row['key'].endswith('.append'))
+    assert selected['order'] == [OWNER + '/text-binding:transcript', OWNER + '/text-binding:prompt:hero']
+    assert prompt['data']['canonical_document'] "'!= accepted['"'data']['canonical_document']
+EOF
+ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/runtime-schema-overlay PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_text_binding.py --tb=short' in /home/user/work/wt/agt-m2-text-binding-native
+ succeeded in 8603ms:
+....xx.........xx...                                                     [100%]
+16 passed, 4 xfailed in 7.86s
+
+codex
+Disjoint first births now rebase while preserving append order. The public command keeps its original guards, and the accepted record captures the actual input order for inverse restoration. I’m finishing the neighboring regression checks and the handoff notes covering schema, clear, and retained-MIME gaps.
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('astrid/sdk/timeline/inverse.py');s=p.read_text().replace('def _patch(state, path, replacement):','def _patch(state, path, replacement, *, append_text=False):',1).replace(\"elif path[-1][0] == 'text-binding' and not node:\",\"elif path[-1][0] == 'text-binding' and (not node or append_text):\",1)
+s=s.replace(\"            ancestor['after'] = _patch(ancestor['after'], address[1][len(value_address(ancestor)[1]):],\\n                                           write['after'])\", \"            ancestor['after'] = _patch(ancestor['after'], address[1][len(value_address(ancestor)[1]):],\\n                                           write['after'], append_text=(ancestor['before'] == ABSENT\\n                                               and ancestor['path'] == ['payload', 'text_bindings']))\",1)
+p.write_text(s)
+PY
+cat >> tests/editing_conformance/test_recipe_text_binding_native.py <<'EOF'
+
+
+def test_multiple_births_in_absent_collection_have_exact_batch_inverse(original):
+    payload(original).pop('text_bindings')
+    voice = apply(original)
+    prompt = apply(voice.bundle, PROMPT, b'prompt')
+    assert inverse(prompt.bundle, [*voice.records, *prompt.records]).bundle == original
+EOF
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_text_binding_spike.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_shot_text_bindings.py --tb=short' in /home/user/work/wt/agt-m2-text-binding-native
+exec
+/bin/bash -lc 'git rev-parse HEAD; git -C /home/user/work/runtime rev-parse HEAD; git diff --check; /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/native_text_binding.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_text_binding_spike.py tests/editing_conformance/test_commit_runtime_text_binding.py' in /home/user/work/wt/agt-m2-text-binding-native
+ succeeded in 147ms:
+ba5f2756f50a84f570aa9699ef621873f7521abc
+8609333456b9537339ee1a5dfc7ffd9609242de8
+All checks passed!
+
+exec
+/bin/bash -lc 'ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_text_binding.py -k '"'exact_project_text_selection_refuses_before_writes or runtime_declares_and_captures_exact_text_port' --tb=short" in /home/user/work/wt/agt-m2-text-binding-native
+ succeeded in 6258ms:
+.........                                                                [100%]
+9 passed, 11 deselected in 5.40s
+
+ succeeded in 38154ms:
+............................................x........................... [ 17%]
+........................................................................ [ 34%]
+........................................................................ [ 52%]
+........................................................................ [ 69%]
+........................................................................ [ 86%]
+......................................................                   [100%]
+413 passed, 1 xfailed in 36.14s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/editing_conformance/test_recipe_text_binding_spike.py');s=p.read_text().replace('The Runtime-dependent part is a strict xfail with its reason (G-RT1).', 'The Runtime port presence check runs in the integration lane; acceptance is\\ncovered by test_commit_runtime_text_binding.py.')
+start=s.index('@pytest.mark.xfail(strict=True, raises=(ImportError, AssertionError)')
+end=s.index('    import runtime_protocol.timeline_commit as port',start)
+s=s[:start]+'''@pytest.mark.integration
+def test_runtime_port_declares_exact_text_selection():
+    from tests.helpers.runtime import use_runtime
+
+    use_runtime()
+'''+s[end:]
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_text_binding_spike.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_shot_text_bindings.py --tb=short' in /home/user/work/wt/agt-m2-text-binding-native
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/prepare-runtime-overlay.py <<'EOF'
+\"\"\"Private schema-only pairing experiment; never writes integration or shared deps.\"\"\"
+import json
+import shutil
+import sys
+from pathlib import Path
+
+source = Path('/home/user/work/runtime')
+private = Path(__file__).with_name('runtime-schema-overlay')
+agent_root = Path('/home/user/work/wt/agt-m2-text-binding-native')
+sys.path.insert(0, str(source / 'generators'))
+from timeline_commit_resources import render
+
+private.mkdir(exist_ok=True)
+for name in ('runtime_protocol', 'contract'):
+    shutil.copytree(source / name, private / name, dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns('__pycache__'))
+if not (private / 'tests').exists():
+    (private / 'tests').symlink_to(source / 'tests', target_is_directory=True)
+agent = json.loads((agent_root / 'astrid/core/timeline/schema/edit-command.schema.json').read_text())
+pin = private / 'contract/schemas/edit-command.json'
+schema = json.loads(pin.read_text())
+for name in ('ScopedId', 'EntityRef', 'TargetKey', 'TextBindingSetArgs'):
+    schema['"'$defs'"'][name] = agent['"'$defs'"'][name]
+clause = next(clause for clause in agent['"'$defs'"']['EditCommand']['allOf']
+              if clause.get('if', {}).get('properties', {}).get('op', {}).get('const') == 'text-binding.set')
+schema['"'$defs'"']['EditCommand']['allOf'].append(clause)
+pin.write_text(json.dumps(schema, indent=2) + '\\n')
+for name, data in render(private).items():
+    (private / name).write_text(data)
+changed = [str(path.relative_to(source / 'runtime_protocol'))
+           for path in (source / 'runtime_protocol').rglob('*')
+           if path.is_file() and '__pycache__' not in path.parts
+           and path.read_bytes() "'!= (private / '"'runtime_protocol' / path.relative_to(source / 'runtime_protocol')).read_bytes()]
+assert changed == ['schemas/timeline-commit-bundle.json'], changed
+print(private)
+EOF
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/prepare-runtime-overlay.py
+ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/runtime-schema-overlay PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_text_binding.py tests/editing_conformance/test_recipe_text_binding_spike.py::test_runtime_port_declares_exact_text_selection --tb=short' in /home/user/work/wt/agt-m2-text-binding-native
+ succeeded in 16713ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/runtime-schema-overlay
+....xx.........xx....                                                    [100%]
+17 passed, 4 xfailed in 15.01s
+
+ succeeded in 44191ms:
+........................................................................ [ 17%]
+........................................................................ [ 34%]
+........................................................................ [ 52%]
+........................................................................ [ 69%]
+........................................................................ [ 87%]
+.....................................................                    [100%]
+413 passed, 1 deselected in 42.86s
+
+2026-10-20T10:43:58.444245Z ERROR codex_models_manager::manager: failed to refresh available models: request timed out
+exec
+/bin/bash -lc "cat > design/agent-text-binding-native.md <<'EOF'
+# Native occurrence text bindings
+
+Source: "'`design/m2-text-binding-contract.md` in the orchestrator directory, adopted against Agent base `ba5f2756f50a84f570aa9699ef621873f7521abc` and Runtime `8609333456b9537339ee1a5dfc7ffd9609242de8`. Runtime'"'s existing implementation is authoritative for CAS selection: "'`runtime_protocol/timeline_commit.py:RuntimeCommitPort.text_selection`, `timeline_commit_port.py:verify_text_object` / `RequestCommitPort.text_selection`, and `timeline_commit_store.py:_project_text_bindings` / `_project_text_binding`.
+
+`astrid/sdk/timeline/native_text_binding.py` registers this closed command through the existing registry and Document/Media dependency recipe:
+
+```json
+{
+  "schema_version": 1,
+  "op": "text-binding.set",
+  "version": "1",
+  "select": "occurrence:occurrence-1",
+  "intent": {"ownership": "occurrence"},
+  "args": {
+    "binding": {"kind": "voiceover_script", "slot": null},
+    "text": {
+      "object_id": "sha256:<64 lowercase hex digits>",
+      "digest": "sha256:<same digest>",
+      "size": 0,
+      "media_type": "text/plain; charset=utf-8"
+    }
+  }
+}
+```
+
+Exactly one of `text` and `clear: true` is required. Kind is `prompt`, `voiceover_script`, or `transcript`; only prompt accepts a non-null slot, matching `[a-z][a-z0-9-]{0,63}`. Size is 0..1,048,576 UTF-8 bytes. The MIME contains a space after the semicolon: this is Runtime'"'s exact existing P1 spelling, not a normalized alias. Object ID equals digest. Runtime checks project-managed custody, actual hash/size/MIME, strict UTF-8, and re-verifies at atomic acceptance. Empty bytes have their real SHA-256 and remain a present zero-byte row. Clear removes the row; clear of an absent key refuses.
+
+The stable row ref is "'`occurrence:<id>/text-binding:<kind>[:<slot>]`. The command records occurrence and source-shot identity, exact tagged prior row, keyed write (including same-value writes), and an exact `media` dependency keyed `text:<digest>`. Provider input capture calls the existing `port.text_selection`; detached capture requires its complete `{object_id,digest,size,media_type,utf8:true}` result. No inline content, Document config facade, new endpoint, table, or projection event is introduced.
+
+Occurrence ownership is explicit and exclusive for this slice. The recorded `text-binding.owners` query compares source shot identities, so separately materialized authoring aliases cannot conceal a shared source. Shared sources refuse. New authored rows contain `kind, slot, media_id, content_hash, byte_size, mime_type`; rebind preserves unknown fields but strips Runtime projection fields and legacy cached `text`. Existing complete descriptors with a cached inline copy remain readable as descriptors; rows carrying only inline text refuse. Unrelated rows and payloads remain exact. Live `binding_id`, `head`, stream and timestamps come from Runtime. Inverse restores the complete retained prior row, including legacy fields, without reading a mutable latest binding.
+
+Order remains authored. Rebind replaces a row in place. Clear records the full guarded collection order, and inverse reinstalls the original position. Birth appends and records `collection.text-bindings.append` using the existing `include-concurrent` policy: replay permits only additions after the original ordered prefix. The public command retains its original claims while the authoritative accepted record captures the actual rebased input order. Disjoint births and disjoint existing-key rebinds can rebase; changed original membership/order or a changed target guard refuses. Missing versus empty collections retain tagged presence through inverse. Undo checks intervening writes, including unchanged writes and A→B→A, and resolves whole-payload aliases against the source owner. Redo uses accepted history/boundaries.
+
+## Runtime pairing still required
+
+1. **Frozen schema**: unchanged integration Runtime rejects the generated `text-binding` guard with `invalid_prepared`, before acceptance. The manager must compose this additive operation and ref patterns into its current full superset (including S2/future operations), then use normal contract/client generation. This worker does not publish a partial public freeze.
+2. **Removal**: `_project_text_binding` rejects every absent after-state with `text_binding_clear_unsupported`. Strict positive tests retain first-birth undo, explicit EMPTY clear/undo, and V1→V2→clear→restart→group inverse. Runtime owner must resolve removal using its existing binding tables/events. EMPTY is never used as clear.
+3. **Actual retained main MIME**: the committed main-API film backup has a transcript object/descriptor with `mime_type: text/plain`. A new native rebind succeeds, but inverse of that rebind fails in `verify_text_object`, which requires `text/plain; charset=utf-8`. Its positive exact-inverse test is a separate strict xfail, scoped to that specific validation error. The descriptor is not rewritten or normalized. Runtime owner must reconcile old exact retained descriptors with P1 validation before old writers can be retired.
+
+Qualification uses the real `RuntimeService` and restored committed main-API film/CAS backup (`timeline_commit_film_fixture.build_film_fixture`), never direct SQL writes or a fake prepared provider. The worker-private `runtime-schema-overlay` copies integration Runtime behavior unchanged and adds only this schema clause/definitions using Runtime'"'s normal "'`timeline_commit_resources.render`; only the generated runtime schema bundle differs in `runtime_protocol`. It proves the prospective schema pair, not unchanged integration Runtime. The reproducible generator and commands are in the worker directory and `notes/report.md`.
+
+Old writers remain. No full suite, socket/browser suite, App journey, shared-source authoring, public generated-client release, or qualified removal is claimed here.
+EOF
+cat > notes/report.md <<'"'EOF'
+# agt-m2-text-binding-native
+
+Implemented additive native "'`text-binding.set`, closed schema and capture helper, real provider `text_selection` capture, stable kind/slot rows, exclusive source-occurrence ownership, ordered append/clear with guarded exact inverse, concurrent disjoint-key rebase, same-value/ABA guards and opaque preservation. Old writers remain. No integration checkout, shared dependency, ledger, producer/element/capture-hook/word-hunk path was edited.
+
+Agent base: `ba5f2756f50a84f570aa9699ef621873f7521abc`; Runtime observed: `8609333456b9537339ee1a5dfc7ffd9609242de8`. Contract and gaps: `design/agent-text-binding-native.md`.
+
+## Verification
+
+Run from `/home/user/work/wt/agt-m2-text-binding-native`.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_text_binding_spike.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_shot_text_bindings.py --tb=short
+```
+
+Final result recorded below. The historical spike remains isolated from the new ordered collection; its former Runtime-presence xfail is now an integration-lane positive because P1 exists.
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_text_binding.py -x --tb=short
+```
+
+**1 failed** at first-use preview: unchanged Runtime'"'s frozen TargetKey pattern rejects "'`occurrence:occurrence-1/text-binding:voiceover_script::` in PreparedCommit; reason `invalid_prepared`. No schema monkeypatch or Runtime source edit was used.
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_text_binding.py -k '"'exact_project_text_selection_refuses_before_writes or runtime_declares_and_captures_exact_text_port' --tb=short
+"'```
+
+**9 passed, 11 deselected.** Actual P1 rejects foreign/missing CAS, wrong descriptor/hash/size/MIME, invalid UTF-8 and oversized objects without publication or live binding changes.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/prepare-runtime-overlay.py
+ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/runtime-schema-overlay PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_text_binding.py tests/editing_conformance/test_recipe_text_binding_spike.py::test_runtime_port_declares_exact_text_selection --tb=short
+```
+
+Final result recorded below. This private overlay uses current Runtime code unchanged; only its contract input and normally generated schema bundle are extended. It preserves Runtime'"'s other operation clauses and does not publish a partial schema. The script checks that the only changed "'`runtime_protocol` file is `schemas/timeline-commit-bundle.json`. Tests use real main-API backup/CAS, native provider and RuntimeService, without sockets, SQL writes or fake PreparedProvider. They cover exact nonempty/Unicode/CRLF/EMPTY bytes, first-use capture, live projection, restart retry, V1 retention after rebind/restart and exact inverse/redo, original guards, disjoint births/rebinds, same-value authorship, and acceptance-time CAS re-verification.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/native_text_binding.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_text_binding_spike.py tests/editing_conformance/test_commit_runtime_text_binding.py
+
+git diff --check
+```
+
+Both passed. No full suite requested or run.
+
+## Decisions and remaining pairing
+
+- Used actual existing P1 MIME `text/plain; charset=utf-8` (space included), exact descriptor fields and existing media dependency lane.
+- Used source-aware exclusive ownership; shared source aliases refuse rather than writing a sibling'"'s live binding.
+- Preserved collection order, using the existing include-concurrent policy for append; no canonical sort. Accepted records capture actual rebased membership while the original public command stays unchanged.
+- Kept all clear/first-birth undo/V1-after-clear positive assertions as strict xfails for the exact "'`text_binding_clear_unsupported` refusal. No EMPTY-as-clear encoding.
+- Found an additional genuine retained-main gap: undoing a rebind of the backup'"'s existing "'`text/plain` transcript fails Runtime'"'s strict MIME verifier. A separate narrow strict xfail preserves exact restoration rather than normalizing immutable history.
+
+Recommended next steps: manager composes the operation into the current full public schema superset and runs normal generation; Runtime owner resolves removal and legacy exact MIME restoration; rerun the positive integration tests against that pair (strict xfails must then flip); retain old writers until all positives qualify. App/wire/browser journeys, public client generation and full suites are unverified.
+EOF" in /home/user/work/wt/agt-m2-text-binding-native
+ succeeded in 50ms:
+exec
+/bin/bash -lc 'git diff --check; /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/native_text_binding.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_text_binding_spike.py tests/editing_conformance/test_commit_runtime_text_binding.py; git diff --stat; git status --short' in /home/user/work/wt/agt-m2-text-binding-native
+ succeeded in 703ms:
+All checks passed!
+ .../core/timeline/schema/edit-command.schema.json  | 140 ++++++++++++++++++++-
+ astrid/sdk/timeline/_collections.py                |  30 ++++-
+ astrid/sdk/timeline/_command_state.py              |  29 +++++
+ astrid/sdk/timeline/_recording.py                  |  20 ++-
+ astrid/sdk/timeline/commands.py                    |  12 +-
+ astrid/sdk/timeline/commit.py                      |   2 +
+ astrid/sdk/timeline/inverse.py                     |  27 ++--
+ notes/report.md                                    | 130 +++++--------------
+ .../test_recipe_text_binding_spike.py              |  23 +++-
+ 9 files changed, 289 insertions(+), 124 deletions(-)
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M notes/report.md
+ M tests/editing_conformance/test_recipe_text_binding_spike.py
+?? astrid/sdk/timeline/native_text_binding.py
+?? design/
+?? tests/editing_conformance/test_commit_runtime_text_binding.py
+?? tests/editing_conformance/test_recipe_text_binding_native.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('astrid/sdk/timeline/_collections.py');s=p.read_text().replace(\"    if kind is None:\\n        return False\\n\", \"    if kind is None:\\n        return False\\n    entity = member(write['ref'])\\n    if kind == 'text-binding' and entity is not None and entity[:2] == (selected['owner'], kind):\\n        if any(key not in write for key in ('before', 'after')):\\n            raise CommandError('binding membership requires complete write history', kind='history_unavailable')\\n        if all(write[key]['state'] == 'present' for key in ('before', 'after')):\\n            return False\\n\",1);p.write_text(s)
+PY
+cat >> tests/editing_conformance/test_recipe_text_binding_native.py <<'EOF'
+
+
+def test_birth_inverse_preserves_later_disjoint_rebind(original):
+    prompt = apply(original, PROMPT, b'old prompt')
+    voice = apply(prompt.bundle)
+    changed = apply(voice.bundle, PROMPT, b'new prompt')
+    restored = inverse(changed.bundle, voice.records, changed.records)
+    expected = apply(original, PROMPT, b'new prompt')
+    assert restored.bundle == expected.bundle
+EOF
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_text_binding_spike.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_shot_text_bindings.py --tb=short' in /home/user/work/wt/agt-m2-text-binding-native
+codex
+The targeted regression run passed 413 tests, and the private Runtime schema pair passed 17 with four precise strict xfails. I added one final check for undoing a birth after a later disjoint rebind; it verifies that membership guards preserve the unrelated value. I’m rerunning the affected checks before writing completion files.
+
+
+exec
+/bin/bash -lc 'ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/runtime-schema-overlay PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_text_binding.py tests/editing_conformance/test_recipe_text_binding_spike.py::test_runtime_port_declares_exact_text_selection --tb=short' in /home/user/work/wt/agt-m2-text-binding-native
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/native_text_binding.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_text_binding_spike.py tests/editing_conformance/test_commit_runtime_text_binding.py; git diff --check' in /home/user/work/wt/agt-m2-text-binding-native
+ succeeded in 610ms:
+All checks passed!
+
+ succeeded in 22055ms:
+....xx.........xx....                                                    [100%]
+17 passed, 4 xfailed in 20.23s
+
+exec
+/bin/bash -lc "git diff --numstat; rg --files -g '*.pyc' -g '*.log' -g '*.tmp' design notes astrid/sdk/timeline tests/editing_conformance | head -20" in /home/user/work/wt/agt-m2-text-binding-native
+ succeeded in 242ms:
+137	3	astrid/core/timeline/schema/edit-command.schema.json
+30	6	astrid/sdk/timeline/_collections.py
+29	0	astrid/sdk/timeline/_command_state.py
+19	1	astrid/sdk/timeline/_recording.py
+9	3	astrid/sdk/timeline/commands.py
+2	0	astrid/sdk/timeline/commit.py
+20	7	astrid/sdk/timeline/inverse.py
+31	99	notes/report.md
+18	5	tests/editing_conformance/test_recipe_text_binding_spike.py
+
+ succeeded in 63099ms:
+........................................................................ [ 17%]
+........................................................................ [ 34%]
+........................................................................ [ 52%]
+........................................................................ [ 69%]
+........................................................................ [ 86%]
+......................................................                   [100%]
+414 passed, 1 deselected in 60.82s (0:01:00)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('notes/report.md');s=p.read_text().replace('Final result recorded below. The historical spike', '**414 passed, 1 deselected.** The historical spike',1).replace('Final result recorded below. This private overlay', '**17 passed, 4 strict xfailed.** This private overlay',1);p.write_text(s)
+PY
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/commit-msg <<'EOF'
+feat(timeline): add native occurrence text binding commands
+
+Capture exact Runtime-verified UTF-8 CAS descriptors through text-binding.set,
+including EMPTY, and record exclusive ownership, stable keyed writes and
+ordered collection semantics for inverse and disjoint-key rebase.
+
+Preserve old writers and positive strict gaps for Runtime clear projection
+and restoration of retained legacy text MIME. Document the schema pairing
+needed before integration and qualify the native port with real Runtime
+service tests using a private generated schema overlay.
+EOF
+python3 - <<'PY'
+from pathlib import Path
+import shutil
+# Remove only failed pytest fixtures with this worker's unique test names.
+root=Path('/tmp/pytest-of-root')
+prefixes=('test_first_use_capture_project', 'test_rebind_existing_main_desc',
+          'test_stale_disjoint_key_rebase', 'test_text_input_is_reverified')
+removed=0
+if root.exists():
+    for parent in root.iterdir():
+        if parent.is_dir() and not parent.is_symlink() and parent.name.startswith('pytest-'):
+            for child in parent.iterdir():
+                if child.is_dir() and not child.is_symlink() and child.name.startswith(prefixes):
+                    shutil.rmtree(child)
+                    removed+=1
+print(f'Removed {removed} failed worker-owned pytest fixtures')
+PY
+git diff --check" in /home/user/work/wt/agt-m2-text-binding-native
+ succeeded in 534ms:
+Removed 0 failed worker-owned pytest fixtures
+
+codex
+Final targeted checks passed: 414 regressions, plus 17 real-service tests with the private schema pair and four strict Runtime gaps. Lint and diff checks passed. The report records the unchanged Runtime schema rejection and the clear/MIME blockers. The commit message is ready; I’ll mark this worker complete without retiring the old writers.
+
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/DONE; git status --short; wc -l astrid/sdk/timeline/native_text_binding.py tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_commit_runtime_text_binding.py design/agent-text-binding-native.md notes/report.md' in /home/user/work/wt/agt-m2-text-binding-native
+ succeeded in 398ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M notes/report.md
+ M tests/editing_conformance/test_recipe_text_binding_spike.py
+?? astrid/sdk/timeline/native_text_binding.py
+?? design/
+?? tests/editing_conformance/test_commit_runtime_text_binding.py
+?? tests/editing_conformance/test_recipe_text_binding_native.py
+   80 astrid/sdk/timeline/native_text_binding.py
+  206 tests/editing_conformance/test_recipe_text_binding_native.py
+  339 tests/editing_conformance/test_commit_runtime_text_binding.py
+   42 design/agent-text-binding-native.md
+   52 notes/report.md
+  719 total
+
+codex
+Implemented native `text-binding.set`: exact UTF-8 CAS capture including EMPTY, stable kind/slot keys, exclusive ownership, ordered bindings, guarded inverses and disjoint-key rebase. Old writers remain.
+
+- Targeted regressions: **414 passed, 1 deselected**.
+- Real RuntimeService with private generated-schema overlay: **17 passed, 4 strict xfailed**.
+- Ruff and `git diff --check`: passed. No full suite run.
+
+Runtime pairing remains blocked by the frozen schema, absent-state clear projection, and exact restoration of legacy `text/plain` descriptors. Positive expectations remain intact.
+
+[Report with exact commands/results](/home/user/work/wt/agt-m2-text-binding-native/notes/report.md) · [Contract and Runtime gaps](/home/user/work/wt/agt-m2-text-binding-native/design/agent-text-binding-native.md)
+
+Next: compose the full schema superset, resolve Runtime gaps, then rerun positives before retiring writers. `commit-msg` and `DONE` are written.
+tokens used
+223,081
+Implemented native `text-binding.set`: exact UTF-8 CAS capture including EMPTY, stable kind/slot keys, exclusive ownership, ordered bindings, guarded inverses and disjoint-key rebase. Old writers remain.
+
+- Targeted regressions: **414 passed, 1 deselected**.
+- Real RuntimeService with private generated-schema overlay: **17 passed, 4 strict xfailed**.
+- Ruff and `git diff --check`: passed. No full suite run.
+
+Runtime pairing remains blocked by the frozen schema, absent-state clear projection, and exact restoration of legacy `text/plain` descriptors. Positive expectations remain intact.
+
+[Report with exact commands/results](/home/user/work/wt/agt-m2-text-binding-native/notes/report.md) · [Contract and Runtime gaps](/home/user/work/wt/agt-m2-text-binding-native/design/agent-text-binding-native.md)
+
+Next: compose the full schema superset, resolve Runtime gaps, then rerun positives before retiring writers. `commit-msg` and `DONE` are written.

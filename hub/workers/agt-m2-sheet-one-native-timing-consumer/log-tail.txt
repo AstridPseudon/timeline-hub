@@ -1,0 +1,400 @@
+diff --git a/tests/editing_conformance/test_native_sheet_ordinary.py b/tests/editing_conformance/test_native_sheet_ordinary.py
+index b6c930e9b10f199a028ef5bb7947eba266405b24..3f2324e53844d9e3c0ce4fce5792000eea2f1bc1
+--- a/tests/editing_conformance/test_native_sheet_ordinary.py
++++ b/tests/editing_conformance/test_native_sheet_ordinary.py
+@@ -11,6 +11,7 @@
+ from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+ from astrid.sdk.timeline._trim_commands import capture_clip_trim
+ from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.rebase import replay
+ from astrid.sdk.timeline.commit import _json
+ from astrid.sdk.timeline.outbox import request_bytes
+ from astrid.sdk.timeline_sheet import NativeSheet, SheetError
+@@ -19,7 +20,7 @@
+ from tests.editing_conformance.test_recipe_m1_commands import inverse
+ from tests.editing_conformance.test_recipe_m2_clip_trim import REF, bundle
+ from tests.sdk.test_timeline_sheet_native import sheet_for
+-from tests.sdk.test_timeline_sync import initial_bundle
++from tests.sdk.test_timeline_sync import connected, initial_bundle, open_session
+ 
+ 
+ def edited(sheet):
+@@ -45,6 +46,37 @@
+     assert _json(inverse(plan.bundle, plan.records).bundle) == _json(original)
+ 
+ 
++def test_native_for_edit_captures_cut_owned_row_and_rebases_disjointly(connected):  # noqa: F811
++    original = initial_bundle()
++    target = 'parent/clip:a'
++    row = State(original).entity(target)
++    row['app'] = {'cut': 'c2', 'layer': 'card', 'for': 1}
++    sheet = sheet_for(original)
++    edited = property_cell(sheet.text, target, 'hold', '1.5')
++
++    plan = sheet.preview(edited)
++    expected = capture_clip_set(original, target, values={'hold': 1.5})
++    assert plan.commands == [expected]
++    assert State(plan.bundle).entity(target)['app'] == {'cut': 'c2', 'layer': 'card', 'for': 1.5}
++    assert _json(inverse(plan.bundle, plan.records).bundle) == _json(original)
++
++    head = copy.deepcopy(original)
++    State(head).entity('parent/clip:b')['params']['text'] = 'peer'
++    rebased = replay(plan, head)
++    assert State(rebased.bundle).entity(target)['app']['for'] == 1.5
++    assert State(rebased.bundle).entity('parent/clip:b')['params']['text'] == 'peer'
++    assert _json(inverse(rebased.bundle, rebased.records).bundle) == _json(head)
++
++    connected[1].bundles['r0'] = copy.deepcopy(original)
++    session = open_session(connected)
++    result = sheet.apply(edited, session=session, dry_run=False)
++    accepted = State(connected[1].bundles['r1']).entity(target)
++    assert result['data']['commands'] == [expected]
++    assert accepted['app'] == {'cut': 'c2', 'layer': 'card', 'for': 1.5}
++    session.undo([result['receipt']['receipt_id']])
++    assert connected[1].bundles['r2'] == original
++
++
+ def test_source_trim_clear_batch_uses_capturers_and_restores_exact_original():
+     original = bundle(transition={'type': 'crossfade', 'duration': .25})
+     before = request_bytes(original)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-one-native-timing-consumer/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-one-native-timing-consumer/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sheet-native-timing-consumer.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sheet-native-timing-consumer.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f52ec1a74ad398b433f04e08529e4663700bfd17
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sheet-native-timing-consumer.md
+@@ -0,0 +1,43 @@
++# AG03 native sheet timing consumer
++
++Status: bounded `timing.for.card` slice complete; AG03 remains partial.
++
++## Mapping and decision
++
++| Main-positive fixture | Connected NativeSheet carrier | Result |
++| --- | --- | --- |
++| `timing.nudge-seconds.card` (`for 1s` → `on +0.1s for 1s`) | edit the retained row's absolute gutter; `NativeSheet.preview` emits existing `clip.move` against the original `parent/clip:<id>` ref | Already covered; no new code needed |
++| `timing.nudge-frames.rocket` (`on "viral"` → `on "viral" -3f`) | requires a word-relative frame offset | Held: public `clip.move` v1 accepts an absolute authored `on` only, so adding this would require a new semantic/operation |
++| `timing.for.card` (`for 1s` → `for 1.5s`) | NativeSheet's retained `hold=1` cell; existing `clip.set` capture updates source `hold` and the existing static `app.for` path | Implemented |
++
++The missing `for` case was not a display-ID problem. A retained cut-owned row carries `app.cut` and `app.for`; `_hold_extent` already recorded the `for` read and write, but rejected the unrelated cut-ownership read before capture. The narrow fix permits `cut` as retained ownership metadata while keeping all extent, source, media, occurrence, and static-`for` guards. No parser format, operation, schema, pin, or fallback writer was added.
++
++The NativeSheet test uses the original row binding and original bundle/basis, asserts the exact existing `clip.set` command, preserves the opaque cut/layer metadata, checks inverse and a disjoint rebase, then commits through the existing connected session and undoes it. The old no-client scenario assertions remain untouched.
++
++## Evidence
++
++From `/home/user/work/wt/agt-m2-sheet-one-native-timing-consumer`:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_native_sheet_ordinary.py tests/editing_conformance/test_native_sheet_current.py tests/sdk/test_timeline_sheet_native.py
++102 passed in 12.09s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_clip_scalar_provider.py
++110 passed in 14.16s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_conformance.py -k 'timing.for.card or timing.nudge-frames.rocket or timing.nudge-seconds.card'
++9 passed, 139 deselected in 2.05s
++```
++
++No full suite, live HTTP, browser, or currentserver run was requested or claimed.
++
++## Remaining deletion blocker
++
++AG03 cannot be marked deleted. The Main conformance sheet path is still
++`tests/editing_conformance/runner.py::_apply_sheet` → CLI `apply` without
++`--native` → `timeline_sheet.apply_sheet` → `_apply_parsed`/`merge_sheet` and
++the detached Checkout save/journal. It must remain for unsupported Main-positive
++sheet behavior (including creation/media/group/follow/narration/look/structure
++and the remaining timing grammars). The native connected/default path and
++explicit `--native` path retain their original basis and do not use this legacy
++writer; this change does not remove or weaken that old path.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-one-native-timing-consumer/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-one-native-timing-consumer/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-one-native-timing-consumer/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-one-native-timing-consumer/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..a0add5d14a9a5d19302ef1f22a8b56b4636efbb3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-one-native-timing-consumer/commit-msg
+@@ -0,0 +1,5 @@
++fix(timeline): capture cut-owned native sheet holds
++
++Allow the existing clip.set hold recipe to retain cut ownership while it
++updates an existing static for extent. Qualify the connected NativeSheet
++timing.for case with exact capture, rebase, inverse, commit, and undo checks.
+diff --git a/astrid/sdk/timeline/_clip_scalar_commands.py b/astrid/sdk/timeline/_clip_scalar_commands.py
+index a5eaecdc81631bdeab9d4092501290390766ac06..71acf3b2fedff8cf8d77cd9a60a846dc3a7a7d30
+--- a/astrid/sdk/timeline/_clip_scalar_commands.py
++++ b/astrid/sdk/timeline/_clip_scalar_commands.py
+@@ -32,6 +32,11 @@
+                     raise CommandError('clip.set hold conflicts with static for', kind='unsupported_timing', ref=ref)
+                 duration_paths.append(prefix + [key])
+                 continue
++            if key == 'cut':
++                # Cut ownership is retained metadata, not a competing extent.
++                # A sheet's `for` edit must be able to update the same clip
++                # while preserving its original cut binding.
++                continue
+             raise CommandError(f'clip.set hold does not support {key}', kind='unsupported_timing', ref=ref)
+     if 'hold' in values:
+         number(values['hold'], 'hold', positive=True)
+diff --git a/tests/editing_conformance/test_native_sheet_ordinary.py b/tests/editing_conformance/test_native_sheet_ordinary.py
+index b6c930e9b10f199a028ef5bb7947eba266405b24..3f2324e53844d9e3c0ce4fce5792000eea2f1bc1
+--- a/tests/editing_conformance/test_native_sheet_ordinary.py
++++ b/tests/editing_conformance/test_native_sheet_ordinary.py
+@@ -11,6 +11,7 @@
+ from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+ from astrid.sdk.timeline._trim_commands import capture_clip_trim
+ from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.rebase import replay
+ from astrid.sdk.timeline.commit import _json
+ from astrid.sdk.timeline.outbox import request_bytes
+ from astrid.sdk.timeline_sheet import NativeSheet, SheetError
+@@ -19,7 +20,7 @@
+ from tests.editing_conformance.test_recipe_m1_commands import inverse
+ from tests.editing_conformance.test_recipe_m2_clip_trim import REF, bundle
+ from tests.sdk.test_timeline_sheet_native import sheet_for
+-from tests.sdk.test_timeline_sync import initial_bundle
++from tests.sdk.test_timeline_sync import connected, initial_bundle, open_session
+ 
+ 
+ def edited(sheet):
+@@ -45,6 +46,37 @@
+     assert _json(inverse(plan.bundle, plan.records).bundle) == _json(original)
+ 
+ 
++def test_native_for_edit_captures_cut_owned_row_and_rebases_disjointly(connected):  # noqa: F811
++    original = initial_bundle()
++    target = 'parent/clip:a'
++    row = State(original).entity(target)
++    row['app'] = {'cut': 'c2', 'layer': 'card', 'for': 1}
++    sheet = sheet_for(original)
++    edited = property_cell(sheet.text, target, 'hold', '1.5')
++
++    plan = sheet.preview(edited)
++    expected = capture_clip_set(original, target, values={'hold': 1.5})
++    assert plan.commands == [expected]
++    assert State(plan.bundle).entity(target)['app'] == {'cut': 'c2', 'layer': 'card', 'for': 1.5}
++    assert _json(inverse(plan.bundle, plan.records).bundle) == _json(original)
++
++    head = copy.deepcopy(original)
++    State(head).entity('parent/clip:b')['params']['text'] = 'peer'
++    rebased = replay(plan, head)
++    assert State(rebased.bundle).entity(target)['app']['for'] == 1.5
++    assert State(rebased.bundle).entity('parent/clip:b')['params']['text'] == 'peer'
++    assert _json(inverse(rebased.bundle, rebased.records).bundle) == _json(head)
++
++    connected[1].bundles['r0'] = copy.deepcopy(original)
++    session = open_session(connected)
++    result = sheet.apply(edited, session=session, dry_run=False)
++    accepted = State(connected[1].bundles['r1']).entity(target)
++    assert result['data']['commands'] == [expected]
++    assert accepted['app'] == {'cut': 'c2', 'layer': 'card', 'for': 1.5}
++    session.undo([result['receipt']['receipt_id']])
++    assert connected[1].bundles['r2'] == original
++
++
+ def test_source_trim_clear_batch_uses_capturers_and_restores_exact_original():
+     original = bundle(transition={'type': 'crossfade', 'duration': .25})
+     before = request_bytes(original)
+
+exec
+/bin/bash -lc "sed -n '285,370p' tests/editing_conformance/test_recipe_clip_scalar_fields.py && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sheet-native-timing-consumer.md && git status --short" in /home/user/work/wt/agt-m2-sheet-one-native-timing-consumer
+ succeeded in 7ms:
+    assert State(plan.bundle).config('occurrence:occ-2') == State(original).config('occurrence:occ-2')
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == original
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+    assert replay(plan, original).records == plan.records
+
+    publication = compile_authoring_candidate(plan.bundle).publication
+    parent = {'project_id': original['project_id'], 'timeline_id': original['timeline_id'],
+              'revision_id': publication['parent_revision_id'], 'content_digest': publication['content_digest'],
+              'payload': publication['parent_composition']}
+    shots = [dict(r, project_id=original['project_id']) for r in publication['shot_revisions']]
+    internals = [dict(r, project_id=original['project_id']) for r in publication['internal_timeline_revisions']]
+    readback = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    assert clip(readback, ref) == expected
+    projection = project_runtime_parent_composition(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    identity = 'direct' if ref.startswith('parent') else 'occ-1:picture-1'
+    compiled = next(r for r in projection.config['clips'] if r['id'] == identity)
+    assert clip_timeline_duration(compiled) == expected['app']['astrid']['for']
+    assert compiled['at'] == pytest.approx(expected['at'] + (0 if ref.startswith('parent') else 10))
+    assert clip_end_frame(compiled, float(rate(fps))) == clip_end_frame(
+        dict(expected, at=compiled['at']), float(rate(fps)))
+
+
+@pytest.mark.parametrize('prefix', [[], ['app'], ['app', 'astrid']])
+def test_matching_static_duration_leaves_only_and_unchanged_aba_guards(prefix):
+    original = bundle(app={'astrid': {}})
+    for path in (['for'], ['app', 'for'], ['app', 'astrid', 'for']):
+        State(original).set(REF, path, present(1))
+    plan = execute(original, [capture_clip_set(original, REF, values={'hold': 1})])
+    assert plan.bundle == original
+    assert [w['path'] for w in plan.records[0]['writes']] == [
+        ['for'], ['app', 'for'], ['app', 'astrid', 'for'], ['hold']]
+    path = prefix + ['for']
+    for history in ([later(REF, path, 1)], [later(REF, path, 2), later(REF, path, 1)]):
+        with pytest.raises(CommandError, match='intervening'):
+            inverse(plan.bundle, plan.records, history)
+        assert replay(plan, original, intervening_records=history).records == plan.records
+    changed = execute(original, [capture_clip_set(original, REF, values={'hold': 2})])
+    assert all(w['after'] == present(2) for w in changed.records[0]['writes'])
+    head = copy.deepcopy(changed.bundle)
+    clip(head, REF)['app']['astrid']['sibling'] = {'keep': [None, 0]}
+    restored = inverse(head, changed.records)
+    assert clip(restored.bundle, REF)['app']['astrid']['sibling'] == {'keep': [None, 0]}
+    assert clip(restored.bundle, REF)['hold'] == 1
+
+
+@pytest.mark.parametrize('prefix', [[], ['app'], ['app', 'astrid']])
+@pytest.mark.parametrize('key,value', [('for', 2), ('for', True), ('for', '2s'), ('for', {'anchor': 'end'}),
+    ('on', 'clip:other'), ('until', 'end'), ('fixed_start', 'dynamic'), ('formulas', {'hold': 'x'})])
+def test_hold_after_move_still_refuses_independent_or_dynamic_intent(prefix, key, value):
+    from astrid.sdk.timeline.capture import capture_move
+
+    original = bundle()
+    moved = execute(original, [capture_move(original, REF, 12)]).bundle
+    State(moved).set(REF, prefix + [key], present(value))
+    before = copy.deepcopy(moved)
+    with pytest.raises(CommandError) as error:
+        capture_clip_set(moved, REF, values={'hold': 2})
+    assert error.value.kind == 'unsupported_timing'
+    assert moved == before
+
+
+@pytest.mark.parametrize('field,value', [('time_map', {}), ('timeMap', []), ('from_ms', 0),
+    ('to_ms', 1000), ('duration', 1), ('duration_ms', 1000)])
+def test_hold_after_move_still_refuses_maps_and_incompatible_duration_codecs(field, value):
+    from astrid.sdk.timeline.capture import capture_move
+
+    moved = execute(bundle(), [capture_move(bundle(), REF, 12)]).bundle
+    clip(moved, REF)[field] = value
+    with pytest.raises(CommandError):
+        capture_clip_set(moved, REF, values={'hold': 2})
+
+
+def test_hold_after_move_retains_half_open_occurrence_and_frame_guards():
+    from astrid.sdk.timeline.capture import capture_move
+
+    original = bundle(fps={'numerator': 30000, 'denominator': 1001})
+    clip(original, REF).update(hold=2, speed=2)
+    moved = execute(original, [capture_move(original, REF, 11.011)]).bundle
+    # Local start 1.011 leaves exactly 8.989 timeline seconds at speed two.
+    plan = execute(moved, [capture_clip_set(moved, REF, values={'hold': 17.978})])
+    assert clip(plan.bundle, REF)['app']['astrid']['for'] == pytest.approx(8.989)
+    with pytest.raises(CommandError) as error:
+        capture_clip_set(moved, REF, values={'hold': 17.98})
+    assert error.value.kind == 'occurrence_boundary'
+# AG03 native sheet timing consumer
+
+Status: bounded `timing.for.card` slice complete; AG03 remains partial.
+
+## Mapping and decision
+
+| Main-positive fixture | Connected NativeSheet carrier | Result |
+| --- | --- | --- |
+| `timing.nudge-seconds.card` (`for 1s` → `on +0.1s for 1s`) | edit the retained row's absolute gutter; `NativeSheet.preview` emits existing `clip.move` against the original `parent/clip:<id>` ref | Already covered; no new code needed |
+| `timing.nudge-frames.rocket` (`on "viral"` → `on "viral" -3f`) | requires a word-relative frame offset | Held: public `clip.move` v1 accepts an absolute authored `on` only, so adding this would require a new semantic/operation |
+| `timing.for.card` (`for 1s` → `for 1.5s`) | NativeSheet's retained `hold=1` cell; existing `clip.set` capture updates source `hold` and the existing static `app.for` path | Implemented |
+
+The missing `for` case was not a display-ID problem. A retained cut-owned row carries `app.cut` and `app.for`; `_hold_extent` already recorded the `for` read and write, but rejected the unrelated cut-ownership read before capture. The narrow fix permits `cut` as retained ownership metadata while keeping all extent, source, media, occurrence, and static-`for` guards. No parser format, operation, schema, pin, or fallback writer was added.
+
+The NativeSheet test uses the original row binding and original bundle/basis, asserts the exact existing `clip.set` command, preserves the opaque cut/layer metadata, checks inverse and a disjoint rebase, then commits through the existing connected session and undoes it. The old no-client scenario assertions remain untouched.
+
+## Evidence
+
+From `/home/user/work/wt/agt-m2-sheet-one-native-timing-consumer`:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_native_sheet_ordinary.py tests/editing_conformance/test_native_sheet_current.py tests/sdk/test_timeline_sheet_native.py
+102 passed in 12.09s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_clip_scalar_provider.py
+110 passed in 14.16s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_conformance.py -k 'timing.for.card or timing.nudge-frames.rocket or timing.nudge-seconds.card'
+9 passed, 139 deselected in 2.05s
+```
+
+No full suite, live HTTP, browser, or currentserver run was requested or claimed.
+
+## Remaining deletion blocker
+
+AG03 cannot be marked deleted. The Main conformance sheet path is still
+`tests/editing_conformance/runner.py::_apply_sheet` → CLI `apply` without
+`--native` → `timeline_sheet.apply_sheet` → `_apply_parsed`/`merge_sheet` and
+the detached Checkout save/journal. It must remain for unsupported Main-positive
+sheet behavior (including creation/media/group/follow/narration/look/structure
+and the remaining timing grammars). The native connected/default path and
+explicit `--native` path retain their original basis and do not use this legacy
+writer; this change does not remove or weaken that old path.
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M tests/editing_conformance/test_native_sheet_ordinary.py
+
+codex
+The connected case now passes through `TimelineSession.commit_many` and guarded undo, with the retained original basis synchronized into the test carrier. The three legacy Main timing scenarios also remain green unchanged (9 path cases), confirming no old no-client behavior was weakened. I’m doing the final diff/marker checks now; no HTTP/full suite is being run per the brief.
+exec
+/bin/bash -lc "git diff --check && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-one-native-timing-consumer/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-one-native-timing-consumer/DONE && printf 'markers: OK\\n' && git status --short --branch && printf '\\ncommit message:\\n' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-one-native-timing-consumer/commit-msg && printf '\\nrepo diff stat:\\n' && git diff --stat" in /home/user/work/wt/agt-m2-sheet-one-native-timing-consumer
+ succeeded in 254ms:
+markers: OK
+## tl/agt-m2-sheet-one-native-timing-consumer
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M tests/editing_conformance/test_native_sheet_ordinary.py
+
+commit message:
+fix(timeline): capture cut-owned native sheet holds
+
+Allow the existing clip.set hold recipe to retain cut ownership while it
+updates an existing static for extent. Qualify the connected NativeSheet
+timing.for case with exact capture, rebase, inverse, commit, and undo checks.
+
+repo diff stat:
+ astrid/sdk/timeline/_clip_scalar_commands.py       |  5 ++++
+ .../test_native_sheet_ordinary.py                  | 34 +++++++++++++++++++++-
+ 2 files changed, 38 insertions(+), 1 deletion(-)
+
+codex
+## Completed
+
+- Enabled connected NativeSheet `timing.for.card` edits on cut-owned rows using existing `clip.set`.
+- Preserved original refs, `app.cut`, `app.for`, inverse, rebase, commit, and undo behavior.
+- Confirmed nudge-seconds is already covered; nudge-frames requires unsupported word-relative semantics.
+- Added design report: [agent-sheet-native-timing-consumer.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sheet-native-timing-consumer.md)
+
+## Tests
+
+- Native sheet neighbors: **102 passed**
+- Scalar/provider neighbors: **110 passed**
+- Three legacy timing scenarios: **9 passed, 139 deselected**
+- `git diff --check`: passed
+
+No full suite or HTTP tests run.
+
+AG03 remains partial because the no-client `apply_sheet` / `_apply_parsed` / `merge_sheet` legacy path still serves unsupported Main-positive grammar.
+
+Commit message and `DONE` marker written.
+tokens used
+259,446
+## Completed
+
+- Enabled connected NativeSheet `timing.for.card` edits on cut-owned rows using existing `clip.set`.
+- Preserved original refs, `app.cut`, `app.for`, inverse, rebase, commit, and undo behavior.
+- Confirmed nudge-seconds is already covered; nudge-frames requires unsupported word-relative semantics.
+- Added design report: [agent-sheet-native-timing-consumer.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sheet-native-timing-consumer.md)
+
+## Tests
+
+- Native sheet neighbors: **102 passed**
+- Scalar/provider neighbors: **110 passed**
+- Three legacy timing scenarios: **9 passed, 139 deselected**
+- `git diff --check`: passed
+
+No full suite or HTTP tests run.
+
+AG03 remains partial because the no-client `apply_sheet` / `_apply_parsed` / `merge_sheet` legacy path still serves unsupported Main-positive grammar.
+
+Commit message and `DONE` marker written.

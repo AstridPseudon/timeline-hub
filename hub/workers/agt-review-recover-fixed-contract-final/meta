@@ -1,0 +1,9 @@
+name=agt-review-recover-fixed-contract-final
+repo=agent
+base=fed685bfe50150e9b8cf6ec38a11c155b127090d
+base_sha=fed685bf
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-recover-fixed-contract-final
+started=2026-10-20T20:25:32Z

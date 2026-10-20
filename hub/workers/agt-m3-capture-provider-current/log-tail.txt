@@ -1,0 +1,400 @@
+import json
+import os
+import shutil
+import tarfile
+from pathlib import Path
+
+import pytest
+from PIL import Image
+
+from astrid.core.rendering.node_pin import resolve_pinned_node
+from astrid.core.rendering.remotion_runtime import RemotionRuntimeStatus
+from astrid.core.theme import builtin_theme
+from astrid.core.timeline import scene_answers
+from astrid.packs.rendering.actions.timeline_visualize.composed_frame import (
+    CaptureSceneLabels,
+)
+from astrid.packs.rendering.actions.timeline_visualize.overlays.labels import (
+    overlay_labels_frame,
+)
+from scripts import gen_effect_registry
+
+ROOT = Path(__file__).resolve().parents[3]
+REMOTION = ROOT / "remotion"
+BASIS = {"width": 200, "height": 100, "fps": 30000 / 1001}
+SOURCE = "retained-revision-and-projection"
+ADDRESSES = {"exact:with:colons": "c08.title"}
+
+
+@pytest.fixture(scope="module")
+def host(tmp_path_factory):
+    root = tmp_path_factory.mktemp("capture-label-host")
+    (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+    project = root / "remotion"
+    project.mkdir()
+    (project / "src").mkdir()
+    modules = project / "node_modules"
+    modules.mkdir()
+    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+    for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+        target = modules / peer
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+        assert target.is_dir(), f"missing provisioned peer: {target}"
+    artifact = Path(os.environ.get("ASTRID_TEST_COMPOSITION_ARTIFACT", REMOTION /
+                                  json.loads((REMOTION / "package.json").read_text())["dependencies"]
+                                  ["@banodoco/timeline-composition"].removeprefix("file:")))
+    expected = {"0.0.10": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
+                "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"}
+    with tarfile.open(artifact) as archive:
+        version = json.load(archive.extractfile("package/package.json"))["version"]
+        assert hashlib.sha256(artifact.read_bytes()).hexdigest() == expected[version]
+        archive.extractall(project, filter="data")
+    package = modules / "@banodoco/timeline-composition"
+    package.parent.mkdir()
+    (project / "package").rename(package)
+    for name in ("scene-query.mjs", "native-scene.mjs", "webpack-alias.mjs", "package.json"):
+        shutil.copyfile(REMOTION / name, project / name)
+    for name in ("host-scene.ts", "host-registries.ts"):
+        shutil.copyfile(REMOTION / "src" / name, project / "src" / name)
+    for kind in ("effects", "animations", "transitions"):
+        (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
+    return project
+
+
+@pytest.fixture
+def native(host, monkeypatch):
+    node = resolve_pinned_node(REMOTION, override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+    assert node.ok and node.version == "v20.19.4"
+    for key in ("NODE_OPTIONS", "NODE_PATH", "PYTHONPYCACHEPREFIX"):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs:
+                        RemotionRuntimeStatus(True, host, node_executable=node.path))
+
+
+def props(kind="text-card"):
+    return {"timeline": {"tracks": [{"id": "content", "kind": "visual"}], "clips": [
+        {"id": "exact:with:colons", "track": "content", "clipType": kind, "at": 0, "hold": 1,
+         "params": {"text": "Ordinary title"}}]},
+            "assets": {"assets": {}}, "theme": builtin_theme()}
+
+
+def adapter(p=None, addresses=None):
+    return CaptureSceneLabels(source_identity=SOURCE, props=p or props(), basis=BASIS,
+                              addresses=ADDRESSES if addresses is None else addresses)
+
+
+def retain(capture, tmp_path, frames=(0, 30)):
+    produced = {}
+    for frame in frames:
+        path = tmp_path / f"{frame}.png"
+        Image.new("RGB", (100, 50)).save(path)
+        produced[frame] = path
+    capture.retain(produced)
+
+
+def test_real_host_labels_are_retained_once_and_drawn_without_private_math(native, tmp_path, monkeypatch):
+    p = props()
+    capture = adapter(p)
+    calls = []
+    query = scene_answers.host_frames_at
+
+    def observe(*args):
+        calls.append(copy.deepcopy(args))
+        return query(*args)
+
+
+exec
+/bin/bash -lc 'ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_source_carry.py' in /home/user/work/wt/agt-m3-capture-provider-current
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-capture-provider-current-remotion-0012-nodes-1020095251-15088 1' in /home/user/work/wt/agt-m3-capture-provider-current
+ exited 1 in 83ms:
+test agt-m3-capture-provider-current-remotion-0012-nodes-1020095251-15088: fail exit=1 in 46s — remotion-0012-nodes on agt-m3-capture-provider-current (agent tree 525bdabe863a42bc177f5ff331560133f77ce634)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 tests/packs/rendering/test_scene_source_carry.py tests/sdk/test_timeline_filmstrip_invocation.py
+counts: 53 passed, 19 errors in 30.11s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-capture-provider-current-remotion-0012-nodes-1020095251-15088/log.txt ---
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.13/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.13/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.13/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path_factory = TempPathFactory(_given_basetemp=PosixPath('/tmp/pytest-of-root/pytest-1797/popen-gw1'), _trace=<pluggy._tracing.TagTra...c30>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-1797/popen-gw1'), _retention_count=3, _retention_policy='failed')
+
+    @pytest.fixture(scope="module")
+    def host(tmp_path_factory):
+        root = tmp_path_factory.mktemp("capture-label-host")
+        (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+        project = root / "remotion"
+        project.mkdir()
+        (project / "src").mkdir()
+        modules = project / "node_modules"
+        modules.mkdir()
+        peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+        for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+            target = modules / peer
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+>           assert target.is_dir(), f"missing provisioned peer: {target}"
+E           AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-1797/popen-gw1/capture-label-host0/remotion/node_modules/react
+E           assert False
+E            +  where False = is_dir()
+E            +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-1797/popen-gw1/capture-label-host0/remotion/node_modules/react').is_dir
+
+tests/packs/rendering/test_capture_scene_labels.py:48: AssertionError
+=========================== short test summary info ============================
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-text-card]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-text]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-am-snap-plate]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-image]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-frame-overlay]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-capture]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-missing]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-copy]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-query]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-frames]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-no_callback]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-extra]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_canonical_basis_uses_whole_partial_canvas_and_rational_rate[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_candidate_retains_real_compiled_candidate_and_base_label[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_execute_handoff_uses_actual_provider_and_public_labels_in_exported_pack[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-text-card]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-image]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-frame-overlay]
+53 passed, 19 errors in 30.11s
+
+ succeeded in 249711ms:
+...........xx............xxx                                             [100%]
+23 passed, 5 xfailed in 248.30s (0:04:08)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-capture-provider-current.md')
+s = p.read_text().replace('Queued; do not resubmit.\\n- Earlier two', '**53 passed / 19 setup errors** in30.11s, service46s, exit1. Every error is missing provisioned React peer: the fixture reads ASTRID_TEST_NODE_MODULES or checkout remotion/node_modules, whereas this lane only sets ASTRID_REMOTION_PROJECT_DIR. No assertion failure. A direct targeted rerun supplies the fixture\\'s existing ASTRID_TEST_NODE_MODULES override, pointing read-only at agent-remotion-0012/node_modules; all links/builds stay in its private tmp_path fixture.\\n- Earlier two', 1)
+s = s.replace('The final closure file rerun is pending below.', 'Final closure file rerun: **23 passed / 5 retained strict xfailed in248.30s**, command "'`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_capture_closure_source.py`. Entire saved expansion and direct reserved-key guards pass. The two publication-double and three early-invocation requirements remain explicit strict xfails.'"')
+p.write_text(s)
+PY
+rg -n 'pending|Queued|queued|53 passed|23 passed' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-capture-provider-current.md | tail -10; git status --short; git diff --check" in /home/user/work/wt/agt-m3-capture-provider-current
+ succeeded in 456ms:
+58:- `agt-m3-capture-provider-current-commit-integration-1020095215-3997`: existing named commit-integration plus tests/sdk/test_capture_source_runtime.py. Current Agent snapshot + actual current Runtime; four new host-only genuine saved/working-copy inline/ref positives, whole saved expansion equality, original twelve config/registry/shot-digest forgery cases, uncertified/native and duplicate-reference controls. **23 passed / 4 existing xfailed capture cases; 2 default M1 failures**, total 24.01s (service28s), exit1. Both default M1 nodes fail health contract negotiation before edits: current Runtime reports schema `3e5e78d0…`, task-required Agent94114269 client expects `8d7f2987…`. No repin attempted (explicit task constraint). Service external Runtime was `c0dcd3871d78c405184506eb6735565592498c77` when launched; its queue metadata also records earlier `642eef74` attempts. Current capture cases use actual RuntimeService and passed; this is not a whole transport/current-release qualification.
+59:- `agt-m3-capture-provider-current-remotion-0012-nodes-1020095251-15088`: tests/packs/rendering/test_scene_source_carry.py + tests/sdk/test_timeline_filmstrip_invocation.py, pinned public12 environment. **53 passed / 19 setup errors** in30.11s, service46s, exit1. Every error is missing provisioned React peer: the fixture reads ASTRID_TEST_NODE_MODULES or checkout remotion/node_modules, whereas this lane only sets ASTRID_REMOTION_PROJECT_DIR. No assertion failure. A direct targeted rerun supplies the fixture's existing ASTRID_TEST_NODE_MODULES override, pointing read-only at agent-remotion-0012/node_modules; all links/builds stay in its private tmp_path fixture.
+70:Initial diagnostic (superseded): three-file direct run produced 4 failures/88 pass/9 skipped/2 xfail. One was this worker's new equality test omitting the already-contractual parent_content_digest augmentation; corrected to compare the whole expected mapping. The other three exposed the pre-existing SDK invocation requirement above and its original strict-xfail markers were retained. Final closure file rerun: **23 passed / 5 retained strict xfailed in248.30s**, command `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_capture_closure_source.py`. Entire saved expansion and direct reserved-key guards pass. The two publication-double and three early-invocation requirements remain explicit strict xfails.
+81:# Initial waits exit124 while queued/running; do not resubmit.
+ M astrid/core/execution/generic_host.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline_filmstrip.py
+ M tests/sdk/test_capture_closure_source.py
+ M tests/sdk/test_capture_source_runtime.py
+ M tests/sdk/test_timeline_capture_projection.py
+?? astrid/core/rendering/verified_source.py
+?? tests/packs/rendering/test_verified_source.py
+
+ succeeded in 51141ms:
+...........................................................              [100%]
+59 passed in 48.99s
+
+exec
+/bin/bash -lc 'date -u; /home/user/work/venv-agent/bin/ruff check --no-cache --output-format concise astrid/core/rendering/verified_source.py tests/packs/rendering/test_verified_source.py tests/sdk/test_timeline_capture_projection.py tests/sdk/test_capture_closure_source.py tests/sdk/test_capture_source_runtime.py; git diff -- tests/sdk/test_capture_source_runtime.py tests/sdk/test_capture_closure_source.py | head -180' in /home/user/work/wt/agt-m3-capture-provider-current
+ succeeded in 328ms:
+Tue Oct 20 09:58:24 UTC 2026
+All checks passed!
+diff --git a/tests/sdk/test_capture_closure_source.py b/tests/sdk/test_capture_closure_source.py
+index 6e08aa95..398bd2f6 100644
+--- a/tests/sdk/test_capture_closure_source.py
++++ b/tests/sdk/test_capture_closure_source.py
+@@ -73,6 +73,18 @@ def test_historical_capture_keeps_exact_parent_and_child_pins(client):
+     ]
+ 
+ 
++def test_saved_capture_keeps_the_entire_managed_expansion(client):
++    parent, projected, expansion = managed_timeline._project_exact_parent_head(
++        client=client, project_id=client.project_id, timeline_id=client.timeline_id,
++        parent_revision_id="parent-1")
++    snapshot = prepare(client)["capture_snapshot"]
++    assert snapshot["config"] == projected.config
++    assert snapshot["registry"] == projected.registry
++    assert snapshot["metadata"]["capture_authority"]["expansion"] == {
++        **expansion, "parent_content_digest": parent["content_digest"]}
++    assert expansion["graph"] and "outputs" in expansion
++
++
+ @pytest.mark.parametrize("field,value", [
+     ("project_id", "foreign"), ("timeline_id", "foreign"),
+     ("revision_id", "newer-head"), ("content_digest", None),
+@@ -226,7 +238,6 @@ def test_sdk_capture_reaches_runtime_before_any_snapshot_write(client, monkeypat
+         assert 'authoring_preview' not in spec['inputs']
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs the host-owned verified timeline source (435357ae verified_source/generic_host)")
+ def test_cas_capture_metadata_cannot_mint_source_or_activate_canonical_compiler(tmp_path):
+     import hashlib
+     import json
+@@ -295,14 +306,13 @@ def test_candidate_shape_or_label_cannot_replace_authored_data(client, preview):
+     assert runtime.created == [] and runtime.objects == before
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs reject_source_keys from the verified timeline source (435357ae)")
+ @pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
+ def test_sdk_capture_reserved_source_ports_are_refused(client, key):
+     with pytest.raises(ValueError, match='host-owned'):
+         prepare(client, **{key: {'source_kind': 'revision', 'revision_id': 'forged'}})
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs reject_source_keys from the verified timeline source (435357ae)")
++@pytest.mark.xfail(strict=True, reason="needs early SDK invocation source-key rejection and error mapping")
+ @pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
+ def test_sdk_capture_invocation_refuses_source_before_admission(key):
+     from astrid.sdk.invocation import _invoke_internal_result
+diff --git a/tests/sdk/test_capture_source_runtime.py b/tests/sdk/test_capture_source_runtime.py
+index 687144d5..48567945 100644
+--- a/tests/sdk/test_capture_source_runtime.py
++++ b/tests/sdk/test_capture_source_runtime.py
+@@ -166,8 +166,37 @@ def open_source_runtime(tmp_path, before_provider=lambda runtime: None):
+         service.close()
+ 
+ 
+-# The xfails below need the host-owned verified timeline source (435357ae: verified_source, generic_host).
+-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
++@pytest.mark.parametrize("working_copy", [False, True])
++@pytest.mark.parametrize("inline", [False, True])
++def test_current_capture_reaches_claim_and_verified_host(runtime, tmp_path, working_copy, inline):
++    snapshot = runtime.snapshot(working_copy)
++    task = runtime.admit(snapshot, inline=inline)
++    values = runtime.materialize(task, tmp_path / "attempt")
++    source = values.timeline_source
++    binding = source.read()
++    assert binding["snapshot"] == snapshot
++    assert binding["authority"] == snapshot["metadata"]["capture_authority"]
++    assert json.loads(Path(values["timeline"]).read_text()) == snapshot["config"]
++    source.validate(values["timeline"], values["assets_registry"])
++    source.validate_snapshot(snapshot)
++    assert binding["ref"]["source_kind"] == ("working_copy" if working_copy else "revision")
++    if working_copy:
++        assert task["spec"]["spec"]["inputs"]["authoring_preview"] == runtime.authoring_preview
++    else:
++        from astrid.packs.rendering.actions.render.managed_timeline import (
++            _project_exact_parent_head,
++        )
++
++        parent, projected, expansion = _project_exact_parent_head(
++            client=runtime, project_id=runtime.project_id, timeline_id="main", parent_revision_id="parent-1")
++        assert snapshot["config"] == projected.config
++        assert snapshot["registry"] == projected.registry
++        assert binding["authority"]["expansion"] == {
++            **expansion, "parent_content_digest": parent["content_digest"]}
++
++
++# Renderer request propagation is still separate from the now-restored host handoff.
++@pytest.mark.xfail(strict=True, reason="needs verified source propagation through RenderRequest")
+ @pytest.mark.parametrize("working_copy", [False, True])
+ @pytest.mark.parametrize("inline", [False, True])
+ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtime, tmp_path, monkeypatch, working_copy, inline):
+@@ -203,7 +232,6 @@ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtim
+     assert parsed.verified_source.read() == binding
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
+ def test_missing_candidate_explicit_cas_preview_stays_uncertified(runtime, tmp_path):
+     snapshot = runtime.snapshot(working_copy=True)
+     task = runtime.admit(snapshot, forward_candidate=False, uncertified=True)
+@@ -280,7 +308,6 @@ def test_replaced_duplicate_capture_ref_is_refused_at_admission(runtime):
+         runtime.admit(snapshot, duplicate=runtime.ref(replacement))
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
+ def test_native_compiled_capture_does_not_acquire_canonical_source(runtime, tmp_path):
+     snapshot = runtime.snapshot()
+     # Neither selector remains; canonical_timeline alone would make Runtime publish a revision ref.
+
+codex
+With the fixture pointed at the shared dependencies through its existing override, all 59 scene-source tests pass, including the retained callback and fresh-only behavior. I’m finalizing the source handoff and test report. The duplicate verifier remains in place for Runtime’s independent pairing.
+
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-capture-provider-current.md <<'EOF'
+
+Final scene-source verification (no renderer, browser or sockets; fixture builds and peer links are private):
+
+"'```bash
+ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_source_carry.py
+# 59 passed in 48.99s, including every native node that the central lane could not set up.
+```
+
+The approved source unit is complete. Harness commit message and DONE are written; no Git/index/branch mutation or integration/shared-dependency write by this worker. Next: resolve the harness commit/tree, pair Runtime'"'s independent 20-case comparison suite, and only then consider deleting the Agent duplicate verifier. Renderer carry, early SDK invocation guard and safe coordinated client repin remain separate owner work; none is claimed here.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-provider-current/commit-msg <<'EOF'
+feat(timeline): restore capture inputs and verified host handoff
+
+Expose detached capture_candidate_inputs on the existing startup semantic
+provider using the pure bundle and preview constructors. Keep the current
+project_capture verifier until Runtime's independent checks qualify.
+
+Port the reviewed verified-source host boundary and retain the full saved
+filmstrip expansion, including graph and outputs. Preserve current scene
+callbacks, fresh-only labels and dependency pins.
+
+Add exact pure hook and saved-expansion goldens, host substitution negatives,
+and current Runtime saved/working-copy claim-to-host controls. Pure tests,
+legacy goldens, host and filmstrip neighbors, and scene-source tests pass.
+The named current lane passes 23 capture cases with four existing renderer
+xfails; its two default M1 tests fail the expected current-Runtime/old-pin
+contract handshake. Record remaining pairing and consumer requirements in
+the orchestrator handoff without changing those expectations.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-provider-current/report.md <<'EOF'
+Implemented the optional pure provider hook, reviewed verified-source host boundary, and full saved-expansion reopen. Kept the duplicate verifier and current pins/callbacks/fresh-only behavior.
+
+Exact source tree: 525bdabe863a42bc177f5ff331560133f77ce634, base efb96034fc7c80a6e73900bfc57dac53260beb3c. Harness assigns branch commit after exit.
+
+Direct results: 34 pure provider, 9 complete saved/candidate golden, 33 host, 80 filmstrip/host neighbor, 23 closure (5 retained xfails), 59 scene-source passes. Ruff for new module/tests and diff whitespace pass; existing-file lint and seven cycle pairs unchanged versus worker base. Mypy blocked by existing shared stub/target mismatch.
+
+Central named commit-integration: 23 capture pass / 4 existing renderer xfail, plus 2 unrelated default M1 failures at current Runtime versus preserved94114269 client contract handshake. Central public12 scene/invocation run: 53 pass / 19 setup errors from missing fixture peer override; the exact native scene cases pass in the 59-case direct rerun with ASTRID_TEST_NODE_MODULES supplied. No full suite.
+
+All commands, results, file hashes, exact source SHA, decisions and remaining qualifications: ../../design/agent-capture-provider-current.md. No renderer-propagation, whole transport, Runtime20-case pair or release qualification claimed. Runtime owns pairing this exact tree before verifier deletion; early SDK invocation guard remains separately scoped. DONE marks this bounded Agent source handoff, not the unqualified cross-owner steps.
+EOF
+git diff --check; git status --short; touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-provider-current/DONE" in /home/user/work/wt/agt-m3-capture-provider-current
+ succeeded in 200ms:
+ M astrid/core/execution/generic_host.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline_filmstrip.py
+ M tests/sdk/test_capture_closure_source.py
+ M tests/sdk/test_capture_source_runtime.py
+ M tests/sdk/test_timeline_capture_projection.py
+?? astrid/core/rendering/verified_source.py
+?? tests/packs/rendering/test_verified_source.py
+
+codex
+Implemented the pure provider hook, verified-source host handoff, and complete saved-expansion reopen. Duplicate verifier and current pins remain intact.
+
+- Direct checks: 34 provider, 9 golden, 33 host, 80 neighbor, 23 closure, and 59 scene-source tests passed.
+- Central capture: 23 passed, 4 existing xfails. Two unrelated M1 cases failed the current-Runtime/client-pin handshake.
+- Central scene setup errors were resolved by supplying the fixture’s dependency override for the direct rerun.
+- Runtime’s independent 20-case pairing remains the next step before verifier deletion.
+
+Source tree: `525bdabe863a42bc177f5ff331560133f77ce634`. Commit message and `DONE` written.
+
+[Exact commands, results, limitations, and handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-capture-provider-current.md).
+tokens used
+216,952
+Implemented the pure provider hook, verified-source host handoff, and complete saved-expansion reopen. Duplicate verifier and current pins remain intact.
+
+- Direct checks: 34 provider, 9 golden, 33 host, 80 neighbor, 23 closure, and 59 scene-source tests passed.
+- Central capture: 23 passed, 4 existing xfails. Two unrelated M1 cases failed the current-Runtime/client-pin handshake.
+- Central scene setup errors were resolved by supplying the fixture’s dependency override for the direct rerun.
+- Runtime’s independent 20-case pairing remains the next step before verifier deletion.
+
+Source tree: `525bdabe863a42bc177f5ff331560133f77ce634`. Commit message and `DONE` written.
+
+[Exact commands, results, limitations, and handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-capture-provider-current.md).

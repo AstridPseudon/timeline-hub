@@ -1,0 +1,400 @@
+    assert len(fake_service.calls) == 1
+    assert fake_service.calls[0][1]["previous_outputs"] == ()
+
+
+
+exec
+/bin/bash -lc "PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -q tests/packs/rendering/test_verified_source.py -k 'render_request_rejects_reserved_backend_source_config or render_service_refuses_lost_verified_source_authority or host_rejects_reserved_source_ports or host_refuses_caller_replacement_of_verified_source or forged_authority_cannot_replace_admitted_ref or missing_authority_fails_closed or host_preserves_literal_source_refusals'" in /home/user/work/wt/agt-review-render-source-restoration
+ succeeded in 6134ms:
+................................                                         [100%]
+32 passed, 28 deselected in 4.99s
+
+exec
+/bin/bash -lc "PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -q tests/core/rendering/test_contracts.py -k 'dto_json_round_trip or optional_request_fields_default_and_selected_config_isolated or unknown_request_top_level_field_is_protocol_error' tests/core/rendering/test_schema_roundtrip.py -k 'every_schema_and_example_is_valid_and_parses or canonical_raw_fixture_validates_and_round_trips_identically' tests/packs/rendering/test_render_facade.py -k 'render_maps_backend_kwargs_into_namespaced_backend_config or render_merges_explicit_backend_config' tests/stage1/test_media_handoff_render_boundary.py -k 'render_request_handoff_roundtrips_and_visualizer_verifies_it'" in /home/user/work/wt/agt-review-render-source-restoration
+ succeeded in 2467ms:
+.                                                                        [100%]
+1 passed, 128 deselected in 1.18s
+
+codex
+The focused authority negatives pass: 32 passed, with no positive claim tests rerun. The first neighbor invocation accidentally applied only the last `-k` selector across all files, so I’m correcting that with separate bounded commands (and no pytest cache) before writing the review.
+exec
+/bin/bash -lc "PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/core/rendering/test_contracts.py -k 'dto_json_round_trip or optional_request_fields_default_and_selected_config_isolated or unknown_request_top_level_field_is_protocol_error'" in /home/user/work/wt/agt-review-render-source-restoration
+exec
+/bin/bash -lc "PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/core/rendering/test_schema_roundtrip.py -k 'every_schema_and_example_is_valid_and_parses or canonical_raw_fixture_validates_and_round_trips_identically'" in /home/user/work/wt/agt-review-render-source-restoration
+exec
+/bin/bash -lc "PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/packs/rendering/test_render_facade.py -k 'render_maps_backend_kwargs_into_namespaced_backend_config or render_merges_explicit_backend_config'" in /home/user/work/wt/agt-review-render-source-restoration
+exec
+/bin/bash -lc "PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/stage1/test_media_handoff_render_boundary.py -k 'render_request_handoff_roundtrips_and_visualizer_verifies_it'" in /home/user/work/wt/agt-review-render-source-restoration
+ succeeded in 1560ms:
+...                                                                      [100%]
+3 passed, 71 deselected in 0.28s
+
+ succeeded in 1822ms:
+.............                                                            [100%]
+13 passed, 18 deselected in 0.63s
+
+ succeeded in 2265ms:
+..                                                                       [100%]
+2 passed, 17 deselected in 0.46s
+
+ succeeded in 2747ms:
+.                                                                        [100%]
+1 passed, 4 deselected in 1.22s
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- carrier restoration comparison ---'; git diff --unified=3 62e6d2c2 4f29c39a -- astrid/core/rendering/contracts.py astrid/core/rendering/service.py | sed -n '1,260p'; printf '%s\\n' '--- target diff check ---'; git diff --check 4f29c39a"'^ 4f29c39a; printf '"'%s\\n' '--- status ---'; git status --short" in /home/user/work/wt/agt-review-render-source-restoration
+ succeeded in 338ms:
+--- carrier restoration comparison ---
+diff --git a/astrid/core/rendering/service.py b/astrid/core/rendering/service.py
+index 0bb94c6f..c5f9bb42 100644
+--- a/astrid/core/rendering/service.py
++++ b/astrid/core/rendering/service.py
+@@ -77,6 +77,7 @@ from .replay import (
+     write_replay_bundle,
+ )
+ from .transport import CommandTransport
++from .window_inputs import materialize_window_input
+ 
+ _QUALIFIED_ID_RE = re.compile(
+     r"^[a-z0-9][a-z0-9_-]*(?:\.[a-z0-9][a-z0-9_-]*)+$"
+@@ -1066,56 +1067,22 @@ class RenderService:
+     ) -> tuple[RenderRequest, dict[str, str]]:
+         """Adapt a planned window for full-timeline-only renderers.
+ 
+-        Unlayered window-aware renderers receive the canonical ``window``
+-        field unchanged. LayerRef track isolation and alpha stamps remain
+-        host-owned, so layered segments are always materialized. A renderer that explicitly declares
++        Window-aware renderers retain the canonical ``window`` and clip clocks.
++        LayerRef track isolation and alpha stamps remain host-owned. A renderer
++        that explicitly declares
+         ``supports_windows: false`` receives an invocation-private sliced
+         timeline and a null window, preserving the behavior of Astrid's
+         existing full-timeline backends without teaching the service any
+         concrete backend identities.
+         """
+ 
+-        if segment.layer is None and candidate.manifest.capabilities.get("supports_windows") is not False:
+-            return request, {}
+-        timeline_path = Path(request.timeline_path)
+-        try:
+-            timeline_data = json.loads(timeline_path.read_text(encoding="utf-8"))
+-        except (OSError, json.JSONDecodeError) as exc:
+-            raise_protocol_error(
+-                backend=candidate.id,
+-                message=f"cannot materialize planned timeline window: {exc}",
+-                recovery_command="repair the timeline JSON and retry the planned render",
+-                details={"timeline_path": str(timeline_path)},
+-            )
+-        if not isinstance(timeline_data, Mapping):
+-            raise_protocol_error(
+-                backend=candidate.id,
+-                message="cannot materialize a window from a non-object timeline",
+-                recovery_command="write the timeline as a JSON object and retry",
+-                details={"timeline_path": str(timeline_path)},
+-            )
+-        materialized = self._window_timeline(
+-            timeline_data,
+-            segment.window,
+-            tracks=segment.layer.tracks if segment.layer is not None else None,
+-        )
+-        if segment.layer is not None:
+-            # Stamp the layer hint into the materialized timeline's metadata so
+-            # the owning renderer knows it is rendering one z-layer: z > 0 must
+-            # emit transparent output (batch 4 consumes the stamp).  Merge into
+-            # the copied metadata dict; never clobber existing keys.
+-            materialized.setdefault("metadata", {})
+-            materialized["metadata"]["astrid_layer"] = {
+-                "z": segment.layer.z,
+-                "alpha": segment.layer.z > 0,
+-            }
+-        materialized_path = (
+-            workspace / "segment-inputs" / f"{index:04d}-timeline.json"
+-        )
+-        write_json_atomic(materialized_path, materialized)
+-        return (
+-            replace(request, timeline_path=str(materialized_path), window=None),
+-            {"materialized_timeline": sha256_file(materialized_path)},
++        return materialize_window_input(
++            request,
++            candidate=candidate,
++            segment=segment,
++            index=index,
++            workspace=workspace,
++            slice_timeline=self._window_timeline,
+         )
+ 
+     @classmethod
+@@ -1191,6 +1158,23 @@ class RenderService:
+             return None
+ 
+         result = dict(clip)
++        # The slice rewrites at/from/to, so a fade would restart at the cut.
++        # Record the original source phase (host-owned; overwrites any
++        # authored value) for the audio envelope to translate against.
++        params = clip.get("params")
++        app = clip.get("app")
++        if isinstance(app, Mapping) and "astrid_slice_origin" in app:
++            result["app"] = {k: v for k, v in app.items() if k != "astrid_slice_origin"}
++        if isinstance(params, Mapping) and (params.get("fadeIn") or params.get("fadeOut")):
++            result["app"] = {
++                **(result["app"] if isinstance(result.get("app"), Mapping) else {}),
++                "astrid_slice_origin": {
++                    "id": clip.get("id"),
++                    "at": clip.get("at", 0),
++                    "from": clip.get("from", 0),
++                    "to": clip.get("to"),
++                },
++            }
+         result["at"] = float(visible_start - start)
+         result["id"] = (
+             f"{clip.get('id', 'clip')}_{window.start_frame}_{window.end_frame}"
+--- target diff check ---
+--- status ---
+
+codex
+The corrected direct-request neighbors pass: contracts 3, schema round-trip 13, facade 2, and media-handoff 1. The restoration matches the approved 62e6d2c2 carrier shape in the relevant contract/service path; the historical e36ccace/eac529ae changes removed unrelated compatibility surfaces, not this authority seam. I’m recording an approval with the deliberate test boundary and remaining limits.
+exec
+/bin/bash -lc 'git rev-parse HEAD && git rev-parse 4f29c39a''^ && git diff --name-status 4f29c39a''^ 4f29c39a && git status --porcelain=v1' in /home/user/work/wt/agt-review-render-source-restoration
+ succeeded in 362ms:
+4f29c39a849faacdf1704d65f3a5ecbe7478f3a5
+a760ecca02111b0e0841510926f200e398f3b6cb
+M	astrid/core/rendering/contracts.py
+M	astrid/core/rendering/service.py
+M	tests/packs/rendering/test_verified_source.py
+M	tests/sdk/test_capture_source_runtime.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-render-source-restoration-review.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-render-source-restoration-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-render-source-restoration-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..022bd05557fbb057cb27d3fae5a502e6ec31488d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-render-source-restoration-review.md
+@@ -0,0 +1,68 @@
++# Agent render source restoration review
++
++## Verdict: APPROVE
++
++Reviewed tree `4f29c39a849faacdf1704d65f3a5ecbe7478f3a5` (parent/base
++`a760ecca02111b0e0841510926f200e398f3b6cb`) against the settled PLAN.
++The four changed files are exactly the two carrier/service files and the two
++tests named by the change.
++
++The restored `RenderRequest.verified_source` is the existing Python-only
++carrier from the approved `62e6d2c2` seam:
++
++- construction obtains the carrier only through `inherited_source()`;
++- a supplied carrier must be the exact `VerifiedTimelineSource` type and equal
++  the inherited carrier, otherwise construction refuses caller replacement;
++- `for_backend()` reconstructs the same Python-only field while backend
++  projection remains the normal request projection;
++- `to_dict()` and `from_dict()` keep the field out of the wire contract;
++- backend namespaces reject all three reserved source keys;
++- `RenderService.render_request()` re-derives and validates the inherited
++  carrier before localization/selection, and validates its prepared paths and
++  bytes again.
++
++The e36ccace and eac529ae main shim-removal commits remove compatibility
++aliases/legacy rendering compatibility. They do not establish a competing
++source carrier, so this restoration does not revive those shims. The
++re-enabled SDK tests were inspected but their unchanged real claim positives
++were not repeated, per the review brief.
++
++## Evidence
++
++Focused authority negatives:
++
++```text
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -q \
++  tests/packs/rendering/test_verified_source.py \
++  -k 'render_request_rejects_reserved_backend_source_config or render_service_refuses_lost_verified_source_authority or host_rejects_reserved_source_ports or host_refuses_caller_replacement_of_verified_source or forged_authority_cannot_replace_admitted_ref or missing_authority_fails_closed or host_preserves_literal_source_refusals'
++32 passed, 28 deselected
++```
++
++Direct request/wire/save-adjacent neighbors, with private pytest cache
++disabled:
++
++```text
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/core/rendering/test_contracts.py -k 'dto_json_round_trip or optional_request_fields_default_and_selected_config_isolated or unknown_request_top_level_field_is_protocol_error'
++3 passed, 71 deselected
++
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/core/rendering/test_schema_roundtrip.py -k 'every_schema_and_example_is_valid_and_parses or canonical_raw_fixture_validates_and_round_trips_identically'
++13 passed, 18 deselected
++
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/packs/rendering/test_render_facade.py -k 'render_maps_backend_kwargs_into_namespaced_backend_config or render_merges_explicit_backend_config'
++2 passed, 17 deselected
++
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/stage1/test_media_handoff_render_boundary.py -k 'render_request_handoff_roundtrips_and_visualizer_verifies_it'
++1 passed, 4 deselected
++```
++
++`git diff --check 4f29c39a^ 4f29c39a` passed. The worker worktree remained
++clean after inspection and testing.
++
++## Limits
++
++No full suite, whole-root pytest, Node/browser suite, or unchanged real
++Runtime claim positives were run. The wire/Node boundary is covered here by
++the Python DTO/schema round trips and render-facade namespace tests; no Node
++save code is changed by this commit. A future integration qualification can
++run the four reactivated SDK combinations through the central test service,
++but that is outside this security/source-authority review.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-render-source-restoration-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-render-source-restoration-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..022bd05557fbb057cb27d3fae5a502e6ec31488d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-render-source-restoration-review.md
+@@ -0,0 +1,68 @@
++# Agent render source restoration review
++
++## Verdict: APPROVE
++
++Reviewed tree `4f29c39a849faacdf1704d65f3a5ecbe7478f3a5` (parent/base
++`a760ecca02111b0e0841510926f200e398f3b6cb`) against the settled PLAN.
++The four changed files are exactly the two carrier/service files and the two
++tests named by the change.
++
++The restored `RenderRequest.verified_source` is the existing Python-only
++carrier from the approved `62e6d2c2` seam:
++
++- construction obtains the carrier only through `inherited_source()`;
++- a supplied carrier must be the exact `VerifiedTimelineSource` type and equal
++  the inherited carrier, otherwise construction refuses caller replacement;
++- `for_backend()` reconstructs the same Python-only field while backend
++  projection remains the normal request projection;
++- `to_dict()` and `from_dict()` keep the field out of the wire contract;
++- backend namespaces reject all three reserved source keys;
++- `RenderService.render_request()` re-derives and validates the inherited
++  carrier before localization/selection, and validates its prepared paths and
++  bytes again.
++
++The e36ccace and eac529ae main shim-removal commits remove compatibility
++aliases/legacy rendering compatibility. They do not establish a competing
++source carrier, so this restoration does not revive those shims. The
++re-enabled SDK tests were inspected but their unchanged real claim positives
++were not repeated, per the review brief.
++
++## Evidence
++
++Focused authority negatives:
++
++```text
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -q \
++  tests/packs/rendering/test_verified_source.py \
++  -k 'render_request_rejects_reserved_backend_source_config or render_service_refuses_lost_verified_source_authority or host_rejects_reserved_source_ports or host_refuses_caller_replacement_of_verified_source or forged_authority_cannot_replace_admitted_ref or missing_authority_fails_closed or host_preserves_literal_source_refusals'
++32 passed, 28 deselected
++```
++
++Direct request/wire/save-adjacent neighbors, with private pytest cache
++disabled:
++
++```text
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/core/rendering/test_contracts.py -k 'dto_json_round_trip or optional_request_fields_default_and_selected_config_isolated or unknown_request_top_level_field_is_protocol_error'
++3 passed, 71 deselected
++
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/core/rendering/test_schema_roundtrip.py -k 'every_schema_and_example_is_valid_and_parses or canonical_raw_fixture_validates_and_round_trips_identically'
++13 passed, 18 deselected
++
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/packs/rendering/test_render_facade.py -k 'render_maps_backend_kwargs_into_namespaced_backend_config or render_merges_explicit_backend_config'
++2 passed, 17 deselected
++
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -p no:cacheprovider -q tests/stage1/test_media_handoff_render_boundary.py -k 'render_request_handoff_roundtrips_and_visualizer_verifies_it'
++1 passed, 4 deselected
++```
++
++`git diff --check 4f29c39a^ 4f29c39a` passed. The worker worktree remained
++clean after inspection and testing.
++
++## Limits
++
++No full suite, whole-root pytest, Node/browser suite, or unchanged real
++Runtime claim positives were run. The wire/Node boundary is covered here by
++the Python DTO/schema round trips and render-facade namespace tests; no Node
++save code is changed by this commit. A future integration qualification can
++run the four reactivated SDK combinations through the central test service,
++but that is outside this security/source-authority review.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..7ab840eea4a6d441e84886bb40e290ba76f74adf
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/commit-msg
+@@ -0,0 +1,4 @@
++docs(review): approve render source carrier restoration
++
++Record the source-authority review and bounded test evidence for the
++Python-only RenderRequest verified-source carrier.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..7ab840eea4a6d441e84886bb40e290ba76f74adf
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(review): approve render source carrier restoration
++
++Record the source-authority review and bounded test evidence for the
++Python-only RenderRequest verified-source carrier.
+
+exec
+/bin/bash -lc "test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-render-source-restoration-review.md && echo review-ok; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/DONE && echo done-ok; printf '%s\\n' '--- commit msg ---'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-render-source-restoration/commit-msg; printf '%s\\n' '--- worktree ---'; git status --short; printf '%s\\n' '--- worktree untracked/ignored check ---'; git status --short --untracked-files=all" in /home/user/work/wt/agt-review-render-source-restoration
+ succeeded in 887ms:
+review-ok
+done-ok
+--- commit msg ---
+docs(review): approve render source carrier restoration
+
+Record the source-authority review and bounded test evidence for the
+Python-only RenderRequest verified-source carrier.
+--- worktree ---
+--- worktree untracked/ignored check ---
+
+exec
+/bin/bash -lc "find . -maxdepth 3 -type d -name '.pytest_cache' -print; find . -maxdepth 3 -type d -name '__pycache__' -print | head -20" in /home/user/work/wt/agt-review-render-source-restoration
+ succeeded in 111ms:
+./.pytest_cache
+./tests/__pycache__
+
+codex
+The approval report and both requested commit-message marker variants are written, and `DONE` is present. I found only local pytest cache directories created by the first bounded run; I’m removing those generated artifacts so the worktree is left clean.
+2026-10-20T19:28:47.164120Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc 'rm -rf -- .pytest_cache tests/__pycache__ && git status --short && test ! -e .pytest_cache && test ! -e tests/__pycache__ && echo cleanup-ok'` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc 'find .pytest_cache tests/__pycache__ -type f -delete && find .pytest_cache tests/__pycache__ -depth -type d -empty -delete && git status --short && test ! -e .pytest_cache && test ! -e tests/__pycache__ && echo cleanup-ok' in /home/user/work/wt/agt-review-render-source-restoration
+ succeeded in 478ms:
+cleanup-ok
+
+codex
+## Review: APPROVE
+
+- Reviewed `4f29c39a849faacdf1704d65f3a5ecbe7478f3a5` against base `a760ecca`.
+- Confirmed the carrier matches approved seam `62e6d2c2`; no caller replacement, reserved backend keys, wire authority, or Node-save regression found.
+- Focused negatives: **32 passed**.
+- Direct neighbors: **19 passed** across contracts, schema, facade, and handoff tests.
+- `git diff --check`: passed.
+- Full suite and unchanged real claim positives were not run, per instructions.
+
+Review: [agent-render-source-restoration-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-render-source-restoration-review.md)
+
+`commit-msg`, `commit-msg.txt`, and `DONE` are present. Worktree is clean.
+tokens used
+116,797
+## Review: APPROVE
+
+- Reviewed `4f29c39a849faacdf1704d65f3a5ecbe7478f3a5` against base `a760ecca`.
+- Confirmed the carrier matches approved seam `62e6d2c2`; no caller replacement, reserved backend keys, wire authority, or Node-save regression found.
+- Focused negatives: **32 passed**.
+- Direct neighbors: **19 passed** across contracts, schema, facade, and handoff tests.
+- `git diff --check`: passed.
+- Full suite and unchanged real claim positives were not run, per instructions.
+
+Review: [agent-render-source-restoration-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-render-source-restoration-review.md)
+
+`commit-msg`, `commit-msg.txt`, and `DONE` are present. Worktree is clean.

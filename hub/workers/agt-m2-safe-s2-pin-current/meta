@@ -1,0 +1,9 @@
+name=agt-m2-safe-s2-pin-current
+repo=agent
+base=tl/agt-m2-s2-consumer-current-prep
+base_sha=fc696847
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-safe-s2-pin-current
+started=2026-10-20T11:27:19Z

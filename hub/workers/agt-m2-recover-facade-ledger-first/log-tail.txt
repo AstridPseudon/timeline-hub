@@ -1,0 +1,400 @@
+     |
+2298 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "…
+2299 | …     try: version = self._version(ref, expected_version, project)
+2300 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^
+2301 | …     key = idempotency_key or uuid.uuid4().hex
+2302 | …     return self._typed("recover_project_reference", project, ref, key=key, expected_version=version, idempotency_key=key)
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2308:31
+     |
+2306 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "…
+2307 | …     ref, failure = self._resolve(project, ref)
+2308 | …     if failure is not None: return failure
+     |                             ^
+2309 | …     metadata = dict(metadata or {})
+2310 | …     if context_task:
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2328:31
+     |
+2326 | …         return DomainResult.failure(ErrorObject("validation_error", "media reference association is required", {}), idempotency_ke…
+2327 | …     ref, failure = self._resolve(project, ref)
+2328 | …     if failure is not None: return failure
+     |                             ^
+2329 | …     try: version = self._version(ref, expected_version, project)
+2330 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2329:12
+     |
+2327 | …     ref, failure = self._resolve(project, ref)
+2328 | …     if failure is not None: return failure
+2329 | …     try: version = self._version(ref, expected_version, project)
+     |          ^
+2330 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2331 | …     return self._typed("set_primary_reference", project, ref, association_id, key=key, expected_version=version, idempotency_key=k…
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2330:43
+     |
+2328 | …     if failure is not None: return failure
+2329 | …     try: version = self._version(ref, expected_version, project)
+2330 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^
+2331 | …     return self._typed("set_primary_reference", project, ref, association_id, key=key, expected_version=version, idempotency_key=k…
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2360:40
+     |
+2358 |         return self._typed("create_project_shot", project, body, key=key, idempotency_key=key)
+2359 |     def _version(self, shot_id, expected_version, project=None):
+2360 |         if expected_version is not None: return int(expected_version)
+     |                                        ^
+2361 |         current = self._client.get_project_shot(project, shot_id)
+2362 |         return int(current.get("version", 1))
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2366:12
+     |
+2364 | …     if project is None:
+2365 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "updat…
+2366 | …     try: version = self._version(shot_id, expected_version, project)
+     |          ^
+2367 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2368 | …     key = idempotency_key or uuid.uuid4().hex
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2367:43
+     |
+2365 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "updat…
+2366 | …     try: version = self._version(shot_id, expected_version, project)
+2367 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^
+2368 | …     key = idempotency_key or uuid.uuid4().hex
+2369 | …     return self._typed("update_project_shot", project, shot_id, key=key, expected_version=version, name=name, metadata=metadata, i…
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2373:12
+     |
+2371 | …     if project is None:
+2372 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "archi…
+2373 | …     try: version = self._version(shot_id, expected_version, project)
+     |          ^
+2374 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2375 | …     key = idempotency_key or uuid.uuid4().hex
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2374:43
+     |
+2372 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "archi…
+2373 | …     try: version = self._version(shot_id, expected_version, project)
+2374 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^
+2375 | …     key = idempotency_key or uuid.uuid4().hex
+2376 | …     return self._typed("archive_project_shot", project, shot_id, key=key, expected_version=version, idempotency_key=key)
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2380:12
+     |
+2378 | …     if project is None:
+2379 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "recov…
+2380 | …     try: version = self._version(shot_id, expected_version, project)
+     |          ^
+2381 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2382 | …     key = idempotency_key or uuid.uuid4().hex
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2381:43
+     |
+2379 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "recov…
+2380 | …     try: version = self._version(shot_id, expected_version, project)
+2381 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^
+2382 | …     key = idempotency_key or uuid.uuid4().hex
+2383 | …     return self._typed("recover_project_shot", project, shot_id, key=key, expected_version=version, idempotency_key=key)
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2394:12
+     |
+2392 | …     if project is None:
+2393 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "remov…
+2394 | …     try: version = self._version(shot_id, expected_version, project)
+     |          ^
+2395 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2396 | …     return self._typed("remove_shot_item", project, shot_id, item_id, key=key, expected_version=version, idempotency_key=key)
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2395:43
+     |
+2393 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "remov…
+2394 | …     try: version = self._version(shot_id, expected_version, project)
+2395 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^
+2396 | …     return self._typed("remove_shot_item", project, shot_id, item_id, key=key, expected_version=version, idempotency_key=key)
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2432:12
+     |
+2430 | …     if project is None:
+2431 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "reord…
+2432 | …     try: version = self._version(shot_id, expected_version, project)
+     |          ^
+2433 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2434 | …     return self._typed("reorder_shot_items", project, shot_id, list(item_ids or []), key=key, expected_version=version, idempotenc…
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2433:43
+     |
+2431 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "reord…
+2432 | …     try: version = self._version(shot_id, expected_version, project)
+2433 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^
+2434 | …     return self._typed("reorder_shot_items", project, shot_id, list(item_ids or []), key=key, expected_version=version, idempotenc…
+     |
+
+E701 Multiple statements on one line (colon)
+    --> astrid/sdk/remote.py:2472:28
+     |
+2470 |         key = idempotency_key or uuid.uuid4().hex
+2471 |         body = {"shot_id": shot_id, "kind": kind, "text": text, "expected_head": expected_head}
+2472 |         if slot is not None: body["slot"] = slot
+     |                            ^
+2473 |         if binding_id is not None:
+2474 |             body = {"binding_id": binding_id, "text": text, "expected_head": expected_head}
+     |
+
+Found 121 errors.
+[*] 6 fixable with the `--fix` option.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worker markers ---' && ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first 2>/dev/null || true && printf '%s\\n' '--- newly generated pyc ---' && find astrid/sdk tests/sdk -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -mmin -10 -print" in /home/user/work/wt/agt-m2-recover-facade-ledger-first
+ succeeded in 115ms:
+--- worker markers ---
+total 580
+drwxr-xr-x    2 root root   4096 Oct 20 19:20 .
+drwxr-xr-x 1177 root root  69632 Oct 20 19:20 ..
+-rw-r--r--    1 root root   1682 Oct 20 19:20 brief.md
+-rw-r--r--    1 root root 500396 Oct 20 19:22 log.txt
+-rw-r--r--    1 root root    241 Oct 20 19:20 meta
+-rw-r--r--    1 root root      0 Oct 20 19:20 running
+-rw-r--r--    1 root root     18 Oct 20 19:20 tmpdir
+--- newly generated pyc ---
+
+exec
+/bin/bash -lc 'ruff check tests/sdk/test_native_timeline_facades.py; test $? -eq 0' in /home/user/work/wt/agt-m2-recover-facade-ledger-first
+ succeeded in 164ms:
+All checks passed!
+
+codex
+Final checks: the targeted tests remain green, and the touched test file passes Ruff. Ruff on `astrid/sdk/remote.py` reports 121 pre-existing style violations across that legacy file (including import ordering and one-line branches); none were introduced by this minimal change, so I’m not broad-formatting it. I’m recording the required handoff metadata and leaving the deferred real HTTP gate explicitly unrequested.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..b25f495075c1f538714a574beb83adc79fea95b4
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first/commit-msg
+@@ -0,0 +1,5 @@
++fix(timeline): forward catalog recover retries
++
++Let Runtime distinguish exact accepted visibility replays from fresh retired
++historical recover requests, preserving explicit version, expected version,
++and idempotency key through the generated recover operation.
+diff --git a/astrid/sdk/remote.py b/astrid/sdk/remote.py
+index 19e27e25fc21c323170d10e15ecb5a99586b2ad1..2e45248df85c9cf0b4f669ca1efca615f33d9fd8
+--- a/astrid/sdk/remote.py
++++ b/astrid/sdk/remote.py
+@@ -1628,27 +1628,12 @@
+                 ErrorObject("protocol_error", "Runtime timeline listing has no valid version", {}),
+                 idempotency_key=key,
+             )
+-        if target != current_version:
+-            return DomainResult.failure(
+-                ErrorObject(
+-                    "retired_route",
+-                    "legacy timeline version recovery is retired; restore an exact revision with timeline.restore",
+-                    {
+-                        "status": 410,
+-                        "operation": "recover_timeline",
+-                        "replacement": "timeline.restore",
+-                        "next_action": "Use TimelineSession.restore(revision_id, content_digest) with the exact historical revision.",
+-                        "version_is_not_revision": True,
+-                    },
+-                ),
+-                idempotency_key=key,
+-            )
+         return self._typed(
+             "recover_timeline",
+             timeline_id,
+             key=key,
+             expected_version=expected,
+-            version=current_version,
++            version=target,
+             idempotency_key=key,
+         )
+ 
+diff --git a/tests/sdk/test_native_timeline_facades.py b/tests/sdk/test_native_timeline_facades.py
+index 0757c6f9c9677b9df3db7e4b5ead306f2d1e0840..524693f560fbc4da246a1a1c7940d30d3ce30c88
+--- a/tests/sdk/test_native_timeline_facades.py
++++ b/tests/sdk/test_native_timeline_facades.py
+@@ -64,13 +64,14 @@
+     def __init__(self) -> None:
+         super().__init__()
+         self.recover_calls = []
++        self.catalog_version = 7
+ 
+     def list_timelines(self, project, *, cursor=None, limit=50):
+         assert project == "project-1"
+         return [[{
+             "timeline_id": "tl-1",
+             "slug": "main",
+-            "version": 7,
++            "version": self.catalog_version,
+             "archived": True,
+             "head_revision_id": "head-7",
+             "document_digest": "sha256:document",
+@@ -158,26 +159,64 @@
+     assert result.data["document_digest"] == "sha256:document"
+ 
+ 
+-def test_legacy_timeline_recover_refuses_non_current_without_forwarding() -> None:
+-    class NoLegacyRoute(_CatalogTransport):
+-        def recover_timeline(self, *args, **kwargs):
+-            raise AssertionError("legacy recover writer must not be forwarded")
++def test_catalog_recover_exact_retry_forwards_original_version_after_catalog_advance() -> None:
++    transport = _CatalogTransport()
++    first = RemoteTimelines(transport).recover(
++        "project-1", "main", expected_version=7, version=7,
++        idempotency_key="catalog-recover-retry",
++    )
++    transport.catalog_version = 8
+ 
+-    result = RemoteTimelines(NoLegacyRoute()).recover(
+-        "project-1", "main", version=6, idempotency_key="legacy-recover"
++    replay = RemoteTimelines(transport).recover(
++        "project-1", "main", expected_version=7, version=7,
++        idempotency_key="catalog-recover-retry",
+     )
++
++    assert first.ok and replay.ok
++    assert replay.data == first.data
++    assert transport.recover_calls == [
++        ("tl-1", 7, 7, "catalog-recover-retry"),
++        ("tl-1", 7, 7, "catalog-recover-retry"),
++    ]
++
++
++def test_legacy_timeline_recover_refuses_non_current_from_runtime_without_writes() -> None:
++    # Forward fresh historical requests too: Runtime's ledger must distinguish
++    # them from an exact accepted replay before refusing without film writes.
++    class RuntimeRefusesHistorical(_CatalogTransport):
++        def recover_timeline(self, timeline_id, *, expected_version, version, idempotency_key):
++            self.recover_calls.append((timeline_id, expected_version, version, idempotency_key))
++            raise WorkspaceClientError(
++                410,
++                "retired_route",
++                "legacy timeline recover cannot restore a historical film version; restore a revision with timeline.restore",
++                {
++                    "status": "refused",
++                    "reason": "timeline_restore_required",
++                    "replacement": "timeline.restore",
++                    "requested_version": version,
++                    "current_version": self.catalog_version,
++                },
++            )
++
++    transport = RuntimeRefusesHistorical()
++    result = RemoteTimelines(transport).recover(
++        "project-1", "main", expected_version=7, version=6,
++        idempotency_key="legacy-recover",
++    )
+     assert not result.ok
+     assert result.idempotency_key == "legacy-recover"
+     assert result.error.code == "retired_route"
+     assert result.error.details == {
+-        "status": 410,
+-        "operation": "recover_timeline",
++        "status": "refused",
++        "reason": "timeline_restore_required",
+         "replacement": "timeline.restore",
+-        "next_action": "Use TimelineSession.restore(revision_id, content_digest) with the exact historical revision.",
+-        "version_is_not_revision": True,
++        "requested_version": 6,
++        "current_version": 7,
+     }
+     assert "timeline.restore" in result.error.message
+     assert "version" in result.error.message
++    assert transport.recover_calls == [("tl-1", 7, 6, "legacy-recover")]
+ 
+ 
+ def test_remote_open_composition_uses_runtime_inspection_authority() -> None:
+
+exec
+/bin/bash -lc "git diff --check && git status --short && printf '\\n--- commit message ---\\n' && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first/commit-msg && printf '\\n--- markers ---\\n' && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first/DONE && test "'! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-facade-ledger-first/DONE && echo DONE-empty && find astrid/sdk tests/sdk -type f '"\\( -name '*.pyc' -o -name '*.pyo' \\) -mmin -15 -print" in /home/user/work/wt/agt-m2-recover-facade-ledger-first
+ succeeded in 269ms:
+ M astrid/sdk/remote.py
+ M tests/sdk/test_native_timeline_facades.py
+
+--- commit message ---
+fix(timeline): forward catalog recover retries
+
+Let Runtime distinguish exact accepted visibility replays from fresh retired
+historical recover requests, preserving explicit version, expected version,
+and idempotency key through the generated recover operation.
+
+--- markers ---
+DONE-empty
+
+codex
+Implemented on `tl/agt-m2-recover-facade-ledger-first` (base `afcb326c`).
+
+- Removed facade preflight rejection of historical versions.
+- Forwarded explicit `version`, `expected_version`, and idempotency key unchanged.
+- Updated tests for exact replay after catalog advance and Runtime-owned historical refusal.
+
+Tests:
+
+- `pytest -q tests/sdk/test_native_timeline_facades.py tests/sdk/test_workspace_client_timeline_commit.py` — 38 passed.
+- Focused Ruff test file — passed.
+- `git diff --check` — passed.
+- Full/HTTP catalog gate not run; awaiting fixed Runtime SHA.
+
+Wrote commit message and empty `DONE` marker as required.
+tokens used
+119,679
+Implemented on `tl/agt-m2-recover-facade-ledger-first` (base `afcb326c`).
+
+- Removed facade preflight rejection of historical versions.
+- Forwarded explicit `version`, `expected_version`, and idempotency key unchanged.
+- Updated tests for exact replay after catalog advance and Runtime-owned historical refusal.
+
+Tests:
+
+- `pytest -q tests/sdk/test_native_timeline_facades.py tests/sdk/test_workspace_client_timeline_commit.py` — 38 passed.
+- Focused Ruff test file — passed.
+- `git diff --check` — passed.
+- Full/HTTP catalog gate not run; awaiting fixed Runtime SHA.
+
+Wrote commit message and empty `DONE` marker as required.

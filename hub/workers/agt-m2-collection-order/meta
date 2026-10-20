@@ -1,0 +1,9 @@
+name=agt-m2-collection-order
+repo=agent
+base=tl/integration
+base_sha=4ffbb8b0
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-collection-order
+started=2026-10-19T22:34:01Z

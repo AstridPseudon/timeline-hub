@@ -1,0 +1,400 @@
+                return association if command['args']['elementRef'] == element else None
+            # Accepted PARAM records are retained selection proof, including
+            # records predating enforcement. New PARAM is checked by the caller
+            # before it can produce such a record.
+            return association
+        if command['op'] == 'timeline.inverse':
+            publications = command['args']['publications']
+            if envelope is not None and envelope['undo_of'] != publications:
+                return None
+            for publication in reversed(publications):
+                target = indices.get(publication)
+                if target is None or target >= index:
+                    return None
+                entry = entries[target]
+                if port.history_entry(publication) != entry or entry['previous'] is None:
+                    return None
+                records = _records([entry], rejected, through, through)
+                if any(relevant(r, target) for r in records):
+                    value = at(target - 1)
+            return value
+        if command['op'] == 'timeline.restore':
+            pin = command['args']
+            if envelope is None or envelope['restored_from'] != pin:
+                return None
+            candidates = [i for i in range(index) if entries[i]['revision_id'] == pin['revision_id']]
+            values = [at(i) for i in candidates if state(i).bundle['source_mapping'][
+                '_runtime_document']['parent_revision']['content_digest'] == pin['content_digest']]
+            return values[0] if values and all(v == values[0] for v in values) else None
+        return None
+
+    @lru_cache(None)
+    def at(end):
+        value = None
+        for index in range(end + 1):
+            entry = entries[index]
+            if entry.get('intent') != 'recorded':
+                value = None
+                continue
+            records = _records([entry], rejected, through, through)
+            if index and owner != 'parent':
+                before, after = state(index - 1), state(index)
+                # State.matches admits only the compiler's exact occurrence
+                # materialization, never an ID prefix or equal sibling JSON.
+                if (before.entity(owner, optional=True) is None
+                        or after.entity(owner, optional=True) is None
+                        or not after.matches(owner + '/shot', ['shot_id'],
+                                             before.get(owner + '/shot', ['shot_id']))):
+                    value = None
+            for record in records:
+                value = effect(value, record, index, entry['records'])
+            row = state(index).entity(select, optional=True)
+            element = (row.get('elementRef') or row.get('element_ref')) if row else None
+            if value is not None and element != value['element']:
+                value = None
+        return value
+
+    try:
+        value = at(len(entries) - 1)
+        for record in staged:
+            value = effect(value, record, len(entries))
+    except (KeyError, TypeError, ValueError, IndexError) as exc:
+        raise CommandError('selected PARAM history is malformed', kind='history_unavailable', ref=select) from exc
+    if value is None:
+        raise CommandError('selected PARAM authority is unavailable', kind='history_unavailable', ref=select)
+    return value
+..........................                                               [100%]
+26 passed in 50.27s
+
+exec
+/bin/bash -lc "rg -n \"ctx.write\\(|record\\['writes'\\]|def reorder\" astrid/sdk/timeline/_collections.py astrid/sdk/timeline/native_occurrence_duplicate.py | tail -20; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-selected-param-authority-provider-targeted-1020130147-14497/status; tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-param-authority-provider/notes/native-runtime-frozen.log; git diff --check" in /home/user/work/wt/agt-m2-selected-param-authority-provider
+ succeeded in 116ms:
+astrid/sdk/timeline/_collections.py:179:    touched = {member(w['ref'])[:2] for record in records for w in record['writes']
+astrid/sdk/timeline/_collections.py:186:            writes = [w for w in record['writes'] if not w['path'] and
+running
+........
+exec
+/bin/bash -lc 'sha256sum astrid/sdk/timeline/_selected_param_authority.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py tests/sdk/test_timeline_selected_param_authority.py tests/sdk/test_timeline_selected_schema_runtime.py; git rev-parse HEAD HEAD''^{tree}; PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'"'PY'
+import json
+from pathlib import Path
+lock=json.loads(Path('runtime.lock.json').read_text())
+print('producer source',lock['source_commit'])
+from astrid_runtime_client import __version__
+print('client',__version__)
+PY
+sed -n '145,192p' astrid/sdk/timeline/_collections.py; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-selected-param-authority-provider-targeted-1020130147-14497/snap" in /home/user/work/wt/agt-m2-selected-param-authority-provider
+ succeeded in 326ms:
+38d30e8fca3566fdf6526e84e538d2f5be5a5d159c8b3ad18c560eb58d85e19b  astrid/sdk/timeline/_selected_param_authority.py
+19b3dee77735fad5dfb1de0d8db026aa89e2aea6382376c8cffc3572e11ed686  astrid/sdk/timeline/commands.py
+25920c4c155d81cf66a807e0129b7289b76c02ab7988054231b459bab56d4c5f  astrid/sdk/timeline/commit.py
+a51748901ea0ef4d5524cdc02dc1de9ac821855c0947fc84860ae10a169d714f  tests/sdk/test_timeline_selected_param_authority.py
+1a7e47838df32cbb485dad85d1ab6732742abd3bb6984e2e3611b45381648aaa  tests/sdk/test_timeline_selected_schema_runtime.py
+ce363f6d6d60e504dbd4d79803c2d6299f648ade
+78af007de1d7c5a59f86fffacd9823de355cd260
+producer source 2c4ac180c2220bdad966bc01e95ad230e99ce26a
+Traceback (most recent call last):
+  File "<stdin>", line 5, in <module>
+ImportError: cannot import name '__version__' from 'astrid_runtime_client' (/home/user/work/wt/agt-m2-selected-param-authority-provider/astrid_runtime_client/__init__.py)
+        offset = 0
+        for entry in self.entries:
+            commands = entry['records']['commands']
+            if index < offset + len(commands):
+                if (len(commands) != 1 or record['command']['op'] != 'timeline.inverse'
+                        or entry['records'].get('undo_of') != record['command']['args']['publications']):
+                    break
+                before, after = self.load_boundary(entry)
+                return State(before), State(after)
+            offset += len(commands)
+        raise CommandError('inverse collection boundary is unavailable', kind='history_unavailable')
+
+
+def _ordinary_create(record, writes, owner, kind):
+    """Trusted scoped creates use append or a recorded stable boundary."""
+    if record['command']['op'] in ('timeline.inverse', 'timeline.restore'):
+        return False
+    created = {item['ref'] for item in record['created']
+               if item['owner'] == owner and item['kind'] == kind}
+    return created == {w['ref'] for w in writes} and all(
+        w['before'] == ABSENT and w['after']['state'] == 'present'
+        and isinstance(w['after']['value'], dict)
+        and w['after']['value'].get('id') == member(w['ref'])[2] for w in writes)
+
+
+def insertion_boundary(ordered, members):
+    if len(members) != 1 or members[0] not in ordered:
+        raise CommandError('create-after requires one existing stable member', kind='selection_changed')
+    index = ordered.index(members[0])
+    return ordered[index:index + 2]
+
+
+def restoration_orders(records, *, only=None):
+    """Project only structural membership; inverse insert positions need a boundary."""
+    touched = {member(w['ref'])[:2] for record in records for w in record['writes']
+               if not w['path'] and member(w['ref']) is not None}
+    result = {}
+    for record in records:
+        if only is not None and record is not only:
+            continue
+        for owner, kind in sorted(touched):
+            writes = [w for w in record['writes'] if not w['path'] and
+                      member(w['ref']) is not None and member(w['ref'])[:2] == (owner, kind)]
+            if not writes:
+                continue
+            selected = [s for s in record['selections'] if s['owner'] == owner
+                        and KINDS.get(s['key']) == kind]
+            boundary = None
+tree=d35d0a36e4bc1f0a33f278a1bd798e4e857ec557
+key=ccdefc95ed1e8bca2b0de023a5dad550
+worktree=/home/user/work/wt/agt-m2-selected-param-authority-provider
+
+codex
+The broader direct run passed 446 tests with the one declared strict alias xfail. The latest Runtime run passed 26 cases, including relevant pin/element conflicts and inverse-of-restore recovery.
+
+The shared Runtime branch advanced during testing. I’m rerunning the native lane against a private archive of an exact Runtime commit, and the central targeted snapshot is running for the final Agent tree.
+exec
+/bin/bash -lc "rg -n '0.2.13|CLIENT_VERSION|PACKAGE_VERSION' astrid_runtime_client runtime.lock.json | head -10; tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-param-authority-provider/notes/native-runtime-frozen.log; tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-selected-param-authority-provider-targeted-1020130147-14497/log.txt" in /home/user/work/wt/agt-m2-selected-param-authority-provider
+ succeeded in 139ms:
+runtime.lock.json:17:      "sha256": "sha256:2db50f1b36e0b2113da2521f04a2a431f4edfd6f9ade7b4dc156e098aa0b215f"
+astrid_runtime_client/contract_metadata.py:3:CONTRACT_VERSION = '0.2.13'
+.............................................................................................. [ 16%]
+........................................................................ [ 32%]
+........................................x..........
+ succeeded in 50575ms:
+exec
+/bin/bash -lc 'head -45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test; tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-param-authority-provider/notes/native-runtime-frozen.log; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-selected-param-authority-provider-targeted-1020130147-14497/status' in /home/user/work/wt/agt-m2-selected-param-authority-provider
+ succeeded in 79ms:
+#!/bin/bash
+# wait-test ID|RESULT-DIR [MAX-MIN]  — poll every 30 s until the test run is done, print its summary, exit with its exit code.
+# Exits 124 (still queued/running) after MAX-MIN minutes (default 100); just run it again.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+D=$O/tests/$(basename "$1"); [ -f $D/status ] || { echo "no test run $1"; exit 2; }; END=$(( $(date +%s) + ${2:-100}*60 ))
+while grep -qE '^(queued|running)' $D/status; do
+  [ $(date +%s) -ge $END ] && { echo "still $(cat $D/status) after ${2:-100} min $(cat $D/why 2>/dev/null); rerun wait-test"; exit 124; }; sleep 30; done
+cat $D/summary; exit $(cat $D/exit 2>/dev/null || echo 1)
+..........................                                               [100%]
+26 passed in 48.88s
+running
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-selected-param-authority-provider-targeted-1020130147-14497 1' in /home/user/work/wt/agt-m2-selected-param-authority-provider
+exec
+/bin/bash -lc 'git diff --check; /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/_selected_param_authority.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py tests/sdk/test_timeline_selected_param_authority.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_selected_schema_runtime.py; git diff --name-only; sha256sum astrid/core/timeline/schema/edit-command.schema.json' in /home/user/work/wt/agt-m2-selected-param-authority-provider
+ succeeded in 358ms:
+All checks passed!
+astrid/sdk/timeline/commands.py
+astrid/sdk/timeline/commit.py
+tests/sdk/test_timeline_selected_schema.py
+tests/sdk/test_timeline_selected_schema_runtime.py
+a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef  astrid/core/timeline/schema/edit-command.schema.json
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-param-authority-provider/notes')
+for name in ('runtime-initial','authority-expanded','runtime-second','runtime-expanded','neighbors','runtime-final','targeted-final','runtime-qualified'):
+ p=Path('/tmp/selected-param-'+name+'.log')
+ if p.exists(): shutil.move(p,notes/p.name)
+shutil.rmtree(notes.parent/'runtime-source')
+PY
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-selected-param-authority-provider-targeted-1020130147-14497/status; tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-selected-param-authority-provider-targeted-1020130147-14497/log.txt" in /home/user/work/wt/agt-m2-selected-param-authority-provider
+ succeeded in 1282ms:
+running
+........................................................................ [ 64%]
+........................................................................ [ 80%]
+........................................................................ [ 96%]
+...............                                                          [100%]
+446 passed, 1 xfailed in 107.70s (0:01:47)
+
+exec
+/bin/bash -lc "git status --short --untracked-files=all; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-selected-param-authority-provider-targeted-1020130147-14497/status; rg -n 'selected.param|authority-provider' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md | tail -5" in /home/user/work/wt/agt-m2-selected-param-authority-provider
+ succeeded in 369ms:
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M tests/sdk/test_timeline_selected_schema.py
+ M tests/sdk/test_timeline_selected_schema_runtime.py
+?? astrid/sdk/timeline/_selected_param_authority.py
+?? tests/sdk/test_timeline_selected_param_authority.py
+pass
+459:native selected-param/inverse coupling remain BLOCKED as documented above; keep
+985:Own tree base d691ddad; Agent lease verified clean at 3565462c05f9d7bf55f169dd925dba28c7ad97f2. Composing reviewed 29e6512 historical source by patch hunks, preserving complete b3 custody/port and all generated0.2.3 bytes. Explicit overlap: historical source requires its parent76f2f95 original-revision replay and prepare-before-publish helpers, absent d691; these store-only prerequisite hunks plus their two regression files are included, no one-shot/checkpoint/producer helper. Existing b3 pack helpers already contain exactly the historical metadata-validator implementation and remain unchanged. Existing central selected-params-agent3565462c-integration suite already pins this exact lease, so no test-run/bin change or new suite requested. Actual PARAM+historical retained-pack fixture in progress; readiness/evidence will follow. Integration/release/old-endpoint holds unchanged.
+1763:Owner12:16 rule + portable counterexample now in design/selected-param-original-pin-rule.md and selected-param-original-pin-counterexample.json/probe.py. Most recent relevant accepted element/PARAM record with exact params.schema/params.snapshot/params.element association establishes P; PARAM preserves it, explicit set-element reselects; no manifest-order guess. Inverse follows authenticated before-selection, restore with equal-revision incompatible selection histories leaves future PARAM visibly unavailable. Existing history/revision/config_source/document_object ports only; no new DTO/endpoint/table. Provider enforcement NOT wired; new strict probes expose changed-pin and legacy-no-authority gaps; detached envelope proof is not Runtime acceptance. Please review existing-port semantics and exact record association before native wiring. App same-client authenticated reads stay sole transport; no browser schema validator or second validation authority is required.
+1784:## agt-m2-selected-param-authority-provider — existing-port inspection
+1785:Agent isolated base ce363f6d, public S2 unchanged. Inspected Runtime RequestCommitPort.history_entry/history/revision_closure at /home/user/work/runtime/runtime_protocol/timeline_commit_port.py:190-248. history(through) authenticates the exact through publication/revision via request ancestry; each page is scoped by the store and returns head/items/next_cursor. history_entry authenticates ancestry and admits retained historical document inputs. revision_closure authenticates project/timeline and reachable revision identity; source publication identity must still come from previous HeadPin links, not revision equality. Existing config_source/document_object remain native snapshot validators. Proposed implementation uses these existing operations only and the native resolver callback at each actual command stage; NO new port, DTO, schema, endpoint or table. Runtime review/ACK of these semantics is still requested before any paired qualification claim. Bounded helper will fail closed on unproven structural lineage; inverse follows authenticated targets' before boundaries and restore requires agreement across all matching accepted source publications. Detailed final exact source and positive gaps will be design/agent-selected-param-authority-provider.md.
+
+ succeeded in 60200ms:
+test agt-m2-selected-param-authority-provider-targeted-1020130147-14497: pass exit=0 in 121s — targeted on agt-m2-selected-param-authority-provider (agent tree d35d0a36e4bc1f0a33f278a1bd798e4e857ec557)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_selected_param_authority.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_clip_scalar_fields.py
+counts: 446 passed, 1 xfailed in 107.70s (0:01:47) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-selected-param-authority-provider-targeted-1020130147-14497/log.txt ---
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................x............................... [ 48%]
+........................................................................ [ 64%]
+........................................................................ [ 80%]
+........................................................................ [ 96%]
+...............                                                          [100%]
+446 passed, 1 xfailed in 107.70s (0:01:47)
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-selected-param-authority-provider-targeted-1020130147-14497 0' in /home/user/work/wt/agt-m2-selected-param-authority-provider
+ succeeded in 57ms:
+test agt-m2-selected-param-authority-provider-targeted-1020130147-14497: pass exit=0 in 121s — targeted on agt-m2-selected-param-authority-provider (agent tree d35d0a36e4bc1f0a33f278a1bd798e4e857ec557)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_selected_param_authority.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_clip_scalar_fields.py
+counts: 446 passed, 1 xfailed in 107.70s (0:01:47) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-selected-param-authority-provider-targeted-1020130147-14497/log.txt ---
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................x............................... [ 48%]
+........................................................................ [ 64%]
+........................................................................ [ 80%]
+........................................................................ [ 96%]
+...............                                                          [100%]
+446 passed, 1 xfailed in 107.70s (0:01:47)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=root/'workers/agt-m2-selected-param-authority-provider'
+report='''# Selected PARAM authority provider
+
+Implemented on isolated Agent branch "'`tl/agt-m2-selected-param-authority-provider`, base `ce363f6d6d60e504dbd4d79803c2d6299f648ade` (base tree `78af007de1d7c5a59f86fffacd9823de355cd260`). Final qualified source tree: `d35d0a36e4bc1f0a33f278a1bd798e4e857ec557`, captured by central targeted request `agt-m2-selected-param-authority-provider-targeted-1020130147-14497`. Harness commit SHA is not yet assigned. No Git mutation or integration edits performed.
+
+## Change and contract
+
+One internal helper, `astrid/sdk/timeline/_selected_param_authority.py`, walks the existing scoped accepted history through the exact HeadPin. It uses existing `_history`, `_records`, `_load`, and `State.matches`; no separate journal, history framework, persistence, endpoint, DTO or port operation. It requires consistent direct command/source/snapshot/element bindings and scoped raw target identity. Native config/object validation checks the winning association'"'s actual portable snapshot bytes and descriptor.
+
+New selected PARAM always requires its recorded original source, including unchanged and clear-only writes. A supplied admitted pin cannot bootstrap selection. Accepted complete PARAM records remain valid historical selection proof, including records predating enforcement; newly executed PARAM cannot create such proof without prior authority. Explicit set-element can select another pin with identical authored element JSON. Incomplete/malformed/later unproven relevant effects leave authority unavailable. Earlier bootstrap/legacy edges do not prevent a later explicit selection.
+
+Provider checks base-stage authority and resolves again at the real head on rebase. Earlier records in the same batch supply the stage's authority; commands' original capture claims remain unchanged. Disjoint edits pass; changed P/E conflicts. Equal-state ordinary ABA remains allowed; inverse retains its existing stricter write guards.
+
+Inverse resolves authenticated original targets to their exact previous publication boundary, including inverse of inverse and inverse of restore. Consumed inverse snapshot pins are never treated as restored selection. Revision-only restore considers every earlier matching accepted source publication; disagreement or missing authority leaves subsequent PARAM unavailable without changing restore or renderer behavior.
+
+Size: helper 163 lines; provider 27 added / 4 removed; command callback 1 added. Total product addition 191 lines / net +187. Under the preferred 200-line bound; no expansion into a generic framework.
+
+## Exact source and immutable public surface
+
+- Agent schema SHA256 remains "'`a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef` (public S2).
+- Vendored client `CONTRACT_VERSION = 0.2.13`, normal artifact producer `2c4ac180c2220bdad966bc01e95ad230e99ce26a` from unchanged runtime.lock.json. No generated/public bytes or pins changed.
+- Final native run used a private **git archive**, not a moving worktree, of Runtime `b748ae723b51c6d578ba7a393209ce37d6e2b0c3`, tree `1711b198be7f693f11ee4640eb0922ec0d0da952`. This server patch retains the normal published 013 contract. The private source archive was removed after testing.
+- Helper SHA256: `38d30e8fca3566fdf6526e84e538d2f5be5a5d159c8b3ad18c560eb58d85e19b`.
+- commit.py SHA256: `25920c4c155d81cf66a807e0129b7289b76c02ab7988054231b459bab56d4c5f`.
+- commands.py SHA256: `19b3dee77735fad5dfb1de0d8db026aa89e2aea6382376c8cffc3572e11ed686`.
+
+## Tests and exact commands
+
+Commands ran from `/home/user/work/wt/agt-m2-selected-param-authority-provider`. Shared dependencies were read-only; bytecode and pytest caches were disabled in direct runs. No full suite was requested.
+
+Final central targeted request (exit 0, **446 passed / 1 strict xfailed**, 107.70s pytest):
+
+```bash
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-selected-param-authority-provider targeted --files '"'tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_selected_param_authority.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_clip_scalar_fields.py'
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-selected-param-authority-provider-targeted-1020130147-14497 0
+"'```
+
+The service command was `/home/user/work/venv-agent/bin/python -m pytest -q` followed by the eight files above. The direct run of the same files with `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD`, `-o addopts= -p no:cacheprovider` also passed **446 / 1 strict xfail** before the final additional scalar-binding shape checks; central evidence covers the final exact tree.
+
+Final real Runtime013 in-process service lane (exit 0, **26 passed in 48.88s**):
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-param-authority-provider/runtime-source /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/sdk/test_timeline_selected_schema_runtime.py
+```
+
+The RuntimeService fixture uses actual normal project/timeline creation, pack admission, immutable managed objects, command execution, acceptance, history, restart and ledger retry. It does not open sockets or browsers. Final log: `notes/native-runtime-frozen.log`. Earlier moving-worktree results are retained as diagnostics only; the frozen run is the exact-source qualification.
+
+Native positives/negatives include: P1/P2 with the same E/O and equal complete canonical JSON after opposite explicit-selection orders; retained original max10 refuses16/accepts8 after newer max20 admission; caller pin switching; unchanged/clear-only/empty unselected refusal; exact object-only reads with unselected objects missing/corrupt; same-value reselection; mixed pins/targets and stage selection; disjoint peer rebase; relevant P and E conflicts; original exact retry after head selection change/restart; inverse/redo round trips; inverse BEFORE-selection; equal-revision ambiguous restore; and inverse-of-restore recovering the exact before-publication selection. Existing first-ledger retry assertions remain intact.
+
+Portable replay (exit 0, **2 cases / 6 effects**, all record envelopes and whole canonical outputs equal to the original fixture):
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/selected-param-original-pin-probe.py
+```
+
+Static checks (both exit 0):
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/_selected_param_authority.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py tests/sdk/test_timeline_selected_param_authority.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_selected_schema_runtime.py
+git diff --check
+```
+
+The two original new strict probes are now real passes, with actual explicit-selection records establishing the pin. Expanded direct cases cover stage claims, ordinary/inverse ABA, occurrence materialization and sibling isolation, copied-target refusal, broken ancestry, and malformed/missing/duplicate associations. No original assertion was changed to expect lost behavior.
+
+## Fixture provenance and required positive gaps
+
+Existing selected fixtures previously used PARAM as their first selection or changed an admitted source implicitly. They now execute normal explicit set-element before the scenario, or immediately after birth inside the same birth batch. No history or prepared acceptance was fabricated. Mixed-pin tests explicitly select the intended initial/current source and retain all original state, maximum, opaque-field, restart/retry, exact-object and inverse/redo assertions. Record assertions select their original PARAM ordinals around the added explicit-selection command. The stale-source negative now explicitly selects the newer version before submitting the original pin, because a previously accepted original pin is correctly retained rather than becoming invalid on readmission.
+
+One unchanged old positive is marked strict xfail: `test_inverse_of_older_param_record_uses_only_selected_identity`. Its setup births a clip with both elementRef and an ignored element_ref alias and then immediately PARAMs it without selected history. A normal set-element would clear the ignored alias, destroying the legacy-alias scenario and its original inverse assertion. The original assertions are retained; the failure occurs at the unproven new PARAM setup, before the legacy inverse scenario. Restoring this positive requires a proven alias-preserving ownership/source association or an authentic legacy accepted-history setup. No arbitrary pin, fabricated accepted record, new field or alias-clearing weakened expectation was substituted. This is an OPEN positive gap, not claimed green.
+
+Copies/duplicates and generic whole-row/source replacements do **not** inherit authority by equal JSON. They remain unavailable unless an existing explicit set-element establishes selection; direct tests prove both refusal and subsequent explicit repair. Carrying duplicate source authority automatically remains a positive gap deliberately outside this bounded helper. Unknown structural producer shapes fail closed.
+
+Public S2 forbids an empty values/clear PARAM (`anyOf` requires a write), so empty PARAM is rejected before provider acceptance. The no-authority refusal is tested in native Runtime. Accepted empty PARAM recording is **not qualified** and cannot be added while keeping S2 bytes fixed. This is concrete evidence that the rule handoff'"'s accepted-empty-record expectation needs a later coordinated schema decision; this unit did not deviate from S2.
+
+Runtime port-review ACK is still pending in the shared coordination file. Existing operations have real native test evidence, but this report is not joint approval or integration/release authorization. No new Runtime port/shape was introduced. App authenticated read forwarding, browser draft/inflight preservation and browser restart/outbox behavior were not modified or verified. Ordinary permanent refusal preserves the submitted command and no accepted head change in the native tests; that is not a browser qualification claim.
+
+## Handoff
+
+Bounded provider unit complete with the precise fail-closed gaps above. Recommend independent Agent/Runtime review of this exact tree, then App's existing authenticated same-client capture bridge consuming the selected source. Resolve the legacy-alias positive setup before claiming a fully green compatibility lane; decide accepted-empty support only in a later explicitly authorized schema unit. No full suite, endpoint retirement, new public artifact, shared dependency mutation or push.
+'''
+(w/'notes/report.md').write_text(report)
+(root/'design/agent-selected-param-authority-provider.md').write_text(report)
+(w/'commit-msg').write_text('''fix(timeline): enforce accepted selected parameter authority
+
+Resolve original selected sources through accepted publication records and
+check them at each native command stage and rebased head. Restore inverse
+selection from authenticated before boundaries and refuse ambiguous restores.
+Keep S2 and the published Runtime013 contract unchanged.
+
+Add direct and real Runtime coverage with explicit-selection fixture setup.
+Retain the legacy alias compatibility scenario as a strict expected failure
+until its birth has a proven alias-preserving source association.
+''')
+with (root/'design/runtime-coordination.md').open('a') as f:
+ f.write('''\\n\\n## agt-m2-selected-param-authority-provider — final existing-port evidence\\nIsolated Agent qualified tree d35d0a36e4bc1f0a33f278a1bd798e4e857ec557, base ce363f6d; helper163 lines, total product191add/4del. No Runtime port/DTO/endpoint/table/public-schema/artifact/pin change; S2a6f1aaa9 and normal013 producer2c4 stay exact. Existing ancestry/config/object ports support native enforcement: central targeted1020130147-14497=446PASS/1strict legacy-alias positive xfail; real normal Runtime013 service26PASS on frozen Runtimeb748ae72/tree1711b198 archive; original portable2cases/6effects replayPASS. Original two enforcement strict probes now realPASS. Relevant P/E conflicts, disjoint peer, exactretry/restart, inverse-before selection and ambiguous revision restore/inverse-of-restore exercised. Existing max10/V2/removal/exactobject/undo/redo positives preserved with normal explicit selection setup, no prepared acceptance fabrication. OPEN: automatic copy-source inheritance (explicit repair supported), legacy-alias birth source positive, accepted empty PARAM (public S2 refuses empty before provider), App browser/draft qualification, and Runtime port-review ACK. Exact commands/hashes/source/limits: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-selected-param-authority-provider.md. Native evidence does not substitute joint review/integration approval.\\n''')
+PY" in /home/user/work/wt/agt-m2-selected-param-authority-provider
+ succeeded in 52ms:
+codex
+Final checks passed: the central Agent snapshot has 446 passes and one declared strict alias xfail; the frozen Runtime013 pair has 26 passes. Portable replay, Ruff, and whitespace checks also passed.
+
+The report records the remaining alias, copy-inheritance, accepted-empty-PARAM, and browser qualification gaps. The public S2 schema and artifact pins are unchanged.
+exec
+/bin/bash -lc 'git diff --check; git status --short --untracked-files=all; test ! -d /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-param-authority-provider/runtime-source; python3 - <<'"'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=root/'workers/agt-m2-selected-param-authority-provider'
+assert (w/'notes/report.md').read_text() == (root/'design/agent-selected-param-authority-provider.md').read_text()
+assert (w/'commit-msg').is_file()
+assert (root/'tests/agt-m2-selected-param-authority-provider-targeted-1020130147-14497/status').read_text().strip() == 'pass'
+(w/'DONE').touch()
+print('report, commit-msg, DONE written')
+PY" in /home/user/work/wt/agt-m2-selected-param-authority-provider
+ succeeded in 246ms:
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M tests/sdk/test_timeline_selected_schema.py
+ M tests/sdk/test_timeline_selected_schema_runtime.py
+?? astrid/sdk/timeline/_selected_param_authority.py
+?? tests/sdk/test_timeline_selected_param_authority.py
+report, commit-msg, DONE written
+
+codex
+Implemented selected-PARAM authority enforcement with a bounded helper; public S2 remains unchanged.
+
+- Central targeted pytest: **446 passed, 1 strict xfail**.
+- Frozen Runtime013 pair: **26 passed**.
+- Portable replay, Ruff, and whitespace checks passed.
+
+Legacy-alias compatibility, automatic copy inheritance, accepted empty PARAM, and browser qualification remain open. Runtime review ACK is pending.
+
+Exact commands, source identities, fixture changes, and next steps are in the [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-param-authority-provider/notes/report.md). Commit message and `DONE` written.
+tokens used
+197,724
+Implemented selected-PARAM authority enforcement with a bounded helper; public S2 remains unchanged.
+
+- Central targeted pytest: **446 passed, 1 strict xfail**.
+- Frozen Runtime013 pair: **26 passed**.
+- Portable replay, Ruff, and whitespace checks passed.
+
+Legacy-alias compatibility, automatic copy inheritance, accepted empty PARAM, and browser qualification remain open. Runtime review ACK is pending.
+
+Exact commands, source identities, fixture changes, and next steps are in the [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-param-authority-provider/notes/report.md). Commit message and `DONE` written.

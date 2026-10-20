@@ -1,0 +1,9 @@
+name=agt-m2-wc7-parent-scalar-consumer
+repo=agent
+base=tl/agt-m2-wc7-owned-move-outbox
+base_sha=dfb4748a
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-wc7-parent-scalar-consumer
+started=2026-10-20T20:12:11Z

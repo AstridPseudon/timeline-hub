@@ -1,0 +1,400 @@
++          }
++        },
++        {
++          "properties": {
++            "clear": {
++              "minItems": 1
++            }
++          }
++        }
++      ],
++      "description": "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive."
++    },
++    "ClipSetParamsArgs": {
++      "type": "object",
++      "properties": {
++        "values": {
++          "type": "object",
++          "additionalProperties": {
++            "$ref": "#/$defs/JSON"
++          }
++        },
++        "clear": {
++          "type": "array",
++          "items": {
++            "type": "string"
++          },
++          "uniqueItems": true
++        }
++      },
++      "required": [
++        "values",
++        "clear"
++      ],
++      "additionalProperties": false,
++      "anyOf": [
++        {
++          "properties": {
++            "values": {
++              "minProperties": 1
++            }
++          }
++        },
++        {
++          "properties": {
++            "clear": {
++              "minItems": 1
++            }
++          }
++        }
++      ],
++      "description": "Patch raw clip.params by literal top-level JSON keys in stored units, never dotted paths or expressions. Null is a value; clear removes presence. Set/clear overlap is refused by the handler. Preserve unmentioned keys."
++    },
+     "EditCommand": {
+       "type": "object",
+       "properties": {
+@@ -508,6 +591,66 @@
+       "additionalProperties": false,
+       "description": "Client recorder fields are claims only. Provider verifies/reconstructs all observations; authorship is write classification, never authenticated actor identity. Unknown operations pass the envelope only and require installed registered schemas/handlers.",
+       "allOf": [
++        {
++          "if": {
++            "properties": {
++              "op": {
++                "const": "track.set"
++              }
++            },
++            "required": [
++              "op"
++            ]
++          },
++          "then": {
++            "properties": {
++              "version": {
++                "const": "1"
++              },
++              "select": {
++                "type": "string",
++                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/track:[^/]+$"
++              },
++              "args": {
++                "$ref": "#/$defs/TrackSetArgs"
++              },
++              "intent": {
++                "type": "object",
++                "additionalProperties": false
++              }
++            }
++          }
++        },
++        {
++          "if": {
++            "properties": {
++              "op": {
++                "const": "clip.set-params"
++              }
++            },
++            "required": [
++              "op"
++            ]
++          },
++          "then": {
++            "properties": {
++              "version": {
++                "const": "1"
++              },
++              "select": {
++                "type": "string",
++                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
++              },
++              "args": {
++                "$ref": "#/$defs/ClipSetParamsArgs"
++              },
++              "intent": {
++                "type": "object",
++                "additionalProperties": false
++              }
++            }
++          }
++        },
+         {
+           "if": {
+             "properties": {
+"""Scoped literal scalar edits, using the native recorder for every write."""
+from __future__ import annotations
+
+import copy
+import re
+
+from jsonschema import Draft202012Validator
+
+from ._command_state import CommandError
+
+
+def _target(ctx, command, kind):
+    ref = command['select']
+    if not isinstance(ref, str) or not re.fullmatch(
+            rf'(?:parent|occurrence:[^/]+)/{kind}:[^/]+', ref) or '::' in ref:
+        raise CommandError(f"{command['op']} requires a parent or occurrence {kind} identity")
+    owner = ref.rsplit('/', 1)[0]
+    if ctx.read(ref, ['id']) is None:
+        raise CommandError('scalar target disappeared', kind='identity_conflict', ref=ref)
+    pin = {'parent': copy.deepcopy(ctx.state.bundle.get('base_parent', {}))}
+    if owner != 'parent':
+        ctx.read(owner, ['occurrence_id'])
+        ctx.read(owner + '/shot', ['shot_id'])
+        shot = ctx.state.occurrence(owner)['shot_id']
+        pin['source'] = copy.deepcopy(ctx.state.bundle['source_mapping']['shots'][shot])
+        ctx.bind('scalar.owner', owner)
+    ctx.dependency('scalar.images', 'entity', pin)
+    ctx.bind('scalar.target', ref, dependencies=['scalar.images'])
+    return ref
+
+
+def _changes(command):
+    values, clear = command['args']['values'], command['args']['clear']
+    if any(not isinstance(key, str) for key in values):
+        raise CommandError('parameter keys must be JSON strings')
+    if set(values).intersection(clear):
+        raise CommandError('a scalar key cannot be both set and cleared')
+    return values, clear
+
+
+def track_set(ctx, command):
+    ref = _target(ctx, command, 'track')
+    values, clear = _changes(command)
+    for key in sorted(values):
+        ctx.write(ref, [key], values[key])
+    for key in sorted(clear):
+        ctx.clear(ref, [key])
+
+
+def clip_set_params(ctx, command):
+    from astrid.sdk.timeline_address import element_schema
+
+    ref = _target(ctx, command, 'clip')
+    values, clear = _changes(command)
+    identity = {key: ctx.read(ref, [key]) for key in (
+        'clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id')}
+    element = identity['clipType'] or identity['clip_type'] or 'media'
+    if not isinstance(element, str):
+        raise CommandError('clip type must be a string', ref=ref)
+    # These are stored JSON values, not human expressions or canvas-unit input.
+    # Reuse the element's declared value schemas without parsing or coercion.
+    properties = element_schema(element).get('properties', {})
+    for key, value in values.items():
+        if key in properties:
+            errors = list(Draft202012Validator(properties[key]).iter_errors(value))
+            if errors:
+                raise CommandError(errors[0].message, ref=ref, path=['params', key])
+    ctx.object(ref, ['params'])
+    for key in sorted(values):
+        ctx.write(ref, ['params', key], values[key])
+    for key in sorted(clear):
+        ctx.clear(ref, ['params', key])
+
+
+def capture_track_set(bundle, select, *, values=None, clear=()):
+    return _capture(bundle, 'track.set', select, values, clear)
+
+
+def capture_clip_set_params(bundle, select, *, values=None, clear=()):
+    return _capture(bundle, 'clip.set-params', select, values, clear)
+
+
+def _capture(bundle, op, select, values, clear):
+    from .commands import execute
+
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+                             'select': select, 'args': {'values': copy.deepcopy({} if values is None else values),
+                                                       'clear': list(clear)}}]).commands[0]
+"""Scalar acceptance/reload/inverse through the real native provider and recorder."""
+from __future__ import annotations
+
+import copy
+import json
+
+import pytest
+
+from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document
+from tests.sdk.test_timeline_commit_provider import (
+    CommitRejected,
+    DetachedRealm,
+    inverse,
+)
+from tests.sdk.test_timeline_commit_provider import (
+    runtime_abi as runtime_abi,
+)
+
+
+def current(realm):
+    return bundle_from_document(realm.documents[realm.head['revision_id']])
+
+
+@pytest.mark.xfail(strict=True, reason='M2 inverse primitives must restore the original shared source closure after occurrence materialization')
+def test_committed_move_then_parent_label_and_occurrence_params_reload_undo_redo():
+    realm = DetachedRealm()
+    moved = realm.call([realm.move()])
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-scalar-commands-commit-integration-1019230244-8469/status && tail -35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-scalar-commands-commit-integration-1019230244-8469/log.txt && git status --short --ignored | head -35 && du -h tests/editing_conformance/fixtures/recipe_m2_scalar_*.json' in /home/user/work/wt/agt-m2-scalar-commands
+ succeeded in 235ms:
+running
+. M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/_scalar_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_track.json
+?? tests/editing_conformance/test_commit_runtime_scalar.py
+?? tests/editing_conformance/test_recipe_scalar_commands.py
+?? tests/sdk/test_timeline_commit_provider_scalar.py
+!! .pytest_cache/
+!! .ruff_cache/
+20K	tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json
+12K	tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json
+12K	tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json
+12K	tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json
+4.0K	tests/editing_conformance/fixtures/recipe_m2_scalar_track.json
+
+ succeeded in 29934ms:
+test agt-m2-scalar-commands-commit-integration-1019230244-8469: pass exit=0 in 18s — commit-integration on agt-m2-scalar-commands (agent tree b873933a6d58478384d33ff7f64ff174152c10e3)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_scalar.py
+counts: 3 passed in 16.55s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-scalar-commands-commit-integration-1019230244-8469/log.txt ---
+...                                                                      [100%]
+3 passed in 16.55s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-scalar-commands-commit-integration-1019230244-8469/status && tail -80 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-scalar-commands-commit-integration-1019230244-8469/log.txt' in /home/user/work/wt/agt-m2-scalar-commands
+ succeeded in 0ms:
+pass
+...                                                                      [100%]
+3 passed in 16.55s
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-scalar-commands/commit-msg <<'EOF'
+feat(timeline): add native track label and clip parameter commands
+
+Register closed v1 track.set and clip.set-params recipes through the native
+recorder, preserving literal JSON, explicit clears, original capture claims,
+occurrence ownership, unchanged writes and disjoint property rebase.
+
+Publish portable scalar capture fixtures and exercise native execution,
+provider reload, guarded inverse/redo and the real Runtime outbox journey.
+Retain the shared-source inverse closure gap as a strict expected failure.
+EOF
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-scalar-commands/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-scalar-commands/commit-msg.txt" in /home/user/work/wt/agt-m2-scalar-commands
+ succeeded in 0ms:
+codex
+The central Runtime lane passed all three tests: the two existing M1 journeys and the new scalar journey. It proved the label handoff through lost ACK, restart, exact retry, accepted reload, undo and redo with the renderer tripwire active; occurrence param set/clear also passed. The only known gap is the strict expected failure for restoring the original shared-source closure identity after occurrence undo.
+exec
+/bin/bash -lc "git diff --check && python3 - <<'PY'
+from pathlib import Path
+for name in ['astrid/sdk/timeline/_scalar_commands.py', 'tests/editing_conformance/test_recipe_scalar_commands.py', 'tests/editing_conformance/test_commit_runtime_scalar.py', 'tests/sdk/test_timeline_commit_provider_scalar.py']:
+ print(len(Path(name).read_text().splitlines()), name)
+import shutil
+for name in ('.pytest_cache', '.ruff_cache'):
+ shutil.rmtree(name, ignore_errors=True)
+PY
+git diff --numstat" in /home/user/work/wt/agt-m2-scalar-commands
+ succeeded in 565ms:
+88 astrid/sdk/timeline/_scalar_commands.py
+255 tests/editing_conformance/test_recipe_scalar_commands.py
+92 tests/editing_conformance/test_commit_runtime_scalar.py
+172 tests/sdk/test_timeline_commit_provider_scalar.py
+143	0	astrid/core/timeline/schema/edit-command.schema.json
+8	4	astrid/sdk/timeline/commands.py
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-scalar-commands/report.md <<'EOF'
+# Scalar commands — branch-only report
+
+Implemented "'`track.set` v1 and `clip.set-params` v1 as native registry operations. All changes are in the assigned Agent worktree; no commit, merge, push, checkout, install, network request or local server was run. Both absolute commit-msg files are written. No merge requested; PLAN'"'s M1 gate remains the orchestrator's decision.
+
+## Contract and implementation
+
+* Canonical Agent schema: "'`astrid/core/timeline/schema/edit-command.schema.json`, new closed `TrackSetArgs` and `ClipSetParamsArgs` definitions and operation envelope clauses. Existing root reference patterns untouched.
+* Both require `args.values` and `args.clear`, with at least one explicit set/clear. `track.set` writes only raw `label` (string including empty string); null assignment refuses, clear removes presence. `clip.set-params` patches literal top-level raw `params` keys with finite JSON, retaining unmentioned fields and distinguishing null from absence. Punctuation/empty keys are literal data. Overlapping set/clear, unknown args, duplicate clears, unsupported versions and shared/unscoped refs refuse.
+* `_scalar_commands.py` uses existing Recording for writes, clears and container creation. Captures preserve tagged original state, target ID, occurrence/source ownership, exact consumed clip type/media selector fields, and immutable image provenance. No containing revision equality guard, timing/media/registry/ID mutation, formula evaluation or renderer advisory is added. Unchanged writes remain recorded.
+* Stored-unit/literal semantics match App raw params patches. Reused main'"'s element property schemas for declared value validation instead of human SDK formula parsing, unit conversion or null-as-clear behavior. Unknown param payload remains opaque. Scoped occurrence refs use existing isolated authoring bundle ownership; shared edit refs refuse.
+* Admission now consults "'`operations()` plus inverse/restore. Singleton normalization uses the registry flag. Registry argument validation retains canonical-schema reference resolution.
+* Five portable JSON captures follow the existing fixture pattern, with original request/command/bundle/after_bundle. `recipe_m2_scalar_{track,params_object,params_null,params_absent,disjoint}.json`; disjoint includes head_bundle/rebased_bundle. All are in `tests/editing_conformance/fixtures/`. They include parent label, shared-source occurrence params, null/absence, opaque JSON and literal punctuation keys. Early App handoff: `schema-handoff.md` alongside this report. No independent frontend guard table.
+
+## Exact verification
+
+Working directory for direct commands: `/home/user/work/wt/agt-m2-scalar-commands`.
+
+Final combined targeted run:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py
+```
+
+**273 passed, 1 xfailed in 16.00s.** Covers native capture/execute/replay/inverse/redo, original claim handoff, unchanged writes and ABA, missing/changed target/source owner, disjoint leaf rebase, known param validation, parent/occurrence isolation, unsupported refs/args, renderer-free imports, and existing recipe/provider/document/sync neighbours. Earlier runs: native recipe+M1 113 passed in 4.51s; initial provider/neighbours run 158 passed/1 failed in 11.29s identified the preserved exact-closure seam below. No passing behavior test was rewritten or deleted.
+
+```sh
+/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_scalar_commands.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_commit_runtime_scalar.py tests/sdk/test_timeline_commit_provider_scalar.py
+git diff --check
+```
+
+**Both passed.** Test-created `.pytest_cache`/`.ruff_cache` removed; no build output/temp files left.
+
+Central test service:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-scalar-commands commit-integration --files tests/editing_conformance/test_commit_runtime_scalar.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-scalar-commands-commit-integration-1019230244-8469 1
+```
+
+**PASS, exit 0: 3 passed in 16.55s** (18s service elapsed; source tree b873933a6d58478384d33ff7f64ff174152c10e3). Actual service command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_scalar.py
+```
+
+This includes both existing M1 journeys and the new actual native provider + Runtime-door/outbox journey: accepted move/lost ACK; B label captured over local A; durable original claims; daemon/client restart; exact retry and accepted label reload; undo/redo preserves accepted move; occurrence param null/unknown JSON set and clear; accepted reload and inverse. Existing renderer tripwire remains active. New test uses the existing `TimelineSession._queue` capture callback seam; this bounded task adds no public scalar convenience method to sync.py.
+
+Result directory: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-scalar-commands-commit-integration-1019230244-8469/`.
+
+No full suite or `make check` was run, per the task'"'s no-full/no-install scope. No App/browser implementation or generated-client artifact update is claimed.
+
+## Primitive gap and next steps
+
+One **strict xfail**, preserving its original exact expected behavior: "'`tests/sdk/test_timeline_commit_provider_scalar.py::test_committed_move_then_parent_label_and_occurrence_params_reload_undo_redo`. After an occurrence edit is accepted/reloaded, inverse restores the original scalar fields but retains main'"'s materialized isolated occurrence owner. Therefore the original shared shot/internal closure and dependency manifest are not byte-identical. The assertion still requires exact equality; no direct State patch or fake recorder was added. Separate positive tests prove occurrence authored-field restoration and redo, and exact parent-label document inverse/redo. "'`_command_state`, `_recording`, inverse, commit, units and reflow were not changed. The primitive owner should resolve the closure restoration seam before removing that xfail.
+
+App can consume the branch schema/capture fixtures for ordinary track label and raw parameter builders, preserving original claims in the existing outbox. Canonical Runtime/App schema/artifact synchronization remains an explicit M2 dependency: this central source-tree pass is not an official-pin/release claim. Public scalar Python session convenience methods, App producer conversion and zero legacy-traffic browser proof remain outside this branch. Do not merge before the orchestrator records PLAN M1 approval.
+
+Line budget: **88** new handler/capture product lines; commands.py **+8/-4**; canonical schema **+143** (no whole-file reformat). New Python tests **519** lines across three files; five compact JSON golden fixture lines (~60 KB on disk). No existing tests weakened and no legacy frontend rewrite.
+EOF
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-scalar-commands/schema-handoff.md <<'"'EOF'
+
+Final qualification: native/neighbour tests 273 passed + 1 strict xfail (original shared-closure identity after occurrence inverse). Central commit-integration, including the new scalar outbox/restart journey, passed 3/3 on source tree b873933a6d58478384d33ff7f64ff174152c10e3. See report.md for exact commands, the primitive seam and unchanged artifact dependencies.
+EOF" in /home/user/work/wt/agt-m2-scalar-commands
+ succeeded in 0ms:
+codex
+Implemented branch-only `track.set` and `clip.set-params`, with closed schemas, native Recording, narrow guards, and five portable capture fixtures.
+
+- Targeted tests: **273 passed, 1 strict xfail**.
+- Central real Runtime journeys: **3 passed**.
+- Ruff and diff checks passed; no full suite run.
+- Remaining gap: occurrence undo restores fields but retains materialized source-owner identity. Exact-closure expectation remains intact.
+- Both absolute commit-message files written. No merge requested.
+
+[Report with exact commands, line budget, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-scalar-commands/report.md). Runtime/App artifact handoff remains an explicit M2 dependency.
+tokens used
+167,839
+Implemented branch-only `track.set` and `clip.set-params`, with closed schemas, native Recording, narrow guards, and five portable capture fixtures.
+
+- Targeted tests: **273 passed, 1 strict xfail**.
+- Central real Runtime journeys: **3 passed**.
+- Ruff and diff checks passed; no full suite run.
+- Remaining gap: occurrence undo restores fields but retains materialized source-owner identity. Exact-closure expectation remains intact.
+- Both absolute commit-message files written. No merge requested.
+
+[Report with exact commands, line budget, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-scalar-commands/report.md). Runtime/App artifact handoff remains an explicit M2 dependency.

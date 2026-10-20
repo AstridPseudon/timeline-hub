@@ -1,0 +1,400 @@
++    path.write_bytes(request_bytes(state))
++    frozen = path.read_bytes()
++    calls = copy.deepcopy(generated.calls)
++
++    with pytest.raises(TimelineEditError, match="in-flight request kind"):
++        open_session(connected)
++
++    assert path.read_bytes() == frozen
++    assert generated.calls == calls
++
++
+ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(connected):
+     session = open_session(connected)
+     _, generated, path = connected
+
+codex
+The current checkout has no `tests/sdk/test_timeline_producer_guard.py` or `tests/editing_conformance/test_producer_insertion.py`; those paths belong to an older/private source snapshot. The available producer coverage is the registered assembler producer test, which is part of the required central private wrapper. I also found and closed the remaining direct `flight.get('kind')` admission branch so every discriminator decision goes through the strict validator. I’m requesting the named central 15-case wrapper now because this change affects real admission dispatch.
+exec
+/bin/bash -lc 'ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+R=$($ORCH/bin/request-test agt-m2-admission-flight-strict-tag identity-pin94114269-integration --files tests/packs/rendering/test_registered_native_pair.py)
+printf '"'%s\\n' \""'$R"
+$ORCH/bin/wait-test "$R"' in /home/user/work/wt/agt-m2-admission-flight-strict-tag
+exec
+/bin/bash -lc 'RESULT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-admission-flight-strict-tag-identity-pin94114269-integration-1020133741-30684
+ls -l "$RESULT" && tail -n 20 "$RESULT/log.txt" 2>/dev/null || true' in /home/user/work/wt/agt-m2-admission-flight-strict-tag
+ succeeded in 86ms:
+total 24
+-rw-r--r-- 1 root root 157 Oct 20 13:37 ext
+-rw-r--r-- 1 root root   3 Oct 20 13:37 log.txt
+-rw-r--r-- 1 root root 192 Oct 20 13:37 request
+-rw-r--r-- 1 root root   0 Oct 20 13:37 runner.log
+-rw-r--r-- 1 root root   6 Oct 20 13:37 running
+-rw-r--r-- 1 root root 146 Oct 20 13:37 snap
+-rw-r--r-- 1 root root   8 Oct 20 13:37 status
+...
+codex
+The central wrapper is still running and its result log is active, so I’m leaving it in place rather than resubmitting. While it runs, I’m doing the final local verification and preparing the required handoff/report artifacts; no shared dependency or integration worktree is being modified.
+exec
+/bin/bash -lc "RESULT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-admission-flight-strict-tag-identity-pin94114269-integration-1020133741-30684
+stat -c '%s %y' \""'$RESULT/log.txt"; tail -n 30 "$RESULT/log.txt"; cat "$RESULT/status" "$RESULT/running" 2>/dev/null || true' in /home/user/work/wt/agt-m2-admission-flight-strict-tag
+ succeeded in 160ms:
+3 2026-10-20 13:37:49.525428747 +0000
+...running
+10180
+
+exec
+/bin/bash -lc 'ps -o pid,etime,stat,cmd -p 10180 || true
+RESULT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-admission-flight-strict-tag-identity-pin94114269-integration-1020133741-30684
+ls -l "$RESULT"; tail -c 2000 "$RESULT/runner.log" 2>/dev/null || true; tail -n 20 "$RESULT/log.txt"' in /home/user/work/wt/agt-m2-admission-flight-strict-tag
+ succeeded in 52ms:
+    PID     ELAPSED STAT CMD
+total 24
+-rw-r--r-- 1 root root 157 Oct 20 13:37 ext
+-rw-r--r-- 1 root root 126 Oct 20 13:41 log.txt
+-rw-r--r-- 1 root root 192 Oct 20 13:37 request
+-rw-r--r-- 1 root root   0 Oct 20 13:37 runner.log
+-rw-r--r-- 1 root root   6 Oct 20 13:37 running
+-rw-r--r-- 1 root root 146 Oct 20 13:37 snap
+-rw-r--r-- 1 root root   8 Oct 20 13:37 status
+................xx..                                                        [100%]
+15 passed, 2 xfailed in 187.42s (0:03:07)
+.
+codex
+The private wrapper’s inner qualification has completed successfully: 15 passed and 2 unchanged strict xfails. The central outer wrapper is still finishing its control checks; I’m waiting for its final exit code before closing the task.
+ succeeded in 240195ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-admission-flight-strict-tag-identity-pin94114269-integration-1020133741-30684
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-admission-flight-strict-tag-identity-pin94114269-integration-1020133741-30684/
+test agt-m2-admission-flight-strict-tag-identity-pin94114269-integration-1020133741-30684: pass exit=0 in 227s — identity-pin94114269-integration on agt-m2-admission-flight-strict-tag (agent tree 8ef5bbffc95823c8cba6f600b0ca787761c8d7f1)
+cmd: test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/packs/rendering/test_registered_native_pair.py
+counts: 15 passed, 2 xfailed in 187.42s (0:03:07) 4 passed in 215.30s (0:03:35) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-admission-flight-strict-tag-identity-pin94114269-integration-1020133741-30684/log.txt ---
+................xx..                                                        [100%]
+15 passed, 2 xfailed in 187.42s (0:03:07)
+.                                                                     [100%]
+4 passed in 215.30s (0:03:35)
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/rendering/test_runtime_stitch.py tests/packs/rendering/test_assemble_timeline.py' in /home/user/work/wt/agt-m2-admission-flight-strict-tag
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/assembly.py astrid/sdk/timeline/sync.py tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/packs/rendering/test_registered_assembler_admission.py tests/packs/rendering/test_registered_native_pair.py && git diff --check' in /home/user/work/wt/agt-m2-admission-flight-strict-tag
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sheet_native.py' in /home/user/work/wt/agt-m2-admission-flight-strict-tag
+ succeeded in 592ms:
+All checks passed!
+
+ succeeded in 7028ms:
+......................................................................   [100%]
+70 passed in 4.96s
+
+ succeeded in 23535ms:
+........................................................................ [ 52%]
+..................................................................       [100%]
+138 passed in 21.49s
+
+codex
+Final verification is green after the last source change: the requested 133-case focus cohort is now 138 passed (the five new discriminator regressions), the sheet subset is 70 passed, Ruff and `git diff --check` pass, and the named central wrapper passed with 15 inner cases plus 2 unchanged strict xfails and 4 outer controls. I’m now recording the exact handoff, commit message, and completion marker.
+exec
+/bin/bash -lc "git status --short && git diff --stat && git diff --check && find . -type d -name __pycache__ -o -type f -name '*.pyc' | sed -n '1,40p'" in /home/user/work/wt/agt-m2-admission-flight-strict-tag
+ succeeded in 1140ms:
+ M astrid/sdk/timeline/sync.py
+ M tests/sdk/test_timeline_sync.py
+ astrid/sdk/timeline/sync.py     | 22 ++++++++++++++++++----
+ tests/sdk/test_timeline_sync.py | 20 ++++++++++++++++++++
+ 2 files changed, 38 insertions(+), 4 deletions(-)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-admission-flight-tag-fix.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-admission-flight-tag-fix.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-admission-flight-tag-fix.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..3cd8a3a51bbaea8d7eb963a9552d133c88e384d0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-admission-flight-tag-fix.md
+@@ -0,0 +1,74 @@
++# Agent admission flight discriminator fix
++
++## Result
++
++Fixed only P2 strict local outbox flight discrimination on the reviewed
++`tl/agt-m2-assembly-admission-durable-flight` candidate.
++
++`TimelineSession._state()` now validates the persisted flight discriminator
++before any state mutation or transport dispatch. A missing `kind` remains the
++legacy commit-flight format. The only recognized present tag is
++`assembly-admission`; present `null`, booleans, numbers, `commit`, and unknown
++strings fail closed with `TimelineEditError`. The existing admission, flush,
++undo, staging, and reload paths all use this validation gate. Invalid flights
++retain their exact outbox bytes and retry identity; no alternate transport is
++attempted.
++
++No public DTO, schema, journal, authority rule, credential behavior, or
++`outbox.py` behavior changed. The explicit `commit` value is rejected because
++this candidate documents no explicit commit tag: legacy commits are identified
++by an absent tag, as required by the review finding and retained probes.
++
++## Files
++
++- `astrid/sdk/timeline/sync.py`: strict discriminator helper and guarded path
++  checks.
++- `tests/sdk/test_timeline_sync.py`: regression for `null`, `false`, numeric,
++  `assembly-admission-v2`, and `commit` tags on a valid lost-ACK commit flight;
++  asserts refusal, exact-byte retention, and no second POST.
++
++## Tests and checks
++
++All commands ran from `/home/user/work/wt/agt-m2-admission-flight-strict-tag`
++with the shared Agent virtualenv read-only and pytest cache disabled.
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/rendering/test_runtime_stitch.py tests/packs/rendering/test_assemble_timeline.py
++138 passed in 21.49s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sheet_native.py
++70 passed in 4.96s
++
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/assembly.py astrid/sdk/timeline/sync.py tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/packs/rendering/test_registered_assembler_admission.py tests/packs/rendering/test_registered_native_pair.py
++All checks passed!
++
++git diff --check
++passed
++```
++
++The requested old producer paths
++`tests/sdk/test_timeline_producer_guard.py` and
++`tests/editing_conformance/test_producer_insertion.py` do not exist in this
++checkout (the attempted command exited 4 before collecting tests). The current
++registered producer coverage is included in the private central wrapper.
++
++Because this changes real admission-flight dispatch, the named central wrapper
++was run once:
++
++```text
++ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
++$ORCH/bin/request-test agt-m2-admission-flight-strict-tag identity-pin94114269-integration --files tests/packs/rendering/test_registered_native_pair.py
++$ORCH/bin/wait-test agt-m2-admission-flight-strict-tag-identity-pin94114269-integration-1020133741-30684
++test ...: pass exit=0 in 227s
++15 passed, 2 xfailed in 187.42s; outer 4 passed in 215.30s
++```
++
++No full/full* suite, browser, live-socket local run, or shared dependency
++mutation was performed.
++
++## Handoff
++
++The harness should commit the worktree using the conventional message in the
++worker commit-msg path. No git commit, merge, rebase, checkout, push, or
++integration-worktree edit was performed. Next step is normal merge-queue
++composition of this two-file narrow delta.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..bfd7246b5ed17e8c65f25e09251d7c6e7c996d89
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/commit-msg
+@@ -0,0 +1,5 @@
++fix(timeline): reject unknown outbox flight kinds
++
++Fail closed on present local flight discriminators that are neither the
++legacy absent tag nor the registered assembly admission kind, preserving the
++original durable outbox flight and retry identity.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..13530a1d4c15fc600019eabba96d57cbc3e0fd55
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/notes/report.md
+@@ -0,0 +1,36 @@
++# Report
++
++Implemented the P2 strict local outbox flight discriminator fix.
++
++The persisted `flight.kind` is now validated centrally before processing:
++absent means the existing legacy commit flight, `assembly-admission` selects
++admission recovery, and every other present value fails closed. This includes
++null, bool, number, `commit`, and unknown strings. The rejection occurs before
++mutation or send and preserves exact outbox bytes/retry identity. Existing
++admission ACK cleanup, pending suffix handling, legacy commit retry/undo, and
++scope checks are unchanged.
++
++Added a regression that starts from a valid lost-ACK commit flight, injects
++each malformed/unknown tag, and verifies reload refuses, the file is byte-for-
++byte unchanged, and no second transport call occurs.
++
++Commands/results:
++
++- Focus cohort: `tests/sdk/test_timeline_assembly.py`,
++  `tests/sdk/test_timeline_sync.py`, `tests/sdk/test_timeline_sync_native.py`,
++  `tests/packs/rendering/test_runtime_stitch.py`,
++  `tests/packs/rendering/test_assemble_timeline.py` — **138 passed**.
++- Sheet cohort: `tests/sdk/test_timeline_sheet.py`,
++  `tests/sdk/test_timeline_sheet_native.py` — **70 passed**.
++- Ruff on touched/relevant files — **All checks passed**.
++- `git diff --check` — **passed**.
++- Named central `identity-pin94114269-integration` wrapper with
++  `tests/packs/rendering/test_registered_native_pair.py` — **15 passed, 2
++  unchanged strict xfails; outer 4 passed; exit 0**.
++
++The older requested producer paths were absent from this checkout, so that
++direct command returned pytest exit 4 before collection. The current
++registered producer coverage is exercised by the central private wrapper.
++
++No full/full* suite was requested. No blocker remains. The harness may compose
++the narrow two-file change through the normal merge queue.
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index 15433abd885a13070dedbdac4c91d7cec84b054d..d2eea33cdaf3cbfebc8dec766052e4ccc0733b4c
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -26,6 +26,19 @@
+         super().__init__(failure.get("message", "timeline commit refused"))
+ 
+ 
++def _flight_kind(flight):
++    """Return the processing kind without defaulting a present discriminator."""
++    if flight is None:
++        return None
++    if not isinstance(flight, dict):
++        raise TimelineEditError("invalid in-flight request kind; original intent retained")
++    if "kind" not in flight:
++        return "commit"
++    if flight["kind"] == "assembly-admission":
++        return "assembly-admission"
++    raise TimelineEditError("invalid in-flight request kind; original intent retained")
++
++
+ def _connection(client):
+     transport = client._remote._transport
+     handshake = transport._last_handshake or {}
+@@ -172,6 +185,7 @@
+     def _state(self):
+         identity = _connection(self.client)
+         state = self.outbox.read()
++        _flight_kind(state.get("flight"))
+         if identity != self.identity or state["scope"] != {
+             **identity, "project_id": self.project_id, "timeline_id": self.timeline_id,
+         }:
+@@ -206,7 +220,7 @@
+         with self.outbox.locked():
+             state = self._state()
+             flight = state['flight']
+-            if flight is not None and flight.get('kind') == 'assembly-admission':
++            if _flight_kind(flight) == 'assembly-admission':
+                 retry_assembly(self, state, flight, child_outputs, replace_clips,
+                                assembler_digest, idempotency_key, rationale)
+             elif state['pending'] or flight is not None:
+@@ -317,7 +331,7 @@
+                 if matches is not None and state["pending"]:
+                     flight = state["flight"]
+                     prefix = (state["pending"][:flight["count"]]
+-                              if flight and flight.get('kind') != 'assembly-admission' else state["pending"])
++                              if flight and _flight_kind(flight) != 'assembly-admission' else state["pending"])
+                     if not matches(prefix):
+                         raise TimelineEditError("pending intent differs; flush the original request before another edit")
+                     return copy.deepcopy(prefix)
+@@ -349,7 +363,7 @@
+                    "select": None, "args": {"publications": publications}}
+         with self.outbox.locked():
+             state = self._state()
+-            if state['flight'] is not None and state['flight'].get('kind') == 'assembly-admission':
++            if _flight_kind(state['flight']) == 'assembly-admission':
+                 raise TimelineEditError('retry the original assembly admission before undo')
+             if state["pending"] and state["pending"] != [command]:
+                 raise TimelineEditError("flush pending intent before undo")
+@@ -362,7 +376,7 @@
+         with self.outbox.locked():
+             state = self._state()
+             flight = state["flight"]
+-            if flight is not None and flight.get('kind') == 'assembly-admission':
++            if _flight_kind(flight) == 'assembly-admission':
+                 raise TimelineEditError('retry the original assembly admission before flushing commands')
+             if flight is None:
+                 if not state["pending"]:
+diff --git a/tests/sdk/test_timeline_sync.py b/tests/sdk/test_timeline_sync.py
+index e287d83c96f67c3c617f7adf6f6c0d06abc5c374..2af70f438735cfd1534e1828617be9bc1dd4d183
+--- a/tests/sdk/test_timeline_sync.py
++++ b/tests/sdk/test_timeline_sync.py
+@@ -253,6 +253,26 @@
+     assert len(generated.calls) == 1
+ 
+ 
++@pytest.mark.parametrize("kind", [None, False, 7, "assembly-admission-v2", "commit"])
++def test_present_unknown_flight_kind_refuses_reload_without_post_or_mutation(connected, kind):
++    session = open_session(connected)
++    _, generated, path = connected
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        session.move("parent/clip:a", 5, idempotency_key="original")
++    state = json.loads(path.read_bytes())
++    state["flight"]["kind"] = kind
++    path.write_bytes(request_bytes(state))
++    frozen = path.read_bytes()
++    calls = copy.deepcopy(generated.calls)
++
++    with pytest.raises(TimelineEditError, match="in-flight request kind"):
++        open_session(connected)
++
++    assert path.read_bytes() == frozen
++    assert generated.calls == calls
++
++
+ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(connected):
+     session = open_session(connected)
+     _, generated, path = connected
+
+exec
+/bin/bash -lc "git status --short && printf '\\n--- commit msg ---\\n' && sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/commit-msg && printf '\\n--- markers ---\\n' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-admission-flight-tag-fix.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/notes/report.md && git diff --check" in /home/user/work/wt/agt-m2-admission-flight-strict-tag
+ succeeded in 509ms:
+ M astrid/sdk/timeline/sync.py
+ M tests/sdk/test_timeline_sync.py
+
+--- commit msg ---
+fix(timeline): reject unknown outbox flight kinds
+
+Fail closed on present local flight discriminators that are neither the
+legacy absent tag nor the registered assembly admission kind, preserving the
+original durable outbox flight and retry identity.
+
+--- markers ---
+-rw-r--r-- 1 root root 3675 Oct 20 13:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-admission-flight-tag-fix.md
+-rw-r--r-- 1 root root    0 Oct 20 13:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/DONE
+-rw-r--r-- 1 root root 1813 Oct 20 13:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/notes/report.md
+
+codex
+Implemented and completed P2 strict flight discrimination.
+
+- Unknown/present `flight.kind` values now fail closed before mutation or dispatch; legacy absent-tag commits and `assembly-admission` remain supported.
+- Added exact-byte/no-retry regression coverage.
+- Focus suite: 138 passed.
+- Sheet suite: 70 passed.
+- Central private wrapper: 15 passed, 2 unchanged xfails; outer 4 passed.
+- Ruff and `git diff --check`: passed.
+- No full suite or shared dependency changes.
+
+Reports:
+
+- [agent-admission-flight-tag-fix.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-admission-flight-tag-fix.md)
+- [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/notes/report.md)
+
+`commit-msg` and `DONE` are written.
+tokens used
+153,499
+Implemented and completed P2 strict flight discrimination.
+
+- Unknown/present `flight.kind` values now fail closed before mutation or dispatch; legacy absent-tag commits and `assembly-admission` remain supported.
+- Added exact-byte/no-retry regression coverage.
+- Focus suite: 138 passed.
+- Sheet suite: 70 passed.
+- Central private wrapper: 15 passed, 2 unchanged xfails; outer 4 passed.
+- Ruff and `git diff --check`: passed.
+- No full suite or shared dependency changes.
+
+Reports:
+
+- [agent-admission-flight-tag-fix.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-admission-flight-tag-fix.md)
+- [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-admission-flight-strict-tag/notes/report.md)
+
+`commit-msg` and `DONE` are written.

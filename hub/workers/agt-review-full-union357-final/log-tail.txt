@@ -1,0 +1,400 @@
++that ACK may the manager decide private source freeze and normal private
++generation. Native Runtime/Agent qualification and public release remain
++unverified and held.
++
++## Not run / not claimed
++
++No full suite, browser/live-socket suite, generation, release, public pin,
++merge, or native Runtime/Agent claim was made. Shared dependencies were not
++modified.
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/DONE; printf '"'%s\\n' '--- commit msg ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/commit-msg.txt; printf '%s\\n' '--- report ---'; sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/report.md; printf '%s\\n' '--- worktree status ---'; git status --short --branch" in /home/user/work/wt/agt-review-full-union357-final
+ succeeded in 22ms:
+--- commit msg ---
+review(timeline): approve private ordinary carrier union
+
+Approve Agent commit 35723081 as private source preparation after focused
+schema-floor, version-boundary, materialization, and inverse checks. Hold exact
+freeze and adoption until Runtime reviews this exact full-union source.
+--- report ---
+# Agent final review — private ordinary/carrier union
+
+## Disposition
+
+**APPROVE PRIVATE SOURCE PREPARATION; HOLD EXACT FREEZE / ADOPTION.**
+
+Reviewed the current worktree at commit `357230816c86da65d5f8cc92b10a3a90d29874e0`,
+tree `94692ec85167d5c606626c4ec678fe2a63ee0aa6`. The current
+`astrid/core/timeline/schema/edit-command.schema.json` SHA-256 is
+`613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3`.
+
+The full ordinary reconstruction is exact: 55 definitions and 29 operation
+clauses, with ordinary SHA-256
+`6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
+The earlier private source remains identifiable as Agent `3730d0bd` / schema
+`f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f`.
+
+## What passed
+
+- `/home/user/work/venv-agent/bin/pytest -q tests/sdk/test_timeline_materialization_schema_union.py tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_version_boundary.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_pristine_initialize.py tests/sdk/test_timeline_current_union_schema.py`
+  — **164 passed** in 157.88s.
+- Focused AG-MAT/public-v1/paired-ACK nodes across placement, occurrence media,
+  provider, and sync tests — **15 passed** in 7.05s.
+- `git diff --check HEAD^ HEAD` — passed.
+
+The checks preserve the 103-read/3-selection public v1 positive, accepted v1
+ledger inverse/redo/restore, and the three obsolete private-v1 refusal /
+equivalent-v2-success pairs. Typed `created`/`owner`/`item` identities and
+the flat materialization map remain scoped to the previously agreed shapes.
+No new EditCommand DTO property, source field, version-pin field, frame
+factory, authority map, or generated artifact is present. Existing P1 original
+pack, F1 same-batch strict inverse, opaque-init, and Root/current paths remain
+covered by the focused suite.
+
+## Runtime condition
+
+The available Runtime private pair is commit `5f22672153253ea11cf35f92590c408ea7bba556`,
+tree `e40f0108feea6c681b10d607ae4b1ed198c4e908`, based on the reviewed Agent
+`3730d0bd` / `f802…` source. It is not an exact counterpart for this `35723081`
+full union. Runtime must review and regenerate its private resource/client
+counterpart against this exact commit/tree/schema, retain current safety guards
+and public floors, then return an explicit exact-source freeze ACK. Only after
+that ACK may the manager decide private source freeze and normal private
+generation. Native Runtime/Agent qualification and public release remain
+unverified and held.
+
+## Not run / not claimed
+
+No full suite, browser/live-socket suite, generation, release, public pin,
+merge, or native Runtime/Agent claim was made. Shared dependencies were not
+modified.
+--- worktree status ---
+## tl/agt-review-full-union357-final
+
+exec
+/bin/bash -lc "rg -n -i 'P1|F1|same.?batch|strict inverse|opaque|Root|root' tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_materialization_*.py tests/editing_conformance/test_recipe_*.py tests/sdk/test_timeline_commit_provider.py | head -180" in /home/user/work/wt/agt-review-full-union357-final
+ succeeded in 35ms:
+tests/editing_conformance/test_materialization_map.py:130:    item['metadata']['opaque_literal'] = 'changed'
+tests/editing_conformance/test_materialization_map.py:131:    assert source_entity(state, 'shot:chapter-shot/item:item-1', pin)['metadata']['opaque_literal'] == 'item-1'
+tests/editing_conformance/test_materialization_map.py:136:@pytest.mark.parametrize('codec', ['id', 'item_id', 'both', 'opaque-id'])
+tests/editing_conformance/test_materialization_map.py:137:def test_item_access_preserves_actual_codec_source_windows_and_opaque_fields(codec):
+tests/editing_conformance/test_materialization_map.py:142:        item['id'] = 'opaque-secondary' if codec == 'opaque-id' else 'item-1'
+tests/editing_conformance/test_materialization_map.py:145:    item['opaque'] = {'id': 'item-1', 'literal': ['item-1', None, {}]}
+tests/editing_conformance/test_materialization_map.py:158:        assert raw['id'] == ('opaque-secondary' if codec == 'opaque-id' else identity)
+tests/editing_conformance/test_materialization_map.py:159:    assert raw['opaque'] == item['opaque'] and raw['metadata'] == item['metadata']
+tests/editing_conformance/test_materialization_map.py:180:            'args': {'row': {'id': 'new-item', 'opaque': {'item-1': None}}}}
+tests/editing_conformance/test_materialization_map.py:215:        root = ctx.read(command['select'])
+tests/editing_conformance/test_materialization_map.py:216:        root['payload']['items'].append({'id': 'unrecorded-item'})
+tests/editing_conformance/test_materialization_map.py:217:        ctx.write(command['select'], [], root)
+tests/editing_conformance/test_materialization_map.py:273:        dep['pin']['source']['opaque'] = 1
+tests/editing_conformance/test_materialization_map.py:276:            'materialization.source:'))['pin']['source']['opaque'] = True
+tests/editing_conformance/test_materialization_map.py:297:    shot['base_payload']['items'][0]['opaque'] = 1
+tests/editing_conformance/test_materialization_map.py:298:    shot['payload']['items'][0]['opaque'] = True
+tests/editing_conformance/test_materialization_map.py:303:    assert physical['payload']['items'][0]['opaque'] is True
+tests/editing_conformance/test_materialization_map.py:307:def test_sibling_first_replay_uses_the_same_codec_remapper_without_touching_opaque_values(codec):
+tests/editing_conformance/test_materialization_map.py:308:    from tests.editing_conformance.test_commit_runtime_opaque_items import opaque
+tests/editing_conformance/test_materialization_map.py:313:    item['metadata'].update(source_item_id='item-1', source_item='item-1', data=opaque())
+tests/editing_conformance/test_materialization_map.py:314:    item['data'] = opaque()
+tests/editing_conformance/test_materialization_map.py:335:    assert row['metadata']['data'] == row['data'] == opaque()
+tests/editing_conformance/test_recipe_auto_placement_reads.py:162:@pytest.mark.parametrize('field', ['params', 'volume', 'opaque'])
+tests/editing_conformance/test_recipe_auto_placement_reads.py:173:        # These opaque top-level fields have no native scalar writer.
+tests/editing_conformance/test_recipe_internal_stages.py:22:        ctx.read(ref, ['opaque'])
+tests/editing_conformance/test_recipe_clip_delete.py:31:    rows[0]['opaque'] = {'literal': 'parent/clip:clip-b', 'values': [None, False, 0]}
+tests/editing_conformance/test_recipe_clip_delete.py:117:    State(head).entity('parent/clip:clip-a')['opaque']['newer'] = [None, 5]
+tests/editing_conformance/test_recipe_clip_delete.py:119:    intervening = [later('parent/clip:clip-a', ['opaque', 'newer'], [None, 5])]
+tests/editing_conformance/test_recipe_clip_delete.py:125:@pytest.mark.parametrize('change', ['order', 'membership', 'target-source', 'target-opaque', 'dependency'])
+tests/editing_conformance/test_recipe_clip_delete.py:137:    elif change == 'target-opaque':
+tests/editing_conformance/test_recipe_clip_delete.py:138:        rows[1]['opaque'] = {'newer': True}
+tests/editing_conformance/test_recipe_m1_commands.py:67:                                 {'on': None, 'until': 'end', 'until_film_end': True, 'opaque': [True],
+tests/editing_conformance/test_recipe_m1_commands.py:69:                                             'until_film_end': None, 'opaque': {'a': 1}}}])
+tests/editing_conformance/test_recipe_m1_commands.py:179:    clip(head, ref)['opaque_clip']['concurrent'] = 'other author'
+tests/editing_conformance/test_recipe_m1_commands.py:183:    assert clip(b.bundle, ref)['opaque_clip']['concurrent'] == 'other author'
+tests/editing_conformance/test_recipe_m1_commands.py:186:    clip(head2, ref)['opaque_clip']['more'] = 'preserve'
+tests/editing_conformance/test_recipe_m1_commands.py:188:    assert clip(rebased.bundle, ref)['opaque_clip']['more'] == 'preserve'
+tests/editing_conformance/test_recipe_m1_commands.py:222:    original = bundle(app={'opaque': {'x': 1}, 'astrid': {'opaque': 2}})
+tests/editing_conformance/test_recipe_m1_commands.py:225:    clip(head)['app']['opaque']['x'] = 2
+tests/editing_conformance/test_recipe_m1_commands.py:226:    assert clip(replay(plan, head).bundle)['app']['opaque']['x'] == 2
+tests/editing_conformance/test_recipe_m1_commands.py:233:    inverse(plan.bundle, plan.records, [later('parent/clip:direct', ['opaque'], 1)])
+tests/editing_conformance/test_recipe_m1_commands.py:240:    original = bundle(app={'opaque': 'original'})
+tests/editing_conformance/test_recipe_m1_commands.py:245:    clip(head)['opaque_clip'] = {'later': True}
+tests/editing_conformance/test_recipe_m1_commands.py:249:    clip(expected)['opaque_clip'] = {'later': True}
+tests/editing_conformance/test_recipe_m1_commands.py:255:def test_track_create_inverse_redo_exact_opaque_row_and_identity_collision():
+tests/editing_conformance/test_recipe_m1_commands.py:257:    row = {'id': 'new', 'kind': 'visual', 'label': 'New track', 'opaque': {'keep': [None, True]}}
+tests/editing_conformance/test_recipe_m1_commands.py:335:    original = bundle(app={'astrid': {'opaque': 'base'}, 'opaque': 'base'})
+tests/editing_conformance/test_recipe_m1_commands.py:339:    clip(head, ref)['app']['astrid']['opaque'] = 'later author'
+tests/editing_conformance/test_recipe_m1_commands.py:340:    clip(head, ref)['app']['opaque'] = 'later author'
+tests/editing_conformance/test_recipe_m1_commands.py:341:    undone = inverse(head, plan.records, [later(ref, ['app', 'opaque'], 'later author')])
+tests/editing_conformance/test_recipe_m1_commands.py:343:    assert clip(undone.bundle, ref)['app']['astrid']['opaque'] == 'later author'
+tests/editing_conformance/test_recipe_m1_commands.py:344:    assert clip(undone.bundle, ref)['app']['opaque'] == 'later author'
+tests/editing_conformance/test_recipe_m1_commands.py:589:             'opaque': {'order': [None, False, 0], 'unknown': {'id': identity}},
+tests/editing_conformance/test_recipe_m1_commands.py:600:        remaining[-1]['opaque']['later'] = 'untouched author'
+tests/editing_conformance/test_recipe_m1_commands.py:607:        next(row for row in expected if row['id'] == remaining[-1]['id'])['opaque']['later'] = 'untouched author'
+tests/editing_conformance/test_recipe_m1_commands.py:643:    head['parent']['config']['tracks'][0]['opaque'] = 'later author'
+tests/editing_conformance/test_recipe_m1_commands.py:705:    head['parent']['config']['tracks'][0]['opaque'] = 'other author'
+tests/editing_conformance/test_recipe_m1_commands.py:706:    undone = inverse(head, plan.records, [later('parent/track:picture', ['opaque'], 'other author')])
+tests/editing_conformance/test_recipe_m1_commands.py:707:    assert undone.bundle['parent']['config']['tracks'][0]['opaque'] == 'other author'
+tests/editing_conformance/test_recipe_m1_commands.py:747:    old = [{'id': 'direct', 'opaque': {'values': [None, 0]}}]
+tests/editing_conformance/test_recipe_m1_commands.py:748:    replaced = [{'id': 'direct', 'opaque': {'values': [None, 1]}}]
+tests/editing_conformance/test_recipe_m1_commands.py:749:    final = [{'id': 'direct', 'opaque': {'values': [None, 2]}}]
+tests/editing_conformance/test_recipe_m1_commands.py:750:    root = {'ref': container_ref, 'path': container_path, 'before': present(old), 'after': present(replaced)}
+tests/editing_conformance/test_recipe_m1_commands.py:751:    leaf = {'ref': member_ref, 'path': ['opaque', 'values', '1'],
+tests/editing_conformance/test_recipe_m1_commands.py:753:    folded = coalesce([{'writes': [root, leaf]}])
+tests/editing_conformance/test_recipe_m1_commands.py:754:    assert folded == [dict(root, after=present(final))]
+tests/editing_conformance/test_recipe_m1_commands.py:756:    later_root = dict(root, before=present(replaced), after=present(final))
+tests/editing_conformance/test_recipe_m1_commands.py:757:    assert coalesce([{'writes': [first_leaf, later_root]}]) == [dict(later_root, before=present(old))]
+tests/editing_conformance/test_recipe_m1_commands.py:788:    child = {'ref': 'occurrence:occ-1/clip:c', 'path': ['opaque'],
+tests/editing_conformance/test_recipe_m1_commands.py:873:def test_staged_inverse_keeps_opaque_strings_and_refuses_all_unchanged_overlap(native_staging_operations):
+tests/editing_conformance/test_recipe_m1_commands.py:878:    clip(head)['opaque'] = {'note': 'parent/track:c'}
+tests/editing_conformance/test_recipe_m1_commands.py:880:    undone = inverse(head, plan.records, [later('parent/clip:direct', ['opaque'], clip(head)['opaque'])])
+tests/editing_conformance/test_recipe_m1_commands.py:881:    assert clip(undone.bundle)['opaque'] == {'note': 'parent/track:c'}
+tests/editing_conformance/test_recipe_m2_clip_trim.py:41:                        'app': {'astrid': {'for': 19, 'until': None, 'opaque': [None, False]},
+tests/editing_conformance/test_recipe_m2_clip_trim.py:151:    {'for': 8, 'until': None, 'astrid': {'for': 9, 'until': None, 'opaque': False}, 'opaque': 0}])
+tests/editing_conformance/test_recipe_m2_clip_trim.py:249:    State(head).entity('parent/clip:clip-b')['opaque'] = {'keep': True}
+tests/editing_conformance/test_recipe_occurrence_delete.py:30:                         'mode': 'images', 'name': None, 'opaque': [None, False, 0]},
+tests/editing_conformance/test_recipe_occurrence_delete.py:202:def test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse(metadata):
+tests/editing_conformance/test_recipe_occurrence_delete.py:212:    source['opaque'] = {'literal': 'occurrence:occ-0', 'nullable': None}
+tests/editing_conformance/test_recipe_parent_media.py:34:    row.update(opaque=[None, False, {}, []], params=None)
+tests/editing_conformance/test_recipe_parent_media.py:38:    registry['opaque'] = [None, False, {}]
+tests/editing_conformance/test_recipe_parent_media.py:114:    'null-selector', 'clear', 'wrong-owner', 'opaque-alias', 'null-registry'])
+tests/editing_conformance/test_recipe_parent_media.py:133:    elif damage == 'opaque-alias':
+tests/editing_conformance/test_recipe_parent_media.py:134:        bundle['parent']['registry']['assets'][new['asset']] = {'opaque': None}
+tests/editing_conformance/test_recipe_parent_media.py:188:    row['transition'] = {'type': 'crossfade', 'duration': .5, 'opaque': [False, None]}
+tests/editing_conformance/test_recipe_occurrence_create.py:38:        'id': 'picture', 'kind': 'visual', 'role': 'output', 'opaque': None})]).bundle
+tests/editing_conformance/test_recipe_occurrence_create.py:48:def test_birth_exact_roots_capture_replay_reload_inverse_redo(fps):
+tests/editing_conformance/test_recipe_occurrence_create.py:88:           'track': 'picture', 'at': 0, 'hold': 2, 'opaque': [None, False]}
+tests/editing_conformance/test_recipe_occurrence_create.py:104:        head['parent']['config']['tracks'][0]['opaque'] = {}
+tests/editing_conformance/test_recipe_occurrence_create.py:172:def test_append_birth_inverse_preserves_existing_order_and_opaque_content():
+tests/editing_conformance/test_recipe_occurrence_create.py:175:    State(existing).entity('occurrence:existing')['opaque'] = [None, False]
+tests/editing_conformance/test_recipe_parent_auto_completion.py:62:@pytest.mark.parametrize('field', ['params', 'volume', 'opaque'])
+tests/editing_conformance/test_recipe_parent_auto_completion.py:145:    edit(head, 'parent/clip:clip-a', at=100, opaque=None)
+tests/editing_conformance/test_recipe_text_binding_native.py:86:def test_rebind_preserves_opaque_and_other_keys_and_disjoint_rebase(original):
+tests/editing_conformance/test_recipe_text_binding_native.py:89:    payload(two.bundle)['opaque'] = {'null': None, 'arrays': [False, {}]}
+tests/editing_conformance/test_recipe_text_binding_native.py:90:    State(two.bundle).entity(REF)['opaque'] = [None, False]
+tests/editing_conformance/test_recipe_text_binding_native.py:94:    assert payload(result.bundle)['opaque'] == payload(two.bundle)['opaque']
+tests/editing_conformance/test_recipe_text_binding_native.py:95:    assert State(result.bundle).entity(REF)['opaque'] == [None, False]
+tests/editing_conformance/test_recipe_text_binding_native.py:213:    legacy.update(mime_type='text/plain', text='legacy cached text', opaque=[None, False])
+tests/editing_conformance/test_recipe_m2_placement_create_unplace.py:141:@pytest.mark.parametrize('damage', ['shared-intent', 'parent-select', 'shared-root', 'occupied', 'video',
+tests/editing_conformance/test_recipe_m2_placement_create_unplace.py:146:    if damage == 'shared-root':
+tests/editing_conformance/test_recipe_m2_placement_create_unplace.py:184:@pytest.mark.parametrize('damage', ['shared-root', 'not-media', 'nested', 'relation', 'missing-target'])
+tests/editing_conformance/test_recipe_m2_placement_create_unplace.py:187:    if damage == 'shared-root':
+tests/editing_conformance/test_recipe_m2_clip_split.py:43:               opaque={'nested': [None, False, 0, {}, []], 'literal': 'clip-a'},
+tests/editing_conformance/test_recipe_m2_clip_split.py:50:        row['app']['astrid'] = {'for': 4, 'opaque': {'for': 'literal'}}
+tests/editing_conformance/test_recipe_m2_clip_split.py:94:        assert half['opaque'] == old['opaque']
+tests/editing_conformance/test_recipe_m2_clip_split.py:100:            assert half['app']['astrid'] == {'for': 2, 'opaque': {'for': 'literal'}}
+tests/editing_conformance/test_recipe_m2_clip_split.py:112:def test_compiled_reload_inverse_exact_row_absence_opaque_order_and_redo_same_ids():
+tests/editing_conformance/test_recipe_m2_clip_split.py:220:        rows[0]['app']['astrid'] = {'for': None, 'opaque': []}
+tests/editing_conformance/test_recipe_m2_clip_split.py:225:        assert row['app']['astrid'] == {'for': None, 'opaque': []}
+tests/editing_conformance/test_recipe_m2_clip_split.py:320:    row = {'id': 'right', 'kind': 'visual', 'at': 9, 'hold': 1, 'opaque': [None, False]}
+tests/editing_conformance/test_recipe_m2_placement.py:107:def test_preserves_raw_identity_source_media_order_opaque_and_sibling(owner, on):
+tests/editing_conformance/test_recipe_m2_placement.py:137:     'astrid': {'on': 'word:old:0', 'until': None, 'until_film_end': None}, 'opaque': [None]}])
+tests/editing_conformance/test_recipe_m2_placement.py:155:    State(head).entity('occurrence:occ-a/clip:clip-a')['opaque'] = {'concurrent': [None]}
+tests/editing_conformance/test_recipe_m2_placement.py:160:    assert State(rebased.bundle).entity('occurrence:occ-a/clip:clip-a')['opaque'] == {'concurrent': [None]}
+tests/editing_conformance/test_recipe_m2_placement.py:248:def test_shared_authored_root_refuses_at_capture_replay_and_inverse_even_on_another_lane():
+tests/editing_conformance/test_recipe_m2_placement.py:268:@pytest.mark.parametrize('field', ['generationId', 'variantId', 'catalog_digest', 'object_id', 'opaque'])
+tests/editing_conformance/test_recipe_m2_video_unplace.py:34:    row['opaque'] = {'literal': CHILD, 'clear': None, 'values': [False, 0, {}]}
+tests/editing_conformance/test_recipe_m2_video_unplace.py:40:    state.entity(OWNER + '/registry')['assets']['reserved-new']['opaque'] = {'keep': [None, False]}
+tests/editing_conformance/test_recipe_m2_video_unplace.py:86:def test_provider_round_trip_preserves_opaque_registry_and_order(kind, keep):
+tests/editing_conformance/test_recipe_m2_video_unplace.py:99:                                       ('opaque', {'changed': True})])
+tests/editing_conformance/test_recipe_m2_video_unplace.py:114:    ('generationId', 'changed'), ('variantId', 'changed'), ('opaque', {'changed': True})])
+tests/editing_conformance/test_recipe_occurrence_media.py:70:               'params': None, 'opaque': [None, False, {}],
+tests/editing_conformance/test_recipe_occurrence_media.py:129:    assets['reserved-new']['opaque'] = None
+tests/editing_conformance/test_recipe_shot_set.py:178:def test_set_refuses_nonobject_settings_root(container):
+tests/editing_conformance/test_recipe_shot_set.py:186:                                   'empty-settings', 'duplicate', 'shared-select', 'shot-root', 'unscoped',
+tests/editing_conformance/test_recipe_shot_set.py:207:    elif damage == 'shot-root':
+tests/editing_conformance/test_recipe_shot_set.py:235:def test_compound_settings_roots_are_unsupported_set_or_clear(key):
+tests/editing_conformance/test_recipe_m2_clip_add.py:36:               'opaque': {'keep': None}}
+tests/editing_conformance/test_recipe_m2_clip_add.py:47:            'app': {'astrid': {'on': None, 'opaque': ['first-clip', None]}, 'future': False},
+tests/editing_conformance/test_recipe_m2_clip_add.py:49:            'opaque': {'id': 'first-clip', 'ordered': [None, False, 0, {}, []]}, **changes}
+tests/editing_conformance/test_recipe_m2_clip_add.py:74:def test_literal_seconds_and_opaque_json_exact_reload_inverse_redo():
+tests/editing_conformance/test_recipe_m2_clip_add.py:78:    row['opaque']['ordered'].append('caller mutation')
+tests/editing_conformance/test_recipe_m2_clip_add.py:117:        rows[0]['opaque'] = {'other-author': [None, False]}
+tests/editing_conformance/test_recipe_m2_clip_add.py:227:def test_canonical_schema_closes_the_operation_and_preserves_opaque_row_fields():
+tests/editing_conformance/test_recipe_add_delete_composition.py:61:def test_mixed_existing_delete_new_add_preserves_order_opaque_clears_and_pins(deleted, add_first):
+tests/editing_conformance/test_recipe_add_delete_composition.py:88:    State(head).entity('parent/clip:clip-a')['opaque']['newer'] = None
+tests/editing_conformance/test_recipe_add_delete_composition.py:90:    disjoint = [later('parent/clip:clip-a', ['opaque', 'newer'], None)]
+tests/editing_conformance/test_recipe_add_delete_composition.py:127:    row = literal_row(params={'text': 'First', 'nullable': None, 'opaque': {'keep': False}})
+tests/editing_conformance/test_recipe_add_delete_composition.py:133:    assert State(cleared).entity(ref)['params'] == {'text': 'First', 'opaque': {'keep': False}}
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:97:    opaque = {'stable_deep_link': 'deep:occ-0', 'output_identity': 'out:occ-0',
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:100:    source.update(output_records=[copy.deepcopy(opaque)], task=copy.deepcopy(opaque),
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:101:                  associations=[copy.deepcopy(opaque)], unknown=copy.deepcopy(opaque),
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:102:                  app={'org.example': copy.deepcopy(opaque)}, metadata=None)
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:111:def test_root_identities_raw_compile_reload_guarded_undo_redo(count, fields, document_id):
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:155:    'identity-aba', 'opaque-aba', 'source-aba', 'source-order', 'dependent',
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:167:            'opaque-aba': ('occurrence:occ-copy', ['output_records']),
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:284:def test_copy_rederives_only_root_identity_against_compiled_destination():
+tests/editing_conformance/test_recipe_scalar_commands.py:36:def test_inverse_refuses_same_batch_unchanged_or_aba_scalar_write(aba):
+tests/editing_conformance/test_recipe_scalar_commands.py:244:                                      present({'old': None, 'empty': '', 'opaque': [None, {}]})])
+tests/editing_conformance/test_recipe_scalar_commands.py:245:def test_param_set_clear_null_and_opaque_literal_keys_roundtrip(container):
+tests/editing_conformance/test_recipe_scalar_commands.py:256:        assert params['opaque'] == [None, {}] and params['empty'] == ''
+tests/editing_conformance/test_recipe_scalar_commands.py:279:    clip(original, REF)['params'] = {'x': 1, 'y': None, 'opaque': {'keep': []}}
+tests/editing_conformance/test_recipe_scalar_commands.py:283:    assert clip(result.bundle, REF)['params'] == {'x': 2, 'y': False, 'opaque': {'keep': []}}
+tests/sdk/test_timeline_commit_provider.py:287:                                                "opaque": {"clear": None}}}}
+tests/sdk/test_timeline_commit_provider.py:803:# reads them: a legacy row is opaque (intent legacy_unknown, no records).
+tests/sdk/test_timeline_commit_provider.py:1228:    ctx.write('parent/clip:clip-b', ['opaque'], {'newer': [None, False, 0]})
+tests/sdk/test_timeline_commit_provider.py:1234:    assert rows[1]['opaque'] == {'newer': [None, False, 0]}
+tests/sdk/test_timeline_commit_provider.py:1354:def test_native_delete_stale_disjoint_opaque_publications_preserve_both():
+tests/sdk/test_timeline_commit_provider.py:1373:    ctx.write('parent/clip:clip-b', ['opaque'], {'literal': 'parent/clip:clip-a', 'nullable': None})
+tests/sdk/test_timeline_commit_provider.py:1381:    assert rows[1]['opaque'] == {'literal': 'parent/clip:clip-a', 'nullable': None}
+tests/sdk/test_timeline_commit_provider.py:1442:def test_native_delete_then_reallocate_in_same_batch_is_atomic(native_staging_operations):
+tests/sdk/test_timeline_commit_provider.py:1564:            'args': {'row': {codec: 'semantic-item', 'opaque': [None, {'id': 'literal'}]}}}
+tests/editing_conformance/test_recipe_m2_parent_media.py:165:    assets['reserved-new']['opaque'] = None
+tests/editing_conformance/test_recipe_m2_parent_media.py:182:        target['registry'] = {'opaque': {'values': [None, False, {}, []]}}
+tests/editing_conformance/test_recipe_m2_parent_media.py:201:        assert target['registry']['opaque'] == {'values': [None, False, {}, []]}
+tests/editing_conformance/test_recipe_m2_parent_media.py:221:@pytest.mark.parametrize('value', [None, False, [], 'opaque'])
+tests/editing_conformance/test_recipe_m2_parent_media.py:321:             'at': 0, 'hold': 4, 'nullable': None, 'opaque': {'values': [None, False, {}, []]}}
+tests/editing_conformance/test_recipe_m2_parent_media.py:566:def test_scoped_replacement_rebases_over_disjoint_sibling_values_without_losing_opaque_data():
+tests/editing_conformance/test_recipe_m2_parent_media.py:572:    edit(head, 'parent/clip:A', at=6, opaque={'later': [None, False, {'asset': 'reserved-new'}]})
+tests/editing_conformance/test_recipe_clip_scalar_fields.py:41:         'app': {'f2Opaque': {'owner': 'f2', 'nested': [1, {'k': 'v'}]}}},
+tests/editing_conformance/test_recipe_clip_scalar_fields.py:48:        x_f2_opaque={'owner': 'f2', 'nested': [1, {'k': 'v'}], 'flag': True})
+tests/editing_conformance/test_recipe_clip_scalar_fields.py:101:@pytest.mark.parametrize('presence', [ABSENT, present(''), present(None), present({'opaque': [None, 0]})])
+tests/editing_conformance/test_recipe_clip_scalar_fields.py:137:    row.update(at=1, hold=2, speed=2, opaque={'null': None, 'order': [False, {}, 0]})
+tests/editing_conformance/test_recipe_clip_scalar_fields.py:195:    other = execute(original, [capture_clip_set_params(original, REF, values={'opaque': [None, 0]})])
+tests/editing_conformance/test_recipe_clip_scalar_fields.py:212:def test_selected_content_sha_and_opaque_registry_siblings_are_independent():
+tests/editing_conformance/test_recipe_clip_scalar_fields.py:268:                'app': {'opaque': [None, False], 'astrid': {'opaque': {'order': [2, 1]}}}})
+tests/editing_conformance/test_materialization_identity.py:81:# these authored virtual roots already exist; only semantic births use created.
+tests/editing_conformance/test_pristine_initialize.py:73:@pytest.mark.parametrize('opaque', [None, False, [], {}])
+tests/editing_conformance/test_pristine_initialize.py:74:def test_inverse_reload_redo_preserves_unrelated_opaque_parent_field(opaque):
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..852b3db6247396a37dd0547ea5e562f81f5fb168
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/commit-msg.txt
+@@ -0,0 +1,5 @@
++review(timeline): approve private ordinary carrier union
++
++Approve Agent commit 35723081 as private source preparation after focused
++schema-floor, version-boundary, materialization, and inverse checks. Hold exact
++freeze and adoption until Runtime reviews this exact full-union source.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0095916c947403f1d450c264a1282b1a92b10696
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/report.md
+@@ -0,0 +1,63 @@
++# Agent final review — private ordinary/carrier union
++
++## Disposition
++
++**APPROVE PRIVATE SOURCE PREPARATION; HOLD EXACT FREEZE / ADOPTION.**
++
++Reviewed the current worktree at commit `357230816c86da65d5f8cc92b10a3a90d29874e0`,
++tree `94692ec85167d5c606626c4ec678fe2a63ee0aa6`. The current
++`astrid/core/timeline/schema/edit-command.schema.json` SHA-256 is
++`613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3`.
++
++The full ordinary reconstruction is exact: 55 definitions and 29 operation
++clauses, with ordinary SHA-256
++`6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
++The earlier private source remains identifiable as Agent `3730d0bd` / schema
++`f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f`.
++
++## What passed
++
++- `/home/user/work/venv-agent/bin/pytest -q tests/sdk/test_timeline_materialization_schema_union.py tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_version_boundary.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_pristine_initialize.py tests/sdk/test_timeline_current_union_schema.py`
++  — **164 passed** in 157.88s.
++- `/home/user/work/venv-agent/bin/pytest -q` on the AG-MAT/public-v1 nodes
++  `test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo`,
++  `test_legacy_accepted_capture_history_remains_undoable_without_new_source_claims`,
++  `test_legacy_sealed_new_submission_preserves_original_claims`,
++  `test_private_carrier_placement_v1_refuses_without_refreshing_original_claims`,
++  `test_portable_goldens`,
++  `test_obsolete_carrier_add_v1_refuses_original_claims_with_draft_kept`,
++  `test_obsolete_carrier_add_equivalent_reauthored_v2_succeeds`,
++  `test_private_carrier_swap_v1_refuses_without_refreshing_original_claims`,
++  `test_paired_materialization_reload_inverse_redo_restore_and_second_occurrence`,
++  `test_inverse_of_sibling_first_rebase_uses_original_source_context`,
++  `test_paired_ack_verifies_known_commands_original_source_and_output_closure`, and
++  `test_paired_inverse_ack_requires_the_known_accepted_source_allocation`
++  — **15 passed** in 7.05s.
++- `git diff --check HEAD^ HEAD` — passed.
++
++The checks preserve the 103-read/3-selection public v1 positive, accepted v1
++ledger inverse/redo/restore, and the three obsolete private-v1 refusal /
++equivalent-v2-success pairs. Typed `created`/`owner`/`item` identities and
++the flat materialization map remain scoped to the previously agreed shapes.
++No new EditCommand DTO property, source field, version-pin field, frame
++factory, authority map, or generated artifact is present. Existing P1 original
++pack, F1 same-batch strict inverse, opaque-init, and Root/current paths remain
++covered by the focused suite.
++
++## Runtime condition
++
++The available Runtime private pair is commit `5f22672153253ea11cf35f92590c408ea7bba556`,
++tree `e40f0108feea6c681b10d607ae4b1ed198c4e908`, based on the reviewed Agent
++`3730d0bd` / `f802…` source. It is not an exact counterpart for this `35723081`
++full union. Runtime must review and regenerate its private resource/client
++counterpart against this exact commit/tree/schema, retain current safety guards
++and public floors, then return an explicit exact-source freeze ACK. Only after
++that ACK may the manager decide private source freeze and normal private
++generation. Native Runtime/Agent qualification and public release remain
++unverified and held.
++
++## Not run / not claimed
++
++No full suite, browser/live-socket suite, generation, release, public pin,
++merge, or native Runtime/Agent claim was made. Shared dependencies were not
++modified.
+
+codex
+## Review report
+
+**APPROVE private Agent source preparation; HOLD exact freeze/adoption.**
+
+Reviewed:
+
+- Commit: `357230816c86da65d5f8cc92b10a3a90d29874e0`
+- Tree: `94692ec85167d5c606626c4ec678fe2a63ee0aa6`
+- Schema SHA-256: `613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3`
+- Ordinary reconstruction: 55 definitions, 29 operations, SHA-256 `6ba7b51e...`
+
+Evidence:
+
+- Focused schema/materialization/inverse suite: **164 passed**
+- AG-MAT/public-v1/paired-ACK tests: **15 passed**
+- `git diff --check HEAD^ HEAD`: passed
+
+Public v1 positives, accepted-history undo/redo/restore, obsolete-private-v1 refusal with draft preservation, equivalent v2 success, typed identities, and existing guards remain intact. No new public DTO, source/version field, frame factory, authority map, or generated artifact was added.
+
+Runtime’s available private counterpart (`5f226721`, tree `e40f0108`) targets the older Agent `3730d0bd` / schema `f802…`, not this full union. Runtime must review/regenerate against this exact Agent commit/tree/schema and return an exact-source freeze ACK. Native qualification, generation, release, and public adoption remain held.
+
+Files written:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/report.md)
+- [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/commit-msg.txt)
+- `DONE` created.
+tokens used
+196,527
+## Review report
+
+**APPROVE private Agent source preparation; HOLD exact freeze/adoption.**
+
+Reviewed:
+
+- Commit: `357230816c86da65d5f8cc92b10a3a90d29874e0`
+- Tree: `94692ec85167d5c606626c4ec678fe2a63ee0aa6`
+- Schema SHA-256: `613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3`
+- Ordinary reconstruction: 55 definitions, 29 operations, SHA-256 `6ba7b51e...`
+
+Evidence:
+
+- Focused schema/materialization/inverse suite: **164 passed**
+- AG-MAT/public-v1/paired-ACK tests: **15 passed**
+- `git diff --check HEAD^ HEAD`: passed
+
+Public v1 positives, accepted-history undo/redo/restore, obsolete-private-v1 refusal with draft preservation, equivalent v2 success, typed identities, and existing guards remain intact. No new public DTO, source/version field, frame factory, authority map, or generated artifact was added.
+
+Runtime’s available private counterpart (`5f226721`, tree `e40f0108`) targets the older Agent `3730d0bd` / schema `f802…`, not this full union. Runtime must review/regenerate against this exact Agent commit/tree/schema and return an exact-source freeze ACK. Native qualification, generation, release, and public adoption remain held.
+
+Files written:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/report.md)
+- [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-full-union357-final/commit-msg.txt)
+- `DONE` created.

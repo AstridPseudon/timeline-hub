@@ -1,0 +1,400 @@
+        print(f"working copy: not checked ({exc}); visualizing the published head", file=sys.stderr)
+        return None
+    if path is None:
+        return None
+    checkout = Checkout.load(path)
+    changes = list(checkout.edits().get("changes") or [])
+    return {
+        "draft": str(path),
+        "base_revision": checkout.base_revision,
+        "edits": len(changes),
+        "changed_cuts": [int(n) for n in checkout.check().changed_cuts],
+    }
+
+
+def _changed_cuts_line(cuts: list[int], *, limit: int = 12) -> str:
+    """One line: which cuts the default selection shows, paged explicitly (never silently truncated)."""
+    if not cuts:
+        return "the working copy changes no cut · --every-cut for all cuts"
+    if len(cuts) <= limit:
+        noun = "cut" if len(cuts) == 1 else "cuts"
+        return f"showing the {len(cuts)} {noun} you changed ({', '.join(map(str, cuts))}) · --every-cut for all cuts"
+    return (
+        f"showing 1–{limit} of {len(cuts)} cuts you changed ({', '.join(map(str, cuts[:limit]))}) · "
+        f"next: --cut {cuts[limit]} · --every-cut for all cuts"
+    )
+
+
+# Flags that only mean something to the paired filmstrip (input lanes, pages).
+_FILMSTRIP_ONLY = ("sample", "show", "hide", "track", "page_size", "include_media", "detail", "render_run",
+                   "occurrence", "clip", "asset", "shot", "context", "neighbors", "include_cuts")
+
+
+def _resolve_visualize_addresses(parsed: argparse.Namespace) -> str | None:
+    """``--at``, ``--range`` and ``--highlight`` take the same addresses as every other verb
+    (``'"Building" in v27'``, ``c30``, ``c41.mink``, ``93.5``), read from the working copy unless
+    ``--published``. Ambiguity lists the choices; the line printed says which one was used."""
+    from astrid.sdk.timeline_address import AddressError, resolve
+    from astrid.sdk.timeline_checkout import Checkout, find_draft
+
+    def needs(name: str, plain: str) -> bool:
+        value = getattr(parsed, name, None)
+        return isinstance(value, str) and bool(value.strip()) and not re.fullmatch(plain, value)
+
+    if not (needs("at", r"\s*@?[\d.:]+s?\s*") or needs("range", r"\s*[\d.:]+\s*\.\.\s*[\d.:]+\s*")
+            or needs("highlight", r"") or needs("clip", r"[^.]*-\d\d-am-[a-z-]+")
+            or (needs("cut", r"\s*\d+\s*") and re.fullmatch(r"\s*c\d+[a-z]?\s*", str(parsed.cut).lower()))):
+        return None  # plain seconds and cut numbers need no lookup
+    ref = getattr(parsed, "timeline_slug", None) or getattr(parsed, "timeline_ref", None)
+    tl = None
+    if not getattr(parsed, "published", False) and not getattr(parsed, "revision_id", None):
+        try:
+            path = find_draft(parsed.project, ref, getattr(parsed, "draft", None), client=parsed.client)
+        except Exception:  # noqa: BLE001 - fall back to the published head
+            path = None
+        tl = Checkout.load(path) if path is not None else None
+    if tl is None:
+        opener = getattr(parsed.client.timelines, "open_bundle", None)
+        if not callable(opener):
+            raise ValueError("an address needs a client that can open the timeline")
+        opened = opener(parsed.project, ref, revision_id=getattr(parsed, "revision_id", None))
+        if not opened.ok or not isinstance(opened.data, Mapping):
+            raise ValueError(f"cannot open the timeline to resolve the address: {opened.error}")
+        tl = Checkout(dict(opened.data["bundle"]))
+    parsed._named = tl  # findings name layers by address (c30b.icon, not "ICON")
+    notes = []
+    try:
+        if getattr(parsed, "clip", None) and not any(c.id == parsed.clip for c in tl.clips()):
+            target = resolve(tl, parsed.clip, prefer="thing")
+            if target.kind != "clip":
+                raise ValueError(f"--clip names a layer (c15.robot); {parsed.clip!r} is a {target.kind}")
+            notes.append(f"--clip {target.address}")
+            parsed.clip = target.clip.id
+        if getattr(parsed, "highlight", None):
+            target = resolve(tl, parsed.highlight, prefer="thing")
+            if target.kind != "clip":
+                raise ValueError(f"--highlight names a layer (c41.tool-16); {parsed.highlight!r} is a {target.kind}")
+            parsed.highlight = target.clip.id
+            notes.append(f"--highlight {target.address}")
+            if not any(getattr(parsed, n, None) not in (None, "") for n in ("at", "range", "cut", "frame")):
+                parsed.at = f"{min(target.end - 1 / tl.fps, target.start + 0.25):.3f}"
+        metavar="FORMAT[,FORMAT...]",
+        type=_visualize_format_argument,
+        help="Repeatable/comma-separated png or md (default: png,md).",
+    )
+    subparser.add_argument(
+        "--mode",
+        choices=("auto", "inputs", "composed"),
+        default="auto",
+        help=(
+            "auto always composes frames from the pinned saved revision; "
+            "inputs is render-free; composed always requests composed frames."
+        ),
+    )
+    subparser.add_argument(
+        "--view",
+        choices=("filmstrip", "contact", "overview", "motion", "diff"),
+        default=None,
+        help=(
+            "Usually leave this out and use --preset (or just give a window). filmstrip: Rendered paired filmstrip "
+            "with input lanes (the only view for drill-down pages; chosen when --show/--sample/--track is used). "
+            "contact (overview): ONE overview page of the whole video, one tile per picture cut (capped at 120), "
+            "480x270. motion: one cut (--cut N) as a motion sheet you can judge as stills: frame strip, onion skins, "
+            "motion curves, word/beat/sfx sync, stillness, lip-sync and findings (<= 60 frames at 480x270). "
+            "diff: immutable revision diff, before/after tiles of only the cuts an edit changed, and the SCOPE "
+            "condition; needs --before-revision-id/--after-revision-id (or --from/--to)."
+        ),
+    )
+    subparser.add_argument(
+        "--preset", choices=PRESET_CHOICES, default=None,
+        help=(
+            "What you want to see, one page each: overview (whole film, one tile per cut); scan (a --range at "
+rg: tests/sdk/test_timeline_visualize_cli.py: No such file or directory (os error 2)
+tests/packs/rendering/test_timeline_visualize_public_view_dispatch.py:7:from astrid.packs.rendering.actions.timeline_visualize import filmstrip_execution, run
+tests/packs/rendering/test_timeline_visualize_public_view_dispatch.py:13:        ("filmstrip", []),
+tests/packs/rendering/test_timeline_visualize_public_view_dispatch.py:27:    def fake_execute_filmstrip(args, *, authority=None):
+tests/packs/rendering/test_timeline_visualize_public_view_dispatch.py:31:    monkeypatch.setattr(filmstrip_execution, "execute_filmstrip", fake_execute_filmstrip)
+tests/packs/rendering/test_timeline_visualize_public_view_dispatch.py:67:    with pytest.raises(ValueError, match="input-only mode supports only view=filmstrip"):
+tests/packs/rendering/test_timeline_visualize_public_view_dispatch.py:68:        filmstrip_execution.execute_input_only(args, {})
+
+exec
+/bin/bash -lc "rg -n '"'^def _resolve_view'"' astrid/packs/timeline/cli_visualize.py && sed -n '166,228p' astrid/packs/timeline/cli_visualize.py && nl -ba tests/editing_conformance/test_commit_runtime_m1.py | sed -n '157,197p;338,362p' && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-cli-journey-review-commit-integration-1019195003-6839/summary" in /home/user/work/wt/agt-m1-cli-journey-review
+ succeeded in 41ms:
+191:def _resolve_view(parsed: argparse.Namespace) -> None:
+                notes.append(f"--at {at!r}: {target.address} = {target.start:.2f} s")
+                entering = [c.address for c in tl.clips() if not c.is_audio and abs(c.start - target.start) < 0.5 / tl.fps
+                            and not tl._is_picture(c)]
+                if entering:  # its first frame can be blank (a stamp flickers in, a slide starts off its mask)
+                    notes.append(f"{', '.join(entering[:3])} enter{'s' if len(entering) == 1 else ''} on this frame "
+                                 f"(an entrance can start invisible; --at '{at} +2f' shows it in)")
+        rng = getattr(parsed, "range", None)
+        if isinstance(rng, str) and rng.strip() and not re.fullmatch(r"\s*[\d.:]+\s*\.\.\s*[\d.:]+\s*", rng):
+            target = resolve(tl, rng, prefer="time")
+            end = target.end if target.end > target.start else target.start + 1.0 / tl.fps
+            parsed.range = f"{target.start:.3f}..{end:.3f}"
+            notes.append(f"--range {rng!r}: {target.address} = {target.start:.2f}–{end:.2f} s")
+    except AddressError as exc:
+        raise ValueError(str(exc)) from None
+    return " · ".join(notes) or None
+
+
+def _id_span(ids: list[str]) -> str:
+    """``c01…c42 (+ c30b)``: the valid cut ids in one short phrase."""
+    plain = [c for c in ids if re.fullmatch(r"c\d+", c)]
+    extra = [c for c in ids if c not in plain]
+    head = f"{plain[0]}…{plain[-1]}" if len(plain) > 1 else ", ".join(plain)
+    return head + (f" (+ {', '.join(extra)})" if extra else "")
+
+
+def _resolve_view(parsed: argparse.Namespace) -> None:
+    """Fill ``parsed.view``/``parsed.preset`` from what was asked: presets first, then the window given.
+
+    No window → overview; ``--range`` → scan; ``--at``/``--frame`` → frame; ``--cut`` → cut;
+    filmstrip-only flags (``--show``, ``--sample`` …) keep the paired filmstrip.
+    """
+    preset = getattr(parsed, "preset", None)
+    if preset == "overview":
+        parsed.view = "contact"
+        return
+    if preset and parsed.view in (None, "motion"):
+        parsed.view = "motion"
+        return
+    if preset:
+        return  # an explicitly chosen view keeps its place; the preset is forwarded as an option
+    if parsed.view == "motion" and not getattr(parsed, "cut", None):
+        parsed.preset = "frame" if (parsed.at is not None or parsed.frame is not None) and not parsed.range else "scan"
+        return
+    if parsed.view == "motion":
+        parsed.preset = "cut"
+        return
+    if parsed.view is not None:
+        return
+    if any(getattr(parsed, name, None) not in (None, "", [], False) for name in _FILMSTRIP_ONLY):
+        parsed.view = "filmstrip"
+    elif getattr(parsed, "cut", None):
+        parsed.view, parsed.preset = "motion", "cut"
+    elif parsed.range:
+        parsed.view, parsed.preset = "motion", "scan"
+    elif parsed.at is not None or parsed.frame is not None:
+        parsed.view, parsed.preset = "motion", ("motion" if getattr(parsed, "window_s", None) else "frame")
+    elif parsed.every is not None or parsed.every_frames is not None:
+        parsed.view = "filmstrip"
+    else:
+        parsed.view = "contact"
+
+
+def _cmd_visualize_diff(parsed: argparse.Namespace) -> int:
+   157	
+   158	
+   159	def assert_readback(client, fixture, accepted):
+   160	    from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+   161	
+   162	    data, receipt = accepted["data"], accepted["receipt"]
+   163	    revision = data["accepted_revision_id"]
+   164	    document = data["canonical_document"]
+   165	    assert receipt["result"] == {key: value for key, value in data.items()
+   166	                                  if key not in {"accepted_publication_id", "show_command"}}
+   167	    assert revision == document["parent_revision"]["revision_id"]
+   168	    stored = client._remote._transport.get_project_parent_composition_revision(
+   169	        fixture.project_id, fixture.timeline_id, revision,
+   170	    )
+   171	    assert stored["project_id"] == document["project_id"] == fixture.project_id
+   172	    assert stored["timeline_id"] == document["timeline_id"] == fixture.timeline_id
+   173	    for key, value in document["parent_revision"].items():
+   174	        assert stored[key] == value
+   175	    assert stored["dependency_manifest"] == document["dependency_manifest"]
+   176	    # Main's lossless authoring codec represents occurrences as placements,
+   177	    # with exact shot/internal pins and any identity remapping in source_mapping.
+   178	    expected_bundle = open_authoring_bundle(
+   179	        {**document["parent_revision"], "project_id": fixture.project_id,
+   180	         "timeline_id": fixture.timeline_id},
+   181	        shot_revisions=[{**row, "project_id": fixture.project_id}
+   182	                        for row in document["shot_revisions"]],
+   183	        internal_timeline_revisions=[{**row, "project_id": fixture.project_id}
+   184	                                     for row in document["internal_timeline_revisions"]],
+   185	    )
+   186	    opened = client.timelines.open_bundle(fixture.project_id, fixture.timeline_id, revision_id=revision)
+   187	    assert opened.ok, opened.as_dict()
+   188	    assert opened.data["revision_id"] == revision
+   189	    assert opened.data["bundle"] == expected_bundle
+   190	    entry = next(row for row in history(client, fixture)["items"]
+   191	                 if row["publication_id"] == receipt["receipt_id"])
+   192	    assert entry["revision_id"] == revision
+   193	    assert entry["receipt"] == receipt
+   194	    assert [row["command"] for row in entry["records"]["commands"]] == data["commands"]
+   195	    assert entry["publisher"] == "owner"
+   196	
+   197	
+   338	    shown = cli(client, fixture, capsys, "show", fixture.timeline_id,
+   339	                "--published", "--revision-id", revision)
+   340	    assert shown["data"]["revision_id"] == revision
+   341	    assert shown["data"]["working_copy"] is None
+   342	    layers = cli(client, fixture, capsys, "show", fixture.timeline_id,
+   343	                 "--published", "--revision-id", revision, "--layers", "--clip", "music-bed")
+   344	    inspection = layers["data"]["native_inspection"]
+   345	    assert inspection["revision_id"] == revision
+   346	    clip = inspection["selected_parent_clips"][0]
+   347	    assert clip["clip_id"] == "music-bed"
+   348	    assert clip["start"] == [2, 1]
+   349	    visualized = cli(client, fixture, capsys, "visualize", fixture.timeline_id,
+   350	                     "--published", "--revision-id", revision, "--mode", "inputs", "--format", "md")
+   351	    assert visualized["data"]["outputs"]["inspection"]["revision_id"] == revision
+   352	    after_undo = history(client, fixture)["items"]
+   353	    assert len(after_undo) == 7
+   354	    assert after_undo[:-1] == after_b
+   355	    assert after_undo[-1]["records"]["undo_of"] == [accepted_b["receipt"]["receipt_id"]]
+   356	    # After undo, the former accepted revision is still the exact immutable film.
+   357	    assert_readback(client, fixture, accepted_b)
+   358	
+   359	
+   360	def _wrong_scope(daemon, fixture, outbox):
+   361	    from astrid.sdk.timeline.sync import TimelineSession
+   362	
+test agt-m1-cli-journey-review-commit-integration-1019195003-6839: fail exit=1 in 25s — commit-integration on agt-m1-cli-journey-review (agent tree cb1c4aa6d6c96f8d834b1c4327f1b45fe7f9cf4a)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py
+counts: 1 failed, 2 passed in 23.08s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-cli-journey-review-commit-integration-1019195003-6839/log.txt ---
+        assert json.dumps(body_b["commands"][0], sort_keys=True) == guard_b
+        assert accepted_b["data"]["status"] == "rebased"
+        assert_move(parent_of(disjoint), parent_of(accepted_b), "music-bed", 3)
+        assert json.loads(outbox.read_bytes())["pending"] == []
+        assert_readback(client, fixture, accepted_b)
+        after_b = history(client, fixture)["items"]
+        assert len(after_b) == 6
+        assert after_b[:-1] == before_restart["items"]
+    
+        undone = cli(client, fixture, capsys, "undo", fixture.timeline_id,
+                     "--publication", accepted_b["receipt"]["receipt_id"])
+        assert json.loads(observed[-1]["body"])["commands"] == [{
+            "schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
+            "args": {"publications": [accepted_b["receipt"]["receipt_id"]]},
+        }]
+        assert parent_of(undone) == parent_of(disjoint)
+        assert_readback(client, fixture, undone)
+        revision = undone["data"]["accepted_revision_id"]
+        shown = cli(client, fixture, capsys, "show", fixture.timeline_id,
+                    "--published", "--revision-id", revision)
+        assert shown["data"]["revision_id"] == revision
+        assert shown["data"]["working_copy"] is None
+        layers = cli(client, fixture, capsys, "show", fixture.timeline_id,
+                     "--published", "--revision-id", revision, "--layers", "--clip", "music-bed")
+        inspection = layers["data"]["native_inspection"]
+        assert inspection["revision_id"] == revision
+        clip = inspection["selected_parent_clips"][0]
+        assert clip["clip_id"] == "music-bed"
+        assert clip["start"] == [2, 1]
+>       visualized = cli(client, fixture, capsys, "visualize", fixture.timeline_id,
+                         "--published", "--revision-id", revision, "--mode", "inputs", "--format", "md")
+
+tests/editing_conformance/test_commit_runtime_m1.py:349: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = <astrid.sdk.client.AstridClient object at 0x7fc8d2088050>
+fixture = FilmFixture(source_root=PosixPath('/tmp/pytest-of-root/pytest-211/test_cli_python_outbox_restart0/film-source-realm'),...b38b84091b36980cb3f1fd6312e8c5c6542a90e07b5330dc20836cc076de4', text_binding_id='d3ea5bb0-95e0-5ea1-985f-c4c669ee13b2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc8d2a11a90>
+args = ('visualize', 'film', '--published', '--revision-id', 'authoring-parent-revision-cd5a416ef5bfb29988d94d58246f2b06733ea2f9d3679380e65466ba2662ec6e', '--mode', ...)
+build_parser = <function build_parser at 0x7fc8d2398400>
+parsed = Namespace(command='visualize', project='ea4cd44cd7e646bf96fce4251d1f4b6d', timeline_ref='film', timeline_slug=None, sh...cmd_visualize at 0x7fc8d2394360>, family='timelines', client=<astrid.sdk.client.AstridClient object at 0x7fc8d2088050>)
+code = 1
+
+    def cli(client, fixture, capsys, *args):
+        from astrid.packs.timeline.cli import build_parser
+    
+        parsed = build_parser(client).parse_args([
+            *args, "--project", fixture.project_id, "--json",
+        ])
+        code = parsed.handler(parsed)
+        output = capsys.readouterr()
+        value = json.loads(output.out)
+>       assert code == 0, (code, value, output.err)
+E       AssertionError: (1, {'data': None, 'error': {'code': 'validation_error', 'details': {'field': 'view', 'mode': 'inputs'}, 'message': 'r... supports only view=filmstrip; composed views require output authority'}, 'idempotency_key': '', 'ok': False, ...}, '')
+E       assert 1 == 0
+
+tests/editing_conformance/test_commit_runtime_m1.py:136: AssertionError
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]
+1 failed, 2 passed in 23.08s
+
+codex
+The central run finished with **2 passed, 1 failed**. Both schedules pass the corrected readback checks; the disjoint schedule also passes restart/retry, rebase, undo, and exact `show`, then fails at `visualize --mode inputs`.
+
+The CLI selects `contact` by default without considering input mode, and the SDK rejects it because input mode requires `filmstrip`. That contradicts the documented `--mode inputs` invocation. I’m stopping at the product boundary and leaving the journey expectation intact for the manager’s correction.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-cli-journey-review/commit-msg <<'EOF'
+test(timeline): match M1 readback to lossless authoring contract
+
+Compare the full opened authoring bundle with main's lossless codec output
+from the accepted canonical closure, including placements and source pins.
+Independently verify the public immutable parent GET against the accepted
+payload, digest, identity and dependency manifest.
+
+Keep the complete CLI journey expectations. Central integration reports two
+passed and one failed: the disjoint journey reaches native inputs visualize,
+where CLI default view selection chooses contact and the SDK requires filmstrip.
+EOF
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F tests/editing_conformance/test_commit_runtime_m1.py
+ git diff --check
+ git status --short" in /home/user/work/wt/agt-m1-cli-journey-review
+ succeeded in 466ms:
+All checks passed!
+ M tests/editing_conformance/test_commit_runtime_m1.py
+
+codex
+Updated only [test_commit_runtime_m1.py](/home/user/work/wt/agt-m1-cli-journey-review/tests/editing_conformance/test_commit_runtime_m1.py:159). Expected readback now uses main’s lossless authoring codec for the entire bundle, preserving occurrence/placement, shot, and source-mapping checks. Independent public GET assertions verify the complete accepted parent payload, digest, identity, and dependency manifest.
+
+Central run `agt-m1-cli-journey-review-commit-integration-1019195003-6839` executed:
+
+```bash
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+**Result: 2 passed, 1 failed in 23.08s.**
+
+- Passed: touched-basis conflict schedule and structural real-store test.
+- Disjoint schedule passed readback, restart/retry, rebase, undo, and exact `show`; failed at native inputs visualization.
+- Blocker: [_resolve_view](/home/user/work/wt/agt-m1-cli-journey-review/astrid/packs/timeline/cli_visualize.py:191) selects `contact` without considering `--mode inputs`; [SDK validation](/home/user/work/wt/agt-m1-cli-journey-review/astrid/sdk/remote.py:889) requires `filmstrip`. Stopped at the product boundary, retaining the original expectation.
+- Post-visualization history and historical readback assertions remain unreached. Full suite was not run.
+
+Tested source tuple:
+
+```text
+Agent base: 8c4bd8506a9b3809875a894b4898381b8d4798aa
+Agent tree: cb1c4aa6d6c96f8d834b1c4327f1b45fe7f9cf4a
+Runtime:    182a7dd8446456162a452a25c8493256c5da29fe
+App:        0dfb3896545e555c221c5be7a6e1680965b6d004
+Composition:7aa384a9f3c815f78ce88ff9b47de5adee7bf34a
+```
+
+`python -m ruff check --no-cache --isolated --select E4,E7,E9,F tests/editing_conformance/test_commit_runtime_m1.py` and `git diff --check` passed. Harness commit message written.
+
+Recommended next step: dispatch the bounded CLI input-mode default correction, then rerun this central lane. **M1 remains unproven.**
+tokens used
+81,338
+Updated only [test_commit_runtime_m1.py](/home/user/work/wt/agt-m1-cli-journey-review/tests/editing_conformance/test_commit_runtime_m1.py:159). Expected readback now uses main’s lossless authoring codec for the entire bundle, preserving occurrence/placement, shot, and source-mapping checks. Independent public GET assertions verify the complete accepted parent payload, digest, identity, and dependency manifest.
+
+Central run `agt-m1-cli-journey-review-commit-integration-1019195003-6839` executed:
+
+```bash
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+**Result: 2 passed, 1 failed in 23.08s.**
+
+- Passed: touched-basis conflict schedule and structural real-store test.
+- Disjoint schedule passed readback, restart/retry, rebase, undo, and exact `show`; failed at native inputs visualization.
+- Blocker: [_resolve_view](/home/user/work/wt/agt-m1-cli-journey-review/astrid/packs/timeline/cli_visualize.py:191) selects `contact` without considering `--mode inputs`; [SDK validation](/home/user/work/wt/agt-m1-cli-journey-review/astrid/sdk/remote.py:889) requires `filmstrip`. Stopped at the product boundary, retaining the original expectation.
+- Post-visualization history and historical readback assertions remain unreached. Full suite was not run.
+
+Tested source tuple:
+
+```text
+Agent base: 8c4bd8506a9b3809875a894b4898381b8d4798aa
+Agent tree: cb1c4aa6d6c96f8d834b1c4327f1b45fe7f9cf4a
+Runtime:    182a7dd8446456162a452a25c8493256c5da29fe
+App:        0dfb3896545e555c221c5be7a6e1680965b6d004
+Composition:7aa384a9f3c815f78ce88ff9b47de5adee7bf34a
+```
+
+`python -m ruff check --no-cache --isolated --select E4,E7,E9,F tests/editing_conformance/test_commit_runtime_m1.py` and `git diff --check` passed. Harness commit message written.
+
+Recommended next step: dispatch the bounded CLI input-mode default correction, then rerun this central lane. **M1 remains unproven.**

@@ -1,0 +1,400 @@
+  echo "counts: $(grep -aE '[0-9]+ (passed|failed)|Tests +[0-9]|^# (pass|fail) ' $D/log.txt | tail -3 | tr '\n' ' ')"; echo "--- last 60 lines of $D/log.txt ---"; tail -60 $D/log.txt; } > $D/summary
+echo $RC > $D/exit; echo $ST > $D/status; [ $RC = 0 -o $RC = 1 ] && echo $ID > $C/$key; rm -f $D/running $C/$key.running
+
+exec
+/bin/bash -lc "set -eu
+/home/user/work/venv-agent/bin/ruff check \\
+  astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py \\
+  tests/packs/rendering/test_normal_audio_sources.py \\
+  tests/packs/rendering/test_normal_audio_source_phase.py
+git diff --check
+printf '%s\\n' '--- approved path hash comparison ---'
+for p in \\
+  astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py \\
+  remotion/attempt-envelope-pcm.mjs \\
+  remotion/compiled-audio-source-clock.mjs \\
+  remotion/normal-audio-sources.mjs \\
+  remotion/tests/gapless-mp3-source-origin.test.mjs \\
+  remotion/tests/long-audio-source.test.mjs \\
+  remotion/tests/normal-audio-native-sources.test.mjs \\
+  remotion/tests/normal-audio-sources.test.mjs \\
+  tests/packs/rendering/test_normal_audio_source_phase.py \\
+  tests/packs/rendering/test_normal_audio_sources.py; do
+  actual="'$(git hash-object "$p")
+  expected=$(git rev-parse "tl/vw-m3-pcm-current-landing-batch:$p")
+  test "$actual" = "$expected"
+  printf '"'%s %s\\n' \""'$actual" "$p"
+done
+printf '"'%s\\n' '--- worktree paths ---'
+git status --short" in /home/user/work/wt/agt-m3-pcm-inactive-port
+ succeeded in 734ms:
+All checks passed!
+--- approved path hash comparison ---
+752fbfe609bc40ef65087b478bf005f7549ec753 astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+4c99b9e6efd3178a04cb57daf3c810ad6fa68c64 remotion/attempt-envelope-pcm.mjs
+badc39f4257a8e4409e8080facdb251513904414 remotion/compiled-audio-source-clock.mjs
+c4f16ff61efafd1960d50e21ef84ff237a68afd7 remotion/normal-audio-sources.mjs
+70c471e59b3e7715f0a6d15936fb6b6d587b8827 remotion/tests/gapless-mp3-source-origin.test.mjs
+7d65d8b65fe266eb358f5f934ad330ea0c43e852 remotion/tests/long-audio-source.test.mjs
+3704149629089239afb26f1a3b720ea49cf49ed1 remotion/tests/normal-audio-native-sources.test.mjs
+4778d6e96034caab560622576e7eb8e6eaacc3f8 remotion/tests/normal-audio-sources.test.mjs
+0e3f50fbb66f00ad3a1c4fb2ae7e8fa98c661ee1 tests/packs/rendering/test_normal_audio_source_phase.py
+336f99dc4348cebe8f29b2214ddd297d7babd957 tests/packs/rendering/test_normal_audio_sources.py
+--- worktree paths ---
+ M tests/packs/rendering/test_normal_audio_source_phase.py
+?? astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+?? remotion/attempt-envelope-pcm.mjs
+?? remotion/compiled-audio-source-clock.mjs
+?? remotion/normal-audio-sources.mjs
+?? remotion/tests/gapless-mp3-source-origin.test.mjs
+?? remotion/tests/long-audio-source.test.mjs
+?? remotion/tests/normal-audio-native-sources.test.mjs
+?? remotion/tests/normal-audio-sources.test.mjs
+?? tests/packs/rendering/test_normal_audio_sources.py
+
+2026-10-20T09:50:19.879321Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc \\\"set -eu\\npaths=(\\n  astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py\\n  remotion/attempt-envelope-pcm.mjs\\n  remotion/compiled-audio-source-clock.mjs\\n  remotion/normal-audio-sources.mjs\\n  remotion/tests/gapless-mp3-source-origin.test.mjs\\n  remotion/tests/long-audio-source.test.mjs\\n  remotion/tests/normal-audio-native-sources.test.mjs\\n  re…460 chars truncated…ree ---'\\nIDX=\\\"'$(mktemp /tmp/pcm-index.XXXXXX)\\ntrap '\\\"'rm -f \\\\\\\"\\\"'$IDX\\\"'\\\"' EXIT\\nGIT_INDEX_FILE=\\\\\\\"\\\"'$IDX\\\" git read-tree HEAD\\nGIT_INDEX_FILE=\\\"$IDX\\\" git add -- \\\"${paths[@]}\\\"\\nGIT_INDEX_FILE=\\\"$IDX\\\" git write-tree\\nprintf '\\\"'%s\\\\\\\\n' '--- worktree tree/status ---'\\ngit rev-parse HEAD\\ngit status --short\\\"` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc "set -eu
+paths=(
+  astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+  remotion/attempt-envelope-pcm.mjs
+  remotion/compiled-audio-source-clock.mjs
+  remotion/normal-audio-sources.mjs
+  remotion/tests/gapless-mp3-source-origin.test.mjs
+  remotion/tests/long-audio-source.test.mjs
+  remotion/tests/normal-audio-native-sources.test.mjs
+  remotion/tests/normal-audio-sources.test.mjs
+  tests/packs/rendering/test_normal_audio_source_phase.py
+  tests/packs/rendering/test_normal_audio_sources.py
+)
+printf '%s\\n' '--- numstat against integration ---'
+git diff --numstat efb96034 tl/vw-m3-pcm-current-landing-batch -- \""'${paths[@]}"
+printf '"'%s\\n' '--- line counts ---'
+wc -l \""'${paths[@]}" | tail -1
+printf '"'%s\\n' '--- ten-path tree ---'
+IDX=/tmp/pcm-index-"'$$
+GIT_INDEX_FILE="$IDX" git read-tree HEAD
+GIT_INDEX_FILE="$IDX" git add -- "${paths[@]}"
+GIT_INDEX_FILE="$IDX" git write-tree
+printf '"'%s\\n' '--- worktree tree/status ---'
+git rev-parse HEAD
+git status --short" in /home/user/work/wt/agt-m3-pcm-inactive-port
+ succeeded in 511ms:
+--- numstat against integration ---
+135	0	astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+114	0	remotion/attempt-envelope-pcm.mjs
+13	0	remotion/compiled-audio-source-clock.mjs
+57	0	remotion/normal-audio-sources.mjs
+192	0	remotion/tests/gapless-mp3-source-origin.test.mjs
+133	0	remotion/tests/long-audio-source.test.mjs
+278	0	remotion/tests/normal-audio-native-sources.test.mjs
+103	0	remotion/tests/normal-audio-sources.test.mjs
+39	15	tests/packs/rendering/test_normal_audio_source_phase.py
+309	0	tests/packs/rendering/test_normal_audio_sources.py
+--- line counts ---
+ 1424 total
+--- ten-path tree ---
+174d50cfb58e8d935ef33c8421142f300fbffa6a
+--- worktree tree/status ---
+efb96034fc7c80a6e73900bfc57dac53260beb3c
+ M tests/packs/rendering/test_normal_audio_source_phase.py
+?? astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+?? remotion/attempt-envelope-pcm.mjs
+?? remotion/compiled-audio-source-clock.mjs
+?? remotion/normal-audio-sources.mjs
+?? remotion/tests/gapless-mp3-source-origin.test.mjs
+?? remotion/tests/long-audio-source.test.mjs
+?? remotion/tests/normal-audio-native-sources.test.mjs
+?? remotion/tests/normal-audio-sources.test.mjs
+?? tests/packs/rendering/test_normal_audio_sources.py
+
+exec
+/bin/bash -lc "find /tmp -maxdepth 1 -type f -name 'pcm-index-*' -print" in /home/user/work/wt/agt-m3-pcm-inactive-port
+ succeeded in 9ms:
+/tmp/pcm-index-2
+
+exec
+/bin/bash -lc 'unlink /tmp/pcm-index-2 && test ! -e /tmp/pcm-index-2' in /home/user/work/wt/agt-m3-pcm-inactive-port
+ succeeded in 11ms:
+codex
+The approved ten-path content matches the frozen landing ref byte-for-byte. The ten-path tree hash is `174d50cf…`, and the worktree remains limited to those paths. No central private-overlay suite is registered in the service config, so I’m preserving that shared config and documenting the exact named-lane command for the manager; the command creates a disposable `/tmp` overlay, copies only the worktree-authored helpers, and links the public12 peer package read-only.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..99887ec128f37e5de05db033be98871331a8ccc2
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/commit-msg
+@@ -0,0 +1,5 @@
++feat(rendering): port inactive PCM preparation helpers
++
++Port the approved inactive normal-audio PCM adapter, public clock helpers,
++native-source tests, and exact phase-preservation tests onto current
++integration without activating the normal render route.
+
+2026-10-20T09:50:47.640049Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid hunk at line 10, 'overlay=$(mktemp -d /tmp/astrid-pcm-remotion.XXXXXX)' is not a valid hunk header. Valid hunk headers: '*** Add File: {path}', '*** Delete File: {path}', '*** Update File: {path}'
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/central-private-lane-command.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/central-private-lane-command.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/central-private-lane-command.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..41867f3123065b3c30619075cada75cfee0becea
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/central-private-lane-command.md
+@@ -0,0 +1,21 @@
++Add this named command to the Agent section of `orch/tests/suites.conf` as
++`remotion-0012-pcm-private`; do not repoint the shared `remotion-0012`
++runtime or copy helpers into it:
++
++```sh
++env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /bin/bash -c '
++set -eu
++overlay=$(mktemp -d /tmp/astrid-pcm-remotion.XXXXXX)
++trap '\''rm -rf -- "$overlay"'\'' EXIT
++mkdir -p "$overlay/tests"
++cp "$PWD/remotion/attempt-envelope-pcm.mjs" "$PWD/remotion/compiled-audio-source-clock.mjs" "$PWD/remotion/normal-audio-sources.mjs" "$overlay/"
++ln -s /home/user/work/runtimes/agent-remotion-0012/node_modules "$overlay/node_modules"
++export ASTRID_REMOTION_PROJECT_DIR="$overlay"
++/home/user/work/venv-agent/bin/python -m pytest -q -n 2 tests/packs/rendering/test_normal_audio_sources.py tests/packs/rendering/test_normal_audio_source_phase.py tests/editing_conformance/test_compile_contracts.py tests/core/rendering/test_service.py
++'
++```
++
++The overlay owns the three host-authored helper files and uses only a
++read-only public12 peer link for dependencies. The central snapshot's normal
++pytest lane then exercises all 105 Python cases, including the 19 helper cases
++that previously failed only because the shared runtime lacked those files.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..99887ec128f37e5de05db033be98871331a8ccc2
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/commit-msg
+@@ -0,0 +1,5 @@
++feat(rendering): port inactive PCM preparation helpers
++
++Port the approved inactive normal-audio PCM adapter, public clock helpers,
++native-source tests, and exact phase-preservation tests onto current
++integration without activating the normal render route.
+
+exec
+/bin/bash -lc "sed -n '1,120p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/central-private-lane-command.md && printf '\\n--- output files ---\\n' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port" in /home/user/work/wt/agt-m3-pcm-inactive-port
+ succeeded in 50ms:
+Add this named command to the Agent section of `orch/tests/suites.conf` as
+`remotion-0012-pcm-private`; do not repoint the shared `remotion-0012`
+runtime or copy helpers into it:
+
+```sh
+env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /bin/bash -c '
+set -eu
+overlay=$(mktemp -d /tmp/astrid-pcm-remotion.XXXXXX)
+trap '\''rm -rf -- "$overlay"'\'' EXIT
+mkdir -p "$overlay/tests"
+cp "$PWD/remotion/attempt-envelope-pcm.mjs" "$PWD/remotion/compiled-audio-source-clock.mjs" "$PWD/remotion/normal-audio-sources.mjs" "$overlay/"
+ln -s /home/user/work/runtimes/agent-remotion-0012/node_modules "$overlay/node_modules"
+export ASTRID_REMOTION_PROJECT_DIR="$overlay"
+/home/user/work/venv-agent/bin/python -m pytest -q -n 2 tests/packs/rendering/test_normal_audio_sources.py tests/packs/rendering/test_normal_audio_source_phase.py tests/editing_conformance/test_compile_contracts.py tests/core/rendering/test_service.py
+'
+```
+
+The overlay owns the three host-authored helper files and uses only a
+read-only public12 peer link for dependencies. The central snapshot's normal
+pytest lane then exercises all 105 Python cases, including the 19 helper cases
+that previously failed only because the shared runtime lacked those files.
+
+--- output files ---
+total 408
+-rw-r--r-- 1 root root   1627 Oct 20 09:46 brief.md
+-rw-r--r-- 1 root root   1582 Oct 20 09:50 central-private-lane-command.md
+drwxr-xr-x 3 root root   4096 Oct 20 09:47 checks
+-rw-r--r-- 1 root root    256 Oct 20 09:50 commit-msg
+-rw-r--r-- 1 root root    202 Oct 20 09:48 direct-python.log
+-rw-r--r-- 1 root root   4277 Oct 20 09:49 gapless-node-correct.log
+-rw-r--r-- 1 root root   6050 Oct 20 09:48 gapless-node.log
+-rw-r--r-- 1 root root 320236 Oct 20 09:50 log.txt
+-rw-r--r-- 1 root root    837 Oct 20 09:49 long-node-correct.log
+-rw-r--r-- 1 root root   4494 Oct 20 09:48 long-node.log
+-rw-r--r-- 1 root root    200 Oct 20 09:46 meta
+-rw-r--r-- 1 root root   4816 Oct 20 09:49 native-node-correct.log
+-rw-r--r-- 1 root root   7605 Oct 20 09:48 native-node.log
+-rw-r--r-- 1 root root   1794 Oct 20 09:49 normal-node-correct.log
+-rw-r--r-- 1 root root  16593 Oct 20 09:48 normal-node.log
+-rw-r--r-- 1 root root      0 Oct 20 09:46 running
+
+exec
+/bin/bash -lc "du -sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/checks && find . -type d \\( -name __pycache__ -o -name .pytest_cache \\) -print | head -20 && git status --short" in /home/user/work/wt/agt-m3-pcm-inactive-port
+ succeeded in 547ms:
+76K	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/checks
+./scripts/__pycache__
+./astrid/packs/rendering/shared/rendering_backend/__pycache__
+./astrid/packs/rendering/rendering/renderers/ffmpeg/__pycache__
+./astrid/packs/rendering/rendering/renderers/remotion/__pycache__
+./astrid/packs/__pycache__
+./astrid/__pycache__
+./astrid/core/element/__pycache__
+./astrid/core/rendering/__pycache__
+./astrid/core/audit/__pycache__
+./astrid/core/timeline/validators/__pycache__
+./astrid/core/timeline/__pycache__
+./astrid/core/theme/__pycache__
+./astrid/core/registry/__pycache__
+./astrid/core/foundation/__pycache__
+./astrid/core/__pycache__
+./astrid/core/contracts/__pycache__
+./astrid/core/pack/__pycache__
+ M tests/packs/rendering/test_normal_audio_source_phase.py
+?? astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+?? remotion/attempt-envelope-pcm.mjs
+?? remotion/compiled-audio-source-clock.mjs
+?? remotion/normal-audio-sources.mjs
+?? remotion/tests/gapless-mp3-source-origin.test.mjs
+?? remotion/tests/long-audio-source.test.mjs
+?? remotion/tests/normal-audio-native-sources.test.mjs
+?? remotion/tests/normal-audio-sources.test.mjs
+?? tests/packs/rendering/test_normal_audio_sources.py
+
+exec
+/bin/bash -lc "find . -type d -name __pycache__ -newermt '2026-10-20 09:46:00' -printf '%TY-%Tm-%Td %TH:%TM:%TS %p\\n' | head -100; find . -type d -name .pytest_cache -newermt '2026-10-20 09:46:00' -printf '%TY-%Tm-%Td %TH:%TM:%TS %p\\n' | head -20" in /home/user/work/wt/agt-m3-pcm-inactive-port
+ succeeded in 139ms:
+2026-10-20 09:47:39.3934981140 ./scripts/__pycache__
+2026-10-20 09:47:39.3894328370 ./astrid/packs/rendering/shared/rendering_backend/__pycache__
+2026-10-20 09:47:39.1934063180 ./astrid/packs/rendering/rendering/renderers/ffmpeg/__pycache__
+2026-10-20 09:47:39.3906105380 ./astrid/packs/rendering/rendering/renderers/remotion/__pycache__
+2026-10-20 09:47:38.4079053410 ./astrid/packs/__pycache__
+2026-10-20 09:47:38.3530217540 ./astrid/__pycache__
+2026-10-20 09:47:39.2743321900 ./astrid/core/element/__pycache__
+2026-10-20 09:47:39.3784318990 ./astrid/core/rendering/__pycache__
+2026-10-20 09:47:39.2488776040 ./astrid/core/audit/__pycache__
+2026-10-20 09:47:38.6977254330 ./astrid/core/timeline/validators/__pycache__
+2026-10-20 09:47:48.8696127850 ./astrid/core/timeline/__pycache__
+2026-10-20 09:47:39.1906015270 ./astrid/core/theme/__pycache__
+2026-10-20 09:47:39.2601455790 ./astrid/core/registry/__pycache__
+2026-10-20 09:47:39.0761494970 ./astrid/core/foundation/__pycache__
+2026-10-20 09:47:39.0772438830 ./astrid/core/__pycache__
+2026-10-20 09:47:39.2714465050 ./astrid/core/contracts/__pycache__
+2026-10-20 09:47:41.3242484110 ./astrid/core/pack/__pycache__
+
+exec
+/bin/bash -lc "find . -type f -path '*/__pycache__/*' -delete
+find . -depth -type d -name __pycache__ -empty -delete
+find . -type d \\( -name __pycache__ -o -name .pytest_cache \\) -print | head -20
+git status --short" in /home/user/work/wt/agt-m3-pcm-inactive-port
+ succeeded in 507ms:
+ M tests/packs/rendering/test_normal_audio_source_phase.py
+?? astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+?? remotion/attempt-envelope-pcm.mjs
+?? remotion/compiled-audio-source-clock.mjs
+?? remotion/normal-audio-sources.mjs
+?? remotion/tests/gapless-mp3-source-origin.test.mjs
+?? remotion/tests/long-audio-source.test.mjs
+?? remotion/tests/normal-audio-native-sources.test.mjs
+?? remotion/tests/normal-audio-sources.test.mjs
+?? tests/packs/rendering/test_normal_audio_sources.py
+
+codex
+The qualification evidence is complete locally: exact ten-path byte comparison, ruff, and diff checks all pass; generated Python caches were removed from the worktree. I’m doing the final scope audit now, then I’ll mark the worker complete with the commit message and DONE marker. Central service execution remains pending the named private-overlay lane because the existing registered lane is the known shared-runtime failure case.
+exec
+/bin/bash -lc "set -eu
+printf '%s\\n' '--- scope audit ---'
+rg -n 'prepare_normal_audio_sources|normal-audio-sources|compiledAudioSourceClock|prepareAttemptEnvelopePcm' astrid remotion tests | head -100
+printf '%s\\n' '--- changed tracked/untracked paths ---'
+git status --short
+printf '%s\\n' '--- forbidden area diff names ---'
+for p in "'$(git status --short | sed '"'s/"'^...//'"'); do case \""'$p" in astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py|remotion/attempt-envelope-pcm.mjs|remotion/compiled-audio-source-clock.mjs|remotion/normal-audio-sources.mjs|remotion/tests/gapless-mp3-source-origin.test.mjs|remotion/tests/long-audio-source.test.mjs|remotion/tests/normal-audio-native-sources.test.mjs|remotion/tests/normal-audio-sources.test.mjs|tests/packs/rendering/test_normal_audio_source_phase.py|tests/packs/rendering/test_normal_audio_sources.py) ;; *) echo "unexpected: $p"; exit 1;; esac; done
+printf '"'%s\\n' 'scope ok'
+printf '%s\\n' '--- commit message ---'
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/commit-msg
+printf '%s\\n' '--- shared runtime status unchanged by this worker ---'
+git -C /home/user/work/runtimes/agent-remotion-0012 status --short --untracked-files=no | head -20 || true" in /home/user/work/wt/agt-m3-pcm-inactive-port
+ succeeded in 929ms:
+--- scope audit ---
+remotion/compiled-audio-source-clock.mjs:7:export const compiledAudioSourceClock = (compiledClip, fps) => {
+remotion/normal-audio-sources.mjs:5:import {prepareAttemptEnvelopePcm} from './attempt-envelope-pcm.mjs';
+remotion/normal-audio-sources.mjs:6:import {compiledAudioSourceClock} from './compiled-audio-source-clock.mjs';
+remotion/normal-audio-sources.mjs:26:      const sourceClock = compiledAudioSourceClock(clip, fps);
+remotion/normal-audio-sources.mjs:29:        const originalClock = compiledAudioSourceClock(originalClip, fps);
+remotion/normal-audio-sources.mjs:40:      const row = prepareAttemptEnvelopePcm({clip: derived, fps, source, attemptDirectory, sourceClock});
+remotion/tests/normal-audio-native-sources.test.mjs:10:import {prepareNormalAudioSources} from '../normal-audio-sources.mjs';
+remotion/tests/normal-audio-native-sources.test.mjs:11:import {compiledAudioSourceClock} from '../compiled-audio-source-clock.mjs';
+remotion/tests/normal-audio-native-sources.test.mjs:116:  const sourceClock = compiledAudioSourceClock(unityClip, fps);
+remotion/tests/normal-audio-native-sources.test.mjs:137:  const graph = JSON.stringify(clip), sourceClock = compiledAudioSourceClock(clip, fps);
+remotion/tests/normal-audio-native-sources.test.mjs:240:    const sourceClock = compiledAudioSourceClock(clip, fps);
+remotion/tests/gapless-mp3-source-origin.test.mjs:9:import {prepareAttemptEnvelopePcm} from '../attempt-envelope-pcm.mjs';
+remotion/tests/gapless-mp3-source-origin.test.mjs:10:import {compiledAudioSourceClock} from '../compiled-audio-source-clock.mjs';
+remotion/tests/gapless-mp3-source-origin.test.mjs:113:  const sourceClock = compiledAudioSourceClock(unityClip, fps);
+remotion/tests/gapless-mp3-source-origin.test.mjs:114:  const prepared = prepareAttemptEnvelopePcm({clip: unityClip, fps, source: mp3, attemptDirectory, sourceClock});
+remotion/tests/gapless-mp3-source-origin.test.mjs:133:  const graph = JSON.stringify(clip), sourceClock = compiledAudioSourceClock(clip, fps);
+remotion/tests/gapless-mp3-source-origin.test.mjs:136:  const prepared = prepareAttemptEnvelopePcm({clip, fps, source: mp3, attemptDirectory, sourceClock});
+remotion/tests/gapless-mp3-source-origin.test.mjs:162:  assert.throws(() => prepareAttemptEnvelopePcm({clip: unityClip, fps,
+remotion/tests/gapless-mp3-source-origin.test.mjs:164:    sourceClock: compiledAudioSourceClock(unityClip, fps)}), /source PCM clock cannot be retained/);
+remotion/tests/normal-audio-sources.test.mjs:7:import {prepareNormalAudioSources} from '../normal-audio-sources.mjs';
+remotion/tests/normal-audio-sources.test.mjs:8:import {compiledAudioSourceClock} from '../compiled-audio-source-clock.mjs';
+remotion/tests/normal-audio-sources.test.mjs:56:  const clock = compiledAudioSourceClock(originalClip, fps);
+remotion/tests/long-audio-source.test.mjs:9:import {prepareAttemptEnvelopePcm} from '../attempt-envelope-pcm.mjs';
+remotion/tests/long-audio-source.test.mjs:10:import {compiledAudioSourceClock} from '../compiled-audio-source-clock.mjs';
+remotion/tests/long-audio-source.test.mjs:67:    const sourceClock = compiledAudioSourceClock(clip, fps);
+remotion/tests/long-audio-source.test.mjs:83:    const prepared = prepareAttemptEnvelopePcm(args);
+remotion/tests/long-audio-source.test.mjs:123:    const args = {clip, fps, source, attemptDirectory, sourceClock: compiledAudioSourceClock(clip, fps)};
+remotion/tests/long-audio-source.test.mjs:124:    assert.throws(() => prepareAttemptEnvelopePcm(args), /non-finite source PCM/);
+remotion/tests/long-audio-source.test.mjs:129:    assert.throws(() => prepareAttemptEnvelopePcm(args));
+remotion/attempt-envelope-pcm.mjs:9:// source clock, using compiledAudioSourceClock from the public trim/rate helpers.
+remotion/attempt-envelope-pcm.mjs:11:export const prepareAttemptEnvelopePcm = ({
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:27:def prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:81:    helper = (project / "normal-audio-sources.mjs").resolve(strict=True)
+tests/packs/rendering/test_normal_audio_sources.py:22:    prepare_normal_audio_sources,
+tests/packs/rendering/test_normal_audio_sources.py:77:            return prepare_normal_audio_sources(
+--- changed tracked/untracked paths ---
+ M tests/packs/rendering/test_normal_audio_source_phase.py
+?? astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+?? remotion/attempt-envelope-pcm.mjs
+?? remotion/compiled-audio-source-clock.mjs
+?? remotion/normal-audio-sources.mjs
+?? remotion/tests/gapless-mp3-source-origin.test.mjs
+?? remotion/tests/long-audio-source.test.mjs
+?? remotion/tests/normal-audio-native-sources.test.mjs
+?? remotion/tests/normal-audio-sources.test.mjs
+?? tests/packs/rendering/test_normal_audio_sources.py
+--- forbidden area diff names ---
+scope ok
+--- commit message ---
+feat(rendering): port inactive PCM preparation helpers
+
+Port the approved inactive normal-audio PCM adapter, public clock helpers,
+native-source tests, and exact phase-preservation tests onto current
+integration without activating the normal render route.
+--- shared runtime status unchanged by this worker ---
+fatal: not a git repository (or any of the parent directories): .git
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/BLOCKED' in /home/user/work/wt/agt-m3-pcm-inactive-port
+ succeeded in 17ms:
+codex
+Implemented the approved inactive PCM port: exactly 10 paths, 319 product lines, byte-identical to `tl/vw-m3-pcm-current-landing-batch` (`ab935f77`). Ten-path tree: `174d50cfb58e8d935ef33c8421142f300fbffa6a`.
+
+Tests:
+
+- Python: `103 passed, 2 xfailed` (strict compile-contract xfails preserved).
+- Node: `5 + 8 + 4 + 2 = 19 passed`.
+- Ruff and `git diff --check`: passed.
+- No full suite run.
+
+Private overlay used worktree-owned helpers with read-only public12 dependencies; shared runtimes/node_modules were untouched. The exact central named-lane command is recorded in [central-private-lane-command.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/central-private-lane-command.md). Central execution remains pending lane registration; the existing lane is the known missing-helper-path failure.
+
+Unresolved by design: source-pair authority validation, malformed trusted-map diagnostics, successful WAV/server lifetime integration, and compile/slice non-commutation. Normal activation, source carry, compiler, pins, DSP, and server lifetime were not changed.
+
+Commit message: [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/commit-msg). DONE marker created.
+tokens used
+159,393
+Implemented the approved inactive PCM port: exactly 10 paths, 319 product lines, byte-identical to `tl/vw-m3-pcm-current-landing-batch` (`ab935f77`). Ten-path tree: `174d50cfb58e8d935ef33c8421142f300fbffa6a`.
+
+Tests:
+
+- Python: `103 passed, 2 xfailed` (strict compile-contract xfails preserved).
+- Node: `5 + 8 + 4 + 2 = 19 passed`.
+- Ruff and `git diff --check`: passed.
+- No full suite run.
+
+Private overlay used worktree-owned helpers with read-only public12 dependencies; shared runtimes/node_modules were untouched. The exact central named-lane command is recorded in [central-private-lane-command.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/central-private-lane-command.md). Central execution remains pending lane registration; the existing lane is the known missing-helper-path failure.
+
+Unresolved by design: source-pair authority validation, malformed trusted-map diagnostics, successful WAV/server lifetime integration, and compile/slice non-commutation. Normal activation, source carry, compiler, pins, DSP, and server lifetime were not changed.
+
+Commit message: [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/commit-msg). DONE marker created.

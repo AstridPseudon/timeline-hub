@@ -1,0 +1,9 @@
+name=agt-m1-frontends-fix
+repo=agent
+base=tl/agt-m1-frontends
+base_sha=0c4a8dd2
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m1-frontends-fix
+started=2026-10-19T19:18:43Z

@@ -1,0 +1,400 @@
+import pytest
+from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline.commit import bundle_from_document
+from tests.sdk.test_timeline_sync import connected
+from tests.sdk.test_timeline_native_checkout import attached
+
+@pytest.mark.parametrize('type_key', ['clipType', 'clip_type'])
+def test_raw_element_alias_keeps_canvas_units_after_acceptance(connected, type_key):
+    clip = State(connected[1].bundles['r0']).entity('parent/clip:a')
+    clip.pop('clipType')
+    clip[type_key] = 'am-sprite'
+    clip['params'] = {'x': 27, 'scale': 6}
+    checkout = attached(connected)
+    checkout.clip('a').set(x=600)
+    accepted = checkout.flush()
+    stored = State(bundle_from_document(accepted['data']['canonical_document'])).entity('parent/clip:a')
+    assert stored['params']['x'] == 100
+PY
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/test_review_sheet.py <<'PY'
+import pytest
+from astrid.sdk.timeline._command_state import State
+from tests.sdk.test_timeline_sheet_native import sheet_for
+from tests.sdk.test_timeline_sync import initial_bundle
+from tests.editing_conformance.test_native_sheet_current import property_cell
+
+@pytest.mark.parametrize('start', [0.1, 1e-6])
+def test_literal_gutter_accepts_an_unrelated_hold_edit(start):
+    bundle = initial_bundle()
+    State(bundle).entity('parent/clip:a')['at'] = start
+    sheet = sheet_for(bundle)
+    assert sheet.preview(sheet.text).commands == []
+    plan = sheet.preview(property_cell(sheet.text, 'parent/clip:a', 'hold', '2'))
+    assert State(plan.bundle).entity('parent/clip:a')['hold'] == 2
+    assert State(plan.bundle).entity('parent/clip:a')['at'] == start
+PY" in /home/user/work/wt/agt-review-native-frontends
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -c pyproject.toml /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/test_review_checkout.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/checkout-adversarial.log 2>&1; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/checkout-adversarial.log' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/checkout
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -c pyproject.toml /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/test_review_sheet.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/sheet-adversarial.log 2>&1; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/sheet-adversarial.log' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/sheet
+ succeeded in 1314ms:
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+____ test_raw_element_alias_keeps_canvas_units_after_acceptance[clip_type] _____
+
+connected = (<tests.sdk.test_timeline_sync.Client object at 0x7f5ca29a6ad0>, <tests.sdk.test_timeline_sync.Generated object at 0x7f5ca29a6990>, PosixPath('/tmp/pytest-of-root/pytest-2001/test_raw_element_alias_keeps_c0/outbox.json'))
+type_key = 'clip_type'
+
+    @pytest.mark.parametrize('type_key', ['clipType', 'clip_type'])
+    def test_raw_element_alias_keeps_canvas_units_after_acceptance(connected, type_key):
+        clip = State(connected[1].bundles['r0']).entity('parent/clip:a')
+        clip.pop('clipType')
+        clip[type_key] = 'am-sprite'
+        clip['params'] = {'x': 27, 'scale': 6}
+        checkout = attached(connected)
+        checkout.clip('a').set(x=600)
+        accepted = checkout.flush()
+        stored = State(bundle_from_document(accepted['data']['canonical_document'])).entity('parent/clip:a')
+>       assert stored['params']['x'] == 100
+E       assert 600 == 100
+
+../notes/test_review_checkout.py:17: AssertionError
+=============================== warnings summary ===============================
+tests/timeline/test_authoring_bundle.py:1034
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/checkout/tests/timeline/test_authoring_bundle.py:1034: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration  # a real Runtime from a second checkout
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ::test_raw_element_alias_keeps_canvas_units_after_acceptance[clip_type]
+1 failed, 1 passed, 1 warning in 0.99s
+
+ succeeded in 1388ms:
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_literal_gutter_accepts_an_unrelated_hold_edit[1e-06] ___________
+
+start = 1e-06
+
+    @pytest.mark.parametrize('start', [0.1, 1e-6])
+    def test_literal_gutter_accepts_an_unrelated_hold_edit(start):
+        bundle = initial_bundle()
+        State(bundle).entity('parent/clip:a')['at'] = start
+        sheet = sheet_for(bundle)
+        assert sheet.preview(sheet.text).commands == []
+>       plan = sheet.preview(property_cell(sheet.text, 'parent/clip:a', 'hold', '2'))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../notes/test_review_sheet.py:13: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <astrid.sdk.timeline_sheet.NativeSheet object at 0x7f74a6ccbb10>
+text = 'film ["p", "t", {"publication_id": "pub0", "revision_id": "r0"}]\nclips\n  1e-06  picture  a  type  text="café"  hold..." hold=1 # ref "parent/clip:b"\ntracks\n         picture  label  track      label=clear # ref "parent/track:picture"\n'
+
+    def preview(self, text):
+        """Return native commands, records and preview bundle without writing anything."""
+        from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+        from astrid.sdk.timeline._command_state import State, equal
+        from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
+        from astrid.sdk.timeline._trim_commands import capture_clip_trim
+        from astrid.sdk.timeline.capture import capture_move
+        from astrid.sdk.timeline.commands import Plan, execute
+        from astrid.sdk.timeline.units import from_canvas
+        from astrid.sdk.timeline_address import element_schema
+    
+        rows, frame = self._read(text)
+        if frame != self._frame or rows.keys() != self._rows.keys():
+            raise SheetError("sheet structure/basis is read-only; additions and removals are unsupported")
+        commands = []
+        working = self._bundle
+        capturers = {"clip.move": capture_move, "clip.trim": capture_clip_trim,
+                     "clip.set": capture_clip_set, "clip.set-params": capture_clip_set_params,
+                     "track.set": capture_track_set}
+    
+        def emit(op, ref, args):
+            nonlocal working
+            command = capturers[op](working, ref, **args)
+            commands.append(command)
+            working = execute(working, [command]).bundle
+    
+        for ref, (section, before, original) in self._rows.items():
+            current_section, after, row = rows[ref]
+            if current_section != section:
+                raise SheetError("sheet row ownership is read-only")
+            if before == after:
+                continue
+            if section == "clips":
+                # Compare every token, including clauses the legacy parser ignores.
+                def cells(tokens):
+                    return {token.split("=", 1)[0]: token.split("=", 1)[1] for token in tokens[4:]
+                            if re.match(r"^[A-Za-z_][\w.-]*=", token)}
+                left, right = cells(before), cells(after)
+                def fixed(tokens):
+                    return [token for token in tokens[1:]
+                            if not re.match(r"^[A-Za-z_][\w.-]*=", token)]
+                if (fixed(before) != fixed(after) or not left.keys() <= right.keys()
+                        or len(right) != len(row["params"]) + (row["trim"] is not None) or row["at"] is None
+                        or sum(bool(re.match(r"^[A-Za-z_][\w.-]*=", token)) for token in after[4:]) != len(right)):
+>                   raise SheetError(f"unsupported row edit at {ref}; keep cells and use explicit key=clear")
+E                   astrid.sdk.timeline_sheet.SheetError: unsupported row edit at parent/clip:a; keep cells and use explicit key=clear
+
+astrid/sdk/timeline_sheet.py:772: SheetError
+=============================== warnings summary ===============================
+tests/timeline/test_authoring_bundle.py:1034
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/sheet/tests/timeline/test_authoring_bundle.py:1034: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration  # a real Runtime from a second checkout
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ::test_literal_gutter_accepts_an_unrelated_hold_edit[1e-06] - astrid.s...
+1 failed, 1 passed, 1 warning in 0.99s
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-frontends.md <<'EOF'
+# Independent review: native ordinary frontends
+
+Reviewed complete commit diffs independently, without product changes:
+
+| Branch | Reviewed tip | Verdict |
+| --- | --- | --- |
+| "'`tl/agt-m2-checkout-native-ordinary` | `3aeb519c05d4e3581dae782d717d62fa225e125f` | **REQUEST CHANGES** — P1: raw `clip_type` uses the wrong parameter units and can accept the wrong authored position. |
+| `tl/agt-m2-sheet-native-ordinary` | `ede468a835065c284ea4c11e56a8846a5389c159` | **REQUEST CHANGES** — P2: scientific-notation start gutters emitted by the exporter block ordinary edits to that row. |
+
+## Checkout finding
+
+`astrid/sdk/timeline/native_checkout.py:194,203` uses inherited `Clip.element`, which reads only `clipType` (`model.py:177`). Attached checkouts intentionally retain raw bundles, and the native params recipe recognizes `clipType` **and** `clip_type`. With raw `clip_type='"'am-sprite'"'` and existing `params={'"'x':27,'scale':6}"'`, ordinary `clip.set(x=600)` should convert 600 canvas pixels to stored x=100. Instead, the inherited getter returns `media`; the adapter queues x=600. Flush through the existing Session, command engine and compiler accepts it and its returned canonical document contains x=600. The equivalent `clipType` control passes. This changes position by a factor of six, without refusal. Resolve the effective raw element consistently before schema lookup/unit conversion, or visibly hold that unsupported representation before staging. Add the accepted-state regression to the normal SDK suite. The reproduction uses the existing generated-transport fake, not a newly run Runtime service.
+
+## Sheet finding
+
+`astrid/sdk/timeline_sheet.py:663` exports a valid raw start of 0.000001 as `1e-06`. `_parse_layer` at line 477 only recognizes decimal gutters. The unchanged export is a no-op, but changing only `hold=1` to `hold=2` raises `SheetError` at line 772 because the parsed start is absent. A start of 0.1 passes. This is a safe refusal, not data loss, but violates the claimed ordinary hold subset on an export generated by the same adapter. Accept the exporter'"'s numeric spelling consistently, retaining the original authored timestamp. Keep the original positive assertion; do not encode refusal as the requirement.
+
+## Evidence and boundaries
+
+- Independently reran checkout's two reported local lanes together: **426 passed in 33.19s** (136 + 290).
+- Independently reran sheet's reported local lane: **500 passed in 44.79s**.
+- Added external adversarial probes with positive controls: checkout **1 passed / 1 failed**, sheet **1 passed / 1 failed**, each 0.99s. Failures are the findings above.
+- Read central logs and matched their recorded source-tree IDs to the reviewed tips: checkout "'`ed4a64b5364294ebb297f681791644eff670869d`, **6 passed**; sheet `c100d227938679b3aa1d4954946f30b2640f7d7f`, **12 passed**. Both use Runtime `94114269d1ce23ab3224d7eca5a85138ce2b5fed`; no new localhost run or full suite requested. These are prior executions, not fresh review executions.
+- Original commands/guards, exact flight body/key, restart/reload, disjoint/relevant conflict, raw occurrence bindings, guarded inverse/redo and clear/opaque preservation have substantial passing coverage. Checkout explicitly covers dependent B on unacked A without refreshing guards. Sheet does not itself export a new B over pending A: it visibly refuses; mixed frontend suffix composition remains unqualified.
+- No legacy-writer retirement or M2 closure follows from either slice. Detached checkout publication, legacy sheet merge/save and the remaining named-cut/narration/structure/formula/look/media grammar remain positive requirements. No existing positive behavior test was weakened in either reviewed diff.
+
+## Composition handoff
+
+The two commit-local changed-path sets do not intersect; their behavioral overlap is the **same TimelineSession/outbox and native clip recipes**. Checkout is based on `e2ad5958`; sheet is based on later `ba5f2756`, including the automatic-placement/fixture-trim changes. Compose on current integration; do not replace its files with a whole older branch tree. Preserve sheet'"'s additive "'`commit_many(base=...)` / `_stage(base=...)` fence and checkout'"'s uncaptured-preview/stale-handle checks.
+
+After the findings are fixed, qualify sheet A lost-ACK → attached checkout B → exact sheet retry → fresh-key B, with both disjoint and relevant peer edits; reverse the frontend order and confirm refusal preserves pending intent and the draft. An attached handle can become stale when a sheet stages/acks commands through the same outbox and must refuse/re-attach, never recapture. Sheet's idle CLI stale-export refusal remains an explicitly documented limitation. This review did not merge the branches or run that combined lane.
+
+Exact commands, earlier probe outcomes, caveats and reproduction scripts: [detailed report](../workers/agt-review-native-frontends/notes/report.md). Product tree unchanged. No review blocker; implementation corrections and composed qualification are recommended next work for the orchestrator.
+EOF" in /home/user/work/wt/agt-review-native-frontends
+ succeeded in 90ms:
+codex
+The unit error reaches the canonical document returned by flush: the same edit stores x=100 with `clipType`, but x=600 with `clip_type`. I’ve recorded request-changes verdicts for both branches. The report also separates each branch’s passing evidence from the mixed checkout/sheet retry scenario that still needs qualification.
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/report.md <<'EOF'
+# Native frontend independent review
+
+Review date: 2026-10-20. Read PLAN.md and repository AGENTS.md first. Scope is read-only review of two branches, not implementation or legacy retirement. No subagents, product fixes, repository process documents, git mutations, installations, shared dependency/cache writes, full suites or localhost executions.
+
+## Verdicts and findings
+
+**Checkout: REQUEST CHANGES**, tip "'`3aeb519c05d4e3581dae782d717d62fa225e125f`, parent `e2ad5958`. Full four-file commit diff inspected (612 added lines). P1: `native_checkout.py:194,203` resolves schemas/units through inherited `Clip.element`, whose `model.py:177` reads only `clipType`. The native adapter reads the untouched raw bundle and the command recipe explicitly accepts both `clipType` and `clip_type`. An `am-sprite` stored under `clip_type`, with existing x=27 and scale=6, accepts ordinary `.set(x=600)` as stored x=600 rather than x=100. The reproduction flushes through the existing Session, real command engine/compiler and generated transport fake, then inspects the returned canonical document. The camel-case control stores x=100. This is a silent sixfold position error in the supported scalar-parameter family. Resolve the effective raw element consistently (or explicitly refuse the unsupported representation before staging); preserve the original alias and opaque data, and add the positive regression to the SDK suite. No Runtime HTTP execution of this new reproduction is claimed.
+
+**Sheet: REQUEST CHANGES**, tip `ede468a835065c284ea4c11e56a8846a5389c159`, parent `ba5f2756`. Full thirteen-file commit diff inspected (1500 additions / 22 deletions), including generated manifests and the shared Runtime fixture change. P2: `timeline_sheet.py:663` emits `repr(start)`, e.g. `1e-06`, while `_parse_layer` at line 477 recognizes only decimal gutters. On a valid authored start 0.000001, the adapter'"'s own unchanged export remains a no-op, but changing only hold=1 to hold=2 fails at line 772 because row.at is None. The 0.1 control succeeds. This is safe refusal with no lost data, but an unadvertised failure of the supported hold edit. Make exported numeric gutters parse consistently without changing the original timestamp. A preliminary 1e16 start probe also reproduced it; the final test uses the practical small start plus a decimal control.
+
+Flat orchestrator verdict report: "'`$ORCH/design/agent-review-native-frontends.md`.
+
+## Contract review
+
+- Both reuse existing native commands/registry and TimelineSession. No new writer, operation, schema, endpoint, client merge or root-diff-to-command synthesis.
+- Attached checkout uses execute over the session'"'s original base plus pending intent. "'`_stage` durably writes captured commands before replacing the visible preview. Tests cover failed disk writes and unchanged-value writes. Stale external outbox writers and unqueued raw mutations visibly refuse.
+- Sheet retains the original bundle and revision/publication in the scoped outbox before exporting. It captures sequentially, verifies the batch against the untouched original, and stages through commit_many. Pure `preview`/dry-run remains side-effect-free. Sheet'"'s added base fence is checked again under the staging lock.
+- Raw "'`parent/...` and `occurrence:.../...` refs come from existing scope/bindings, not display-ID parsing. Tests include repeated clip IDs, literal colons, occurrence isolation and shared sibling preservation.
+- Checkout dependent B is captured on unacked A; A'"'s exact body/key survives reload/restart; A acknowledgement precedes fresh-key B at HA with the exact original B guards. Disjoint C passes; relevant C conflicts with B retained. Session flush, rather than the frontend, performs this sequencing.
+- Sheet retry tests preserve original pins, body/key and commands without fetching a new bundle, refuse changed retry text/key, preserve conflicts/draft, and test inverse/redo plus intervening-write ABA refusal. The sheet does not independently export B on pending A: export explicitly refuses. Do not claim mixed-frontend dependent-B coverage from its twelve-test lane.
+- Source trim/hold, incoming transition and asset clear, label null/absence/empty/literal-clear, opaque values and rational FPS have positive coverage. Checkout's public param "'`None` means explicit clear by existing API contract; literal null remains distinct in native payloads/nested opaque JSON, not a new nullable public setter overload. Selected pack params are held before local schema lookup; exact retained schema inputs are not substituted with caller/local authority.
+- Neither diff weakens/deletes a passing behavior expectation to make loss of behavior green. Sheet files are new relative to its assigned parent; its port includes positive clip-fragment support. Legacy sheet/transaction tests still pass.
+
+## Independent local executions
+
+Read-only branch archives were extracted under this worker'"'s directory, not checked out over another worker. Their source trees are the exact reviewed commits. Shared Python environment was used for dependencies only; PYTHONPATH selected each archive. Bytecode and pytest caches disabled.
+
+"'```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+W=$ORCH/workers/agt-review-native-frontends
+# From assigned review worktree:
+git archive tl/agt-m2-checkout-native-ordinary | tar -x -C "$W/checkout"
+git archive tl/agt-m2-sheet-native-ordinary | tar -x -C "$W/sheet"
+```
+
+From `$W/checkout`, exact combined rerun of the worker'"'s 136- and 290-test local lanes:
+
+"'```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_native_checkout.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_clip_trim_provider.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_media_verbs.py tests/sdk/test_timeline_param_values.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_sheet.py
+```
+
+**426 passed in 33.19s, exit 0.** Also read original worker log entries for 136 passed in 16.94s and 290 passed in 19.43s.
+
+From `$W/sheet`, exact rerun of its reported local lane:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sheet_native.py tests/packs/timeline/test_cli_native_sheet.py tests/editing_conformance/test_native_sheet_current.py tests/editing_conformance/test_native_sheet_ordinary.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_native.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/test_artifact_manifest.py tests/test_cli_surface_conformance.py
+```
+
+**500 passed in 44.79s, exit 0.** Original worker report'"'s 500/47.25s is corroborated by the rerun.
+
+Final external adversarial tests, from their corresponding branch archive directories:
+
+"'```sh
+# Checkout:
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -c pyproject.toml "$W/notes/test_review_checkout.py"
+# Sheet:
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -c pyproject.toml "$W/notes/test_review_sheet.py"
+```
+
+Each reports **1 failed, 1 passed, 1 warning in 0.99s**. Positive controls pass; the intended expected behavior is left failing, not rewritten as refusal. Output is retained in `checkout-adversarial.log` and `sheet-adversarial.log` beside this report. The executed logging wrappers redirected pytest output to those files and ended with `cat`, so their shell exit was 0; these are explicitly failed pytest runs, not green checks. The warning is an unregistered integration marker imported through a helper with the external-test configuration; no integration tests ran in these probes.
+
+Preliminary probes, before adding controls/accepted-state assertions: checkout **1 failed in 1.06s** (preview x=600 instead of 100, using `_allow_new=True`); sheet **2 failed in 1.05s** (starts 1e-6 and 1e16). Both emitted the same marker warning. The final checkout probe removes `_allow_new=True` and confirms the wrong value after acceptance, making the finding independent of that escape hatch.
+
+## Prior central evidence verified, not rerun
+
+Verified summary/log.txt, exact command and source tree for each final result:
+
+```sh
+$ORCH/bin/request-test agt-m2-checkout-native-ordinary identity-pin94114269-integration --files tests/editing_conformance/test_commit_runtime_native_checkout.py
+$ORCH/bin/wait-test agt-m2-checkout-native-ordinary-identity-pin94114269-integration-1020103805-12999
+```
+
+**6 passed in 21.81s, exit 0**: three attached-checkout cases plus three existing identity cases. Tree `ed4a64b5364294ebb297f681791644eff670869d` equals the reviewed checkout tip'"'s tree. Actual suite command:
+
+"'```sh
+test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_native_checkout.py
+```
+
+```sh
+$ORCH/bin/request-test agt-m2-sheet-native-ordinary identity-pin94114269-integration --files '"'tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py'
+"'$ORCH/bin/wait-test agt-m2-sheet-native-ordinary-identity-pin94114269-integration-1020104801-32667 0
+```
+
+**12 passed in 29.27s, exit 0**: nine sheet cases plus three identity neighbors. Tree `c100d227938679b3aa1d4954946f30b2640f7d7f` equals the reviewed sheet tip'"'s tree. Actual suite command:
+
+"'```sh
+test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py
+```
+
+These checks qualify the pinned Runtime, not moving Runtime integration. Reviewed worker reports disclose initial health-digest mismatches, fixture refinements and failed attempts. No full/typecheck/make-check green inferred. The final sheet historical fixture uses old-main real publication APIs plus the production schema migration; it does not SQL-seed history or bypass admission. Rational-object FPS is direct-conformance evidence, not this historical HTTP fixture.
+
+## Composition and remaining requirements
+
+No commit-local product/test paths overlap between these two slices. Their logical overlap is the durable Session/outbox, clip recipe guards and raw bundle shape. Sheet'"'s later parent includes automatic-placement/fixture-trim updates; do not overwrite these with checkout's older tree. Preserve additive "'`commit_many(base=...)` and `_stage(base=...)` while keeping AttachedCheckout'"'s existing call compatible. The independent passing lanes do not prove combined behavior.
+
+Recommended after corrections: composed targeted tests for sheet A lost ACK → attached B → sheet exact retry → B fresh key at HA, with disjoint/relevant C; reverse frontend order, retaining original commands and visible refusal where pending sheet export is unsupported. Exercise attached stale handles after external sheet writes/acknowledgement; reattach should be explicit, not guard recapture. This review does not merge branches or claim this composed lane passed.
+
+Remaining grammar and writers must stay until positively migrated: detached Checkout.open/load/draft save/publish, legacy non-native CLI apply, legacy sheet merge/find_version/save, named cuts/notes/holds, narration/gaps, layer/track structure and ordering, relational moments/formulas/sequences, sound/look/fades/music/film policy, slip, selected-media/pack input families, occurrence trim, and unsupported fragment forms. Idle CLI reopening refreshes its base and therefore visibly refuses an old sheet even for disjoint changes; that documented limitation is not first-apply rebase coverage or AG03 completion.
+
+No PLAN decision was changed or relitigated. Routine review choices: exact branch archives for independent execution; generated-transport probes for newly found adapter bugs without unauthorized socket work; no product corrections. Task is complete, not blocked. Orchestrator decides fix/merge sequencing. Worktree remains unchanged; temporary source archives are removed after verification, with reproduction scripts and logs retained under this worker folder. No build output/temp file remains in the assigned repository.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/commit-msg <<'EOF'
+docs(timeline): review native checkout and sheet frontends
+
+Record independent branch verdicts, targeted validation, adversarial findings
+and the remaining shared-session composition gate outside the product tree.
+EOF" in /home/user/work/wt/agt-review-native-frontends
+ succeeded in 201ms:
+exec
+/bin/bash -lc "nl -ba astrid/sdk/timeline/model.py | sed -n '170,184p'; git status --short; git diff --check; git rev-parse tl/agt-m2-checkout-native-ordinary tl/agt-m2-sheet-native-ordinary; du -sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/{checkout,sheet}; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-frontends.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/report.md" in /home/user/work/wt/agt-review-native-frontends
+ succeeded in 1509ms:
+   170	
+   171	    @property
+   172	    def track(self) -> str:
+   173	        return str(self.data.get("track") or "")
+   174	
+   175	    @property
+   176	    def params(self) -> dict[str, Any]:
+   177	        """The element params (live: changes write through). A clip without params reads as ``{}``
+   178	        and is not given an empty one just by looking (that would read as an edit)."""
+   179	        value = self.data.get("params")
+   180	        if isinstance(value, dict):
+   181	            return value
+   182	        return _LazyParams(self.data)
+   183	
+   184	    @property
+3aeb519c05d4e3581dae782d717d62fa225e125f
+ede468a835065c284ea4c11e56a8846a5389c159
+111M	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/checkout
+111M	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/sheet
+-rw-r--r-- 1 root root  5078 Oct 20 10:58 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-frontends.md
+-rw-r--r-- 1 root root 13268 Oct 20 10:59 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/report.md
+
+exec
+/bin/bash -lc "nl -ba /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/checkout/astrid/sdk/timeline/model.py | sed -n '152,168p'; python3 - <<'PY'
+from pathlib import Path
+import shutil
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = orch / 'workers/agt-review-native-frontends'
+for name in ('checkout', 'sheet'):
+    shutil.rmtree(worker / name)
+PY" in /home/user/work/wt/agt-review-native-frontends
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+for path in (orch / 'design/agent-review-native-frontends.md', orch / 'workers/agt-review-native-frontends/notes/report.md'):
+    path.write_text(path.read_text().replace('model.py:177', 'model.py:164'))
+report = orch / 'workers/agt-review-native-frontends/notes/report.md'
+with report.open('a') as handle:
+    handle.write('\\nFinal repository checks: "'`git status --short` produced no entries; `git diff --check` exited 0. Branch tips still matched the reviewed SHAs.'"\\n')
+PY" in /home/user/work/wt/agt-review-native-frontends
+ succeeded in 232ms:
+ succeeded in 20701ms:
+   152	    def __init__(self, tl: "Checkout", shot_id: str, data: dict[str, Any]):  # noqa: F821
+   153	        self._tl = tl
+   154	        self.shot_id = shot_id
+   155	        self.data = data
+   156	
+   157	    # identity -----------------------------------------------------------
+   158	    @property
+   159	    def id(self) -> str:
+   160	        return str(self.data.get("id") or "")
+   161	
+   162	    @property
+   163	    def element(self) -> str:
+   164	        return str(self.data.get("clipType") or "media")
+   165	
+   166	    @property
+   167	    def asset(self) -> str | None:
+   168	        value = self.data.get("asset")
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends')
+assert not (worker / 'checkout').exists()
+assert not (worker / 'sheet').exists()
+assert (worker / 'commit-msg').is_file()
+assert (worker / 'notes/report.md').is_file()
+(worker / 'DONE').touch()
+print('Review reports, commit-msg and DONE written; temporary archives removed.')
+PY" in /home/user/work/wt/agt-review-native-frontends
+ succeeded in 121ms:
+Review reports, commit-msg and DONE written; temporary archives removed.
+
+codex
+Both verdicts: **REQUEST CHANGES**.
+
+- Checkout: raw `clip_type` causes incorrect parameter units in the accepted document.
+- Sheet: exported scientific-notation starts block ordinary hold edits.
+
+Targeted reruns: **426 passed** and **500 passed**. Each adversarial probe produced **1 pass / 1 failure**. Prior central **6/12 passes** verified; mixed-frontend composition remains untested. No product changes or full suites.
+
+[Detailed report and exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/report.md). Flat verdict report, commit-msg and DONE written. Recommend corrections, then composed retry qualification.
+tokens used
+138,328
+Both verdicts: **REQUEST CHANGES**.
+
+- Checkout: raw `clip_type` causes incorrect parameter units in the accepted document.
+- Sheet: exported scientific-notation starts block ordinary hold edits.
+
+Targeted reruns: **426 passed** and **500 passed**. Each adversarial probe produced **1 pass / 1 failure**. Prior central **6/12 passes** verified; mixed-frontend composition remains untested. No product changes or full suites.
+
+[Detailed report and exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends/notes/report.md). Flat verdict report, commit-msg and DONE written. Recommend corrections, then composed retry qualification.

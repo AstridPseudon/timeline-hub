@@ -1,0 +1,9 @@
+name=agt-review-init-opaque-inverse-real
+repo=agent
+base=tl/agt-m2-init-opaque-disjoint-inverse
+base_sha=4296a709
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-init-opaque-inverse-real
+started=2026-10-20T16:06:37Z

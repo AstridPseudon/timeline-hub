@@ -1,0 +1,400 @@
++    assert global_session.outbox.path.read_bytes() == global_bytes
++    assert len(runtime.calls) == calls and runtime.calls[-1] == first
++    loaded = attach(runtime)
++    with pytest.raises(TimelineEditError, match='immutable'):
++        loaded.publish('Changed reason')
++    with pytest.raises(TimelineEditError, match='immutable'):
++        loaded.publish(idempotency_key='changed-key')
++    assert path.read_bytes() == durable
++    accepted = loaded.publish()
++    assert runtime.calls[-1][:2] == first[:2]
++    assert accepted['receipt'] == first[3]['receipt']
++    assert accepted['message'] == 'Opening' and len(runtime.history()['items']) == count
++    assert global_session.outbox.path.read_bytes() == global_bytes
++    assert json.loads(path.read_bytes())['pending'] == []
++
++
++def test_http_ambiguous_owner_and_mixed_edits_keep_original_draft(
++    tmp_path, film, real_runtime,
++):
++    fixture, parent, _ = film
++    daemon = real_runtime(fixture.duplicate_root, support_root=tmp_path / 'support', authoring_profile='astrid')
++    client = m1.open_client(daemon)
++    session = TimelineSession.open(fixture.project_id, fixture.timeline_id,
++                                  client=client, outbox_path=tmp_path / 'owned.json')
++    original = session._bundle(json.loads(session.outbox.path.read_bytes()))
++    owner = 'occurrence:' + parent['occurrences'][0]['occurrence_id']
++    identity = State(original).collection(owner, 'clip')[0]['id']
++    # The same display ID belongs to two different owners in a real closure.
++    session.commit_many([
++        ingress.command('track.create', 'parent', {'row': {'id': 'titles', 'kind': 'visual'}}),
++        ingress.command('clip.add', 'parent', {'row': {'id': identity, 'clipType': 'am-type',
++            'track': 'titles', 'at': 0, 'hold': 1, 'params': {'text': 'Parent'}}}),
++    ])
++    tl = Checkout.attach(session)
++    durable, draft = session.outbox.path.read_bytes(), copy.deepcopy(tl.bundle)
++    with pytest.raises(TimelineEditError, match='one exact clip'):
++        tl.clip(identity).on(2)
++    assert session.outbox.path.read_bytes() == durable and tl.bundle == draft
++    ref = 'parent/clip:' + identity
++    tl.clip(ref).on(2)
++    tl.clip(ref).set(text='Local mixed edit')
++    durable, draft = tl.session.outbox.path.read_bytes(), copy.deepcopy(tl.bundle)
++    head = copy.deepcopy(m1.history(client, fixture)['head'])
++    with pytest.raises(TimelineEditError, match='held'):
++        tl.publish('Mixed')
++    assert tl.session.outbox.path.read_bytes() == durable and tl.bundle == draft
++    assert m1.history(client, fixture)['head'] == head
+diff --git a/tests/sdk/test_timeline_owned_move_publish.py b/tests/sdk/test_timeline_owned_move_publish.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..dd4d0742ce15eb2ab457508e6cac571cfb8a4a01
+--- /dev/null
++++ b/tests/sdk/test_timeline_owned_move_publish.py
+@@ -0,0 +1,150 @@
++"""Explicitly attached draft publication never discovers another outbox."""
++from __future__ import annotations
++
++import copy
++import json
++from types import SimpleNamespace
++
++import pytest
++
++from astrid.core.timeline.authoring_bundle import open_authoring_bundle
++from astrid.sdk.timeline import commands, store
++from astrid.sdk.timeline._command_state import State
++from astrid.sdk.timeline._common import TimelineEditError
++from astrid.sdk.timeline.sync import TimelineSession
++from astrid.sdk.timeline_checkout import Checkout
++from astrid.sdk.workspace_client import WorkspaceClientError
++from tests.editing_conformance.test_recipe_clip_scalar_fields import app_closure
++from tests.sdk.test_timeline_sync import connected, open_session  # noqa: F401
++
++
++def state(connected):
++    return json.loads(connected[2].read_bytes())
++
++
++def test_parent_publish_rebases_original_capture_reloads_and_undoes(connected):
++    client, generated, _ = connected
++    tl = Checkout.attach(open_session(connected))
++    original = copy.deepcopy(tl.clip('a').data)
++    generated.bundles['peer'] = copy.deepcopy(generated.bundles['r0'])
++    State(generated.bundles['peer']).entity('parent/track:picture')['label'] = 'Peer'
++    generated.head = {'revision_id': 'peer', 'publication_id': 'peer-publication'}
++    assert tl.clip('a').on(2).start == 2
++    captured = state(connected)['pending']
++    accepted = tl.publish('Make room for the opening', idempotency_key='owned-move')
++    body = json.loads(generated.calls[-1][0])
++    assert body['commands'] == captured
++    assert body['base_revision_id'] == 'r0' and body['base_publication_id'] == 'pub0'
++    assert body['rationale'] == accepted['message'] == 'Make room for the opening'
++    assert accepted['receipt']['result']['status'] == 'rebased'
++    assert accepted['idempotency_key'] == 'owned-move'
++    loaded = Checkout.attach(open_session(connected))
++    assert loaded.clip('a').start == 2
++    assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer'
++    loaded.undo([accepted['receipt']['receipt_id']])
++    assert loaded.clip('a').data == original
++    assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer'
++    assert client.reads
++
++
++def test_parent_publish_restart_keeps_exact_request_key_and_rationale(connected, monkeypatch):
++    _, generated, _ = connected
++    tl = Checkout.attach(open_session(connected))
++    tl.clip('a').on(2)
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        tl.publish('Opening', idempotency_key='original')
++    durable = connected[2].read_bytes()
++    flight = state(connected)['flight']
++    loaded = Checkout.attach(open_session(connected))
++    with pytest.raises(TimelineEditError, match='immutable'):
++        loaded.publish('Changed reason')
++    with pytest.raises(TimelineEditError, match='immutable'):
++        loaded.publish(idempotency_key='replacement')
++    assert connected[2].read_bytes() == durable
++
++    def no_capture(*args):
++        pytest.fail('publish retry attempted to recapture intent')
++
++    monkeypatch.setattr(commands, 'execute', no_capture)
++    accepted = loaded.publish()
++    assert generated.calls[-1] == generated.calls[-2] == (flight['body'].encode(), 'original')
++    assert accepted['message'] == 'Opening'
++    assert loaded.clip('a').start == 2
++    assert len(generated.accepted) == 1
++    assert state(connected)['pending'] == [] and state(connected)['flight'] is None
++
++
++def test_unrelated_and_detached_publish_never_consume_global_pending_or_flight(connected, monkeypatch):
++    client, generated, path = connected
++    # A default session represents an independent CLI/session outbox.
++    from astrid.sdk import storage_root
++
++    monkeypatch.setattr(storage_root, 'resolve_runtime_data_root', lambda: path.parent)
++    global_session = TimelineSession.open('p', 't', client=client)
++    generated.path = global_session.outbox.path
++    global_session.queue_move('parent/clip:a', 3)
++    unrelated = Checkout.attach(open_session(connected))
++    detached = Checkout.open('p', 't', revision_id='r0', client=client)
++    monkeypatch.setattr(detached, '_sync_film_length', lambda: [])
++    monkeypatch.setattr(detached, '_check_core', lambda: SimpleNamespace(valid=True))
++
++    def held_candidate(*args, **kwargs):
++        raise TimelineEditError('detached candidate retained')
++
++    monkeypatch.setattr(store, 'publish_bundle', held_candidate)
++    for in_flight in (False, True):
++        if in_flight:
++            generated.lose_ack = True
++            with pytest.raises(WorkspaceClientError):
++                global_session.flush(idempotency_key='cli-flight')
++        before, calls = global_session.outbox.path.read_bytes(), list(generated.calls)
++        with pytest.raises(TimelineEditError, match='held'):
++            unrelated.publish()
++        with pytest.raises(TimelineEditError, match='held'):
++            Checkout.attach(global_session).publish()
++        with pytest.raises(TimelineEditError, match='detached candidate retained'):
++            detached.publish(client=client)
++        assert global_session.outbox.path.read_bytes() == before
++        assert generated.calls == calls
++
++
++def test_mixed_and_unqueued_edits_are_held_without_consuming_draft(connected, monkeypatch):
++    tl = Checkout.attach(open_session(connected))
++    tl.clip('a').on(2)
++    tl.clip('b').set(text='Still local')
++    before, draft = connected[2].read_bytes(), copy.deepcopy(tl.bundle)
++    with pytest.raises(TimelineEditError, match='held'):
++        tl.publish('Mixed')
++    assert connected[2].read_bytes() == before and tl.bundle == draft
++    assert connected[1].calls == []
++
++    # A second writer arriving after the preview check is fenced under the
++    # same lock that seals the flight, before any request is written or sent.
++    other = Checkout.attach(open_session(connected))
++    monkeypatch.setattr(tl, '_unchanged_preview', lambda: other.clip('b').on(4))
++    with pytest.raises(TimelineEditError, match='basis changed'):
++        tl.publish()
++    assert state(connected)['flight'] is None and connected[1].calls == []
++
++
++def test_ambiguous_owner_and_occurrence_publish_refuse_with_draft_intact(connected):
++    parent, shots, internals = app_closure()
++    parent.update(project_id='p', timeline_id='t')
++    for image in [*shots, *internals]:
++        image['project_id'] = 'p'
++    bundle = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
++    for owner in ('parent', 'occurrence:f2-occurrence', 'occurrence:shared-sibling'):
++        State(bundle).collection(owner, 'clip')[0]['id'] = 'same'
++    connected[1].bundles['r0'] = bundle
++    tl = Checkout.attach(open_session(connected))
++    before, draft = connected[2].read_bytes(), copy.deepcopy(tl.bundle)
++    with pytest.raises(TimelineEditError, match='one exact clip'):
++        tl.clip('same').on(1)
++    assert connected[2].read_bytes() == before and tl.bundle == draft
++    tl.clip('occurrence:f2-occurrence/clip:same').on(1)
++    before, draft = connected[2].read_bytes(), copy.deepcopy(tl.bundle)
++    with pytest.raises(TimelineEditError, match='held'):
++        tl.publish('Occurrence is outside this bounded publisher')
++    assert connected[2].read_bytes() == before and tl.bundle == draft
++    assert connected[1].calls == []
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_owned_move_publish.py tests/sdk/test_timeline_native_checkout.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_checkout_publication_retry.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_transaction.py' in /home/user/work/wt/agt-m2-wc7-owned-move-outbox
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest --collect-only -q -p no:cacheprovider -m integration tests/editing_conformance/test_owned_move_publish_runtime.py' in /home/user/work/wt/agt-m2-wc7-owned-move-outbox
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_checkout.py astrid/sdk/timeline/sync.py --output-format concise && git diff --check' in /home/user/work/wt/agt-m2-wc7-owned-move-outbox
+ succeeded in 478ms:
+All checks passed!
+
+ succeeded in 5592ms:
+tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_move_publish_disjoint_rebase_reload_undo
+tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_lost_ack_restart_exact_retry_and_unrelated_global_nonconsumption
+tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_ambiguous_owner_and_mixed_edits_keep_original_draft
+
+3 tests collected in 1.51s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib
+import pathlib
+import subprocess
+
+root = pathlib.Path.cwd()
+entries = {}
+for row in subprocess.check_output(['git', 'ls-tree', '-r', '-z', 'HEAD']).split(b'\\0'):
+    if row:
+        metadata, path = row.split(b'\\t', 1)
+        mode, kind, oid = metadata.split()
+        entries[path] = (mode, oid)
+
+def tree_id(rows):
+    tree = {}
+    for path, value in rows.items():
+        node = tree
+        parts = path.split(b'/')
+        for part in parts[:-1]:
+            node = node.setdefault(part, {})
+        node[parts[-1]] = value
+    def digest(node):
+        chunks = []
+        for name, value in sorted(node.items(), key=lambda item: item[0] + (b'/' if isinstance(item[1], dict) else b'')):
+            mode, oid = (b'40000', digest(value)) if isinstance(value, dict) else value
+            chunks.append(mode + b' ' + name + b'\\0' + bytes.fromhex(oid.decode()))
+        payload = b''.join(chunks)
+        return hashlib.sha1(b'tree ' + str(len(payload)).encode() + b'\\0' + payload).hexdigest().encode()
+    return digest(tree).decode()
+
+assert tree_id(entries) == subprocess.check_output(['git', 'rev-parse', 'HEAD"'^{tree}'"'], text=True).strip()
+changed = subprocess.check_output(['git', 'diff', '--name-only', '-z', 'HEAD']).split(b'\\0')
+changed += subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard', '-z']).split(b'\\0')
+for path in set(changed) - {b''}:
+    file = root / path.decode()
+    payload = file.read_bytes()
+    oid = hashlib.sha1(b'blob ' + str(len(payload)).encode() + b'\\0' + payload).hexdigest().encode()
+    entries[path] = (entries.get(path, (b'100644', None))[0], oid)
+print('Base commit:', subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip())
+print('Base tree:', subprocess.check_output(['git', 'rev-parse', 'HEAD"'^{tree}'"'], text=True).strip())
+print('Result tree (computed without writing git objects/index):', tree_id(entries))
+PY" in /home/user/work/wt/agt-m2-wc7-owned-move-outbox
+ succeeded in 871ms:
+Base commit: f82da322077ed0ac0c58966a0815b5ffc02fc0cc
+Base tree: c585e729962883c25efd04742b750d2ecc1e1b6b
+Result tree (computed without writing git objects/index): 0c68c122143ff8d75337bc40295bcbe836559cba
+
+ succeeded in 33913ms:
+........................................................................ [ 36%]
+........................................................................ [ 72%]
+.......................................................                  [100%]
+=============================== warnings summary ===============================
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+  /home/user/work/wt/agt-m2-wc7-owned-move-outbox/tests/sdk/test_timeline_checkout.py:1576: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    assert set(image.convert("RGB").getdata()) == {colors[n]}
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+199 passed, 17 deselected, 4 warnings in 28.50s
+
+exec
+/bin/bash -lc 'git diff --check && git status --short --untracked-files=all' in /home/user/work/wt/agt-m2-wc7-owned-move-outbox
+ succeeded in 876ms:
+ M astrid/sdk/timeline/checkout.py
+ M astrid/sdk/timeline/native_checkout.py
+ M astrid/sdk/timeline/sync.py
+?? tests/editing_conformance/test_owned_move_publish_runtime.py
+?? tests/sdk/test_timeline_owned_move_publish.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-owned-move-outbox')
+worker.mkdir(parents=True, exist_ok=True)
+message = '''feat(sdk): publish owned parent moves from attached checkouts
+
+Accept one captured parent clip move through the existing attached checkout
+publish method only when the caller explicitly selects its draft outbox.
+Seal rationale and the exact request under the outbox lock, retaining original
+capture guards and retry identity across acknowledgement loss and restart.
+
+Leave detached publication and element setters unchanged. Cover stale-base
+capture/rebase, exact retry, unrelated outbox isolation, and held mixed or
+ambiguous edits; add manager-run generated-client HTTP qualification cases.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+report = '''# WC7 bounded owned move publication
+
+Implemented the permitted explicit native consumer boundary: "'`Checkout.attach(TimelineSession.open(..., outbox_path=dedicated_draft_path)).clip("parent/clip:ID").on(number)` followed by the existing `publish(message, idempotency_key=...)` method. Restart recovery explicitly reselects the same outbox path and calls `publish()`; it never discovers a global outbox through a detached Checkout.
+
+The captured command, original revision/publication guards, rationale, and exact flight/key use existing TimelineSession/Outbox fields. Rationale and request are sealed in one atomic outbox write. A private preparation callback checks the attached basis under that same lock, fencing a second writer before sending. Lost-ACK retries reject changed keys/reasons, retain original bytes, and do not recapture commands. Native acceptance returns the actual receipt and persisted rationale. No schema, pin, DTO, persistent format, journal, or new public method was added.
+
+Decision/boundary: transparent `Checkout.open/load/draft` migration is not implemented. Detached lookups expose shot IDs; flattening can move parent clips into a synthetic shot and collapse occurrence ownership. Existing detached files also do not bind a native outbox/capture/key. Inferring an owner or adopting a pending global request would repeat the rejected candidates'"' defects. Explicit path selection is the caller's ownership/recovery declaration; callers must allocate a dedicated path per logical draft. Reusing that path intentionally reopens that draft. Default sessions, no-edit unrelated outboxes, non-parent moves, multi-command/mixed edits, force/restructure, and unqueued changes remain held by the bounded publisher. Existing native "'`flush()` behavior remains available. Detached publish'"'s journal/reason/evidence handling and main element "'`.set()` semantics were left untouched. No old assertions were edited, skipped, or weakened.
+
+## Exact source
+
+- Worktree: `/home/user/work/wt/agt-m2-wc7-owned-move-outbox`
+- Base HEAD: `f82da322077ed0ac0c58966a0815b5ffc02fc0cc` (includes `78ff61d5` plus the already-present canonical source-image port).
+- Base tree: `c585e729962883c25efd04742b750d2ecc1e1b6b`.
+- Result tree: `0c68c122143ff8d75337bc40295bcbe836559cba`, computed from HEAD plus all changed/new files without writing git objects or index.
+- Product delta: 46 insertions / 2 deletions in checkout.py (docstring), native_checkout.py, sync.py. New tests: five unit cases and three HTTP cases in two direct test files.
+
+## Commands and results
+
+From the worktree:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_owned_move_publish.py tests/sdk/test_timeline_native_checkout.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_checkout_publication_retry.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_transaction.py
+```
+
+Final source: **199 passed, 17 deselected, 4 existing Pillow deprecation warnings, 28.50s**. Deselections are the repository'"'s standard non-unit lane filter. Earlier narrower runs: 27 passed, then 90 passed; the final command covers both. No full suite or test-service request was made.
+
+"'```sh
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_checkout.py astrid/sdk/timeline/sync.py --output-format concise
+git diff --check
+```
+
+Both passed. Checking checkout.py also reports its pre-existing I001 import-order diagnostic; `git show HEAD:astrid/sdk/timeline/checkout.py | /home/user/work/venv-agent/bin/python -m ruff check --no-cache --stdin-filename astrid/sdk/timeline/checkout.py -` confirms the same baseline diagnostic. Its only change is the attach docstring.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest --collect-only -q -p no:cacheprovider -m integration tests/editing_conformance/test_owned_move_publish_runtime.py
+```
+
+**3 tests collected, exit 0**. Collection only is not HTTP qualification.
+
+## Manager next step / unverified
+
+Run these exact nodes on this source with the manager'"'s qualified public013/current Runtime environment, through the central service. No pin changes are proposed:
+
+- "'`tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_move_publish_disjoint_rebase_reload_undo`
+- `tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_lost_ack_restart_exact_retry_and_unrelated_global_nonconsumption`
+- `tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_ambiguous_owner_and_mixed_edits_keep_original_draft`
+
+The first two reuse the unmodified generated client'"'s injected real HTTP-handler transport and real durable provider; the third uses the existing live Runtime fixture. They have NOT been executed by this worker. Broad detached consumer migration and occurrence publication remain outside this bounded implementation. No implementation blocker; HTTP qualification is outstanding by instruction. Shared dependencies were not modified. No build output is left in the worktree. Commit messages are in commit-msg and commit-msg.txt for the harness; no git mutation was performed.
+'''
+(worker / 'REPORT.md').write_text(report)
+shutil.rmtree('/tmp/agt-m2-wc7-owned-move-outbox-ruff', ignore_errors=True)
+print(worker / 'REPORT.md')
+PY" in /home/user/work/wt/agt-m2-wc7-owned-move-outbox
+ succeeded in 145ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-owned-move-outbox/REPORT.md
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-owned-move-outbox')
+assert (worker / 'commit-msg').is_file() and (worker / 'REPORT.md').is_file()
+(worker / 'DONE').touch()
+print('DONE')
+PY" in /home/user/work/wt/agt-m2-wc7-owned-move-outbox
+ succeeded in 161ms:
+DONE
+
+codex
+Implemented bounded attached-checkout parent move publication with explicit outbox ownership, persisted rationale, original guards, and exact lost-ACK retry. Detached publication remains unchanged because its handles cannot safely establish occurrence ownership.
+
+- Targeted tests: **199 passed, 17 deselected**.
+- Ruff on changed implementation modules and `git diff --check`: passed.
+- Three HTTP cases collected; execution remains for MANAGER with public013/current source.
+- Result tree: `0c68c122143ff8d75337bc40295bcbe836559cba`.
+- Wrote `commit-msg`, `commit-msg.txt`, and `DONE`.
+
+[Report with exact commands, HTTP nodes, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-owned-move-outbox/REPORT.md).
+tokens used
+139,667
+Implemented bounded attached-checkout parent move publication with explicit outbox ownership, persisted rationale, original guards, and exact lost-ACK retry. Detached publication remains unchanged because its handles cannot safely establish occurrence ownership.
+
+- Targeted tests: **199 passed, 17 deselected**.
+- Ruff on changed implementation modules and `git diff --check`: passed.
+- Three HTTP cases collected; execution remains for MANAGER with public013/current source.
+- Result tree: `0c68c122143ff8d75337bc40295bcbe836559cba`.
+- Wrote `commit-msg`, `commit-msg.txt`, and `DONE`.
+
+[Report with exact commands, HTTP nodes, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-owned-move-outbox/REPORT.md).

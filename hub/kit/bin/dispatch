@@ -44,6 +44,9 @@ TD=/tmp/w-$(echo -n $N | md5sum | cut -c1-10); mkdir -p $TD; echo $TD > $D/tmpdi
   # commit becomes a true two-parent merge (HEAD + that sha) with the worker's resolved tree. Sandboxed workers cannot write .git themselves.
   MP=; [ -s $D/merge-parent ] && MP=$(tr -d ' \n' < $D/merge-parent); if [ -n "$MP" ] && git -C $WT rev-parse -q --verify "$MP^{commit}" >/dev/null; then git -C $WT rev-parse "$MP^{commit}" > "$(git -C $WT rev-parse --path-format=absolute --git-path MERGE_HEAD)"; echo "merge-parent $MP recorded" >> $D/commit.log; fi
   if [ -n "$(git -C $WT status --porcelain)" ] || [ -n "$MP" ]; then git -C $WT add -A && { [ -s $D/commit-msg ] && git -C $WT commit -q -F $D/commit-msg || git -C $WT commit -q -m "tl/$N: $(head -1 $D/brief.md | cut -c1-70)"; } >> $D/commit.log 2>&1; fi
+  # Codex usage limit -> machine-wide Claude fallback (Luna->Haiku, Sol->Sonnet, Astra->Opus), lifted automatically by the dispatcher's probe
+  if [[ $M != claude-* ]] && [ "$(cat $D/exit 2>/dev/null)" != 0 ] && tail -60 $D/log.txt 2>/dev/null | grep -qiE "usage limit|hit your usage|usage_limit|quota exceeded|insufficient_quota"; then
+    [ -f $O/CODEX_UNAVAILABLE ] || echo "$(date -u +%FT%TZ) Codex usage limit seen in worker $N; automatic Claude fallback (MODELS.md). The dispatcher probes Codex every 20 min and lifts this when it works." > $O/CODEX_UNAVAILABLE; fi
   rm -f $D/running; date -u +%FT%TZ > $D/ended; [ -f $D/KEEP ] || rm -rf "$TD"
   # recycle-on-finish (owner disk rule 2026-10-20): drop a finished, clean worktree; the branch tl/$N and the reports stay, managers review by branch, test-run recreates it if needed. Skip KEEP/leased.
   [ -f $D/KEEP ] || grep -lqsw -- "$N" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null || { [ -z "$(git -C $WT status --porcelain 2>/dev/null | head -1)" ] && git -C /home/user/work/$REPO worktree remove $WT 2>/dev/null && touch $D/recycled; } ) >/dev/null 2>&1 &

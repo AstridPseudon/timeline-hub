@@ -1,0 +1,9 @@
+name=agt-review-accounted-short-attempt
+repo=agent
+base=tl/vw-m3-accounted-short-attempt-concrete-patch
+base_sha=973c082e
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-accounted-short-attempt
+started=2026-10-20T19:44:27Z

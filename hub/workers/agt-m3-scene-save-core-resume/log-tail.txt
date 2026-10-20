@@ -1,0 +1,400 @@
+
+import pytest
+
+from astrid.core.rendering import remotion_runtime
+from astrid.core.rendering.node_pin import resolve_pinned_node
+from astrid.core.timeline import scene_answers
+
+ROOT = Path(__file__).resolve().parents[3]
+ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz"
+SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+
+
+@pytest.fixture
+def installed(tmp_path, monkeypatch):
+    # Harness loader overrides are inadmissible; use the clean host environment.
+    for key in ("PYTHONPYCACHEPREFIX", "NODE_OPTIONS", "NODE_PATH"):
+        monkeypatch.delenv(key, raising=False)
+    toolchain = resolve_pinned_node(
+        ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+    assert toolchain.ok, toolchain.problem
+    node = str(toolchain.path)
+    assert toolchain.version == "v20.19.4"
+    assert hashlib.sha256(ARTIFACT.read_bytes()).hexdigest() == SHA256
+    package = tmp_path / "node_modules/@banodoco/timeline-composition"
+    package.parent.mkdir(parents=True)
+    with tarfile.open(ARTIFACT) as archive:
+        archive.extractall(tmp_path, filter="data")
+    (tmp_path / "package").rename(package)
+    (tmp_path / "package.json").write_text('{"type":"module"}')
+    shutil.copyfile(ROOT / "remotion/scene-query.mjs", tmp_path / "scene-query.mjs")
+
+    def hashes():
+        return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
+                for p in package.rglob("*") if p.is_file()}
+
+    before = hashes()
+    assert len(before) == 77
+    # Admission is tested separately. Only the status seam is replaced here;
+    # subprocess/import/preparation/query all execute the real installed artifact.
+    monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs:
+                        remotion_runtime.RemotionRuntimeStatus(
+                            True, tmp_path, node_executable=Path(node), node_version="v20.19.4"))
+    yield tmp_path, node, package
+    assert hashes() == before
+
+
+def scene(clips=None, transitions=None):
+    clips = clips if clips is not None else [
+        {"id": "exact:first", "at": 0, "hold": 1, "track": "plate", "clipType": "custom"},
+        {"id": "exact:second", "at": 1, "hold": 1, "track": "plate", "clipType": "custom"},
+    ]
+    return {"tracks": [{"track": {"id": "plate", "kind": "visual"}, "clips": clips,
+                        "transitions": transitions if transitions is not None else [None]}],
+            "assets": {"assets": {}}, "fps": 30, "width": 641, "height": 359}
+
+
+def canonical(project, node, payload, frames):
+    script = """
+import {prepareScene, querySceneFrame} from '@banodoco/timeline-composition/evaluation';
+import {readFileSync} from 'node:fs';
+const {scene: s, frames} = JSON.parse(readFileSync(0, 'utf8'));
+const prepared = prepareScene(s.tracks, s.assets, s.fps, s.width, s.height,
+  {roles: s.roles, elements: new Set(s.elements ?? [])});
+console.log(JSON.stringify(frames.map(frame => querySceneFrame(prepared, frame))));
+"""
+    return json.loads(subprocess.check_output(
+        [node, "--input-type=module", "-e", script], cwd=project, text=True,
+        input=json.dumps({"scene": payload, "frames": frames})))
+
+tests/packs/rendering/test_scene_answers.py:8:import subprocess
+tests/packs/rendering/test_scene_answers.py:16:from astrid.core.rendering.node_pin import resolve_pinned_node
+tests/packs/rendering/test_scene_answers.py:29:    toolchain = resolve_pinned_node(
+tests/packs/rendering/test_scene_answers.py:32:    node = str(toolchain.path)
+tests/packs/rendering/test_scene_answers.py:35:    package = tmp_path / "node_modules/@banodoco/timeline-composition"
+tests/packs/rendering/test_scene_answers.py:50:    # subprocess/import/preparation/query all execute the real installed artifact.
+tests/packs/rendering/test_scene_answers.py:53:                            True, tmp_path, node_executable=Path(node), node_version="v20.19.4"))
+tests/packs/rendering/test_scene_answers.py:54:    yield tmp_path, node, package
+tests/packs/rendering/test_scene_answers.py:68:def canonical(project, node, payload, frames):
+tests/packs/rendering/test_scene_answers.py:71:import {readFileSync} from 'node:fs';
+tests/packs/rendering/test_scene_answers.py:77:    return json.loads(subprocess.check_output(
+tests/packs/rendering/test_scene_answers.py:78:        [node, "--input-type=module", "-e", script], cwd=project, text=True,
+tests/packs/rendering/test_scene_answers.py:85:    project, node, _ = installed
+tests/packs/rendering/test_scene_answers.py:90:    assert answers == canonical(project, node, payload, frames)
+tests/packs/rendering/test_scene_answers.py:104:    project, node, _ = installed
+tests/packs/rendering/test_scene_answers.py:109:    assert answers == canonical(project, node, payload, frames)
+tests/packs/rendering/test_scene_answers.py:119:    project, node, _ = installed
+tests/packs/rendering/test_scene_answers.py:127:    run = subprocess.run
+tests/packs/rendering/test_scene_answers.py:133:    monkeypatch.setattr(scene_answers.subprocess, "run", capture)
+tests/packs/rendering/test_scene_answers.py:136:    monkeypatch.setattr(scene_answers.subprocess, "run", run)
+tests/packs/rendering/test_scene_answers.py:137:    assert answers == canonical(project, node, payload, [1, 0, 1])
+tests/packs/rendering/test_scene_answers.py:152:    assert answer["coverage"] == "UNKNOWN"
+tests/packs/rendering/test_scene_answers.py:155:def test_unknown_custom_modifier_and_unresolved_media_stay_unknown(installed):
+tests/packs/rendering/test_scene_answers.py:166:    assert answer["coverage"] == "UNKNOWN"
+tests/packs/rendering/test_scene_answers.py:167:    assert all(layer["visible"] == "unknown" for layer in answer["layers"])
+tests/packs/rendering/test_scene_answers.py:168:    assert all(layer["opaqueSupport"] == "unknown" for layer in answer["layers"])
+tests/packs/rendering/test_scene_answers.py:170:        "unknown-component-internals", "unknown-media-alpha", "modifier-admission-refused"}
+tests/packs/rendering/test_scene_answers.py:174:def test_public_package_failure_is_unavailable(installed, broken):
+tests/packs/rendering/test_scene_answers.py:178:    target = project / "node_modules/@banodoco/timeline-composition"
+tests/packs/rendering/test_scene_answers.py:192:                          True, project, node_executable=status.node_executable)):
+tests/packs/rendering/test_scene_answers.py:193:        with pytest.raises(scene_answers.SceneQueryUnavailable, match="unavailable"):
+tests/packs/rendering/test_scene_answers.py:203:def test_invalid_launch_validation_is_unavailable(installed, monkeypatch):
+tests/packs/rendering/test_scene_answers.py:204:    project, node, _ = installed
+tests/packs/rendering/test_scene_answers.py:208:    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", node)
+tests/packs/rendering/test_scene_answers.py:222:def test_unsupported_loader_override_is_unavailable(installed, monkeypatch):
+tests/packs/rendering/test_scene_answers.py:229:def test_missing_or_escaped_admitted_helper_is_unavailable(installed, tmp_path_factory, escape):
+tests/packs/rendering/test_scene_answers.py:242:def test_invalid_response_cardinality_or_frame_is_unavailable(installed, monkeypatch, response):
+tests/packs/rendering/test_scene_answers.py:243:    monkeypatch.setattr(scene_answers.subprocess, "run", lambda *args, **kwargs:
+tests/packs/rendering/test_scene_answers.py:250:def test_invalid_resolved_inputs_are_unavailable(installed, change):
+
+exec
+/bin/bash -lc "sed -n '140,204p' tests/packs/rendering/test_scene_answers.py && tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-save-core-resume/notes/targeted.log" in /home/user/work/wt/agt-m3-scene-save-core-resume
+ succeeded in 118ms:
+
+@pytest.mark.parametrize("clip_id", ["__proto__", "constructor", "toString"])
+@pytest.mark.parametrize("role", [None, "background"])
+def test_reserved_clip_ids_use_only_authored_role_overrides(installed, clip_id, role):
+    payload = scene(clips=[
+        {"id": clip_id, "track": "plate", "clipType": "custom", "at": 0, "hold": 1},
+    ], transitions=[])
+    if role is not None:
+        payload["roles"] = {clip_id: role}
+    answer = scene_answers.frames_at(payload, [0])[0]
+    assert answer["layers"][0]["clipId"] == clip_id
+    assert answer["layers"][0]["role"] == (role or "picture")
+    assert answer["coverage"] == "UNKNOWN"
+
+
+def test_unknown_custom_modifier_and_unresolved_media_stay_unknown(installed):
+    payload = scene(clips=[
+        {"id": "custom", "at": 0, "hold": 1, "clipType": "my-component",
+         "params": {"width": 641, "opaque": True}},
+        {"id": "missing", "at": 0, "hold": 1, "asset": "missing-media"},
+        {"id": "modifier", "at": 0, "hold": 1, "asset": "image",
+         "modifiers": [{"id": "m", "element": "custom-modifier", "params": {}}]},
+    ], transitions=[None, None])
+    payload["assets"]["assets"]["image"] = {
+        "file": "unverified.png", "type": "image", "resolution": "641x359", "opaque": True}
+    answer = scene_answers.frames_at(payload, [0])[0]
+    assert answer["coverage"] == "UNKNOWN"
+    assert all(layer["visible"] == "unknown" for layer in answer["layers"])
+    assert all(layer["opaqueSupport"] == "unknown" for layer in answer["layers"])
+    assert {finding["code"] for finding in answer["findings"]} >= {
+        "unknown-component-internals", "unknown-media-alpha", "modifier-admission-refused"}
+
+
+@pytest.mark.parametrize("broken", ["missing", "broken"])
+def test_public_package_failure_is_unavailable(installed, broken):
+    _, _, package = installed
+    # Use a separate copy so the immutable fixture itself remains unchanged.
+    project = package.parents[2] / broken
+    target = project / "node_modules/@banodoco/timeline-composition"
+    target.parent.mkdir(parents=True)
+    shutil.copytree(package, target)
+    shutil.copyfile(ROOT / "remotion/scene-query.mjs", project / "scene-query.mjs")
+    evaluation = target / "dist/evaluation.js"
+    if broken == "missing":
+        evaluation.unlink()
+    else:
+        evaluation.write_text("throw new Error('broken evaluation');")
+    status = scene_answers.remotion_runtime_status()
+    from unittest.mock import patch
+
+    with patch.object(scene_answers, "remotion_runtime_status", return_value=
+                      remotion_runtime.RemotionRuntimeStatus(
+                          True, project, node_executable=status.node_executable)):
+        with pytest.raises(scene_answers.SceneQueryUnavailable, match="unavailable"):
+            scene_answers.frames_at(scene(), [0])
+
+
+def test_invalid_runtime_context_never_becomes_empty_answer(tmp_path, monkeypatch):
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(tmp_path / "missing"))
+    with pytest.raises(scene_answers.SceneQueryUnavailable, match="project directory not found"):
+        scene_answers.frames_at({"tracks": []}, [0])
+
+
+def test_invalid_launch_validation_is_unavailable(installed, monkeypatch):
+    project, node, _ = installed
+........................................................................ [ 82%]
+........................................................................ [ 90%]
+.............
+ succeeded in 245757ms:
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_answers.py::test_reserved_clip_ids_use_only_authored_role_overrides tests/packs/rendering/test_scene_answers.py::test_unknown_custom_modifier_and_unresolved_media_stay_unknown tests/packs/rendering/test_scene_answers.py::test_public_package_failure_is_unavailable tests/packs/rendering/test_scene_answers.py::test_invalid_runtime_context_never_becomes_empty_answer' in /home/user/work/wt/agt-m3-scene-save-core-resume
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-scene-save-core-resume-commit-integration-1020133834-12522 1' in /home/user/work/wt/agt-m3-scene-save-core-resume
+ succeeded in 6474ms:
+..........                                                               [100%]
+10 passed in 3.53s
+
+exec
+/bin/bash -lc 'tail -14 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-save-core-resume/notes/targeted.log && git diff --check && git status --short' in /home/user/work/wt/agt-m3-scene-save-core-resume
+ succeeded in 308ms:
+........................................................................ [ 82%]
+........................................................................ [ 90%]
+........................................................................ [ 97%]
+......................                                                   [100%]
+=============================== warnings summary ===============================
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+  /home/user/work/wt/agt-m3-scene-save-core-resume/tests/sdk/test_timeline_checkout.py:1573: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    assert set(image.convert("RGB").getdata()) == {colors[n]}
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+958 passed, 26 deselected, 4 warnings in 244.24s (0:04:04)
+ M astrid/packs/timeline/cli.py
+ M astrid/sdk/timeline/check.py
+ M astrid/sdk/timeline/publish.py
+ M astrid/sdk/timeline/store.py
+ M astrid/sdk/timeline/transaction.py
+ M astrid/sdk/timeline_duplicate.py
+ M tests/packs/timeline/test_verbs_working_copy.py
+ M tests/sdk/test_media_transcript.py
+ M tests/sdk/test_timeline_checkout.py
+ M tests/sdk/test_timeline_checkout_facade.py
+ M tests/sdk/test_timeline_checkout_history_boundaries.py
+ M tests/sdk/test_timeline_persistence.py
+ M tests/sdk/test_timeline_publish_connection.py
+?? tests/sdk/test_scene_save_core.py
+
+codex
+The final local run passed: 958 tests, plus 27 working-copy caller tests and 10 tests for unknown/unavailable Scene answers against the immutable package in private test directories. The final-tree central renderer-off run is still finishing. I’ll then write the report and handoff; D09 remains held for Viewing’s seam and physical parity.
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-scene-save-core-resume-commit-integration-1020133834-12522/status && tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-scene-save-core-resume-commit-integration-1020133834-12522/log.txt && git diff --numstat -- astrid' in /home/user/work/wt/agt-m3-scene-save-core-resume
+ succeeded in 60ms:
+running
+.................1	1	astrid/packs/timeline/cli.py
+26	18	astrid/sdk/timeline/check.py
+1	1	astrid/sdk/timeline/publish.py
+1	1	astrid/sdk/timeline/store.py
+2	2	astrid/sdk/timeline/transaction.py
+2	2	astrid/sdk/timeline_duplicate.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+path = Path('.ruff_cache')
+if path.is_dir() and not path.is_symlink():
+    shutil.rmtree(path)
+print('Removed private Ruff cache; shared dependencies unchanged.')
+PY" in /home/user/work/wt/agt-m3-scene-save-core-resume
+ succeeded in 373ms:
+Removed private Ruff cache; shared dependencies unchanged.
+
+ exited 124 in 60208ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+base = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-save-core-resume')
+report = '''# Scene / save-core separation
+
+Completed candidate on starting Agent head "'`4ef1391c`; integration and harness commit pending. Product diff: **34 added / 26 removed lines (net +8), six files**. No git mutations, integration edits, shared dependency writes, renderer/Root-prep/cache edits, public API, DTO, SourceFactory, new validator or fallback source.
+
+`Checkout.check()` calls the existing implementation through `_check(diagnostics=True)` and keeps every explicit geometry/lint/text/Scene diagnostic, including OFFCANVAS'"'s original blocking classification. Private "'`_check_core() -> CheckReport` shares that implementation with `diagnostics=False`. It retains real validator execution, formula resolution, orphans, empty lengths, outside-formula checks, param types, stale beats and shot-length checks. Publish, both transaction report branches, detached CLI edit reports and both duplicate-timeline preflights use core. Ordinary save and native commit implementations are unchanged. Validator/publisher imports go directly to their defining `astrid.core.timeline.authoring_bundle` module, avoiding the SDK facade'"'s eager preview import.
+
+Owner 13:25 grant and PLAN §§2.5/4.2 authorize omitting visual checks from save. Tiny_publishable rocket raw "'`params.x=10000` still produces an explicit report invalid solely OFFCANVAS, while core validity, disk save/reload and real publisher/compiler succeed and preserve raw x **exactly**, including in the actual publication payload and post-publication checkout. No clamp/autofix. The approved inherited refusal change is recorded as HELD candidate AG-SAVE-VISUAL-01 in `design/deletion-ledger.agent.md`; no old visual diagnostic assertion was changed and no standalone old OFFCANVAS publish test was found. No test was skipped, xfailed, weakened or deleted. Existing assertions stay intact; only check/publisher test stubs move to the private core seam or the publisher'"'s same defining module. Facade identity assertions cover "'`check`, `_check_core` and `_check`; a false private override still prevents every publication write.
+
+## Exact tests and results
+
+From `/home/user/work/wt/agt-m3-scene-save-core-resume`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_scene_save_core.py tests/sdk/test_scene_caller_preservation.py tests/sdk/test_coverage_empty_cut.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_publish_connection.py tests/sdk/test_media_transcript.py tests/sdk/test_timeline_film_length.py tests/sdk/test_timeline_look.py tests/sdk/test_timeline_reflow_golden.py tests/sdk/test_timeline_reflow_keep.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timing_compiler.py tests/sdk/test_timeline_capture_projection.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_persistence.py tests/packs/timeline/test_cli_status_publish.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_native.py tests/sdk/test_timeline_native_checkout.py tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_sheet_native.py tests/sdk/test_native_timeline_facades.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_shot_set.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m2_clip_split.py
+```
+
+**958 passed, 26 deselected, 4 existing Pillow deprecation warnings, 244.24 s**; final log `notes/targeted.log`. Covers all 16 new import/process/diagnostic fences, existing pure capture/provider guards, publication connection/three-way/recovery/ownership checks, transaction undo/rollback, persistence across processes, existing explicit diagnostics and approved S2 byte-identity/schema floors.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_verbs_working_copy.py
+```
+
+**27 passed, 4.47 s**. Final caller-only stub adaptation preserves the original duplicate all-or-nothing assertions.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_answers.py::test_reserved_clip_ids_use_only_authored_role_overrides tests/packs/rendering/test_scene_answers.py::test_unknown_custom_modifier_and_unresolved_media_stay_unknown tests/packs/rendering/test_scene_answers.py::test_public_package_failure_is_unavailable tests/packs/rendering/test_scene_answers.py::test_invalid_runtime_context_never_becomes_empty_answer
+```
+
+**10 passed, 3.53 s**. Immutable Composition 0.0.12 unpacked into private pytest directories; real Node queries preserve UNKNOWN and report missing/broken package/context as unavailable. These existing adapter tests replace only the install-status seam; they do not certify normal Root-prep or source/physical parity. SDK formatter positives/UNKNOWN/UNAVAILABLE/content-unknown cases are also unchanged and pass in the 958-test run.
+
+Central request (only named/targeted lanes, never full*):
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-scene-save-core-resume commit-integration --files "tests/editing_conformance/test_commit_runtime_native_checkout.py tests/editing_conformance/test_commit_runtime_native_frontends.py tests/sdk/test_timeline_checkout_history_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_commit_provider_runtime.py"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-scene-save-core-resume-commit-integration-1020133834-12522 1
+```
+
+Service command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_native_checkout.py tests/editing_conformance/test_commit_runtime_native_frontends.py tests/sdk/test_timeline_checkout_history_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+Final-tree result is appended below. Earlier same lane on tree `97ee886110af7589fad73b3880969332fdfc927e`: **40 passed / 24 deselected, 135.31 s**, request `agt-m3-scene-save-core-resume-commit-integration-1020133635-17342`. It was re-requested after final import ordering/test-stub cleanup; no full-suite request. The M1 fixtures use the checked-in Runtime lock commit; selected-schema tests run through the paired Runtime helper in that same process. These are renderer-off native save/reload/retry/restart/undo positives, not physical rendering evidence.
+
+## Quality and limits
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_structure_baseline`: exit 0, current=14/new=0/fixed=0.
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/sdk/test_scene_save_core.py`: exit 0. Ruff stdin comparisons of every changed Python file against `git show HEAD:<path>` found **zero added or removed existing findings**, and zero findings in the new file.
+- Repository `... -m scripts.reshape.compare_ruff_baseline`: exit 1, current=2207 vs baseline=2220, refuses the pre-existing improved count of 13; baseline not changed.
+- Repository `... -m scripts.reshape.compare_mypy_baseline`: exit 2 before completing: missing PyYAML stubs and installed NumPy stubs using Python-3.12 type statements against configured Python 3.11. No shared dependency modifications attempted.
+- `... -m scripts.reshape.import_cycles --baseline scripts/reshape/baselines/import_cycles.json`: exit 1, pre-existing `rendering <-> timeline` cycle. The checker scans `astrid/core` only; `git diff --quiet HEAD -- astrid/core` exits 0, proving this patch does not change that graph'"'s source.
+- "'`git diff --check`: exit 0. Private Ruff cache removed. No full suite or full `make check` run; repository-wide quality is not claimed green.
+
+Initial local runs caught bugs in the prior worker'"'s unfinished test fixtures: missing fake-client head/narration operations; non-draft undo history; damage erased by existing formula resolution; stale fake head on reset; parser static contract setup inside the edit fence. Corrected the fixtures without changing the original behavioral expectations. Intermediate runs were 4 fail/7 pass, 2 fail/11 pass, 1 fail/12 pass, 1 fail/472 pass and 2 fail/497 pass. Final combined run above is green. CLI parser setup still imports the static rendering inspection contract before the handler fence; only edit/report/save execution is claimed renderer-independent. Fresh-process SDK import/core validity is fenced from the first Checkout import, and all save operations reject actual imports (including cached import requests), subprocess launch and diagnostic evaluation rather than returning fake green results.
+
+## Handoff
+
+Append-only update to "'`design/d09-scene-check-save-core-handoff.md` records this exact private boundary and results. No Root-prep interface was consumed or activated. Viewing owns the normal frozen config/source/registry/theme/merged-props/occurrence lifetime. Unavailable sources remain explicit-check advice and cannot certify a canonical answer. D09 remains HELD until both seams and physical parity qualify. Public13 adoption, pixel/audio/cache parity and owner-film viewing were not run or claimed.
+
+Recommended next step: review/merge this small Agent seam through the harness, keep the ledger row HELD until integration, then compose with Viewing'"'s independently qualified Root-prep seam and physical parity. No implementation decision needed further permission; the prior OFFCANVAS escalation was resolved by the explicit brief. Quality-baseline/environment issues are reported for the orchestrator, not changed outside this task.
+'''
+(base / 'notes/report.md').write_text(report)
+PY" in /home/user/work/wt/agt-m3-scene-save-core-resume
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-scene-save-core-resume-commit-integration-1020133834-12522/status && tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-scene-save-core-resume-commit-integration-1020133834-12522/log.txt' in /home/user/work/wt/agt-m3-scene-save-core-resume
+ succeeded in 0ms:
+pass
+........................................                                 [100%]
+40 passed, 24 deselected in 136.34s (0:02:16)
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-scene-save-core-resume-commit-integration-1020133834-12522 1' in /home/user/work/wt/agt-m3-scene-save-core-resume
+ succeeded in 0ms:
+test agt-m3-scene-save-core-resume-commit-integration-1020133834-12522: pass exit=0 in 144s — commit-integration on agt-m3-scene-save-core-resume (agent tree f4d74d55c77c76b8d20e5e4b3fd7bb2719f4d1be)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_native_checkout.py tests/editing_conformance/test_commit_runtime_native_frontends.py tests/sdk/test_timeline_checkout_history_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_commit_provider_runtime.py
+counts: 40 passed, 24 deselected in 136.34s (0:02:16) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-scene-save-core-resume-commit-integration-1020133834-12522/log.txt ---
+........................................                                 [100%]
+40 passed, 24 deselected in 136.34s (0:02:16)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = orch / 'workers/agt-m3-scene-save-core-resume'
+with (worker / 'notes/report.md').open('a') as stream:
+    stream.write('''\\nFinal-tree central qualification: **40 passed, 24 deselected, 136.34 s**, exit 0. Request "'`agt-m3-scene-save-core-resume-commit-integration-1020133834-12522`, exact source tree `f4d74d55c77c76b8d20e5e4b3fd7bb2719f4d1be`. Result and full log: `tests/agt-m3-scene-save-core-resume-commit-integration-1020133834-12522/{summary,log.txt}`. The final wait-test command above was repeated after exit 124 without resubmission and returned exit 0. All requested implementation and targeted qualification work is complete; `DONE` and conventional `commit-msg` are written.'"\\n''')
+with (orch / 'design/d09-scene-check-save-core-handoff.md').open('a') as stream:
+    stream.write('''\\n\\n## Agent SDK boundary — completed candidate (agt-m3-scene-save-core-resume)\\n\\nThis supersedes the earlier Agent BLOCKED outcome: the resumption brief explicitly resolves OFFCANVAS under PLAN §§2.5/4.2 and the owner 13:25 grant. Source candidate is based on 4ef1391c; final central source tree f4d74d55c77c76b8d20e5e4b3fd7bb2719f4d1be. Harness commit/integration pending.\\n\\nExact private interface: "'`Checkout._check_core() -> CheckReport`, calling the one existing implementation as `_check(diagnostics=False)`. Public `Checkout.check()` uses `_check(diagnostics=True)` and preserves all existing explicit geometry/lint/text/Scene diagnostics and OFFCANVAS classification. Core keeps the real authoritative validator, formula resolution, orphan/empty/outside/type/stale-beat/shot-length checks; publish, both transaction report branches, detached CLI edit reports and both duplicate publication preflights use only core. Ordinary save/native commit code is unchanged. Core validator/publisher imports use their defining `astrid.core.timeline.authoring_bundle`, never the preview-bearing SDK facade. No duplicate validator or public API/DTO/SourceFactory. Private method identity and false-override publication refusal are tested.'"\\n\\nQualification: final local targeted **958 passed / 26 deselected**, working-copy callers **27 passed**, immutable public12 unknown/unavailable Scene answer tests **10 passed**, final-tree central renderer-off M1/native/recovery/retained-schema lane **40 passed / 24 deselected** ("'`agt-m3-scene-save-core-resume-commit-integration-1020133834-12522`). Tiny_publishable raw rocket x=10000: explicit check invalid solely OFFCANVAS; core-valid disk save/reload and real compiler/publisher preserve raw x exactly in payload and checkout. Actual import/process/diagnostic fences cover save and a fresh SDK import; no fake green scene answer. CLI parser setup still imports a static rendering inspection contract before its handler fence, so startup purity is not claimed. Existing public diagnostics, core invalidity and original publication/transaction/recovery/ownership assertions are retained; test stubs move to the private seam only.'"\\n\\nNo Root-prep helper is consumed or activated. Viewing still owns extracting the normal Root-prep lifetime and read-only query with exact frozen config/source/registry/theme/merged props/occurrence identity and normal component defaults. No empty-source, built-in-theme or registry fallback. Source unavailability stays honest explicit-check advice, never canonical certification. No renderer/run.py/cache/source-host edit or public13 adoption in this candidate. D09 remains HELD until both seams and physical pixel/audio/cache parity qualify. Repository-wide quality is not claimed green: structure passes, changed-file Ruff has no new findings; stale Ruff/cycle baselines and dependency typing problems are detailed in the report. No full* suite requested.\\n\\nExact commands, scope, intermediate fixture failures, limits and next step: "'`workers/agt-m3-scene-save-core-resume/notes/report.md`. Approved visual-save policy row AG-SAVE-VISUAL-01 appended as HELD candidate to `design/deletion-ledger.agent.md`; no D09 deletion claim.'"\\n''')
+(worker / 'commit-msg').write_text('''fix(timeline): separate scene checks from save validation\\n\\nShare core validity checks between explicit diagnostics and publication\\nwithout importing renderer preview code during saves. Route publication,\\ntransactions and implicit CLI/duplicate preflights through the private core\\ncheck while preserving explicit geometry, lint and text diagnostics.\\n\\nKeep OFFCANVAS advisory for saves and preserve authored coordinates exactly.\\nCover renderer import/process fences, invalid-core refusal and private guard\\noverrides alongside native renderer-off retry, recovery and undo paths.\\n''')
+PY" in /home/user/work/wt/agt-m3-scene-save-core-resume
+ succeeded in 0ms:
+exec
+/bin/bash -lc "git diff --check && git status --short && python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-save-core-resume')
+assert (root / 'notes/report.md').is_file()
+assert (root / 'commit-msg').is_file()
+assert not (root / 'BLOCKED').exists()
+assert not Path('.ruff_cache').exists()
+(root / 'DONE').touch()
+print('Report, commit-msg and DONE written.')
+PY" in /home/user/work/wt/agt-m3-scene-save-core-resume
+ succeeded in 190ms:
+ M astrid/packs/timeline/cli.py
+ M astrid/sdk/timeline/check.py
+ M astrid/sdk/timeline/publish.py
+ M astrid/sdk/timeline/store.py
+ M astrid/sdk/timeline/transaction.py
+ M astrid/sdk/timeline_duplicate.py
+ M tests/packs/timeline/test_verbs_working_copy.py
+ M tests/sdk/test_media_transcript.py
+ M tests/sdk/test_timeline_checkout.py
+ M tests/sdk/test_timeline_checkout_facade.py
+ M tests/sdk/test_timeline_checkout_history_boundaries.py
+ M tests/sdk/test_timeline_persistence.py
+ M tests/sdk/test_timeline_publish_connection.py
+?? tests/sdk/test_scene_save_core.py
+Report, commit-msg and DONE written.
+
+codex
+Completed Scene/save-core separation. Explicit diagnostics remain intact; core-valid saves and publication preserve raw `x=10000` despite OFFCANVAS.
+
+- Tests: **958 + 27 + 10 local passes; 40 central renderer-off passes**.
+- Product diff: **+34/−26 lines**.
+- No implementation blocker. Repository quality checks retain baseline/environment failures.
+- D09 remains held for Viewing’s seam and physical parity.
+- Handoff, ledger entry, commit message and `DONE` written.
+
+[Report with exact commands, results and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-save-core-resume/notes/report.md).
+
+Next: harness review/commit, then integration with Viewing’s qualified seam.
+tokens used
+214,138
+Completed Scene/save-core separation. Explicit diagnostics remain intact; core-valid saves and publication preserve raw `x=10000` despite OFFCANVAS.
+
+- Tests: **958 + 27 + 10 local passes; 40 central renderer-off passes**.
+- Product diff: **+34/−26 lines**.
+- No implementation blocker. Repository quality checks retain baseline/environment failures.
+- D09 remains held for Viewing’s seam and physical parity.
+- Handoff, ledger entry, commit message and `DONE` written.
+
+[Report with exact commands, results and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-save-core-resume/notes/report.md).
+
+Next: harness review/commit, then integration with Viewing’s qualified seam.

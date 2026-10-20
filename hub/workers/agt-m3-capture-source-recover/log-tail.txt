@@ -1,0 +1,18 @@
+I couldn't run any test, so the Runtime capture-source probe and the Agent caller review are not done. Every call to the shared venv interpreter (`/home/user/work/venv-agent/bin/python`) was refused as needing approval, even `--version`. I didn't work around that, for example by pointing system `python3` at the venv's packages.
+
+- **Done:**
+  - **Probe copy:** I copied the predecessor's `tests/sdk/test_capture_source_runtime.py` into this worktree unchanged.
+  - **Imports:** I checked by reading that its helper imports resolve (`_closure`, `_digest`, `_replace_values`, `OLD`, `AUDIO` and `prepare_filmstrip` all exist).
+- **Runtime finding, from code only:** In `/home/user/work/runtime/runtime_protocol/snapshot_refs.py`, `publish_snapshot` checks that the project matches and that the parent revision exists with the right digest. For working copies it also checks the marker and the base parent digest. It never compares the snapshot's `config` or `registry` to the parent, shot or internal closure. The digest it checks comes from the snapshot's own `capture_authority` claim. This matches the source worker's finding, but I haven't demonstrated a forgery.
+- **Unverified:**
+  - whether the file collects;
+  - whether the saved and unsaved positives pass;
+  - which forged cases Runtime actually admits;
+  - the `True == 1` and `2 == 2.0` check in `VerifiedTimelineSource.validate_snapshot`;
+  - the caller-boundary review.
+- **Test is not final:** The forgery case still uses an after-the-fact `pytest.xfail`. After a real run it should become `@pytest.mark.xfail(strict=True)` on exactly the admitted cases, with the positive expectation unchanged. I made no Runtime or product edits and didn't write the coordination-file note.
+- **To finish:** Approve the venv interpreter, then run `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=<worktree> /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_capture_source_runtime.py`.
+
+The commit message says plainly that the test file hasn't been run. Files are in `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-source-recover/`:
+- report.md
+- commit-msg

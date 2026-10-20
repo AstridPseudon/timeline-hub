@@ -1,0 +1,400 @@
+''')
+print(p)
+PY" in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-word-binding-contract.md
+
+exec
+/bin/bash -lc "sed -n '40,105p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-word-binding-contract.md; git diff --stat; /home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/word_binding_recipe.py tests/editing_conformance/test_word_binding_recipe.py" in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 144ms:
+and supplies that immutable value to the generic read resolver. A caller's read is
+only a checked claim. Fold then selects that publication's binding state; inverse
+of restore uses the ordinary accepted restore edge. No chosen publication is inferred
+from a revision. Legacy restore without this read is safe only when ALL reachable
+occurrences of that exact revision agree on binding state; otherwise refuse visibly.
+Current State/get/claim validation does NOT implement this resolver. Review the
+reference convention/context addition before code. Alternatively manager may choose
+another exact publication carrier, but args alone demonstrably cannot work.
+
+## Exact declaration serialization and first capture
+
+`tests/editing_conformance/word_binding_recipe.py` contains the concrete closed
+parameter schema and handler. Envelope: schema_version=1, op=`clip.anchor`,
+version=`1`, select=`parent/clip:<raw-target-id>`, intent=`{anchor:follow}`.
+This bounded spike supports parent targets and occurrence-owned source clips:
+
+```json
+{"field":"on","declaration":"\"again\"","choice":{
+ "source":"occurrence:occ/clip:voice",
+ "document":{"document_id":"transcript:<64 hex>","version":1,
+             "content_digest":"sha256:<64 hex>"},
+ "word_ids":["word:<64 lowercase hex>"]}}
+```
+
+`field` is on/until; `word_ids` is a nonempty unique ORDERED array of main's
+`word:<64hex>` IDs, optionally suffixed `:<positive duplicate ordinal>` as emitted
+by media_transcript.line_segment. No conversion to legacy word:segment:index.
+DocumentPin has exactly document_id/version/content_digest. Clear is exactly
+`{field:on,declaration:null,choice:null}` and records an absent authored leaf;
+a null choice with text or a choice with null text refuses. The handler records
+writes even when text is unchanged. No synthetic whole-parent image is used for
+undo of a declaration.
+
+Frontend picker operates ONCE on its original authorized snapshot: identify the
+clicked source occurrence/raw clip, exact Document and consecutive words; resolve
+an initial text/#n query there if used. The executable picker models a word click
+in a known raw clip. The existing main-Moment ordinal counterexample is exercised
+alongside it: after source reordering, the old #2 would select `other` despite the
+same document and word ID. Explicit stable choice is command intent; declaration
+text validates the selected phrase/line, and #n is never searched again on replay.
+The direct-click form allows two identical declaration strings to bind different
+words. Product UI/CLI spelling/disambiguation still needs review; there is no new
+production picker here.
+
+Server validates registered args against its schema and derives records itself.
+It resolves the scoped source clip and owner identity from the original request
+base, reads source asset/media identity, and checks against Runtime-captured exact
+VerifiedDocuments. The pure timing kernel verifies document scope/id/version/raw
+content digest, actual media, ordered/consecutive stable words, matching phrase and
+line, half-open source window, supported maps and current availability. No inline
+schema, inline VerifiedDocument, caller recorder or latest source is authority.
+The spike first retains the transcript through the existing real Runtime fixture;
+first-use pin discovery/hydration from this new operation's args remains production
+work, not something this fixture pretends to implement.
+
+## Existing accepted record carriers
+
+Authoritative recorder emits (in addition to ordinary reads/writes/claims):
+
+```json
+{"key":"anchor.transcript","kind":"transcript","pin":"<exact DocumentPin object>","policy":"exact"}
+{"key":"anchor.choice","kind":"entity","pin":{
+ "target":"parent/clip:card","field":"on","declaration":"\"again\"",
+ "choice":"<the exact choice object above>"},"policy":"exact"}
+{"key":"anchor.source","ref":"occurrence:occ/clip:voice","policy":"follow",
+ "dependencies":["anchor.transcript","anchor.choice"]}
+All checks passed!
+
+codex
+Targeted checks pass: the final spike has 13 passes and one strict expected failure for ambiguous revision-only restore. Compiler and command neighbors also passed. I’m finishing the contract and recovery report, with restore provenance and first-use pin capture called out as work still needed before production wiring.
+
+exec
+/bin/bash -lc "env PYTHONPATH=/home/user/work/wt/agt-m2-word-recipe-recover PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import json
+from pathlib import Path
+from astrid.sdk.media_transcript import build_transcript, transcript_document_id
+from astrid.core.timeline.authoring_bundle import _digest
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-word-binding-contract.md')
+text=p.read_text()
+content=build_transcript('sha256:'+'1'*64,'line','again again stop',[[2,2.5,'again'],[3,3.5,'again'],[5.5,6,'stop']])
+pin={'document_id':transcript_document_id('example-project',content['media_id'],content['source_id']), 'version':1,'content_digest':_digest(content)}
+args={'field':'on','declaration':'\"again\"','choice':{'source':'occurrence:occ/clip:voice','document':pin,'word_ids':[content['segments'][0]['words'][0]['id']]}}
+start=text.index('"'```json'"\\n',text.index('## Exact declaration serialization'))
+end=text.index('"'```'"',start+8)+3
+text=text[:start]+'Example with deterministic main transcript IDs (project "'`example-project`, media `sha256:'"'+'1'*64+'"'`, line `again again stop`):'"\\n\\n"'```json'"\\n'+json.dumps(args,indent=2)+'\\n"'```'"'+text[end:]
+start=text.index('"'```json'"\\n',text.index('## Existing accepted record carriers'))
+end=text.index('"'```'"',start+8)+3
+records=[{'key':'anchor.transcript','kind':'transcript','pin':pin,'policy':'exact'}, {'key':'anchor.choice','kind':'entity','pin':{'target':'parent/clip:card',**args},'policy':'exact'},{'key':'anchor.source','ref':args['choice']['source'],'policy':'follow','dependencies':['anchor.transcript','anchor.choice']}]
+text=text[:start]+'"'```json'"\\n'+json.dumps(records,indent=2)+'\\n"'```'"'+text[end:]
+text=text.replace('Quoted angle placeholders above denote objects, not actual strings in records;\\nsee the executable helper for literal objects. Ordered main word IDs live in typed\\n','Ordered main word IDs live in typed\\n')
+p.write_text(text)
+print('Replaced schematic record examples with concrete main transcript IDs and complete objects.')
+PY" in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 385ms:
+Replaced schematic record examples with concrete main transcript IDs and complete objects.
+
+exec
+/bin/bash -lc 'git diff --no-index --stat /dev/null tests/editing_conformance/word_binding_recipe.py; git diff --no-index --stat /dev/null tests/editing_conformance/test_word_binding_recipe.py; git diff --check; git status --short' in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 455ms:
+ .../editing_conformance/word_binding_recipe.py     | 175 +++++++++++++++++++++
+ 1 file changed, 175 insertions(+)
+ .../test_word_binding_recipe.py                    | 242 +++++++++++++++++++++
+ 1 file changed, 242 insertions(+)
+?? tests/editing_conformance/test_word_binding_recipe.py
+?? tests/editing_conformance/word_binding_recipe.py
+
+exec
+/bin/bash -lc "env PYTHONPATH=/home/user/work/wt/agt-m2-word-recipe-recover PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from astrid.sdk.timeline.commands import operations
+from astrid_runtime_client.contract_metadata import SCHEMA_DIGEST
+print('vendored Runtime composed SCHEMA_DIGEST:', SCHEMA_DIGEST)
+print('product registry:', ', '.join(sorted(operations())))
+print('engine builtins: timeline.inverse, timeline.restore')
+PY" in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 770ms:
+vendored Runtime composed SCHEMA_DIGEST: sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d
+product registry: clip.move, track.create
+engine builtins: timeline.inverse, timeline.restore
+
+exec
+/bin/bash -lc 'git status --short --ignored tests/editing_conformance .pytest_cache; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-recipe-recover/meta' in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 23ms:
+?? tests/editing_conformance/test_word_binding_recipe.py
+?? tests/editing_conformance/word_binding_recipe.py
+!! .pytest_cache/
+name=agt-m2-word-recipe-recover
+repo=agent
+base=tl/agt-m2-word-binding-recipe
+base_sha=b3e9d8ef
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-word-recipe-recover
+started=2026-10-20T00:48:56Z
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests')
+paths=list(root.glob('agt-m2-word-binding-recipe-*'))
+print('Predecessor central test requests:', len(paths))
+for p in paths:
+    state=p/'status'
+    print(p.name, state.read_text().strip() if state.exists() else '(no status)')
+PY" in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 0ms:
+Predecessor central test requests: 0
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root=Path('/home/user/work/wt/agt-m2-word-recipe-recover')
+cache=root/'.pytest_cache'
+if cache.exists():
+    shutil.rmtree(cache)
+    print('Removed local pytest cache')
+for parent in [Path('/tmp/pytest-of-root'),Path('/tmp/pytest-of-user')]:
+    if parent.exists():
+        for path in parent.glob('pytest-*/test_phrase_records_all_consecu*'):
+            if path.is_dir() and not path.is_symlink():
+                shutil.rmtree(path)
+                print('Removed failed spike scratch:',path)
+PY" in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 180ms:
+Removed local pytest cache
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+paths=['tests/editing_conformance/word_binding_recipe.py','tests/editing_conformance/test_word_binding_recipe.py']
+for path in paths:
+    r=subprocess.run(['git','diff','--no-index','--check','/dev/null',path],capture_output=True,text=True)
+    print(path, 'exit',r.returncode, r.stdout+r.stderr)
+    assert r.returncode == 0
+PY" in /home/user/work/wt/agt-m2-word-recipe-recover
+ exited 1 in 0ms:
+tests/editing_conformance/word_binding_recipe.py exit 1 
+Traceback (most recent call last):
+  File "<stdin>", line 7, in <module>
+AssertionError
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+for path in ['tests/editing_conformance/word_binding_recipe.py','tests/editing_conformance/test_word_binding_recipe.py']:
+    r=subprocess.run(['git','diff','--no-index','--check','/dev/null',path],capture_output=True,text=True)
+    assert r.returncode in (0,1) and not (r.stdout+r.stderr), (r.returncode,r.stdout,r.stderr)
+    print(path+': no whitespace errors (exit 1 denotes new-file diff)')
+PY" in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 0ms:
+tests/editing_conformance/word_binding_recipe.py: no whitespace errors (exit 1 denotes new-file diff)
+tests/editing_conformance/test_word_binding_recipe.py: no whitespace errors (exit 1 denotes new-file diff)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-recipe-recover')
+(root/'notes').mkdir(parents=True,exist_ok=True)
+(root/'notes'/'report.md').write_text('''# Word-binding recipe recovery
+
+Implemented a tests-only declaration recipe and accepted-history binding fold.
+Shared contract: "'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-word-binding-contract.md`.
+Product diff: two new files under `tests/editing_conformance/`, 417 lines total;
+no product/schema/ABI/default compiler changes.
+
+## Recovery and scope
+
+- FIRST inspected predecessor read-only: `git status --short`,
+  `git diff --binary HEAD`, `git ls-files --others --exclude-standard` in
+  `/home/user/work/wt/agt-m2-word-binding-recipe` all returned empty.
+  Both old/new HEADs are `b3e9d8ef31f9fcc8297ae2ac66ed7b56ad042d8d`.
+  No WIP needed copying. Rechecked predecessor at finish: still clean/same HEAD.
+- Read PLAN, Agent INBOX (including 00:50 recovery ACK), timing-adapter,
+  pack-snapshot-custody and runtime-coordination decisions. Pack custody remains
+  the agreed snapshot_object/portable bytes/document_object seam with Runtime
+  product ownership; no alternate seam added. Completed cancel NO-OP/persisted
+  epoch and pin-only numeric-forwarding decisions do not require changes here.
+- No predecessor central-test requests exist. No interrupted result was counted.
+  Only bounded non-socket targeted tests ran directly with shared venv-agent.
+  No full suite/install/heavy/central socket job, source-root generation, git
+  commit/merge/rebase/checkout/push, integration edits or frozen-ref movement.
+  No host-helper change or Viewing handoff is involved in this task.
+
+## What the spike proves
+
+Test-local clip.anchor registry entry validates closed args and authoritatively
+records target/field/text, scoped occurrence/raw source clip, ordered main stable
+word IDs, a separate exact transcript dependency, entity choice dependency and
+follow binding. It never places word:digest in legacy AnchorIdentity. It uses
+real Agent execution and real Runtime acceptance/history; no SQL or fabricated
+receipts. Handler/fold perform no disk/network/source/latest reads.
+
+Complete authenticated ancestry recovers before-binding without another stored
+format: fold each accepted publication, keep disposable sparse deltas, invert
+explicit publication targets generically. Equal-text A(word1)->B(word2)->undoB
+recovers A after a source move/reorder and Runtime reopen. Same exact document AND
+word reused in two CAS-backed raw clips retains raw source identity. Original
+choice survives server stale rebase while current ordinal selection points at
+other; derived timing follows the chosen source without direct start/order guards.
+Phrase order, last write, clear/undo, inverse-of-inverse, unique restore and
+inverse-of-restore, missing/foreign/withdrawn captures, invented claims, missing IDs
+and incomplete accepted history are covered. Retained-input neighbors verify
+actual missing/foreign/revoked Runtime source reads, retained V1 after producer V2
+and fresh-interpreter exact capture.
+
+## Evidence-backed boundary needing manager review
+
+A and B with identical declaration text but different chosen words have IDENTICAL
+accepted canonical documents/revision/digest and DISTINCT publications. Current
+RestoreArgs contains only revision_id/content_digest. It cannot say which binding
+state to restore. Counterexample passes; the positive requirement is retained as
+`xfail(strict=True)` with its restoration requirement. No passing test was weakened.
+
+Recommended smallest generic addition, documented BEFORE any product wiring:
+use the existing general AgentRead envelope to capture exact selected historical
+publication provenance, resolved by the provider through existing history_entry
+and revision_closure. No new port/ABI/DTO/store is needed. State/read context and
+restore capture would need a reviewed implementation; none is silently added.
+Ambiguous extraction currently refuses. This is a new semantic blocker exposed
+by the spike, not justification to move frozen refs or merge M2 before PLAN M1.
+
+Other limits: this is NOT production registration or default compiler parity.
+First-use transcript pin discovery/hydration from declaration args is not wired;
+tests deliberately start from the existing real retained-input fixture. Initial
+legacy declarations with no accepted choice remain unknown. The fold'"'s test input
+is one bounded authenticated history page; production must use existing paginated
+_history/_records through an exact head pair. Multi-owner targets, alias clears,
+all source maps/codecs, multi-anchor commands and full consumer parity remain
+future qualification. No App/browser/socket, full-suite or macOS claim is made.
+
+## Exact commands and results
+
+Working directory "'`/home/user/work/wt/agt-m2-word-recipe-recover` unless noted.
+Runtime checkout was clean integrated `9f9b25c000485e919f30f1411831fe2d5a3c1316`.
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=/home/user/work/wt/agt-m2-word-recipe-recover PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_word_binding_recipe.py
+# FINAL: 13 passed, 1 xfailed in 15.04s; exit 0
+
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=/home/user/work/wt/agt-m2-word-recipe-recover PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/sdk/test_timeline_commit_provider_runtime.py
+# 20 passed, 1 xfailed in 22.75s; exit 0 (before adding the final extra reused-CAS undo case)
+
+env PYTHONPATH=/home/user/work/wt/agt-m2-word-recipe-recover PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/sdk/test_media_transcript.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py
+# 135 passed in 23.10s; exit 0
+
+/home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/word_binding_recipe.py tests/editing_conformance/test_word_binding_recipe.py
+# All checks passed; exit 0 on final source
+
+git diff --check
+# exit 0; tracked source unchanged
+
+git diff --no-index --check /dev/null tests/editing_conformance/word_binding_recipe.py
+git diff --no-index --check /dev/null tests/editing_conformance/test_word_binding_recipe.py
+# No whitespace diagnostics; exit 1 is the normal new-file difference status
+```
+
+Initial development run: 11 passed/1 xfailed/1 failed because the new phrase test
+incorrectly assumed quantized start >3. Corrected it to main'"'s exact floor-frame
+expectation (frame 89 at 30000/1001), kept reverse-word-order refusal, and reran
+successfully. Initial Ruff import/fixture alias findings corrected; final lint clean.
+A temporary whitespace-check wrapper initially asserted that no-index exit 1 was
+an error; corrected its interpretation and confirmed both new files emit no
+whitespace diagnostics. Local pytest cache removed; no build output/temp files
+remain in the worktree.
+
+## Frozen source identities / next action
+
+Packaged EditCommand artifact raw SHA256 remains
+"'`2a4058f883c59457052e4b42f74cc2fa411cf004f98f1c7ef953ecbe894ff427`.
+Vendored Runtime composed SCHEMA_DIGEST remains
+`sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`.
+Product registry remains clip.move, track.create; engine builtins timeline.inverse,
+timeline.restore. clip.anchor exists ONLY in the scoped test monkeypatch. No
+composed schema was regenerated; no normal Runtime root update is required by
+this tests-only diff.
+
+Manager should review the restore publication-provenance addition and declaration
+spelling, then authorize a small generic history/binding context and first-use
+source-capture implementation. Keep the strict restore xfail until that exact
+behavior is proven. All M2 integration merges remain HELD until PLAN records M1.
+Both new commit-message files are ready; harness owns the commit.
+'"''')
+msg='''test(timeline): prove stable word binding recipe and restore ambiguity
+
+Exercise a design-only declaration handler using existing command args,
+bindings, dependencies and real Runtime accepted history. Prove original
+source choice through rebase, reload, guarded inverse and source reorder.
+
+Expose revision-only restore ambiguity for identical authored declarations
+and retain the positive requirement as a strict expected failure. Leave
+product registration, schema and default compiler unchanged.
+'''
+for name in ('commit-msg','commit-msg.txt'):
+    (root/name).write_text(msg)
+print(root/'notes'/'report.md')
+print('Both commit messages written')
+PY" in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-recipe-recover/notes/report.md
+Both commit messages written
+
+exec
+/bin/bash -lc 'git status --short; git diff --check; wc -l tests/editing_conformance/word_binding_recipe.py tests/editing_conformance/test_word_binding_recipe.py; test ! -e .pytest_cache' in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 293ms:
+?? tests/editing_conformance/test_word_binding_recipe.py
+?? tests/editing_conformance/word_binding_recipe.py
+  175 tests/editing_conformance/word_binding_recipe.py
+  242 tests/editing_conformance/test_word_binding_recipe.py
+  417 total
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+p=root/'design/m2-word-binding-contract.md'
+blocks=p.read_text().split('"'```json'"\\n')[1:]
+for block in blocks:
+    json.loads(block.split('"'```'"')[0])
+worker=root/'workers/agt-m2-word-recipe-recover'
+assert (worker/'commit-msg').read_bytes()==(worker/'commit-msg.txt').read_bytes()
+assert (worker/'notes/report.md').is_file()
+print('Design JSON examples valid; report and matching commit messages present.')
+PY" in /home/user/work/wt/agt-m2-word-recipe-recover
+ succeeded in 0ms:
+Design JSON examples valid; report and matching commit messages present.
+
+codex
+Completed the tests-only word-binding spike. Predecessor was clean; nothing required transfer.
+
+- Final spike: **13 passed, 1 strict xfail**.
+- Compiler/command neighbors: **135 passed**; retained-input/provider neighbors: **8 passed**.
+- Ruff and whitespace checks passed.
+- Found restore ambiguity: identical-text bindings can share a revision. Exact publication provenance needs review before production wiring.
+- Both commit messages written; M2 merges remain held.
+
+[Report with exact commands and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-recipe-recover/notes/report.md) · [Design contract](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-word-binding-contract.md)
+tokens used
+139,774
+Completed the tests-only word-binding spike. Predecessor was clean; nothing required transfer.
+
+- Final spike: **13 passed, 1 strict xfail**.
+- Compiler/command neighbors: **135 passed**; retained-input/provider neighbors: **8 passed**.
+- Ruff and whitespace checks passed.
+- Found restore ambiguity: identical-text bindings can share a revision. Exact publication provenance needs review before production wiring.
+- Both commit messages written; M2 merges remain held.
+
+[Report with exact commands and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-recipe-recover/notes/report.md) · [Design contract](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-word-binding-contract.md)

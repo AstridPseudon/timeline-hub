@@ -1,0 +1,9 @@
+name=agt-m2-ordinary202-current-source-pair
+repo=agent
+base=tl/agt-m2-ordinary014-current-init-source
+base_sha=3c4f6de4
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-ordinary202-current-source-pair
+started=2026-10-20T16:33:19Z

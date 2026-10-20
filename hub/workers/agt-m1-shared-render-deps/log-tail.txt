@@ -1,0 +1,400 @@
+npm is /opt/node22/bin/npm
+npm is /usr/local/bin/npm
+--- candidate runtimes ---
+/home/user/work/node-v20.19.4-linux-x64/lib/node_modules/npm/bin/npm
+/home/user/work/node-v20.19.4-linux-x64/bin/node
+/opt/node21/lib/node_modules/npm/bin/npm
+/opt/node21/bin/node
+/opt/node22/lib/node_modules/npm/bin/npm
+/opt/node22/bin/node
+/opt/node20/lib/node_modules/npm/bin/npm
+/opt/node20/bin/node
+--- package metadata ---
+engine-strict=true
+{
+  "schema": 1,
+  "package": "@remotion/renderer",
+  "version": "4.0.509",
+  "reason": "Use Node native CPU availability on Darwin before nproc; preserve upstream behavior on other platforms.",
+  "files": [
+    {
+      "path": "dist/get-cpu-count.js",
+      "before_sha256": "83c2afbe40cb515068701c9722f5c465597e40c6c10b704c8da63812ea24bab8",
+      "after_sha256": "d89ef6b67068fb8f1c0e2f21781a37205b4beb1a8f7ff7997ba82b49c835c2bb",
+      "before": "    const node = getNodeCpuCount();\n    const nproc =",
+      "after": "    const node = getNodeCpuCount();\n    // Darwin already has native CPU availability; avoid a needless shell lookup.\n    if (process.platform === \"darwin\") {\n        return node;\n    }\n    const nproc ="
+    },
+    {
+      "path": "dist/esm/index.mjs",
+      "before_sha256": "f9604c14bb917e263c9e79c85044b681d1da41df5b5b8ae586a6f2e4b7050413",
+      "after_sha256": "812dfecb6877a299a9a9b4704bf591baede53aa465eea92cc9b09c69b674050b",
+      "before": "  const node = getNodeCpuCount();\n  const nproc =",
+      "after": "  const node = getNodeCpuCount();\n  // Darwin already has native CPU availability; avoid a needless shell lookup.\n  if (process.platform === \"darwin\") {\n    return node;\n  }\n  const nproc ="
+    }
+  ]
+}
+--- ignore rules ---
+node_modules/
+out/
+.remotion-props.json
+_active_theme
+_active_theme.txt
+.astrid-registry-state.json
+.astrid-registry.lock
+
+exec
+/bin/bash -lc 'set -e
+PIN=/home/user/work/node-v20.19.4-linux-x64/bin/node
+NPM=/home/user/work/node-v20.19.4-linux-x64/lib/node_modules/npm/bin/npm-cli.js
+"$PIN" --version
+"$PIN" "$NPM" --version
+ls -ld /home/user/work/deps /home/user/work/deps/agent-remotion-0.0.8 2>/dev/null || true
+find /home/user/work/deps/agent-remotion-0.0.8 -maxdepth 3 -type f -print 2>/dev/null | sort || true' in /home/user/work/wt/agt-m1-shared-render-deps
+ succeeded in 55ms:
+v20.19.4
+10.8.2
+
+exec
+/bin/bash -lc 'set -e
+DEP=/home/user/work/deps/agent-remotion-0.0.8
+mkdir -p "$DEP/artifacts" "$DEP/scripts" "$DEP/patches"
+cp remotion/package.json "$DEP/package.json"
+cp remotion/package-lock.json "$DEP/package-lock.json"
+cp remotion/artifacts/banodoco-timeline-composition-0.0.8.tgz "$DEP/artifacts/banodoco-timeline-composition-0.0.8.tgz"
+cp remotion/scripts/apply-renderer-darwin-cpu-patch.mjs "$DEP/scripts/apply-renderer-darwin-cpu-patch.mjs"
+cp remotion/patches/renderer-4.0.509-darwin-cpu.json "$DEP/patches/renderer-4.0.509-darwin-cpu.json"
+PIN=/home/user/work/node-v20.19.4-linux-x64/bin/node
+NPM=/home/user/work/node-v20.19.4-linux-x64/lib/node_modules/npm/bin/npm-cli.js
+printf '"'%s\\n' '--- copied files ---'
+find \""'$DEP" -maxdepth 3 -type f -printf '"'%P\\n' | sort
+printf '%s\\n' '--- copied manifest comparisons ---'
+cmp remotion/package.json \""'$DEP/package.json"
+cmp remotion/package-lock.json "$DEP/package-lock.json"
+cmp <(git show tl/vw-m1-consumer-full-fixes:remotion/package.json) "$DEP/package.json"
+cmp <(git show tl/vw-m1-consumer-full-fixes:remotion/package-lock.json) "$DEP/package-lock.json"
+printf '"'%s\\n' '--- pinned toolchain ---'
+\""'$PIN" --version
+"$PIN" "$NPM" --version' in /home/user/work/wt/agt-m1-shared-render-deps
+ succeeded in 189ms:
+--- copied files ---
+artifacts/banodoco-timeline-composition-0.0.8.tgz
+package-lock.json
+package.json
+patches/renderer-4.0.509-darwin-cpu.json
+scripts/apply-renderer-darwin-cpu-patch.mjs
+--- copied manifest comparisons ---
+--- pinned toolchain ---
+v20.19.4
+10.8.2
+
+codex
+The shared directory now contains byte-for-byte copies of both manifests, the 0.0.8 composition tarball, the postinstall script, and the patch metadata it loads. The pinned runtime is available at Node v20.19.4/npm v10.8.2; I’m running ordinary `npm ci` with only a temporary writable npm cache.
+2026-10-19T23:07:31.475984Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc 'set -e\\nDEP=/home/user/work/deps/agent-remotion-0.0.8\\ncp remotion/.npmrc \\\"$DEP/.npmrc\\\"\\nPIN=/home/user/work/node-v20.19.4-linux-x64/bin/node\\nNPM=/home/user/work/node-v20.19.4-linux-x64/lib/node_modules/npm/bin/npm-cli.js\\nCACHE=$(mktemp -d /tmp/agent-remotion-npmcache.XXXXXX)\\ntrap '\\\"'rm -rf \\\\\\\"\\\"'$CACHE\\\"'\\\"' EXIT\\nNPM_CONFIG_CACHE=\\\\\\\"\\\"'$CACHE\\\" \\\"$PIN\\\" \\\"$NPM\\\" ci'` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc 'set -e
+DEP=/home/user/work/deps/agent-remotion-0.0.8
+cp /home/user/work/wt/agt-m1-shared-render-deps/remotion/.npmrc "$DEP/.npmrc"
+PIN=/home/user/work/node-v20.19.4-linux-x64/bin/node
+NPM=/home/user/work/node-v20.19.4-linux-x64/lib/node_modules/npm/bin/npm-cli.js
+CACHE=$(mktemp -d /tmp/agent-remotion-npmcache.XXXXXX)
+trap '"'rm -r -- \""'$CACHE"'"' EXIT
+NPM_CONFIG_CACHE=\""'$CACHE" "$PIN" "$NPM" ci' in /home/user/work/deps/agent-remotion-0.0.8
+ succeeded in 7877ms:
+
+> postinstall
+> node scripts/apply-renderer-darwin-cpu-patch.mjs
+
+{"package":"@remotion/renderer","version":"4.0.509","patchedFiles":2}
+
+added 278 packages, and audited 279 packages in 8s
+
+51 packages are looking for funding
+  run `npm fund` for details
+
+6 vulnerabilities (2 moderate, 4 high)
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
+
+codex
+`npm ci` completed successfully with the pinned toolchain, installed 278 packages, and ran the postinstall patch (2 files patched). npm reported six audit findings; I’m leaving them untouched as required. I’m now checking the installed package identity, lock integrity, hashes, and that the agent worktree remains clean.
+exec
+/bin/bash -lc 'set -e
+DEP=/home/user/work/deps/agent-remotion-0.0.8
+PIN=/home/user/work/node-v20.19.4-linux-x64/bin/node
+NPM=/home/user/work/node-v20.19.4-linux-x64/lib/node_modules/npm/bin/npm-cli.js
+CACHE=$(mktemp -d /tmp/agent-remotion-npmcache.XXXXXX)
+OUT=$(mktemp /tmp/agent-remotion-npm-ls.XXXXXX.json)
+trap '"'rm -r -- \""'$CACHE" "$OUT"'"' EXIT
+printf '%s\\n' '--- manifest cmp against base ---'
+cmp \""'$DEP/package.json" <(git show tl/vw-m1-consumer-full-fixes:remotion/package.json)
+cmp "$DEP/package-lock.json" <(git show tl/vw-m1-consumer-full-fixes:remotion/package-lock.json)
+printf '"'%s\\n' 'cmp: PASS'
+printf '%s\\n' '--- manifest hashes ---'
+sha256sum \""'$DEP/package.json" "$DEP/package-lock.json"
+printf '"'%s\\n' '--- installed direct graph ---'
+NPM_CONFIG_CACHE=\""'$CACHE" "$PIN" "$NPM" ls --depth=0
+printf '"'%s\\n' '--- complete installed graph consistency ---'
+NPM_CONFIG_CACHE=\""'$CACHE" "$PIN" "$NPM" ls --all --json > "$OUT"
+"$PIN" - "$OUT" <<'"'NODE'
+const fs = require('node:fs');
+const graph = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+if (graph.problems?.length) throw new Error(graph.problems.join('\\n'));
+const root = graph.dependencies?.['@banodoco/timeline-composition'];
+if ("'!root || root.version !== '"'0.0.8') throw new Error("'`unexpected installed @banodoco version: ${root?.version}`);
+console.log(`npm ls --all: PASS (${Object.keys(graph.dependencies ?? {}).length} root dependencies)`);
+console.log(`installed @banodoco/timeline-composition: ${root.version}`);
+NODE
+printf '"'%s\\n' '--- package and lock identity ---'
+\""'$PIN" - <<'"'NODE'
+const fs = require('node:fs');
+const crypto = require('node:crypto');
+const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+const installed = JSON.parse(fs.readFileSync('node_modules/@banodoco/timeline-composition/package.json', 'utf8'));
+const entry = lock.packages['node_modules/@banodoco/timeline-composition'];
+if (installed.name "'!== '"'@banodoco/timeline-composition' || installed.version "'!== '"'0.0.8') throw new Error(JSON.stringify(installed));
+if (entry.version "'!== '"'0.0.8' || entry.resolved "'!== '"'file:artifacts/banodoco-timeline-composition-0.0.8.tgz') throw new Error(JSON.stringify(entry));
+const tarball = fs.readFileSync('artifacts/banodoco-timeline-composition-0.0.8.tgz');
+const integrity = "'`sha512-${crypto.createHash('"'sha512').update(tarball).digest('base64')}"'`;
+if (entry.integrity && entry.integrity !== integrity) throw new Error(`integrity mismatch: ${entry.integrity} != ${integrity}`);
+console.log(`installed package.json: ${installed.name}@${installed.version}`);
+console.log(`lock entry: ${entry.version} (${entry.resolved})`);
+console.log(`tarball integrity: ${integrity}`);
+console.log(`lock integrity: ${entry.integrity ?? '"'(not recorded for local file)'}"'`);
+NODE
+printf '"'%s\\n' '--- artifact and copied support files ---'
+sha256sum \""'$DEP/artifacts/banodoco-timeline-composition-0.0.8.tgz" "$DEP/scripts/apply-renderer-darwin-cpu-patch.mjs" "$DEP/patches/renderer-4.0.509-darwin-cpu.json"
+printf '"'%s\\n' '--- agent worktree status ---'
+git -C /home/user/work/wt/agt-m1-shared-render-deps status --short
+printf '%s\\n' '--- temp cache check ---'
+find /tmp -maxdepth 1 -type d -name 'agent-remotion-npmcache.*' -print" in /home/user/work/deps/agent-remotion-0.0.8
+ exited 1 in 0ms:
+--- manifest cmp against base ---
+fatal: not a git repository (or any of the parent directories): .git
+cmp: EOF on /dev/fd/63 which is empty
+
+exec
+/bin/bash -lc 'set -e
+WORK=/home/user/work/wt/agt-m1-shared-render-deps
+DEP=/home/user/work/deps/agent-remotion-0.0.8
+PIN=/home/user/work/node-v20.19.4-linux-x64/bin/node
+NPM=/home/user/work/node-v20.19.4-linux-x64/lib/node_modules/npm/bin/npm-cli.js
+CACHE=$(mktemp -d /tmp/agent-remotion-npmcache.XXXXXX)
+OUT=$(mktemp /tmp/agent-remotion-npm-ls.XXXXXX.json)
+trap '"'rm -r -- \""'$CACHE" "$OUT"'"' EXIT
+printf '%s\\n' '--- manifest cmp against base ---'
+cmp \""'$DEP/package.json" <(git -C "$WORK" show tl/vw-m1-consumer-full-fixes:remotion/package.json)
+cmp "$DEP/package-lock.json" <(git -C "$WORK" show tl/vw-m1-consumer-full-fixes:remotion/package-lock.json)
+printf '"'%s\\n' 'cmp: PASS'
+printf '%s\\n' '--- manifest hashes ---'
+sha256sum \""'$DEP/package.json" "$DEP/package-lock.json"
+printf '"'%s\\n' '--- installed direct graph ---'
+NPM_CONFIG_CACHE=\""'$CACHE" "$PIN" "$NPM" ls --depth=0
+printf '"'%s\\n' '--- complete installed graph consistency ---'
+NPM_CONFIG_CACHE=\""'$CACHE" "$PIN" "$NPM" ls --all --json > "$OUT"
+"$PIN" - "$OUT" <<'"'NODE'
+const fs = require('node:fs');
+const graph = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+if (graph.problems?.length) throw new Error(graph.problems.join('\\n'));
+const root = graph.dependencies?.['@banodoco/timeline-composition'];
+if ("'!root || root.version !== '"'0.0.8') throw new Error("'`unexpected installed @banodoco version: ${root?.version}`);
+console.log(`npm ls --all: PASS (${Object.keys(graph.dependencies ?? {}).length} root dependencies)`);
+console.log(`installed @banodoco/timeline-composition: ${root.version}`);
+NODE
+printf '"'%s\\n' '--- package and lock identity ---'
+\""'$PIN" - <<'"'NODE'
+const fs = require('node:fs');
+const crypto = require('node:crypto');
+const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+const installed = JSON.parse(fs.readFileSync('node_modules/@banodoco/timeline-composition/package.json', 'utf8'));
+const entry = lock.packages['node_modules/@banodoco/timeline-composition'];
+if (installed.name "'!== '"'@banodoco/timeline-composition' || installed.version "'!== '"'0.0.8') throw new Error(JSON.stringify(installed));
+if (entry.version "'!== '"'0.0.8' || entry.resolved "'!== '"'file:artifacts/banodoco-timeline-composition-0.0.8.tgz') throw new Error(JSON.stringify(entry));
+const tarball = fs.readFileSync('artifacts/banodoco-timeline-composition-0.0.8.tgz');
+const integrity = "'`sha512-${crypto.createHash('"'sha512').update(tarball).digest('base64')}"'`;
+if (entry.integrity && entry.integrity !== integrity) throw new Error(`integrity mismatch: ${entry.integrity} != ${integrity}`);
+console.log(`installed package.json: ${installed.name}@${installed.version}`);
+console.log(`lock entry: ${entry.version} (${entry.resolved})`);
+console.log(`tarball integrity: ${integrity}`);
+console.log(`lock integrity: ${entry.integrity ?? '"'(not recorded for local file)'}"'`);
+NODE
+printf '"'%s\\n' '--- artifact and copied support files ---'
+sha256sum \""'$DEP/artifacts/banodoco-timeline-composition-0.0.8.tgz" "$DEP/scripts/apply-renderer-darwin-cpu-patch.mjs" "$DEP/patches/renderer-4.0.509-darwin-cpu.json"
+printf '"'%s\\n' '--- agent worktree status ---'
+git -C \""'$WORK" status --short
+printf '"'%s\\n' '--- temp cache check ---'
+find /tmp -maxdepth 1 -type d -name 'agent-remotion-npmcache.*' -print" in /home/user/work/deps/agent-remotion-0.0.8
+ succeeded in 1336ms:
+--- manifest cmp against base ---
+cmp: PASS
+--- manifest hashes ---
+17321f320f6f15b233ca9132ee6df3b34a0f54c689a0cfa4fe398177aff9a15f  /home/user/work/deps/agent-remotion-0.0.8/package.json
+35cea68df7ee4cc009438e7a079e6b871e4721f1856e14352ba38e48e74224df  /home/user/work/deps/agent-remotion-0.0.8/package-lock.json
+--- installed direct graph ---
+tools-remotion@ /home/user/work/deps/agent-remotion-0.0.8
+├── @banodoco/timeline-composition@0.0.8
+├── @react-three/fiber@8.18.0
+├── @remotion/bundler@4.0.509
+├── @remotion/cli@4.0.509
+├── @remotion/google-fonts@4.0.509
+├── @remotion/layout-utils@4.0.509
+├── @remotion/media@4.0.509
+├── @remotion/renderer@4.0.509
+├── @remotion/three@4.0.509
+├── @types/node@25.6.0
+├── @types/react-dom@18.3.7
+├── @types/react@18.3.31
+├── @types/three@0.185.4
+├── react-dom@18.3.1
+├── react@18.3.1
+├── remotion@4.0.509
+├── three@0.185.1
+└── typescript@5.9.3
+
+--- complete installed graph consistency ---
+npm ls --all: PASS (18 root dependencies)
+installed @banodoco/timeline-composition: 0.0.8
+--- package and lock identity ---
+installed package.json: @banodoco/timeline-composition@0.0.8
+lock entry: 0.0.8 (file:artifacts/banodoco-timeline-composition-0.0.8.tgz)
+tarball integrity: sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw==
+lock integrity: sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw==
+--- artifact and copied support files ---
+93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa  /home/user/work/deps/agent-remotion-0.0.8/artifacts/banodoco-timeline-composition-0.0.8.tgz
+3657dc69131e50a26ff22861047627619c8b9a31fb02fac01f04458678d6dd9e  /home/user/work/deps/agent-remotion-0.0.8/scripts/apply-renderer-darwin-cpu-patch.mjs
+0c40797eef97f0405820874e0543ca5fd1a6119447203d65d125ac0c3dba5fb7  /home/user/work/deps/agent-remotion-0.0.8/patches/renderer-4.0.509-darwin-cpu.json
+--- agent worktree status ---
+--- temp cache check ---
+/tmp/agent-remotion-npmcache.b19V8F
+
+codex
+Verification passed: the copied manifests still compare equal to `tl/vw-m1-consumer-full-fixes`, `npm ls --all` reports a consistent installed graph, and `@banodoco/timeline-composition` is exactly 0.0.8 with matching lock/tarball SHA-512 integrity. The worktree status is clean; I’m doing the final cache check and writing the required absolute report.
+exec
+/bin/bash -lc "set -e
+printf '%s\\n' '--- temp cache cleanup after npm verification ---'
+find /tmp -maxdepth 1 -type d -name 'agent-remotion-npmcache.*' -print
+printf '%s\\n' '--- shared dependency footprint ---'
+du -sh /home/user/work/deps/agent-remotion-0.0.8
+printf '%s\\n' '--- final worktree cleanliness ---'
+git -C /home/user/work/wt/agt-m1-shared-render-deps diff --check
+test -z \""'$(git -C /home/user/work/wt/agt-m1-shared-render-deps status --porcelain)"
+printf '"'%s\\n' 'clean: PASS'" in /home/user/work/wt/agt-m1-shared-render-deps
+ succeeded in 565ms:
+--- temp cache cleanup after npm verification ---
+--- shared dependency footprint ---
+376M	/home/user/work/deps/agent-remotion-0.0.8
+--- final worktree cleanliness ---
+clean: PASS
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-render-deps/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-render-deps/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-render-deps/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..8300d2ae29fe0577740bf2528ffb980ec2a336ed
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-render-deps/notes/report.md
+@@ -0,0 +1,72 @@
++# Shared Remotion dependency setup
++
++## Result
++
++Prepared and preserved `/home/user/work/deps/agent-remotion-0.0.8/` from the
++`tl/vw-m1-consumer-full-fixes` base. It contains the copied manifests, the
++`@banodoco/timeline-composition` 0.0.8 tarball, the postinstall script and its
++Darwin renderer patch metadata, `.npmrc`, and the installed `node_modules`.
++No product or test files were changed; the worker worktree is clean.
++
++Pinned toolchain used:
++
++```text
++Node v20.19.4
++npm 10.8.2
++```
++
++## Commands and evidence
++
++- Copied manifests and verified them with `cmp` against both the worktree and
++  `git show tl/vw-m1-consumer-full-fixes:remotion/...`: PASS.
++- Ran normal immutable install with a temporary cache:
++
++  ```text
++  NPM_CONFIG_CACHE="$CACHE" /home/user/work/node-v20.19.4-linux-x64/bin/node \
++    /home/user/work/node-v20.19.4-linux-x64/lib/node_modules/npm/bin/npm-cli.js ci
++  ```
++
++  Result: PASS; 278 packages added, postinstall ran and patched 2 renderer
++  files. The temporary cache was removed afterward.
++- Ran `npm ls --depth=0`: PASS; direct graph includes
++  `@banodoco/timeline-composition@0.0.8` and Remotion 4.0.509 packages.
++- Ran `npm ls --all --json` and checked for problems: PASS; installed graph is
++  consistent.
++- Checked installed package and lock entry: PASS;
++  `@banodoco/timeline-composition@0.0.8`, resolved from
++  `file:artifacts/banodoco-timeline-composition-0.0.8.tgz`.
++- Ran `git diff --check` and checked `git status --porcelain`: PASS; clean.
++
++Manifest SHA-256:
++
++```text
++package.json      17321f320f6f15b233ca9132ee6df3b34a0f54c689a0cfa4fe398177aff9a15f
++package-lock.json 35cea68df7ee4cc009438e7a079e6b871e4721f1856e14352ba38e48e74224df
++```
++
++Composition tarball SHA-256:
++
++```text
++93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa
++```
++
++Tarball and lock-entry SHA-512 integrity (both equal):
++
++```text
++sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw==
++```
++
++## Decisions / caveats
++
++- Included `.npmrc` and `patches/renderer-4.0.509-darwin-cpu.json` because the
++  copied postinstall script depends on them; this keeps the reusable directory
++  self-contained.
++- npm reported 6 audit findings (2 moderate, 4 high). No audit, update, or
++  audit-fix action was run, per task instructions.
++- No full, socket, browser, or product test suite was run; this task only
++  prepared and verified the shared locked dependency environment.
++
++## Next step
++
++Later snapshot suites can use the preserved directory directly with the pinned
++Node/npm toolchain.
+
+codex
+Completed shared dependency setup.
+
+- Created and preserved `/home/user/work/deps/agent-remotion-0.0.8/`.
+- `npm ci` with Node `20.19.4` / npm `10.8.2`: PASS; 278 packages installed.
+- `npm ls --all`: PASS; exact `@banodoco/timeline-composition@0.0.8`.
+- Manifest comparisons against base: PASS.
+- Worktree clean; temporary npm cache removed.
+- No full/socket/browser suites run. npm reported 6 audit findings; no fixes applied.
+
+Detailed report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-render-deps/notes/report.md)
+tokens used
+46,851
+Completed shared dependency setup.
+
+- Created and preserved `/home/user/work/deps/agent-remotion-0.0.8/`.
+- `npm ci` with Node `20.19.4` / npm `10.8.2`: PASS; 278 packages installed.
+- `npm ls --all`: PASS; exact `@banodoco/timeline-composition@0.0.8`.
+- Manifest comparisons against base: PASS.
+- Worktree clean; temporary npm cache removed.
+- No full/socket/browser suites run. npm reported 6 audit findings; no fixes applied.
+
+Detailed report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-render-deps/notes/report.md)

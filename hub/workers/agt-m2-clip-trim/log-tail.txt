@@ -1,0 +1,400 @@
++from astrid.sdk.timeline.rebase import replay
++from astrid.sdk.timeline_checkout import Clip
++from tests.editing_conformance.test_recipe_m1_commands import inverse, later
++from tests.sdk.test_timeline_commit_provider_document import document_fixture
++
++FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_clip_trim.json'
++REF = 'parent/clip:clip-a'
++
++
++def media_document(**changes):
++    document = document_fixture()
++    payload = document['parent_revision']['payload']
++    for rows in (payload['clips'], payload['config']['clips']):
++        rows[0].update({'from': 2, 'to': 6, 'speed': 2, 'hold': 17,
++                        'app': {'astrid': {'for': 19, 'until': None, 'opaque': [None, False]},
++                                'org.example': {'literal': 'clip-a', 'clear': None}}, **changes})
++    payload['registry'] = copy.deepcopy(payload['registry'])
++    payload['registry']['assets']['picture']['duration'] = 10
++    document['parent_revision']['content_digest'] = _digest(payload)
++    return document
++
++
++def bundle(**changes):
++    value = bundle_from_document(media_document())
++    for rows in (value['parent']['clips'], value['parent']['config']['clips']):
++        rows[0].update(copy.deepcopy(changes))
++    return value
++
++
++def clip(value):
++    return State(value).entity(REF)
++
++
++@pytest.mark.parametrize('changes,args', [({}, {'in_s': 1, 'out_s': 5}),
++    ({'speed': None}, {'in_s': 0, 'out_s': 10}), ({'speed': .5}, {'out_s': 10}),
++    ({}, {'in_s': .000001, 'out_s': 1.000002}),
++    ({'from': None, 'to': None, 'hold': None}, {}),
++    ({'from': None, 'to': 8}, {'in_s': None, 'out_s': None})])
++def test_trim_matches_main_model_precedence_and_source_defaults(monkeypatch, changes, args):
++    original = bundle(**changes)
++    row = copy.deepcopy(clip(original))
++    # Use main's actual trim function, without a checkout, save, or media IO.
++    monkeypatch.setattr(Clip, '_source_duration', lambda self: 10)
++    main = Clip(SimpleNamespace(_is_audio=lambda *args: False), None, row)
++    main.trim(**args)
++    command = capture_clip_trim(original, REF, **args)
++    plan = execute(original, [command])
++    assert clip(plan.bundle) == row
++    assert clip(plan.bundle)['at'] == clip(original)['at']
++    assert clip(plan.bundle)['asset'] == 'picture'
++    assert replay(plan, original).records == plan.records
++    assert inverse(plan.bundle, plan.records).bundle == original
++    assert inverse(inverse(plan.bundle, plan.records).bundle,
++                   inverse(plan.bundle, plan.records).records).bundle == plan.bundle
++
++
++def test_windowless_trim_uses_file_not_hold_and_length_helper_stays_windowless():
++    from astrid.sdk.timeline.doc import _set_length, _trim_front
++
++    original = bundle(speed=1, hold=3)
++    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
++        for key in ('from', 'to'):
++            rows[0].pop(key)
++    for helper in (_set_length, _trim_front):
++        row = copy.deepcopy(clip(original))
++        helper(row, 1)
++        assert 'from' not in row and 'to' not in row
++    plan = execute(original, [capture_clip_trim(original, REF, in_s=2)])
++    assert (clip(plan.bundle)['from'], clip(plan.bundle)['to'], clip(plan.bundle)['hold']) == (2, 10, 8)
++    assert inverse(plan.bundle, plan.records).bundle == original
++
++
++@pytest.mark.parametrize('app', ['absent', None, {}, {'astrid': None}, {'astrid': {}},
++    {'for': 3, 'until': None}, {'astrid': {'for': None, 'until': None}},
++    {'for': 8, 'until': None, 'astrid': {'for': 9, 'until': None, 'opaque': False}, 'opaque': 0}])
++def test_absent_null_legacy_intent_and_empty_clear_restore_exactly(monkeypatch, app):
++    original = bundle(app=app)
++    if app == 'absent':
++        for rows in (original['parent']['clips'], original['parent']['config']['clips']):
++            rows[0].pop('app')
++    row = copy.deepcopy(clip(original))
++    monkeypatch.setattr(Clip, '_source_duration', lambda self: 10)
++    Clip(SimpleNamespace(_is_audio=lambda *args: False), None, row).trim(1, 5)
++    plan = execute(original, [capture_clip_trim(original, REF, in_s=1, out_s=5)])
++    assert clip(plan.bundle) == row
++    assert inverse(plan.bundle, plan.records).bundle == original
++
++
++def test_rational_fps_source_contact_and_half_open_intervals_are_not_requantized():
++    original = bundle(at=.1001, speed=1)
++    plan = execute(original, [capture_clip_trim(original, REF, in_s=9.8999, out_s=10)])
++    row = clip(plan.bundle)
++    assert (row['at'], row['from'], row['to'], row['hold']) == (.1001, 9.8999, 10, .1001)
++    assert clip_start_frame(row, 30000 / 1001) == 3
++    assert clip_end_frame(row, 30000 / 1001) == 6
++    # At the half-open endpoint, the adjacent clip starts with no shared frame.
++    adjacent = dict(row, at=.2002)
++    assert clip_start_frame(adjacent, 30000 / 1001) == clip_end_frame(row, 30000 / 1001)
++    assert clip_timeline_duration(row) == .1001
++    assert document_from_bundle(plan.bundle)['parent_revision']['payload']['config']['output'] == {
++        'fps': {'numerator': 30000, 'denominator': 1001}}
++    assert not any(read['path'] == ['config', 'output', 'fps'] for read in plan.commands[0]['reads'])
++
++
++@pytest.mark.parametrize('args', [{'in_s': -1}, {'out_s': 11}, {'in_s': 6, 'out_s': 6},
++    {'in_s': 7, 'out_s': 6}, {'in_s': 0, 'out_s': .0000001}, {'out_s': float('inf')},
++    {'in_s': float('nan')}, {'in_s': True}, {'out_s': '4'}, {'out_s': 0},
++    {'out_s': 5, 'ripple': True}, {'from': 1}, {'source_duration': 100}])
++def test_bad_closed_bounds_are_atomic(args):
++    original = bundle()
++    before = copy.deepcopy(original)
++    command = {'schema_version': 1, 'op': 'clip.trim', 'version': '1', 'select': REF, 'args': args}
++    with pytest.raises(CommandError):
++        execute(original, [command])
++    assert original == before
++
++
++@pytest.mark.parametrize('changes', [{'time_map': {}}, {'timeMap': []}, {'from_ms': 0},
++    {'at_ms': 1000}, {'duration': 3}, {'source_window': {'start': 0, 'end': 10}},
++    {'source_offset': 1},
++    {'children': []}, {'clipType': 'text'}, {'speed': 0}, {'speed': -1}, {'speed': True},
++    {'speed': {'numerator': 2, 'denominator': 1}}, {'at': -1}, {'at': float('inf')},
++    {'asset_id': 'picture'}, {'asset': None}, {'hold': float('nan')},
++    {'from': float('inf')}, {'to': '10'}, {'anchor': 'beat:1'}, {'animation': []},
++    {'params': {'keyframes': []}}, {'app': {'on': 'end'}}, {'app': {'astrid': {'cut': 'c'}}},
++    {'app': {'astrid': {'until': 'end'}}}, {'app': {'astrid': {'formulas': {}}}},
++    {'app': {'astrid': {'sequence': 's'}}}, {'app': {'astrid': {'until_film_end': True}}},
++    {'app': []}, {'app': {'astrid': []}}])
++def test_unsupported_shapes_refuse_without_mutation(changes):
++    original = bundle(**changes)
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        capture_clip_trim(original, REF, in_s=1, out_s=5)
++    assert original == before
++
++
++@pytest.mark.parametrize('ref', ['occurrence:occ-a/clip:clip-a', 'shot:chapter-shot/clip:clip-a',
++                                'parent/clip:missing', 'clip-a', 'parent/clip:clip-a::at'])
++def test_only_existing_stable_parent_identity_is_supported(ref):
++    with pytest.raises(CommandError):
++        capture_clip_trim(bundle(), ref, in_s=1, out_s=5)
++
++
++@pytest.mark.parametrize('key,value', [('duration', None), ('duration', 0), ('duration', float('inf')),
++    ('source_window', {'start': 2, 'end': 10}), ('time_map', {}), ('source', {'kind': 'mapped'})])
++def test_source_metadata_is_required_and_maps_refused(key, value):
++    original = bundle()
++    original['parent']['registry']['assets']['picture'][key] = value
++    with pytest.raises(CommandError):
++        capture_clip_trim(original, REF, out_s=5)
++
++
++def test_replay_consumed_source_identity_bounds_and_selection_but_preserves_disjoint_data():
++    original = bundle()
++    plan = execute(original, [capture_clip_trim(original, REF, in_s=1, out_s=5)])
++    for path, value in [(['assets', 'picture', 'duration'], 11),
++                        (['assets', 'picture', 'media_id'], 'sha256:' + '2' * 64)]:
++        head = copy.deepcopy(original)
++        State(head).set('parent/registry', path, {'state': 'present', 'value': value})
++        with pytest.raises(CommandError):
++            replay(plan, head)
++    head = copy.deepcopy(original)
++    clip(head)['params'] = {'other': [None, False]}
++    State(head).entity('parent/clip:clip-b')['opaque'] = {'keep': True}
++    head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
++    result = replay(plan, head)
++    assert clip(result.bundle)['params'] == {'other': [None, False]}
++    assert inverse(result.bundle, result.records).bundle == head
++    baseline, output = document_from_bundle(head), document_from_bundle(result.bundle)
++    for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
++        assert output[key] == baseline[key]
++    assert output['parent_revision']['payload']['registry'] == baseline['parent_revision']['payload']['registry']
++    assert output['parent_revision']['payload']['occurrences'] == baseline['parent_revision']['payload']['occurrences']
++    assert next(r for r in plan.commands[0]['reads'] if r['path'] == ['id'])['state']['value'] == 'clip-a'
++    for key in ('asset', 'track', 'speed', 'hold', 'from', 'to', 'time_map'):
++        head = copy.deepcopy(original)
++        clip(head)[key] = 'changed'
++        with pytest.raises(CommandError):
++            replay(plan, head)
++    head = copy.deepcopy(original)
++    for rows in (head['parent']['clips'], head['parent']['config']['clips']):
++        rows.pop(0)
++    with pytest.raises(CommandError):
++        replay(plan, head)
++
++
++def test_unchanged_writes_and_original_capture_claims_are_authoritative():
++    original = bundle(speed=1, hold=4, app={'org.example': None})
++    command = capture_clip_trim(original, REF)
++    plan = execute(original, [command])
++    assert plan.bundle == original
++    assert all(w['before'] == w['after'] for w in plan.records[0]['writes'])
++    with pytest.raises(CommandError, match='intervening'):
++        inverse(plan.bundle, plan.records, [later(REF, ['hold'], 4)])
++    for field, replacement in [('reads', []), ('expect', {}), ('resolved', []), ('bindings', {})]:
++        forged = copy.deepcopy(command)
++        forged[field] = replacement
++        with pytest.raises(CommandError, match=field):
++            execute(original, [forged])
++
++
++def test_portable_golden_and_closed_schema():
++    golden = json.loads(FIXTURE.read_text())
++    original = bundle_from_document(golden['input'])
++    plan = execute(original, golden['commands'])
++    assert plan.records == golden['records']
++    assert document_from_bundle(plan.bundle) == golden['output']
++    schema = json.loads((Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json').read_text())
++    validator = Draft202012Validator(schema)
++    validator.validate(plan.commands[0])
++    for changes in ({'args': {'out_s': 5, 'extra': None}}, {'select': 'occurrence:occ-a/clip:clip-a'},
++                    {'intent': {'anchor': 'follow'}}):
++        assert list(validator.iter_errors({**plan.commands[0], **changes}))
++    absent_app = execute(bundle(app=None), [capture_clip_trim(bundle(app=None), REF)])
++    assert absent_app.records[0]['writes'][-1]['after'] == ABSENT
+diff --git a/tests/sdk/test_timeline_clip_trim_provider.py b/tests/sdk/test_timeline_clip_trim_provider.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..ca2680a198043cef58499604209ffb86f9789307
+--- /dev/null
++++ b/tests/sdk/test_timeline_clip_trim_provider.py
+@@ -0,0 +1,143 @@
++"""Trim acceptance/replay through the native provider; Runtime ABI is stubbed."""
++from __future__ import annotations
++
++import copy
++import json
++
++import pytest
++
++from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
++from astrid.sdk.timeline._trim_commands import capture_clip_trim
++from astrid.sdk.timeline.commit import _digest, bundle_from_document
++from tests.editing_conformance.test_recipe_m2_clip_trim import REF, clip, media_document
++from tests.sdk.test_timeline_commit_provider import CommitRejected, DetachedRealm, inverse
++from tests.sdk.test_timeline_commit_provider import runtime_abi as runtime_abi
++
++
++def current(realm):
++    return bundle_from_document(realm.documents[realm.head['revision_id']])
++
++
++def trim(realm, **args):
++    return capture_clip_trim(current(realm), REF, **args)
++
++
++def test_trim_committed_reload_exact_inverse_redo_keeps_registry_and_child_pins():
++    original = media_document()
++    realm = DetachedRealm(original)
++    command = trim(realm, in_s=1, out_s=5)
++    accepted = realm.call([command])
++    assert accepted['data']['commands'] == [command]
++    document = accepted['data']['canonical_document']
++    reloaded = bundle_from_document(json.loads(json.dumps(document)))
++    assert (clip(reloaded)['from'], clip(reloaded)['to'], clip(reloaded)['hold']) == (1, 5, 2)
++    assert clip(reloaded)['at'] == 1 and clip(reloaded)['speed'] == 2
++    for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
++        assert document[key] == original[key]
++    for key in ('registry', 'occurrences'):
++        assert document['parent_revision']['payload'][key] == original['parent_revision']['payload'][key]
++    assert all(item[0] not in ('transcript', 'config') for item in realm.reads)
++    undo = realm.call([inverse([accepted['receipt']['receipt_id']])])
++    assert undo['data']['canonical_document'] == original
++    redo = realm.call([inverse([undo['receipt']['receipt_id']])])
++    assert redo['data']['canonical_document'] == document
++
++
++def test_move_then_trim_is_an_ordinary_native_writer_and_undo_keeps_the_move():
++    realm = DetachedRealm(media_document())
++    moved = realm.call([realm.move()])
++    moved_document = moved['data']['canonical_document']
++    accepted = realm.call([trim(realm, in_s=1, out_s=5)])
++    row = clip(current(realm))
++    assert row['at'] == 3.003
++    assert row['app']['astrid']['fixed_start'] is True
++    assert 'for' not in row['app']['astrid']
++    assert row['app']['astrid']['opaque'] == [None, False]
++    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
++    assert undone['data']['canonical_document'] == moved_document
++
++
++def test_stale_trim_rebases_over_disjoint_params_with_original_claims_and_guarded_inverse():
++    realm = DetachedRealm(media_document(params={}))
++    base = copy.deepcopy(realm.head)
++    command = trim(realm, in_s=1, out_s=5)
++    other = capture_clip_set_params(current(realm), REF, values={'opaque': [None, False, 0]})
++    before_trim = realm.call([other])['data']['canonical_document']
++    accepted = realm.call([command], base=base)
++    assert accepted['data']['status'] == 'rebased'
++    assert accepted['data']['commands'] == [command]
++    assert clip(current(realm))['params'] == {'opaque': [None, False, 0]}
++    later = realm.call([capture_track_set(current(realm), 'parent/track:picture', values={'label': 'other'})])
++    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
++    expected = copy.deepcopy(before_trim)
++    # Compare payloads because a disjoint label gives the parent a new identity.
++    expected['parent_revision']['payload']['config']['tracks'][0]['label'] = 'other'
++    assert undone['data']['canonical_document']['parent_revision']['payload'] == expected['parent_revision']['payload']
++    assert undone['data']['canonical_document']['dependency_manifest'] == later['data']['canonical_document']['dependency_manifest']
++
++
++@pytest.mark.parametrize('aba', [False, True])
++def test_same_value_and_aba_trim_publications_block_original_inverse(aba):
++    realm = DetachedRealm(media_document())
++    first = realm.call([trim(realm, in_s=1, out_s=5)])
++    revision = realm.head['revision_id']
++    if aba:
++        realm.call([trim(realm, in_s=2, out_s=4)])
++    again = realm.call([trim(realm, in_s=1, out_s=5)])
++    assert realm.head['revision_id'] == revision
++    assert first['receipt']['receipt_id'] != again['receipt']['receipt_id']
++    record = realm.entries[-1]['records']['commands'][0]
++    if not aba:
++        assert all(write['before'] == write['after'] for write in record['writes'])
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    with pytest.raises(CommitRejected) as error:
++        realm.call([inverse([first['receipt']['receipt_id']])])
++    assert error.value.failure['details']['reason'] == 'intervening_write'
++    assert (realm.head, realm.entries, realm.documents) == before
++
++
++def test_original_trim_dependency_change_and_forged_capture_are_atomic():
++    realm = DetachedRealm(media_document())
++    original = trim(realm, in_s=1, out_s=5)
++    realm.call([trim(realm, in_s=2, out_s=4)])
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    with pytest.raises(CommitRejected):
++        realm.call([original])
++    assert (realm.head, realm.entries, realm.documents) == before
++    forged = trim(realm, in_s=0, out_s=10)
++    forged['reads'] = []
++    with pytest.raises(CommitRejected) as error:
++        realm.call([forged])
++    assert error.value.failure['details']['reason'] == 'capture_mismatch'
++    assert (realm.head, realm.entries, realm.documents) == before
++
++
++def test_missing_duration_refuses_without_fetch_or_partial_acceptance():
++    document = media_document()
++    payload = document['parent_revision']['payload']
++    del payload['registry']['assets']['picture']['duration']
++    document['parent_revision']['content_digest'] = _digest(payload)
++    realm = DetachedRealm(document)
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    command = {'schema_version': 1, 'op': 'clip.trim', 'version': '1', 'select': REF,
++               'args': {'in_s': 1, 'out_s': 5}}
++    with pytest.raises(CommitRejected, match='registry source duration'):
++        realm.call([command])
++    assert (realm.head, realm.entries, realm.documents) == before
++    assert realm.prepared == realm.accepted == []
++
++
++@pytest.mark.parametrize('changes', [{'args': {'in_s': -1}}, {'args': {'out_s': 11}},
++    {'args': {'in_s': 3, 'out_s': 3}}, {'args': {'in_s': 0, 'out_s': .0000001}},
++    {'args': {'out_s': 5, 'clear': ['speed']}}, {'select': 'occurrence:occ-a/clip:clip-a'},
++    {'intent': {'ripple': 'all'}}])
++def test_late_bad_trim_cannot_partially_publish_prior_label(changes):
++    realm = DetachedRealm(media_document())
++    label = capture_track_set(current(realm), 'parent/track:picture', values={'label': 'unaccepted'})
++    invalid = {'schema_version': 1, 'op': 'clip.trim', 'version': '1', 'select': REF,
++               'args': {'in_s': 1, 'out_s': 5}, **changes}
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    with pytest.raises(CommitRejected):
++        realm.call([label, invalid])
++    assert (realm.head, realm.entries, realm.documents) == before
++    assert realm.prepared == realm.accepted == []
+
+exec
+/bin/bash -lc 'git status --short && git diff --check && wc -l astrid/sdk/timeline/_trim_commands.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_clip_trim_provider.py' in /home/user/work/wt/agt-m2-clip-trim
+ succeeded in 599ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/_trim_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+?? tests/editing_conformance/test_recipe_m2_clip_trim.py
+?? tests/sdk/test_timeline_clip_trim_provider.py
+   99 astrid/sdk/timeline/_trim_commands.py
+  231 tests/editing_conformance/test_recipe_m2_clip_trim.py
+  143 tests/sdk/test_timeline_clip_trim_provider.py
+  473 total
+
+codex
+Implemented bounded native `clip.trim` v1 with schema, capture, provider tests, and portable golden.
+
+- Targeted tests: **245 passed**.
+- Changed-file Ruff and whitespace checks passed.
+- Preserved main’s speed/hold inconsistency; flagged for orchestrator review.
+- Actual Runtime qualification remains **pending**. Work remains **HELD** until PLAN M1 exit.
+- Both commit-message files written.
+
+[Report with exact commands, results, and decisions](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-trim/notes/report.md)
+tokens used
+148,645
+Implemented bounded native `clip.trim` v1 with schema, capture, provider tests, and portable golden.
+
+- Targeted tests: **245 passed**.
+- Changed-file Ruff and whitespace checks passed.
+- Preserved main’s speed/hold inconsistency; flagged for orchestrator review.
+- Actual Runtime qualification remains **pending**. Work remains **HELD** until PLAN M1 exit.
+- Both commit-message files written.
+
+[Report with exact commands, results, and decisions](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-trim/notes/report.md)

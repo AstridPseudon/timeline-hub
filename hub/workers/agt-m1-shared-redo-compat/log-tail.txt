@@ -1,0 +1,400 @@
+owner shot-placement-fdcf7269f8d8f09029cd1086d4da8edadb496c5e431b082c12ed583573904708 source shot-placement-fdcf7269f8d8f09029cd1086d4da8edadb496c5e431b082c12ed583573904708
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_command_state.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_recipe_m1_commands.py; git diff --check; git diff -- astrid/sdk/timeline/_command_state.py' in /home/user/work/wt/agt-m1-shared-redo-compat
+ succeeded in 248ms:
+All checks passed!
+diff --git a/astrid/sdk/timeline/_command_state.py b/astrid/sdk/timeline/_command_state.py
+index 7717d8f9..5c1be812 100644
+--- a/astrid/sdk/timeline/_command_state.py
++++ b/astrid/sdk/timeline/_command_state.py
+@@ -203,10 +203,12 @@ class State:
+             from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+             # The only admitted source change is this occurrence's exact main
+             # materialization of the original source, never a prefix heuristic.
+-            return actual['value'] == _authoring_shot_id(
+-                self.bundle['project_id'], self.bundle['timeline_id'],
+-                self.occurrence(ref.removesuffix('/shot'))['occurrence_id'],
+-                expected['value'], shared=True)
++            occurrence = self.occurrence(ref.removesuffix('/shot'))
++            def materialized(source):
++                return _authoring_shot_id(self.bundle['project_id'], self.bundle['timeline_id'],
++                                          occurrence['occurrence_id'], source, shared=True)
++            return (actual['value'] == materialized(expected['value'])
++                    or expected['value'] == occurrence['shot_id'] == materialized(actual['value']))
+         return False
+ 
+     def set(self, ref, path, state):
+
+ succeeded in 17020ms:
+.....................                                                    [100%]
+21 passed in 16.41s
+
+codex
+The bounded M2 source-alias check fixes both fixtures: move→undo→redo→undo now preserves exact closures, and rematerialization retains the same private slot IDs. The product diff is two net lines. Focused tests pass, including the opaque-item cases and new controls for scoped source identity and redo refusal after intervening A→B→A writes. I’ll submit the final candidate to the central M1 lane.
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m1-shared-redo-compat opaque-preservation-integration' in /home/user/work/wt/agt-m1-shared-redo-compat
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788
+
+exec
+/bin/bash -lc 'tail -65 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md; ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-redo-compat; git diff --numstat; git status --short --untracked-files=all' in /home/user/work/wt/agt-m1-shared-redo-compat
+ succeeded in 564ms:
+
+## Agent manager01:50 — source progress and M1 separation
+M1 opaque remapper875a9aff independently rerun against Runtime9f:6PASS/3strict exact-original-closure inverse xfails,6.77s. Namespace preservation itself passes allcodecs throughundo; strict fullclosure requirements remain honest until agt-m1-opaque-exact-inverse isolates authenticated historical-image reuse from reviewed d474. No M2registry/schema import. Final candidate will be new branch, then permanent actual qualification, ownerreview and M1merge.
+Runtime Bundle2 d691 reviewcandidate/source0.2.3 ready noted; schema472622 remains exactfrozeninput. Agent reviewed-product successor active with45c+28561mixed+0edhold+pureliteralhelper+approvedopaquehelper, no schema mutation, no official release claim before final pair.
+Materialization first candidate nowCOMMITTED c65c50b8e9c77248c55a68ac159c9b2f517c34d8; independentreview active agt-m2-materialization-review because+397productlines and pending approvedopaquehelper composition. Exactcarrierdecision remainsACK; Runtime own-slot worker finished tests-only while initialsourceunavailable, so actualimplementation isstillrequired after review+normalitemrefartifact. No actualmapacceptanceclaim. Do not treat preparednegativeblanketrefusals as joinvalidationproof.
+Producer Agent candidate1441bdf1a4795aad318cf27e8b26331146bc0d92 ready440PASS; producer.guard provider requires actual port.producer_attempt(pin)→{pin}, requester queue_proposal pinsoriginalbase/commands/rationale in existingoutbox. Artifacthashneverrecomputed byclient. Runtimeauthority/one-shot/historical workers active; no retirementapproval.
+Worker2 exact historical source snapshot consumed in OWN tree for combined proof (after reading Worker3 central43PASS source progress): store.py cc202289fd2aa3500b92625b92f754045417d699b84c7f3769d67366bfa765f7, service.py888a36948cfc27e54124256a05a47511e2a34843a4fa916addee24a3090b1e9b, timeline_commit_inputs.py07c82e6a796ef1a2b60fde590984ae32d43d53535b80637f04b27e30cc8fe61d, Task schema2bc3a98edcd9d5c7221944a7602a342876261fb2c927f7f909528719ba757ba3, OpenAPI52c63f328c0f14d3e1a298e923a894e0357335bff2d629095639866f75cd666e; historical tests0b026dfc9cb84a2d85e22146aa8cec66d974f68f8620759cdb93d91f725bd1cd and exact replay/identity/schema tests from same branch. Base76f replay fix included; no producer test deletion from that base. Own hooks reapplied ONLY before freezer/all create_task returns; freezer/replay/deferred publication source unchanged. No duplicate capture or selector implementation. Own focused checkpoint rerun now running. If Worker3 changes source subsequently, please flag exact final hashes before bounded central union request.
+
+## agt-m2-materialization-review — independent review in progress (base c65c50b8e9c77248c55a68ac159c9b2f517c34d8)
+
+Assigned successor source is /home/user/work/wt/agt-m2-materialization-review on tl/agt-m2-materialization-review; harness source SHA pending. Approved M1 opaque fix 875a9aff is being adapted to the candidate's single shared remapper, with its direct tests and six positive real-service requirements (no new xfails, no old-provider import). No Runtime/product pins/artifacts/Bundle2 changes.
+
+Concrete review findings: suffix-recursive remapping corrupts opaque namespaces; duplicate binding keys can coexist with an expected binding; tuple/Python equality conflates boolean/number provenance or ACK claims; source_entity accepts an empty /item: suffix as a shot payload request. These are bounded source fixes under existing exact carrier, with direct regressions. Readback source reuse also needs JSON value equality so a true-vs-1 authored edit is not discarded.
+
+Architectural gap requiring manager attention before widening: SDK inverse ACK verification is currently activated by the returned nonidentity map. An ACK which drops the entire inverse allocation map can bypass accepted-history validation. The manual inverse path also verifies only submitted fields plus allocation bindings, rather than reconstructing all inverse claims with the existing engine. Recommended successor: always obtain authenticated target history for inverse ACKs, reconstruct with the existing execute/AcceptedRecords boundary machinery, and compare all claims using equal(); do not add another inverse interpreter or DTO. General legacy inverse reconstruction requires its existing before/after closure reads. This review will not invent an alternative authority or silently change frozen M1 claims.
+
+Actual paired tests remain blocked: rt-m2-materialization-own-slot HEAD 237c51a is staged tests only; its report explicitly says new-form admission/own-slot implementation and matching official generated item-ref artifacts are absent. No schema override or attempted paired qualification here. Please publish the final reviewed Runtime source + normal generated item-ref release before central paired execution. Final Agent source SHA follows harness commit; use that SHA, not the parent c65c50b8, for any subsequent generation/qualification.
+
+
+## agt-m1-opaque-exact-inverse — M1 integration candidate ready
+
+Base exactly `875a9aff`; only product change is `commit.py`, 48 added / 4 removed (44 net, under 75). Isolated historical-image reuse from reviewed `d474`: accepted targeted before/after boundaries authenticated through existing history, pair, scope and digest checks; reuse requires the same occurrence and authoring identity plus matching authored shot/internal content. The parent is compiled normally; a historical parent ID is reused only after complete parent and manifest equality. No M2 registry/root/ordered/media/params/schema/capture import. Existing coalescing, guards, occupancy, retry and approved remapper are unchanged.
+
+All six opaque cases now PASS without xfails, including actual move → accept → persisted exact retry after restart → undo with complete original closure equality. Final focused tests: 187 PASS / 1 ordinary-lane integration deselected, 35.99s. Central unchanged Runtime9f: 19 PASS, 54.97s, final tree `2812273e0044c1aa5286b6c8740d77fffa3038a6`, run `agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007` (all four requested files plus new shared controls). Five malformed historical-boundary refusals, newer sibling/parent preservation and touching ABA controls pass. Touched-file Ruff and diff check PASS.
+
+Two of four M2 shared-inverse cases ported unchanged (parameterized disjoint-parent controls). The two full shared redo journeys are incompatible: first exact undo PASS, then redo refuses with `inverse_dependency_changed` at unchanged `inverse.py:120`. Those journeys were not imported or claimed; no original M1 test was weakened/deleted and no guard changed. Keep full M2 shared redo separate.
+
+No full suite, manual socket, Runtime change, integration mutation, merge or push. Exact commands, provenance and limits: `workers/agt-m1-opaque-exact-inverse/notes/report.md`. Both commit-message files are ready; harness commit pending.
+Worker2 historical source union initially13checkpointPASS8.98s; broader repeat exposed legitimate existing StaleHead at competing-key loser before port.validate (head check intentionally precedes input validation). Test fixture PreparedProvider has no normal Agent head-race loop. Narrow TEST setup fix now retries exactly same original request/key once on StaleHead before asserting producer_proposal_consumed; no base/command/guard refresh and no store acceptance reorder or product source change. Other original regression command on pre-historical loaded source completed192PASS1deselected118.50s; final combined-source run still in progress. This race fixture correction preserves once-per-task assertion and exact ledger winner replay.
+
+
+## agt-m2-dependent-aba-proof — ordinary suffix ABA fixed; M2 integration HELD
+
+Source: `/home/user/work/wt/agt-m2-dependent-aba-proof`, branch `tl/agt-m2-dependent-aba-proof`, base `a95c58f1a94ef7412cb8fef9e44e7024a96cca5d` (harness commit pending). Product diff: `astrid/sdk/timeline/inverse.py` +15/-1 and `astrid/sdk/timeline/rebase.py` +3/-1; 18 added product lines, two replaced lines. No Runtime, schema, DTO, generated client, API, capture, sync or commit changes.
+
+Classification: REAL provider rebase bug, not an inverse-suffix fixture. Both original xfails queue ordinary `track.set` and `clip.set-params` B; no `timeline.inverse` is injected. `commit.py` executes the original capture at HA, then `rebase.replay` unconditionally called the inverse's full `check_intervening`, incorrectly refusing external A→Peer→A even when final original value/selection guards hold. Reproduced against the unmodified official Runtime `6be970633cc82ab412428151e6bf42f3e7fc3081` selected by `use_runtime(vendored_runtime_commit())`; no schema override. The generated client's injected transport invokes real Runtime HTTP handlers in memory, without sockets.
+
+Fix: ordinary replay uses history to protect stable member/root identities and selected identities from replacement (including raw container aliases and owner replacement); execute still verifies ORIGINAL value/read/selection/binding/created-ID claims against the head. Inverse/restore replay and inverse application keep the original full intervening-write check. No whole-parent restore or recapture is introduced. Boolean/number equality code is unchanged.
+
+Tests: removed exactly the two strict ingress ABA xfails after reproducing both and proving the fix. Extended the existing lost-ACK schedule with an A-created track consumed by original B, plus clip delete→guarded restore before retry; retained every original retry/receipt/bytes/key/pin/file/pending-command assertion. Added actual Runtime equal-state/no-op inverse refusal controls. Corrected old ordinary-rebase refusal expectations in four adjacent recipe files to assert exact original commands/records succeed at equal final state; existing inverse ABA, mismatch, owner/container replacement and reservation assertions remain. This is a required distinction from the settled dependent/optimistic decision, not missing-behavior expectations. A direct recipe test verifies numeric equivalence and boolean/number distinction.
+
+Commands ran from the source worktree, dependency-only shared venv, PYTHONDONTWRITEBYTECODE=1:
+
+```sh
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_native_batch_ingress.py -k 'lost_ack and aba' -rx
+# Before changes: 2 strict xfailed, 34 deselected, 3.07s.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_native_batch_ingress.py -k 'lost_ack and aba' --runxfail --tb=short
+# Before changes: 2 FAILED, 34 deselected, 2.73s; ordinary B flush => intervening_write.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_native_batch_ingress.py --tb=short
+# FINAL: 40 passed, 42.10s; official frozen pair above, no xfails/skips.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recording_clear.py tests/editing_conformance/test_recipe_m2_placement.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py --tb=short
+# 535 passed, 66.53s. Subsequent change only adds two scalar tests, verified below, plus final ingress fixture corrections.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_parent_track_label.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recipe_internal_stages.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_commit_provider_parent_track_label.py --tb=short
+# 162 passed, 18.77s.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py --tb=short
+# FINAL scalar file: 70 passed, 16.09s (including two added JSON equality controls).
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py tests/editing_conformance/test_native_batch_ingress.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recording_clear.py
+# All checks passed.
+git diff --check
+# PASS.
+```
+
+Exploration disclosure: the first six-file recipe/provider run after the product fix had 33 failed / 410 passed (50.30s), all old ordinary equal-state refusal expectations in the four recipe files subsequently corrected above; the inverse/provider assertions passed. An intermediate ingress run had 4 failed / 38 passed (52.19s): two new inverse tests incorrectly inspected the raw HTTP error envelope (corrected to the public CommitConflict.failure), and two new numeric probes hit `revision_identity_mismatch` on the peer's sole x=2→2.0 or x=true→1 commit, BEFORE B rebase. Numeric/boolean guard probes now exercise execute/replay directly in the recipe file. The separate frozen-pair numeric acceptance issue is unmodified and unqualified here; do not interpret the passing retry numeric tests as numeric publication proof. Initial pytest cleanup also emitted a shared `/tmp/pytest-of-root/pytest-current` atexit race after the successful xfail reproduction; subsequent final runs exited normally.
+
+Limits/next steps: targeted tests only; no full suite, make check, sockets, browsers, installs, integration-worktree edits, leased/frozen source edits, merge, push or manual commit. Review this bounded patch, then compose via the manager when permitted; M2 integration remains HELD. Investigate the separate numeric revision-identity refusal in its owner's existing workstream if not already covered. Both `workers/agt-m2-dependent-aba-proof/commit-msg` and `commit-msg.txt` are ready for the harness.
+total 324
+drwxr-xr-x   3 root root   4096 Oct 20 01:52 .
+drwxr-xr-x 360 root root  20480 Oct 20 01:54 ..
+-rw-r--r--   1 root root   2889 Oct 20 01:51 brief.md
+-rw-r--r--   1 root root 288184 Oct 20 01:54 log.txt
+-rw-r--r--   1 root root    217 Oct 20 01:51 meta
+drwxr-xr-x   2 root root   4096 Oct 20 01:53 notes
+-rw-r--r--   1 root root      0 Oct 20 01:51 running
+6	4	astrid/sdk/timeline/_command_state.py
+65	0	tests/editing_conformance/test_commit_runtime_shared_inverse.py
+29	0	tests/editing_conformance/test_recipe_m1_commands.py
+ M astrid/sdk/timeline/_command_state.py
+ M tests/editing_conformance/test_commit_runtime_shared_inverse.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-redo-compat/notes')
+for ref in ['f6fbe741','875a9aff','1e1dcc64','d4743e29']:
+ d=json.loads((p/f'{ref}-3.json').read_text())
+ for step in d['stages']:
+  if 'records' in step:
+   r=step['records']['commands'][0]
+   print(ref,step['stage'], 'writes',r['writes'])
+   print('sourcebinding/deps', [v for v in r['dependencies'] if v['key']=='move.images'])
+PY" in /home/user/work/wt/agt-m1-shared-redo-compat
+ succeeded in 0ms:
+f6fbe741 move writes [{'after': {'state': 'present', 'value': 0.20000000000000018}, 'before': {'state': 'present', 'value': 0}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {}}, 'before': {'state': 'absent'}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {}}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'on'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'until'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'until_film_end'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'on'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'until'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'until_film_end'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': True}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'fixed_start'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': 1.8}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'for'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps [{'key': 'move.images', 'kind': 'entity', 'pin': {'parent': {'content_digest': 'sha256:71a62b5f4d9f08144962bc85920954bd96a29aafc1ebf82a9c036fe05d8ab16f', 'revision_id': 'shared-inverse-baseline'}, 'source': {'content_digest': 'sha256:d621270cdb1ac3de14d109f0586cd26853d036eb88f106ad2b0f1ac3c18e3fb7', 'internal_timeline_content_digest': 'sha256:9fb7e21a3b19633f5b6cd9e3a17795a25025fdf1e8b512c2bec2df4135806192', 'internal_timeline_id': 'film', 'internal_timeline_revision_id': 'film-internal-3', 'item_id_map': {}, 'revision_id': 'film-shot-revision-3', 'shot_id': 'shot-3'}}, 'policy': 'exact'}]
+f6fbe741 undo writes [{'after': {'state': 'absent'}, 'before': {'state': 'present', 'value': {'astrid': {'fixed_start': True, 'for': 1.8}}}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': 0}, 'before': {'state': 'present', 'value': 0.20000000000000018}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps []
+f6fbe741 redo writes [{'after': {'state': 'present', 'value': 0.20000000000000018}, 'before': {'state': 'present', 'value': 0}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {'astrid': {'fixed_start': True, 'for': 1.8}}}, 'before': {'state': 'absent'}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps []
+875a9aff move writes [{'after': {'state': 'present', 'value': 0.20000000000000018}, 'before': {'state': 'present', 'value': 0}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {}}, 'before': {'state': 'absent'}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {}}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'on'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'until'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'until_film_end'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'on'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'until'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'until_film_end'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': True}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'fixed_start'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': 1.8}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'for'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps [{'key': 'move.images', 'kind': 'entity', 'pin': {'parent': {'content_digest': 'sha256:71a62b5f4d9f08144962bc85920954bd96a29aafc1ebf82a9c036fe05d8ab16f', 'revision_id': 'shared-inverse-baseline'}, 'source': {'content_digest': 'sha256:d621270cdb1ac3de14d109f0586cd26853d036eb88f106ad2b0f1ac3c18e3fb7', 'internal_timeline_content_digest': 'sha256:9fb7e21a3b19633f5b6cd9e3a17795a25025fdf1e8b512c2bec2df4135806192', 'internal_timeline_id': 'film', 'internal_timeline_revision_id': 'film-internal-3', 'item_id_map': {}, 'revision_id': 'film-shot-revision-3', 'shot_id': 'shot-3'}}, 'policy': 'exact'}]
+875a9aff undo writes [{'after': {'state': 'absent'}, 'before': {'state': 'present', 'value': {'astrid': {'fixed_start': True, 'for': 1.8}}}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': 0}, 'before': {'state': 'present', 'value': 0.20000000000000018}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps []
+875a9aff redo writes [{'after': {'state': 'present', 'value': 0.20000000000000018}, 'before': {'state': 'present', 'value': 0}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {'astrid': {'fixed_start': True, 'for': 1.8}}}, 'before': {'state': 'absent'}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps []
+1e1dcc64 move writes [{'after': {'state': 'present', 'value': 0.20000000000000018}, 'before': {'state': 'present', 'value': 0}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {}}, 'before': {'state': 'absent'}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {}}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'on'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'until'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'until_film_end'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'on'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'until'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'until_film_end'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': True}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'fixed_start'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': 1.8}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'for'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps [{'key': 'move.images', 'kind': 'entity', 'pin': {'parent': {'content_digest': 'sha256:71a62b5f4d9f08144962bc85920954bd96a29aafc1ebf82a9c036fe05d8ab16f', 'revision_id': 'shared-inverse-baseline'}, 'source': {'content_digest': 'sha256:d621270cdb1ac3de14d109f0586cd26853d036eb88f106ad2b0f1ac3c18e3fb7', 'internal_timeline_content_digest': 'sha256:9fb7e21a3b19633f5b6cd9e3a17795a25025fdf1e8b512c2bec2df4135806192', 'internal_timeline_id': 'film', 'internal_timeline_revision_id': 'film-internal-3', 'item_id_map': {}, 'revision_id': 'film-shot-revision-3', 'shot_id': 'shot-3'}}, 'policy': 'exact'}]
+1e1dcc64 undo writes [{'after': {'state': 'absent'}, 'before': {'state': 'present', 'value': {'astrid': {'fixed_start': True, 'for': 1.8}}}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': 0}, 'before': {'state': 'present', 'value': 0.20000000000000018}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps []
+d4743e29 move writes [{'after': {'state': 'present', 'value': 0.20000000000000018}, 'before': {'state': 'present', 'value': 0}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {}}, 'before': {'state': 'absent'}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {}}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'on'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'until'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'until_film_end'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'on'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'until'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'absent'}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'until_film_end'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': True}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'fixed_start'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': 1.8}, 'before': {'state': 'absent'}, 'path': ['app', 'astrid', 'for'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps [{'key': 'move.images', 'kind': 'entity', 'pin': {'parent': {'content_digest': 'sha256:71a62b5f4d9f08144962bc85920954bd96a29aafc1ebf82a9c036fe05d8ab16f', 'revision_id': 'shared-inverse-baseline'}, 'source': {'content_digest': 'sha256:d621270cdb1ac3de14d109f0586cd26853d036eb88f106ad2b0f1ac3c18e3fb7', 'internal_timeline_content_digest': 'sha256:9fb7e21a3b19633f5b6cd9e3a17795a25025fdf1e8b512c2bec2df4135806192', 'internal_timeline_id': 'film', 'internal_timeline_revision_id': 'film-internal-3', 'item_id_map': {}, 'revision_id': 'film-shot-revision-3', 'shot_id': 'shot-3'}}, 'policy': 'exact'}]
+d4743e29 undo writes [{'after': {'state': 'absent'}, 'before': {'state': 'present', 'value': {'astrid': {'fixed_start': True, 'for': 1.8}}}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': 0}, 'before': {'state': 'present', 'value': 0.20000000000000018}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps []
+d4743e29 redo writes [{'after': {'state': 'present', 'value': 0.20000000000000018}, 'before': {'state': 'present', 'value': 0}, 'path': ['at'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}, {'after': {'state': 'present', 'value': {'astrid': {'fixed_start': True, 'for': 1.8}}}, 'before': {'state': 'absent'}, 'path': ['app'], 'ref': 'occurrence:occurrence-3/clip:clip-3'}]
+sourcebinding/deps []
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788/status; /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788 1' in /home/user/work/wt/agt-m1-shared-redo-compat
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-redo-compat/notes')
+refs=['f6fbe741','875a9aff','1e1dcc64','d4743e29']
+for i in (3,1):
+ ds=[json.loads((p/f'{ref}-{i}.json').read_text()) for ref in refs]
+ for stage in ('move','undo','redo'):
+  records=[s['records']['commands'][0] for d in ds for s in d['stages'] if s['stage']==stage and 'records' in s]
+  print(i, stage, 'accepted',len(records),'identical writes across revisions:',all(r['writes']==records[0]['writes'] for r in records),'identical bindings:',all(r['bindings']==records[0]['bindings'] for r in records))
+ # Source read is the only difference in reverse guards? inspect keys unique to M2.
+ prior=ds[0]['stages'][1]['records']['commands'][0]['reads']
+ newer=ds[-1]['stages'][1]['records']['commands'][0]['reads']
+ keys=lambda rows:{(r['ref'],tuple(r['path'])) for r in rows}
+ print('M2 extra undo guard addresses', sorted(keys(newer)-keys(prior)))
+PY" in /home/user/work/wt/agt-m1-shared-redo-compat
+ succeeded in 0ms:
+3 move accepted 4 identical writes across revisions: True identical bindings: True
+3 undo accepted 4 identical writes across revisions: True identical bindings: True
+3 redo accepted 3 identical writes across revisions: True identical bindings: True
+M2 extra undo guard addresses [('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'cut')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'fixed_start')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'for')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'formulas')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'on')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'orphan')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'sequence')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'sequence_fit')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'sequence_index')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'until')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'astrid', 'until_film_end')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'cut')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'fixed_start')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'for')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'formulas')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'on')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'orphan')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'sequence')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'sequence_fit')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'sequence_index')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'until')), ('occurrence:occurrence-3/clip:clip-3', ('app', 'until_film_end'))]
+1 move accepted 4 identical writes across revisions: True identical bindings: True
+1 undo accepted 4 identical writes across revisions: True identical bindings: True
+1 redo accepted 3 identical writes across revisions: True identical bindings: True
+M2 extra undo guard addresses [('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'cut')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'fixed_start')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'for')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'formulas')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'on')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'orphan')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'sequence')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'sequence_fit')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'sequence_index')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'until')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'astrid', 'until_film_end')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'cut')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'fixed_start')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'for')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'formulas')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'on')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'orphan')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'sequence')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'sequence_fit')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'sequence_index')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'until')), ('occurrence:occurrence-1/clip:clip-1', ('app', 'until_film_end'))]
+
+exec
+/bin/bash -lc 'tail -15 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788/log.txt; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788/summary' in /home/user/work/wt/agt-m1-shared-redo-compat
+ succeeded in 0ms:
+.......................                                                  [100%]
+23 passed in 29.21s
+test agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788: pass exit=0 in 31s — opaque-preservation-integration on agt-m1-shared-redo-compat (agent tree 8f046de1844963feab3732cb4ffda7064c49f64e)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py
+counts: 23 passed in 29.21s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788/log.txt ---
+.......................                                                  [100%]
+23 passed in 29.21s
+
+ succeeded in 29957ms:
+running
+test agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788: pass exit=0 in 31s — opaque-preservation-integration on agt-m1-shared-redo-compat (agent tree 8f046de1844963feab3732cb4ffda7064c49f64e)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py
+counts: 23 passed in 29.21s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788/log.txt ---
+.......................                                                  [100%]
+23 passed in 29.21s
+
+codex
+The central M1 lane passed: **23 tests**, including lost-ack/restart retry, occupied-destination refusal, opaque-item exact undo, and the shared redo journeys. I’m recording the four-revision comparison and code provenance for the orchestrator. The earlier 19-test result remains evidence only for its historical source tree.
+
+exec
+/bin/bash -lc "rg -n 'history|boundary|malform' tests/sdk/test_timeline_commit_provider.py | tail -15; git diff --check; git status --short; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788/request; ls -d .ruff_cache .pytest_cache 2>/dev/null" in /home/user/work/wt/agt-m1-shared-redo-compat
+ exited 2 in 504ms:
+122:        self.realm.reads.append(("history", detached(through), after_publication_id))
+130:            raise refusal("history_unavailable") from None
+132:            raise refusal("history_unavailable")
+385:def test_paged_history_and_multiple_target_publications_are_one_inverse():
+421:def test_missing_or_inconsistent_history_and_scope_fail_closed(damage):
+433:        realm.entries[-1]["previous"]["publication_id"] = "other-history"
+530:def test_missing_or_malformed_transcript_source_is_refused(damage):
+712:def test_structural_reservation_history_fails_closed(damage):
+737:    assert error.value.failure["details"]["reason"] == "history_unavailable"
+741:def test_known_legacy_prefix_is_a_boundary_but_unknown_intent_after_recording_refuses():
+750:    assert error.value.failure["details"]["reason"] == "history_unavailable"
+754:def test_moves_do_not_scan_reservation_history():
+759:    assert not any(read[0] == "history" for read in realm.reads)
+949:def test_restore_preserves_verified_legacy_history_boundary(intent):
+961:    assert error.value.failure["details"]["reason"] == "history_unavailable"
+ M astrid/sdk/timeline/_command_state.py
+ M tests/editing_conformance/test_commit_runtime_shared_inverse.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+target=agt-m1-shared-redo-compat
+repo=agent
+suite=opaque-preservation-integration
+files=''
+nocache=0
+requested=2026-10-20T01:54:32Z
+.ruff_cache
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-redo-compat/notes/report.md <<'EOF'
+M1 exact undo / existing shared redo compatibility is fixed and qualified. Assigned branch starts at committed exact-inverse candidate "'`1e1dcc64012caf68db7ac1e1709b8908348e3534`; approved opaque helper `875a9aff4e658def3fa912cacd13f28a911fe89a` is already its parent. Actual Runtime throughout was unchanged `/home/user/work/runtime` at `9f9b25c000485e919f30f1411831fe2d5a3c1316`.
+
+The previous classification of these redo failures as separate M2 scope was incorrect: old M1 actually accepted redo. Exact undo introduced the refusal. This report supersedes that classification, not the previous candidate'"'s historical 19-test qualification.
+
+Both normal API-built fixtures ran on each revision: original third source repeated, and authored/text-bound first source repeated with opaque parent/shot/clip data, item identities, media and child source window. Fixtures, schemas and guards were not changed for diagnosis. The permanent full positive was ported byte-for-byte from reviewed "'`d4743e2984cef0908fa0b6bef166aa801f2bde8f`; it retains complete closure equality, second undo, stable rematerialized slot IDs, immutable readbacks, history/receipt parity, sibling preservation, and transcript/binding equality.
+
+| Agent revision | Actual first undo, both fixtures | Actual redo, both fixtures | Original positive + separate diagnostic |
+| --- | --- | --- | --- |
+| `f6fbe741` original M1 | Accepted; canonical closure differs from original; materialized source D retained | Accepted; canonical closure exactly equals first move | 2 failed at exact undo / 2 diagnostic passed, 2.94s |
+| `875a9aff` approved opaque helper | Accepted; canonical closure differs from original; D retained | Accepted; canonical closure exactly equals first move | 2 failed at exact undo / 2 diagnostic passed, 3.15s |
+| `1e1dcc64` exact-inverse candidate | Accepted; full canonical closure exactly equals original; source S restored | Refused `inverse_dependency_changed`, `inverse.py:120`, `/shot::shot_id`, expected D, actual S | 2 failed at redo / 2 diagnostic passed, 3.95s |
+| `d4743e29` reviewed M2 | Accepted; full canonical closure exactly equals original; S restored | Accepted; canonical closure exactly equals first move | 4 passed, 5.22s, including permanent second-undo/rematerialization positive |
+| Final M1 candidate | Accepted; full canonical closure exactly equals original | Accepted; full canonical closure exactly equals first move; second undo and stable rematerialization also pass | Final direct and central results below |
+
+Here S is `shot-3` or `shot-1`. D is exactly `_authoring_shot_id(project_id, timeline_id, occurrence_id, S, shared=True)`, not a prefix match. Exported revisions were run sequentially in temporary directories inside the assigned worktree, automatically removed. Separate diagnostic omits only the intermediate exact-undo equality assertion to reach baseline redo; it measures that equality, keeps immutable acceptance/readback assertions, and asserts exact redo equality when accepted. It records candidate refusal explicitly, without changing the permanent positive. Raw accepted documents, recorder writes/reads/bindings, source mappings and refusal details are retained in this notes directory as `<revision>-<fixture-index>.json`; exact test outputs are `<revision>.log`. `reproduce.py` repeats the four-revision experiment without touching any git ref or peer worktree.
+
+Accepted recorder comparison, verified independently for each fixture:
+
+- All four revisions emit identical move writes (11) and identical undo writes (2). All three accepting historical revisions emit identical redo writes (2). For the third fixture, the undo writes remove `app` and restore local `at` from `0.20000000000000018` to `0`; redo writes restore exactly the moved `at` and authored `app.astrid` fields. The first fixture'"'s writes also match exactly across revisions.
+- Move has 121 reads and the same three fixed bindings: "'`move.track`, `move.owner`, and `move.target` with `move.images`, `move.quantization`, `move.source` dependencies. Its source read is S; its exact `move.images` source pin names the original shot/internal revisions. All these writes/bindings compare equal across the four exports.
+- M1 inverse records have 98 reads and no bindings; reviewed M2 inverse has 121 reads and no bindings (23 additional authored app-field addresses from its staged inverse capture). No M2 capture machinery was ported. Every undo record reads D from its accepted input. Old M1 persists D after undo, so redo reads D and succeeds. Exact candidate persists S after undo while its undo record still correctly reads D, so its one-direction source guard refuses. Reviewed M2 accepts the exact reverse alias and its redo record reads S; its result materializes D again.
+- Every accepted diagnostic result passes Runtime'"'s immutable parent/shot/internal readback and receipt/result equality; baseline history remains unchanged and transcript text binding is equal before/after. No fixture or record was adjusted to hide differing physical pins.
+
+Only product change is the existing exact alias predicate in "'`astrid/sdk/timeline/_command_state.py`: **6 added / 4 removed = 2 net extra lines**, below the 50-line budget. Copied the bounded reverse alias correction from reviewed `d474` verbatim. It allows expected D versus actual S only when `expected == current occurrence authoring shot ID == materialized(actual S)` for that exact project/timeline/occurrence. Existing State.entity source-owner validation still runs first. Provider still loads authenticated accepted records and boundary images; no caller inverse snapshot is used. Existing intervening-write/source-ABA checks and all authored value/selection guards remain unchanged. The base'"'s opaque helper and authenticated exact-image reuse are untouched. No M2 registry/root/widening, whole-parent restore, Runtime/schema/pin/client change.
+
+Added two unit parameter cases checking reverse aliases with ordinary and hash-shaped source IDs, rejecting a different occurrence/project/timeline/source and invalid source ownership. Added two real-provider cases: exact undo, intervening move and exact undo back to the identical original closure, then original redo must refuse "'`intervening_write` without changing document, history or durable store. Existing undo-ABA and disjoint parent/sibling positives remain unchanged. No assertions were weakened, deleted, skipped, or marked xfail.
+
+Exact commands, run from `/home/user/work/wt/agt-m1-shared-redo-compat` unless central:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-redo-compat/notes/reproduce.py
+```
+
+Results: four rows above. Script invokes, per immutable export, the shared venv with `PYTHONDONTWRITEBYTECODE=1`, `PYTHONPATH=<export>`, `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime`:
+
+```sh
+/home/user/work/venv-agent/bin/python -m pytest -q -s -m integration tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_slot_move_inverse_redo_and_rematerialization tests/editing_conformance/test_shared_redo_diagnostic.py --tb=short -p no:cacheprovider
+```
+
+Final focused ordinary suite:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py --tb=short -p no:cacheprovider
+```
+
+**189 passed, 1 integration deselected in 15.31s**, exit 0. Includes all five authenticated-history refusal controls, original source/owner/selection/ABA guards, exact retry/restore and adjacent converter coverage.
+
+Final direct actual-provider lane (in-process Runtime service, no sockets):
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py --tb=short -p no:cacheprovider
+```
+
+**21 passed in 16.41s**, exit 0. Earlier checkpoint, before the new ABA/source-scope controls, was **14 passed in 13.14s** for shared inverse + opaque items; final runs above supersede that checkpoint.
+
+Only one central final-candidate request, after final code/tests were ready:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m1-shared-redo-compat opaque-preservation-integration
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788 1
+```
+
+Actual central command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+**23 passed in 29.21s**, exit 0, service 31s. Exact final tested Agent source tree **`8f046de1844963feab3732cb4ffda7064c49f64e`**. Log and summary at `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788/`. This includes persisted in-flight exact retry after lost ACK and Runtime restart, renderer-off commit, occupied projection destinations, restore/reservations, six opaque cases and ten shared inverse cases. The earlier exact-inverse central 19PASS still applies only to its tree `2812273e0044c1aa5286b6c8740d77fffa3038a6`; it is not relabeled as testing this correction.
+
+```sh
+/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_command_state.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_recipe_m1_commands.py
+git diff --check
+```
+
+Both PASS, exit 0.
+
+No blocker remains for this bounded M1 candidate. Recommend manager review and harness integration of this successor with exact-image reuse, retaining the full shared redo positives as requirements. No full suite/make check, dependency install, browser/renderer build, direct listener, existing-film repair, other Runtime revision, integration-worktree mutation, manual git commit/merge/rebase/checkout/push or M2 qualification was performed. Temporary source exports and worker-created cache removed; no build output remains in the worktree. Commit message is ready at both worker `commit-msg` and `commit-msg.txt`.
+EOF
+python3 - <<'"'PY'
+from pathlib import Path
+import shutil
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-redo-compat')
+(worker/'report.md').write_bytes((worker/'notes/report.md').read_bytes())
+message='''fix(timeline): preserve shared redo after exact occurrence undo
+
+Accept only the exact reverse materialization alias for the same source and
+project/timeline/occurrence. Keep authenticated history, dependency guards and
+intervening-write ABA refusal while retaining exact historical image reuse.
+
+Restore permanent real Runtime shared undo/redo/rematerialization coverage and
+add source-scope and post-undo ABA controls. Compare four historical revisions;
+qualify the final M1 candidate against Runtime 9f9b25c.
+'''
+for name in ('commit-msg','commit-msg.txt'):
+ (worker/name).write_text(message)
+shutil.rmtree('.ruff_cache', ignore_errors=True)
+PY" in /home/user/work/wt/agt-m1-shared-redo-compat
+ succeeded in 0ms:
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md <<'EOF'
+
+## agt-m1-shared-redo-compat — exact undo must retain old M1 redo (resolved)
+
+Base "'`1e1dcc64012caf68db7ac1e1709b8908348e3534` already includes approved helper `875a9aff`. Same API-built shared-third and authored/text-bound shared-first fixtures, unchanged Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316`: `f6fbe741` and `875a9aff` both accept move/undo/redo; undo closure is inexact but redo closure exactly equals first move. `1e1dcc64` restores exact original closure, then both redo cases refuse `inverse_dependency_changed` at `/shot::shot_id` (accepted undo read D versus restored source S). Reviewed `d4743e2984cef0908fa0b6bef166aa801f2bde8f` passes exact undo/redo/second undo/rematerialization. Previous classification as separate M2 scope was wrong: old M1 redo actually works. Original permanent expectations stayed untouched; a separately labeled diagnostic bypassed only intermediate exact-undo equality to reach baseline redo.
+
+Bounded correction: copied only reviewed d474'"'s reverse source-alias predicate in "'`_command_state.State.matches`, 6 added / 4 removed = 2 net product lines. Requires expected D == current occurrence authoring identity == exact materialization(project,timeline,occurrence,actual S), with existing source-owner validation and all history/value/selection/intervening ABA guards intact. No M2 root/registry/capture machinery, parent restore, Runtime/schema/pin/client changes. Exact-image reuse/opaque helper from the base are unchanged. Permanent full shared redo test copied verbatim from d474; source-scope negatives and actual post-exact-undo ABA refusal added. No assertions weakened/xfail/deletion.
+
+Four-revision raw acceptance/readback/recorder/source-binding comparison and exact commands: `workers/agt-m1-shared-redo-compat/notes/report.md`, reproducible diagnostic `notes/reproduce.py`, raw `<revision>-<index>.json` and `<revision>.log`. Across both fixtures, move writes/bindings (11 writes/121 reads, 3 bindings) and undo writes (2) compare identically across all four revisions; accepting redo writes (2) also compare identically. M1 inverse has 98 reads, M2 121 (extra capture reads were not ported). Old undo retains D; corrected undo restores S; final alias guard handles exactly this reverse edge.
+
+Final focused ordinary tests 189PASS/1 integration deselected (15.31s), including five authenticated-history refusals. Direct in-process Runtime lane 21PASS (16.41s). One central final-candidate `opaque-preservation-integration` run: **23PASS, 29.21s**, source tree **`8f046de1844963feab3732cb4ffda7064c49f64e`**, service `agt-m1-shared-redo-compat-opaque-preservation-integration-1020015432-27788` (31s). Includes M1 lost-ACK/restart exact retry, opaque exact undo, both shared redo/rematerialization cases, disjoint parent/sibling, ABA, occupied destinations and restore/reservation. Ruff and diff check PASS. Previous central19 remains evidence only for historical tree `2812273e0044c1aa5286b6c8740d77fffa3038a6`, not this correction.
+
+No blocker for this bounded M1 successor; recommend review/integrate via harness. Both commit-message files ready. No full suite, sockets run locally, installs, ref mutations, integration-worktree writes or M2 qualification.
+EOF
+git diff --check; git status --short; git diff --stat' in /home/user/work/wt/agt-m1-shared-redo-compat
+ succeeded in 722ms:
+ M astrid/sdk/timeline/_command_state.py
+ M tests/editing_conformance/test_commit_runtime_shared_inverse.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+ astrid/sdk/timeline/_command_state.py              | 10 ++--
+ .../test_commit_runtime_shared_inverse.py          | 65 ++++++++++++++++++++++
+ .../editing_conformance/test_recipe_m1_commands.py | 29 ++++++++++
+ 3 files changed, 100 insertions(+), 4 deletions(-)
+
+codex
+Fixed the redo regression with **2 net product lines**, porting reviewed M2’s exact reverse source-alias guard.
+
+The four-revision comparison confirmed old M1 accepted redo; exact-image undo introduced the refusal. Permanent exact undo→redo→undo/rematerialization tests now pass, alongside source-identity and ABA refusal controls.
+
+Validation:
+
+- Focused suite: **189 passed, 1 integration deselected**.
+- Actual Runtime9f provider tests: **21 passed**.
+- Central final-candidate M1 lane: **23 passed**.
+- Ruff and diff checks passed.
+
+[Report with exact commands and revision comparison](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-redo-compat/notes/report.md). Coordination and both commit-message files are ready.
+
+No blockers. Full suite was not run. Recommend manager review and harness integration.
+tokens used
+101,327
+Fixed the redo regression with **2 net product lines**, porting reviewed M2’s exact reverse source-alias guard.
+
+The four-revision comparison confirmed old M1 accepted redo; exact-image undo introduced the refusal. Permanent exact undo→redo→undo/rematerialization tests now pass, alongside source-identity and ABA refusal controls.
+
+Validation:
+
+- Focused suite: **189 passed, 1 integration deselected**.
+- Actual Runtime9f provider tests: **21 passed**.
+- Central final-candidate M1 lane: **23 passed**.
+- Ruff and diff checks passed.
+
+[Report with exact commands and revision comparison](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-shared-redo-compat/notes/report.md). Coordination and both commit-message files are ready.
+
+No blockers. Full suite was not run. Recommend manager review and harness integration.

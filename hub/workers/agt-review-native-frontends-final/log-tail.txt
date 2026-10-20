@@ -1,0 +1,400 @@
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=../pytest-tmp-final tests/sdk/test_timeline_native_checkout.py::test_raw_element_alias_keeps_canvas_units_after_acceptance tests/editing_conformance/test_native_sheet_ordinary.py::test_exported_gutter_accepts_hold_edit_without_rewriting_timestamp tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_restore_recovery.py tests/sdk/test_timeline_checkout_publication_retry.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_native_sheet.py tests/sdk/test_timeline_sheet_native.py tests/test_cli_surface_conformance.py tests/test_artifact_manifest.py tests/sdk/test_timeline_sheet.py > ../notes/current-targeted.log 2>&1' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends-final/composed
+codex
+Integration advanced during the review to `7970544b`, changing only `_timing_evaluators.py`. I’ve copied that exact file into the private composition and am rerunning the focused tests against this newer base. The diff review found no assertion weakening; the added final HTTP test records refused B requests so it can verify their original guards and fresh key.
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -c pyproject.toml --basetemp=../pytest-tmp-probes ../notes/test_review_checkout.py ../notes/test_review_sheet.py > ../notes/original-probes.log 2>&1 && cat ../notes/original-probes.log' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends-final/composed
+exec
+/bin/bash -lc "git diff 01926d03 7970544b -- astrid/sdk/timeline/_timing_evaluators.py && rg -n 'timing' tests/sdk/test_timeline_checkout_history* tests/sdk/test_timeline_sheet.py && git show bdf88327:cli-surface.json | tail -3" in /home/user/work/wt/agt-review-native-frontends-final
+ exited 1 in 97ms:
+diff --git a/astrid/sdk/timeline/_timing_evaluators.py b/astrid/sdk/timeline/_timing_evaluators.py
+index 4590fd13..471881fa 100644
+--- a/astrid/sdk/timeline/_timing_evaluators.py
++++ b/astrid/sdk/timeline/_timing_evaluators.py
+@@ -20,7 +20,7 @@ from astrid.sdk.timeline.units import (
+ from astrid.sdk.timeline_checkout import Checkout
+ 
+ 
+-def _number(value):
++def _timing_number(value):
+     return _time_fraction(value, "timing value")
+ 
+ 
+@@ -65,17 +65,17 @@ class _ReadLookup(Checkout):
+ def _duration(clip):
+     # clip_duration's hold > source window > duration precedence, in exact source seconds.
+     speed = _playback_rate(_value(clip, "speed", 1))
+-    if _number(_value(clip, "from")) < 0:
++    if _timing_number(_value(clip, "from")) < 0:
+         raise TimingCompileError("invalid negative source in-point")
+     if clip.get("to") is not None:
+-        if _number(clip["to"]) <= _number(_value(clip, "from")):
++        if _timing_number(clip["to"]) <= _timing_number(_value(clip, "from")):
+             raise TimingCompileError("invalid source interval")
+     if clip.get("hold") is not None:
+-        length = _number(clip["hold"])
++        length = _timing_number(clip["hold"])
+     elif clip.get("to") is not None:
+-        length = _number(clip["to"]) - _number(_value(clip, "from"))
++        length = _timing_number(clip["to"]) - _timing_number(_value(clip, "from"))
+     elif clip.get("duration") is not None:
+-        length = _number(clip["duration"])
++        length = _timing_number(clip["duration"])
+     else:
+         return None
+     if length <= 0:
+@@ -149,10 +149,10 @@ def evaluate(bundle, sources, bindings, policy):
+             if value.get("speed") not in (None, 1) or value.get("source_offset") not in (None, 0):
+                 raise TimingCompileError("placement source map requires the canonical authoring adapter")
+         start_ms = placement.get("start_ms", row.get("at_ms", 0))
+-        if row.get("at_ms") is not None and _number(row["at_ms"]) != _number(start_ms):
++        if row.get("at_ms") is not None and _timing_number(row["at_ms"]) != _timing_number(start_ms):
+             raise TimingCompileError("contradictory placement starts")
+-        offset = _number(start_ms) / 1000
+-        length = _number(row["duration_ms"]) / 1000
++        offset = _timing_number(start_ms) / 1000
++        length = _timing_number(row["duration_ms"]) / 1000
+         if offset < 0 or length <= 0:
+             raise TimingCompileError("invalid occurrence interval")
+         placement_ends.append(offset + length)
+@@ -251,7 +251,7 @@ def evaluate(bundle, sources, bindings, policy):
+             dependencies = [cut_node(cut, edge)]
+             moment = replace(moment, cut=cut) if moment.cut else moment
+         # Main offsets and first-word picture in-point semantics, on the exact bound pool.
+-        moment = replace(moment, offset_s=_number(moment.offset_s))
++        moment = replace(moment, offset_s=_timing_number(moment.offset_s))
+ 
+         def resolve(values):
+             if bound is not None:
+@@ -260,7 +260,7 @@ def evaluate(bundle, sources, bindings, policy):
+                 source_end = source_start + _duration(clips[pin.source])
+                 words = []
+                 for segment, index, word in entries:
+-                    start, end = (source_to_timeline_time(_number(word[k]), source_start=source_in,
++                    start, end = (source_to_timeline_time(_timing_number(word[k]), source_start=source_in,
+                                   timeline_start=source_start, speed=speed) for k in ("start", "end"))
+                     if start < source_start or start >= source_end or end > source_end:
+                         raise TimingCompileError("bound word is outside the half-open source clip interval")
+@@ -306,7 +306,7 @@ def evaluate(bundle, sources, bindings, policy):
+             if declarations.get(key) is not None and not isinstance(declarations[key], str):
+                 raise TimingCompileError(f"unsupported {key} declaration: expected main Moment text")
+         length = _duration(clip)
+-        start = offsets[owner] + _number(clip.get("at", 0))
++        start = offsets[owner] + _timing_number(clip.get("at", 0))
+         cut = intent.cut_of(clip)
+         audio = owner[1] and lookup._is_audio(owner[1], clip)
+         on, until = intent.on(clip), intent.until(clip)
+@@ -320,7 +320,7 @@ def evaluate(bundle, sources, bindings, policy):
+         if until:
+             add(node(owner, "end"), *moment_rule(owner, "until", until))
+         elif declarations.get("for") is not None:
+-            length = _number(declarations["for"])
++            length = _timing_number(declarations["for"])
+             if length <= 0:
+                 raise TimingCompileError("declared duration must be positive")
+             add(node(owner, "end"), [node(owner, "start")],
+@@ -348,7 +348,7 @@ def evaluate(bundle, sources, bindings, policy):
+         _, entries, source_in, speed = _bound_words(bundle, documents, pin, clips, internals)
+         interval = result[pin.source]
+         for _, _, word in entries:
+-            start, end = (source_to_timeline_time(_number(word[k]), source_start=source_in,
++            start, end = (source_to_timeline_time(_timing_number(word[k]), source_start=source_in,
+                           timeline_start=interval["start"], speed=speed) for k in ("start", "end"))
+             if start < interval["start"] or start >= interval["end"] or end > interval["end"]:
+                 raise TimingCompileError("bound word is outside the derived source interval")
+@@ -389,11 +389,11 @@ def _bound_words(bundle, documents, pin, clips, internals):
+     if any(seg != segment or index != first + i for i, (seg, index, _) in enumerate(entries)):
+         raise TimingCompileError("bound phrase must contain consecutive words of one segment")
+     for _, _, word in entries:
+-        if _number(word["start"]) < 0 or _number(word["end"]) <= _number(word["start"]):
++        if _timing_number(word["start"]) < 0 or _timing_number(word["end"]) <= _timing_number(word["start"]):
+             raise TimingCompileError("invalid bound word interval")
+-        if (_number(word["start"]) < _number(_value(source, "from"))
+-                or source.get("to") is not None and _number(word["end"]) > _number(source["to"])):
++        if (_timing_number(word["start"]) < _timing_number(_value(source, "from"))
++                or source.get("to") is not None and _timing_number(word["end"]) > _timing_number(source["to"])):
+             raise TimingCompileError("bound word is outside the half-open source window")
+     if _duration(source) is None:
+         raise TimingCompileError("bound source needs an exact authored source interval")
+-    return pin, entries, _number(_value(source, "from")), _playback_rate(_value(source, "speed", 1))
++    return pin, entries, _timing_number(_value(source, "from")), _playback_rate(_value(source, "speed", 1))
+
+ succeeded in 3588ms:
+....                                                                     [100%]
+=============================== warnings summary ===============================
+tests/timeline/test_authoring_bundle.py:1034
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends-final/composed/tests/timeline/test_authoring_bundle.py:1034: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration  # a real Runtime from a second checkout
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+4 passed, 1 warning in 2.56s
+
+exec
+/bin/bash -lc 'cat ../notes/current-targeted.log && env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py --check && env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends-final/composed
+ succeeded in 1968ms:
+........................................................................ [ 40%]
+........................................................................ [ 80%]
+.cli-surface.json is current
+artifacts.json is current
+
+ succeeded in 31512ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+import ast,hashlib,os,subprocess
+from pathlib import Path
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends-final');root=w/'composed'
+git=lambda *a:subprocess.check_output(['git',*a])
+base='7970544bb17dfcf234bd1cc1bb55ab5d713decd8'
+entries={}
+for row in git('ls-tree','-rz',base).split(b'\\0'):
+ if row:
+  meta,p=row.split(b'\\t',1);entries[p.decode()]=tuple(meta.split())
+added=[]
+for p in git('diff','--name-only','bdf88327"'^'"','bdf88327').decode().splitlines():
+ if p not in entries:
+  added.append(p);entries[p]=tuple(git('ls-tree','bdf88327','--',p).split(b'\\t')[0].split())
+changed=[];trie={}
+for p,(mode,kind,sha) in entries.items():
+ if kind"'!=b'"'commit':
+  path=root/p;data=os.readlink(path).encode() if path.is_symlink() else path.read_bytes()
+  digest=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\\0'+data).hexdigest().encode()
+  if digest"'!=sha:changed.append(p)
+  sha=digest
+ node=trie;parts=p.split('"'/')
+ for part in parts[:-1]:node=node.setdefault(part,{})
+ node[parts[-1]]=(mode,sha)
+def tree(node):
+ payload=b''
+ for name,val in sorted(node.items(),key=lambda kv:(kv[0]+('/' if isinstance(kv[1],dict) else '')).encode()):
+  mode,sha=(b'40000',tree(val)) if isinstance(val,dict) else (val[0],bytes.fromhex(val[1].decode()))
+  payload+=mode+b' '+name.encode()+b'\\0'+sha
+ return hashlib.sha1(b'tree '+str(len(payload)).encode()+b'\\0'+payload).digest()
+lines=['BASE '+base,'CANDIDATE '+git('rev-parse','bdf88327').decode().strip(),'PRIVATE COMPOSED TREE '+tree(trie).hex(),'Modified existing paths: '+str(len(changed)),*changed,'Added paths: '+str(len(added)),*added]
+for p,classname in [('astrid/sdk/timeline/checkout.py','Checkout'),('astrid/sdk/timeline_sheet.py',None),('astrid/packs/timeline/cli.py',None)]:
+ before=ast.parse(git('show',base+':'+p).decode());after=ast.parse((root/p).read_text())
+ if classname:
+  before=next(n for n in before.body if isinstance(n,ast.ClassDef) and n.name==classname);after=next(n for n in after.body if isinstance(n,ast.ClassDef) and n.name==classname)
+ funcs=lambda t:{n.name:ast.dump(n,include_attributes=False) for n in t.body if isinstance(n,ast.FunctionDef)}
+ b,a=funcs(before),funcs(after);lines.append(p+' changed existing functions: '+repr([n for n in b if b[n]"'!=a.get(n)]))
+for p in ['"'astrid/sdk/timeline/publish.py','astrid/sdk/timeline/store.py','astrid/sdk/timeline/_timing_evaluators.py']:
+ assert(root/p).read_bytes()==git('show',base+':'+p);lines.append(p+' byte-identical to current integration')
+output='\\n'.join(lines)+'\\n';(w/'notes/composition-check.txt').write_text(output);print(output)
+PY" in /home/user/work/wt/agt-review-native-frontends-final
+ succeeded in 1480ms:
+BASE 7970544bb17dfcf234bd1cc1bb55ab5d713decd8
+CANDIDATE bdf883271fd522552c004706024ff04b1b6aa73f
+PRIVATE COMPOSED TREE 37a266d70d228316fa972413fb8603d8bd2b9692
+Modified existing paths: 8
+artifacts.json
+astrid/packs/timeline/cli.py
+astrid/packs/timeline/cli_show.py
+astrid/sdk/timeline/checkout.py
+astrid/sdk/timeline/sync.py
+astrid/sdk/timeline_sheet.py
+cli-surface.json
+tests/editing_conformance/test_native_batch_ingress.py
+Added paths: 11
+astrid/sdk/timeline/native_checkout.py
+tests/editing_conformance/test_commit_runtime_native_checkout.py
+tests/editing_conformance/test_commit_runtime_native_frontends.py
+tests/editing_conformance/test_native_sheet_current.py
+tests/editing_conformance/test_native_sheet_current_runtime.py
+tests/editing_conformance/test_native_sheet_ordinary.py
+tests/editing_conformance/test_native_sheet_ordinary_runtime.py
+tests/packs/timeline/test_cli_native_sheet.py
+tests/sdk/test_timeline_native_checkout.py
+tests/sdk/test_timeline_native_frontends.py
+tests/sdk/test_timeline_sheet_native.py
+astrid/sdk/timeline/checkout.py changed existing functions: []
+astrid/sdk/timeline_sheet.py changed existing functions: ['parse_sheet', '_strip_comment', '_parse_layer', 'apply_sheet']
+astrid/packs/timeline/cli.py changed existing functions: ['_cmd_show', '_configure_show', '_cmd_apply', '_configure_apply', '_cmd_commit_edit']
+astrid/sdk/timeline/publish.py byte-identical to current integration
+astrid/sdk/timeline/store.py byte-identical to current integration
+astrid/sdk/timeline/_timing_evaluators.py byte-identical to current integration
+
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends-final/notes/current-targeted.log && git rev-parse tl/integration && git status --short && git diff --check' in /home/user/work/wt/agt-review-native-frontends-final
+ succeeded in 468ms:
+........................................................................ [ 40%]
+........................................................................ [ 80%]
+....................................                                     [100%]
+180 passed in 30.66s
+7970544bb17dfcf234bd1cc1bb55ab5d713decd8
+
+codex
+The focused run on the private composition with integration `7970544b` passed **180 tests**. The four unchanged probes from the prior review also passed. I found no blocking source issue. The report will approve this bounded patch and note the evidence limit: the central 18-pass run qualifies candidate `bdf88327` with pinned Runtime `94114269`, while the newer private composition has local targeted coverage.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=orch/'workers/agt-review-native-frontends-final'
+report='''# Native frontend final gate
+
+**APPROVE the bounded native checkout/sheet patch. No blocking source finding, assertion weakening, or PLAN disagreement.** This is an integration recommendation, not M2/AG03 closure, legacy-writer retirement, or final cross-repository tuple qualification.
+
+## Exact sources and scope
+
+- Candidate "'`tl/agt-m2-native-frontends-finish`: `bdf883271fd522552c004706024ff04b1b6aa73f`, tree `b3250fda18204300720baf403734a3a14f7cfffd`; parent `86405964ecb713ad42a375f9de7960b3f9dc259b`.
+- Review worktree/initial integration: `01926d032de76ccf2514adde0a1854c98341aba9`, including history merge `5430a971` / implementation `f3afc274` and trim merge `6a595224`.
+- Integration advanced during review to `7970544bb17dfcf234bd1cc1bb55ab5d713decd8`: only `_timing_evaluators.py` changed (helper-name collision fix). Final independent executions use that exact newer source.
+- Private composed tree: `37a266d70d228316fa972413fb8603d8bd2b9692`. Computed using Git blob/tree serialization over the complete tracked source paths and candidate additions, without writing Git objects. Exactly eight existing paths modified and eleven added; the same 19-path scope as the candidate. Details: `composition-check.txt` beside this report.
+
+Read PLAN.md, repository guidance, prior design review and detailed reproduction report, candidate'"'s complete product/fixture diff, added mixed-frontend tests, and current history/recovery changes. Compared every candidate path with the prior reviewed checkout ("'`3aeb519c`) and sheet (`ede468a8`) blobs: 13/17 inherited paths are byte-identical; the four changed paths contain only the alias fix, numeric-gutter fix, basis/pending stale-handle fence, and positive regressions. The two additional files are the local and HTTP mixed-frontend tests. No command schema, pin, endpoint, deletion claim, or unrelated product scope was introduced.
+
+No passing behavior assertion was removed, skipped, weakened, or recast as refusal. The existing batch-ingress test change only extends its fixture for historical films and reads the initial resource pair without prematurely adopting historical command history. The final HTTP test correction records entry to the actual commit handler, forwards its input unchanged, and checks the refused B request as well as accepted requests; it does not relax B'"'s guards/key/base expectations.
+
+## Findings resolved and composition preserved
+
+The original positive probes now pass unchanged: both raw "'`clipType` and `clip_type` resolve `am-sprite` and accept canvas x=600 as stored x=100, preserving scale=6. The scientific `1e-06` start gutter accepts an unrelated hold=1→2 edit and retains the original timestamp. Permanent tests also check original type/read guards, opaque/null/type preservation and exact inverse.
+
+Mixed local and recorded HTTP cases cover sheet A lost ACK → attached B captured over A → exact A retry after restart → explicit reattach → B with fresh key and original complete commands/guards at A'"'s accepted revision/publication pair. Disjoint peer work accepts/rebases; relevant peer work conflicts and retains B plus draft. Reversing frontend order refuses sheet suffix/export while preserving the checkout flight/body/key and edited text. Stale attached handles refuse edit/flush/undo after external staging or acknowledgement, including equal-preview publication changes; explicit reattach is required and original claims are never refreshed.
+
+Private composition preserves all current Checkout methods exactly (AST comparison; only "'`attach` is added), including published undo/redo, accepted-base fencing, retirement, locked reload/save and interrupted local-restore recovery. `publish.py` and `store.py` remain byte-identical to current integration. Sheet retains `apply_sheet(..., client=...)`, `find_version(..., client=client)`, same-base local-history restrictions and retained Runtime revision lookup. CLI retains publication redo dispatch/options/help. Trim/current timing sources are retained, not replaced with candidate'"'s older tree.
+
+The unmodified candidate patch cannot apply directly to current "'`timeline_sheet.py`. Its large insertion hunk includes the older `apply_sheet` signature and `find_version` call as context. I changed exactly those two CONTEXT lines in a private patch to match current history code; no candidate additions were changed. `git apply --check` then succeeded. Regenerated the private CLI surface and artifact manifest from the composed code, thereby including both history redo and native sheet options. Do not overwrite these files wholesale from the older candidate.
+
+## Independent targeted executions
+
+All source executions used the private archive under this worker'"'s directory, the shared Agent venv for dependencies only, and disabled bytecode/pytest caches. No sockets, browser, full suite, installation, shared-dependency write, source fix, or Git mutation.
+
+The initial private archive was made with:
+
+"'```sh
+git archive 01926d032de76ccf2514adde0a1854c98341aba9 | tar -x -C "$W/composed"
+git diff bdf88327''^ bdf88327 --binary > "$W/notes/candidate.patch"
+# Adjust only the two sheet context lines described above; retained as composition.patch.
+cd "$W/composed"
+git apply --check ../notes/composition.patch
+git apply ../notes/composition.patch
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py
+```
+
+Here `W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends-final`. The first attempted `git apply --check --directory=/absolute/archive/path` returned 128 (Git disallows that absolute path); running from the archive exposed the real sheet context mismatch, exit 1. Neither failed check changed source. Both were resolved as above.
+
+On initial integration, the first command below without the last three files passed **139 tests in 10.84s**. The last three files separately passed **41 tests in 7.51s**. Integration then advanced; copied its sole changed file verbatim into the private archive:
+
+```sh
+# From the assigned review repository:
+git show 7970544bb17dfcf234bd1cc1bb55ab5d713decd8:astrid/sdk/timeline/_timing_evaluators.py > "$W/composed/astrid/sdk/timeline/_timing_evaluators.py"
+```
+
+Final current-source command, from `$W/composed`:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=../pytest-tmp-final tests/sdk/test_timeline_native_checkout.py::test_raw_element_alias_keeps_canvas_units_after_acceptance tests/editing_conformance/test_native_sheet_ordinary.py::test_exported_gutter_accepts_hold_edit_without_rewriting_timestamp tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_restore_recovery.py tests/sdk/test_timeline_checkout_publication_retry.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_native_sheet.py tests/sdk/test_timeline_sheet_native.py tests/test_cli_surface_conformance.py tests/test_artifact_manifest.py tests/sdk/test_timeline_sheet.py
+```
+
+**180 passed in 30.66s; exit 0.** Output: `current-targeted.log`.
+
+Copied the prior review'"'s two external probe files unchanged into this worker's notes, then ran:
+
+"'```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -c pyproject.toml --basetemp=../pytest-tmp-probes ../notes/test_review_checkout.py ../notes/test_review_sheet.py
+```
+
+**4 passed in 2.56s; exit 0.** One imported-helper `PytestUnknownMarkWarning` for integration registration under the external-test configuration; no integration test executed. Output: `original-probes.log`.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py --check
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
+```
+
+Both exit 0 on the final private tree. Assigned review worktree `git status --short` remains empty and `git diff --check` exits 0.
+
+## Prior evidence verified, not rerun
+
+Read actual summary, snapshot record, request and log for central result `agt-m2-native-frontends-finish-identity-pin94114269-integration-1020110804-898`. It records **18 passed in 81.09s, exit 0**, tree `b3250fda18204300720baf403734a3a14f7cfffd`, byte-identical to the candidate tree. The actual command was:
+
+```sh
+test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_native_checkout.py tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py tests/editing_conformance/test_commit_runtime_native_frontends.py
+```
+
+Includes all three mixed-frontend cases, three attached checkout cases, nine sheet cases and three identity cases. Runtime is exactly `94114269d1ce23ab3224d7eca5a85138ce2b5fed`, development evidence only. Earlier central run had 17 pass/1 failure in its observation of refused B; comparing archived tree `9bdb89bbfb29f3c5809d249c13450e6520e56044` to final candidate shows only the single HTTP test-file observer correction described above.
+
+Read original local execution output and command in the implementation worker'"'s "'`log.txt`: **609 passed in 51.15s**, covering the 20 files listed in that worker'"'s detailed report. Those product/local-test sources did not change in the initial-to-final central tree diff; the only changed file is the HTTP mixed test, absent from the 609 lane. This supports the worker's source-equivalence claim. Limitation: the local command itself did not atomically record a Git tree, so I cannot independently certify an exact whole-tree SHA at the instant of that local run. The 609 result is recorded prior evidence, not a fresh run or proof on current integration. I did not repeat it.
+
+## Recommendation and limitations
+
+Integrate the narrow candidate patch while retaining the current history changes and regenerating both manifests. The private composition patch plus the two generators reproduces the tested combination on the pinned current base (extracting current base directly is equivalent to the initial-base-plus-timing-file construction above). Then qualify the resulting safe cross-repo tuple centrally through the appropriate targeted/named lane. No final-tuple or current-composition HTTP result is claimed by this review.
+
+Pending sheet export, unsupported sheet grammar and attached verbs remain visible bounded refusals; idle CLI stale sheet reopening remains a documented limitation. Detached checkout publication/local history and legacy sheet paths remain live. No deletion/schema/pin claim and no full/make-check/typecheck/App journey claim. No implementation blocker or source correction requested. Private source archive and pytest temporary directories are removed after review; reports, patches and probe logs remain only under this worker's assigned ORCH paths.
+'''
+(w/'notes/report.md').write_text(report)
+flat='''# Native frontend final gate — APPROVE
+
+Approve candidate **"'`bdf883271fd522552c004706024ff04b1b6aa73f`** for bounded integration onto **`7970544bb17dfcf234bd1cc1bb55ab5d713decd8`**. No blocking finding, unreviewed scope, assertion weakening or PLAN disagreement. The combined patch is 19 paths; previously reviewed bases remain intact apart from the two requested fixes, stale-handle fencing and additive composition tests.
+
+- Raw `clip_type` now accepts canvas x=600 as stored **x=100**, retaining scale=6 and original guards. Exported **`1e-06`** gutter now permits hold=1→2 while preserving its timestamp. Four unchanged original review probes pass.
+- Private composition on current integration: **180 targeted tests passed**, plus the **4 original probes**. Mixed outbox tests prove exact A retry, original B claims, fresh B key, disjoint acceptance/relevant conflict, reverse-order draft preservation, and stale-handle refusal without recapture.
+- History/recovery `5430a971`, trim `6a595224`, and latest timing fix survive. Existing Checkout methods remain unchanged; sheet retains client-aware retained-history lookup; CLI retains publication redo. Private composed tree: **`37a266d70d228316fa972413fb8603d8bd2b9692`**.
+- Integrate with current history code: the sheet insertion patch needs two context lines adjusted for current `apply_sheet(..., client=...)` and `find_version(..., client=client)`. Regenerate `cli-surface.json` and `artifacts.json` from the combined code; both private checks pass. Do not replace overlapping files with the older candidate versions.
+
+Verified actual central **18 passed in 81.09s** at candidate tree **`b3250fda18204300720baf403734a3a14f7cfffd`**, pinned Runtime **`94114269d1ce23ab3224d7eca5a85138ce2b5fed`**. This is development evidence, not current/final-tuple qualification. Verified the recorded **609 passed in 51.15s** and unchanged local-test/product sources; its local execution did not atomically record a whole-tree SHA. Did not rerun 609 or any full/HTTP suite.
+
+No source fixes, shared dependency writes, Git mutations, pin/schema changes, legacy retirement or M2/AG03 closure. Next: history-preserving integration, then targeted central qualification of the safe tuple. No blocker.
+
+Exact commands, outcomes, source identities and limitations: [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends-final/notes/report.md).
+'"'''
+(orch/'design/agent-review-native-frontends-final.md').write_text(flat)
+(w/'commit-msg').write_text('chore(timeline): complete native frontend final review\\n\\nApprove the bounded native frontend patch after targeted current-source\\ncomposition and history-fence verification. Record evidence and limitations\\nin the assigned external review reports; leave repository source unchanged.\\n')
+PY" in /home/user/work/wt/agt-review-native-frontends-final
+ succeeded in 135ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch');w=orch/'workers/agt-review-native-frontends-final'
+p=orch/'design/agent-review-native-frontends-final.md'
+s=p.read_text()
+s=s.replace('No source fixes, shared dependency writes', '''Exact independent probe command (from the private composition; "'`PYTHONPATH` selects its source):
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -c pyproject.toml --basetemp=../pytest-tmp-probes ../notes/test_review_checkout.py ../notes/test_review_sheet.py
+```
+
+Result: **4 passed, 1 imported-marker warning in 2.56s**, exit 0. The complete exact 180-test command and generator checks are in the linked worker report; **180 passed in 30.66s**, exit 0.
+
+No source fixes, shared dependency writes'"''')
+p.write_text(s)
+p=w/'notes/report.md';s=p.read_text().replace('the first command below without the last three files passed', 'the final pytest command below without the last three files, using "'`--basetemp=../pytest-tmp`, passed'"').replace('The last three files separately passed **41 tests in 7.51s**.', '''The last three files separately passed **41 tests in 7.51s**, using:
+
+"'```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=../pytest-tmp-second tests/test_cli_surface_conformance.py tests/test_artifact_manifest.py tests/sdk/test_timeline_sheet.py
+```'"''')
+p.write_text(s)
+for name in ('composed','pytest-tmp','pytest-tmp-second','pytest-tmp-final','pytest-tmp-probes'):
+ p=w/name
+ if p.exists(): shutil.rmtree(p)
+assert (w/'notes/current-targeted.log').read_text().rstrip().endswith('180 passed in 30.66s')
+assert (w/'notes/report.md').is_file()
+assert (orch/'design/agent-review-native-frontends-final.md').is_file()
+(w/'DONE').touch()
+PY
+git status --short && git diff --check && git rev-parse tl/integration" in /home/user/work/wt/agt-review-native-frontends-final
+ succeeded in 5240ms:
+7970544bb17dfcf234bd1cc1bb55ab5d713decd8
+
+codex
+**APPROVE** `bdf88327` for bounded integration onto `7970544b`.
+
+- Private composition: **180 targeted tests passed**.
+- Original regression probes: **4 passed**.
+- History/recovery fences preserved; no assertion weakening or source changes.
+- Prior central **18-pass** result verified against the exact candidate tree and pinned Runtime. Current composed HTTP behavior remains unverified.
+
+[Final review](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-frontends-final.md) · [Detailed report and commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends-final/notes/report.md)
+
+No blocker. Integration must preserve current history changes and regenerate manifests. `DONE` and `commit-msg` written; worktree clean.
+tokens used
+108,636
+**APPROVE** `bdf88327` for bounded integration onto `7970544b`.
+
+- Private composition: **180 targeted tests passed**.
+- Original regression probes: **4 passed**.
+- History/recovery fences preserved; no assertion weakening or source changes.
+- Prior central **18-pass** result verified against the exact candidate tree and pinned Runtime. Current composed HTTP behavior remains unverified.
+
+[Final review](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-frontends-final.md) · [Detailed report and commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-frontends-final/notes/report.md)
+
+No blocker. Integration must preserve current history changes and regenerate manifests. `DONE` and `commit-msg` written; worktree clean.

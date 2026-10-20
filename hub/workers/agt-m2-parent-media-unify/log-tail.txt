@@ -1,0 +1,400 @@
+    lane = found.get('track') if found is not None else home
+    consumed = [clip['id'] for clip in clips]
+    capture = {'owner': owner, 'clip': clip_id, 'kind': kind, 'media': dict(media),
+               'anchor': {'id': anchor, 'state': 'present' if found is not None else 'absent'},
+               'lane': lane, 'consumed': consumed,
+               'fps': {'numerator': fps.numerator, 'denominator': fps.denominator}}
+    if frame is None:
+        start = max((_end_frame(clip, origin, fps) for clip in clips), default=math.floor(origin * fps + Fraction(1, 2)))
+        capture.update(resolution='append', extent_frame=start)
+    else:
+        if isinstance(frame, bool) or not isinstance(frame, int):
+            raise CommandError('frame must be an integer', kind='unsupported_timing')
+        taken = {clip_start_frame({**clip, 'at': origin + number(clip.get('at'), 'clip.at')}, float(fps))
+"""Occurrence-only media recipes over raw children and detached Runtime inputs."""
+from __future__ import annotations
+
+import copy
+import re
+
+from ._command_state import ABSENT, CommandError, equal
+from ._media_inputs import _verified
+from ._recording import active
+from .capture import MAP_FIELDS, RELATIONS, number, occurrence_start, rate
+
+MEDIA_INTENT = {'ownership': 'occurrence'}
+
+
+def _owner(ctx, ref, *, child=False):
+    pattern = r'occurrence:(?!.*::)[^/]+' + (r'/clip:(?!.*::)[^/]+' if child else '')
+    if not isinstance(ref, str) or not re.fullmatch(pattern, ref):
+        raise CommandError('media edit requires explicit occurrence/raw child ownership')
+    owner = ref.rsplit('/', 1)[0] if child else ref
+    ctx.select('collection.occurrences', 'parent')
+    ctx.read(owner, ['occurrence_id'])
+    ctx.read(owner + '/shot', ['shot_id'])
+    for path in MAP_FIELDS:
+        ctx.read(owner, path)
+    row = ctx.state.occurrence(owner)
+    occurrence_start(row)
+    if (not active(row) or isinstance(row.get('source_offset'), bool) or isinstance(row.get('speed'), bool)
+            or row.get('source_offset') not in (None, 0)
+            or row.get('speed') not in (None, 1)
+            or any(row.get(key) is not None for key in ('time_map', 'timeMap'))):
+        raise CommandError('media edit requires an active translation-only occurrence', kind='unsupported_map')
+    number(row.get('duration_ms'), 'occurrence.duration_ms', positive=True)
+    fps = rate(ctx.read('parent', ['config', 'output', 'fps']))
+    if rate(ctx.read(owner + '/source', ['output', 'fps'])) != fps:
+        raise CommandError('parent and child fps differ', kind='unsupported_timing')
+    if ctx.read(owner + '/source', ['source_window']) is not None:
+        raise CommandError('internal source_window is unsupported', kind='unsupported_map')
+    ctx.bind('media.owner', owner)
+    return owner, row['duration_ms'] / 1000
+
+
+def _exclusive(ctx, owner):
+    if ctx.select('placement.owners', owner) != [owner]:
+        raise CommandError('shared authored placement is unsupported', kind='unsupported_ownership', ref=owner)
+
+
+def _consume(ctx, owner, ids):
+    """Record the clip rows an automatic builder read, so a later change conflicts at replay."""
+    members = ctx.select('collection.clips', owner)
+    for clip_id in ids:
+        ref = owner + '/clip:' + clip_id
+        if ref not in members:
+            raise CommandError('consumed clip is not in the occurrence', kind='identity_conflict', ref=ref)
+        ctx.read(ref)
+
+
+def _binding(pin, kind):
+    return {'media_id': pin['object_id'], 'type': kind,
+            'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
+
+
+def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
+    identity = pin['asset'] if alias is None else alias
+    if not isinstance(identity, str) or not re.fullmatch(r'(?!.*::)[^/]+', identity):
+        raise CommandError('media requires a reserved raw asset alias')
+    # Containers must already exist. Never replace null/opaque registry state.
+    registry = ctx.state.registry(owner)
+    if not isinstance(registry, dict) or not isinstance(registry.get('assets'), dict):
+        raise CommandError('media edit requires an authored asset registry')
+    if owner == 'parent':
+        ctx.read(owner + '/collection:asset')
+    ref = owner + '/asset:' + identity
+    expected = _binding(pin, kind)
+    entry = ctx.read(ref)
+    if ctx.state.get(ref, []) == ABSENT and create:
+1:"""Completion auto-placement: anchor-after and lane-end fallback over existing birth ops."""
+13:from astrid.sdk.timeline.native_auto_placement import auto_place_completion
+21:    runtime_abi,  # noqa: F401 -- autouse detached ABI fixture
+26:FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_auto_placement.json'
+41:    result = auto_place_completion(bundle, OWNER, 'placed', new, ownership='occurrence',
+105:    result = auto_place_completion(bundle, OWNER, 'placed', pin, ownership='occurrence',
+145:            auto_place_completion(head, owner, 'placed', pin, ownership=ownership, verified_media=verified)
+154:        auto_place_completion(bundle, OWNER, 'placed', pin, ownership='occurrence', verified_media=[])
+158:        auto_place_completion(bundle, OWNER, 'placed', pin, ownership='occurrence', verified_media=audio)
+166:        auto_place_completion(bundle, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
+174:    assert result['capture']['consumed'] == ['clip-a']
+181:    moved = auto_place_completion(head, OWNER, 'again', verified[1]['selection'], ownership='occurrence',
+199:    rebuilt = auto_place_completion(head, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
+219:    assert (capture['resolution'], capture['lane'], capture['consumed']) == ('fallback-at', 'overlay', [])
+225:    # Nothing was consumed from the lane, so a sibling moving does not change the approved intent.
+273:    rebuilt = auto_place_completion(head, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
+  111 astrid/sdk/timeline/native_parent_media_commands.py
+  510 tests/editing_conformance/test_recipe_m2_parent_media.py
+  559 tests/editing_conformance/test_producer_insertion.py
+ 1180 total
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/__init__.py
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+?? astrid/sdk/timeline/native_parent_media_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_parent_media.json
+?? tests/editing_conformance/fixtures/recipe_parent_media.json
+?? tests/editing_conformance/test_producer_insertion.py
+?? tests/editing_conformance/test_recipe_m2_parent_media.py
+
+exec
+/bin/bash -lc "sed -n '108,148p' astrid/sdk/timeline/commands.py; sed -n '187,215p' astrid/sdk/timeline/commands.py; sed -n '1,85p' astrid/sdk/timeline/_recording.py" in /home/user/work/wt/agt-m2-parent-media-unify
+ succeeded in 89ms:
+                and '/' not in command['select']):
+            raise CommandError("track.create requires parent or occurrence owner")
+        if command.get('intent', {}) != {}:
+            raise CommandError("track.create has no intention overrides")
+
+
+def _normalize(command):
+    command = copy.deepcopy(command)
+    validate_command(command)
+    operation = operations().get(command['op'])
+    resolved = command.get('resolved', [command['select']] if operation and operation.singleton else [])
+    for field in ('expect', 'authorship'):
+        if field not in command:
+            continue
+        normalized = {}
+        for key, value in command[field].items():
+            ref, path = address(key, resolved)
+            canonical = ref + '::' + spelling(path)
+            if canonical in normalized and not equal(normalized[canonical], value):
+                raise CommandError("inconsistent equivalent property guards", ref=ref, path=path)
+            normalized[canonical] = value
+        command[field] = normalized
+    return command
+
+
+def _verify_claims(ctx, command):
+    for ref in command.get('created', []):
+        if ctx.state.entity(ref, optional=True) is not None:
+            raise CommandError('created identity is occupied', kind='identity_collision', ref=ref)
+    for key, expected in command.get('expect', {}).items():
+        ref, path = address(key, command.get('resolved', []))
+        guard(ctx.state, ref, path, expected)
+    for read in command.get('reads', []):
+        guard(ctx.state, read['ref'], read['path'], read['state'])
+    for selected in command.get('selections', []):
+        actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
+        if not equal(actual, selected):
+            raise CommandError("original selection membership/order changed", kind='selection_changed', ref=selected['owner'])
+
+
+def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
+        else:
+            apply_inverse(ctx, inverse_records, intervening_records)
+            ctx.record['command']['intent'] = {}
+            ctx.record['command']['resolved'] = []
+        if ordinal == len(commands) - 1:
+            ctx.compile_inputs()
+        ctx.compile_mirrors()
+        record = ctx.finish(capture=True)
+        for field in ('resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'):
+            if field not in command:
+                continue
+            matches = equal(command[field], record['command'][field])
+            if field == 'reads':
+                actual = record['command']['reads']
+                matches = len(command[field]) == len(actual) and all(
+                    claimed['ref'] == read['ref'] and claimed['path'] == read['path']
+                    and (equal(claimed['state'], read['state'])
+                         or ctx.command_input.matches(read['ref'], read['path'], claimed['state']))
+                    for claimed, read in zip(command[field], actual))
+            if field == 'expect' and command[field].keys() == record['command'][field].keys():
+                matches = all(ctx.command_input.matches(*address(key, command.get('resolved', [])), expected)
+                              for key, expected in command[field].items())
+            if not matches:
+                raise CommandError(f"submitted {field} does not match authoritative capture", kind='capture_mismatch')
+        # Keep original claims and metadata after they have been verified.
+        record['command'].update({k: v for k, v in command.items() if k != 'intent'})
+        records.append(record)
+    return Plan(candidate, records)
+"""Instrumented authored-state primitives. Handlers never manufacture records."""
+from __future__ import annotations
+
+import copy
+
+from ._collections import KINDS, arrange, insertion_boundary, order, rows
+from ._command_state import ABSENT, CommandError, State, equal, present, spelling
+from ._common import AUDIO_KINDS
+
+
+def active(row):
+    return (row.get('enabled') is not False and row.get('active') is not False
+            and not any(row.get(key) is True for key in ('disabled', 'hidden', 'deleted')))
+
+
+def selection(state, key, owner, members=()):
+    boundaries = None
+    if key == "move.target":
+        result = [ref for ref in members if state.entity(ref, optional=True) is not None]
+    elif key in KINDS:
+        result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
+                  else order(state, owner, KINDS[key]))
+        if key.endswith('.after'):
+            return {"key": key, "query_version": 1, "owner": owner, "members": list(members),
+                    "order": result, "boundaries": insertion_boundary(result, members),
+                    "policy": "guard-membership"}
+    elif key == 'placement.owners':
+        shot = state.occurrence(owner)['shot_id']
+        result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
+                  if row['shot_id'] == shot]
+        boundaries = ['shot:' + shot]
+    elif key == "move.blockers":
+        origin = state.occurrence(owner)
+        lane = (origin.get('placement') or {}).get('track', origin.get('track'))
+        track = state.entity('parent/track:' + lane, optional=True) if isinstance(lane, str) else None
+        output = track is None or (track.get('kind') not in AUDIO_KINDS
+                                   and track.get('role') not in AUDIO_KINDS and active(track))
+        result = []
+        for row in state.bundle['placements']:
+            if output and active(row) and (row.get('placement') or {}).get('track', row.get('track')) == lane:
+                result.append('occurrence:' + row['occurrence_id'])
+    else:
+        raise CommandError(f"unsupported recorded query {key!r}")
+    return {"key": key, "query_version": 1, "owner": owner, "members": result,
+            "order": list(result), "boundaries": list(result) if boundaries is None else boundaries,
+            "policy": "guard-membership"}
+
+
+class Recording:
+    def __init__(self, bundle, command, ordinal, *, closures=None, verified_media=(),
+                 schema_inputs=(), realm_id=None):
+        self.state = State(bundle, closures=closures)
+        self.verified_media = copy.deepcopy(verified_media)
+        self.schema_inputs, self.realm_id = schema_inputs, realm_id
+        self.input_state = None
+        self.command_input = State(copy.deepcopy(bundle), closures=closures)
+        parent = bundle['parent']
+        config = parent.get('config')
+        self.mirrored_clips = (isinstance(parent.get('clips'), list)
+                               and isinstance(config, dict) and isinstance(config.get('clips'), list)
+                               and equal(parent['clips'], config['clips']))
+        self.record = {"ordinal": ordinal, "command": copy.deepcopy(command), "writes": [],
+                       "reads": [], "selections": [], "bindings": [], "created": [],
+                       "dependencies": [], "derived_writes": []}
+
+    def capture_input(self):
+        """Keep inverse claims on its immutable head, separate from reverse stages."""
+        self.input_state = State(copy.deepcopy(self.state.bundle), closures=self.state.closures)
+
+    def read(self, ref, path=()):
+        value = self.state.get(ref, path)
+        captured = self.input_state.get(ref, path) if self.input_state is not None else value
+        read = {"ref": ref, "path": list(path), "state": captured}
+        if not any(equal(read, prior) for prior in self.record['reads']):
+            self.record['reads'].append(read)
+        return copy.deepcopy(value.get('value'))
+
+    def select(self, key, owner, members=()):
+        value = selection(self.input_state or self.state, key, owner, members)
+        if value not in self.record['selections']:
+            if key.startswith('collection.'):
+                self.read(owner + '/collection:' + KINDS[key])
+                if owner != 'parent':
+                    self.read(owner, ['occurrence_id'])
+                    self.read(owner + '/shot', ['shot_id'])
+
+codex
+The final focused run passed: **130 passed, 5 strict xfailed**. The remaining five cases are the four deferred parent auto-placement tests and the producer/outbox test whose implementation is absent from this base.
+
+I’ll leave `BLOCKED` because that producer dependency prevents the full 66-case D13 acceptance claim. The report will identify the completed native changes, exact test commands, schema SHA, and remaining freeze and Runtime-generation work.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-unify')
+report='''# Parent media unification
+
+Implemented the bounded native unification on "'`tl/agt-m2-parent-media-unify`, base `efb96034fc7c80a6e73900bfc57dac53260beb3c`. **Acceptance remains BLOCKED on one separately owned producer integration case absent from this base.** No DONE marker. Parent auto-placement is the explicitly permitted follow-up.
+
+## Changes and decisions
+
+- One unpublished `clip.add-media` v1 with exactly closed `{row, media}` args. Full authored rows retain IDs, aliases, literal at/from/to/hold/speed, opaque fields and explicit nulls. The media selection remains the existing five-field shape. `capture_parent_completion` is a literal scalar-to-row builder, not another wire variant. Unknown scalar builder keys refuse rather than being discarded.
+- Preserved the reviewed `capture_assembled_media` lowering: read-only `timeline.assembled-target`, ordinary guarded clip deletions, missing-track creation and media births. Ordered child ordinal/clip/object matching, immutable media inputs and source/fps guards remain. It copies inputs and fills missing hold before capture; it does not settle outputs or resolve custody.
+- **Insertion-boundary decision, for separate schema review:** `clip.add-media.select='"'parent'"'` appends; `select='"'parent/clip:<stable ID>'"'` creates immediately after that boundary and leaves it present. The row/media args remain identical. `capture_clip_replace_media` emits `timeline.assembled-target`, one birth after the target, and ordinary `clip.delete`; no same-op scalar/row union or implicit replacement. For the guard, `select='"'parent'"'` retains the original flat-assembly requirement and reads all target rows; a scoped parent clip selector asserts the populated replacement target and reads that row. Both assert the complete ordered parent clip inventory. This preserves free-parent-lane replacement when occurrences exist, without loosening the original D13 flat-assembly guard. Disjoint sibling values can still rebase.
+- Ported direct/config/equal-mirrored registry addressing, storage-presence guards, physical/scoped overlap, create-or-require exact binding checks, and reservation inventory from retained branch `b1ec87a1e7e7bacbdbec09b6be24a02577336141`. Conflicting/null/opaque/missing registry containers refuse. Equal mirrors receive only the same scoped asset leaf writes. Unknown siblings and reused bindings survive.
+- Inverse dependent traversal uses canonical clip collections and declared reference containers, preserving opaque data as data. Null speed is interpreted as the existing default without changing its authored presence.
+- Applied the bounded `_inverse_media_removals` fix from provider-order.patch: reconstruct each authenticated accepted command'"'s proven collection order after its writes, using "'`AcceptedRecords`, `restoration_orders` and `arrange`. Accepted-record equality, input/output scope/revision/digest checks, exact before-state checks, source boundary comparison, document pins and introduced-media provenance checks remain. No monkeypatch/private probe is used for qualification.
+- Ported inverse public selection normalization from parent-media-order. Its `_ordinary_create` relaxation for same-command create/delete is unnecessary: this implementation uses separate ordinary birth and deletion records, retaining the stricter original proof.
+- Recovered both prior candidates from their retained branches because their worktrees were recycled: native `b1ec87a1e7e7bacbdbec09b6be24a02577336141`, ordered scalar candidate `c407d0d693af54783e24c3732679c95fb6f7f873`. The scalar candidate is not a public freeze and was not installed as a second operation.
+
+No producer.guard, capture hook, native element, auto-placement, Runtime client/pin, public Composition 12, integration worktree, or Git metadata was changed. Product delta excluding schema/tests/fixtures: 184 additions / 23 removals, including the 111-line parent module. Schema: 95 added lines.
+
+## Qualification
+
+All commands ran from `/home/user/work/wt/agt-m2-parent-media-unify`. Shared dependencies were read-only; no installs, shared caches, sockets, browsers, full suites, broad all-SDK reruns or central full requests.
+
+Final focused source run, after the scoped-target/disjoint-sibling adjustment:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_producer_insertion.py --tb=short
+```
+
+**130 passed, 5 xfailed in 42.01s.** This comprises:
+
+- Earlier 66 D13 cases: 65 passed; the producer/outbox integration case is retained as strict xfail because producer.guard/build_producer_batch/queue_proposal and its separately owned test helper are absent from this base.
+- Earlier 56 parent birth/order cases: 52 passed; four parent auto-placement cases retain their behavior expectations as strict xfails for the explicitly deferred follow-up.
+- Thirteen added cases passed: six real repository-provider first/middle/last replacements across image/video, five literal scalar-builder/source-unit/null-speed cases, one birth-preserves-boundary case, and one scoped-replacement/disjoint-sibling rebase case.
+
+The provider cases run the actual repository RuntimeCommitService against detached immutable test ports, including reload, inverse, redo, repeated undo, exact canonical documents and retired IDs. These are not a real Runtime daemon, genuine custody or settled-output authority proof. Equal-z composition input ordering is tested through the real projector; no rendered-pixel claim.
+
+Neighbor verification, before the final parent-only scoped-read narrowing and its focused regression (neighbor product code unchanged afterward):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_internal_stages.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_semantic_reservations.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/packs/rendering/test_assemble_timeline.py --tb=short
+```
+
+**635 passed in 108.45s.** Includes corruption/refusal tests for accepted media boundaries, record/source/revision/document-pin checks, existing occurrence media/inverses/reservations, current completion/shared auto-placement and assembler neighbors.
+
+Final lint and whitespace:
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/native_parent_media_commands.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/native_occurrence_media_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/__init__.py tests/editing_conformance/test_producer_insertion.py tests/editing_conformance/test_recipe_m2_parent_media.py
+git diff --check
+```
+
+**Both passed.** Earlier exploratory failures were missing/regenerated goldens and an accidental broad textual insertion into reservation scanning, which was corrected before qualification. Subsequent focused runs passed 117 then 129 cases before the final 130. No passing expectation was changed to refusal, skipped or deleted; the five unavailable behaviors retain strict xfails with restoration requirement comments.
+
+## Complete schema and artifacts
+
+Canonical schema `astrid/core/timeline/schema/edit-command.schema.json` SHA256:
+
+`65e8e0338110f85c7f9b8f42b0364c9bf55cc414e6af7f26e95a71a68e5cb19a`
+
+Structural comparison against both worker base and current integration `df2739f9` confirmed all 43 preexisting definitions, 21 operation conditions and all other schema fields unchanged. Exactly `AssembledTargetArgs`, `ClipAddMediaArgs` and their two operation conditions were added (45 definitions / 23 conditions total). Both baseline schemas have SHA256 `83a476f894f31dc359514e9c081bf28da2b1f8cd515bb30cce14292823753224`; neither contains producer.guard fields. No producer fields were dropped. The source preserves the inherited identical duplicate OccurrenceDeleteArgs text to avoid unrelated cleanup.
+
+- Parent module SHA256: `3511b68ed0f851a0d77f1f1213ff7823948c2a169e97a5a7de8d54e594da1bc7`.
+- D13 golden `tests/editing_conformance/fixtures/recipe_parent_media.json`: `5e97b6fabd237b86448131886dfdc9220efcdd033979cf5c3628a225661e8f6e`.
+- Completion golden `tests/editing_conformance/fixtures/recipe_m2_parent_media.json`: `22f1d1e94f3fbfada8cfc37519c30cfc96024a5a9a03a927a79a8ffcc85415b5`.
+
+## Held work and next steps
+
+1. **Acceptance blocker:** integrate the separately owned producer.guard/requester implementation and its test helper, retain its full current schema definitions/conditions when forming the later union, and restore/rerun `test_settled_assembly_normalization_numeric_forwarding_and_normal_outbox`. This task cannot honestly claim all 66 D13 cases pass while that case is xfailed. Its original success expectations are preserved. Do not mistake this dependency for a genuine settled assembler/authority qualification.
+2. **Permitted parent auto-builder follow-up:** extend current `auto_place_completion` with explicit parent ownership and named parent track, while preserving `preferred_track`, `fallback_at`, `fallback_track`, missing-saved-track refusal, rational-fps anchor-end/fallback/lane-end resolution, five-second completion defaults/video duration and consumed timing guards. Emit only the canonical row/media birth. Record every timing input consumed at capture/replay; the old parent-builder.patch predates the saved-policy/consumed guards and cannot be copied wholesale. No scalar args or `consumed` union was added to clip.add-media here. Restore the four strict parent auto-placement cases and add current saved-policy/consumption regressions on that path.
+3. Review the scoped selector semantics above and perform the separate normal complete-schema freeze and Runtime regeneration. Neither the old scalar schema nor this worktree changes any public tuple. Normal Runtime generation, generated-client validation and actual Runtime pairing remain required.
+4. Genuine managed settled-child selection/custody, assembler completion authority, durable one-shot/cancel/restart and receipt-to-render recovery remain unverified and outside this bounded task. No settled assembler/authority, pixel render, live Runtime or full-suite claim is made.
+
+`commit-msg` is prepared for the harness. `BLOCKED` names the exact missing producer dependency; no `DONE`, build output or temporary files were left in the worktree. No commits, merges, rebases, checkouts, pushes, branch/ref deletion, dependency mutation or integration writes were performed.
+'"'''
+(p/'report.md').write_text(report)
+(p/'commit-msg').write_text('''feat(timeline): unify parent media birth and ordered replacement
+
+Use one closed row/media command for parent births and assembly proposals.
+Preserve authored rows and registry mirrors, compose explicit replacement from
+scoped target guards, positioned birth and ordinary deletion, and reconstruct
+accepted collection order when proving inverse media removals.
+
+Add native birth, ordered provider reload/inverse/redo and source-unit coverage.
+Retain strict expected failures for the separate producer integration and
+parent automatic placement follow-up; Runtime schema generation remains held.
+''')
+(p/'BLOCKED').write_text('''Native implementation and focused qualification are complete: 130 passed / 5 strict xfailed; 635 neighboring tests passed. Full required 66-case D13 acceptance is blocked because the assigned base lacks the separately owned producer.guard/build_producer_batch/queue_proposal implementation and test_settled_proposal_contract helper. The original producer/outbox success case is retained as strict xfail, not weakened or skipped. Integrate that owned dependency and restore/rerun the case before claiming all 66. Four other strict xfails are the task-permitted separate parent auto-placement follow-up; exact delta is in report.md. Normal separate schema freeze/Runtime generation and genuine settled authority qualification remain required and are not claimed.\\n''')
+print('Wrote report.md, commit-msg and BLOCKED; no DONE.')
+PY" in /home/user/work/wt/agt-m2-parent-media-unify
+ succeeded in 187ms:
+Wrote report.md, commit-msg and BLOCKED; no DONE.
+
+codex
+Implemented canonical `{row, media}` birth, explicit ordered replacement, registry preservation, and the provider inverse-order fix.
+
+- Focused: **130 passed, 5 strict xfailed**
+- Neighbors: **635 passed**
+- Ruff and whitespace checks passed.
+
+Wrote `commit-msg` and `BLOCKED`; no `DONE`. Full acceptance awaits the missing producer integration. Parent auto-placement is deferred as permitted; separate schema freeze and Runtime generation remain required.
+
+[Report with exact commands, schema SHA, and remaining work](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-unify/report.md).
+tokens used
+169,324
+Implemented canonical `{row, media}` birth, explicit ordered replacement, registry preservation, and the provider inverse-order fix.
+
+- Focused: **130 passed, 5 strict xfailed**
+- Neighbors: **635 passed**
+- Ruff and whitespace checks passed.
+
+Wrote `commit-msg` and `BLOCKED`; no `DONE`. Full acceptance awaits the missing producer integration. Parent auto-placement is deferred as permitted; separate schema freeze and Runtime generation remain required.
+
+[Report with exact commands, schema SHA, and remaining work](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-unify/report.md).

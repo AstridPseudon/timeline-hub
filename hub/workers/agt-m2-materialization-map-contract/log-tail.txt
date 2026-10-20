@@ -1,0 +1,400 @@
+finish must retain these typed bindings. Keep the original Plan source dependency
+on rebase; verify against captured immutable inputs, not a refreshed source head.
+The original read occurrence:O/shot path [shot_id] names physical source S;
+the allocation names physical output D/J and candidate closure names exact output
+shot/internal revisions. Before and after physical identities are explicit in
+those facts; no fake State root write or physical-row birth record is introduced.
+Replay uses the captured D/J and original source pins. Reload recovers provenance
+from verified accepted records/closures, never by interpreting a shot ID prefix.
+Exact compiler functions already seed shot with project,timeline,O,S and item
+with project,timeline,O,D,I; D contains S. Keep these functions/seeds unchanged.
+Runtime performs the complete mutable shot/item occupancy preflight in the same
+accept transaction before any write; preview runs equivalent read-only checks.
+Unrelated occupied or retired destinations refuse, including same-project rows,
+foreign rows, archived owners and item collisions. Captured external reads and
+caller id_map/bindings do not authorize overwrite. Exact immutable reuse writes
+no projection. Ordinary current-owner updates keep their existing guarded path.
+An earlier own slot requires authenticated accepted ancestry: history_entry /
+_verify_accepted receipt+event records_digest, matching P/T/O/source binding/read,
+exact before→after occurrence edges and exact shot/item closure identities.
+Require the same captured allocation, and verify current or restored source edge;
+another occurrence/source or mere deterministic ID equality is insufficient.
+Item IDs must belong to that same proven shot in live/retained projections.
+New allocation records bind the source pin and allocations into authenticated
+records; cross-check receipt.result.id_map against them, never trust it alone.
+Old M1 records retain their exact accepted source-edge/binding/read proof path;
+do not retrofit required new facts or weaken inverse/restore/exact-retry guards.
+Semantic-birth reservations remain separate: shots project-wide, items globally
+by parsed item ID (not only owner-qualified ref); undo never frees them. Trusted
+inverse/restore may reuse only authenticated identities; exact ledger retry wins
+before live occupancy checks. No caller-created fact grants restoration authority.
+Release Agent schema/parser/recorder/compiler/provider and Runtime port/store
+validation together; generate refs/clients normally and refresh Agent/App pins and
+ACK validators together. Keep interface_version=1; exact contract digest fails
+closed on mismatched pairs. M2 merges wait for PLAN's M1 completion record.
+
+
+## 2026-10-20 — source-bound materialization join (exact proposal; manager ACKs pending)
+Settled direction: virtual-to-physical materialization is derived allocation,
+not semantic birth. This supersedes the earlier materialization-as-birth proposal
+and, ONLY for a coordinated new release, the identity-only restriction above.
+Old artifacts/accepted legacy identity pairs keep their existing behavior.
+No compiler seed change: current seeds already include P/T/O/source identities.
+Keep id_map: map<string,string>, existing bindings/dependencies, ABI1, no new port,
+DTO, table, args.materialization, physical State root or fabricated absent value.
+For original source shot S/item I, occurrence O, allocated shot D/item J:
+  id_map = {"shot:D":"D", "shot:D/item:J":"J"}
+  K = "materialization.source:shot:D"
+  bindings = [{key:"shot:D",ref:"shot:S",policy:"fixed",dependencies:[K]},
+    {key:"shot:D/item:J",ref:"shot:S/item:I",policy:"fixed",dependencies:[K]},
+    {key:"materialization.owner:shot:D",ref:"occurrence:O",policy:"fixed",dependencies:[K]}]
+  dependency = {key:K,kind:"entity",policy:"exact",
+    pin:{parent:ORIGINAL_base_parent,source:ORIGINAL_source_mapping.shots[D]}}
+Source contains shot/internal revision IDs+digests and exact item_id_map {I:J}.
+Request scope supplies P/T; independently verify it against the original closure.
+Keys are allocated refs, values raw IDs: original source + occurrence are the
+join through bindings/pins. Raw S->D/I->J keys lose sibling allocations of S/I.
+Use canonical parsed refs, never prefix guesses; reject malformed, missing,
+extra, conflicting or incorrectly bound allocation pairs. Matching repeated
+record tuples merge. Legacy identity pairs remain on their existing gated path.
+Derive only allocations actually emitted by the original base plan; parent-only
+edits emit none. Capture in command.bindings before sealing; retain dependency
+pins in Plan/records and map in accepted output/receipt. finish must retain source
+shot/item bindings. Replay CONSUMES this original map, never reallocates at head;
+original pins authenticate provenance, not whole-parent equality on stale head.
+Explicit physical before = verified original occurrence source edge S and exact
+source shot/item closure; after = candidate occurrence edge D and exact D/J
+shot/internal closure identities. These facts do NOT assert SQL slot absence.
+Head absence after restore likewise does not prove a slot is physically absent.
+Runtime must atomically preflight actual mutable/retired shot and global item
+occupancy before writes. Preserve M1 guard and exact-ledger-lookup-first retry.
+An existing own slot requires authenticated accepted ancestry: receipt/event
+records_digest, original P/T/O/S/I bindings/pins, exact accepted before->after
+edges and shot/item closure identities, plus current/restored source-edge proof.
+Cross-check receipt map against authenticated records, never trust map alone.
+An unrelated occupant, other owner/source, missing/corrupt proof or arbitrary
+caller facts refuses without SQL/CAS/history writes. Keep the old M1 own-slot
+proof path; do not require invented new facts of old accepted records.
+A genuinely NEW authored shot/item separately uses absent-root create_entity,
+typed created facts, guarded inverse and retired-ID reservations (items globally).
+Physical derived items never become semantic births to obtain overwrite rights.
+Raw item codec is item_id, with existing id fallback; raw rows are not clips.
+Agent shared-open currently fails the id-only variant: copying remaps item_id
+but leaves id unchanged. Fix/qualify that codec after freeze; no State item
+accessor is claimed by this design. New semantic item accessors must use it.
+After BOTH manager ACKs, release four canonical shot-owned item-ref patterns
+(ScopedId,EntityRef,TargetKey,AnchorIdentity) through Agent source and normal
+Runtime generation; qualify parser/capture/replay/provider and both Runtime
+identity-only gates. Agent sync/App ACK validators change in the same tuple;
+no suffix rewriting, raw generated edits, old-artifact mutation or Bundle1 change.
+Acceptance cases before implementation: capture/JSON recovery/exact replay;
+stale disjoint parent AND sibling-first materialization; undo/redo/restore with
+original map retained; second occurrence yields distinct D/J; fake/missing/extra
+pairs, wrong source/owner/pin/scope refuse; restore with an existing own row
+requires history; unrelated same/foreign/retired/global-item occupants refuse.
+Executable Agent spike uses real compiler closures and the proposed join only,
+not Runtime authority. Five old requirements now mean derived map/no false birth
+plus four item refs; two additional strict requirements expose stale sibling
+reallocation and raw-id codec failure. Root alias fixes remain owned by 1b523.
+Both managers must ACK this exact join; implementation is a separate assignment.
+ M tests/editing_conformance/test_materialization_identity.py
+?? tests/editing_conformance/test_materialization_map_spike.py
+180 tests/editing_conformance/test_materialization_map_spike.py
+
+exec
+/bin/bash -lc "rg -n '"'^## .*materialization'"' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-contract.md && tail -n 10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md && tail -n 12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md" in /home/user/work/wt/agt-m2-materialization-map-contract
+ succeeded in 0ms:
+342:## 2026-10-20 — physical materialization (proposal; Agent ACK pending)
+402:## 2026-10-20 — source-bound materialization join (exact proposal; manager ACKs pending)
+## Runtime manager01:04 — portability service request correction
+rt-m2-portable-pair-portability submitted named suite without --files, accidentally ran broad integration lane (55PASS/4FAIL/7ERROR/2SKIP). It is NOT the intended9casequalification; do not weaken unrelatedtests/product or claimnewregression. Manager submitted exact intended9file request rt-m2-portable-pair-portability-pack-portable-agentb2b51c4a-integration-1020010406-13633; please await/report THAT result, do notduplicate. Allnamedpack suites require --files tests/test_timeline_portable_pack_integration.py.
+
+## 2026-10-20 — orchestrator: DECISION on physical-materialization-carrier (Agent + Runtime freeze this)
+APPROVED as the manager recommends. Two different things, two different records:
+- SEMANTIC BIRTH (a genuinely new authored shot/item) is a typed created-entity fact, through Recording.create_entity (an absent root is required), with an exact inverse.
+- MATERIALISATION (the compiler deriving a physical shot/item slot for an EXISTING authored virtual identity) is NOT a creation, so never call create_entity for it. Capture it once through the existing id_map / source-bound allocation, as a deterministic derived mapping {occurrence_id, source_shot_id → shot_id, [source_item_id → item_id]}, and replay it exactly. physical before/after are explicit. This is exactly the case where id_map grows past identity-only, as reserved at Checkpoint A.
+- Runtime keeps the pre-write occupancy guard and adds the accepted own-slot proof: a slot owned by this occurrence's earlier accepted materialisation is reusable, and any other occupant refuses (as in M1).
+- Extend the shot-owned item refs through normal artifact generation. The 5 strict xfails flip; keep the 2 root-alias ones until they're addressed.
+- The existing compiler IDs already scope by project/timeline/occurrence/source, so no seed change is needed. Record that conclusion in design/.
+- Extend the shot-owned item refs through normal artifact generation. The 5 strict xfails flip; keep the 2 root-alias ones until they're addressed.
+- The existing compiler IDs already scope by project/timeline/occurrence/source, so no seed change is needed. Record that conclusion in design/.
+
+## Runtime manager01:08 — physical-materialization decision ACK/pairedfreeze
+ACK orchestrator distinction semanticbirthvsderivedmapping,existingid_map expansion,ownslotproof,nocompilerseedchange. Runtime rt-m2-materialization-port-contract audits exact currentmap<string,string> +bothidentity-onlyrejects andproposesminimalexactcarrier/acceptedownslotproof incommit-contract/runtime-coordination, designonlybeforepairedACK. Pleasecoordinateexactkeys/shape/sourcebindings withthatworker; no inferauthorityfromcallerid_map/IDspelling. Agentextends typedshot-owneditemrefs andsemanticcreatefacts separately. Existingdraftidentity-only/birth paragraphs nowstale; yours toamend. RuntimekeepsM1occupieddestguardalways. Portableactualhostpairfinal17f3b9f/tree112c now exactcentral9PASS2.93s aftermanagercorrectedmissing--files; nativePARAMstillAgentowned. B2custodyworktreeleasecontinuesuntilcombinedcohort exactpairrun finishes.
+
+## Runtime manager01:14 — exact carrier proposal ready / params sourcefreeze
+Reviewed materializationportcontract proposal now appended design/commit-contract.md and runtime-coordination.md: flat id_map typedallocationref→rawphysicalid {"shot:D":"D","shot:D/item:J":"J"}; exactsourceS/I andownerO joined through fixedexistingbindings andentitydependency pin containingoriginal parent+source_mapping.shots[D]. No DTOshapechange/no fabricatedbirth; compilerseedsunchanged. Historicalownslot requiresverifiedreceipt/event/records+beforeafteredge/fullpins,notcaller map alone. PleaseACKexactjoinedcarrierorciteprecisefailingcasebeforeimplementation; worker report contains exactsource audit. Oldrawsource→destmap loses O1/O2sharedsourceallocations, nestedvaluesbreakstringtypes; proposalavoidsboth.
+Nativeparams3565462c/0ce509f3 +Runtimeb3 reported15actualPASS+416focused/4unrelatedxfail with3originalselectedxfailsflipped. Please independentreviewandFREEZEexactcanonicalschema/productsource tuple forofficialcoupledparams artifact whenready. RuntimeSOURCE8947f8d addsapprovedVerifiedDocumentObject/Protocol/generatorprojection,53PASS/tempgeneratedchecks. No consumerpinmove/releasebeforeyourreviewedsourcefreeze; mayridecomposedBundle2ordinarypopup ifthatfreezeisready,otherwiseplease nameparams-onlyregistrycandidate preservingfrozenlabel. AllM2integrationstillheldonM1record.
+
+## Runtime manager01:16 — PARAM HTTP durability journey/exactsourcelease
+Toqualifytransportbeyondyour15directservicecases, rt-m2-selected-params-door-journey willadd ONErealRuntimeHTTP/outbox-style exactrequestlostACK→headC+V2→deletecache/currentselection→restart→exactretry→nativeguardedundo case againstsource3565462c. No Agentproductedits/browsers/artifactpins. PleaseLEASE/PRESERVE /home/user/work/wt/agt-m2-params-retained-wire exact3565462c untilthisboundedjourneycompletes; currentnamedservicepreflightassertssourceHEAD. Sourcecurrentlynotofficialfrozenartifact, thisisonlytesttuple. Yournativecapture/inverseimplementationremainsauthoritative; workerreusesexistingcapture/providerfactory/fixtures, no overrides.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+path = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-contract.md')
+content = path.read_text()
+heading = '## 2026-10-20 — source-bound materialization join (exact proposal; manager ACKs pending)'
+start = content.index(heading)
+end = content.find('\\n## ', start + len(heading))
+if end == -1:
+    end = len(content)
+addition = '''## 2026-10-20 — source-bound materialization join (exact proposal; manager ACKs pending)
+Agent spike adopts the preceding physical-materialization proposal's EXACT
+id_map/binding/dependency spellings; worker agreement is not both managers' ACK.
+That new release supersedes only identity-only/materialization-as-birth wording;
+old artifacts/legacy identity pairs and frozen Bundle1 remain unchanged.
+Physical S/I -> D/J edges above are explicit closure identities, NOT assertions
+that SQL rows are absent. Head absence after restore never proves slot absence.
+No args.materialization, physical State root, fabricated absence or new namespace
+with caller-granted authority is needed. Runtime authenticates own-slot history.
+Acceptance cases: capture/JSON recovery/exact replay; stale disjoint parent AND
+sibling-first materialization; undo/redo/restore retaining the original map;
+second occurrence's distinct D/J; fake/missing/extra pair, wrong source/owner/pin/
+scope refusal; existing own row after restore requires accepted history; unrelated
+same/foreign/retired/global-item occupants refuse atomically; exact retry first.
+Executable spike uses actual compiler closures, not Runtime admission authority.
+Native stale sibling replay currently changes Oa back to S: head no longer shares
+S. It must consume captured D/J. No allocator seed change addresses that gap.
+Raw codec is item_id with id fallback (Runtime store validates/persists either).
+Shared-open with id-only currently collides: remapper changes item_id, not id.
+Preserve that positive case; no State item accessor is claimed before codec proof.
+Five previous requirements now assert derived map/no false birth plus four item
+refs; two added strict xfails expose sibling replay and id-codec gaps. Existing
+new-semantic-root typed birth tests remain; compose separate root fix 1b523.
+After exact paired manager freeze, report ready for separately assigned product
+implementation and normal coordinated generation, including both ACK validators.
+'''
+path.write_text(content[:start] + addition + content[end:])
+print('Condensed Agent addendum to', len(addition.splitlines()), 'lines; retained preceding Runtime exact proposal.')
+PY" in /home/user/work/wt/agt-m2-materialization-map-contract
+ succeeded in 0ms:
+Condensed Agent addendum to 25 lines; retained preceding Runtime exact proposal.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-map-contract')
+(worker / 'notes').mkdir(exist_ok=True)
+report = '''# agt-m2-materialization-map-contract
+
+Bounded design/test spike complete on Agent base "'`3530f7aa`. No product,
+schema, generated artifact, pin or compiler seed changes. Exact carrier agrees
+with Runtime worker proposal; **paired manager freeze is not yet recorded**.
+Runtime manager'"'s 01:14 review publishes the exact join and requests Agent ACK.
+Do not interpret worker agreement or the settled direction ACK as both managers'
+exact-carrier ACK. Product implementation remains a separate assignment.
+
+## Changes and decisions
+
+- Updated the five prior requirements to the ratified behavior: source-bound
+  derived "'`id_map` with **no false semantic birth**, plus four positive canonical
+  `shot:S/item:I` reference requirements. Old never-passing physical-birth
+  expectation -> derived allocation is an explicit orchestrator supersession,
+  not a passing behavior converted to refusal. These remain strict xfails until
+  actual paired implementation/generation; no schema override or fake green.
+- Added `tests/editing_conformance/test_materialization_map_spike.py` (180 lines):
+  real executor/compiler closures drive the small proposed join and validations.
+  It covers source/output physical edges, JSON recovery, exact replay, disjoint
+  parent head, undo/redo, revision restore/rematerialization, sibling allocations,
+  legacy identity pairs, and fake/missing/extra/wrong-source/owner/pin/scope pairs.
+  The helper verifies the proposed carrier against known original inputs; it is
+  NOT Runtime admission, own-slot history authentication, or product map replay.
+- Chosen smallest existing carrier, matching Runtime exactly:
+  `{"shot:D":"D","shot:D/item:J":"J"}` joined to fixed source bindings
+  `shot:S`, `shot:S/item:I`, owner binding `materialization.owner:shot:D ->
+  occurrence:O`, and entity dependency `materialization.source:shot:D` with pin
+  `{parent: ORIGINAL_base_parent, source: ORIGINAL_source_mapping.shots[D]}`.
+  Source includes exact shot/internal pins and `item_id_map`. Raw source-only
+  keys collapse sibling occurrences; no nested/JSON-encoded map values, new
+  args/DTO/table/port or guessed-prefix authority is necessary.
+- Original mapping must be retained in Plan/records/result/receipt and consumed
+  on replay. Closure edges S/I -> D/J are explicit physical identities, never
+  a claim that SQL slots are absent. Runtime authenticates accepted ancestry
+  before own-slot reuse, checks all occupancy atomically, preserves the M1 guard,
+  and consults the exact ledger before live occupancy. Existing old proof paths
+  and legacy identity-pair behavior remain valid/gated. Never rewrite suffixes.
+- Kept M1 goldens, source guards and genuinely absent semantic-root typed births.
+  Root-stage/alias files are untouched: this predecessor base still has its two
+  strict xfails; separate `1b523` resolves them and must be composed by manager.
+  No root fix was reintroduced, duplicated or reverted in this change.
+
+## Executed counterexamples
+
+1. Capture Oa while Oa/Ob share S; materialize Ob, reopen its closure, then replay
+   Oa. Native output becomes S/I instead of original D/J because S now has only
+   one head occurrence. This proves why replay must consume the ORIGINAL map,
+   rather than recalculate from head. New positive strict xfail preserves D/J.
+2. Runtime store validation/persistence accepts item_id with id fallback. Replace
+   the source item'"'s item_id with id using ordinary verified digests/manifests:
+   shared Agent open raises "'`AuthoringBundleError: authoring shot item identity
+   collision '"'item-1'"'`. `_copy_shot_for_placement` reads either codec, but its
+   reference remapper only rewrites item_id, leaving id unchanged. New positive
+   strict xfail requires successful materialization. No State item accessor or
+   semantic item creation support is claimed. Reported for post-freeze work.
+
+Neither finding contradicts the settled no-seed-change decision. Both are native
+implementation gaps. The spike'"'s successful join tests do not fix them.
+
+## Exact commands and results
+
+Cwd: "'`/home/user/work/wt/agt-m2-materialization-map-contract`.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py
+```
+
+**211 passed, 9 xfailed in 7.72s**, exit0. Xfails: five ratified carrier/ref
+requirements, two new counterexamples, two unchanged predecessor root cases.
+The initial two-file spike run also passed: 15 passed, 7 xfailed in 1.47s.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py --runxfail --tb=short
+```
+
+**15 passed, 7 failed in 1.49s**, expected diagnostic exit1: missing Plan map,
+four unchanged canonical item-ref refusals, sibling reallocation and raw-id
+shared-open collision. No unrelated failure was masked by an xfail.
+
+```bash
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py
+```
+
+**3 passed in 2.49s**, exit0 against clean Runtime
+`9f9b25c000485e919f30f1411831fe2d5a3c1316`. Direct in-process service only,
+no localhost/socket/browser. Proves existing M1 same-project/foreign atomic
+refusal, fresh slot, dry-run, restart/lost-ACK exact retry without provider or
+projection persistence, subsequent own move, restore and rematerialization.
+Does NOT qualify acceptance of the new map or new item refs.
+
+```bash
+/home/user/work/venv-agent/bin/python -m ruff check tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py
+git diff --check
+```
+
+Both exit0, Ruff all checks passed. Initial Ruff import-format finding corrected
+before final runs. No full suite, make check, install, network, browser, central
+service request, commit/merge/checkout/push or build output was produced.
+
+## Coordination and next steps
+
+Read PLAN first and Runtime'"'s report/source audit. Appended the exact proposal
+request/evidence to the authorized absolute shared paths:
+- "'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-contract.md`
+- `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md`
+
+Runtime manager published the original exact proposal while this spike ran;
+condensed the Agent addition to 25 lines referring to that authority instead of
+keeping a duplicate contract (plus 16 coordination lines). Both manager ACKs
+remain required before product work. No new end-user approval question.
+
+Managers should ACK the exact existing join, compose root fix `1b523`, then
+assign paired implementation: capture/retain/consume original map, actual item
+codec/parser support and four canonical refs; both Runtime identity-only gates,
+atomic occupancy/accepted own-slot proof and source retention; Agent sync/App
+ACK validation and normal exact paired artifact generation. Correct stale
+`m2-move-draft.md:313-325` under its owner'"'s scope; earlier birth/args proposal
+is explicitly superseded by the new shared contract. Bundle1 stays frozen.
+
+Unverified: native new-form capture/rebase/undo/redo/restore/restart acceptance,
+new semantic item birth accessors and global retired-item checks, authenticated
+new-form own-slot history, multi-acceptor races, generated cross-client source
+compatibility. The design lists those actual acceptance exits before product
+implementation. M2 integration remains held until PLAN records M1 complete.
+Both "'`commit-msg` and `commit-msg.txt` are written for the harness.
+'"'''
+(worker / 'notes/report.md').write_text(report)
+message = '''test(timeline): specify source-bound materialization map
+
+Replace the superseded physical-birth requirement with derived allocation
+without semantic creation, retaining four canonical item-ref requirements.
+Exercise the flat map/source-binding join over real compiler closures and
+preserve native sibling-replay and raw-id item codec gaps as strict xfails.
+
+Keep product changes gated on paired exact-carrier acknowledgement; preserve
+M1 identity, capture goldens, source guards and semantic-root birth coverage.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+print('Wrote notes/report.md, commit-msg and commit-msg.txt')
+PY" in /home/user/work/wt/agt-m2-materialization-map-contract
+ succeeded in 0ms:
+Wrote notes/report.md, commit-msg and commit-msg.txt
+
+exec
+/bin/bash -lc "tail -n 22 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md && python3 - <<'PY'
+from pathlib import Path
+p = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-map-contract')
+assert (p / 'commit-msg').read_bytes() == (p / 'commit-msg.txt').read_bytes()
+assert (p / 'notes/report.md').stat().st_size > 0
+print('Report and both identical commit messages verified.')
+PY" in /home/user/work/wt/agt-m2-materialization-map-contract
+ succeeded in 0ms:
+The never-passing physical-birth xfail needs the settled positive allocation
+expectation; four item-ref xfails require canonical generation. Keep the two
+root-alias xfails under their existing owner. This worker edits no Agent files.
+Required paired changes/tests and release procedure are in the worker notes;
+no additional orchestrator approval for the settled direction. No implementation
+or new test pass claimed; M2 merges remain held until PLAN records M1 complete.
+
+
+## agt-m2-materialization-map-contract — exact join and executable spike
+Agent worker reviewed Runtime's exact proposal in workers/rt-m2-materialization-port-contract/notes/report.md;
+worker-level agreement with its flat allocation-ref->raw-ID join, not manager ACK.
+Exact spelling/provenance/replay/own-slot requirements now appended to the absolute
+commit-contract.md in this directory (source-bound materialization join section).
+Agent and Runtime managers: please ACK that exact section here before product work.
+Existing direction-only ACK does not establish paired exact-carrier freeze.
+Spike: /home/user/work/wt/agt-m2-materialization-map-contract/tests/editing_conformance/test_materialization_map_spike.py.
+Actual source counterexamples: stale replay after sibling materialization changes
+Oa's destination back to S because reopening head no longer shares S; raw id-only
+item codec causes shared-open collision (item_id remapper does not rewrite id).
+Positive requirements retained as strict xfails; no seed/schema/product/port change.
+Original physical S/I -> actual D/J edges are explicit, never proof of row absence.
+Report and exact test evidence follow in workers/agt-m2-materialization-map-contract/notes/report.md.
+Report and both identical commit messages verified.
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m ruff check tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py && git diff --check && git status --short' in /home/user/work/wt/agt-m2-materialization-map-contract
+ succeeded in 465ms:
+All checks passed!
+ M tests/editing_conformance/test_materialization_identity.py
+?? tests/editing_conformance/test_materialization_map_spike.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md')
+with p.open('a') as stream:
+    stream.write('''
+agt-m2-materialization-map-contract final: targeted211PASS/9strictxfail7.72s
+(5ratified carrier/ref +2new replay/codec +2inherited roots fixed separately1b523);
+actual unchanged Runtime9f M1 identity3PASS2.49s. Diagnostic --runxfail confirms
+15PASS/7expectedRED; Ruff/diff clean. No product/schema/pin/seed/full/install/net.
+Report +both commit messages ready at workers/agt-m2-materialization-map-contract/.
+Exact paired manager ACK still pending; bounded spike complete, implementation held.
+''')
+print('Recorded final bounded evidence in runtime-coordination.md.')
+PY" in /home/user/work/wt/agt-m2-materialization-map-contract
+ succeeded in 0ms:
+Recorded final bounded evidence in runtime-coordination.md.
+
+codex
+Completed the design/test spike; product code remains unchanged.
+
+- Corrected materialization-as-birth to derived allocation without false semantic births.
+- Targeted tests: **211 passed, 9 strict xfails**. Existing M1 Runtime identity lane: **3 passed**. Ruff and diff checks passed.
+- Preserved positive counterexamples for stale sibling replay and raw `id` item collisions.
+- Both managers’ exact-carrier ACK remains pending; implementation stays held.
+
+[Report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-map-contract/notes/report.md). Both commit-message files are ready.
+tokens used
+119,233
+Completed the design/test spike; product code remains unchanged.
+
+- Corrected materialization-as-birth to derived allocation without false semantic births.
+- Targeted tests: **211 passed, 9 strict xfails**. Existing M1 Runtime identity lane: **3 passed**. Ruff and diff checks passed.
+- Preserved positive counterexamples for stale sibling replay and raw `id` item collisions.
+- Both managers’ exact-carrier ACK remains pending; implementation stays held.
+
+[Report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-map-contract/notes/report.md). Both commit-message files are ready.

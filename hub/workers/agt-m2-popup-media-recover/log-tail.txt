@@ -1,0 +1,400 @@
+
+* `occurrence.add-media`: `select:"occurrence:<raw occurrence ID>"`,
+  `args:{"row":<raw child clip>,"media":<MediaSelection>}`.
+  Row requires `id`, `clipType`, `track`, `at`, `hold`; `asset` must equal
+  `media.asset`. `row.id` is reserved once by the caller before capture. The
+  immutable selection'"'s "'`asset` is the registry alias, fixed before capture,
+  never regenerated or silently renamed on retry/collision.
+* `occurrence.swap-media`:
+  `select:"occurrence:<raw occurrence ID>/clip:<raw child ID>"`,
+  `args:{"old_media":<MediaSelection>,"media":<MediaSelection>}`.
+  The existing child supplies its raw track, local timing and old registry alias.
+  Only its asset property changes; all authored opaque/null fields stay intact.
+  `${occurrenceId}:${clipId}` is a projected display ID, not the raw child ID.
+
+`MediaSelection` is the existing closed, immutable five-field value:
+`{asset,generation_id,variant_id,object_id,catalog_digest}`. Both digests use
+`sha256:<64 lowercase hex>`; IDs are nonempty strings. No caller intrinsic
+metadata, acquisition or new media port is accepted.
+
+For example a video ADD row can be:
+
+```json
+{"id":"reserved-child","clipType":"video","asset":"reserved-new","track":"picture","at":0.125,"hold":4,"from":2,"to":6,"speed":2,"params":null,"opaque":[null,false,{}]}
+```
+
+Timing is unprojected child-relative seconds. `hold` is SOURCE seconds;
+`[from,to)` must equal that source hold. Playback duration is `hold/speed`.
+Positive finite noninteger speeds work; negative, zero and boolean speeds refuse.
+An occurrence starting globally at 8 seconds keeps this child at 0.125, not 8.125.
+The raw child interval must fit `[0, occurrence.duration_ms/1000)`; an equal end
+is allowed. Video window end may equal verified intrinsic duration. Parent and
+child fps must match, including exact rational fps; no authoring-time rounding.
+Images require positive hold, no from/to and default speed.
+
+## Capture exports, schema and portable golden
+
+```python
+from astrid.sdk.timeline.native_occurrence_media_commands import (
+    capture_occurrence_add_media,
+    capture_occurrence_swap_media,
+)
+
+add = capture_occurrence_add_media(bundle, owner, row, media,
+                                   verified_media=verified_media)
+swap = capture_occurrence_swap_media(bundle, raw_child_ref, old_media, media,
+                                     verified_media=verified_media)
+```
+
+Both run the actual deterministic handler/recorder and return one complete
+EditCommand with original reads, selections, bindings, created, expect,
+authorship and resolved claims. Replay verifies those exact claims.
+`verified_media` contains detached existing `VerifiedMedia` responses, not a
+second authority mechanism: production `RuntimeCommitService` validates the
+command args then calls the existing ABI1 `port.selected_media(pin)` outside
+pure execution, passing exact responses into execution/server replay. The
+existing 9ebd87af `_verified` helper is reused as `_media_inputs.py`.
+
+Canonical schema:
+`/home/user/work/wt/agt-m2-popup-media-recover/astrid/core/timeline/schema/edit-command.schema.json`.
+Raw file SHA256:
+`8b48748f9220e4b79dce4ad1ccb8b9e9f28b314fc96f71f34d6fec7de4ab480f`.
+Exports: `OccurrenceAddMediaArgs`, `OccurrenceSwapMediaArgs`, `MediaSelection`.
+The ordinary leaf source extends ScopedId/EntityRef/TargetKey/AnchorIdentity
+with scoped `asset` references; existing AgentCreatedID fields remain unchanged.
+Managers must compose this source with foundation before normal Runtime root
+export/generation; this hash is this worker'"'s source, not the foundation bundle hash.
+
+Exact golden:
+"'`/home/user/work/wt/agt-m2-popup-media-recover/tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json`.
+It has `add` and `swap` cases, each containing exact `input`, `verified_media`,
+`commands`, `records`, and `output`. Both use rational 30000/1001 fps, nonzero
+occurrence start, nonzero raw child start and video from/to/speed, shared source
+occurrences, opaque/null values and a NEW object absent from the original manifest.
+Goldens assert byte-for-byte JSON structure after normal decoding and exact
+recorder equality. They do not pretend portable fixture media is real authority.
+
+## Registry birth, guards, inverse and identity retirement
+
+Missing new alias creates exactly:
+`{media_id:media.object_id,type:<image|video>,generationId:media.generation_id,variantId:media.variant_id}`.
+An existing new alias must equal that complete binding or refuse, including
+extra/null keys. Existing old aliases are read and checked against verified
+old identity/type/generation/variant while preserving opaque legacy fields;
+unsupported identity/source-locator codecs refuse.
+
+`Recording.create_asset` records an ordinary whole-entity write and
+`{ref:"occurrence:ID/asset:ALIAS",kind:"asset",owner:"occurrence:ID"}` birth.
+It does not append caller invented facts or add a DTO/history table/ABI.
+Reads cover raw occurrence/shot ownership, placement map, duration, fps, source
+window, raw child track and registry bindings; selections cover occurrence,
+track and child membership/order as consumed. ADD records the created child too.
+
+The generalized inverse checks alias dependents after reversing its consumers.
+Local asset/asset_id and explicit scoped asset_ref/owner_ref edges prevent
+removal, including references from another occurrence or shot payload. Overlap
+normalizes asset references to their owner/source registry leaf, so an intervening
+same-value registry write still blocks undo. Reservation scans include implicit
+registry identities and accepted births: a fresh request cannot reuse a retired
+alias; authenticated redo of its own history can restore it. No standalone upsert.
+
+The inherited 2f77310e provider-only `document_from_bundle(...,
+inverse_records=AcceptedRecords(...))` manifest hook remains unchanged. Only
+introduced pins proven by authenticated boundaries are removed. Original
+unselected pins and later disjoint media stay; surviving media/document
+references refuse. Detached captures alone cannot authorize pin removal.
+
+## Explicit refusal scope and qualification
+
+Only active image/video raw children on active visual output child tracks;
+only existing, explicit occurrence owners with translation-only placement maps
+(source_offset absent/0, occurrence speed absent/1). Nondefault/rational-object
+occurrence maps, internal source_window, anchors/relations, transitions, alternate
+timing codecs, mismatched/missing inputs, registry collisions, parent/display
+selectors, shared intent and out-of-occurrence intervals refuse. Existing opaque
+params and app data are preserved. This slice does not implement placement,
+relational timeline_frame/end_frame, registry-container creation or implicit shared
+writes. Pack custody and producer guard changes remain on their agreed separate
+owners/seams; nothing here changes them.
+
+The native detached suite proves exact capture, compile/reload inverse/redo,
+shared-occurrence isolation, deterministic replay, disjoint rebase, source-unit
+hold with noninteger speed, half-open bounds, scoped asset dependencies and
+retired-ID refusal. Real managed generations/public media-selection reads and
+the production provider reach normal Runtime acceptance; positive preview is
+currently refused at PreparedCommit'"'s old TargetKey asset pattern. Strict xfails
+retain acceptance/reload/restart/exact retry/changed-key/undo/redo and lifecycle
+race expectations. Only that exact old schema error qualifies for xfail;
+credential revocation already passes normally. No Runtime source/pin was edited.
+Final exact commands/counts and central result ID are in the new worker report.
+
+Next: manager composes source -> Runtime performs normal official generation ->
+paired artifacts/pin -> rerun the unchanged strict tests and qualify actual App
+capture/browser consumption. No positive real popup acceptance is claimed yet.
+EOF
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_scalar_commands.py' in /home/user/work/wt/agt-m2-popup-media-recover
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-popup-media-recover-commit-integration-1020005644-22288 1' in /home/user/work/wt/agt-m2-popup-media-recover
+ succeeded in 0ms:
+test agt-m2-popup-media-recover-commit-integration-1020005644-22288: pass exit=0 in 28s — commit-integration on agt-m2-popup-media-recover (agent tree 2621b21cecd72d8113c83838132d1cd5357116bc)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_runtime.py
+counts: 42 passed, 12 xfailed in 26.31s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-popup-media-recover-commit-integration-1020005644-22288/log.txt ---
+..xxxx............................xx..xx..xx..xx......                   [100%]
+42 passed, 12 xfailed in 26.31s
+
+exec
+/bin/bash -lc 'git diff --numstat && wc -l astrid/sdk/timeline/{native_occurrence_media_commands,_media_inputs}.py && git diff --check && /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/{_command_state,_recording,commands,commit,inverse,rebase,_media_inputs,native_occurrence_media_commands}.py tests/editing_conformance/{test_recipe_occurrence_media,test_commit_runtime_occurrence_media}.py && git -C /home/user/work/wt/agt-m2-popup-media-resume status --short && git -C /home/user/work/wt/agt-m2-popup-media-resume diff --binary HEAD' in /home/user/work/wt/agt-m2-popup-media-recover
+ succeeded in 0ms:
+135	4	astrid/core/timeline/schema/edit-command.schema.json
+23	0	astrid/sdk/timeline/_command_state.py
+14	1	astrid/sdk/timeline/_recording.py
+5	2	astrid/sdk/timeline/commands.py
+16	3	astrid/sdk/timeline/commit.py
+21	0	astrid/sdk/timeline/inverse.py
+4	2	astrid/sdk/timeline/rebase.py
+ 158 astrid/sdk/timeline/native_occurrence_media_commands.py
+  21 astrid/sdk/timeline/_media_inputs.py
+ 179 total
+All checks passed!
+
+ succeeded in 16952ms:
+........................................................................ [ 15%]
+........................................................................ [ 30%]
+........................................................................ [ 45%]
+........................................................................ [ 61%]
+........................................................................ [ 76%]
+........................................................................ [ 91%]
+......................................                                   [100%]
+470 passed in 16.40s
+
+codex
+The central targeted run finished: 42 passed and 12 strict expected failures for the missing Runtime asset schema. Credential-revocation cases passed; positive acceptance and lifecycle-race checks remain blocked at schema validation. I’ll record the exact source hash, test results and generation handoff in the final report.
+
+exec
+/bin/bash -lc 'git status --short && sha256sum astrid/core/timeline/schema/edit-command.schema.json && git diff --stat && ls -lh tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-popup-media-recover-commit-integration-1020005644-22288/ext' in /home/user/work/wt/agt-m2-popup-media-recover
+ succeeded in 0ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+?? astrid/sdk/timeline/_media_inputs.py
+?? astrid/sdk/timeline/native_occurrence_media_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+?? tests/editing_conformance/test_commit_runtime_occurrence_media.py
+?? tests/editing_conformance/test_recipe_occurrence_media.py
+8b48748f9220e4b79dce4ad1ccb8b9e9f28b314fc96f71f34d6fec7de4ab480f  astrid/core/timeline/schema/edit-command.schema.json
+ .../core/timeline/schema/edit-command.schema.json  | 139 ++++++++++++++++++++-
+ astrid/sdk/timeline/_command_state.py              |  23 ++++
+ astrid/sdk/timeline/_recording.py                  |  15 ++-
+ astrid/sdk/timeline/commands.py                    |   7 +-
+ astrid/sdk/timeline/commit.py                      |  19 ++-
+ astrid/sdk/timeline/inverse.py                     |  21 ++++
+ astrid/sdk/timeline/rebase.py                      |   6 +-
+ 7 files changed, 218 insertions(+), 12 deletions(-)
+-rw-r--r-- 1 root root 104K Oct 20 00:54 tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+external=runtime=9f9b25c000485e919f30f1411831fe2d5a3c1316 app=2bfde69eac32335eae0bc5fa2820940c0b3c694b composition=2ac77f40d45d593e68ef281df50d2408d5a0f5a3 
+
+2026-10-20T00:58:48.915301Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc \\\"mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/notes\\ncat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/notes/report.md <<'EOF'\\n# agt-m2-popup-media-recover\\n\\nImplemented the bounded Agent occurrence media ADD/SWA…10925 chars truncated…ma override or Bundle1 move. New worker final report:\\nworkers/agt-m2-popup-media-recover/notes/report.md. M2 integration remains held.\\nEOF\\nrm -f /tmp/popup-edit.py /tmp/popup-real-test.py\\npython3 - <<'\\\"'PY'\\nimport shutil\\nfrom pathlib import Path\\nfor name in ('.pytest_cache', '.ruff_cache'):\\n p=Path(name)\\n if p.is_dir():\\n  shutil.rmtree(p)\\nPY\\\"` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc "mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/notes
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/notes/report.md <<'EOF'
+# agt-m2-popup-media-recover
+
+Implemented bounded Agent occurrence media ADD/SWAP, exact native captures/goldens,
+and scoped asset birth/retirement. **Paired Runtime acceptance is blocked on
+normal official schema generation.** No M2 merge is requested.
+
+## Recovery and delivery
+
+Read PLAN first, latest Agent INBOX (including completed-cancel, numeric-forwarding
+and exact pack-custody ACK), relevant design and predecessor reports. Inspected
+"'`/home/user/work/wt/agt-m2-popup-media-resume` READ-ONLY with `git status --short`,
+`git diff --binary HEAD`, and `git ls-files --others --exclude-standard`: all empty.
+Both old/new HEADs were `2f77310e6e4a6920f993a1c9c0093cd71b133543`.
+No surviving source/untracked files required transfer; no cache/log was copied.
+Old worktree remains clean. No checkout/commit/merge/rebase/push/ref mutation.
+Frozen Bundle1/R4 refs and integration worktrees are untouched.
+
+- `native_occurrence_media_commands.py`: occurrence.add-media@1 and
+  occurrence.swap-media@1, with capture_occurrence_add_media and
+  capture_occurrence_swap_media exports. Provider uses the actual existing
+  selected_media ABI outside pure execution; reused 9ebd87af verified-media
+  helper and managed-generation fixture pattern. No extra port/DTO/history/ABI.
+- Small generic scoped asset primitive, State address/overlap and reservations.
+  Missing alias creates an actual recorded write plus created fact; present alias
+  must equal the canonical binding. Guarded inverse checks local and cross-owner
+  scoped dependents. Fresh retired aliases refuse; authenticated history redo
+  restores. Existing manifest-provenance hook is unchanged, reviewed defensively.
+- Exact raw owner/child/track and membership/order guards; rational fps, positive
+  video speed, source-unit hold, half-open windows and raw child-relative timing;
+  opaque/null preservation and shared-occurrence isolation.
+- Exact input/commands/records/output goldens:
+  `tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json`.
+  NEW media is absent from original manifests; no preseed hides introduction.
+- Full exact API/args/intents/schema/captures/golden/unsupported-shape handoff:
+  `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-popup-native-contract.md`.
+  Blocker and final results also recorded in absolute runtime-coordination.md.
+
+Python product growth: 241 added lines beyond the reused 21-line helper,
+233 net lines; schema and tests separate. No Runtime product, pack-custody,
+producer-guard or host-helper implementation was changed. Custody stays on the
+manager-ACKed snapshot_object/portable JSON/document_object seam, Runtime owned.
+
+Canonical schema: `astrid/core/timeline/schema/edit-command.schema.json`.
+Raw-file SHA256:
+`8b48748f9220e4b79dce4ad1ccb8b9e9f28b314fc96f71f34d6fec7de4ab480f`.
+Defs: MediaSelection, OccurrenceAddMediaArgs, OccurrenceSwapMediaArgs;
+ScopedId/EntityRef/TargetKey/AnchorIdentity gain scoped asset addresses.
+This is this worker'"'s composed source, not the separate foundation bundle's
+final composed hash. Manager must compose foundation before official generation.
+
+## Exact final tests
+
+Working directory: "'`/home/user/work/wt/agt-m2-popup-media-recover`.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_scalar_commands.py
+```
+
+**470 passed in 16.40s**, exit 0. New native file alone: **56 passed in 1.84s**.
+Exact capture/goldens, replay, source-unit noninteger speed, half-open boundaries,
+occurrence isolation, inverse/redo/reload, disjoint rebase, identity retirement,
+and dependency/authority refusals. Existing provenance expectations stay passing.
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-popup-media-recover commit-integration --files '"'tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_runtime.py'
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-popup-media-recover-commit-integration-1020005644-22288 1
+"'```
+
+**Central PASS: 42 passed, 12 xfailed in 26.31s**, exit 0 (28s wall).
+Service command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+Snapshot `2621b21cecd72d8113c83838132d1cd5357116bc`;
+Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316`.
+Full log/result:
+`orch/tests/agt-m2-popup-media-recover-commit-integration-1020005644-22288/`.
+One request after final source; no full/duplicate request or interrupted-pass claim.
+36 popup cases pass (stale/foreign/fingerprint/authority and credential revocation),
+plus six existing real M1/provenance/reservation cases. Twelve strict xfails:
+four positive image/video ADD/SWAP acceptance chains and eight lifecycle races.
+Their original positive expectations remain. Only the precise old asset schema
+error qualifies for xfail; other errors remain failures.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/{_command_state,_recording,commands,commit,inverse,rebase,_media_inputs,native_occurrence_media_commands}.py tests/editing_conformance/{test_recipe_occurrence_media,test_commit_runtime_occurrence_media}.py
+git diff --check
+```
+
+Both passed. No full suite, installation, sockets/browser/live run or artifact pin.
+
+Initial direct diagnostic of the real test (`-k exact_capture --maxfail=1`)
+failed1/deselected44 at the frozen asset schema. An intermediate run marked
+revocation xfail too (8 strict XPASS/28pass/12xfail). Those passing revocation
+markers were removed; final central results supersede it. No behavior assertion
+was weakened or removed. Existing passing behavior tests were not rewritten.
+
+## Decisions, blocker, next step
+
+Use immutable selection.asset as the fixed reserved alias; caller allocates ADD
+row.id once before capture. New binding is exactly media_id/type/generationId/
+variantId; old legacy binding may preserve opaque data but must match verified
+identity. Hold is source seconds, duration=hold/speed. Reject unsupported maps
+instead of guessing units. Placement, shared edits, relational frame metadata,
+registry-container creation, internal source_window, transitions/anchors and
+alternate timing/source codecs remain outside this slice.
+
+Actual Runtime reaches normal PreparedCommit validation and refuses
+`command.authorship['"'occurrence:occ-a/asset:variant-…::']"'`: its pinned
+TargetKey/ScopedId patterns still admit clip|track only. No schema override or
+validator bypass was used. Positive real popup acceptance, lifecycle atomicity,
+and popup restart/retry/undo/redo remain UNVERIFIED, despite detached proofs.
+
+Manager next: compose this exact source with foundation, ask Runtime for normal
+root export/generation, then pair official artifacts/pin and rerun the unchanged
+strict tests. Remove markers only after they pass; qualify App/browser use before
+publishing a final bundle. Keep Bundle1 frozen and M2 integration held until PLAN
+records M1. Product changes and both commit messages are ready for harness commit.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/commit-msg <<'"'EOF'
+feat(timeline): capture occurrence media add and swap
+
+Add occurrence-owned media recipes with exact immutable selection reads,
+portable recorder goldens, and guarded scoped asset creation and retirement.
+Preserve raw child timing, source-unit holds, and shared occurrence isolation.
+
+Keep real acceptance and lifecycle coverage as strict expected failures for
+the known installed Runtime asset schema gap pending official generation.
+EOF
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/commit-msg.txt
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md <<'EOF'
+
+Agent popup recovery final source: canonical schema raw SHA256
+"'`8b48748f9220e4b79dce4ad1ccb8b9e9f28b314fc96f71f34d6fec7de4ab480f`;
+ops occurrence.add-media@1 / occurrence.swap-media@1. Contract and exact golden
+published in design/m2-popup-native-contract.md. Final direct neighbors470PASS
+(16.40s); central agt-m2-popup-media-recover-commit-integration-1020005644-22288
+42PASS/12strictxfail (26.31s), Runtime9f9b25c, source tree2621b21c. Remaining
+xfails are ONLY frozen asset-address schema boundary; real credential revocation
+passes. No positive real popup acceptance claimed. Manager should compose exact
+foundation+popup source before requesting normal Runtime root generation and
+paired pin; no Runtime/schema override or Bundle1 move. New worker final report:
+workers/agt-m2-popup-media-recover/notes/report.md. M2 integration remains held.
+EOF' in /home/user/work/wt/agt-m2-popup-media-recover
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+for filename in ('/tmp/popup-edit.py', '/tmp/popup-real-test.py'):
+    Path(filename).unlink(missing_ok=True)
+for name in ('.pytest_cache', '.ruff_cache'):
+    directory = Path('/home/user/work/wt/agt-m2-popup-media-recover') / name
+    if directory.is_dir():
+        shutil.rmtree(directory)
+PY
+git diff --check
+git status --short
+cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/commit-msg.txt" in /home/user/work/wt/agt-m2-popup-media-recover
+ succeeded in 0ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+?? astrid/sdk/timeline/_media_inputs.py
+?? astrid/sdk/timeline/native_occurrence_media_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+?? tests/editing_conformance/test_commit_runtime_occurrence_media.py
+?? tests/editing_conformance/test_recipe_occurrence_media.py
+
+codex
+Implemented occurrence media ADD/SWAP, exact captures/goldens, and guarded asset creation/retirement. Old worktree was clean; nothing required transfer.
+
+- Targeted tests: **470 passed**
+- Central integration: **42 passed, 12 strict xfails**
+- Ruff and diff checks passed
+
+Real popup acceptance remains blocked on official Runtime asset-schema generation. No merges, commits or frozen-ref changes.
+
+[Report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/notes/report.md). Both commit-message files are ready.
+tokens used
+192,211
+Implemented occurrence media ADD/SWAP, exact captures/goldens, and guarded asset creation/retirement. Old worktree was clean; nothing required transfer.
+
+- Targeted tests: **470 passed**
+- Central integration: **42 passed, 12 strict xfails**
+- Ruff and diff checks passed
+
+Real popup acceptance remains blocked on official Runtime asset-schema generation. No merges, commits or frozen-ref changes.
+
+[Report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media-recover/notes/report.md). Both commit-message files are ready.

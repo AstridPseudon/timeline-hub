@@ -1,0 +1,400 @@
++- Null: `_patch(present(None), ['missing'], ABSENT)` raises `AttributeError` because it calls `pop` on None.
++
++Two NEW positive tests retain the required exact inverse/redo assertions under `xfail(strict=True)`, with a requirement comment. They are distinct from the four old xfails, which were removed because those cases now pass. No passing test expectation was weakened.
++
++I requested scope clarification through the user-input tool: permit a minimal generic `inverse._patch` correction, or retain the explicit State/Recording/scalar/tests boundary and report the blocker. No response has arrived at report time. The task explicitly states that scope, and instructs reporting evidence against a settled decision rather than deviating. I left inverse.py unchanged. This task is **not fully complete / not integration-ready** because exact batch inverse remains broken.
++
++## Verification
++
++Final targeted run, exit 0:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recording_clear.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py
++```
++
++**448 passed, 2 xfailed in 21.92s.** The xfails are only the two newly exposed batch-coalescing counterexamples.
++
++Earlier targeted runs, exit 0:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py tests/editing_conformance/test_recipe_m1_commands.py
++# 207 passed in 13.61s (initial implementation)
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recording_clear.py
++# 67 passed in 0.97s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recording_clear.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py
++# 155 passed in 9.76s (before final provider ABA refinement and new batch xfails)
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -rx tests/editing_conformance/test_recipe_scalar_commands.py -k clear_then_set_batch
++# 66 deselected, 2 xfailed in 0.71s
++```
++
++Checks, exit 0:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-force-exclude astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_scalar_commands.py tests/editing_conformance/test_recording_clear.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py
++# All checks passed!
++git diff --check
++# clean
++```
++
++Not run: full suite, make check, central test service, live sockets/localhost/browser tests, rendering/pixel parity, typecheck, installations, or network. No generated build output or temporary test artifacts were left in the worktree.
++
++## Decisions and next steps
++
++Preserve tagged absence/null and explicit unchanged leaf intent. Guard only the first nonobject ancestor needed by a no-op clear; leave existing object contents outside the read set so disjoint leaves remain independent. Keep literal scalar/array refusal and object creation for sets.
++
++Manager/orchestrator should authorize the minimal generic `_patch` correction to preserve tagged absent/null ancestors when folding a descendant clear, including nested absent/null ancestors inside aggregate objects. Then remove the two new strict xfails only after their positive assertions pass, add nested/coalesced round-trips, rerun the targeted command above, and review before any integration. Do not claim batch inverse completeness from the green standalone cases.
+diff --git a/astrid/sdk/timeline/_command_state.py b/astrid/sdk/timeline/_command_state.py
+index 80bc97b75629f49f2be0f5d1374c610fa193f8e8..2ca419ab29a315a44fccb0499d358e28e20865d8
+--- a/astrid/sdk/timeline/_command_state.py
++++ b/astrid/sdk/timeline/_command_state.py
+@@ -367,6 +367,9 @@
+             return
+         value = self.entity(ref)
+         for key in path[:-1]:
++            if (state['state'] == 'absent' and isinstance(value, dict)
++                    and (key not in value or value[key] is None)):
++                return
+             if not isinstance(value, dict) or key not in value or not isinstance(value[key], dict):
+                 raise CommandError("write requires recorded container creation", ref=ref, path=path)
+             value = value[key]
+diff --git a/astrid/sdk/timeline/_recording.py b/astrid/sdk/timeline/_recording.py
+index 029ec680931189af6f048a617238bb8f5c01d380..4027a5f5048acbacd34e0f5c34defd2b96b559c0
+--- a/astrid/sdk/timeline/_recording.py
++++ b/astrid/sdk/timeline/_recording.py
+@@ -80,6 +80,13 @@
+                                             "pin": copy.deepcopy(pin), "policy": "exact"})
+ 
+     def assign(self, ref, path, after):
++        if after['state'] == 'absent':
++            for end in range(1, len(path)):
++                ancestor = self.state.get(ref, path[:end])
++                if ancestor == ABSENT or ancestor == present(None):
++                    # A missing leaf must not erase its ancestor's tagged presence.
++                    self.read(ref, path[:end])
++                    break
+         before = self.state.get(ref, path)
+         self.record['writes'].append({"ref": ref, "path": list(path),
+                                        "before": before, "after": copy.deepcopy(after)})
+diff --git a/astrid/sdk/timeline/_scalar_commands.py b/astrid/sdk/timeline/_scalar_commands.py
+index d9b2ada622dad058997e6f0c5f1e1c47abddc1c6..d06740f7cdbbc1d5049ac8b223635378cd1b5553
+--- a/astrid/sdk/timeline/_scalar_commands.py
++++ b/astrid/sdk/timeline/_scalar_commands.py
+@@ -75,7 +75,8 @@
+             errors = list(Draft202012Validator(properties[key]).iter_errors(value))
+             if errors:
+                 raise CommandError(errors[0].message, ref=ref, path=['params', key])
+-    ctx.object(ref, ['params'])
++    if values:
++        ctx.object(ref, ['params'])
+     for key in sorted(values):
+         ctx.write(ref, ['params', key], values[key])
+     for key in sorted(clear):
+diff --git a/tests/editing_conformance/test_recipe_scalar_commands.py b/tests/editing_conformance/test_recipe_scalar_commands.py
+index 5263b64fe8fd3afffa67a712417368c71709c532..8f3fad71b51fc11cd54bd252fd8337c8a10bb377
+--- a/tests/editing_conformance/test_recipe_scalar_commands.py
++++ b/tests/editing_conformance/test_recipe_scalar_commands.py
+@@ -87,9 +87,6 @@
+ 
+ 
+ @pytest.mark.parametrize('container', [ABSENT, present(None)])
+-# Requirement: clear-only writes must preserve absent/null params without
+-# widening to the container. The shared State.set clear primitive still needs it.
+-@pytest.mark.xfail(strict=True, reason='clear-only params silently creates an object container')
+ def test_clear_only_params_preserves_nonobject_presence_and_leaf_intent(container):
+     original = bundle()
+     if container != ABSENT:
+@@ -100,12 +97,41 @@
+     assert command['expect'] == {REF + '::params.missing': ABSENT}
+     assert plan.records[0]['writes'] == [
+         {'ref': REF, 'path': ['params', 'missing'], 'before': ABSENT, 'after': ABSENT}]
+-    assert inverse(plan.bundle, plan.records).bundle == original
++    assert {'ref': REF, 'path': ['params'], 'state': container} in command['reads']
++    undone = inverse(plan.bundle, plan.records)
++    assert undone.bundle == original
++    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+     assert replay(plan, original).records == plan.records
++    for changed in (ABSENT, present(None), present({}), present(False)):
++        if changed == container:
++            continue
++        head = copy.deepcopy(original)
++        State(head).set(REF, ['params'], changed)
++        with pytest.raises(CommandError):
++            replay(plan, head)
++        with pytest.raises(CommandError):
++            inverse(head, plan.records)
+     with pytest.raises(CommandError, match='intervening'):
+         replay(plan, original, intervening_records=[later(REF, ['params', 'missing'], None)])
+ 
+ 
++@pytest.mark.parametrize('container', [ABSENT, present(None)])
++# Requirement: exact generic batch undo must preserve a no-op clear's ancestor
++# when a later command creates that container. inverse._patch still normalizes it.
++@pytest.mark.xfail(strict=True, reason='inverse coalescing normalizes absent/null ancestors')
++def test_clear_then_set_batch_preserves_exact_absent_or_null_inverse(container):
++    original = bundle()
++    if container != ABSENT:
++        clip(original, REF)['params'] = copy.deepcopy(container['value'])
++    commands = [capture_clip_set_params(original, REF, clear=['missing']),
++                capture_clip_set_params(original, REF, values={'x': 1})]
++    plan = execute(original, commands)
++    assert replay(plan, original).records == plan.records
++    undone = inverse(plan.bundle, plan.records)
++    assert undone.bundle == original
++    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
++
++
+ def test_registered_sprite_strip_binding_refuses_selected_registry_retarget():
+     from astrid.core.element import load_default_registry
+     from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+diff --git a/tests/editing_conformance/test_recording_clear.py b/tests/editing_conformance/test_recording_clear.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d539996cc30a1ddfcfdd5048cafe30951638b4f6
+--- /dev/null
++++ b/tests/editing_conformance/test_recording_clear.py
+@@ -0,0 +1,158 @@
++"""Shared leaf clears preserve ancestor presence and retain guarded intent."""
++from __future__ import annotations
++
++import copy
++
++import pytest
++
++from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
++from astrid.sdk.timeline._recording import Recording
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.staging_recipes import install_staging_operations
++from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse
++
++REF = 'occurrence:occ-1/clip:picture-1'
++PATH = ['params', 'nested', 'leaf']
++CONTAINERS = [
++    (ABSENT, ['params']),
++    (present(None), ['params']),
++    (present({}), ['params', 'nested']),
++    (present({'nested': None}), ['params', 'nested']),
++    (present({'nested': {'other': [False, None]}}), None),
++    (present({'nested': {'leaf': None, 'other': [False, None]}}), None),
++]
++
++
++def set_container(row, container):
++    if container != ABSENT:
++        row['params'] = copy.deepcopy(container['value'])
++
++
++def clear_call():
++    return {'schema_version': 1, 'op': 'fixture.properties', 'version': '1', 'select': REF,
++            'args': {'changes': [{'path': PATH, 'state': ABSENT}]}}
++
++
++@pytest.mark.parametrize('container,guard_path', CONTAINERS)
++@pytest.mark.parametrize('primitive', ['set', 'clear', 'assign'])
++def test_shared_clear_records_only_leaf_and_needed_ancestor(container, guard_path, primitive):
++    original = {'parent': {}}
++    set_container(original['parent'], container)
++    candidate = copy.deepcopy(original)
++    state = State(candidate)
++    before = state.get('parent', PATH)
++    if primitive == 'set':
++        state.set('parent', PATH, ABSENT)
++    else:
++        ctx = Recording(candidate, {}, 0)
++        if primitive == 'clear':
++            ctx.clear('parent', PATH)
++        else:
++            ctx.assign('parent', PATH, ABSENT)
++        assert ctx.record['writes'] == [
++            {'ref': 'parent', 'path': PATH, 'before': before, 'after': ABSENT}]
++        assert ctx.record['reads'] == ([] if guard_path is None else [
++            {'ref': 'parent', 'path': guard_path, 'state': State(original).get('parent', guard_path)}])
++        assert ctx.finish(capture=True)['command']['expect'] == {'parent::params.nested.leaf': before}
++    expected = copy.deepcopy(original)
++    if before != ABSENT:
++        del expected['parent']['params']['nested']['leaf']
++    assert candidate == expected
++
++
++@pytest.mark.parametrize('value', [False, 0, '', [], ['object'], 'scalar'])
++@pytest.mark.parametrize('depth', [0, 1])
++def test_shared_clear_rejects_invalid_scalar_or_array_ancestors(value, depth):
++    original = {'parent': {'params': value if depth == 0 else {'nested': value}}}
++    for primitive in ('set', 'clear', 'assign'):
++        candidate = copy.deepcopy(original)
++        with pytest.raises(CommandError):
++            if primitive == 'set':
++                State(candidate).set('parent', PATH, ABSENT)
++            elif primitive == 'clear':
++                Recording(candidate, {}, 0).clear('parent', PATH)
++            else:
++                Recording(candidate, {}, 0).assign('parent', PATH, ABSENT)
++        assert candidate == original
++
++
++@pytest.mark.parametrize('container', [ABSENT, present(None), present({}), present({'nested': None})])
++def test_shared_set_still_requires_recorded_container_creation(container):
++    original = {'parent': {}}
++    set_container(original['parent'], container)
++    candidate = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        State(candidate).set('parent', PATH, present(1))
++    assert candidate == original
++
++
++@pytest.mark.parametrize('container,guard_path', CONTAINERS)
++def test_generic_clear_replay_exact_inverse_and_redo(monkeypatch, container, guard_path):
++    install_staging_operations(monkeypatch)
++    original = bundle()
++    set_container(clip(original, REF), container)
++    plan = execute(original, [clear_call()])
++    assert replay(plan, original).records == plan.records
++    undone = inverse(plan.bundle, plan.records)
++    assert undone.bundle == original
++    redone = inverse(undone.bundle, undone.records)
++    assert redone.bundle == plan.bundle
++    assert replay(undone, plan.bundle, inverse_records=plan.records).records == undone.records
++    assert replay(redone, original, inverse_records=undone.records).records == redone.records
++
++
++@pytest.mark.parametrize('container,guard_path', CONTAINERS[:4])
++@pytest.mark.parametrize('replacement', [ABSENT, present(None), present({}), present(False)])
++def test_generic_clear_guards_first_absent_or_null_ancestor(monkeypatch, container, guard_path, replacement):
++    install_staging_operations(monkeypatch)
++    original = bundle()
++    set_container(clip(original, REF), container)
++    plan = execute(original, [clear_call()])
++    expected = State(original).get(REF, guard_path)
++    assert {'ref': REF, 'path': guard_path, 'state': expected} in plan.records[0]['reads']
++    if replacement == expected:
++        return
++    head = copy.deepcopy(original)
++    State(head).set(REF, guard_path, replacement)
++    snapshot = copy.deepcopy(head)
++    with pytest.raises(CommandError):
++        replay(plan, head)
++    with pytest.raises(CommandError):
++        inverse(head, plan.records)
++    assert head == snapshot
++
++
++def test_generic_clear_preserves_disjoint_existing_leaves(monkeypatch):
++    install_staging_operations(monkeypatch)
++    original = bundle()
++    clip(original, REF)['params'] = {'nested': {'other': None}, 'opaque': [False]}
++    plan = execute(original, [clear_call()])
++    assert plan.records[0]['reads'] == [{'ref': REF, 'path': PATH, 'state': ABSENT}]
++    head = copy.deepcopy(original)
++    clip(head, REF)['params']['nested']['other'] = 'concurrent'
++    later = [{'writes': [{'ref': REF, 'path': ['params', 'nested', 'other'],
++                          'before': present(None), 'after': present('concurrent')}]}]
++    assert replay(plan, head, intervening_records=later).bundle == head
++    assert inverse(head, plan.records, later).bundle == head
++
++
++@pytest.mark.parametrize('container,guard_path', CONTAINERS[:5])
++@pytest.mark.parametrize('aba', [False, True])
++def test_generic_clear_retains_unchanged_and_aba_publication_guards(monkeypatch, container, guard_path, aba):
++    install_staging_operations(monkeypatch)
++    original = bundle()
++    set_container(clip(original, REF), container)
++    plan = execute(original, [clear_call()])
++    paths = [PATH] + ([] if guard_path is None else [guard_path])
++    for path in paths:
++        before = State(original).get(REF, path)
++        writes = ([{'ref': REF, 'path': path, 'before': before, 'after': present('away')}]
++                  if aba else [])
++        writes.append({'ref': REF, 'path': path,
++                       'before': present('away') if aba else before, 'after': before})
++        for apply in (lambda: replay(plan, original, intervening_records=[{'writes': writes}]),
++                      lambda: inverse(original, plan.records, [{'writes': writes}])):
++            with pytest.raises(CommandError) as error:
++                apply()
++            assert error.value.kind == 'intervening_write'
+diff --git a/tests/sdk/test_timeline_commit_provider_scalar.py b/tests/sdk/test_timeline_commit_provider_scalar.py
+index 156826a053edde972445d4edad60ef1d7b06bbcb..0a52dba97aecca2da3fc807318e482ffeba97768
+--- a/tests/sdk/test_timeline_commit_provider_scalar.py
++++ b/tests/sdk/test_timeline_commit_provider_scalar.py
+@@ -58,11 +58,7 @@
+     assert (realm.head, realm.entries, realm.documents) == before
+ 
+ 
+-@pytest.mark.parametrize('container', [ABSENT, present(None)])
+-# Requirement: a clear of an absent param must preserve the literal container
+-# and record only that leaf, including across provider reload and inverse.
+-@pytest.mark.xfail(strict=True, reason='clear-only params silently creates an object container')
+-def test_provider_clear_only_preserves_absent_or_null_container(container):
++def clear_realm(container):
+     from tests.sdk.test_timeline_commit_provider_document import document_fixture
+ 
+     document = document_fixture()
+@@ -71,14 +67,47 @@
+         if container != ABSENT:
+             rows[0]['params'] = copy.deepcopy(container['value'])
+     document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+-    realm = DetachedRealm(document)
++    return DetachedRealm(document)
++
++
++@pytest.mark.parametrize('container', [ABSENT, present(None)])
++def test_provider_clear_only_preserves_absent_or_null_container(container):
++    realm = clear_realm(container)
+     ref = 'parent/clip:clip-a'
+     before = copy.deepcopy(State(current(realm)).entity(ref))
++    revision = realm.head['revision_id']
+     accepted = realm.call([capture_clip_set_params(current(realm), ref, clear=['missing'])])
+     assert State(current(realm)).entity(ref) == before
++    assert realm.head['revision_id'] == revision
+     assert accepted['data']['commands'][0]['expect'] == {ref + '::params.missing': ABSENT}
+-    realm.call([inverse([accepted['receipt']['receipt_id']])])
++    record = realm.entries[-1]['records']['commands'][0]
++    assert record['writes'] == [
++        {'ref': ref, 'path': ['params', 'missing'], 'before': ABSENT, 'after': ABSENT}]
++    assert {'ref': ref, 'path': ['params'], 'state': container} in record['reads']
++    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
+     assert State(current(realm)).entity(ref) == before
++    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
++    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
++
++
++@pytest.mark.parametrize('container', [ABSENT, present(None)])
++@pytest.mark.parametrize('aba', [False, True])
++def test_provider_absent_leaf_clear_retains_publication_and_aba_intent(container, aba):
++    realm = clear_realm(container)
++    ref = 'parent/clip:clip-a'
++    first = realm.call([capture_clip_set_params(current(realm), ref, clear=['missing'])])
++    revision = realm.head['revision_id']
++    if aba:
++        away = realm.call([capture_clip_set_params(current(realm), ref, values={'missing': None})])
++        realm.call([inverse([away['receipt']['receipt_id']])])
++    last = realm.call([capture_clip_set_params(current(realm), ref, clear=['missing'])])
++    assert realm.head['revision_id'] == revision
++    assert last['receipt']['receipt_id'] != first['receipt']['receipt_id']
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    with pytest.raises(CommitRejected) as error:
++        realm.call([inverse([first['receipt']['receipt_id']])])
++    assert error.value.failure['details']['reason'] == 'intervening_write'
++    assert (realm.head, realm.entries, realm.documents) == before
+ 
+ 
+ @pytest.mark.parametrize('registry_location', ['direct', 'config', 'both'])
+
+codex
+Implemented the bounded clear fix; all four original xfails now pass. Tagged ancestor presence, leaf intent, replay, standalone undo/redo and ABA guards are covered.
+
+Targeted tests: **448 passed, 2 xfailed**. Ruff and `git diff --check` passed. No full suite run.
+
+**Blocked:** clear-then-set batch undo exposes a generic `inverse._patch` defect. Two new strict xfails preserve the positive expectations. Scope clarification is pending because the task explicitly limits product changes to State/Recording/scalar.
+
+[Report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-absent/notes/report.md). Both commit-message files are written. Integration remains held.
+tokens used
+81,040
+Implemented the bounded clear fix; all four original xfails now pass. Tagged ancestor presence, leaf intent, replay, standalone undo/redo and ABA guards are covered.
+
+Targeted tests: **448 passed, 2 xfailed**. Ruff and `git diff --check` passed. No full suite run.
+
+**Blocked:** clear-then-set batch undo exposes a generic `inverse._patch` defect. Two new strict xfails preserve the positive expectations. Scope clarification is pending because the task explicitly limits product changes to State/Recording/scalar.
+
+[Report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clear-absent/notes/report.md). Both commit-message files are written. Integration remains held.

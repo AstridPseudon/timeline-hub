@@ -1,0 +1,9 @@
+name=agt-review-history-boundary-final
+repo=agent
+base=tl/agt-m2-history-boundary-finish
+base_sha=3f1ac982
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-history-boundary-final
+started=2026-10-20T10:18:07Z

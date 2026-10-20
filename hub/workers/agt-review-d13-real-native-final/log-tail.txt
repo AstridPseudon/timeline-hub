@@ -1,0 +1,400 @@
+astrid/core/execution/generic_host.py:4890:        # granted projects:write. Settlement owns that association
+--- manifestforge
+--- reset.*flight
+--- adopt.*flight
+--- recapture
+tests/sdk/test_timeline_assembly.py:98:def test_lost_admission_ack_reuses_durable_body_without_recapture(tmp_path, monkeypatch):
+tests/sdk/test_timeline_assembly.py:112:    def no_recapture(*_args, **_kwargs):
+tests/sdk/test_timeline_assembly.py:115:    monkeypatch.setattr(session.client.tasks, "prepare_admission", no_recapture)
+tests/sdk/test_timeline_assembly.py:116:    monkeypatch.setattr(session.client._remote._transport, "get_managed_output", no_recapture)
+tests/sdk/test_timeline_assembly.py:117:    monkeypatch.setattr(session.client._remote._transport, "get_project_media_selection", no_recapture)
+tests/sdk/test_timeline_assembly.py:118:    monkeypatch.setattr(session.client._remote._transport, "get_project_verified_media", no_recapture)
+astrid/sdk/timeline/sync.py:351:        # recaptures guards from a possibly changed head after a lost ACK.
+
+--- prohibited D13 new paths only ---
+87	0	astrid/core/contracts/runtime_orchestration.py
+33	104	astrid/core/execution/generic_host.py
+75	9	astrid/packs/rendering/actions/assemble_timeline/run.py
+3	3	astrid/packs/rendering/pack.yaml
+166	0	astrid/sdk/timeline/assembly.py
+84	3	astrid/sdk/timeline/sync.py
+9	0	astrid/sdk/workspace_client.py
+215	119	tests/packs/video_editing/test_runtime_publication_chain.py
+123	0	tests/sdk/test_timeline_assembly.py
+20	0	tests/sdk/test_timeline_sync.py
+
+--- source tree markers ---
+fatal: unable to resolve revision: 310e5484..HEAD
+
+codex
+The native/runtime contract checks out: the Runtime’s `timeline_commit_producer` validator independently binds the admitted target, task/attempt, executor, fence, epoch, proposal digest, exact settled CAS bytes, and one `producer.guard`; the Agent host only constructs producer identity from the claimed task/attempt context. I found one review issue to resolve in the report: the D13 test diff introduces a new environment-dependent `pytest.skip` guard, despite the brief’s “no new markers/skips” requirement. I’m running only the small non-heavy guards now and will classify that precisely.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py::test_present_unknown_flight_kind_refuses_reload_without_post_or_mutation tests/packs/video_editing/test_runtime_publication_chain.py::test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task' in /home/user/work/wt/agt-review-d13-real-native-final
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -rs -o addopts= -p no:cacheprovider tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task' in /home/user/work/wt/agt-review-d13-real-native-final
+ succeeded in 11085ms:
+........s                                                                [100%]
+8 passed, 1 skipped in 2.41s
+
+ succeeded in 2939ms:
+s                                                                        [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/lanes.py:91: no Runtime checkout: set ASTRID_RUNTIME_CHECKOUT to one (looked at ['/home/user/work/wt/astrid-runtime', '/home/user/peteromallet/astrid-runtime'])
+1 skipped in 1.24s
+
+exec
+/bin/bash -lc "printf 'merge bases:\\n'; git merge-base 22cc4559 30fc8dd1; git merge-base 081f0907 30fc8dd1; printf '\\nD13 and integration ancestry:\\n'; git merge-base --is-ancestor 22cc4559 30fc8dd1; echo 22cc_integration="'$?; git merge-base --is-ancestor 081f0907 30fc8dd1; echo 081f_integration=$?; printf '"'\\nD13 commits not in integration:\\n'; git log --oneline 30fc8dd1..081f0907; printf '\\nIntegration current D13 relevant content checks:\\n'; git show 30fc8dd1:astrid/core/execution/generic_host.py | rg -n '_publish_assembled_timeline|producer_identity|runtime_epoch=int\\(' | head -50; git show 30fc8dd1:astrid/sdk/timeline/assembly.py >/dev/null 2>&1; echo assembly_at_integration="'$?; git show 30fc8dd1:tests/packs/video_editing/test_runtime_publication_chain.py | rg -n '"'xfail|pytest\\.skip|native|legacy_assembler' | head -80" in /home/user/work/wt/agt-review-d13-real-native-final
+ succeeded in 173ms:
+merge bases:
+4ef1391c2c104d5d11b3a27265035c51be296045
+4ef1391c2c104d5d11b3a27265035c51be296045
+
+D13 and integration ancestry:
+22cc_integration=1
+081f_integration=1
+
+D13 commits not in integration:
+081f0907 test(timeline): qualify native render preservation chain
+22cc4559 fix(timeline): replace assembler publication with native consumer
+310e5484 fix(timeline): guard inverses against staged writes
+ce3e647f feat(timeline): prepare complete next ordinary command union
+
+Integration current D13 relevant content checks:
+8419:    def _publish_assembled_timeline(
+9650:                publication_result = self._publish_assembled_timeline(
+assembly_at_integration=128
+184:        pytest.skip("ffmpeg, ffprobe, and node are required for the daemon render chain")
+
+context compacted
+exec
+/bin/bash -lc "git status --short && printf '%s\\n' \"candidate_base="'$(git rev-parse 310e5484''^{tree})" "candidate_final=$(git rev-parse HEAD''^{tree})" "current_integration=$(git -C /home/user/work/agent rev-parse 30fc8dd1''^{tree})" "current_runtime=$(git -C /home/user/work/runtime rev-parse HEAD)"' in /home/user/work/wt/agt-review-d13-real-native-final
+ succeeded in 306ms:
+candidate_base=c5a8a3ec7e9e01c61c5ae31834da53bed4be406a
+candidate_final=740ac183a97650368234f0a5c1cc86f1bc8499a1
+current_integration=50925d6df67ce717653e3ce7ac12803f8865da93
+current_runtime=81f8c7e0b22c34804015c054762af3d737e4698a
+
+2026-10-20T15:16:18.797186Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid hunk at line 77, '8 passed, 1 skipped in 2.41s' is not a valid hunk header. Valid hunk headers: '*** Add File: {path}', '*** Delete File: {path}', '*** Update File: {path}'
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..148ec9d97efa44575fb59d402f31aa41c0b74214
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md
+@@ -0,0 +1,132 @@
++# Agent D13 final native-consumer deletion gate
++
++## Verdict
++
++**REQUEST CHANGES**.
++
++The native consumer replacement and deletion are substantively qualified, but the
++final candidate adds an environment-dependent `pytest.skip` for `ffmpeg`,
++`ffprobe`, and `node` in `tests/packs/video_editing/test_runtime_publication_chain.py`.
++The gate requires new markers/skips to be absent. Remove that skip (tool
++availability belongs to the named lane precondition) without weakening the
++render assertions, then rerun the named central suite once on the final tree.
++
++## Source identity
++
++- Candidate HEAD: `081f0907c008baeb8e35b0a56cdd63b2b08bb8a6`
++- Candidate tree: `740ac183a97650368234f0a5c1cc86f1bc8499a1`
++- D13 source base: `310e5484` (tree `c5a8a3ec7e9e01c61c5ae31834da53bed4be406a`)
++- Worktree status: clean; no source changes made by this review.
++
++## Evidence reviewed
++
++The central named run used the final candidate tree and the pinned private
++Runtime/Remotion/Node environment:
++
++```text
++agent registered-native-render-integration
++pytest -m integration
++2 passed in 227.61s
++```
++
++The two exact test IDs are the real daemon-backed native assemble and final
++render chain. The test reads the rendered bytes from Runtime CAS, requires a
++non-trivial MP4, runs `ffprobe` over those bytes, asserts a positive duration,
++checks the render task parent revision, and completes guarded undo. The runner
++did not retain a standalone MP4 in its result directory, so independent
++post-run replay of that file is not possible; the in-run CAS-byte and ffprobe
++assertions are the available final-render proof.
++
++The original legacy refusal and artifact-preservation test remains positive;
++the old strict xfails are removed. The native path preserves settled proposal
++validation, exact producer/task/attempt provenance, ordered CAS aggregation,
++media lifecycle checks, normal `rendering.render` admission, revision-pinned
++rendering, and guarded undo.
++
++The lost-ACK/restart path was checked: admission is captured once, the exact
++outbox body/key is retried after restart, and no recapture is performed. The
++unknown flight-kind guard remains strict (`c610` cases included); there is no
++reset, adopt, or recapture fallback.
++
++The GenericHost change is minimal: epoch is propagated from authoritative
++claimed task/attempt context and validated with the Runtime fence/epoch
++validator. The preserved tuple is target, fence, epoch, executor, and proposal
++digest; caller JSON is not authoritative. The old pre-settlement canonical
++writer is removed only alongside the positive native replacement.
++
++The WorkspaceClient additions are the existing Runtime media-selection and
++verified-media read facades and their existing generated operations. No new
++DTO, endpoint, or public alias was introduced. `STITCH`/assemble remains
++distinct from `rendering.render`. The requester uses the owner commit
++credential; the GenericHost uses the Runtime worker token, so no credential
++lending was found. No `ScopeFactory`, fake GenericHost, render-worker project
++write, or manifest-forge path was found.
++
++One remaining source issue is the new conditional skip described in the
++verdict. It is separate from the local fixture skip below and is present in
++the candidate source.
++
++## Targeted tests
++
++Run directly in this worktree:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py::test_present_unknown_flight_kind_refuses_reload_without_post_or_mutation tests/packs/video_editing/test_runtime_publication_chain.py::test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task
++8 passed, 1 skipped in 2.41s
++```
++
++The one local skip was the pre-existing lane fixture requirement: no Runtime
++checkout was available at `/home/user/work/wt/astrid-runtime` or
++`/home/user/peteromallet/astrid-runtime`. It was not a test assertion failure.
++The isolated refusal test reports the same reason (`1 skipped in 1.24s`).
++`git diff --check HEAD` passed. No full suite was run.
++
++## Composition audit
++
++Current Agent integration is `tl/integration` commit
++`30fc8dd154015a7c58cf4ce7b065ccc46f470ee8`, tree
++`50925d6df67ce717653e3ce7ac12803f8865da93`, with merge-base
++`4ef1391c2c104d5d11b3a27265035c51be296045`. It is not the D13 candidate base:
++D13 is based on `310e5484`, and the candidate is not merged into integration.
++
++After the exact source014/ordinary014 pin, the composition delta is:
++
++- Keep current integration's document read facades in
++  `astrid/sdk/workspace_client.py` and add/retain D13's existing media
++  selection and verified-media facades; these are a union, not a replacement.
++- Keep current integration's stage-guard additions to
++  `tests/sdk/test_timeline_sync.py` and retain D13's strict unknown-flight-kind
++  coverage.
++- Apply D13's `generic_host.py` deletion of the old automatic pre-settlement
++  assembler writer and add `astrid/sdk/timeline/assembly.py`; current
++  integration still has `_publish_assembled_timeline` and has no assembly
++  module.
++- Carry the remaining D13 paths exactly: runtime orchestration contract,
++  rendering assemble action/manifest, timeline sync, workspace client,
++  publication-chain tests, and assembly/sync tests, resolving only the
++  two documented overlaps above.
++
++The current integration includes later P1/Scene/Root/AM work; the frozen
++candidate base `310e` must not be treated as current integration or merged
++prematurely.
++
++## Remaining current-pair and ledger gates
++
++1. Remove the new environment-dependent skip and rerun the named central
++   `registered-native-render-integration` suite once on the final candidate.
++2. Compose D13 after the exact source014/ordinary014 pin, preserving the
++   current integration overlaps listed above; do not delete D13 during the
++   composition.
++3. Qualify the current Agent/Runtime pair. The central artifact used external
++   Runtime commit `c45cbc6ba3772ac2cebb5a5c94f91be24231e2d8`; the current
++   Runtime worktree is `81f8c7e0b22c34804015c054762af3d737e4698a`, so that
++   current pair is not yet proven by this review.
++4. Re-run the post-composition current-pair and deletion-ledger gates, including
++   the real render/ffprobe and lost-ACK restart chain, before recording D13 as
++   merged and closing the ledger row.
++
++Runtime peer inspection found no shared protocol concern: the validator still
++requires the authoritative task/attempt identity, positive fence and epoch,
++exact admitted target, proposal digest, and one-shot producer guard before
++settlement.
++
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..148ec9d97efa44575fb59d402f31aa41c0b74214
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md
+@@ -0,0 +1,132 @@
++# Agent D13 final native-consumer deletion gate
++
++## Verdict
++
++**REQUEST CHANGES**.
++
++The native consumer replacement and deletion are substantively qualified, but the
++final candidate adds an environment-dependent `pytest.skip` for `ffmpeg`,
++`ffprobe`, and `node` in `tests/packs/video_editing/test_runtime_publication_chain.py`.
++The gate requires new markers/skips to be absent. Remove that skip (tool
++availability belongs to the named lane precondition) without weakening the
++render assertions, then rerun the named central suite once on the final tree.
++
++## Source identity
++
++- Candidate HEAD: `081f0907c008baeb8e35b0a56cdd63b2b08bb8a6`
++- Candidate tree: `740ac183a97650368234f0a5c1cc86f1bc8499a1`
++- D13 source base: `310e5484` (tree `c5a8a3ec7e9e01c61c5ae31834da53bed4be406a`)
++- Worktree status: clean; no source changes made by this review.
++
++## Evidence reviewed
++
++The central named run used the final candidate tree and the pinned private
++Runtime/Remotion/Node environment:
++
++```text
++agent registered-native-render-integration
++pytest -m integration
++2 passed in 227.61s
++```
++
++The two exact test IDs are the real daemon-backed native assemble and final
++render chain. The test reads the rendered bytes from Runtime CAS, requires a
++non-trivial MP4, runs `ffprobe` over those bytes, asserts a positive duration,
++checks the render task parent revision, and completes guarded undo. The runner
++did not retain a standalone MP4 in its result directory, so independent
++post-run replay of that file is not possible; the in-run CAS-byte and ffprobe
++assertions are the available final-render proof.
++
++The original legacy refusal and artifact-preservation test remains positive;
++the old strict xfails are removed. The native path preserves settled proposal
++validation, exact producer/task/attempt provenance, ordered CAS aggregation,
++media lifecycle checks, normal `rendering.render` admission, revision-pinned
++rendering, and guarded undo.
++
++The lost-ACK/restart path was checked: admission is captured once, the exact
++outbox body/key is retried after restart, and no recapture is performed. The
++unknown flight-kind guard remains strict (`c610` cases included); there is no
++reset, adopt, or recapture fallback.
++
++The GenericHost change is minimal: epoch is propagated from authoritative
++claimed task/attempt context and validated with the Runtime fence/epoch
++validator. The preserved tuple is target, fence, epoch, executor, and proposal
++digest; caller JSON is not authoritative. The old pre-settlement canonical
++writer is removed only alongside the positive native replacement.
++
++The WorkspaceClient additions are the existing Runtime media-selection and
++verified-media read facades and their existing generated operations. No new
++DTO, endpoint, or public alias was introduced. `STITCH`/assemble remains
++distinct from `rendering.render`. The requester uses the owner commit
++credential; the GenericHost uses the Runtime worker token, so no credential
++lending was found. No `ScopeFactory`, fake GenericHost, render-worker project
++write, or manifest-forge path was found.
++
++One remaining source issue is the new conditional skip described in the
++verdict. It is separate from the local fixture skip below and is present in
++the candidate source.
++
++## Targeted tests
++
++Run directly in this worktree:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py::test_present_unknown_flight_kind_refuses_reload_without_post_or_mutation tests/packs/video_editing/test_runtime_publication_chain.py::test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task
++8 passed, 1 skipped in 2.41s
++```
++
++The one local skip was the pre-existing lane fixture requirement: no Runtime
++checkout was available at `/home/user/work/wt/astrid-runtime` or
++`/home/user/peteromallet/astrid-runtime`. It was not a test assertion failure.
++The isolated refusal test reports the same reason (`1 skipped in 1.24s`).
++`git diff --check HEAD` passed. No full suite was run.
++
++## Composition audit
++
++Current Agent integration is `tl/integration` commit
++`30fc8dd154015a7c58cf4ce7b065ccc46f470ee8`, tree
++`50925d6df67ce717653e3ce7ac12803f8865da93`, with merge-base
++`4ef1391c2c104d5d11b3a27265035c51be296045`. It is not the D13 candidate base:
++D13 is based on `310e5484`, and the candidate is not merged into integration.
++
++After the exact source014/ordinary014 pin, the composition delta is:
++
++- Keep current integration's document read facades in
++  `astrid/sdk/workspace_client.py` and add/retain D13's existing media
++  selection and verified-media facades; these are a union, not a replacement.
++- Keep current integration's stage-guard additions to
++  `tests/sdk/test_timeline_sync.py` and retain D13's strict unknown-flight-kind
++  coverage.
++- Apply D13's `generic_host.py` deletion of the old automatic pre-settlement
++  assembler writer and add `astrid/sdk/timeline/assembly.py`; current
++  integration still has `_publish_assembled_timeline` and has no assembly
++  module.
++- Carry the remaining D13 paths exactly: runtime orchestration contract,
++  rendering assemble action/manifest, timeline sync, workspace client,
++  publication-chain tests, and assembly/sync tests, resolving only the
++  two documented overlaps above.
++
++The current integration includes later P1/Scene/Root/AM work; the frozen
++candidate base `310e` must not be treated as current integration or merged
++prematurely.
++
++## Remaining current-pair and ledger gates
++
++1. Remove the new environment-dependent skip and rerun the named central
++   `registered-native-render-integration` suite once on the final candidate.
++2. Compose D13 after the exact source014/ordinary014 pin, preserving the
++   current integration overlaps listed above; do not delete D13 during the
++   composition.
++3. Qualify the current Agent/Runtime pair. The central artifact used external
++   Runtime commit `c45cbc6ba3772ac2cebb5a5c94f91be24231e2d8`; the current
++   Runtime worktree is `81f8c7e0b22c34804015c054762af3d737e4698a`, so that
++   current pair is not yet proven by this review.
++4. Re-run the post-composition current-pair and deletion-ledger gates, including
++   the real render/ffprobe and lost-ACK restart chain, before recording D13 as
++   merged and closing the ledger row.
++
++Runtime peer inspection found no shared protocol concern: the validator still
++requires the authoritative task/attempt identity, positive fence and epoch,
++exact admitted target, proposal digest, and one-shot producer guard before
++settlement.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..6d97e3548ff1986ddf16cdddc862bd5e78fb45bc
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/commit-msg
+@@ -0,0 +1,5 @@
++review(agent): audit D13 native consumer deletion gate
++
++Record the read-only final D13 review, qualification evidence, and source014
++composition overlaps.
++
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/BLOCKED && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/commit-msg && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md && stat -c '"'%n %s bytes' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/commit-msg" in /home/user/work/wt/agt-review-d13-real-native-final
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/DONE 0 bytes
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md 6685 bytes
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-real-native-final/commit-msg 156 bytes
+
+codex
+## D13 review complete
+
+- Published report: [agent-review-d13-real-native-final.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md)
+- Verdict: **REQUEST CHANGES**
+- Reason: candidate adds a new environment-dependent `pytest.skip`; remove it and rerun the central named suite.
+- Central evidence: `2 passed in 227.61s`, including actual CAS MP4 bytes, `ffprobe`, revision-pinned render, lost-ACK retry, and guarded undo.
+- Targeted evidence: `8 passed, 1 skipped in 2.41s`; skip was only due unavailable Runtime checkout.
+- No source edits, full suite, or new tests performed.
+- Commit message written and empty `DONE` marker created.
+tokens used
+290,004
+## D13 review complete
+
+- Published report: [agent-review-d13-real-native-final.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-d13-real-native-final.md)
+- Verdict: **REQUEST CHANGES**
+- Reason: candidate adds a new environment-dependent `pytest.skip`; remove it and rerun the central named suite.
+- Central evidence: `2 passed in 227.61s`, including actual CAS MP4 bytes, `ffprobe`, revision-pinned render, lost-ACK retry, and guarded undo.
+- Targeted evidence: `8 passed, 1 skipped in 2.41s`; skip was only due unavailable Runtime checkout.
+- No source edits, full suite, or new tests performed.
+- Commit message written and empty `DONE` marker created.

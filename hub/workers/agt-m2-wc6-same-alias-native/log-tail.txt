@@ -1,0 +1,400 @@
+ 
+     ``base`` is the exact Runtime closure at ``candidate.base_parent``.  Every
+@@ -255,6 +329,43 @@
+             _check_clip_shape(before, after, owner=owner, clip_id=clip_id)
+             working, emitted = _emit_clip_commands(working, owner, before, after)
+             commands.extend(emitted)
++
++        media_changes = _same_alias_changes(
++            canonical_shots[shot_id]["internal_timeline"], shot["internal_timeline"], owner=owner
++        )
++        deferred = set()
++        for alias, (old_entry, new_entry) in media_changes.items():
++            if sum(row["shot_id"] == shot_id for row in base["placements"]) != 1:
++                raise DocumentDiffError(f"{owner}/asset:{alias} shared placement scope is ambiguous")
++            affected = [clip_id for clip_id, row in before_rows.items() if row.get("asset") == alias]
++            if not affected or any(after_rows[clip_id].get("asset") != alias for clip_id in affected):
++                raise DocumentDiffError(f"{owner}/asset:{alias} media consumers changed identity")
++            pair = (media_selections or {}).get((owner, alias))
++            if pair is None:
++                if not defer_media:
++                    raise DocumentDiffError(
++                        f"{owner}/asset:{alias} requires an exact Runtime media selection"
++                    )
++                deferred.add(alias)
++                continue
++            try:
++                old_media, new_media = pair["old"], pair["new"]
++                command = capture_occurrence_swap_media(
++                    working, _clip_ref(owner, affected[0]), old_media, new_media,
++                    verified_media=verified_media,
++                )
++            except (CommandError, KeyError, TypeError) as exc:
++                raise DocumentDiffError(
++                    f"{owner}/asset:{alias} native same-alias media rebind is held: {exc}"
++                ) from exc
++            try:
++                result = execute(working, [command], verified_media=verified_media)
++            except CommandError as exc:
++                raise DocumentDiffError(
++                    f"{owner}/asset:{alias} native same-alias media rebind is held: {exc}"
++                ) from exc
++            commands.append(command)
++            working = result.bundle
+         _require_explicit_rows(
+             shot["internal_timeline"].get("clips", []),
+             working["shots"][shot_id]["internal_timeline"].get("clips", []),
+@@ -266,11 +377,40 @@
+         _require_same(shot["internal_timeline"].get("tracks"),
+                       shot["base_internal_timeline"].get("tracks"),
+                       f"{owner} track edits are held by the document view")
+-        _require_same(shot["internal_timeline"].get("registry"),
+-                      shot["base_internal_timeline"].get("registry"),
+-                      f"{owner} registry/media edits are held by the document view")
+-        _require_same(shot.get("payload"), shot.get("base_payload"),
+-                      f"{owner} shot payload/narration edits are held by the document view")
++        if not media_changes:
++            _require_same(shot["internal_timeline"].get("registry"),
++                          shot["base_internal_timeline"].get("registry"),
++                          f"{owner} registry/media edits are held by the document view")
++            _require_same(shot.get("payload"), shot.get("base_payload"),
++                          f"{owner} shot payload/narration edits are held by the document view")
++        else:
++            if deferred:
++                deferred_changes = {
++                    alias: media_changes[alias] for alias in deferred
++                }
++                _require_same(
++                    _replace_registry_media(shot["internal_timeline"].get("registry"), deferred_changes),
++                    shot["base_internal_timeline"].get("registry"),
++                    f"{owner} registry contains unsupported media fields",
++                )
++            else:
++                _require_same(shot["internal_timeline"].get("registry"),
++                              working["shots"][shot_id]["internal_timeline"].get("registry"),
++                              f"{owner} registry/media differs from the native command result")
++            if deferred:
++                replacements = {
++                    old.get("media_id"): new.get("media_id")
++                    for alias, (old, new) in media_changes.items()
++                    if alias in deferred
++                }
++                _require_same(
++                    _replace_known_payload_media(shot.get("payload"), replacements),
++                    shot.get("base_payload"),
++                    f"{owner} payload contains unsupported media or narration edits",
++                )
++            else:
++                _require_same(shot.get("payload"), working["shots"][shot_id]["payload"],
++                              f"{owner} payload differs from the native command result")
+         for key in set(shot["internal_timeline"]) - {"clips", "tracks", "registry"}:
+             _require_same(shot["internal_timeline"].get(key), shot["base_internal_timeline"].get(key),
+                           f"{owner} internal field {key!r} is held by the document view")
+diff --git a/astrid/sdk/timeline/native_occurrence_media_commands.py b/astrid/sdk/timeline/native_occurrence_media_commands.py
+index bcc3708f8398de711b7348ab70f39abb24736cf4..2ed19d48ea369be9e79a14964fa1fb7529af6d3d
+--- a/astrid/sdk/timeline/native_occurrence_media_commands.py
++++ b/astrid/sdk/timeline/native_occurrence_media_commands.py
+@@ -62,6 +62,48 @@
+             'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
+ 
+ 
++def _same_object(value, object_id):
++    return isinstance(value, str) and value.removeprefix('sha256:') == object_id.removeprefix('sha256:')
++
++
++def _replace_payload_media(ctx, owner, old_object_id, new_object_id):
++    """Update only the bounded payload mirrors of an occurrence selection."""
++    payload = ctx.read(owner + '/shot', ['payload'])
++    if not isinstance(payload, dict):
++        raise CommandError('media edit requires an authored shot payload', kind='unsupported_media')
++
++    items = payload.get('items')
++    if isinstance(items, list):
++        for index, row in enumerate(items):
++            if isinstance(row, dict) and _same_object(row.get('media_id'), old_object_id):
++                ctx.write(owner + '/shot', ['payload', 'items', str(index), 'media_id'], new_object_id)
++
++    assets = payload.get('assets')
++    if isinstance(assets, list):
++        for index, row in enumerate(assets):
++            if not isinstance(row, dict):
++                continue
++            for key in ('object_id', 'media_id', 'digest', 'content_digest', 'content_sha256'):
++                if _same_object(row.get(key), old_object_id):
++                    replacement = new_object_id.removeprefix('sha256:') if key == 'content_sha256' else new_object_id
++                    ctx.write(owner + '/shot', ['payload', 'assets', str(index), key], replacement)
++            source = row.get('source')
++            if isinstance(source, dict):
++                for key in ('object_id', 'media_id', 'digest', 'content_digest', 'content_sha256'):
++                    if _same_object(source.get(key), old_object_id):
++                        replacement = new_object_id.removeprefix('sha256:') if key == 'content_sha256' else new_object_id
++                        ctx.write(owner + '/shot', ['payload', 'assets', str(index), 'source', key], replacement)
++
++    bindings = payload.get('audio_bindings')
++    if isinstance(bindings, list):
++        for index, row in enumerate(bindings):
++            if not isinstance(row, dict):
++                continue
++            for key in ('object_id', 'media_id'):
++                if _same_object(row.get(key), old_object_id):
++                    ctx.write(owner + '/shot', ['payload', 'audio_bindings', str(index), key], new_object_id)
++
++
+ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
+     identity = pin['asset'] if alias is None else alias
+     if not isinstance(identity, str) or not re.fullmatch(r'(?!.*::)[^/]+', identity):
+@@ -158,9 +200,29 @@
+     value, kind = _verified(ctx, pin)
+     if old_kind != kind:
+         raise CommandError('media swap preserves media kind', kind='unsupported_media')
+-    _clip(ctx, owner, row, limit, kind, [previous, value])
+-    _registry(ctx, owner, old, kind, alias=row['asset'])
+-    _registry(ctx, owner, pin, kind, create=True)
++    alias = row['asset']
++    same_alias = old['asset'] == pin['asset'] == alias
++    if same_alias:
++        # A same-alias replacement is a rebind, not an alias birth.  Validate
++        # every clip consuming the alias so one registry write cannot leave an
++        # unsupported source window or kind hidden behind another consumer.
++        members = ctx.select('collection.clips', owner)
++        affected = []
++        for member in members:
++            candidate = ctx.read(member)
++            if isinstance(candidate, dict) and candidate.get('asset') == alias:
++                _clip(ctx, owner, candidate, limit, kind, [previous, value])
++                affected.append(member)
++        if not affected:
++            raise CommandError('media alias has no affected consumers', kind='identity_conflict')
++        _registry(ctx, owner, old, kind, alias=alias)
++        for key, replacement in _binding(pin, kind).items():
++            ctx.write(owner + '/asset:' + alias, [key], replacement)
++        _replace_payload_media(ctx, owner, old['object_id'], pin['object_id'])
++    else:
++        _clip(ctx, owner, row, limit, kind, [previous, value])
++        _registry(ctx, owner, old, kind, alias=alias)
++        _registry(ctx, owner, pin, kind, create=True)
+     ctx.bind('media.target', ref, dependencies=['media.old', 'media.new'])
+     ctx.write(ref, ['asset'], pin['asset'])
+ 
+diff --git a/astrid/sdk/workspace_client.py b/astrid/sdk/workspace_client.py
+index 36798449e92c113f22e6aaacbbceef82a6d73cd5..eb86b06ec0c661d3d0b591164808b06e43721824
+--- a/astrid/sdk/workspace_client.py
++++ b/astrid/sdk/workspace_client.py
+@@ -264,6 +264,7 @@
+                 "list_project_runs", "list_run_events", "list_managed_outputs",
+                 "list_events",  # Includes the from_=latest polling cursor.
+                 "get_managed_output", "list_generations",
++                "get_project_media_selection", "get_project_verified_media",
+                 "get_generation", "list_variants", "attach_variant_thumbnail",
+                 "get_source_frame_thumbnail", "ensure_source_frame_thumbnail",
+                 "mark_variant_viewed", "mark_generation_variants_viewed",
+@@ -810,6 +811,14 @@
+             duration_seconds=duration_seconds,
+         )
+ 
++    def get_project_media_selection(self, project_id: str, selection: Mapping[str, Any]) -> Any:
++        """Read one exact project-owned media selection for a native command."""
++        return self._call_generated("get_project_media_selection", project_id, dict(selection))
++
++    def get_project_verified_media(self, project_id: str, selection: Mapping[str, Any]) -> Any:
++        """Read the Runtime-verified media metadata for a native command."""
++        return self._call_generated("get_project_verified_media", project_id, dict(selection))
++
+     def get_project_media_import(self, project_id: str, import_operation_id: str) -> Any:
+         return self._call_generated("get_project_media_import", project_id, import_operation_id)
+ 
+diff --git a/tests/editing_conformance/test_recipe_occurrence_media.py b/tests/editing_conformance/test_recipe_occurrence_media.py
+index e0b6d8e3a8fe017b479df50d5d9e55e7f002185c..c7b6b696c8e7a97fccd8d520b7769580bfee160d
+--- a/tests/editing_conformance/test_recipe_occurrence_media.py
++++ b/tests/editing_conformance/test_recipe_occurrence_media.py
+@@ -74,6 +74,44 @@
+     return document, bundle, command, verified
+ 
+ 
++def test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry_fields():
++    document, old, new, verified = inputs()
++    bundle = bundle_from_document(document)
++    old = copy.deepcopy(old)
++    new = {**copy.deepcopy(new), 'asset': old['asset']}
++    verified = [
++        {**row, 'selection': {**row['selection'], 'asset': old['asset']}}
++        if row['selection']['asset'] == 'reserved-new' else row
++        for row in verified
++    ]
++    State(bundle).config(OWNER)['registry']['assets'][old['asset']]['label'] = 'keep-label'
++    State(bundle).config(OWNER)['registry']['assets'][old['asset']]['opaque'] = {'keep': [1, None]}
++    State(bundle).entity(TARGET)['asset'] = old['asset']
++    State(bundle).occurrence(OWNER).update(source_offset=0, speed=1)
++    before = copy.deepcopy(bundle)
++    command = capture_occurrence_swap_media(bundle, TARGET, old, new, verified_media=verified)
++
++    plan = execute(bundle, [command], verified_media=verified)
++    entry = State(plan.bundle).config(OWNER)['registry']['assets'][old['asset']]
++    assert entry['media_id'] == NEW
++    assert entry['generationId'] == new['generation_id']
++    assert entry['variantId'] == new['variant_id']
++    assert entry['label'] == 'keep-label'
++    assert entry['opaque'] == {'keep': [1, None]}
++    assert State(plan.bundle).entity(TARGET)['asset'] == old['asset']
++    assert plan.bundle['shots'][State(plan.bundle).occurrence(OWNER)['shot_id']]['payload']['items'][0]['media_id'] == NEW
++    assert inverse(plan.bundle, plan.records).bundle == before
++    aba = copy.deepcopy(plan.bundle)
++    State(aba).config(OWNER)['registry']['assets'][old['asset']]['media_id'] = old['object_id']
++    media_path = ['registry', 'assets', old['asset'], 'media_id']
++    with pytest.raises(CommandError, match='intervening'):
++        inverse(aba, plan.records, [{
++            'writes': [{'ref': OWNER + '/source', 'path': media_path,
++                        'before': {'state': 'present', 'value': NEW},
++                        'after': {'state': 'present', 'value': old['object_id']}}]
++        }])
++
++
+ @pytest.mark.parametrize('operation', ['add', 'swap'])
+ @pytest.mark.parametrize('kind', ['image', 'video'])
+ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
+diff --git a/tests/timeline/test_authoring_feedback.py b/tests/timeline/test_authoring_feedback.py
+index aed6013833e1f476afe9dba5721353fbe13583d4..2a922cdccb5b0feab05cf0d3838f8d193aa1f5a3
+--- a/tests/timeline/test_authoring_feedback.py
++++ b/tests/timeline/test_authoring_feedback.py
+@@ -168,7 +168,7 @@
+     work = bundle()
+     shot = next(iter(work["shots"].values()))
+     shot["internal_timeline"]["registry"]["assets"]["old-picture"]["media_id"] = NEW
+-    with pytest.raises(DocumentDiffError, match="registry/media"):
++    with pytest.raises(DocumentDiffError, match="exact Runtime media selection"):
+         document_diff_to_commands(work, bundle())
+ 
+ 
+diff --git a/tests/timeline/test_authoring_media.py b/tests/timeline/test_authoring_media.py
+index d606f35c513b6a53871f63367605dd7b44855a33..93b486f60c9a7168f5acd1322707655caf570aef
+--- a/tests/timeline/test_authoring_media.py
++++ b/tests/timeline/test_authoring_media.py
+@@ -224,10 +224,6 @@
+         import_authoring_media(plan, catalog)
+ 
+ 
+-@pytest.mark.xfail(
+-    strict=True,
+-    reason="WC6 native document view does not yet express legacy same-alias media replacement; retain this positive requirement until a bounded media command does",
+-)
+ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypatch):
+     import sys
+     from contextlib import nullcontext
+@@ -239,13 +235,57 @@
+     spec.loader.exec_module(helper)
+     path = picture(tmp_path)
+     work = bundle()
++    work["base_parent"]["publication_id"] = "publication-1"
++    work["placements"][0].update(source_offset=0, speed=1)
++    work["base_placements"]["occ-1"].update(source_offset=0, speed=1)
++    old_entry = next(iter(work["shots"].values()))["base_internal_timeline"]["registry"]["assets"]["old-picture"]
++    old_entry.update(generationId="generation-old", variantId="variant-old")
++    next(iter(work["shots"].values()))["internal_timeline"]["registry"]["assets"]["old-picture"].update(
++        generationId="generation-old", variantId="variant-old"
++    )
+     edit(work, path.name)
+     document = tmp_path / "timeline.json"
+     document.write_text(json.dumps(work))
+     shown = SimpleNamespace(ok=True, data={"summary": {"head_revision_id": "advanced-head"}})
+     client = SimpleNamespace(timelines=SimpleNamespace(open_composition=lambda *args: shown))
+     class StaleWorkspace(Catalog):
+-        def publish_parent_composition(self, *args, **kwargs):
++        def get_project_media_selection(self, _project_id, selection):
++            if selection["generation_id"] == "generation-old":
++                object_id = OLD
++            else:
++                object_id = self.calls[0][1] and self.calls[0][2]["expected_digest"]
++            return {
++                "asset": selection["asset"], "generation_id": selection["generation_id"],
++                "variant_id": selection["variant_id"], "object_id": object_id,
++                "catalog_digest": "sha256:" + "c" * 64,
++            }
++
++        def get_project_verified_media(self, _project_id, selection):
++            return {"selection": selection, "media_type": "image/png", "size": 78,
++                    "width": 16, "height": 12}
++
++    class Session:
++        def _state(self):
++            return {"base": {"revision_id": "parent-1", "publication_id": "publication-1"},
++                    "pending": [], "flight": None}
++
++        def _bundle(self, _state):
++            original = bundle()
++            original["base_parent"]["publication_id"] = "publication-1"
++            original["placements"][0].update(source_offset=0, speed=1)
++            original["base_placements"]["occ-1"].update(source_offset=0, speed=1)
++            original_shot = next(iter(original["shots"].values()))
++            original_shot["base_internal_timeline"]["registry"]["assets"]["old-picture"].update(
++                generationId="generation-old", variantId="variant-old"
++            )
++            original_shot["internal_timeline"]["registry"]["assets"]["old-picture"].update(
++                generationId="generation-old", variantId="variant-old"
++            )
++            return original
++
++        def commit_many(self, commands, **kwargs):
++            assert [command["op"] for command in commands] == ["occurrence.swap-media"]
++            assert kwargs["base"] == {"revision_id": "parent-1", "publication_id": "publication-1"}
+             raise RuntimeError("parent composition head is stale")
+ 
+     stale_workspace = StaleWorkspace()
+@@ -255,6 +295,7 @@
+     monkeypatch.setattr(
+         helper, "workspace", lambda: stale_workspace
+     )
++    monkeypatch.setattr(helper.TimelineSession, "open", lambda *args, **kwargs: Session())
+     monkeypatch.setattr(
+         sys,
+         "argv",
+
+exec
+/bin/bash -lc 'git status --short; git diff --check; test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-same-alias-native/DONE && echo no-DONE; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-same-alias-native/BLOCKED && echo blocked-written; find . -type d -name __pycache__ -print' in /home/user/work/wt/agt-m2-wc6-same-alias-native
+ succeeded in 240ms:
+ M astrid/packs/rendering/docs/scripts/timeline_document.py
+ M astrid/sdk/authoring_media.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/document_diff.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M astrid/sdk/workspace_client.py
+ M tests/editing_conformance/test_recipe_occurrence_media.py
+ M tests/timeline/test_authoring_feedback.py
+ M tests/timeline/test_authoring_media.py
+no-DONE
+blocked-written
+
+codex
+Implemented the private same-alias native media rebind path.
+
+- Reused existing `occurrence.swap-media` v1; no schema/public pin/HTTP DTO changes.
+- Preserved alias identity, opaque fields, payload/raw data, inverse, and ABA guards.
+- Removed the strict xfail after the original positive test passed.
+- Local tests: `158 passed, 1 deselected`; Ruff and compile checks passed.
+- Central real Runtime session journey: `10 passed`.
+- Same-alias Runtime acceptance is blocked by the supplied Runtime candidate’s retired direct-shot fixture route; no fallback was added.
+
+Reports:
+
+- [Design report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc6-same-alias-native.md)
+- [Worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-same-alias-native/notes/report.md)
+- [Commit message](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-same-alias-native/commit-msg)
+
+`BLOCKED` was written with the exact external blocker.
+tokens used
+466,970
+Implemented the private same-alias native media rebind path.
+
+- Reused existing `occurrence.swap-media` v1; no schema/public pin/HTTP DTO changes.
+- Preserved alias identity, opaque fields, payload/raw data, inverse, and ABA guards.
+- Removed the strict xfail after the original positive test passed.
+- Local tests: `158 passed, 1 deselected`; Ruff and compile checks passed.
+- Central real Runtime session journey: `10 passed`.
+- Same-alias Runtime acceptance is blocked by the supplied Runtime candidate’s retired direct-shot fixture route; no fallback was added.
+
+Reports:
+
+- [Design report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc6-same-alias-native.md)
+- [Worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-same-alias-native/notes/report.md)
+- [Commit message](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-same-alias-native/commit-msg)
+
+`BLOCKED` was written with the exact external blocker.

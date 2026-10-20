@@ -1,0 +1,400 @@
+11 | | from astrid.sdk.timeline.native_auto_placement import auto_place_completion, auto_place_shared
+12 | | from astrid.sdk.timeline.native_placement_commands import capture_placement
+13 | | from astrid.sdk.timeline.rebase import replay
+14 | | from tests.editing_conformance.test_recipe_m1_commands import inverse
+15 | | from tests.editing_conformance.test_recipe_occurrence_media import inputs
+   | |_________________________________________________________________________^ I001
+16 |
+17 |   OWNER = 'occurrence:occ-a'
+   |
+   = help: Organize imports
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+
+codex
+The new 282-case guard tests pass: unrelated parameter, volume, and opaque edits preserve the complete fresh capture and let the original request replay. The stale-placement matrix still refuses, including timing-field absence changes. I’ve regenerated the two automatic-placement goldens and am checking the remaining media/pool conformance tests and exact fixture changes.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-auto-narrow-reads/tests/editing_conformance/test_recipe_auto_placement_reads.py
+diff --git a/astrid/sdk/timeline/native_occurrence_media_commands.py b/astrid/sdk/timeline/native_occurrence_media_commands.py
+index 1889f677d49e746503fd20e77cefb0290be34d88..bcc3708f8398de711b7348ab70f39abb24736cf4
+--- a/astrid/sdk/timeline/native_occurrence_media_commands.py
++++ b/astrid/sdk/timeline/native_occurrence_media_commands.py
+@@ -45,13 +45,16 @@
+ 
+ 
+ def _consume(ctx, owner, ids):
+-    """Record the clip rows an automatic builder read, so a later change conflicts at replay."""
++    """Guard automatic placement's timing and lane inputs, including absent fields."""
+     members = ctx.select('collection.clips', owner)
+     for clip_id in ids:
+         ref = owner + '/clip:' + clip_id
+         if ref not in members:
+             raise CommandError('consumed clip is not in the occurrence', kind='identity_conflict', ref=ref)
+-        ctx.read(ref)
++        # _end_frame supplies at/at_ms to duration.py, which validates speed
++        # and uses numeric hold before from/to. Track selects/inherits the lane.
++        for field in ('at', 'at_ms', 'track', 'hold', 'from', 'to', 'speed'):
++            ctx.read(ref, [field])
+ 
+ 
+ def _binding(pin, kind):
+diff --git a/tests/editing_conformance/test_recipe_auto_placement_reads.py b/tests/editing_conformance/test_recipe_auto_placement_reads.py
+index c10c913308491d8c55322a98092faca2a38bd6cb..69b4415ecd53df08a3bcf66c2c1613732e84ba16
+--- a/tests/editing_conformance/test_recipe_auto_placement_reads.py
++++ b/tests/editing_conformance/test_recipe_auto_placement_reads.py
+@@ -1,5 +1,6 @@
+ """Automatic placement records only the timing/lane inputs it consumes."""
+ from __future__ import annotations
++
+ import copy
+ 
+ import pytest
+@@ -154,3 +155,72 @@
+     assert recaptured.commands == [command]
+     with pytest.raises(CommandError):
+         replay(recaptured, head, verified_media=verified)
++
++
++@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('mode', MODES)
++@pytest.mark.parametrize('field', ['params', 'volume', 'opaque'])
++def test_unrelated_clip_edits_preserve_the_complete_capture_and_original_replay(kind, mode, field):
++    bundle, pin, verified, req = basis(kind, mode)
++    original = build(bundle, pin, verified, req)
++    saved = copy.deepcopy(original)
++    plan = execute(bundle, original['commands'], verified_media=verified)
++    target = OWNER + '/clip:clip-a'
++    if field == 'params':
++        changed = execute(bundle, [capture_clip_set_params(bundle, target, values={'unrelated': 1})])
++        head, intervening = changed.bundle, changed.records
++    else:
++        # These opaque top-level fields have no native scalar writer.
++        head, intervening = copy.deepcopy(bundle), ()
++        State(head).entity(target)[field] = .5 if field == 'volume' else [None, False, {'custom': 1}]
++    before = copy.deepcopy(head)
++    assert build(head, pin, verified, req) == original
++    rebased = replay(plan, head, intervening_records=intervening, verified_media=verified)
++    assert rebased.commands == original['commands']
++    assert rebased.records == plan.records
++    assert State(rebased.bundle).entity(CHILD) == State(plan.bundle).entity(CHILD)
++    assert State(rebased.bundle).entity(target) == State(head).entity(target)
++    assert inverse(rebased.bundle, rebased.records).bundle == head
++    assert head == before
++    assert original == saved
++
++
++@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('timing,end', [
++    ({'at': 1, 'hold': 2}, 330),
++    ({'at_ms': 1000, 'hold': 2}, 330),
++    ({'at': 1, 'hold': 2, 'from': False, 'to': None}, 330),
++    ({'at': 1, 'hold': 2, 'from': 2, 'to': 6, 'speed': 2}, 300),
++    ({'at': 1, 'from': 2, 'to': 6, 'speed': 2}, 330),
++    ({'at': 1, 'hold': None, 'from': 2, 'to': 6, 'speed': 2}, 330),
++    ({'at': 1, 'hold': False, 'from': 2, 'to': 6, 'speed': 2}, 330),
++    ({'at': 1, 'to': 2, 'speed': None}, 330),
++    ({'at': 1, 'from': None, 'to': 2}, 330),
++    ({'at': 1}, 271),
++])
++def test_duration_precedence_and_start_fallback_are_recorded_as_literal_field_states(kind, timing, end):
++    bundle, pin, verified, req = basis(kind, 'anchor-home')
++    ref = OWNER + '/clip:clip-a'
++    row = State(bundle).entity(ref)
++    for field in ('at', 'at_ms', 'hold', 'from', 'to', 'speed'):
++        row.pop(field, None)
++    row.update(timing)
++    result = build(bundle, pin, verified, req)
++    assert result['capture']['start_frame'] == end
++    plan = execute(bundle, result['commands'], verified_media=verified)
++    reads = [read for read in plan.records[0]['reads'] if read['ref'] == ref]
++    fields = ('at', 'at_ms', 'track', 'hold', 'from', 'to', 'speed')
++    assert reads == [{'ref': ref, 'path': [field], 'state': State(bundle).get(ref, [field])}
++                     for field in fields]
++    assert replay(plan, bundle, verified_media=verified).records == plan.records
++    # Even an equivalent default or a previously absent branch input stays guarded.
++    for field in fields:
++        head = copy.deepcopy(bundle)
++        changed = State(head).entity(ref)
++        if field in changed:
++            del changed[field]
++        else:
++            changed[field] = None
++        with pytest.raises(CommandError) as error:
++            replay(plan, head, verified_media=verified)
++        assert error.value.kind == 'dependency_changed'
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-auto-narrow-reads /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-narrow-reads/pytest-conformance tests/editing_conformance/test_recipe_auto_placement_reads.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py' in /home/user/work/wt/agt-m2-auto-narrow-reads
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_media_commands.py tests/editing_conformance/test_recipe_auto_placement_reads.py && git diff --check' in /home/user/work/wt/agt-m2-auto-narrow-reads
+ succeeded in 182ms:
+All checks passed!
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import json, subprocess
+from pathlib import Path
+for name in ('recipe_m2_auto_placement', 'recipe_m2_shared_auto_placement'):
+    path = Path('tests/editing_conformance/fixtures') / (name + '.json')
+    old = json.loads(subprocess.check_output(['git', 'show', 'HEAD:' + str(path)]))
+    new = json.loads(path.read_text())
+    for case in old:
+        if old[case] == new[case]:
+            print(name, case, 'unchanged')
+            continue
+        before, after = old[case], new[case]
+        assert before['capture'] == after['capture'] and before['child'] == after['child']
+        for index, (prior, current) in enumerate(zip(before['commands'], after['commands'], strict=True)):
+            print(name, case, 'command', index, 'changed keys:', [key for key in prior if prior[key] "'!= current[key]])
+            for key in prior:
+                if prior[key] != current[key]:
+                    if isinstance(prior[key], dict):
+                        print('"' nested changes:', [part for part in prior[key] if prior[key][part] "'!= current[key][part]])
+                    elif isinstance(prior[key], list):
+                        print('"' lengths:', len(prior[key]), len(current[key]))
+PY" in /home/user/work/wt/agt-m2-auto-narrow-reads
+ succeeded in 193ms:
+recipe_m2_auto_placement image-absent command 0 changed keys: ['reads']
+ lengths: 29 41
+recipe_m2_auto_placement image-anchor command 0 changed keys: ['reads']
+ lengths: 28 34
+recipe_m2_auto_placement video-absent command 0 changed keys: ['reads']
+ lengths: 29 41
+recipe_m2_auto_placement video-anchor command 0 changed keys: ['reads']
+ lengths: 28 34
+recipe_m2_shared_auto_placement image-append command 0 changed keys: ['reads']
+ lengths: 30 48
+recipe_m2_shared_auto_placement image-shift command 0 changed keys: ['reads']
+ lengths: 30 48
+recipe_m2_shared_auto_placement video-append command 0 changed keys: ['reads']
+ lengths: 30 48
+recipe_m2_shared_auto_placement video-overlay-anchor command 0 changed keys: ['reads']
+ lengths: 30 48
+
+exec
+/bin/bash -lc "rg -n 'auto_place_completion|auto_place_shared' tests --glob '*.py' --files-with-matches && git diff --numstat" in /home/user/work/wt/agt-m2-auto-narrow-reads
+ succeeded in 90ms:
+tests/editing_conformance/test_recipe_m2_shot_pool.py
+tests/editing_conformance/test_recipe_m2_auto_placement.py
+tests/editing_conformance/test_recipe_m2_shared_auto_placement.py
+tests/editing_conformance/test_recipe_auto_placement_reads.py
+5	2	astrid/sdk/timeline/native_occurrence_media_commands.py
+366	96	tests/editing_conformance/fixtures/recipe_m2_auto_placement.json
+813	249	tests/editing_conformance/fixtures/recipe_m2_shared_auto_placement.json
+
+exec
+/bin/bash -lc "rg --files tests | rg '(test_.*duration|test_.*capture|test_.*auto|test_.*pool)'" in /home/user/work/wt/agt-m2-auto-narrow-reads
+ succeeded in 24ms:
+tests/packs/capture/test_capture_pack.py
+tests/packs/video_editing/test_pool_schema.py
+tests/packs/video_editing/test_pool_build.py
+tests/packs/rendering/test_remotion_capture_scene_props.py
+tests/packs/rendering/test_capture_scene_labels.py
+tests/packs/rendering/test_composed_frame_capture.py
+tests/packs/editorial/test_validate_clip_duration.py
+tests/editing_conformance/test_recipe_m2_shot_pool.py
+tests/editing_conformance/test_recipe_m2_shared_auto_placement.py
+tests/editing_conformance/test_recipe_auto_placement_reads.py
+tests/editing_conformance/test_recipe_m2_auto_placement.py
+tests/stage1/test_cold_launch_autobootstrap.py
+tests/core/experiments/test_capture.py
+tests/core/runtime/test_log_capture.py
+tests/sdk/test_timeline_capture_projection.py
+tests/sdk/test_capture_source_runtime.py
+tests/sdk/test_capture_closure_source.py
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import copy
+import json
+import subprocess
+from pathlib import Path
+fields = ('at', 'at_ms', 'track', 'hold', 'from', 'to', 'speed')
+for name in ('recipe_m2_auto_placement', 'recipe_m2_shared_auto_placement'):
+    path = Path('tests/editing_conformance/fixtures') / (name + '.json')
+    old = json.loads(subprocess.check_output(['git', 'show', 'HEAD:' + str(path)]))
+    new = json.loads(path.read_text())
+    expected = copy.deepcopy(old)
+    for case in expected.values():
+        for command in case['commands']:
+            expanded = []
+            for read in command['reads']:
+                if '/clip:' in read['ref'] and read['path'] == []:
+                    row = read['state']['value']
+                    expanded.extend({'ref': read['ref'], 'path': [field], 'state': (
+                        {'state': 'present', 'value': row[field]} if field in row else {'state': 'absent'})}
+                        for field in fields)
+                else:
+                    expanded.append(read)
+            command['reads'] = expanded
+    assert expected == new, name
+    print(name + ': only consumed whole-row reads replaced by seven literal field reads; all other content identical')
+PY" in /home/user/work/wt/agt-m2-auto-narrow-reads
+ exited 1 in 176ms:
+Traceback (most recent call last):
+  File "<stdin>", line 16, in <module>
+KeyError: 'value'
+
+ succeeded in 64122ms:
+........................................................................ [ 12%]
+........................................................................ [ 25%]
+........................................................................ [ 37%]
+........................................................................ [ 50%]
+........................................................................ [ 63%]
+........................................................................ [ 75%]
+........................................................................ [ 88%]
+...................................................................      [100%]
+571 passed in 62.76s (0:01:02)
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import copy
+import json
+import subprocess
+from pathlib import Path
+fields = ('at', 'at_ms', 'track', 'hold', 'from', 'to', 'speed')
+for name in ('recipe_m2_auto_placement', 'recipe_m2_shared_auto_placement'):
+    path = Path('tests/editing_conformance/fixtures') / (name + '.json')
+    old = json.loads(subprocess.check_output(['git', 'show', 'HEAD:' + str(path)]))
+    new = json.loads(path.read_text())
+    expected = copy.deepcopy(old)
+    for case in expected.values():
+        for command in case['commands']:
+            expanded = []
+            for read in command['reads']:
+                if '/clip:' in read['ref'] and read['path'] == [] and read['state']['state'] == 'present':
+                    row = read['state']['value']
+                    expanded.extend({'ref': read['ref'], 'path': [field], 'state': (
+                        {'state': 'present', 'value': row[field]} if field in row else {'state': 'absent'})}
+                        for field in fields)
+                else:
+                    expanded.append(read)
+            command['reads'] = expanded
+    assert expected == new, name
+    print(name + ': only consumed whole-row reads replaced by seven literal field reads; all other content identical')
+PY" in /home/user/work/wt/agt-m2-auto-narrow-reads
+ succeeded in 56ms:
+recipe_m2_auto_placement: only consumed whole-row reads replaced by seven literal field reads; all other content identical
+recipe_m2_shared_auto_placement: only consumed whole-row reads replaced by seven literal field reads; all other content identical
+
+exec
+/bin/bash -lc 'git status --short && git diff --check && wc -l tests/editing_conformance/test_recipe_auto_placement_reads.py' in /home/user/work/wt/agt-m2-auto-narrow-reads
+ succeeded in 198ms:
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M tests/editing_conformance/fixtures/recipe_m2_auto_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_shared_auto_placement.json
+?? tests/editing_conformance/test_recipe_auto_placement_reads.py
+226 tests/editing_conformance/test_recipe_auto_placement_reads.py
+
+codex
+All 571 requested source conformance tests pass, including pool/legacy guards and the new unrelated-edit cases. The golden comparison confirms that only consumed-clip `reads` changed; captures, authored children, selections, bindings, and other guards are identical. I’m writing the handoff report and commit message. No full suite or paired Runtime qualification was run.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-narrow-reads')
+worker.mkdir(parents=True, exist_ok=True)
+report = '''# Automatic placement: narrow consumed-clip reads
+
+Completed on the assigned worktree; source-only evidence. No blockers.
+
+## Change and decisions
+
+"'`native_occurrence_media_commands._consume` retains membership checking and `collection.clips` selection, replacing each consumed whole-row read with seven field reads: `at`, `at_ms`, `track`, `hold`, `from`, `to`, `speed`. Every read retains its literal tagged JSON state, including absence, null and false.
+
+The list comes from `native_auto_placement._end_frame` and `duration.py` (`clip_start_frame`, `clip_end_frame`, timing validation, source duration and playback speed). `at_ms` is the start fallback, `track` filters/inherits lanes, numeric `hold` wins over trim endpoints, and speed defaults only on null/absence. Both trim endpoints stay conservatively guarded even under numeric hold. Neither this helper path nor its duration functions consume clipType, time_map/timeMap, duration/duration_ms, asset selectors, params, volume or opaque fields. `capture._duration` has additional codec checks but is not called for automatic placement resolution. No public args, schema, recorder, birth handlers or arithmetic changed. Target-track whole-row guards remain conservative, as allowed by the brief.
+
+Added 282 direct cases: the review'"'s eight-mode image/video matrix, native intervening moves, retarget and original-claim tampering, positive native clip.set-params and explicit changed-head volume/opaque fixtures, plus at_ms fallback, explicit source windows, hold/trim/speed precedence, minimum frame duration and absent/null/false guard states. Positive cases compare the complete fresh capture, replay the original request with the intervening records, preserve the changed consumed row, and undo exactly to the changed head. Volume/opaque top-level changes use fixtures because the native scalar schemas do not expose writers for those fields. Saved-policy and fixed-retry expectations remain in the existing suites. Pool and legacy guards from 80f51496 are unchanged and pass.
+
+## Exact tests and checks
+
+Working directory: "'`/home/user/work/wt/agt-m2-auto-narrow-reads`.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-auto-narrow-reads /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-narrow-reads/pytest-reads tests/editing_conformance/test_recipe_auto_placement_reads.py
+```
+
+282 passed in 37.01s; exit 0. Final combined run after the import-format correction and golden regeneration:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-auto-narrow-reads /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-narrow-reads/pytest-conformance tests/editing_conformance/test_recipe_auto_placement_reads.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
+```
+
+571 passed in 62.76s; exit 0.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_media_commands.py tests/editing_conformance/test_recipe_auto_placement_reads.py
+git diff --check
+```
+
+Both exit 0. Initial Ruff run found an import-spacing issue in the new test file; corrected before the final combined run.
+
+No full suite, make check, live Runtime/browser/socket tests or paired qualification requested or run. Detached provider coverage in existing conformance tests is source evidence only. Shared dependencies stayed read-only.
+
+## Exact golden changes
+
+Regenerated full semantic fixtures through their existing `case()` builders and `execute()`, preserving normal sorted/indented JSON. Compared parsed HEAD fixtures against the new fixtures after expanding only each present consumed clip whole-row read into the seven tagged field reads; exact equality passed. No private encoding changes.
+
+Only `commands[0].reads` changed in these records:
+
+| Fixture | Case | Old/new read count | Consumed clips |
+| --- | --- | --- | --- |
+| recipe_m2_auto_placement.json | image-absent | 29 / 41 | clip-a, clip-b |
+| recipe_m2_auto_placement.json | image-anchor | 28 / 34 | clip-a |
+| recipe_m2_auto_placement.json | video-absent | 29 / 41 | clip-a, clip-b |
+| recipe_m2_auto_placement.json | video-anchor | 28 / 34 | clip-a |
+| recipe_m2_shared_auto_placement.json | image-append | 30 / 48 | clip-a, clip-b, clip-c |
+| recipe_m2_shared_auto_placement.json | image-shift | 30 / 48 | clip-a, clip-b, clip-c |
+| recipe_m2_shared_auto_placement.json | video-append | 30 / 48 | clip-a, clip-b, clip-c |
+| recipe_m2_shared_auto_placement.json | video-overlay-anchor | 30 / 48 | clip-a, clip-b, clip-c |
+
+All captures, children, selections, bindings, other command fields and existing non-consumed reads are identical. Other goldens are untouched.
+
+## Handoff
+
+Ready for the manager to compose the fixture encoding worker'"'s private encoding changes with these semantic golden changes, then port the worktree delta. No integration, parent-birth, producer, element, commit-path or ledger edits; no git mutations/push. No decision escalation. Test temp output was cleaned from this worker's directory; no build output left in the worktree.
+'''
+(worker / 'report.md').write_text(report)
+(worker / 'commit-msg').write_text('''fix(timeline): narrow automatic placement clip reads
+
+Guard only consumed timing and lane fields while retaining literal JSON states,
+collection selections, exclusive ownership, pool and legacy eligibility guards.
+
+Cover unrelated-field rebases and the stale-placement review matrix, and
+regenerate full semantic automatic-placement goldens.
+''')
+for name in ('pytest-reads', 'pytest-conformance'):
+    path = worker / name
+    if path.exists():
+        shutil.rmtree(path)
+(worker / 'DONE').touch()
+PY
+
+git diff --check && git status --short" in /home/user/work/wt/agt-m2-auto-narrow-reads
+ succeeded in 127ms:
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M tests/editing_conformance/fixtures/recipe_m2_auto_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_shared_auto_placement.json
+?? tests/editing_conformance/test_recipe_auto_placement_reads.py
+
+codex
+Implemented `_consume` field reads while preserving membership, stale-placement, pool, and legacy guards.
+
+- Targeted conformance: **571 passed**.
+- Ruff and `git diff --check`: passed.
+- Goldens changed only in consumed-clip reads.
+- No blockers; no full suite or paired qualification run.
+
+[Report with exact commands and changed records](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-narrow-reads/report.md). Commit message and `DONE` written. Ready for manager review and fixture-encoding composition.
+tokens used
+95,753
+Implemented `_consume` field reads while preserving membership, stale-placement, pool, and legacy guards.
+
+- Targeted conformance: **571 passed**.
+- Ruff and `git diff --check`: passed.
+- Goldens changed only in consumed-clip reads.
+- No blockers; no full suite or paired qualification run.
+
+[Report with exact commands and changed records](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-narrow-reads/report.md). Commit message and `DONE` written. Ready for manager review and fixture-encoding composition.

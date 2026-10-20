@@ -1,0 +1,400 @@
+410:            raise CommandError('introduced media has surviving dependents', kind='surviving_dependents')
+419:              for historical in source_bundles] + [source]
+463:        pin = call.get('args', {}).get('schema_source')
+515:            selected = row.get('elementRef') or row.get('element_ref')
+522:                if 'schema_source' not in command['args']:
+523:                    raise CommandError('selected project pack requires exact schema_source',
+525:        if command['op'] in ('clip.set-params', 'clip.set-element', 'clip.set') and 'schema_source' in command['args']:
+527:            selected = (command['args']['elementRef'] if command['op'] == 'clip.set-element'
+528:                        else (command['args']['values'].get('elementRef')
+530:                              else row.get('elementRef') or row.get('element_ref')))
+532:                required.append((command['args']['schema_source'], selected))
+540:                    pin = record['command']['args'].get('schema_source')
+544:                                and read['path'] in (['elementRef'], ['element_ref'])}
+545:                    selected = identity.get('elementRef') or identity.get('element_ref')
+844:                         "authoring_preview retained closure is unavailable")
+970:                def load_boundary(entry):
+982:                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+984:                    accepted, CommitRejected, base, current), load_boundary)
+1062:                document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..20d1906870378ab4af4a8a9a853139ae99525e7d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md
+@@ -0,0 +1,64 @@
++# Transition successor review
++
++Verdict: **ACK for the bounded Agent review**. No Agent-side defect was found in successor `eb115db81ac2c24b182fe6873fbd883da851571e`. Cross-repo Runtime/App2 agreement and generation remain a separate **HOLD/pending gate**; this review does not claim those integrations.
++
++## Source/schema identity
++
++- Source: `eb115db81ac2c24b182fe6873fbd883da851571e`
++- Source tree: `10ea4f3adb085adf7589239f852248cc9811eeb4`
++- Schema: `astrid/core/timeline/schema/edit-command.schema.json`
++- Schema SHA-256: `a70f0e8898c6acccb34062e73733c93dd4e7bc22c34ef012431e1791907e1f4a`
++- Worktree is clean after review; no product files were changed.
++
++## Findings
++
++- The wire contract is explicit: `clear=["transition","elementRef"]` is required for the paired destructive removal. Legacy `clear=["transition"]` leaves `elementRef`, `element_ref`, and opaque identity fields byte-for-byte intact.
++- SET/update and explicit remove are atomic and enforce transition kind, id/type, and revision matching. The element reference is checked in both spellings where applicable.
++- First-selected DocumentPin inverse cleanup is exact and bounded to pins proven introduced by the inverse target. Later dependent selected pins preserve the document pin; unproven retained historical custody is not dropped.
++- Existing AcceptedRecords boundary/replay and retention seams are reused. No duplicate history framework was added, and cleanup is not a broad manifest sweep.
++- The original-P1/P2 probe passed: after P2 constraint widening, removal/restart, and current live-source change, updating the same selected transition used the recorded original P1. Resubmitting identical nested `values.elementRef` with P2 authority was rejected atomically; a fresh explicit P2 selection was accepted.
++- Same-batch staged inverse guards are present through `staged_records=records`; targeted scalar inverse tests passed. No new skip/xfail markers were introduced in the successor diff.
++
++## Evidence
++
++```
++PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_clip_scalar_fields.py \
++  tests/sdk/test_timeline_commit_provider.py \
++  tests/sdk/test_timeline_current_union_schema.py \
++  tests/sdk/test_timeline_transition_schema.py \
++  tests/sdk/test_timeline_clip_scalar_provider.py
++```
++
++Result: **263 passed**.
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_scalar_commands.py \
++  -k 'inverse_refuses_same_batch or inverse_allows_later_explicit_write or inverse_allows_later'
++```
++
++Result: **5 passed, 127 deselected**.
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/sdk/test_timeline_selected_schema.py \
++  tests/sdk/test_timeline_selected_param_authority.py
++```
++
++Result: **59 passed**.
++
++Private direct P1/P2 plus later-dependent-pin probe:
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider review_transition_probe.py
++```
++
++Result before cleanup: **1 passed**. The diagnostic file was removed afterward.
++
++The selected-schema Runtime integration-marked cases were invoked locally and reported **5 skipped, 27 deselected** because no Runtime integration environment is available in this worker. No full suite or whole-root pytest was run.
++
++## Recommended next step
++
++Use the central bounded integration service for the Runtime/App2 agreement/generation checks, then proceed only if those cross-repo gates independently ACK this exact schema/tree.
++
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..089311911ba78f88ebd4887ec89cdac4e52b3984
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg
+@@ -0,0 +1,5 @@
++docs(review): qualify transition successor
++
++Record bounded Agent review of explicit transition removal and document-pin inverse cleanup.
++No product changes; Runtime/App2 agreement remains a separate gate.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..20d1906870378ab4af4a8a9a853139ae99525e7d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md
+@@ -0,0 +1,64 @@
++# Transition successor review
++
++Verdict: **ACK for the bounded Agent review**. No Agent-side defect was found in successor `eb115db81ac2c24b182fe6873fbd883da851571e`. Cross-repo Runtime/App2 agreement and generation remain a separate **HOLD/pending gate**; this review does not claim those integrations.
++
++## Source/schema identity
++
++- Source: `eb115db81ac2c24b182fe6873fbd883da851571e`
++- Source tree: `10ea4f3adb085adf7589239f852248cc9811eeb4`
++- Schema: `astrid/core/timeline/schema/edit-command.schema.json`
++- Schema SHA-256: `a70f0e8898c6acccb34062e73733c93dd4e7bc22c34ef012431e1791907e1f4a`
++- Worktree is clean after review; no product files were changed.
++
++## Findings
++
++- The wire contract is explicit: `clear=["transition","elementRef"]` is required for the paired destructive removal. Legacy `clear=["transition"]` leaves `elementRef`, `element_ref`, and opaque identity fields byte-for-byte intact.
++- SET/update and explicit remove are atomic and enforce transition kind, id/type, and revision matching. The element reference is checked in both spellings where applicable.
++- First-selected DocumentPin inverse cleanup is exact and bounded to pins proven introduced by the inverse target. Later dependent selected pins preserve the document pin; unproven retained historical custody is not dropped.
++- Existing AcceptedRecords boundary/replay and retention seams are reused. No duplicate history framework was added, and cleanup is not a broad manifest sweep.
++- The original-P1/P2 probe passed: after P2 constraint widening, removal/restart, and current live-source change, updating the same selected transition used the recorded original P1. Resubmitting identical nested `values.elementRef` with P2 authority was rejected atomically; a fresh explicit P2 selection was accepted.
++- Same-batch staged inverse guards are present through `staged_records=records`; targeted scalar inverse tests passed. No new skip/xfail markers were introduced in the successor diff.
++
++## Evidence
++
++```
++PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_clip_scalar_fields.py \
++  tests/sdk/test_timeline_commit_provider.py \
++  tests/sdk/test_timeline_current_union_schema.py \
++  tests/sdk/test_timeline_transition_schema.py \
++  tests/sdk/test_timeline_clip_scalar_provider.py
++```
++
++Result: **263 passed**.
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_scalar_commands.py \
++  -k 'inverse_refuses_same_batch or inverse_allows_later_explicit_write or inverse_allows_later'
++```
++
++Result: **5 passed, 127 deselected**.
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/sdk/test_timeline_selected_schema.py \
++  tests/sdk/test_timeline_selected_param_authority.py
++```
++
++Result: **59 passed**.
++
++Private direct P1/P2 plus later-dependent-pin probe:
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider review_transition_probe.py
++```
++
++Result before cleanup: **1 passed**. The diagnostic file was removed afterward.
++
++The selected-schema Runtime integration-marked cases were invoked locally and reported **5 skipped, 27 deselected** because no Runtime integration environment is available in this worker. No full suite or whole-root pytest was run.
++
++## Recommended next step
++
++Use the central bounded integration service for the Runtime/App2 agreement/generation checks, then proceed only if those cross-repo gates independently ACK this exact schema/tree.
++
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..089311911ba78f88ebd4887ec89cdac4e52b3984
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg
+@@ -0,0 +1,5 @@
++docs(review): qualify transition successor
++
++Record bounded Agent review of explicit transition removal and document-pin inverse cleanup.
++No product changes; Runtime/App2 agreement remains a separate gate.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..089311911ba78f88ebd4887ec89cdac4e52b3984
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg.txt
+@@ -0,0 +1,5 @@
++docs(review): qualify transition successor
++
++Record bounded Agent review of explicit transition removal and document-pin inverse cleanup.
++No product changes; Runtime/App2 agreement remains a separate gate.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..20d1906870378ab4af4a8a9a853139ae99525e7d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md
+@@ -0,0 +1,64 @@
++# Transition successor review
++
++Verdict: **ACK for the bounded Agent review**. No Agent-side defect was found in successor `eb115db81ac2c24b182fe6873fbd883da851571e`. Cross-repo Runtime/App2 agreement and generation remain a separate **HOLD/pending gate**; this review does not claim those integrations.
++
++## Source/schema identity
++
++- Source: `eb115db81ac2c24b182fe6873fbd883da851571e`
++- Source tree: `10ea4f3adb085adf7589239f852248cc9811eeb4`
++- Schema: `astrid/core/timeline/schema/edit-command.schema.json`
++- Schema SHA-256: `a70f0e8898c6acccb34062e73733c93dd4e7bc22c34ef012431e1791907e1f4a`
++- Worktree is clean after review; no product files were changed.
++
++## Findings
++
++- The wire contract is explicit: `clear=["transition","elementRef"]` is required for the paired destructive removal. Legacy `clear=["transition"]` leaves `elementRef`, `element_ref`, and opaque identity fields byte-for-byte intact.
++- SET/update and explicit remove are atomic and enforce transition kind, id/type, and revision matching. The element reference is checked in both spellings where applicable.
++- First-selected DocumentPin inverse cleanup is exact and bounded to pins proven introduced by the inverse target. Later dependent selected pins preserve the document pin; unproven retained historical custody is not dropped.
++- Existing AcceptedRecords boundary/replay and retention seams are reused. No duplicate history framework was added, and cleanup is not a broad manifest sweep.
++- The original-P1/P2 probe passed: after P2 constraint widening, removal/restart, and current live-source change, updating the same selected transition used the recorded original P1. Resubmitting identical nested `values.elementRef` with P2 authority was rejected atomically; a fresh explicit P2 selection was accepted.
++- Same-batch staged inverse guards are present through `staged_records=records`; targeted scalar inverse tests passed. No new skip/xfail markers were introduced in the successor diff.
++
++## Evidence
++
++```
++PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_clip_scalar_fields.py \
++  tests/sdk/test_timeline_commit_provider.py \
++  tests/sdk/test_timeline_current_union_schema.py \
++  tests/sdk/test_timeline_transition_schema.py \
++  tests/sdk/test_timeline_clip_scalar_provider.py
++```
++
++Result: **263 passed**.
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_scalar_commands.py \
++  -k 'inverse_refuses_same_batch or inverse_allows_later_explicit_write or inverse_allows_later'
++```
++
++Result: **5 passed, 127 deselected**.
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/sdk/test_timeline_selected_schema.py \
++  tests/sdk/test_timeline_selected_param_authority.py
++```
++
++Result: **59 passed**.
++
++Private direct P1/P2 plus later-dependent-pin probe:
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider review_transition_probe.py
++```
++
++Result before cleanup: **1 passed**. The diagnostic file was removed afterward.
++
++The selected-schema Runtime integration-marked cases were invoked locally and reported **5 skipped, 27 deselected** because no Runtime integration environment is available in this worker. No full suite or whole-root pytest was run.
++
++## Recommended next step
++
++Use the central bounded integration service for the Runtime/App2 agreement/generation checks, then proceed only if those cross-repo gates independently ACK this exact schema/tree.
++
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..089311911ba78f88ebd4887ec89cdac4e52b3984
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg
+@@ -0,0 +1,5 @@
++docs(review): qualify transition successor
++
++Record bounded Agent review of explicit transition removal and document-pin inverse cleanup.
++No product changes; Runtime/App2 agreement remains a separate gate.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..089311911ba78f88ebd4887ec89cdac4e52b3984
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg.txt
+@@ -0,0 +1,5 @@
++docs(review): qualify transition successor
++
++Record bounded Agent review of explicit transition removal and document-pin inverse cleanup.
++No product changes; Runtime/App2 agreement remains a separate gate.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..20d1906870378ab4af4a8a9a853139ae99525e7d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md
+@@ -0,0 +1,64 @@
++# Transition successor review
++
++Verdict: **ACK for the bounded Agent review**. No Agent-side defect was found in successor `eb115db81ac2c24b182fe6873fbd883da851571e`. Cross-repo Runtime/App2 agreement and generation remain a separate **HOLD/pending gate**; this review does not claim those integrations.
++
++## Source/schema identity
++
++- Source: `eb115db81ac2c24b182fe6873fbd883da851571e`
++- Source tree: `10ea4f3adb085adf7589239f852248cc9811eeb4`
++- Schema: `astrid/core/timeline/schema/edit-command.schema.json`
++- Schema SHA-256: `a70f0e8898c6acccb34062e73733c93dd4e7bc22c34ef012431e1791907e1f4a`
++- Worktree is clean after review; no product files were changed.
++
++## Findings
++
++- The wire contract is explicit: `clear=["transition","elementRef"]` is required for the paired destructive removal. Legacy `clear=["transition"]` leaves `elementRef`, `element_ref`, and opaque identity fields byte-for-byte intact.
++- SET/update and explicit remove are atomic and enforce transition kind, id/type, and revision matching. The element reference is checked in both spellings where applicable.
++- First-selected DocumentPin inverse cleanup is exact and bounded to pins proven introduced by the inverse target. Later dependent selected pins preserve the document pin; unproven retained historical custody is not dropped.
++- Existing AcceptedRecords boundary/replay and retention seams are reused. No duplicate history framework was added, and cleanup is not a broad manifest sweep.
++- The original-P1/P2 probe passed: after P2 constraint widening, removal/restart, and current live-source change, updating the same selected transition used the recorded original P1. Resubmitting identical nested `values.elementRef` with P2 authority was rejected atomically; a fresh explicit P2 selection was accepted.
++- Same-batch staged inverse guards are present through `staged_records=records`; targeted scalar inverse tests passed. No new skip/xfail markers were introduced in the successor diff.
++
++## Evidence
++
++```
++PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_clip_scalar_fields.py \
++  tests/sdk/test_timeline_commit_provider.py \
++  tests/sdk/test_timeline_current_union_schema.py \
++  tests/sdk/test_timeline_transition_schema.py \
++  tests/sdk/test_timeline_clip_scalar_provider.py
++```
++
++Result: **263 passed**.
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_scalar_commands.py \
++  -k 'inverse_refuses_same_batch or inverse_allows_later_explicit_write or inverse_allows_later'
++```
++
++Result: **5 passed, 127 deselected**.
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/sdk/test_timeline_selected_schema.py \
++  tests/sdk/test_timeline_selected_param_authority.py
++```
++
++Result: **59 passed**.
++
++Private direct P1/P2 plus later-dependent-pin probe:
++
++```
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider review_transition_probe.py
++```
++
++Result before cleanup: **1 passed**. The diagnostic file was removed afterward.
++
++The selected-schema Runtime integration-marked cases were invoked locally and reported **5 skipped, 27 deselected** because no Runtime integration environment is available in this worker. No full suite or whole-root pytest was run.
++
++## Recommended next step
++
++Use the central bounded integration service for the Runtime/App2 agreement/generation checks, then proceed only if those cross-repo gates independently ACK this exact schema/tree.
++
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/DONE && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/commit-msg && git status --short --untracked-files=all && git diff --check' in /home/user/work/wt/agt-review-transition-explicit-remove-pin
+ succeeded in 453ms:
+codex
+Review complete.
+
+- **ACK:** Agent successor `eb115db81ac2c24b182fe6873fbd883da851571e`.
+- **HOLD/pending:** Runtime/App2 cross-repo agreement and generation were not run here.
+- Verified explicit transition+elementRef removal, legacy clear preservation, strict guards, inverse cleanup/retention, ABA/same-batch handling, and original-P1 authority after P2.
+- Tests: 263 passed; 5 passed; 59 passed; direct P1/P2 probe 1 passed.
+- Runtime integration-marked tests: 5 skipped locally due unavailable integration environment.
+- Worktree clean; no product changes.
+- Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md)
+- Commit message and `DONE` marker written.
+tokens used
+283,071
+Review complete.
+
+- **ACK:** Agent successor `eb115db81ac2c24b182fe6873fbd883da851571e`.
+- **HOLD/pending:** Runtime/App2 cross-repo agreement and generation were not run here.
+- Verified explicit transition+elementRef removal, legacy clear preservation, strict guards, inverse cleanup/retention, ABA/same-batch handling, and original-P1 authority after P2.
+- Tests: 263 passed; 5 passed; 59 passed; direct P1/P2 probe 1 passed.
+- Runtime integration-marked tests: 5 skipped locally due unavailable integration environment.
+- Worktree clean; no product changes.
+- Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-transition-explicit-remove-pin/report.md)
+- Commit message and `DONE` marker written.

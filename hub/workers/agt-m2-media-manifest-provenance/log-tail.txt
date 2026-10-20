@@ -1,0 +1,400 @@
+tests/editing_conformance/fixtures/recipe_m1_move.json
+tests/editing_conformance/fixtures/recipe_m1_occurrence.json
+tests/editing_conformance/fixtures/recipe_m1_shared.json
+tests/editing_conformance/fixtures/recipe_m2_clip_add.json
+tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json
+tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json
+tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json
+tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json
+tests/editing_conformance/fixtures/recipe_m2_scalar_track.json
+tests/editing_conformance/runner.py
+tests/editing_conformance/staging_recipes.py
+tests/editing_conformance/test_commit_runtime_first_clip.py
+tests/editing_conformance/test_commit_runtime_m1.py
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+tests/editing_conformance/test_commit_runtime_scalar.py
+tests/editing_conformance/test_conformance.py
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+tests/editing_conformance/test_platform_safety_net.py
+tests/editing_conformance/test_recipe_m1_commands.py
+tests/editing_conformance/test_recipe_m2_clip_add.py
+tests/editing_conformance/test_recipe_scalar_commands.py
+tests/editing_conformance/test_recorded_graph_roots.py
+tests/editing_conformance/test_runner_selftest.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py')
+s=p.read_text().replace(\"        redone = submit(body([inverse(undone)]), 'redo')\", \"        assert service.get_project_media_selection(project, {key: new[key] for key in (\\n            'asset', 'generation_id', 'variant_id')}, authorize=authorize) == new\\n        redone = submit(body([inverse(undone)]), 'redo')\")
+s=s.replace(\"        assert service.get_project_media_selection(project, new, authorize=authorize) == new\\n\", '')
+p.write_text(s)
+p=Path('tests/editing_conformance/test_occurrence_media_manifest_inverse.py')
+s=p.read_text()+'''
+
+
+def test_parent_media_introduction_uses_same_framework(popup_edit):
+    document, _, _ = popup_edit
+    realm = DetachedRealm(document)
+    introduced = properties(realm, ('parent', ['registry', 'assets', 'new'],
+                                    {'media_id': NEW, 'type': 'image', 'opaque': [None, False]}),
+                            ('parent/clip:clip-a', ['asset'], 'new'))
+    undo = realm.call([inverse_call([introduced['receipt']['receipt_id']])])
+    assert undo['data']['canonical_document'] == document
+    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])])
+    assert redo['data']['canonical_document'] == introduced['data']['canonical_document']
+'''
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_runtime.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py' in /home/user/work/wt/agt-m2-media-manifest-provenance
+ succeeded in 18571ms:
+....                                                                     [100%]
+4 passed in 2.43s
+........................................................................ [ 23%]
+........................................................................ [ 47%]
+........................................................................ [ 71%]
+........................................................................ [ 95%]
+...............                                                          [100%]
+303 passed in 13.59s
+
+exec
+/bin/bash -lc 'git diff -- astrid/sdk/timeline/inverse.py && git diff --check && /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py' in /home/user/work/wt/agt-m2-media-manifest-provenance
+ succeeded in 196ms:
+diff --git a/astrid/sdk/timeline/inverse.py b/astrid/sdk/timeline/inverse.py
+index fdcfe374..1c1d2941 100644
+--- a/astrid/sdk/timeline/inverse.py
++++ b/astrid/sdk/timeline/inverse.py
+@@ -265,7 +265,7 @@ def apply_inverse(ctx, records, intervening_records):
+             ctx.select(selected['key'], selected['owner'], selected['members'])
+     for write in reversed(changes):
+         ctx.read(write['ref'], write['path'])
+-        if not write['path'] and write['after'] == ABSENT:
++        if not write['path'] and write['after'] == ABSENT and write['before'] != ABSENT:
+             root = root_identity(write['ref'])
+             if root is not None:
+                 ctx.create_entity(write['ref'], kind=root[0],
+All checks passed!
+
+codex
+Final targeted checks pass: 303 unit/provider tests and 4 real Runtime integration tests. Grouped undo testing also exposed a one-line inverse bug: a coalesced absent→absent child write tried to recreate a missing value. That now remains a recorded no-op. I’m writing the handoff and reports; the implementation is frozen for review.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+contract = '''# M2 popup native contract — shared provenance fixed; popup publication pending
+
+Worker: "'`agt-m2-media-manifest-provenance`. Base:
+`c3da1535053b34bf63fcc4d6a06b3563087b38f4` (`tl/agt-m2-popup-media`).
+Implementation is frozen at this handoff; the harness supplies its commit.
+All M2 integration remains held until the orchestrator records PLAN M1 exit.
+
+The shared media-manifest inverse blocker is resolved. Both original strict
+xfails now pass with their exact-document expectations, including original
+parent revision identity. No production occurrence media opcode, capture,
+parameter schema, App args or recorder golden is published by this change.
+
+## Exact framework seam
+
+The existing import gains one optional, provider-only Python argument:
+
+```python
+from astrid.sdk.timeline.commit import document_from_bundle
+
+canonical_document = document_from_bundle(
+    plan.bundle,
+    source_bundles=inverse_sources,
+    inverse_records=inverse_records,
+)
+```
+
+`RuntimeCommitService.commit` already supplies this argument. `inverse_records`
+is the existing internal
+`astrid.sdk.timeline._collections.AcceptedRecords` loaded from accepted history,
+with `entries` and `load_boundary(entry) -> (before_bundle, after_bundle)`.
+The loader checks publication ancestry, the previous publication/revision pair,
+and exact project/timeline closure scope through the existing port. Native
+handlers and clients do not construct this object, pass a manifest override,
+or serialize any new recorder field. Detached lists cannot authorize pin removal.
+Historical `source_bundles` alone continue to preserve all current source pins.
+The new `_inverse_media_removals` helper is private.
+
+The shared converter derives each accepted edge'"'s added media pins from its
+before/after manifests. It verifies exact immutable images, then reproduces the
+accepted output payload/shot/internal closure from recorded authored and derived
+writes. Every introduced pin must appear in those authored writes. Changed
+unrecorded document scope or unexplained pin changes refuse with
+"'`history_unavailable`; malformed closures refuse with `invalid_document`.
+It processes targeted publication deltas in reverse order, including inverse
+edges, rather than pruning all unused media or restoring a whole manifest.
+Whole-closure restore continues through its existing exact-source mechanism.
+
+Only proven introduced pins are eligible for removal. Original retained pins
+and newer disjoint media stay. If a resulting payload or retained, verified
+source document still references an eligible pin, undo refuses with
+`surviving_dependents`. Missing retained document captures refuse with
+`history_unavailable`. The normal authored-write/read/selection and intervening
+publication checks still guard undo and redo, including same-value ABA writes.
+Compilation and historical image comparison still determine exact revision
+reuse; there is no parent snapshot replacement.
+
+Grouped create+undo also exposed an existing inverse installation bug:
+coalescing can yield an absent-to-absent child write. Such a write now remains a
+recorded assignment, rather than attempting to recreate `before['"'value']"'`.
+Its value and history guards remain in place.
+
+## Recipe for the next popup worker
+
+Continue using deterministic normal recorder primitives: read the exact owner,
+source, old binding and selected child/membership; record creation of the missing
+registry key (or require an identical existing binding); create the reserved
+child for ADD or write the existing child'"'s asset for SWAP. Preserve opaque and
+null data and raw child-relative timing. Registry creation and its consumer
+belong to the same command batch. Let the shared provider/compiler perform the
+manifest and inverse work; there is no command-local cleanup hook.
+
+Use ABI 1 "'`selected_media(MediaSelection) -> VerifiedMedia`, with the exact
+`(asset, generation_id, variant_id, object_id, catalog_digest)` selection and
+recorded dependencies, for production media admission. The held existing-slot
+parent swap implementation/proof remains bounded to its prior scope:
+`9ebd87afca97382e51c060fa2ca018c43f09f8bd`, 24 previously reported real tests.
+This worker read that implementation and reused its real managed-output fixture
+pattern; it did not port or rerun the 24-test parent suite.
+
+The next worker must publish actual native occurrence capture exports,
+operation names/versions, parameter schemas, App args and authoritative recorder
+goldens before App consumes them. Those names and artifacts remain unavailable
+here. Display `${occurrenceId}:${clipId}` is not the raw child ID; retain the
+explicit occurrence owner and unprojected timing. Existing refusal scope still
+applies: parent/display selectors, missing immutable closure/owner pins,
+ambiguous membership, registry collisions, mismatched media tuples, implicit
+shared edits, unsupported timing/source maps and out-of-occurrence intervals.
+Clear/shared editing, placement, relational `timeline_frame`/`metadata.end_frame`
+and standalone registry upserts remain outside this slice.
+
+## Executable evidence and qualification limits
+
+Source worktree:
+`/home/user/work/wt/agt-m2-media-manifest-provenance`.
+
+* `tests/editing_conformance/test_occurrence_media_manifest_inverse.py`: both
+  former strict xfails pass; exact reload/undo/redo/undo, original unselected
+  source pins, later disjoint media/references, surviving dependents, retained
+  document captures, ABA guards, corrupt boundaries and grouped inverse deltas.
+  Parent media introduction also uses the same framework successfully.
+* `tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py`:
+  real managed image outputs via the Runtime generation settlement fixtures,
+  authenticated public selection read, public `RuntimeService.commit_timeline`,
+  real port validation/acceptance, preview, reload, restart, exact retries of
+  introduction and undo, changed-payload retry refusal, exact redo, immutable
+  historical receipt/dependency/manifest retention, and integrity verification.
+
+The real test uses a test-only deterministic recipe plus a provider subclass
+that performs the declared `selected_media` ABI read and delegates all semantics
+to the unchanged shared provider. It never replaces a prepared candidate or
+accepted history. This proves existing Runtime acceptance permits a result media
+manifest smaller than its captured input media closure while keeping historical
+inputs. It does not qualify production popup admission or its captures.
+
+The real legacy seed publisher only accepts numeric fps in its visual seam, so
+that fixture uses 24 fps and scalar source offsets/speed. Rational 30000/1001 fps,
+source preservation, occurrence isolation and opaque fields remain covered by
+the detached regression. No production Runtime change was made.
+
+Final commands from the source worktree:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py
+# 303 passed in 13.59s
+
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_runtime.py
+# 4 passed in 2.43s
+```
+
+Ruff over all four changed Python files and `git diff --check` passed. Runtime
+source was `9f9b25c000485e919f30f1411831fe2d5a3c1316`.
+No full suite, browser/socket suite, installation, integration merge or push ran.
+Normal packaged artifact refresh and production-provider qualification remain
+release gates. Resume the bounded popup worker only on the orchestrator'"'s
+approved base; keep all M2 integration held pending PLAN M1.
+'''
+(root / 'design/m2-popup-native-contract.md').write_text(contract)
+worker = root / 'workers/agt-m2-media-manifest-provenance'
+(worker / 'notes').mkdir(exist_ok=True)
+report = '''# Shared media-manifest inverse provenance
+
+Implemented and frozen for harness commit on
+"'`tl/agt-m2-media-manifest-provenance`, base
+`c3da1535053b34bf63fcc4d6a06b3563087b38f4`.
+No production popup operations were implemented. All M2 integration remains held
+pending the orchestrator'"'s PLAN M1 record.
+
+## Change
+
+"'`astrid/sdk/timeline/commit.py` now accepts existing provider-authenticated
+`AcceptedRecords` at compilation. It derives introduced media pins from exact
+accepted before/after boundaries, verifies recorded writes reproduce the
+accepted immutable payload/images, and reverses only those pin deltas.
+Historical source images alone still cannot remove a pin. Original retained
+unselected media and newer disjoint media/references survive. Result payload or
+retained verified document references to a candidate pin cause atomic refusal;
+missing captures, unexplained media/document scope, and corrupt boundaries fail
+closed. No authored/recorder/DTO/ABI/schema/endpoint field was added, and no
+manifest/parent snapshot override or global prune was introduced.
+
+The provider passes its existing `inverse_records` context into
+`document_from_bundle(..., inverse_records=inverse_records)`. No native command
+needs special media cleanup. Accepted records, source closures and Runtime input
+captures stay intact.
+
+`inverse.py` has a one-line correction required by the grouped create+undo proof:
+an absent-to-absent coalesced child write is recorded as an assignment instead
+of attempting to recreate a nonexistent before-value. Its guards are retained.
+
+Both original strict xfails were removed while preserving exact document and
+revision equality. Added tests cover exact undo/redo/undo, original pins, later
+references, disjoint additions, source document dependencies, guarded ABA redo,
+corrupt boundary/record scope, atomic provider refusal, grouped deltas, and
+parent use of the same framework.
+
+## Final verification
+
+Working directory for every command:
+`/home/user/work/wt/agt-m2-media-manifest-provenance`.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py
+```
+
+**303 passed in 13.59s**, exit 0; no xfails in this selection.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+**4 passed in 2.43s**, exit 0. Runtime source:
+`9f9b25c000485e919f30f1411831fe2d5a3c1316`.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+git diff --check
+```
+
+Both passed, exit 0. Only targeted, socket-free suites ran directly. No full
+suite, install, merge, commit, checkout, rebase or push ran.
+
+During development, new tests exposed the absent-to-absent grouped inverse bug
+above. Early runs also caught invalid test seeding (unregistered placeholder
+text binding, rational fps unsupported by legacy visual seed publisher), an
+incorrect disjoint-test expectation that retained the changed shot link, and
+use of the five-field selection where the public selector read requires its
+three-field selector. Fixtures/expectations were corrected to public contracts;
+all final commands are green. No prior passing behavior test was weakened.
+
+## Real Runtime evidence and limits
+
+The new real proof reuses the managed-output fixture pattern from held parent
+swap commit `9ebd87afca97382e51c060fa2ca018c43f09f8bd` through Runtime'"'s existing
+"'`test_generation_publish_v1_settlement` helpers. Realm/media/shot/text/history
+are created through service APIs; no SQL or fabricated accepted history is used.
+Authentication, immutable selection reads, real port validation/acceptance,
+preview, exact baseline restoration, restart-safe receipt retry, changed-payload
+retry refusal, redo and integrity checks all run against public RuntimeService.
+The accepted input target closure contains the introduced media, while undo'"'s
+result manifest omits it. The original receipt, dependency records, revision
+manifest and managed selection remain readable afterward.
+
+The forward recipe and selection-reading provider subclass are test-only,
+necessary because this base predates the held native-media admission seam.
+They delegate to the real shared provider and do not replace prepared documents
+or history. This is shared acceptance proof, not production popup qualification.
+The Runtime legacy seed publication requires numeric fps; the real fixture uses
+24 fps/scalar source offsets and the detached proof retains rational fps,
+opaque/null data, source pins and shared occurrence isolation coverage.
+
+The prior 24-test real parent existing-slot swap proof was inspected but not
+rerun or expanded. No claim is made for popup captures, UI args/goldens, video
+popup admission, HTTP transport/browser behavior, or packaged artifacts.
+
+## Decisions and next steps
+
+Used the existing AcceptedRecords loader plus Python converter argument instead
+of extending persisted authored state or the Runtime ABI. Required exact replay
+of accepted writes before attributing a pin; retained document capture checks
+refuse ambiguous scope. Reversed publication deltas to support guarded undo and
+redo groups without blanket manifest restoration. No PLAN decision was changed.
+
+Published the exact shared seam, recipe, exports that exist, unavailable popup
+artifacts, tests and remaining gates to:
+"'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-popup-native-contract.md`.
+
+The foundational blocker is resolved. Freeze this branch, let the harness commit,
+and resume the bounded popup implementation on the orchestrator-approved base.
+Its actual native captures/schemas/args/goldens and production selected-media
+admission must be published and qualified before App use. Normal artifact
+refresh remains a release gate. All M2 integration stays held until PLAN M1.
+'"'''
+(worker / 'notes/report.md').write_text(report)
+message = '''fix(timeline): restore introduced media pins through guarded inverses
+
+Derive removable pins from accepted before/after closures and recorded writes,
+keeping original source pins and newer disjoint dependencies intact. Refuse
+surviving references and ambiguous provenance through the shared provider.
+
+Restore exact compiled undo/redo revisions, preserve absent-to-absent inverse
+writes, and cover corrupt boundaries plus real Runtime retry/history retention.
+'''
+for filename in ('commit-msg', 'commit-msg.txt'):
+    (worker / filename).write_text(message)
+PY
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-media-manifest-provenance
+ succeeded in 538ms:
+All checks passed!
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+?? tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+
+codex
+Implemented the shared provenance fix; both strict xfails now pass. Exact undo/redo preserves original pins and disjoint additions, while dependent references and corrupt boundaries refuse atomically. Implementation is frozen; both commit-message files are written.
+
+Validation:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py
+```
+
+**303 passed.**
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+**4 passed.** Ruff and `git diff --check` passed.
+
+Used existing accepted boundaries without ABI/schema changes. Also fixed an absent→absent grouped inverse bug. Real Runtime acceptance is proven with test-only forward admission; production popup operations and artifact refresh remain unqualified. No full suite ran. M2 integration remains held pending PLAN M1.
+
+[Detailed report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-media-manifest-provenance/notes/report.md) · [Updated handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-popup-native-contract.md)
+tokens used
+169,996
+Implemented the shared provenance fix; both strict xfails now pass. Exact undo/redo preserves original pins and disjoint additions, while dependent references and corrupt boundaries refuse atomically. Implementation is frozen; both commit-message files are written.
+
+Validation:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py
+```
+
+**303 passed.**
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+**4 passed.** Ruff and `git diff --check` passed.
+
+Used existing accepted boundaries without ABI/schema changes. Also fixed an absent→absent grouped inverse bug. Real Runtime acceptance is proven with test-only forward admission; production popup operations and artifact refresh remain unqualified. No full suite ran. M2 integration remains held pending PLAN M1.
+
+[Detailed report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-media-manifest-provenance/notes/report.md) · [Updated handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-popup-native-contract.md)

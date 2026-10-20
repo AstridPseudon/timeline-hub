@@ -1,0 +1,400 @@
++
++Exact commands, development diagnostics, and scope limits are recorded in
++`workers/agt-m2-inverse-staged-write-guard/notes/report.md`. This result closes the
++core inverse gap; it does not qualify the private PARAM resolver or its separate
++legacy-alias compatibility issue.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inverse-staged-write-guard/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inverse-staged-write-guard/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..6bfcb76e75f17a1edb4909b2bd34244b86400a71
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inverse-staged-write-guard/commit-msg
+@@ -0,0 +1,9 @@
++fix(timeline): guard inverses against earlier staged writes
++
++Check prior command records in the same batch with the existing strict inverse
++intervening-write guard, including unchanged values and ABA writes. Keep these
++records separate from the inverse target group and its ordered reversal stages.
++
++Add native Runtime regressions for atomic refusal, disjoint and grouped inverse
++success, staged selection ordering, and ledger-first retry, plus scalar replay
++and composed reversal coverage.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inverse-staged-write-guard/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inverse-staged-write-guard/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..30483b3c0b21ff6a8c9c8d545ef78f470c4c1b09
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inverse-staged-write-guard/notes/report.md
+@@ -0,0 +1,150 @@
++# Same-batch inverse write guard: complete
++
++Base: Agent `4ef1391c` in the assigned worktree. Read PLAN.md, the selected PARAM
++authority review F1/native probe, and the 13:27 escalation before implementation.
++No settled decision required changing and no blocking counterexample was found.
++
++## Changes
++
++- `commands.execute` supplies earlier finished batch records to `apply_inverse`.
++- `apply_inverse` applies the existing strict intervening-write check to those
++  records, separately from accepted history and the inverse's own target group.
++- Product size: 4 added / 2 removed lines, net +2. Tests: 122 added lines in two
++  existing suite files. No new framework, fake publication, provider, SQL fixture,
++  DTO, schema, pin, or generated-client change.
++- Five permanent real Runtime cases: same-pin and new-pin unchanged overlapping
++  reselection refuse atomically; disjoint staged label plus single/grouped inverse
++  succeeds; inverse then explicit selection then PARAM succeeds with P2 recorded.
++- Three permanent native-command scalar cases: no-op and ABA staged writes refuse;
++  a composed disjoint/inverse/later-write batch succeeds, replays, and reverses.
++
++The native setup really admits P1, selects it, admits P2 retaining the same E,
++and accepts a new unchanged P1 target T. It checks that every write in T has
++equal before/after states. It does not require the private PARAM resolver to
++expose the core bug. The refusal assertions cover the request draft, complete
++revision/publication head, canonical document, all accepted history, the complete
++logical SQLite dump, and every CAS path and byte. SQLite `total_changes` also
++stays unchanged, so there are no semantic database writes, even rolled-back ones.
++No read-side exception was needed in this fixture. Retry of the original accepted
++request returns exactly the original result with `commands.execute` forbidden.
++
++The disjoint/grouped positive compares the complete resulting canonical document
++with the expected label-only document and preserves opaque nested params.
++The existing grouped create/own-move, noncontiguous target, surviving-dependent,
++strict ABA, new-ID reservation, recording/clear, and forward equal-state ABA
++expectations all passed unchanged. The existing legacy-alias positive also passed
++on this S2 base; it was not rewritten, removed, weakened, skipped, or xfailed.
++
++## Exact qualification commands
++
++All commands below ran from
++`/home/user/work/wt/agt-m2-inverse-staged-write-guard`.
++These variables abbreviate the exact paths used in the invocations:
++
++```bash
++WORKER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inverse-staged-write-guard
++PY=/home/user/work/venv-agent/bin/python
++```
++
++The native Runtime source was a private immutable archive, not a moving integration
++checkout. It was prepared with:
++
++```bash
++mkdir -p "$WORKER/notes" "$WORKER/runtime-source"
++git -C /home/user/banodoco/banodoco-workspace-runtime archive b748ae723b51c6d578ba7a393209ce37d6e2b0c3 | tar -x -C "$WORKER/runtime-source"
++```
++
++Before changing product code:
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT="$WORKER/runtime-source" "$PY" -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/sdk/test_timeline_selected_schema_runtime.py -k 'inverse_refuses_earlier_unchanged_selection' > "$WORKER/notes/native-before.log" 2>&1
++```
++
++Exit 1: **2 failed, 22 deselected in 4.04s**. Both negatives failed with
++`DID NOT RAISE RuntimeErrorBase`, reproducing F1 on the unchanged current S2 core.
++One additional positive parameterization was added later, explaining the final
++selected-schema file's count of 25 rather than 24.
++
++Final command/provider/conformance qualification:
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD "$PY" -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_scalar.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recording_clear.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recipe_internal_stages.py > "$WORKER/notes/targeted.log" 2>&1
++```
++
++Exit 0: **541 passed in 86.08s**. Includes the existing ordered/grouped inverse,
++read-stage, dependency, clear, rebase, reservation, and opaque preservation cases.
++
++Final real Runtime acceptance qualification:
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT="$WORKER/runtime-source" "$PY" -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py > "$WORKER/notes/native-runtime.log" 2>&1
++```
++
++Exit 0: **29 passed in 49.56s**. The assigned base has 20 pre-existing selected
++schema Runtime cases, all included, plus the five new cases and four existing
++reservation/retry cases. No candidate-only PARAM resolver tests were imported.
++
++Official pinned numeric Runtime cases, in their own process because their autouse
++fixture archives a specific Runtime Git commit:
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/banodoco/banodoco-workspace-runtime "$PY" -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/sdk/test_timeline_numeric_revision_runtime.py > "$WORKER/notes/numeric-runtime.log" 2>&1
++```
++
++Exit 0: **9 passed in 15.81s**. `vendored_runtime_commit()` selects immutable
++`2c4ac180c2220bdad966bc01e95ad230e99ce26a`; the repository above is only its Git
++object source. No moving working-tree Runtime code is supplied to these tests.
++
++Final static/scope checks:
++
++```bash
++/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/commands.py astrid/sdk/timeline/inverse.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_recipe_scalar_commands.py
++git diff --check
++sha256sum astrid/core/timeline/schema/edit-command.schema.json
++git diff --quiet HEAD -- astrid/core/timeline/schema runtime.lock.json astrid_runtime_client
++```
++
++All exited 0. Ruff: **All checks passed!** S2 SHA256 remains
++`a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`.
++
++## Development diagnostics and decisions
++
++- The first focus run after the fix passed both refusal cases and the ordered
++  PARAM positive. The new label positive initially used unsupported `name`
++  instead of schema-owned `label`, then compared opened bundle bookkeeping with
++  regenerated revision metadata. Both fixture mistakes were corrected; the final
++  assertion compares the complete expected canonical document.
++- A first broader native invocation ended **24 passed, 14 errors** (47.30s), saved
++  in `native-fixture-errors.log`. Five errors came from assuming the first admitted
++  element was the selected one (admission sorts `fade` before `reveal`). The final
++  fixture verifies membership by exact descriptor. Nine errors came from trying
++  to archive a pinned numeric Runtime commit from an extracted source directory
++  without Git objects. Running those tests separately with their real Git object
++  source fixed the harness setup. Every affected case passed in the final runs.
++- The separate scalar focus command was
++  `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_scalar_commands.py -k 'inverse_refuses_same_batch or inverse_allows_later'`:
++  **3 passed, 70 deselected in 1.62s**, log `scalar-focus.log`.
++- Chose a separate internal staged-record argument rather than flattening it into
++  accepted target history. This preserves `AcceptedRecords` boundary behavior,
++  avoids treating earlier commands as part of this inverse's own group, preserves
++  unavailable accepted-history refusal, and leaves inverse scratch stages/cache
++  handling untouched. Both checks use the existing overlap/read/selection logic.
++
++## Limits and handoff
++
++Task complete, no blockers. **579 tests passed** across the final three targeted
++invocations. No full/full* request, localhost/browser/socket suite, renderer test,
++or `make check` was run. Native RuntimeService tests are in-process. No shared
++dependency or tool cache was modified, no integration worktree was edited, and no
++Git mutation/push was performed. The private Runtime archive was removed after
++qualification; logs and this report remain in the assigned worker directory.
++
++The private resolver's post-bypass following-P diagnostic was unnecessary for
++this core assertion and was not run. The private resolver's C1 compatibility issue
++and App authenticated/browser gates remain separate; this report does not claim
++they are qualified. No contrary passing staged-overlap positive was discovered.
++
++Recommended next step: review and integrate this small S2 core fix, then apply the
++same bounded guard to any private candidate that has not inherited it and rerun
++that candidate's existing authority/native tests before claiming F1 closure there.
++The harness owns committing; `commit-msg` and `DONE` are supplied.
+diff --git a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py
+index 8769db771edddd38bb37e3a44e7ff9226d191d02..c01963863b908d5f1b619683d272907da733b59b
+--- a/astrid/sdk/timeline/commands.py
++++ b/astrid/sdk/timeline/commands.py
+@@ -192,7 +192,7 @@
+             ctx.record['command']['intent'] = {}
+             ctx.record['command']['resolved'] = []
+         else:
+-            apply_inverse(ctx, inverse_records, intervening_records)
++            apply_inverse(ctx, inverse_records, intervening_records, staged_records=records)
+             ctx.record['command']['intent'] = {}
+             ctx.record['command']['resolved'] = []
+         if ordinal == len(commands) - 1:
+diff --git a/astrid/sdk/timeline/inverse.py b/astrid/sdk/timeline/inverse.py
+index 6ad08f75c79c86c6e55ca76497db6979117e7852..2722f779b7b80569bc3e55e7225776d185cfda09
+--- a/astrid/sdk/timeline/inverse.py
++++ b/astrid/sdk/timeline/inverse.py
+@@ -347,12 +347,14 @@
+                 raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
+ 
+ 
+-def apply_inverse(ctx, records, intervening_records):
++def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
+     if not records:
+         raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
+     if any(not isinstance(record, dict) or 'writes' not in record for record in records):
+         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
+     check_intervening(records, intervening_records, state=ctx.state)
++    # Earlier batch commands are intervening writes, not part of this undo group.
++    check_intervening(records, staged_records, state=ctx.state)
+     changes = coalesce(records, ctx.state)
+     ctx.capture_input()
+     root_orders = occurrence_orders(ctx.state, records, changes)
+diff --git a/tests/editing_conformance/test_recipe_scalar_commands.py b/tests/editing_conformance/test_recipe_scalar_commands.py
+index f51d80de3099b92bca3b309668eda07ab946f1e3..83041541a5ec57813b7aa96519de87e25493f388
+--- a/tests/editing_conformance/test_recipe_scalar_commands.py
++++ b/tests/editing_conformance/test_recipe_scalar_commands.py
+@@ -32,6 +32,33 @@
+             'args': {'values': {} if values is None else values, 'clear': list(clear)}}
+ 
+ 
++@pytest.mark.parametrize('aba', [False, True])
++def test_inverse_refuses_same_batch_unchanged_or_aba_scalar_write(aba):
++    ref = 'parent/track:picture'
++    target = execute(bundle(), [call('track.set', ref, {'label': 'target'})])
++    undo = inverse(target.bundle, target.records).commands[0]
++    staged = ([call('track.set', ref, {'label': 'away'})] if aba else [])
++    staged.append(call('track.set', ref, {'label': 'target'}))
++    before = copy.deepcopy((target.bundle, target.records))
++    with pytest.raises(CommandError) as error:
++        execute(target.bundle, [*staged, undo], inverse_records=target.records)
++    assert error.value.kind == 'intervening_write'
++    assert (target.bundle, target.records) == before
++
++
++def test_inverse_allows_later_explicit_write_and_disjoint_prior_stages():
++    ref, other = 'parent/track:picture', 'occurrence:occ-1/track:picture'
++    target = execute(bundle(), [call('track.set', ref, {'label': 'target'})])
++    undo = inverse(target.bundle, target.records).commands[0]
++    plan = execute(target.bundle, [call('track.set', other, {'label': 'disjoint'}), undo,
++                                   call('track.set', ref, {'label': 'later'})],
++                   inverse_records=target.records)
++    assert State(plan.bundle).entity(ref)['label'] == 'later'
++    assert State(plan.bundle).entity(other)['label'] == 'disjoint'
++    assert replay(plan, target.bundle, inverse_records=target.records).records == plan.records
++    assert inverse(plan.bundle, plan.records).bundle == target.bundle
++
++
+ @pytest.fixture
+ def admitted_param_revisions(configured_project_pack):
+     # Main's real admission/registry path, including its immutable source snapshots.
+diff --git a/tests/sdk/test_timeline_selected_schema_runtime.py b/tests/sdk/test_timeline_selected_schema_runtime.py
+index e6e97d179ef04fd481494167ac9b92ff6bc25ce6..e342fc1dfade650b100bc1465c0ac3bd3270f145
+--- a/tests/sdk/test_timeline_selected_schema_runtime.py
++++ b/tests/sdk/test_timeline_selected_schema_runtime.py
+@@ -150,6 +150,101 @@
+             'args': {'values': values, 'clear': list(clear), 'schema_source': case.pin}}
+ 
+ 
++def select_source(case, pin):
++    return {'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': REF,
++            'args': {'elementRef': case.selected, 'schema_source': pin}}
++
++
++@pytest.fixture
++def unchanged_selection(retained_pack):
++    case = retained_pack
++    first = copy.deepcopy(case.pin)
++    case.submit(case.request([select_source(case, first)]), 'retain-first-selection')
++    manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
++    test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
++    admitted = packs.admit_project_pack('realm', case.project)
++    assert case.selected in [{key: item['descriptor'][key] for key in case.selected}
++                             for item in admitted['elements']]
++    document = case.service.get_document(case.project, first['document_id'])
++    second = {'document_id': document['document_id'], 'version': document['version'],
++              'content_digest': commit._digest(document['content'])}
++    assert second['version'] > first['version']
++    body = case.request([select_source(case, first)])
++    before = case.bundle()
++    target = case.submit(body, 'unchanged-selection')
++    assert case.bundle() == before
++    return case, first, second, body, target
++
++
++def accepted_state(case):
++    head = case.head()
++    store = case.service._timeline_commits()[0]
++    document = store.revision_closure(case.project, 'film', head['revision_id'])
++    history = case.service.list_timeline_commits(case.project, 'film', authorize=lambda: None)
++    database = tuple(case.service.store.conn.iterdump())
++    objects = {str(path.relative_to(case.service.cas.root)): path.read_bytes()
++               for path in case.service.cas.root.rglob('*') if path.is_file()}
++    return head, document, history, database, objects
++
++
++@pytest.mark.parametrize('reselect', ['same-pin', 'new-pin'])
++def test_native_inverse_refuses_earlier_unchanged_selection_atomically(
++        unchanged_selection, monkeypatch, reselect):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    case, first, second, body, target = unchanged_selection
++    publication = target['receipt']['receipt_id']
++    record = case.service._timeline_commits()[0].history_entry(
++        case.project, 'film', publication)['records']['commands'][0]
++    assert record['writes'] and all(write['before'] == write['after'] for write in record['writes'])
++    before = accepted_state(case)
++    changes = case.service.store.conn.total_changes
++    request = case.request([select_source(case, first if reselect == 'same-pin' else second),
++                            inverse(publication)])
++    original = copy.deepcopy(request)
++    with pytest.raises(RuntimeErrorBase) as error:
++        case.submit(request, 'staged-selection-inverse')
++    assert error.value.status == 409
++    assert error.value.details['reason'] == 'intervening_write'
++    assert request == original
++    assert accepted_state(case) == before
++    assert case.service.store.conn.total_changes == changes
++    with monkeypatch.context() as retry:
++        retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('retry executed semantics'))
++        assert case.submit(body, 'unchanged-selection') == target
++    assert accepted_state(case) == before
++
++
++@pytest.mark.parametrize('grouped', [False, True])
++def test_native_disjoint_staged_label_and_inverse_preserve_opaque(unchanged_selection, grouped):
++    case, _, _, _, target = unchanged_selection
++    before = case.bundle()
++    undo = inverse(target['receipt']['receipt_id'])
++    if grouped:
++        params = case.submit(case.request([raw_params(case, {'seed': 8})]), 'grouped-params')
++        undo['args']['publications'].append(params['receipt']['receipt_id'])
++    label = capture_track_set(before, 'parent/track:picture', values={'label': 'staged label'})
++    result = case.submit(case.request([label, undo]), 'staged-label-inverse')
++    expected = copy.deepcopy(before)
++    State(expected).entity('parent/track:picture')['label'] = 'staged label'
++    assert result['data']['canonical_document'] == commit.document_from_bundle(expected)
++    assert State(case.bundle()).entity(REF)['params']['future'] == {'keep': [None, False, {}]}
++
++
++def test_native_inverse_then_selection_and_params_use_staged_pin(unchanged_selection):
++    case, _, second, _, target = unchanged_selection
++    case.pin = second
++    result = case.submit(case.request([inverse(target['receipt']['receipt_id']),
++                                      select_source(case, second), raw_params(case, {'seed': 8})]),
++                         'inverse-selection-params')
++    assert State(commit.bundle_from_document(result['data']['canonical_document'])).entity(
++        REF)['params'] == {'seed': 8, 'future': {'keep': [None, False, {}]}}
++    entry = case.service._timeline_commits()[0].history_entry(
++        case.project, 'film', result['receipt']['receipt_id'])
++    assert next(dependency['pin'] for dependency in entry['records']['commands'][2]['dependencies']
++                if dependency['key'] == 'params.schema') == second
++
++
+ def test_mixed_pack_readmission_keeps_old_and_new_native_param_sources(retained_pack, monkeypatch):
+     from runtime_protocol.errors import RuntimeErrorBase
+     from runtime_protocol.service import RuntimeService
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inverse-staged-write-guard')
+shutil.rmtree(worker / 'runtime-source')
+assert (worker / 'notes/report.md').is_file()
+assert (worker / 'commit-msg').is_file()
+assert Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-inverse-staged-write-fix.md').is_file()
+(worker / 'DONE').touch()
+PY
+
+git diff --check && git status --short" in /home/user/work/wt/agt-m2-inverse-staged-write-guard
+ succeeded in 4732ms:
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+ M tests/sdk/test_timeline_selected_schema_runtime.py
+
+codex
+Implemented F1 with a 4-line product diff: earlier staged writes now use the existing strict inverse guard, separately from inverse targets.
+
+Validation passed:
+
+- 541 command/provider/conformance tests
+- 29 native Runtime tests
+- 9 pinned numeric Runtime tests
+- Ruff and whitespace checks
+
+No schema, pin or DTO changes; no existing tests weakened. No blockers or full suites run. Commit message and `DONE` written.
+
+[Detailed report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inverse-staged-write-guard/notes/report.md)
+tokens used
+134,798
+Implemented F1 with a 4-line product diff: earlier staged writes now use the existing strict inverse guard, separately from inverse targets.
+
+Validation passed:
+
+- 541 command/provider/conformance tests
+- 29 native Runtime tests
+- 9 pinned numeric Runtime tests
+- Ruff and whitespace checks
+
+No schema, pin or DTO changes; no existing tests weakened. No blockers or full suites run. Commit message and `DONE` written.
+
+[Detailed report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-inverse-staged-write-guard/notes/report.md)

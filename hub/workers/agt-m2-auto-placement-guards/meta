@@ -1,0 +1,9 @@
+name=agt-m2-auto-placement-guards
+repo=agent
+base=tl/integration
+base_sha=931d7ec5
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-auto-placement-guards
+started=2026-10-20T08:51:15Z

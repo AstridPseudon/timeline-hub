@@ -1,0 +1,400 @@
+ .../editing_conformance/test_parent_track_label.py | 17 +++++++++++-
+ 3 files changed, 40 insertions(+), 10 deletions(-)
+80973d34ae10e498d7213c30287012c9876f4b1a
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import json
+import subprocess
+from pathlib import Path
+from unittest.mock import patch
+from astrid.sdk.timeline.commands import execute
+
+fixture = json.loads(Path('tests/editing_conformance/fixtures/recipe_m2_app_track_label.json').read_text())
+current = execute(fixture['bundle'], [fixture['request']])
+for revision in ('ceb2ab67bf97d342c5af7392bee1f24cabc2ea2e', '77b1f0f7177174571edd7b13b3c010377432597d'):
+    source = subprocess.check_output(['git', 'show', revision + ':astrid/sdk/timeline/_scalar_commands.py'], text=True)
+    namespace = {'__package__': 'astrid.sdk.timeline'}
+    exec(compile(source, revision + ':_scalar_commands.py', 'exec'), namespace)
+    with patch('astrid.sdk.timeline._track_commands.track_set', namespace['track_set']):
+        original = execute(fixture['bundle'], [fixture['request']])
+    assert current.records == original.records
+    assert current.bundle == original.bundle == fixture['after_bundle']
+    assert current.commands == original.commands == [fixture['command']]
+    print(revision + ': complete records, commands and after-bundle match')
+    frozen = subprocess.check_output(['git', 'show', revision + ':tests/editing_conformance/fixtures/recipe_m2_app_track_label.json']) if revision.startswith('77b1') else None
+    if frozen is not None:
+        assert frozen == Path('tests/editing_conformance/fixtures/recipe_m2_app_track_label.json').read_bytes()
+        print('App golden byte-identical to frozen source')
+PY" in /home/user/work/wt/agt-m2-parent-label-proof
+ succeeded in 215ms:
+ceb2ab67bf97d342c5af7392bee1f24cabc2ea2e: complete records, commands and after-bundle match
+77b1f0f7177174571edd7b13b3c010377432597d: complete records, commands and after-bundle match
+App golden byte-identical to frozen source
+
+ succeeded in 11247ms:
+........................................................................ [ 47%]
+........................................................................ [ 94%]
+.........                                                                [100%]
+153 passed in 9.55s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-commit-integration-1019232041-18378/log.txt; cat tests/editing_conformance/test_commit_runtime_parent_track_label.py; git diff -- tests/editing_conformance/test_parent_track_label.py astrid/sdk/timeline/_track_commands.py; ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-label' in /home/user/work/wt/agt-m2-parent-label-proof
+ succeeded in 0ms:
+..x                                                                      [100%]
+2 passed, 1 xfailed in 12.49s
+"""Real Runtime door coverage for the parent-track label handoff.
+
+Run centrally with the ``parent-label-proof`` suite (current Runtime source).
+"""
+from __future__ import annotations
+
+import copy
+import json
+
+import pytest
+
+from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._track_commands import capture_track_set
+from astrid.sdk.timeline.commit import bundle_from_document
+from tests.editing_conformance import test_commit_runtime_m1 as m1
+
+film, renderer_off = m1.film, m1.renderer_off
+
+pytestmark = pytest.mark.integration
+
+
+def test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move(
+    tmp_path, monkeypatch, film, renderer_off, real_runtime,
+):
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    fixture, original_parent, _ = film
+    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
+    support = tmp_path / 'support'
+    daemon = real_runtime(fixture.duplicate_root, support_root=support, authoring_profile='astrid')
+    client = m1.open_client(daemon)
+    outbox = tmp_path / 'parent-label-outbox.json'
+    session = TimelineSession.open(fixture.project_id, fixture.timeline_id,
+                                   client=client, outbox_path=outbox)
+
+    moved = session.move('parent/clip:music-bed', 1)
+    m1.assert_move(original_parent, m1.parent_of(moved), 'music-bed', 1)
+    m1.assert_readback(client, fixture, moved)
+    moved_bundle = bundle_from_document(moved['data']['canonical_document'])
+    assert State(moved_bundle).entity('parent/clip:music-bed')['at'] == 1
+    label = session._queue(lambda state: capture_track_set(
+        session._bundle(state), 'parent/track:music', values={'label': 'Music'}))
+    accepted = session.flush()
+    assert json.loads(outbox.read_bytes())['pending'] == []
+    assert accepted['data']['commands'] == [label]
+    m1.assert_readback(client, fixture, accepted)
+    accepted_bundle = bundle_from_document(accepted['data']['canonical_document'])
+    assert State(accepted_bundle).entity('parent/track:music')['label'] == 'Music'
+    assert State(accepted_bundle).entity('parent/clip:music-bed')['at'] == 1
+    expected = copy.deepcopy(m1.parent_of(moved))
+    next(row for row in expected['config']['tracks'] if row['id'] == 'music')['label'] = 'Music'
+    assert m1.parent_of(accepted) == expected
+
+    reloaded = TimelineSession.open(fixture.project_id, fixture.timeline_id,
+                                    client=client, outbox_path=tmp_path / 'reload-outbox.json')
+    other = TimelineSession.open(fixture.project_id, fixture.timeline_id,
+                                 client=client, outbox_path=tmp_path / 'other-outbox.json')
+    disjoint = other.move('parent/clip:music-other', 2)
+    m1.assert_move(m1.parent_of(accepted), m1.parent_of(disjoint), 'music-other', 2)
+    m1.assert_readback(client, fixture, disjoint)
+    undone = reloaded.undo([accepted['receipt']['receipt_id']])
+    m1.assert_readback(client, fixture, undone)
+    document = undone['data']['canonical_document']
+    restored = bundle_from_document(document)
+    assert State(restored).entity('parent/clip:music-bed')['at'] == 1
+    assert State(restored).entity('parent/clip:music-other')['at'] == 2
+    assert 'label' not in State(restored).entity('parent/track:music')
+    assert State(bundle_from_document(disjoint['data']['canonical_document'])).entity(
+        'parent/clip:music-other')['at'] == 2
+    expected = copy.deepcopy(m1.parent_of(disjoint))
+    next(row for row in expected['config']['tracks'] if row['id'] == 'music').pop('label')
+    assert m1.parent_of(undone) == expected
+    # Only the authored parent revision changes; all immutable closures and
+    # document/media pins survive the label, concurrent move and guarded undo.
+    moved_document = moved['data']['canonical_document']
+    for result in (accepted, disjoint, undone):
+        current = result['data']['canonical_document']
+        assert {key: value for key, value in current.items() if key != 'parent_revision'} == {
+            key: value for key, value in moved_document.items() if key != 'parent_revision'}
+diff --git a/astrid/sdk/timeline/_track_commands.py b/astrid/sdk/timeline/_track_commands.py
+index b1fb2bce..8d72a9e9 100644
+--- a/astrid/sdk/timeline/_track_commands.py
++++ b/astrid/sdk/timeline/_track_commands.py
+@@ -13,7 +13,7 @@ def _target(ctx, command):
+         raise CommandError(f"{command['op']} requires a parent track identity")
+     if ctx.read(ref, ['id']) is None:
+         raise CommandError('track target disappeared', kind='identity_conflict', ref=ref)
+-    ctx.dependency('scalar.images', 'entity', copy.deepcopy(ctx.state.bundle.get('base_parent', {})))
++    ctx.dependency('scalar.images', 'entity', {'parent': copy.deepcopy(ctx.state.bundle.get('base_parent', {}))})
+     ctx.bind('scalar.target', ref, dependencies=['scalar.images'])
+     return ref
+ 
+diff --git a/tests/editing_conformance/test_parent_track_label.py b/tests/editing_conformance/test_parent_track_label.py
+index a5d9bbd1..4c616350 100644
+--- a/tests/editing_conformance/test_parent_track_label.py
++++ b/tests/editing_conformance/test_parent_track_label.py
+@@ -63,6 +63,21 @@ def test_app_parent_track_label_capture_golden_is_exact_and_portable():
+     assert fixture['source'] == 'src/tools/video-editor/commands/fixtures/authoringBundle.json'
+     assert fixture['app_case'] == 'parent-only'
+     assert command == fixture['command']
++    # Full native record from ceb2ab67/77b1f0f7, including the parent pin wrapper.
++    assert plan.records == [{
++        'ordinal': 0,
++        'command': fixture['command'],
++        'writes': [{'ref': REF, 'path': ['label'],
++                    'before': fixture['before'], 'after': fixture['after']}],
++        'reads': fixture['command']['reads'],
++        'selections': [],
++        'bindings': [{'key': 'scalar.target', 'ref': REF, 'policy': 'fixed',
++                      'dependencies': ['scalar.images']}],
++        'created': [],
++        'dependencies': [{'key': 'scalar.images', 'kind': 'entity',
++                          'pin': {'parent': fixture['bundle']['base_parent']}, 'policy': 'exact'}],
++        'derived_writes': [],
++    }]
+     assert execute(fixture['bundle'], [fixture['request']]).commands == [command]
+     assert plan.bundle == fixture['after_bundle']
+     assert State(fixture['bundle']).get(REF, ['label']) == ABSENT
+@@ -111,7 +126,7 @@ def test_parent_label_preserves_unicode_opaque_siblings_and_exact_pins():
+     assert changed['opaque'] == track['opaque']
+     dependency = next(row for row in plan.records[0]['dependencies'] if row['key'] == 'scalar.images')
+     assert dependency['policy'] == 'exact'
+-    assert dependency['pin'] == original['base_parent']
++    assert dependency['pin'] == {'parent': original['base_parent']}
+     assert plan.records[0]['command']['bindings'] == {'scalar.target': REF}
+ 
+ 
+total 1196
+drwxr-xr-x   3 root root    4096 Oct 19 23:22 .
+drwxr-xr-x 180 root root   12288 Oct 19 23:24 ..
+-rw-r--r--   1 root root    2175 Oct 19 23:15 brief.md
+-rw-r--r--   1 root root     195 Oct 19 23:18 commit-msg
+-rw-r--r--   1 root root     195 Oct 19 23:18 commit-msg.txt
+-rw-r--r--   1 root root       0 Oct 19 23:22 commit.log
+-rw-r--r--   1 root root      21 Oct 19 23:22 ended
+-rw-r--r--   1 root root       2 Oct 19 23:22 exit
+-rw-r--r--   1 root root 1173373 Oct 19 23:22 log.txt
+-rw-r--r--   1 root root     190 Oct 19 23:15 meta
+drwxr-xr-x   2 root root    4096 Oct 19 23:18 notes
+-rw-r--r--   1 root root     656 Oct 19 23:22 report.md
+
+codex
+All 153 local tests passed, including clear, unchanged-write, and ABA cases. The complete record, command, and after-bundle also match both frozen handlers (`ceb2ab67` and `77b1f0f7`); the App golden is unchanged. I’m now submitting only the corrected Runtime node, with xfails disabled and the renderer-off fixture active.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf')
+line = 'agent parent-label-proof env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration --runxfail -rx tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move'"\\n'
+assert not any(row.split()[:2] == ['agent', 'parent-label-proof'] for row in p.read_text().splitlines())
+with p.open('a') as out:
+    out.write(line)
+PY
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-parent-label-proof parent-label-proof" in /home/user/work/wt/agt-m2-parent-label-proof
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-label-proof-parent-label-proof-1019232525-12148
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/ 1' in /home/user/work/wt/agt-m2-parent-label-proof
+exec
+/bin/bash -lc 'git status --short; git diff --numstat; wc -l astrid/sdk/timeline/_track_commands.py; git -C /home/user/work/runtime rev-parse HEAD; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/status' in /home/user/work/wt/agt-m2-parent-label-proof
+ succeeded in 473ms:
+ M astrid/sdk/timeline/_track_commands.py
+ M tests/editing_conformance/test_commit_runtime_parent_track_label.py
+ M tests/editing_conformance/test_parent_track_label.py
+1	1	astrid/sdk/timeline/_track_commands.py
+23	8	tests/editing_conformance/test_commit_runtime_parent_track_label.py
+16	1	tests/editing_conformance/test_parent_track_label.py
+44 astrid/sdk/timeline/_track_commands.py
+80973d34ae10e498d7213c30287012c9876f4b1a
+queued
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/status; tail -n 70 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/log.txt; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/why' in /home/user/work/wt/agt-m2-parent-label-proof
+ exited 1 in 0ms:
+pass
+.                                                                        [100%]
+1 passed in 4.14s
+cat: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/why: No such file or directory
+
+exec
+/bin/bash -lc 'ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/summary; git -C /home/user/work/runtime rev-parse HEAD; git diff --check' in /home/user/work/wt/agt-m2-parent-label-proof
+ succeeded in 255ms:
+total 44
+drwxr-xr-x   2 root root  4096 Oct 19 23:25 .
+drwxr-xr-x 108 root root 12288 Oct 19 23:25 ..
+-rw-r--r--   1 root root     2 Oct 19 23:25 exit
+-rw-r--r--   1 root root   157 Oct 19 23:25 ext
+-rw-r--r--   1 root root    98 Oct 19 23:25 log.txt
+-rw-r--r--   1 root root   119 Oct 19 23:25 request
+-rw-r--r--   1 root root     0 Oct 19 23:25 runner.log
+-rw-r--r--   1 root root   137 Oct 19 23:25 snap
+-rw-r--r--   1 root root     5 Oct 19 23:25 status
+-rw-r--r--   1 root root   823 Oct 19 23:25 summary
+test agt-m2-parent-label-proof-parent-label-proof-1019232525-12148: pass exit=0 in 6s — parent-label-proof on agt-m2-parent-label-proof (agent tree ec0ef6a2b1f0a5f3dcd466a71b1f91e1d928621c)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration --runxfail -rx tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move
+counts: 1 passed in 4.14s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/log.txt ---
+.                                                                        [100%]
+1 passed in 4.14s
+80973d34ae10e498d7213c30287012c9876f4b1a
+
+ succeeded in 29917ms:
+test agt-m2-parent-label-proof-parent-label-proof-1019232525-12148: pass exit=0 in 6s — parent-label-proof on agt-m2-parent-label-proof (agent tree ec0ef6a2b1f0a5f3dcd466a71b1f91e1d928621c)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration --runxfail -rx tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move
+counts: 1 passed in 4.14s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/log.txt ---
+.                                                                        [100%]
+1 passed in 4.14s
+
+codex
+The corrected Runtime node passed: **1 passed in 4.14s**, with `--runxfail -rx`, against current Runtime source `80973d34`. It completed move → parent label → reload → disjoint move → undo with the renderer off, preserving the full authored payload and immutable pins. I’ll record the result and commit messages; official artifact refresh remains pending for release qualification.
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/ext; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/snap' in /home/user/work/wt/agt-m2-parent-label-proof
+ succeeded in 0ms:
+external=runtime=80973d34ae10e498d7213c30287012c9876f4b1a app=bdc9dcd9b5bacb5ef0466e167b7af06d15c2d362 composition=7aa384a9f3c815f78ce88ff9b47de5adee7bf34a 
+tree=ec0ef6a2b1f0a5f3dcd466a71b1f91e1d928621c
+key=46e02b6ac5a47e5c6c9a4ba7cc9140b0
+worktree=/home/user/work/wt/agt-m2-parent-label-proof
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-label-proof')
+(root / 'notes').mkdir(exist_ok=True)
+report = '''# Parent label Runtime qualification correction
+
+Base: "'`tl/agt-m2-parent-label`, exact HEAD `fd66104e2d651c4af4c464eb9afadc8fabdb1c41`.
+Final tested Agent tree: `ec0ef6a2b1f0a5f3dcd466a71b1f91e1d928621c`.
+Current Runtime source: `/home/user/work/runtime`, `80973d34ae10e498d7213c30287012c9876f4b1a` (unchanged before/after; central external-source metadata agrees).
+
+## Changes and cause
+
+- Exposed the existing `m1.film` and `m1.renderer_off` fixtures at module scope and explicitly requested the renderer-off fixture. Previously, importing the m1 module did not register its fixtures in this test module: `film` was unavailable before the test body, and the renderer tripwire was never requested. The previous central log only said `2 passed, 1 xfailed`, without a traceback; it provided no evidence of Runtime rejection or an artifact-refresh failure. No original product failure is claimed here.
+- Removed the blanket strict xfail. The corrected real Runtime door/provider/client/outbox node passes with `--runxfail -rx`; there is no observed product failure trace and no xfail/skip in this node.
+- Strengthened move → parent label → reload → newer disjoint move → undo assertions: exact complete parent payload at each step, real readback/history, emptied outbox, preserved unknown JSON, source/transcript bindings, shot/internal closures and all document/media dependency pins. The first move uses the existing full-payload M1 assertion; the label and undo compare complete parent payloads with only the intended label difference.
+- Restored the original native `scalar.images.pin = {'"'parent': pin}"'` shape with a one-line wrapper in the still-44-line `_track_commands.py`. Added complete-record equality to the existing exact App fixture test, including writes, reads, bindings, dependencies and all empty recorder collections. The command args, schema, registry and golden are unchanged.
+- Added only the worker-owned `agent parent-label-proof` line to shared `orch/tests/suites.conf` to select this one node and pass `--runxfail -rx`. No test runner/bin change.
+
+## Exact test commands and results
+
+Run from `/home/user/work/wt/agt-m2-parent-label-proof`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_parent_track_label.py tests/sdk/test_timeline_commit_provider_parent_track_label.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py
+```
+
+**153 passed in 9.55s**, exit 0. This includes parent-label clear/empty/absent, unchanged writes, ABA guarded undo, the full App record assertion and adjacent M1/provider tests.
+
+Central request (exactly one node, one request after final source edits):
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-parent-label-proof parent-label-proof
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/ 1
+```
+
+Central executed:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration --runxfail -rx tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move
+```
+
+**1 passed in 4.14s**, exit 0 (6s service duration). Log: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-label-proof-parent-label-proof-1019232525-12148/log.txt`.
+Corrected evidence is **153 local passes + 1 actual Runtime pass**, zero expected failures in these runs. The earlier 2 M1 passes + 1 masked xfail must not be counted as parent-label qualification.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_track_commands.py tests/editing_conformance/test_parent_track_label.py tests/editing_conformance/test_commit_runtime_parent_track_label.py
+git diff --check
+```
+
+Both passed, exit 0.
+
+Full-record source parity was additionally checked with the following exact stdin command, exit 0:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PARITY'
+import json
+import subprocess
+from pathlib import Path
+from unittest.mock import patch
+from astrid.sdk.timeline.commands import execute
+
+fixture = json.loads(Path('tests/editing_conformance/fixtures/recipe_m2_app_track_label.json').read_text())
+current = execute(fixture['bundle'], [fixture['request']])
+for revision in ('ceb2ab67bf97d342c5af7392bee1f24cabc2ea2e', '77b1f0f7177174571edd7b13b3c010377432597d'):
+    source = subprocess.check_output(['git', 'show', revision + ':astrid/sdk/timeline/_scalar_commands.py'], text=True)
+    namespace = {'__package__': 'astrid.sdk.timeline'}
+    exec(compile(source, revision + ':_scalar_commands.py', 'exec'), namespace)
+    with patch('astrid.sdk.timeline._track_commands.track_set', namespace['track_set']):
+        original = execute(fixture['bundle'], [fixture['request']])
+    assert current.records == original.records
+    assert current.bundle == original.bundle == fixture['after_bundle']
+    assert current.commands == original.commands == [fixture['command']]
+    print(revision + ': complete records, commands and after-bundle match')
+    frozen = subprocess.check_output(['git', 'show', revision + ':tests/editing_conformance/fixtures/recipe_m2_app_track_label.json']) if revision.startswith('77b1') else None
+    if frozen is not None:
+        assert frozen == Path('tests/editing_conformance/fixtures/recipe_m2_app_track_label.json').read_bytes()
+        print('App golden byte-identical to frozen source')
+PARITY
+"'```
+
+Both source revisions matched complete records, normalized commands and after-bundles; the App golden byte-compared with `77b1f0f7`. This temporary handler substitution was only for offline source parity, never for the actual Runtime qualification.
+
+## Decisions, limits and next steps
+
+No new product decision: followed the prescribed parent-only scope and retained ordinary positive expectations. No Runtime change, acceptance fabrication, accepted SQL, schema/operation change, full-suite run, M2 merge, git commit/merge/checkout, push or other worktree edit. Repository diff: 3 files, 40 insertions / 10 deletions; product diff is one line. No build output or temporary artifacts were added to the worktree.
+
+No blocker for this bounded source qualification. Official Runtime command-artifact refresh remains pending release qualification and was not tested here. Full suite, make check, browsers, packaged artifacts and the independent M1 projection fix were not run/claimed. This remains M2 priority 1 after the M1 blocker; recommend manager review, retain the ordinary passing Runtime node, and qualify the refreshed official artifacts separately. Both `commit-msg` and `commit-msg.txt` are written beside `notes/` for the harness.
+'"'''
+(root / 'notes' / 'report.md').write_text(report)
+message = '''fix(timeline): qualify parent labels through the real runtime
+
+Expose the shared film and renderer-off fixtures and remove the blanket
+Runtime xfail. Check exact authored payloads and immutable pins through
+move, parent label, reload, disjoint move and guarded undo.
+
+Restore the original parent dependency pin wrapper and assert complete
+native record parity on the unchanged App fixture.
+
+Validation: 153 local tests and the single central Runtime node passed.
+'''
+for filename in ('commit-msg', 'commit-msg.txt'):
+    (root / filename).write_text(message)
+print(root / 'notes' / 'report.md')
+print('Wrote both commit message files.')
+PY" in /home/user/work/wt/agt-m2-parent-label-proof
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-label-proof/notes/report.md
+Wrote both commit message files.
+
+codex
+Fixed fixture exposure, removed the blanket xfail, restored the original parent-pin wrapper, and added full-record and authored-payload preservation assertions.
+
+Validation:
+
+- Local targeted suites: **153 passed in 9.55s**.
+- Central Runtime node with `--runxfail -rx`: **1 passed in 4.14s**, against Runtime `80973d34`, with the renderer off.
+- Frozen-source record parity, unchanged App golden, Ruff, and diff checks passed.
+
+No product failure was observed after correction. No scope decisions or blockers remain. Official artifact refresh still needs release qualification; no full suite or merge was performed.
+
+[Report with exact commands, results, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-label-proof/notes/report.md). Both commit-message files are written.
+tokens used
+84,259
+Fixed fixture exposure, removed the blanket xfail, restored the original parent-pin wrapper, and added full-record and authored-payload preservation assertions.
+
+Validation:
+
+- Local targeted suites: **153 passed in 9.55s**.
+- Central Runtime node with `--runxfail -rx`: **1 passed in 4.14s**, against Runtime `80973d34`, with the renderer off.
+- Frozen-source record parity, unchanged App golden, Ruff, and diff checks passed.
+
+No product failure was observed after correction. No scope decisions or blockers remain. Official artifact refresh still needs release qualification; no full suite or merge was performed.
+
+[Report with exact commands, results, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-label-proof/notes/report.md). Both commit-message files are written.

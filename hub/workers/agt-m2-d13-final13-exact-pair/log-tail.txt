@@ -1,0 +1,400 @@
+____ ERROR collecting tests/packs/vibecomfy/test_media_canonical_loader.py _____
+ImportError while importing test module '/home/user/work/wt/.test-agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020193936-1768/tests/packs/vibecomfy/test_media_canonical_loader.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/vibecomfy/test_media_canonical_loader.py:10: in <module>
+    vibecomfy = require_module("vibecomfy")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/lanes.py:80: in require_module
+    return importlib.import_module(name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'vibecomfy'
+=========================== short test summary info ============================
+ERROR tests/packs/test_vibecomfy_runtime_real_service_integration.py
+ERROR tests/packs/vibecomfy/test_media_canonical_loader.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+1 skipped, 15695 deselected, 2 errors in 44.12s
+
+codex
+The central suite exposed a guard mismatch: its configured command is only `pytest ... -m integration` and does not constrain the file, so collection reached unrelated VibeComfy integration tests and failed with `ModuleNotFoundError: vibecomfy` (2 collection errors, 15,695 deselected). I’m checking the runner’s `--files` semantics before deciding whether the exact two node IDs can be constrained within this named suite; I will not rerun the unconstrained command.
+exec
+/bin/bash -lc "ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+rg -n -C 8 'files=|--files|suite|pytest' \""'$ORCH"/bin "$ORCH"/dispatcher* "$ORCH"/tests 2>/dev/null | sed -n '"'1,260p'" in /home/user/work/wt/agt-m2-d13-final13-exact-pair
+ succeeded in 267ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-23-  [ $alive = 0 ] && { echo "  ORPHAN worker $w (running marker, no process): finalize with bin/stop-worker"; n=$((n+1)); }; done
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-24-echo "  pending queue: $(ls $O/queue/pending 2>/dev/null | grep -vc '^\.') item(s); oldest waiting $( f=$(ls -1tr $O/queue/pending 2>/dev/null | grep -v '^\.' | head -1); [ -n "$f" ] && echo $(( (NOW - $(stat -c %Y $O/queue/pending/$f)) / 60 ))m || echo -)"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-25-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-26-echo "== MERGES since (red flags are mechanical: removed assert/expect lines in tests, added skip/xfail/only, deleted test files)"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-27-awk -v s="$(iso $SINCE)" '$1 >= s' $O/merges.log | while read ts repo name sha; do R=$W/$repo
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-28-  git -C $R cat-file -e "$sha^{commit}" 2>/dev/null || { echo "  $ts $repo $name $sha (not available locally)"; continue; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-29-  st=$(git -C $R diff --shortstat $sha^1 $sha 2>/dev/null | sed 's/ files\? changed/f/;s/ insertions\?(+)/+/;s/ deletions\?(-)/-/;s/,//g')
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-30-  T=$(git -C $R diff $sha^1 $sha -- '*test*' '*spec*' '*__tests__*' 2>/dev/null)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts:31:  ra=$(echo "$T" | grep -cE '^-[^-].*(assert|expect\(|toBe|toEqual|toThrow|pytest\.raises)'); aa=$(echo "$T" | grep -cE '^\+[^+].*(assert|expect\(|toBe|toEqual|toThrow|pytest\.raises)')
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts:32:  sk=$(echo "$T" | grep -cE '^\+[^+].*(\.skip\(|\.only\(|it\.todo|xfail|pytest\.mark\.skip|skipIf|@unittest\.skip)')
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-33-  dt=$(git -C $R diff --diff-filter=D --name-only $sha^1 $sha 2>/dev/null | grep -cE 'test|spec')
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-34-  flag=""; [ $ra -gt $aa ] && flag="$flag NET-ASSERTS-REMOVED($ra>$aa)"; [ $sk -gt 0 ] && flag="$flag SKIP/XFAIL+$sk"; [ $dt -gt 0 ] && flag="$flag TEST-FILES-DELETED:$dt"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-35-  echo "  $ts $repo $name $sha [$st] asserts -$ra/+$aa${flag:+ FLAG:$flag}"; done
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-36-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-37-echo "== LEDGER"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-38-echo "  DELETED rows: $(grep -cE '^\|.*\| *DELETED' $O/design/deletion-ledger.md 2>/dev/null) of $(grep -cE '^\| *[A-Z][A-Z0-9-]*[0-9]' $O/design/deletion-ledger.md 2>/dev/null); last change $(( (NOW - $(stat -c %Y $O/.ledger_deleted_changed 2>/dev/null || echo $NOW)) / 60 ))m ago"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-39-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/tick-facts-40-echo "== ESCALATIONS filed since (by area)"
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test-1-#!/bin/bash
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:2:# request-test WORKER|integration:REPO SUITE [--files "a b c"] [--no-cache]  — queue a test run (done by the dispatcher OUTSIDE the
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:3:# sandbox, so localhost/browsers work). SUITE: full | targeted (needs --files) | a named suite from $ORCH/tests/suites.conf.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test-4-# Prints the result dir $ORCH/tests/<id>/ ; then: $ORCH/bin/wait-test <id>. Only writes under $ORCH.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test-5-O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test-6-T=$1; S=$2; shift 2 || { sed -n 2,4p $0; exit 2; }; F=; NC=0
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:7:while [ $# -gt 0 ]; do case $1 in --files) F=$2; shift 2;; --no-cache) NC=1; shift;; *) echo "unknown arg $1"; exit 2;; esac; done
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test-8-case $T in integration:*) R=${T#integration:}; [ -d /home/user/work/$R ] || { echo "no repo $R"; exit 2; };;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test-9-  *) [ -f $O/workers/$T/meta ] || { echo "no worker $T"; exit 2; }; R=$(sed -n 's/^repo=//p' $O/workers/$T/meta);; esac
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:10:awk -v r=$R -v s=$S '$1==r && $2==s {f=1} END {exit !f}' $O/tests/suites.conf || { echo "suite '$S' not in suites.conf for $R:"; awk -v r=$R '$1==r {print "  " $2}' $O/tests/suites.conf; exit 2; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:11:[ $S = targeted ] && [ -z "$F" ] && { echo "targeted needs --files"; exit 2; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:12:case $S in *-nodes) [ -z "$F" ] && { echo "REFUSED: *-nodes suites need --files (they otherwise run the whole default suite)"; exit 2; };; esac
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test-13-ID=$(echo "${T#integration:}" | tr -c 'a-zA-Z0-9-\n' -)-$S-$(date -u +%m%d%H%M%S)-$RANDOM; D=$O/tests/$ID; mkdir -p $D
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:14:printf 'target=%q\nrepo=%q\nsuite=%q\nfiles=%q\nnocache=%s\nrequested=%s\n' "$T" "$R" "$S" "$F" $NC $(date -u +%FT%TZ) > $D/request
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test-15-echo queued > $D/status; echo "TEST $ID" > $O/queue/pending/.test-$ID.tmp && mv $O/queue/pending/.test-$ID.tmp $O/queue/pending/test-$ID
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test-16-echo "$D/"; echo "wait: $O/bin/wait-test $ID" >&2
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv-1-#!/bin/bash
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv-2-# request-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — ask the dispatcher for a NEW read-only installed-Agent child venv
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv:3:# /home/user/work/NAME (venv-agent-child-<suffix>) at an exact Agent commit, optionally with a "<NAME>-full" suite cloned from
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv-4-# BASE_SUITE using RUNTIME. Result in $ORCH/queue/done/childvenv-NAME. No escalation needed.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv-5-O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv-6-[ -n "$2" ] || { echo "usage: request-child-venv venv-agent-child-<suffix> AGENT_SHA [BASE_SUITE RUNTIME]"; exit 2; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv-7-echo "CHILDVENV $*" > $O/queue/pending/childvenv-$1; echo "child venv $1 queued; result in $O/queue/done/childvenv-$1"
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-1-#!/bin/bash
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-2-# make-runtime NAME AGENT_SHA [LOCK_SHA256] — run by the dispatcher (outside the sandbox; uses the network for npm ci).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-3-# Builds a NEW read-only Remotion runtime /home/user/work/runtimes/<NAME> from the Agent repo's remotion/ directory at
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-4-# AGENT_SHA (exact package-lock bytes, verified against LOCK_SHA256 when given), with Node 20 and `npm ci`. Writes
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime:5:# $ORCH/tests/<NAME>.env and a "<NAME>-nodes" suite (cloned from the remotion-0012-nodes line). Never touches an existing runtime.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-6-O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; A=/home/user/work/agent
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-7-N=$1; S=$2; L=$3; case "$N" in agent-remotion-[0-9a-z]*) ;; *) echo "REFUSED: name must be agent-remotion-<version>"; exit 2;; esac
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-8-D=/home/user/work/runtimes/$N; [ -e $D ] && { echo "exists: $D (runtimes are immutable; pick a new name)"; exit 0; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-9-git -C $A cat-file -e "$S^{commit}" 2>/dev/null || git -C $A fetch -q hub 2>/dev/null; git -C $A cat-file -e "$S^{commit}" || { echo "unknown agent commit $S"; exit 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-10-NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin; T=$D.partial; rm -rf $T; mkdir -p $T
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-11-git -C $A archive "$S" remotion | tar -x -C $T --strip-components=1 || { echo "archive failed"; exit 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-12-got=$(sha256sum $T/package-lock.json | cut -d' ' -f1); [ -z "$L" ] || [ "$got" = "$L" ] || { echo "REFUSED: lock sha256 $got != $L"; rm -rf $T; exit 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-13-( cd $T && PATH=$NODE:$PATH npm ci --no-audit --no-fund --loglevel=error ) || { echo "npm ci failed"; rm -rf $T; exit 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-14-mv $T $D; find $D -path '*/node_modules/.cache' -prune -o -path '*/node_modules/.vite*' -prune -o -type f -exec chmod a-w {} +
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime-15-sed "s#agent-remotion-0012#$N#g" $O/tests/agent-remotion-0012.env > $O/tests/$N.env
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime:16:grep -q "^agent $N-nodes " $O/tests/suites.conf || grep '^agent remotion-0012-nodes ' $O/tests/suites.conf | sed "s#remotion-0012-nodes#$N-nodes#; s#agent-remotion-0012#$N#g" >> $O/tests/suites.conf
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime:17:echo "created $D from agent ${S:0:12} (lock $got), read-only; env tests/$N.env; suite '$N-nodes'; remotion $(PATH=$NODE:$PATH node -e "console.log(require('$D/node_modules/remotion/package.json').version)" 2>/dev/null)"
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-1-#!/bin/bash
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-2-# compact-scratch [MIN_MB] — global, safe disk relief (orchestrator/lead tool). In FINISHED workers (ended over 1 h ago,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch:3:# not running, not KEEP, not leased, not named in tests/suites.conf, tests/*.env or any manager STATUS.md), every scratch
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-4-# directory larger than MIN_MB (default 50) inside the worker's record folder is packed into <dir>.tgz and the directory
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-5-# removed. Nothing is lost (unpack with tar xzf). Worktrees are never touched (use bin/recycle for those).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-6-O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; MIN=${1:-50}; cut=$(date -d '-1 hour' +%s)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-7-B=$(df -BM --output=avail /home/user | tail -1 | tr -d ' M'); n=0
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch:8:REF=$(cat $O/tests/suites.conf $O/tests/*.env $O/managers/*/STATUS.md 2>/dev/null)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-9-for d in $O/workers/*/; do w=$(basename $d)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-10-  [ -f $d/running ] || [ -f $d/KEEP ] && continue; [ -f $d/ended ] && [ $(stat -c %Y $d/ended) -lt $cut ] || continue
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-11-  grep -lqsw -- "$w" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null && continue
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-12-  grep -qw -- "$w" <<< "$REF" && continue
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-13-  for s in $(find $d -mindepth 1 -maxdepth 2 -type d 2>/dev/null); do [ -d "$s" ] || continue
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-14-    [ $(du -sm "$s" | cut -f1) -gt $MIN ] || continue
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-15-    tar czf "$s.tgz" -C "$(dirname "$s")" "$(basename "$s")" && rm -rf "$s" && n=$((n+1)); done; done
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch-16-echo "packed $n scratch dirs; free ${B}M -> $(df -BM --output=avail /home/user | tail -1 | tr -d ' ')"
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-1-#!/bin/bash
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-2-# dispatch NAME --repo agent|runtime|app|composition --base BRANCH --model M --effort E [--net] [--heavy] [--timeout MIN] [--merge-parent SHA] --brief FILE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-3-# Starts a Codex worker in its own worktree /home/user/work/wt/NAME on branch tl/NAME (from --base, default tl/integration).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch:4:# Refuses if free disk < 5 GB, or if --heavy and >=2 heavy jobs (heavy workers + running full test suites) are already running.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-5-set -e
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-6-O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-7-N=$1; shift; REPO=; BASE=tl/integration; M=gpt-5.6-luna; E=high; NET=0; HEAVY=0; TMO=180; BRIEF=; MPARENT=
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-8-while [ $# -gt 0 ]; do case $1 in
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-9- --repo) REPO=$2; shift 2;; --base) BASE=$2; shift 2;; --model) M=$2; shift 2;; --effort) E=$2; shift 2;;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-10- --merge-parent) MPARENT=$2; shift 2;;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-11- --net) NET=1; shift;; --heavy) HEAVY=1; shift;; --timeout) TMO=$2; shift 2;; --brief) BRIEF=$2; shift 2;;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-12- *) echo "unknown arg $1"; exit 2;; esac; done
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-13-# Owner rule 2026-10-20 (rev 2): effort is capped at high (no xhigh). Sol only for hard tasks, flagged by a line starting "HARD:" in the brief; otherwise Luna.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-14-[ "$E" = xhigh ] && { echo "$(date -u +%FT%TZ) $N: effort xhigh -> high" >> $O/model-downgrades.log; E=high; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-15-case $M in *sol*) grep -q '^HARD:' "$BRIEF" 2>/dev/null || { echo "$(date -u +%FT%TZ) $N: $M -> gpt-5.6-luna (no HARD: line in brief)" >> $O/model-downgrades.log; M=gpt-5.6-luna; };; esac
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-16-. $O/bin/claude-perms.sh; M=$(codex_fallback $M)   # CODEX_UNAVAILABLE -> Claude fallback
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-17-[ -n "$REPO" ] && [ -f "$BRIEF" ] || { echo "need --repo and --brief FILE"; exit 2; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-18-D=$O/workers/$N; [ -e $D ] && { echo "worker $N already exists"; exit 2; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-19-FREE=$(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9); [ "$FREE" -lt 5 ] && { echo "REFUSED: only ${FREE}G free"; exit 3; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch:20:if [ $HEAVY = 1 ]; then H=$(grep -l '^heavy=1' $O/workers/*/meta 2>/dev/null | while read f; do d=$(dirname $f); [ -f $d/running ] && echo x; done | wc -l); T=$(for r in $O/tests/*/running; do [ -f ${r%running}heavy ] && kill -0 $(cat $r) 2>/dev/null && echo x; done | wc -l); H=$((H+T)); [ "$H" -ge 2 ] && { echo "REFUSED: $H heavy jobs running ($T full test suites)"; exit 3; }; fi
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-21-WT=/home/user/work/wt/$N; git -C /home/user/work/$REPO worktree add -q -b tl/$N $WT $BASE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-22-mkdir -p $D; cp $BRIEF $D/brief.md; [ -n "$MPARENT" ] && echo "$MPARENT" > $D/merge-parent
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-23-printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=%s\neffort=%s\nheavy=%s\nworktree=%s\nstarted=%s\n' $N $REPO $BASE $(git -C $WT rev-parse --short HEAD) $M $E $HEAVY $WT $(date -u +%FT%TZ) > $D/meta
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-24-[ -d /home/user/work/app/node_modules ] && [ $REPO = app ] && [ ! -e $WT/node_modules ] && ln -s /home/user/work/app/node_modules $WT/node_modules
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-25-NETCFG=(); [ $NET = 1 ] && NETCFG=(-c sandbox_workspace_write.network_access=true)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-26-touch $D/running
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-27-# per-worker temp dir (2026-10-20): short path (browser sockets have a ~100-char limit), removed when the worker finishes
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch-28-TD=/tmp/w-$(echo -n $N | md5sum | cut -c1-10); mkdir -p $TD; echo $TD > $D/tmpdir; export TMPDIR=$TD TMP=$TD TEMP=$TD
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-203-        ok = bool(re.search(r"restored[^\n]{0,80}PASS|ALL\s*5\s*journeys\s*PASS", STATUS["app"], re.I))
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-204-        return ("done" if ok else "pending"), "app"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-205-    if "restore preservation" in low:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-206-        rt_ok = bool(re.search(r"restore\s*7[^\n]{0,30}(preserved|pass)|restore API preservation PASS", STATUS["runtime"] + STATUS["agent"], re.I))
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-207-        app_pending = bool(re.search(r"In flight:[^\n]*restore[-\s]?head[-\s]?pair|restoreHistory[^\n]{0,80}(fix|bug)[^\n]{0,40}(in flight|pending)", STATUS["app"], re.I))
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-208-        if rt_ok and not app_pending: return "done", "app"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-209-        if rt_ok or not app_pending: return "partial", "app"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-210-        return "pending", "app"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json:211:    if "full-suite" in low or "full suite" in low:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-212-        newf = bool(re.search(r"(FOUR|\d+)\s*NEW\s*(consumer|full)|new agent full failures", ALLSTAT + LOG, re.I))
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-213-        return ("pending" if newf else "done"), "agent and viewing"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-214-    if "audit" in low:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-215-        latest = sorted(glob.glob(f"{ORCH}/audits/*.md"))
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-216-        verdict = rd(latest[-1]).strip().split("\n")[0] if latest else ""
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-217-        recorded = bool(re.search(r"M1 (recorded|closed)", LOG, re.I))
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-218-        clear = bool(re.match(r"\W*(APPROVE|CLEAR|PASS|NO BLOCKING)", verdict, re.I))
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-219-        return ("done" if (clear or recorded) else "pending"), "orchestrator"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-220-    return "pending", "orchestrator"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-221-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-222-PLAIN = {
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-223-    "e2e-m1-gesture": "End-to-end clip move test passes on the central machine",
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-224-    "restored": "App journeys restored and passing",
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-225-    "restore preservation": "Restore keeps all earlier edits (Runtime and Agent done; App restore-history fix pending)",
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json:226:    "full-suite": "Every new failure in the full test suites is explained",
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-227-    "audit": "Deep audit finds nothing that blocks",
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-228-}
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-229-m1_exit = []
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-230-if CURRENT == "M1":
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-231-    for i, t in enumerate(items_txt):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-232-        st, owner = exit_state(i, t)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-233-        label = next((v for k, v in PLAIN.items() if k in t.lower()), t)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-json-234-        if "restore preservation" in t.lower():
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-1-#!/bin/bash
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-2-# provision-agent-machine [--verify-only] [--list] [NAME ...]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine:3:# Rebuilds, at the SAME paths, every environment the Agent test suites (tests/suites.conf `agent ...` lines and
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-4-# tests/*.env) use, on a fresh machine. Idempotent: an environment that already exists is only VERIFIED, never
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-5-# modified (shared installs are never written after creation). Builds go to <dest>.partial (or, for venvs, in place
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-6-# and rolled back on failure). Needs network: nodejs.org, PyPI, github.com, the hub remote.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-7-# Prerequisites on the fresh machine: git, curl, tar, xz, sha256sum, python3.13 (set PYTHON313=/path if elsewhere),
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-8-# /home/user/work/agent and /home/user/work/runtime cloned (branch tl/integration), `hub` remote (added if absent).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-9-# Exit status 0 only if every selected environment verified. See $ORCH/AGENT-MACHINE.md.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-10-W=${W:-/home/user/work}      # (override only to rehearse in a scratch root)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-11-AGENT=${AGENT:-$W/agent}
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-109-  fi
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-110-}
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-111-verify_venv() { # NAME FREEZE [ASTRID_SHA]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-112-  local name=$1 freeze=$2 sha=${3:-} py=$W/$1/bin/python got want v n
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-113-  v=$("$py" -c 'import sys; assert sys.version_info[:2]==(3,13); print(sys.version.split()[0])') || { echo "python is not 3.13"; return 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-114-  got=$("$py" -m pip freeze --all | norm); want=$(norm < "$freeze")
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-115-  [ "$got" = "$want" ] || { echo "freeze differs from $freeze:"; diff <(echo "$got") <(echo "$want") | head -10; return 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-116-  n=$(echo "$want" | wc -l)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine:117:  "$py" -c 'import pytest, xdist, jsonschema, referencing, yaml, banodoco_timeline_schema, runpod_lifecycle' || return 1
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-118-  if [ -n "$sha" ]; then
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-119-    local mk note="" ; mk=$(cat "$W/$name/.astrid-source-commit" 2>/dev/null)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-120-    [ -z "$mk" ] && note=" (no .astrid-source-commit marker: venv predates this script, commit not checked)"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-121-    [ -z "$mk" ] || [ "$mk" = "$sha" ] || { echo "astrid source commit marker $mk != $sha"; return 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-122-    "$py" -c 'import importlib.metadata as m, astrid, astrid_runtime_client; assert m.version("astrid")=="0.1.0"' || return 1
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-123-    echo "python $v; $n pins match; astrid@${sha:0:8} + astrid_runtime_client import ok$note"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-124-  else
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/provision-agent-machine-125-    echo "python $v; $n pins match; import ok"
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-1-#!/bin/bash
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-2-# test-run ID — called by dispatcher-daemon (outside the sandbox) for queue/pending/test-ID. Exit 0 = started in background or served
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-3-# from cache, 3 = wait (slot busy / identical run in flight / low disk), 1 = bad request. "test-run --run ID" is the background job.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:4:# Caps: one heavy ("full*") suite at a time, plus up to 2 other runs. Cache key: repo + tree of the worktree (incl. uncommitted
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:5:# changes) + suite + files + command. Result: tests/ID/{status,exit,summary,log.txt}; status = queued|running|pass|fail|timeout|error.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-6-O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-7-[ "$1" = --run ] && { RUN=1; shift; }; ID=$1; D=$O/tests/$ID; C=$O/tests/cache
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-8-bad() { echo "$*" > $D/summary; echo 1 > $D/exit; echo error > $D/status; echo "$*"; exit 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-9-alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/dev/null && [ "$1" = $( [ -f ${r%running}heavy ] && echo heavy || echo light) ] && echo x; done | wc -l; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-10-. $D/request 2>/dev/null && { [ -z "$RUN" ] || . $D/snap; } || { echo "no request for $ID"; exit 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-11-case $target in integration:*) W=/home/user/work/$repo;; *) W=$(sed -n 's/^worktree=//p' $O/workers/$target/meta);; esac
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-12-if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled worker: recreate a detached worktree from its branch
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-13-  git -C /home/user/work/$repo worktree add -q --detach "$W" "tl/$target" 2>/dev/null || git -C /home/user/work/$repo worktree add -q --detach "$W" "hub/tl/$target" 2>/dev/null; fi
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-14-[ -d "$W" ] || bad "worktree $W not found (and no tl/$target branch to recreate it from)"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:15:CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-16-OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:17:HV=light; case $suite in full*) HV=heavy;; esac
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-18-if [ -z "$RUN" ]; then
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-19-  IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-20-  TREE=$(GIT_INDEX_FILE=$IDX git -C $W write-tree); rm -f $IDX; [ -n "$TREE" ] || bad "could not compute tree of $W"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:21:  # cross-product suites (e2e, journeys, commit-integration, or a command naming another repo) also depend on the
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-22-  # other repos' integration code: add their tl/integration heads to the key so a stale pass is never reused
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:23:  EXT=""; case "$suite $CMD" in *e2e*|*integration*|*three-products*|*journey*) EXT=x;; esac
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-24-  for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-25-  [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:26:  KEY=$(echo "$repo $TREE $suite $files $CMD $EXT" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-27-  if [ $nocache = 0 ] && [ -f $C/$KEY ] && SRC=$O/tests/$(cat $C/$KEY) && [ -f $SRC/summary ]; then
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-28-    cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-29-    basename $SRC > $D/cached_from; cp $SRC/status $D/status; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-30-  [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:31:  [ $HV = heavy ] && [ $(alive heavy) -ge 1 ] && { echo "a full suite is already running" | tee $D/why; exit 3; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-32-  [ $HV = light ] && [ $(alive light) -ge 2 ] && { echo "2 targeted/named runs already running" | tee $D/why; exit 3; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-33-  FLOOR=5; [ $HV = heavy ] && FLOOR=8; [ $(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9) -lt $FLOOR ] && { echo "low disk (<${FLOOR}G free; heavy runs need 8G so Runtime storage preflight does not cause false reds)" | tee $D/why; exit 3; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-34-  [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:35:  setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-36-fi
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-37-echo $$ > $D/running; SNAP=/home/user/work/wt/.test-$ID; T0=$(date +%s)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-38-COMMIT=$(git -C $W commit-tree $tree -p HEAD -m "test snapshot $ID") && git -C $W worktree add -q --detach $SNAP $COMMIT || { echo 1 > $D/exit; echo error > $D/status; echo "snapshot failed" > $D/summary; rm -f $D/running $C/$key.running; exit 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-39-NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules; case $repo in app|composition) [ -e $SNAP/node_modules ] || ln -s "$(readlink -f $NM)" $SNAP/node_modules;; esac
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-40-# agent: link the worktree's installed Remotion runtime (remotion/node_modules), else the integration checkout's, read-only by convention
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-41-if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-42-  [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-43-( cd $SNAP && PYTHONPATH=$SNAP timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-44-git -C $W worktree remove --force $SNAP 2>/dev/null || { rm -rf $SNAP; git -C $W worktree prune; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-45-ST=fail; [ $RC = 0 ] && ST=pass; [ $RC = 124 -o $RC = 137 ] && ST=timeout
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:46:{ echo "test $ID: $ST exit=$RC in $(( $(date +%s) - T0 ))s — $suite on $target ($repo tree $tree)"; echo "cmd: $CMD"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-47-  echo "counts: $(grep -aE '[0-9]+ (passed|failed)|Tests +[0-9]|^# (pass|fail) ' $D/log.txt | tail -3 | tr '\n' ' ')"; echo "--- last 60 lines of $D/log.txt ---"; tail -60 $D/log.txt; } > $D/summary
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-48-[ -f $D/CANCELLED ] && { ST=cancelled; RC=130; }   # stopped by request-stop-test: never a result, never cached
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run-49-echo $RC > $D/exit; echo $ST > $D/status; [ $RC = 0 -o $RC = 1 ] && echo $ID > $C/$key; rm -f $D/running $C/$key.running
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-1-#!/bin/bash
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-2-# make-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — run by the dispatcher (network). Builds a NEW read-only installed-Agent
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-3-# child venv /home/user/work/<NAME> (NAME = venv-agent-child-<suffix>): Python 3.13, the exact pinned set from
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-4-# tests/provision/venv-agent-child-s2.txt (--no-deps), plus astrid installed NON-editably from `git archive` of AGENT_SHA.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv:5:# With BASE_SUITE and RUNTIME: adds suite "<NAME>-full" = BASE_SUITE's line with venv-agent-child-s2 -> NAME and
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-6-# agent-remotion-0012 -> RUNTIME. Never touches an existing venv.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-7-O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; A=/home/user/work/agent; W=/home/user/work
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-8-N=$1; S=$2; BS=$3; RT=$4; case "$N" in venv-agent-child-[a-z0-9-]*) ;; *) echo "REFUSED: name must be venv-agent-child-<suffix>"; exit 2;; esac
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-9-D=$W/$N; [ -e $D ] && { echo "exists: $D (child venvs are immutable; pick a new name)"; exit 0; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-10-git -C $A cat-file -e "$S^{commit}" 2>/dev/null || git -C $A fetch -q hub 2>/dev/null; git -C $A cat-file -e "$S^{commit}" || { echo "unknown agent commit $S"; exit 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-11-F=$O/tests/provision/venv-agent-child-s2.txt; T=$D.partial; SRC=$(mktemp -d)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-12-rm -rf $T; python3.13 -m venv $T && P=$T/bin/python && $P -m pip install -q --no-cache-dir 'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3' \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-13- && grep -v -e '^astrid @' -e '^pip==' -e '^setuptools==' -e '^wheel==' $F > $T/.provision-requirements.txt \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-14- && $P -m pip install -q --no-cache-dir --no-deps -r $T/.provision-requirements.txt \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-15- && git -C $A archive "$S" | tar -x -C $SRC && $P -m pip install -q --no-cache-dir --no-deps $SRC || { echo "build failed"; rm -rf $T $SRC; exit 1; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-16-rm -rf $SRC; echo "$S" > $T/.astrid-source-commit
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-17-# venvs record their own path in scripts: rebuild in place is not possible, so fix shebangs/activate for the final path
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-18-grep -rl "$T" $T/bin 2>/dev/null | xargs -r sed -i "s#$T#$D#g"; mv $T $D
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv-19-$D/bin/python -m pip freeze --all > $O/tests/provision/$N.txt; chmod -R a-w $D
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv:20:if [ -n "$BS" ] && [ -n "$RT" ]; then grep -q "^agent $N-full " $O/tests/suites.conf || { L=$(grep "^agent $BS " $O/tests/suites.conf) && [ -n "$L" ] && echo "$L" | sed "s#^agent $BS #agent $N-full #; s#venv-agent-child-s2#$N#g; s#agent-remotion-0012#$RT#g" >> $O/tests/suites.conf; }; fi
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv:21:echo "created $D (astrid from ${S:0:12}, $(wc -l < $O/tests/provision/$N.txt) pins, read-only)$( [ -n "$BS" ] && echo "; suite $N-full")"; $D/bin/python -c 'import astrid; print("astrid import ok")'
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/summary-1-test rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520: pass exit=0 in 19s — commit-integration on rt-m2-registered-render-canonical-target (runtime tree 7ab412cc4bcbe517efcfa806e092336390312e18)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/summary:2:cmd: env ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=$PWD:/home/user/work/agent /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/test_timeline_commit_integration.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/summary-3-counts: 9 passed in 16.45s 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/summary-4---- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/log.txt ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/summary-5-.........                                                                [100%]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/summary-6-9 passed in 16.45s
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/request-1-target=rt-m2-registered-render-canonical-target
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/request-2-repo=runtime
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/request:3:suite=commit-integration
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/request:4:files=''
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/request-5-nocache=0
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-registered-render-canonical-target-commit-integration-1020114418-9520/request-6-requested=2026-10-20T11:44:18Z
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-tests-sprite-global-fixture-renderer-peers12-integration-1020180148-31181/summary-1-test agt-tests-sprite-global-fixture-renderer-peers12-integration-1020180148-31181: pass exit=0 in 123s — renderer-peers12-integration on agt-tests-sprite-global-fixture (agent tree 15dae593bc33f238554b155754eb0996017933b7)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-tests-sprite-global-fixture-renderer-peers12-integration-1020180148-31181/summary:2:cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 -o addopts= -p no:cacheprovider tests/packs/rendering/test_sprite_scene_capability.py tests/packs/rendering/test_scene_host.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-tests-sprite-global-fixture-renderer-peers12-integration-1020180148-31181/summary-3-counts: 32 passed in 107.14s (0:01:47) 
+
+exec
+/bin/bash -lc "D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020193936-1768; printf 'status='; cat \""'$D/status"; [ -f "$D/exit" ] && printf '"'exit=' && cat \""'$D/exit" || true; [ -f "$D/summary" ] && tail -80 "$D/summary" || true' in /home/user/work/wt/agt-m2-d13-final13-exact-pair
+ succeeded in 95ms:
+status=fail
+exit=2
+test agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020193936-1768: fail exit=2 in 135s — d13-native7d-public13-integration on agt-m2-d13-final13-exact-pair (agent tree 7d807bc27b1b237de7138c13672d2fa814a22f3f)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+counts: 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020193936-1768/log.txt ---
+
+==================================== ERRORS ====================================
+_ ERROR collecting tests/packs/test_vibecomfy_runtime_real_service_integration.py _
+ImportError while importing test module '/home/user/work/wt/.test-agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020193936-1768/tests/packs/test_vibecomfy_runtime_real_service_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/test_vibecomfy_runtime_real_service_integration.py:19: in <module>
+    require_module("vibecomfy.porting.import_service")
+tests/lanes.py:80: in require_module
+    return importlib.import_module(name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'vibecomfy'
+____ ERROR collecting tests/packs/vibecomfy/test_media_canonical_loader.py _____
+ImportError while importing test module '/home/user/work/wt/.test-agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020193936-1768/tests/packs/vibecomfy/test_media_canonical_loader.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/vibecomfy/test_media_canonical_loader.py:10: in <module>
+    vibecomfy = require_module("vibecomfy")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/lanes.py:80: in require_module
+    return importlib.import_module(name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'vibecomfy'
+=========================== short test summary info ============================
+ERROR tests/packs/test_vibecomfy_runtime_real_service_integration.py
+ERROR tests/packs/vibecomfy/test_media_canonical_loader.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+1 skipped, 15695 deselected, 2 errors in 44.12s
+
+ exited 2 in 150340ms:
+test agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020193936-1768: fail exit=2 in 135s — d13-native7d-public13-integration on agt-m2-d13-final13-exact-pair (agent tree 7d807bc27b1b237de7138c13672d2fa814a22f3f)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+counts: 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020193936-1768/log.txt ---
+
+==================================== ERRORS ====================================
+_ ERROR collecting tests/packs/test_vibecomfy_runtime_real_service_integration.py _
+ImportError while importing test module '/home/user/work/wt/.test-agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020193936-1768/tests/packs/test_vibecomfy_runtime_real_service_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/test_vibecomfy_runtime_real_service_integration.py:19: in <module>
+    require_module("vibecomfy.porting.import_service")
+tests/lanes.py:80: in require_module
+    return importlib.import_module(name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'vibecomfy'
+____ ERROR collecting tests/packs/vibecomfy/test_media_canonical_loader.py _____
+ImportError while importing test module '/home/user/work/wt/.test-agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020193936-1768/tests/packs/vibecomfy/test_media_canonical_loader.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/vibecomfy/test_media_canonical_loader.py:10: in <module>
+    vibecomfy = require_module("vibecomfy")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/lanes.py:80: in require_module
+    return importlib.import_module(name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'vibecomfy'
+=========================== short test summary info ============================
+ERROR tests/packs/test_vibecomfy_runtime_real_service_integration.py
+ERROR tests/packs/vibecomfy/test_media_canonical_loader.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+1 skipped, 15695 deselected, 2 errors in 44.12s
+
+codex
+The first run is complete and failed only at unrelated collection, predicate: `ModuleNotFoundError: vibecomfy` in two VibeComfy integration modules; the requested publication-chain nodes did not execute. I’m submitting one corrected, non-identical request using the same pinned D13 suite plus exactly the two collected node IDs as `--files`.
+exec
+/bin/bash -lc "set -e
+NODES='tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render'
+R="'$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-d13-final13-exact-pair d13-native7d-public13-integration --files "$NODES")
+printf '"'%s\\n' \""'$R"
+printf '"'%s\\n' \""'$R" | tail -1 | xargs -I{} basename {} > /tmp/agt-m2-d13-final13-exact-pair-test-id' in /home/user/work/wt/agt-m2-d13-final13-exact-pair
+ succeeded in 142ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020194215-8708
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020194215-8708/
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-d13-final13-exact-pair-d13-native7d-public13-integration-1020194215-8708' in /home/user/work/wt/agt-m2-d13-final13-exact-pair

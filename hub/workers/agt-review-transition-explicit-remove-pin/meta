@@ -1,0 +1,9 @@
+name=agt-review-transition-explicit-remove-pin
+repo=agent
+base=tl/agt-m2-transition-clear-and-pin-inverse
+base_sha=eb115db8
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-transition-explicit-remove-pin
+started=2026-10-20T19:18:55Z

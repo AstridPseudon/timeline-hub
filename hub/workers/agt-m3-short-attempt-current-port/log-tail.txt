@@ -1,0 +1,400 @@
+ succeeded in 100ms:
+tests/core/rendering/test_service.py
+tests/sdk/test_capture_source_runtime.py
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \\
+  tests/sdk/test_capture_source_runtime.py \\
+  tests/core/rendering/test_service.py::test_managed_support_uses_retained_attempt_through_real_transport \\
+  tests/core/rendering/test_service.py::test_managed_support_keeps_foreign_progress_transport_rejection" in /home/user/work/wt/agt-m3-short-attempt-current-port
+ succeeded in 4972ms:
+......                                                                   [100%]
+6 passed, 27 deselected in 3.26s
+
+codex
+All required focused coverage passes: 71 tests covering the new Remotion attempt-temp checks, generic-host isolation, storage ownership registry, and strict verified-source tests; the additional source-runtime/service custody checks pass 6 tests (27 unrelated parametrizations deselected). I’m doing the final cleanliness/diff audit, then I’ll write the required report and harness metadata.
+exec
+/bin/bash -lc "find . -type d -name __pycache__ -prune -exec rm -rf {} +
+git diff --check
+git status --short
+printf '\\n--- tracked diff stat ---\\n'
+git diff --stat
+printf '\\n--- changed paths vs base ---\\n'
+git diff --name-only f82da322
+printf '\\n--- untracked test syntax ---\\n'
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m py_compile tests/packs/rendering/test_remotion_attempt_temp.py
+find . -type d -name __pycache__ -prune -exec rm -rf {} +
+printf '\\n--- final status ---\\n'
+git status --short" in /home/user/work/wt/agt-m3-short-attempt-current-port
+ succeeded in 1471ms:
+ M astrid/core/execution/generic_host.py
+ M astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+?? tests/packs/rendering/test_remotion_attempt_temp.py
+
+--- tracked diff stat ---
+ astrid/core/execution/generic_host.py              | 10 +++-
+ .../renderers/remotion/root_preparation.py         | 58 +++++++++++++++++++++-
+ 2 files changed, 65 insertions(+), 3 deletions(-)
+
+--- changed paths vs base ---
+astrid/core/execution/generic_host.py
+astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+
+--- untracked test syntax ---
+
+--- final status ---
+ M astrid/core/execution/generic_host.py
+ M astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+?? tests/packs/rendering/test_remotion_attempt_temp.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..88869af444e7c8bda89e0c8ba69c94b86fca5df8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/commit-msg
+@@ -0,0 +1,4 @@
++feat(rendering): account short-lived remotion scratch
++
++Keep ephemeral attempt roots reclaimable without embedding long task identity,
++and place managed Remotion scratch inside a proved owner-only attempt root.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..88869af444e7c8bda89e0c8ba69c94b86fca5df8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/commit-msg.txt
+@@ -0,0 +1,4 @@
++feat(rendering): account short-lived remotion scratch
++
++Keep ephemeral attempt roots reclaimable without embedding long task identity,
++and place managed Remotion scratch inside a proved owner-only attempt root.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..d567e65d7929073bb23fba7c4ca24fcb5a8f0c4f
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/report.md
+@@ -0,0 +1,34 @@
++# agt-m3-short-attempt-current-port
++
++## What changed
++
++- Ported only the accounted short-attempt behavior onto current `tl/integration`:
++  ephemeral GenericPackHost attempt roots now use the stable `astrid-attempt-` reclaim prefix without task/attempt identity in the basename, and all newly allocated roots are mode `0700`.
++- Added the `.r-` renderer-workspace diagnostic classification and bounded Remotion root proof. Internal managed invocations create browser scratch beneath the exact owner-only attempt root only when the progress marker, staging child, output path, ancestry, ownership, and permissions prove that relationship; otherwise the existing workspace-parent behavior remains.
++- Added direct tests for short-name budget, ownership, symlink/foreign-root refusal, cleanup, and live-envelope accounting.
++
++Current source authority was preserved: `RenderRequest.verified_source`, service-side comparison/validation, and all strict verified-source tests remain unchanged. Explicit `attempt_base` allocation still uses `task_id-attempt_id` and refuses reuse. No Runtime/public DTO, knob, external TMPDIR behavior, quota exemption, or source-authority change was added.
++
++## Tests
++
++Passed:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_remotion_attempt_temp.py tests/core/test_generic_host_attempt_isolation.py tests/sdk/test_storage_ownership.py::test_registry_describes_all_reported_persistent_roots tests/sdk/test_storage_ownership.py::test_package_persistent_writers_are_registered tests/packs/rendering/test_verified_source.py
++71 passed in 11.39s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_capture_source_runtime.py tests/core/rendering/test_service.py::test_managed_support_uses_retained_attempt_through_real_transport tests/core/rendering/test_service.py::test_managed_support_keeps_foreign_progress_transport_rejection
++6 passed, 27 deselected in 3.26s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m py_compile tests/packs/rendering/test_remotion_attempt_temp.py
++passed
++
++git diff --check
++passed
++```
++
++Not run by instruction: browser/MP4 qualification, full suite, localhost/live-socket suites, or test-service runs.
++
++## Decisions and next steps
++
++No new decisions were required. `storage_ownership.py` needed no code change because the existing `astrid-attempt-` selector already covers the shortened ephemeral roots; `.r-` is classified only in the host's bounded diagnostics. The next step is Viewing's separately owned browser/MP4 qualification.
+diff --git a/astrid/core/execution/generic_host.py b/astrid/core/execution/generic_host.py
+index 13870fc6faf70215950aeedb44902e14fe561e3f..3fdb84fe881d14573498313e4d7bf069f09a4999
+--- a/astrid/core/execution/generic_host.py
++++ b/astrid/core/execution/generic_host.py
+@@ -2141,6 +2141,7 @@
+     ".render-service",
+     ".render-inputs-",
+     ".remotion-runtime-",
++    ".r-",
+     "astrid-render-assets-",
+ )
+ 
+@@ -5284,9 +5285,16 @@
+             if root.exists() or root.is_symlink():
+                 raise HostError(f"attempt-base allocation already exists: {root.name}")
+             root.mkdir()
++            root.chmod(0o700)
+             return root.resolve()
+-        root = self.attempt_root or Path(tempfile.mkdtemp(prefix=f"astrid-attempt-{task_id}-")).resolve()
++        # The lease and progress marker carry the task/attempt/fence identity;
++        # do not put those values in an ephemeral filesystem basename.  Keep
++        # the established reclaim prefix so storage_ownership still finds
++        # crash-abandoned roots.
++        root = self.attempt_root or Path(tempfile.mkdtemp(prefix="astrid-attempt-")).resolve()
+         root.mkdir(parents=True, exist_ok=True)
++        if self.attempt_root is None:
++            root.chmod(0o700)
+         return root
+ 
+     @property
+diff --git a/astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py b/astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+index e5e125dcea63699f4f8b56f6b8206aeb424fd48a..017227e930f3ae5017f96f2ff69c1aca6f18f5be
+--- a/astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
++++ b/astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+@@ -3,16 +3,63 @@
+ from __future__ import annotations
+ 
+ import json
++import os
+ import shutil
+ from contextlib import ExitStack, contextmanager
+ from pathlib import Path
+ from tempfile import TemporaryDirectory
+ from typing import Any, Callable, Iterator, Mapping, Sequence, cast
+ 
++from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
+ from astrid.core.rendering.contracts import FrameWindow
+ from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools
+ 
+ 
++def _accounted_attempt_root(
++    staging_parent: Path,
++    provenance_out_path: Path,
++) -> Path | None:
++    """Return the host-owned attempt root proved by its progress marker.
++
++    The progress path is an existing internal invocation carrier.  Requiring
++    the real, owner-only marker parent to contain both the service workspace
++    and output prevents a caller from selecting an unrelated short directory.
++    Direct callers and failed/foreign proofs retain the existing workspace
++    parent.
++    """
++    if os.environ.get(ASTRID_INTERNAL_INVOCATION) != "1":
++        return None
++    raw_progress = os.environ.get("ASTRID_PROGRESS_PATH")
++    if not raw_progress:
++        return None
++    progress = Path(raw_progress)
++    if not progress.is_absolute() or progress.name != ".astrid-progress.json":
++        return None
++    try:
++        if (progress.is_symlink() or not progress.parent.is_dir()
++                or staging_parent.is_symlink() or not staging_parent.is_dir()
++                or any(part.is_symlink() for part in (staging_parent, *staging_parent.parents))
++                or any(part.is_symlink() for part in (provenance_out_path, *provenance_out_path.parents))):
++            return None
++        if any(part.is_symlink() for part in (progress.parent, *progress.parent.parents)):
++            return None
++        attempt = progress.parent.resolve(strict=True)
++        facts = attempt.stat()
++        if (not attempt.is_dir() or facts.st_uid != os.getuid()
++                or facts.st_mode & 0o077):
++            return None
++        staging = staging_parent.resolve(strict=True)
++        output = provenance_out_path.resolve(strict=False)
++    except OSError:
++        return None
++    if (staging.parent != attempt
++            or not output.is_relative_to(attempt)
++            or not staging.is_relative_to(attempt)
++            or not output.parent.name == "outputs"):
++        return None
++    return attempt
++
++
+ @contextmanager
+ def _prepared_remotion_root(
+     timeline_path: Path,
+@@ -78,11 +125,18 @@
+     staged_public_root = project_dir / "public" / "astrid-effects" / render_hash
+     with ExitStack() as asset_lifecycle:
+         try:
+-            temp_parent = (staging_parent or provenance_out_path.parent).resolve()
++            requested_parent = staging_parent or provenance_out_path.parent
++            attempt_root = _accounted_attempt_root(
++                requested_parent, provenance_out_path,
++            )
++            temp_parent = attempt_root or requested_parent.resolve()
+             temp_parent.mkdir(parents=True, exist_ok=True)
+             remotion_temp_root = Path(
+                 asset_lifecycle.enter_context(
+-                    TemporaryDirectory(prefix=".remotion-runtime-", dir=str(temp_parent))
++                    TemporaryDirectory(
++                        prefix=".r-" if attempt_root is not None else ".remotion-runtime-",
++                        dir=str(temp_parent),
++                    )
+                 )
+             )
+             backend._assert_outside_public(remotion_temp_root, project_dir)
+diff --git a/tests/packs/rendering/test_remotion_attempt_temp.py b/tests/packs/rendering/test_remotion_attempt_temp.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..aba0c31dbd1309dfc1770a3eca9ef217f7c49814
+--- /dev/null
++++ b/tests/packs/rendering/test_remotion_attempt_temp.py
+@@ -0,0 +1,106 @@
++"""Pure ownership and path-budget checks for managed Remotion scratch."""
++
++import os
++import tempfile
++from pathlib import Path
++
++from astrid.core.execution.generic_host import (
++    StorageEnvelopeError,
++    _assert_live_storage_envelope,
++    _cleanup_ephemeral_attempt,
++)
++from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import (
++    _accounted_attempt_root,
++)
++
++
++def _attempt_fixture() -> tuple[tempfile.TemporaryDirectory[str], Path, Path, Path]:
++    holder = tempfile.TemporaryDirectory(prefix="tl-", dir="/tmp")
++    base = Path(holder.name)
++    attempt = base / "astrid-attempt-a1b2c3"
++    staging = attempt / ".render-service-a1"
++    output = staging / "outputs" / "render.mp4"
++    output.parent.mkdir(parents=True)
++    attempt.chmod(0o700)
++    progress = attempt / ".astrid-progress.json"
++    progress.touch()
++    return holder, attempt, staging, output
++
++
++def test_ephemeral_attempt_name_keeps_reclaim_prefix_without_task_identity(
++    tmp_path: Path, monkeypatch,
++) -> None:
++    monkeypatch.setenv("TMPDIR", str(tmp_path))
++    from astrid.core.execution.generic_host import GenericPackHost
++
++    host = GenericPackHost(pack_roots=[tmp_path])
++    attempt = host._allocate_attempt_root("task-with-a-long-identity", "attempt-with-a-long-identity")
++    try:
++        assert attempt.name.startswith("astrid-attempt-")
++        assert "task-with-a-long-identity" not in attempt.name
++        assert attempt.stat().st_mode & 0o077 == 0
++    finally:
++        _cleanup_ephemeral_attempt(attempt)
++
++
++def test_accounted_attempt_scratch_stays_in_owner_root_and_under_socket_limit(
++    monkeypatch,
++) -> None:
++    holder, attempt, staging, output = _attempt_fixture()
++    try:
++        monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
++        monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(attempt / ".astrid-progress.json"))
++
++        assert _accounted_attempt_root(staging, output) == attempt
++        socket_path = (
++            attempt / ".r-9x9u2k0m" / "com.google.Chrome.F0OceF" / "SingletonSocket"
++        )
++        assert len(os.fsencode(socket_path)) < 108
++    finally:
++        holder.cleanup()
++
++
++def test_foreign_progress_root_is_refused(monkeypatch) -> None:
++    holder, attempt, staging, output = _attempt_fixture()
++    try:
++        foreign = Path(holder.name) / "foreign"
++        foreign.mkdir()
++        (foreign / ".astrid-progress.json").touch()
++        monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
++        monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(foreign / ".astrid-progress.json"))
++
++        assert _accounted_attempt_root(staging, output) is None
++    finally:
++        holder.cleanup()
++
++
++def test_symlinked_staging_root_is_refused(monkeypatch) -> None:
++    holder, attempt, staging, output = _attempt_fixture()
++    try:
++        alias = Path(holder.name) / "staging-alias"
++        alias.symlink_to(staging, target_is_directory=True)
++        monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
++        monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(attempt / ".astrid-progress.json"))
++
++        assert _accounted_attempt_root(alias, output) is None
++    finally:
++        holder.cleanup()
++
++
++def test_attempt_root_scratch_is_charged_by_existing_live_envelope(tmp_path: Path) -> None:
++    attempt = tmp_path / "attempt"
++    output = attempt / "outputs"
++    scratch = attempt / ".r-abc" / "com.google.Chrome"
++    output.mkdir(parents=True)
++    scratch.mkdir(parents=True)
++    (scratch / "SingletonSocket").write_bytes(b"x")
++
++    try:
++        _assert_live_storage_envelope(
++            {"scratch_bytes": 0, "output_bytes": 0}, attempt, output,
++        )
++    except StorageEnvelopeError as exc:
++        assert exc.diagnostic["category"] == "scratch_overrun"
++        assert exc.diagnostic["observed_scratch_bytes"] == 1
++    else:
++        raise AssertionError("attempt-root browser scratch escaped live accounting")
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/DONE
+printf '%s\\n' '--- worker artifacts ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/{report.md,commit-msg,commit-msg.txt,DONE}
+printf '%s\\n' '--- marker bytes ---'
+wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/DONE
+printf '%s\\n' '--- worktree status ---'
+git status --short" in /home/user/work/wt/agt-m3-short-attempt-current-port
+ succeeded in 481ms:
+--- worker artifacts ---
+-rw-r--r-- 1 root root    0 Oct 20 19:56 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/DONE
+-rw-r--r-- 1 root root  210 Oct 20 19:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/commit-msg
+-rw-r--r-- 1 root root  210 Oct 20 19:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/commit-msg.txt
+-rw-r--r-- 1 root root 2678 Oct 20 19:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/report.md
+--- marker bytes ---
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-short-attempt-current-port/DONE
+--- worktree status ---
+ M astrid/core/execution/generic_host.py
+ M astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+?? tests/packs/rendering/test_remotion_attempt_temp.py
+
+codex
+Implemented the short ephemeral-attempt port.
+
+- Added owner-only `0700` ephemeral roots with stable reclaim prefix.
+- Added bounded `.r-*` Remotion scratch allocation and diagnostics.
+- Preserved `RenderRequest.verified_source` and strict source validation unchanged.
+- Added ownership, cleanup, symlink/foreign-root, socket-path, and envelope tests.
+
+Tests passed:
+
+- `71 passed in 11.39s`
+- `6 passed, 27 deselected in 3.26s`
+- `py_compile` passed
+- `git diff --check` passed
+
+Browser/MP4, full, and live-socket suites were not run per instruction. Report, commit messages, and `DONE` marker are written.
+tokens used
+75,395
+Implemented the short ephemeral-attempt port.
+
+- Added owner-only `0700` ephemeral roots with stable reclaim prefix.
+- Added bounded `.r-*` Remotion scratch allocation and diagnostics.
+- Preserved `RenderRequest.verified_source` and strict source validation unchanged.
+- Added ownership, cleanup, symlink/foreign-root, socket-path, and envelope tests.
+
+Tests passed:
+
+- `71 passed in 11.39s`
+- `6 passed, 27 deselected in 3.26s`
+- `py_compile` passed
+- `git diff --check` passed
+
+Browser/MP4, full, and live-socket suites were not run per instruction. Report, commit messages, and `DONE` marker are written.

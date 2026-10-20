@@ -1,0 +1,9 @@
+name=agt-m2-custody-retained-capability-fix
+repo=agent
+base=tl/agt-m2-main-custody-current-port
+base_sha=f511038d
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-custody-retained-capability-fix
+started=2026-10-20T16:36:21Z

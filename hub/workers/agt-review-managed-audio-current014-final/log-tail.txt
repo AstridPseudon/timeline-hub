@@ -1,0 +1,400 @@
+ succeeded in 214ms:
+83a0cf253be1eea171d2e9b985b37e719fd7655a
+83a0cf253be1eea171d2e9b985b37e719fd7655a
+:100644 100644 a094c607 2031d891 M	astrid/sdk/timeline/_media_inputs.py
+:100644 100644 c5dd666a 762c4d8c M	astrid/sdk/timeline/_trim_commands.py
+:100644 100644 6723a656 bff9314a M	astrid/sdk/timeline/native_occurrence_media_commands.py
+:100644 100644 de7bbd75 02211052 M	tests/editing_conformance/test_commit_runtime_parent_media.py
+:100644 100644 62384aad 9914f62f M	tests/editing_conformance/test_recipe_m2_clip_trim.py
+:100644 100644 6052a414 f2748a95 M	tests/editing_conformance/test_recipe_m2_parent_media.py
+:100644 100644 e0b6d8e3 0cce8893 M	tests/editing_conformance/test_recipe_occurrence_media.py
+
+exec
+/bin/bash -lc 'git rev-parse HEAD HEAD''^; git show -s --format='"'%H %T %P' HEAD; git show -s --format='%H %T %P' HEAD"'^' in /home/user/work/wt/agt-review-managed-audio-current014-final
+ succeeded in 38ms:
+04e5737b471abd30dea593d6702b41a473361aad
+e86f44d04e0a5f183d82d4d1ac307951dd32c44e
+04e5737b471abd30dea593d6702b41a473361aad 83a0cf253be1eea171d2e9b985b37e719fd7655a e86f44d04e0a5f183d82d4d1ac307951dd32c44e
+e86f44d04e0a5f183d82d4d1ac307951dd32c44e 5b4ec03d6d3081f9a3b96676f10ca051c4e9775e ee896821b502ee4e51211b19d064fa44915f5777
+
+codex
+Static review is clean. The commit changes exactly the seven intended Agent files, is byte-identical to the approved native donor (`b7718c58`) and WAV qualification donor (`ddaaf0d6`) on their respective paths, passes whitespace checks, and leaves the current schema hash (`6ba7b51…`), generated client/pin files, and protected fixture unchanged. I found no basis for a HOLD on this bounded parent/managed-media port; the HOLD remains only for the explicitly open child-scope/raw-audio work.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-managed-audio-current014-final.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-managed-audio-current014-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-managed-audio-current014-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5afdc6d12e0a64927ff6582de1966cc1805d3ffd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-managed-audio-current014-final.md
+@@ -0,0 +1,27 @@
++# Agent managed-audio current014 review
++
++Verdict: **APPROVE** `04e5737b` for the bounded managed-audio parent/native
++port only. No release, adoption, publication, pin, or product change.
++
++Evidence:
++
++- Focused review lane (run once): 261 passed, 37 deselected.
++- Source-worker evidence: 275 passed/48 deselected focused conformance tests;
++  1 passed/36 deselected real managed-WAV CAS lifecycle; 22 passed voiceover
++  tests; Ruff and `git diff --check` passed.
++- Exactly seven Agent files changed. Native six-file content matches approved
++  donor `b7718c58`; the Runtime qualification test matches `ddaaf0d6`.
++- Existing five-field MediaSelection, positive authoritative intrinsic
++  duration, audio asset/track checks, wrong-type/boolean refusal, source-unit
++  hold, and guarded inverse/read behavior are preserved. Real WAV bytes are
++  settled and read through normal managed CAS, not SQL or fabricated metadata.
++- Current edit-command schema remains hash
++  `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`; the
++  generated014 pin/client files and protected fixture are unchanged.
++
++Boundary remains OPEN: child-scope voiceover still directly mutates its
++internal draft track/clip and uses `bound.publish`; raw unregistered audio and
++the no-managed-tuple path are also open. Do not remove `bound.publish`, add a
++proposal wrapper, invent metadata, or claim child qualification until the
++exact `track.create` + `occurrence.add-media` commit/reload/retry/inverse/redo
++proof exists.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/REPORT.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/REPORT.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..66e69c89bd0b7ab45544f37e08889ebbc2066518
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/REPORT.md
+@@ -0,0 +1,61 @@
++# Review: managed audio current014
++
++## Verdict
++
++**APPROVE** `04e5737b` for the bounded managed-audio parent/native port only.
++No release, adoption, publication, pin, or product change is implied.
++
++## Scope verified
++
++- The existing five-field `MediaSelection` remains the authority. `_verified`
++  requires exact selection equality, positive integer size, supported
++  `image/*`, `video/*`, or `audio/*`, and positive finite intrinsic duration
++  for video/audio. Boolean and wrong-type duration inputs refuse before writes.
++- Parent `clip.add-media` and occurrence `occurrence.add-media` remain the
++  carriers. Audio rows use the existing `clipType: media` carrier on an
++  active raw audio track; occurrence media track-kind checks are scoped and
++  preserve visual behavior.
++- Audio trim requires an active raw audio track and an audio registry asset.
++  Unsupported source windows/maps, invalid speed, boolean/non-finite timing,
++  and missing exact Runtime-verified duration refuse atomically. When the
++  legacy registry lacks duration, only the Runtime-carried positive intrinsic
++  duration is used and recorded as an exact dependency; no fabricated metadata
++  is introduced. Source-unit hold and existing guarded inverse/read behavior
++  remain intact.
++- The real WAV qualification uses the normal managed-output settlement and CAS
++  path, validates the selected metadata through the Runtime port, reads the
++  resulting bytes from CAS, and proves reload, exact retry, inverse, redo, and
++  store integrity. It does not use SQL or fabricated accepted metadata.
++
++## Evidence
++
++Focused review command, run once:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_commit_runtime_parent_media.py
++```
++
++Result: **261 passed, 37 deselected in 29.97s**.
++
++Additional source-worker evidence, not rerun here: 275 passed/48 deselected
++focused conformance tests; 1 passed/36 deselected real managed-WAV test; 22
++passed existing voiceover tests; Ruff and `git diff --check` passed.
++
++The reviewed commit changes exactly seven files. The six native files are
++byte-identical to donor `b7718c58`; the Runtime qualification test is
++byte-identical to donor `ddaaf0d6`. Current schema
++`astrid/core/timeline/schema/edit-command.schema.json` hashes to
++`6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d` and is
++unchanged by this commit. Generated client/pin files and the protected public
++fixture are also unchanged; `git diff --check` passes and the worktree is
++clean.
++
++## Open boundary / recommendation
++
++Child-scope voiceover remains **OPEN**: `draft_voiceover.py` still directly
++mutates the internal `draft-vo` track/clip and uses the existing
++`bound.publish`; it has not been proven as captured `track.create` plus
++`occurrence.add-media` through commit/reload/retry/inverse/redo. Raw,
++unregistered audio and the no-managed-tuple path also remain strictly open.
++Do not remove `bound.publish`, add a proposal wrapper, invent metadata, or
++claim child-scope qualification until that exact proof exists.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..47bf7f13bf922cd060c9d479beebb237214d8dd7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(review): approve bounded managed audio current014 port
++
++Record the narrow review approval and preserve the explicit child-scope and
++raw-audio qualification boundaries without changing product behavior.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-managed-audio-current014-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-managed-audio-current014-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5afdc6d12e0a64927ff6582de1966cc1805d3ffd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-managed-audio-current014-final.md
+@@ -0,0 +1,27 @@
++# Agent managed-audio current014 review
++
++Verdict: **APPROVE** `04e5737b` for the bounded managed-audio parent/native
++port only. No release, adoption, publication, pin, or product change.
++
++Evidence:
++
++- Focused review lane (run once): 261 passed, 37 deselected.
++- Source-worker evidence: 275 passed/48 deselected focused conformance tests;
++  1 passed/36 deselected real managed-WAV CAS lifecycle; 22 passed voiceover
++  tests; Ruff and `git diff --check` passed.
++- Exactly seven Agent files changed. Native six-file content matches approved
++  donor `b7718c58`; the Runtime qualification test matches `ddaaf0d6`.
++- Existing five-field MediaSelection, positive authoritative intrinsic
++  duration, audio asset/track checks, wrong-type/boolean refusal, source-unit
++  hold, and guarded inverse/read behavior are preserved. Real WAV bytes are
++  settled and read through normal managed CAS, not SQL or fabricated metadata.
++- Current edit-command schema remains hash
++  `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`; the
++  generated014 pin/client files and protected fixture are unchanged.
++
++Boundary remains OPEN: child-scope voiceover still directly mutates its
++internal draft track/clip and uses `bound.publish`; raw unregistered audio and
++the no-managed-tuple path are also open. Do not remove `bound.publish`, add a
++proposal wrapper, invent metadata, or claim child qualification until the
++exact `track.create` + `occurrence.add-media` commit/reload/retry/inverse/redo
++proof exists.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/REPORT.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/REPORT.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..66e69c89bd0b7ab45544f37e08889ebbc2066518
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/REPORT.md
+@@ -0,0 +1,61 @@
++# Review: managed audio current014
++
++## Verdict
++
++**APPROVE** `04e5737b` for the bounded managed-audio parent/native port only.
++No release, adoption, publication, pin, or product change is implied.
++
++## Scope verified
++
++- The existing five-field `MediaSelection` remains the authority. `_verified`
++  requires exact selection equality, positive integer size, supported
++  `image/*`, `video/*`, or `audio/*`, and positive finite intrinsic duration
++  for video/audio. Boolean and wrong-type duration inputs refuse before writes.
++- Parent `clip.add-media` and occurrence `occurrence.add-media` remain the
++  carriers. Audio rows use the existing `clipType: media` carrier on an
++  active raw audio track; occurrence media track-kind checks are scoped and
++  preserve visual behavior.
++- Audio trim requires an active raw audio track and an audio registry asset.
++  Unsupported source windows/maps, invalid speed, boolean/non-finite timing,
++  and missing exact Runtime-verified duration refuse atomically. When the
++  legacy registry lacks duration, only the Runtime-carried positive intrinsic
++  duration is used and recorded as an exact dependency; no fabricated metadata
++  is introduced. Source-unit hold and existing guarded inverse/read behavior
++  remain intact.
++- The real WAV qualification uses the normal managed-output settlement and CAS
++  path, validates the selected metadata through the Runtime port, reads the
++  resulting bytes from CAS, and proves reload, exact retry, inverse, redo, and
++  store integrity. It does not use SQL or fabricated accepted metadata.
++
++## Evidence
++
++Focused review command, run once:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_commit_runtime_parent_media.py
++```
++
++Result: **261 passed, 37 deselected in 29.97s**.
++
++Additional source-worker evidence, not rerun here: 275 passed/48 deselected
++focused conformance tests; 1 passed/36 deselected real managed-WAV test; 22
++passed existing voiceover tests; Ruff and `git diff --check` passed.
++
++The reviewed commit changes exactly seven files. The six native files are
++byte-identical to donor `b7718c58`; the Runtime qualification test is
++byte-identical to donor `ddaaf0d6`. Current schema
++`astrid/core/timeline/schema/edit-command.schema.json` hashes to
++`6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d` and is
++unchanged by this commit. Generated client/pin files and the protected public
++fixture are also unchanged; `git diff --check` passes and the worktree is
++clean.
++
++## Open boundary / recommendation
++
++Child-scope voiceover remains **OPEN**: `draft_voiceover.py` still directly
++mutates the internal `draft-vo` track/clip and uses the existing
++`bound.publish`; it has not been proven as captured `track.create` plus
++`occurrence.add-media` through commit/reload/retry/inverse/redo. Raw,
++unregistered audio and the no-managed-tuple path also remain strictly open.
++Do not remove `bound.publish`, add a proposal wrapper, invent metadata, or
++claim child-scope qualification until that exact proof exists.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..47bf7f13bf922cd060c9d479beebb237214d8dd7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg
+@@ -0,0 +1,4 @@
++docs(review): approve bounded managed audio current014 port
++
++Record the narrow review approval and preserve the explicit child-scope and
++raw-audio qualification boundaries without changing product behavior.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..47bf7f13bf922cd060c9d479beebb237214d8dd7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(review): approve bounded managed audio current014 port
++
++Record the narrow review approval and preserve the explicit child-scope and
++raw-audio qualification boundaries without changing product behavior.
+
+exec
+/bin/bash -lc 'WORKER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final; test -f "$WORKER/DONE" && test ! -s "$WORKER/DONE" && echo DONE=ok; echo '"'--- worker artifacts ---'; ls -l \""'$WORKER/REPORT.md" "$WORKER/commit-msg" "$WORKER/commit-msg.txt" "$WORKER/DONE"; echo '"'--- worktree status ---'; git status --short; echo '--- report head ---'; sed -n '1,220p' \""'$WORKER/REPORT.md"; echo '"'--- design note ---'; sed -n '1,180p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-managed-audio-current014-final.md" in /home/user/work/wt/agt-review-managed-audio-current014-final
+ succeeded in 570ms:
+DONE=ok
+--- worker artifacts ---
+-rw-r--r-- 1 root root    0 Oct 20 15:58 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/DONE
+-rw-r--r-- 1 root root 3263 Oct 20 15:58 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/REPORT.md
+-rw-r--r-- 1 root root  207 Oct 20 15:58 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg
+-rw-r--r-- 1 root root  207 Oct 20 15:58 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/commit-msg.txt
+--- worktree status ---
+--- report head ---
+# Review: managed audio current014
+
+## Verdict
+
+**APPROVE** `04e5737b` for the bounded managed-audio parent/native port only.
+No release, adoption, publication, pin, or product change is implied.
+
+## Scope verified
+
+- The existing five-field `MediaSelection` remains the authority. `_verified`
+  requires exact selection equality, positive integer size, supported
+  `image/*`, `video/*`, or `audio/*`, and positive finite intrinsic duration
+  for video/audio. Boolean and wrong-type duration inputs refuse before writes.
+- Parent `clip.add-media` and occurrence `occurrence.add-media` remain the
+  carriers. Audio rows use the existing `clipType: media` carrier on an
+  active raw audio track; occurrence media track-kind checks are scoped and
+  preserve visual behavior.
+- Audio trim requires an active raw audio track and an audio registry asset.
+  Unsupported source windows/maps, invalid speed, boolean/non-finite timing,
+  and missing exact Runtime-verified duration refuse atomically. When the
+  legacy registry lacks duration, only the Runtime-carried positive intrinsic
+  duration is used and recorded as an exact dependency; no fabricated metadata
+  is introduced. Source-unit hold and existing guarded inverse/read behavior
+  remain intact.
+- The real WAV qualification uses the normal managed-output settlement and CAS
+  path, validates the selected metadata through the Runtime port, reads the
+  resulting bytes from CAS, and proves reload, exact retry, inverse, redo, and
+  store integrity. It does not use SQL or fabricated accepted metadata.
+
+## Evidence
+
+Focused review command, run once:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_commit_runtime_parent_media.py
+```
+
+Result: **261 passed, 37 deselected in 29.97s**.
+
+Additional source-worker evidence, not rerun here: 275 passed/48 deselected
+focused conformance tests; 1 passed/36 deselected real managed-WAV test; 22
+passed existing voiceover tests; Ruff and `git diff --check` passed.
+
+The reviewed commit changes exactly seven files. The six native files are
+byte-identical to donor `b7718c58`; the Runtime qualification test is
+byte-identical to donor `ddaaf0d6`. Current schema
+`astrid/core/timeline/schema/edit-command.schema.json` hashes to
+`6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d` and is
+unchanged by this commit. Generated client/pin files and the protected public
+fixture are also unchanged; `git diff --check` passes and the worktree is
+clean.
+
+## Open boundary / recommendation
+
+Child-scope voiceover remains **OPEN**: `draft_voiceover.py` still directly
+mutates the internal `draft-vo` track/clip and uses the existing
+`bound.publish`; it has not been proven as captured `track.create` plus
+`occurrence.add-media` through commit/reload/retry/inverse/redo. Raw,
+unregistered audio and the no-managed-tuple path also remain strictly open.
+Do not remove `bound.publish`, add a proposal wrapper, invent metadata, or
+claim child-scope qualification until that exact proof exists.
+--- design note ---
+# Agent managed-audio current014 review
+
+Verdict: **APPROVE** `04e5737b` for the bounded managed-audio parent/native
+port only. No release, adoption, publication, pin, or product change.
+
+Evidence:
+
+- Focused review lane (run once): 261 passed, 37 deselected.
+- Source-worker evidence: 275 passed/48 deselected focused conformance tests;
+  1 passed/36 deselected real managed-WAV CAS lifecycle; 22 passed voiceover
+  tests; Ruff and `git diff --check` passed.
+- Exactly seven Agent files changed. Native six-file content matches approved
+  donor `b7718c58`; the Runtime qualification test matches `ddaaf0d6`.
+- Existing five-field MediaSelection, positive authoritative intrinsic
+  duration, audio asset/track checks, wrong-type/boolean refusal, source-unit
+  hold, and guarded inverse/read behavior are preserved. Real WAV bytes are
+  settled and read through normal managed CAS, not SQL or fabricated metadata.
+- Current edit-command schema remains hash
+  `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`; the
+  generated014 pin/client files and protected fixture are unchanged.
+
+Boundary remains OPEN: child-scope voiceover still directly mutates its
+internal draft track/clip and uses `bound.publish`; raw unregistered audio and
+the no-managed-tuple path are also open. Do not remove `bound.publish`, add a
+proposal wrapper, invent metadata, or claim child qualification until the
+exact `track.create` + `occurrence.add-media` commit/reload/retry/inverse/redo
+proof exists.
+
+codex
+## Review result: APPROVE
+
+Reviewed `04e5737b` as a bounded managed-audio parent/native port.
+
+- Focused tests: **261 passed, 37 deselected**.
+- Verified exact five-field media selection, positive intrinsic duration, audio-track/type guards, boolean/wrong-type refusal, source-unit hold, inverse/read guards, and real WAV CAS lifecycle.
+- Commit changes exactly seven intended files; schema hash `6ba7b51…`, generated pins/client files, and protected fixtures are unchanged.
+- Child-scope voiceover, raw unregistered audio, and no-managed-tuple behavior remain strictly open. `bound.publish` was not removed.
+
+Artifacts:
+
+- [REPORT.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/REPORT.md)
+- [design review note](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-managed-audio-current014-final.md)
+- `DONE` marker created; worktree clean.
+tokens used
+154,454
+## Review result: APPROVE
+
+Reviewed `04e5737b` as a bounded managed-audio parent/native port.
+
+- Focused tests: **261 passed, 37 deselected**.
+- Verified exact five-field media selection, positive intrinsic duration, audio-track/type guards, boolean/wrong-type refusal, source-unit hold, inverse/read guards, and real WAV CAS lifecycle.
+- Commit changes exactly seven intended files; schema hash `6ba7b51…`, generated pins/client files, and protected fixtures are unchanged.
+- Child-scope voiceover, raw unregistered audio, and no-managed-tuple behavior remain strictly open. `bound.publish` was not removed.
+
+Artifacts:
+
+- [REPORT.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-managed-audio-current014-final/REPORT.md)
+- [design review note](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-managed-audio-current014-final.md)
+- `DONE` marker created; worktree clean.

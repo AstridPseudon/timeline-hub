@@ -1,0 +1,400 @@
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_recipe_m2_group_move.py::test_membership_aba_and_destination_lane_aba_are_guarded
+FAILED tests/editing_conformance/test_recipe_m2_group_move.py::test_unrelated_lane_activity_rebases_but_inactive_destination_members_are_guarded
+2 failed, 83 passed in 4.85s
+
+exec
+/bin/bash -lc 'C=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/candidate; P=/home/user/work/venv-agent/bin/python; cd "$C"; ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$C" "$P" -B - <<'"'PY'
+from tests.helpers.runtime import use_runtime
+use_runtime('a51af885ea631c695a857985239c7fe7bf2e871f')
+import pytest
+raise SystemExit(pytest.main([
+    '-q', '-p', 'no:cacheprovider', '-m', 'integration or not integration',
+    'tests/sdk/test_timeline_group_migration_runtime.py',
+    'tests/sdk/test_current_group_runtime.py', '--tb=short',
+]))
+PY" in /home/user/work/wt/agt-review-group-first-slice-private
+ succeeded in 6672ms:
+...........                                                              [100%]
+11 passed in 5.82s
+
+codex
+The focused rerun reproduces the prior classification exactly: 83 passed and 2 inherited failures, both equal-state ordinary replay assertions; no assertions were removed, weakened, skipped, or newly xfailed. The real Runtime lane passes 11/11 with genuine pre-existing PNG CAS and `media.transcript/v1` DocumentPin inputs, rational 30000/1001 timing, restart, exact inverse/redo, atomic touched-membership refusal, and independent-group rebase. I’m finalizing the evidence hashes and report now.
+exec
+/bin/bash -lc 'W=/home/user/work/wt/agt-review-group-first-slice-private; N=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes; C=$N/candidate; printf '"'%s\\n' '--- EXACT TREE/SOURCE ---'; git -C \""'$W" rev-parse HEAD; git -C "$W" rev-parse HEAD''^{tree}; git -C "$W" status --short --branch; sha256sum "$N/private-candidate.patch" "$C/astrid/core/timeline/schema/edit-command.schema.json"; printf '"'%s\\n' '--- FLOOR BYTE CHECK ---'; P=/home/user/work/venv-agent/bin/python; PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\""'$W" "$P" -B - <<'"'PY'
+from pathlib import Path
+import hashlib, json, subprocess
+root=Path('/home/user/work/wt/agt-review-group-first-slice-private')
+cand=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/candidate')
+path='astrid/core/timeline/schema/edit-command.schema.json'
+base=subprocess.check_output(['git','-C',str(root),'show',f'HEAD:{path}'])
+private=(cand/path).read_bytes()
+ordinary=json.loads(base)
+priv=json.loads(private)
+stripped=json.loads(json.dumps(priv))
+for key in ('MigrateGroupsArgs','OccurrenceMoveArgs'): stripped['"'$defs'"'].pop(key)
+stripped['"'$defs'"']['EditCommand']['allOf']=stripped['"'$defs'"']['EditCommand']['allOf'][:-2]
+print('base_sha256',hashlib.sha256(base).hexdigest())
+print('private_sha256',hashlib.sha256(private).hexdigest())
+print('ordinary_defs_clauses',len(ordinary['"'$defs'"']),len(ordinary['"'$defs'"']['EditCommand']['allOf']))
+print('private_defs_clauses',len(priv['"'$defs'"']),len(priv['"'$defs'"']['EditCommand']['allOf']))
+print('stripped_equal_base',json.dumps(stripped,indent=2)+'\\n' == base.decode())
+for path in ('runtime.lock.json','astrid_runtime_client/generated.py','astrid_runtime_client/timeline_commit_types.py'):
+    b=subprocess.check_output(['git','-C',str(root),'show',f'HEAD:{path}'])
+    print(path,'candidate_equal_base', (cand/path).read_bytes()==b)
+PY" in /home/user/work/wt/agt-review-group-first-slice-private
+ succeeded in 328ms:
+--- EXACT TREE/SOURCE ---
+ee896821b502ee4e51211b19d064fa44915f5777
+aa0b15850d4b777b77f54faec189cf7e4c60a7b6
+## tl/agt-review-group-first-slice-private
+74f657c0308d931334361426925851a9413657d688f1261e3195e80d519a573d  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/private-candidate.patch
+c51d71e687e9962fd5309528d6d69d266e319ebffe9a1dc46af20be7add8afc3  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/candidate/astrid/core/timeline/schema/edit-command.schema.json
+--- FLOOR BYTE CHECK ---
+base_sha256 6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d
+private_sha256 c51d71e687e9962fd5309528d6d69d266e319ebffe9a1dc46af20be7add8afc3
+ordinary_defs_clauses 55 29
+private_defs_clauses 57 31
+stripped_equal_base True
+runtime.lock.json candidate_equal_base True
+astrid_runtime_client/generated.py candidate_equal_base True
+astrid_runtime_client/timeline_commit_types.py candidate_equal_base True
+
+exec
+/bin/bash -lc 'W=/home/user/work/wt/agt-review-group-first-slice-private; git -C "$W" ls-tree -r --name-only HEAD | rg '"'new_group_commands|occurrence_commands.py|group_view.py|test_group_read_view|recipe_m2_group' || true; git -C \""'$W" show --stat --oneline --decorate HEAD | sed -n '"'1,80p'; git -C \""'$W" log --oneline --all -- astrid/sdk/timeline/new_group_commands.py tests/editing_conformance/test_group_read_view.py | sed -n '"'1,40p'" in /home/user/work/wt/agt-review-group-first-slice-private
+ succeeded in 2ms:
+ee896821 (HEAD -> tl/agt-review-group-first-slice-private, hub/tl/agt-review-current-ordinary-source-join, hub/tl/agt-m2-ordinary-current-source-compose, hub/tl/agt-m2-group-migration-current-first-slice, hub/timeline/agent/tl/agt-review-current-ordinary-source-join, hub/timeline/agent/tl/agt-m2-ordinary-current-source-compose, hub/timeline/agent/tl/agt-m2-group-migration-current-first-slice, tl/agt-review-current-ordinary-source-join, tl/agt-m2-ordinary-current-source-compose) feat(timeline): compose ordinary source onto current integration
+
+ .../core/timeline/schema/edit-command.schema.json  |  755 +++++-
+ astrid/sdk/remote.py                               |   18 +
+ astrid/sdk/timeline/__init__.py                    |    8 +-
+ astrid/sdk/timeline/_clip_scalar_commands.py       |    2 +-
+ astrid/sdk/timeline/_collections.py                |   46 +-
+ astrid/sdk/timeline/_command_state.py              |   88 +-
+ astrid/sdk/timeline/_delete_commands.py            |   19 +-
+ astrid/sdk/timeline/_recording.py                  |   29 +-
+ astrid/sdk/timeline/_root_inverse.py               |   43 +-
+ astrid/sdk/timeline/_timing_evaluators.py          |    8 +-
+ astrid/sdk/timeline/commands.py                    |   38 +-
+ astrid/sdk/timeline/commit.py                      |  127 +-
+ astrid/sdk/timeline/inverse.py                     |   76 +-
+ astrid/sdk/timeline/native_auto_placement.py       |  101 +-
+ astrid/sdk/timeline/native_initialize.py           |   35 +
+ astrid/sdk/timeline/native_occurrence_create.py    |   61 +
+ .../timeline/native_occurrence_media_commands.py   |   61 +-
+ .../sdk/timeline/native_parent_media_commands.py   |  123 +
+ astrid/sdk/timeline/native_text_binding.py         |   80 +
+ astrid/sdk/timeline/native_word_anchor.py          |  317 +++
+ astrid/sdk/timeline_media_replacement.py           |   41 +
+ .../fixtures/native_word_anchor.json               | 2833 ++++++++++++++++++++
+ .../fixtures/pristine_initialize.json              |  695 +++++
+ .../fixtures/recipe_m2_parent_media.json           | 1672 ++++++++++++
+ .../fixtures/recipe_m2_text_binding.json           |   21 +
+ .../fixtures/recipe_parent_media.json              | 2076 ++++++++++++++
+ .../fixtures/reviewed_native_s3.json               |  530 ++++
+ .../native_word_anchor_fixture.py                  |  214 ++
+ .../test_commit_runtime_media_manifest_inverse.py  |  130 +-
+ .../test_commit_runtime_occurrence_create.py       |  260 ++
+ .../test_commit_runtime_occurrence_media.py        |   30 +-
+ .../test_commit_runtime_parent_auto_completion.py  |  168 ++
+ .../test_commit_runtime_parent_media.py            |  507 ++++
+ .../test_commit_runtime_parent_media_swap.py       |  301 +++
+ .../test_commit_runtime_text_binding.py            |  367 +++
+ .../test_grouped_clip_cache_inverse.py             |  111 +
+ .../editing_conformance/test_native_word_anchor.py |  764 ++++++
+ .../test_native_word_anchor_vectors.py             |  166 ++
+ .../test_next_command_cohort_runtime.py            |  256 ++
+ .../test_next_ordinary_union_runtime.py            |   60 +
+ .../test_pristine_initialize.py                    |  171 ++
+ .../editing_conformance/test_producer_insertion.py |  565 ++++
+ .../editing_conformance/test_recipe_clip_delete.py |   33 +-
+ .../test_recipe_m2_parent_media.py                 |  577 ++++
+ .../test_recipe_occurrence_create.py               |  178 ++
+ .../test_recipe_parent_auto_completion.py          |  192 ++
+ .../test_recipe_parent_media.py                    |  194 ++
+ .../test_recipe_text_binding_native.py             |  222 ++
+ .../test_recipe_text_binding_spike.py              |   11 +
+ .../test_recorded_graph_roots.py                   |    6 +-
+ .../test_s3_reviewed_cohort_runtime.py             |  103 +
+ .../test_timing_retained_inputs.py                 |   15 +-
+ .../agent-frozen-s2-26ef2bbb.json                  | 1982 ++++++++++++++
+ .../agent-word-caea687e.json                       | 1932 +++++++++++++
+ .../next-command-additions.json                    |  525 ++++
+ .../text-command-additions.json                    |  193 ++
+ tests/helpers/trusted_seed.py                      |    3 +-
+ tests/sdk/test_timeline_current_union_schema.py    |   84 +-
+ .../test_timeline_pristine_initialize_provider.py  |   70 +
+ .../test_timeline_pristine_initialize_runtime.py   |  109 +
+ tests/test_timeline_clip_replacement.py            |   61 +
+ 61 files changed, 20264 insertions(+), 199 deletions(-)
+86dfc584 feat(timeline): recover bounded canonical group helpers
+746440c4 feat(timeline): port guarded canonical group migration candidate
+a0dad5fc feat(timeline): record explicit lossless legacy group migration
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0da09350625b899bfd22329f41a299cd95115ef1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md
+@@ -0,0 +1,66 @@
++# Review: recovered private group first slice
++
++## Decision
++
++**APPROVE the private recovery as a bounded, reviewable PLAN4.1 Option A first-slice candidate. HOLD public adoption, schema/client pinning, and App qualification.** This is not a public-adoption or release claim.
++
++Exact Agent source under review:
++
++- source commit: `ee896821b502ee4e51211b19d064fa44915f5777`
++- source tree: `aa0b15850d4b777b77f54faec189cf7e4c60a7b6`
++- private patch: `74f657c0308d931334361426925851a9413657d688f1261e3195e80d519a573d`
++- private schema: `c51d71e687e9962fd5309528d6d69d266e319ebffe9a1dc46af20be7add8afc3`
++
++The private patch is the recovered candidate at `notes/candidate`; it is not present in this review worktree and no product files were changed here.
++
++## Verified against Option A / PLAN4.1
++
++- Migration is explicit and recorded (`timeline.migrate-groups`), uses canonical shot/occurrence roots and existing `Recording.create_entity`, and keeps `pinnedShotGroups` as migration input/read-side projection rather than a second editable store.
++- Full legacy group metadata, opaque/nullable fields, authored order, source windows/hold/speed, rational output, dependency pins, and explicit legacy-to-canonical member identity mapping are retained in occurrence provenance. Exact guarded inverse restores the original raw parent and redo recreates the same IDs.
++- Interleaved, reordered, duplicate/missing/shared member identities, unsupported items/maps/aliases, divergent mirrors/registries, and occupied/forged destinations refuse atomically. The legacy sanitizer is not used; the graph exception is limited to the exact provenance path.
++- Occurrence movement binds the exact occurrence, parent destination track, and occurrence child track. Parent placement plus all affected raw child tracks are recorded in one operation. Child-track creation is a typed command in the same batch and is undoable. Shared/derived ownership refuses before writes; no display-ID or `(shotId, trackId)` inference is used.
++- The pure group view reads current canonical child membership/order and source geometry, carries display metadata from provenance only, preserves source windows and rational FPS, and emits explicit owner/member/track bindings. Independent groups rebase without disturbing the other group's state.
++- Ordinary source floor is unchanged: 55 definitions / 29 clauses and the base schema SHA256 is `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`. Private-only schema is 57 / 31; stripping its two additions reproduces the ordinary schema byte-for-byte. `runtime.lock.json` and generated client files remain byte-identical to base.
++- The current ordinary 55/29 and carrier 3730/48/22 artifacts were not frozen or silently bypassed. No public registration, pin, normal generation, integration, release, or sourceRef union was performed.
++
++## Evidence
++
++Focused private semantic lane, rerun directly:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=notes/candidate /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_m2_group_migration.py \
++  tests/editing_conformance/test_recipe_m2_group_move.py \
++  tests/editing_conformance/test_group_read_view.py \
++  tests/editing_conformance/test_current_group_slice.py --tb=short
++```
++
++Result: **83 passed, 2 failed in 4.85s**. The only failures are inherited assertions in `test_membership_aba_and_destination_lane_aba_are_guarded` and `test_unrelated_lane_activity_rebases_but_inactive_destination_members_are_guarded`. They require refusal for equal-state ordinary replay; current settled ordinary replay permits that equal-state case while inverse remains strict. The assertions remain unchanged and are not converted to skip/xfail.
++
++Real Runtime lane, rerun directly with the explicitly selected private setup helper:
++
++```text
++ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 \
++PYTHONPATH=notes/candidate /home/user/work/venv-agent/bin/python -B - <<'PY'
++from tests.helpers.runtime import use_runtime
++use_runtime('a51af885ea631c695a857985239c7fe7bf2e871f')
++import pytest
++raise SystemExit(pytest.main([
++  '-q', '-p', 'no:cacheprovider', '-m', 'integration or not integration',
++  'tests/sdk/test_timeline_group_migration_runtime.py',
++  'tests/sdk/test_current_group_runtime.py', '--tb=short']))
++PY
++```
++
++Result: **11 passed in 5.82s**. The setup uses genuine managed PNG CAS and `media.transcript/v1` segments created before the legacy parent/DocumentPins, then proves retained source readback, rational 30000/1001 timing, restart, exact raw inverse/redo, independent-group Runtime rebase, and atomic touched-membership refusal. Scene evaluation is trip-wired off. The helper is Runtime-owned test setup only: commit `54db299d6ebb9ec98649895760a4cd37cee6c147`, helper SHA256 `9f61af7be9518aa9d2442091257d6cdae99c65db0773377a53244f8807b30e13`.
++
++The requested unchanged 382f helper was also previously reproduced at **7 passed / 2 failed** (`semantic identity boundary differs from writes`); that is an explicit stale setup dependency, not a public helper adoption or Agent guard relaxation.
++
++App preservation check: the shared current App test retains exactly three original `it.fails` cases, byte-stable at SHA256 `1326a6a4d84f8a43372cde6c0c229430ec09eac32f6022d43295d585c4de3df5`: free multi-clip drag to a new bottom track, pinned group across tracks, and pinned group onto a new track. Their successful geometry/group assertions remain intact. App browser/session qualification was not run.
++
++No full suite, browser, HTTP/socket, renderer, macOS, new matrix, large fixture, new skip/xfail, product change, integration pin, release, or push was performed.
++
++## Remaining agreement required
++
++Before any public adoption, the Agent and Runtime owners must agree the exact full current 55/29 ordinary cohort plus the current carrier/sourceRef/fence join, normally generate the matching 57/31 artifact/client set, and qualify that matched pair without substituting 3730/48/22 or a withdrawn schema. Then App must qualify the existing-lane adapter and the two remaining original drag outcomes (new-lane pinned drag and free multi-drag), while preserving all three original success assertions. Shared physical remapping and nonempty semantic item mapping remain explicitly unsupported in this slice and must be separately agreed before expansion.
++
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..797fa9fefb86a2cdb24e708509fda140466ad101
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg
+@@ -0,0 +1,4 @@
++feat(timeline): review private group first slice
++
++Approve the bounded private Option A recovery while holding public adoption
++pending the exact current ordinary/carrier cohort and App qualification.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..797fa9fefb86a2cdb24e708509fda140466ad101
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg.txt
+@@ -0,0 +1,4 @@
++feat(timeline): review private group first slice
++
++Approve the bounded private Option A recovery while holding public adoption
++pending the exact current ordinary/carrier cohort and App qualification.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0da09350625b899bfd22329f41a299cd95115ef1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md
+@@ -0,0 +1,66 @@
++# Review: recovered private group first slice
++
++## Decision
++
++**APPROVE the private recovery as a bounded, reviewable PLAN4.1 Option A first-slice candidate. HOLD public adoption, schema/client pinning, and App qualification.** This is not a public-adoption or release claim.
++
++Exact Agent source under review:
++
++- source commit: `ee896821b502ee4e51211b19d064fa44915f5777`
++- source tree: `aa0b15850d4b777b77f54faec189cf7e4c60a7b6`
++- private patch: `74f657c0308d931334361426925851a9413657d688f1261e3195e80d519a573d`
++- private schema: `c51d71e687e9962fd5309528d6d69d266e319ebffe9a1dc46af20be7add8afc3`
++
++The private patch is the recovered candidate at `notes/candidate`; it is not present in this review worktree and no product files were changed here.
++
++## Verified against Option A / PLAN4.1
++
++- Migration is explicit and recorded (`timeline.migrate-groups`), uses canonical shot/occurrence roots and existing `Recording.create_entity`, and keeps `pinnedShotGroups` as migration input/read-side projection rather than a second editable store.
++- Full legacy group metadata, opaque/nullable fields, authored order, source windows/hold/speed, rational output, dependency pins, and explicit legacy-to-canonical member identity mapping are retained in occurrence provenance. Exact guarded inverse restores the original raw parent and redo recreates the same IDs.
++- Interleaved, reordered, duplicate/missing/shared member identities, unsupported items/maps/aliases, divergent mirrors/registries, and occupied/forged destinations refuse atomically. The legacy sanitizer is not used; the graph exception is limited to the exact provenance path.
++- Occurrence movement binds the exact occurrence, parent destination track, and occurrence child track. Parent placement plus all affected raw child tracks are recorded in one operation. Child-track creation is a typed command in the same batch and is undoable. Shared/derived ownership refuses before writes; no display-ID or `(shotId, trackId)` inference is used.
++- The pure group view reads current canonical child membership/order and source geometry, carries display metadata from provenance only, preserves source windows and rational FPS, and emits explicit owner/member/track bindings. Independent groups rebase without disturbing the other group's state.
++- Ordinary source floor is unchanged: 55 definitions / 29 clauses and the base schema SHA256 is `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`. Private-only schema is 57 / 31; stripping its two additions reproduces the ordinary schema byte-for-byte. `runtime.lock.json` and generated client files remain byte-identical to base.
++- The current ordinary 55/29 and carrier 3730/48/22 artifacts were not frozen or silently bypassed. No public registration, pin, normal generation, integration, release, or sourceRef union was performed.
++
++## Evidence
++
++Focused private semantic lane, rerun directly:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=notes/candidate /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_recipe_m2_group_migration.py \
++  tests/editing_conformance/test_recipe_m2_group_move.py \
++  tests/editing_conformance/test_group_read_view.py \
++  tests/editing_conformance/test_current_group_slice.py --tb=short
++```
++
++Result: **83 passed, 2 failed in 4.85s**. The only failures are inherited assertions in `test_membership_aba_and_destination_lane_aba_are_guarded` and `test_unrelated_lane_activity_rebases_but_inactive_destination_members_are_guarded`. They require refusal for equal-state ordinary replay; current settled ordinary replay permits that equal-state case while inverse remains strict. The assertions remain unchanged and are not converted to skip/xfail.
++
++Real Runtime lane, rerun directly with the explicitly selected private setup helper:
++
++```text
++ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 \
++PYTHONPATH=notes/candidate /home/user/work/venv-agent/bin/python -B - <<'PY'
++from tests.helpers.runtime import use_runtime
++use_runtime('a51af885ea631c695a857985239c7fe7bf2e871f')
++import pytest
++raise SystemExit(pytest.main([
++  '-q', '-p', 'no:cacheprovider', '-m', 'integration or not integration',
++  'tests/sdk/test_timeline_group_migration_runtime.py',
++  'tests/sdk/test_current_group_runtime.py', '--tb=short']))
++PY
++```
++
++Result: **11 passed in 5.82s**. The setup uses genuine managed PNG CAS and `media.transcript/v1` segments created before the legacy parent/DocumentPins, then proves retained source readback, rational 30000/1001 timing, restart, exact raw inverse/redo, independent-group Runtime rebase, and atomic touched-membership refusal. Scene evaluation is trip-wired off. The helper is Runtime-owned test setup only: commit `54db299d6ebb9ec98649895760a4cd37cee6c147`, helper SHA256 `9f61af7be9518aa9d2442091257d6cdae99c65db0773377a53244f8807b30e13`.
++
++The requested unchanged 382f helper was also previously reproduced at **7 passed / 2 failed** (`semantic identity boundary differs from writes`); that is an explicit stale setup dependency, not a public helper adoption or Agent guard relaxation.
++
++App preservation check: the shared current App test retains exactly three original `it.fails` cases, byte-stable at SHA256 `1326a6a4d84f8a43372cde6c0c229430ec09eac32f6022d43295d585c4de3df5`: free multi-clip drag to a new bottom track, pinned group across tracks, and pinned group onto a new track. Their successful geometry/group assertions remain intact. App browser/session qualification was not run.
++
++No full suite, browser, HTTP/socket, renderer, macOS, new matrix, large fixture, new skip/xfail, product change, integration pin, release, or push was performed.
++
++## Remaining agreement required
++
++Before any public adoption, the Agent and Runtime owners must agree the exact full current 55/29 ordinary cohort plus the current carrier/sourceRef/fence join, normally generate the matching 57/31 artifact/client set, and qualify that matched pair without substituting 3730/48/22 or a withdrawn schema. Then App must qualify the existing-lane adapter and the two remaining original drag outcomes (new-lane pinned drag and free multi-drag), while preserving all three original success assertions. Shared physical remapping and nonempty semantic item mapping remain explicitly unsupported in this slice and must be separately agreed before expansion.
++
+
+exec
+/bin/bash -lc "W=/home/user/work/wt/agt-review-group-first-slice-private; OUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private; printf '%s\\n' '--- WORKTREE STATUS ---'; git -C \""'$W" status --short --branch; printf '"'%s\\n' '--- OUTPUT FILES ---'; ls -l \""'$OUT"/report.md "$OUT"/commit-msg "$OUT"/commit-msg.txt "$OUT"/DONE; printf '"'%s\\n' '--- REPORT CHECKSUM ---'; sha256sum \""'$OUT"/report.md "$OUT"/commit-msg "$OUT"/commit-msg.txt; printf '"'%s\\n' '--- DECISION LINES ---'; sed -n '1,45p' \""'$OUT"/report.md' in /home/user/work/wt/agt-review-group-first-slice-private
+ succeeded in 101ms:
+--- WORKTREE STATUS ---
+## tl/agt-review-group-first-slice-private
+--- OUTPUT FILES ---
+-rw-r--r-- 1 root root    0 Oct 20 15:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/DONE
+-rw-r--r-- 1 root root  199 Oct 20 15:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg
+-rw-r--r-- 1 root root  199 Oct 20 15:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg.txt
+-rw-r--r-- 1 root root 6376 Oct 20 15:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md
+--- REPORT CHECKSUM ---
+6bc276080e4fe93150bd27e5d52b10d6b59e766bf774b28d4101870931dae0c4  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md
+d225bb29f1a34aed81f18293bf711046bb1107a64efadad15ecfdd1ed2ce85a7  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg
+d225bb29f1a34aed81f18293bf711046bb1107a64efadad15ecfdd1ed2ce85a7  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/commit-msg.txt
+--- DECISION LINES ---
+# Review: recovered private group first slice
+
+## Decision
+
+**APPROVE the private recovery as a bounded, reviewable PLAN4.1 Option A first-slice candidate. HOLD public adoption, schema/client pinning, and App qualification.** This is not a public-adoption or release claim.
+
+Exact Agent source under review:
+
+- source commit: `ee896821b502ee4e51211b19d064fa44915f5777`
+- source tree: `aa0b15850d4b777b77f54faec189cf7e4c60a7b6`
+- private patch: `74f657c0308d931334361426925851a9413657d688f1261e3195e80d519a573d`
+- private schema: `c51d71e687e9962fd5309528d6d69d266e319ebffe9a1dc46af20be7add8afc3`
+
+The private patch is the recovered candidate at `notes/candidate`; it is not present in this review worktree and no product files were changed here.
+
+## Verified against Option A / PLAN4.1
+
+- Migration is explicit and recorded (`timeline.migrate-groups`), uses canonical shot/occurrence roots and existing `Recording.create_entity`, and keeps `pinnedShotGroups` as migration input/read-side projection rather than a second editable store.
+- Full legacy group metadata, opaque/nullable fields, authored order, source windows/hold/speed, rational output, dependency pins, and explicit legacy-to-canonical member identity mapping are retained in occurrence provenance. Exact guarded inverse restores the original raw parent and redo recreates the same IDs.
+- Interleaved, reordered, duplicate/missing/shared member identities, unsupported items/maps/aliases, divergent mirrors/registries, and occupied/forged destinations refuse atomically. The legacy sanitizer is not used; the graph exception is limited to the exact provenance path.
+- Occurrence movement binds the exact occurrence, parent destination track, and occurrence child track. Parent placement plus all affected raw child tracks are recorded in one operation. Child-track creation is a typed command in the same batch and is undoable. Shared/derived ownership refuses before writes; no display-ID or `(shotId, trackId)` inference is used.
+- The pure group view reads current canonical child membership/order and source geometry, carries display metadata from provenance only, preserves source windows and rational FPS, and emits explicit owner/member/track bindings. Independent groups rebase without disturbing the other group's state.
+- Ordinary source floor is unchanged: 55 definitions / 29 clauses and the base schema SHA256 is `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`. Private-only schema is 57 / 31; stripping its two additions reproduces the ordinary schema byte-for-byte. `runtime.lock.json` and generated client files remain byte-identical to base.
+- The current ordinary 55/29 and carrier 3730/48/22 artifacts were not frozen or silently bypassed. No public registration, pin, normal generation, integration, release, or sourceRef union was performed.
+
+## Evidence
+
+Focused private semantic lane, rerun directly:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=notes/candidate /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider \
+  tests/editing_conformance/test_recipe_m2_group_migration.py \
+  tests/editing_conformance/test_recipe_m2_group_move.py \
+  tests/editing_conformance/test_group_read_view.py \
+  tests/editing_conformance/test_current_group_slice.py --tb=short
+```
+
+Result: **83 passed, 2 failed in 4.85s**. The only failures are inherited assertions in `test_membership_aba_and_destination_lane_aba_are_guarded` and `test_unrelated_lane_activity_rebases_but_inactive_destination_members_are_guarded`. They require refusal for equal-state ordinary replay; current settled ordinary replay permits that equal-state case while inverse remains strict. The assertions remain unchanged and are not converted to skip/xfail.
+
+Real Runtime lane, rerun directly with the explicitly selected private setup helper:
+
+```text
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 \
+PYTHONPATH=notes/candidate /home/user/work/venv-agent/bin/python -B - <<'PY'
+from tests.helpers.runtime import use_runtime
+
+codex
+Review complete.
+
+- Decision: **APPROVE private recovery; HOLD public adoption**.
+- Source: `ee896821...`, tree `aa0b1585...`
+- Private patch SHA256: `74f657c0308d931334361426925851a9413657d688f1261e3195e80d519a573d`
+- Focused tests: **83 passed, 2 inherited equal-state red spikes**.
+- Runtime proof: **11 passed** with genuine CAS, transcript segments, rational FPS, restart, inverse/redo, rebase, and atomic refusal.
+- Confirmed ordinary 55/29 floor unchanged; private schema is 57/31. App’s exact three `it.fails` remain unchanged.
+- No product changes, pins, integration, full suites, or public-adoption claim.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md)
+
+Prepared `commit-msg`, `commit-msg.txt`, and `DONE`.
+tokens used
+211,962
+Review complete.
+
+- Decision: **APPROVE private recovery; HOLD public adoption**.
+- Source: `ee896821...`, tree `aa0b1585...`
+- Private patch SHA256: `74f657c0308d931334361426925851a9413657d688f1261e3195e80d519a573d`
+- Focused tests: **83 passed, 2 inherited equal-state red spikes**.
+- Runtime proof: **11 passed** with genuine CAS, transcript segments, rational FPS, restart, inverse/redo, rebase, and atomic refusal.
+- Confirmed ordinary 55/29 floor unchanged; private schema is 57/31. App’s exact three `it.fails` remain unchanged.
+- No product changes, pins, integration, full suites, or public-adoption claim.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md)
+
+Prepared `commit-msg`, `commit-msg.txt`, and `DONE`.

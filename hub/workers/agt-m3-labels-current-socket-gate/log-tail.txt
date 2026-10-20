@@ -1,0 +1,400 @@
+
+/** Resolve a manifest-declared resource without allowing pack-root escape. */
+export const resolveDeclaredResource = (packRoot, declaredPath) => {
+  if (typeof declaredPath !== 'string' || !declaredPath || path.isAbsolute(declaredPath)) {
+    throw new Error(`V3 resource path must be a non-empty relative path: ${declaredPath}`);
+  }
+  const root = path.resolve(packRoot);
+  const resolved = path.resolve(root, declaredPath);
+  if (!isWithin(root, resolved)) {
+    throw new Error(`V3 resource escapes pack root: ${declaredPath}`);
+  }
+  return resolved;
+};
+
+/** Resolve a public asset while keeping lookup inside the owned public root. */
+export const resolvePublicResource = (publicRoot, resourcePath) => {
+  if (typeof resourcePath !== 'string' || !resourcePath || path.isAbsolute(resourcePath)) {
+    throw new Error(`public resource path must be a non-empty relative path: ${resourcePath}`);
+  }
+  const root = path.resolve(publicRoot);
+  const resolved = path.resolve(root, resourcePath);
+  if (!isWithin(root, resolved)) {
+    throw new Error(`public resource escapes public root: ${resourcePath}`);
+  }
+  return resolved;
+};
+
+/** Refuse renderer scratch/staging paths beneath public/ to prevent recursion. */
+export const assertOutsidePublicRoot = (publicRoot, candidate) => {
+  const root = path.resolve(publicRoot);
+  const resolved = path.resolve(candidate);
+  if (isWithin(root, resolved)) {
+    throw new Error(`renderer staging path is inside public and would recurse: ${resolved}`);
+  }
+  return resolved;
+};
+
+77-    return fs.statSync(file).isDirectory();
+78-  } catch {
+79-    return false;
+80-  }
+81-};
+82-
+83-const hasManifest = (dir) => MANIFEST_NAMES.some((name) => fs.existsSync(path.join(dir, name)));
+84-
+85:const packRootsIn = (root, {skipLocal = false} = {}) => {
+86-  const resolvedRoot = path.resolve(root);
+87-  if (hasManifest(resolvedRoot)) return [resolvedRoot];
+88-  let names = [];
+89-  try {
+90-    names = fs.readdirSync(resolvedRoot).sort();
+91-  } catch {
+92-    return [];
+93-  }
+94-  return names
+95:    .filter((name) => !name.startsWith('.') && !(skipLocal && name === 'local'))
+96-    .map((name) => path.join(resolvedRoot, name))
+97-    .filter((dir) => isDirectory(dir) && hasManifest(dir));
+98-};
+99-
+100-const isWithin = (root, candidate) => {
+101-  const relative = path.relative(path.resolve(root), path.resolve(candidate));
+102-  return relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+103-};
+--
+164-};
+165-
+166-// V3 aliases come only from declared rendering entries. There is deliberately
+167-// no fallback scan of legacy `elements/` locations.
+168-export const packElementAliases = ({env = process.env, astridDir = repoRootOf()} = {}) => {
+169-  const inTree = packRootsIn(path.resolve(astridDir, 'astrid/packs'));
+170-  const external = [];
+171-  for (const rawRoot of (env.ASTRID_PACKS_PATH ?? '').split(path.delimiter)) {
+172:    if (rawRoot) external.push(...packRootsIn(rawRoot, {skipLocal: true}));
+173-  }
+174-  return {
+175-    ...collectDeclaredPackElementAliases(inTree),
+176-    ...collectDeclaredPackElementAliases(external),
+177-  };
+178-};
+179-
+180-const primitiveAliases = (projectDir) => {
+
+codex
+The custom suite fixed the rendering pack aliases but exposed the next environment detail: the alias loader intentionally excludes `local` when scanning the collection root. I’m extending only the worker’s suite entry to pass both the collection root and the direct `local` pack root; this is still test-environment configuration, not product logic or a test relaxation.
+exec
+/bin/bash -lc "rg -n 'agt-m3-labels-current-socket-gate-root-prep' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf" in /home/user/work/wt/agt-m3-labels-current-socket-gate
+ succeeded in 0ms:
+91:agent agt-m3-labels-current-socket-gate-root-prep env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules ASTRID_PACKS_PATH="$PWD/astrid/packs" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+
+exec
+/bin/bash -lc "sed -n '91p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf" in /home/user/work/wt/agt-m3-labels-current-socket-gate
+ succeeded in 0ms:
+agent agt-m3-labels-current-socket-gate-root-prep env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules ASTRID_PACKS_PATH="$PWD/astrid/packs" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index 694fc07399b450c87b7c36180459331e385240bc..38a1239419a40ffddeeb536c461021782a1ad91e
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -88,3 +88,4 @@
+ agent native014-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+ 
+ runtime cli-agent2f8-integration env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-2f8b9cc5 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-2f8b9cc5 /home/user/work/venv-agent/bin/python -m pytest -q -m integration /home/user/work/wt/agt-pin-2f8b9cc5/tests/sdk/test_timeline_commit_provider_runtime.py
++agent agt-m3-labels-current-socket-gate-root-prep env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules ASTRID_PACKS_PATH="$PWD/astrid/packs:$PWD/astrid/packs/local" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+
+exec
+/bin/bash -lc 'set -o pipefail
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-labels-current-socket-gate agt-m3-labels-current-socket-gate-root-prep --files "tests/packs/rendering/test_live_source_label_native.py" --no-cache)
+echo "RESULT_DIR=$R"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m3-labels-current-socket-gate
+exec
+/bin/bash -lc "result=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822; stat -c '%s %y' \""'$result/log.txt"; tail -n 3 "$result/log.txt"; cat "$result/status"' in /home/user/work/wt/agt-m3-labels-current-socket-gate
+ succeeded in 0ms:
+6 2026-10-20 16:31:00.796419216 +0000
+......running
+
+exec
+/bin/bash -lc "result=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822; stat -c '%s %y' \""'$result/log.txt"; tail -n 3 "$result/log.txt"; cat "$result/status"' in /home/user/work/wt/agt-m3-labels-current-socket-gate
+ succeeded in 0ms:
+10 2026-10-20 16:31:26.692911191 +0000
+..........running
+
+exec
+/bin/bash -lc "result=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822; stat -c '%s %y' \""'$result/log.txt"; tail -n 3 "$result/log.txt"; cat "$result/status"' in /home/user/work/wt/agt-m3-labels-current-socket-gate
+ succeeded in 63ms:
+14 2026-10-20 16:31:59.844018446 +0000
+..............running
+
+codex
+The direct suites remain green, and the corrected central run has reached the 14 fast cases. The remaining two root cases are executing with both current Agent pack roots explicitly available; I’m waiting for their completion before finalizing.
+exec
+/bin/bash -lc "result=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822; stat -c '%s %y' \""'$result/log.txt"; tail -n 4 "$result/log.txt"; cat "$result/status"' in /home/user/work/wt/agt-m3-labels-current-socket-gate
+ succeeded in 0ms:
+14 2026-10-20 16:31:59.844018446 +0000
+..............running
+
+exec
+/bin/bash -lc "result=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822; stat -c '%s %y' \""'$result/log.txt"; tail -n 4 "$result/log.txt"; cat "$result/status"' in /home/user/work/wt/agt-m3-labels-current-socket-gate
+ succeeded in 18ms:
+15 2026-10-20 16:33:15.744427238 +0000
+...............running
+
+ succeeded in 270056ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822
+RESULT_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822/
+test agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822: pass exit=0 in 234s — agt-m3-labels-current-socket-gate-root-prep on agt-m3-labels-current-socket-gate (agent tree 6de356067d251e644101da19272c5424fa4f3a68)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules ASTRID_PACKS_PATH="$PWD/astrid/packs:$PWD/astrid/packs/local" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_live_source_label_native.py
+counts: 18 passed in 232.09s (0:03:52) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822/log.txt ---
+..................                                                       [100%]
+18 passed in 232.09s (0:03:52)
+
+codex
+The required central gate is now green: all 18 native-source-label tests passed, including both final-root socket cases, in test-service run `agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822`. I’m recording the exact source boundary, intermediate environment diagnostics, test IDs, and commit message, then I’ll mark the worker complete.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index 694fc07399b450c87b7c36180459331e385240bc..38a1239419a40ffddeeb536c461021782a1ad91e
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -88,3 +88,4 @@
+ agent native014-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+ 
+ runtime cli-agent2f8-integration env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-2f8b9cc5 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-2f8b9cc5 /home/user/work/venv-agent/bin/python -m pytest -q -m integration /home/user/work/wt/agt-pin-2f8b9cc5/tests/sdk/test_timeline_commit_provider_runtime.py
++agent agt-m3-labels-current-socket-gate-root-prep env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules ASTRID_PACKS_PATH="$PWD/astrid/packs:$PWD/astrid/packs/local" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f35c44f4b00b4cef3951361184b850cffff6e188
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg
+@@ -0,0 +1,4 @@
++test(rendering): preserve uncertified snapshot labels
++
++Port the approved six-path provenance delta onto current Agent and qualify the native source-label socket gate.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..f35c44f4b00b4cef3951361184b850cffff6e188
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(rendering): preserve uncertified snapshot labels
++
++Port the approved six-path provenance delta onto current Agent and qualify the native source-label socket gate.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..fa1e4fef01184d2c364a69cb517c1f4b2c569551
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/report.md
+@@ -0,0 +1,31 @@
++# Port report: current socket gate
++
++## Change
++
++Ported only the independently approved `git diff 634867..d93b4ff6` six-path delta from `d93b4ff6` onto current `2f8b9cc5`:
++
++- `astrid/packs/rendering/actions/timeline_visualize/provenance.py`
++- `tests/packs/rendering/test_fast_lane.py`
++- `tests/packs/rendering/test_live_source_label_native.py`
++- `tests/packs/rendering/test_scene_source_carry.py`
++- `tests/packs/rendering/test_timeline_filmstrip_cards.py`
++- `tests/packs/rendering/test_timeline_filmstrip_execution.py`
++
++The six worktree files byte-match their `d93b4ff6` versions. No SDK, save-core, Root/service, WC4, AM, pin, D09, or scene-SDK activation changes were made.
++
++The existing review approved merge tree was `53214e13be3c1c9c057c58f93e55039832ba0eba`; its ledger boundary remains: metadata-only, legacy, and CAS-unclaimed inputs are `UNCERTIFIED`, and only host-minted `VerifiedTimelineSource` can mint accepted revision/candidate labels.
++
++## Tests
++
++- Direct focused label/refusal neighbours: exact review command set, **114 passed**, 1 existing Pillow deprecation warning.
++- Direct scene-source carry: exact review command, **59 passed**.
++- Central initial `root-prep-current-integration` run `agt-m3-labels-current-socket-gate-root-prep-current-integration-1020162259-27304`: **2 passed, 16 skipped** because Runtime was not in the suite environment; not used as qualification.
++- Central environment diagnostic `agt-m3-labels-current-socket-gate-registered-native-render-integration-1020162351-13424`: **16 passed, 2 failed** because current Remotion could not resolve Agent pack aliases; not used as qualification.
++- Central corrected own suite `agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822`: **18 passed** in 232.09s, including both final-root socket cases.
++
++Added the worker-owned central suite entry in `orch/tests/suites.conf` with current Runtime, Remotion/Node, and both current Agent pack roots; shared dependencies were not modified.
++
++## Status
++
++Qualified for merge recommendation: the required 18/18 central gate, 114 focused neighbours, and 59 scene-source tests pass. No full suite was requested or run.
++
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index 694fc07399b450c87b7c36180459331e385240bc..38a1239419a40ffddeeb536c461021782a1ad91e
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -88,3 +88,4 @@
+ agent native014-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+ 
+ runtime cli-agent2f8-integration env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-2f8b9cc5 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-2f8b9cc5 /home/user/work/venv-agent/bin/python -m pytest -q -m integration /home/user/work/wt/agt-pin-2f8b9cc5/tests/sdk/test_timeline_commit_provider_runtime.py
++agent agt-m3-labels-current-socket-gate-root-prep env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules ASTRID_PACKS_PATH="$PWD/astrid/packs:$PWD/astrid/packs/local" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f35c44f4b00b4cef3951361184b850cffff6e188
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg
+@@ -0,0 +1,4 @@
++test(rendering): preserve uncertified snapshot labels
++
++Port the approved six-path provenance delta onto current Agent and qualify the native source-label socket gate.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..f35c44f4b00b4cef3951361184b850cffff6e188
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(rendering): preserve uncertified snapshot labels
++
++Port the approved six-path provenance delta onto current Agent and qualify the native source-label socket gate.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..fa1e4fef01184d2c364a69cb517c1f4b2c569551
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/report.md
+@@ -0,0 +1,31 @@
++# Port report: current socket gate
++
++## Change
++
++Ported only the independently approved `git diff 634867..d93b4ff6` six-path delta from `d93b4ff6` onto current `2f8b9cc5`:
++
++- `astrid/packs/rendering/actions/timeline_visualize/provenance.py`
++- `tests/packs/rendering/test_fast_lane.py`
++- `tests/packs/rendering/test_live_source_label_native.py`
++- `tests/packs/rendering/test_scene_source_carry.py`
++- `tests/packs/rendering/test_timeline_filmstrip_cards.py`
++- `tests/packs/rendering/test_timeline_filmstrip_execution.py`
++
++The six worktree files byte-match their `d93b4ff6` versions. No SDK, save-core, Root/service, WC4, AM, pin, D09, or scene-SDK activation changes were made.
++
++The existing review approved merge tree was `53214e13be3c1c9c057c58f93e55039832ba0eba`; its ledger boundary remains: metadata-only, legacy, and CAS-unclaimed inputs are `UNCERTIFIED`, and only host-minted `VerifiedTimelineSource` can mint accepted revision/candidate labels.
++
++## Tests
++
++- Direct focused label/refusal neighbours: exact review command set, **114 passed**, 1 existing Pillow deprecation warning.
++- Direct scene-source carry: exact review command, **59 passed**.
++- Central initial `root-prep-current-integration` run `agt-m3-labels-current-socket-gate-root-prep-current-integration-1020162259-27304`: **2 passed, 16 skipped** because Runtime was not in the suite environment; not used as qualification.
++- Central environment diagnostic `agt-m3-labels-current-socket-gate-registered-native-render-integration-1020162351-13424`: **16 passed, 2 failed** because current Remotion could not resolve Agent pack aliases; not used as qualification.
++- Central corrected own suite `agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822`: **18 passed** in 232.09s, including both final-root socket cases.
++
++Added the worker-owned central suite entry in `orch/tests/suites.conf` with current Runtime, Remotion/Node, and both current Agent pack roots; shared dependencies were not modified.
++
++## Status
++
++Qualified for merge recommendation: the required 18/18 central gate, 114 focused neighbours, and 59 scene-source tests pass. No full suite was requested or run.
++
+
+exec
+/bin/bash -lc "set -e
+printf '%s\\n' '--- WORKTREE ---'
+git status --short --branch
+git diff --check
+printf '%s\\n' '--- DIFF STAT ---'
+git diff --stat
+printf '%s\\n' '--- WORKER ARTIFACTS ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/{report.md,commit-msg,commit-msg.txt,DONE}
+printf '%s\\n' '--- DONE SIZE ---'
+stat -c '%s bytes' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/DONE
+printf '%s\\n' '--- REPORT ---'
+sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/report.md" in /home/user/work/wt/agt-m3-labels-current-socket-gate
+ succeeded in 915ms:
+--- WORKTREE ---
+## tl/agt-m3-labels-current-socket-gate
+ M astrid/packs/rendering/actions/timeline_visualize/provenance.py
+ M tests/packs/rendering/test_fast_lane.py
+ M tests/packs/rendering/test_scene_source_carry.py
+ M tests/packs/rendering/test_timeline_filmstrip_cards.py
+ M tests/packs/rendering/test_timeline_filmstrip_execution.py
+?? tests/packs/rendering/test_live_source_label_native.py
+--- DIFF STAT ---
+ .../actions/timeline_visualize/provenance.py       | 119 ++++++++++-----------
+ tests/packs/rendering/test_fast_lane.py            |  46 ++++----
+ tests/packs/rendering/test_scene_source_carry.py   |  22 ++--
+ .../rendering/test_timeline_filmstrip_cards.py     |   6 +-
+ .../rendering/test_timeline_filmstrip_execution.py |   8 +-
+ 5 files changed, 108 insertions(+), 93 deletions(-)
+--- WORKER ARTIFACTS ---
+-rw-r--r-- 1 root root    0 Oct 20 16:35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/DONE
+-rw-r--r-- 1 root root  168 Oct 20 16:35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg
+-rw-r--r-- 1 root root  168 Oct 20 16:35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/commit-msg.txt
+-rw-r--r-- 1 root root 2180 Oct 20 16:35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/report.md
+--- DONE SIZE ---
+0 bytes
+--- REPORT ---
+# Port report: current socket gate
+
+## Change
+
+Ported only the independently approved `git diff 634867..d93b4ff6` six-path delta from `d93b4ff6` onto current `2f8b9cc5`:
+
+- `astrid/packs/rendering/actions/timeline_visualize/provenance.py`
+- `tests/packs/rendering/test_fast_lane.py`
+- `tests/packs/rendering/test_live_source_label_native.py`
+- `tests/packs/rendering/test_scene_source_carry.py`
+- `tests/packs/rendering/test_timeline_filmstrip_cards.py`
+- `tests/packs/rendering/test_timeline_filmstrip_execution.py`
+
+The six worktree files byte-match their `d93b4ff6` versions. No SDK, save-core, Root/service, WC4, AM, pin, D09, or scene-SDK activation changes were made.
+
+The existing review approved merge tree was `53214e13be3c1c9c057c58f93e55039832ba0eba`; its ledger boundary remains: metadata-only, legacy, and CAS-unclaimed inputs are `UNCERTIFIED`, and only host-minted `VerifiedTimelineSource` can mint accepted revision/candidate labels.
+
+## Tests
+
+- Direct focused label/refusal neighbours: exact review command set, **114 passed**, 1 existing Pillow deprecation warning.
+- Direct scene-source carry: exact review command, **59 passed**.
+- Central initial `root-prep-current-integration` run `agt-m3-labels-current-socket-gate-root-prep-current-integration-1020162259-27304`: **2 passed, 16 skipped** because Runtime was not in the suite environment; not used as qualification.
+- Central environment diagnostic `agt-m3-labels-current-socket-gate-registered-native-render-integration-1020162351-13424`: **16 passed, 2 failed** because current Remotion could not resolve Agent pack aliases; not used as qualification.
+- Central corrected own suite `agt-m3-labels-current-socket-gate-agt-m3-labels-current-socket-gate-root-prep-1020163030-17822`: **18 passed** in 232.09s, including both final-root socket cases.
+
+Added the worker-owned central suite entry in `orch/tests/suites.conf` with current Runtime, Remotion/Node, and both current Agent pack roots; shared dependencies were not modified.
+
+## Status
+
+Qualified for merge recommendation: the required 18/18 central gate, 114 focused neighbours, and 59 scene-source tests pass. No full suite was requested or run.
+
+
+codex
+## Report
+
+Ported only the approved `634867..d93b4ff6` six-path delta onto `2f8b9cc5`. No SDK/save-core/Root/service/WC4/AM/pin changes.
+
+Tests:
+
+- Focused neighbours: **114 passed**
+- Scene-source carry: **59 passed**
+- Central final-root gate `...1020163030-17822`: **18 passed**, including both socket-bound cases
+
+Earlier environment diagnostics were not used as qualification: 16 skipped or 2 alias-resolution failures.
+
+Added the worker-specific central test-suite entry, wrote `commit-msg`/`commit-msg.txt`, `report.md`, and empty `DONE`. No full suite run.
+tokens used
+202,487
+## Report
+
+Ported only the approved `634867..d93b4ff6` six-path delta onto `2f8b9cc5`. No SDK/save-core/Root/service/WC4/AM/pin changes.
+
+Tests:
+
+- Focused neighbours: **114 passed**
+- Scene-source carry: **59 passed**
+- Central final-root gate `...1020163030-17822`: **18 passed**, including both socket-bound cases
+
+Earlier environment diagnostics were not used as qualification: 16 skipped or 2 alias-resolution failures.
+
+Added the worker-specific central test-suite entry, wrote `commit-msg`/`commit-msg.txt`, `report.md`, and empty `DONE`. No full suite run.

@@ -1,0 +1,400 @@
++The metadata is authored informational data only. Runtime producer authority
++continues to come from the existing guard/receipt path; this leaf cannot
++authorize a producer, media, task, run, or publication.
++
++## Remaining extent/audio blockers
++
++This change does not lower the rest of the original voiceover candidate. The
++current native command set still lacks an exact generated-audio source/duration
++carrier and a native placement/parent ripple retiming command. Consequently,
++the original audio materialization and `ripple` extent edits remain open; the
++metadata leaf can be carried independently but cannot stand in for them.
++
++The outer voiceover handoff also remains blocked on the actual normal Runtime
++admission/requester proof: the current continuation path requires its exact
++dependency shape. No Runtime restriction, producer authority, endpoint, DTO,
++approval path, or legacy writer was changed here.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..23a3f25b71bb309240bb08d1c2ed60056d36953e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/commit-msg
+@@ -0,0 +1,4 @@
++feat(timeline): carry draft voiceover metadata leaf
++
++Extend occurrence-owned shot.set with the closed draft_voiceover metadata
++leaf, preserving opaque siblings and guarded recorder semantics.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..23a3f25b71bb309240bb08d1c2ed60056d36953e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/commit-msg.txt
+@@ -0,0 +1,4 @@
++feat(timeline): carry draft voiceover metadata leaf
++
++Extend occurrence-owned shot.set with the closed draft_voiceover metadata
++leaf, preserving opaque siblings and guarded recorder semantics.
+diff --git a/astrid/core/timeline/schema/edit-command.schema.json b/astrid/core/timeline/schema/edit-command.schema.json
+index 7e0affefc81e75b1d6dde6c4dbb773f0f8812e3a..5ef2e6e7de86b24a2266415bd090059d980724c9
+--- a/astrid/core/timeline/schema/edit-command.schema.json
++++ b/astrid/core/timeline/schema/edit-command.schema.json
+@@ -652,6 +652,19 @@
+               },
+               "minProperties": 1,
+               "additionalProperties": false
++            },
++            "metadata": {
++              "type": "object",
++              "properties": {
++                "draft_voiceover": {
++                  "type": [
++                    "object",
++                    "null"
++                  ]
++                }
++              },
++              "minProperties": 1,
++              "additionalProperties": false
+             }
+           },
+           "additionalProperties": false
+@@ -682,7 +695,8 @@
+               "settings.turboMode",
+               "settings.advancedMode",
+               "settings.smoothContinuations",
+-              "settings.ltxHdResolution"
++              "settings.ltxHdResolution",
++              "metadata.draft_voiceover"
+             ]
+           },
+           "uniqueItems": true
+@@ -709,7 +723,7 @@
+           }
+         }
+       ],
+-      "description": "Occurrence-owned raw shot payload fields: canonical root name and bounded scalar settings roots. Null is a value; clear removes presence. Unmentioned fields survive. Compound settings roots (steerableMotionSettings, phaseConfig, pairConfigs, shotImageIds, loras, structureVideo, modelSettingsByModel) are unsupported."
++      "description": "Occurrence-owned raw shot payload fields: canonical root name, bounded scalar settings roots, and the known draft_voiceover metadata leaf. Null is a value; clear removes presence. Unmentioned fields survive. Compound settings roots (steerableMotionSettings, phaseConfig, pairConfigs, shotImageIds, loras, structureVideo, modelSettingsByModel) are unsupported."
+     },
+     "ClipSetParamsArgs": {
+       "type": "object",
+diff --git a/astrid/sdk/timeline/_shot_commands.py b/astrid/sdk/timeline/_shot_commands.py
+index 04d827b534e6ae7827a50d7101f8ec4eb97b83ba..ccf681c5d82492a76d5b3ed3e515c8d85ebecddd
+--- a/astrid/sdk/timeline/_shot_commands.py
++++ b/astrid/sdk/timeline/_shot_commands.py
+@@ -1,4 +1,4 @@
+-"""Occurrence-owned shot name and bounded settings edits on the raw shot payload."""
++"""Occurrence-owned shot name, settings, and draft provenance edits."""
+ from __future__ import annotations
+ 
+ import copy
+@@ -25,7 +25,12 @@
+     ctx.bind('shot.owner', owner)
+     values, clear = command['args']['values'], command['args']['clear']
+     settings = values.get('settings', {})
+-    paths = {('name',): 'name' in values, **{('settings', key): True for key in settings}}
++    metadata = values.get('metadata', {})
++    paths = {
++        ('name',): 'name' in values,
++        **{('settings', key): True for key in settings},
++        ('metadata', 'draft_voiceover'): 'draft_voiceover' in metadata,
++    }
+     for entry in clear:
+         path = tuple(entry.split('.'))
+         if paths.get(path):
+@@ -38,6 +43,10 @@
+         ctx.object(ref, ['payload', 'settings'])
+     for key in sorted(settings):
+         ctx.write(ref, ['payload', 'settings', key], settings[key])
++    if metadata:
++        ctx.object(ref, ['payload', 'metadata'])
++    if 'draft_voiceover' in metadata:
++        ctx.write(ref, ['payload', 'metadata', 'draft_voiceover'], metadata['draft_voiceover'])
+     for entry in sorted(clear):
+         ctx.clear(ref, ['payload', *entry.split('.')])
+ 
+diff --git a/tests/editing_conformance/test_recipe_shot_set.py b/tests/editing_conformance/test_recipe_shot_set.py
+index c0dc4a54ce8eeb29702a8e6f8ae74f0369642dfd..03b3f3af860d8ef4b3b867153d4412a3109dd1b2
+--- a/tests/editing_conformance/test_recipe_shot_set.py
++++ b/tests/editing_conformance/test_recipe_shot_set.py
+@@ -17,6 +17,9 @@
+ from astrid.sdk.timeline.commands import execute, operations
+ from astrid.sdk.timeline.rebase import replay
+ from tests.editing_conformance.test_recipe_m1_commands import bundle, inverse, later
++from tests.packs.video_editing.test_draft_voiceover import fixture as voiceover_fixture
++from tests.packs.video_editing.test_draft_voiceover import synthesis
++from tests.packs.video_editing.test_draft_voiceover import vo
+ 
+ FIXTURES = Path(__file__).parent / 'fixtures'
+ REF = 'occurrence:occ-1/shot'
+@@ -105,6 +108,58 @@
+     assert inverse(plan.bundle, plan.records).bundle == original
+ 
+ 
++def test_original_draft_voiceover_fixture_outcome_lowers_to_one_metadata_leaf():
++    candidate, scripts = voiceover_fixture()
++    scripts['occurrences'][0]['text'] = 'Long new narration'
++    prepared = vo.prepare_draft_voiceover(candidate, scripts, synthesize=synthesis,
++                                          timing_policy='ripple', padding_seconds=.15)
++    draft = prepared['candidate']['shots']['s1']['payload']['metadata']['draft_voiceover']
++
++    original = bundle(shared=False)
++    metadata = payload(original)['metadata']
++    metadata.update({'opaque': {'keep': [None, True]}, 'namespaced': {'future': 'value'}})
++    command = capture_shot_set(original, REF, values={'metadata': {'draft_voiceover': draft}})
++    plan = execute(original, [command])
++
++    assert payload(plan.bundle)['metadata'] == {
++        'draft_voiceover': draft,
++        'opaque': {'keep': [None, True]},
++        'namespaced': {'future': 'value'},
++        'settings': {'look': 'warm'},
++    }
++    assert any(write['path'] == ['payload', 'metadata', 'draft_voiceover']
++               for write in plan.records[0]['writes'])
++    assert inverse(plan.bundle, plan.records).bundle == original
++
++
++def test_draft_voiceover_clear_preserves_metadata_and_has_exact_inverse():
++    original = bundle(shared=False)
++    metadata = payload(original)['metadata']
++    metadata.update({'draft_voiceover': {'text': 'old', 'duration': 2}, 'opaque': [1, None]})
++    command = capture_shot_set(original, REF, clear=['metadata.draft_voiceover'])
++    plan = execute(original, [command])
++    assert payload(plan.bundle)['metadata'] == {'opaque': [1, None], 'settings': {'look': 'warm'}}
++    assert inverse(plan.bundle, plan.records).bundle == original
++    assert execute(original, [command]).records == plan.records
++
++
++def test_draft_voiceover_disjoint_opaque_and_aba_guards():
++    original = bundle(shared=False)
++    draft = {'text': 'new', 'text_digest': 'sha256:' + 'a' * 64,
++             'settings': {'rate': '+5%'}, 'audio_media_id': 'sha256:' + 'b' * 64,
++             'run_id': 'run', 'task_id': 'task', 'base_head': 'h'}
++    payload(original)['metadata']['opaque'] = {'keep': True}
++    a = execute(original, [capture_shot_set(original, REF,
++                                            values={'metadata': {'draft_voiceover': draft}})])
++    b = execute(original, [capture_shot_set(original, REF,
++                                            values={'settings': {'prompt': 'disjoint'}})])
++    rebased = replay(b, a.bundle, intervening_records=a.records)
++    assert payload(rebased.bundle)['metadata']['draft_voiceover'] == draft
++    assert payload(rebased.bundle)['metadata']['opaque'] == {'keep': True}
++    with pytest.raises(CommandError, match='intervening'):
++        inverse(a.bundle, a.records, [later(REF, ['payload', 'metadata', 'draft_voiceover'], draft)])
++
++
+ @pytest.mark.parametrize('shared', [True, False])
+ def test_occurrence_only_isolation_and_compiled_shot_content(shared):
+     original = bundle(shared=shared)
+diff --git a/tests/sdk/test_timeline_materialization_schema_union.py b/tests/sdk/test_timeline_materialization_schema_union.py
+index 995be7fea0a86e10a78d12737588f92da446d357..f8fe76e5afcf5c77684073d920b3631fe999b93c
+--- a/tests/sdk/test_timeline_materialization_schema_union.py
++++ b/tests/sdk/test_timeline_materialization_schema_union.py
+@@ -18,6 +18,7 @@
+ PRIVATE_CARRIER_SHA256 = '613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3'
+ PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
+ PRIVATE_GROUP_SHA256 = '27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb'
++PRIVATE_VOICEOVER_SHA256 = '65bb68acbfbc72dabbbc83eab66e5309fe5cf5f42c1acb4bc821c62434742a1e'
+ 
+ 
+ def without_groups(schema):
+@@ -30,9 +31,21 @@
+     return schema
+ 
+ 
++def without_voiceover(schema):
++    shot = schema['$defs']['ShotSetArgs']
++    del shot['properties']['values']['properties']['metadata']
++    shot['properties']['clear']['items']['enum'].remove('metadata.draft_voiceover')
++    shot['description'] = (
++        'Occurrence-owned raw shot payload fields: canonical root name and bounded scalar settings roots. '
++        'Null is a value; clear removes presence. Unmentioned fields survive. Compound settings roots '
++        '(steerableMotionSettings, phaseConfig, pairConfigs, shotImageIds, loras, structureVideo, '
++        'modelSettingsByModel) are unsupported.')
++    return schema
++
++
+ def ordinary_schema():
+     """Remove only the reviewed carrier additions, checking each complete branch."""
+-    candidate = without_groups(copy.deepcopy(_SCHEMA))
++    candidate = without_groups(without_voiceover(copy.deepcopy(_SCHEMA)))
+     del candidate['$defs']['ProjectDataWriteArgs']
+     candidate['$defs']['EditCommand']['allOf'] = [
+         clause for clause in candidate['$defs']['EditCommand']['allOf']
+@@ -77,7 +90,7 @@
+ 
+ 
+ def test_removing_only_group_additions_reconstructs_project_data_bytes():
+-    candidate = without_groups(copy.deepcopy(_SCHEMA))
++    candidate = without_groups(without_voiceover(copy.deepcopy(_SCHEMA)))
+     raw = (json.dumps(candidate, indent=2) + '\n').encode()
+     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
+     assert len(candidate['$defs']) == 56
+@@ -85,7 +98,7 @@
+ 
+ 
+ def test_removing_group_and_project_data_additions_reconstructs_private_carrier_bytes():
+-    candidate = without_groups(copy.deepcopy(_SCHEMA))
++    candidate = without_groups(without_voiceover(copy.deepcopy(_SCHEMA)))
+     del candidate['$defs']['ProjectDataWriteArgs']
+     candidate['$defs']['EditCommand']['allOf'] = [
+         clause for clause in candidate['$defs']['EditCommand']['allOf']
+@@ -98,31 +111,37 @@
+ 
+ 
+ def test_project_data_proposal_has_a_new_closed_schema_hash():
+-    raw = (json.dumps(without_groups(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
++    raw = (json.dumps(without_groups(without_voiceover(copy.deepcopy(_SCHEMA))), indent=2) + '\n').encode()
+     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
+ 
+ 
+ def test_private_group_proposal_is_exactly_two_additions_on_project_data_floor():
+     raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+-    assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
++    assert hashlib.sha256(raw).hexdigest() == PRIVATE_VOICEOVER_SHA256
+     assert len(_SCHEMA['$defs']) == 58
+     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
+ 
+ 
++def test_voiceover_property_preserves_the_prior_group_schema_hash():
++    raw = (json.dumps(without_voiceover(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
++    assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
++
++
+ def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
+     from tests.sdk.test_timeline_current_union_schema import FIXTURES, baseline
+ 
+     previous = baseline('agent-frozen-s2-26ef2bbb')
++    current = without_voiceover(copy.deepcopy(_SCHEMA))
+     raw = (FIXTURES / 'agent-frozen-s2-26ef2bbb.json').read_bytes()
+     for name in (*REFERENCES, 'AnchorIdentity'):
+         addition = copy.deepcopy(
+-            _SCHEMA['$defs'][name]['anyOf'][-1] if name in REFERENCES else _SCHEMA['$defs'][name])
++            current['$defs'][name]['anyOf'][-1] if name in REFERENCES else current['$defs'][name])
+         old = json.dumps(previous['$defs'][name]['pattern']).encode()
+         assert raw.count(old) == 1
+         raw = raw.replace(old, json.dumps(addition['pattern']).encode(), 1)
+         previous['$defs'][name] = addition
+     current = {clause['if']['properties']['op']['const']: clause
+-               for clause in _SCHEMA['$defs']['EditCommand']['allOf']}
++               for clause in current['$defs']['EditCommand']['allOf']}
+     for clause in previous['$defs']['EditCommand']['allOf']:
+         op = clause['if']['properties']['op']['const']
+         if op in SOURCE_BOUND_OPERATIONS - {'track.create'}:
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_shot_set.py tests/packs/video_editing/test_draft_voiceover.py tests/sdk/test_timeline_materialization_schema_union.py' in /home/user/work/wt/agt-m2-voiceover-provenance-property
+ succeeded in 4274ms:
+........................................................................ [ 67%]
+...................................                                      [100%]
+107 passed in 3.50s
+
+exec
+/bin/bash -lc "git status --short && git diff --check && env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/_shot_commands.py tests/editing_conformance/test_recipe_shot_set.py tests/sdk/test_timeline_materialization_schema_union.py && printf '\\n--- report ---\\n' && sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-provenance-source.md && printf '\\n--- markers ---\\n' && wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/commit-msg.txt" in /home/user/work/wt/agt-m2-voiceover-provenance-property
+ succeeded in 994ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_shot_commands.py
+ M tests/editing_conformance/test_recipe_shot_set.py
+ M tests/sdk/test_timeline_materialization_schema_union.py
+All checks passed!
+
+--- report ---
+# Agent voiceover provenance property source
+
+Date: 2026-10-20 (UTC)
+
+Status: private Agent source proposal for cross-area ACK. This slice does not
+retire WC5 and does not claim a completed outer producer settlement.
+
+## Exact authored leaf
+
+The existing `shot.set` command now accepts the closed property carrier:
+
+```text
+args.values.metadata.draft_voiceover
+args.clear: "metadata.draft_voiceover"
+```
+
+The value is either a JSON object or explicit `null`; `clear` removes the leaf.
+The command never accepts an arbitrary metadata key or replaces the metadata
+root. It writes only `payload.metadata.draft_voiceover`. Existing sibling,
+unknown, and namespaced metadata fields remain untouched. The normal command
+validator still rejects non-finite JSON, and the recorder's JSON equality keeps
+booleans distinct from numbers.
+
+## Owner, source, and schema identity
+
+- Owner semantics remain explicit occurrence ownership:
+  `intent.ownership == "occurrence"`, selected by
+  `occurrence:<id>/shot`. Shared ownership is not inferred or accepted. The
+  existing occurrence and shot identity reads, `shot.owner` binding, exact
+  source dependency, and source-bound materialization guards remain in place.
+- Source fixture: the original `tests/packs/video_editing/test_draft_voiceover.py`
+  `fixture`/`synthesis` outcome, including its text, text digest, settings,
+  generated audio identity, run/task IDs, and base-head information. The
+  outcome is lowered through the recorder in
+  `tests/editing_conformance/test_recipe_shot_set.py`.
+- Reviewed base: `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`.
+- New complete schema candidate SHA-256:
+  `65bb68acbfbc72dabbbc83eab66e5309fe5cf5f42c1acb4bc821c62434742a1e`.
+  The prior group candidate remains reproducible as
+  `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb` after
+  removing this property. The older `392`, `613`, and `6ba` floor hashes remain
+  unchanged and are tested as such.
+
+The metadata is authored informational data only. Runtime producer authority
+continues to come from the existing guard/receipt path; this leaf cannot
+authorize a producer, media, task, run, or publication.
+
+## Remaining extent/audio blockers
+
+This change does not lower the rest of the original voiceover candidate. The
+current native command set still lacks an exact generated-audio source/duration
+carrier and a native placement/parent ripple retiming command. Consequently,
+the original audio materialization and `ripple` extent edits remain open; the
+metadata leaf can be carried independently but cannot stand in for them.
+
+The outer voiceover handoff also remains blocked on the actual normal Runtime
+admission/requester proof: the current continuation path requires its exact
+dependency shape. No Runtime restriction, producer authority, endpoint, DTO,
+approval path, or legacy writer was changed here.
+
+--- markers ---
+  0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/DONE
+192 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/commit-msg
+192 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-provenance-property/commit-msg.txt
+384 total
+
+codex
+Implemented and marked complete.
+
+- Extended `shot.set` for only `payload.metadata.draft_voiceover`, with occurrence ownership, exact clear/null semantics, sibling preservation, guards, inverse, rebase, and ABA behavior.
+- Added recorder tests using the original voiceover fixture.
+- Preserved prior schema floor hashes; new schema hash: `65bb68acbfbc72dabbbc83eab66e5309fe5cf5f42c1acb4bc821c62434742a1e`.
+- Wrote [provenance source report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-provenance-source.md), commit messages, and `DONE`.
+
+Tests:
+
+- Targeted voiceover/shot/schema tests: `107 passed`
+- Current union schema: `34 passed`
+- Ruff, py_compile, JSON validation, and `git diff --check`: passed
+
+Remaining audio/extent and Runtime admission blockers are documented; WC5 retirement is not claimed.
+tokens used
+232,089
+Implemented and marked complete.
+
+- Extended `shot.set` for only `payload.metadata.draft_voiceover`, with occurrence ownership, exact clear/null semantics, sibling preservation, guards, inverse, rebase, and ABA behavior.
+- Added recorder tests using the original voiceover fixture.
+- Preserved prior schema floor hashes; new schema hash: `65bb68acbfbc72dabbbc83eab66e5309fe5cf5f42c1acb4bc821c62434742a1e`.
+- Wrote [provenance source report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-provenance-source.md), commit messages, and `DONE`.
+
+Tests:
+
+- Targeted voiceover/shot/schema tests: `107 passed`
+- Current union schema: `34 passed`
+- Ruff, py_compile, JSON validation, and `git diff --check`: passed
+
+Remaining audio/extent and Runtime admission blockers are documented; WC5 retirement is not claimed.

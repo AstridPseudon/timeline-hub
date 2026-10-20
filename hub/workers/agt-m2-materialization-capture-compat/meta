@@ -1,0 +1,9 @@
+name=agt-m2-materialization-capture-compat
+repo=agent
+base=tl/agt-m2-materialization-union-compose
+base_sha=2ea37958
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-materialization-capture-compat
+started=2026-10-20T02:30:45Z

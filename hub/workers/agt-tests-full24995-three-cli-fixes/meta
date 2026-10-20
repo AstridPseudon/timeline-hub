@@ -1,0 +1,9 @@
+name=agt-tests-full24995-three-cli-fixes
+repo=agent
+base=tl/integration
+base_sha=30fc8dd1
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-tests-full24995-three-cli-fixes
+started=2026-10-20T15:47:50Z

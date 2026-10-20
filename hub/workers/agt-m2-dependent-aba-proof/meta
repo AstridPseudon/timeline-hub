@@ -1,0 +1,9 @@
+name=agt-m2-dependent-aba-proof
+repo=agent
+base=tl/agt-m2-native-batch-ingress
+base_sha=a95c58f1
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-dependent-aba-proof
+started=2026-10-20T01:46:25Z

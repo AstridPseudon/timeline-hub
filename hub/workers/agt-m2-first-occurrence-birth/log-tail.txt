@@ -1,0 +1,400 @@
+
+Found 3 errors.
+[*] 3 fixable with the `--fix` option.
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F,I --fix tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_commit_runtime_occurrence_create.py && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_create.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/_recording.py && git diff --check && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-first-occurrence-birth renderer-peers12-integration --files tests/editing_conformance/test_commit_runtime_occurrence_create.py' in /home/user/work/wt/agt-m2-first-occurrence-birth
+ succeeded in 723ms:
+Found 3 errors (3 fixed, 0 remaining).
+All checks passed!
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test && git diff --numstat && wc -l astrid/sdk/timeline/native_occurrence_create.py tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_commit_runtime_occurrence_create.py && git status --short && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import json,hashlib
+from pathlib import Path
+p=Path('astrid/core/timeline/schema/edit-command.schema.json'); data=json.loads(p.read_bytes()); floor=json.loads(Path('/home/user/work/runtime/contract/schemas/edit-command.json').read_bytes())
+assert all(data['"'$defs'"'][key] == value for key,value in floor['"'$defs'"'].items() if key"'!='"'EditCommand')
+assert data['"'$defs'"']['EditCommand']['allOf'][:-1] == floor['"'$defs'"']['EditCommand']['allOf']
+print('Full S2 unchanged + birth:', len(data['"'$defs'"']), 'defs,', len(data['"'$defs'"']['EditCommand']['allOf']), 'ops')
+print('Candidate schema sha256:', hashlib.sha256(p.read_bytes()).hexdigest())
+PY" in /home/user/work/wt/agt-m2-first-occurrence-birth
+ succeeded in 939ms:
+#!/bin/bash
+# wait-test ID|RESULT-DIR [MAX-MIN]  — poll every 30 s until the test run is done, print its summary, exit with its exit code.
+# Exits 124 (still queued/running) after MAX-MIN minutes (default 100); just run it again.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+D=$O/tests/$(basename "$1"); [ -f $D/status ] || { echo "no test run $1"; exit 2; }; END=$(( $(date +%s) + ${2:-100}*60 ))
+while grep -qE '^(queued|running)' $D/status; do
+  [ $(date +%s) -ge $END ] && { echo "still $(cat $D/status) after ${2:-100} min $(cat $D/why 2>/dev/null); rerun wait-test"; exit 124; }; sleep 30; done
+cat $D/summary; exit $(cat $D/exit 2>/dev/null || echo 1)
+254	3	astrid/core/timeline/schema/edit-command.schema.json
+3	2	astrid/sdk/timeline/_recording.py
+3	0	astrid/sdk/timeline/commands.py
+14	2	astrid/sdk/timeline/commit.py
+22	2	astrid/sdk/timeline/inverse.py
+4	2	tests/editing_conformance/test_recorded_graph_roots.py
+   58 astrid/sdk/timeline/native_occurrence_create.py
+  169 tests/editing_conformance/test_recipe_occurrence_create.py
+  247 tests/editing_conformance/test_commit_runtime_occurrence_create.py
+  474 total
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_recorded_graph_roots.py
+?? astrid/sdk/timeline/native_occurrence_create.py
+?? tests/editing_conformance/test_commit_runtime_occurrence_create.py
+?? tests/editing_conformance/test_recipe_occurrence_create.py
+Full S2 unchanged + birth: 49 defs, 23 ops
+Candidate schema sha256: edb3ac6a4650e9c847097f831e1c37adab84af0990891b2965e541cbef02d273
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319 1' in /home/user/work/wt/agt-m2-first-occurrence-birth
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319/status && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319/why 2>/dev/null && git diff --check' in /home/user/work/wt/agt-m2-first-occurrence-birth
+ exited 1 in 0ms:
+pass
+
+ succeeded in 30112ms:
+test agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319: pass exit=0 in 26s — renderer-peers12-integration on agt-m2-first-occurrence-birth (agent tree c29a4952fce6cd480f978579787eb40b7cd8030e)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 -o addopts= -p no:cacheprovider tests/editing_conformance/test_commit_runtime_occurrence_create.py
+counts: 2 passed in 21.69s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319/log.txt ---
+bringing up nodes...
+bringing up nodes...
+
+..                                                                       [100%]
+2 passed in 21.69s
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319/summary && git diff -- astrid/sdk/timeline/commit.py astrid/sdk/timeline/_recording.py && sed -n '1,95p' tests/editing_conformance/test_commit_runtime_occurrence_create.py && tail -32 tests/editing_conformance/test_recipe_occurrence_create.py" in /home/user/work/wt/agt-m2-first-occurrence-birth
+ succeeded in 54ms:
+test agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319: pass exit=0 in 26s — renderer-peers12-integration on agt-m2-first-occurrence-birth (agent tree c29a4952fce6cd480f978579787eb40b7cd8030e)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 -o addopts= -p no:cacheprovider tests/editing_conformance/test_commit_runtime_occurrence_create.py
+counts: 2 passed in 21.69s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319/log.txt ---
+bringing up nodes...
+bringing up nodes...
+
+..                                                                       [100%]
+2 passed in 21.69s
+diff --git a/astrid/sdk/timeline/_recording.py b/astrid/sdk/timeline/_recording.py
+index 688bcfc9..fcee1192 100644
+--- a/astrid/sdk/timeline/_recording.py
++++ b/astrid/sdk/timeline/_recording.py
+@@ -25,10 +25,11 @@ def selection(state, key, owner, members=()):
+                     "order": result, "boundaries": insertion_boundary(result, members),
+                     "policy": "guard-membership"}
+     elif key == 'placement.owners':
+-        shot = state.occurrence(owner)['shot_id']
++        origin = state.entity(owner, optional=True)
++        shot = origin['shot_id'] if origin is not None else None
+         result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
+                   if row['shot_id'] == shot]
+-        boundaries = ['shot:' + shot]
++        boundaries = ['shot:' + shot] if shot is not None else []
+     elif key == "move.blockers":
+         origin = state.occurrence(owner)
+         lane = (origin.get('placement') or {}).get('track', origin.get('track'))
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index 397018e1..3d265b9a 100644
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -164,7 +164,8 @@ def bundle_from_document(document):
+ def _inverse_media_removals(records, bundle):
+     """Only accepted edges can prove that a retained pin was introduced by writes."""
+     from ._collections import AcceptedRecords
+-    from ._command_state import CommandError, State, equal
++    from ._command_state import ABSENT, CommandError, State, equal, root_identity
++    from ._recording import Recording
+ 
+     if not records:
+         return set()
+@@ -201,7 +202,18 @@ def _inverse_media_removals(records, bundle):
+             for write in [*record['writes'], *record['derived_writes']]:
+                 if not state.matches(write['ref'], write['path'], write['before']):
+                     raise CommandError('media boundary differs from accepted writes', kind='history_unavailable')
+-                state.set(write['ref'], write['path'], write['after'])
++                root = root_identity(write['ref'])
++                created = ({'ref': write['ref'], 'kind': root[0],
++                            'owner': None if root[0] == 'shot' else 'parent'} if root else None)
++                if (root is not None and not write['path'] and write['before'] == ABSENT
++                        and write['after']['state'] == 'present' and created in record['created']):
++                    # Replaying authenticated semantic birth must retain the
++                    # recorder's source-free compiler marker, just like execution.
++                    Recording(state.bundle, record['command'], record['ordinal']).create_entity(
++                        write['ref'], kind=root[0], owner=created['owner'],
++                        value=write['after']['value'], restoring=True)
++                else:
++                    state.set(write['ref'], write['path'], write['after'])
+         replayed = document_from_bundle(state.bundle, source_bundles=(after,))
+         if (not equal(replayed['parent_revision']['payload'], images[1]['parent_revision']['payload'])
+                 or any(not equal(replayed[key], images[1][key]) for key in (
+"""First canonical shot via normal bootstrap, generated schema and accepted history.
+
+Privately generate the full S2 superset and run the journey in an isolated
+process so other integration tests keep their own Runtime imports. No SQL, legacy baseline, HTTP alias or shared dependency writes.
+"""
+from __future__ import annotations
+
+import copy
+import io
+import os
+import subprocess
+import sys
+import tarfile
+from pathlib import Path
+
+import pytest
+
+from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+from astrid.sdk.timeline.native_occurrence_media_commands import (
+    capture_occurrence_add_media,
+)
+from tests.helpers.runtime import runtime_checkout
+
+pytestmark = pytest.mark.integration
+OWNER = 'occurrence:first-occurrence'
+
+
+@pytest.fixture(scope='module')
+def generated_runtime(tmp_path_factory):
+    source = runtime_checkout()
+    private = tmp_path_factory.mktemp('birth-runtime')
+    archive = subprocess.run(['git', '-C', str(source), 'archive', 'HEAD'], check=True, capture_output=True)
+    with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as tree:
+        tree.extractall(private, filter='data')
+    schema = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
+    (private / 'contract/schemas/edit-command.json').write_bytes(schema.read_bytes())
+    environment = {**os.environ, 'PYTHONDONTWRITEBYTECODE': '1', 'PYTHONPATH': str(private)}
+    # The normal generator checks all immutable published floors, including S2.
+    for flags in ([], ['--check']):
+        result = subprocess.run([sys.executable, 'generators/generate.py', *flags], cwd=private,
+                                env=environment, capture_output=True, text=True)
+        assert result.returncode == 0, result.stdout + result.stderr
+    return private
+
+
+@pytest.mark.parametrize('grouped', [False, True])
+def test_bootstrap_birth_child_media_exact_history_inverse_redo_retry(
+    generated_runtime, tmp_path, grouped,
+):
+    script = '''
+import sys
+from pathlib import Path
+import pytest
+from tests.helpers.runtime import use_runtime
+use_runtime()
+from tests.editing_conformance.test_commit_runtime_occurrence_create import _prove_birth
+with pytest.MonkeyPatch.context() as patch:
+    _prove_birth(Path(sys.argv[1]), patch, sys.argv[2] == 'True')
+'''
+    environment = {**os.environ, 'ASTRID_RUNTIME_CHECKOUT': str(generated_runtime),
+                   'PYTHONDONTWRITEBYTECODE': '1',
+                   'PYTHONPATH': os.pathsep.join([str(Path(__file__).parents[2]),
+                                                 str(generated_runtime / 'tests')])}
+    result = subprocess.run([sys.executable, '-c', script, str(tmp_path), str(grouped)],
+                            env=environment, capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def _prove_birth(tmp_path, monkeypatch, grouped):
+    from runtime_protocol.auth import CredentialStore
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+    from test_generation_publish_v1_settlement import (
+        _effect,
+        _fixture,
+        _output,
+        _settle,
+    )
+
+    def effect(project):
+        return _effect(project, groups=[{'group_key': 'main', 'selectors': [
+            {'selector': 'image', 'ordinal': 0, 'variant_key': 'image', 'output_port': 'image'}]}])
+
+    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
+    project = project['id']
+    credentials = CredentialStore(tmp_path / 'credentials')
+    token, _ = credentials.provision('birth-editor', ['projects:read', 'projects:write'])
+
+    def authorize():
+        return credentials.require(token, 'projects:write')
+
+def test_later_child_or_occurrence_dependency_prevents_birth_undo():
+    original = empty_bundle()
+    plan = execute(original, [birth(original)])
+    tracked = execute(plan.bundle, [capture_track_create(plan.bundle, OWNER, {'id': 'child', 'kind': 'visual'})])
+    with pytest.raises(CommandError):
+        inverse(tracked.bundle, plan.records, tracked.records)
+    dependent = copy.deepcopy(plan.bundle)
+    dependent['placements'].append({**copy.deepcopy(dependent['placements'][0]), 'occurrence_id': 'dependent'})
+    with pytest.raises(CommandError, match='surviving'):
+        inverse(dependent, plan.records)
+
+
+@pytest.mark.parametrize('change', [
+    {'occurrence_id': ' '}, {'shot_id': 'shot/bad'}, {'shot_id': 'x::y'},
+    {'duration': 0}, {'duration': True}, {'on': -1}, {'on': float('inf')}, {'track': 'missing'},
+])
+def test_closed_birth_inputs_refuse_before_mutation(change):
+    original = empty_bundle()
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError):
+        birth(original, **change)
+    assert original == before
+
+
+def test_append_birth_inverse_preserves_existing_order_and_opaque_content():
+    original = empty_bundle()
+    existing = execute(original, [birth(original, occurrence_id='existing', shot_id='existing')]).bundle
+    State(existing).entity('occurrence:existing')['opaque'] = [None, False]
+    plan = execute(existing, [birth(existing)])
+    assert [row['occurrence_id'] for row in plan.bundle['placements']] == ['existing', 'first-occurrence']
+    assert inverse(plan.bundle, plan.records).bundle == existing
+
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-occurrence-birth/notes/report.md <<'EOF'
+# First canonical occurrence birth
+
+Implemented the bounded native capability. The existing typed refs and recorder DO represent first semantic birth; no new port, HTTP route, ABI, table or ID codec is needed. Source-backed contract was written before implementation: [contract.md](contract.md).
+
+## Changes
+
+* "'`astrid/sdk/timeline/native_occurrence_create.py`: closed `occurrence.create` v1 plus `capture_occurrence_create`. Explicit caller-reserved shot/occurrence IDs; empty shot/internal timeline plus canonical occurrence; parent track/output and occurrence/track order guards; fixed absolute placement in seconds, main frame quantization; no whole-parent replacement. Authored roots use `Recording.create_entity`, absent-root reads and exact created facts. No materialization is represented as semantic birth.
+* `commands.py`: register that command using parent as an owner selector, with empty resolved refs (parent is not a ScopedId).
+* `inverse.py`: fold native child births into a created root using existing validated historical collection orders; do not arrange collections after their created owner has been reversed away.
+* `_recording.py`: absent occurrence has an empty `placement.owners` selection, needed to capture the original absent head during grouped redo.
+* `commit.py:_inverse_media_removals`: reconstitute only authenticated accepted root birth via the recorder when verifying a media-introducing boundary. Plain `State.set` lost the source-free compiler marker. Derived materialization still cannot enter this branch without exact semantic created facts.
+* Schema is the COMPLETE S2 superset, preserving every S2 definition/operation and adding only `OccurrenceCreateArgs` and `occurrence.create`: 49 definitions, 23 operations. Candidate SHA256 `edb3ac6a4650e9c847097f831e1c37adab84af0990891b2965e541cbef02d273`. S2 was read only, not changed or published. Its baseline SHA256 is `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`.
+* New recipe and real Runtime tests live in main'"'s editing-conformance suite. The former fixture-private registry test now checks that arbitrary root payloads remain refused by the closed public birth command; it does not change any passing authoring behavior to refusal.
+
+Product Python delta: +94 net lines (including the 58-line new command); command-schema delta +251 net lines (includes full S2 adoption); tests +418 net lines. No process docs or generated client files added to the repo.
+
+## Evidence
+
+Final central snapshot: "'`c29a4952fce6cd480f978579787eb40b7cd8030e`. Private Runtime source archived from integration HEAD `2c4ac180c2220bdad966bc01e95ad230e99ce26a` (S2 release). Shared Runtime, dependencies, venvs and node_modules were not modified.
+
+Native and neighboring behavior tests (final product code):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
+```
+
+**574 passed in 37.26s**, log [targeted-test.log](targeted-test.log). Includes root absence/created facts, deterministic replay, rational FPS, compiled reload, exact inverse/redo, grouped child birth, original owner/order/output/legacy guards, collision and malformed-input refusal, disjoint scalar rebase, later same-value writes and surviving dependencies.
+
+Runtime proof was run through the central named suite after the final test-isolation/import cleanup:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-first-occurrence-birth renderer-peers12-integration --files tests/editing_conformance/test_commit_runtime_occurrence_create.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319 1
+```
+
+**2 passed in 21.69s, exit 0**; service result dir `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-occurrence-birth-renderer-peers12-integration-1020115152-27319/`. Named command invokes `/home/user/work/venv-agent/bin/python -m pytest -q -n 2 -o addopts= -p no:cacheprovider tests/editing_conformance/test_commit_runtime_occurrence_create.py`, with the suite'"'s standard read-only Runtime/renderer environment. No renderer was invoked.
+
+Inside each test's private Runtime archive, normal commands "'`python generators/generate.py` and `python generators/generate.py --check` both pass, including ALL immutable compatibility floors and S2. The real journey runs in an isolated subprocess so other integration tests'"' Runtime imports are untouched. It uses normal generation settlement/media selection and verification, provider registration, createTimeline bootstrap, accepted native commits/history, exact immutable readback, child track/media, inverse/redo, same-timeline retired ID refusal, project-wide occupied AND retired shot refusal, unchanged history on those refusals, storage close/reopen and exact old-request retry. Both sequential authoring and grouped birth+track+media pass. Legacy publication and renderer methods are tripwired. There is no SQL, fabricated accepted history or seeded baseline.
+
+The direct in-process-service test run before the final import-format cleanup also passed **2 tests in 15.64s**:
+
+"'```sh
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-occurrence-birth/runtime-basetemp tests/editing_conformance/test_commit_runtime_occurrence_create.py
+```
+
+Lint and whitespace:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_create.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/_recording.py
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F,I tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_commit_runtime_occurrence_create.py
+git diff --check
+```
+
+All pass. A structural comparison additionally confirmed that every non-EditCommand S2 definition is unchanged and all S2 operation clauses are the exact prefix of the candidate clauses.
+
+One initial central request attempted to pass `-m integration` as a targeted file argument; the test service rejected that argument before executing tests. No suite was run by that request. The named service run above is the actual central evidence. Intermediate red tests found and drove the grouped inverse/source-free replay/explicit gain fixes; no behavior expectations were weakened or skipped.
+
+## Decisions and limits
+
+* Normal empty bootstrap has no output block. Capture guards that absence, inherits `{}` into the child and uses existing 30 fps default; authored object output is copied exactly. Explicit null/non-object output refuses.
+* Explicit unity gain is authored because current Runtime persists an omitted gain as 1 but startup verification compares to authored absence/None. This yields a restart-valid normal closure without modifying Runtime.
+* A later authored child write blocks undoing the older birth even after another inverse restores equal values. Tests retain that ABA requirement; a grouped publication reverses as one unit.
+* Existing main semantics remain the single chapters-as-shots representation. No arbitrary shot settings, shared-shot birth, automatic placement/pooling, migration, or framework is added.
+* No full suite, make check, HTTP/SDK transport, App/UI journey or released-client qualification was run. Runtime proof uses actual public Runtime service APIs and acceptance/history, not the HTTP client. The normal generated DTO/schema artifacts are qualified privately, not published.
+
+No typed-reference or Runtime port gap remains in this bounded capability. The remaining artifact/release gap is deliberate: official Runtime generated bundle/clients and consumer pins must move together to the complete S2-plus-birth candidate; no partial freeze or current-S2 mutation was made. Direct retired-writer positives and existing writer-retirement staging were left unchanged. Recommend coordinated successor generation/pins and App adoption using the exact capture helper before retiring any remaining consumer. No git mutation, integration edit, ledger edit or push was performed.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-occurrence-birth/commit-msg <<'"'EOF'
+feat(timeline): record first canonical occurrence birth
+
+Add a closed occurrence.create recipe for an empty shot and internal timeline
+with reserved stable IDs, original placement guards and exact created facts.
+Preserve the full S2 command schema as the compatibility floor.
+
+Support grouped child births in guarded inverse and authenticated media-boundary
+replay. Prove bootstrap, native child media, inverse/redo, project-wide identity
+refusals and restart-safe retry against a privately generated Runtime contract.
+EOF" in /home/user/work/wt/agt-m2-first-occurrence-birth
+ succeeded in 9ms:
+2026-10-20T11:54:15.203639Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F,I tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_commit_runtime_occurrence_create.py && git diff --check && rm -rf /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-occurrence-birth/runtime-basetemp && touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-occurrence-birth/DONE && git status --short'` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F,I tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_commit_runtime_occurrence_create.py && git diff --check && git status --short' in /home/user/work/wt/agt-m2-first-occurrence-birth
+ succeeded in 1320ms:
+All checks passed!
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_recorded_graph_roots.py
+?? astrid/sdk/timeline/native_occurrence_create.py
+?? tests/editing_conformance/test_commit_runtime_occurrence_create.py
+?? tests/editing_conformance/test_recipe_occurrence_create.py
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import shutil
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-occurrence-birth')
+temporary = worker / 'runtime-basetemp'
+assert not temporary.is_symlink() and temporary.resolve().parent == worker.resolve()
+if temporary.exists():
+    shutil.rmtree(temporary)
+(worker / 'DONE').touch()
+PY" in /home/user/work/wt/agt-m2-first-occurrence-birth
+ succeeded in 1332ms:
+codex
+Implemented `occurrence.create` and capture using the existing recorder and typed refs. Includes guarded grouped inverse/redo and the complete S2 schema superset.
+
+Validation passed:
+
+- Targeted native/neighbour tests: **574 passed**.
+- Central command: `request-test agt-m2-first-occurrence-birth renderer-peers12-integration --files tests/editing_conformance/test_commit_runtime_occurrence_create.py` — **2 passed**.
+- Ruff and `git diff --check` passed.
+
+Runtime proof covers normal bootstrap, child media, exact undo/redo, occupied/retired IDs and restart retry. No typed-ref or port gap remains. Full suites, HTTP/SDK and App journeys were not run.
+
+[Report with exact commands, results and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-occurrence-birth/notes/report.md).
+
+Next: coordinated Runtime generation and consumer pins, then App adoption before writer retirement. `commit-msg` and `DONE` are written.
+tokens used
+240,592
+Implemented `occurrence.create` and capture using the existing recorder and typed refs. Includes guarded grouped inverse/redo and the complete S2 schema superset.
+
+Validation passed:
+
+- Targeted native/neighbour tests: **574 passed**.
+- Central command: `request-test agt-m2-first-occurrence-birth renderer-peers12-integration --files tests/editing_conformance/test_commit_runtime_occurrence_create.py` — **2 passed**.
+- Ruff and `git diff --check` passed.
+
+Runtime proof covers normal bootstrap, child media, exact undo/redo, occupied/retired IDs and restart retry. No typed-ref or port gap remains. Full suites, HTTP/SDK and App journeys were not run.
+
+[Report with exact commands, results and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-occurrence-birth/notes/report.md).
+
+Next: coordinated Runtime generation and consumer pins, then App adoption before writer retirement. `commit-msg` and `DONE` are written.

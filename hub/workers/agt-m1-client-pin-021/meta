@@ -1,0 +1,9 @@
+name=agt-m1-client-pin-021
+repo=agent
+base=tl/integration
+base_sha=b3a1cc21
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m1-client-pin-021
+started=2026-10-19T19:43:26Z

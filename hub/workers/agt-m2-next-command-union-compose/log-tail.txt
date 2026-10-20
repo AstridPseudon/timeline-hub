@@ -1,0 +1,400 @@
+import io
+import subprocess
+import tarfile
+from pathlib import Path
+
+NOTES = Path(__file__).resolve().parent
+AGENT = Path('/home/user/work/wt/agt-m2-next-command-union-compose')
+RUNTIME = Path('/home/user/work/runtime')
+REFS = {
+    'runtime-generation': 'c0dcd3871d78c405184506eb6735565592498c77',
+    'runtime-s2-base': 'f7081c14efd9a5b834987e7a1e2abf597b66313b',
+    'historical-runtime': '80973d34ae10e498d7213c30287012c9876f4b1a',
+}
+for name, ref in REFS.items():
+    target = NOTES / name
+    target.mkdir(exist_ok=True)
+    raw = subprocess.check_output(['git', '-C', str(RUNTIME), 'archive', ref])
+    with tarfile.open(fileobj=io.BytesIO(raw), mode='r:') as archive:
+        archive.extractall(target, filter='data')
+    if name == 'historical-runtime':
+        continue
+    (target / 'contract/schemas/edit-command.json').write_bytes(
+        (AGENT / 'astrid/core/timeline/schema/edit-command.schema.json').read_bytes())
+    for extra in ([], ['--check']):
+        subprocess.run(['/home/user/work/venv-runtime/bin/python',
+                        str(target / 'generators/generate.py'), *extra], check=True)
+PY
+python3 - <<'PY'
+import hashlib,json,subprocess
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes')
+schema=Path('astrid/core/timeline/schema/edit-command.schema.json').read_bytes()
+(root/'edit-command.candidate.schema.json').write_bytes(schema)
+s=json.loads(schema)
+(root/'schema-summary.json').write_text(json.dumps({'sha256':hashlib.sha256(schema).hexdigest(),'definition_count':len(s['"'$defs'"']),'operation_names':sorted(c['if']['properties']['op']['const'] for c in s['"'$defs'"']['EditCommand']['allOf']),'definitions':sorted(s['"'$defs'"'])},indent=2)+'\\n')
+base='runtime-s2-base'
+paths=(root/'generator-s2-base.log').read_text().splitlines()
+(root/'private-generated-output-hashes.json').write_text(json.dumps({path:hashlib.sha256((root/base/path).read_bytes()).hexdigest() for path in paths},indent=2)+'\\n')
+print(hashlib.sha256(schema).hexdigest())
+print(sorted(c['if']['properties']['op']['const'] for c in s['"'$defs'"']['EditCommand']['allOf']))
+PY" in /home/user/work/wt/agt-m2-next-command-union-compose
+ succeeded in 217ms:
+fafb1985a326e6121aa8c9fb34bbda196edc3dfaf462352070372e631bea1f52
+['clip.add', 'clip.add-media', 'clip.anchor', 'clip.delete', 'clip.move', 'clip.set', 'clip.set-element', 'clip.set-params', 'clip.split', 'clip.trim', 'occurrence.add-media', 'occurrence.delete', 'occurrence.duplicate', 'occurrence.swap-media', 'placement.create', 'placement.move', 'placement.unplace', 'producer.guard', 'shot.pool', 'shot.set', 'timeline.assembled-target', 'timeline.init', 'timeline.inverse', 'timeline.restore', 'track.create', 'track.set']
+
+ succeeded in 34582ms:
+ succeeded in 44320ms:
+exec
+/bin/bash -lc "tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/element-native-preservation.log; tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/retained-schema-private-final.log; tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/actual-s2-base-final.log; rg --files --hidden -g '*.orig' -g '*.rej' -g '__pycache__' -g '.pytest_cache' -g '"'!.git'"' | head -15; git diff --check" in /home/user/work/wt/agt-m2-next-command-union-compose
+ succeeded in 97ms:
+........................                                                 [100%]
+24 passed in 40.81s
+....................                                                     [100%]
+20 passed in 32.70s
+.....................................................
+codex
+The private Runtime built from the completed S2 base passes all five producer tests, including the original positive with `--runxfail`. Retained-schema tests pass on the same private generated contract; native element and capture preservation tests also pass. The remaining check is the final parent/word/joint run. The grouped inverse remains a review blocker, and no public tuple or client pin has changed.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib,subprocess
+from pathlib import Path
+s2=subprocess.check_output(['git','show','26ef2bbb:astrid/core/timeline/schema/edit-command.schema.json'])
+assert hashlib.sha256(s2).hexdigest()=='a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef'
+rt=subprocess.check_output(['git','-C','/home/user/work/runtime','show','f7081c14:contract/schemas/edit-command.json'])
+print('S2 Runtime base schema SHA256:',hashlib.sha256(rt).hexdigest())
+assert rt==s2
+for path in ('astrid/sdk/timeline/compiler.py','astrid/sdk/timeline/checkout.py','astrid/sdk/timeline/store.py','astrid/sdk/timeline/_trim_commands.py','astrid/sdk/timeline/native_auto_placement.py','astrid/sdk/timeline_elements.py','runtime.lock.json'):
+    assert Path(path).read_bytes()==subprocess.check_output(['git','show',f'HEAD:{path}']),path
+print('Preserved compiler/history/trim/auto/public-helper/runtime-lock bytes: yes')
+PY" in /home/user/work/wt/agt-m2-next-command-union-compose
+ succeeded in 220ms:
+S2 Runtime base schema SHA256: a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef
+Preserved compiler/history/trim/auto/public-helper/runtime-lock bytes: yes
+
+ succeeded in 260102ms:
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/report.md <<'MD'
+**Review candidate prepared; freeze is blocked by a newly exposed grouped inverse defect.**
+
+Assigned worktree "'`/home/user/work/wt/agt-m2-next-command-union-compose`, base `7970544b`. This is the NEXT command cohort, not an S2 replacement or a published tuple. No integration tree, branch/ref, Runtime/client pin, shared dependency/cache, public generator, ledger or root process document was changed. No delegation or messages to other owners occurred. The harness owns any eventual commit.
+
+The canonical schema is `astrid/core/timeline/schema/edit-command.schema.json`; a review copy is `notes/edit-command.candidate.schema.json` beside this report. SHA256: `fafb1985a326e6121aa8c9fb34bbda196edc3dfaf462352070372e631bea1f52`. It has **53 definitions and 26 operation conditions**. `notes/schema-summary.json` contains every actual definition and operation name. `notes/candidate.patch` contains the source/test candidate, including new files.
+
+Composed only the approved parent `905cdcfa`, pristine init `487ca1e0`, and word `9f474fec` additions over the complete S2 command floor `26ef2bbb` / raw SHA256 `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`. The digest prefix is not a commit. Parent'"'s partial standalone schema was never selected. Existing files received bounded hunks; current compiler/history/trim/auto implementations were retained. New handlers/tests came from the approved source chains. The evaluator receives only the review's eight-line source-window/occurrence-boundary delta, preserving "'`_timing_number` and every renamed caller.
+
+Reused the now-committed S2 consumer preparation `fc696847`: the overlapping `_clip_scalar_commands.py`, `_recording.py`, `producer.py`, `rebase.py` and `sync.py` are byte-identical. Reused its published-floor inventory, historical regex containment proof and native element Runtime tests. Its keyed-view caller changes are outside this task and were not duplicated. The legacy public element helper remains unchanged, as required by the reviewed S2 preparation; no helper or authentic assembler/requester cutover is claimed.
+
+The five additions are exactly `AssembledTargetArgs`, `ClipAddMediaArgs`, `TimelineInitArgs`, `WordAnchor`, and `ClipAnchorArgs`. Removing those definitions and four operation conditions yields complete S2 exactly. The new slice fixture compares each added definition and condition with its approved source. Immutable S2/S1, current c456b328/df2739f9, original word and Runtime0.2.10 floors remain. The committed published-source inventory also checks 0.2.1, 0.2.2, 0.2.3, 0.2.8 and locked 0.2.9. For 0.2.1/0.2.2 only, the inherited conservative checker cannot infer regex inclusion; the committed test explicitly proves the existing additive asset/shot/occurrence-track alternatives, then checks every remaining field against the whole old schema. No guard or floor was weakened.
+
+The exact operation names are:
+
+```text
+clip.add                 clip.add-media           clip.anchor
+clip.delete              clip.move                clip.set
+clip.set-element         clip.set-params          clip.split
+clip.trim                occurrence.add-media     occurrence.delete
+occurrence.duplicate     occurrence.swap-media    placement.create
+placement.move           placement.unplace        producer.guard
+shot.pool                shot.set                 timeline.assembled-target
+timeline.init            timeline.inverse         timeline.restore
+track.create             track.set
+```
+
+The inventory test checks equality with the native registry plus inverse/restore, with no duplicates. Text binding remains excluded. No broader timing declarations are activated; compiler admission stays the reviewed bounded word-reference path. The capture-candidate hook remains present. Compiler, checkout, local store/history, trim, auto placement, public element helper and runtime lock were independently checked byte-equal to the assigned base.
+
+**Two limits require manager judgment before freeze.**
+
+1. A fully successful pristine init → first parent media → word-selection chain cannot be constructed using only this closed cohort. Init requires exactly empty placements/shots; WordAnchor requires `occurrence:<id>/clip:<id>`; the registry has no first-occurrence creation operation. No unsupported source insertion was invented. New real-service tests prove init → first media birth, restart/exact retry, missing-word-source atomic refusal, grouped undo back to the original raw document, and fresh-key initialization refusal after equal-byte undo. Successful same-echo stable A/B word selection is tested on a genuine historical occurrence source in a separate joint parent-media/word journey.
+2. That historical joint journey finds an additional safe refusal: grouping parent birth + anchor A + anchor B + inverse(B) into one undo raises `inverse_conflict` / `original authored guard changed` at the created clip root. The grouped authored-root expectation retains the original literal `at` cache while the accepted word edits changed derived `at`/`hold`. The failure comes from the root guard before mutation. Ordinary B undo restores the exact A document, redo restores exact B, restart/exact retries retain both choices, and undoing earlier A alone correctly refuses an intervening write. The expected successful grouped undo is preserved as a **new strict xfail**, parameter `[True]` in `test_next_command_cohort_runtime.py`; the `[False]` journey remains a passing positive. I did not broaden the approved inverse delta to repair this new interaction. The manager should commission a bounded authored-root/derived-cache inverse fix and independently review it before freezing the successor.
+
+The original four strict xfails for deferred parent automatic placement remain unchanged. The parent'"'s separate settled-proposal/outbox forwarding positive became XPASS once S2 was included; its obsolete xfail was removed and the original positive assertions now pass. This is detached proposal forwarding, not authentic producer/requester lifecycle qualification. S2's real generic-producer positive retains its old-pin xfail in the source and is explicitly run with "'`--runxfail` on the private S2-base Runtime below.
+
+**Runtime provenance and reproduction.**
+
+Primary candidate tests use an immutable private archive of completed S2 Runtime `f7081c14efd9a5b834987e7a1e2abf597b66313b`, normally regenerated with this candidate'"'s canonical schema copied to its ordinary "'`contract/schemas/edit-command.json` input. The base Runtime input is independently byte-identical to full S2. This PRIVATE copy is `notes/runtime-s2-base`; it is not a public successor release. Both ordinary generation and `--check` exited 0, producing the usual 13 outputs. Their hashes are in `notes/private-generated-output-hashes.json`.
+
+The initial word-review-base experiment used private `c0dcd3871d78c405184506eb6735565592498c77` under `notes/runtime-generation`, normally regenerated the same way. It exposed that older Runtime'"'s known producer-record normalization defect. Final producer qualification below uses the completed S2 base and passes. Historical word-source data is created through the public pre-cut API in immutable "'`80973d34ae10e498d7213c30287012c9876f4b1a`, then reopened in the current private Runtime. Parent film fixtures restore the Runtime'"'s genuine pre-cut backup. No SQL-seeded acceptance, inline schema-loader substitution, fabricated receipts, PreparedProvider, renderer, daemon, HTTP Door, browser or sockets are involved.
+
+The existing init and committed native element preservation tests explicitly select vendored Runtime94114269 (Agent remains pinned to 0.2.9). Capture tests explicitly select their existing historical Runtime4bb1d0f7 fixture. These lanes establish Agent source preservation on their stated bases; they are not generated-pair qualification. Exact private candidate-schema coverage comes from the S2-base lanes.
+
+Private archives are removed after testing. "'`notes/prepare_sources.py` recreates them using read-only git archives and the normal generator; run it from the retained candidate worktree before reproducing the commands below. It installs nothing and writes only inside this worker'"'s notes.
+
+All test commands run from the assigned worktree. Common shell abbreviations below expand to the exact paths and environment used:
+
+"'```sh
+W=/home/user/work/wt/agt-m2-next-command-union-compose
+N=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes
+P=/home/user/work/venv-agent/bin/python
+cd "$W"
+export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$W"
+```
+
+Normal private generation, then a read-only stale-output check (both exit 0):
+
+```sh
+/home/user/work/venv-runtime/bin/python "$N/runtime-s2-base/generators/generate.py"
+/home/user/work/venv-runtime/bin/python "$N/runtime-s2-base/generators/generate.py" --check
+```
+
+Final portable source/schema/conformance command: **220 passed, 4 existing strict xfailed in 270.18 s**, exit 0 (`final-portable.log`). Counts overlap other lanes and must not be summed as unique tests.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_composed_schema.py tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_producer_insertion.py tests/editing_conformance/test_native_word_anchor_vectors.py tests/sdk/test_timeline_pristine_initialize_provider.py
+```
+
+Final explicit operation inventory / published-floor / exact approved-slice checks: **3 passed in 5.59 s**, exit 0 (`inventory-published-floor.log`). The inventory test was added after the preceding run started, so it was checked separately.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort tests/sdk/test_timeline_current_union_schema.py::test_all_published_floors_preserve_every_field_with_only_historical_pattern_widening tests/sdk/test_timeline_current_union_schema.py::test_each_added_definition_and_operation_matches_its_approved_source
+```
+
+Current kernel, facade, history, trim, auto, producer, retained-element and deletion neighbors: **918 passed, 9 skipped in 153.27 s**, exit 0 (`current-neighbors.log`). The skips were capture tests without a Runtime locator; all 43 capture tests passed in the subsequent explicit Runtime lane below. No skip was added or changed.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py tests/sdk/test_timeline_producer_guard.py tests/sdk/test_timeline_selected_schema.py tests/editing_conformance/test_recipe_clip_set_element.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_auto_placement_reads.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/sdk/test_native_timeline_facades.py tests/sdk/test_timeline_capture_projection.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_restore_recovery.py tests/editing_conformance/test_recipe_m2_clip_trim.py
+```
+
+Final exact private candidate parent/word/joint command: RESULT_PENDING (`actual-s2-base-final.log`).
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2-base" ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-runtime" "$P" -m pytest -o addopts= -p no:cacheprovider -q -rx -m integration tests/editing_conformance/test_commit_runtime_parent_media.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_next_command_cohort_runtime.py
+```
+
+Private candidate generic-producer lifecycle, explicitly preserving the original positive: **5 passed in 9.64 s**, exit 0 (`producer-s2-base-final.log`).
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2-base" "$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration --runxfail tests/sdk/test_timeline_producer_guard_runtime.py
+```
+
+Private candidate retained-schema admission/capture: **20 passed in 32.70 s**, exit 0 (`retained-schema-private-final.log`).
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2-base" "$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration tests/sdk/test_timeline_selected_schema_runtime.py
+```
+
+Unmodified committed S2 native element preservation tests (their original vendored Runtime pin): **24 passed in 40.81 s**, exit 0 (`element-native-preservation.log`).
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime "$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration tests/core/test_timeline_element_publication_runtime.py
+```
+
+Original actual init create/restart/lost-ACK/undo/retry/redo positive: **1 passed in 2.83 s**, exit 0 (`pristine-original-runtime.log`).
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime "$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration tests/sdk/test_timeline_pristine_initialize_runtime.py
+```
+
+Explicit capture preservation lane: **43 passed in 15.79 s**, exit 0 (`capture-final.log`).
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime "$P" -m pytest -o addopts= -p no:cacheprovider -q -rs tests/sdk/test_timeline_capture_projection.py
+```
+
+Obsolete parent scalar-shape refusal on the original generic-envelope Runtime8609333: **2 passed in 2.63 s**, exit 0 (`generic-boundary.log`). This retains the original provider rejection branch; the exact typed candidate rejects earlier, before provider/media reads, with a tested 422. Both branches assert unchanged storage and no selected-media/acceptance call.
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime "$P" -c '"'from tests.helpers.runtime import use_runtime; use_runtime(commit=\"8609333\"); import pytest; raise SystemExit(pytest.main([\"-o\", \"addopts=\", \"-p\", \"no:cacheprovider\", \"-q\", \"-m\", \"integration\", \"tests/editing_conformance/test_commit_runtime_parent_media.py::test_runtime_rejects_obsolete_scalar_shape_before_reads_and_writes\"]))'
+"'```
+
+Lint: `python3` built the changed/new `astrid/**/*.py` path list from `git diff --name-only` and `git ls-files --others --exclude-standard`, then ran `"$P" -m ruff check --no-cache` on that exact list: **All checks passed**, exit 0. The focused check also included the new joint/inventory test files. `git diff --check`: exit 0. A first lint attempt identified only my unsorted producer import; it was sorted without a semantic change.
+
+**Earlier attempts and corrections, retained honestly.**
+
+- `initial-targeted.log`: the final-portable command restricted to current-union schema, composed schema, pristine init, parent-media conformance and word vectors: **162 passed / 4 existing xfailed**, exit 0. This initially used three redundant whole source-schema fixtures; they were reduced to the exact additions fixture before the final command, retaining all published/current/S2 floors.
+- `native-targeted.log`: pristine init + parent-media + producer insertion + word vectors + init provider: **185 passed / 4 existing xfailed / 1 strict XPASS**, exit 1. The XPASS was the original detached producer/outbox forwarding positive, now satisfied by S2. Removing its stale marker restored it as a passing test; no positive assertions changed.
+- `actual-original.log`: parent and word Runtime files on the older regenerated c0dcd387 base: **88 passed / 2 failed**, exit 1. Both failures were the negative scalar-shape test assuming the older generic envelope would validate before the provider rejected. The normally generated candidate has closed args and rejects earlier. The test now proves both the generic and typed rejection branches without weakening atomic refusal.
+- `joint-runtime.log`: initial new joint probes had **3 failures**: separate earlier undos after later writes/reversals were correctly guarded. `joint-runtime-final.log` used complete grouped undo and had **2 passed / 1 failed**, isolating the new derived-cache root-guard defect. The split final joint controls on c0dcd387 (`joint-and-boundary.log`) gave **5 passed / 1 new strict xfailed in 15.36 s** including both typed negative-boundary cases. The grouped-success assertion remains in the xfail case.
+- `producer-runtime.log`: original generic producer positives with `--runxfail` on regenerated c0dcd387: **4 passed / 1 failed**, exit 1, the known old Runtime guard-record normalization problem. The final S2-base command above passes all five; Agent source/expectations were unchanged.
+
+These probe commands use the same `-o addopts= -p no:cacheprovider -q` flags and file groups listed above, changing only the explicitly named file subsets and `ASTRID_RUNTIME_CHECKOUT="$N/runtime-generation"`; word probes also set `ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-runtime"`. No rerun was submitted as a full suite.
+
+No full/full* suite, make check, App/client pair, CLI/sheet picker, browser/live transport, render/preview parity, owner film, macOS, public successor generation/freeze, authentic producer/requester cutover, public-helper migration, or first-occurrence creation is qualified. Keep S2 release work intact. Next steps are independent review of this candidate and the two limits above, a bounded grouped-inverse fix, then manager freeze followed by normal coordinated public generation and consumer adoption. Old writers/positive journeys remain until that separate migration qualifies.
+MD' in /home/user/work/wt/agt-m2-next-command-union-compose
+ succeeded in 13ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/editing_conformance/test_next_command_cohort_runtime.py');s=p.read_text().replace(\"    case.restart()\\n    assert word.bundle(case)['parent']['clips'][-1]\", \"    case.restart()\\n    loaded = case.service.get_project_parent_composition_revision(\\n        case.project, 'film', case.head()['revision_id'])\\n    assert loaded['payload'] == documents[1]['parent_revision']['payload']\\n    assert word.bundle(case)['parent']['clips'][-1]\",1);p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/runtime-s2-base ASTRID_WORD_ANCHOR_SEED_RUNTIME=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/historical-runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts= -p no:cacheprovider -q -rx -m integration tests/editing_conformance/test_next_command_cohort_runtime.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/joint-immutable-reload-final.log 2>&1' in /home/user/work/wt/agt-m2-next-command-union-compose
+exec
+/bin/bash -lc 'tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/actual-s2-base-final.log; git diff --check' in /home/user/work/wt/agt-m2-next-command-union-compose
+ succeeded in 328ms:
+........................................................................ [ 76%]
+.....................x                                                   [100%]
+=========================== short test summary info ============================
+XFAIL tests/editing_conformance/test_next_command_cohort_runtime.py::test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_and_retry[True] - Grouped birth/word inverse must reconcile derived cache guards
+93 passed, 1 xfailed in 257.59s (0:04:17)
+
+ succeeded in 14559ms:
+codex
+The final private S2-base run passed: 93 tests and one strict xfail for the grouped inverse defect. I’ve also added a direct immutable revision read after restart to the joint word test; that targeted rerun is finishing now. I’ll then finalize the source patch, schema and report, and mark the qualification blocker without touching S2 release work.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/report.md')
+s=p.read_text().replace('Final exact private candidate parent/word/joint command: RESULT_PENDING ("'`actual-s2-base-final.log`).'"','Final exact private candidate parent/word/joint command: **93 passed, 1 new strict xfailed in 257.59 s**, exit 0 ("'`actual-s2-base-final.log`).'"')
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/native_initialize.py astrid/sdk/timeline/native_parent_media_commands.py astrid/sdk/timeline/native_word_anchor.py tests/editing_conformance/test_next_command_cohort_runtime.py tests/sdk/test_timeline_current_union_schema.py
+python3 - <<'"'PY'
+import hashlib,subprocess
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes')
+patch=subprocess.check_output(['git','diff','--binary'])
+for path in subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines():
+    result=subprocess.run(['git','diff','--no-index','--binary','--','/dev/null',path],capture_output=True)
+    assert result.returncode==1,(path,result.stderr)
+    patch+=result.stdout
+(root/'candidate.patch').write_bytes(patch)
+print('candidate.patch SHA256:',hashlib.sha256(patch).hexdigest())
+print('patch bytes:',len(patch))
+PY" in /home/user/work/wt/agt-m2-next-command-union-compose
+ succeeded in 474ms:
+All checks passed!
+candidate.patch SHA256: 73a52438d35046c4a15794818d07404ad30edb9b16941f4b0433bf5f0eb4d36e
+patch bytes: 1010617
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/joint-immutable-reload-final.log; git status --short; git diff --check' in /home/user/work/wt/agt-m2-next-command-union-compose
+ succeeded in 274ms:
+...x                                                                     [100%]
+=========================== short test summary info ============================
+XFAIL tests/editing_conformance/test_next_command_cohort_runtime.py::test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_and_retry[True] - Grouped birth/word inverse must reconcile derived cache guards
+3 passed, 1 xfailed in 11.97s
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/__init__.py
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_delete_commands.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_timing_evaluators.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M astrid/sdk/timeline/rebase.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/fixtures/recipe_m2_clip_set_element.json
+ M tests/editing_conformance/test_recipe_clip_delete.py
+ M tests/editing_conformance/test_recipe_clip_set_element.py
+ M tests/sdk/test_timeline_selected_schema.py
+?? astrid/sdk/timeline/native_initialize.py
+?? astrid/sdk/timeline/native_parent_media_commands.py
+?? astrid/sdk/timeline/native_word_anchor.py
+?? astrid/sdk/timeline/producer.py
+?? tests/core/test_timeline_element_publication_runtime.py
+?? tests/editing_conformance/fixtures/native_word_anchor.json
+?? tests/editing_conformance/fixtures/pristine_initialize.json
+?? tests/editing_conformance/fixtures/recipe_m2_parent_media.json
+?? tests/editing_conformance/fixtures/recipe_parent_media.json
+?? tests/editing_conformance/fixtures/settled_proposal_move.artifact.json
+?? tests/editing_conformance/fixtures/settled_proposal_move.json
+?? tests/editing_conformance/fixtures/settled_proposal_numeric.artifact.json
+?? tests/editing_conformance/native_word_anchor_fixture.py
+?? tests/editing_conformance/test_commit_runtime_parent_media.py
+?? tests/editing_conformance/test_native_word_anchor.py
+?? tests/editing_conformance/test_native_word_anchor_vectors.py
+?? tests/editing_conformance/test_next_command_cohort_runtime.py
+?? tests/editing_conformance/test_pristine_initialize.py
+?? tests/editing_conformance/test_producer_guard.py
+?? tests/editing_conformance/test_producer_insertion.py
+?? tests/editing_conformance/test_recipe_m2_parent_media.py
+?? tests/editing_conformance/test_settled_proposal_contract.py
+?? tests/fixtures/current-union-command-schemas/
+?? tests/sdk/command_schema_compatibility.py
+?? tests/sdk/test_timeline_current_union_schema.py
+?? tests/sdk/test_timeline_pristine_initialize_provider.py
+?? tests/sdk/test_timeline_pristine_initialize_runtime.py
+?? tests/sdk/test_timeline_producer_guard.py
+?? tests/sdk/test_timeline_producer_guard_runtime.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose')
+p=root/'notes/report.md';s=p.read_text()
+s=s.replace('"'`notes/candidate.patch` contains the source/test candidate, including new files.'"', '"'`notes/candidate.patch` contains the source/test candidate, including new files; SHA256 `73a52438d35046c4a15794818d07404ad30edb9b16941f4b0433bf5f0eb4d36e`.'"')
+needle='Private candidate generic-producer lifecycle, explicitly preserving the original positive:'
+extra='''After adding a direct immutable revision read and payload comparison after restart, the joint file alone was rerun on the same private pair: **3 passed / 1 strict xfailed in 11.97 s**, exit 0 ("'`joint-immutable-reload-final.log`).
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2-base" ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-runtime" "$P" -m pytest -o addopts= -p no:cacheprovider -q -rx -m integration tests/editing_conformance/test_next_command_cohort_runtime.py
+```
+
+'"'''
+s=s.replace(needle,extra+needle)
+p.write_text(s)
+(root/'commit-msg').write_text('''feat(timeline): prepare additive next-cohort review candidate
+
+Compose reviewed parent media, pristine initialization and stable word anchors
+with the complete frozen S2 schema and bounded native producer/element source.
+Preserve the current timing facade, capture inputs, history, auto guards and trim.
+
+Add exact schema-floor/inventory checks and joint Runtime controls for first
+media birth, stable word choices, reload, retry and guarded inverse. Retain a
+strict expected failure for grouped birth/word inverse cache guards pending
+independent review; leave all public pins and release cutovers unchanged.
+''')
+(root/'BLOCKED').write_text('''Review candidate is prepared, but whole-cohort qualification is blocked: the new strict-xfail joint test groups parent media birth, word choice A, word choice B and inverse(B); Runtime refuses with inverse_conflict at the created clip root because authored-root coalescing does not reconcile word-derived at/hold cache changes. Repair is outside the three independently approved deltas and needs a bounded manager-owned follow-up before freeze. A fully successful pristine-init-to-word chain also needs a first-occurrence creation feature absent from this closed cohort. See notes/report.md; final private exact-schema tests: 93 passed / 1 strict xfailed, final direct immutable-reload joint tests: 3 passed / 1 strict xfailed. No S2 replacement/public freeze/pin/cutover occurred.
+''')
+PY
+patch --dry-run -R -p1 < /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/candidate.patch > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/patch-check.log
+python3 - <<'PY'
+import shutil
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes')
+for name in ('runtime-generation','runtime-s2-base','historical-runtime'):
+    shutil.rmtree(root/name)
+print('Removed the three private Runtime source archives; retained reproduction script, schema, patch and logs.')
+PY
+git diff --check" in /home/user/work/wt/agt-m2-next-command-union-compose
+ succeeded in 2228ms:
+Removed the three private Runtime source archives; retained reproduction script, schema, patch and logs.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/report.md')
+s=p.read_text().replace('"'`git diff --check`: exit 0.'"', '"'`git diff --check`: exit 0. `patch --dry-run -R -p1 < "$N/candidate.patch"`: exit 0 against the final worktree; no source mutation. All three private source archives were removed after the last tests; review artifacts and the recreation script remain.'"')
+p.write_text(s)
+assert 'RESULT_PENDING' not in s
+root=p.parents[1]
+assert (root/'commit-msg').is_file() and (root/'BLOCKED').is_file()
+assert not (root/'DONE').exists()
+print('Report, candidate schema/patch, commit message and precise BLOCKED marker are ready.')
+PY" in /home/user/work/wt/agt-m2-next-command-union-compose
+ succeeded in 8ms:
+Report, candidate schema/patch, commit message and precise BLOCKED marker are ready.
+
+codex
+Prepared the review candidate: **53 definitions / 26 operations**, preserving full S2 and current safeguards.
+
+- Portable checks: **220 passed, 4 existing xfails**.
+- Current neighbors: **918 passed**; all capture checks subsequently passed.
+- Private Runtime: **93 passed, 1 new strict xfail**; producer tests **5 passed**.
+- Lint and patch checks passed.
+
+**Qualification is BLOCKED:** grouped media-birth/word-anchor undo fails a derived-cache guard. Successful pristine-to-word authoring also needs first-occurrence creation, absent from this cohort. Recommend a bounded inverse fix before freeze.
+
+[Detailed report with exact commands, results and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/report.md).
+
+Source patch, schema, commit message and `BLOCKED` marker are written. No public freeze, pin change or full suite.
+tokens used
+240,463
+Prepared the review candidate: **53 definitions / 26 operations**, preserving full S2 and current safeguards.
+
+- Portable checks: **220 passed, 4 existing xfails**.
+- Current neighbors: **918 passed**; all capture checks subsequently passed.
+- Private Runtime: **93 passed, 1 new strict xfail**; producer tests **5 passed**.
+- Lint and patch checks passed.
+
+**Qualification is BLOCKED:** grouped media-birth/word-anchor undo fails a derived-cache guard. Successful pristine-to-word authoring also needs first-occurrence creation, absent from this cohort. Recommend a bounded inverse fix before freeze.
+
+[Detailed report with exact commands, results and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/notes/report.md).
+
+Source patch, schema, commit message and `BLOCKED` marker are written. No public freeze, pin change or full suite.

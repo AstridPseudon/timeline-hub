@@ -1,0 +1,400 @@
+26 passed, 2 xfailed in 252.39s (0:04:12)
+No stale xfails/skips in final central lane
+PRESERVED commit_many base forwarding and native trim AST; _stage contains both guards
+MERGED SOURCE TREE 75354d38c898729bac09619679f5421faba319ed
+PASS
+
+codex
+Verification is complete: **973 targeted tests passed**, **18 central matching-pair tests passed**, and the source guards finished with **26 passed / 2 existing xfails**. The final audit confirms the source tree still matches the central-tested tree. I’m finalizing the report and DONE marker for the harness commit and root-managed merge.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/app-handoff.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..ed38af713111ce55eaf9578b4c9e094be011dd30
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/commit-msg
+@@ -0,0 +1,10 @@
++chore(runtime): integrate approved S2 consumer pin
++
++Port the reviewed S2 consumer source and official Runtime 2c4ac180 pin
++onto current Agent integration without replacing newer integration work.
++Preserve both sheet basis fencing and producer pending isolation, current
++native trim/frontends, video unplace, history, timing, and PCM behavior.
++
++Restore original M1 and producer positives, retain exact S2 schema bounds,
++and qualify the composed tree with the central 18-case matching-pair lane
++and targeted outbox, sheet, CLI, placement, schema, and source guards.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/app-handoff.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/app-handoff.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..998a337614f63b8200003a5f95070f92dcf6b0a6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/app-handoff.md
+@@ -0,0 +1,16 @@
++# Composed Agent S2 source handoff
++
++Concrete source is ready at `/home/user/work/wt/agt-m2-safe-s2-pin-integration-gate`, branch `tl/agt-m2-safe-s2-pin-integration-gate`, based on integration `cf7448ed`. The harness has not yet assigned the final commit. Expected final source tree: **`75354d38c898729bac09619679f5421faba319ed`**.
++
++This tree ports approved `905a4f0f` forward while preserving every integration path outside its delta, including PCM, native frontends, video unplace, history, sheet, CLI trim and timing. The reviewed `_stage` conflict keeps both the sheet basis fence and pending producer isolation, plus current `base` forwarding and trim API. Original M1 and producer positive bodies are unchanged; temporary xfails are removed. The sole source cleanup strips the reviewed new test's extra EOF blank line.
++
++Use the official published matching tuple together:
++
++- Runtime **`2c4ac180c2220bdad966bc01e95ad230e99ce26a`**, tree `7ab412cc4bcbe517efcfa806e092336390312e18`, retained producer checkout **`/home/user/work/wt/rt-m2-pin-2c4ac180`**. Keep this checkout.
++- Client **`0.2.13`**, schema **`sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4`**.
++- Artifact manifest **`sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56`**, 75 official hashes; all 15 locked files match official bytes.
++- Canonical command schema remains **`a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`**, 48 definitions / 22 operations. No parent/init/word/text successor expansion.
++
++`vendor_lock.py check`, artifact-manifest check, source preservation/positive AST audit and whitespace check pass. Central test **`agt-m2-safe-s2-pin-integration-gate-commit-integration-1020120744-24294` PASSED: 18 passed in 56.79s**, exit 0, on exactly the composed tree above. This includes original M1 restart/retry/rebase/undo, original producer acceptance and neighbors, keyed view recovery/authority, image/video automatic placement and identity cases. The central lane selects the exact vendored Runtime commit through M1's locator rather than executing moving integration HEAD. **Local targeted checks: 973 passed in 278.80s, exit 0**, covering current outbox/sheet/CLI/trim/history/video/auto/producer/schema guards. **Separate source guards: 26 passed / 2 existing strict xfails in 252.39s, exit 0**. Full commands, lint-baseline improvement classification and limits are recorded in `report.md`. Final source audit confirms the same central-tested tree after all checks; ready for root's queue merge.
++
++App can prepare its separate normal pin/typecheck and scheduled browser qualification from this composed source and tuple. Root handles the queue merge. Agent results do not qualify App. WC4/public helper cut, candidate operations and source/capture certificate closure remain outside this unit. Existing occurrence-media/direct-shot fixture debt remains visible and unqualified.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/audit.py b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/audit.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..00e38d319f0f77970606bf912add7a9479c84c28
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/audit.py
+@@ -0,0 +1,134 @@
++"""Read-only audit of the composed consumer and immutable producer."""
++import ast
++import hashlib
++import json
++import os
++from pathlib import Path
++import subprocess
++
++ROOT = Path('/home/user/work/wt/agt-m2-safe-s2-pin-integration-gate')
++PRODUCER = Path('/home/user/work/wt/rt-m2-pin-2c4ac180')
++APPROVED = '905a4f0f'
++
++
++def git(*args):
++    return subprocess.check_output(['git', '-C', str(ROOT), *args])
++
++
++def blob(ref, name):
++    return git('show', ref + ':' + name)
++
++
++def digest(data):
++    return 'sha256:' + hashlib.sha256(data).hexdigest()
++
++
++def git_hash(kind, data):
++    return hashlib.sha1(kind + b' ' + str(len(data)).encode() + b'\0' + data).digest()
++
++
++def tree_hash(rows):
++    tree = {}
++    for name, mode, oid in rows:
++        node = tree
++        parts = name.split('/')
++        for part in parts[:-1]:
++            node = node.setdefault(part, {})
++        node[parts[-1]] = (mode, oid)
++
++    def walk(node):
++        output = b''
++        for name, value in sorted(node.items(), key=lambda item: item[0] + ('/' if isinstance(item[1], dict) else '')):
++            mode, oid = ('40000', walk(value)) if isinstance(value, dict) else value
++            output += mode.encode() + b' ' + name.encode() + b'\0' + oid
++        return git_hash(b'tree', output)
++    return walk(tree).hex()
++
++
++head_rows = []
++for row in git('ls-tree', '-rz', 'HEAD').split(b'\0'):
++    if row:
++        meta, name = row.split(b'\t')
++        mode, kind, oid = meta.split()
++        assert kind == b'blob'
++        head_rows.append((name.decode(), mode.decode(), bytes.fromhex(oid.decode())))
++assert tree_hash(head_rows) == git('rev-parse', 'HEAD^{tree}').decode().strip()
++
++approved_paths = set(git('diff', '--name-only', '01926d03', APPROVED).decode().splitlines())
++current_paths = set(git('diff', '--name-only', 'HEAD').decode().splitlines())
++new_paths = set(git('ls-files', '--others', '--exclude-standard').decode().splitlines())
++assert current_paths | new_paths <= approved_paths
++for name, _, _ in head_rows:
++    if name not in approved_paths:
++        assert (ROOT / name).read_bytes() == blob('HEAD', name), name
++for name in approved_paths - {'astrid/sdk/timeline/sync.py', 'tests/core/test_timeline_element_publication_runtime.py'}:
++    assert (ROOT / name).read_bytes() == blob(APPROVED, name), name
++name = 'tests/core/test_timeline_element_publication_runtime.py'
++assert (ROOT / name).read_bytes() == blob(APPROVED, name).rstrip(b'\n') + b'\n'
++print('PRESERVED every integration path outside approved delta; approved bytes except two-guard merge and EOF cleanup')
++
++lock = json.loads((ROOT / 'runtime.lock.json').read_bytes())
++manifest = json.loads((PRODUCER / lock['manifest']).read_bytes())
++assert git('-C', str(PRODUCER), 'rev-parse', 'HEAD').decode().strip() == lock['source_commit']
++assert not git('-C', str(PRODUCER), 'status', '--porcelain').strip()
++assert len(manifest['artifacts']) == 75
++for name, expected in manifest['artifacts'].items():
++    data = (PRODUCER / name).read_bytes()
++    assert digest(data) == expected, name
++    assert data == git('-C', str(PRODUCER), 'show', 'HEAD:' + name), name
++for name, entry in lock['files'].items():
++    data = (ROOT / name).read_bytes()
++    assert data == (PRODUCER / entry['from']).read_bytes(), name
++    assert digest(data) == entry['sha256'] == manifest['artifacts'][entry['from']], name
++assert manifest['version'] == lock['producer_version'] == 'sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56'
++print('PRODUCER 75/75 official committed hashes; LOCK 15/15 official bytes')
++
++schema_path = 'astrid/core/timeline/schema/edit-command.schema.json'
++raw = (ROOT / schema_path).read_bytes()
++schema = json.loads(raw)
++assert raw == blob('26ef2bbb', schema_path) == (PRODUCER / 'contract/schemas/edit-command.json').read_bytes()
++assert digest(raw) == 'sha256:a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef'
++assert len(schema['$defs']) == 48 and len(schema['$defs']['EditCommand']['allOf']) == 22
++print('SCHEMA EXACT S2 a6f1aaa9 / 48 definitions / 22 operations')
++
++metadata = {}
++exec((ROOT / 'astrid_runtime_client/contract_metadata.py').read_bytes(), metadata)
++assert metadata['CONTRACT_VERSION'] == '0.2.13'
++assert metadata['SCHEMA_DIGEST'] == 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4'
++assert len(metadata['OPERATIONS']) == len(set(metadata['OPERATIONS'])) == 133
++print('CLIENT 0.2.13 / SCHEMA 8de823 / 133 distinct HTTP operations')
++
++for name, function, ref in [
++    ('tests/editing_conformance/test_commit_runtime_m1.py', 'test_cli_python_outbox_restart_and_guarded_inverse', 'HEAD'),
++    ('tests/sdk/test_timeline_producer_guard_runtime.py', 'test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes', 'fc696847'),
++]:
++    def dump(data):
++        node = next(n for n in ast.parse(data).body if isinstance(n, ast.FunctionDef) and n.name == function)
++        node.decorator_list = []
++        return ast.dump(node, include_attributes=False)
++    assert dump((ROOT / name).read_bytes()) == dump(blob(ref, name))
++    print('ORIGINAL POSITIVE AST', function)
++for name in ['tests/editing_conformance/test_commit_runtime_m1.py', 'tests/editing_conformance/test_commit_runtime_identity.py', 'tests/sdk/test_timeline_producer_guard_runtime.py']:
++    data = (ROOT / name).read_text()
++    assert 'xfail' not in data and 'pytest.mark.skip' not in data
++print('No stale xfails/skips in final central lane')
++
++sync = ast.parse((ROOT / 'astrid/sdk/timeline/sync.py').read_bytes())
++klass = next(n for n in sync.body if isinstance(n, ast.ClassDef) and n.name == 'TimelineSession')
++for method in ['commit_many', 'trim']:
++    def method_dump(data):
++        k = next(n for n in ast.parse(data).body if isinstance(n, ast.ClassDef) and n.name == 'TimelineSession')
++        return ast.dump(next(n for n in k.body if isinstance(n, ast.FunctionDef) and n.name == method), include_attributes=False)
++    assert method_dump((ROOT / 'astrid/sdk/timeline/sync.py').read_bytes()) == method_dump(blob('HEAD', 'astrid/sdk/timeline/sync.py'))
++print('PRESERVED commit_many base forwarding and native trim AST; _stage contains both guards')
++
++rows = []
++for name, mode, _ in head_rows:
++    data = os.readlink(ROOT / name).encode() if mode == '120000' else (ROOT / name).read_bytes()
++    rows.append((name, mode, git_hash(b'blob', data)))
++for name in sorted(new_paths):
++    rows.append((name, '100644', git_hash(b'blob', (ROOT / name).read_bytes())))
++tree = tree_hash(rows)
++(Path(__file__).parent / 'source-tree.txt').write_text(tree + '\n')
++print('MERGED SOURCE TREE', tree)
++print('PASS')
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/lint_delta.py b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/lint_delta.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..4fb1dce60673ebe5c0da766585648b8fae16cc29
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/lint_delta.py
+@@ -0,0 +1,26 @@
++"""Compare scoped Ruff diagnostics on the ported Python paths with integration."""
++from collections import Counter
++import json
++from pathlib import Path
++import subprocess
++
++ROOT = Path('/home/user/work/wt/agt-m2-safe-s2-pin-integration-gate')
++PYTHON = '/home/user/work/venv-agent/bin/python'
++paths = subprocess.check_output(['git', '-C', str(ROOT), 'diff', '--name-only', '01926d03', '905a4f0f']).decode().splitlines()
++old_total = new_total = 0
++for path in paths:
++    if not path.startswith('astrid/') or not path.endswith('.py'):
++        continue
++    old = subprocess.run(['git', '-C', str(ROOT), 'show', 'HEAD:' + path], capture_output=True)
++    counters = []
++    for data in [old.stdout if old.returncode == 0 else b'', (ROOT / path).read_bytes()]:
++        result = subprocess.run([PYTHON, '-m', 'ruff', 'check', '--no-cache', '--output-format', 'json',
++                                 '--stdin-filename', path, '-'], cwd=ROOT, input=data, capture_output=True)
++        assert result.returncode in (0, 1), result.stderr
++        counters.append(Counter((item['code'], item['message']) for item in json.loads(result.stdout)))
++    assert not counters[1] - counters[0], (path, counters[1] - counters[0])
++    old_total += sum(counters[0].values())
++    new_total += sum(counters[1].values())
++    print(path, 'HEAD', sum(counters[0].values()), 'composed', sum(counters[1].values()))
++print('PASS no new scoped diagnostics; counts on ported paths:', old_total, '->', new_total)
++print('Current whole-repo count 2207 implies HEAD count', 2207 - new_total + old_total)
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/port.py b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/port.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..6ffa8e5edf649421adb48bbad7501ad1be99c24f
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/port.py
+@@ -0,0 +1,61 @@
++"""Port only the approved delta, resolving the reviewed two-guard conflict."""
++import pathlib
++import subprocess
++import tempfile
++
++ROOT = pathlib.Path('/home/user/work/wt/agt-m2-safe-s2-pin-integration-gate')
++BASE = '01926d032de76ccf2514adde0a1854c98341aba9'
++APPROVED = '905a4f0f1dcadf92a226b1da0baba50b8a37178d'
++
++
++def git(*args):
++    return subprocess.check_output(['git', '-C', str(ROOT), *args])
++
++
++paths = git('diff', '--name-only', BASE, APPROVED).decode().splitlines()
++changes = {}
++with tempfile.TemporaryDirectory() as directory:
++    files = [pathlib.Path(directory) / name for name in ('current', 'base', 'approved')]
++    for name in paths:
++        current = ROOT / name
++        other = git('show', f'{APPROVED}:{name}')
++        exists = subprocess.run(['git', '-C', str(ROOT), 'cat-file', '-e', f'{BASE}:{name}'],
++                                capture_output=True).returncode == 0
++        if not exists:
++            assert not current.exists(), name
++            changes[name] = other
++            continue
++        before = git('show', f'{BASE}:{name}')
++        ours = current.read_bytes()
++        if ours == other:
++            continue
++        for file, data in zip(files, (ours, before, other)):
++            file.write_bytes(data)
++        result = subprocess.run(['diff3', '-m', '-E', *map(str, files)], capture_output=True)
++        assert result.returncode in (0, 1), result.stderr
++        merged = result.stdout
++        if result.returncode:
++            assert name == 'astrid/sdk/timeline/sync.py', name
++            start = merged.index(b'<<<<<<< ')
++            end = merged.index(b'\n', merged.index(b'>>>>>>> ', start)) + 1
++            conflict = merged[start:end]
++            assert b'outbox no longer has the original sheet basis' in conflict
++            assert b'flush the producer proposal before another edit' in conflict
++            merged = merged[:start] + (
++                b'                if base is not None and state["base"] != _pin(base):\n'
++                b'                    raise TimelineEditError("outbox no longer has the original sheet basis")\n'
++                b"                if any(call['op'] == 'producer.guard' for call in state['pending']):\n"
++                b"                    raise TimelineEditError('flush the producer proposal before another edit')\n"
++            ) + merged[end:]
++            print(f'Resolved both guards: {name}')
++        if merged != ours:
++            changes[name] = merged
++
++for name, data in changes.items():
++    path = ROOT / name
++    path.parent.mkdir(parents=True, exist_ok=True)
++    if name == 'tests/core/test_timeline_element_publication_runtime.py':
++        data = data.rstrip(b'\n') + b'\n'
++    path.write_bytes(data)
++    print(name)
++print(f'Ported {len(changes)} changed paths; no refs or index changed.')
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..11340a09cf59162957b6cf5e0c31c4fdff966fe3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/report.md
+@@ -0,0 +1,74 @@
++# Approved S2 pin composed onto current Agent integration
++
++**COMPLETE: merged-ready source, targeted qualification and App handoff are ready. No blocker for this bounded unit. Root owns the queue merge.**
++
++Worktree: `/home/user/work/wt/agt-m2-safe-s2-pin-integration-gate`; branch `tl/agt-m2-safe-s2-pin-integration-gate`.
++
++Base: `cf7448ed6c1298b172d004914cfe2bb8c99048e7`. Approved source/pin: `905a4f0f1dcadf92a226b1da0baba50b8a37178d`. Composed source tree: **`75354d38c898729bac09619679f5421faba319ed`**. Harness assigns the commit after worker exit; this tree, rather than the unmodified base commit, identifies the qualified source.
++
++## Changes and decisions
++
++Read PLAN.md, repository AGENTS.md and `design/agent-review-safe-s2-pin-final.md`. Applied only the approved delta from its actual merge base `01926d03`, using working-tree three-way composition; no repository refs/index, checkout, merge, commit or integration directory was modified. There were 40 changed paths; the overlapping timing file was already identical and needed no write.
++
++Resolved only the reviewed `_stage` conflict: both the current sheet basis fence and producer pending guard run before pending matching/capture. Retained current `base` parameter/forwarding and native trim method. Every integration path outside the approved delta is byte-identical to `cf7448ed`, preserving PCM `a2ba1bca`, native `78d548cf`, video `60ddf8f0`, CLI/current trim, history, sheet and timing overlays. All approved paths match `905a4f0f` except this necessary sync composition and removal of its new publication test's trailing EOF blank line.
++
++Kept the exact published Runtime **`2c4ac180c2220bdad966bc01e95ad230e99ce26a`**, tree `7ab412cc4bcbe517efcfa806e092336390312e18`; retained producer checkout **`/home/user/work/wt/rt-m2-pin-2c4ac180`** (KEEP). Client **0.2.13**; schema **`sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4`**; artifact version **`sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56`**. Independently verified all 75 official committed artifact hashes and all 15 locked files against that clean checkout.
++
++Canonical schema is exactly S2 **`a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`**, 48 definitions / 22 operations, byte-equal to official Runtime and frozen S2. No parent/init/word/text expansion. Original M1 and original producer positive function bodies are AST-identical; their stale strict xfails are removed as approved. No passing expectations were weakened, deleted or converted to refusal. Composition 0.0.12 package/lock/tarball, helper and theme assertions remain unchanged.
++
++The normal artifact-manifest check was already current, so no regeneration was needed. Public artifacts were not rebuilt or edited. Shared dependencies, fixtures and runtimes remained read-only. All scripts and logs created for this worker are outside the repo under this notes directory.
++
++## Verification
++
++Commands below ran from the assigned worktree. Counts overlap and are not unique-test totals.
++
++```sh
++python3 scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-pin-2c4ac180
++python3 scripts/artifact_manifest.py --check
++git diff --check
++PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/audit.py
++```
++
++All **exit 0**. Vendor check matches the official producer manifest; artifact manifest is current; whitespace is clean. Audit additionally proves integration preservation, exact approved bytes with the two reviewed exceptions, positive AST preservation, retained `commit_many`/trim APIs and the source-tree hash. See `audit.log`. `PYTHONDONTWRITEBYTECODE=1` was also set on the initial vendor/manifest executions.
++
++```sh
++env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_native_timeline_facades.py tests/sdk/test_timeline_current_union_schema.py tests/editing_conformance/test_recipe_auto_placement_reads.py tests/editing_conformance/test_producer_guard.py tests/sdk/test_timeline_producer_guard.py tests/editing_conformance/test_recipe_clip_set_element.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_native_checkout.py tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_sheet_native.py tests/editing_conformance/test_native_sheet_current.py tests/editing_conformance/test_native_sheet_ordinary.py tests/packs/timeline/test_cli_native_sheet.py tests/packs/timeline/test_cli_commit_trim.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_video_unplace.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/editing_conformance/test_settled_proposal_contract.py tests/test_artifact_manifest.py
++```
++
++**973 passed in 278.80s (0:04:38); exit 0**, log `targeted.log`. Covers current outbox/retry, native frontends, ordinary/current sheet, CLI trim/sheet, video unplace, history, auto-placement read guards, selected source/owner guards, producer isolation and retained schema floors.
++
++```sh
++env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_capture_closure_source.py
++```
++
++**26 passed, 2 xfailed in 252.39s (0:04:12); exit 0**, log `source-guards.log`. The two existing strict xfails in the unchanged `test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies` parameters remain outside this pin unit; they require the separately held Runtime-validated capture publication / SDK-ref-host handoff. They were not added or changed by this port.
++
++```sh
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-safe-s2-pin-integration-gate commit-integration --files "tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_producer_guard_runtime.py"
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-safe-s2-pin-integration-gate-commit-integration-1020120744-24294 1
++```
++
++**18 passed in 56.79s; exit 0**, central wall time 71s. Single central request; source snapshot tree exactly **`75354d38c898729bac09619679f5421faba319ed`**. Actual central command:
++
++```sh
++env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_producer_guard_runtime.py
++```
++
++M1 first selects `use_runtime(commit=vendored_runtime_commit())`, extracting immutable **2c4ac180** from the configured object store. Identity and producer cases reuse that exact checkout in the same process. The moving integration directory in the command is the object source, not the executed Runtime source. No `--runxfail`, skips or xfails in this final lane. Includes original M1 CLI/Python restart/lost-ACK/original-flight/rebase/conflict/undo, renderer-off acceptance, real keyed-view recovery and authority, image/video automatic placement, identity and all five original producer cases.
++
++Full central log: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-safe-s2-pin-integration-gate-commit-integration-1020120744-24294/log.txt`.
++
++```sh
++env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD RUFF_NO_CACHE=true /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_ruff_baseline
++PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/lint_delta.py
++```
++
++Baseline checker **exit 1**, exclusively because findings improved to **2207 vs baseline 2220** and its shrink-only policy asks to record the improvement. Scoped comparison **exit 0**: every changed product Python file has no new Ruff diagnostic; changed-path findings improve **122 → 121**, implying base `cf7448ed` was already 2208 against baseline 2220. No lint baseline churn added to the approved source port. See `ruff.log` and `lint-delta.log`.
++
++## Handoff, limits and next steps
++
++Concrete composed source and tuple were published immediately in `app-handoff.md`, then updated with the central pass. Root handles the queue merge; App should take this composed tree with the official tuple and run its own normal pin/typecheck and centrally scheduled browser qualification. Keep the producer checkout above.
++
++After testing, re-ran the read-only audit and `git diff --check`: both exit 0, final source tree still **`75354d38c898729bac09619679f5421faba319ed`**. No build output or temporary files remain in the worktree. Conventional harness commit text is in the worker's `commit-msg`; the empty `DONE` marker is written after this report is finalized.
++
++No full/full* suite was run or requested; no full `make check`, App/browser, owner-film, pixel/audio, macOS or complete composed-integration Runtime qualification is claimed. This is not a WC4/public-helper cut, candidate-op qualification or source/capture certificate closure. Existing 48 occurrence-media fixture cases and five direct-shot-write cases identified in the approved review remain untouched and unqualified; this unit does not relabel them green. The independent source-guard xfails remain visible. Lint baseline refresh is a separate optional cleanup. No blocking product deviation was found.
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/DONE; rg -n 'pending|still finishing' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/report.md; git diff --check" in /home/user/work/wt/agt-m2-safe-s2-pin-integration-gate
+ succeeded in 484ms:
+13:Resolved only the reviewed `_stage` conflict: both the current sheet basis fence and producer pending guard run before pending matching/capture. Retained current `base` parameter/forwarding and native trim method. Every integration path outside the approved delta is byte-identical to `cf7448ed`, preserving PCM `a2ba1bca`, native `78d548cf`, video `60ddf8f0`, CLI/current trim, history, sheet and timing overlays. All approved paths match `905a4f0f` except this necessary sync composition and removal of its new publication test's trailing EOF blank line.
+
+codex
+Ported approved `905a4f0f` onto `cf7448ed`, preserving both `_stage` guards and all current integration overlays. Final tree: `75354d38c898729bac09619679f5421faba319ed`.
+
+- Targeted checks: **973 passed**.
+- Central matching pair: **18 passed**.
+- Source guards: **26 passed, 2 existing xfails**.
+- Vendor, manifest, preservation and whitespace checks passed.
+- Ruff baseline exits 1 for improved counts; no new diagnostics.
+
+[Detailed report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/report.md).
+
+App handoff, `commit-msg` and `DONE` are written. No blockers; root handles queue merge, followed by App qualification. No full suite, WC4 cut or source/capture certificate closure claimed.
+tokens used
+115,627
+Ported approved `905a4f0f` onto `cf7448ed`, preserving both `_stage` guards and all current integration overlays. Final tree: `75354d38c898729bac09619679f5421faba319ed`.
+
+- Targeted checks: **973 passed**.
+- Central matching pair: **18 passed**.
+- Source guards: **26 passed, 2 existing xfails**.
+- Vendor, manifest, preservation and whitespace checks passed.
+- Ruff baseline exits 1 for improved counts; no new diagnostics.
+
+[Detailed report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/notes/report.md).
+
+App handoff, `commit-msg` and `DONE` are written. No blockers; root handles queue merge, followed by App qualification. No full suite, WC4 cut or source/capture certificate closure claimed.

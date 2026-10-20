@@ -1,0 +1,400 @@
+def recipe(retained, monkeypatch):
+    install(monkeypatch)
+    retained.submit(retained.create("recipe-initial"), "recipe-initial")
+    return retained
+
+
+def bundle(case):
+    result = bundle_from_document(case.documents[case.head()["revision_id"]])
+    # This is the same authorized capture observed from the real provider,
+    # handed to the frontend picker, not an inline command/source authority.
+    result["source_mapping"]["pinned_documents"] = copy.deepcopy(
+        case.hydrated[-1]["source_mapping"]["pinned_documents"])
+    return result
+
+
+def pick(case, index=0, *, text='"again"', source="voice", count=1, field="on"):
+    original = bundle(case)
+    words = original["source_mapping"]["pinned_documents"][0]["document"]["content"]["segments"][0]["words"]
+    call = {"schema_version": 1, "op": OP, "version": "1", "select": REF,
+            "args": {"field": field, "declaration": text, "choice": {
+                "source": "occurrence:occ/clip:" + source, "document": case.pin,
+                "word_ids": [word["id"] for word in words[index:index + count]]}},
+            "intent": {"anchor": "follow"}}
+    moment = moments.parse(text)
+    for name, default in (("edge", "start"), ("offset_s", 0), ("offset_frames", 0)):
+        if getattr(moment, name) != default:
+            call["args"]["choice"][name] = getattr(moment, name)
+    return commands.execute(original, [call]).commands[0]
+
+
+def history(case):
+    # History is used only to inspect undo provenance, never to compile a film.
+    page = case.service.list_timeline_commits(case.project, "film", limit=200, authorize=lambda: None)
+    assert page["next_cursor"] is None
+    assert page["head"] == case.head()
+    return json.loads(json.dumps(page["items"]))
+
+
+def projected(case):
+    current = bundle(case)
+    return compile_authored(current, current["source_mapping"]["pinned_documents"])
+
+
+def undo(case, accepted, key):
+    return case.submit(case.request([{"schema_version": 1, "op": "timeline.inverse", "version": "1",
+        "select": None, "args": {"publications": [accepted["receipt"]["receipt_id"]]}}]), key)
+
+
+def restore(case, accepted, key):
+    parent = accepted["data"]["canonical_document"]["parent_revision"]
+    return case.submit(case.request([{"schema_version": 1, "op": "timeline.restore", "version": "1",
+        "select": None, "args": {name: parent[name] for name in ("revision_id", "content_digest")}}]), key)
+
+
+def window_command(monkeypatch, start, end):
+    """A bounded test-only source trim, using the ordinary recorder and Runtime."""
+    registry = commands.operations
+
+    def trim(ctx, command):
+        target = command["select"]
+        ctx.read(target, ["id"])
+        for field in ("from", "to"):
+            ctx.write(target, [field], command["args"][field])
+
+    parameters = {"type": "object", "additionalProperties": False, "required": ["from", "to"],
+                  "properties": {field: {"type": "number"} for field in ("from", "to")}}
+    monkeypatch.setattr(commands, "operations", lambda: {
+        **registry(), "fixture.window": commands.Operation(parameters, trim, {}, True)})
+    validate = commands.validate_command
+
+    def checked(command):
+        if command.get("op") == "fixture.window":
+            from jsonschema import Draft202012Validator
+            commands._VALIDATOR.validate(command)
+            Draft202012Validator(parameters).validate(command["args"])
+        else:
+            validate(command)
+
+    monkeypatch.setattr(commands, "validate_command", checked)
+    return {"schema_version": 1, "op": "fixture.window", "version": "1",
+            "select": "occurrence:occ/clip:voice", "args": {"from": start, "to": end}}
+
+    assert json.loads(completed.stdout) == {
+        "start": "7007/2000", "end": "8007/2000", "start_frame": "105", "end_frame": "120"}
+    case.restart()
+    assert projected(case).timings[TARGET]["start"] == Fraction(7007, 2000)
+
+
+@pytest.mark.parametrize("echo", ['"stop" #99 +300f', "obsolete display label", None])
+def test_reference_is_authoritative_and_kernel_never_searches_echo(recipe, monkeypatch, echo):
+    case = recipe
+    case.submit(case.request([pick(case, 1)]), "reference")
+    current = bundle(case)
+    sources = current["source_mapping"]["pinned_documents"]
+    expected = compile_authored(current, sources)
+    if echo is not None:
+        case.submit(case.request([{"schema_version": 1, "op": OP, "version": "1", "select": REF,
+            "args": {"field": "on", "declaration": echo,
+                     "choice": authored(current)[KEY]["choice"]}}]), "change-echo")
+        case.restart()
+        current = bundle(case)
+    app = current["parent"]["clips"][0]["app"]["astrid"]
+    if echo is None:
+        del app["on"]
+    else:
+        app["on"] = echo
+
+    def no_search(*args, **kwargs):
+        pytest.fail("a present stable reference must never search for text")
+
+    monkeypatch.setattr(moments, "find_words", no_search)
+    result = compile_authored(current, sources)
+    assert result.timings == expected.timings
+    assert result.bundle == current
+
+
+@pytest.mark.parametrize("text", ['"again"', '"again" #2', '"again" in line #2'])
+def test_legacy_ambiguous_text_refuses_choose_occurrence(recipe, text):
+Review/gate puretimingkernelport+stablewordIDevaluator. Source519lines fromapprovedoldkernel nowcurrent; verify noIO/authoredmutation/historylookup/textreseeking, capturedinputsimmutable/exactpins, rationalfps/halfopensourcewindows/cyclehandling deterministic. No defaultregistry activation/unsupporteddeclarationbehaviorchange. Preserve201neighbors+97word+2V1V2+93D07 proofs; runcriticalkernel/cycle tests onlyasneeded.
+MANDATORYtrivialdocfix: workerwrote rootdesign/agent-timing-kernel-current.md inrepo, violatesrepohygiene and isn'tsharedORCH. MoveproductAPIdoc toallowed docs/design/ path (orremoveprocess-onlydoc); copycorrecthandoffflat ORCH/design/agent-timing-kernel-current.md. Updateanyrefs, no unrelatedproductedits. Do notmergeoldbranches/pins/helpers. Rootdirectorydesign mustnotremain. Verify scripts/reshape repo-hygiene ordirectrule.
+Reportsourceverdict+exactsafe4module/testpaths andcohortdelta, noRuntime/defaultactivationclaim. Ifsourcecorrect, complete docfix andleave merge-readycommitmsg/DONE; elsepreciseBLOCKED/repro. No full.
+Never request suite full*; only targeted/named. ShareddepsREADONLY; overlays own. No push/integration/ledgerchanges. ReadPLAN/AGENTS. Worktree-onlyports. Detailednotes/report.md+self-containedfinal actualcommands/results; commit-msg forcode/DONE or exactBLOCKED underworkers/agt-m2-timing-kernel-gate.
+
+
+ succeeded in 17237ms:
+...................................................                      [100%]
+51 passed in 15.26s
+
+codex
+The focused compiler/cycle run passed all 51 tests. Source review confirms that bound IDs select words directly, inputs are snapshotted, and source pins are checked exactly. The doc move and shared copy are complete; I’ll finish the hygiene checks and record the earlier proof cohorts separately from today’s run.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/reshape/check_repo_hygiene.py' in /home/user/work/wt/agt-m2-timing-kernel-gate
+exec
+/bin/bash -lc 'git diff --check; git diff --exit-code HEAD -- astrid tests runtime.lock.json remotion/package.json remotion/package-lock.json; git diff --name-status; wc -l astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py; git diff --exit-code b8139a1acbb6d286fff791f95f09276e5492ea9f HEAD -- tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py; git diff --exit-code fd27d5ebdb795b4855e42f5389793eb99637ae7e HEAD -- astrid/sdk/timeline/_timing_evaluators.py' in /home/user/work/wt/agt-m2-timing-kernel-gate
+ succeeded in 155ms:
+D	design/agent-timing-kernel-current.md
+  127 astrid/sdk/timeline/compiler.py
+  399 astrid/sdk/timeline/_timing_evaluators.py
+  320 tests/sdk/test_timing_compiler.py
+  114 tests/sdk/test_timing_cycles.py
+  960 total
+
+ succeeded in 414ms:
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import subprocess
+from pathlib import Path
+from scripts.reshape import check_repo_hygiene as hygiene
+base = 'df2739f903edac02bd36b4446deeea847524c040'
+donor = 'b8139a1acbb6d286fff791f95f09276e5492ea9f'
+fixed = 'fd27d5ebdb795b4855e42f5389793eb99637ae7e'
+def git(*args):
+    return subprocess.check_output(['git', *args])
+assert not Path('design').exists()
+new_doc = 'docs/design/agent-timing-kernel-current.md'
+shared = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-timing-kernel-current.md')
+assert Path(new_doc).read_bytes() == git('show', f'HEAD:design/agent-timing-kernel-current.md') == shared.read_bytes()
+paths = hygiene._tracked_files() + git('ls-files', '--others', '--exclude-standard').decode().splitlines()
+assert hygiene.find_unknown_root_entries(paths) == []
+assert hygiene.find_root_generated_artifacts() == []
+assert hygiene.find_tracked_ignored_artifacts(paths) == []
+assert git('diff', 'HEAD', '--', 'astrid', 'tests', 'runtime.lock.json', 'remotion/package.json', 'remotion/package-lock.json') == b''
+for path in ('tests/sdk/test_timing_compiler.py', 'tests/sdk/test_timing_cycles.py'):
+    assert Path(path).read_bytes() == git('show', f'{donor}:{path}')
+path = 'astrid/sdk/timeline/_timing_evaluators.py'
+assert Path(path).read_bytes() == git('show', f'{fixed}:{path}')
+changed = set(git('diff', '--name-only', base, 'HEAD').decode().splitlines())
+expected = {
+    'astrid/sdk/timeline/compiler.py', 'astrid/sdk/timeline/_timing_evaluators.py',
+    'tests/sdk/test_timing_compiler.py', 'tests/sdk/test_timing_cycles.py',
+    'tests/editing_conformance/test_timing_retained_inputs.py',
+    'tests/editing_conformance/test_word_binding_recipe.py',
+    'tests/editing_conformance/word_binding_recipe.py',
+    'design/agent-timing-kernel-current.md',
+}
+assert changed == expected
+print('PASS: no root design; byte-identical doc move/shared copy; hygiene includes untracked destination.')
+print('PASS: approved tests unchanged; stable-ID evaluator byte-identical to approved correction.')
+print('PASS: port changes only eight approved additions; current product/tests/helpers/defaults/pins unchanged by gate.')
+for path in ('astrid/sdk/timeline/compiler.py', 'astrid/sdk/timeline/_timing_evaluators.py'):
+    before = len(git('show', f'{donor}:{path}').splitlines())
+    after = len(Path(path).read_bytes().splitlines())
+    print(f'{path}: donor {before} lines; current {after} lines; delta {after-before:+d}')
+PY" in /home/user/work/wt/agt-m2-timing-kernel-gate
+ succeeded in 282ms:
+PASS: no root design; byte-identical doc move/shared copy; hygiene includes untracked destination.
+PASS: approved tests unchanged; stable-ID evaluator byte-identical to approved correction.
+PASS: port changes only eight approved additions; current product/tests/helpers/defaults/pins unchanged by gate.
+astrid/sdk/timeline/compiler.py: donor 126 lines; current 127 lines; delta +1
+astrid/sdk/timeline/_timing_evaluators.py: donor 393 lines; current 399 lines; delta +6
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-timing-kernel-gate')
+report = '''# Timing kernel gate
+
+## Verdict and changes
+
+PASS for the bounded pure compiler port at "'`233d76d6` over current base
+`df2739f903edac02bd36b4446deeea847524c040`. No blocking source finding.
+Read PLAN.md and the repository AGENTS.md. No settled decision was changed.
+
+Moved the useful product API document, byte for byte, from
+`design/agent-timing-kernel-current.md` to
+`docs/design/agent-timing-kernel-current.md`. Removed the now-empty root `design/`.
+Copied the identical handoff to the required flat shared path:
+`$ORCH/design/agent-timing-kernel-current.md`, where ORCH is
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch`.
+A repository-wide rg search found no references requiring updates.
+All gate worktree changes are this document relocation; no product/test edit.
+
+## Exact safe quartet and source delta
+
+1. `astrid/sdk/timeline/compiler.py` — 127 lines, opt-in captured-input API.
+2. `astrid/sdk/timeline/_timing_evaluators.py` — 399 lines, pure evaluation.
+3. `tests/sdk/test_timing_compiler.py` — 320 lines, unchanged donor tests.
+4. `tests/sdk/test_timing_cycles.py` — 114 lines, unchanged donor tests.
+
+The two SDK test files are byte-identical to approved kernel
+`b8139a1acbb6d286fff791f95f09276e5492ea9f`. The evaluator is byte-identical to
+approved stable-ID correction `fd27d5ebdb795b4855e42f5389793eb99637ae7e`.
+Product census: donor 126 + 393 = 519 lines; current 127 + 399 = 526,
+net +7: +1 compiler documentation line and +6 stable-ID evaluator correction.
+No helper, pin, old branch or unrelated implementation was brought forward.
+
+Additional test-only port paths remain unchanged:
+- `tests/editing_conformance/test_timing_retained_inputs.py`
+- `tests/editing_conformance/test_word_binding_recipe.py`
+- `tests/editing_conformance/word_binding_recipe.py`
+
+## Source review
+
+- TimingInputs serializes bundle/source JSON at construction and returns fresh
+  copies. WordBindings are frozen with tuple owners/IDs. Results own the bundle;
+  outer and interval timing mappings are read-only. Success/refusal cannot write
+  back into caller-authored state.
+- No evaluation-time filesystem/network/process/clock/random calls, history
+  reads, authorization work or renderer work. Imports are outside the computation
+  purity boundary. _ReadLookup bypasses Checkout initialization and overrides the
+  mutating internal accessor. The called cut/clip/audio accessors only read.
+- Exact DocumentPin keys, positive integer versions, matching scoped document
+  headers and content digest are checked. Used captures also require transcript
+  schema/kind, registered media and project/media/source-derived document ID.
+  Missing exact version/digest or duplicate captures refuse. Caller owns capture
+  authorization/revocation; omission refuses instead of reading latest.
+- Stable IDs alone select bound words. Duplicate/missing IDs, nonconsecutive or
+  cross-segment phrases, stale bindings and mismatched private spelling refuse.
+  The evaluator computes the chosen word edge directly; it never searches text
+  or calls find_words in that branch. Text normalization validates the selected
+  phrase only. The test-local legacy adapter'"'s unique-text lookup is separate;
+  the product kernel performs no such fallback.
+- Exact Fraction FPS/time arithmetic preserves rational canvas rates, source
+  speed/window mapping and explicit quantization. Bound words are checked against
+  both authored and derived half-open source intervals: end at source-out passes,
+  onset at source-out refuses. Collapsed/reversed intervals refuse.
+- The iterative directed graph walk sorts roots/dependencies and produces a
+  deterministic closed cycle path; forward references and the 1100-node chain
+  are covered by the fresh run.
+- Unsupported declaration refusals are unchanged from the approved slice.
+  Default registration/provider/Checkout behavior is untouched; provider compiler
+  version remains authoring-bundle-1. The authored word-reference adapter remains
+  a test-only parent-clip experiment, with scoped monkeypatch registration.
+
+## Fresh commands and results
+
+All commands ran in "'`/home/user/work/wt/agt-m2-timing-kernel-gate`.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py --tb=short
+```
+
+**51 passed in 15.26s**, exit 0. Completion was captured on a repeated launch
+because the first launch'"'s terminal handle was not retained; no failed result
+was observed or suppressed.
+
+"'```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/reshape/check_repo_hygiene.py
+```
+
+**PASS**, exit 0, no findings. An additional direct Python assertion ran the
+checker'"'s root/generated/ignored rules over tracked PLUS untracked paths, so the
+new destination was included before harness staging. It also verified no root
+"'`design`, byte equality of original/moved/shared docs, unchanged product/tests/
+package pins, the exact eight port additions and the donor/correction equality
+checks. All assertions passed.
+
+```bash
+git diff --check
+git diff --exit-code HEAD -- astrid tests runtime.lock.json remotion/package.json remotion/package-lock.json
+git diff --exit-code b8139a1acbb6d286fff791f95f09276e5492ea9f HEAD -- tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py
+git diff --exit-code fd27d5ebdb795b4855e42f5389793eb99637ae7e HEAD -- astrid/sdk/timeline/_timing_evaluators.py
+```
+
+**PASS**, all empty diffs. No shared dependency writes or worktree build output.
+
+## Preserved earlier cohorts (not rerun by this gate)
+
+Reviewed the completed port worker report at
+`$ORCH/workers/agt-m2-timing-kernel-current/notes/report.md` and its source/test
+diffs. The following are prior evidence, not fresh gate results. Current gate
+changes leave every source/test byte unchanged.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_reflow_golden.py tests/sdk/test_timeline_reflow_keep.py tests/sdk/test_media_transcript.py tests/sdk/test_intent_app_astrid.py tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_cuts.py --tb=short
+```
+
+**201 passed, 17 deselected**, four existing Pillow warnings, 67.80s. Donor 202
+becomes 201 because current-base D07 removed two legacy ripple helper cases and
+added the public relocated-units case (net -1). Verified that diff; did not restore
+retired helpers or rewrite behavior expectations.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m '"'' tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/timeline/test_timeline_kernel_kinds.py tests/stage1/test_kernel_admission_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py --tb=short
+"'```
+
+**97 passed, 8 subtests passed**, 66.36s, before the two extra version cases.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -xq -p no:cacheprovider -m integration tests/editing_conformance/test_timing_retained_inputs.py -k explicit_v2 --tb=short
+```
+
+**2 passed, 6 deselected**, 3.68s. Thus 97 + 2 = 99 current word/retained-input/
+neighbor cases covered by the earlier runs, not two V1/V2 cases silently omitted.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_clip_trim_provider.py --tb=short
+```
+
+**93 passed**, 8.44s, current D07/native trim replacement proof preserved.
+The original report also records clean Ruff/mypy checks; not rerun for a doc move.
+
+## Decisions, limits, next step
+
+Kept the API document because its callable, exact-pin boundary and adapter limits
+are product guidance; only its location was wrong. The shared handoff contains the
+same guidance. No other implementation decision was needed. No blockers.
+
+Merge-ready for the orchestrator/harness: apply the doc move with the reviewed port.
+No full suite, live-socket suite, browser suite, Runtime qualification/default
+activation, renderer parity, one-writer completion or cross-product claim is made.
+Native all-owner word adapters and default compiler migration/parity remain
+separate work as documented in the handoff. No commits/merges/pushes, integration
+edits, ledger changes or branch/ref operations were performed.
+'"'''
+(worker / 'notes/report.md').write_text(report)
+(worker / 'commit-msg').write_text('docs(timeline): relocate timing kernel API handoff\\n\\nMove the pure timing kernel API document into docs/design so the repository\\npasses root hygiene. Preserve the reviewed compiler and stable-word evaluator\\nunchanged; the focused compiler and cycle tests pass.\\n')
+print('Wrote detailed gate report and conventional commit message.')
+PY" in /home/user/work/wt/agt-m2-timing-kernel-gate
+ succeeded in 62ms:
+Wrote detailed gate report and conventional commit message.
+
+codex
+The gate passes for this bounded port. The stable-ID evaluator matches the approved correction byte for byte, and the original compiler/cycle tests are preserved. Hygiene checks pass, including the new unstaged document path. The report records the earlier 201, 97 + 2 and 93 cohorts as prior evidence; no full suite was requested.
+exec
+/bin/bash -lc "git diff --check; git status --short --untracked-files=all; python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-timing-kernel-gate')
+assert not Path('design').exists()
+assert (worker / 'notes/report.md').is_file()
+assert (worker / 'commit-msg').is_file()
+assert not (worker / 'BLOCKED').exists()
+assert Path('docs/design/agent-timing-kernel-current.md').read_bytes() == (worker.parent.parent / 'design/agent-timing-kernel-current.md').read_bytes()
+(worker / 'DONE').touch()
+print('DONE created; documentation-only gate fix is ready for harness commit.')
+PY" in /home/user/work/wt/agt-m2-timing-kernel-gate
+ succeeded in 204ms:
+ D design/agent-timing-kernel-current.md
+?? docs/design/agent-timing-kernel-current.md
+DONE created; documentation-only gate fix is ready for harness commit.
+
+codex
+**PASS — merge-ready for the bounded pure compiler port.** Source review found no blocker; product code is unchanged.
+
+Moved the API doc to `docs/design/agent-timing-kernel-current.md`, copied it to `$ORCH/design/agent-timing-kernel-current.md`, and removed root `design/`.
+
+Fresh checks:
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py --tb=short` — **51 passed**.
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/reshape/check_repo_hygiene.py` — **passed**.
+- `git diff --check` — **passed**.
+
+Prior 201-neighbor, 97 + 2-word/version and 93-D07 proofs remain unchanged; they were not rerun. No full suite or Runtime/default-activation qualification claimed.
+
+[Detailed report]( /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-timing-kernel-gate/notes/report.md) records the exact safe quartet and source/cohort deltas. Commit message and `DONE` are written. No blockers; next step is the harness commit and orchestrator integration.
+tokens used
+84,642
+**PASS — merge-ready for the bounded pure compiler port.** Source review found no blocker; product code is unchanged.
+
+Moved the API doc to `docs/design/agent-timing-kernel-current.md`, copied it to `$ORCH/design/agent-timing-kernel-current.md`, and removed root `design/`.
+
+Fresh checks:
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py --tb=short` — **51 passed**.
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/reshape/check_repo_hygiene.py` — **passed**.
+- `git diff --check` — **passed**.
+
+Prior 201-neighbor, 97 + 2-word/version and 93-D07 proofs remain unchanged; they were not rerun. No full suite or Runtime/default-activation qualification claimed.
+
+[Detailed report]( /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-timing-kernel-gate/notes/report.md) records the exact safe quartet and source/cohort deltas. Commit message and `DONE` are written. No blockers; next step is the harness commit and orchestrator integration.

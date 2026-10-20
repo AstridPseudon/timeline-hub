@@ -1,0 +1,9 @@
+name=agt-review-recover-current-qualified-cut
+repo=agent
+base=tl/agt-m2-recover-current-server-final-gate
+base_sha=7d9860fc
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-recover-current-qualified-cut
+started=2026-10-20T20:15:34Z

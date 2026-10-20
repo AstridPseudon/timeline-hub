@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-installed-host-gate/log.txt:5880:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-closed-empty-intent-generator/log.txt:7666:/bin/bash -lc "sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md" in /home/user/work/wt/agt-m3-public13-installed-host-gate
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-installed-host-gate/log.txt:5881:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-closed-empty-intent-generator/log.txt:7668:/bin/bash -lc "rg --files | sed -n '1,160p'" in /home/user/work/wt/agt-m3-public13-installed-host-gate
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-installed-host-gate/log.txt:5886:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md:2230:## 18:03Z — orchestrator: agent-20261020T180053Z-build-remotion13-profile — DONE. /home/user/work/runtimes/agent-remotion-0013 was built from 30da0a5e, lock sha256 c4d7030b… verified, remotion 4.0.509, read-only; env tests/agent-remotion-0013.env; suite agent-remotion-0013-nodes. Your rule is now a tool: `$ORCH/bin/request-runtime` (MANAGER-COMMON.md). For a newer descendant, request a new name.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-installed-host-gate/log.txt:5889:/bin/bash -lc "rg -n '"'^agent .*?(0013|current13|public13|host)'"' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf | tail -80" in /home/user/work/wt/agt-m3-public13-installed-host-gate
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-installed-host-gate/log.txt:5891:/bin/bash -lc "rg -n \"ASTRID_REMOTION_PROJECT_DIR|resolve_remotion_project_dir\" astrid/core/rendering/remotion_runtime.py | tail -20; sed -n '1218,1280p' astrid/core/rendering/remotion_runtime.py" in /home/user/work/wt/agt-m3-public13-installed-host-gate
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-installed-host-gate/log.txt:5893:/bin/bash -lc 'rg -n -i "agent-remotion-0013-nodes|current13-integration|public13.*installed|installed.*public13|runtime13" /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-installed-host-gate/log.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-installed-host-gate/brief.md' in /home/user/work/wt/agt-m3-public13-installed-host-gate
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-installed-host-gate/log.txt:5895:/bin/bash -lc 'sha256sum remotion/package-lock.json remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256; sha256sum /home/user/work/runtimes/agent-remotion-0013/package-lock.json /home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz; cmp -s remotion/package-lock.json /home/user/work/runtimes/agent-remotion-0013/package-lock.json; echo lock_cmp=$?; cmp -s remotion/package.json /home/user/work/runtimes/agent-remotion-0013/package.json; echo pkg_cmp=$?; realpath /home/user/work/runtimes/agent-remotion-0013/node_modules; realpath /home/user/work/runtimes/agent-remotion-0013/node_modules/@banodoco/timeline-composition; stat -c '"'%F %N' /home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/runtimes/agent-remotion-0013/node_modules/@banodoco/timeline-composition" in /home/user/work/wt/agt-m3-public13-installed-host-gate
+
+ succeeded in 116ms:
+c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24  remotion/package-lock.json
+9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738  remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+50dc59f263dd062506b43793384a460764a8f0feeedafea563b0853560f76b4b  remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256
+c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24  /home/user/work/runtimes/agent-remotion-0013/package-lock.json
+9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738  /home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz
+lock_cmp=0
+pkg_cmp=0
+/home/user/work/runtimes/agent-remotion-0013/node_modules
+/home/user/work/runtimes/agent-remotion-0013/node_modules/@banodoco/timeline-composition
+directory '/home/user/work/runtimes/agent-remotion-0013/node_modules'
+directory '/home/user/work/runtimes/agent-remotion-0013/node_modules/@banodoco/timeline-composition'
+
+codex
+The approved runtime is byte-identical to this source pin for `package.json`, `package-lock.json` (SHA-256 `c4d7030b…`), and the 0.0.13 archive (`9412ae25…`); its `node_modules` is a real directory, not a symlink. I found the authorized central suite `agent-remotion-0013-nodes` and will run the proportional local package/SSR/labels checks first, then that named suite, with the prescribed Node 20.19.4 and runtime-13 environment.
+exec
+/bin/bash -lc 'env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme tests/packs/rendering/test_composition_package.py::test_public13_evaluation_admits_valid_source_and_rejects_four_forged_sources tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup tests/packs/rendering/test_capture_scene_labels.py' in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ exited 1 in 2967ms:
+...E..........EEEE.EEEE                                                  [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_real_host_labels_are_retained_once_and_drawn_without_private_math _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7fb5a90a8050>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-3291'), _retention_count=3, _retention_policy='failed')
+
+    @pytest.fixture(scope="module")
+    def host(tmp_path_factory):
+        root = tmp_path_factory.mktemp("capture-label-host")
+        (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+        project = root / "remotion"
+        project.mkdir()
+        (project / "src").mkdir()
+        modules = project / "node_modules"
+        modules.mkdir()
+        peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+        for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+            target = modules / peer
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+>           assert target.is_dir(), f"missing provisioned peer: {target}"
+E           AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react
+E           assert False
+E            +  where False = is_dir()
+E            +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react').is_dir
+
+tests/packs/rendering/test_capture_scene_labels.py:48: AssertionError
+_____ ERROR at setup of test_mixed_or_missing_capture_cannot_retain_facts ______
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7fb5a90a8050>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-3291'), _retention_count=3, _retention_policy='failed')
+
+    @pytest.fixture(scope="module")
+    def host(tmp_path_factory):
+        root = tmp_path_factory.mktemp("capture-label-host")
+        (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+        project = root / "remotion"
+        project.mkdir()
+        (project / "src").mkdir()
+        modules = project / "node_modules"
+        modules.mkdir()
+        peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+        for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+            target = modules / peer
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+>           assert target.is_dir(), f"missing provisioned peer: {target}"
+E           AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react
+E           assert False
+E            +  where False = is_dir()
+E            +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react').is_dir
+
+tests/packs/rendering/test_capture_scene_labels.py:48: AssertionError
+___ ERROR at setup of test_other_source_or_uncaptured_frame_never_falls_back ___
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7fb5a90a8050>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-3291'), _retention_count=3, _retention_policy='failed')
+
+    @pytest.fixture(scope="module")
+    def host(tmp_path_factory):
+        root = tmp_path_factory.mktemp("capture-label-host")
+        (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+        project = root / "remotion"
+        project.mkdir()
+        (project / "src").mkdir()
+        modules = project / "node_modules"
+        modules.mkdir()
+        peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+        for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+            target = modules / peer
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+>           assert target.is_dir(), f"missing provisioned peer: {target}"
+E           AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react
+E           assert False
+E            +  where False = is_dir()
+E            +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react').is_dir
+
+tests/packs/rendering/test_capture_scene_labels.py:48: AssertionError
+_ ERROR at setup of test_unknown_public_geometry_is_an_answer_and_unavailability_is_not_empty _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7fb5a90a8050>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-3291'), _retention_count=3, _retention_policy='failed')
+
+    @pytest.fixture(scope="module")
+    def host(tmp_path_factory):
+        root = tmp_path_factory.mktemp("capture-label-host")
+        (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+        project = root / "remotion"
+        project.mkdir()
+        (project / "src").mkdir()
+        modules = project / "node_modules"
+        modules.mkdir()
+        peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+        for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+            target = modules / peer
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+>           assert target.is_dir(), f"missing provisioned peer: {target}"
+E           AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react
+E           assert False
+E            +  where False = is_dir()
+E            +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react').is_dir
+
+tests/packs/rendering/test_capture_scene_labels.py:48: AssertionError
+_ ERROR at setup of test_real_media_bounds_use_public_canvas_and_keep_uncertain_alpha _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7fb5a90a8050>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-3291'), _retention_count=3, _retention_policy='failed')
+
+    @pytest.fixture(scope="module")
+    def host(tmp_path_factory):
+        root = tmp_path_factory.mktemp("capture-label-host")
+        (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+        project = root / "remotion"
+        project.mkdir()
+        (project / "src").mkdir()
+        modules = project / "node_modules"
+        modules.mkdir()
+        peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+        for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+            target = modules / peer
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+>           assert target.is_dir(), f"missing provisioned peer: {target}"
+E           AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react
+E           assert False
+E            +  where False = is_dir()
+E            +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react').is_dir
+
+tests/packs/rendering/test_capture_scene_labels.py:48: AssertionError
+__ ERROR at setup of test_mismatched_public_response_is_not_relabelled[frame] __
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7fb5a90a8050>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-3291'), _retention_count=3, _retention_policy='failed')
+
+    @pytest.fixture(scope="module")
+    def host(tmp_path_factory):
+        root = tmp_path_factory.mktemp("capture-label-host")
+        (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+        project = root / "remotion"
+        project.mkdir()
+        (project / "src").mkdir()
+        modules = project / "node_modules"
+        modules.mkdir()
+        peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+        for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+            target = modules / peer
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+>           assert target.is_dir(), f"missing provisioned peer: {target}"
+E           AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react
+E           assert False
+E            +  where False = is_dir()
+E            +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react').is_dir
+
+tests/packs/rendering/test_capture_scene_labels.py:48: AssertionError
+__ ERROR at setup of test_mismatched_public_response_is_not_relabelled[width] __
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7fb5a90a8050>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-3291'), _retention_count=3, _retention_policy='failed')
+
+    @pytest.fixture(scope="module")
+    def host(tmp_path_factory):
+        root = tmp_path_factory.mktemp("capture-label-host")
+        (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+        project = root / "remotion"
+        project.mkdir()
+        (project / "src").mkdir()
+        modules = project / "node_modules"
+        modules.mkdir()
+        peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+        for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+            target = modules / peer
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+>           assert target.is_dir(), f"missing provisioned peer: {target}"
+E           AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react
+E           assert False
+E            +  where False = is_dir()
+E            +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react').is_dir
+
+tests/packs/rendering/test_capture_scene_labels.py:48: AssertionError
+_ ERROR at setup of test_mismatched_public_response_is_not_relabelled[height] __
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7fb5a90a8050>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-3291'), _retention_count=3, _retention_policy='failed')
+
+    @pytest.fixture(scope="module")
+    def host(tmp_path_factory):
+        root = tmp_path_factory.mktemp("capture-label-host")
+        (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+        project = root / "remotion"
+        project.mkdir()
+        (project / "src").mkdir()
+        modules = project / "node_modules"
+        modules.mkdir()
+        peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+        for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+            target = modules / peer
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+>           assert target.is_dir(), f"missing provisioned peer: {target}"
+E           AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react
+E           assert False
+E            +  where False = is_dir()
+E            +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react').is_dir
+
+tests/packs/rendering/test_capture_scene_labels.py:48: AssertionError
+_ ERROR at setup of test_mismatched_public_response_is_not_relabelled[clipId] __
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7fb5a90a8050>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-3291'), _retention_count=3, _retention_policy='failed')
+
+    @pytest.fixture(scope="module")
+    def host(tmp_path_factory):
+        root = tmp_path_factory.mktemp("capture-label-host")
+        (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+        project = root / "remotion"
+        project.mkdir()
+        (project / "src").mkdir()
+        modules = project / "node_modules"
+        modules.mkdir()
+        peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+        for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+            target = modules / peer
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+>           assert target.is_dir(), f"missing provisioned peer: {target}"
+E           AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react
+E           assert False
+E            +  where False = is_dir()
+E            +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-3291/capture-label-host0/remotion/node_modules/react').is_dir
+
+tests/packs/rendering/test_capture_scene_labels.py:48: AssertionError
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_public13_evaluation_admits_valid_source_and_rejects_four_forged_sources
+  /home/user/work/wt/agt-m3-public13-installed-host-gate/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_real_host_labels_are_retained_once_and_drawn_without_private_math
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_mixed_or_missing_capture_cannot_retain_facts
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_other_source_or_uncaptured_frame_never_falls_back
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_unknown_public_geometry_is_an_answer_and_unavailability_is_not_empty
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_real_media_bounds_use_public_canvas_and_keep_uncertain_alpha
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[frame]
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[width]
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[height]
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[clipId]
+14 passed, 2 warnings, 9 errors in 1.93s
+
+codex
+The first local label run hit the known missing-runtime-import environment mistake: the label fixture defaulted to this source checkout’s absent `remotion/node_modules`, while the installed runtime was not supplied through `ASTRID_TEST_NODE_MODULES`. The package, four-negative admission, and SSR cases passed; I’m correcting only that environment binding and rerunning the label cases once.
+exec
+/bin/bash -lc 'env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules ASTRID_TEST_COMPOSITION_ARTIFACT=/home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_capture_scene_labels.py' in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ succeeded in 18996ms:
+....................                                                     [100%]
+20 passed in 18.15s
+
+codex
+The corrected installed-runtime label run passed all 20 cases. The proportional local checks now have: package/archive + four forged-source negatives + public TextCard SSR passed, and current label cases passed 20/20. I’m now submitting the explicitly authorized `agent-remotion-0013-nodes` named suite to the central service; no full suite is being requested.
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-public13-installed-host-gate agent-remotion-0013-nodes) && printf '"'%s\\n' \""'$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m3-public13-installed-host-gate
+codex
+The named suite is running in the central service against the runtime-13 environment and the current worktree snapshot. I’m waiting for its result and will inspect its log if it reports a failure or remains queued.
+exec
+/bin/bash -lc 'ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947; tail -40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/log.txt 2>/dev/null || true' in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ succeeded in 77ms:
+total 20
+-rw-r--r-- 1 root root 157 Oct 20 18:07 ext
+-rw-r--r-- 1 root root   0 Oct 20 18:07 log.txt
+-rw-r--r-- 1 root root 136 Oct 20 18:07 request
+-rw-r--r-- 1 root root   0 Oct 20 18:07 runner.log
+-rw-r--r-- 1 root root   5 Oct 20 18:07 running
+-rw-r--r-- 1 root root 147 Oct 20 18:07 snap
+-rw-r--r-- 1 root root   8 Oct 20 18:07 status
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/status; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/request; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/running' in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ succeeded in 129ms:
+running
+target=agt-m3-public13-installed-host-gate
+repo=agent
+suite=agent-remotion-0013-nodes
+files=''
+nocache=0
+requested=2026-10-20T18:07:23Z
+3148
+
+exec
+/bin/bash -lc "stat -c '%s %y' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/runner.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/log.txt; ps -p 3148 -o pid,etime,stat,cmd" in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ exited 1 in 36ms:
+0 2026-10-20 18:07:24.249267786 +0000
+72 2026-10-20 18:09:13.296769484 +0000
+    PID     ELAPSED STAT CMD
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/log.txt; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/status; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947' in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ succeeded in 61ms:
+bringing up nodes...
+bringing up nodes...
+
+............................................................running
+total 24
+-rw-r--r-- 1 root root 157 Oct 20 18:07 ext
+-rw-r--r-- 1 root root 103 Oct 20 18:09 log.txt
+-rw-r--r-- 1 root root 136 Oct 20 18:07 request
+-rw-r--r-- 1 root root   0 Oct 20 18:07 runner.log
+-rw-r--r-- 1 root root   5 Oct 20 18:07 running
+-rw-r--r-- 1 root root 147 Oct 20 18:07 snap
+-rw-r--r-- 1 root root   8 Oct 20 18:07 status
+
+exec
+/bin/bash -lc "ps -axo pid,etime,stat,cmd | rg 'pytest|test-run|agent-remotion-0013|request-test|wait-test' | head -40" in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ succeeded in 0ms:
+      1       00:00 Ss   codex-linux-sandbox --sandbox-policy-cwd /home/user/work/wt/agt-m3-public13-installed-host-gate --command-cwd /home/user/work/wt/agt-m3-public13-installed-host-gate --permission-profile {"type":"managed","file_system":{"type":"restricted","entries":[{"path":{"type":"special","value":{"kind":"root"}},"access":"read"},{"path":{"type":"path","path":"/home/user/work/wt/agt-m3-public13-installed-host-gate"},"access":"write"},{"path":{"type":"path","path":"/home/user/work"},"access":"write"},{"path":{"type":"path","path":"/home/user/peteromallet"},"access":"write"},{"path":{"type":"path","path":"/home/user/banodoco"},"access":"write"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch"},"access":"write"},{"path":{"type":"special","value":{"kind":"slash_tmp"}},"access":"write"},{"path":{"type":"special","value":{"kind":"tmpdir"}},"access":"write"},{"path":{"type":"path","path":"/home/user/work/wt/agt-m3-public13-installed-host-gate/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/wt/agt-m3-public13-installed-host-gate/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/wt/agt-m3-public13-installed-host-gate/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/wt/agt-m3-public13-installed-host-gate/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.aws"},"access":"read","missing_path_behavior":"skip"}]},"network":"restricted"} --apply-seccomp-then-exec -- /bin/bash -c __CODEX_SNAPSHOT_OVERRIDE_SET_0="${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS+x}" __CODEX_SNAPSHOT_OVERRIDE_0="${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS-}" __CODEX_SNAPSHOT_OVERRIDE_SET_1="${CODEX_PERMISSION_PROFILE+x}" __CODEX_SNAPSHOT_OVERRIDE_1="${CODEX_PERMISSION_PROFILE-}" __CODEX_SNAPSHOT_OVERRIDE_SET_2="${CODEX_PLUGIN_METRICS_OUTPUT+x}" __CODEX_SNAPSHOT_OVERRIDE_2="${CODEX_PLUGIN_METRICS_OUTPUT-}" __CODEX_SNAPSHOT_OVERRIDE_SET_3="${CODEX_SESSION_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_3="${CODEX_SESSION_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_4="${CODEX_THREAD_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_4="${CODEX_THREAD_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_5="${CODEX_TOOL_CALL_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_5="${CODEX_TOOL_CALL_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_6="${CODEX_VERSION+x}" __CODEX_SNAPSHOT_OVERRIDE_6="${CODEX_VERSION-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0="${ALL_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_0="${ALL_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1="${BUNDLE_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_1="${BUNDLE_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2="${BUNDLE_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_2="${BUNDLE_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3="${BUNDLE_NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_3="${BUNDLE_NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4="${BUNDLE_SSL_CA_CERT+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_4="${BUNDLE_SSL_CA_CERT-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5="${CARGO_HTTP_CAINFO+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_5="${CARGO_HTTP_CAINFO-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6="${CODEX_CA_CERTIFICATE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_6="${CODEX_CA_CERTIFICATE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7="${CODEX_NETWORK_ALLOW_LOCAL_BINDING+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_7="${CODEX_NETWORK_ALLOW_LOCAL_BINDING-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8="${CODEX_NETWORK_PROXY_ACTIVE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_8="${CODEX_NETWORK_PROXY_ACTIVE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9="${CODEX_NETWORK_PROXY_ATTRIBUTION+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_9="${CODEX_NETWORK_PROXY_ATTRIBUTION-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10="${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_10="${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11="${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_11="${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12="${CURL_CA_BUNDLE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_12="${CURL_CA_BUNDLE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13="${DOCKER_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_13="${DOCKER_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14="${DOCKER_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_14="${DOCKER_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15="${ELECTRON_GET_USE_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_15="${ELECTRON_GET_USE_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16="${FTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_16="${FTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17="${GIT_SSL_CAINFO+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_17="${GIT_SSL_CAINFO-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18="${HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_18="${HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19="${HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_19="${HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20="${NODE_EXTRA_CA_CERTS+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_20="${NODE_EXTRA_CA_CERTS-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21="${NODE_USE_ENV_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_21="${NODE_USE_ENV_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22="${NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_22="${NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23="${NPM_CONFIG_CAFILE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_23="${NPM_CONFIG_CAFILE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24="${NPM_CONFIG_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_24="${NPM_CONFIG_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25="${NPM_CONFIG_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_25="${NPM_CONFIG_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26="${NPM_CONFIG_NOPROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_26="${NPM_CONFIG_NOPROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27="${NPM_CONFIG_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_27="${NPM_CONFIG_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28="${PIP_CERT+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_28="${PIP_CERT-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29="${PIP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_29="${PIP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30="${REQUESTS_CA_BUNDLE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_30="${REQUESTS_CA_BUNDLE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31="${SSL_CERT_FILE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_31="${SSL_CERT_FILE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32="${WSS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_32="${WSS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33="${WS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_33="${WS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34="${YARN_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_34="${YARN_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35="${YARN_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_35="${YARN_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36="${YARN_NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_36="${YARN_NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37="${all_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_37="${all_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38="${ftp_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_38="${ftp_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39="${http_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_39="${http_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40="${https_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_40="${https_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41="${no_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_41="${no_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42="${npm_config_cafile+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_42="${npm_config_cafile-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43="${npm_config_http_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_43="${npm_config_http_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44="${npm_config_https_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_44="${npm_config_https_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45="${npm_config_noproxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_45="${npm_config_noproxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46="${npm_config_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_46="${npm_config_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47="${ws_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_47="${ws_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48="${wss_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_48="${wss_proxy-}" __CODEX_SNAPSHOT_PROXY_ENV_SET="${CODEX_NETWORK_PROXY_ACTIVE+x}"  if . '/root/.codex/shell_snapshots/01a15a7d-bcda-7720-a7a6-ed2ea081c3d5.1792519552245042399.sh' >/dev/null 2>&1; then :; fi  if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_0}" ]; then   if [ -z "${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS+x}" ] || [ "${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS-}" != "${__CODEX_SNAPSHOT_OVERRIDE_0}" ]; then export CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS="${__CODEX_SNAPSHOT_OVERRIDE_0}"; else export CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS; fi else builtin unset CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS 2>/dev/null || command unset CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_0 __CODEX_SNAPSHOT_OVERRIDE_0 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_0 __CODEX_SNAPSHOT_OVERRIDE_0 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_1}" ]; then   if [ -z "${CODEX_PERMISSION_PROFILE+x}" ] || [ "${CODEX_PERMISSION_PROFILE-}" != "${__CODEX_SNAPSHOT_OVERRIDE_1}" ]; then export CODEX_PERMISSION_PROFILE="${__CODEX_SNAPSHOT_OVERRIDE_1}"; else export CODEX_PERMISSION_PROFILE; fi else builtin unset CODEX_PERMISSION_PROFILE 2>/dev/null || command unset CODEX_PERMISSION_PROFILE; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_1 __CODEX_SNAPSHOT_OVERRIDE_1 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_1 __CODEX_SNAPSHOT_OVERRIDE_1 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_2}" ]; then   if [ -z "${CODEX_PLUGIN_METRICS_OUTPUT+x}" ] || [ "${CODEX_PLUGIN_METRICS_OUTPUT-}" != "${__CODEX_SNAPSHOT_OVERRIDE_2}" ]; then export CODEX_PLUGIN_METRICS_OUTPUT="${__CODEX_SNAPSHOT_OVERRIDE_2}"; else export CODEX_PLUGIN_METRICS_OUTPUT; fi else builtin unset CODEX_PLUGIN_METRICS_OUTPUT 2>/dev/null || command unset CODEX_PLUGIN_METRICS_OUTPUT; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_2 __CODEX_SNAPSHOT_OVERRIDE_2 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_2 __CODEX_SNAPSHOT_OVERRIDE_2 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_3}" ]; then   if [ -z "${CODEX_SESSION_ID+x}" ] || [ "${CODEX_SESSION_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_3}" ]; then export CODEX_SESSION_ID="${__CODEX_SNAPSHOT_OVERRIDE_3}"; else export CODEX_SESSION_ID; fi else builtin unset CODEX_SESSION_ID 2>/dev/null || command unset CODEX_SESSION_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_3 __CODEX_SNAPSHOT_OVERRIDE_3 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_3 __CODEX_SNAPSHOT_OVERRIDE_3 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_4}" ]; then   if [ -z "${CODEX_THREAD_ID+x}" ] || [ "${CODEX_THREAD_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_4}" ]; then export CODEX_THREAD_ID="${__CODEX_SNAPSHOT_OVERRIDE_4}"; else export CODEX_THREAD_ID; fi else builtin unset CODEX_THREAD_ID 2>/dev/null || command unset CODEX_THREAD_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_4 __CODEX_SNAPSHOT_OVERRIDE_4 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_4 __CODEX_SNAPSHOT_OVERRIDE_4 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_5}" ]; then   if [ -z "${CODEX_TOOL_CALL_ID+x}" ] || [ "${CODEX_TOOL_CALL_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_5}" ]; then export CODEX_TOOL_CALL_ID="${__CODEX_SNAPSHOT_OVERRIDE_5}"; else export CODEX_TOOL_CALL_ID; fi else builtin unset CODEX_TOOL_CALL_ID 2>/dev/null || command unset CODEX_TOOL_CALL_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_5 __CODEX_SNAPSHOT_OVERRIDE_5 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_5 __CODEX_SNAPSHOT_OVERRIDE_5 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_6}" ]; then   if [ -z "${CODEX_VERSION+x}" ] || [ "${CODEX_VERSION-}" != "${__CODEX_SNAPSHOT_OVERRIDE_6}" ]; then export CODEX_VERSION="${__CODEX_SNAPSHOT_OVERRIDE_6}"; else export CODEX_VERSION; fi else builtin unset CODEX_VERSION 2>/dev/null || command unset CODEX_VERSION; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_6 __CODEX_SNAPSHOT_OVERRIDE_6 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_6 __CODEX_SNAPSHOT_OVERRIDE_6 if [ -n "$__CODEX_SNAPSHOT_PROXY_ENV_SET" ] || [ -n "${CODEX_NETWORK_PROXY_ACTIVE+x}" ]; then if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0}" ]; then   if [ -z "${ALL_PROXY+x}" ] || [ "${ALL_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_0}" ]; then export ALL_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_0}"; else export ALL_PROXY; fi else builtin unset ALL_PROXY 2>/dev/null || command unset ALL_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0 __CODEX_SNAPSHOT_PROXY_OVERRIDE_0 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0 __CODEX_SNAPSHOT_PROXY_OVERRIDE_0 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1}" ]; then   if [ -z "${BUNDLE_HTTPS_PROXY+x}" ] || [ "${BUNDLE_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_1}" ]; then export BUNDLE_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_1}"; else export BUNDLE_HTTPS_PROXY; fi else builtin unset BUNDLE_HTTPS_PROXY 2>/dev/null || command unset BUNDLE_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1 __CODEX_SNAPSHOT_PROXY_OVERRIDE_1 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1 __CODEX_SNAPSHOT_PROXY_OVERRIDE_1 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2}" ]; then   if [ -z "${BUNDLE_HTTP_PROXY+x}" ] || [ "${BUNDLE_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_2}" ]; then export BUNDLE_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_2}"; else export BUNDLE_HTTP_PROXY; fi else builtin unset BUNDLE_HTTP_PROXY 2>/dev/null || command unset BUNDLE_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2 __CODEX_SNAPSHOT_PROXY_OVERRIDE_2 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2 __CODEX_SNAPSHOT_PROXY_OVERRIDE_2 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3}" ]; then   if [ -z "${BUNDLE_NO_PROXY+x}" ] || [ "${BUNDLE_NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_3}" ]; then export BUNDLE_NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_3}"; else export BUNDLE_NO_PROXY; fi else builtin unset BUNDLE_NO_PROXY 2>/dev/null || command unset BUNDLE_NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3 __CODEX_SNAPSHOT_PROXY_OVERRIDE_3 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3 __CODEX_SNAPSHOT_PROXY_OVERRIDE_3 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4}" ]; then   if [ -z "${BUNDLE_SSL_CA_CERT+x}" ] || [ "${BUNDLE_SSL_CA_CERT-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_4}" ]; then export BUNDLE_SSL_CA_CERT="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_4}"; else export BUNDLE_SSL_CA_CERT; fi else builtin unset BUNDLE_SSL_CA_CERT 2>/dev/null || command unset BUNDLE_SSL_CA_CERT; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4 __CODEX_SNAPSHOT_PROXY_OVERRIDE_4 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4 __CODEX_SNAPSHOT_PROXY_OVERRIDE_4 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5}" ]; then   if [ -z "${CARGO_HTTP_CAINFO+x}" ] || [ "${CARGO_HTTP_CAINFO-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_5}" ]; then export CARGO_HTTP_CAINFO="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_5}"; else export CARGO_HTTP_CAINFO; fi else builtin unset CARGO_HTTP_CAINFO 2>/dev/null || command unset CARGO_HTTP_CAINFO; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5 __CODEX_SNAPSHOT_PROXY_OVERRIDE_5 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5 __CODEX_SNAPSHOT_PROXY_OVERRIDE_5 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6}" ]; then   if [ -z "${CODEX_CA_CERTIFICATE+x}" ] || [ "${CODEX_CA_CERTIFICATE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_6}" ]; then export CODEX_CA_CERTIFICATE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_6}"; else export CODEX_CA_CERTIFICATE; fi else builtin unset CODEX_CA_CERTIFICATE 2>/dev/null || command unset CODEX_CA_CERTIFICATE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6 __CODEX_SNAPSHOT_PROXY_OVERRIDE_6 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6 __CODEX_SNAPSHOT_PROXY_OVERRIDE_6 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7}" ]; then   if [ -z "${CODEX_NETWORK_ALLOW_LOCAL_BINDING+x}" ] || [ "${CODEX_NETWORK_ALLOW_LOCAL_BINDING-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_7}" ]; then export CODEX_NETWORK_ALLOW_LOCAL_BINDING="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_7}"; else export CODEX_NETWORK_ALLOW_LOCAL_BINDING; fi else builtin unset CODEX_NETWORK_ALLOW_LOCAL_BINDING 2>/dev/null || command unset CODEX_NETWORK_ALLOW_LOCAL_BINDING; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7 __CODEX_SNAPSHOT_PROXY_OVERRIDE_7 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7 __CODEX_SNAPSHOT_PROXY_OVERRIDE_7 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_ACTIVE+x}" ] || [ "${CODEX_NETWORK_PROXY_ACTIVE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_8}" ]; then export CODEX_NETWORK_PROXY_ACTIVE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_8}"; else export CODEX_NETWORK_PROXY_ACTIVE; fi else builtin unset CODEX_NETWORK_PROXY_ACTIVE 2>/dev/null || command unset CODEX_NETWORK_PROXY_ACTIVE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8 __CODEX_SNAPSHOT_PROXY_OVERRIDE_8 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8 __CODEX_SNAPSHOT_PROXY_OVERRIDE_8 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_ATTRIBUTION+x}" ] || [ "${CODEX_NETWORK_PROXY_ATTRIBUTION-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_9}" ]; then export CODEX_NETWORK_PROXY_ATTRIBUTION="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_9}"; else export CODEX_NETWORK_PROXY_ATTRIBUTION; fi else builtin unset CODEX_NETWORK_PROXY_ATTRIBUTION 2>/dev/null || command unset CODEX_NETWORK_PROXY_ATTRIBUTION; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9 __CODEX_SNAPSHOT_PROXY_OVERRIDE_9 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9 __CODEX_SNAPSHOT_PROXY_OVERRIDE_9 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS+x}" ] || [ "${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_10}" ]; then export CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_10}"; else export CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS; fi else builtin unset CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS 2>/dev/null || command unset CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10 __CODEX_SNAPSHOT_PROXY_OVERRIDE_10 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10 __CODEX_SNAPSHOT_PROXY_OVERRIDE_10 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE+x}" ] || [ "${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_11}" ]; then export CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_11}"; else export CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE; fi else builtin unset CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE 2>/dev/null || command unset CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11 __CODEX_SNAPSHOT_PROXY_OVERRIDE_11 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11 __CODEX_SNAPSHOT_PROXY_OVERRIDE_11 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12}" ]; then   if [ -z "${CURL_CA_BUNDLE+x}" ] || [ "${CURL_CA_BUNDLE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_12}" ]; then export CURL_CA_BUNDLE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_12}"; else export CURL_CA_BUNDLE; fi else builtin unset CURL_CA_BUNDLE 2>/dev/null || command unset CURL_CA_BUNDLE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12 __CODEX_SNAPSHOT_PROXY_OVERRIDE_12 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12 __CODEX_SNAPSHOT_PROXY_OVERRIDE_12 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13}" ]; then   if [ -z "${DOCKER_HTTPS_PROXY+x}" ] || [ "${DOCKER_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_13}" ]; then export DOCKER_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_13}"; else export DOCKER_HTTPS_PROXY; fi else builtin unset DOCKER_HTTPS_PROXY 2>/dev/null || command unset DOCKER_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13 __CODEX_SNAPSHOT_PROXY_OVERRIDE_13 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13 __CODEX_SNAPSHOT_PROXY_OVERRIDE_13 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14}" ]; then   if [ -z "${DOCKER_HTTP_PROXY+x}" ] || [ "${DOCKER_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_14}" ]; then export DOCKER_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_14}"; else export DOCKER_HTTP_PROXY; fi else builtin unset DOCKER_HTTP_PROXY 2>/dev/null || command unset DOCKER_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14 __CODEX_SNAPSHOT_PROXY_OVERRIDE_14 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14 __CODEX_SNAPSHOT_PROXY_OVERRIDE_14 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15}" ]; then   if [ -z "${ELECTRON_GET_USE_PROXY+x}" ] || [ "${ELECTRON_GET_USE_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_15}" ]; then export ELECTRON_GET_USE_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_15}"; else export ELECTRON_GET_USE_PROXY; fi else builtin unset ELECTRON_GET_USE_PROXY 2>/dev/null || command unset ELECTRON_GET_USE_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15 __CODEX_SNAPSHOT_PROXY_OVERRIDE_15 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15 __CODEX_SNAPSHOT_PROXY_OVERRIDE_15 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16}" ]; then   if [ -z "${FTP_PROXY+x}" ] || [ "${FTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_16}" ]; then export FTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_16}"; else export FTP_PROXY; fi else builtin unset FTP_PROXY 2>/dev/null || command unset FTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16 __CODEX_SNAPSHOT_PROXY_OVERRIDE_16 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16 __CODEX_SNAPSHOT_PROXY_OVERRIDE_16 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17}" ]; then   if [ -z "${GIT_SSL_CAINFO+x}" ] || [ "${GIT_SSL_CAINFO-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_17}" ]; then export GIT_SSL_CAINFO="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_17}"; else export GIT_SSL_CAINFO; fi else builtin unset GIT_SSL_CAINFO 2>/dev/null || command unset GIT_SSL_CAINFO; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17 __CODEX_SNAPSHOT_PROXY_OVERRIDE_17 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17 __CODEX_SNAPSHOT_PROXY_OVERRIDE_17 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18}" ]; then   if [ -z "${HTTPS_PROXY+x}" ] || [ "${HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_18}" ]; then export HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_18}"; else export HTTPS_PROXY; fi else builtin unset HTTPS_PROXY 2>/dev/null || command unset HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18 __CODEX_SNAPSHOT_PROXY_OVERRIDE_18 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18 __CODEX_SNAPSHOT_PROXY_OVERRIDE_18 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19}" ]; then   if [ -z "${HTTP_PROXY+x}" ] || [ "${HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_19}" ]; then export HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_19}"; else export HTTP_PROXY; fi else builtin unset HTTP_PROXY 2>/dev/null || command unset HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19 __CODEX_SNAPSHOT_PROXY_OVERRIDE_19 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19 __CODEX_SNAPSHOT_PROXY_OVERRIDE_19 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20}" ]; then   if [ -z "${NODE_EXTRA_CA_CERTS+x}" ] || [ "${NODE_EXTRA_CA_CERTS-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_20}" ]; then export NODE_EXTRA_CA_CERTS="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_20}"; else export NODE_EXTRA_CA_CERTS; fi else builtin unset NODE_EXTRA_CA_CERTS 2>/dev/null || command unset NODE_EXTRA_CA_CERTS; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20 __CODEX_SNAPSHOT_PROXY_OVERRIDE_20 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20 __CODEX_SNAPSHOT_PROXY_OVERRIDE_20 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21}" ]; then   if [ -z "${NODE_USE_ENV_PROXY+x}" ] || [ "${NODE_USE_ENV_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_21}" ]; then export NODE_USE_ENV_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_21}"; else export NODE_USE_ENV_PROXY; fi else builtin unset NODE_USE_ENV_PROXY 2>/dev/null || command unset NODE_USE_ENV_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21 __CODEX_SNAPSHOT_PROXY_OVERRIDE_21 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21 __CODEX_SNAPSHOT_PROXY_OVERRIDE_21 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22}" ]; then   if [ -z "${NO_PROXY+x}" ] || [ "${NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_22}" ]; then export NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_22}"; else export NO_PROXY; fi else builtin unset NO_PROXY 2>/dev/null || command unset NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22 __CODEX_SNAPSHOT_PROXY_OVERRIDE_22 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22 __CODEX_SNAPSHOT_PROXY_OVERRIDE_22 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23}" ]; then   if [ -z "${NPM_CONFIG_CAFILE+x}" ] || [ "${NPM_CONFIG_CAFILE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_23}" ]; then export NPM_CONFIG_CAFILE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_23}"; else export NPM_CONFIG_CAFILE; fi else builtin unset NPM_CONFIG_CAFILE 2>/dev/null || command unset NPM_CONFIG_CAFILE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23 __CODEX_SNAPSHOT_PROXY_OVERRIDE_23 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23 __CODEX_SNAPSHOT_PROXY_OVERRIDE_23 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24}" ]; then   if [ -z "${NPM_CONFIG_HTTPS_PROXY+x}" ] || [ "${NPM_CONFIG_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_24}" ]; then export NPM_CONFIG_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_24}"; else export NPM_CONFIG_HTTPS_PROXY; fi else builtin unset NPM_CONFIG_HTTPS_PROXY 2>/dev/null || command unset NPM_CONFIG_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24 __CODEX_SNAPSHOT_PROXY_OVERRIDE_24 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24 __CODEX_SNAPSHOT_PROXY_OVERRIDE_24 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25}" ]; then   if [ -z "${NPM_CONFIG_HTTP_PROXY+x}" ] || [ "${NPM_CONFIG_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_25}" ]; then export NPM_CONFIG_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_25}"; else export NPM_CONFIG_HTTP_PROXY; fi else builtin unset NPM_CONFIG_HTTP_PROXY 2>/dev/null || command unset NPM_CONFIG_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25 __CODEX_SNAPSHOT_PROXY_OVERRIDE_25 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25 __CODEX_SNAPSHOT_PROXY_OVERRIDE_25 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26}" ]; then   if [ -z "${NPM_CONFIG_NOPROXY+x}" ] || [ "${NPM_CONFIG_NOPROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_26}" ]; then export NPM_CONFIG_NOPROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_26}"; else export NPM_CONFIG_NOPROXY; fi else builtin unset NPM_CONFIG_NOPROXY 2>/dev/null || command unset NPM_CONFIG_NOPROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26 __CODEX_SNAPSHOT_PROXY_OVERRIDE_26 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26 __CODEX_SNAPSHOT_PROXY_OVERRIDE_26 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27}" ]; then   if [ -z "${NPM_CONFIG_PROXY+x}" ] || [ "${NPM_CONFIG_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_27}" ]; then export NPM_CONFIG_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_27}"; else export NPM_CONFIG_PROXY; fi else builtin unset NPM_CONFIG_PROXY 2>/dev/null || command unset NPM_CONFIG_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27 __CODEX_SNAPSHOT_PROXY_OVERRIDE_27 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27 __CODEX_SNAPSHOT_PROXY_OVERRIDE_27 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28}" ]; then   if [ -z "${PIP_CERT+x}" ] || [ "${PIP_CERT-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_28}" ]; then export PIP_CERT="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_28}"; else export PIP_CERT; fi else builtin unset PIP_CERT 2>/dev/null || command unset PIP_CERT; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28 __CODEX_SNAPSHOT_PROXY_OVERRIDE_28 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28 __CODEX_SNAPSHOT_PROXY_OVERRIDE_28 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29}" ]; then   if [ -z "${PIP_PROXY+x}" ] || [ "${PIP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_29}" ]; then export PIP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_29}"; else export PIP_PROXY; fi else builtin unset PIP_PROXY 2>/dev/null || command unset PIP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29 __CODEX_SNAPSHOT_PROXY_OVERRIDE_29 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29 __CODEX_SNAPSHOT_PROXY_OVERRIDE_29 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30}" ]; then   if [ -z "${REQUESTS_CA_BUNDLE+x}" ] || [ "${REQUESTS_CA_BUNDLE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_30}" ]; then export REQUESTS_CA_BUNDLE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_30}"; else export REQUESTS_CA_BUNDLE; fi else builtin unset REQUESTS_CA_BUNDLE 2>/dev/null || command unset REQUESTS_CA_BUNDLE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30 __CODEX_SNAPSHOT_PROXY_OVERRIDE_30 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30 __CODEX_SNAPSHOT_PROXY_OVERRIDE_30 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31}" ]; then   if [ -z "${SSL_CERT_FILE+x}" ] || [ "${SSL_CERT_FILE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_31}" ]; then export SSL_CERT_FILE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_31}"; else export SSL_CERT_FILE; fi else builtin unset SSL_CERT_FILE 2>/dev/null || command unset SSL_CERT_FILE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31 __CODEX_SNAPSHOT_PROXY_OVERRIDE_31 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31 __CODEX_SNAPSHOT_PROXY_OVERRIDE_31 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32}" ]; then   if [ -z "${WSS_PROXY+x}" ] || [ "${WSS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_32}" ]; then export WSS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_32}"; else export WSS_PROXY; fi else builtin unset WSS_PROXY 2>/dev/null || command unset WSS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32 __CODEX_SNAPSHOT_PROXY_OVERRIDE_32 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32 __CODEX_SNAPSHOT_PROXY_OVERRIDE_32 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33}" ]; then   if [ -z "${WS_PROXY+x}" ] || [ "${WS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_33}" ]; then export WS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_33}"; else export WS_PROXY; fi else builtin unset WS_PROXY 2>/dev/null || command unset WS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33 __CODEX_SNAPSHOT_PROXY_OVERRIDE_33 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33 __CODEX_SNAPSHOT_PROXY_OVERRIDE_33 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34}" ]; then   if [ -z "${YARN_HTTPS_PROXY+x}" ] || [ "${YARN_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_34}" ]; then export YARN_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_34}"; else export YARN_HTTPS_PROXY; fi else builtin unset YARN_HTTPS_PROXY 2>/dev/null || command unset YARN_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34 __CODEX_SNAPSHOT_PROXY_OVERRIDE_34 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34 __CODEX_SNAPSHOT_PROXY_OVERRIDE_34 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35}" ]; then   if [ -z "${YARN_HTTP_PROXY+x}" ] || [ "${YARN_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_35}" ]; then export YARN_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_35}"; else export YARN_HTTP_PROXY; fi else builtin unset YARN_HTTP_PROXY 2>/dev/null || command unset YARN_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35 __CODEX_SNAPSHOT_PROXY_OVERRIDE_35 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35 __CODEX_SNAPSHOT_PROXY_OVERRIDE_35 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36}" ]; then   if [ -z "${YARN_NO_PROXY+x}" ] || [ "${YARN_NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_36}" ]; then export YARN_NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_36}"; else export YARN_NO_PROXY; fi else builtin unset YARN_NO_PROXY 2>/dev/null || command unset YARN_NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36 __CODEX_SNAPSHOT_PROXY_OVERRIDE_36 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36 __CODEX_SNAPSHOT_PROXY_OVERRIDE_36 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37}" ]; then   if [ -z "${all_proxy+x}" ] || [ "${all_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_37}" ]; then export all_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_37}"; else export all_proxy; fi else builtin unset all_proxy 2>/dev/null || command unset all_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37 __CODEX_SNAPSHOT_PROXY_OVERRIDE_37 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37 __CODEX_SNAPSHOT_PROXY_OVERRIDE_37 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38}" ]; then   if [ -z "${ftp_proxy+x}" ] || [ "${ftp_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_38}" ]; then export ftp_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_38}"; else export ftp_proxy; fi else builtin unset ftp_proxy 2>/dev/null || command unset ftp_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38 __CODEX_SNAPSHOT_PROXY_OVERRIDE_38 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38 __CODEX_SNAPSHOT_PROXY_OVERRIDE_38 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39}" ]; then   if [ -z "${http_proxy+x}" ] || [ "${http_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_39}" ]; then export http_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_39}"; else export http_proxy; fi else builtin unset http_proxy 2>/dev/null || command unset http_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39 __CODEX_SNAPSHOT_PROXY_OVERRIDE_39 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39 __CODEX_SNAPSHOT_PROXY_OVERRIDE_39 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40}" ]; then   if [ -z "${https_proxy+x}" ] || [ "${https_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_40}" ]; then export https_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_40}"; else export https_proxy; fi else builtin unset https_proxy 2>/dev/null || command unset https_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40 __CODEX_SNAPSHOT_PROXY_OVERRIDE_40 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40 __CODEX_SNAPSHOT_PROXY_OVERRIDE_40 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41}" ]; then   if [ -z "${no_proxy+x}" ] || [ "${no_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_41}" ]; then export no_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_41}"; else export no_proxy; fi else builtin unset no_proxy 2>/dev/null || command unset no_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41 __CODEX_SNAPSHOT_PROXY_OVERRIDE_41 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41 __CODEX_SNAPSHOT_PROXY_OVERRIDE_41 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42}" ]; then   if [ -z "${npm_config_cafile+x}" ] || [ "${npm_config_cafile-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_42}" ]; then export npm_config_cafile="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_42}"; else export npm_config_cafile; fi else builtin unset npm_config_cafile 2>/dev/null || command unset npm_config_cafile; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42 __CODEX_SNAPSHOT_PROXY_OVERRIDE_42 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42 __CODEX_SNAPSHOT_PROXY_OVERRIDE_42 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43}" ]; then   if [ -z "${npm_config_http_proxy+x}" ] || [ "${npm_config_http_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_43}" ]; then export npm_config_http_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_43}"; else export npm_config_http_proxy; fi else builtin unset npm_config_http_proxy 2>/dev/null || command unset npm_config_http_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43 __CODEX_SNAPSHOT_PROXY_OVERRIDE_43 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43 __CODEX_SNAPSHOT_PROXY_OVERRIDE_43 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44}" ]; then   if [ -z "${npm_config_https_proxy+x}" ] || [ "${npm_config_https_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_44}" ]; then export npm_config_https_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_44}"; else export npm_config_https_proxy; fi else builtin unset npm_config_https_proxy 2>/dev/null || command unset npm_config_https_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44 __CODEX_SNAPSHOT_PROXY_OVERRIDE_44 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44 __CODEX_SNAPSHOT_PROXY_OVERRIDE_44 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45}" ]; then   if [ -z "${npm_config_noproxy+x}" ] || [ "${npm_config_noproxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_45}" ]; then export npm_config_noproxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_45}"; else export npm_config_noproxy; fi else builtin unset npm_config_noproxy 2>/dev/null || command unset npm_config_noproxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45 __CODEX_SNAPSHOT_PROXY_OVERRIDE_45 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45 __CODEX_SNAPSHOT_PROXY_OVERRIDE_45 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46}" ]; then   if [ -z "${npm_config_proxy+x}" ] || [ "${npm_config_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_46}" ]; then export npm_config_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_46}"; else export npm_config_proxy; fi else builtin unset npm_config_proxy 2>/dev/null || command unset npm_config_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46 __CODEX_SNAPSHOT_PROXY_OVERRIDE_46 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46 __CODEX_SNAPSHOT_PROXY_OVERRIDE_46 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47}" ]; then   if [ -z "${ws_proxy+x}" ] || [ "${ws_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_47}" ]; then export ws_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_47}"; else export ws_proxy; fi else builtin unset ws_proxy 2>/dev/null || command unset ws_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47 __CODEX_SNAPSHOT_PROXY_OVERRIDE_47 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47 __CODEX_SNAPSHOT_PROXY_OVERRIDE_47 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48}" ]; then   if [ -z "${wss_proxy+x}" ] || [ "${wss_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_48}" ]; then export wss_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_48}"; else export wss_proxy; fi else builtin unset wss_proxy 2>/dev/null || command unset wss_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48 __CODEX_SNAPSHOT_PROXY_OVERRIDE_48 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48 __CODEX_SNAPSHOT_PROXY_OVERRIDE_48 fi if [ -n "${PATH:-}" ]; then export PATH='/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path':"$PATH"; else export PATH='/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path'; fi  exec '/bin/bash' -c 'ps -axo pid,etime,stat,cmd | rg '"'"'pytest|test-run|agent-remotion-0013|request-test|wait-test'"'"' | head -40'
+      2       00:00 S    /bin/bash -c ps -axo pid,etime,stat,cmd | rg 'pytest|test-run|agent-remotion-0013|request-test|wait-test' | head -40
+      4       00:00 S    rg pytest|test-run|agent-remotion-0013|request-test|wait-test
+
+exec
+/bin/bash -lc "tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/log.txt; stat -c '%s %y' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/log.txt; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/status" in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ succeeded in 0ms:
+........................................................................ [  0%]
+........................................................................ [  1%]
+........................................................................ [  1%]
+........................................................................ [  2%]
+.......................................................................514 2026-10-20 18:09:50.916771720 +0000
+running
+
+codex
+The central named suite is progressing normally (about 2% after its initial startup), with no failure output. It is the authorized broad node-qualified suite rather than a forbidden `full*` request; I’ll let it finish and preserve its exact result directory for the handoff.
+exec
+/bin/bash -lc "tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/log.txt; stat -c '%s %y' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/log.txt" in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ succeeded in 181ms:
+........................................................................ [  5%]
+........................................................................ [  5%]
+..................1021 2026-10-20 18:10:27.272773881 +0000
+
+exec
+/bin/bash -lc 'tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/log.txt' in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ succeeded in 159ms:
+........................................................................ [  6%]
+........................................................................ [  6%]
+.........................................................
+codex
+The named suite remains healthy at roughly 6%, with only passing-dot output and no errors. I’m continuing to monitor the central result rather than launching any duplicate suite.
+exec
+/bin/bash -lc 'tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947/log.txt' in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ succeeded in 45ms:
+........................................................................ [  7%]
+........................................................................ [  8%]
+................
+exec
+/bin/bash -lc "set -eu
+printf 'agent_commit '; git rev-parse HEAD
+printf 'agent_tree '; git rev-parse HEAD"'^{tree}
+printf '"'worktree_status '; git status --porcelain
+printf 'node '; /home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node --version
+printf 'lock_sha '; sha256sum remotion/package-lock.json | cut -d' ' -f1
+printf 'runtime_lock_sha '; sha256sum /home/user/work/runtimes/agent-remotion-0013/package-lock.json | cut -d' ' -f1
+printf 'archive_sha '; sha256sum remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz | cut -d' ' -f1
+printf 'runtime_archive_sha '; sha256sum /home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz | cut -d' ' -f1
+printf 'archive_members_regular '; tar -tvf remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz | awk 'END {print NR}'
+printf 'archive_nonregular '; tar -tvf remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz | awk '"'$1 !~ /''^-/'"' | wc -l
+printf 'runtime_package '; node -e \"const p=require('/home/user/work/runtimes/agent-remotion-0013/package.json'); console.log(p.dependencies['@banodoco/timeline-composition'],p.engines.node)\"
+printf 'runtime_package_integrity '; node -e \"const l=require('/home/user/work/runtimes/agent-remotion-0013/package-lock.json'); console.log(l.packages['node_modules/@banodoco/timeline-composition'].integrity)\"" in /home/user/work/wt/agt-m3-public13-installed-host-gate
+ succeeded in 1133ms:
+agent_commit 89cdb91da8aa8195955bca55752df018647ef4e4
+agent_tree 85ec9b7bd39f053e1d5b4eca3d4a06c2c7f4f4a2
+worktree_status node v20.19.4
+lock_sha c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24
+runtime_lock_sha c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24
+archive_sha 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+runtime_archive_sha 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+archive_members_regular 77
+archive_nonregular 0
+runtime_package file:artifacts/banodoco-timeline-composition-0.0.13.tgz =20.19.4
+runtime_package_integrity sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ==
+

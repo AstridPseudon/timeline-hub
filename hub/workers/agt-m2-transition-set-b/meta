@@ -1,0 +1,9 @@
+name=agt-m2-transition-set-b
+repo=agent
+base=tl/agt-m2-transition-set
+base_sha=027bd16d
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-transition-set-b
+started=2026-10-20T03:17:32Z

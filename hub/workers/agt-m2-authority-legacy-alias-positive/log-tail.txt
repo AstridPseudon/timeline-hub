@@ -1,0 +1,400 @@
+ tests/sdk/test_timeline_selected_schema_runtime.py | 71 ++++++++++++++++++++++
+ 2 files changed, 97 insertions(+), 10 deletions(-)
+diff --git a/tests/sdk/test_timeline_selected_schema.py b/tests/sdk/test_timeline_selected_schema.py
+index 274fa540..f7d8cab1 100644
+--- a/tests/sdk/test_timeline_selected_schema.py
++++ b/tests/sdk/test_timeline_selected_schema.py
+@@ -22,6 +22,7 @@ from astrid.sdk.timeline.commit import (
+ )
+ from tests.editing_conformance import test_recipe_scalar_commands as scalar_recipes
+ from tests.editing_conformance.test_recipe_m2_clip_add import empty_document
++from tests.helpers.selected_param_legacy import accepted_params
+ from tests.sdk.test_timeline_commit_provider import (
+     CommitRejected,
+     DetachedPort,
+@@ -211,20 +212,35 @@ def test_selected_pack_refuses_a_port_without_document_object(selected_effect, m
+     assert (realm.head, realm.entries, realm.documents) == before
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason='owner12:16: alias-bearing birth needs proven selection without erasing the alias before this legacy-inverse scenario')
+-def test_inverse_of_older_param_record_uses_only_selected_identity(selected_effect, monkeypatch):
+-    realm, selected, _ = selected_effect
+-    row = copy.deepcopy(State(current(realm)).entity(REF))
+-    row['id'] = 'legacy-alias'
++def test_inverse_of_older_param_record_uses_only_selected_identity(monkeypatch):
++    historical = accepted_params()
++
++    class HistoricalRealm(DetachedRealm):
++        def context(self, *args, **kwargs):
++            context = super().context(*args, **kwargs)
++            context['request']['project_id'] = historical['project']
++            context['invocation']['path'] = f"/v1/projects/{historical['project']}/timelines/film/commit"
++            context['request_hash'] = _digest(context['invocation'])
++            return context
++
++    # Detached compatibility boundary: these are unmodified reads from an old
++    # real Runtime acceptance, not a newly authorized first PARAM. The native
++    # companion restores its authenticated backup and tests current authority.
++    realm = HistoricalRealm()
++    realm.head, realm.entries, realm.documents = (
++        historical['head'], historical['entries'], historical['documents'])
++    realm.schema_options = historical['options']
++    verified, realm.snapshot_objects = realm.schema_options['schema_inputs'][0]
++    realm.retained_sources[_digest(verified['pin'])] = verified
++    selected, row, accepted = historical['selected'], historical['row'], historical['accepted']
+     # The ignored alias names another real admitted revision in this same pin.
+     admissions = realm.schema_options['schema_inputs'][0][0]['document']['content']['admissions']
+     other = next(item for item in admissions if item['revision'] != selected['revision'])
+-    row['element_ref'] = {key: other[key] for key in ('id', 'kind', 'revision')}
+-    row['element_ref']['packId'] = selected['packId']
++    assert row['elementRef'] == selected
++    assert row['element_ref'] == {**{key: other[key] for key in ('id', 'kind', 'revision')},
++                                 'packId': selected['packId']}
+     ref = 'parent/clip:legacy-alias'
+-    commit(realm, [capture_clip_add(current(realm), 'parent', row)])
+-    accepted = commit(realm, [capture_clip_set_params(
+-        current(realm), ref, values={'seed': 8}, **realm.schema_options)])
++    assert State(current(realm)).entity(ref) == {**row, 'params': {**row['params'], 'seed': 8}}
+     # Represent the predecessor's accepted record shape, preserving all its
+     # original source pin, authored writes, identity reads and expectations.
+     record = realm.entries[-1]['records']['commands'][0]
+diff --git a/tests/sdk/test_timeline_selected_schema_runtime.py b/tests/sdk/test_timeline_selected_schema_runtime.py
+index b144391c..dc7e1049 100644
+--- a/tests/sdk/test_timeline_selected_schema_runtime.py
++++ b/tests/sdk/test_timeline_selected_schema_runtime.py
+@@ -8,6 +8,7 @@ import shutil
+ from contextlib import contextmanager
+ from pathlib import Path
+ from types import SimpleNamespace
++from zipfile import ZipFile
+ 
+ import pytest
+ import yaml
+@@ -22,12 +23,82 @@ from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, captur
+ from astrid.sdk.timeline.capture import capture_track_create
+ from tests.core import test_project_packs
+ from tests.helpers.runtime import use_runtime
++from tests.helpers.selected_param_legacy import ARCHIVE, accepted_params
+ 
+ pytestmark = pytest.mark.integration
+ REF = 'parent/clip:effect'
+ configured_project_pack = test_project_packs.configured
+ 
+ 
++def test_pre_enforcement_alias_history_reopens_with_current_authority(tmp_path, monkeypatch):
++    use_runtime()
++    from runtime_protocol.backup import restore_backup
++    from runtime_protocol.errors import RuntimeErrorBase
++    from runtime_protocol.service import RuntimeService
++    from runtime_protocol.timeline_commit_port import RequestCommitPort, route_path
++
++    historical = accepted_params()
++    extracted = tmp_path / 'historical'
++    with ZipFile(ARCHIVE) as archive:
++        archive.extractall(extracted)
++    root = tmp_path / 'realm'
++    restore_backup(extracted / 'backup', root, key=(extracted / 'backup-auth.key').read_bytes())
++    project, ref = historical['project'], 'parent/clip:legacy-alias'
++    service = RuntimeService(root)
++    service.register_timeline_commit_provider(commit.create_runtime_commit_service())
++
++    def head():
++        resource = service.get_project_timeline(project, 'film')
++        return {'revision_id': resource['head_revision_id'],
++                'publication_id': resource['head_publication_id']}
++
++    def submit(calls, key):
++        return service.commit_timeline(
++            project, 'film', {'api_version': 1, 'project_id': project, 'timeline_id': 'film',
++                             'base_revision_id': head()['revision_id'],
++                             'base_publication_id': head()['publication_id'], 'commands': calls},
++            idempotency_key=key, publisher='author', invocation_path=route_path(project, 'film'),
++            authorize=lambda: None)
++
++    reads = []
++    original = RequestCommitPort.document_object
++
++    def read(port, pin, object_id):
++        reads.append((pin, object_id))
++        return original(port, pin, object_id)
++
++    monkeypatch.setattr(RequestCommitPort, 'document_object', read)
++    try:
++        store = service._timeline_commits()[0]
++        assert head() == historical['head']
++        assert store.history(project, 'film', head())['items'] == historical['entries']
++        assert service.commit_timeline(
++            project, 'film', historical['request'], idempotency_key='legacy-params',
++            publisher='author', invocation_path=route_path(project, 'film'),
++            authorize=lambda: None) == historical['accepted']
++        pin = historical['options']['schema_source']
++        params = {'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': ref,
++                  'args': {'values': {'seed': 16}, 'clear': [], 'schema_source': pin}}
++        # The ignored alias is max20; selected identity remains the retained max10.
++        with pytest.raises(RuntimeErrorBase, match='10|16'):
++            submit([params], 'legacy-invalid')
++        assert head() == historical['head']
++        undone = submit([inverse(historical['accepted']['receipt']['receipt_id'])], 'legacy-undo')
++        assert State(commit.bundle_from_document(undone['data']['canonical_document'])).entity(ref) == historical['row']
++        redone = submit([inverse(undone['receipt']['receipt_id'])], 'legacy-redo')
++        assert redone['data']['canonical_document'] == historical['accepted']['data']['canonical_document']
++        # A genuinely accepted old complete PARAM supplies authority for new edits.
++        changed = submit([{**params, 'args': {**params['args'], 'values': {'seed': 9}}}], 'legacy-new')
++        assert State(commit.bundle_from_document(changed['data']['canonical_document'])).entity(ref) == {
++            **historical['row'], 'params': {**historical['row']['params'], 'seed': 9}}
++        admissions = historical['options']['schema_inputs'][0][0]['document']['content']['admissions']
++        selected_object = next(item['snapshot_object']['object_id'] for item in admissions
++                               if item['revision'] == historical['selected']['revision'])
++        assert reads and all(item == (pin, selected_object) for item in reads)
++    finally:
++        service.close()
++
++
+ @pytest.fixture
+ def retained_pack(configured_project_pack, tmp_path, monkeypatch):
+     use_runtime()
+ M tests/sdk/test_timeline_selected_schema.py
+ M tests/sdk/test_timeline_selected_schema_runtime.py
+?? tests/helpers/selected_param_legacy.py
+?? tests/sdk/fixtures/
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/runtime-source PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/old-agent /home/user/work/venv-agent/bin/python tests/sdk/fixtures/selected-param-legacy/generate.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/regenerated.zip' in /home/user/work/wt/agt-m2-authority-legacy-alias-positive
+ succeeded in 2831ms:
+codex
+The native companion passes. The new provider reads the restored history unchanged, returns the original retry result, rejects seed 16 under max10, and completes inverse/redo plus a new PARAM while preserving the alias and opaque values. I’ve removed the marker; the broader parameter lane and all 26 existing native cases are running now.
+
+ succeeded in 39078ms:
+...........................                                              [100%]
+27 passed in 38.06s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/notes/review-boundary.md')
+p.write_text('''# Read-only coordination: original legacy-alias positive
+
+No product/provider/schema/client changes. The original positive passed with its strict marker still present ("'`--runxfail`, 1 passed), before marker removal.
+
+Review current worktree diff in `/home/user/work/wt/agt-m2-authority-legacy-alias-positive` and `tests/sdk/fixtures/selected-param-legacy/README.md`. Genuine history/backup was generated through old Agent ce363f6d6d60e504dbd4d79803c2d6299f648ade + Runtime b748ae723b51c6d578ba7a393209ce37d6e2b0c3 (contract 013) normal admission/provider/commit path. The native companion already passes, verifies exact untouched history after backup restore, exact ledger retry, max10 refusal despite max20 alias, inverse/redo and a new authorized PARAM.
+
+The detached original test alone preserves its original pre-snapshot dependency/binding projection. That projected record is a compatibility boundary, never submitted as authenticated Runtime history. Native authority claims use only the complete untouched old accepted record. No arbitrary current first-PARAM bootstrap, explicit-selection alias cleanup change, or synthetic accepted history. Broader 447-parameter and 27-native lanes in progress; final report will hold results.
+'"''')
+PY" in /home/user/work/wt/agt-m2-authority-legacy-alias-positive
+ succeeded in 40ms:
+exec
+/bin/bash -lc 'rg --files tests/sdk/fixtures/selected-param-legacy; sha256sum tests/sdk/fixtures/selected-param-legacy/accepted.zip astrid/core/timeline/schema/timeline-config.schema.json; git diff --numstat; git rev-parse HEAD HEAD''^{tree}; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-selected-param-authority/notes/report.md' in /home/user/work/wt/agt-m2-authority-legacy-alias-positive
+ exited 1 in 184ms:
+tests/sdk/fixtures/selected-param-legacy/generate.py
+tests/sdk/fixtures/selected-param-legacy/README.md
+tests/sdk/fixtures/selected-param-legacy/accepted.zip
+79f881f95ce13338ee8cd5490529c43a55523819792eed682160a9042770dc56  tests/sdk/fixtures/selected-param-legacy/accepted.zip
+f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1  astrid/core/timeline/schema/timeline-config.schema.json
+26	10	tests/sdk/test_timeline_selected_schema.py
+71	0	tests/sdk/test_timeline_selected_schema_runtime.py
+654da69321b73d7d23fb4b9e689c1c1dcb2334cf
+d35d0a36e4bc1f0a33f278a1bd798e4e857ec557
+cat: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-selected-param-authority/notes/report.md: No such file or directory
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/runtime-source/runtime_protocol/contract_metadata.py; git status --short; sha256sum tests/helpers/selected_param_legacy.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/fixtures/selected-param-legacy/generate.py' in /home/user/work/wt/agt-m2-authority-legacy-alias-positive
+ succeeded in 490ms:
+"""Generated contract metadata; do not edit by hand."""
+
+PROTOCOL = "workspace.v1"
+COMPONENT_MANIFEST_SHA256 = 'sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5'
+SCHEMA_DIGEST = 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4'
+OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection', 'getProjectVerifiedMedia', 'getProjectVerifiedDocumentObject', 'getProjectVerifiedDocument', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'getShot', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+ M tests/sdk/test_timeline_selected_schema.py
+ M tests/sdk/test_timeline_selected_schema_runtime.py
+?? tests/helpers/selected_param_legacy.py
+?? tests/sdk/fixtures/
+9963b3610e43642ff947f7544fa213a23d9e13bcae75ed6bec55465d288d0124  tests/helpers/selected_param_legacy.py
+0605522ffe7d23a2ea24b6c06212aa5b016958b6af6899997ee6ced3bcc38933  tests/sdk/test_timeline_selected_schema.py
+99a0f5d4b50af476e5b3d18f186725d8a4f9419dcaab6e1539c6f6e68fd5ead1  tests/sdk/test_timeline_selected_schema_runtime.py
+a3158e81e53267d21a48187e33b7a50315561b51af10bcadf6e502910ec5db82  tests/sdk/fixtures/selected-param-legacy/generate.py
+
+exec
+/bin/bash -lc "rg -n 'CONTRACT_VERSION|SCHEMA_DIGEST' astrid_runtime_client/contract_metadata.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/runtime-source/packages/python/astrid_runtime_client/contract_metadata.py; rg -n 'version.*0.2.13|0.2.13' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/runtime-source/contract/manifest*" in /home/user/work/wt/agt-m2-authority-legacy-alias-positive
+ exited 1 in 6ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/runtime-source/packages/python/astrid_runtime_client/contract_metadata.py:3:CONTRACT_VERSION = '0.2.13'
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/runtime-source/packages/python/astrid_runtime_client/contract_metadata.py:6:SCHEMA_DIGEST = 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4'
+astrid_runtime_client/contract_metadata.py:3:CONTRACT_VERSION = '0.2.13'
+astrid_runtime_client/contract_metadata.py:6:SCHEMA_DIGEST = 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4'
+
+ succeeded in 87842ms:
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 48%]
+........................................................................ [ 64%]
+........................................................................ [ 80%]
+........................................................................ [ 96%]
+...............                                                          [100%]
+447 passed in 86.60s (0:01:26)
+
+codex
+Verification is complete: **447 parameter tests passed**, and **27 native Runtime tests passed**, including all 26 existing cases. Lint and diff checks also pass. I’m writing the reports and commit message, then removing the private source archives and regeneration output.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=base/'workers/agt-m2-authority-legacy-alias-positive'
+report='''# Restored original selected PARAM legacy-alias positive
+
+Completed on "'`/home/user/work/wt/agt-m2-authority-legacy-alias-positive`. No product, provider, public S2, generated client or runtime.lock changes; no Git mutation, integration edit, install, shared dependency mutation, socket/browser run, full-suite request or push.
+
+## Gap and rule
+
+Read `PLAN.md` and `design/agent-selected-param-authority-provider.md`. The original positive failed during setup because a new first PARAM had no accepted selected-source history. Normal explicit set-element clears ignored `element_ref`, destroying this regression'"'s alias scenario. That cleanup meaning is unchanged.
+
+New PARAM requires prior accepted selected-source authority. A genuinely accepted complete PARAM from before enforcement remains historical proof; a newly executed PARAM cannot bootstrap an arbitrary admitted pin. Incomplete pre-snapshot records are exercised only at the original detached inverse-compatibility boundary, not claimed as native current authority. Automatic copy inheritance remains a separate fail-closed gap. Empty PARAM remains syntactically invalid S2. No rule change or orchestrator decision was needed.
+
+## Implementation and fixture boundary
+
+- Restored "'`tests/sdk/test_timeline_selected_schema.py::test_inverse_of_older_param_record_uses_only_selected_identity` using portable reads of authentic old accepted history. Original row equality (including opaque params and both aliases), inverse and exact selected-object-only read assertions remain. Added explicit checks that selected `elementRef` and ignored `element_ref` name different genuine admitted revisions.
+- Kept the original test'"'s dependency/binding projection to the pre-snapshot shape. This alteration exists only in the detached in-memory copy; the underlying backup and native accepted history are untouched. The test does not fabricate or freshly submit an accepted PARAM.
+- Added a 34,852-byte ZIP (actual size recorded below) with a normal authenticated Runtime backup, fixture-only operator key and unmodified exported history/closures/inputs/request/result. Runtime's normal admission, provider and commit path generated all accepted facts. Reused the old native admission fixture and Runtime's "'`backup` / `restore_backup` helpers. No SQL writes, Prepared provider, validator replacement or bypass.
+- Added a reproducible bounded generator and fixture README, plus a JSON-only fixture reader. Generator checks the old provider and frozen Runtime service source hashes.
+- Added one native companion: restore authenticated backup, register new provider, compare all five native history entries exactly, recover exact ledger retry, refuse 16 under retained max10 despite the ignored max20 alias, undo to the complete original row, redo to the complete accepted document, then accept a new authorized PARAM preserving aliases and opaque params. Every observed object read names only the selected revision'"'s object. Pack source/build directories from fixture generation no longer exist.
+
+## Frozen source identities
+
+| Role | Commit | Tree |
+| --- | --- | --- |
+| Old Agent, normal acceptance producer | "'`ce363f6d6d60e504dbd4d79803c2d6299f648ade` | `78af007de1d7c5a59f86fffacd9823de355cd260` |
+| New Agent provider, unchanged by this fix | `654da69321b73d7d23fb4b9e689c1c1dcb2334cf` | `d35d0a36e4bc1f0a33f278a1bd798e4e857ec557` |
+| Real Runtime used for old acceptance and new native qualification | `b748ae723b51c6d578ba7a393209ce37d6e2b0c3` | `1711b198be7f693f11ee4640eb0922ec0d0da952` |
+
+Both source checkouts were private `git archive` exports, never moving worktrees. Runtime and Agent client report contract `0.2.13`, schema digest `8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4`; runtime.lock'"'s normal producer remains "'`2c4ac180c2220bdad966bc01e95ad230e99ce26a`. The new test/helper/fixture changes are uncommitted for the harness; no final commit SHA is claimed.
+
+## Exact commands and results
+
+All commands ran in the assigned worktree. Shared Python dependencies were read-only. No bytecode or pytest/ruff caches were enabled. Native tests use in-process RuntimeService; no sockets or browsers.
+
+Before removing the original strict xfail marker:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --runxfail tests/sdk/test_timeline_selected_schema.py::test_inverse_of_older_param_record_uses_only_selected_identity
+```
+
+Exit 0: **1 passed in 1.24s**. The marker was removed only after this real positive pass.
+
+Final parameter/history/conformance lane:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_selected_param_authority.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_clip_scalar_fields.py
+```
+
+Exit 0: **447 passed in 86.60s**; no xfail, refusal conversion or weakened test. This includes the entire original 446-pass/one-xfail lane and selected-history positives/negatives.
+
+Final frozen real Runtime lane:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/runtime-source /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/sdk/test_timeline_selected_schema_runtime.py
+```
+
+Exit 0: **27 passed in 38.06s** (all original 26 plus the new historical companion). Preserves real max10 versus later max20 admission, source/build removal, restart, original ledger retry and undo/redo cases. The new companion also passed alone: **1 passed in 1.82s**.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_selected_schema_runtime.py tests/helpers/selected_param_legacy.py tests/sdk/fixtures/selected-param-legacy/generate.py
+git diff --check
+```
+
+Both exit 0; Ruff: **All checks passed!** One initial import-order lint finding in the new generator was corrected before final checks.
+
+Fixture capture command (exit 0), using the private immutable archives:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/runtime-source PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/old-agent /home/user/work/venv-agent/bin/python tests/sdk/fixtures/selected-param-legacy/generate.py tests/sdk/fixtures/selected-param-legacy/accepted.zip
+```
+
+The final generator, including frozen source hash checks, was run again successfully with the same command except destination `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/regenerated.zip`. This independent regeneration did not replace the qualified fixture. Both temporary source archives and this regeneration output were removed after verification; regenerate them to repeat these commands.
+
+## Coordination, limits and next steps
+
+Read the independent review'"'s available notes/logs; no report/decision file was present when checked. Wrote "'`notes/review-boundary.md` in this worker'"'s own directory for read-only coordination. No other worker's tree was edited. No independent provider bug was identified, and no approval to change S2 selection semantics was sought or needed.
+
+Nothing blocked. Full suites, browser/App outbox behavior, automatic copy-source inheritance and accepted empty PARAM are unverified/out of scope. Recommend orchestrator/independent reviewer inspect the detached projection versus untouched native boundary, then harness-commit and qualify integration as appropriate. This unit restores the original positive without claiming the separate known gaps closed.
+'''
+archive=Path('tests/sdk/fixtures/selected-param-legacy/accepted.zip')
+report=report.replace('34,852-byte ZIP (actual size recorded below)', f'{archive.stat().st_size:,}-byte ZIP')
+report+='\\nFixture SHA256: "'`'"'+hashlib.sha256(archive.read_bytes()).hexdigest()+'"'`.'"\\n'
+(worker/'notes/report.md').write_text(report)
+(base/'design/agent-selected-param-legacy-alias-fix.md').write_text(report)
+(worker/'commit-msg').write_text('''test(timeline): restore legacy selected parameter inverse positive
+
+Use authentic pre-enforcement Agent and Runtime accepted history for the
+alias-bearing inverse fixture without changing selection cleanup or authority.
+Retain the original pre-snapshot inverse and selected-object assertions, and
+verify the untouched authenticated history through the current native provider.
+
+Validate all 447 parameter/history tests and 27 real Runtime selected-schema
+cases, including retained max10, restart, exact retry and inverse/redo.
+''')
+print(worker/'notes/report.md')
+print(base/'design/agent-selected-param-legacy-alias-fix.md')
+print('Fixture size:',archive.stat().st_size)
+PY" in /home/user/work/wt/agt-m2-authority-legacy-alias-positive
+ succeeded in 116ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/notes/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-selected-param-legacy-alias-fix.md
+Fixture size: 34299
+
+exec
+/bin/bash -lc 'tail -12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-selected-param-authority/notes/targeted.log; tail -12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-selected-param-authority/notes/native-runtime.log; git diff --check; git status --short' in /home/user/work/wt/agt-m2-authority-legacy-alias-positive
+ succeeded in 526ms:
+........................x............................................... [ 47%]
+........................................................................ [ 95%]
+.......                                                                  [100%]
+150 passed, 1 xfailed in 80.35s (0:01:20)
+..........................                                               [100%]
+26 passed in 67.67s (0:01:07)
+ M tests/sdk/test_timeline_selected_schema.py
+ M tests/sdk/test_timeline_selected_schema_runtime.py
+?? tests/helpers/selected_param_legacy.py
+?? tests/sdk/fixtures/
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=base/'workers/agt-m2-authority-legacy-alias-positive'
+for name in ('old-agent','runtime-source'):
+    shutil.rmtree(worker/name)
+(worker/'regenerated.zip').unlink()
+for path in (worker/'notes/report.md',base/'design/agent-selected-param-legacy-alias-fix.md'):
+    value=path.read_text()
+    value=value.replace(\"Read the independent review's available notes/logs; no report/decision file was present when checked.\", \"Read the independent review's available test-log summaries (150 passed / 1 xfailed, native 26 passed); no report/decision file was present when checked.\")
+    path.write_text(value)
+(worker/'DONE').touch()
+print('Private archives and regeneration output removed; commit-msg and DONE written.')
+PY" in /home/user/work/wt/agt-m2-authority-legacy-alias-positive
+ succeeded in 6002ms:
+Private archives and regeneration output removed; commit-msg and DONE written.
+
+codex
+Restored the original positive using authentic old Agent/Runtime accepted history, preserving alias, opaque-state, inverse and selected-object assertions. No product or schema changes.
+
+- Original passed with `--runxfail` before marker removal.
+- Parameter/history lane: **447 passed**.
+- Native Runtime lane: **27 passed**.
+- Ruff and diff checks passed.
+
+[Report with exact commands and fixture boundary](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/notes/report.md) · [Design report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-selected-param-legacy-alias-fix.md)
+
+Nothing blocked. `commit-msg` and `DONE` written; temporary archives removed. Ready for independent review and harness commit.
+tokens used
+111,062
+Restored the original positive using authentic old Agent/Runtime accepted history, preserving alias, opaque-state, inverse and selected-object assertions. No product or schema changes.
+
+- Original passed with `--runxfail` before marker removal.
+- Parameter/history lane: **447 passed**.
+- Native Runtime lane: **27 passed**.
+- Ruff and diff checks passed.
+
+[Report with exact commands and fixture boundary](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-authority-legacy-alias-positive/notes/report.md) · [Design report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-selected-param-legacy-alias-fix.md)
+
+Nothing blocked. `commit-msg` and `DONE` written; temporary archives removed. Ready for independent review and harness commit.

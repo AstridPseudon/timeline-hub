@@ -1,0 +1,400 @@
+~
+~
++    ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
+~
++    from .overlays.labels import addresses_at, canvas_of
+~
+~
++    config = snapshot.get("config") or {}
+~
++    fps = float(Fraction(*snapshot["fps_rational"]))
+~
++    canvas = canvas_of(config)
+~
++    for row, card in zip(receipt.get("cards") or [], cards):
+~
++        frame = int(card["frame"])
+~
++        capture = getattr(frame_provider, "scene_for_frame", lambda frame: None)(frame)
+~
++        if capture is None:
+~
++            row["addresses"] = addresses_at(config, frame, fps, canvas)
+~
++        else:
+~
++            from .overlays.labels import MIN_OPACITY
+~
+~
++            labels, _canvas = capture.labels(frame, source_identity=frame_provider.source_identity)
+~
++            row["addresses"] = [item.address for item in labels
+~
++                                if item.opacity is None or item.opacity >= MIN_OPACITY]
+~
++    return receipt
+~
+~
+~
+~
++def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], fps: float, highlight: str | None = None, *, frame_provider=None):
+~
++    """Compose the selected bounds and address overlays for contact tiles."""
+~
++    selected = set(layer_names or ())
+~
++    if not selected.intersection({"bounds", "labels"}):
+~
++        return None
+~
+~
++    contact_elements = None
+~
++    if "bounds" in selected:
+~
++        from .motion.sheet import snapshot_elements
+~
+~
++        _occurrences, contact_elements = snapshot_elements(snapshot)
+~
++    config = snapshot.get("config") if isinstance(snapshot.get("config"), Mapping) else None
+~
+~
++    def overlay(image, seconds):
+~
++        result = image
+~
++        if contact_elements is not None:
+~
++            from .layers.builtin import overlay_bounds
+~
+~
++            result = overlay_bounds(result, contact_elements, seconds, fps, labels=False, highlight=highlight)
+~
++        if "labels" in selected and config is not None:
+~
++            from .overlays.labels import overlay_labels_frame
+~
+~
++            frame = int(math.floor(float(seconds) * fps + 0.5))
+~
++            capture = getattr(frame_provider, "scene_for_frame", lambda frame: None)(frame)
+~
++            result = overlay_labels_frame(result, config, frame, fps, capture=capture,
+~
++                                          source_identity=getattr(frame_provider, "source_identity", ""))
+~
++        return result
+~
+~
++    return overlay
+~
+~
+~
+ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snapshot: dict, options: dict, frame_provider=None,
+~
+                          asset_files: Mapping[str, str] | None = None,
+~
+                          revision_label: Mapping[str, Any] | None = None) -> dict:
+~
+
+exec
+/bin/bash -lc 'test -d /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final && echo worker-dir-exists || echo missing; test -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md && echo report-exists || true' in /home/user/work/wt/agt-review-wc2-converted-approval-final
+ succeeded in 0ms:
+worker-dir-exists
+
+codex
+The final review basis is fixed: candidate commit `5e30e53eacfbcbf2234e15a3fdca97a92128548c`, tree `a062cd1c5826217f19e7aa8ebb4c878c9f9b7288`; the integration base tree is `b614c4d7036ad8b93517969fc595e9f43c9f8ff4`. I found no remaining retired-helper references, and the moved filmstrip helpers have all consumers importing from their new canonical module. I’m recording an APPROVE verdict with the explicit assertion mapping now.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..354b8f57542a349dd7e0596975675b9dd19fe075
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md
+@@ -0,0 +1,68 @@
++# Agent WC2 converted approval final review
++
++Decision: **APPROVE**
++
++## Exact review basis
++
++- Candidate commit: `5e30e53eacfbcbf2234e15a3fdca97a92128548c`
++- Candidate tree: `a062cd1c5826217f19e7aa8ebb4c878c9f9b7288`
++- `tl/integration` base: `a8a40afd37e5560a14fa5e1a09ace6018596793e`
++- Base tree: `b614c4d7036ad8b93517969fc595e9f43c9f8ff4`
++- Candidate working tree was clean before this report was written.
++
++This is an independent public-behavior/test-conversion review of the whole
++candidate, not a review of the earlier HOLD. The new tests use the real
++`TimelineSession.queue_proposal` and `flush` boundary against `RuntimeService`
++with `publisher='requester'`; they do not call the retired candidate writer or
++fabricate accepted history.
++
++## One-to-one mapping
++
++| Removed assertion | Replacement evidence | Verdict |
++| --- | --- | --- |
++| A changed approved artifact is refused and the writer is not called. | `tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_proposal_queue_refuses_tampering_preserves_draft_then_accepts_fresh_request[digest]` mutates the settled proposal digest; the real requester path refuses it. It compares Runtime commit history before/after and verifies the pending commands, in-flight idempotency key, and durable conflict remain in the outbox. | **Mapped** |
++| The admitted base/original target is approval-bound and tampering is refused without loss. | The same test's `[target]` case mutates `admitted_target.base_revision_id`; Runtime refuses it, with unchanged history/head and the tampered proposal still durable in the draft. `test_digest_binds_attempt_and_original_target` covers producer identity plus project, timeline, base revision, and base publication digest binding across all fields. | **Mapped** |
++| An unchanged approved artifact is accepted once, returns its approval identity, and invokes the writer once. | The fresh half of both parametrized requester tests queues an unchanged copy of the actual settled proposal and accepts it only as `publisher == 'requester'`; the canonical document contains the exact opaque row `[1.0, -0.0, False]`. The existing `test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes` verifies the proposal digest pin, exact retry after Runtime restart, one-shot consumption, and normal undo. The immutable proposal digest is the replacement approval identity; there is no snapshot promotion or writer call. | **Mapped** |
++| Frozen render/restart/single-generation tail: live execution, durable replay, lost acknowledgement, render count, and one claim. | `tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation` retains the live execution and all restart/replay, lost-ack, `render_count == 1`, and single-claim assertions. Only the obsolete promotion tail was removed. | **Mapped; live/render assertions preserved** |
++
++The two digest controls also cover every settled-command field and rationale /
++extra-command sensitivity. Together with the target controls, they preserve
++the original approval, digest, and base-target semantics at the requester
++boundary. The new acceptance assertion preserves opaque command data without
++normalization.
++
++## Public SDK surface
++
++The removed helper was intentionally public, so this was checked as a public
++break rather than justified as dead private code. `approve_authoring_candidate`
++remains exported from `astrid/core/timeline/authoring_bundle.py`,
++`astrid/sdk/authoring_bundle.py`, and lazy `astrid.sdk`; the retired
++`promote_approved_authoring_candidate` is absent from all three surfaces and
++has no remaining code references. Direct import smoke checks confirmed the
++approval helper remains callable and the promotion helper raises
++`AttributeError`/`ImportError`.
++
++The separate filmstrip-cache deletion is internally consistent: its two
++helpers were moved into `filmstrip_cards.py`, all consumers import from there,
++and no `_filmstrip_cache` module reference remains.
++
++## Verification
++
++Passed:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_producer_guard_runtime.py
++7 passed in 2.87s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_all_settled_command_fields tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_attempt_and_original_target
++24 passed in 0.61s
++
++git diff --check tl/integration..HEAD
++passed
++```
++
++The public import/export smoke check passed. No full suite, browser journey,
++localhost/live-socket suite, or separate renderer suite was run.
++
++Final verdict: **APPROVE for merge**. The prior HOLD is cleared by the real
++requester-side settled-proposal conversion and its one-to-one behavior proof.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..cf8c1f8cfa0ca13f466e964c1f4b841811435130
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): approve settled proposal conversion
++
++Record the final independent WC2 review after verifying the real requester
++approval path, digest and admitted-target refusal, opaque command preservation,
++and frozen render/restart assertions.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..354b8f57542a349dd7e0596975675b9dd19fe075
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md
+@@ -0,0 +1,68 @@
++# Agent WC2 converted approval final review
++
++Decision: **APPROVE**
++
++## Exact review basis
++
++- Candidate commit: `5e30e53eacfbcbf2234e15a3fdca97a92128548c`
++- Candidate tree: `a062cd1c5826217f19e7aa8ebb4c878c9f9b7288`
++- `tl/integration` base: `a8a40afd37e5560a14fa5e1a09ace6018596793e`
++- Base tree: `b614c4d7036ad8b93517969fc595e9f43c9f8ff4`
++- Candidate working tree was clean before this report was written.
++
++This is an independent public-behavior/test-conversion review of the whole
++candidate, not a review of the earlier HOLD. The new tests use the real
++`TimelineSession.queue_proposal` and `flush` boundary against `RuntimeService`
++with `publisher='requester'`; they do not call the retired candidate writer or
++fabricate accepted history.
++
++## One-to-one mapping
++
++| Removed assertion | Replacement evidence | Verdict |
++| --- | --- | --- |
++| A changed approved artifact is refused and the writer is not called. | `tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_proposal_queue_refuses_tampering_preserves_draft_then_accepts_fresh_request[digest]` mutates the settled proposal digest; the real requester path refuses it. It compares Runtime commit history before/after and verifies the pending commands, in-flight idempotency key, and durable conflict remain in the outbox. | **Mapped** |
++| The admitted base/original target is approval-bound and tampering is refused without loss. | The same test's `[target]` case mutates `admitted_target.base_revision_id`; Runtime refuses it, with unchanged history/head and the tampered proposal still durable in the draft. `test_digest_binds_attempt_and_original_target` covers producer identity plus project, timeline, base revision, and base publication digest binding across all fields. | **Mapped** |
++| An unchanged approved artifact is accepted once, returns its approval identity, and invokes the writer once. | The fresh half of both parametrized requester tests queues an unchanged copy of the actual settled proposal and accepts it only as `publisher == 'requester'`; the canonical document contains the exact opaque row `[1.0, -0.0, False]`. The existing `test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes` verifies the proposal digest pin, exact retry after Runtime restart, one-shot consumption, and normal undo. The immutable proposal digest is the replacement approval identity; there is no snapshot promotion or writer call. | **Mapped** |
++| Frozen render/restart/single-generation tail: live execution, durable replay, lost acknowledgement, render count, and one claim. | `tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation` retains the live execution and all restart/replay, lost-ack, `render_count == 1`, and single-claim assertions. Only the obsolete promotion tail was removed. | **Mapped; live/render assertions preserved** |
++
++The two digest controls also cover every settled-command field and rationale /
++extra-command sensitivity. Together with the target controls, they preserve
++the original approval, digest, and base-target semantics at the requester
++boundary. The new acceptance assertion preserves opaque command data without
++normalization.
++
++## Public SDK surface
++
++The removed helper was intentionally public, so this was checked as a public
++break rather than justified as dead private code. `approve_authoring_candidate`
++remains exported from `astrid/core/timeline/authoring_bundle.py`,
++`astrid/sdk/authoring_bundle.py`, and lazy `astrid.sdk`; the retired
++`promote_approved_authoring_candidate` is absent from all three surfaces and
++has no remaining code references. Direct import smoke checks confirmed the
++approval helper remains callable and the promotion helper raises
++`AttributeError`/`ImportError`.
++
++The separate filmstrip-cache deletion is internally consistent: its two
++helpers were moved into `filmstrip_cards.py`, all consumers import from there,
++and no `_filmstrip_cache` module reference remains.
++
++## Verification
++
++Passed:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_producer_guard_runtime.py
++7 passed in 2.87s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_all_settled_command_fields tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_attempt_and_original_target
++24 passed in 0.61s
++
++git diff --check tl/integration..HEAD
++passed
++```
++
++The public import/export smoke check passed. No full suite, browser journey,
++localhost/live-socket suite, or separate renderer suite was run.
++
++Final verdict: **APPROVE for merge**. The prior HOLD is cleared by the real
++requester-side settled-proposal conversion and its one-to-one behavior proof.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..cf8c1f8cfa0ca13f466e964c1f4b841811435130
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): approve settled proposal conversion
++
++Record the final independent WC2 review after verifying the real requester
++approval path, digest and admitted-target refusal, opaque command preservation,
++and frozen render/restart assertions.
+
+exec
+/bin/bash -lc "git status --short; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md && echo report=present; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/DONE && echo done=present; wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/DONE; sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md; printf '\\n--- commit message ---\\n'; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/commit-msg" in /home/user/work/wt/agt-review-wc2-converted-approval-final
+ succeeded in 277ms:
+report=present
+done=present
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-converted-approval-final/DONE
+# Agent WC2 converted approval final review
+
+Decision: **APPROVE**
+
+## Exact review basis
+
+- Candidate commit: `5e30e53eacfbcbf2234e15a3fdca97a92128548c`
+- Candidate tree: `a062cd1c5826217f19e7aa8ebb4c878c9f9b7288`
+- `tl/integration` base: `a8a40afd37e5560a14fa5e1a09ace6018596793e`
+- Base tree: `b614c4d7036ad8b93517969fc595e9f43c9f8ff4`
+- Candidate working tree was clean before this report was written.
+
+This is an independent public-behavior/test-conversion review of the whole
+candidate, not a review of the earlier HOLD. The new tests use the real
+`TimelineSession.queue_proposal` and `flush` boundary against `RuntimeService`
+with `publisher='requester'`; they do not call the retired candidate writer or
+fabricate accepted history.
+
+## One-to-one mapping
+
+| Removed assertion | Replacement evidence | Verdict |
+| --- | --- | --- |
+| A changed approved artifact is refused and the writer is not called. | `tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_proposal_queue_refuses_tampering_preserves_draft_then_accepts_fresh_request[digest]` mutates the settled proposal digest; the real requester path refuses it. It compares Runtime commit history before/after and verifies the pending commands, in-flight idempotency key, and durable conflict remain in the outbox. | **Mapped** |
+| The admitted base/original target is approval-bound and tampering is refused without loss. | The same test's `[target]` case mutates `admitted_target.base_revision_id`; Runtime refuses it, with unchanged history/head and the tampered proposal still durable in the draft. `test_digest_binds_attempt_and_original_target` covers producer identity plus project, timeline, base revision, and base publication digest binding across all fields. | **Mapped** |
+| An unchanged approved artifact is accepted once, returns its approval identity, and invokes the writer once. | The fresh half of both parametrized requester tests queues an unchanged copy of the actual settled proposal and accepts it only as `publisher == 'requester'`; the canonical document contains the exact opaque row `[1.0, -0.0, False]`. The existing `test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes` verifies the proposal digest pin, exact retry after Runtime restart, one-shot consumption, and normal undo. The immutable proposal digest is the replacement approval identity; there is no snapshot promotion or writer call. | **Mapped** |
+| Frozen render/restart/single-generation tail: live execution, durable replay, lost acknowledgement, render count, and one claim. | `tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation` retains the live execution and all restart/replay, lost-ack, `render_count == 1`, and single-claim assertions. Only the obsolete promotion tail was removed. | **Mapped; live/render assertions preserved** |
+
+The two digest controls also cover every settled-command field and rationale /
+extra-command sensitivity. Together with the target controls, they preserve
+the original approval, digest, and base-target semantics at the requester
+boundary. The new acceptance assertion preserves opaque command data without
+normalization.
+
+## Public SDK surface
+
+The removed helper was intentionally public, so this was checked as a public
+break rather than justified as dead private code. `approve_authoring_candidate`
+remains exported from `astrid/core/timeline/authoring_bundle.py`,
+`astrid/sdk/authoring_bundle.py`, and lazy `astrid.sdk`; the retired
+`promote_approved_authoring_candidate` is absent from all three surfaces and
+has no remaining code references. Direct import smoke checks confirmed the
+approval helper remains callable and the promotion helper raises
+`AttributeError`/`ImportError`.
+
+The separate filmstrip-cache deletion is internally consistent: its two
+helpers were moved into `filmstrip_cards.py`, all consumers import from there,
+and no `_filmstrip_cache` module reference remains.
+
+## Verification
+
+Passed:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_producer_guard_runtime.py
+7 passed in 2.87s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_all_settled_command_fields tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_attempt_and_original_target
+24 passed in 0.61s
+
+git diff --check tl/integration..HEAD
+passed
+```
+
+The public import/export smoke check passed. No full suite, browser journey,
+localhost/live-socket suite, or separate renderer suite was run.
+
+Final verdict: **APPROVE for merge**. The prior HOLD is cleared by the real
+requester-side settled-proposal conversion and its one-to-one behavior proof.
+
+--- commit message ---
+test(timeline): approve settled proposal conversion
+
+Record the final independent WC2 review after verifying the real requester
+approval path, digest and admitted-target refusal, opaque command preservation,
+and frozen render/restart assertions.
+
+codex
+## Result: APPROVE
+
+- Candidate SHA: `5e30e53eacfbcbf2234e15a3fdca97a92128548c`
+- Tree: `a062cd1c5826217f19e7aa8ebb4c878c9f9b7288`
+- 7 requester tests: **7 passed**
+- Frozen/digest controls: **24 passed**
+- `git diff --check`: **passed**
+- Public SDK export consistency verified.
+- No full/browser/live-socket suite run.
+
+Report: [agent-wc2-converted-final-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md)
+
+Commit message and `DONE` marker written.
+tokens used
+89,398
+## Result: APPROVE
+
+- Candidate SHA: `5e30e53eacfbcbf2234e15a3fdca97a92128548c`
+- Tree: `a062cd1c5826217f19e7aa8ebb4c878c9f9b7288`
+- 7 requester tests: **7 passed**
+- Frozen/digest controls: **24 passed**
+- `git diff --check`: **passed**
+- Public SDK export consistency verified.
+- No full/browser/live-socket suite run.
+
+Report: [agent-wc2-converted-final-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-converted-final-review.md)
+
+Commit message and `DONE` marker written.

@@ -1,0 +1,64 @@
+test agent-commit-integration-1019194725-29579: fail exit=1 in 8s — commit-integration on integration:agent (agent tree 8af032b34282a1df017f62afce38f4cbae521590)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py
+counts: 2 failed, 1 passed in 6.31s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-commit-integration-1019194725-29579/log.txt ---
+        from astrid.sdk.workspace_client import WorkspaceClientError
+    
+        fixture, original_parent, baseline = film
+        monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "client-data"))
+        observed, lose = wire
+        support = tmp_path / "support"
+    
+        def start(port=0):
+            return real_runtime(fixture.duplicate_root, support_root=support,
+                                port=port, authoring_profile="astrid")
+    
+        daemon = start()
+        client = open_client(daemon)
+        base_history = history(client, fixture)
+        assert len(base_history["items"]) == 2
+        assert base_history["items"][-1]["receipt"] == baseline["receipt"]
+        assert all(row["intent"] == "legacy_unknown" and row["records"] is None
+                   for row in base_history["items"])
+    
+        moved = cli(client, fixture, capsys, "edit", "move", fixture.timeline_id,
+                    "--clip", "parent/clip:music-bed", "--on", "1")
+        assert_move(original_parent, parent_of(moved), "music-bed", 1)
+        assert observed[-1]["response"]["data"]["canonical_document"] == moved["data"]["canonical_document"]
+        assert json.loads(observed[-1]["body"])["source"] == {"via": "cli"}
+>       assert_readback(client, fixture, moved)
+
+tests/editing_conformance/test_commit_runtime_m1.py:209: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = <astrid.sdk.client.AstridClient object at 0x7f40064b1bd0>
+fixture = FilmFixture(source_root=PosixPath('/tmp/pytest-of-root/pytest-210/test_cli_python_outbox_restart1/film-source-realm'),...7459f7ba2b6ac2662e863b74cac2c64eac10315827c74c0552158a7e4049e', text_binding_id='bfcad964-67bc-5a30-970c-a9ecd31bbf37')
+accepted = {'data': {'accepted_publication_id': 'txn-59ed1f7284b4497ab54f77814da774e1', 'accepted_revision_id': 'authoring-parent...y-baseline', ...}, 'error': None, 'idempotency_key': 'timeline-edit-8bcdf32b2ca648aea0446283bb2a77dd', 'ok': True, ...}
+
+    def assert_readback(client, fixture, accepted):
+        data, receipt = accepted["data"], accepted["receipt"]
+        revision = data["accepted_revision_id"]
+        document = data["canonical_document"]
+        assert receipt["result"] == {key: value for key, value in data.items()
+                                      if key not in {"accepted_publication_id", "show_command"}}
+        assert revision == document["parent_revision"]["revision_id"]
+        opened = client.timelines.open_bundle(fixture.project_id, fixture.timeline_id, revision_id=revision)
+        assert opened.ok, opened.as_dict()
+        assert opened.data["revision_id"] == revision
+>       assert opened.data["bundle"]["parent"] == document["parent_revision"]["payload"]
+E       AssertionError: assert {'clips': [{'...': 'audio'}}}} == {'clips': [{'...': 'audio'}}}}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Right contains 1 more item:
+E         {'occurrences': [{'duration_ms': 1800,
+E                           'gain': 1,
+E                           'muted': False,
+E                           'occurrence_id': 'occurrence-1',...
+E         
+E         ...Full output truncated (33 lines hidden), use '-vv' to show
+
+tests/editing_conformance/test_commit_runtime_m1.py:169: AssertionError
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]
+FAILED tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict]
+2 failed, 1 passed in 6.31s

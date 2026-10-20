@@ -1,0 +1,400 @@
+   115	
+   116	    monkeypatch.setattr(runner.subprocess, "run", fake_run)
+   117	    result = runner._run_explicit_command_executor(
+   118	        definition,
+   119	        runner.ExecutorRunRequest(executor_id=definition.id, out=tmp_path),
+   120	        {},
+   121	    )
+   122	
+   123	    assert result.returncode == 0
+   124	    assert calls and calls[0][0][0] == ["python3", "-c", "pass"]
+  3758	        candidates = _launch_worker_probe_environments((tmp_path,), environment)
+  3759	        context = probe_context(environment=actual, python_executable=sys.executable)
+  3760	        assert actual['HOME'] == str(tmp_path / 'worker-home')
+  3761	        assert actual['LANG'] == 'C'
+  3762	        assert context in [probe_context(environment=e, python_executable=sys.executable)
+  3763	                           for e in candidates]
+  3764	        assert context != probe_context(environment=candidates[0], python_executable=sys.executable)
+  3765	        from astrid.core.execution.generic_host import _admitted_python_roots, dependency_pythonpath
+  3766	        assert candidates[1]['ASTRID_PACKS_PATH'] == str(tmp_path)
+  3767	        expected_paths = tuple(dict.fromkeys((str(Path(__file__).resolve().parents[1]),
+  3768	            *dependency_pythonpath(environment), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
+  3769	        assert tuple(candidates[1]['PYTHONPATH'].split(os.pathsep)) == expected_paths
+  3770	    finally:
+  3771	        secrets.clear()
+  3772	
+  3773	
+  3774	def test_readiness_preserves_network_guard_in_final_command_popen_environment(tmp_path, monkeypatch):
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..33f8832e786c7b1d5b64ad16eb673d05f226b120
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/commit-msg
+@@ -0,0 +1,5 @@
++test: isolate timeline lock and execution environment fixtures
++
++Load persistence checkouts before acquiring the live-holder lock, clear
++ambient VibeComfy identity variables in the subprocess-boundary test, and
++derive generic-host expectations from the explicit test environment.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..21babf58816f3fc8df28c3d1040733f6a2baaf94
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md
+@@ -0,0 +1,67 @@
++# Agent test-isolation repair report
++
++## Changes
++
++- `tests/sdk/test_timeline_persistence.py`: load the checkout before starting the live lock holder. The mutation, bounded save wait, refusal-by-PID/name, cleanup, and unchanged-file assertions remain intact.
++- `tests/stage1/test_zero_shim_execution_pack_deletion.py`: remove all six VibeComfy checkout/candidate/attestation variables from this test's environment before installing the fake subprocess probe. The fake therefore observes the executor boundary command rather than an ambient dependency identity probe.
++- `tests/test_generic_host.py`: compute the expected dependency roots from the test's explicit `environment` mapping, matching `_launch_worker_probe_environments`, instead of ambient `os.environ`.
++
++No product, Runtime, client, safety, validation, framework, manifest, threshold, or schema changes were made.
++
++## Before evidence
++
++Current tree before edits, exact targeted command in an isolated environment:
++
++```text
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context
++```
++
++Result: **1 failed, 2 passed in 7.97s**. The persistence test failed at `Checkout.load(path)` while the holder owned the lock; the two environment-sensitive tests passed.
++
++Current tree before edits, same command with the supported full-profile selection:
++
++```text
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context
++```
++
++Result: **3 failed in 7.49s**. In addition to the persistence load failure, the executor fake returned `stdout=None` to the ambient VibeComfy identity probe, and the generic-host expected path included the ambient `/home/user/work/fixtures/vibecomfy` absent from the explicit mapping.
++
++## After evidence
++
++The three repaired nodes passed in the isolated environment:
++
++```text
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context
++```
++
++Result: **3 passed in 7.21s**.
++
++The same three nodes passed with the supported full-profile selection:
++
++```text
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context
++```
++
++Result: **3 passed in 6.10s**.
++
++Persistence and history/recovery verification ran in both modes with:
++
++```text
++FILES=(tests/sdk/test_timeline_persistence.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_history_runtime.py tests/sdk/test_timeline_checkout_restore_recovery.py)
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider "${FILES[@]}"
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider "${FILES[@]}"
++```
++
++Results: isolated **64 passed, 1 skipped in 20.67s**; full profile **64 passed, 1 skipped in 21.37s**.
++
++Adjacent stage1 and generic-host projection coverage ran in both modes using the complete `tests/stage1/test_zero_shim_execution_pack_deletion.py` plus the fixed-worker projection, registry-selector projection, and command-projection tests from `tests/test_generic_host.py`.
++
++Results: isolated **15 passed in 21.37s**; full profile **15 passed in 20.59s**.
++
++`git diff --check` passed. No full suite, browser, localhost, live-socket, or central socket suite was requested. Shared dependencies were not modified or reinstalled; pytest cache was disabled and bytecode generation was disabled.
++
++## Decisions, blockers, next steps
++
++The test setup was repaired rather than changing `Checkout.load` locking or weakening the required refusal assertion. The VibeComfy test clears the complete relevant identity selection because it intentionally has no dependency; the generic-host test uses the same explicit mapping as production.
++
++Nothing is blocked. Recommended next step: integrate this test-only branch and include these two environment modes in the next central qualification targeted lane. A full suite remains intentionally unrequested by this worker.
+diff --git a/tests/sdk/test_timeline_persistence.py b/tests/sdk/test_timeline_persistence.py
+index 79cf8b24151e33dc3340f189bd805f13b3ce7d8a..cc7d72798d176cfde3a45e6eb56f24ed2fd4691e
+--- a/tests/sdk/test_timeline_persistence.py
++++ b/tests/sdk/test_timeline_persistence.py
+@@ -371,12 +371,12 @@
+ def test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name(world, monkeypatch):
+     path = world.working_copy()
+     Checkout(timeline()).save(path, quiet=True)
++    tl = Checkout.load(path)
+     holder = subprocess.Popen([sys.executable, "-c", HOLD, str(path)], cwd=str(REPO),
+                               stdout=subprocess.PIPE, text=True, encoding="utf-8")
+     try:
+         assert holder.stdout.readline().strip() == "held"  # the holder has the lock and its pid on it
+         monkeypatch.setenv("ASTRID_TIMELINE_LOCK_TIMEOUT", "0.5")  # the real wait is 30 s; this test shortens it
+-        tl = Checkout.load(path)
+         tl.clip("b-type").set(text="blocked edit")
+         started = time.monotonic()
+         with pytest.raises(TimelineEditError, match=rf"another writer \(pid {holder.pid}\) has held") as refused:
+diff --git a/tests/stage1/test_zero_shim_execution_pack_deletion.py b/tests/stage1/test_zero_shim_execution_pack_deletion.py
+index 024ce9a996964731e9a979c53d1db5162d883514..8521b5fa0c7126c883fcb6bdfe61031a07e59b75
+--- a/tests/stage1/test_zero_shim_execution_pack_deletion.py
++++ b/tests/stage1/test_zero_shim_execution_pack_deletion.py
+@@ -96,6 +96,19 @@
+     )
+     calls: list[tuple[object, dict[str, object]]] = []
+ 
++    # This boundary test supplies no VibeComfy dependency.  Clear the full
++    # profile inherited by qualification runs before installing the subprocess
++    # probe, so its fake sees only the executor command under test.
++    for name in (
++        "ASTRID_VIBECOMFY_CHECKOUT",
++        "ASTRID_VIBECOMFY_CANDIDATE_KIND",
++        "ASTRID_VIBECOMFY_CANDIDATE_REVISION",
++        "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST",
++        "ASTRID_VIBECOMFY_ATTESTED_REVISION",
++        "ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST",
++    ):
++        monkeypatch.delenv(name, raising=False)
++
+     def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[object]:
+         calls.append((args, kwargs))
+         return subprocess.CompletedProcess(args[0] if args else [], 0)
+diff --git a/tests/test_generic_host.py b/tests/test_generic_host.py
+index 20a092c1e88c5ca48833348666ee689f206d3579..0fc30e8a6a9c9bb807790ffa9886855a67e9bc33
+--- a/tests/test_generic_host.py
++++ b/tests/test_generic_host.py
+@@ -3762,10 +3762,10 @@
+         assert context in [probe_context(environment=e, python_executable=sys.executable)
+                            for e in candidates]
+         assert context != probe_context(environment=candidates[0], python_executable=sys.executable)
+-        from astrid.core.execution.generic_host import _admitted_python_roots, _dependency_pythonpath
++        from astrid.core.execution.generic_host import _admitted_python_roots, dependency_pythonpath
+         assert candidates[1]['ASTRID_PACKS_PATH'] == str(tmp_path)
+         expected_paths = tuple(dict.fromkeys((str(Path(__file__).resolve().parents[1]),
+-            *_dependency_pythonpath(), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
++            *dependency_pythonpath(environment), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
+         assert tuple(candidates[1]['PYTHONPATH'].split(os.pathsep)) == expected_paths
+     finally:
+         secrets.clear()
+
+2026-10-20T12:47:04.585064Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid patch: The first line of the patch must be '*** Begin Patch'
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..33f8832e786c7b1d5b64ad16eb673d05f226b120
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/commit-msg
+@@ -0,0 +1,5 @@
++test: isolate timeline lock and execution environment fixtures
++
++Load persistence checkouts before acquiring the live-holder lock, clear
++ambient VibeComfy identity variables in the subprocess-boundary test, and
++derive generic-host expectations from the explicit test environment.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..21babf58816f3fc8df28c3d1040733f6a2baaf94
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md
+@@ -0,0 +1,67 @@
++# Agent test-isolation repair report
++
++## Changes
++
++- `tests/sdk/test_timeline_persistence.py`: load the checkout before starting the live lock holder. The mutation, bounded save wait, refusal-by-PID/name, cleanup, and unchanged-file assertions remain intact.
++- `tests/stage1/test_zero_shim_execution_pack_deletion.py`: remove all six VibeComfy checkout/candidate/attestation variables from this test's environment before installing the fake subprocess probe. The fake therefore observes the executor boundary command rather than an ambient dependency identity probe.
++- `tests/test_generic_host.py`: compute the expected dependency roots from the test's explicit `environment` mapping, matching `_launch_worker_probe_environments`, instead of ambient `os.environ`.
++
++No product, Runtime, client, safety, validation, framework, manifest, threshold, or schema changes were made.
++
++## Before evidence
++
++Current tree before edits, exact targeted command in an isolated environment:
++
++```text
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context
++```
++
++Result: **1 failed, 2 passed in 7.97s**. The persistence test failed at `Checkout.load(path)` while the holder owned the lock; the two environment-sensitive tests passed.
++
++Current tree before edits, same command with the supported full-profile selection:
++
++```text
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context
++```
++
++Result: **3 failed in 7.49s**. In addition to the persistence load failure, the executor fake returned `stdout=None` to the ambient VibeComfy identity probe, and the generic-host expected path included the ambient `/home/user/work/fixtures/vibecomfy` absent from the explicit mapping.
++
++## After evidence
++
++The three repaired nodes passed in the isolated environment:
++
++```text
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context
++```
++
++Result: **3 passed in 7.21s**.
++
++The same three nodes passed with the supported full-profile selection:
++
++```text
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context
++```
++
++Result: **3 passed in 6.10s**.
++
++Persistence and history/recovery verification ran in both modes with:
++
++```text
++FILES=(tests/sdk/test_timeline_persistence.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_history_runtime.py tests/sdk/test_timeline_checkout_restore_recovery.py)
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider "${FILES[@]}"
++env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider "${FILES[@]}"
++```
++
++Results: isolated **64 passed, 1 skipped in 20.67s**; full profile **64 passed, 1 skipped in 21.37s**.
++
++Adjacent stage1 and generic-host projection coverage ran in both modes using the complete `tests/stage1/test_zero_shim_execution_pack_deletion.py` plus the fixed-worker projection, registry-selector projection, and command-projection tests from `tests/test_generic_host.py`.
++
++Results: isolated **15 passed in 21.37s**; full profile **15 passed in 20.59s**.
++
++`git diff --check` passed. No full suite, browser, localhost, live-socket, or central socket suite was requested. Shared dependencies were not modified or reinstalled; pytest cache was disabled and bytecode generation was disabled.
++
++## Decisions, blockers, next steps
++
++The test setup was repaired rather than changing `Checkout.load` locking or weakening the required refusal assertion. The VibeComfy test clears the complete relevant identity selection because it intentionally has no dependency; the generic-host test uses the same explicit mapping as production.
++
++Nothing is blocked. Recommended next step: integrate this test-only branch and include these two environment modes in the next central qualification targeted lane. A full suite remains intentionally unrequested by this worker.
+diff --git a/tests/sdk/test_timeline_persistence.py b/tests/sdk/test_timeline_persistence.py
+index 79cf8b24151e33dc3340f189bd805f13b3ce7d8a..cc7d72798d176cfde3a45e6eb56f24ed2fd4691e
+--- a/tests/sdk/test_timeline_persistence.py
++++ b/tests/sdk/test_timeline_persistence.py
+@@ -371,12 +371,12 @@
+ def test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name(world, monkeypatch):
+     path = world.working_copy()
+     Checkout(timeline()).save(path, quiet=True)
++    tl = Checkout.load(path)
+     holder = subprocess.Popen([sys.executable, "-c", HOLD, str(path)], cwd=str(REPO),
+                               stdout=subprocess.PIPE, text=True, encoding="utf-8")
+     try:
+         assert holder.stdout.readline().strip() == "held"  # the holder has the lock and its pid on it
+         monkeypatch.setenv("ASTRID_TIMELINE_LOCK_TIMEOUT", "0.5")  # the real wait is 30 s; this test shortens it
+-        tl = Checkout.load(path)
+         tl.clip("b-type").set(text="blocked edit")
+         started = time.monotonic()
+         with pytest.raises(TimelineEditError, match=rf"another writer \(pid {holder.pid}\) has held") as refused:
+diff --git a/tests/stage1/test_zero_shim_execution_pack_deletion.py b/tests/stage1/test_zero_shim_execution_pack_deletion.py
+index 024ce9a996964731e9a979c53d1db5162d883514..8521b5fa0c7126c883fcb6bdfe61031a07e59b75
+--- a/tests/stage1/test_zero_shim_execution_pack_deletion.py
++++ b/tests/stage1/test_zero_shim_execution_pack_deletion.py
+@@ -96,6 +96,19 @@
+     )
+     calls: list[tuple[object, dict[str, object]]] = []
+ 
++    # This boundary test supplies no VibeComfy dependency.  Clear the full
++    # profile inherited by qualification runs before installing the subprocess
++    # probe, so its fake sees only the executor command under test.
++    for name in (
++        "ASTRID_VIBECOMFY_CHECKOUT",
++        "ASTRID_VIBECOMFY_CANDIDATE_KIND",
++        "ASTRID_VIBECOMFY_CANDIDATE_REVISION",
++        "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST",
++        "ASTRID_VIBECOMFY_ATTESTED_REVISION",
++        "ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST",
++    ):
++        monkeypatch.delenv(name, raising=False)
++
+     def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[object]:
+         calls.append((args, kwargs))
+         return subprocess.CompletedProcess(args[0] if args else [], 0)
+diff --git a/tests/test_generic_host.py b/tests/test_generic_host.py
+index 20a092c1e88c5ca48833348666ee689f206d3579..0fc30e8a6a9c9bb807790ffa9886855a67e9bc33
+--- a/tests/test_generic_host.py
++++ b/tests/test_generic_host.py
+@@ -3762,10 +3762,10 @@
+         assert context in [probe_context(environment=e, python_executable=sys.executable)
+                            for e in candidates]
+         assert context != probe_context(environment=candidates[0], python_executable=sys.executable)
+-        from astrid.core.execution.generic_host import _admitted_python_roots, _dependency_pythonpath
++        from astrid.core.execution.generic_host import _admitted_python_roots, dependency_pythonpath
+         assert candidates[1]['ASTRID_PACKS_PATH'] == str(tmp_path)
+         expected_paths = tuple(dict.fromkeys((str(Path(__file__).resolve().parents[1]),
+-            *_dependency_pythonpath(), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
++            *dependency_pythonpath(environment), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
+         assert tuple(candidates[1]['PYTHONPATH'].split(os.pathsep)) == expected_paths
+     finally:
+         secrets.clear()
+
+exec
+/bin/bash -lc "git status --short && git diff --check && printf '%s\\n' '--- commit message ---' && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/commit-msg && printf '%s\\n' '--- markers/report ---' && stat -c '%n %s bytes' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md && tail -20 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md" in /home/user/work/wt/agt-tests-lock-env-isolation
+ succeeded in 364ms:
+ M tests/sdk/test_timeline_persistence.py
+ M tests/stage1/test_zero_shim_execution_pack_deletion.py
+ M tests/test_generic_host.py
+--- commit message ---
+test: isolate timeline lock and execution environment fixtures
+
+Load persistence checkouts before acquiring the live-holder lock, clear
+ambient VibeComfy identity variables in the subprocess-boundary test, and
+derive generic-host expectations from the explicit test environment.
+--- markers/report ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/DONE 0 bytes
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md 6409 bytes
+
+```text
+FILES=(tests/sdk/test_timeline_persistence.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_history_runtime.py tests/sdk/test_timeline_checkout_restore_recovery.py)
+env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider "${FILES[@]}"
+env -i HOME=/tmp/agt-tests-lock-env-isolation LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider "${FILES[@]}"
+```
+
+Results: isolated **64 passed, 1 skipped in 20.67s**; full profile **64 passed, 1 skipped in 21.37s**.
+
+Adjacent stage1 and generic-host projection coverage ran in both modes using the complete `tests/stage1/test_zero_shim_execution_pack_deletion.py` plus the fixed-worker projection, registry-selector projection, and command-projection tests from `tests/test_generic_host.py`.
+
+Results: isolated **15 passed in 21.37s**; full profile **15 passed in 20.59s**.
+
+`git diff --check` passed. No full suite, browser, localhost, live-socket, or central socket suite was requested. Shared dependencies were not modified or reinstalled; pytest cache was disabled and bytecode generation was disabled.
+
+## Decisions, blockers, next steps
+
+The test setup was repaired rather than changing `Checkout.load` locking or weakening the required refusal assertion. The VibeComfy test clears the complete relevant identity selection because it intentionally has no dependency; the generic-host test uses the same explicit mapping as production.
+
+Nothing is blocked. Recommended next step: integrate this test-only branch and include these two environment modes in the next central qualification targeted lane. A full suite remains intentionally unrequested by this worker.
+
+codex
+Implemented the three test-only isolation fixes.
+
+- Persistence checkout loads before the live holder starts.
+- VibeComfy environment variables are cleared before the fake subprocess probe.
+- Generic-host expectations use the explicit test environment.
+
+Validation:
+
+- Targeted tests: **3 passed** in isolated and full-profile environments.
+- Persistence/history suite: **64 passed, 1 skipped** in both environments.
+- Adjacent stage1/generic-host tests: **15 passed** in both environments.
+- `git diff --check`: passed.
+- No full suite or shared dependencies modified.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md)
+
+Commit message and `DONE` marker created.
+tokens used
+89,420
+Implemented the three test-only isolation fixes.
+
+- Persistence checkout loads before the live holder starts.
+- VibeComfy environment variables are cleared before the fake subprocess probe.
+- Generic-host expectations use the explicit test environment.
+
+Validation:
+
+- Targeted tests: **3 passed** in isolated and full-profile environments.
+- Persistence/history suite: **64 passed, 1 skipped** in both environments.
+- Adjacent stage1/generic-host tests: **15 passed** in both environments.
+- `git diff --check`: passed.
+- No full suite or shared dependencies modified.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-lock-env-isolation/notes/report.md)
+
+Commit message and `DONE` marker created.

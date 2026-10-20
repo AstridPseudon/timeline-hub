@@ -1,0 +1,400 @@
+
+exec
+/bin/bash -lc 'git rev-parse HEAD''^{commit} HEAD''^{tree}; git status --short --branch; git show -s --format='"'%H%n%T%n%P' HEAD; git diff --numstat e010e6a3868e963471244491bb6672c3e4a5135e..HEAD" in /home/user/work/wt/agt-review-private392-owned-pin
+ succeeded in 292ms:
+1303ce6be32e7bd96ed5c6b35afcb15819e81b50
+2f2685d85c3f65b458795100a8045371eb19ee06
+## tl/agt-review-private392-owned-pin
+1303ce6be32e7bd96ed5c6b35afcb15819e81b50
+2f2685d85c3f65b458795100a8045371eb19ee06
+e010e6a3868e963471244491bb6672c3e4a5135e
+30	3	astrid/sdk/remote.py
+8	8	astrid_runtime_client/__init__.py
+2	2	astrid_runtime_client/contract_metadata.py
+1	1	astrid_runtime_client/generated.py
+88	174	astrid_runtime_client/timeline_commit_types.py
+6	6	runtime.lock.json
+
+exec
+/bin/bash -lc "test -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-pin-review.md && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-pin-review.md || true; ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin" in /home/user/work/wt/agt-review-private392-owned-pin
+ succeeded in 0ms:
+total 524
+drwxr-xr-x    2 root root   4096 Oct 20 20:54 .
+drwxr-xr-x 1289 root root  69632 Oct 20 20:54 ..
+-rw-r--r--    1 root root   1209 Oct 20 20:54 brief.md
+-rw-r--r--    1 root root 442756 Oct 20 20:57 log.txt
+-rw-r--r--    1 root root    237 Oct 20 20:54 meta
+-rw-r--r--    1 root root      0 Oct 20 20:54 running
+-rw-r--r--    1 root root     18 Oct 20 20:54 tmpdir
+
+codex
+Targeted evidence is green: vendor-lock check passed, the focused vendor/parity/schema lane passed 47 tests, the pinned-client import identity check passed, and `git diff --check` passed. The earlier worker’s unchanged pin proof reports 98 passed / 9 deselected; I’m carrying that forward without broad reruns, as requested.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-pin-review.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-pin-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-pin-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..66b1da6577ff4b627c83349f98845c0796257a09
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-pin-review.md
+@@ -0,0 +1,63 @@
++# Agent private392 pin review
++
++Decision: **APPROVE**.
++
++This is an independent PRIVATE pin/reload review only. It is not an
++integration, public-release, adoption, activation, or native-pair claim.
++
++## Exact candidate
++
++- Agent commit: `1303ce6be32e7bd96ed5c6b35afcb15819e81b50`
++- Agent tree: `2f2685d85c3f65b458795100a8045371eb19ee06`
++- Frozen Agent base: `e010e6a3868e963471244491bb6672c3e4a5135e`
++- Frozen Agent base tree: `70414cf6875d2c97c45f33e0a5158c80bd7391d9`
++- Runtime producer commit: `f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414`
++- Runtime producer tree: `8be43e13acb436120f8a63b1a178d64c49422461`
++
++The candidate has six changed paths from the frozen base: the Runtime lock,
++four generated Python client files, and `astrid/sdk/remote.py`. The source
++hunk is byte-identical to approved `909bfad8`.
++
++## Identity and byte review
++
++- The Runtime manifest contains 75 artifacts; all 75 exist at `f8da4b6d` and
++  match their declared hashes.
++- All 15 locked consumer paths match both the lock hashes and the exact
++  producer bytes at `f8da4b6d`.
++- Runtime identity is `astrid-runtime`, protocol `workspace.v1`, package
++  `0.2.13`, health/schema digest
++  `sha256:242d2bc193bf16b699eb87592736769aacd8fdb75a1bb859dff3255d83ea5042`,
++  raw bundle digest
++  `sha256:fa7717e25c95126b18bb6f37b4c2d813d4a815456a06d438d52ef41c2cf1eab3`,
++  and artifact version
++  `sha256:52df520b8384c70dc10d0b15bdce00e758c153019d26ddb9e141f5840885ba2d`.
++- The Agent command schema is unchanged from `e010`: 56 definitions, 30
++  operations, schema digest
++  `sha256:39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d`.
++- No `e63` incomplete source, old `952` source commit, or `0.2.14` package
++  identity appears in the candidate pin files.
++
++## Source/reload review
++
++The sole extra source change is the approved `_source_closure` conversion:
++Runtime read envelopes are projected through the existing canonical image
++field sets before `open_authoring_bundle`, while raw GET rows remain available
++to callers. It preserves payload/authored fields, revision pins, identity,
++collection order, and the existing schema. It adds no DTO, authority,
++normalization, or current/future feature semantics. This retains the actual
++`909bfad8` reload fix and does not alter the accepted-history or materialization
++authority paths.
++
++## Evidence
++
++- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json` — PASS.
++- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py tests/sdk/test_timeline_materialization_schema_union.py` — **47 passed**.
++- Pinned-client import identity check for package `0.2.13`, health digest,
++  and `ProjectDataWriteArgs` — PASS.
++- `git diff --check` — PASS.
++- Reused the unchanged pin worker proof: **98 passed, 9 deselected**;
++  no broad matrix, full suite, localhost rerun, or native pair was run for
++  this review.
++
++The next step remains the manager’s separately bounded new project-data/carrier
++lifecycle Door case; this review makes no claim about that case.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..01aaf8c6c1f2022151f30750b622e57b569329ef
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg
+@@ -0,0 +1,4 @@
++review(timeline): approve private392 Agent pin
++
++Approve the exact f8da Runtime producer and the bounded 909 source-closure
++reload conversion after independent byte, identity, and targeted checks.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..01aaf8c6c1f2022151f30750b622e57b569329ef
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg.txt
+@@ -0,0 +1,4 @@
++review(timeline): approve private392 Agent pin
++
++Approve the exact f8da Runtime producer and the bounded 909 source-closure
++reload conversion after independent byte, identity, and targeted checks.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..746fb893fd7fb8e7c21b36e3b6d3868e4f3d8561
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/report.md
+@@ -0,0 +1,26 @@
++# Report
++
++Decision: APPROVE.
++
++Reviewed Agent commit `1303ce6be32e7bd96ed5c6b35afcb15819e81b50`, tree
++`2f2685d85c3f65b458795100a8045371eb19ee06`, against frozen Agent base
++`e010e6a3868e963471244491bb6672c3e4a5135e`. Runtime producer is exactly
++`f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414`, tree
++`8be43e13acb436120f8a63b1a178d64c49422461`.
++
++Verified all 75 producer manifest artifacts and all 15 lock consumer files by
++hash/bytes. Confirmed Runtime `0.2.13`, health `242d…`, raw bundle `fa7717…`,
++artifact version `52df…`, Agent schema `39211e…`, and no e63/old952/0.2.14
++identity. The only source change is byte-identical to approved `909bfad8` and
++preserves raw rows plus canonical authored fields/pins/order without new DTO,
++authority, normalization, or feature semantics.
++
++Tests/checks:
++
++- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json` — PASS.
++- Focused vendor/parity/schema lane — **47 passed**.
++- Pinned-client import identity check — PASS.
++- `git diff --check` — PASS.
++- Reused unchanged worker proof — **98 passed, 9 deselected**.
++
++No full suite, native pair, or public/integration/adoption claim was made.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-pin-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-pin-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..66b1da6577ff4b627c83349f98845c0796257a09
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-pin-review.md
+@@ -0,0 +1,63 @@
++# Agent private392 pin review
++
++Decision: **APPROVE**.
++
++This is an independent PRIVATE pin/reload review only. It is not an
++integration, public-release, adoption, activation, or native-pair claim.
++
++## Exact candidate
++
++- Agent commit: `1303ce6be32e7bd96ed5c6b35afcb15819e81b50`
++- Agent tree: `2f2685d85c3f65b458795100a8045371eb19ee06`
++- Frozen Agent base: `e010e6a3868e963471244491bb6672c3e4a5135e`
++- Frozen Agent base tree: `70414cf6875d2c97c45f33e0a5158c80bd7391d9`
++- Runtime producer commit: `f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414`
++- Runtime producer tree: `8be43e13acb436120f8a63b1a178d64c49422461`
++
++The candidate has six changed paths from the frozen base: the Runtime lock,
++four generated Python client files, and `astrid/sdk/remote.py`. The source
++hunk is byte-identical to approved `909bfad8`.
++
++## Identity and byte review
++
++- The Runtime manifest contains 75 artifacts; all 75 exist at `f8da4b6d` and
++  match their declared hashes.
++- All 15 locked consumer paths match both the lock hashes and the exact
++  producer bytes at `f8da4b6d`.
++- Runtime identity is `astrid-runtime`, protocol `workspace.v1`, package
++  `0.2.13`, health/schema digest
++  `sha256:242d2bc193bf16b699eb87592736769aacd8fdb75a1bb859dff3255d83ea5042`,
++  raw bundle digest
++  `sha256:fa7717e25c95126b18bb6f37b4c2d813d4a815456a06d438d52ef41c2cf1eab3`,
++  and artifact version
++  `sha256:52df520b8384c70dc10d0b15bdce00e758c153019d26ddb9e141f5840885ba2d`.
++- The Agent command schema is unchanged from `e010`: 56 definitions, 30
++  operations, schema digest
++  `sha256:39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d`.
++- No `e63` incomplete source, old `952` source commit, or `0.2.14` package
++  identity appears in the candidate pin files.
++
++## Source/reload review
++
++The sole extra source change is the approved `_source_closure` conversion:
++Runtime read envelopes are projected through the existing canonical image
++field sets before `open_authoring_bundle`, while raw GET rows remain available
++to callers. It preserves payload/authored fields, revision pins, identity,
++collection order, and the existing schema. It adds no DTO, authority,
++normalization, or current/future feature semantics. This retains the actual
++`909bfad8` reload fix and does not alter the accepted-history or materialization
++authority paths.
++
++## Evidence
++
++- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json` — PASS.
++- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py tests/sdk/test_timeline_materialization_schema_union.py` — **47 passed**.
++- Pinned-client import identity check for package `0.2.13`, health digest,
++  and `ProjectDataWriteArgs` — PASS.
++- `git diff --check` — PASS.
++- Reused the unchanged pin worker proof: **98 passed, 9 deselected**;
++  no broad matrix, full suite, localhost rerun, or native pair was run for
++  this review.
++
++The next step remains the manager’s separately bounded new project-data/carrier
++lifecycle Door case; this review makes no claim about that case.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..01aaf8c6c1f2022151f30750b622e57b569329ef
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg
+@@ -0,0 +1,4 @@
++review(timeline): approve private392 Agent pin
++
++Approve the exact f8da Runtime producer and the bounded 909 source-closure
++reload conversion after independent byte, identity, and targeted checks.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..01aaf8c6c1f2022151f30750b622e57b569329ef
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg.txt
+@@ -0,0 +1,4 @@
++review(timeline): approve private392 Agent pin
++
++Approve the exact f8da Runtime producer and the bounded 909 source-closure
++reload conversion after independent byte, identity, and targeted checks.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..746fb893fd7fb8e7c21b36e3b6d3868e4f3d8561
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/report.md
+@@ -0,0 +1,26 @@
++# Report
++
++Decision: APPROVE.
++
++Reviewed Agent commit `1303ce6be32e7bd96ed5c6b35afcb15819e81b50`, tree
++`2f2685d85c3f65b458795100a8045371eb19ee06`, against frozen Agent base
++`e010e6a3868e963471244491bb6672c3e4a5135e`. Runtime producer is exactly
++`f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414`, tree
++`8be43e13acb436120f8a63b1a178d64c49422461`.
++
++Verified all 75 producer manifest artifacts and all 15 lock consumer files by
++hash/bytes. Confirmed Runtime `0.2.13`, health `242d…`, raw bundle `fa7717…`,
++artifact version `52df…`, Agent schema `39211e…`, and no e63/old952/0.2.14
++identity. The only source change is byte-identical to approved `909bfad8` and
++preserves raw rows plus canonical authored fields/pins/order without new DTO,
++authority, normalization, or feature semantics.
++
++Tests/checks:
++
++- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json` — PASS.
++- Focused vendor/parity/schema lane — **47 passed**.
++- Pinned-client import identity check — PASS.
++- `git diff --check` — PASS.
++- Reused unchanged worker proof — **98 passed, 9 deselected**.
++
++No full suite, native pair, or public/integration/adoption claim was made.
+
+exec
+/bin/bash -lc "git status --short --branch; printf '%s\\n' '--- markers ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/{report.md,commit-msg,commit-msg.txt,DONE}; printf '%s\\n' '--- published review ---'; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-pin-review.md" in /home/user/work/wt/agt-review-private392-owned-pin
+ succeeded in 336ms:
+## tl/agt-review-private392-owned-pin
+--- markers ---
+-rw-r--r-- 1 root root    0 Oct 20 20:57 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/DONE
+-rw-r--r-- 1 root root  196 Oct 20 20:57 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg
+-rw-r--r-- 1 root root  196 Oct 20 20:57 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/commit-msg.txt
+-rw-r--r-- 1 root root 1196 Oct 20 20:57 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private392-owned-pin/report.md
+--- published review ---
+# Agent private392 pin review
+
+Decision: **APPROVE**.
+
+This is an independent PRIVATE pin/reload review only. It is not an
+integration, public-release, adoption, activation, or native-pair claim.
+
+## Exact candidate
+
+- Agent commit: `1303ce6be32e7bd96ed5c6b35afcb15819e81b50`
+- Agent tree: `2f2685d85c3f65b458795100a8045371eb19ee06`
+- Frozen Agent base: `e010e6a3868e963471244491bb6672c3e4a5135e`
+- Frozen Agent base tree: `70414cf6875d2c97c45f33e0a5158c80bd7391d9`
+- Runtime producer commit: `f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414`
+- Runtime producer tree: `8be43e13acb436120f8a63b1a178d64c49422461`
+
+The candidate has six changed paths from the frozen base: the Runtime lock,
+four generated Python client files, and `astrid/sdk/remote.py`. The source
+hunk is byte-identical to approved `909bfad8`.
+
+## Identity and byte review
+
+- The Runtime manifest contains 75 artifacts; all 75 exist at `f8da4b6d` and
+  match their declared hashes.
+- All 15 locked consumer paths match both the lock hashes and the exact
+  producer bytes at `f8da4b6d`.
+- Runtime identity is `astrid-runtime`, protocol `workspace.v1`, package
+  `0.2.13`, health/schema digest
+  `sha256:242d2bc193bf16b699eb87592736769aacd8fdb75a1bb859dff3255d83ea5042`,
+  raw bundle digest
+  `sha256:fa7717e25c95126b18bb6f37b4c2d813d4a815456a06d438d52ef41c2cf1eab3`,
+  and artifact version
+  `sha256:52df520b8384c70dc10d0b15bdce00e758c153019d26ddb9e141f5840885ba2d`.
+- The Agent command schema is unchanged from `e010`: 56 definitions, 30
+  operations, schema digest
+  `sha256:39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d`.
+- No `e63` incomplete source, old `952` source commit, or `0.2.14` package
+  identity appears in the candidate pin files.
+
+## Source/reload review
+
+The sole extra source change is the approved `_source_closure` conversion:
+Runtime read envelopes are projected through the existing canonical image
+field sets before `open_authoring_bundle`, while raw GET rows remain available
+to callers. It preserves payload/authored fields, revision pins, identity,
+collection order, and the existing schema. It adds no DTO, authority,
+normalization, or current/future feature semantics. This retains the actual
+`909bfad8` reload fix and does not alter the accepted-history or materialization
+authority paths.
+
+## Evidence
+
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json` — PASS.
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py tests/sdk/test_timeline_materialization_schema_union.py` — **47 passed**.
+- Pinned-client import identity check for package `0.2.13`, health digest,
+  and `ProjectDataWriteArgs` — PASS.
+- `git diff --check` — PASS.
+- Reused the unchanged pin worker proof: **98 passed, 9 deselected**;
+  no broad matrix, full suite, localhost rerun, or native pair was run for
+  this review.
+
+The next step remains the manager’s separately bounded new project-data/carrier
+lifecycle Door case; this review makes no claim about that case.
+
+codex
+## Report
+
+- Decision: **APPROVE**
+- Reviewed Agent commit/tree: `1303ce6be32e7bd96ed5c6b35afcb15819e81b50` / `2f2685d85c3f65b458795100a8045371eb19ee06`
+- Runtime producer verified: `f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414` / `8be43e13acb436120f8a63b1a178d64c49422461`
+- All 75 manifest artifacts and 15 vendored lock files matched.
+- Confirmed Runtime `0.2.13`, health/raw-bundle/artifact digests, unchanged schema `39211e…`, and no e63/old952/0.2.14 identity.
+- Approved source hunk matches `909bfad8` and preserves canonical authored data, pins, ordering, and authority boundaries.
+
+Tests:
+
+- Vendor lock check: PASS
+- Targeted tests: **47 passed**
+- Import identity check: PASS
+- `git diff --check`: PASS
+- Reused unchanged pin proof: **98 passed, 9 deselected**
+
+Published review: `design/agent-private392-pin-review.md`. No blockers, full suite, native pair, or integration/adoption claim.
+tokens used
+131,331
+## Report
+
+- Decision: **APPROVE**
+- Reviewed Agent commit/tree: `1303ce6be32e7bd96ed5c6b35afcb15819e81b50` / `2f2685d85c3f65b458795100a8045371eb19ee06`
+- Runtime producer verified: `f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414` / `8be43e13acb436120f8a63b1a178d64c49422461`
+- All 75 manifest artifacts and 15 vendored lock files matched.
+- Confirmed Runtime `0.2.13`, health/raw-bundle/artifact digests, unchanged schema `39211e…`, and no e63/old952/0.2.14 identity.
+- Approved source hunk matches `909bfad8` and preserves canonical authored data, pins, ordering, and authority boundaries.
+
+Tests:
+
+- Vendor lock check: PASS
+- Targeted tests: **47 passed**
+- Import identity check: PASS
+- `git diff --check`: PASS
+- Reused unchanged pin proof: **98 passed, 9 deselected**
+
+Published review: `design/agent-private392-pin-review.md`. No blockers, full suite, native pair, or integration/adoption claim.

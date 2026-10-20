@@ -1,0 +1,400 @@
++        {'id': 'picture', 'kind': 'visual'}]
++    return document_from_bundle(bundle)
++
++
++def test_portable_golden_and_exact_position_opaque_presence_reload_undo_redo():
++    golden = json.loads(FIXTURE.read_text())
++    original = bundle_from_document(golden['input'])
++    command = capture_track_delete(original, TARGET)
++    assert golden['commands'] == [command]
++    plan = execute(original, golden['commands'])
++    assert plan.records == golden['records']
++    assert document_from_bundle(plan.bundle) == golden['output']
++    record = plan.records[0]
++    assert record['writes'] == [{'ref': TARGET, 'path': [],
++                                'before': {'state': 'present', 'value': State(original).entity(TARGET)},
++                                'after': ABSENT}]
++    assert record['created'] == []
++    reloaded = bundle_from_document(golden['output'])
++    undone = inverse(reloaded, plan.records)
++    assert document_from_bundle(undone.bundle) == golden['input']
++    accepted = accepted_boundaries(undone.records, reloaded, undone.bundle)
++    redone = inverse(undone.bundle, accepted)
++    assert document_from_bundle(redone.bundle) == golden['output']
++    assert inverse(redone.bundle, redone.records).bundle == undone.bundle
++    assert replay(plan, original).records == plan.records
++
++
++def add_dependency(bundle, kind):
++    state = State(bundle)
++    if kind == 'clip':
++        for rows in (bundle['parent']['clips'], bundle['parent']['config']['clips']):
++            rows[0]['track'] = 'empty'
++    elif kind == 'child-clip':
++        state.collection('occurrence:occ-a', 'clip')[0]['track_ref'] = TARGET
++    elif kind in ('audio', 'effects'):
++        state.config('parent')[kind] = [{'track_id': 'empty'}]
++    elif kind in ('child-audio', 'child-effects'):
++        state.config('occurrence:occ-a')[kind.removeprefix('child-')] = [{'owner_ref': TARGET}]
++    elif kind in ('placement', 'occurrence'):
++        row = state.occurrence('occurrence:occ-a')
++        (row['placement'] if kind == 'placement' else row)['track'] = 'empty'
++    else:
++        for shot in bundle['shots'].values():
++            shot['payload']['audio_bindings'] = [{'track_ref': TARGET}]
++
++
++@pytest.mark.parametrize('kind', ['clip', 'child-clip', 'audio', 'effects', 'child-audio',
++                                 'child-effects', 'placement', 'occurrence', 'shot-audio'])
++def test_surviving_or_new_declared_dependency_refuses_atomically(kind):
++    original = bundle_from_document(deletion_document())
++    plan = execute(original, [capture_track_delete(original, TARGET)])
++    head = copy.deepcopy(original)
++    add_dependency(head, kind)
++    before = copy.deepcopy(head)
++    with pytest.raises(CommandError) as error:
++        capture_track_delete(head, TARGET)
++    assert error.value.kind == 'surviving_dependents'
++    with pytest.raises(CommandError):
++        replay(plan, head)
++    assert head == before
++
++
++def test_disjoint_clip_timing_other_track_label_and_opaque_strings_survive_replay_and_inverse():
++    original = bundle_from_document(deletion_document())
++    plan = execute(original, [capture_track_delete(original, TARGET)])
++    head = copy.deepcopy(original)
++    for rows in (head['parent']['clips'], head['parent']['config']['clips']):
++        rows[0]['at'] = 2
++        rows[0]['opaque'] = {'track_ref': TARGET}
++    State(head).entity('parent/track:picture')['label'] = 'Another author'
++    intervening = [later('parent/clip:clip-a', ['at'], 2),
++                   later('parent/clip:clip-a', ['opaque'], {'track_ref': TARGET}),
++                   later('parent/track:picture', ['label'], 'Another author')]
++    rebased = replay(plan, head, intervening_records=intervening)
++    assert inverse(rebased.bundle, rebased.records).bundle == head
++    deleted_head = copy.deepcopy(plan.bundle)
++    deleted_head['parent'] = copy.deepcopy(rebased.bundle['parent'])
++    assert inverse(deleted_head, plan.records, intervening).bundle == head
++
++
++@pytest.mark.parametrize('ref,path,value', [
++    (TARGET, ['id'], 'empty'), (TARGET, ['nullable'], None),
++    ('parent/clip:clip-a', ['track'], 'picture'),
++    ('occurrence:occ-a/clip:clip-a', ['track_ref'], None),
++    ('parent/source', ['effects'], []), ('occurrence:occ-a/source', ['audio'], []),
++    ('occurrence:occ-a', ['placement', 'track'], 'picture'),
++    ('occurrence:occ-a', ['shot_id'], 'chapter-shot'),
++    ('shot:chapter-shot', ['payload', 'audio_bindings'], []),
++    ('parent', ['config', 'clips'], []), ('parent', ['config', 'tracks'], []),
++    ('occurrence:new', [], {}), ('shot:new', [], {}),
++])
++def test_identity_exclusions_population_and_order_aba_conflict(ref, path, value):
++    original = bundle_from_document(deletion_document())
++    plan = execute(original, [capture_track_delete(original, TARGET)])
++    intervening = [later(ref, path, value)]
++    with pytest.raises(CommandError) as error:
++        replay(plan, original, intervening_records=intervening)
++    assert error.value.kind == 'intervening_write'
++    with pytest.raises(CommandError):
++        inverse(plan.bundle, plan.records, intervening)
++
++
++@pytest.mark.parametrize('change', ['identity', 'order', 'new-clip', 'new-occurrence', 'new-shot'])
++def test_current_identity_and_population_changes_conflict(change):
++    original = bundle_from_document(deletion_document())
++    plan = execute(original, [capture_track_delete(original, TARGET)])
++    head = copy.deepcopy(original)
++    if change == 'identity':
++        State(head).entity(TARGET)['id'] = 'different'
++    elif change == 'order':
++        State(head).collection('parent', 'track').reverse()
++    elif change == 'new-clip':
++        for rows in (head['parent']['clips'], head['parent']['config']['clips']):
++            rows.append({**copy.deepcopy(rows[0]), 'id': 'new'})
++    elif change == 'new-occurrence':
++        head['placements'].append({**copy.deepcopy(head['placements'][0]), 'occurrence_id': 'new'})
++    else:
++        shot = copy.deepcopy(next(iter(head['shots'].values())))
++        shot['shot_id'] = 'new'
++        head['shots']['new'] = shot
++    with pytest.raises(CommandError):
++        replay(plan, head)
++
++
++def test_canonical_schema_closes_args_identity_version_and_intentions():
++    schema = json.loads((Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json').read_text())
++    validator = Draft202012Validator(schema)
++    original = bundle_from_document(deletion_document())
++    valid = capture_track_delete(original, TARGET)
++    validator.validate(valid)
++    for field, value in [('args', {'cascade': True}), ('version', '2'),
++                         ('select', 'occurrence:occ-a/track:picture'),
++                         ('select', 'parent'), ('select', 'parent/track:bad::id'),
++                         ('select', 'parent/track:missing'), ('intent', {'ripple': 'none'})]:
++        command = {**copy.deepcopy(valid), field: value}
++        with pytest.raises(CommandError):
++            execute(original, [command])
++        if value != 'parent/track:missing':
++            assert list(validator.iter_errors(command))
++    forged = copy.deepcopy(valid)
++    forged['reads'] = []
++    with pytest.raises(CommandError, match='reads'):
++        execute(original, [forged])
++
++
++@pytest.mark.parametrize('position', [0, 1, 2])
++def test_first_middle_last_exact_order_restoration(position):
++    original = bundle_from_document(deletion_document())
++    tracks = State(original).collection('parent', 'track')
++    target = tracks.pop(1)
++    tracks.insert(position, target)
++    original = bundle_from_document(document_from_bundle(original))
++    plan = execute(original, [capture_track_delete(original, TARGET)])
++    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
++    undone = inverse(reloaded, plan.records)
++    assert document_from_bundle(undone.bundle) == document_from_bundle(original)
++    accepted = accepted_boundaries(undone.records, reloaded, undone.bundle)
++    assert document_from_bundle(inverse(undone.bundle, accepted).bundle) == document_from_bundle(plan.bundle)
++
++
++@pytest.mark.parametrize('layout', ['both', 'payload', 'config', 'absent'])
++def test_last_track_and_empty_or_absent_clip_populations_preserve_presence(layout):
++    original = bundle_from_document(empty_document())
++    original['parent']['config']['tracks'] = [{'id': 'empty', 'kind': 'visual'}]
++    if layout in ('payload', 'absent'):
++        original['parent']['config'].pop('clips')
++    if layout in ('config', 'absent'):
++        original['parent'].pop('clips')
++    original = bundle_from_document(document_from_bundle(original))
++    plan = execute(original, [capture_track_delete(original, TARGET)])
++    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
++    assert reloaded['parent']['config']['tracks'] == []
++    undone = inverse(reloaded, plan.records)
++    assert document_from_bundle(undone.bundle) == document_from_bundle(original)
++    assert State(undone.bundle).entity(TARGET) == {'id': 'empty', 'kind': 'visual'}
++    assert 'nullable' not in State(undone.bundle).entity(TARGET)
++    accepted = accepted_boundaries(undone.records, reloaded, undone.bundle)
++    assert document_from_bundle(inverse(undone.bundle, accepted).bundle) == document_from_bundle(plan.bundle)
++
++
++@pytest.mark.parametrize('key', ['track_ref', 'owner_ref', 'track', 'track_id'])
++def test_all_existing_declared_edge_spellings_refuse(key):
++    original = bundle_from_document(deletion_document())
++    original['parent']['config']['effects'] = [{key: TARGET if key.endswith('_ref') else 'empty'}]
++    with pytest.raises(CommandError) as error:
++        capture_track_delete(original, TARGET)
++    assert error.value.kind == 'surviving_dependents'
++
++
++def test_unplaced_shot_audio_reference_is_also_guarded():
++    original = bundle_from_document(deletion_document())
++    # The shared scanner also visits shot payloads outside an occurrence.
++    original['placements'] = []
++    plan = execute(original, [capture_track_delete(original, TARGET)])
++    head = copy.deepcopy(original)
++    shot_id = next(iter(head['shots']))
++    head['shots'][shot_id]['payload']['audio_bindings'] = [{'owner_ref': TARGET}]
++    with pytest.raises(CommandError):
++        replay(plan, head)
++    with pytest.raises(CommandError) as error:
++        capture_track_delete(head, TARGET)
++    assert error.value.kind == 'surviving_dependents'
++    with pytest.raises(CommandError) as error:
++        replay(plan, original, intervening_records=[
++            later('shot:' + shot_id, ['payload', 'audio_bindings'], [])])
++    assert error.value.kind == 'intervening_write'
+diff --git a/tests/sdk/test_timeline_track_delete_provider.py b/tests/sdk/test_timeline_track_delete_provider.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..580a2be27cc70c3cf78082f1264e524e1dd889ef
+--- /dev/null
++++ b/tests/sdk/test_timeline_track_delete_provider.py
+@@ -0,0 +1,134 @@
++"""Track deletion through the real provider and authenticated accepted history."""
++from __future__ import annotations
++
++import copy
++
++import pytest
++
++from astrid.sdk.timeline._clip_commands import capture_clip_add
++from astrid.sdk.timeline._scalar_commands import capture_track_set
++from astrid.sdk.timeline._track_commands import capture_track_delete
++from astrid.sdk.timeline.commit import bundle_from_document
++from tests.editing_conformance.test_recipe_m2_clip_add import empty_document, literal_row
++from tests.editing_conformance.test_recipe_m2_track_delete import TARGET, deletion_document
++from tests.sdk.test_timeline_commit_provider import (
++    CommitRejected,
++    DetachedRealm,
++    inverse,
++    runtime_abi,  # noqa: F401 (shared autouse Runtime ABI fixture)
++    track_create,
++)
++from tests.sdk.test_timeline_commit_provider_document import document_fixture
++
++
++def capture(realm, ref=TARGET):
++    return capture_track_delete(bundle_from_document(realm.documents[realm.head['revision_id']]), ref)
++
++
++def test_provider_exact_order_opaque_absence_reload_inverse_redo():
++    realm = DetachedRealm(deletion_document())
++    original = copy.deepcopy(realm.documents[realm.head['revision_id']])
++    deleted = realm.call([capture(realm)])
++    document = deleted['data']['canonical_document']
++    tracks = document['parent_revision']['payload']['config']['tracks']
++    assert [row['id'] for row in tracks] == ['before', 'picture']
++    assert realm.documents[realm.head['revision_id']] == document
++    for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
++        assert document[key] == original[key]
++    undone = realm.call([inverse([deleted['receipt']['receipt_id']])])
++    assert undone['data']['canonical_document'] == original
++    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
++    assert redone['data']['canonical_document'] == document
++    assert realm.call([inverse([redone['receipt']['receipt_id']])])['data']['canonical_document'] == original
++
++
++def test_stale_delete_preserves_independent_move_and_other_track_label_then_undo():
++    realm = DetachedRealm(deletion_document())
++    base = copy.deepcopy(realm.head)
++    command = capture(realm)
++    realm.call([realm.move(on=2)])
++    bundle = bundle_from_document(realm.documents[realm.head['revision_id']])
++    realm.call([capture_track_set(bundle, 'parent/track:picture', values={'label': 'New label'})])
++    head_document = copy.deepcopy(realm.documents[realm.head['revision_id']])
++    deleted = realm.call([command], base=base)
++    payload = deleted['data']['canonical_document']['parent_revision']['payload']
++    assert payload['clips'] == head_document['parent_revision']['payload']['clips']
++    assert payload['config']['tracks'][-1]['label'] == 'New label'
++    undone = realm.call([inverse([deleted['receipt']['receipt_id']])])
++    assert undone['data']['canonical_document'] == head_document
++
++
++def test_new_consumer_stale_delete_refuses_without_partial_publication():
++    realm = DetachedRealm(empty_document())
++    realm.call([track_create('first-track')])
++    base = copy.deepcopy(realm.head)
++    command = capture(realm, 'parent/track:first-track')
++    bundle = bundle_from_document(realm.documents[realm.head['revision_id']])
++    realm.call([capture_clip_add(bundle, 'parent', literal_row())])
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    with pytest.raises(CommitRejected):
++        realm.call([command], base=base)
++    assert (realm.head, realm.entries, realm.documents) == before
++
++
++def test_created_then_deleted_track_id_is_retired_and_guarded_redo_keeps_same_id():
++    realm = DetachedRealm(empty_document())
++    realm.call([track_create('reserved-track')])
++    original = copy.deepcopy(realm.documents[realm.head['revision_id']])
++    deleted = realm.call([capture(realm, 'parent/track:reserved-track')])
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    with pytest.raises(CommitRejected) as error:
++        realm.call([track_create('reserved-track')])
++    assert error.value.failure['details']['reason'] == 'identity_collision'
++    assert (realm.head, realm.entries, realm.documents) == before
++    restored = realm.call([inverse([deleted['receipt']['receipt_id']])])
++    assert restored['data']['canonical_document'] == original
++    redone = realm.call([inverse([restored['receipt']['receipt_id']])])
++    assert redone['data']['canonical_document'] == deleted['data']['canonical_document']
++
++
++# Requirement: reserve authenticated whole-row removals as well as recorded
++# allocations. The separate clip-delete slice owns this provider correction.
++@pytest.mark.xfail(strict=True, reason='Bootstrap track retirement needs provider removal reservations')
++def test_deleted_bootstrap_track_id_must_also_stay_retired():
++    realm = DetachedRealm(deletion_document())
++    realm.call([capture(realm)])
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    with pytest.raises(CommitRejected) as error:
++        realm.call([track_create('empty')])
++    assert error.value.failure['details']['reason'] == 'identity_collision'
++    assert (realm.head, realm.entries, realm.documents) == before
++
++
++def test_deleted_track_own_write_aba_and_late_invalid_batch_refuse_atomically():
++    realm = DetachedRealm(deletion_document())
++    base = copy.deepcopy(realm.head)
++    command = capture(realm)
++    bundle = bundle_from_document(realm.documents[realm.head['revision_id']])
++    realm.call([capture_track_set(bundle, TARGET, values={'label': 'Changed'})])
++    bundle = bundle_from_document(realm.documents[realm.head['revision_id']])
++    realm.call([capture_track_set(bundle, TARGET, clear=['label'])])
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    with pytest.raises(CommitRejected) as error:
++        realm.call([command], base=base)
++    assert error.value.failure['details']['reason'] == 'intervening_write'
++    bad = {'schema_version': 1, 'op': 'track.delete', 'version': '1',
++           'select': 'parent/track:before', 'args': {'cascade': True}}
++    with pytest.raises(CommitRejected):
++        realm.call([capture(realm), bad])
++    assert (realm.head, realm.entries, realm.documents) == before
++
++
++def test_parent_delete_keeps_original_shared_shot_closure_and_provider_restores_original_pin():
++    from astrid.sdk.timeline.commit import _digest
++
++    document = document_fixture()
++    parent = document['parent_revision']
++    parent['payload']['config']['tracks'].insert(0, {'id': 'empty', 'kind': 'visual'})
++    parent['content_digest'] = _digest(parent['payload'])
++    realm = DetachedRealm(document)
++    deleted = realm.call([capture(realm)])
++    for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
++        assert deleted['data']['canonical_document'][key] == document[key]
++    restored = realm.call([inverse([deleted['receipt']['receipt_id']])])
++    assert restored['data']['canonical_document'] == document
+
+codex
+The final targeted run finished: 436 passed, with one strict expected failure for bootstrap ID retirement. Changed-file Ruff checks and `git diff --check` also pass. I’ve written the report and both commit-message files, including the reservation fix dependency, and am cleaning generated caches. No merge or push was performed.
+exec
+/bin/bash -lc "python3 - <<'PY'
+import os
+import shutil
+from pathlib import Path
+removed = 0
+for source in (Path('astrid'), Path('tests')):
+    for parent, directories, _ in os.walk(source):
+        if '__pycache__' in directories:
+            shutil.rmtree(Path(parent) / '__pycache__')
+            directories.remove('__pycache__')
+            removed += 1
+for cache in (Path('.pytest_cache'), Path('.ruff_cache')):
+    if cache.exists():
+        shutil.rmtree(cache)
+        removed += 1
+print(f'Removed {removed} cache directories')
+PY
+ git diff --check
+ git status --short" in /home/user/work/wt/agt-m2-track-delete
+ succeeded in 618ms:
+Removed 20 cache directories
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/inverse.py
+?? astrid/sdk/timeline/_track_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_track_delete.json
+?? tests/editing_conformance/test_recipe_m2_track_delete.py
+?? tests/sdk/test_timeline_track_delete_provider.py
+
+codex
+Implemented `track.delete` v1 with closed args, recorded dependency guards, exact ordered undo/redo, and a portable golden.
+
+- Targeted regression: **436 passed, 1 strict xfailed**.
+- Changed-file Ruff and `git diff --check`: **passed**.
+- Both commit-message files written; generated caches removed.
+
+**Blocked:** bootstrap track IDs can still be reused after deletion. The strict xfail preserves the required refusal. The manager should port the existing clip-delete reservation fix before integration. M2 remains **HELD**.
+
+[Full report with exact test commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-track-delete/notes/report.md)
+tokens used
+117,142
+Implemented `track.delete` v1 with closed args, recorded dependency guards, exact ordered undo/redo, and a portable golden.
+
+- Targeted regression: **436 passed, 1 strict xfailed**.
+- Changed-file Ruff and `git diff --check`: **passed**.
+- Both commit-message files written; generated caches removed.
+
+**Blocked:** bootstrap track IDs can still be reused after deletion. The strict xfail preserves the required refusal. The manager should port the existing clip-delete reservation fix before integration. M2 remains **HELD**.
+
+[Full report with exact test commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-track-delete/notes/report.md)

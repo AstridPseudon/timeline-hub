@@ -1,0 +1,400 @@
+    'capture_identity': 'capture-1',
+    'snapshot_label': {'status': 'committed', 'label': 'committed revision r1'},
+    'scene_clips': {'compiled-1': {'address': 'c01.field'}},
+    'answers': [{'frame': 0, 'coverage': 'COVERED', 'content': 'CONTENT',
+                 'layers': [{'clipId': 'compiled-1'}], 'findings': []}],
+}}
+missing_source_shape = {'ok': True, 'scene_result': {
+    'capture_identity': 'capture-1', 'source_label': 'committed revision r1',
+    'compiled_id_address_map': {'compiled-1': 'c01.field'},
+    'scene_answers': [{'frame': 0, 'coverage': 'COVERED', 'content': 'CONTENT',
+                      'layers': [{'clipId': 'compiled-1'}], 'findings': []}],
+}}
+for name, result in [('approved-viewing-shape', actual_shape), ('missing-source-binding', missing_source_shape)]:
+    spans = f._scene_only_spans(result, context)
+    print(name, [(s.cls, s.content, s.findings) for s in spans])
+PY" in /home/user/work/wt/agt-review-sdk-scene-only-caller
+ succeeded in 324ms:
+approved-viewing-shape [('UNAVAILABLE', None, ('scene source label unavailable',))]
+missing-source-binding [('COVERED', 'CONTENT', ())]
+
+exec
+/bin/bash -lc "ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller 2>/dev/null || true; find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers -maxdepth 2 -name 'commit-msg*' | tail -20" in /home/user/work/wt/agt-review-sdk-scene-only-caller
+ succeeded in 11ms:
+total 612
+drwxr-xr-x    2 root root   4096 Oct 20 17:15 .
+drwxr-xr-x 1043 root root  65536 Oct 20 17:15 ..
+-rw-r--r--    1 root root   1061 Oct 20 17:15 brief.md
+-rw-r--r--    1 root root 541275 Oct 20 17:17 log.txt
+-rw-r--r--    1 root root    241 Oct 20 17:15 meta
+-rw-r--r--    1 root root      0 Oct 20 17:15 running
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-d13-regen/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-d13-regen/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-unify/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-a610-triage/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-catalog-text-replay-fix/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-review-union-013/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-review-union-013/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-viewing-extractions-current/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-authority-compose/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-authority-compose/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-commit-path-dedup/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-commit-path-dedup/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-legacy-final-review/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-cutover-route-tests/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/orch-fallback-smoke/commit-msg
+
+codex
+The focused run completed: 87 passed in 3.16s. Static review confirms the save/core and transaction paths were untouched and the worktree remains clean. Two blocking review findings remain: the implementation’s result keys do not match the Viewing handoff’s artifact keys, and a missing managed source binding can currently be accepted as `COVERED`; ordinary activation therefore stays explicitly held. I’m recording that review and completion marker now without changing product source.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6c66bd9e77342f347337e90f799a8fce2564ed2e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md
+@@ -0,0 +1,77 @@
++# SDK scene-only managed caller review
++
++## Verdict
++
++**HOLD ordinary activation and D09 deletion.** The reviewed caller is
++appropriately narrow, but it is not qualified against the actual Viewing
++executor contract yet.
++
++Reviewed Agent commit `4f3cd32be34e194d55bad31820e7b6078de319af` with tree
++`9a50e3ada5d7da687e49d510370e007e6b50b305`; the worktree was clean and no
++product source was changed by this review.
++
++## What is correct
++
++- `_scene_only_request()` reuses `prepare_filmstrip()` for the saved/candidate
++  capture and requests the existing managed visualization invocation with
++  `mode: "scene_only"`, `view: "filmstrip"`, and `formats: ["md"]`.
++- No caller `source_ref`, certification, authority DTO, provider, store,
++  endpoint, SourceFactory, copied projector, or new public API was added.
++- The adapter is not wired into ordinary `Checkout.check()` activation.
++  `_check_core`, save, publish, and transaction paths remain unchanged and
++  renderer/Node-free.
++- Missing/stale capture and map checks return advisory `UNAVAILABLE` spans.
++
++## Blocking findings
++
++1. The implementation and its positive fixtures use a synthetic
++   `scene_result` payload with `scene_answers`, `compiled_id_address_map`, and
++   `source_label` (`astrid/sdk/timeline_filmstrip.py:1355-1372, 1398-1427;
++   `tests/sdk/test_scene_caller_preservation.py:151-175`). The actual Viewing
++   SDK handoff specifies the existing `filmstrip_bundle` artifact and nested
++   `scene-answers.json`, with keys `answers`, `scene_clips`, and
++   `snapshot_label`, including `status: "unavailable"` with empty answers.
++   The adapter neither reads that artifact nor accepts those agreed keys.
++   A result from the agreed executor would therefore be classified as
++   unavailable (the local probe produced `scene source label unavailable`).
++   The two shared handoff notes are themselves inconsistent on these names;
++   the orchestrator must settle that exact contract before activation. This
++   review does not treat the SDK-only fixture as executor evidence.
++
++2. Source binding is not mandatory. `_scene_only_spans()` only validates a
++   managed object/video binding when one is present; it accepts a payload with
++   the synthetic capture/map/label fields but no admitted source binding. A
++   local probe returned `COVERED` for that case. Exact admitted source/base
++   binding is required by the handoff, so missing source must be advisory
++   `UNAVAILABLE`, never a certificate from metadata or public rows. The bound
++   label is also only checked for non-empty text, not against an executor-bound
++   expected label.
++
++3. The caller does not explicitly carry the full canonical frame extent from
++   `capture_snapshot.duration_frames`, although the Viewing handoff says the
++   Agent caller should request that extent. Confirm the final request shape
++   with Viewing when resolving finding 1.
++
++## Evidence
++
++Focused command (private Python bytecode and pytest cache disabled):
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_scene_caller_preservation.py tests/sdk/test_scene_save_core.py tests/sdk/test_timeline_filmstrip.py tests/sdk/test_timeline_filmstrip_invocation.py
++```
++
++Result: **87 passed in 3.16s**.
++
++Additional checks passed: `git show --check --oneline HEAD` and
++`git diff --check HEAD^ HEAD`. No full suite, browser, live socket, Runtime,
++or executor qualification was run.
++
++## Required next step
++
++Viewing and Agent should reconcile the exact managed-artifact field names,
++then add a focused positive using the real artifact shape and negatives for
++missing/stale source binding and stale label/map. Keep ordinary activation
++held until those tests exercise the actual executor; retain save-core,
++OFFCANVAS/core-valid, and all existing saveNoNode guards. Do not delete the
++private legacy Scene path or claim D09 completion from this SDK-only result.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..1de86f1d995af018a410dcb9ab4756641c77d120
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg
+@@ -0,0 +1,4 @@
++chore(review): review scene-only SDK caller
++
++Record the managed-artifact key mismatch and missing-source-binding hold
++found while reviewing the private Scene-only caller.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..1de86f1d995af018a410dcb9ab4756641c77d120
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg.txt
+@@ -0,0 +1,4 @@
++chore(review): review scene-only SDK caller
++
++Record the managed-artifact key mismatch and missing-source-binding hold
++found while reviewing the private Scene-only caller.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- product status ---' && git status --short --branch && printf '%s\\n' '--- review artifacts ---' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/DONE && sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md" in /home/user/work/wt/agt-review-sdk-scene-only-caller
+ succeeded in 223ms:
+--- product status ---
+## tl/agt-review-sdk-scene-only-caller
+--- review artifacts ---
+-rw-r--r-- 1 root root 3906 Oct 20 17:17 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md
+-rw-r--r-- 1 root root    0 Oct 20 17:17 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/DONE
+-rw-r--r-- 1 root root  171 Oct 20 17:17 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg
+-rw-r--r-- 1 root root  171 Oct 20 17:17 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg.txt
+# SDK scene-only managed caller review
+
+## Verdict
+
+**HOLD ordinary activation and D09 deletion.** The reviewed caller is
+appropriately narrow, but it is not qualified against the actual Viewing
+executor contract yet.
+
+Reviewed Agent commit `4f3cd32be34e194d55bad31820e7b6078de319af` with tree
+`9a50e3ada5d7da687e49d510370e007e6b50b305`; the worktree was clean and no
+product source was changed by this review.
+
+## What is correct
+
+- `_scene_only_request()` reuses `prepare_filmstrip()` for the saved/candidate
+  capture and requests the existing managed visualization invocation with
+  `mode: "scene_only"`, `view: "filmstrip"`, and `formats: ["md"]`.
+- No caller `source_ref`, certification, authority DTO, provider, store,
+  endpoint, SourceFactory, copied projector, or new public API was added.
+- The adapter is not wired into ordinary `Checkout.check()` activation.
+  `_check_core`, save, publish, and transaction paths remain unchanged and
+  renderer/Node-free.
+- Missing/stale capture and map checks return advisory `UNAVAILABLE` spans.
+
+## Blocking findings
+
+1. The implementation and its positive fixtures use a synthetic
+   `scene_result` payload with `scene_answers`, `compiled_id_address_map`, and
+   `source_label` (`astrid/sdk/timeline_filmstrip.py:1355-1372, 1398-1427;
+   `tests/sdk/test_scene_caller_preservation.py:151-175`). The actual Viewing
+   SDK handoff specifies the existing `filmstrip_bundle` artifact and nested
+   `scene-answers.json`, with keys `answers`, `scene_clips`, and
+   `snapshot_label`, including `status: "unavailable"` with empty answers.
+   The adapter neither reads that artifact nor accepts those agreed keys.
+   A result from the agreed executor would therefore be classified as
+   unavailable (the local probe produced `scene source label unavailable`).
+   The two shared handoff notes are themselves inconsistent on these names;
+   the orchestrator must settle that exact contract before activation. This
+   review does not treat the SDK-only fixture as executor evidence.
+
+2. Source binding is not mandatory. `_scene_only_spans()` only validates a
+   managed object/video binding when one is present; it accepts a payload with
+   the synthetic capture/map/label fields but no admitted source binding. A
+   local probe returned `COVERED` for that case. Exact admitted source/base
+   binding is required by the handoff, so missing source must be advisory
+   `UNAVAILABLE`, never a certificate from metadata or public rows. The bound
+   label is also only checked for non-empty text, not against an executor-bound
+   expected label.
+
+3. The caller does not explicitly carry the full canonical frame extent from
+   `capture_snapshot.duration_frames`, although the Viewing handoff says the
+   Agent caller should request that extent. Confirm the final request shape
+   with Viewing when resolving finding 1.
+
+## Evidence
+
+Focused command (private Python bytecode and pytest cache disabled):
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_scene_caller_preservation.py tests/sdk/test_scene_save_core.py tests/sdk/test_timeline_filmstrip.py tests/sdk/test_timeline_filmstrip_invocation.py
+```
+
+Result: **87 passed in 3.16s**.
+
+Additional checks passed: `git show --check --oneline HEAD` and
+`git diff --check HEAD^ HEAD`. No full suite, browser, live socket, Runtime,
+or executor qualification was run.
+
+## Required next step
+
+Viewing and Agent should reconcile the exact managed-artifact field names,
+then add a focused positive using the real artifact shape and negatives for
+missing/stale source binding and stale label/map. Keep ordinary activation
+held until those tests exercise the actual executor; retain save-core,
+OFFCANVAS/core-valid, and all existing saveNoNode guards. Do not delete the
+private legacy Scene path or claim D09 completion from this SDK-only result.
+
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..2fb2a63de817f0aee09756f03fedf7f79676f37b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md
+@@ -0,0 +1,84 @@
++# SDK scene-only managed caller review
++
++## Verdict
++
++**HOLD ordinary activation and D09 deletion.** The reviewed caller is
++appropriately narrow, but it is not qualified against the actual Viewing
++executor contract yet.
++
++Reviewed Agent commit `4f3cd32be34e194d55bad31820e7b6078de319af` with tree
++`9a50e3ada5d7da687e49d510370e007e6b50b305`; the worktree was clean and no
++product source was changed by this review.
++
++## What is correct
++
++- `_scene_only_request()` reuses `prepare_filmstrip()` for the saved/candidate
++  capture and requests the existing managed visualization invocation with
++  `mode: "scene_only"`, `view: "filmstrip"`, and `formats: ["md"]`.
++- No caller `source_ref`, certification, authority DTO, provider, store,
++  endpoint, SourceFactory, copied projector, or new public API was added.
++- The adapter is not wired into ordinary `Checkout.check()` activation.
++  `_check_core`, save, publish, and transaction paths remain unchanged and
++  renderer/Node-free.
++- Missing/stale capture and map checks return advisory `UNAVAILABLE` spans.
++
++## Blocking findings
++
++1. The implementation and its positive fixtures use a synthetic
++   `scene_result` payload with `scene_answers`, `compiled_id_address_map`, and
++   `source_label` (`astrid/sdk/timeline_filmstrip.py:1355-1372, 1398-1427;
++   `tests/sdk/test_scene_caller_preservation.py:151-175`). The actual Viewing
++   SDK handoff specifies the existing `filmstrip_bundle` artifact and nested
++   `scene-answers.json`, with keys `answers`, `scene_clips`, and
++   `snapshot_label`, including `status: "unavailable"` with empty answers.
++   The adapter neither reads that artifact nor accepts those agreed keys.
++   A result from the agreed executor would therefore be classified as
++   unavailable (the local probe produced `scene source label unavailable`).
++   The two shared handoff notes are themselves inconsistent on these names;
++   the orchestrator must settle that exact contract before activation. This
++   review does not treat the SDK-only fixture as executor evidence.
++
++2. Source binding is not mandatory. `_scene_only_spans()` only validates a
++   managed object/video binding when one is present; it accepts a payload with
++   the synthetic capture/map/label fields but no admitted source binding. A
++   local probe returned `COVERED` for that case. Exact admitted source/base
++   binding is required by the handoff, so missing source must be advisory
++   `UNAVAILABLE`, never a certificate from metadata or public rows. The bound
++   label is also only checked for non-empty text, not against an executor-bound
++   expected label.
++
++3. The caller does not explicitly carry the full canonical frame extent from
++   `capture_snapshot.duration_frames`, although the Viewing handoff says the
++   Agent caller should request that extent. Confirm the final request shape
++   with Viewing when resolving finding 1.
++
++## Evidence
++
++Focused command (private Python bytecode and pytest cache disabled):
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_scene_caller_preservation.py tests/sdk/test_scene_save_core.py tests/sdk/test_timeline_filmstrip.py tests/sdk/test_timeline_filmstrip_invocation.py
++```
++
++Result: **87 passed in 3.16s**.
++
++Additional checks passed: `git show --check --oneline HEAD` and
++`git diff --check HEAD^ HEAD`. No full suite, browser, live socket, Runtime,
++or executor qualification was run.
++
++Reviewed-file SHA-256: `astrid/sdk/timeline_filmstrip.py`
++`ffc55b985725b33b6f28d5285fa8309018a1f1a1933229c94f114094d36a2b96`;
++`astrid/sdk/timeline/check.py`
++`94c277864fbaf29f55050f827cf619217f685471f4eeb7c3299543e41bdc9623`;
++`tests/sdk/test_scene_caller_preservation.py`
++`5dda3ff8cdd4a749563f7e52b25e79e31bd2bc6db6b5942cb70e76d8e4765f19`.
++
++## Required next step
++
++Viewing and Agent should reconcile the exact managed-artifact field names,
++then add a focused positive using the real artifact shape and negatives for
++missing/stale source binding and stale label/map. Keep ordinary activation
++held until those tests exercise the actual executor; retain save-core,
++OFFCANVAS/core-valid, and all existing saveNoNode guards. Do not delete the
++private legacy Scene path or claim D09 completion from this SDK-only result.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..1de86f1d995af018a410dcb9ab4756641c77d120
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg
+@@ -0,0 +1,4 @@
++chore(review): review scene-only SDK caller
++
++Record the managed-artifact key mismatch and missing-source-binding hold
++found while reviewing the private Scene-only caller.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..1de86f1d995af018a410dcb9ab4756641c77d120
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-sdk-scene-only-caller/commit-msg.txt
+@@ -0,0 +1,4 @@
++chore(review): review scene-only SDK caller
++
++Record the managed-artifact key mismatch and missing-source-binding hold
++found while reviewing the private Scene-only caller.
+
+codex
+## Review report
+
+- Reviewed commit `4f3cd32b`, tree `9a50e3ada5d7da687e49d510370e007e6b50b305`.
+- Focused tests: **87 passed in 3.16s**.
+- Worktree remains clean; no product source changed.
+- Found blocking contract mismatch: implementation fixtures use `scene_answers` / `compiled_id_address_map` / `source_label`, while Viewing’s handoff specifies `filmstrip_bundle` → `scene-answers.json` with `answers` / `scene_clips` / `snapshot_label`.
+- Found missing-source-binding acceptance bug: payloads without admitted managed-source binding can currently be accepted as `COVERED`.
+- Ordinary activation and D09 deletion remain **HOLD** pending contract reconciliation and real executor qualification.
+
+Artifacts written:
+
+- [Review report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md)
+- Commit message files and `DONE` marker created.
+tokens used
+120,589
+## Review report
+
+- Reviewed commit `4f3cd32b`, tree `9a50e3ada5d7da687e49d510370e007e6b50b305`.
+- Focused tests: **87 passed in 3.16s**.
+- Worktree remains clean; no product source changed.
+- Found blocking contract mismatch: implementation fixtures use `scene_answers` / `compiled_id_address_map` / `source_label`, while Viewing’s handoff specifies `filmstrip_bundle` → `scene-answers.json` with `answers` / `scene_clips` / `snapshot_label`.
+- Found missing-source-binding acceptance bug: payloads without admitted managed-source binding can currently be accepted as `COVERED`.
+- Ordinary activation and D09 deletion remain **HOLD** pending contract reconciliation and real executor qualification.
+
+Artifacts written:
+
+- [Review report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-review-sdk-scene-only-caller-REPORT.md)
+- Commit message files and `DONE` marker created.

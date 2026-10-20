@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-parent-init-current.md-16-**Full-schema composition is required before freeze.** S2 is commit `26ef2bbb` / raw schema SHA-256 `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef` (the a6f1aaa9 prefix is not a commit). Parent schema is 45 definitions/23 conditions and fails frozen S1/S2: missing five producer definitions, producer.guard and S2 optional element schema_source. Init is 49/23, preserving S2 additively. A review-only S2+parent+init schema is 51/25 and passes all retained/current/published floors. It was never substituted into service tests or published. Shared source paths are schema, commands.py and commit.py; retain both registrations/provider hunks, current capture inputs and current consumed guards. Do not copy a whole old candidate file or resolve the schema by selecting one side. Update init's per-candidate exact-count additive proof when composing the union, retaining every behavior.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-parent-init-current.md-17-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-parent-init-current.md:18:Private versus public: Agent lock remains pinned to Runtime94114269 (0.2.9). Parent real tests use unchanged Runtime8609333's generic unknown-op envelope plus Agent's closed schema, not a typed generated public parent release. Init real tests archive pinned94114269. S2's generic media-free producer and the normal declared-file/upload experiment are not authentic assembler qualification; the normal host still has its old pre-settlement publisher. Keep old writers/positive tests until the complete generated pair and replacement journeys qualify.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-parent-init-current.md-19-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-parent-init-current.md-20-Independent commands/results (exact full commands, working directories and logs in the detailed report):
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-safe-s2-pin-final.md-21-Inspected the changed tests and fixtures, including the element golden's structural JSON changes. Its new pin, admitted owner/revision, object inputs and capture binding support the retained-schema requirement; original before/after and inverse assertions remain. New refusal cases supplement existing positives. Design-only producer goldens and detached preview tests are clearly separate from actual Runtime acceptance tests.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-safe-s2-pin-final.md-22-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-safe-s2-pin-final.md:23:The new automatic-placement fixture restores the existing authenticated pre-cut film, adjusts the neutral parent's duration/FPS through the existing publication API, then enables the scene tripwire. The tripwire's entire original body is AST-identical after extraction into `_disable_scene`; preview/acceptance/retry/inverse/redo run with it enabled. Media identity and video duration arrive through normal task admission and fenced settlement (`generation.publish_v1` metadata), followed by generated-client selection and verified-media reads. No SQL writes, manufactured authoritative database metadata, fake acceptance port, schema override, or renderer bypass appears in the new positive path. Private closure calls read the baseline; publication happens only during seed preparation. The unchanged identity tests contain SQL **reads** for preservation assertions, not new setup shortcuts.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-safe-s2-pin-final.md-24-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-safe-s2-pin-final.md-25-New keyed-view cases use the normal generated transport and actual HTTP handler, lose an accepted ACK, advance head, restart, recover the original keyed result, reject changed options under the original key, and allocate fresh logical keys. Real read-only credentials are denied before ingestion; inspection still works; projects:write creates the view. No passing success test was rewritten to expect denial. The reviewed seed and media payloads qualify contract behavior, not decoded media quality or pixel/audio rendering.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-14-The exact Agent counterpart is commit
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-15-`3730d0bd51686a1692450359482205df64dcc839`, tree
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md:16:`3892a10bcffa9bf520b4c79591637cf3259d6724`, with private schema SHA-256
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-17-`f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f`.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-18-The public `agent-26ef2bbb` floor remains immutable at SHA-256
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-27-- `tests/test_door_transport.py` is byte-identical to `16acbb6`.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-28-- No added xfail, skip, TODO, or HACK marker was found in the candidate diff.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md:29:- The generated changes are the private command schema/artifact digests and
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-30-  their generated metadata; there is no new HTTP route, DTO, endpoint, ID
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-31-  seed, or authority field. Existing `EditCommand.version` carries the
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-82-```
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-83-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md:84:The private archive was overlaid only with the exact Agent f802 schema; no
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-85-repository or shared dependency was modified. The central host check ran on
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-83fe.md-86-the current integration tree because live-socket tests must use the central
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-s3-source-cohort.md-9-Independent targeted results (overlapping): **659 passed / 4 existing strict xfailed** portable/schema/inverse; **113 passed** real service/native word/current retained schema/producer; **124 passed** current facade/history/video/CLI; **2 passed** normally generated birth; **5 passed** additional review probes. The mandatory real pristine init → occurrence/shot/internal → child track/video → parent add/swap/delete → SECOND same-echo word ID+pin → grouped undo/redo/reload/restart passed. Six injected restoration-authority faults refused atomically before healthy redo; explicit authored at/hold no-op and ABA writes still refuse undo.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-s3-source-cohort.md-10-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-s3-source-cohort.md:11:Private Runtime was normally generated from immutable `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, complete subject schema, normal generated artifacts and manifest/check only. All non-generated Runtime source stayed unchanged. No shared dependency writes or full/full* request.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-s3-source-cohort.md-12-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-s3-source-cohort.md-13-Known pending coverage remains separate: four original parent-auto positives stay strict HELD for the separate worker; two unchanged manifest-inverse nodes still fail importing retired `_binding_descriptor` before Agent execution (independently reproduced). No App/browser/HTTP/public-client/requester/owner-film/macOS gate is claimed. Initial relative historical-source paths caused 63 setup errors in my first service invocation; the corrected absolute-path run passed all 113 without a source change.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-video-unplace-current.md-19-Prior worker evidence was inspected in its report and log: **352 passed in 43.73s**, **4 passed in 22.66s**, with the disclosed fixture setup corrections. These are supported by the fresh reproduction above.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-video-unplace-current.md-20-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-video-unplace-current.md:21:Actual Agent schema bytes are identical at parent, candidate and integration: SHA256 `83a476f894f31dc359514e9c081bf28da2b1f8cd515bb30cce14292823753224` (43 definitions). Retained private S2 schema bytes match Runtime commit `f7081c14efd9a5b834987e7a1e2abf597b66313b` exactly: SHA256 `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef` (48 definitions). `PlacementUnplaceArgs` remains the identical closed empty object. No schema or dependency pin changed.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-video-unplace-current.md-22-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-video-unplace-current.md:23:No current integration conflict: every changed path is byte-identical between the candidate parent and final integration `78d548cf`; read-only three-way file merges produce exactly the candidate files, exit 0 for all eight. The private integration overlay tests passed at `a2ba1bca`; the later native-frontends merge at `78d548cf` received a fresh conflict/schema check, not another test run. Recheck if integration advances before merge.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-video-unplace-current.md-24-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-video-unplace-current.md-25-Qualification limits: Runtime evidence uses the private unpublished S2 candidate and its validated source-fixture helper for the already-placed seed. It proves neither normal API birth-to-unplace history nor owner-film compatibility, installed/public client qualification, HTTP/browser behavior, App producer parity or App cutover. The enlarged native image/video capture must be ported and qualified by the App owner before activation. No public qualification or cutover is approved. No full suite requested/run, no sockets/browser suite, product fixes, dependency mutation, git mutation, integration changes or ledger edits.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md-13-- Core still runs the canonical authoring validator, formula resolution, orphan/empty/outside/type/stale-beat/shot-length checks, and publication guards. The renderer-bearing SDK facade is avoided by importing `astrid.core.timeline.authoring_bundle` directly.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md-14-- The explicit OFFCANVAS negative and core-valid save/publish positive are both present. The positive preserves raw `params.x=10000` through ordinary save/reload and the real publication payload; no clamp, hiding or autofix was introduced.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md:15:- Existing publication, transaction, retry/recovery, ownership, schema and native assertions remain represented. Test stubs were moved only to the new private seam or the defining pure authoring module.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md-16-- `git diff --check f5d0b4e0^ f5d0b4e0` passed. The assigned review worktree remained clean.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md-17-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-ordinary-native/report.md-3-- Targeted pytest: **395 passed, 92 subtests passed**.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-ordinary-native/report.md-4-- Central `identity-pin94114269-integration --files tests/editing_conformance/test_cli_trim_runtime.py`: **5 passed**, covering reload, exact retry, dependent intent, rebase, conflict retention, and undo.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-ordinary-native/report.md:5:- No full suite, schema/pin changes, or private candidate.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-ordinary-native/report.md-6-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-ordinary-native/report.md-7-[Report with exact commands, failures, and remaining writer paths](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-cli-ordinary-native/notes/report.md)
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md-13-| Complete reported Agent patch SHA256 | `e7c092dda52fe60de5b98fda30dedd14559cc72820094dff7a4107e0dd841410` |
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md-14-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md:15:The private Runtime tree is a content identity, not a commit or a public pinnable producer. I independently archived committed Runtime `129493b2`, copied only the candidate authored schema, and ran the normal complete Python/TypeScript/conformance/artifact generation and checks. The result is byte/mode equal to the handed-off private candidate. Exactly 13 Runtime paths differ from the committed base: authored schema plus 12 normal generated outputs; no product/test source changes. `a51267ec3dd94ea465a3161e3b4d8fbcd061009e` is an ancestor of `129493b2`, retaining the already reviewed `e41f3d1e` correction.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md-16-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md:17:Removing exactly `TextBindingSetArgs`, the `text-binding.set` clause and the three additive reference unions restores the entire parent S2 schema structurally. Thus all 48 definitions/22 operations remain within 49/23; no replacement with the older incomplete schema. Agent and private Runtime authored schema bytes are identical. Current public Agent lock/client/artifact files have zero diff. Public lock remains producer `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, artifact `sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56`. Private input/generated metadata still says `0.2.13`; changed bytes cannot be published at that existing version.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md-18-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md-19-The native implementation matches the originally reviewed product changes while retaining current producer-aware recording/capture. Closed new-input schema requires an explicit occurrence, valid kind/slot, a four-field immutable source pin and exactly one of text/clear. First authoring produces exactly the six descriptor fields. Shared source ownership refuses, including materialized authoring aliases. Source object/digest/size/project, canonical MIME, UTF-8 and acceptance-time CAS hash are verified; EMPTY remains a present object and clear produces ABSENT.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md-37-Destructive GC remains unverified: append-only CAS reachability/non-orphan status plus retained bytes is the actual evidence, without a collector cycle. No public read/writer deletion follows from that result. No full/full* suite, browser/socket test, public package build/install, public TypeScript compile, App journey or public-tuple qualification was run or claimed.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md-38-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md:39:Decision: approve this private preparation without changing the settled plan. Nothing is blocked. Next, the Runtime owner can carry the complete 49/23 schema through an authorized fresh public version and normal client generation; qualify the coordinated consumer tuple and actual App journeys before cutover. Keep destructive-GC qualification with a future real collector owner.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-viewing-am-small-units.md-80-## Final integration condition
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-viewing-am-small-units.md-81-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-viewing-am-small-units.md:82:Merge sprite first through the merge queue, refresh and check the normal manifest, then merge plate separately and repeat catalog and manifest generation/checks. Preserve presenter, source-certification, PCM, SDK, schema, lock, and public12 bytes. D09/private crop/parity remains held.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-exact-retry-final.md-28-- No full, matrix, browser, live-socket, or central integration suite was run.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-exact-retry-final.md-29-- The current tests use private/fake session seams for adapter control flow; they do not prove Runtime acceptance. I make no fake-session acceptance claim.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-exact-retry-final.md:30:- The old whole-publication publisher remains deleted in this tree, but its replacement is not whole-WC3 qualified by this review. The prior public-014/parent-provider attempt failed before the adapter on the Runtime ownership schema, and the real normal-pin/current-source private Runtime case is assigned to a separate qualification worker. Whole WC3 therefore remains held until that normal private parent-provider case passes with the current client and retains the original six positive assertions (success, exactly-one publication, idempotency key, selected asset, timing `at`/`hold`, and expected head), plus native retry/restart evidence.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-exact-retry-final.md-31-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-exact-retry-final.md-32-## Required next action
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/report.md-7-Expected worktree tree: `5f17c47a36b75a69e1fa50fd1cc3a1e54e1a80c0`. The harness must create the true two-parent commit with first parent `2585e01c` and `--merge-parent f133a879`; I did not run Git merge, commit, rebase, checkout, or ref mutation.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/report.md-8-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/report.md:9:No WC3/WC6/D13/audio/private-carrier/project-data/Mouth changes were brought forward. `e86f44d0` normal014 pin bytes, current `ee896821` source bytes, frozen Agent `310e5484`, schema `6ba7…`, generated clients, lock, and artifacts remain unchanged.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/report.md-10-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary014-current-init-source/report.md-11-## Exact checks
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/report.md-6-- Recovered diagnostics: **83 passed, 2 failed**, retaining old expectations that conflict with settled equal-state replay policy.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/report.md-7-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/report.md:8:The private proof uses reviewed helper `54db299` explicitly and records `gain:1` at occurrence birth. Frozen ordinary schema/pins and original App tests remain untouched.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/report.md-9-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/report.md-10-[Report with exact commands, results, decisions, and source mapping](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/report.md).
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/report.md-7-- Ruff and `git diff --check` passed. Cycle check retains the verified baseline failure.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/report.md-8-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/report.md:9:The private pair qualifies actual registered-host artifacts and settled associations. Published schemas/pins remain untouched. Requester commit/restart, lost-ACK admission durability, and registered render remain unqualified.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/report.md-10-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/report.md-11-[Detailed report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/notes/report.md)
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/report.md-2-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/report.md-3-- Targeted regressions: **414 passed, 1 deselected**.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/report.md:4:- Real RuntimeService with private generated-schema overlay: **17 passed, 4 strict xfailed**.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/report.md-5-- Ruff and `git diff --check`: passed. No full suite run.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-binding-native/report.md-6-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-native/report.md-10-Exact commands, results, decisions and limitations are in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-native/notes/report.md).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-native/report.md-11-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-native/report.md:12:No bounded-task blocker remains. Manager must compose the current kernel and complete S1 schema union before freezing. No full suite ran. Commit message and `DONE` are written; private test copies were cleaned up.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/report.md-1-**APPROVEPRIVATE** for Agent `3730d0bd`. No blocking Agent source findings.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/report.md-2-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/report.md:3:Independent checks passed: 447 carrier/SDK tests, 96 schema tests, 22 focused neighbors, 7 explicit ledger-pair/public-v1 tests, and 24 probes. Counts overlap. Public v1 compatibility and obsolete-private refusal/current-v2 success pairs are preserved.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/report.md-4-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/report.md-5-Runtime ACK, both-owner review and actual matched native qualification remain pending. No source or Git changes; no full suites requested.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md-6-- Focused tests: **83 passed, 2 inherited equal-state red spikes**.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md-7-- Runtime proof: **11 passed** with genuine CAS, transcript segments, rational FPS, restart, inverse/redo, rebase, and atomic refusal.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md:8:- Confirmed ordinary 55/29 floor unchanged; private schema is 57/31. App’s exact three `it.fails` remain unchanged.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md-9-- No product changes, pins, integration, full suites, or public-adoption claim.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-first-slice-private/report.md-10-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-final-parentauto/report.md-2-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-final-parentauto/report.md-3-- Agent: `310e5484`, tree `c5a8a3ec`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-final-parentauto/report.md:4:- Schema: raw `6ba7b51e…768f2d`, canonical `63ac77b3…bfacba7`, 55 defs / 29 ops
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-final-parentauto/report.md-5-- Runtime: `7f6dd892`, tree `4cccb2d6`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-final-parentauto/report.md-6-- Private normal generation: 75 artifacts, digest `ce3781c2…30d59`, artifact identity `7e8fe2e4…7240d`
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-private-replace/report.md-12-- parent: `e86f44d04e0a5f183d82d4d1ac307951dd32c44e`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-private-replace/report.md-13-- tree: `d4a9474e20b7eca2b36ba80f5fa7204b5dc3f8fb`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-private-replace/report.md:14:- private Agent schema SHA-256: `b02cd3a30a63647cd4a31bb8426c049d02ac3ddd168af5f7847a735eb549db16`
+
+exec
+/bin/bash -lc "rg -n -i -C 5 'project.?data|compiler.?canary' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md" in /home/user/work/wt/agt-review-project-data-private-replace
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-818-App can't retire its remaining snapshot writers until these native ops exist. They are Agent-owned, closed typed args, guarded inverse, captures and goldens published through the hub, one slice per worker:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-819-1. clip.set transition SET. Match the existing UI: transition identity, duration and params (ClipTransitionSection.tsx, ElementsLibraryPanel to timeline.apply_transition). Use the canonical INCOMING meaning with incoming-neighbor validation. Use selected registry/schema authority only where actually needed. Do NOT widen clear into set.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-820-2. Property families: opacity, effects and position.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-821-3. Placement unplace/create (native placement.move stays move-only).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-822-4. Occurrence/group delete/duplicate (group delete already assigned; add duplicate).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md:823:5. Authored transcript/project-data associations, per the census.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-824-No whole-row or root replaces, and no aliasing op names. Each one is M2 work: dispatch 1 and 2 now on branches; merges follow the M1 record. Each published slice lets App cut a writer, and each cut gets a deletion-ledger row.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-825-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-826-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-827-## Runtime02:59 — M1 final integration full classified, ZERO new
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-828-Runtime4bb/tree219 finalonefull runtime-full-restore-integration-1020021911-13639 **3829PASS/7exactmainFAIL/18SKIP/170.49s**. FailureSETexactprior3790/7full; failuretests+runtime_boundary.py+platform.py BYTEUNCHANGED8cmain, all7alreadyprovedmain inruntime-baseline.md.39newnullpreservationtests passed.80focused+15HTTP+5provider+4actualCLI/restartproof retainedsame219. Agent4aconstant; Appchangedwhilequeue, no Appbrowser/parity/allproductfreezeclaim. RuntimeM1EXITCOMPLETE, globalPLANrecordstillowner. Fullreview notes/m1-null-speed-final-full.md. No secondfull. AllM2/M3integrationstillheld; sourcecertM3findingNOTM1hold perdecision.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-47-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-48-- fully supported native label/hold batches use the generic port;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-49-- mixed supported/unsupported batches enter the generic port and are refused atomically by its all-member preflight, before owner resolution, capture, preview, enqueue, or snapshot fallback;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-50-- all-unsupported batches remain on the existing validate/compile/guarded `commitData` producer path.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-51-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md:52:There is no post-capture fallback, copied support predicate, duplicate writer, or `legacyClean()` bypass. The existing cold-read readiness gate and MAIN574 changes remain intact. The mounted compiler canary therefore stays on its existing standalone path until its native operation is paired.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-53-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-54-## Private validation
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-55-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-56-The private candidate was an archived copy of exact base `590c19795`, with the helper prerequisite and the four-file proposal applied. The approved dispatch repair was applied unchanged; it applies cleanly to this current root.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-57-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-64-  src/tools/video-editor/hooks/useTimelineOps.test.ts \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-65-  src/tools/video-editor/hooks/useTimelineOps.trackLabel.test.ts \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-66-  src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-67-  src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-68-  src/tools/video-editor/commands/commitSession.test.ts \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md:69:  src/tools/video-editor/lib/compiler-canary.test.ts \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-70-  src/tools/video-editor/lib/source-map-runtime.test.ts
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-71-```
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-72-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-73-Result: **9 files, 278 tests passed**. The current `590c19795` root has three more tests than the earlier 275-test review count.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-current-port-packet.md-74-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-15-  during its all-member preflight;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-16-- all-unsupported standalone batches bypass the native port and retain the
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-17-  existing validate/compile/guarded `commitData` snapshot path.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-18-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-19-There is no post-capture fallback, copied support predicate, new legacy
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md:20:writer, or history/`legacyClean()` bypass. The mounted compiler canary remains
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-21-on its existing standalone path until its native migration.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-22-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-23-**Actual Door/browser: HOLD.** No Runtime HTTP/Door, browser, localhost,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-24-live-socket, or full-suite qualification was run, as required by the brief.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-25-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-41-  src/tools/video-editor/hooks/useTimelineOps.test.ts \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-42-  src/tools/video-editor/hooks/useTimelineOps.trackLabel.test.ts \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-43-  src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-44-  src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-45-  src/tools/video-editor/commands/commitSession.test.ts \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md:46:  src/tools/video-editor/lib/compiler-canary.test.ts \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-47-  src/tools/video-editor/lib/source-map-runtime.test.ts
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-48-=> 9 files, 275 tests passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-49-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-50-node_modules/.bin/eslint \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-51-  src/tools/video-editor/commands/commitSession.ts \
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-68-## Behavior verification
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-69-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-70-The real mounted `useTimelineOps` hook was exercised with the real
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-71-`createTimelineCommandSession` generic port in a private one-off probe:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-72-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md:73:- `compiler-canary.ts` produced its actual source + source-map
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md:74:  `project-data.write` batch. It made exactly one guarded snapshot commit,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md:75:  preserved two project-data entries, and made zero native-port calls.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md:76:- A mixed `track.update` + `project-data.write` batch raised
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-77-  `Native patch refused` at native capture preflight. It made no snapshot
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-78-  commit; finish and submit were not reached.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-79-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-80-The native capture tests assert that the supported two-member batch becomes
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-standalone-final-review.md-81-one ordered command list (`clip.set`, `track.set`) with ordinals `[0, 1]`,
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-49-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-50-Both commands passed. Existing compiler/source-map producer neighbors also passed:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-51-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-52-```text
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-53-node_modules/.bin/vitest run --no-cache --maxWorkers=1 --no-file-parallelism \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md:54:  src/tools/video-editor/lib/compiler-canary.test.ts \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-55-  src/tools/video-editor/lib/source-map-runtime.test.ts
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-56-```
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-57-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-58-Result: **2 files, 90 tests passed**. This confirms their isolated test doubles remain intact; it does not prove the live hook wiring below.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-59-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-80-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-81-## Finding — actual door HOLD
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-82-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-83-`useTimelineOps.ts:276-281` unconditionally calls `genericPatchPort.capture/finish/submit` whenever the port exists. `useTimelineState.ts:766-770` passes `save.commands.genericPatchPort` into the live hook once the command session is mounted. Therefore the retained legacy branch at `useTimelineOps.ts:283-315` is unreachable for live sessions, including valid unsupported standalone operations.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-84-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md:85:This is distinct from the required mixed-batch behavior: mixed supported/unsupported input correctly refuses before owners/preview/enqueue. The defect is that an all-unsupported positive patch also refuses instead of preserving the existing snapshot producer until its native migration. A direct affected producer is `compiler-canary.ts:440-441`, whose `project-data.write` source/source-map batch now reaches the bounded native port and refuses before the later proposal/draft path. The source helper itself remains approved; the live consumer needs a narrow dispatch distinction that retains unsupported positive/draft producers while keeping mixed native refusal atomic.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-86-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-87-No product change was made in this review.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-88-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-89-## Not run / limits
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-ordinary-session-patch-review.md-90-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-33-`commitData(compiled.nextData, { save: true, semantic: true })` (`:298-303`).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-34-That is the D01 snapshot ingress.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-35-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-36-The same `TimelineOps.apply` is used by proposal acceptance
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-37-(`src/tools/video-editor/lib/proposal-runtime.ts:503-566`) and by the compiler
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:38:canary. `compiler-canary.ts:421-442` deliberately builds all DSL/source-map
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:39:`project-data.write` operations into one `dataPatch` and calls `timeline.apply`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-40-once. It then creates a separate clip proposal (`:444-475`). Do not turn the
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-41-first batch into one submission per source-map entry.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-42-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-43-Additional durable ordinary callers remain outside `useTimelineOps`: project
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-44-transcript association/import (`src/tools/video-editor/lib/project-transcript-host.ts:628-652`)
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-66-`clipScalarCapture` path, which is absent from reviewed root `b1ef4b9b`. Its
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-67-golden fixture and “027” parity claims are historical only.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-68-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-69-The fixed Agent/Runtime pair has native `track.set`, `clip.set`,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-70-`clip.set-params`, `clip.set-element`, `clip.move`, `clip.add`, `clip.trim`,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:71:and related commands. It has **no** native `project-data.write`, transcript,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-72-data-kind, or seam operation. Therefore the old helper cannot close this row,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-73-and no App-only mapper can honestly make the source-map/transcript families
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-74-native.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-75-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-76-## Exact minimal seam for App integration
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-96-   native local diff. A mixed supported/unsupported patch must raise one
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-97-   refusal before preview, outbox append, or `commitData`; never filter the
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-98-   supported members or submit them independently. Keep
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-99-   `previewTimelinePatch`/`compileTimelinePatch` as pure diagnostic/preview
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-100-   utilities until every ordinary operation family has a native producer.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:101:4. Leave `compiler-canary.ts` unchanged. Its source/source-map `dataPatch`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-102-   must remain one `TimelineOps.apply` batch, and its main clip proposal must
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-103-   remain one proposal accepted through the same seam. If the current fixed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-104-   producer pair cannot accept the data batch, fail the whole batch visibly and
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-105-   retain the proposal/draft; do not split it into per-key submissions.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-106-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-107-Local-vs-App boundary: capture/execute/preview are pure App command helpers;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-108-the App session owns the outbox, retry identity, local projection, and one
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-109-`/v1` request. Runtime receives the existing `commands[]` request unchanged.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-110-The only cross-repo prerequisite is a reviewed Agent producer revision plus
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:111:matching Runtime registration for the missing project-data/transcript/data-kind
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-112-ordinary operation(s). Do not add a new wire field until that producer design
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-113-has an executable requirement.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-114-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-115-## Deletion boundary
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-116-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-121-  `src/tools/video-editor/hooks/useTimelineOps.ts:283-295` and its now-unused
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-122-  `captureTrackLabelEdit`/`submitTrackLabelEdit` imports from this adapter.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-123-- Delete the legacy snapshot branch in
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-124-  `src/tools/video-editor/hooks/useTimelineOps.ts:298-303`.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-125-- Retain `validateTimelinePatch`, pure preview/diagnostic compilation, and the
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:126:  compiler-canary producer. Do not delete `project-transcript-host.ts`,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-127-  `dataKindItems.ts`, or `timeline-save-utils.ts` until their missing native
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-128-  producer contracts and callers are separately covered; deleting them now
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-129-  would lose required transcript/data-kind behavior.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-130-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-131-## Acceptance commands
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-132-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-133-1. App local targeted lane (no browser/socket):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-134-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:135:   `node_modules/.bin/vitest run --no-cache --maxWorkers=1 --no-file-parallelism src/tools/video-editor/hooks/useTimelineOps.test.ts src/tools/video-editor/hooks/useTimelineOps.trackLabel.test.ts src/tools/video-editor/lib/compiler-canary.test.ts src/tools/video-editor/commands/genericPatchCapture.test.ts src/tools/video-editor/commands/commitSession.genericPatch.test.ts`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-136-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-137-   Required assertions: whole mixed refusal has no preview/outbox/commit,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-138-   supported members become one command array/one outbox intent, lost-ACK
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:139:   retry reuses exact body/key, and compiler-canary source-map writes remain
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-140-   one batch.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-141-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-142-2. Agent fixed-pair conformance in a private Agent archive:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-143-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-144-   `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$AGENT_D874" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py`
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-152-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-153-## Evidence run and blocker
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-154-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-155-Current App focused neighbors passed with the root-config form:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-156-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:157:`node_modules/.bin/vitest run --no-cache --maxWorkers=1 --no-file-parallelism src/tools/video-editor/hooks/useTimelineOps.test.ts src/tools/video-editor/hooks/useTimelineOps.trackLabel.test.ts src/tools/video-editor/lib/compiler-canary.test.ts`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-158-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-159-Result: **3 files, 122 tests passed**.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-160-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-161-The requested `--config config/testing/vitest.config.ts --configLoader=runner`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-162-variant could not start because the repository config evaluates `__dirname`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-163-under the runner loader (`ReferenceError: __dirname is not defined`). No
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-164-dependency was installed or modified.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-165-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-166-Actual blocker: the fixed Agent `d8749a9c` / Runtime `2c4ac180` contract has no
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:167:native command for `project-data.write` or the transcript/data-kind/seam
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-168-ordinary families. App can stage the generic session seam for existing native
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md:169:commands, but D01 cannot close, and compiler-canary source persistence cannot
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-170-be moved off snapshot writes, until that producer revision is reviewed and
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app2-ordinary-batch-source-review.md-171-paired.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-1-# agent — 2026-10-20T16:17:38Z
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-2-Milestone: M1 RECORDED; M2 active, no exit. Gates1/6/7 OPEN.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-3-Integrated: Agent2f8b9cc5/public013/Composition12. NewcorrectedMouth56723187 (original2b5known-statepatch) merged;17focused+40neighbors+8artifact/catalogfreshnessPASS; privatecrop/statistics retained, no D09/parityclaim. New73427b02 nativeSheetparentclipomission throughcaptureddelete; postmerge16HTTPPASS31852. f133 fixtureonly_core fakecheckoutfix; postmerge4PASS22802. Prior WC4P1cut813, F1stagedguard8e, Scene/save-core dab, Root/service extractions04c/725, spriteacc/plate30fc, WC9docs130. D05/D06/D07/WC4/WC9 DELETED; AG03partial/nativeomissionmerged, legacyapply_sheetheld.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-4-Published: immutable Runtimeproducer2c4ac180/client013/publicS2a6f1 48/22, Composition12. CompatibleRuntimepatches neednorepin. Composition13 AppFIRSTnotyetadopted. No current014/release.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-5-Full: EXACT813/tree236c full24995=14696PASS/3FAIL/452SKIP/4XFAIL/565subtests3879s. All3testfixtures missing_check_core; fixedf133 withoutassertionchanges, targetedcurrent4PASS+254workerneighbors. Rawfull remainsRED,0unclassified. design/agent-full24995-classification.md. ExcludeslaterAM/docs/sheet; no relabel/rerun/duplicatefull.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md:6:In flight: ordinary014-current-init-source; raw-audio-duration-read-fix; wc3-real-http-retry-final; review-d13-main-custody-patch; review-project-data-private-replace; review-wc5-known-intent-preservation; wc6-narration-command-slice. Luna/high; >=2ledgerlanes. Labelsreviewfinished, central18socketgate28716pending.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md:7:Next5:1) current014+approvedinitopaque/sourcejoin ->Appnormalbranchpair/ownerrelease/currentRuntimecompatunion;2) D13realrender014gate, WC3finalreview, WC6remainingoriginalpositives thenONEsmallunitpermerge;3) init fouropaqueinverse positives fix/currentpair +namespacedprojectdata storageclassification/minimalreplacement;4) voiceoverchildscopeknownintent+rawaudio pair;5) currentcarrierCAS/textsuccessor review->ONE3730nativepair->fullcurrent55/29groupunion.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-8-Candidate014: e86f44d04e0a5f183d82d4d1ac307951dd32c44e on ee896 currentjoin, independentAPPROVE63+vendorlock/all75producer/15clientidentity,279local/143actualcentral. Producer a0dca169/tree4b7dd0fe,6ba55/29,schema ce378/artifactf021. UNPUBLISHED/stagingonly, no carrier. ApphubandApp2peerrequestsent. Sealedtext importdiscrepancyRESOLVEDRuntime exacta0/31011PASS; frozenbothschemasadmitexactkey, no schemachange.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-9-Ready/held: WC6a4c13077 finalAPPROVE6guards+12focused/71unit/1actualHTTP, strictpayload/scalar/authenticatedmap no absentancestor exemption. Remainingnarration/structuralpositivesOPEN, fixtureimportportactive. WC3current22unit/154neighbors/22directa0, exactreceiptassertions added, finalreviewactive. D1365c87 exact014functionalrenderassertionscompleted but custodyteardownRED; stoppedcleanupworker after+67/-2 unowned Maincustody_broker/process_group patch. Owner scopeescalation161359Z +independentreadonlyreviewactive; finalcentralresultnotclaimed. MustseparatecorepatchfromD13/pin beforeanymerge. No ignoredcleanup. Managedaudio04e5737b independentAPPROVE261+1actualWAV, childscopevoiceover/rawunregisteredstrictOPEN. Rawadapter8f155121+126purePASS independentlyHOLD missingoriginalduration_seconds recordedread (samepinchangedpositivemetadata trim8->7); existingmediareadclaimfixactive. Runtimeab4c unsafe fdverify->pathreopen REJECTED; e220singlefd7+71PASS needsexactindependentreview/currentcompose. No actualpairyet/no guessedmetadata/genadoption.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-10-Groups: recoveredprivate86dfc584/helpersunregistered, privatepatch74f657c..., schema c51d57/31 againstunchangedordinary6ba55/29. IndependentprivateAPPROVE37view/83+2obsoleteequalstateREDspikes/204inverse/11realCASsegmentsrationalfixture migration-move-reload-undo-redo-rebase. Reviewedtesthelper54db299explicit;382fstale2fails. Publicregistration/sourceRef/carrierunionheld; originalApp3it.failsuntouched. Carrier7b8 boundedindependentAPPROVE415blobs/1catalogheadfence; Runtimecurrent9fCAS+textsuccessoractive, no private/publicpin. ONE3730nativepaironlyaftersuccessorreview.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md:11:Blocked/needs: no all-workblocker. Init4296+2585 approvednarrowreadfix:31pure+4actuala0 includingcombinednull/false/array/object disjointopaque->restart/reload->undo/redo. App2activation/publicadoptionstillheld; newcurrentf133normal014candidatecompositionactive, olde86/310unchanged. Privateprojectdata b598 addsclosedreplace atMainparent.config.app[target][key] (notcatalog),16purePASS; 4frozeninventoryfailures expectedprivateonly, notmodified; independentreview+peeragreementbeforegeneration, no frozen6ba/a0mutation. Mouth ee710 rejection resolved2b5/567merged2f8; UNKNOWN/compatROI distinction kept. D09 source/cache/physicalparityOPEN. Labelsd93 independentAPPROVE114+59+16direct;2socketcasesnotlocalsandboxqualified. Central28716 now18nativebeforemerge, no sourcecertificateparityclaim.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md:12:Inbox: ACKall12:35-through16:11 rawsinglefdcurrentcompose +16:04mouthcorrectivegrant; sealedtext11exactPASS reconciled. LatestRuntime9ftextrestored/CASpreserved/currentcarrier+014compatcompositionsactive. Rawaudiopeerprivateoptionalmethodagreement15:52; compatibilitymanifestRuntimeowner,noimplicitrelease. App2ownSTATUSbootstrapopaque andprojectdata gaps observed/assigned, directpeerrequest014sent. Actualtimestampsdate-u.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-13-Decided locally: missing_coretestdoublefixedretainingassertions; sealedtextfiximportsnotcodec; supportednativeomissionlandswithoutfalseAG03closure; privateunregisteredgrouphelpersnotmerged; rawaudio metadataONLYexactverifiedWAVbytes/noguessedcatalogtuple. ShareddepsREADONLY/privateoverlays. No newunapprovedskip/xfail/frozenmutation.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-14-Resources:7.5Glastcheck; nofullrunning/requested; D13boundedrendercentralonly. Recyclecleanownfinishedunleasedworktreesifneeded, branches/reportsretained; KEEP/dirty/leaseduntouched. No ownerfilm/macOS/globalMP4parity/unifiedPCM/M2exitclaim.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-15-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md-16-Decided locally: holdWC5partialproposal untiloriginalpreserve/ripple/regeneration behaviorandrealsettledspeechselection proven; no success-to-proposal_open substitute. WC6 testsfixtureport nowreachesreal legacywholepublisher refusal; distinguish WC2 vsWC6 beforewrongrowclosure. Maincustodyunownedpatchheldforownergrant, no pathscopeexpansion by assumption.
+
+context compacted
+codex
+# Review report
+
+**Verdict: HOLD qualification and App cutover.**
+
+- Candidate: `b5984ac0c7e2aa9de710175188cef9a602c48c3d`
+- Tree: `d4a9474e20b7eca2b36ba80f5fa7204b5dc3f8fb`
+- Private schema SHA-256: `b02cd3a30a63647cd4a31bb8426c049d02ac3ddd168af5f7847a735eb549db16`
+- Counts: 56 schema definitions, 30 composed clauses, 28 registered handlers.
+
+Confirmed exact storage path `parent.config.app[extension_id][key]`, closed `select:"parent"`/`mode:"replace"` arguments, no catalog/TargetKey/table/endpoint, opaque-key preservation, ordered source/source-map batches, strict inverse/ABA guards, and no whole-parent replacement.
+
+Blocking findings:
+
+1. Candidate key validation is not App-compatible: whitespace, reserved outer keys (`__proto__`, `constructor`, `prototype`), and oversized UTF-8 keys are accepted by schema validation; App requires trimmed keys, a 256-byte limit, reserved-name rejection, and additional size/count limits.
+2. Concurrent writes to disjoint keys under a previously absent/empty/null target namespace refuse with `dependency_changed`; this avoids silent deletion but does not yet satisfy automatic disjoint-key rebase.
+3. Runtime pairing and App native cutover are absent; App must retain the compiler-canary and legacy snapshot fallback.
+
+Tests:
+
+- Focused M2/M1/scalar suites: `209 passed`
+- M2 + composed schema: `16 passed`
+- M2 only: `11 passed`
+- Ruff: passed
+- `git diff --check`: passed
+- Frozen inventory failures: original candidate evidence reports `4`, private-only and expected; frozen files remain unchanged.
+- No Runtime, App/browser, schema-generation, or full suite run.
+
+Precise proposals are recorded in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-private-replace/report.md). Commit message was written to the requested path; `DONE` created. Worktree remains clean.
+tokens used
+272,300
+# Review report
+
+**Verdict: HOLD qualification and App cutover.**
+
+- Candidate: `b5984ac0c7e2aa9de710175188cef9a602c48c3d`
+- Tree: `d4a9474e20b7eca2b36ba80f5fa7204b5dc3f8fb`
+- Private schema SHA-256: `b02cd3a30a63647cd4a31bb8426c049d02ac3ddd168af5f7847a735eb549db16`
+- Counts: 56 schema definitions, 30 composed clauses, 28 registered handlers.
+
+Confirmed exact storage path `parent.config.app[extension_id][key]`, closed `select:"parent"`/`mode:"replace"` arguments, no catalog/TargetKey/table/endpoint, opaque-key preservation, ordered source/source-map batches, strict inverse/ABA guards, and no whole-parent replacement.
+
+Blocking findings:
+
+1. Candidate key validation is not App-compatible: whitespace, reserved outer keys (`__proto__`, `constructor`, `prototype`), and oversized UTF-8 keys are accepted by schema validation; App requires trimmed keys, a 256-byte limit, reserved-name rejection, and additional size/count limits.
+2. Concurrent writes to disjoint keys under a previously absent/empty/null target namespace refuse with `dependency_changed`; this avoids silent deletion but does not yet satisfy automatic disjoint-key rebase.
+3. Runtime pairing and App native cutover are absent; App must retain the compiler-canary and legacy snapshot fallback.
+
+Tests:
+
+- Focused M2/M1/scalar suites: `209 passed`
+- M2 + composed schema: `16 passed`
+- M2 only: `11 passed`
+- Ruff: passed
+- `git diff --check`: passed
+- Frozen inventory failures: original candidate evidence reports `4`, private-only and expected; frozen files remain unchanged.
+- No Runtime, App/browser, schema-generation, or full suite run.
+
+Precise proposals are recorded in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-private-replace/report.md). Commit message was written to the requested path; `DONE` created. Worktree remains clean.

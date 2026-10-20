@@ -1,0 +1,400 @@
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+?? astrid/sdk/timeline/_media_inputs.py
+?? astrid/sdk/timeline/native_occurrence_media_commands.py
+?? astrid/sdk/timeline/native_placement_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+?? tests/editing_conformance/fixtures/recipe_m2_placement.json
+?? tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+?? tests/editing_conformance/test_commit_runtime_occurrence_media.py
+?? tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+?? tests/editing_conformance/test_recipe_m2_placement.py
+?? tests/editing_conformance/test_recipe_occurrence_media.py
+?? tests/sdk/test_timeline_composed_schema.py
+
+codex
+Final bounded checks passed: 1,196 tests passed with five strict xfails retained; the direct Runtime service lane again passed 42 with 12 popup strict xfails. Ruff and mypy also passed. The central HTTP run is still active. I’m preparing the handoff with the exact tested tree and schema hash; the harness-created commit SHA will need recording after this worker exits.
+
+exec
+/bin/bash -lc "cat > /tmp/write_popup_handoff.py <<'PY'
+from pathlib import Path
+import json, hashlib, subprocess
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+notes=orch/'workers/agt-m2-popup-foundation-compose/notes'
+root=Path('/home/user/work/wt/agt-m2-popup-foundation-compose')
+manifest=json.loads((notes/'final-manifest.json').read_text())
+def digest(path): return hashlib.sha256((root/path).read_bytes()).hexdigest()
+goldens=['recipe_m1_move.json','recipe_m1_occurrence.json','recipe_m1_shared.json','recipe_m2_app_track_label.json','recipe_m2_clip_add.json','recipe_clip_delete.json','recipe_m2_scalar_track.json','recipe_m2_scalar_params_absent.json','recipe_m2_scalar_params_null.json','recipe_m2_scalar_params_object.json','recipe_m2_scalar_disjoint.json','recipe_m2_placement.json','recipe_m2_occurrence_media.json']
+golden_rows='\\n'.join(f'| "'`{name}` | `{digest("tests/editing_conformance/fixtures/"+name)}` |'"' for name in goldens)
+text=f'''# M2 writer bundle 2 — INTERNAL PROVISIONAL source, no release
+
+M2 integration is HELD until PLAN records M1. Frozen Bundle1 remains Agent
+"'`3bf9e5368a956ef562c77e1beb0a745addf23daf` / Runtime
+`6be970633cc82ab412428151e6bf42f3e7fc3081`, client `0.2.2`.
+This candidate is not popup acceptance, a generated artifact release, or an App handoff.
+
+## Exact source identity
+
+| Field | Value |
+|---|---|
+| Branch | `tl/agt-m2-popup-foundation-compose` |
+| Source worktree | `{root}` |
+| Base commit | `{manifest['"'base']}"'` |
+| Final tested source tree | `{manifest['"'tree']}"'` |
+| Composed commit | **PENDING HARNESS COMMIT AFTER WORKER EXIT**; do not use the base SHA as the composed commit |
+| Canonical schema | `{root}/astrid/core/timeline/schema/edit-command.schema.json` |
+| Canonical schema file SHA256 | `{manifest['"'schema_sha256']}"'` |
+| Runtime lock SHA256 | `{digest('"'runtime.lock.json')}"'` (unchanged) |
+| Exact paired Runtime | `6be970633cc82ab412428151e6bf42f3e7fc3081` |
+| Paired client/schema/artifact | `0.2.2` / `sha256:89a396aaa10a5ab6c29fb5f053bf12dd031be4a259c33ebc6a53489fcd5878d3` / `sha256:3b805d6946fd73c44144009021f44153b78ceeb5e5b1298cd2397a1f2dc19730` |
+
+The sandbox forbids commits and the harness commits only after exit. Manager TODO:
+read `git rev-parse tl/agt-m2-popup-foundation-compose`, verify its tree equals the
+final tested tree above, and replace the pending commit cell before freezing source.
+The exact tree is already corroborated by the central service'"'s "'`snap` file.
+No commit identity is fabricated in this handoff.
+
+## Reviewed composition and file manifests
+
+- Foundation `84db8bde` is retained, including generic clear batches, staged/own-write
+  capture, net-zero handling, semantic reservations, root patterns and original goldens.
+- Popup: exact `2f77310e..5528c45c`. Full file manifest: `{notes}/popup-manifest.txt`;
+  complete reviewed delta: `{notes}/popup.patch`. New helper/handler, golden and both
+  popup test files are byte-identical to `5528c45c`.
+- Media provenance: exact `c3da1535..2f77310e`. Manifest: `{notes}/media-provenance-manifest.txt`;
+  delta: `{notes}/media-provenance.patch`. Only boundary-proven manifest removal and
+  provider forwarding are added to the newer core. The one inverse condition already
+  exists equivalently in the foundation (`before.state == present`), so it is retained.
+  The missing precursor test module is copied exactly from reviewed `2f77310e`,
+  rather than importing the older product core.
+- Placement: exact `e4338c48''^..e4338c48`; manifest `{notes}/placement-manifest.txt`,
+  delta `{notes}/placement.patch`. Handler, golden and tests are byte-identical.
+  Selection/query and registry changes are manually reconciled with foundation/popup.
+- Trim `8de94595` is **not composed**: the base lacks `_trim_commands.py` and its
+  fixture/tests. It depends on native trim `d82f6ef7`, outside the supplied exact
+  overlay. Manager must explicitly review/include that prerequisite, then apply
+  `8de94595`; do not copy its whole older `commands.py` or schema.
+- Split `3b03358` is **not composed**: that revision does not resolve in this object
+  store. `3b03eee9` exists but is not silently substituted; manager must confirm the
+  exact reviewed split SHA and its generic create-after/order changes.
+- Scalar worker `agt-m2-clip-scalar-fields` was still uncommitted when final source
+  was frozen for paired tests. Its WIP is excluded; manager adds only its committed,
+  passing source in a later composition. This is why this source remains INTERNAL PROVISIONAL.
+- Params/word/root-stage/materialization WIP is excluded. Params'"' three strict xfails
+  and the foundation's two new root inverse strict xfails remain byte-identical.
+
+The only additional Python glue beyond reviewed overlays is replacing the existing
+seven-line "'`TRACK_CREATE_PARAMETERS` literal with its one-line canonical-schema lookup.
+Its exact existing closed args become `TrackCreateArgs` plus one normal operation
+condition in the canonical schema. This closes a generator gap without adding a
+handler or behavior. All registered args now have normal closed definitions.
+Exact semantic-union and 22 byte checks: `{notes}/audit.py`, `{notes}/final-manifest.json`.
+
+## Operations and capture exports
+
+Every registered operation is version `1`, schema_version `1`. Engine/provider
+operations `timeline.inverse` and `timeline.restore` remain available separately.
+
+| Operation | Capture export | Args definition |
+|---|---|---|
+| `clip.move` | `astrid.sdk.timeline.capture.capture_move` | `ClipMoveArgs` |
+| `clip.delete` | `astrid.sdk.timeline.capture.capture_clip_delete` | `ClipDeleteArgs` |
+| `clip.add` | `astrid.sdk.timeline._clip_commands.capture_clip_add` | `ClipAddArgs` |
+| `clip.set-params` | `astrid.sdk.timeline._scalar_commands.capture_clip_set_params` | `ClipSetParamsArgs` |
+| `track.create` | `astrid.sdk.timeline.capture.capture_track_create` | `TrackCreateArgs` |
+| `track.set` | `astrid.sdk.timeline._track_commands.capture_track_set` | `TrackSetArgs` |
+| `placement.move` | `astrid.sdk.timeline.native_placement_commands.capture_placement` | `ClipMoveArgs` |
+| `occurrence.add-media` | `astrid.sdk.timeline.native_occurrence_media_commands.capture_occurrence_add_media` | `OccurrenceAddMediaArgs` |
+| `occurrence.swap-media` | `astrid.sdk.timeline.native_occurrence_media_commands.capture_occurrence_swap_media` | `OccurrenceSwapMediaArgs` |
+
+Published `_track_commands` remains a thin re-export of the sole scalar handler.
+Native session ingress stays `astrid.sdk.timeline.sync.TimelineSession.queue/commit`.
+Popup signatures/ownership/refusals are detailed in `{orch}/design/m2-popup-native-contract.md`.
+The immutable five-field `MediaSelection` and ABI1 `selected_media` seam are unchanged.
+
+Portable goldens are absolute under `{root}/tests/editing_conformance/fixtures/`.
+Popup golden contains add/swap input, verified_media, exact commands/records/output;
+placement golden contains parent/occurrence cases. M1 and parent-label capture +
+records + output serialization remains exactly **87776 bytes**, SHA256
+`b7f84a929716c9fc479fff1ea99e26daeeeb49b72ddc7594562b929f0feb3ff8`.
+Frozen-base/composed parity outputs compare equal.
+
+| Golden filename | SHA256 |
+|---|---|
+{golden_rows}
+
+## Qualification and explicit limits
+
+Final bounded nonnetwork lane: **1196 passed, 4 existing platform skips,
+64 integration deselections, 5 strict xfails** in 84.56s.
+Actual direct Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316` service/SQLite/CAS lane:
+**42 passed, 12 strict xfailed** in 21.47s. No socket listeners or schema overrides.
+All twelve popup positive/race expectations remain unchanged; only the specific
+old scoped-asset schema error can trigger their strict xfail. Params'"' invalid
+selected-schema cases and two root inverse gaps remain visible too.
+Ruff passes; mypy passes for all ten touched product modules. Vendor lock verifies
+against exact "'`6be9706`; canonical schema semantic union and capture byte parity pass.
+
+Exact-pair central run (one request, final tree only):
+`agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598`.
+Result path: `{orch}/tests/agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598/`.
+**Result pending at initial handoff write; manager must use final summary below / worker report.**
+The suite asserts exact Runtime HEAD and uses the existing frozen client pin, including
+parent label/M1/identity/provider/client cutover plus scalar/first-clip/add-delete/popup/provenance files.
+No full suite, install, network fetch, App/browser journey, artifact generation/version
+selection, commit/merge/push or integration edits are performed here.
+Detached popup greens do **not** prove Runtime popup acceptance or App readiness.
+
+## Official Runtime generation request — source and definitive TODO
+
+1. Manager reviews this source, resolves the missing trim/split identities and optional
+   scalar overlay, and records the harness commit + tested tree above. Any source
+   additions require a new reviewed schema SHA and bounded qualification; do not call
+   this incomplete source a final ordinary/popup bundle.
+2. After manager freeze, Runtime copies the exact canonical source path and SHA above
+   onto a NEW candidate and performs normal official root/export generation. Keep one
+   union of foundation shot/occurrence root patterns and scoped `asset` patterns in
+   `ScopedId`, `EntityRef`, `TargetKey`, `AnchorIdentity`. Include all nine registered
+   args schemas and `MediaSelection`, including the relocated `TrackCreateArgs`.
+   Cover PreparedCommit recorder/created/guard sites through normal generation.
+3. Runtime owns generated Python/TypeScript artifacts, normal package-root exports,
+   artifact manifest and version choice. Agent/App then consume that exact same
+   official tuple and refresh pins together. This worker generates no Runtime files,
+   chooses no release version, uses no raw-schema override and bypasses no pin.
+4. Rerun the unchanged 12 strict positive/race popup expectations through actual
+   managed media selection/production provider; remove markers only after acceptance,
+   reload, restart/exact retry, changed-key refusal, undo/redo and lifecycle races pass.
+5. Resolve selected-pack params'"' three strict failures and root inverse's two strict
+   failures under their assigned owners. Qualify App popup captures/browser use and
+   zero legacy writer traffic; never infer acceptance from unit counts.
+6. Keep Bundle1 frozen and all M2 integration held until PLAN records M1. This handoff
+   is an official generation **request source**, not authorization to release artifacts.
+'''
+(orch/'design/m2-writer-bundle-2.md').write_text(text)
+print(orch/'design/m2-writer-bundle-2.md')
+PY
+python3 /tmp/write_popup_handoff.py" in /home/user/work/wt/agt-m2-popup-foundation-compose
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598 1' in /home/user/work/wt/agt-m2-popup-foundation-compose
+ succeeded in 0ms:
+test agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598: pass exit=0 in 117s — bundle1-runtime6be9706-integration on agt-m2-popup-foundation-compose (agent tree c401f7720a092d1c1305ed37dea55c7754b8eacf)
+cmd: test "$(git -C /home/user/work/wt/rt-m2-track-public-export rev-parse HEAD)" = 6be970633cc82ab412428151e6bf42f3e7fc3081 && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/stage1/test_runtime_client_cutover.py tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+counts: 90 passed, 13 xfailed in 112.27s (0:01:52) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598/log.txt ---
+..................................................x..xxxx............... [ 69%]
+.............xx..xx..xx..xx....                                          [100%]
+90 passed, 13 xfailed in 112.27s (0:01:52)
+
+exec
+/bin/bash -lc 'tail -12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598/log.txt; git diff --name-only 3bf9e536 -- astrid_runtime_client runtime.lock.json; git log -1 --oneline tl/agt-m2-clip-scalar-fields; ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-scalar-fields' in /home/user/work/wt/agt-m2-popup-foundation-compose
+ succeeded in 0ms:
+..................................................x..xxxx............... [ 69%]
+.............xx..xx..xx..xx....                                          [100%]
+90 passed, 13 xfailed in 112.27s (0:01:52)
+84db8bde feat(timeline): compose reviewed native editing foundation
+brief.md
+log.txt
+meta
+running
+
+codex
+The single exact-pair HTTP run passed: 90 tests passed and 13 strict xfails remained—12 popup cases blocked by official asset-schema generation, plus the inherited nullable-speed case. Its snapshot matches tested tree `c401f772…`. I’ll finish the report and commit-message files, keeping popup acceptance, the scalar addition, and trim/split dependencies explicitly outstanding.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+p=orch/'design/m2-writer-bundle-2.md'
+s=p.read_text().replace('**Result pending at initial handoff write; manager must use final summary below / worker report.**', '**PASS: 90 passed, 13 strict xfailed in 112.27s; service exit 0 / 117s.**\\nTwelve are the preserved popup positives/races; one is the inherited first-clip\\nnullable-speed case. The exact centrally snapshotted tree matches the source identity above.')
+p.write_text(s)
+msg='''feat(timeline): compose provisional popup editing candidate
+
+Compose reviewed occurrence media, provenance and placement deltas onto the
+native editing foundation while preserving Bundle1 pins and capture goldens.
+Publish existing track creation args through the canonical command schema.
+
+Retain strict popup acceptance, selected-params and root-inverse gaps. Keep
+scalar, trim and split prerequisites explicit for the next reviewed source.
+
+Validate 1196 bounded tests and 42 direct Runtime service tests; qualify the
+frozen 0.2.2 HTTP pair with 90 passes and 13 strict expected failures.
+'''
+worker=orch/'workers/agt-m2-popup-foundation-compose'
+for name in ('commit-msg','commit-msg.txt'):
+    (worker/name).write_text(msg)
+for path in (Path('/home/user/work/wt/agt-m2-popup-foundation-compose/.ruff_cache'),
+             Path('/tmp/agt-m2-popup-foundation-compose-mypy')):
+    if path.exists(): shutil.rmtree(path)
+for name in ('/tmp/compose_popup.py','/tmp/compose_placement.py','/tmp/write_popup_handoff.py'):
+    Path(name).unlink(missing_ok=True)
+PY
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/report.md <<'MD'
+# agt-m2-popup-foundation-compose
+
+Composed **INTERNAL PROVISIONAL** ordinary/popup source on reviewed "'`84db8bde`,
+retaining frozen Bundle1 vendor/pin 0.2.2 and exact M1/parent-label captures.
+M2 integration remains HELD until PLAN records M1. No release or popup acceptance claim.
+
+Final tested tree: `c401f7720a092d1c1305ed37dea55c7754b8eacf` (matches central snapshot).
+Canonical schema SHA256: `5e622fb61142501f2c028f639da855ca318600be27a594253641bf9b755aa287`.
+Composed commit SHA is **pending harness commit after exit**; the manager must
+record it and verify the exact tree before freezing. No base SHA is mislabeled.
+
+## Changes and decisions
+
+- Applied reviewed popup `2f77310e..5528c45c`, provenance `c3da1535..2f77310e`,
+  and placement `e4338c48''^..e4338c48`. Exact per-delta file manifests and patches
+  are in adjacent `popup-*`, `media-provenance-*`, `placement-*` files. Shared
+  registry/schema/core signatures were manually reconciled, retaining own stages,
+  generic clears, net-zero inverse, root patterns and semantic reservations.
+- Imported only the media-provenance boundary-removal hook and provider forwarding;
+  foundation already has the equivalent absent-to-absent inverse condition.
+  The missing precursor provenance test module is exactly `2f77310e`'"'s test,
+  without copying its older product core. New handlers/helpers/goldens/tests remain
+  byte-identical to their reviewed revisions; "'`audit.py` verifies 22 byte checks
+  and the exact semantic schema union (`final-manifest.json`).
+- Moved the existing closed `track.create` parameter literal into canonical
+  `TrackCreateArgs` and referenced it from Python; added normal schema condition.
+  This is the sole extra Python glue: one lookup replaces seven literal lines.
+  All nine registered operations now have closed canonical args. Added five
+  generator-consumption/reference-union tests. Published track capture remains
+  the unchanged thin re-export of the sole scalar implementation.
+- Did not compose optional trim: `8de94595` needs absent native trim prerequisite
+  `d82f6ef7` and its fixture/tests. Did not substitute split: supplied `3b03358`
+  does not resolve; `3b03eee9` exists but requires manager identity confirmation.
+  These are concrete missing dependencies, not an invitation to copy older cores.
+- Scalar worker remained uncommitted at final-source freeze and last status check;
+  no WIP was copied. Candidate remains INTERNAL PROVISIONAL for manager addition.
+  Params/word/root-stage/materialization WIP is excluded. Three params and two
+  root inverse strict xfails stay visible and byte-identical.
+
+## Exact final verification
+
+All commands run from `/home/user/work/wt/agt-m2-popup-foundation-compose`.
+No dependency install, full suite, network fetch, browser, Runtime artifact
+write, integration worktree write, commit/merge/checkout/push/ref change.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m '"'not integration' tests/editing_conformance tests/sdk/test_timeline_commit_provider*.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_semantic_reservations.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_sync*.py tests/sdk/test_timeline_composed_schema.py tests/packs/timeline/test_cli_native.py
+"'```
+
+**1196 passed, 4 existing platform skips, 64 integration deselections, 5 strict
+xfailed in 84.56s**. `nonnetwork-final.log`. Covers all bounded conformance,
+providers, sync and native CLI. Earlier pre-schema-relocation run of the same
+lane without `test_timeline_composed_schema.py`: **1191 passed, 4 skipped,
+64 deselected, 5 xfailed in 90.15s** (`nonnetwork.log`), superseded above.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+```
+
+**42 passed, 12 strict xfailed in 21.47s**, actual Runtime
+`9f9b25c000485e919f30f1411831fe2d5a3c1316` service/SQLite/CAS, no socket listeners.
+`runtime-direct-9f-final.log`; earlier pre-relocation run also **42 passed,
+12 xfailed in 37.72s**. All 12 popup positives/races retain original expectations
+and only the precise old asset-schema error qualifies as xfail. This is not an
+HTTP compatibility claim on 9f and not positive popup acceptance.
+
+```bash
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-popup-foundation-compose bundle1-runtime6be9706-integration --files '"'tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py'
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598 1
+"'```
+
+**Central PASS: 90 passed, 13 strict xfailed in 112.27s; exit 0 / 117s**.
+One request after final source, no resubmission. Exact frozen Runtime
+`6be970633cc82ab412428151e6bf42f3e7fc3081` asserted by the suite; Agent client
+0.2.2/pin unchanged. Includes M1/parent label/permanent identity/client cutover,
+scalar/first-clip/add-delete/popup/provenance. Thirteen xfails are twelve popup
+cases plus inherited first-clip null-speed. Result directory:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598/`.
+
+```bash
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/{_collections,_command_state,_recording,commands,commit,inverse,rebase,_media_inputs,native_occurrence_media_commands,native_placement_commands}.py tests/sdk/test_timeline_composed_schema.py tests/editing_conformance/{test_recipe_occurrence_media,test_recipe_m2_placement,test_occurrence_media_manifest_inverse,test_commit_runtime_occurrence_media,test_commit_runtime_media_manifest_inverse}.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=silent --cache-dir=/tmp/agt-m2-popup-foundation-compose-mypy astrid/sdk/timeline/{_collections,_command_state,_recording,commands,commit,inverse,rebase,_media_inputs,native_occurrence_media_commands,native_placement_commands}.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-track-public-export
+git diff --check
+```
+
+All PASS; mypy: **no issues in 10 source files**. Temporary caches removed.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/capture-parity.py
+PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/audit.py
+```
+
+PASS. M1 + parent-label captures/records/output remain byte-exact: **87776 bytes**,
+SHA256 `b7f84a929716c9fc479fff1ea99e26daeeeb49b72ddc7594562b929f0feb3ff8`;
+composed output compares equal to frozen base'"'s "'`parity-base.txt`.
+Vendor directory and lock have no diff against frozen `3bf9e536`.
+
+Initial diagnostic lane before canonical args relocation:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_selected_schema.py --tb=short
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py --tb=short
+```
+
+**296 passed / 5 strict xfailed in 11.95s**, then **5 passed in 0.34s**.
+Both are included and superseded by the final bounded lane. No behavior expectation
+was removed, skipped or rewritten into refusal.
+
+## Handoff and blockers
+
+Complete absolute source/schema/operation/capture/golden/generation-request handoff:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md`.
+Both `commit-msg` and `commit-msg.txt` are ready for the harness. No coordination
+docs, build outputs or temporary files are left in the repository.
+
+Manager next: record harness commit and verify tested tree; resolve optional
+trim/split identities and include only committed/passing scalar source; review
+and freeze the final schema; ask Runtime for normal official union/root exports
+and artifact generation/version. Pair official artifacts/pins before rerunning
+unchanged strict popup acceptance/race cases. Params and root inverse gaps remain
+release blockers under their owners. App/browser and full/make-check qualification
+are unverified. No Runtime schema override, generation, pin bypass or release
+version selection occurred; all M2 remains held for PLAN M1.
+MD
+PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/audit.py
+git diff --check' in /home/user/work/wt/agt-m2-popup-foundation-compose
+ succeeded in 1672ms:
+schema: 5e622fb61142501f2c028f639da855ca318600be27a594253641bf9b755aa287
+tree: c401f7720a092d1c1305ed37dea55c7754b8eacf
+exact byte checks: 22
+canonical schema union: PASS
+
+codex
+Composed **INTERNAL PROVISIONAL** popup, provenance, and placement source; preserved Bundle1 pins and byte-exact goldens.
+
+- Bounded tests: **1196 passed, 5 strict xfailed**.
+- Actual Runtime service: **42 passed, 12 strict xfailed**.
+- Exact-pair HTTP: **90 passed, 13 strict xfailed**.
+- Ruff, mypy, vendor lock, and capture parity passed.
+
+Scalar remains excluded; trim needs its prerequisite and the supplied split revision is unresolved. Popup acceptance still requires official Runtime generation. The harness commit SHA remains pending.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/report.md) · [Bundle2 handoff and TODOs](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md)
+
+Both commit-message files are ready. All M2 remains held for PLAN M1.
+tokens used
+150,821
+Composed **INTERNAL PROVISIONAL** popup, provenance, and placement source; preserved Bundle1 pins and byte-exact goldens.
+
+- Bounded tests: **1196 passed, 5 strict xfailed**.
+- Actual Runtime service: **42 passed, 12 strict xfailed**.
+- Exact-pair HTTP: **90 passed, 13 strict xfailed**.
+- Ruff, mypy, vendor lock, and capture parity passed.
+
+Scalar remains excluded; trim needs its prerequisite and the supplied split revision is unresolved. Popup acceptance still requires official Runtime generation. The harness commit SHA remains pending.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/report.md) · [Bundle2 handoff and TODOs](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md)
+
+Both commit-message files are ready. All M2 remains held for PLAN M1.

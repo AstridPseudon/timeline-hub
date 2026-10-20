@@ -1,0 +1,400 @@
+--- queue done metadata ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m1-pin-tuple-final
+dispatched agt-m1-pin-tuple-final in /home/user/work/wt/agt-m1-pin-tuple-final (base tl/integration)
+
+exec
+/bin/bash -lc 'set +e
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/runtime
+rc=$?
+printf '"'vendor_check_exit=%s\\n' \""'$rc"
+exit 0' in /home/user/work/wt/agt-m1-pin-tuple-final
+ succeeded in 62ms:
+producer commit: expected 6489e47e5d3efc996e9f92cc2fffcb831cc39a24, got 45d3b81c426e3c941c9abb9ab7fc140866b68534
+producer manifest version differs from lock
+re-vendor with: python scripts/vendor_lock.py update runtime.lock.json --producer <astrid-runtime checkout>
+vendor_check_exit=1
+
+codex
+The first vendor check caught a producer race: Runtime advanced from the observed `182a7dd…` to `45d3b81…` during verification. I will not pin the stale SHA; I’m re-reading the current clean HEAD and its committed manifest now, then will use that exact full SHA for the normal `vendor_lock.py update`.
+exec
+/bin/bash -lc "set -u
+PROD=/home/user/work/runtime
+printf '%s\\n' '--- current producer after race ---'
+git -C \""'$PROD" status --short --branch
+git -C "$PROD" rev-parse HEAD
+git -C "$PROD" log -3 --format='"'%H%n%s%n%D'
+printf '%s\\n' '--- current committed manifest metadata ---'
+git -C \""'$PROD" show HEAD:contract/artifacts.json | sed -n '"'1,110p' | tail -12
+printf '%s\\n' '--- current manifest version and selected artifact hashes ---'
+python3 - <<'PY'
+import hashlib,json,pathlib,subprocess
+p=pathlib.Path('/home/user/work/runtime')
+m=json.loads((p/'contract/artifacts.json').read_text())
+print('producer=',m.get('producer'))
+print('version=',m.get('version'))
+for k in ('packages/typescript/src/timeline-commit-types.ts','packages/python/astrid_runtime_client/__init__.py','packages/python/astrid_runtime_client/contract_metadata.py','packages/python/astrid_runtime_client/generated.py','packages/python/astrid_runtime_client/timeline_commit_types.py','contract/schemas/timeline-config.schema.json'):
+ print(k, m['artifacts'].get(k))
+print('manifest_file_sha256=sha256:'+hashlib.sha256((p/'contract/artifacts.json').read_bytes()).hexdigest())
+print('head=',subprocess.check_output(['git','-C',str(p),'rev-parse','HEAD'],text=True).strip())
+PY
+printf '%s\\n' '--- diff from prior observed 182a7dd ---'
+git -C \""'$PROD" diff --stat 182a7dd8446456162a452a25c8493256c5da29fe..HEAD -- contract/artifacts.json
+git -C "$PROD" diff --unified=2 182a7dd8446456162a452a25c8493256c5da29fe..HEAD -- contract/artifacts.json | head -160' in /home/user/work/wt/agt-m1-pin-tuple-final
+ succeeded in 206ms:
+--- current producer after race ---
+## tl/integration
+45d3b81c426e3c941c9abb9ab7fc140866b68534
+45d3b81c426e3c941c9abb9ab7fc140866b68534
+Merge tl/rt-m1-realpath-review
+HEAD -> tl/integration
+5542ca236d78e281d0bbea248dd73ea0481c00f6
+test(timeline): preserve disjoint intent in real inverse expectations
+tl/rt-m1-realpath-review
+182a7dd8446456162a452a25c8493256c5da29fe
+Merge tl/rt-m1-receipt-types
+hub/tl/integration, hub/timeline/runtime/tl/integration
+--- current committed manifest metadata ---
+    "packages/typescript/package-lock.json": "sha256:a922c015934e1c67569da6353d5fca6408f0ccde695b2ffc5045e426cdcda637",
+    "packages/typescript/package.json": "sha256:2ceb04a642a009d6a3e0312a15c597d5f62edb99f4c21d58d10e1e24c6c3458e",
+    "packages/typescript/src/contract-metadata.ts": "sha256:d3c36d3621b9c76c84bb47cf33efe0b0d482e4214353d10b72eb4ecb42943b8e",
+    "packages/typescript/src/generated.ts": "sha256:a98eddf3560097d4ad5547efe7d923576f1bc7cf449da28d7ae49393630e838c",
+    "packages/typescript/src/index.ts": "sha256:6b6dff85e4199007c8890802e0c228171285114fa2f862999c6741c632c5d1a5",
+    "packages/typescript/src/timeline-commit-types.ts": "sha256:715a9487adf1a56b865bb818be8e6d7007823d54fef1952cd7d12454c554d32d",
+    "packages/typescript/tsconfig.json": "sha256:48bc718286b70c7ff5af00d1adfea37ad7c7f8820d3050117dc9d6aea239181b",
+    "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:822f1c71ce5f1747b0d96af7e02fe4bdf094ce0cc98867b93118c9e128103395"
+  },
+  "producer": "astrid-runtime",
+  "version": "sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d"
+}
+--- current manifest version and selected artifact hashes ---
+producer= astrid-runtime
+version= sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d
+packages/typescript/src/timeline-commit-types.ts sha256:715a9487adf1a56b865bb818be8e6d7007823d54fef1952cd7d12454c554d32d
+packages/python/astrid_runtime_client/__init__.py sha256:0ec98414f0410da5db816e2dcb3204207046902026902db5283251c168a19c6d
+packages/python/astrid_runtime_client/contract_metadata.py sha256:d009690b5b9d812a51433fa747ece4a83a6db762a91063c9aafdecd3e27f0cbb
+packages/python/astrid_runtime_client/generated.py sha256:94a941696abe0bc13d8c46d622fe58529424d9eaabdca6e11e8ccb863c600439
+packages/python/astrid_runtime_client/timeline_commit_types.py sha256:9bd6bbad5741bfc73d57418c17654f0dae7fd19a5d0bb4ed44fea0f130375a70
+contract/schemas/timeline-config.schema.json sha256:f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1
+manifest_file_sha256=sha256:a28297441f1d0b9324b75180094c5ef2c426c3d03b0241a24e3f08b5395a199f
+head= 45d3b81c426e3c941c9abb9ab7fc140866b68534
+--- diff from prior observed 182a7dd ---
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m1-pin-tuple-final/runtime.lock.json
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 71dfefa27ebd13a290f36b6b1fddec90c48f3f9c..4ba4c3135aa386018ebcb71e67a35437acf61356
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -64,5 +64,5 @@
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+   "producer_version": "sha256:82db7dfef7e6a09af94b78de384f672f9c202f4d3c80d1128775cfab1ddb4acf",
+-  "source_commit": "6489e47e5d3efc996e9f92cc2fffcb831cc39a24"
++  "source_commit": "45d3b81c426e3c941c9abb9ab7fc140866b68534"
+ }
+
+exec
+/bin/bash -lc "set -e
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py update runtime.lock.json --producer /home/user/work/runtime
+printf '%s\\n' '--- post-update status ---'
+git status --short
+printf '%s\\n' '--- lock selectors ---'
+python3 - <<'PY'
+import json
+x=json.load(open('runtime.lock.json'))
+print('source_commit=',x['source_commit'])
+print('producer_version=',x['producer_version'])
+print('files=',len(x['files']))
+PY" in /home/user/work/wt/agt-m1-pin-tuple-final
+ succeeded in 372ms:
+updated runtime.lock.json from astrid-runtime 45d3b81c426e
+--- post-update status ---
+ M runtime.lock.json
+--- lock selectors ---
+source_commit= 45d3b81c426e3c941c9abb9ab7fc140866b68534
+producer_version= sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d
+files= 15
+
+codex
+The re-read found `45d3b81c426e3c941c9abb9ab7fc140866b68534` as the current clean Runtime integration HEAD; its committed artifact manifest still carries aggregate `9b18a553…`, with unchanged Python/client and schema hashes. `vendor_lock.py update` completed successfully, and only `runtime.lock.json` is modified so far. I’m auditing the exact diff and then running the required focused 29-test vendor/parity lane.
+exec
+/bin/bash -lc "printf '%s\\n' '--- lock diff ---'; git diff -- runtime.lock.json; printf '%s\\n' '--- changed paths/stat ---'; git diff --name-status; git diff --stat; printf '%s\\n' '--- exact current check ---'; set +e; PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/runtime; rc="'$?; printf '"'vendor_check_exit=%s\\n' \""'$rc"; exit 0' in /home/user/work/wt/agt-m1-pin-tuple-final
+ succeeded in 688ms:
+--- lock diff ---
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 71dfefa2..24cc62bc 100644
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -63,6 +63,6 @@
+   },
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+-  "producer_version": "sha256:82db7dfef7e6a09af94b78de384f672f9c202f4d3c80d1128775cfab1ddb4acf",
+-  "source_commit": "6489e47e5d3efc996e9f92cc2fffcb831cc39a24"
++  "producer_version": "sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d",
++  "source_commit": "45d3b81c426e3c941c9abb9ab7fc140866b68534"
+ }
+--- changed paths/stat ---
+M	runtime.lock.json
+ runtime.lock.json | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+--- exact current check ---
+ok runtime.lock.json (matches producer manifest)
+vendor_check_exit=0
+
+exec
+/bin/bash -lc 'set -e
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py --basetemp=/tmp/agt-m1-pin-tuple-final-tests --tb=short' in /home/user/work/wt/agt-m1-pin-tuple-final
+ succeeded in 4116ms:
+.............................                                            [100%]
+29 passed in 3.23s
+
+exec
+/bin/bash -lc "set -e
+python3 - <<'PY'
+import hashlib, json, pathlib, subprocess
+root = pathlib.Path.cwd()
+lock = json.loads((root / 'runtime.lock.json').read_text())
+old = json.loads(subprocess.check_output(['git','show','HEAD:runtime.lock.json'], text=True))
+producer = pathlib.Path('/home/user/work/runtime')
+assert lock['source_commit'] == subprocess.check_output(['git','-C',str(producer),'rev-parse','HEAD'], text=True).strip()
+assert lock['producer_version'] == json.loads((producer / lock['manifest']).read_text())['version']
+assert len(lock['files']) == 15
+for consumer, entry in lock['files'].items():
+    current = (root / consumer).read_bytes()
+    baseline = subprocess.check_output(['git','show',f'HEAD:{consumer}'])
+    source = (producer / entry['from']).read_bytes()
+    assert current == baseline, consumer
+    assert current == source, consumer
+    assert 'sha256:' + hashlib.sha256(current).hexdigest() == entry['sha256'], consumer
+    assert entry['sha256'] == old['files'][consumer]['sha256'], consumer
+print('15 consumer files: current == baseline == producer; hashes unchanged')
+for name in (
+    'astrid/core/timeline/schema/timeline-config.schema.json',
+    'astrid/core/timeline/schema/edit-command.schema.json',
+    'astrid_runtime_client/contract_metadata.py',
+):
+    assert subprocess.call(['git','diff','--quiet','HEAD','--',name]) == 0, name
+print('compiled/config, edit-command schema, and client metadata bytes unchanged')
+PY
+printf 'producer_head='; git -C /home/user/work/runtime rev-parse HEAD
+printf 'producer_status='; git -C /home/user/work/runtime status --porcelain
+printf '%s\\n' '--- worktree status ---'; git status --short" in /home/user/work/wt/agt-m1-pin-tuple-final
+ succeeded in 236ms:
+15 consumer files: current == baseline == producer; hashes unchanged
+compiled/config, edit-command schema, and client metadata bytes unchanged
+producer_head=45d3b81c426e3c941c9abb9ab7fc140866b68534
+producer_status=--- worktree status ---
+ M runtime.lock.json
+
+codex
+The focused lane passed all 29 tests. A byte audit also confirms all 15 vendored consumers are byte-identical to both the pre-refresh Agent tree and current Runtime producer, including the compiled timeline-config schema; the edit-command schema and client metadata are unchanged. Runtime HEAD remained stable at the exact full SHA, so I’m publishing the final source/aggregate/schema tuple in the shared Agent coordination note and preparing the harness handoff files.
+2026-10-19T19:52:00.061474Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md:
+Final official generated receipt tuple fix merged Runtime182a7dd: client0.2.1 + schema4e52f7df unchanged, aggregate9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d. Actual JSON receipt unchanged; TS project_seq now identical fixed2tuple to main. App/Agent notified. Artifact DTO coverage audit redirect was already fixed in8d70090 and confirmed generator/artifact --check on integration; no duplicate work needed.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md
+index 8ae1a2ec08c0b9db53a0cc722c2225245f668457..635714d577b34a41f7c04538fb32508434246a17
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md
+@@ -75,3 +75,15 @@
+ rt-m1-realpath-review passed central commit-integration:5passed8.77s (rt-m1-realpath-review-commit-integration-1019194703-7913, Runtime tree258b0c842ad8d314a36c446b21c44109d11e99cd, parentea20536; Agent8c4bd8506a9b3809875a894b4898381b8d4798aa, App0dfb3896545e555c221c5be7a6e1680965b6d004, Composition7aa384a9f3c815f78ce88ff9b47de5adee7bf34a). Actual normal Agent factory/capture/provider through Runtime/door, renderer-blocked, lostACK discard/newerdisjoint/restart/exact key replay/provider tripwire/inverse. Stronger full-B inverse expectation approved; corrected handshake fixture to existing POST and Error-root shape. No product changes or relaxed closure/history/guards. Manager reviewed exact diff and source tuple; merge requested. Neutral default collection with Agent blocked5deselected (not5skips). Client persisted outbox/actual App pointer/CLI readback remain separate owners' M1 proof.
+ 
+ Final official generated receipt tuple fix merged Runtime182a7dd: client0.2.1 + schema4e52f7df unchanged, aggregate9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d. Actual JSON receipt unchanged; TS project_seq now identical fixed2tuple to main. App/Agent notified. Artifact DTO coverage audit redirect was already fixed in8d70090 and confirmed generator/artifact --check on integration; no duplicate work needed.
++
++## Final Agent vendor-lock publication (2026-10-19)
++
++Agent `runtime.lock.json` now pins the exact current committed Runtime integration
++source `45d3b81c426e3c941c9abb9ab7fc140866b68534` (the producer advanced from
++`182a7dd8446456162a452a25c8493256c5da29fe` during the initial check; the later
++full SHA was re-read and used). The committed manifest remains aggregate
++`sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d`,
++with client `0.2.1` and raw schema digest
++`sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`.
++All 15 Agent consumer bytes/hashes, including the compiled timeline-config
++schema, are unchanged.
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 71dfefa27ebd13a290f36b6b1fddec90c48f3f9c..4ba4c3135aa386018ebcb71e67a35437acf61356
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -64,5 +64,5 @@
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+   "producer_version": "sha256:82db7dfef7e6a09af94b78de384f672f9c202f4d3c80d1128775cfab1ddb4acf",
+-  "source_commit": "6489e47e5d3efc996e9f92cc2fffcb831cc39a24"
++  "source_commit": "45d3b81c426e3c941c9abb9ab7fc140866b68534"
+ }
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pin-tuple-final/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pin-tuple-final/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md
+index 8ae1a2ec08c0b9db53a0cc722c2225245f668457..635714d577b34a41f7c04538fb32508434246a17
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md
+@@ -75,3 +75,15 @@
+ rt-m1-realpath-review passed central commit-integration:5passed8.77s (rt-m1-realpath-review-commit-integration-1019194703-7913, Runtime tree258b0c842ad8d314a36c446b21c44109d11e99cd, parentea20536; Agent8c4bd8506a9b3809875a894b4898381b8d4798aa, App0dfb3896545e555c221c5be7a6e1680965b6d004, Composition7aa384a9f3c815f78ce88ff9b47de5adee7bf34a). Actual normal Agent factory/capture/provider through Runtime/door, renderer-blocked, lostACK discard/newerdisjoint/restart/exact key replay/provider tripwire/inverse. Stronger full-B inverse expectation approved; corrected handshake fixture to existing POST and Error-root shape. No product changes or relaxed closure/history/guards. Manager reviewed exact diff and source tuple; merge requested. Neutral default collection with Agent blocked5deselected (not5skips). Client persisted outbox/actual App pointer/CLI readback remain separate owners' M1 proof.
+ 
+ Final official generated receipt tuple fix merged Runtime182a7dd: client0.2.1 + schema4e52f7df unchanged, aggregate9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d. Actual JSON receipt unchanged; TS project_seq now identical fixed2tuple to main. App/Agent notified. Artifact DTO coverage audit redirect was already fixed in8d70090 and confirmed generator/artifact --check on integration; no duplicate work needed.
++
++## Final Agent vendor-lock publication (2026-10-19)
++
++Agent `runtime.lock.json` now pins the exact current committed Runtime integration
++source `45d3b81c426e3c941c9abb9ab7fc140866b68534` (the producer advanced from
++`182a7dd8446456162a452a25c8493256c5da29fe` during the initial check; the later
++full SHA was re-read and used). The committed manifest remains aggregate
++`sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d`,
++with client `0.2.1` and raw schema digest
++`sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`.
++All 15 Agent consumer bytes/hashes, including the compiled timeline-config
++schema, are unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pin-tuple-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pin-tuple-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..b836ff5d949f03426608abe02326489698b74fa7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pin-tuple-final/commit-msg
+@@ -0,0 +1,5 @@
++chore(agent): refresh Runtime artifact tuple pin
++
++Refresh runtime.lock.json through vendor_lock.py to the current committed
++Runtime producer source and final artifact aggregate. Preserve all vendored
++consumer bytes, including the compiled timeline schema and Runtime client.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pin-tuple-final/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pin-tuple-final/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c8f9f7b32b2435b08176725646a801813352e026
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pin-tuple-final/report.md
+@@ -0,0 +1,24 @@
++## Completed
++
++- Updated only `runtime.lock.json` through `scripts/vendor_lock.py update`.
++- Final source pin: `45d3b81c426e3c941c9abb9ab7fc140866b68534`.
++- Producer aggregate: `sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d`.
++- Runtime client: `0.2.1`.
++- Raw schema digest: `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`.
++- All 15 consumer files remain byte/hash-identical to the pre-refresh Agent tree and current Runtime producer; compiled timeline-config and edit-command schema bytes remain unchanged.
++- Published the exact tuple and source-race note in `scratchpad/orch/design/runtime-m1-coordination.md`.
++
++The first check observed the producer at `182a7dd8446456162a452a25c8493256c5da29fe`,
++then detected it had advanced during verification. I re-read the clean committed
++HEAD and used the exact current full SHA `45d3b81c426e3c941c9abb9ab7fc140866b68534`,
++as required; the committed manifest aggregate and selected artifact bytes were
++unchanged.
++
++## Tests and checks
++
++- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/runtime` — passed.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py --basetemp=/tmp/agt-m1-pin-tuple-final-tests --tb=short` — **29 passed**.
++- Consumer byte/hash audit — **15 passed**, current equals baseline equals producer.
++- `git diff --check` — passed.
++
++No full, socket, browser, install, or product-behavior suite was run.
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 71dfefa27ebd13a290f36b6b1fddec90c48f3f9c..4ba4c3135aa386018ebcb71e67a35437acf61356
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -64,5 +64,5 @@
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+   "producer_version": "sha256:82db7dfef7e6a09af94b78de384f672f9c202f4d3c80d1128775cfab1ddb4acf",
+-  "source_commit": "6489e47e5d3efc996e9f92cc2fffcb831cc39a24"
++  "source_commit": "45d3b81c426e3c941c9abb9ab7fc140866b68534"
+ }
+
+exec
+/bin/bash -lc "set -e
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/runtime
+ git diff --check
+printf '%s\\n' '--- final worktree ---'
+git status --short --branch
+printf '%s\\n' '--- final diff stat ---'
+git diff --stat
+printf '%s\\n' '--- final lock selectors ---'
+rg -n 'producer_version|source_commit' runtime.lock.json
+printf '%s\\n' '--- handoff files ---'
+sed -n '1,120p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pin-tuple-final/commit-msg
+sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pin-tuple-final/report.md" in /home/user/work/wt/agt-m1-pin-tuple-final
+ succeeded in 981ms:
+ok runtime.lock.json (matches producer manifest)
+--- final worktree ---
+## tl/agt-m1-pin-tuple-final
+ M runtime.lock.json
+--- final diff stat ---
+ runtime.lock.json | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+--- final lock selectors ---
+66:  "producer_version": "sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d",
+67:  "source_commit": "45d3b81c426e3c941c9abb9ab7fc140866b68534"
+--- handoff files ---
+chore(agent): refresh Runtime artifact tuple pin
+
+Refresh runtime.lock.json through vendor_lock.py to the current committed
+Runtime producer source and final artifact aggregate. Preserve all vendored
+consumer bytes, including the compiled timeline schema and Runtime client.
+## Completed
+
+- Updated only `runtime.lock.json` through `scripts/vendor_lock.py update`.
+- Final source pin: `45d3b81c426e3c941c9abb9ab7fc140866b68534`.
+- Producer aggregate: `sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d`.
+- Runtime client: `0.2.1`.
+- Raw schema digest: `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`.
+- All 15 consumer files remain byte/hash-identical to the pre-refresh Agent tree and current Runtime producer; compiled timeline-config and edit-command schema bytes remain unchanged.
+- Published the exact tuple and source-race note in `scratchpad/orch/design/runtime-m1-coordination.md`.
+
+The first check observed the producer at `182a7dd8446456162a452a25c8493256c5da29fe`,
+then detected it had advanced during verification. I re-read the clean committed
+HEAD and used the exact current full SHA `45d3b81c426e3c941c9abb9ab7fc140866b68534`,
+as required; the committed manifest aggregate and selected artifact bytes were
+unchanged.
+
+## Tests and checks
+
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/runtime` — passed.
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py --basetemp=/tmp/agt-m1-pin-tuple-final-tests --tb=short` — **29 passed**.
+- Consumer byte/hash audit — **15 passed**, current equals baseline equals producer.
+- `git diff --check` — passed.
+
+No full, socket, browser, install, or product-behavior suite was run.
+
+codex
+## Completed
+
+- Updated only `runtime.lock.json` via `vendor_lock.py`.
+- Final source: `45d3b81c426e3c941c9abb9ab7fc140866b68534`
+- Aggregate: `sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d`
+- Schema: `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`
+- All 15 consumer bytes/hashes unchanged.
+- Published tuple to shared Runtime coordination.
+- Commit message/report written.
+
+## Tests
+
+- Vendor check: passed.
+- Focused vendor/parity tests: **29 passed**
+- Consumer byte/hash audit: passed.
+- `git diff --check`: passed.
+
+The producer advanced during the initial check, so the exact newer committed SHA was pinned. No full, socket, browser, install, or product-behavior suites were run.
+tokens used
+87,120
+## Completed
+
+- Updated only `runtime.lock.json` via `vendor_lock.py`.
+- Final source: `45d3b81c426e3c941c9abb9ab7fc140866b68534`
+- Aggregate: `sha256:9b18a553108535606aed239ab946c89c9609b1d8c1515d229395691964b87e4d`
+- Schema: `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`
+- All 15 consumer bytes/hashes unchanged.
+- Published tuple to shared Runtime coordination.
+- Commit message/report written.
+
+## Tests
+
+- Vendor check: passed.
+- Focused vendor/parity tests: **29 passed**
+- Consumer byte/hash audit: passed.
+- `git diff --check`: passed.
+
+The producer advanced during the initial check, so the exact newer committed SHA was pinned. No full, socket, browser, install, or product-behavior suites were run.

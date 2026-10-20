@@ -1,0 +1,400 @@
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('astrid/sdk/timeline/commands.py'); t=p.read_text(); a=\"raise CommandError('legacy groups require the sole recorded migration command')\"; b=\"raise CommandError('legacy groups require the sole recorded migration command',\\n                               kind='unsupported_dependency')\"; assert a in t; p.write_text(t.replace(a,b))
+PY
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider tests/editing_conformance/test_recipe_m2_group_migration.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/timeline/test_authoring_bundle.py tests/timeline/test_shot_composition.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/sdk/test_timeline_semantic_reservations.py' in /home/user/work/wt/agt-m2-group-official-root-proof
+exec
+/bin/bash -lc "rg -n 'set\\(operations|operations\\(\\).*==|12|OccurrenceSwapMediaArgs' tests/editing_conformance/test*schema* tests/sdk/test*command* tests/editing_conformance/test*registry* 2>/dev/null; rg -n 'operations\\(' tests/editing_conformance tests/sdk --glob '*.py' | head -35; ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-official-root-proof" in /home/user/work/wt/agt-m2-group-official-root-proof
+ succeeded in 0ms:
+tests/sdk/test_timeline_commit_provider.py:50:def native_staging_operations(monkeypatch):
+tests/sdk/test_timeline_commit_provider.py:51:    install_staging_operations(monkeypatch)
+tests/sdk/test_timeline_composed_schema.py:33:    for op, operation in operations().items():
+tests/sdk/test_timeline_semantic_reservations.py:27:    install_staging_operations(monkeypatch)
+tests/sdk/test_timeline_semantic_reservations.py:43:    registered = commands.operations()
+tests/editing_conformance/test_parent_track_label.py:40:    assert operations()['track.set'].handler is _scalar_commands.track_set
+tests/editing_conformance/test_parent_track_label.py:41:    assert operations()['clip.set-params'].handler is _scalar_commands.clip_set_params
+tests/editing_conformance/test_recipe_m1_commands.py:806:def native_staging_operations(monkeypatch):
+tests/editing_conformance/test_recipe_m1_commands.py:808:    install_staging_operations(monkeypatch)
+tests/editing_conformance/test_recipe_internal_stages.py:37:    registered = commands.operations()
+tests/editing_conformance/staging_recipes.py:5:def install_staging_operations(monkeypatch):
+tests/editing_conformance/staging_recipes.py:31:    registered = commands.operations()
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:60:    installed = commands.operations()
+tests/editing_conformance/test_recording_clear.py:92:    install_staging_operations(monkeypatch)
+tests/editing_conformance/test_recording_clear.py:108:    install_staging_operations(monkeypatch)
+tests/editing_conformance/test_recording_clear.py:127:    install_staging_operations(monkeypatch)
+tests/editing_conformance/test_recording_clear.py:143:    install_staging_operations(monkeypatch)
+tests/editing_conformance/test_inverse_clear_batches.py:82:    install_staging_operations(monkeypatch)
+tests/editing_conformance/test_inverse_clear_batches.py:121:    install_staging_operations(monkeypatch)
+tests/editing_conformance/test_inverse_clear_batches.py:144:    install_staging_operations(monkeypatch)
+tests/editing_conformance/test_recorded_graph_roots.py:95:    registered = commands.operations()
+tests/editing_conformance/test_recorded_graph_roots.py:134:    registered = commands.operations()
+tests/editing_conformance/test_recorded_graph_roots.py:209:    registered = commands.operations()
+tests/editing_conformance/test_recipe_clip_delete.py:243:    Draft202012Validator(operations()['clip.delete'].parameters).validate({})
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:71:    installed = commands.operations()
+tests/editing_conformance/test_recipe_scalar_commands.py:183:    assert {'track.set', 'clip.set-params'} <= operations().keys()
+brief.md
+log.txt
+meta
+notes
+running
+
+exec
+/bin/bash -lc 'cat tests/sdk/test_timeline_composed_schema.py; PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py tests/editing_conformance/test_recipe_internal_stages.py tests/editing_conformance/test_parent_track_label.py' in /home/user/work/wt/agt-m2-group-official-root-proof
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/new_group_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/core/timeline/authoring_bundle.py astrid/core/timeline/shot_composition.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_group_migration_runtime.py tests/timeline/test_shot_composition.py tests/editing_conformance/test_commit_runtime_occurrence_media.py; git diff --check' in /home/user/work/wt/agt-m2-group-official-root-proof
+ succeeded in 570ms:
+All checks passed!
+
+ succeeded in 3703ms:
+"""The Runtime generator consumes the same closed args as the native registry."""
+from __future__ import annotations
+
+import copy
+import json
+from pathlib import Path
+
+import pytest
+from jsonschema import Draft202012Validator, ValidationError
+
+from astrid.sdk.timeline.commands import _SCHEMA, operations
+
+
+def fixture_commands(value):
+    if isinstance(value, dict):
+        if value.get('schema_version') == 1 and 'op' in value and 'args' in value:
+            yield value
+        for child in value.values():
+            yield from fixture_commands(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from fixture_commands(child)
+
+
+def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden():
+    Draft202012Validator.check_schema(_SCHEMA)
+    validator = Draft202012Validator(_SCHEMA)
+    fixtures = Path(__file__).parents[1] / 'editing_conformance' / 'fixtures'
+    commands = {command['op']: command for path in sorted(fixtures.glob('*.json'))
+                for command in fixture_commands(json.loads(path.read_text()))}
+    conditions = {condition['if']['properties']['op']['const']: condition['then']['properties']
+                  for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
+    for op, operation in operations().items():
+        ref = conditions[op]['args']['$ref'].removeprefix('#/$defs/')
+        assert _SCHEMA['$defs'][ref] == operation.parameters
+        assert operation.parameters['additionalProperties'] is False
+        validator.validate(commands[op])
+        unknown = copy.deepcopy(commands[op])
+        unknown['args']['unsupported_argument'] = None
+        with pytest.raises(ValidationError):
+            validator.validate(unknown)
+
+
+@pytest.mark.parametrize('ref', ['shot:raw-shot', 'occurrence:raw-occurrence',
+                                'parent/asset:alias', 'occurrence:raw-occurrence/asset:alias'])
+def test_root_and_scoped_asset_references_share_the_canonical_patterns(ref):
+    for name in ('ScopedId', 'EntityRef', 'AnchorIdentity'):
+        Draft202012Validator(_SCHEMA).evolve(
+            schema={'$ref': '#/$defs/' + name}).validate(ref)
+    Draft202012Validator(_SCHEMA).evolve(
+        schema={'$ref': '#/$defs/TargetKey'}).validate(ref + '::')
+......................................                                   [100%]
+38 passed in 2.66s
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-bundle2-runtime-artifacts /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider -m integration tests/sdk/test_timeline_group_migration_runtime.py' in /home/user/work/wt/agt-m2-group-official-root-proof
+ exited 1 in 10480ms:
+...FF....                                                                [100%]
+=================================== FAILURES ===================================
+_ test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids[golden-parent] _
+astrid/sdk/timeline/commit.py:621: in _check_reservations
+    scan(records, boundary(entry['previous']['revision_id']))
+astrid/sdk/timeline/commit.py:579: in scan
+    raise CommandError('created identity history is unavailable', kind='history_unavailable')
+E   astrid.sdk.timeline._command_state.CommandError: created identity history is unavailable
+
+The above exception was the direct cause of the following exception:
+../rt-m2-bundle2-runtime-artifacts/runtime_protocol/service.py:2677: in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-m2-bundle2-runtime-artifacts/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../rt-m2-bundle2-runtime-artifacts/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:791: in commit
+    _check_reservations(port, plan, current, CommitRejected, base)
+astrid/sdk/timeline/commit.py:624: in _check_reservations
+    raise rejected(_failure('history_unavailable', 'semantic identity history is unavailable',
+E   runtime_protocol.timeline_commit.CommitRejected: semantic identity history is unavailable
+
+The above exception was the direct cause of the following exception:
+tests/sdk/test_timeline_group_migration_runtime.py:195: in test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids
+    migrated = submit(service, capture_migrate_groups(original, GROUPS), 'migrate')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/sdk/test_timeline_group_migration_runtime.py:190: in submit
+    return runtime.commit_timeline(project, timeline, body, idempotency_key=key, publisher='author',
+../rt-m2-bundle2-runtime-artifacts/runtime_protocol/service.py:2642: in commit_timeline
+    return self._execute_timeline_commit(
+../rt-m2-bundle2-runtime-artifacts/runtime_protocol/service.py:2682: in _execute_timeline_commit
+    raise public_failure(exc.failure) from exc
+E   runtime_protocol.errors.RuntimeErrorBase: semantic identity history is unavailable
+_ test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids[opaque-parent] _
+astrid/sdk/timeline/commit.py:621: in _check_reservations
+    scan(records, boundary(entry['previous']['revision_id']))
+astrid/sdk/timeline/commit.py:579: in scan
+    raise CommandError('created identity history is unavailable', kind='history_unavailable')
+E   astrid.sdk.timeline._command_state.CommandError: created identity history is unavailable
+
+The above exception was the direct cause of the following exception:
+../rt-m2-bundle2-runtime-artifacts/runtime_protocol/service.py:2677: in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-m2-bundle2-runtime-artifacts/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../rt-m2-bundle2-runtime-artifacts/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:791: in commit
+    _check_reservations(port, plan, current, CommitRejected, base)
+astrid/sdk/timeline/commit.py:624: in _check_reservations
+    raise rejected(_failure('history_unavailable', 'semantic identity history is unavailable',
+E   runtime_protocol.timeline_commit.CommitRejected: semantic identity history is unavailable
+
+The above exception was the direct cause of the following exception:
+tests/sdk/test_timeline_group_migration_runtime.py:195: in test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids
+    migrated = submit(service, capture_migrate_groups(original, GROUPS), 'migrate')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/sdk/test_timeline_group_migration_runtime.py:190: in submit
+    return runtime.commit_timeline(project, timeline, body, idempotency_key=key, publisher='author',
+../rt-m2-bundle2-runtime-artifacts/runtime_protocol/service.py:2642: in commit_timeline
+    return self._execute_timeline_commit(
+../rt-m2-bundle2-runtime-artifacts/runtime_protocol/service.py:2682: in _execute_timeline_commit
+    raise public_failure(exc.failure) from exc
+E   runtime_protocol.errors.RuntimeErrorBase: semantic identity history is unavailable
+=========================== short test summary info ============================
+FAILED tests/sdk/test_timeline_group_migration_runtime.py::test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids[golden-parent]
+FAILED tests/sdk/test_timeline_group_migration_runtime.py::test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids[opaque-parent]
+2 failed, 7 passed in 8.66s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess,hashlib
+b=subprocess.check_output(['git','-C','/home/user/banodoco/banodoco-workspace-runtime','show','7c6e4eabf88d914d9c98c0097b06ea298ba11866:tests/timeline_trusted_bootstrap.py'])
+print('helper lines',len(b.splitlines()),'sha256',hashlib.sha256(b).hexdigest())
+print('candidate schema sha256',hashlib.sha256(Path('astrid/core/timeline/schema/edit-command.schema.json').read_bytes()).hexdigest())
+PY" in /home/user/work/wt/agt-m2-group-official-root-proof
+ succeeded in 80ms:
+helper lines 99 sha256 c3cdaa6b904f374cee7c17f6d61ba196909bca1e9bab0f6e200d8efe6e227c82
+candidate schema sha256 47f67cd701ba3d2210d8b3c1f754e00eeace6078e37f610bc7b286ea17df2930
+
+codex
+The wider inverse check found one compatibility mismatch: the new migration-only gate changed a clip-deletion refusal’s error kind. I restored the existing `unsupported_dependency` kind and left the test assertion unchanged. The final targeted run is in progress; both real migration tests remain red at the bootstrap-history boundary.
+
+exec
+/bin/bash -lc 'git diff --check; git diff -- astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commands.py; git status --porcelain | tail -8' in /home/user/work/wt/agt-m2-group-official-root-proof
+ succeeded in 871ms:
+diff --git a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py
+index 171981ba..cc5a852e 100644
+--- a/astrid/sdk/timeline/commands.py
++++ b/astrid/sdk/timeline/commands.py
+@@ -37,6 +37,7 @@ def operations():
+     from .capture import MOVE_INTENT, move, track_create
+     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
+     from .native_placement_commands import placement_move
++    from .new_group_commands import migrate_groups
+     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
+             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
+@@ -48,7 +49,8 @@ def operations():
+             'clip.trim': Operation(_SCHEMA['$defs']['ClipTrimArgs'], clip_trim, {}, True),
+             'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
+             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
+-            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
++            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
++            'timeline.migrate-groups': Operation(_SCHEMA['$defs']['MigrateGroupsArgs'], migrate_groups, {})}
+ 
+ 
+ @dataclass
+@@ -134,6 +136,15 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
+ 
+     if not commands:
+         raise CommandError("command batch must not be empty")
++    config = bundle['parent'].get('config')
++    if isinstance(config, dict) and 'pinnedShotGroups' in config:
++        migration = len(commands) == 1 and commands[0].get('op') == 'timeline.migrate-groups'
++        reversing = len(commands) == 1 and commands[0].get('op') == 'timeline.inverse' and any(
++            w['ref'] == 'parent' and w['path'] == ['config', 'pinnedShotGroups']
++            for record in inverse_records for w in record['writes'])
++        if not migration and not reversing:
++            raise CommandError('legacy groups require the sole recorded migration command',
++                               kind='unsupported_dependency')
+     if id_map and any(key != value for key, value in id_map.items()):
+         raise CommandError("id_map must contain identity pairs only", kind='identity_collision')
+     if any(call.get('op') == 'timeline.restore' for call in commands) and len(commands) != 1:
+diff --git a/astrid/sdk/timeline/inverse.py b/astrid/sdk/timeline/inverse.py
+index df9de6c7..ea0bf608 100644
+--- a/astrid/sdk/timeline/inverse.py
++++ b/astrid/sdk/timeline/inverse.py
+@@ -284,6 +284,7 @@ def _validate_inputs(state, record, records):
+                     staged.create_entity(**created, value=write['after']['value'], restoring=True)
+                 else:
+                     stage.set(write['ref'], write['path'], write['after'])
++                staged.compile_mirrors()
+             reads.extend(read for read in record['reads']
+                          if stage.matches(read['ref'], read['path'], read['state']))
+             selections.extend(selected for selected in record['selections']
+ M runtime.lock.json
+ M tests/editing_conformance/test_commit_runtime_occurrence_media.py
+ M tests/timeline/test_shot_composition.py
+?? astrid/sdk/timeline/new_group_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_group_migration.json
+?? tests/editing_conformance/test_recipe_m2_group_migration.py
+?? tests/sdk/test_timeline_group_migration_provider.py
+?? tests/sdk/test_timeline_group_migration_runtime.py
+
+ succeeded in 86676ms:
+........................................................................ [ 11%]
+........................................................................ [ 22%]
+........................................................................ [ 33%]
+........................................................................ [ 44%]
+........................................................................ [ 55%]
+........................................................................ [ 66%]
+........................................................................ [ 77%]
+........................................................................ [ 88%]
+........................................................................ [100%]
+648 passed, 1 deselected in 85.36s (0:01:25)
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-official-root-proof/notes/report.md <<'EOF'
+# agt-m2-group-official-root-proof — bounded candidate, M2 HELD
+
+Ported the minimal migration product/tests from a0dad5fc/99d5eea6/958a7020 onto reviewed a31d712d, retaining its current recorder, staged inverse, selected-input provider and compiler. Added "'`timeline.migrate-groups` v1, explicit legacy admission, caller-supplied root mapping and complete opaque legacy provenance. Pure reload → inverse → exact raw legacy document → same-ID redo passes for the original and opaque-parent variants. Detached provider tests cover disjoint work, rebased undo, ABA, later dependents and missing/caller-supplied history. Unsupported interleaving, member reorder and duplicate legacy shot identities refuse; nothing is normalized.
+
+Two necessary reconciliation changes beyond the old migration overlay:
+
+- The newer inverse reconstructs write stages to validate created child bindings. Refresh its already-derived parent clip mirror at each such stage (one line); otherwise a migrated parent collection query fails on stale mirrors. No old inverse implementation, specialized migration inverse or new framework was imported.
+- Historical identity-reservation scans can open exact legacy closures, while ordinary current-head authoring admission remains strict. The ordinary execution refusal retains the existing `unsupported_dependency` kind required by clip-delete'"'s unchanged test.
+
+Applied all six files of the normal reviewed pin delta f423074778f4220df808799a4f7b308e56885397 exactly. Runtime is clean d691ddadb4ef3f5881a25fa893b4fb812211f102 at "'`/home/user/work/wt/rt-m2-bundle2-runtime-artifacts`, client 0.2.3, SCHEMA_DIGEST `sha256:a435dde3b552999ea75ff593868ff4d56debdd64bd8f79c134fb470a279a05e6`. No Runtime changes or schema replacement.
+
+## Exact remaining boundary
+
+The real fixture creates PNG CAS media and an ordinary `media.transcript/v1` `segments` Document first, then constructs the full rational-fps legacy parent and exact DocumentPin. The 99-line Runtime-owned helper is imported unchanged from the explicit archive of 7c6e4eabf88d914d9c98c0097b06ea298ba11866, `tests/timeline_trusted_bootstrap.py`, SHA256 `c3cdaa6b904f374cee7c17f6d61ba196909bca1e9bab0f6e200d8efe6e227c82`. All executing Runtime product code remains d691. This uses actual storage acceptance, no SQL or invented history.
+
+The old root-key failure is resolved on the normal official artifact: `test_official_runtime_schema_admits_recorded_migration_command` passes without its old xfail. Both real positive migration variants now pass request validation and reach the actual Agent provider. They fail before acceptance in `_check_reservations` (`commit.py:579/621/624`): the trusted helper stores a record with `created: []`, but its command omits `created`, failing the newer guard'"'s exact command/record agreement. The public error is "'`history_unavailable` / `semantic identity history is unavailable`. No production guard, helper record, test assertion or Runtime data was changed to bypass it. Both positive tests remain real failures, without xfail/skip.
+
+PASS independently: exact setup/get/closure/inspect, retained v1 sources after live v2 and reopen (both parent variants), literal detached `lines` source refusal (both variants), public seed'"'s genuine DocumentPin/rational-fps refusals, compiled canonical envelope and recorded root-guard schema admission. These are not accepted migration evidence. Actual accepted migration/reload/undo/redo, exact retry/restart and cross-product outcomes remain unverified beyond the first provider call. No later failure is inferred.
+
+Normal group generation remains a separate release requirement even though Runtime's generic command envelope permits this source probe. The distinct canonical candidate SHA256 is "'`47f67cd701ba3d2210d8b3c1f754e00eeace6078e37f610bc7b286ea17df2930`; review copy is `notes/edit-command.group-candidate.schema.json`. Removing only its migration condition/args definition recovers exact frozen ordinary Bundle2 schema bytes (472622...). All 16 pre-existing conformance fixture files are byte-identical to a31, including M1 and label goldens. The old migration golden itself is also unchanged (SHA256 `0b7dea75702cd909ba645970ac3ee9b370aad70396505ba4e9e3d781ab7f55a6`). This branch is a new source candidate, not a frozen-branch mutation or official group release.
+
+## Exact validation
+
+All commands below ran in `/home/user/work/wt/agt-m2-group-official-root-proof`. They are targeted suites, not full-suite runs. Final pure regression result follows below.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider tests/editing_conformance/test_recipe_m2_group_migration.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/timeline/test_authoring_bundle.py tests/timeline/test_shot_composition.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/sdk/test_timeline_semantic_reservations.py
+```
+
+FINAL_PURE_RESULT
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py tests/editing_conformance/test_recipe_internal_stages.py tests/editing_conformance/test_parent_track_label.py
+```
+
+**38 passed in 2.66s**, exit 0. Includes the registry/closed args/golden consistency check across all 13 registered operations.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-bundle2-runtime-artifacts /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_occurrence_media.py
+```
+
+**48 passed in 36.88s**, exit 0. Actual direct Runtime popup acceptance/races/retry/reopen/inverses on the normal pin. No sockets or browser.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-bundle2-runtime-artifacts /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider -m integration tests/sdk/test_timeline_group_migration_runtime.py
+```
+
+**7 passed, 2 failed in 8.66s**, exit 1. Both failures are exactly `test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids[golden-parent]` and `[opaque-parent]`, at the first submit, as classified above. No strict xfails remain in this file.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/new_group_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/core/timeline/authoring_bundle.py astrid/core/timeline/shot_composition.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_group_migration_runtime.py tests/timeline/test_shot_composition.py tests/editing_conformance/test_commit_runtime_occurrence_media.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --python-version 3.13 --follow-imports=silent --cache-dir=/tmp/agt-m2-group-official-root-proof-mypy astrid/sdk/timeline/new_group_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-bundle2-runtime-artifacts
+git diff --check
+```
+
+**All pass**; mypy checks five source files under the shared interpreter'"'s Python 3.13 version. No claim of full mypy/make check coverage. The inline byte audit also passed exact recovery of the ordinary schema, all 16 existing fixture bytes, and all six f423 pin files. Helper hash/99-line identity verified against git show.
+
+Earlier diagnostics: the first migration/provider run was **45 passed, 5 failed**, exposing the stale staged mirror, before the one-line fix. Its rerun was **50 passed**. The first eight-file neighbor run was **402 passed, 1 deselected**. An additional inverse/delete/split/trim/reservation neighbor run was **245 passed, 1 failed**, exposing the changed refusal kind; the final combined run above retains that assertion and uses the compatible kind. The first real pair run had the same **7 passed, 2 failed** provider boundary. Counts from overlapping runs are not summed.
+
+## Decision and next steps
+
+Kept settled option A. No editable parent soft tags or group-ID store. No deletion of distinct behavior, no weakened tests and no new xfails. The new admission restriction is migration-only, not a general legacy restore mechanism. Exact restoration requires authenticated inverse sources, not caller snapshots.
+
+Absolute contract and exact mapping for all three untouched App "'`it.fails` outcomes: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-contract.md`. Existing-lane group placement/retrack and the derived App group view were not already ported on a31; they are explicit next deltas, not implied by migration passes. Free multi-move and new-track grouping remain separate. No App test/browser success is claimed.
+
+Recommended order: review this bounded candidate and the single-line inverse correction; Runtime owner supplies a helper successor with complete capture fields through actual storage functions; rerun the unchanged real positive tests. Review/freeze a distinct group source before normal Runtime group schema/client generation and coordinated pins. Then implement existing-lane placement plus the read-only derived App compatibility view, keeping exact App outcomes and independent concurrency/undo tests. All M2 integration stays HELD until PLAN records M1.
+
+No full suite, central full request, make check, installs, SQL, Runtime edits, socket/browser tests, git commit/merge/rebase/checkout/push or integration-worktree writes occurred. Harness commit remains pending exit. Both conventional commit-message files are supplied at the worker root. No build output or temporary files are left in the worktree.
+EOF' in /home/user/work/wt/agt-m2-group-official-root-proof
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-official-root-proof')
+message='''feat(timeline): port guarded canonical group migration candidate
+
+Add explicit lossless legacy-group capture and canonical root migration on the
+reviewed Bundle2 core. Preserve opaque provenance, source pins, collection order
+and exact guarded inverse round trips; refresh mirrors during inverse staging.
+
+Consume the reviewed Runtime 0.2.3 pin unchanged and preserve ordinary schema
+and golden bytes. Keep the real migration expectations live: normal root guards
+now admit them, while trusted-bootstrap capture completeness blocks acceptance.
+'''
+for name in ('commit-msg','commit-msg.txt'):
+    (root/name).write_text(message)
+shutil.rmtree('/tmp/agt-m2-group-official-root-proof-mypy',ignore_errors=True)
+PY
+git diff --check" in /home/user/work/wt/agt-m2-group-official-root-proof
+ succeeded in 2592ms:
+codex
+The final targeted run passed: 648 passed, with one existing lane deselected. The 38 registry/staging/label tests and 48 direct Runtime popup tests also passed. I’ve written the report, group contract, distinct schema review copy, and commit messages. The real migration pair remains blocked: 7 passed and 2 failed at bootstrap-history validation. No merge or release is claimed.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-official-root-proof')
+p=root/'notes/report.md'; t=p.read_text(); assert t.count('FINAL_PURE_RESULT')==1; p.write_text(t.replace('FINAL_PURE_RESULT','**648 passed, 1 deselected in 85.36s (0:01:25)**, exit 0; no xfails. The deselection is an existing integration lane case.'))
+assert (root/'commit-msg').read_text()==(root/'commit-msg.txt').read_text()
+assert (root/'notes/edit-command.group-candidate.schema.json').read_bytes()==Path('astrid/core/timeline/schema/edit-command.schema.json').read_bytes()
+print('Report, contract, candidate schema and both commit-message files ready')
+PY
+git diff --check" in /home/user/work/wt/agt-m2-group-official-root-proof
+ succeeded in 406ms:
+Report, contract, candidate schema and both commit-message files ready
+
+codex
+Implemented the bounded migration candidate with lossless provenance and exact pure undo/redo. Ordinary Bundle2 schema content and all 16 existing fixtures remain preserved.
+
+- Targeted regression: **648 passed, 1 deselected**
+- Registry/staging/labels: **38 passed**
+- Runtime popup pair: **48 passed**
+- Real migration pair: **7 passed, 2 failed**
+
+The real pair now passes official root-key validation, then fails because the trusted bootstrap command omits `created`. Runtime/helper changes, group movement, derived App view, and new group artifact generation remain followups. No full suite or browser tests ran; M2 remains held.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-official-root-proof/notes/report.md). Contract and both commit-message files are written.
+tokens used
+152,156
+Implemented the bounded migration candidate with lossless provenance and exact pure undo/redo. Ordinary Bundle2 schema content and all 16 existing fixtures remain preserved.
+
+- Targeted regression: **648 passed, 1 deselected**
+- Registry/staging/labels: **38 passed**
+- Runtime popup pair: **48 passed**
+- Real migration pair: **7 passed, 2 failed**
+
+The real pair now passes official root-key validation, then fails because the trusted bootstrap command omits `created`. Runtime/helper changes, group movement, derived App view, and new group artifact generation remain followups. No full suite or browser tests ran; M2 remains held.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-official-root-proof/notes/report.md). Contract and both commit-message files are written.

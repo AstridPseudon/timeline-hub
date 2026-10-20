@@ -1,0 +1,9 @@
+name=agt-review-audio-managed-native-final
+repo=agent
+base=tl/agt-m2-audio-real-source-qualification
+base_sha=ddaaf0d6
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-audio-managed-native-final
+started=2026-10-20T15:19:22Z

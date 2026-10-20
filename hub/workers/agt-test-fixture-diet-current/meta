@@ -1,0 +1,9 @@
+name=agt-test-fixture-diet-current
+repo=agent
+base=tl/integration
+base_sha=8e310785
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-test-fixture-diet-current
+started=2026-10-20T13:42:36Z

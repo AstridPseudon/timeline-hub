@@ -1,0 +1,9 @@
+name=agt-m2-private952-http-reload-finish
+repo=agent
+base=tl/agt-m2-private952-reload-source-shape
+base_sha=909bfad8
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-private952-http-reload-finish
+started=2026-10-20T19:26:58Z

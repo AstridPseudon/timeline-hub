@@ -1,0 +1,400 @@
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/commit-msg
+@@ -0,0 +1,4 @@
++chore(review): approve current extent fixture portability
++
++Record the owner review and focused verification for the current native extent
++and pinned composition fixture portability unit.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..8c713170da8495047ca5fa6fbf4df1f5cd118db9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/notes/report.md
+@@ -0,0 +1,41 @@
++# agt-review-extent-current report
++
++## Verdict
++
++Approved `tl/vw-m3-current-extent-fixture-portability` at
++`5d0f1ddcad54936b36cedf1d89bf34f45fa612b5` for the Agent owner gate.
++
++## Scope checked
++
++Reviewed the candidate against current `tl/integration` (`e5c2ff5f`) with
++merge base `df2739f9`. The candidate's two post-base commits are the extent
++unit `da10b0b7` and the one-file portability fix `5d0f1ddc`.
++
++The portability fix resolves the fixture from the committed
++`remotion/package.json` `file:` dependency, confines the resolved path to the
++Remotion root, and requires the archive to exist. It selects the current
++0.0.12 package. The extent unit preserves original native-layer duration and
++clock, admits only bounded pre-tail native positives, retains the existing
++legacy sliced path, and keeps the native/legacy Three/live-scene behavior.
++
++No package or lockfile/pin changes, serializer definition changes, PCM
++production activation, or old 0.0.10 archive dependency are present in the
++candidate delta. The only PCM/serializer mentions added by the extent tests
++are assertions/comments around existing behavior.
++
++## Tests
++
++- Private candidate extraction: `git archive 5d0f1ddc`.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/candidate-review-20261020 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/pytest-basetemp-20261020 tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_remotion_layer_tail_compat.py tests/packs/rendering/test_live_scene_composition.py -k 'not real_render'` — **112 passed, 1 deselected**.
++- `/tmp/vw-m3-agent-gate-node20.19.4/bin/node remotion/tests/root-metadata.test.cjs` — **7 passed, 0 failed**.
++- `/home/user/work/venv-agent/bin/python -B -m ruff check --no-cache tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_remotion_layer_tail_compat.py tests/packs/rendering/test_live_scene_composition.py` — **all checks passed**.
++- `git diff --check df2739f9 5d0f1ddc` — **passed**.
++
++The producer's independent final-gate report records 177 bounded checks
++passing; this review independently reran the focused Agent lanes above.
++
++## Limitations
++
++No full suite, browser/live render, encoder/decoder, pixel/audio parity, or
++Runtime qualification was run. The one `real_render` test was deselected.
++
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-extent-current.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-extent-current.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c53de1f5dd710c3c38ed63e6e6ffff8fbc1fd75c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-extent-current.md
+@@ -0,0 +1,91 @@
++# Agent owner review: current extent fixture portability
++
++## Verdict
++
++**APPROVE** `tl/vw-m3-current-extent-fixture-portability` at
++`5d0f1ddcad54936b36cedf1d89bf34f45fa612b5` for merge onto the current
++integration branch.
++
++Reviewed against `tl/integration` at `e5c2ff5f78ae4a96e436ea1f118f655c05df2b27`;
++the candidate/integration merge base is `df2739f903edac02bd36b4446deeea847524c040`.
++The candidate contains the previously reviewed extent unit `da10b0b7690a8c2a4032e75eb3d4a3e988121997`
++and the requested portability commit `5d0f1ddc`. The portability commit itself
++is one test-file change: 15 insertions and 1 deletion in
++`tests/packs/rendering/test_remotion_layer_tail_compat.py`.
++
++## Review findings
++
++- The portability helper reads the committed `file:` dependency from
++  `remotion/package.json`, resolves it relative to `remotion/`, rejects a path
++  escaping that directory, and checks that the archive exists. The candidate's
++  dependency is the current `banodoco-timeline-composition-0.0.12.tgz`.
++- The extent unit measures the original render view before native layer
++  filtering, carries the original clip clocks, and passes the original extent
++  as an invocation-only metadata value. Native isolated layers retain their
++  absolute `FrameWindow`; `supports_windows: false` continues through the
++  existing sliced legacy path with a null window.
++- Remotion accepts the carried extent only for a valid native layer stamp and
++  a bounded pre-tail clock. It refuses malformed, conflicting, overlong,
++  legacy-window, unlayered, and ordinary-tail cases. Root's two compositions
++  share the same metadata callback and preserve the original full duration
++  while legacy local-window metadata remains local.
++- The native and legacy Three/live-scene cases retain the original scene
++  payload, local slice, pin/hold behavior, alpha choice, and source-time
++  mapping. The source timeline remains unchanged.
++
++The full candidate delta has only these seven paths: the three rendering
++product files, the Root metadata test, the live-scene test, the native extent
++test, and the tail compatibility test. There is no package/package-lock or
++pin change; no PCM activation or PCM implementation path was added; no
++serializer definition changed; and no old 0.0.10 archive is referenced by the
++candidate delta. The remaining 0.0.10 mentions in the tree are pre-existing
++documentation/historical test data, not this fixture's dependency.
++
++## Evidence run by this review
++
++All tests ran from a private `git archive` extraction of `5d0f1ddc` with the
++shared Agent venv and shared Node modules treated as read-only.
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/candidate-review-20261020 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/pytest-basetemp-20261020 \
++  tests/packs/rendering/test_native_layer_extent.py \
++  tests/packs/rendering/test_remotion_layer_tail_compat.py \
++  tests/packs/rendering/test_live_scene_composition.py -k 'not real_render'
++```
++
++Result: **112 passed, 1 deselected** in 33.52 seconds.
++
++```text
++/tmp/vw-m3-agent-gate-node20.19.4/bin/node remotion/tests/root-metadata.test.cjs
++```
++
++Result: **7 passed, 0 failed**.
++
++```text
++/home/user/work/venv-agent/bin/python -B -m ruff check --no-cache \
++  tests/packs/rendering/test_native_layer_extent.py \
++  tests/packs/rendering/test_remotion_layer_tail_compat.py \
++  tests/packs/rendering/test_live_scene_composition.py
++```
++
++Result: **All checks passed**.
++
++```text
++git diff --check df2739f903edac02bd36b4446deeea847524c040 \
++  5d0f1ddcad54936b36cedf1d89bf34f45fa612b5
++```
++
++Result: **passed**.
++
++The producer/final-gate report additionally records 177 bounded checks
++passing (166 pytest and 11 Node) in a fresh tracked extraction; this review
++did not treat that report as a substitute for the focused rerun above.
++
++## Limitations
++
++No full suite, browser/live-render test, encoder/decoder run, pixel/audio
++parity check, or Runtime qualification was run here. The one real-render
++live-scene test was intentionally deselected under the worker rules. These
++limitations do not block this narrow fixture-portability approval, but the
++broader viewing and Runtime gates remain separate.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..df6227606971b28d43ff1afa5581337ceb29534a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/commit-msg
+@@ -0,0 +1,4 @@
++chore(review): approve current extent fixture portability
++
++Record the owner review and focused verification for the current native extent
++and pinned composition fixture portability unit.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..8c713170da8495047ca5fa6fbf4df1f5cd118db9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/notes/report.md
+@@ -0,0 +1,41 @@
++# agt-review-extent-current report
++
++## Verdict
++
++Approved `tl/vw-m3-current-extent-fixture-portability` at
++`5d0f1ddcad54936b36cedf1d89bf34f45fa612b5` for the Agent owner gate.
++
++## Scope checked
++
++Reviewed the candidate against current `tl/integration` (`e5c2ff5f`) with
++merge base `df2739f9`. The candidate's two post-base commits are the extent
++unit `da10b0b7` and the one-file portability fix `5d0f1ddc`.
++
++The portability fix resolves the fixture from the committed
++`remotion/package.json` `file:` dependency, confines the resolved path to the
++Remotion root, and requires the archive to exist. It selects the current
++0.0.12 package. The extent unit preserves original native-layer duration and
++clock, admits only bounded pre-tail native positives, retains the existing
++legacy sliced path, and keeps the native/legacy Three/live-scene behavior.
++
++No package or lockfile/pin changes, serializer definition changes, PCM
++production activation, or old 0.0.10 archive dependency are present in the
++candidate delta. The only PCM/serializer mentions added by the extent tests
++are assertions/comments around existing behavior.
++
++## Tests
++
++- Private candidate extraction: `git archive 5d0f1ddc`.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/candidate-review-20261020 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/pytest-basetemp-20261020 tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_remotion_layer_tail_compat.py tests/packs/rendering/test_live_scene_composition.py -k 'not real_render'` — **112 passed, 1 deselected**.
++- `/tmp/vw-m3-agent-gate-node20.19.4/bin/node remotion/tests/root-metadata.test.cjs` — **7 passed, 0 failed**.
++- `/home/user/work/venv-agent/bin/python -B -m ruff check --no-cache tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_remotion_layer_tail_compat.py tests/packs/rendering/test_live_scene_composition.py` — **all checks passed**.
++- `git diff --check df2739f9 5d0f1ddc` — **passed**.
++
++The producer's independent final-gate report records 177 bounded checks
++passing; this review independently reran the focused Agent lanes above.
++
++## Limitations
++
++No full suite, browser/live render, encoder/decoder, pixel/audio parity, or
++Runtime qualification was run. The one `real_render` test was deselected.
++
+
+exec
+/bin/bash -lc "find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/candidate-review-20261020 -depth -mindepth 1 -delete && rmdir /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/candidate-review-20261020 && find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/pytest-basetemp-20261020 -depth -mindepth 1 -delete && rmdir /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/pytest-basetemp-20261020 && find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current -maxdepth 2 -type f -printf '%P\\n' | sort" in /home/user/work/wt/agt-review-extent-current
+ succeeded in 6303ms:
+DONE
+brief.md
+commit-msg
+log.txt
+meta
+notes/report.md
+running
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- approval ---' && sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-extent-current.md && printf '%s\\n' '--- worker report ---' && sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/notes/report.md && printf '%s\\n' '--- worker status ---' && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/DONE && echo DONE_PRESENT && test "'! -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/BLOCKED && echo NOT_BLOCKED && printf '"'%s\\n' '--- repo status ---' && git status --short --branch" in /home/user/work/wt/agt-review-extent-current
+ succeeded in 652ms:
+--- approval ---
+# Agent owner review: current extent fixture portability
+
+## Verdict
+
+**APPROVE** `tl/vw-m3-current-extent-fixture-portability` at
+`5d0f1ddcad54936b36cedf1d89bf34f45fa612b5` for merge onto the current
+integration branch.
+
+Reviewed against `tl/integration` at `e5c2ff5f78ae4a96e436ea1f118f655c05df2b27`;
+the candidate/integration merge base is `df2739f903edac02bd36b4446deeea847524c040`.
+The candidate contains the previously reviewed extent unit `da10b0b7690a8c2a4032e75eb3d4a3e988121997`
+and the requested portability commit `5d0f1ddc`. The portability commit itself
+is one test-file change: 15 insertions and 1 deletion in
+`tests/packs/rendering/test_remotion_layer_tail_compat.py`.
+
+## Review findings
+
+- The portability helper reads the committed `file:` dependency from
+  `remotion/package.json`, resolves it relative to `remotion/`, rejects a path
+  escaping that directory, and checks that the archive exists. The candidate's
+  dependency is the current `banodoco-timeline-composition-0.0.12.tgz`.
+- The extent unit measures the original render view before native layer
+  filtering, carries the original clip clocks, and passes the original extent
+  as an invocation-only metadata value. Native isolated layers retain their
+  absolute `FrameWindow`; `supports_windows: false` continues through the
+  existing sliced legacy path with a null window.
+- Remotion accepts the carried extent only for a valid native layer stamp and
+  a bounded pre-tail clock. It refuses malformed, conflicting, overlong,
+  legacy-window, unlayered, and ordinary-tail cases. Root's two compositions
+  share the same metadata callback and preserve the original full duration
+  while legacy local-window metadata remains local.
+- The native and legacy Three/live-scene cases retain the original scene
+  payload, local slice, pin/hold behavior, alpha choice, and source-time
+  mapping. The source timeline remains unchanged.
+
+The full candidate delta has only these seven paths: the three rendering
+product files, the Root metadata test, the live-scene test, the native extent
+test, and the tail compatibility test. There is no package/package-lock or
+pin change; no PCM activation or PCM implementation path was added; no
+serializer definition changed; and no old 0.0.10 archive is referenced by the
+candidate delta. The remaining 0.0.10 mentions in the tree are pre-existing
+documentation/historical test data, not this fixture's dependency.
+
+## Evidence run by this review
+
+All tests ran from a private `git archive` extraction of `5d0f1ddc` with the
+shared Agent venv and shared Node modules treated as read-only.
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/candidate-review-20261020 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/pytest-basetemp-20261020 \
+  tests/packs/rendering/test_native_layer_extent.py \
+  tests/packs/rendering/test_remotion_layer_tail_compat.py \
+  tests/packs/rendering/test_live_scene_composition.py -k 'not real_render'
+```
+
+Result: **112 passed, 1 deselected** in 33.52 seconds.
+
+```text
+/tmp/vw-m3-agent-gate-node20.19.4/bin/node remotion/tests/root-metadata.test.cjs
+```
+
+Result: **7 passed, 0 failed**.
+
+```text
+/home/user/work/venv-agent/bin/python -B -m ruff check --no-cache \
+  tests/packs/rendering/test_native_layer_extent.py \
+  tests/packs/rendering/test_remotion_layer_tail_compat.py \
+  tests/packs/rendering/test_live_scene_composition.py
+```
+
+Result: **All checks passed**.
+
+```text
+git diff --check df2739f903edac02bd36b4446deeea847524c040 \
+  5d0f1ddcad54936b36cedf1d89bf34f45fa612b5
+```
+
+Result: **passed**.
+
+The producer/final-gate report additionally records 177 bounded checks
+passing (166 pytest and 11 Node) in a fresh tracked extraction; this review
+did not treat that report as a substitute for the focused rerun above.
+
+## Limitations
+
+No full suite, browser/live-render test, encoder/decoder run, pixel/audio
+parity check, or Runtime qualification was run here. The one real-render
+live-scene test was intentionally deselected under the worker rules. These
+limitations do not block this narrow fixture-portability approval, but the
+broader viewing and Runtime gates remain separate.
+
+--- worker report ---
+# agt-review-extent-current report
+
+## Verdict
+
+Approved `tl/vw-m3-current-extent-fixture-portability` at
+`5d0f1ddcad54936b36cedf1d89bf34f45fa612b5` for the Agent owner gate.
+
+## Scope checked
+
+Reviewed the candidate against current `tl/integration` (`e5c2ff5f`) with
+merge base `df2739f9`. The candidate's two post-base commits are the extent
+unit `da10b0b7` and the one-file portability fix `5d0f1ddc`.
+
+The portability fix resolves the fixture from the committed
+`remotion/package.json` `file:` dependency, confines the resolved path to the
+Remotion root, and requires the archive to exist. It selects the current
+0.0.12 package. The extent unit preserves original native-layer duration and
+clock, admits only bounded pre-tail native positives, retains the existing
+legacy sliced path, and keeps the native/legacy Three/live-scene behavior.
+
+No package or lockfile/pin changes, serializer definition changes, PCM
+production activation, or old 0.0.10 archive dependency are present in the
+candidate delta. The only PCM/serializer mentions added by the extent tests
+are assertions/comments around existing behavior.
+
+## Tests
+
+- Private candidate extraction: `git archive 5d0f1ddc`.
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/candidate-review-20261020 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/pytest-basetemp-20261020 tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_remotion_layer_tail_compat.py tests/packs/rendering/test_live_scene_composition.py -k 'not real_render'` — **112 passed, 1 deselected**.
+- `/tmp/vw-m3-agent-gate-node20.19.4/bin/node remotion/tests/root-metadata.test.cjs` — **7 passed, 0 failed**.
+- `/home/user/work/venv-agent/bin/python -B -m ruff check --no-cache tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_remotion_layer_tail_compat.py tests/packs/rendering/test_live_scene_composition.py` — **all checks passed**.
+- `git diff --check df2739f9 5d0f1ddc` — **passed**.
+
+The producer's independent final-gate report records 177 bounded checks
+passing; this review independently reran the focused Agent lanes above.
+
+## Limitations
+
+No full suite, browser/live render, encoder/decoder, pixel/audio parity, or
+Runtime qualification was run. The one `real_render` test was deselected.
+
+--- worker status ---
+DONE_PRESENT
+NOT_BLOCKED
+--- repo status ---
+## tl/agt-review-extent-current
+
+codex
+## Result: APPROVED
+
+Approved commit `5d0f1ddca` against current integration.
+
+- Approval: [agent-review-extent-current.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-extent-current.md)
+- Detailed report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/notes/report.md)
+- Focused pytest: **112 passed, 1 deselected**
+- Root metadata Node tests: **7 passed**
+- Ruff: **passed**
+- `git diff --check`: **passed**
+
+Confirmed no PCM production activation, serializer implementation change, pin/package change, or old 0.0.10 fixture dependency. Native extent, bounded pre-tail clock, and native/legacy Three behavior remain covered.
+
+Not run: full suite, browser/live render, encoder/pixel/audio parity, or Runtime qualification. `DONE` and commit message were written.
+tokens used
+145,458
+## Result: APPROVED
+
+Approved commit `5d0f1ddca` against current integration.
+
+- Approval: [agent-review-extent-current.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-extent-current.md)
+- Detailed report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-extent-current/notes/report.md)
+- Focused pytest: **112 passed, 1 deselected**
+- Root metadata Node tests: **7 passed**
+- Ruff: **passed**
+- `git diff --check`: **passed**
+
+Confirmed no PCM production activation, serializer implementation change, pin/package change, or old 0.0.10 fixture dependency. Native extent, bounded pre-tail clock, and native/legacy Three behavior remain covered.
+
+Not run: full suite, browser/live render, encoder/pixel/audio parity, or Runtime qualification. `DONE` and commit message were written.

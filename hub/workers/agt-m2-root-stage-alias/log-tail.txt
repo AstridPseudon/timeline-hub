@@ -1,0 +1,400 @@
++
+     def value_address(write):
+-        ref, path = logical_address(write['ref'], write['path'])
++        ref, path = root_address(write['ref'], write['path'])
+         # Source rows are owned by an occurrence, but aren't JSON children of
+         # its placement row. Ownership overlap must not fold them into that row.
+         if ref.startswith('occurrence:') and path[:1] == ('source',):
+@@ -106,10 +141,10 @@
+     return result
+ 
+ 
+-def check_intervening(records, intervening_records, *, include_reads=True):
++def check_intervening(records, intervening_records, *, include_reads=True, state=None):
+     if intervening_records is None:
+         raise CommandError('complete intervening history is required', kind='history_unavailable')
+-    guarded = []
++    guarded, source_roots = [], []
+     selections = []
+     for record in records:
+         if not isinstance(record, dict) or any(key not in record for key in ('writes', 'reads', 'selections', 'created')):
+@@ -122,19 +157,21 @@
+                 if read['ref'].endswith('/shot'):
+                     guarded.append((read['ref'].removesuffix('/shot'), ('shot_id',)))
+                     if read['path'] == ['shot_id'] and isinstance(read['state'].get('value'), str):
+-                        guarded.append(('shot:' + read['state']['value'], ()))
++                        source_roots.append(('shot:' + read['state']['value'], ()))
+             for binding in record.get('bindings', []):
+                 ref = binding['ref']
+                 if member(ref) is not None:
+                     guarded.append((ref, ('id',)))
+                 elif ref.startswith('occurrence:') and '/' not in ref:
+                     guarded.append((ref, ('occurrence_id',)))
++    root_address = _root_addresses(records, state)
+     for record in intervening_records:
+         if not isinstance(record, dict) or 'writes' not in record:
+             raise CommandError("complete intervening write history is required", kind='history_unavailable')
+         for write in record['writes']:
+             address = write['ref'], tuple(write['path'])
+-            if (any(overlaps(address, prior) for prior in guarded)
++            if (any(overlaps(address, prior) for prior in [*guarded, *source_roots])
++                    or any(overlaps(root_address(*address), root_address(*prior)) for prior in guarded)
+                     or any(selection_overlap(s, write) for s in selections)):
+                 raise CommandError("an intervening publication wrote a guarded address",
+                                    kind='intervening_write', ref=address[0], path=address[1])
+@@ -212,21 +249,34 @@
+ 
+     def proven_sites():
+         if record['command']['op'] == 'timeline.inverse':
+-            return _legacy_inverse_sites(records, record)
++            return (*_legacy_inverse_sites(records, record), set())
+         # Recorder writes are ordered even though reads and selections are not.
+         # Reconstruct only those stages, retaining unrelated current authored data.
+-        stage = State(copy.deepcopy(state.bundle), closures=state.closures)
+-        reads, selections = [], []
++        staged = Recording(copy.deepcopy(state.bundle), record['command'], record['ordinal'],
++                           closures=state.closures)
++        stage = staged.state
++        reads, selections, bindings = [], [], set()
+         for write in [None, *record['writes']]:
+             if write is not None:
+                 guard(stage, write['ref'], write['path'], write['before'], kind='history_unavailable')
+-                stage.set(write['ref'], write['path'], write['after'])
++                root = root_identity(write['ref'])
++                if root is not None and not write['path'] and write['before'] == ABSENT and write['after'] != ABSENT:
++                    created = {'ref': write['ref'], 'kind': root[0],
++                               'owner': None if root[0] == 'shot' else 'parent'}
++                    if record['created'].count(created) != 1:
++                        raise CommandError('root creation context is unavailable', kind='history_unavailable',
++                                           ref=write['ref'])
++                    staged.create_entity(**created, value=write['after']['value'], restoring=True)
++                else:
++                    stage.set(write['ref'], write['path'], write['after'])
+             reads.extend(read for read in record['reads']
+                          if stage.matches(read['ref'], read['path'], read['state']))
+             selections.extend(selected for selected in record['selections']
+                               if equal(selection(stage, selected['key'], selected['owner'],
+                                                  selected['members']), selected))
+-        return reads, selections
++            bindings.update(binding['ref'] for binding in record.get('bindings', [])
++                            if stage.entity(binding['ref'], optional=True) is not None)
++        return reads, selections, bindings
+ 
+     for read in record['reads']:
+         if state.matches(read['ref'], read['path'], read['state']):
+@@ -248,7 +298,10 @@
+     for binding in record.get('bindings', []):
+         ref = binding['ref']
+         if ref not in created and state.entity(ref, optional=True) is None:
+-            raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
++            if sites is None:
++                sites = proven_sites()
++            if ref not in sites[2]:
++                raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
+ 
+ 
+ def apply_inverse(ctx, records, intervening_records):
+@@ -256,8 +309,8 @@
+         raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
+     if any(not isinstance(record, dict) or 'writes' not in record for record in records):
+         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
+-    check_intervening(records, intervening_records)
+-    changes = coalesce(records)
++    check_intervening(records, intervening_records, state=ctx.state)
++    changes = coalesce(records, ctx.state)
+     orders = restoration_orders(records)
+     for (owner, kind), (_, expected) in orders.items():
+         actual = ctx.select('collection.' + kind + 's', owner)
+diff --git a/astrid/sdk/timeline/rebase.py b/astrid/sdk/timeline/rebase.py
+index 34c686826b7a568c8da58c8ac4341a42aa4e1a01..b8ba8289d8414a43bfc5d26cdf1ab1902d7369aa
+--- a/astrid/sdk/timeline/rebase.py
++++ b/astrid/sdk/timeline/rebase.py
+@@ -1,11 +1,12 @@
+ """Server-only replay of the original captured intent on an accepted head."""
+ from __future__ import annotations
+ 
++from ._command_state import State
+ from .commands import execute
+ from .inverse import check_intervening
+ 
+ 
+ def replay(plan, head_bundle, *, intervening_records=(), inverse_records=(), id_map=None, closures=None):
+-    check_intervening(plan.records, intervening_records)
++    check_intervening(plan.records, intervening_records, state=State(head_bundle))
+     return execute(head_bundle, plan.commands, inverse_records=inverse_records,
+                    intervening_records=intervening_records, id_map=id_map, closures=closures)
+diff --git a/tests/editing_conformance/test_recorded_graph_roots.py b/tests/editing_conformance/test_recorded_graph_roots.py
+index 72f347aee5251823f273715870cfc50b9e2f1ce9..b5dab309b87125f49516096fcabedd00ab17e752
+--- a/tests/editing_conformance/test_recorded_graph_roots.py
++++ b/tests/editing_conformance/test_recorded_graph_roots.py
+@@ -79,14 +79,7 @@
+         state.get('occurrence:occ-a/' + scope, [])
+ 
+ 
+-# Requirements: reconstructed root stages retain source identity, and root/child
+-# aliases coalesce before inverse guards. Keep both expectations until restored.
+-@pytest.mark.parametrize('mode', ['read',
+-    pytest.param('selection', marks=pytest.mark.xfail(
+-        strict=True, reason='reconstructed created-shot stage loses its source-free identity')),
+-    pytest.param('edit', marks=pytest.mark.xfail(
+-        strict=True, reason='root creation and occurrence-child writes need shared inverse alias coalescing')),
+-])
++@pytest.mark.parametrize('mode', ['read', 'selection', 'edit'])
+ def test_one_recipe_creates_roots_then_reads_and_edits_their_children(monkeypatch, mode):
+     from tests.editing_conformance.test_recipe_m1_commands import inverse
+ 
+@@ -113,6 +106,153 @@
+     assert inverse(plan.bundle, plan.records).bundle == original
+ 
+ 
++@pytest.fixture
++def child_ops(root_ops, monkeypatch):
++    def create(ctx, command):
++        for root in root_values():
++            ctx.create_entity(**root)
++        ref = 'occurrence:new-occ/clip:title'
++        ctx.select('collection.clips', 'occurrence:new-occ')
++        ctx.read(ref, ['hold'])
++        ctx.bind('child', ref)
++        for value in (3, 3, 2, 3):
++            ctx.write(ref, ['hold'], value)
++            ctx.read(ref, ['hold'])
++
++    def write(ctx, command):
++        for value in command['args']['values']:
++            ctx.write(command['select'], ['hold'], value)
++
++    def write_root(ctx, command):
++        owner = command['select'].split('/')[0]
++        ref = 'shot:' + ctx.state.occurrence(owner)['shot_id']
++        for value in command['args']['values']:
++            shot = ctx.read(ref)
++            shot['internal_timeline']['clips'][0]['hold'] = value
++            ctx.write(ref, [], shot)
++
++    registered = commands.operations()
++    registered['test.create-roots'] = commands.Operation({'type': 'object'}, create, {})
++    registered['test.child-write'] = commands.Operation({'type': 'object'}, write, {}, True)
++    registered['test.root-write'] = commands.Operation({'type': 'object'}, write_root, {}, True)
++    monkeypatch.setattr(commands, 'operations', lambda: registered)
++
++
++def child_command(ref='occurrence:new-occ/clip:title', values=(3,)):
++    return {'schema_version': 1, 'op': 'test.child-write', 'version': '1',
++            'select': ref, 'args': {'values': list(values)}}
++
++
++def test_created_root_child_stages_replay_inverse_redo_and_compiled_reload(child_ops):
++    from tests.editing_conformance.test_recipe_m1_commands import inverse
++
++    original = bundle_from_document(document_fixture())
++    plan = commands.execute(original, [create_command()])
++    records = copy.deepcopy(plan.records)
++    assert replay(plan, original).records == records
++    undone = inverse(plan.bundle, records)
++    assert undone.bundle == original
++    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
++    assert replay(undone, plan.bundle, inverse_records=records).records == undone.records
++    accepted = document_from_bundle(plan.bundle)
++    reloaded = bundle_from_document(accepted)
++    undone = inverse(reloaded, records)
++    restored = document_from_bundle(undone.bundle, source_bundles=(original, reloaded))
++    assert restored == document_fixture()
++    redone = inverse(undone.bundle, undone.records)
++    assert document_from_bundle(redone.bundle, source_bundles=(original, reloaded)) == accepted
++    assert plan.records == records
++
++
++@pytest.mark.parametrize('values', [(3,), (4, 3)])
++def test_created_root_child_same_value_and_aba_publications_refuse(child_ops, values):
++    from tests.editing_conformance.test_recipe_m1_commands import inverse
++
++    original = bundle_from_document(document_fixture())
++    plan = commands.execute(original, [create_command()])
++    later = commands.execute(plan.bundle, [child_command(values=values)])
++    assert later.bundle == plan.bundle
++    before = copy.deepcopy(later.bundle)
++    with pytest.raises(CommandError) as error:
++        inverse(later.bundle, plan.records, later.records)
++    assert error.value.kind == 'intervening_write'
++    assert later.bundle == before
++
++
++def test_created_shot_later_occurrence_dependency_refuses(root_ops):
++    from tests.editing_conformance.test_recipe_m1_commands import inverse
++
++    original = bundle_from_document(document_fixture())
++    plan = commands.execute(original, [create_command()])
++    root = copy.deepcopy(root_values()[1])
++    root['ref'] = 'occurrence:dependent'
++    root['value']['occurrence_id'] = 'dependent'
++    later = commands.execute(plan.bundle, [create_command([root])])
++    before = copy.deepcopy(later.bundle)
++    with pytest.raises(CommandError) as error:
++        inverse(later.bundle, plan.records, later.records)
++    assert error.value.kind == 'surviving_dependents'
++    assert later.bundle == before
++
++
++def test_root_and_child_aliases_use_exact_authored_owner_not_shared_source(child_ops, monkeypatch):
++    from tests.editing_conformance.test_recipe_m1_commands import inverse
++
++    def edit(ctx, command):
++        ref = command['select']
++        shot = 'shot:' + ctx.state.occurrence(ref.split('/')[0])['shot_id']
++        value = ctx.read(shot)
++        value['internal_timeline']['clips'][0]['hold'] = 3
++        ctx.write(shot, [], value)
++        ctx.write(ref, ['hold'], 4)
++
++    registered = commands.operations()
++    registered['test.root-child'] = commands.Operation({'type': 'object'}, edit, {}, True)
++    monkeypatch.setattr(commands, 'operations', lambda: registered)
++    original = bundle_from_document(document_fixture())
++    ref = 'occurrence:occ-a/clip:clip-a'
++    sibling = 'occurrence:occ-b/clip:clip-a'
++    assert State(original).occurrence('occurrence:occ-a')['shot_id'] != State(original).occurrence('occurrence:occ-b')['shot_id']
++    command = {**child_command(ref), 'op': 'test.root-child', 'args': {}}
++    plan = commands.execute(original, [command])
++    later = commands.execute(plan.bundle, [child_command(sibling, (5,))])
++    expected = commands.execute(original, [child_command(sibling, (5,))])
++    undone = inverse(later.bundle, plan.records, later.records)
++    assert undone.bundle == expected.bundle
++    assert inverse(undone.bundle, undone.records).bundle == later.bundle
++    assert replay(plan, expected.bundle, intervening_records=later.records).bundle == later.bundle
++    collision = commands.execute(plan.bundle, [child_command(ref, (4,))])
++    with pytest.raises(CommandError) as error:
++        inverse(collision.bundle, plan.records, collision.records)
++    assert error.value.kind == 'intervening_write'
++
++
++@pytest.mark.parametrize('damage', ['missing-created', 'wrong-kind', 'wrong-owner', 'missing-owner',
++                                   'changed-owner', 'duplicate-owner', 'missing-source'])
++def test_created_child_inverse_requires_complete_exact_root_context(child_ops, damage):
++    from tests.editing_conformance.test_recipe_m1_commands import inverse
++
++    plan = commands.execute(bundle_from_document(document_fixture()), [create_command()])
++    records = copy.deepcopy(plan.records)
++    head = copy.deepcopy(plan.bundle)
++    if damage == 'missing-created':
++        records[0]['created'] = []
++    elif damage in ('wrong-kind', 'wrong-owner'):
++        records[0]['created'][0]['kind' if damage == 'wrong-kind' else 'owner'] = 'parent'
++    elif damage == 'missing-owner':
++        records[0]['writes'].pop(1)
++    elif damage == 'changed-owner':
++        records[0]['writes'][1]['after']['value']['shot_id'] = 'other-shot'
++    elif damage == 'duplicate-owner':
++        head['placements'].append(copy.deepcopy(head['placements'][-1]))
++    else:
++        head['shots']['new-shot'].pop('_created')
++    before = copy.deepcopy(head)
++    with pytest.raises(CommandError):
++        inverse(head, records)
++    assert head == before
++
++
+ def test_executor_creates_full_roots_replays_and_compiles_without_source_pins(root_ops):
+     original = bundle_from_document(document_fixture())
+     before = copy.deepcopy(original)
+diff --git a/tests/sdk/test_timeline_commit_graph_roots.py b/tests/sdk/test_timeline_commit_graph_roots.py
+index 523d683f782362ed85a8efb0c4b0c2f35cb5caf0..fedd8cf7487b2ab1d3bb87bd7d8b6b9f3c484503
+--- a/tests/sdk/test_timeline_commit_graph_roots.py
++++ b/tests/sdk/test_timeline_commit_graph_roots.py
+@@ -11,6 +11,10 @@
+ from astrid.sdk.timeline._command_state import CommandError, State, present
+ from astrid.sdk.timeline.commands import _SCHEMA, execute
+ from tests.editing_conformance.test_recorded_graph_roots import (
++    child_ops as child_ops,
++)
++from tests.editing_conformance.test_recorded_graph_roots import (
++    child_command,
+     create_command,
+     root_values,
+ )
+@@ -159,6 +163,48 @@
+     assert redone['data']['commands'][0]['created'] == ['shot:new-shot', 'occurrence:new-occ']
+ 
+ 
++@pytest.mark.usefixtures('child_ops')
++def test_authenticated_created_child_stages_reload_inverse_redo_exact_closure():
++    from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse
++
++    realm = DetachedRealm(document_fixture())
++    original = copy.deepcopy(realm.documents[realm.head['revision_id']])
++    accepted = realm.call([create_command()])
++    document = accepted['data']['canonical_document']
++    assert State(commit.bundle_from_document(document)).get(
++        'occurrence:new-occ/clip:title', ['hold']) == present(3)
++    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
++    assert undone['data']['canonical_document'] == original
++    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
++    assert redone['data']['canonical_document'] == document
++    assert redone['data']['commands'][0]['created'] == ['shot:new-shot', 'occurrence:new-occ']
++
++
++@pytest.mark.usefixtures('child_ops')
++@pytest.mark.parametrize('first_scope', ['root', 'child'])
++@pytest.mark.parametrize('aba', [False, True])
++@pytest.mark.parametrize('noncontiguous', [False, True])
++def test_provider_root_child_aliases_guard_equal_state_publications(first_scope, aba, noncontiguous):
++    from tests.sdk.test_timeline_commit_provider import CommitRejected, DetachedRealm, inverse
++
++    realm = DetachedRealm(document_fixture())
++    command = child_command('occurrence:occ-a/clip:clip-a')
++    root = {**command, 'op': 'test.root-write'}
++    first = realm.call([root if first_scope == 'root' else command])
++    gap = command if first_scope == 'root' else root
++    realm.call([{**gap, 'args': {'values': [4, 3] if aba else [3]}}])
++    targets = [first['receipt']['receipt_id']]
++    if noncontiguous:
++        second = realm.call([{**command, 'args': {'values': [5]}}])
++        targets.append(second['receipt']['receipt_id'])
++    head, accepted = copy.deepcopy(realm.head), copy.deepcopy(realm.accepted)
++    with pytest.raises(CommitRejected) as error:
++        realm.call([inverse(targets)])
++    assert error.value.failure['details']['reason'] == 'intervening_write'
++    assert realm.head == head
++    assert realm.accepted == accepted
++
++
+ @pytest.mark.parametrize('damage', ['opaque', 'internal', 'compiler-link'])
+ def test_compiled_root_guard_still_authenticates_authored_data(damage):
+     original = commit.bundle_from_document(document_fixture())
+
+exec
+/bin/bash -lc "cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-stage-alias/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-stage-alias/commit-msg.txt && git diff --check && git diff --stat && rg -n 'PENDING|770 passed|52 passed|M2 remains' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-stage-alias/notes/report.md" in /home/user/work/wt/agt-m2-root-stage-alias
+ succeeded in 0ms:
+ astrid/sdk/timeline/_command_state.py              |   6 +-
+ astrid/sdk/timeline/commit.py                      |   4 +-
+ astrid/sdk/timeline/inverse.py                     |  81 +++++++++--
+ astrid/sdk/timeline/rebase.py                      |   3 +-
+ .../test_recorded_graph_roots.py                   | 156 +++++++++++++++++++--
+ tests/sdk/test_timeline_commit_graph_roots.py      |  46 ++++++
+ 6 files changed, 271 insertions(+), 25 deletions(-)
+1:Fixed generic created-root child inverse staging and alias closure. Both foundation strict xfails now pass with their original positive assertions unchanged. **M2 remains HELD until PLAN records M1.**
+16:**770 passed, 3 strict xfailed in 57.58s.** Only the three held selected-schema parameter cases remain xfailed. Log: `notes/targeted-final.log` beside this report. The earlier expanded run (`notes/targeted.log`) exposed two introduced overbroad source-identity guard conflicts (disjoint parameter rebase and sibling inverse); fixed without weakening expectations. The focused correction run below passed **80 tests in 2.15s**:
+31:**52 passed, 1 existing strict xfailed in 88.14s; service exit 0 / 91s.** Final source snapshot tree `96befa64244753e63b7e7ea3df87b1e796414f45`. Result directory: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-root-stage-alias-bundle1-runtime6be9706-integration-1020010407-13559/`; full log is `log.txt` there. The existing nullable-speed first-clip xfail is unchanged.
+33:The same named suite on the earlier source tree `c0e866648d322c43142dcaaaf655e7200e0e8d35` passed **52 passed, 1 existing strict xfailed in 76.66s**, service exit 0 / 78s, request `agt-m2-root-stage-alias-bundle1-runtime6be9706-integration-1020010218-10004`. That run finished before requesting the corrected final tree; no queued/running request was resubmitted. The named suite asserts exact official Runtime `6be970633cc82ab412428151e6bf42f3e7fc3081` and exercises existing wire operations (M1, parent label, scalar, first clip, permanent IDs, add/delete, retry/restart and cutover). No custom root recipe or invented created proof was sent through the frozen wire.
+
+codex
+Fixed both root-stage xfails without changing their positive assertions. Created-root child bindings and root/child alias guards now survive replay, compile/reload, undo, and redo.
+
+- Targeted tests: **770 passed, 3 held xfails**.
+- Central official Runtime lane: **52 passed, 1 existing xfail**.
+- Ruff, diff checks, and M1/parent-label byte goldens passed.
+
+[Report with exact commands, decisions, and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-stage-alias/notes/report.md). Both commit-message files are written.
+
+No code blockers. Full suite and new root-wire qualification remain unrun. Ready for manager review; M2 remains held pending PLAN M1.
+tokens used
+136,354
+Fixed both root-stage xfails without changing their positive assertions. Created-root child bindings and root/child alias guards now survive replay, compile/reload, undo, and redo.
+
+- Targeted tests: **770 passed, 3 held xfails**.
+- Central official Runtime lane: **52 passed, 1 existing xfail**.
+- Ruff, diff checks, and M1/parent-label byte goldens passed.
+
+[Report with exact commands, decisions, and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-stage-alias/notes/report.md). Both commit-message files are written.
+
+No code blockers. Full suite and new root-wire qualification remain unrun. Ready for manager review; M2 remains held pending PLAN M1.

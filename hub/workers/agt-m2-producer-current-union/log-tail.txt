@@ -1,0 +1,400 @@
++            'runtime_epoch': service.health()['runtime_epoch']}, idempotency_key='claim')
++        assert attempt['task_id'] == task['task']['id']
++        document = service._timeline_commits()[0].revision_closure(
++            project, 'film', target['base_revision_id'])
++        commands = [capture_track_create(commit.bundle_from_document(document), 'parent',
++            {'id': 'proposed', 'kind': 'visual', 'opaque': [1.0, -0.0, False]})]
++        proposal = {'schema_version': 1, 'producer': {
++            'task_id': attempt['task_id'], 'attempt_id': attempt['attempt_id'],
++            'executor_id': 'worker', 'fence': attempt['fence'], 'runtime_epoch': attempt['runtime_epoch']},
++            'admitted_target': target, 'rationale': 'Reviewed café', 'commands': commands}
++        proposal['proposal_digest'] = commit._digest(proposal)
++        raw = commit._json(proposal).encode('utf-8')
++        settle_output(service, attempt, raw, 'authoring_proposal', 'application/json', 'settle')
++        case.proposal, case.target = proposal, target
++        yield case
++    finally:
++        case.service.close()
++
++
++def body(case):
++    return {'api_version': 1, **build_producer_batch(case.proposal)}
++
++
++def submit(case, request, key):
++    from runtime_protocol.timeline_commit_port import route_path
++
++    return case.service.commit_timeline(case.target['project_id'], 'film', request,
++        idempotency_key=key, publisher='requester',
++        invocation_path=route_path(case.target['project_id'], 'film'), authorize=lambda: None)
++
++
++# D13 qualification requires Runtime to accept the native recorder's guard
++# metadata; 6023cfb compares that record to the necessarily bare request guard.
++@pytest.mark.xfail(strict=True, reason='D13: Runtime must accept native captured producer.guard records')
++def test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes(settled):
++    from runtime_protocol.errors import RuntimeErrorBase
++    from runtime_protocol.service import RuntimeService
++
++    case = settled
++    original = body(case)
++    forwarded = subprocess.run(['node', '-e',
++        'process.stdout.write(JSON.stringify(JSON.parse(require("fs").readFileSync(0,"utf8"))))'],
++        input=commit._json(original), text=True, capture_output=True, check=True, timeout=15)
++    request = json.loads(forwarded.stdout)
++    assert type(original['commands'][1]['args']['row']['opaque'][0]) is float
++    assert type(request['commands'][1]['args']['row']['opaque'][0]) is int
++    assert request['commands'][0]['args']['pin']['proposal_digest'] == case.proposal['proposal_digest']
++    preview = submit(case, {**request, 'dry_run': True}, 'preview')
++    assert preview['data']['status'] == 'preview' and preview['receipt'] is None
++    accepted = submit(case, request, 'accept')
++    assert accepted['data']['status'] == 'accepted'
++    assert accepted['data']['canonical_document']['parent_revision']['payload']['config']['tracks'] == [
++        request['commands'][1]['args']['row']]
++    case.service.close()
++    case.service = RuntimeService(case.root)
++    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
++    assert submit(case, request, 'accept') == accepted
++    with pytest.raises(RuntimeErrorBase) as error:
++        submit(case, request, 'second-key')
++    assert error.value.details['reason'] == 'producer_proposal_consumed'
++    current = {'base_revision_id': accepted['data']['accepted_revision_id'],
++               'base_publication_id': accepted['receipt']['receipt_id']}
++    inverse = {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
++               'args': {'publications': [accepted['receipt']['receipt_id']]}}
++    undone = submit(case, {**request, **current, 'commands': [inverse]}, 'undo')
++    assert undone['data']['canonical_document']['parent_revision']['payload']['config']['tracks'] == []
++
++
++@pytest.mark.parametrize('mutation', ['number', 'boolean', 'reason', 'digest'])
++def test_settled_artifact_mutation_refuses_without_history_or_head_changes(settled, mutation):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    case = settled
++    request = copy.deepcopy(body(case))
++    if mutation in ('number', 'boolean'):
++        request['commands'][1]['args']['row']['opaque'][0] = 2 if mutation == 'number' else True
++    elif mutation == 'reason':
++        request['rationale'] = 'Changed'
++    else:
++        request['commands'][0]['args']['pin']['proposal_digest'] = 'sha256:' + 'f' * 64
++    before = case.service.list_timeline_commits(case.target['project_id'], 'film', authorize=lambda: None)
++    with pytest.raises(RuntimeErrorBase) as error:
++        submit(case, request, 'mutated')
++    assert error.value.details['reason'] in {'producer_dependency_unavailable', 'producer_attempt_mismatch'}
++    assert case.service.list_timeline_commits(
++        case.target['project_id'], 'film', authorize=lambda: None) == before
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py tests/sdk/test_timeline_producer_guard.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py --tb=short' in /home/user/work/wt/agt-m2-producer-current-union
+codex
+The real settled-proposal test reached Runtime capture, but preview refused with `producer authority requires its guard record`. Runtime compares the bare request guard with Agent’s record, which adds the standard capture metadata. I’ve kept the acceptance/restart/undo requirement as a strict expected failure and left both implementations’ authority checks intact. Four artifact-mutation refusal cases passed.
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/__init__.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/producer.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/sdk/timeline/native_auto_placement.py astrid/sdk/timeline/native_occurrence_media_commands.py astrid/sdk/timeline/native_placement_commands.py tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py tests/sdk/test_timeline_producer_guard.py tests/sdk/command_schema_compatibility.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_producer_guard_runtime.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py && git diff --check' in /home/user/work/wt/agt-m2-producer-current-union
+exec
+/bin/bash -lc 'ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_producer_guard_runtime.py --runxfail --tb=short' in /home/user/work/wt/agt-m2-producer-current-union
+ succeeded in 997ms:
+All checks passed!
+
+ exited 1 in 12268ms:
+F....                                                                    [100%]
+=================================== FAILURES ===================================
+____ test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes ____
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/service.py:2435: in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:917: in commit
+    return (port.preview(prepared) if request.get("dry_run", False)
+            ^^^^^^^^^^^^^^^^^^^^^^
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/timeline_commit_port.py:451: in preview
+    result = self.__store.preview(self.__context, prepared, authorize=self.__authorize, inputs=self)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/timeline_commit_store.py:632: in preview
+    candidate = self._validate(context, prepared, inputs)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/timeline_commit_store.py:547: in _validate
+    inputs.validate(prepared)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/timeline_commit_port.py:368: in validate
+    self._validate_producer_consumption(prepared)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/timeline_commit_port.py:413: in _validate_producer_consumption
+    for capture in self._producer_captures(prepared):
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/timeline_commit_port.py:363: in _producer_captures
+    return self._read(read)
+           ^^^^^^^^^^^^^^^^
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/timeline_commit_port.py:165: in _read
+    return copy.deepcopy(call())
+                         ^^^^^^
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/timeline_commit_port.py:357: in read
+    raise refused("producer_dependency_unavailable", "producer authority requires its guard record")
+E   runtime_protocol.timeline_commit.CommitRejected: producer authority requires its guard record
+
+The above exception was the direct cause of the following exception:
+tests/sdk/test_timeline_producer_guard_runtime.py:125: in test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes
+    preview = submit(case, {**request, 'dry_run': True}, 'preview')
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/sdk/test_timeline_producer_guard_runtime.py:104: in submit
+    return case.service.commit_timeline(case.target['project_id'], 'film', request,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/service.py:2400: in commit_timeline
+    return self._execute_timeline_commit(
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb/runtime_protocol/service.py:2440: in _execute_timeline_commit
+    raise public_failure(exc.failure) from exc
+E   runtime_protocol.errors.RuntimeErrorBase: producer authority requires its guard record
+=========================== short test summary info ============================
+FAILED tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes
+1 failed, 4 passed in 9.95s
+
+ succeeded in 116914ms:
+........................................................................ [ 27%]
+........................................................................ [ 54%]
+........................................................................ [ 81%]
+................................................                         [100%]
+264 passed in 114.58s (0:01:54)
+
+ succeeded in 29790ms:
+........................................................................ [ 24%]
+........................................................................ [ 49%]
+........................................................................ [ 74%]
+........................................................................ [ 98%]
+...                                                                      [100%]
+291 passed in 27.63s
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+p=Path('docs/design/m2-auto-placement.md');s=p.read_text().replace('clip_id, media, *, ownership, verified_media, anchor=None, duration=None)"'` is pure.'"', 'clip_id, media, *, ownership, verified_media, anchor=None, duration=None,\\npreferred_track=None, fallback_at=None, fallback_track=None)"'` is pure.'"').replace('literal. New clip goes on the occurrence lane. Result must fit the occurrence','literal. New clip goes on the resolved saved or occurrence lane. Result must fit the occurrence').replace('  ("'`dependency_changed`) instead of landing at the stale position. The caller rebuilds on the'"\\n  new head;', '  ("'`dependency_changed`) instead of landing at the stale position. Rebuilding on the'"\\n  new head is a new capture for requester review, never a rewrite of an in-flight request;');p.write_text(s)
+p=Path('astrid/sdk/timeline/native_auto_placement.py');s=p.read_text().replace('re-run on replay, so replay and inverse are exact whatever happened to the anchor.', 're-run on replay; unchanged-basis replay and inverse are exact.').replace('instead of landing at a stale position; the builder is then re-run on the new head.', 'instead of landing at a stale position. Rebuilding on a new head is a new capture\\nfor requester review, never a rewrite of an in-flight request.');p.write_text(s)
+import hashlib,json,subprocess
+raw=Path('astrid/core/timeline/schema/edit-command.schema.json').read_bytes();schema=json.loads(raw)
+print('schema sha256:',hashlib.sha256(raw).hexdigest());print('defs:',len(schema['"'$defs'"']));print('ops:',', '.join(c['if']['properties']['op']['const'] for c in schema['"'$defs'"']['EditCommand']['allOf']))
+print('base:',subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip())
+PY" in /home/user/work/wt/agt-m2-producer-current-union
+ succeeded in 232ms:
+schema sha256: 30da4fde84c328e7cb44035b50eb53fd2cd9637a14a0c948f4412f6469ce34bd
+defs: 48
+ops: clip.delete, track.set, shot.set, clip.set-params, clip.set-element, timeline.inverse, timeline.restore, clip.move, clip.add, occurrence.add-media, occurrence.swap-media, placement.move, placement.create, placement.unplace, shot.pool, track.create, clip.set, clip.trim, clip.split, occurrence.duplicate, occurrence.delete, producer.guard
+base: c456b3281497653cecf44f61acd6fa30565d83c8
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import hashlib,json,subprocess
+schema_path=Path('astrid/core/timeline/schema/edit-command.schema.json')
+raw=schema_path.read_bytes();schema=json.loads(raw)
+ops=[c['if']['properties']['op']['const'] for c in schema['"'$defs'"']['EditCommand']['allOf']]
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+text=f'''# Agent full current canonical union candidate
+
+2026-10-20. PLAN 4.1 / D13 source candidate only. Manager freeze is pending the harness commit; this document does not authorize generation, consumer pin changes or endpoint retirement.
+
+Source: branch "'`tl/agt-m2-producer-current-union`, worktree `/home/user/work/wt/agt-m2-producer-current-union`, based on `c456b3281497653cecf44f61acd6fa30565d83c8`. The harness must provide the new commit, then the manager must verify this exact schema hash before freezing the source ref.
+
+Canonical path: `astrid/core/timeline/schema/edit-command.schema.json`.
+Raw SHA256: `{hashlib.sha256(raw).hexdigest()}`.
+Inventory: **{len(schema['"'"'$defs'"'])} definitions, {len(ops)} registered operation conditions** (20 native recipes plus inverse/restore).
+
+Operations, in canonical order:
+
+{', '.join('"'`'"'+op+'"'`'"' for op in ops)}.
+
+## Composition and preservation
+
+Ported the reviewed "'`931d7ec56dadffc2efdc893fec80b4c4aadf8a8e` → `5c6467da34f53ce8d5111c0162eca5ff614380ed` bounded auto-placement delta, then the producer-only `1441bdf1a4795aad318cf27e8b26331146bc0d92` delta. Current registry, semantic rebase policy, selected-schema resolver, client/core/scene carry and durable requester session remain current. No old whole source trees were copied. No parent-media insertion/assembled-target variant was added.
+
+The only canonical changes from c456b328 are five producer definitions, the `producer.guard` conditional, and optional closed `consumed` args on `placement.create` / `occurrence.add-media`. Every other definition/condition is structurally identical. `producer.guard` args contain only `pin`; original settled artifact digest is forwarded, never recomputed from requester serialization. Commands/rationale use numeric-value equality with booleans distinct. Runtime capture remains required at provider preparation, including preview. The original admitted base, commands and rationale persist through the existing requester outbox and exact retry.
+
+Permanent tests: `tests/sdk/test_timeline_current_union_schema.py`; exact authored compatibility helper from Agent `ffa5325c69c575a883af25123f4d1c20a3706e4b` (`tests/sdk/command_schema_compatibility.py`, raw SHA256 `d54e1b83fc65ee44fbdcea57876dd040f919b553fff6aac1aa90a3e49bb31b78`). Each entire immutable schema below is checked, not a subset floor. Regressions drop every definition and registered operation individually, and reject narrowed numeric args. A separate exact comparison permits only the approved additions above.
+
+| Immutable input | Source path | Raw SHA256 | Definitions / ops |
+| --- | --- | --- | --- |
+| Agent c456b3281497653cecf44f61acd6fa30565d83c8 | astrid/core/timeline/schema/edit-command.schema.json | 40ce6d81487f39236fbfb3adf13e6e0c3f43cfcc375b39b7badc32d65531fd4b | 43 / 21 |
+| Runtime 6023cfb10307b4c0004642b5fa1995d72ba4f6d1, release 0.2.10 | contract/schemas/edit-command.json | 472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9 | 35 / 14 |
+
+Both containment checks pass. Exact snapshots live under `tests/fixtures/current-union-command-schemas/`, extracted with read-only `git show` from those refs.
+
+## Runtime qualification findings — activation remains held
+
+**The brief'"'s statement that Runtime6023cfb has a public producer guard schema is incorrect.** Its release metadata is 0.2.10 and its real producer port/checkpoint exists, but its public "'`contract/schemas/edit-command.json` has the ordinary 472622c4 hash above, with no `ProducerGuardArgs`, `ProducerAttemptPin`, `SettledProducerProposal` or `producer.guard` condition. Generated command types lack those producer types too. The generic unknown-op envelope can carry the guard; that is not explicit typed/closed guard publication. Do not claim normally generated guard/consumed public types from that release. Agent stays pinned to Runtime94114269 / 0.2.9.
+
+`tests/sdk/test_timeline_producer_guard_runtime.py` creates real tasks, claims and immutable managed output settlements through public RuntimeService APIs, including two ordered settled data children and a captured media-free track-create proposal. No store rows are injected, no prepared provider simulates acceptance, and no validator/schema/port is replaced. Tested against an untouched `git archive 6023cfb...` using the existing Runtime locator, with the normal Agent semantic provider.
+
+Four real changed-number/boolean/rationale/digest refusals pass without timeline-history changes. The positive Node numeric forwarding → preview → acceptance → restart/retry/one-shot → undo requirement **fails at preview**: `producer_dependency_unavailable`, “producer authority requires its guard record”. Runtime `RequestCommitPort._producer_captures` requires record command == original request guard, while normal Agent recording adds intent/resolved/reads/selections/bindings/created/expect/authorship metadata. Runtime `request_pin` simultaneously requires the bare five-field guard envelope, so adding those fields to the request cannot solve it. The original positive expectation stays `xfail(strict=True)` with a D13 restoration comment. `--runxfail` reproduces the failure. No accepted producer mutation/restart/undo is claimed. Runtime owner must reconcile that boundary without weakening original settled command/pin/dependency checks.
+
+This fixture is an authentic **media-free generic producer** settlement. An authentic assembler proposal over its selected visual outputs, media insertion, requester-to-render handoff and production/App journey remain unqualified. No full suite, sockets, browsers or renderer were run.
+
+## Bounded auto-placement limits
+
+The review `design/agent-review-auto-guards-current.md` approves timing/lane/exclusive-owner guards only. Pool membership/absence for promotion and builder-only legacy pinnedShotGroups eligibility remain unrecorded; mixed pool/legacy flows stay held. Whole-row reads conservatively conflict with unrelated clip field edits. Parent births, append growth beyond the occurrence window, video unplace, and short-video/default-style preservation remain separate work. Unreleased incompatible `clip.add-media` / `timeline.assembled-target` variants are excluded. A rebuilt continuation is a new capture for requester approval, never an in-flight rewrite.
+
+Targeted source evidence: 291 guard/numeric/settled/auto tests passed; 264 schema/outbox/provider/reservation neighbors passed. The Runtime run with `--runxfail` has 4 passed / 1 failed as explained above. Exact commands, final strict-xfail result and lint evidence are in `workers/agt-m2-producer-current-union/report.md`. Shared dependencies stayed read-only.
+
+Next: harness commit; manager verifies hash/ref and freezes this full source; Runtime owner resolves the guard-record/public-schema gaps, normally regenerates from the approved full schema, and re-runs the original positive producer qualification before any activation or consumer pin change.
+'"'''
+(root/'design/agent-canonical-current-union.md').write_text(text)
+PY
+rg --files --hidden --no-ignore -g '*.pyc' -g '.pytest_cache/**' -g '.ruff_cache/**' | head -30
+ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_producer_guard_runtime.py -rx --tb=short' in /home/user/work/wt/agt-m2-producer-current-union
+ succeeded in 7868ms:
+tests/sdk/__pycache__/command_schema_compatibility.cpython-313.pyc
+tests/__pycache__/__init__.cpython-313.pyc
+x....                                                                    [100%]
+=========================== short test summary info ============================
+XFAIL tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes - D13: Runtime must accept native captured producer.guard records
+4 passed, 1 xfailed in 6.09s
+
+codex
+All 555 source and neighboring tests passed across the two targeted runs, including schema preservation, outbox, provider and reservation checks. The handoff document now lists the full schema hash and operations, plus the Runtime public-schema and guard-record gaps. I’m finishing the strict-xfail check and worker report.
+exec
+/bin/bash -lc 'git diff --check && /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/__init__.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/producer.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/sdk/timeline/native_auto_placement.py astrid/sdk/timeline/native_occurrence_media_commands.py astrid/sdk/timeline/native_placement_commands.py tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py tests/sdk/test_timeline_producer_guard.py tests/sdk/command_schema_compatibility.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_producer_guard_runtime.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py && git diff --exit-code HEAD -- runtime.lock.json astrid_runtime_client astrid/sdk/timeline/native_parent_media_commands.py astrid/sdk/timeline/checkout.py astrid/core/timeline/timeline_elements.py && sha256sum astrid/core/timeline/schema/edit-command.schema.json tests/sdk/command_schema_compatibility.py && git status --short' in /home/user/work/wt/agt-m2-producer-current-union
+ succeeded in 1194ms:
+All checks passed!
+30da4fde84c328e7cb44035b50eb53fd2cd9637a14a0c948f4412f6469ce34bd  astrid/core/timeline/schema/edit-command.schema.json
+d54e1b83fc65ee44fbdcea57876dd040f919b553fff6aac1aa90a3e49bb31b78  tests/sdk/command_schema_compatibility.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/__init__.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/native_auto_placement.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M astrid/sdk/timeline/native_placement_commands.py
+ M astrid/sdk/timeline/rebase.py
+ M astrid/sdk/timeline/sync.py
+ M docs/design/m2-auto-placement.md
+ M tests/editing_conformance/fixtures/recipe_m2_auto_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+ M tests/editing_conformance/fixtures/recipe_m2_placement_create_unplace.json
+ M tests/editing_conformance/fixtures/recipe_m2_shared_auto_placement.json
+ M tests/editing_conformance/test_recipe_m2_auto_placement.py
+ M tests/editing_conformance/test_recipe_m2_shared_auto_placement.py
+?? astrid/sdk/timeline/producer.py
+?? tests/editing_conformance/fixtures/settled_proposal_move.artifact.json
+?? tests/editing_conformance/fixtures/settled_proposal_move.json
+?? tests/editing_conformance/fixtures/settled_proposal_numeric.artifact.json
+?? tests/editing_conformance/test_producer_guard.py
+?? tests/editing_conformance/test_settled_proposal_contract.py
+?? tests/fixtures/current-union-command-schemas/
+?? tests/sdk/command_schema_compatibility.py
+?? tests/sdk/test_timeline_current_union_schema.py
+?? tests/sdk/test_timeline_producer_guard.py
+?? tests/sdk/test_timeline_producer_guard_runtime.py
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import shutil
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-m2-producer-current-union'
+report='''# Current canonical producer union — source complete, paired acceptance held
+
+Worktree "'`/home/user/work/wt/agt-m2-producer-current-union`, branch `tl/agt-m2-producer-current-union`; base `c456b3281497653cecf44f61acd6fa30565d83c8`. Harness commit pending. Read PLAN and AGENTS before editing. No settled decision changed.
+
+## Result
+
+Ported the reviewed 11-file auto-placement correction from `931d7ec5` to `5c6467da`, then producer.guard / producer / recording / provider / rebase / existing durable requester session changes and tests from `1441bdf1`. Used narrow worktree patches; adapted only overlapping current source call signatures and registry/provider positions. Current selected-input resolver, identity-only ordinary rebase policy, all current registered operations, core/client/scene carry remain. No old registry or whole-tree replacement.
+
+Canonical schema SHA256: **30da4fde84c328e7cb44035b50eb53fd2cd9637a14a0c948f4412f6469ce34bd**; **48 definitions / 22 registered conditions**. Added only five approved producer definitions, producer.guard condition and two optional consumed properties. Unreleased clip.add-media / timeline.assembled-target variants excluded.
+
+The unchanged authored compatibility helper from ffa5325c (SHA256 d54e1b83fc65ee44fbdcea57876dd040f919b553fff6aac1aa90a3e49bb31b78) checks the ENTIRE exact current Agent and Runtime6023cfb public schemas. Both pass. Permanent regression removes every definition and operation individually and rejects narrowing. The separate exact schema comparison allows only approved producer/consumed additions. Immutable raw snapshots include pinned digest assertions, with source provenance in the shared handoff.
+
+Published full schema hash, op list, source branch/base and qualification gaps to `design/agent-canonical-current-union.md`. Manager must fill in the harness commit and verify the hash before freezing. Auto-placement documentation now clarifies saved lanes and that rebuilding is a new capture/review, never an in-flight rewrite.
+
+## Evidence — exact commands and results
+
+All commands below ran from `/home/user/work/wt/agt-m2-producer-current-union`. Shared venv dependencies were read-only; worktree code came from PYTHONPATH. No full suite or central full* request, socket/browser/renderer/install run occurred.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py tests/sdk/test_timeline_producer_guard.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py --tb=short
+```
+
+**291 passed in 27.63s; exit 0.** Includes native guard, JS numeric forwarding, settled artifact custody/value vectors, requester lost-ACK/reopen exact-flight proof, bounded auto guards, original occurrence/placement inverse and redo fixtures. An initial identical file selection without --tb=short passed 291 in 11.61s. Later edits to auto code were documentation only.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_semantic_reservations.py --tb=short
+```
+
+**264 passed in 114.58s; exit 0.** Schema containment/drop/narrowing, current registry fixture coverage, ordinary outbox/native batching/provider/reservation neighbors. No product semantics or these tests changed afterwards.
+
+The actual Runtime runs used an untouched git archive, extracted with Python tarfile to the worker-owned `runtime6023cfb` directory. Exact input command:
+
+```sh
+git -C /home/user/work/runtime archive 6023cfb10307b4c0004642b5fa1995d72ba4f6d1
+```
+
+The fixture uses the normal `tests.helpers.runtime.use_runtime()` locator and public RuntimeService task create/claim/settle + commit APIs. In-process service only, no daemon/socket. Two ordered data child outputs and the captured track.create proposal are immutable managed outputs from real settlement; no SQL injections, prepared-provider acceptance simulation, schema override or port substitution.
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_producer_guard_runtime.py --runxfail --tb=short
+```
+
+**4 passed, 1 failed in 9.95s; exit 1.** Positive requirement fails at preview, before acceptance, with producer_dependency_unavailable / “producer authority requires its guard record”. Other four tests retain original artifact authority and reject command numeric change, bool-for-number substitution, rationale change and digest substitution without timeline history mutation.
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/runtime6023cfb PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_producer_guard_runtime.py -rx --tb=short
+```
+
+**4 passed, 1 xfailed in 6.09s; exit 0.** The original positive preview/accept/restart/exact retry/one-shot/undo expectation remains strict xfail, naming D13'"'s required native guard-record compatibility. No success requirement was rewritten as expected refusal. Initial fixture setup lacked Runtime's mandatory two dependency edges (5 setup errors); corrected by creating and settling real ordered children through public APIs. Subsequent genuine preview failure remained and is reported, not worked around.
+
+"'```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/__init__.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/producer.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/sdk/timeline/native_auto_placement.py astrid/sdk/timeline/native_occurrence_media_commands.py astrid/sdk/timeline/native_placement_commands.py tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py tests/sdk/test_timeline_producer_guard.py tests/sdk/command_schema_compatibility.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_producer_guard_runtime.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py
+git diff --check
+git diff --exit-code HEAD -- runtime.lock.json astrid_runtime_client astrid/sdk/timeline/native_parent_media_commands.py astrid/sdk/timeline/checkout.py astrid/core/timeline/timeline_elements.py
+sha256sum astrid/core/timeline/schema/edit-command.schema.json tests/sdk/command_schema_compatibility.py
+```
+
+All exit 0; Ruff clean and hashes match above. Initial Ruff import-order diagnostic was fixed in the new registry import. Final git status contains only assigned producer/auto/schema paths and direct tests/fixtures. Removed own Python caches and temporary Runtime extraction after the runs. No build output remains in the worktree. No dependency, runtime pin/client, endpoint, other-worker, integration, ledger, Git metadata or frozen ref edits; no commit/merge/rebase/checkout/push.
+
+## Decisions, discovered gaps and next steps
+
+1. **Brief premise correction:** Runtime6023cfb is release 0.2.10 and has real producer port/checkpoint code, but its public `contract/schemas/edit-command.json` is still raw SHA256 472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9: 35 definitions / 14 ordinary operations, no producer guard definition/conditional. Generated command types also lack producer types. The schema'"'s generic unknown-op envelope carrying a guard is not explicit closed/typed producer publication. Kept that exact full schema as the compatibility input, without inventing a release baseline or changing any pins. Agent remains Runtime94114269 / 0.2.9.
+2. **Actual paired acceptance is blocked:** Runtime6023cfb "'`_producer_captures` requires exact equality between the bare request guard and Agent'"'s capture-normalized guard record. Normal Agent recording adds intent, resolved and recorder-claim fields. Runtime request_pin also prohibits those extra envelope fields on the request. This prevents even preview with authentic settled data. Kept settled Agent1441 behavior and Runtime checks; strict positive regression exposes the cross-owner boundary rather than weakening it. Runtime owner should reconcile native normalized records with the original bare guard while preserving original pin, commands/rationale and exact authority dependencies.
+3. **Scope limits:** the new actual fixture is a generic media-free settled producer. Authentic assembler/selected-video output qualification, actual accepted producer mutation, restart/one-shot/undo, App/durable outbox-to-real-Runtime handoff and requester-to-render handoff remain unverified. The detached outbox test proves local persistence/retry only. No renderer retirement or production activation.
+4. **Reviewed auto limits remain open:** pool membership/absence and legacy group eligibility reads, conservative whole-row overconflicts, parent births, growth beyond occurrence windows, video unplace, and short-video/default-style preservation. No incompatible unreleased parent-media variant was ported.
+
+The bounded source candidate and qualification report are complete, so DONE is appropriate; production pairing is explicitly held, not marked complete. Next: harness commit; manager verify schema hash/source ref and freeze; Runtime owner resolve the two release/guard-record gaps, regenerate normally from the reviewed full schema, then run the unchanged positive producer requirement and authentic assembler/App qualification before pin or endpoint changes.
+'''
+(worker/'report.md').write_text(report)
+(worker/'commit-msg').write_text('''feat(timeline): compose current producer and automatic placement guards
+
+Port the reviewed consumed-read and exclusive-owner correction over current
+source, then carry the settled pin-only producer guard through the native
+provider, semantic replay and existing durable requester outbox.
+
+Preserve both complete current and Runtime public command schemas with exact
+compatibility snapshots and permanent dropped-definition/operation regressions.
+Keep the real Runtime producer acceptance requirement as a strict expected
+failure for its native guard-record mismatch; retain artifact mutation checks.
+''')
+for cache in (Path('tests/sdk/__pycache__'),Path('tests/__pycache__')):
+    shutil.rmtree(cache,ignore_errors=True)
+shutil.rmtree(worker/'runtime6023cfb')
+(worker/'DONE').touch()
+PY
+git diff --check" in /home/user/work/wt/agt-m2-producer-current-union
+ succeeded in 1640ms:
+codex
+Composed the current-source union with both reviewed deltas; pins and endpoints remain unchanged.
+
+- **555 targeted tests passed.**
+- Real Runtime qualification: **4 passed, 1 strict xfail**. Preview rejects Agent’s normalized guard record.
+- Runtime `6023cfb` also lacks the public producer schema claimed in the brief.
+
+[Report with exact commands/results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/report.md) · [Schema hash, operations and source handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-canonical-current-union.md)
+
+`commit-msg` and `DONE` are written. Next: harness commit, manager freeze, then Runtime compatibility fixes before activation.
+tokens used
+165,169
+Composed the current-source union with both reviewed deltas; pins and endpoints remain unchanged.
+
+- **555 targeted tests passed.**
+- Real Runtime qualification: **4 passed, 1 strict xfail**. Preview rejects Agent’s normalized guard record.
+- Runtime `6023cfb` also lacks the public producer schema claimed in the brief.
+
+[Report with exact commands/results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-current-union/report.md) · [Schema hash, operations and source handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-canonical-current-union.md)
+
+`commit-msg` and `DONE` are written. Next: harness commit, manager freeze, then Runtime compatibility fixes before activation.

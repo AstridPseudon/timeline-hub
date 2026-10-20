@@ -1,0 +1,400 @@
+    monkeypatch.setattr(packs, 'admit_project_pack', forbidden)
+    client.lost_ack[0] = True
+    assert not update_parent_element(client.connect(), case.project, 'film', **kwargs).ok
+    flight = json.loads(client.outbox().read_bytes())['flight']
+    body = json.loads(flight['body'])
+    for changed in ({'duration': 7}, {'idempotency_key': 'another-key'},
+                    {'element': {**case.selected, 'revision': 'another-revision'}}):
+        refused = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, **changed})
+        assert not refused.ok and len(client.calls) == 1
+        assert json.loads(client.outbox().read_bytes())['flight'] == flight
+    assert [command['op'] for command in body['commands']] == ['clip.set']
+    assert body['commands'][0]['args'] == {'values': {'hold': 6}, 'clear': []}
+    assert body['commands'][0]['selections'][0]['key'] == 'element.targets'
+    accepted = case.submit(body, flight['key'])
+    document = accepted['data']['canonical_document']
+    assert State(commit.bundle_from_document(document)).entity('parent/clip:legacy-effect') == {**row, 'hold': 6}
+    assert document['dependency_manifest'] == original['dependency_manifest']
+    case.service.close()
+    case.service = RuntimeService(case.root)
+    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    assert case.bundle()['source_mapping']['_runtime_document'] == document
+    with monkeypatch.context() as retry:
+        retry.setattr('astrid.sdk.timeline_elements.execute', forbidden)
+        retry.setattr(commands, 'execute', forbidden)
+        result = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+        assert result.ok, result.error
+        assert result.receipt.as_dict() == accepted['receipt']
+        assert update_parent_element(client.connect(), case.project, 'film', **kwargs) == result
+        assert client.calls == [(flight['body'].encode(), flight['key'])] * 2
+    undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-legacy')
+    assert undone['data']['canonical_document']['parent_revision']['payload'] == original['parent_revision']['payload']
+    redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'redo-legacy')
+    assert redone['data']['canonical_document'] == document
+
+
+@pytest.mark.parametrize('params', [{'seed': 4.0}, {'future': {'keep': [None, False, {}]}}])
+def test_legacy_unchanged_params_noop_needs_no_snapshot(retained_pack, helper_client, monkeypatch, params):
+    case = retained_pack
+    current = case.service.get_document(case.project, case.pin['document_id'])
+    content = copy.deepcopy(current['content'])
+    for admission in content['admissions']:
+        admission.pop('snapshot_object')
+    case.service.update_document(case.project, current['document_id'], {
+        'expected_version': current['version'], 'content': content}, idempotency_key='legacy-admission')
+    assert packs.resolve_admitted_element(
+        'realm', case.project, case.selected)['descriptor']['revision'] == case.selected['revision']
+    original = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('unchanged params requested a schema snapshot')
+
+    monkeypatch.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+                            _load(port, context, entry['revision_id']))
+
+                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+                inverse_records = AcceptedRecords(accepted, _records(
+                    accepted, CommitRejected, base, current), load_boundary)
+                # A gap before a later target is that target's input, not an
+                # intervening write after it. Check every target's own suffix
+                # before any reversal can mask a non-target overlapping edge.
+                for index, entry in enumerate(ordered):
+                    if entry['publication_id'] in undo_of:
+                        check_intervening(_records([entry], CommitRejected, base, current),
+                                          _records([later for later in ordered[index + 1:]
+                                                    if later['publication_id'] not in undo_of],
+                                                   CommitRejected, base, current),
+                                          state=State(_load(port, context, entry['revision_id'])))
+            closures, restored_from = {}, None
+            if restore:
+                restored_from = copy.deepcopy(calls[0]['args'])
+                source = _load(port, context, restored_from['revision_id'])
+                image = source['source_mapping']['_runtime_document']['parent_revision']
+                _require(image['content_digest'] == restored_from['content_digest'],
+                         "restore source digest mismatch")
+                closures[restored_from['revision_id']] = source
+            else:
+                # Only authenticated accepted writes can authorize an inverse
+                # closure replacement. Never accept a caller-supplied image.
+                for write in (write for record in inverse_records for write in record['writes']):
+                    if write['ref'] == 'timeline' and not write['path']:
+                        pin = write['before']['value']
+                        source = _load(port, context, pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 "inverse historical closure pin mismatch")
+                        closures[pin['revision_id']] = source
+            # The port captures exactly the resulting document inputs. Discarded
+            # current/source closures must not retain unrelated document pins.
+            schema_inputs = []
+            for source in closures.values():
+                schema_inputs.extend(_hydrate(port, source))
+            if not closures:
+                schema_inputs = _hydrate(port, bundle, calls)
+            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                              context=context, through=base)
+            original = execute(bundle, calls, inverse_records=inverse_records,
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media, realm_id=context['realm_id'],
+pass
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc4-original-pin-cut/notes')
+for name in ['native-final.log','current-neighbors.log']:
+    print(name,repr((p/name).read_text()[-1400:]))
+PY" in /home/user/work/wt/agt-m2-wc4-original-pin-cut
+ succeeded in 209ms:
+native-final.log '........................................................................ [ 76%]\n.........'
+current-neighbors.log '........................................................................ [ 31%]\n........................................................................ [ 62%]\n..............................................................'
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc4-original-pin-cut/notes')
+paths=(notes/'source-paths.txt').read_text().splitlines()
+for path in paths:
+    assert Path(path).read_bytes()==subprocess.check_output(['git','show','e36b5056:'+path]),path
+patch=subprocess.check_output(['git','diff','--binary'])
+for name in subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines():
+    result=subprocess.run(['git','diff','--no-index','--binary','--','/dev/null',name],capture_output=True)
+    assert result.returncode==1
+    patch+=result.stdout
+(notes/'final-source.diff').write_bytes(patch)
+print('All 20 changed paths match the composed source tree cd13be81; review diff saved.')
+PY" in /home/user/work/wt/agt-m2-wc4-original-pin-cut
+ succeeded in 2177ms:
+All 20 changed paths match the composed source tree cd13be81; review diff saved.
+
+ succeeded in 216510ms:
+ succeeded in 227620ms:
+codex
+The central socket checks passed: 20 tests covering M1 retry/restart and the current trim, sheet and frontend paths. That run captured tree `cd13be81bf14c05e5acc7089a1e66d109000c61d`. The remaining local lanes are finishing; I’ll record the handoff and leave WC4 HELD for review and merge.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc4-original-pin-cut/notes')
+for name in ['native-final.log','current-neighbors.log']:
+    print(name,repr((p/name).read_text()[-1600:]))
+PY" in /home/user/work/wt/agt-m2-wc4-original-pin-cut
+ succeeded in 619ms:
+native-final.log '........................................................................ [ 76%]\n......................                                                   [100%]\n94 passed in 225.62s (0:03:45)\n'
+current-neighbors.log '........................................................................ [ 31%]\n........................................................................ [ 62%]\n........................................................................ [ 93%]\n................                                                         [100%]\n232 passed in 213.80s (0:03:33)\n'
+
+exec
+/bin/bash -lc 'git diff --check && git status --short --ignored && git diff --name-only -- astrid_runtime_client runtime.lock.json requirements/runtime.lock astrid/core/timeline/schema/edit-command.schema.json artifacts.json && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc4-original-pin-cut/notes/lint.log' in /home/user/work/wt/agt-m2-wc4-original-pin-cut
+ succeeded in 2101ms:
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline_elements.py
+ M astrid/sdk/workspace_client.py
+ M tests/core/test_timeline_element_publication.py
+ M tests/core/test_timeline_element_publication_runtime.py
+ M tests/editing_conformance/fixtures/recipe_m2_clip_set_element.json
+ M tests/editing_conformance/test_recipe_clip_set_element.py
+ M tests/sdk/test_timeline_selected_schema.py
+ M tests/sdk/test_timeline_selected_schema_runtime.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/_selected_param_authority.py
+?? tests/helpers/selected_param_legacy.py
+?? tests/sdk/fixtures/
+?? tests/sdk/test_timeline_selected_param_authority.py
+!! astrid/__pycache__/
+!! astrid/core/__pycache__/
+!! astrid/core/foundation/__pycache__/
+!! astrid/core/rendering/__pycache__/
+All checks passed!
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root=Path.cwd()
+for path in root.rglob('__pycache__'):
+    if path.is_dir():
+        shutil.rmtree(path)
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc4-original-pin-cut/notes')
+shutil.rmtree(notes/'runtime-source')
+PY" in /home/user/work/wt/agt-m2-wc4-original-pin-cut
+ succeeded in 785ms:
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc4-original-pin-cut/notes/report.md <<'EOF'
+# WC4 native original-pin cut
+
+Complete on base "'`8e3107853d17453758a933d1f47215cc1c002660`. **WC4 stays HELD pending independent review and manager merge.** No integration edits, commits, merges, pushes, schema changes or dependency writes. No execution blocker.
+
+The central qualified source tree is `cd13be81bf14c05e5acc7089a1e66d109000c61d`. It equals the prior original-pin join tree; all 20 changed paths were compared byte for byte with that committed reference after qualification. This task independently qualified the composition on the requested current F1 base and the Runtime port-review source.
+
+## Implementation and sources
+
+- Reviewed helper source: `20f1b2902f7155cb271213abc184e5c2ec4aafd2` (`tl/agt-m2-wc4-current-source-gate`). Its `remote.py`, `_clip_scalar_commands.py`, `_recording.py`, sync guard tests and element conformance changes are preserved exactly.
+- Reviewed authority and authentic legacy-alias source: `6868e16a590af64fc764159489b8e4ed22f526d0`, tree `8a6b41c79e5975856f0c2bde24546c2ae90ff412`. `_selected_param_authority.py` and `commit.py` remain byte-identical to it. The original alias fixture ZIP is unchanged: SHA256 `79f881f95ce13338ee8cd5490529c43a55523819792eed682160a9042770dc56`.
+- Existing F1 source: `fa1564641a684a04db3fd60cb6765019507132a2`, already in base. `inverse.py` is unchanged. `commands.py` adds only `ctx.prior_records = records` for the reviewed authority callback; the existing `staged_records=records` inverse guard remains intact. Existing scalar and native F1 tests retain their assertions.
+- Prior join reference: `e36b505656f5b98c8bab3495c38f5d04fe8fbee5`. Used only for the necessary helper capture/read adaptation, thin facade forwarding and direct fixture/test composition of the named prerequisites. No unrelated source was imported.
+
+`update_parent_element` no longer imports or invokes the whole-document publisher, its authoring validation/preparation, or `resolve_admitted_element`. It stages native commands through the existing durable session/outbox and `/v1` commit.
+
+Same-selected HOLD emits only guarded `clip.set`; it does not resolve selection or inspect current admission/snapshot. The genuine digest-only, no-selection fixture forbids resolver/config/object/admission reads and passes reload, inverse/redo and lost-ACK/restart retry. Existing generic provider hydration of already pinned documents is unchanged.
+
+Same-selected PARAM (changed, unchanged, or clear-only) emits PARAM without synthetic reselection and obtains original P/E/O from the ONE existing accepted-history resolver. A small request-local adapter supplies authenticated public history and canonical closures already present in accepted receipts. It adds no authority algorithm, journal, cache, validator or endpoint. Seven facade lines forward the existing generated public 013 VerifiedDocument/object methods and add them to the existing operation allowlist. The generated client/public S2 contract is unchanged.
+
+Actual revision reselection retains authenticated current admission reads. Missing portable snapshot still visibly returns `pack snapshot unavailable; re-admit pack`; admission remains outside save. Ordinary PARAM cannot bootstrap authority from its caller pin or an admission manifest.
+
+Current `sync.py`, `outbox.py`, `inverse.py`, verified-source extraction, `runtime.lock.json` and `requirements/runtime.lock` are byte-identical to base. The public command schema remains SHA256 `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`. Generated-client paths and `artifacts.json` are untouched.
+
+Product delta: eight paths, +449/-67 lines, net +382 including the 163-line reviewed authority helper. New Python files are at most 408 lines. Exact 20 changed paths: `source-paths.txt`; complete binary review patch: `final-source.diff`, both beside this report.
+
+## Behavior qualified
+
+- Original P1 max10 after P2 max20, optional live admission removal, local source/cache removal, Runtime restart and one-item history pagination: accepts8/clear using P1, refuses16 before POST with unchanged head/database; explicit revision reselection may select P2 and accept16.
+- Both original helper strict-xfail assertions passed under `--runxfail` before marker removal. They then passed normally in the final native lane. No assertion was weakened and no new xfail/skip was added.
+- Authentic old alias positive retains canonical `elementRef`, ignored max20 `element_ref`, opaque data, exact object-read identity, inverse/redo and ledger retry assertions. The accepted backup was ported unchanged, not regenerated or recertified.
+- F1 unchanged same-pin/new-pin selection before inverse refuses atomically; disjoint staged labels and grouped inverse succeed; inverse then selection then PARAM uses its real staged pin.
+- Raw null/absence/opaque values, mirrors, membership/order, exact retry body/key, rebased original base, acknowledged pagination, lost ACK/restart, undo/redo and current sheet/producer/outbox guards pass their existing suites.
+
+## Exact test commands and results
+
+Commands ran from `/home/user/work/wt/agt-m2-wc4-original-pin-cut`. In the commands below these variables expand literally to:
+
+```sh
+PY=/home/user/work/venv-agent/bin/python
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+WORKER=$ORCH/workers/agt-m2-wc4-original-pin-cut
+RT=$WORKER/notes/runtime-source
+```
+
+Direct native tests used a private `git archive` of Runtime `388eff42a644aeafa5d4605d0bb235e1ca849741`, tree `708df14c75ef739a2c6130ca39f9e67b2758a571` (the Runtime port-review source; public 0.2.13). Extracted only under this worker'"'s notes, removed after testing. No shared Runtime or dependency changes. Native service tests are in-process and use no sockets.
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD "$PY" -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_selected_param_authority.py tests/sdk/test_timeline_selected_schema.py tests/core/test_timeline_element_publication.py tests/editing_conformance/test_recipe_clip_set_element.py tests/sdk/test_timeline_sync.py
+```
+
+Exit 0: **192 passed in 68.80s** (`focused-initial.log`).
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD "$PY" -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_clip_scalar_fields.py
+```
+
+Exit 0: **391 passed in 72.87s** (`authority-neighbors.log`).
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD "$PY" -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_producer_guard.py tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_sheet_native.py tests/editing_conformance/test_native_sheet_current.py tests/packs/timeline/test_cli_commit_trim.py tests/packs/rendering/test_verified_source.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_workspace_client_timeline_commit.py
+```
+
+Exit 0: **232 passed in 213.80s** (`current-neighbors.log`). The three direct non-native lanes total **815 passed**.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT="$RT" "$PY" -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+```
+
+Exit 0: **94 passed in 225.62s** (`native-final.log`): 59 helper/native element, 32 selected-schema, three scalar native cases. This contains the existing 75-case actual lane plus original-authority, authentic-alias, F1 and helper cases.
+
+Before removing the two existing helper xfails:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT="$RT" "$PY" -m pytest -q -o addopts= -p no:cacheprovider -m integration --runxfail tests/core/test_timeline_element_publication_runtime.py::test_param_only_helper_preserves_original_pin_without_reselection tests/core/test_timeline_element_publication_runtime.py::test_helper_retains_max10_after_max20_restart_and_explicit_revision_reselection tests/core/test_timeline_element_publication_runtime.py::test_legacy_same_selected_hold_reload_inverse_retry tests/sdk/test_timeline_selected_schema_runtime.py::test_pre_enforcement_alias_history_reopens_with_current_authority tests/sdk/test_timeline_selected_schema_runtime.py::test_native_inverse_refuses_earlier_unchanged_selection_atomically tests/sdk/test_timeline_selected_schema_runtime.py::test_native_disjoint_staged_label_and_inverse_preserve_opaque tests/sdk/test_timeline_selected_schema_runtime.py::test_native_inverse_then_selection_and_params_use_staged_pin
+```
+
+**16 passed in 31.80s** (`native-original-assertions.log`); these cases are included in the final 94, not added to the total.
+
+Sockets were run only by the central service:
+
+```sh
+$ORCH/bin/request-test agt-m2-wc4-original-pin-cut commit-integration --files '"'tests/editing_conformance/test_cli_trim_runtime.py tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_commit_runtime_native_frontends.py'
+"'$ORCH/bin/wait-test agt-m2-wc4-original-pin-cut-commit-integration-1020141202-30867 1
+```
+
+Central exit 0: **20 passed in 124.73s**, qualified tree `cd13be81bf14c05e5acc7089a1e66d109000c61d`. First wait returned 124 while still running; re-waited the same request without resubmission. Service'"'s exact command:
+
+"'```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_cli_trim_runtime.py tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_commit_runtime_native_frontends.py
+```
+
+**929 passed across the five qualification lanes; no failures, skips or expected failures.** No full/full* suite requested.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/_clip_scalar_commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_selected_param_authority.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline_elements.py astrid/sdk/workspace_client.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py tests/editing_conformance/test_recipe_clip_set_element.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_sync.py tests/helpers/selected_param_legacy.py tests/sdk/fixtures/selected-param-legacy/generate.py tests/sdk/test_timeline_selected_param_authority.py
+git diff --check
+```
+
+Both exit 0; Ruff says `All checks passed!` (`lint.log`). `remote.py` has 121 inherited Ruff diagnostics. Independently compared `ruff check --no-cache --output-format=json --stdin-filename astrid/sdk/remote.py -` for HEAD bytes and current bytes: identical code/message/source-line signatures for all 121. No unrelated formatting was changed.
+
+## Decisions, gaps and handoff
+
+No settled decision was changed. The only join choice was forwarding already generated retained-read operations through the existing facade and adapting public authenticated history to the reviewed resolver. No Runtime operation/DTO/schema change was needed. No guards were refreshed and no tests were weakened. Existing generic retained-source hydration and the reviewed fail-closed boundaries for unsupported duplicate/source lineage and ambiguous restores remain as reviewed.
+
+No full suite/make check, App/browser/outbox journey, renderer/pixel/audio or macOS qualification. The fixture generator was reviewed and its authentic output copied unchanged; not rerun here. The private Runtime archive and all worktree bytecode were cleaned up. Notes and logs remain only in the assigned worker directory.
+
+Recommended next step: review this exact tree and the narrow public-read adapter with F1 interaction, then manager-controlled merge qualification. Keep the WC4 deletion ledger HELD until that review and merge. This worker supplies implementation and bounded evidence, not release/ledger approval.
+EOF' in /home/user/work/wt/agt-m2-wc4-original-pin-cut
+ succeeded in 0ms:
+codex
+All qualification lanes passed: 815 focused/provider/conformance tests, 94 native Runtime cases and 20 central socket cases. The reports record the changed paths, source identities and unverified areas. I’m writing the commit message and completion marker; WC4 remains HELD for review and merge.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc4-original-pin-cut.md <<'EOF'
+# WC4 original-pin cut on current F1 base
+
+Implementation complete on Agent "'`8e3107853d17453758a933d1f47215cc1c002660`; **WC4 remains HELD until review and manager merge**. No integration edits or Git mutations. Central qualified tree: `cd13be81bf14c05e5acc7089a1e66d109000c61d`.
+
+The whole-document publisher path in `update_parent_element` is deleted. The helper uses native session/outbox commands. Same-selected HOLD needs no reselection or portable snapshot; same-selected changed/unchanged/clear PARAM uses the original accepted selection P/E/O through the existing resolver. Genuine revision reselection without portable bytes visibly requires re-admission outside save.
+
+Sources: reviewed helper `20f1b2902f7155cb271213abc184e5c2ec4aafd2`, authority/authentic alias `6868e16a590af64fc764159489b8e4ed22f526d0`, existing staged-inverse guard `fa1564641a684a04db3fd60cb6765019507132a2`. The earlier join `e36b505656f5b98c8bab3495c38f5d04fe8fbee5` supplied the bounded capture/read-adapter and direct-test composition reference. All 20 changed paths match its source tree; authority/provider code matches 6868 exactly. F1 inverse, sync/outbox, current verified-source code, public S2 schema/generated client and pins remain unchanged.
+
+Only necessary glue was added: request-local authenticated history adapts to the existing authority resolver; seven facade lines forward existing generated VerifiedDocument/object operations. No new Runtime operation, DTO, schema, validator, cache, journal or inline authority.
+
+Qualified on this worker:
+
+- 192 focused helper/authority/schema/sync tests passed.
+- 391 provider/conformance neighbors passed.
+- 232 current frontend/sheet/producer/source/schema neighbors passed.
+- 94 real in-process Runtime cases passed against private frozen Runtime `388eff42a644aeafa5d4605d0bb235e1ca849741`, tree `708df14c75ef739a2c6130ca39f9e67b2758a571`, public 013: 59 helper/native element, 32 selected-schema, three scalar native.
+- 20 central socket cases passed: `agt-m2-wc4-original-pin-cut-commit-integration-1020141202-30867`, tree `cd13be81bf14c05e5acc7089a1e66d109000c61d`.
+- Ruff changed files passed except `remote.py`'"'s 121 diagnostics, independently proven identical to base. "'`git diff --check` passed.
+
+**929 passed; no failures/skips/xfails; no full* suite.** Before removing the two original helper xfails, their untouched original assertions passed under `--runxfail` with the targeted authority/F1/legacy companions (16 pass; included again in the final native lane).
+
+Permanent cases prove original P1 max10 after P2 max20 refuses16 before POST/head/database writes, accepts8/clear after restart and source removal, explicit real revision reselection accepts16 under P2, digest-only HOLD, authentic legacy-alias inverse/retry, F1 same-batch negatives and disjoint/reverse-order positives. Existing retry/reload/undo, typed intent, raw null/absence/opaque and current guards are preserved.
+
+No browser/App/outbox journey, full/make check, renderer/pixel/audio or macOS claim. Reviewed unsupported lineage/ambiguous restore remains fail-closed. No schema blocker. Private source/bytecode cleaned up; shared dependencies untouched.
+
+Exact commands/results, decisions, source identities and limitations: [worker report](../workers/agt-m2-wc4-original-pin-cut/notes/report.md). Exact [20 changed paths](../workers/agt-m2-wc4-original-pin-cut/notes/source-paths.txt) and [complete review patch](../workers/agt-m2-wc4-original-pin-cut/notes/final-source.diff).
+
+Next: independent review of the narrow public-read adapter and F1 composition, then manager-controlled merge qualification. The worker does not change the deletion ledger or approve release.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc4-original-pin-cut/commit-msg <<'"'EOF'
+fix(timeline): preserve accepted parameter authority in native element updates
+
+Replace the parent element helper's whole-document publisher with native
+commands and the existing durable session/outbox. Resolve same-selected
+parameter edits from accepted history and retained immutable inputs while
+keeping digest-only HOLD independent of portable admission.
+
+Compose the reviewed authority and authentic legacy alias coverage with the
+current staged inverse guard. Preserve exact retry, reload, restart and undo
+semantics without changing public schemas, generated clients or pins.
+
+Validate 815 focused/provider/conformance tests, 94 native Runtime cases and
+20 central socket cases. Leave WC4 held for review and manager merge.
+EOF
+
+git diff --check && git status --short --ignored" in /home/user/work/wt/agt-m2-wc4-original-pin-cut
+ succeeded in 573ms:
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline_elements.py
+ M astrid/sdk/workspace_client.py
+ M tests/core/test_timeline_element_publication.py
+ M tests/core/test_timeline_element_publication_runtime.py
+ M tests/editing_conformance/fixtures/recipe_m2_clip_set_element.json
+ M tests/editing_conformance/test_recipe_clip_set_element.py
+ M tests/sdk/test_timeline_selected_schema.py
+ M tests/sdk/test_timeline_selected_schema_runtime.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/_selected_param_authority.py
+?? tests/helpers/selected_param_legacy.py
+?? tests/sdk/fixtures/
+?? tests/sdk/test_timeline_selected_param_authority.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc4-original-pin-cut')
+for name in ['focused-initial.log','authority-neighbors.log','current-neighbors.log','native-final.log']:
+    text=(worker/'notes'/name).read_text()
+    assert 'passed in' in text and 'failed' not in text, name
+assert (worker/'commit-msg').is_file()
+assert (worker/'notes'/'report.md').is_file()
+assert not (worker/'notes'/'runtime-source').exists()
+(worker/'DONE').touch()
+print('Report, commit message and empty DONE marker written.')
+PY" in /home/user/work/wt/agt-m2-wc4-original-pin-cut
+ succeeded in 0ms:
+Report, commit message and empty DONE marker written.
+
+codex
+Implemented native WC4 updates with original accepted-PARAM authority; deleted the whole-document publisher path. Preserved F1 guards, authentic legacy aliases and retry/reload/undo behavior.
+
+- **Tests:** 815 focused/conformance, 94 native Runtime and 20 central socket cases passed.
+- **Sources:** helper `20f1b290`, authority `6868e16a`; qualified tree `cd13be81`.
+- **Blockers:** none. No schema/client/pin changes; no full or browser suite run.
+- **Next:** independent review and manager merge. **WC4 remains HELD.**
+
+[Report with exact commands, results and changed paths](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc4-original-pin-cut/notes/report.md). Commit message and DONE marker written.
+tokens used
+143,407
+Implemented native WC4 updates with original accepted-PARAM authority; deleted the whole-document publisher path. Preserved F1 guards, authentic legacy aliases and retry/reload/undo behavior.
+
+- **Tests:** 815 focused/conformance, 94 native Runtime and 20 central socket cases passed.
+- **Sources:** helper `20f1b290`, authority `6868e16a`; qualified tree `cd13be81`.
+- **Blockers:** none. No schema/client/pin changes; no full or browser suite run.
+- **Next:** independent review and manager merge. **WC4 remains HELD.**
+
+[Report with exact commands, results and changed paths](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc4-original-pin-cut/notes/report.md). Commit message and DONE marker written.

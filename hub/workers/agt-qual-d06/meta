@@ -1,0 +1,9 @@
+name=agt-qual-d06
+repo=agent
+base=tl/agt-m2-delete-core-extensions
+base_sha=6c5b616a
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-qual-d06
+started=2026-10-20T04:13:04Z

@@ -1,0 +1,9 @@
+name=agt-m3-sdk-scene-only-managed-caller
+repo=agent
+base=tl/integration
+base_sha=79b33f8a
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-sdk-scene-only-managed-caller
+started=2026-10-20T16:51:03Z

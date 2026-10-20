@@ -1,0 +1,400 @@
+   439	        transcript = pin["document_id"].startswith("transcript:")
+   440	        verified = (port.transcript_source(pin) if transcript else port.config_source(pin))
+   441	        _require(isinstance(verified, Mapping) and isinstance(verified.get("document"), Mapping),
+   442	                 "invalid scoped source capture")
+   443	        source = verified["document"]
+   444	        _require(verified["pin"] == pin and source.get("document_id") == pin["document_id"]
+   445	                 and source.get("project_id") == bundle["project_id"]
+   446	                 and type(source.get("version")) is int
+   447	                 and source.get("version") == pin["version"]
+   448	                 and _digest(source.get("content")) == pin["content_digest"],
+   449	                 "captured document does not match its exact scoped pin")
+   450	        if transcript:
+   451	            from astrid.sdk.media_transcript import transcript_document_id
+   452	            content = source["content"]
+   453	            _require(isinstance(content, Mapping) and source.get("kind") == "media.transcript"
+   454	                     and content.get("schema") == "media.transcript/v1"
+   455	                     and isinstance(content.get("media_id"), str)
+   456	                     and _DIGEST.fullmatch(content["media_id"])
+   457	                     and _id(content.get("source_id"))
+   458	                     and (content["media_id"] in {
+   459	                         row["media_id"] for row in document["dependency_manifest"]["media"]}
+   460	                         or pin in restored_pins and any(
+   461	                             pin in source['source_mapping']['_runtime_document']['dependency_manifest']['documents']
+   462	                             and content['media_id'] in {row['media_id'] for row in
+   463	                                 source['source_mapping']['_runtime_document']['dependency_manifest']['media']}
+   464	                             for source in inverse_sources))
+   465	                     and pin["document_id"] == transcript_document_id(
+   466	                         bundle["project_id"], content.get("media_id"), content.get("source_id")),
+   467	                     "invalid transcript source identity")
+   468	        elif source.get('kind') == 'astrid.project-pack':
+   469	            schema_inputs.append((copy.deepcopy(verified), {}))
+   470	        else:
+   471	            _require(isinstance(source.get("kind"), str) and source["kind"].endswith(".config"),
+   472	                     "unregistered config source kind")
+   473	        captures.append(copy.deepcopy(verified))
+   474	    bundle["source_mapping"]["pinned_documents"] = captures
+   475	    return schema_inputs
+   476	
+   477	
+   478	def _schema_resolver(port, inputs, inverse_records, *, context, through):
+   479	    """Resolve bytes at the real command stage, never by simulating handlers."""
+   480	    from astrid.core.element.project_packs import admitted_element_snapshot_descriptor
+   680	            check = ordinary and record['command']['op'] != 'timeline.inverse'
+   681	            claimed = set()
+   682	            for item in items:
+   683	                ref = item['ref']
+   684	                if check and (ref in reserved or ref in claimed):
+   685	                    raise CommandError('created identity was already reserved', kind='identity_collision', ref=ref)
+   686	                claimed.add(ref)
+   687	            for write in record['writes']:
+   688	                if write['ref'] == 'timeline':
+   689	                    for pin in (write['before']['value'], write['after']['value']):
+   690	                        source = boundary(pin['revision_id'])
+   691	                        image = source['source_mapping']['_runtime_document']['parent_revision']
+   692	                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+   693	                                 'historical closure pin mismatch')
+   694	                        state.closures[pin['revision_id']] = source
+   695	                if not state.matches(write['ref'], write['path'], write['before']):
+   696	                    raise CommandError('semantic identity boundary differs from writes', kind='history_unavailable')
+   697	                if (record['command']['op'] == 'timeline.inverse' and root_identity(write['ref']) is not None
+   698	                        and write['ref'].startswith('occurrence:') and not write['path']
+   699	                        and write['after']['state'] == 'present'):
+   700	                    from ._root_inverse import recover_source
+   701	                    recover_source(state, write['after']['value'], output)
+   702	                before = _reservation_refs(state)
+   703	                root = root_identity(write['ref'])
+   704	                created = ({'ref': write['ref'], 'kind': root[0],
+   705	                            'owner': None if root[0] == 'shot' else 'parent'} if root else None)
+   706	                if (root is not None and not write['path'] and write['before']['state'] == 'absent'
+   707	                        and write['after']['state'] == 'present' and created in items):
+   708	                    from ._recording import Recording
+   709	                    Recording(state.bundle, record['command'], record['ordinal']).create_entity(
+   710	                        write['ref'], kind=root[0], owner=created['owner'],
+   711	                        value=write['after']['value'], restoring=True)
+   712	                else:
+   713	                    state.set(write['ref'], write['path'], write['after'])
+   714	                if write['ref'] == 'timeline':
+   715	                    state = State(state.bundle, closures=state.closures)
+   716	                after = _reservation_refs(state)
+   717	                collisions = (after - before) & reserved if check else set()
+   718	                if collisions:
+   719	                    raise CommandError('created identity was already reserved', kind='identity_collision',
+   720	                                       ref=sorted(collisions)[0])
+   721	                reserved.update(after)
+   722	            reserved.update(claimed)
+   723	            for write in record['derived_writes']:
+   724	                state.set(write['ref'], write['path'], write['after'])
+   725	
+   726	    try:
+   727	        for entry in _history(port, current, None, rejected, base):
+   728	            if (not recorded and entry.get('intent') in {'bootstrap', 'legacy_unknown'}
+   729	                    and entry.get('records') is None):
+   730	                # Unknown legacy intent is not allocation proof. The first
+   731	                # recorded edge supplies its authenticated original boundary.
+   732	                continue
+   733	            recorded = True
+   734	            records = _records([entry], rejected, base, current)
+   735	            _require(entry.get('previous') is not None, 'missing original identity boundary')
+   895	            calls = request["commands"]
+   896	            from astrid.sdk.timeline.commands import validate_command
+   897	            verified_media = []
+   898	            for call in calls:
+   899	                validate_command(call)
+   900	            verified_producer = capture_producer(port, request)
+   901	            for call in calls:
+   902	                if call['op'] == 'text-binding.set' and 'text' in call['args']:
+   903	                    verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
+   904	                if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+   905	                                'shot.pool'):
+   906	                    for key in ('old_media', 'media'):
+   907	                        if key in call['args']:
+   908	                            verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
+   909	            restore = any(call["op"] == "timeline.restore" for call in calls)
+   910	            if restore:
+   911	                current = port.head()
+   912	                if len(calls) != 1:
+   913	                    raise CommitRejected(_failure("invalid_commands", "restore must be the sole command",
+   914	                                                  base, current))
+   915	                if current != base:
+   916	                    raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+   917	                                                  base, current))
+   918	            bundle = _load(port, context, base["revision_id"])
+   919	            current = port.head()
+   920	            base_entry = port.history_entry(base["publication_id"])
+   921	            if base_entry["revision_id"] != base["revision_id"]:
+   922	                raise CommitRejected(_failure("history_unavailable", "base publication/revision mismatch",
+   923	                                              base, current))
+   924	            initialize = any(call['op'] == 'timeline.init' for call in calls)
+   925	            if initialize and (base_entry['intent'] != 'bootstrap'
+   926	                               or base_entry['previous'] is not None or current != base):
+   927	                raise CommandError('initialization requires the original bootstrap publication',
+   928	                                   kind='not_pristine')
+   929	            undo_of = []
+   930	            if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
+   931	                raise CommitRejected(_failure("unsupported_operation",
+   932	                                              "use one inverse command listing all target publications",
+   933	                                              base, current))
+   934	            for call in calls:
+   935	                if call["op"] == "timeline.inverse":
+   936	                    for publication in call["args"]["publications"]:
+   937	                        if publication not in undo_of:
+   938	                            undo_of.append(publication)
+   939	            inverse_records, inverse_intervening, inverse_sources = [], [], []
+   940	            if undo_of:
+   941	                targets = [port.history_entry(publication) for publication in undo_of]
+   942	                segments = []
+   943	                for target in targets:
+   944	                    pin = {"revision_id": target["revision_id"],
+   945	                           "publication_id": target["publication_id"]}
+   946	                    # Loading the exact target also verifies source scope; no
+   947	                    # client-provided inverse writes enter the core engine.
+   948	                    _load(port, context, target["revision_id"])
+   949	                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
+   950	                    segments.append(segment)
+   951	                # The longest segment begins at the earliest targeted edge.
+   952	                ordered = max(segments, key=len)
+   953	                if undo_of != [entry["publication_id"] for entry in ordered
+   954	                               if entry["publication_id"] in undo_of]:
+   955	                    raise CommitRejected(_failure("invalid_inverse_order",
+   956	                                                  "inverse publications must be oldest to newest",
+   957	                                                  base, current))
+   958	                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
+   959	
+   960	                def load_boundary(entry):
+   961	                    previous = entry.get('previous')
+   962	                    if not previous:
+   963	                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
+   964	                    prior = port.history_entry(previous['publication_id'])
+   965	                    if prior['revision_id'] != previous['revision_id']:
+   966	                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
+   967	                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
+   968	                    _history(port, pin, previous, CommitRejected, base)
+   969	                    return (_load(port, context, previous['revision_id']),
+   970	                            _load(port, context, entry['revision_id']))
+   971	
+   972	                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+   973	                inverse_records = AcceptedRecords(accepted, _records(
+   974	                    accepted, CommitRejected, base, current), load_boundary)
+   975	                # A gap before a later target is that target's input, not an
+   976	                # intervening write after it. Check every target's own suffix
+   977	                # before any reversal can mask a non-target overlapping edge.
+   978	                for index, entry in enumerate(ordered):
+   979	                    if entry['publication_id'] in undo_of:
+   980	                        check_intervening(_records([entry], CommitRejected, base, current),
+   981	                                          _records([later for later in ordered[index + 1:]
+   982	                                                    if later['publication_id'] not in undo_of],
+   983	                                                   CommitRejected, base, current),
+   984	                                          state=State(_load(port, context, entry['revision_id'])))
+   985	            closures, restored_from = {}, None
+   986	            if restore:
+   987	                restored_from = copy.deepcopy(calls[0]['args'])
+   988	                source = _load(port, context, restored_from['revision_id'])
+   989	                image = source['source_mapping']['_runtime_document']['parent_revision']
+   990	                _require(image['content_digest'] == restored_from['content_digest'],
+   991	                         "restore source digest mismatch")
+   992	                closures[restored_from['revision_id']] = source
+   993	            else:
+   994	                # Only authenticated accepted writes can authorize an inverse
+   995	                # closure replacement. Never accept a caller-supplied image.
+   996	                for write in (write for record in inverse_records for write in record['writes']):
+   997	                    if write['ref'] == 'timeline' and not write['path']:
+   998	                        pin = write['before']['value']
+   999	                        source = _load(port, context, pin['revision_id'])
+  1000	                        image = source['source_mapping']['_runtime_document']['parent_revision']
+  1001	                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+  1002	                                 "inverse historical closure pin mismatch")
+  1003	                        closures[pin['revision_id']] = source
+  1004	            # The port captures exactly the resulting document inputs. Discarded
+  1005	            # current/source closures must not retain unrelated document pins.
+  1006	            schema_inputs = []
+  1007	            for source in closures.values():
+  1008	                schema_inputs.extend(_hydrate(port, source))
+  1009	            if not closures:
+  1010	                schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records,
+  1011	                                         inverse_sources=inverse_sources)
+  1012	            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+  1013	                                              context=context, through=base)
+  1014	            original = execute(bundle, calls, inverse_records=inverse_records,
+  1015	                               intervening_records=inverse_intervening, closures=closures,
+  1016	                               verified_media=verified_media, realm_id=context['realm_id'],
+  1017	                               resolve_inputs=resolve_inputs, verified_producer=verified_producer)
+  1018	            for attempt in range(3):
+  1019	                if attempt:
+  1020	                    current = port.head()
+  1021	                # An equal document after undo is still a later publication.
+  1022	                # CAS retries must recheck this fact before ordinary replay.
+  1023	                if initialize and current != base:
+  1024	                    raise CommandError('initialization cannot rebase over an accepted edit',
+  1025	                                       kind='not_pristine')
+  1026	                if current == base:
+  1027	                    plan = original
+  1028	                else:
+  1029	                    if restore:
+  1030	                        raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+  1031	                                                      base, current))
+  1032	                    entries = _history(port, current, base, CommitRejected, base)
+  1033	                    head_bundle = _load(port, context, current["revision_id"])
+  1034	                    if not closures:
+  1035	                        schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records,
+--- current/target merge path facts ---
+61
+A	tests/editing_conformance/test_producer_insertion.py
+M	tests/editing_conformance/test_recipe_clip_delete.py
+A	tests/editing_conformance/test_recipe_m2_parent_media.py
+A	tests/editing_conformance/test_recipe_occurrence_create.py
+A	tests/editing_conformance/test_recipe_parent_auto_completion.py
+A	tests/editing_conformance/test_recipe_parent_media.py
+A	tests/editing_conformance/test_recipe_text_binding_native.py
+M	tests/editing_conformance/test_recipe_text_binding_spike.py
+M	tests/editing_conformance/test_recorded_graph_roots.py
+A	tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+M	tests/editing_conformance/test_timing_retained_inputs.py
+A	tests/fixtures/current-union-command-schemas/agent-frozen-s2-26ef2bbb.json
+A	tests/fixtures/current-union-command-schemas/agent-word-caea687e.json
+A	tests/fixtures/current-union-command-schemas/next-command-additions.json
+A	tests/fixtures/current-union-command-schemas/text-command-additions.json
+M	tests/helpers/trusted_seed.py
+M	tests/sdk/test_timeline_current_union_schema.py
+A	tests/sdk/test_timeline_pristine_initialize_provider.py
+A	tests/sdk/test_timeline_pristine_initialize_runtime.py
+M	tests/test_timeline_clip_replacement.py
+--- worktree cleanliness ---
+## tl/agt-review-current-ordinary-source-join
+--- temporary test dirs created ---
+4.0K	/tmp/agt-review-current-ordinary-portable
+4.0K	/tmp/agt-review-current-ordinary-schema
+4.0K	/tmp/agt-review-current-ordinary-selected
+4.0K	/tmp/agt-review-current-ordinary-birth
+4.0K	/tmp/agt-review-current-ordinary-parent
+4.0K	/tmp/agt-review-current-ordinary-media
+4.0K	/tmp/agt-review-current-ordinary-media-historical-seed
+
+exec
+/bin/bash -lc 'for p in /tmp/agt-review-current-ordinary-portable /tmp/agt-review-current-ordinary-schema /tmp/agt-review-current-ordinary-selected /tmp/agt-review-current-ordinary-birth /tmp/agt-review-current-ordinary-parent /tmp/agt-review-current-ordinary-media /tmp/agt-review-current-ordinary-media-historical-seed /tmp/agt-review-current-ordinary-seed.*; do if test -e "$p"; then find "$p" -depth -delete; fi; done
+for p in /tmp/agt-review-current-ordinary-portable /tmp/agt-review-current-ordinary-schema /tmp/agt-review-current-ordinary-selected /tmp/agt-review-current-ordinary-birth /tmp/agt-review-current-ordinary-parent /tmp/agt-review-current-ordinary-media /tmp/agt-review-current-ordinary-media-historical-seed; do test ! -e "$p" || exit 1; done
+printf '"'temporary-test-directories: cleaned\\n'" in /home/user/work/wt/agt-review-current-ordinary-source-join
+ succeeded in 49ms:
+temporary-test-directories: cleaned
+
+codex
+Review conclusion is APPROVE. The target tree is clean and exactly `aa0b158…`; both-parent ancestry is verified. I’m writing the required absolute design report and worker artifacts now, with the media fixture caveat explicitly separated from source correctness and with no merge/release/public-pin approval implied.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..299d0ea9d1c7cbf4b81d08eb8bc93e52fc64c8a8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md
+@@ -0,0 +1,37 @@
++# Agent current ordinary-source join review
++
++## Verdict
++
++**APPROVE** the read-only review of merge `ee896821b502ee4e51211b19d064fa44915f5777` (tree `aa0b15850d4b777b77f54faec189cf7e4c60a7b6`).
++
++This is a two-parent merge of current integration `30fc8dd154015a7c58cf4ce7b065ccc46f470ee8` and frozen ordinary parent `310e54840fa5fb8eb7e51bb64ed2c34b7a1063b3`. Both parents are ancestors of the target. No source, branch, index, Runtime, App, Composition, or public pin was modified by this review.
++
++## Join findings
++
++- The merge delta from current is limited to the reviewed ordinary Agent source, fixtures, and tests: schema, SDK timeline command/recording/commit/inverse paths, native initialize/occurrence/parent-media/text/word-anchor paths, media replacement, and their conformance tests. No Runtime/App/Composition source was added.
++- Current P1/WC4/F1/Scene/Root/service/Sprite/Plate/docs paths remain byte-identical to the current parent where they do not intentionally overlap the ordinary source. In particular `_selected_param_authority.py`, `check.py`, `publish.py`, `store.py`, `transaction.py`, `timeline_elements.py`, `timeline_duplicate.py`, `workspace_client.py`, rendering service/window extraction, Sprite/Plate sources, architecture/docs, `runtime.lock.json`, and `artifacts.json` are retained.
++- The public generated client/pin and Composition `0.0.12` artifact are unchanged: `astrid/sdk/workspace_client.py`, `runtime.lock.json`, `requirements/runtime.lock`, `artifacts.json`, and `remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz` match current parent.
++- Schema is byte-exact: SHA-256 `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`, with 55 definitions and 29 operations. No private carrier/audio schema or unreviewed WC3/WC6/D13 consumer logic was introduced.
++- The two `commit.py` joins preserve current selected-parameter authority and add the ordinary inverse-aware source hydration at both initial and stale-head replay sites. `_inverse_clip_transcripts` only removes authenticated first-use transcript pins for removed created clips; `_hydrate` admits restored pins only from authenticated inverse closures. The reservation replay retains the current root-birth/source marker behavior.
++- Duplicate F1 hunks were removed without dropping current behavior: every existing F1 test body in the selected-param, selected-schema, selected-schema-runtime, and clip-element test files is present with identical AST body and assertion count in the target. The target/current comparison found no missing test functions or changed existing test bodies.
++
++## Tests
++
++All tests ran from this worktree with `/home/user/work/venv-agent/bin/python`, `PYTHONPATH` set to the worktree, `PYTHONDONTWRITEBYTECODE=1`, and `-p no:cacheprovider`. No full or full-* suite was run.
++
++- `tests/editing_conformance/test_recipe_scalar_commands.py -k 'inverse_'`, parent auto-completion, native text binding, pristine initialize: **18 passed, 205 deselected**.
++- Current F1/selected-param unit lane (`tests/sdk/test_timeline_selected_param_authority.py`, legacy alias inverse, clip-element, scalar inverse/authority/disjoint/birth selection): **43 passed, 90 deselected**.
++- Schema/source floors and parent-media completion/literal subset: **43 passed, 76 deselected**.
++- Private normally generated Runtime selected-PARAM/F1/legacy-alias native lane: **32 passed**.
++- Private normally generated Runtime birth + text joint inverse/redo/reopen/retry lane: **2 passed**.
++- Private normally generated Runtime parent auto saved/fallback/stale-read/zero-write lane: **14 passed**.
++- Media manifest inverse add/swap lane: **2 passed** using a temporary private extraction of the exact historical seed commit `b2a1d9fd82121a5509769531a2e91aece97d78b` from `/home/user/work/runtime`, while keeping `ASTRID_RUNTIME_CHECKOUT` on the private normally generated 55/29 Runtime fixture.
++- `git diff --check`: clean; target worktree remained clean.
++
++The first media retry with the literal `ASTRID_PARENT_MEDIA_SEED_RUNTIME=/home/user/work/runtime` reached the shared Runtime worktree but failed setup because its current fixture module no longer exports historical `_binding_descriptor`; the exact Git seed commit does export it. The temporary historical extraction passed both add and swap cases without changing the shared Runtime or relaxing fixtures. This is a fixture-path caveat, not a product assertion failure.
++
++## Gaps and boundaries
++
++- This is an Agent-source join review only. The normal Runtime 0.2.14-owned pin/private actual pair remains separate and pending; this report is not merge, release, public-pin, or Runtime-candidate approval.
++- Full suites, browser/socket journeys, App qualification, renderer/pixel/audio parity, owner-film viewing, and public Runtime publication were not run.
++- No source changes were made in this worktree. Next step is the orchestrator’s normal owned-pin/consumer qualification after official Runtime candidate approval.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..df07918babfc1f09f919af9c82eef96282daf896
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/commit-msg
+@@ -0,0 +1,5 @@
++docs(review): record ordinary source join approval
++
++Record the read-only review of the current Agent ordinary-source merge,
++including targeted test evidence, protected-path checks, and the historical
++media-fixture setup caveat.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6ee8f07cc4f92d474c501f6f1cc670cba20983bd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/notes/report.md
+@@ -0,0 +1,5 @@
++# Agent current ordinary-source join review
++
++See the published report at `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md`.
++
++Verdict: APPROVE. Target `ee896821b502ee4e51211b19d064fa44915f5777`, tree `aa0b15850d4b777b77f54faec189cf7e4c60a7b6`; both parents verified as ancestors. Targeted tests passed: 18 portable, 43 F1/selected-param unit, 43 schema/source floors, 32 selected native, 2 birth/text, 14 parent-auto, and 2 media-manifest inverse. The direct shared Runtime seed path exposed fixture-module drift; exact historical commit extraction from that Git repo passed both media cases. No source changes, full suites, public pin, merge, or release approval.
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/DONE
+printf '%s\\n' '--- artifacts ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/DONE
+printf '%s\\n' '--- worktree status ---'
+git status --short --branch
+printf '%s\\n' '--- report verdict ---'
+rg -n '"'^'"\\*\\*APPROVE\\*\\*|"'^Verdict: APPROVE|''^docs'"\\(review\\)' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/{notes/report.md,commit-msg}" in /home/user/work/wt/agt-review-current-ordinary-source-join
+ succeeded in 82ms:
+--- artifacts ---
+-rw-r--r-- 1 root root 4980 Oct 20 15:13 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md
+-rw-r--r-- 1 root root    0 Oct 20 15:13 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/DONE
+-rw-r--r-- 1 root root  228 Oct 20 15:13 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/commit-msg
+-rw-r--r-- 1 root root  751 Oct 20 15:13 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/notes/report.md
+--- worktree status ---
+## tl/agt-review-current-ordinary-source-join
+--- report verdict ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/commit-msg:1:docs(review): record ordinary source join approval
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-current-ordinary-source-join/notes/report.md:5:Verdict: APPROVE. Target `ee896821b502ee4e51211b19d064fa44915f5777`, tree `aa0b15850d4b777b77f54faec189cf7e4c60a7b6`; both parents verified as ancestors. Targeted tests passed: 18 portable, 43 F1/selected-param unit, 43 schema/source floors, 32 selected native, 2 birth/text, 14 parent-auto, and 2 media-manifest inverse. The direct shared Runtime seed path exposed fixture-module drift; exact historical commit extraction from that Git repo passed both media cases. No source changes, full suites, public pin, merge, or release approval.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md:5:**APPROVE** the read-only review of merge `ee896821b502ee4e51211b19d064fa44915f5777` (tree `aa0b15850d4b777b77f54faec189cf7e4c60a7b6`).
+
+codex
+## Review complete — APPROVE
+
+- Reviewed merge `ee896821…`, tree `aa0b158…`; both parents verified as ancestors.
+- Confirmed schema SHA `6ba7b51e…`, 55 definitions/29 operations.
+- Confirmed current Agent, public client/pins, Runtime lock, and Composition `0.0.12` artifact remain unchanged.
+- Verified duplicate F1 removal preserved all existing test bodies/assertions.
+- Tests passed: `18`, `43`, `43`, `32`, `2`, `14`, and `2` media-manifest cases.
+- No full suites, source edits, merge, release, or public-pin approval performed.
+
+Media tests required a private extraction of historical seed commit `b2a1d9f…`; both cases passed. Details and caveat: [review report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md>).
+
+Artifacts written: `commit-msg`, `notes/report.md`, and `DONE`.
+tokens used
+214,257
+## Review complete — APPROVE
+
+- Reviewed merge `ee896821…`, tree `aa0b158…`; both parents verified as ancestors.
+- Confirmed schema SHA `6ba7b51e…`, 55 definitions/29 operations.
+- Confirmed current Agent, public client/pins, Runtime lock, and Composition `0.0.12` artifact remain unchanged.
+- Verified duplicate F1 removal preserved all existing test bodies/assertions.
+- Tests passed: `18`, `43`, `43`, `32`, `2`, `14`, and `2` media-manifest cases.
+- No full suites, source edits, merge, release, or public-pin approval performed.
+
+Media tests required a private extraction of historical seed commit `b2a1d9f…`; both cases passed. Details and caveat: [review report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-current-ordinary-source-join.md>).
+
+Artifacts written: `commit-msg`, `notes/report.md`, and `DONE`.

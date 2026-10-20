@@ -1,0 +1,9 @@
+name=agt-m2-wc4-current-source-gate
+repo=agent
+base=tl/integration
+base_sha=9cb10904
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-wc4-current-source-gate
+started=2026-10-20T12:42:40Z

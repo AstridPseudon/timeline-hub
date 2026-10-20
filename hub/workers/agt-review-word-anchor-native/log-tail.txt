@@ -1,0 +1,400 @@
++                                 'head_unchanged': True})
++    finally:
++        service.close()
++        shutil.rmtree(root.parent)
++print(json.dumps(outcomes, indent=2))
+diff --git a/design/agent-review-word-anchor-native.md b/design/agent-review-word-anchor-native.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f08c9be428349ac17a386cf872a57191a5690d1
+--- /dev/null
++++ b/design/agent-review-word-anchor-native.md
+@@ -0,0 +1,138 @@
++# Native word-anchor review
++
++Reviewed `caea687ee05632738bac7fb9683b5bb1933b83c0` against the approved
++`m2-word-binding-contract.md`, the authored-identity decision, and the kernel now
++integrated at `43d567f9`. **Changes required before native acceptance is qualified:**
++two source-boundary checks are missing, and the outgoing schema still needs the
++complete frozen S2 union. The authored-identity decision remains sound.
++
++The review changes no product code, schema, pin, tests, integration tree or process
++document. Diagnostics and the detailed command/result report live outside this
++repository in the assigned worker's `notes/` directory.
++
++## Findings
++
++1. **Occurrence visibility is not checked for the selected word.** Through normal
++   Runtime acceptance, an occurrence starting at 2 seconds with `duration_ms=100`
++   accepts a word-anchor start of `3.4701333333333335` seconds. The source clip's
++   own from/to interval still contains the word, but the occurrence ends at 2.1
++   seconds. `_timing_evaluators.evaluate` records occurrence ends for film-end
++   evaluation; its bound-word checks compare only with the source clip interval.
++   `native_word_anchor.binding` also omits this visibility check. Validate the
++   selected phrase against the supported occurrence's visible half-open interval
++   on first selection, replay, source changes, inverse and restore. A word ending
++   exactly at the boundary may remain valid; an onset there cannot be selected.
++   Neighboring `native_placement_commands.placement_move` already enforces an
++   occurrence extent for its own operation.
++2. **A raw source clip's `source_window` is silently ignored.** A historical film
++   seeded through the public publication API with
++   `voice.source_window={"from":20,"to":30}` accepts the same word at
++   `3.4701333333333335`. The adapter checks `source_window` on the internal timeline
++   and registry asset, while the kernel's `_maps` omits that key on the raw clip.
++   This is outside the advertised literal-source codec. Refuse the unsupported
++   raw clip map instead of treating it as ordinary from/to timing. No claim about
++   renderer interpretation of this unsupported field is needed for this finding.
++3. **This schema is not an outgoing freeze.** Full containment of frozen S2
++   `26ef2bbb31b4892fdd7c15ee5b20700bd40cb933`, raw SHA256
++   `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`, fails at
++   seven paths: the missing optional `ClipSetElementArgs.schema_source`, missing
++   `producer.guard`, and missing `ProducerAdmittedTarget`, `ProducerAttemptPin`,
++   `ProducerGuardArgs`, `ProducerIdentity`, `SettledProducerProposal`. The worker's
++   comparison with its narrower parent is insufficient for release containment.
++
++The two acceptance reproducers use real CAS, main-v1 transcript creation, normal
++Agent provider registration, and the actual regenerated Runtime. Initial fixture
++data is published through historical public APIs. There is no PreparedProvider,
++SQL history seed, raw schema override, test-local operation or fabricated receipt
++in those reproducers. Normal `occurrence.delete` correctly refuses source removal
++with an unchanged head after the baseline anchor is accepted.
++
++## What is proven
++
++The stored `app.astrid.word_anchors.{on,until}` contains the raw occurrence/clip,
++exact existing DocumentPin, ordered stable main-v1 word IDs, edge and offsets.
++The echo remains human text. Same-echo A/B selections produce different authored
++revisions and content digests; revision-only restore recovers each choice across
++restart. Fresh-process compilation receives only canonical JSON and verified
++transcript JSON. No accepted-history fold supplies meaning.
++
++The adapter constructs a private declaration from the selected IDs. The kernel
++checks those exact IDs, exact scoped pin/digest, transcript/media identity,
++consecutive same-segment phrase, clip source window and derived clip interval.
++Its bound-word resolver never calls text selection; a tripwire tests this with
++stale, invalid and absent echoes. Missing inputs refuse without latest-version,
++ordinal, alternate-clip or text fallback. Repeated legacy text, even with an
++ordinal, refuses `ambiguous anchor; choose occurrence` at the pure adapter boundary;
++the unique-text positive still compiles without authoring a reference.
++
++The recorded recipe guards target identity and writes, source raw clip/occurrence/
++shot ownership, active source/track selection and registry asset identity. It
++retains an exact transcript dependency and a follow binding. Source position,
++order and supported windows are recomputed rather than frozen read guards, so a
++disjoint native source move rebases while retaining the chosen raw clip and IDs.
++The clock uses exact rational canvas FPS; six-decimal second offsets and frame
++offsets retain their tested precision. Clear removes both echo and reference,
++including a legacy flat echo that would otherwise reappear, and preserves the
++other field and opaque siblings.
++
++Native inverse restores A after B, including unchanged echo writes, and inverse
++of inverse restores B. First-anchor inverse restores the complete prior clip and
++exact absence. The last-reference literal cache is restored from authenticated
++ordinary inverse provenance; live references always recompile. That cache recovery
++does not make the film depend on accepted-history interpretation. Competing
++target writes and later equal writes prevent unsafe inverse.
++
++First use hydrates through `transcript_source` and retains V1 in the normal
++dependency manifest. After a normal V2 update removes the chosen words, restart,
++exact retry and an unrelated later native commit keep using V1. Missing version,
++wrong digest, foreign document and authorization revocation refuse atomically.
++V2 word removal is not document deletion: no public document-deletion route was
++tested. The original raw source removal/media-change and source-trim probes use
++test-local operations; this review separately verified native occurrence removal.
++
++The default hook is bounded to parent clips carrying the new reference namespace
++and their exact source dependency slice. A tested unrelated legacy clip retaining
++`until_film_end` and `sequence` survives unchanged. Films with no new references
++retain their existing default path. This is not broad compiler migration or proof
++that Checkout retime/resolve, CLI, sheet, App picker, preview/export or other
++consumers honor the new references. Those remain explicit qualification work.
++
++## Required composition and evidence
++
++Start from **complete frozen S2**, preserving every definition and operation.
++Add exactly `WordAnchor`, `ClipAnchorArgs`, and the `clip.anchor` conditional from
++this worker. The in-memory result has **50 definitions / 23 operation conditions**;
++full containment of both S2 and the word candidate returns `[]`. Preserve S2's
++producer registry/verified-producer plumbing and element first-use hydration while
++adding this worker's declaration, guard, final compile hook and transcript-pin
++hydration. Port the native module and its conformance fixtures/tests additively;
++do not replace current shared command/provider files with the partial worker files.
++Normally regenerate that complete successor before any coordinated consumer pin.
++
++For the kernel, `_timing_evaluators.py` is byte-identical to `43d567f9`.
++`compiler.py` differs only in its module docstring; executable ASTs are equal.
++Use the integrated kernel files and its current documentation/tests rather than
++reverting them to the worker's testing port. No executable kernel backport is
++needed for this candidate. The source-window findings above still need narrow fixes.
++
++Independent targeted results on Linux:
++
++| Check | Result |
++| --- | --- |
++| Native main-suite Runtime file | 50 passed, 104.59 s |
++| Portable file plus six command/provider neighbor files | 453 passed, 37.48 s (12 portable + 441 neighbors) |
++| Current kernel's compiler/cycle files, copied unchanged from `43d567f9` to a private test folder | 51 passed, 19.31 s |
++| Full S2/word containment diagnostic | Seven candidate failures; both union comparisons pass |
++| Ordinary Runtime generator and `--check` | Exit 0 |
++| Ruff on the reviewed product/test files | Passed |
++
++Runtime evidence uses an **unpublished private normal-generation candidate**, not
++the current public pair: base `c0dcd3871d78c405184506eb6735565592498c77`, base tree
++`5f86f0ef9ad6c4c5bec21f41a8a1781c6a687c6d`, with this worker's schema SHA256
++`a058aa6ec55d86f84b74360f4e9c01d207ec1db86434170c5d5658b5c809130a` copied as the
++canonical generator input. Generated source fingerprint:
++`a3aa854ce26583e9197f572ef75fed8b41d092d4f1b31c8cd3c6e7d7ec9c8883` (SHA256 over
++sorted relative paths and bytes, with 4-byte path and 8-byte content lengths).
++The historical seed Runtime is `80973d34ae10e498d7213c30287012c9876f4b1a`.
++Normal generation's older published floor passing does not establish S2 containment.
++No full suite, localhost/browser/socket lane or public release pair was tested.
+
+exec
+/bin/bash -lc "git diff --check; git status --short; wc -l design/agent-review-word-anchor-native.md; rg -n 'Prepared|SQL|raw.*schema|first_selection' tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_native_word_anchor.py; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-word-anchor-native/notes/kernel-pure.log" in /home/user/work/wt/agt-review-word-anchor-native
+ succeeded in 1445ms:
+?? design/
+138 design/agent-review-word-anchor-native.md
+tests/editing_conformance/native_word_anchor_fixture.py:28:def first_selection(bundle):
+tests/editing_conformance/native_word_anchor_fixture.py:92:    # Initial untracked publication, before a commit history exists. No SQL,
+tests/editing_conformance/test_native_word_anchor.py:147:    assert retained_inputs.first_selection(original).source[-1] == "voice"
+tests/editing_conformance/test_native_word_anchor.py:152:    assert retained_inputs.first_selection(bundle(case)).source[-1] == "other"
+...................................................                      [100%]
+51 passed in 19.31s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-word-anchor-native')
+report=Path('design/agent-review-word-anchor-native.md').read_text()
+report += '''
+
+## Exact execution record and reproduction
+
+Working directory: "'`/home/user/work/wt/agt-review-word-anchor-native`.
+Reviewed source: `caea687ee05632738bac7fb9683b5bb1933b83c0`.
+Only repository change: `design/agent-review-word-anchor-native.md`.
+No product/schema/pin/test changes, integration writes, ledger edits, commits,
+pushes, full-suite requests, dependency writes or dependency installations.
+The review is complete; qualification remains held on the reported source checks
+and complete S2 composition. No task-execution blocker remains.
+
+These variables define the exact command environment used below:
+
+```bash
+cd /home/user/work/wt/agt-review-word-anchor-native
+W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-word-anchor-native/notes
+```
+
+Private Runtime preparation used Python `subprocess.check_output(['"'git', '-C',
+'/home/user/work/runtime', 'archive', REF])"'` and `tarfile.extractall(...,
+filter='"'data')"'`, with `REF=c0dcd3871d78c405184506eb6735565592498c77` extracted to
+`$W/runtime-generation` and `REF=80973d34ae10e498d7213c30287012c9876f4b1a` to
+`$W/historical-runtime`. It copied only this worktree'"'s
+"'`astrid/core/timeline/schema/edit-command.schema.json` bytes to
+`$W/runtime-generation/contract/schemas/edit-command.json`. These were private
+source copies, not edits to Runtime or its shared dependencies. Exact generated
+file hashes and fingerprint algorithm are in `generated-source-hashes.json`.
+
+```bash
+cd "$W/runtime-generation"
+env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python generators/generate.py
+env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python generators/generate.py --check
+```
+
+Both exited 0. The ordinary generator emitted 13 generated/package outputs;
+`--check` emitted nothing. The source hash and schema hash above identify this
+unpublished candidate; no current-public-pair result is claimed.
+
+```bash
+cd /home/user/work/wt/agt-review-word-anchor-native
+env ASTRID_RUNTIME_CHECKOUT="$W/runtime-generation" '"\\\\
+    ASTRID_WORD_ANCHOR_SEED_RUNTIME=\""'$W/historical-runtime" '"\\\\
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\""'$PWD" '"\\\\
+    /home/user/work/venv-agent/bin/python -m pytest -o addopts= -p no:cacheprovider -q \\\\
+    tests/editing_conformance/test_native_word_anchor.py
+"'```
+
+Exit 0, **50 passed in 104.59s**. Output: `native-runtime.log`. These tests use
+in-process SQLite-backed Runtime services and subprocess restart/seed checks;
+no localhost, daemon, browser or live socket suite was run.
+
+```bash
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" '"\\\\
+    /home/user/work/venv-agent/bin/python -m pytest -o addopts= -p no:cacheprovider -q \\\\
+    tests/editing_conformance/test_native_word_anchor_vectors.py \\\\
+    tests/editing_conformance/test_recipe_m1_commands.py \\\\
+    tests/editing_conformance/test_recipe_internal_stages.py \\\\
+    tests/editing_conformance/test_recording_clear.py \\\\
+    tests/editing_conformance/test_inverse_clear_batches.py \\\\
+    tests/sdk/test_timeline_commit_provider.py \\\\
+    tests/sdk/test_timeline_commit_provider_document.py
+"'```
+
+Exit 0, **453 passed in 37.48s**. This independently reproduces the worker'"'s
+12 portable plus 441 neighbor result in one invocation.
+
+An initial kernel command targeting this worktree's nonexistent
+"'`tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py
+ tests/editing_conformance/test_timing_retained_inputs.py` exited 4 during
+collection (**no tests ran**; output `kernel.log`). This worker branched before
+the kernel'"'s tests landed. The correction copied only the two pure main-suite
+files unchanged with "'`git show 43d567f9:tests/sdk/NAME` to `$W/kernel-tests/NAME`:
+
+```bash
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" '"\\\\
+    /home/user/work/venv-agent/bin/python -m pytest -o addopts= -p no:cacheprovider -q \\\\
+    \""'$W/kernel-tests/test_timing_compiler.py" "$W/kernel-tests/test_timing_cycles.py"
+```
+
+Exit 0, **51 passed in 19.31s** (`kernel-pure.log`). No retained-input kernel
+fixture using prepared acceptance was run or counted as native proof. No product
+kernel edit or semantic overlay was needed: the two executable ASTs match the
+integrated kernel exactly.
+
+```bash
+env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python "$W/schema_review.py"
+```
+
+Exit 0; `schema-review.log` gives all seven frozen-S2 incompatibility paths and
+both successful full in-memory union containment comparisons. The complete
+candidate schema was never written into the repository. The exact union is
+frozen S2 plus the two word definitions and one word operation conditional.
+
+```bash
+env ASTRID_RUNTIME_CHECKOUT="$W/runtime-generation" '"\\\\
+    ASTRID_WORD_ANCHOR_SEED_RUNTIME=\""'$W/historical-runtime" '"\\\\
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\""'$PWD" '"\\\\
+    /home/user/work/venv-agent/bin/python \""'$W/scope_probe.py"
+```
+
+Exit 0; diagnostic output is `scope-probe.log`:
+
+- Baseline native anchor accepted at `3.4701333333333335`.
+- Native `occurrence.delete` refused: `bound source occurrence/clip is missing or
+  ambiguous`; the full head response stayed equal.
+- Short-occurrence anchor incorrectly accepted at the same start despite the
+  occurrence ending at 2.1 seconds.
+- Raw-clip `source_window` anchor incorrectly accepted at the same start.
+
+The diagnostic'"'s zero exit means the reproducer completed; the two ACCEPTED
+outcomes are safety findings, not passing refusal assertions. "'`scope_probe.py`
+contains the exact public fixture variations. It obtains the existing seed
+function'"'s source with "'`inspect.getsource`, substitutes only the seed'"'s
+"'`duration_ms` literal or adds the raw clip field, then calls normal historical
+publication. All measured edits use normal provider/Runtime acceptance. There
+is no product modification, SQL write, PreparedProvider or schema override.
+An initial diagnostic invocation lacked the seed'"'s FPS/DECLARATION constants
+and exited 1 before measured edits; the import was corrected before the final
+successful invocation. Its temporary realm was removed.
+
+"'```bash
+/home/user/work/venv-agent/bin/ruff check --no-cache '"\\\\
+    astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py \\\\
+    astrid/sdk/timeline/native_word_anchor.py astrid/sdk/timeline/commands.py \\\\
+    astrid/sdk/timeline/commit.py tests/editing_conformance/native_word_anchor_fixture.py \\\\
+    tests/editing_conformance/test_native_word_anchor.py \\\\
+    tests/editing_conformance/test_native_word_anchor_vectors.py
+git diff --check
+"'```
+
+Both exited 0. No full suite ran or was requested. No passing behavior test was
+changed, removed, skipped or converted into a refusal expectation.
+
+## Decisions and next steps
+
+The approved authored stable identity is retained. Accepted history remains
+provenance for inverse/rebase, and restore v1 remains sufficient. No new feature,
+DTO, schema decision, pin, history fold or alternative compiler was introduced.
+The source checks above should be fixed narrowly by the implementation owner,
+with permanent positive boundary/refusal regressions in the native main suite.
+Compose the complete frozen S2 successor and preserve its producer/element
+semantics while adding the native hooks; normally regenerate and qualify the
+coordinated pair before consumer repinning. Migrate remaining consumer surfaces
+separately. MacOS, live transport, UI, pixels/audio and document deletion remain
+unverified. This bounded review is complete and does not authorize release.
+
+The private Runtime and historical source copies and copied kernel-test directory
+were temporary and are removed after verification; the scripts/logs/source hash
+metadata remain here. Regenerate the copies with the exact inputs above to replay.
+'"'''
+(w/'notes/report.md').write_text(report)
+(w/'commit-msg').write_text('docs(timeline): review native authored word-anchor safety\\n\\nVerify authored stable identity and revision-only restore against the normal\\nRuntime provider. Record source visibility and map refusal gaps, independent\\ntargeted results, and the required complete frozen S2 schema composition.\\n')
+PY" in /home/user/work/wt/agt-review-word-anchor-native
+ succeeded in 8ms:
+codex
+The review is written. All 50 native Runtime, 453 portable/neighbor, and 51 pure-kernel tests passed. The report records the two acceptance bugs, the exact S2 union needed, and the unpublished Runtime candidate hashes. I’m cleaning up the private test copies and checking that the review document is the only repository change.
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-word-anchor-native')
+for name in ('runtime-generation','historical-runtime','kernel-tests'):
+ shutil.rmtree(w/'notes'/name)
+shutil.rmtree('/tmp/word-review-y6mv149e',ignore_errors=True)
+assert (w/'notes/report.md').is_file()
+assert (w/'commit-msg').is_file()
+assert Path('design/agent-review-word-anchor-native.md').is_file()
+print('Private source/test copies and failed-probe temporary realm removed.')
+PY
+git diff --check
+git status --short
+find design -type f" in /home/user/work/wt/agt-review-word-anchor-native
+ succeeded in 757ms:
+Private source/test copies and failed-probe temporary realm removed.
+?? design/
+design/agent-review-word-anchor-native.md
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-word-anchor-native')
+(w/'DONE').touch()
+print('Review complete; commit-msg and DONE written.')
+PY" in /home/user/work/wt/agt-review-word-anchor-native
+ succeeded in 79ms:
+Review complete; commit-msg and DONE written.
+
+codex
+Review complete. **Changes required before qualification:**
+
+- Native acceptance permits a selected word beyond its occurrence’s end.
+- A raw source clip’s unsupported `source_window` is ignored.
+- The schema needs the complete frozen S2 union: **50 definitions / 23 operations**.
+
+Authored stable identity, revision-only restore, and no-text-fallback behavior are supported by the evidence.
+
+Independent checks:
+
+- Native Runtime file: **50 passed**.
+- Portable plus command/provider neighbors: **453 passed**.
+- Current kernel compiler/cycle tests: **51 passed**.
+- Normal generation, `--check`, Ruff and whitespace checks passed.
+
+Runtime evidence used an **unpublished private regenerated candidate**, not the current public pair. No full suite ran.
+
+[Review document](/home/user/work/wt/agt-review-word-anchor-native/design/agent-review-word-anchor-native.md) · [Detailed report with exact commands, results, hashes and reproducers](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-word-anchor-native/notes/report.md)
+
+Only the review document changed in the repository. Private test copies were removed; `commit-msg` and `DONE` are written. Next: fix the two source checks, compose S2 additively, then qualify the coordinated pair.
+tokens used
+167,885
+Review complete. **Changes required before qualification:**
+
+- Native acceptance permits a selected word beyond its occurrence’s end.
+- A raw source clip’s unsupported `source_window` is ignored.
+- The schema needs the complete frozen S2 union: **50 definitions / 23 operations**.
+
+Authored stable identity, revision-only restore, and no-text-fallback behavior are supported by the evidence.
+
+Independent checks:
+
+- Native Runtime file: **50 passed**.
+- Portable plus command/provider neighbors: **453 passed**.
+- Current kernel compiler/cycle tests: **51 passed**.
+- Normal generation, `--check`, Ruff and whitespace checks passed.
+
+Runtime evidence used an **unpublished private regenerated candidate**, not the current public pair. No full suite ran.
+
+[Review document](/home/user/work/wt/agt-review-word-anchor-native/design/agent-review-word-anchor-native.md) · [Detailed report with exact commands, results, hashes and reproducers](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-word-anchor-native/notes/report.md)
+
+Only the review document changed in the repository. Private test copies were removed; `commit-msg` and `DONE` are written. Next: fix the two source checks, compose S2 additively, then qualify the coordinated pair.

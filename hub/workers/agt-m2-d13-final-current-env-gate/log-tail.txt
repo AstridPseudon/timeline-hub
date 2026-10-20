@@ -1,0 +1,400 @@
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final-current-env-gate-d13-native7d-public13-integration-1020195518-12814; echo status=$(cat "$D/status"); wc -c "$D/log.txt"; tail -12 "$D/log.txt" 2>/dev/null || true' in /home/user/work/wt/agt-m2-d13-final-current-env-gate
+ succeeded in 75ms:
+status=running
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final-current-env-gate-d13-native7d-public13-integration-1020195518-12814/log.txt
+
+codex
+The central job is still running without a streamed log (the service buffers output until completion), now in the expected duration range for the real render/ffprobe/undo path. I’m continuing the single wait.
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final-current-env-gate-d13-native7d-public13-integration-1020195518-12814; echo status=$(cat "$D/status"); find "$D" -maxdepth 1 -type f -printf '"'%f %s\\n' | sort" in /home/user/work/wt/agt-m2-d13-final-current-env-gate
+ succeeded in 219ms:
+status=running
+ext 2669
+log.txt 0
+request 260
+runner.log 0
+running 6
+snap 145
+status 8
+
+exec
+/bin/bash -lc "date -u; D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final-current-env-gate-d13-native7d-public13-integration-1020195518-12814; stat -c 'status_mtime=%y' \""'$D/status"; cat "$D/status"' in /home/user/work/wt/agt-m2-d13-final-current-env-gate
+ succeeded in 46ms:
+Tue Oct 20 20:04:44 UTC 2026
+status_mtime=2026-10-20 19:59:34.953163095 +0000
+running
+
+codex
+The render case has been running for about five minutes, matching the prior public13 two-case wall time; the service still reports it as active and has not produced a failure. I’m letting the existing run finish under its 90-minute service ceiling.
+ exited 1 in 600536ms:
+test agt-m2-d13-final-current-env-gate-d13-native7d-public13-integration-1020195518-12814: fail exit=1 in 334s — d13-native7d-public13-integration on agt-m2-d13-final-current-env-gate (agent tree cf9518d979a5dfd50e7959cb0b5f8c6db9156562)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+counts: 1 failed in 284.17s (0:04:44) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final-current-env-gate-d13-native7d-public13-integration-1020195518-12814/log.txt ---
+            # while release still correctly rejects a live command census.
+            adapter.fence(reason="host_shutdown")
+            owner = self._handoff_accounting_owner
+            deadline = time.monotonic() + 5.0
+            with owner._handoff_condition:
+                while (owner._handoff_observation_known
+                       and owner._handoff_active_attempts != 0):
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    owner._handoff_condition.wait(timeout=remaining)
+                complete = (owner._handoff_observation_known
+                            and owner._handoff_active_attempts == 0)
+            with self._process_lock:
+                complete = complete and not self._active_processes
+            if not complete:
+                self._latch_cleanup_uncertainty("CPU attempt cleanup remains unresolved")
+                # Do not abandon retained originals when the adapter is poisoned.
+                # No new observation/admission is allowed on this failure path.
+                from astrid.core.execution.process_group import contain_retained_handles
+                cleanup_deadline = time.monotonic() + 2.0
+                with self._process_lock:
+                    retained = tuple(self._active_processes | self._host_lifetime_processes)
+                for process in retained:
+                    if getattr(process, "_astrid_task_scope", False):
+                        _task_scope.stop(process, 0.2)
+                        continue
+                    contain_retained_handles(process, cleanup_deadline=cleanup_deadline,
+                                             first_error=(getattr(process, "_astrid_tree_uncertain", None)
+                                                          or "CPU attempt cleanup remains unresolved"))
+                graph = getattr(self, "_native_engine_graph", None)
+                if graph is not None:
+                    try:
+                        graph.abort()
+                    except BaseException as exc:
+                        errors.append(exc)
+>               raise CleanupUncertainError("CPU attempt cleanup remains unresolved")
+E               astrid.core.execution.custody_broker.CustodyError: CPU attempt cleanup remains unresolved
+
+astrid/core/execution/generic_host.py:5730: CustodyError
+----------------------------- Captured stderr call -----------------------------
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 17294, "elapsed_ms": 13778}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 17294, "elapsed_ms": 12366}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "registry_settle", "outcome": "completed", "process_id": 17294, "elapsed_ms": 31690}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 8192}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 17294, "elapsed_ms": 110}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 17294, "elapsed_ms": 296}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 2797}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 3399}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 17294, "elapsed_ms": 385}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 4122}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 7651}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "launch_transaction", "outcome": "completed", "process_id": 17294, "elapsed_ms": 60876}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 3870}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 3072}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 3672}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 3641}
+=========================== short test summary info ============================
+FAILED tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+1 failed in 284.17s (0:04:44)
+
+codex
+The corrected environment worked: the original render test passed Remotion validation and completed the launch/render phases, but the test ended with the already-known custody teardown failure `CustodyError: CPU attempt cleanup remains unresolved`. Because this is outside the requested test-environment-only scope, I will not alter custody/product code; I’m recording the exact blocked result and verifying the source tree stayed unchanged.
+exec
+/bin/bash -lc "D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final-current-env-gate-d13-native7d-public13-integration-1020195518-12814; printf '%s\\n' '--- service request/snapshot/result ---'; sed -n '1,80p' \""'$D/request"; sed -n '"'1,80p' \""'$D/snap"; sed -n '"'1,80p' \""'$D/summary"; printf '"'%s\\n' '--- selected log evidence ---'; rg -n 'Remotion|render|ffprobe|mp4|CAS|undo|proposal|settled|request|lost|restart|Cleanup|Custody|PASSED|FAILED|passed|failed' \""'$D/log.txt" | tail -100; printf '"'%s\\n' '--- source status ---'; git status --short --branch; git rev-parse HEAD; git diff --stat; printf '%s\\n' '--- current SOURCE-related paths/terms ---'; rg -n 'SOURCE|source|image.*conversion|conversion' astrid tests/packs/video_editing/test_runtime_publication_chain.py --glob '*.py' | head -120" in /home/user/work/wt/agt-m2-d13-final-current-env-gate
+ succeeded in 308ms:
+--- service request/snapshot/result ---
+target=agt-m2-d13-final-current-env-gate
+repo=agent
+suite=d13-native7d-public13-integration
+files=tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+nocache=0
+requested=2026-10-20T19:55:18Z
+tree=cf9518d979a5dfd50e7959cb0b5f8c6db9156562
+key=1df538a350b224fac7badc244b73dc0c
+worktree=/home/user/work/wt/agt-m2-d13-final-current-env-gate
+test agt-m2-d13-final-current-env-gate-d13-native7d-public13-integration-1020195518-12814: fail exit=1 in 334s — d13-native7d-public13-integration on agt-m2-d13-final-current-env-gate (agent tree cf9518d979a5dfd50e7959cb0b5f8c6db9156562)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+counts: 1 failed in 284.17s (0:04:44) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-final-current-env-gate-d13-native7d-public13-integration-1020195518-12814/log.txt ---
+            # while release still correctly rejects a live command census.
+            adapter.fence(reason="host_shutdown")
+            owner = self._handoff_accounting_owner
+            deadline = time.monotonic() + 5.0
+            with owner._handoff_condition:
+                while (owner._handoff_observation_known
+                       and owner._handoff_active_attempts != 0):
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    owner._handoff_condition.wait(timeout=remaining)
+                complete = (owner._handoff_observation_known
+                            and owner._handoff_active_attempts == 0)
+            with self._process_lock:
+                complete = complete and not self._active_processes
+            if not complete:
+                self._latch_cleanup_uncertainty("CPU attempt cleanup remains unresolved")
+                # Do not abandon retained originals when the adapter is poisoned.
+                # No new observation/admission is allowed on this failure path.
+                from astrid.core.execution.process_group import contain_retained_handles
+                cleanup_deadline = time.monotonic() + 2.0
+                with self._process_lock:
+                    retained = tuple(self._active_processes | self._host_lifetime_processes)
+                for process in retained:
+                    if getattr(process, "_astrid_task_scope", False):
+                        _task_scope.stop(process, 0.2)
+                        continue
+                    contain_retained_handles(process, cleanup_deadline=cleanup_deadline,
+                                             first_error=(getattr(process, "_astrid_tree_uncertain", None)
+                                                          or "CPU attempt cleanup remains unresolved"))
+                graph = getattr(self, "_native_engine_graph", None)
+                if graph is not None:
+                    try:
+                        graph.abort()
+                    except BaseException as exc:
+                        errors.append(exc)
+>               raise CleanupUncertainError("CPU attempt cleanup remains unresolved")
+E               astrid.core.execution.custody_broker.CustodyError: CPU attempt cleanup remains unresolved
+
+astrid/core/execution/generic_host.py:5730: CustodyError
+----------------------------- Captured stderr call -----------------------------
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 17294, "elapsed_ms": 13778}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 17294, "elapsed_ms": 12366}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "registry_settle", "outcome": "completed", "process_id": 17294, "elapsed_ms": 31690}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 8192}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 17294, "elapsed_ms": 110}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 17294, "elapsed_ms": 296}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 2797}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 3399}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "completed", "process_id": 17294, "elapsed_ms": 385}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 4122}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 7651}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "launch_transaction", "outcome": "completed", "process_id": 17294, "elapsed_ms": 60876}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 3870}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 3072}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 3672}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "complete_inputs", "outcome": "completed", "process_id": 17294, "elapsed_ms": 3641}
+=========================== short test summary info ============================
+FAILED tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+1 failed in 284.17s (0:04:44)
+--- selected log evidence ---
+2876:                    return {"task_id": task_id, "status": "failed", "deadline_exceeded": True}
+2948:                    f"capability {record.id!r} produced no typed settled outputs"
+2986:                if deadline_failed:
+2987:                    return {"task_id": task_id, "status": "failed", "deadline_exceeded": True}
+3056:                if deadline_failed:
+3057:                    return {"task_id": task_id, "status": "failed", "deadline_exceeded": True}
+3062:            # restart or identity change cannot become a Runtime settlement.
+3074:            managed_settled = True
+3085:            settled = True
+3093:            if deadline_failed:
+3094:                return {"task_id": task_id, "status": "failed", "deadline_exceeded": True}
+3098:            if isinstance(exc, CommandCleanupUnresolved):
+3104:                if deadline_failed:
+3105:                    return {"task_id": task_id, "status": "failed", "deadline_exceeded": True}
+3108:            original_error = exc.execution_error if isinstance(exc, CommandCleanupUnresolved) else exc
+3137:                # caller did not request debug retention.
+3155:            if managed_token is not None and not managed_settled:
+3172:                        self.managed_tool_session.fence(reason="task_failed")
+3178:                    and managed_settled
+3179:                    and settled
+3185:                        self._vibecomfy_requested_warmth_hint = None
+3189:                                "task_settled"
+3190:                                if managed_settled
+3193:                                else "task_failed"
+3198:            if capability_id == "vibecomfy.run" and not settled:
+3201:                self._vibecomfy_requested_warmth_hint = None
+3208:            self._requested_idle_seconds = None
+3280:    def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch, real_runtime):
+3281:        """Run registered native assembly through requester, host, Runtime, and render."""
+3284:        # The named integration suite supplies the pinned current Remotion/runtime
+3286:        # checkout-local renderer.
+3290:        from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
+3293:        # to Remotion's usage beacon. Inject its CA only through this private
+3329:            pack_roots=[astrid_root / "astrid/packs/rendering"],
+3336:            host.preflight("rendering.assemble_timeline")
+3337:            host.preflight("rendering.render")
+3338:            assemble_digest = host.capabilities["rendering.assemble_timeline"].capability_digest
+3339:            render_digest = host.capabilities["rendering.render"].capability_digest
+3345:                ("rendering.assemble_timeline", assemble_digest),
+3346:                ("rendering.render", render_digest),
+3354:                    "capabilities": [child_capability, "rendering.assemble_timeline", "rendering.render"],
+3368:                path = tmp_path / f"child-{index}.mp4"
+3420:                            "media_type": "video/mp4",
+3455:            assert admitted_task["capability"] == "rendering.assemble_timeline"
+3465:            assert admitted_spec["outputs"]["authoring_proposal"] == {
+3466:                "type": "file", "artifact_type": "timeline/authoring-proposal",
+3470:                capability_ids=["rendering.assemble_timeline"],
+3477:                        "capability": "rendering.assemble_timeline",
+3493:            assert {item["name"] for item in author_result["outputs"]} >= {"authoring_proposal", "timeline", "assets"}
+3494:            settled = read_assembly_proposal(session, author, attempt_id=author_claim["attempt_id"])
+3495:            assert [command["op"] for command in settled["commands"][:3]] == [
+3498:            assert [command["args"]["media"]["object_id"] for command in settled["commands"] if command["op"] == "clip.add-media"] == [
+3501:            assert settled["admitted_target"] == admitted_target
+3502:            assert settled["commands"][0]["args"]["replace_clips"] == admitted_capture["replace_clips"]
+3510:                raise WorkspaceClientError(0, "transport_error", "lost commit acknowledgement")
+3513:            with pytest.raises(WorkspaceClientError, match="lost commit acknowledgement"):
+3518:            restarted = TimelineSession.open(
+3521:            committed = restarted.flush(idempotency_key="host-chain-commit")
+3529:            render_admission = client.invoke_result(
+3530:                "rendering.render", kind="executor", project=project["id"],
+3531:                inputs={"timeline_ref": "main", "expected_version": scope.data["version"], "output_name": "host-chain.mp4"},
+3534:            assert render_admission.ok
+3535:            render_task_id = render_admission.kernel_task_id
+3536:            assert isinstance(render_task_id, str) and render_task_id
+3538:                "SELECT COUNT(*) FROM tasks WHERE capability=?", ("rendering.render",)
+3540:            render_claim = host.client.claim_next(
+3542:                capability_ids=["rendering.render"],
+3543:                idempotency_key="host-chain-claim-render",
+3548:                        "id": render_claim["task_id"],
+3549:                        "capability": "rendering.render",
+3550:                        "spec": render_claim["spec"],
+3551:                        "input_object_ids": render_claim["input_object_ids"],
+3552:                        "project_id": render_claim["project_id"],
+3553:                        "run_id": render_claim["run_id"],
+3554:                        "attempt_id": render_claim["attempt_id"],
+3555:                        "fence": render_claim["fence"],
+3556:                        "runtime_epoch": render_claim["runtime_epoch"],
+3559:                lease_token=render_claim["lease_id"],
+3560:                attempt_id=render_claim["attempt_id"],
+3561:                fence=render_claim["fence"],
+3564:            render_result = service.task(render_task_id)["task"]["result"]
+3565:            assert {item["name"] for item in render_result["outputs"]} >= {"video", "provenance"}
+3566:            video = next(item for item in render_result["outputs"] if item["name"] == "video")
+3570:                ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", "-"],
+3576:            render_task = service.task(render_task_id)["task"]
+3577:            render_inputs = render_task["spec"]["spec"]["inputs"]
+3578:            assert render_inputs["timeline_authority"]["config_version"] == scope.data["version"]
+3579:            assert render_inputs["timeline_authority"]["parent_revision_id"] == accepted_revision
+3580:            undone = restarted.undo([accepted_publication], idempotency_key="host-chain-undo")
+3581:            assert undone["data"]["accepted_revision_id"]
+3597:        # report uncertainty. A failed release must not leave a sibling live.
+3615:        with self._renderer_setup_lock:
+3616:            renderer_owner = self._remotion_host_session
+3617:            if renderer_owner is not None:
+3619:                    renderer_owner.close()
+3664:>               raise CleanupUncertainError("CPU attempt cleanup remains unresolved")
+3665:E               astrid.core.execution.custody_broker.CustodyError: CPU attempt cleanup remains unresolved
+3667:astrid/core/execution/generic_host.py:5730: CustodyError
+3686:FAILED tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+3687:1 failed in 284.17s (0:04:44)
+--- source status ---
+## tl/agt-m2-d13-final-current-env-gate
+60eec35a58a029635ae75ecf3047a8f51f4e6bed
+--- current SOURCE-related paths/terms ---
+astrid/sdk/timeline_views.py:14:  element's source file one hop away. This is the view for understanding and
+astrid/sdk/timeline_views.py:51:__all__ = ["element_source", "clip_keyframes", "render_script", "render_code", "render_at", "render_clips"]
+astrid/sdk/timeline_views.py:66:        # resources are not yet joined.  Keep this read-only label available
+astrid/sdk/timeline_views.py:81:            for resource in item.get("resources") or ():
+astrid/sdk/timeline_views.py:82:                if isinstance(resource, Mapping) and resource.get("kind") == "implementation":
+astrid/sdk/timeline_views.py:83:                    component = pack_root / str(resource.get("path"))
+astrid/sdk/timeline_views.py:93:def element_source(clip_type: str) -> str | None:
+astrid/sdk/timeline_views.py:325:        words, source = _words_for_occurrence(shot, start, clips, kinds)
+astrid/sdk/timeline_views.py:386:        block = [f"{_shot_name(shot, shot_id)} · {start:.2f}–{end:.2f} s · words: {source}"]
+astrid/sdk/timeline_views.py:477:        words, _source = _words_for_occurrence(shot, start, clips, kinds)
+astrid/sdk/timeline_views.py:523:    legend.append("# element sources (props are each element's schema in element.yaml beside it):")
+astrid/sdk/timeline_views.py:525:        legend.append(f"#   {name:<14} {element_source(name) or '(not in this checkout)'}")
+astrid/sdk/invocation.py:686:                or any(name in values for name in ("timeline_source", "filmstrip_authority", "transcript_file", "transcript.json"))):
+astrid/sdk/invocation.py:725:    if "timeline_source" in values:
+astrid/sdk/invocation.py:727:            "timeline_source is not a supported product input; use timeline_slug "
+astrid/sdk/invocation.py:774:    # These snapshots are host-prepared immutable closures. Carry resource
+astrid/sdk/invocation.py:781:            binding = _admitted_timeline_element_resources(config)
+astrid/sdk/invocation.py:782:            snapshot.setdefault("metadata", {})["element_resources"] = binding
+astrid/sdk/invocation.py:783:            snapshot["metadata"]["element_resource_binding_hash"] = _expanded_config_hash(binding)
+astrid/sdk/invocation.py:944:        "source_audio_digest",
+astrid/sdk/invocation.py:968:            source_audio_digest=values.get("source_audio_digest"),
+astrid/sdk/invocation.py:1001:def _admitted_timeline_element_resources(config: Mapping[str, Any], *, registry=None, packs=None) -> dict[str, Any]:
+astrid/sdk/invocation.py:1002:    """Project declaration-owned resources beside immutable authored clips.
+astrid/sdk/invocation.py:1005:    identity. No directory scan or resource basename supplies an owner.
+astrid/sdk/invocation.py:1026:            raise CapabilityValidationError("element resource binding requires exact clip/element/kind identities")
+astrid/sdk/invocation.py:1034:            raise CapabilityValidationError("element resource owner is not admitted") from exc
+astrid/sdk/invocation.py:1035:        pack_id = element.metadata.get("pack_id") or element.source.removeprefix("pack:")
+astrid/sdk/invocation.py:1051:                raise CapabilityValidationError("element resource is unavailable or outside its admitted pack")
+astrid/sdk/invocation.py:1056:        resources = []
+astrid/sdk/invocation.py:1057:        declared_resources = [deepcopy(dict(row)) for row in declaration.get("resources", [])]
+astrid/sdk/invocation.py:1058:        for resource in declared_resources:
+astrid/sdk/invocation.py:1059:            path = admitted_path(resource["path"])
+astrid/sdk/invocation.py:1062:            if path.parent != manifest.parent or resource.get("kind") not in {"implementation", "support"}:
+astrid/sdk/invocation.py:1063:                raise CapabilityValidationError("motion resource is not declared by the same element")
+astrid/sdk/invocation.py:1064:            resources.append({"kind": resource["kind"], "path": str(path),
+astrid/sdk/invocation.py:1065:                              "declared_path": resource["path"], "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+astrid/sdk/invocation.py:1070:                                         "resources": declared_resources},
+astrid/sdk/invocation.py:1071:                         "motion_resources": resources}
+astrid/sdk/invocation.py:1183:            _source_digest, source_checkout_closure_digest, source_checkout_digest,
+astrid/sdk/invocation.py:1188:            "pack_source": source_checkout_digest(root),
+astrid/sdk/invocation.py:1189:            "core_source": source_checkout_closure_digest(root),
+astrid/sdk/invocation.py:1190:            "remotion": {part: _source_digest(remotion / part) for part in remotion_parts},
+astrid/sdk/invocation.py:1193:                name: _source_digest(Path(path).resolve()) if path else None
+astrid/sdk/invocation.py:1389:                    "source_index": int(occurrence.get("ordinal", len(shot_occurrences))),
+astrid/sdk/invocation.py:1523:        "element_resources": _admitted_timeline_element_resources(snapshot.config),
+astrid/sdk/invocation.py:2270:            "source_variant_id": variant_context["source_variant_id"],
+astrid/sdk/invocation.py:2271:            "source_object_id": variant_context["source_object_id"],
+astrid/sdk/invocation.py:2335:        raise CapabilityPreconditionError("generation lookup returned an invalid resource")
+astrid/sdk/invocation.py:2355:            "variant generation source belongs to a different project"
+astrid/sdk/invocation.py:2368:    source = next(
+astrid/sdk/invocation.py:2372:    if source is None:
+astrid/sdk/invocation.py:2376:    if source.get("generation_id") not in (None, generation_id):
+astrid/sdk/invocation.py:2378:    source_object_id = source.get("object_id")
+astrid/sdk/invocation.py:2379:    if not isinstance(source_object_id, str) or not re.fullmatch(
+astrid/sdk/invocation.py:2380:        r"sha256:[0-9a-f]{64}", source_object_id
+astrid/sdk/invocation.py:2388:        "source_variant_id": variant_id,
+astrid/sdk/invocation.py:2389:        "source_object_id": source_object_id,
+astrid/sdk/invocation.py:2560:        # Canonical sibling/source invocations use the same preflight as the
+astrid/sdk/invocation.py:2564:        canonical_names = {"python", "companion", "source", "source_video"}
+astrid/sdk/invocation.py:2636:    # miss for VibeComfy's canonical sibling bundle and managed source video.
+astrid/sdk/invocation.py:2659:        source_object_id = variant_context.get("source_object_id")
+astrid/sdk/invocation.py:2660:        if not isinstance(source_object_id, str) or not re.fullmatch(
+astrid/sdk/invocation.py:2661:            r"sha256:[0-9a-f]{64}", source_object_id
+astrid/sdk/invocation.py:2664:                "variant generation source object must be a managed SHA-256 digest"
+astrid/sdk/invocation.py:2666:        input_manifest.append(source_object_id)
+astrid/sdk/invocation.py:2736:    # renders source previews.
+astrid/sdk/invocation.py:2910:                        "timeline_id": provenance.get("timeline_id"), "source_kind": "cas"}
+astrid/sdk/invocation.py:2924:            source_kind = "working_copy" if binding is not None else ("revision" if revision_id else "cas")
+astrid/sdk/invocation.py:2931:                "source_kind": source_kind,
+astrid/sdk/invocation.py:3045:    data, rejection = _admission_resource(admit(admission))
+astrid/sdk/invocation.py:3055:        data, rejection = _admission_resource(admit(admission, replace_frozen=True))
+astrid/sdk/invocation.py:3063:            "runtime task admission returned an incomplete task resource"
+astrid/sdk/invocation.py:3112:def _admission_resource(
+astrid/sdk/invocation.py:3115:    """Return the admitted task resource or the runtime rejection."""
+astrid/sdk/invocation.py:3132:        raise CapabilityInvocationError("runtime task admission returned no task resource")
+astrid/sdk/invocation.py:3857:        raise CapabilityInvocationError("child bridge admission returned an incomplete task resource")
+astrid/sdk/invocation.py:3880:                protocol_error = CapabilityInvocationError("child bridge status returned a foreign task resource")
+astrid/sdk/invocation.py:4097:        from astrid.core.rendering.verified_source import reject_source_keys
+astrid/sdk/invocation.py:4100:            reject_source_keys(request_inputs)
+astrid/sdk/invocation.py:4259:    # intentionally limited to the source ledger and therefore cannot inspect
+astrid/sdk/verified_speech_authoring.py:3:This module is intentionally source-only: it never calls ASR and never turns
+astrid/sdk/verified_speech_authoring.py:55:        source_type = raw.get("source_type")
+astrid/sdk/verified_speech_authoring.py:63:        if source_type != "verified_speech":
+astrid/sdk/verified_speech_authoring.py:73:            "source_type": "verified_speech",
+astrid/sdk/verified_speech_authoring.py:83:    media_asset_key: str = "source-main",
+astrid/sdk/verified_speech_authoring.py:100:                "source_type": item["source_type"],
+astrid/sdk/verified_speech_authoring.py:113:            "source_type": item["source_type"],
+astrid/sdk/verified_speech_authoring.py:135:        "source_id": "transcript:main",
+astrid/sdk/verified_speech_authoring.py:136:        "source_version": "1",
+astrid/sdk/verified_speech_authoring.py:146:        "source_audio_digest": "sha256:" + media_hex,
+astrid/sdk/verified_speech_authoring.py:149:        # not substitute the digest of a copied projection for that source
+astrid/sdk/verified_speech_authoring.py:169:            "source": "authored.spoken_segments",
+astrid/sdk/verified_speech_authoring.py:170:            "source_type": "verified_speech",
+astrid/sdk/events.py:4:the generated client's event resources into Astrid's stable
+astrid/sdk/events.py:51:            raise CapabilityEventLogError("runtime event read returned an invalid event resource")
+astrid/sdk/events.py:80:                # but ``task`` preserves the public DTO's source vocabulary.
+astrid/sdk/events.py:81:                source="task",
+astrid/sdk/timeline_transcripts.py:10:    NARRATION_SOURCE,
+astrid/sdk/timeline_transcripts.py:20:    """Read only. Clip words are local; source time is ``from + local * speed``."""
+astrid/sdk/timeline_transcripts.py:44:            source_start = float(data.get("from") or 0)
+astrid/sdk/timeline_transcripts.py:46:            if source_start < 0 or speed <= 0:
+astrid/sdk/timeline_transcripts.py:47:                raise ValueError("invalid source window or speed")
+astrid/sdk/timeline_transcripts.py:48:            timed = [(round(source_start + float(w[0]) * speed, 6),
+astrid/sdk/timeline_transcripts.py:49:                      round(source_start + float(w[1]) * speed, 6), str(w[2])) for w in words]
+astrid/sdk/timeline_transcripts.py:94:                    current = read_transcript(client, project, media_id, NARRATION_SOURCE)
+astrid/sdk/timeline_transcripts.py:98:                    row["status"] = write_transcript(client, project, media_id, NARRATION_SOURCE, content)
+astrid/sdk/timeline_editing.py:50:def _next_id(prefix: str, source: Mapping[str, Any] | None = None) -> str:
+astrid/sdk/timeline_editing.py:51:    if source and isinstance(source.get("id"), str) and source["id"]:
+astrid/sdk/timeline_editing.py:52:        return _stable_id(prefix, source["id"], uuid.uuid4().hex)
+astrid/sdk/timeline_editing.py:63:                child_key in {"item_id", "source_item_id", "selected_item_id", "parent_item_id"}
+astrid/sdk/timeline_editing.py:137:        source_duration = hold
+astrid/sdk/timeline_editing.py:139:        source_from, source_to = clip.get("from", 0), clip.get("to", 0)
+astrid/sdk/timeline_editing.py:140:        source_duration = source_to - source_from
+astrid/sdk/timeline_editing.py:141:    duration = source_duration / speed
+astrid/sdk/timeline_editing.py:151:    source_duration = (end - start) * speed
+astrid/sdk/timeline_editing.py:153:        clip["hold"] = source_duration
+astrid/sdk/timeline_editing.py:155:        source_from = clip.get("from", 0)
+astrid/sdk/timeline_editing.py:156:        clip["from"] = source_from
+astrid/sdk/timeline_editing.py:157:        clip["to"] = source_from + source_duration
+astrid/sdk/timeline_editing.py:197:def place_media(container: MutableMapping[str, Any], media: Mapping[str, Any] | str, *, track: MutableMapping[str, Any], start: int | float, end: int | float, clip_id: str | None = None, fit: str | None = None, rect: Mapping[str, Any] | None = None, source_start: int | float | None = None, source_end: int | float | None = None, **fields: Any) -> MutableMapping[str, Any]:
+

@@ -1,0 +1,400 @@
+                    draft.bundle['parent']['clips'][0]['at'] = on
+                    draft.bundle['parent']['config']['clips'] = copy.deepcopy(draft.bundle['parent']['clips'])
+                draft.save(quiet=True)
+    
+            local_move(1)
+            local_move(2)
+            assert len(list(store._history_dir(draft.path).glob('*.json'))) == 2
+            session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client)
+            accepted = session.move('parent/clip:music-bed', 2)
+            draft._reset_base(client=client)
+            assert draft.base_revision == accepted['data']['accepted_revision_id']
+>           restored = session.commit({
+                'schema_version': 1, 'op': 'timeline.restore', 'version': '1', 'select': None,
+                'args': {key: original['base_parent'][key] for key in ('revision_id', 'content_digest')},
+            })
+
+tests/sdk/test_timeline_checkout_history_runtime.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/sync.py:211: in commit
+    return self.commit_many([command], idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/sync.py:218: in commit_many
+    commands = [_native_command(command) for command in commands]
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'content_digest': 'sha256:b6069d1ddccc0279e871b142773b63b73b107ebf9d0adc11ab73832b69097afb', 'revision_id': 'm1-journey-baseline'}, 'op': 'timeline.restore', 'schema_version': 1, 'select': None, ...}
+
+    def _native_command(command):
+        from astrid.sdk.timeline.commands import operations, validate_command
+    
+        command = copy.deepcopy(command)
+        validate_command(command)
+        if command["op"] not in operations():
+>           raise TimelineEditError("queue/commit requires a registered native operation")
+E           astrid.sdk.timeline._common.TimelineEditError: queue/commit requires a registered native operation
+
+astrid/sdk/timeline/sync.py:58: TimelineEditError
+----------------------------- Captured stdout call -----------------------------
+saved /tmp/pytest-of-root/pytest-1800/test_retained_restore_does_not0/client-data/drafts/7b6f2bae8ffe42bf925216c38249ed79/film/main.json · 0 clip(s) changed vs published · tl.check().brief() says what blocks publishing
+=========================== short test summary info ============================
+FAILED tests/sdk/test_timeline_checkout_history_runtime.py::test_retained_restore_does_not_reopen_consumed_draft_steps
+1 failed, 3 passed in 42.46s
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-history-boundary-finish/tests/sdk/test_timeline_checkout_history_runtime.py
+diff --git a/astrid/sdk/timeline/checkout.py b/astrid/sdk/timeline/checkout.py
+index da502103c7c15b2ed4d932ae9d0313b0844d63f9..ed06b3b672c6438256d76293bf4a239b17772d7c
+--- a/astrid/sdk/timeline/checkout.py
++++ b/astrid/sdk/timeline/checkout.py
+@@ -259,6 +259,19 @@
+         session = TimelineSession.open(self.bundle["project_id"], self.bundle["timeline_id"], client=client)
+         return session.undo(publications, **options)
+ 
++    def _retire_draft_history(self) -> None:
++        """Acknowledged intent cannot become unsent again, even at a retained revision."""
++        if self.path:
++            import shutil
++
++            target = Path(self.path)
++            with _store._file_lock(target):
++                for folder in (_store._history_dir(target), _store._redo_dir(target)):
++                    if folder.exists():
++                        shutil.rmtree(folder)
++        self._journal = []
++        self.__dict__.pop("_exported", None)
++
+     def _restore_draft(self, steps: int, *, redo: bool) -> list[str]:
+         if not self.path:
+             raise TimelineEditError("only a saved working copy can undo or redo draft edits; "
+@@ -284,12 +297,26 @@
+                 raise TimelineEditError(f"nothing to {kind}: no unsent draft edit at this base; "
+                                         "use publications for accepted edits")
+             labels = []
+-            for step, label, state in selected:
+-                _store._write_step(destination(target), label, current)
+-                current = state
++            staged = []
++            temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
++            try:
++                for step, label, state in selected:
++                    staged.append(_store._stage_step(destination(target), label, current))
++                    current = state
++                    labels.append(label)
++                temporary.write_text(current, encoding="utf-8")
++                os.replace(temporary, target)
++            except BaseException:
++                temporary.unlink(missing_ok=True)
++                for step_tmp, _step in staged:
++                    step_tmp.unlink(missing_ok=True)
++                raise
++            # Keep every source until the draft and all reverse states are in
++            # place. Failed writes/replaces leave the original undo chain intact.
++            for step_tmp, step in staged:
++                os.replace(step_tmp, step)
++            for step, _label, _state in selected:
+                 step.unlink()
+-                labels.append(label)
+-            target.write_text(current, encoding="utf-8")
+             self._reload()
+         _journal.record_or_note(self, target, kind=kind, outcome="changed", label="; ".join(labels)[:160],
+                                 before=_journal.digest(start), after=_journal.digest(current))
+diff --git a/astrid/sdk/timeline/publish.py b/astrid/sdk/timeline/publish.py
+index 01be4cdb02ff15aaa27158fc153df034d7f7ad9a..f32de707910c8c5906b2dff09422e593553e0000
+--- a/astrid/sdk/timeline/publish.py
++++ b/astrid/sdk/timeline/publish.py
+@@ -44,6 +44,9 @@
+             receipt = _store.publish_bundle(stored, key, client=client, force=force)
+         else:  # only the narration binding is behind (a retry after it failed): pin it, nothing else to publish
+             receipt = {"old_head": self.base_revision, "new_head": self.base_revision, "structure": "unchanged"}
++        # Acceptance consumes the local steps before any follow-up read or
++        # narration work can fail. This also fences a reload of a stale draft.
++        self._retire_draft_history()
+         receipt["narration_pinned"] = []
+         if chapter_film or self.narration_changes():
+             # A line's text changed (or the shots are new): bind each such shot's narration now that
+@@ -85,6 +88,7 @@
+ 
+     def _reset_base(self, *, client: Any = None) -> None:
+         """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""
++        self._retire_draft_history()
+         try:
+             head = _store.fetch_bundle(str(self.bundle["project_id"]), str(self.bundle["timeline_id"]), client=client)
+         except Exception as exc:  # noqa: BLE001 - the publish stands; the working copy keeps its old base
+@@ -94,14 +98,14 @@
+         from astrid.sdk.timeline_restructure import flatten
+ 
+         head = flatten(head)
+-        old, old_journal = self.bundle, list(self._journal)
++        old, old_disk = self.bundle, self._disk
+         self.bundle, self._mcache, self._journal, self._disk = head, None, [], None
+         try:
+             target = Path(self.path)
+             with _store._file_lock(target):
+                 self._save_locked(target, force=True, record=False)
+         except Exception as exc:  # noqa: BLE001
+-            self.bundle, self._journal = old, old_journal
++            self.bundle, self._disk = old, old_disk
+             self.notes.append(f"published, but this working copy could not be reset to the new head ({exc}); "
+                               "its base is still the old one")
+ 
+diff --git a/tests/sdk/test_timeline_checkout_history_runtime.py b/tests/sdk/test_timeline_checkout_history_runtime.py
+index 1b45363f0980505ad05fef27edfa241d205241a8..e0c3a24797a1602f47e4555a446b50f0259f9cbe
+--- a/tests/sdk/test_timeline_checkout_history_runtime.py
++++ b/tests/sdk/test_timeline_checkout_history_runtime.py
+@@ -49,3 +49,54 @@
+         assert parent_of(redone) == parent_of(disjoint)
+         assert_readback(client, fixture, redone)
+         assert Checkout.open(fixture.project_id, fixture.timeline_id, client=client).base_revision == redone['data']['accepted_revision_id']
++
++
++def test_retained_restore_does_not_reopen_consumed_draft_steps(
++    tmp_path, monkeypatch, film, renderer_off, real_runtime,
++):
++    from astrid.sdk.timeline import store
++    from astrid.sdk.timeline._common import TimelineEditError
++    from astrid.sdk.timeline.sync import TimelineSession
++    from astrid.sdk.timeline_checkout import Checkout
++
++    fixture, _, _ = film
++    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
++    daemon = real_runtime(fixture.duplicate_root, support_root=tmp_path / 'support', authoring_profile='astrid')
++    with open_client(daemon) as client:
++        draft = Checkout.draft(fixture.project_id, fixture.timeline_id, client=client)
++        original = copy.deepcopy(draft.bundle)
++
++        def local_move(on):
++            with draft.step('move music'):
++                draft.bundle['parent']['clips'][0]['at'] = on
++                draft.bundle['parent']['config']['clips'] = copy.deepcopy(draft.bundle['parent']['clips'])
++            draft.save(quiet=True)
++
++        local_move(1)
++        local_move(2)
++        assert len(list(store._history_dir(draft.path).glob('*.json'))) == 2
++        session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client)
++        accepted = session.move('parent/clip:music-bed', 2)
++        draft._reset_base(client=client)
++        assert draft.base_revision == accepted['data']['accepted_revision_id']
++        restored = client._remote._transport._generated.restore_project_parent_composition_revision(
++            fixture.project_id, fixture.timeline_id, original['base_parent']['revision_id'],
++            expected_head=accepted['data']['accepted_revision_id'],
++            expected_publication_id=accepted['receipt']['receipt_id'],
++            idempotency_key='restore-retained-draft-base',
++        )
++        assert restored['data']['accepted_revision_id'] == original['base_parent']['revision_id']
++        assert restored['receipt']['receipt_id'] != accepted['receipt']['receipt_id']
++        draft._reset_base(client=client)
++        draft = Checkout.load(draft.path)
++        assert draft.document() == Checkout(original).document()
++        for operation in (draft.undo, draft.redo):
++            with pytest.raises(TimelineEditError, match='no unsent draft edit'):
++                operation()
++        base = draft.document()
++        local_move(3)
++        edited = draft.document()
++        assert len(draft.undo(100)) == 1
++        assert draft.document() == base
++        draft.redo()
++        assert draft.document() == edited
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-history-boundary-finish commit-integration --files tests/sdk/test_timeline_checkout_history_runtime.py' in /home/user/work/wt/agt-m2-history-boundary-finish
+ succeeded in 84ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-boundary-finish-commit-integration-1020095840-26533/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-history-boundary-finish-commit-integration-1020095840-26533
+
+codex
+The first central run passed the three existing journeys. The new restore test failed because I called `timeline.restore` through the native registry, which does not register it in this checkout. I’ve corrected the test to use the generated Runtime restore endpoint with both head guards, and queued a rerun.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+for name in ('.ruff_cache', '.mypy_cache'):
+    path = Path(name)
+    if path.is_dir():
+        shutil.rmtree(path)
+PY
+git diff --check; git status --short; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-boundary-finish-commit-integration-1020095840-26533/status" in /home/user/work/wt/agt-m2-history-boundary-finish
+ succeeded in 1100ms:
+ M astrid/sdk/timeline/checkout.py
+ M astrid/sdk/timeline/publish.py
+ M tests/sdk/test_timeline_checkout_history_runtime.py
+?? tests/sdk/test_timeline_checkout_history_boundaries.py
+?? tests/sdk/test_timeline_checkout_publication_retry.py
+queued
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-history-boundary-finish-commit-integration-1020095840-26533 1' in /home/user/work/wt/agt-m2-history-boundary-finish
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-boundary-finish-commit-integration-1020095840-26533/status; tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-boundary-finish-commit-integration-1020095840-26533/log.txt' in /home/user/work/wt/agt-m2-history-boundary-finish
+ exited 1 in 0ms:
+queued
+tail: cannot open '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-boundary-finish-commit-integration-1020095840-26533/log.txt' for reading: No such file or directory
+
+exec
+/bin/bash -lc "rg -n '"'^(def |    def )(publish_bundle|three_way|log|_merge_writer)|kind="publish"|def _cmd_apply|apply_sheet'"\\(' astrid/sdk/timeline/store.py astrid/sdk/timeline/checkout.py astrid/sdk/timeline/publish.py astrid/packs/timeline/cli_log.py astrid/sdk/timeline_sheet.py astrid/packs/timeline/cli*.py | head -30" in /home/user/work/wt/agt-m2-history-boundary-finish
+ succeeded in 0ms:
+astrid/sdk/timeline/store.py:169:def three_way(base: Mapping[str, Any], head: Mapping[str, Any], candidate: Mapping[str, Any], *,
+astrid/sdk/timeline/store.py:257:def publish_bundle(candidate: Mapping[str, Any], idempotency_key: str, *, client: Any = None, force: bool = False) -> dict[str, Any]:
+astrid/sdk/timeline_sheet.py:596:def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
+astrid/sdk/timeline/checkout.py:195:    def _merge_writer(self, target: Path, now: str, *, force: bool) -> None:
+astrid/sdk/timeline/checkout.py:433:    def log(self, **filters: Any) -> list[_journal.JournalRecord]:
+astrid/sdk/timeline/publish.py:82:            _journal.record_or_note(self, Path(self.path), kind="publish", outcome="changed", label="publish",
+astrid/packs/timeline/cli.py:3565:def _cmd_apply(parsed: argparse.Namespace) -> int:
+astrid/packs/timeline/cli.py:3569:    changes = apply_sheet(tl, Path(parsed.sheet_file).read_text(encoding="utf-8"))
+
+codex
+The corrected service run is queued. The local patch is finished and temporary lint caches are removed. AG01/AG03/WC7–8 remain open: whole-candidate publication, local publication journal reads, sheet application, and checkout merge writers still need migration.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-history-boundary-finish-commit-integration-1020095840-26533 1' in /home/user/work/wt/agt-m2-history-boundary-finish
+ exited 124 in 60154ms:
+still queued after 1 min 2 targeted/named runs already running; rerun wait-test
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-boundary-finish')
+worker.joinpath('commit-msg').write_text('''fix(timeline): retire consumed draft history at acceptance
+
+Fence local undo/redo and sheet export caches before post-publication work,
+including failed head reads and reset writes and a return to a retained base.
+Keep newly saved unsent edits reversible.
+
+Stage reverse steps and atomically replace restored drafts before retiring
+undo sources. Promote boundary and lost-acknowledgement probes to regressions,
+with write-failure and real Runtime retained-restore coverage.
+''')
+worker.joinpath('report.md').write_text('''Finished the local-history boundary fixes on top of "'`88dd38f1`, confined to the assigned worktree. No integration-tree, dependency, lock, ledger, Git metadata or ref changes.
+
+Changes:
+- Retire consumed undo/redo files, the in-memory edit journal and sheet export cache immediately after known publication acceptance and on an acknowledged base reset. A retained revision returning after A→B→A cannot reopen consumed steps.
+- Retire before follow-up narration/head reads/reset writes. Failed refresh preserves the old draft and comparison bytes, while consumed history stays retired across reload. New unsent edits still undo/redo.
+- Restore stages reverse states with the existing store helper and writes/replaces a temporary draft before retiring any source file. Injected partial temporary writes and failed replacements preserve the original draft and source bytes, and reload/retry still round-trips.
+- Promoted all four boundary requirements and both lost-ACK probes to normal permanent regressions; expanded boundary coverage to nine parameterized cases. Added real-service retained-revision restore coverage under the renderer tripwire.
+
+Decisions: remove consumed existing step files instead of adding a publication generation/schema/journal. Adapted the failed-write probe from intercepting the obsolete in-place target write to the new atomic replacement point, and additionally inject partial temporary writes. No original passing behavior expectation was rewritten, skipped or xfailed. Retained the approved native publication entrypoints. No port/sync from integration was necessary; the current D07/public12 integration tree was not touched.
+
+Validation (all Python runs use this worktree via `PYTHONPATH=$PWD`, dependencies remain read-only):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_publication_retry.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_transaction.py
+```
+Initial four-probe promotion plus lost-ACK/neighbors: **28 passed**, 5.55s (before expanding parameter coverage).
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_verbs_working_copy.py tests/sdk/test_undo_a1_legacy_open.py tests/packs/timeline/test_cli_parity.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timeline_checkout_publication_retry.py
+```
+**386 passed, 17 deselected, 4 existing Pillow warnings**, 43.29s. This includes the original 375 positives, two lost-ACK probes and nine boundary/fault cases. The 17 existing lane deselections are not green claims.
+
+```sh
+$ORCH/bin/request-test agt-m2-history-boundary-finish commit-integration --files tests/sdk/test_timeline_checkout_history_runtime.py
+$ORCH/bin/wait-test agt-m2-history-boundary-finish-commit-integration-1020095654-5221 1
+```
+Initial service run: **3 passed, 1 failed**, 42.46s. The added restore test incorrectly used `TimelineSession.commit` for a special operation absent from its native registry. Corrected the new test to the existing generated Runtime restore endpoint with both expected-head guards, preserving its assertions.
+
+Final service run: PENDING.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache --select F,E9 astrid/sdk/timeline/checkout.py astrid/sdk/timeline/publish.py
+```
+**Pass.** Also compared full configured Ruff findings on each modified product file against `git show HEAD:<path>` using `ruff check --no-cache --output-format json --stdin-filename <path> -`: checkout 1→1, publish 2→2; **no new findings**. An exploratory explicit-file Ruff scan of the tests reported imported pytest-fixture F401/F811 findings (these tests follow the existing fixture-import convention and are outside the configured Ruff include scope).
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_ruff_baseline
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_mypy_baseline
+git diff --check
+```
+Ruff baseline: **exit 1**, current 2212 versus exact baseline 2220 (improved by 8); no baseline edited. Mypy: **exit 2**, shared environment missing YAML stubs and installed NumPy stubs using syntax newer than configured Python 3.11; cannot claim type gate. `git diff --check`: **pass**. Removed created lint caches. No full suite or `make check` run/requested.
+
+Remaining migration work (AG01/AG03/WC7/WC8 stays open):
+- `timeline/publish.py` and `store.publish_bundle` still publish whole candidates with client-side merge/CAS; narration remains a whole-candidate publisher.
+- `Checkout.log` and `packs/timeline/cli_log.py` still expose local journal records, including publication-labelled records, rather than complete Runtime acceptance history.
+- `timeline_sheet.apply_sheet` still merges/applies detached documents directly. CLI `_cmd_apply` still does not forward its available client to the retained-basis fallback.
+- `Checkout._merge_writer`, `store.three_way` and other sheet/checkout producers remain.
+
+Next: review and narrowly port these worktree changes atop current integration without replacing D07/public12; continue command-producer migration separately. No task implementation blocker; repository-wide lint/type gates remain unqualified as described above.
+'"''')
+PY" in /home/user/work/wt/agt-m2-history-boundary-finish
+ succeeded in 0ms:
+ succeeded in 60156ms:
+test agt-m2-history-boundary-finish-commit-integration-1020095840-26533: pass exit=0 in 37s — commit-integration on agt-m2-history-boundary-finish (agent tree 932e2b9591a4a13830e23236d15afb6b2a7097b7)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
+counts: 4 passed in 30.16s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-boundary-finish-commit-integration-1020095840-26533/log.txt ---
+....                                                                     [100%]
+4 passed in 30.16s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-boundary-finish-commit-integration-1020095840-26533/status; tail -10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-boundary-finish-commit-integration-1020095840-26533/log.txt' in /home/user/work/wt/agt-m2-history-boundary-finish
+ succeeded in 0ms:
+pass
+....                                                                     [100%]
+4 passed in 30.16s
+
+codex
+The corrected central run passed all four provider tests with renderer access blocked. That includes retained A→B→A restore, refusal to reopen consumed undo/redo steps, and a new unsent edit that still round-trips. I’ll record the final evidence and completion marker now.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import json
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-boundary-finish')
+p = worker / 'report.md'
+s = p.read_text().replace('Final service run: PENDING.', '''"'```sh
+$ORCH/bin/request-test agt-m2-history-boundary-finish commit-integration --files tests/sdk/test_timeline_checkout_history_runtime.py
+$ORCH/bin/wait-test agt-m2-history-boundary-finish-commit-integration-1020095840-26533 1
+```
+**PASS, 4 passed**, 30.16s, exit 0, tree `932e2b9591a4a13830e23236d15afb6b2a7097b7` (service elapsed 37s). Exact service child command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
+```
+Proves real-provider edit/reload/inverse/redo, persisted lost-ACK restart behavior from M1, disjoint edit preservation, retained sheet basis preservation and real retained restore A→B→A with new publication identity; consumed local undo/redo stay unavailable after reload, then a new unsent local edit round-trips. Renderer imports/evaluation are blocked by the existing tripwire; this does not claim renderer processes were stopped machine-wide. The normal helper selects the unchanged Runtime/client lock, not a qualification of the drifting integration pair.'"''')
+lock = json.loads(Path('runtime.lock.json').read_text())
+s += '\\nPaired Runtime source commit: "'`'"' + lock['source_commit'] + '"'`.'"\\n'
+p.write_text(s)
+print('report.md and commit-msg ready')
+PY
+git diff --check; git status --short" in /home/user/work/wt/agt-m2-history-boundary-finish
+ succeeded in 580ms:
+report.md and commit-msg ready
+ M astrid/sdk/timeline/checkout.py
+ M astrid/sdk/timeline/publish.py
+ M tests/sdk/test_timeline_checkout_history_runtime.py
+?? tests/sdk/test_timeline_checkout_history_boundaries.py
+?? tests/sdk/test_timeline_checkout_publication_retry.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-boundary-finish')
+assert (worker / 'report.md').is_file()
+assert (worker / 'commit-msg').is_file()
+assert 'PENDING' not in (worker / 'report.md').read_text()
+(worker / 'DONE').touch()
+print('DONE')
+PY" in /home/user/work/wt/agt-m2-history-boundary-finish
+ succeeded in 42ms:
+DONE
+
+codex
+Completed the boundary fixes and permanent regressions.
+
+- Targeted tests: **386 passed**, including all four boundary requirements and both lost-ACK probes.
+- Central renderer-blocked provider tests: **4 passed**, including real retained A→B→A restore.
+- Restore writes now preserve undo sources until atomic replacement succeeds.
+- No full suite requested. Ruff baseline and mypy remain unqualified; AG01/AG03/WC7–8 remain open.
+
+[Report with exact commands and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-boundary-finish/report.md). Commit message and `DONE` written. Recommend narrow-porting onto current integration.
+tokens used
+223,247
+Completed the boundary fixes and permanent regressions.
+
+- Targeted tests: **386 passed**, including all four boundary requirements and both lost-ACK probes.
+- Central renderer-blocked provider tests: **4 passed**, including real retained A→B→A restore.
+- Restore writes now preserve undo sources until atomic replacement succeeds.
+- No full suite requested. Ruff baseline and mypy remain unqualified; AG01/AG03/WC7–8 remain open.
+
+[Report with exact commands and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-boundary-finish/report.md). Commit message and `DONE` written. Recommend narrow-porting onto current integration.

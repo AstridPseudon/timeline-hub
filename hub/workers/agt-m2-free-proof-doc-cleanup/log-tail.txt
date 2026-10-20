@@ -1,0 +1,400 @@
++    clip_commands = []
++    for row in rows:
++        command = capture_clip_add(staged, "parent", row)
++        clip_commands.append(command)
++        staged = execute(staged, [command]).bundle
++    result, _ = _commit(client, project, clip_commands, "seed-clips")
++    assert result.ok, result.as_dict()
++    return daemon, client, project
++
++
++def _assert_geometry(document, *, moved):
++    parent = document["parent_revision"]["payload"]
++    by_id = {row["id"]: row for row in parent["clips"]}
++    expected = {
++        "clip-1": {"track": "V2", "at": 1},
++        "clip-2": {"track": "V3", "at": 3},
++    } if moved else {
++        "clip-1": {"track": "V1", "at": 0},
++        "clip-2": {"track": "V2", "at": 2},
++    }
++    for clip_id, values in expected.items():
++        assert {key: by_id[clip_id][key] for key in values} == values
++        assert by_id[clip_id]["hold"] == 2
++        assert by_id[clip_id]["opaque"] == {
++            "literal": clip_id, "ordered": [None, False, {}, []]
++        }
++        expected_app = {
++            "future": {"keep": None}, "astrid": {"opaque": [clip_id, None]}
++        }
++        if moved:
++            expected_app["astrid"].update(fixed_start=True, **{"for": 2.0})
++        assert by_id[clip_id]["app"] == expected_app
++    track_ids = [row["id"] for row in parent["config"]["tracks"]]
++    assert track_ids == (["V1", "V2", "V3"] if moved else ["V1", "V2"])
++    assert "pinnedShotGroups" not in parent["config"]
++
++
++def _reload(client, project, accepted):
++    from astrid.core.timeline.authoring_bundle import open_authoring_bundle
++
++    document = accepted["data"]["canonical_document"]
++    revision = accepted["data"]["accepted_revision_id"]
++    stored = client._remote._transport.get_project_parent_composition_revision(
++        project, TIMELINE, revision,
++    )
++    assert stored["project_id"] == project
++    assert stored["timeline_id"] == TIMELINE
++    for key, value in document["parent_revision"].items():
++        assert stored[key] == value
++    assert stored["dependency_manifest"] == document["dependency_manifest"]
++    opened = client.timelines.open_bundle(project, TIMELINE, revision_id=revision)
++    assert opened.ok, opened.as_dict()
++    assert opened.data["revision_id"] == revision
++    expected = open_authoring_bundle(
++        {**document["parent_revision"], "project_id": project, "timeline_id": TIMELINE},
++        shot_revisions=[
++            {**row, "project_id": project} for row in document["shot_revisions"]
++        ],
++        internal_timeline_revisions=[
++            {**row, "project_id": project}
++            for row in document["internal_timeline_revisions"]
++        ],
++    )
++    assert opened.data["bundle"] == expected
++    return document
++
++
++def _free_move_commands(session):
++    def track(state):
++        command = capture_track_create(session._bundle(state), "parent", {
++            "id": "V3", "kind": "visual",
++        })
++        command["group_id"] = "free-drag-1"
++        return command
++
++    create = session._queue(track)
++
++    def move(state):
++        command = capture_move_set(
++            session._bundle(state), MEMBERS, "parent/clip:clip-2", 3,
++        )
++        command["group_id"] = "free-drag-1"
++        return command
++
++    move_command = session._queue(move)
++    return create, move_command
++
++
++def test_free_move_runtime_lost_ack_restart_reload_undo_redo_and_exact_history(
++    tmp_path: Path, real_runtime, lost_ack,
++):
++    use_runtime()
++    from astrid.sdk.timeline.sync import TimelineSession
++    from astrid.sdk.workspace_client import WorkspaceClientError
++
++    daemon, client, project = _seed(real_runtime)
++    baseline = _history(client, project)
++    outbox = tmp_path / "free-move-outbox.json"
+--- worker report candidates ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-runtime/brief.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-runtime/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-runtime/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-runtime/commit.log
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-runtime/ended
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-runtime/exit
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-runtime/log.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-runtime/meta
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-runtime/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/brief.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/commit.log
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/ended
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/exit
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/log.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/meta
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/brief.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/log.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/meta
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/running
+
+exec
+/bin/bash -lc "echo '--- runtime worker report ---'; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-runtime/report.md; echo '--- set worker report ---'; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/report.md" in /home/user/work/wt/agt-m2-free-proof-doc-cleanup
+ succeeded in 0ms:
+--- runtime worker report ---
+Implemented:
+
+- [Runtime acceptance tests]( /home/user/work/wt/agt-m2-free-move-runtime/tests/editing_conformance/test_commit_runtime_free_move_set.py)
+- [M2 contract proof]( /home/user/work/wt/agt-m2-free-move-runtime/docs/design/m2-free-move-contract.md)
+- Required report and both commit-message files written.
+
+Tests:
+
+- Recipe: `67 passed`
+- Central Runtime integration: `6 passed, 67 deselected`
+- No full suite run.
+
+No blockers. App TypeScript/generated-artifact integration remains explicitly out of scope.--- set worker report ---
+Implemented `clip.move-set` with ordered members, one quantized delta, explicit lanes, atomic collision checks, and existing guarded undo/redo. Product change: 192 net lines.
+
+- Verification: **416 targeted tests passed**; Ruff and `git diff --check` clean. Exact commands are in the [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/notes/report.md).
+- Published the [App contract](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md) and portable golden.
+- Destination-lane occurrences explicitly refuse in this bounded slice.
+- Both commit messages are written; caches removed. No commits or merges performed.
+
+No implementation blocker. Live Runtime/browser qualification remains unverified. Next: manager/App review and coordinated integration proof. All three App `it.fails` remain unchanged; M2 merges remain held for PLAN M1.
+codex
+The base commit confirms the acceptance file is byte-identical to this worktree and the source proof is exactly 15 lines; the worker report records the central result as 6 passed, 67 deselected, with the recipe’s 67-pass proof retained. I’ll now append the original 15-line proof verbatim to the absolute contract and delete only the accidental repo document.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-free-proof-doc-cleanup/docs/design/m2-free-move-contract.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md
+index 7facf50b6e4d40bb3193a7549f8612e04a89bc98..39961003dbe64ebd3dc8b2580b644b100df6ea7b
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md
+@@ -158,3 +158,19 @@
+ unit conformance proves these behaviors; real Runtime acceptance, lost-ACK
+ restart, official artifacts and the three preserved App tests remain integration
+ work, not claims of this candidate.
++
++# M2 free multi-clip move: Runtime proof
++
++Status: reviewed Agent/runtime acceptance proof; App TypeScript integration remains out of scope for this change.
++
++The real-daemon acceptance test is [test_commit_runtime_free_move_set.py](../../tests/editing_conformance/test_commit_runtime_free_move_set.py). It seeds a normal authenticated Runtime project through registered `track.create` and `clip.add` commands, then proves the reviewed App geometry:
++
++- `V1`, `V2`, `V3`; `clip-1` -> `V2 @ 1`, hold `2`; `clip-2` -> `V3 @ 3`, hold `2`;
++- ordered selection `clip-2`, `clip-1`, with no `pinnedShotGroups`;
++- `track.create(V3)` plus the sealed `clip.move-set` in one `/v1` publication;
++- exact canonical reload, accepted history command captures, and opaque clip/app fields;
++- durable lost-ACK retry after Runtime restart with the same request body, idempotency key, and receipt;
++- guarded undo (moves restored before the created track is removed), redo with the same authored IDs, and refusal when a later clip depends on `V3`;
++- disjoint-lane server rebase, and refusal after relevant lane-entry membership changes A -> B -> A.
++
++This is evidence for the Python/Runtime command contract only. It does not claim an official generated TypeScript consumer or App artifact: the App-side gesture producer, generated-client consumption, and shipped artifact scope still require their own integration proof.
+diff --git a/docs/design/m2-free-move-contract.md b/docs/design/m2-free-move-contract.md
+deleted file mode 100644
+index d9cbbdce3ee2c090966d12505a5ae4951615fa27..0000000000000000000000000000000000000000
+--- a/docs/design/m2-free-move-contract.md
++++ /dev/null
+@@ -1,15 +0,0 @@
+-# M2 free multi-clip move: Runtime proof
+-
+-Status: reviewed Agent/runtime acceptance proof; App TypeScript integration remains out of scope for this change.
+-
+-The real-daemon acceptance test is [test_commit_runtime_free_move_set.py](../../tests/editing_conformance/test_commit_runtime_free_move_set.py). It seeds a normal authenticated Runtime project through registered `track.create` and `clip.add` commands, then proves the reviewed App geometry:
+-
+-- `V1`, `V2`, `V3`; `clip-1` -> `V2 @ 1`, hold `2`; `clip-2` -> `V3 @ 3`, hold `2`;
+-- ordered selection `clip-2`, `clip-1`, with no `pinnedShotGroups`;
+-- `track.create(V3)` plus the sealed `clip.move-set` in one `/v1` publication;
+-- exact canonical reload, accepted history command captures, and opaque clip/app fields;
+-- durable lost-ACK retry after Runtime restart with the same request body, idempotency key, and receipt;
+-- guarded undo (moves restored before the created track is removed), redo with the same authored IDs, and refusal when a later clip depends on `V3`;
+-- disjoint-lane server rebase, and refusal after relevant lane-entry membership changes A -> B -> A.
+-
+-This is evidence for the Python/Runtime command contract only. It does not claim an official generated TypeScript consumer or App artifact: the App-side gesture producer, generated-client consumption, and shipped artifact scope still require their own integration proof.
+
+exec
+/bin/bash -lc "ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup 2>&1; test -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/notes/report.md && sed -n '1,200p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/notes/report.md || true; test -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg && { echo '--- commit-msg'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg; } || true; test -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg.txt && { echo '--- commit-msg.txt'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg.txt; } || true" in /home/user/work/wt/agt-m2-free-proof-doc-cleanup
+ succeeded in 0ms:
+total 660
+drwxr-xr-x   2 root root   4096 Oct 20 01:23 .
+drwxr-xr-x 337 root root  20480 Oct 20 01:23 ..
+-rw-r--r--   1 root root    940 Oct 20 01:23 brief.md
+-rw-r--r--   1 root root 636240 Oct 20 01:24 log.txt
+-rw-r--r--   1 root root    223 Oct 20 01:23 meta
+-rw-r--r--   1 root root      0 Oct 20 01:23 running
+
+exec
+/bin/bash -lc 'mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/notes' in /home/user/work/wt/agt-m2-free-proof-doc-cleanup
+ succeeded in 0ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md
+index 7facf50b6e4d40bb3193a7549f8612e04a89bc98..39961003dbe64ebd3dc8b2580b644b100df6ea7b
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md
+@@ -158,3 +158,19 @@
+ unit conformance proves these behaviors; real Runtime acceptance, lost-ACK
+ restart, official artifacts and the three preserved App tests remain integration
+ work, not claims of this candidate.
++
++# M2 free multi-clip move: Runtime proof
++
++Status: reviewed Agent/runtime acceptance proof; App TypeScript integration remains out of scope for this change.
++
++The real-daemon acceptance test is [test_commit_runtime_free_move_set.py](../../tests/editing_conformance/test_commit_runtime_free_move_set.py). It seeds a normal authenticated Runtime project through registered `track.create` and `clip.add` commands, then proves the reviewed App geometry:
++
++- `V1`, `V2`, `V3`; `clip-1` -> `V2 @ 1`, hold `2`; `clip-2` -> `V3 @ 3`, hold `2`;
++- ordered selection `clip-2`, `clip-1`, with no `pinnedShotGroups`;
++- `track.create(V3)` plus the sealed `clip.move-set` in one `/v1` publication;
++- exact canonical reload, accepted history command captures, and opaque clip/app fields;
++- durable lost-ACK retry after Runtime restart with the same request body, idempotency key, and receipt;
++- guarded undo (moves restored before the created track is removed), redo with the same authored IDs, and refusal when a later clip depends on `V3`;
++- disjoint-lane server rebase, and refusal after relevant lane-entry membership changes A -> B -> A.
++
++This is evidence for the Python/Runtime command contract only. It does not claim an official generated TypeScript consumer or App artifact: the App-side gesture producer, generated-client consumption, and shipped artifact scope still require their own integration proof.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f9c525a43b25e6efa4793526c08676c22054579
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg
+@@ -0,0 +1,4 @@
++docs(timeline): relocate free move runtime proof
++
++Move the accidental repository-relative acceptance note into the orchestrator
++contract while leaving product code and tests unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f9c525a43b25e6efa4793526c08676c22054579
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(timeline): relocate free move runtime proof
++
++Move the accidental repository-relative acceptance note into the orchestrator
++contract while leaving product code and tests unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ae3b6e200a437d9bc134b11ccbca95875b85b23a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-proof-doc-cleanup/notes/report.md
+@@ -0,0 +1,18 @@
++# Report
++
++## Changes
++
++- Removed the accidental repository-relative `docs/design/m2-free-move-contract.md`.
++- Appended its exact 15-line Runtime proof, including the source link and App/TypeScript scope limits, to the absolute orchestrator contract at `scratchpad/orch/design/m2-free-move-contract.md`.
++- No product or test source changed.
++
++## Verification
++
++- `git diff --check` — passed.
++- `git diff -- tests/editing_conformance/test_commit_runtime_free_move_set.py` — empty; the test remains byte-identical to base `a5a1688c`.
++- `git hash-object tests/editing_conformance/test_commit_runtime_free_move_set.py` vs `git rev-parse a5a1688c:tests/editing_conformance/test_commit_runtime_free_move_set.py` — matched (`b29a198aaf5704ac8c597705368dbf7895436634`).
++- No feature, full-suite, or test rerun performed, as directed.
++
++## Limits
++
++The retained proof records the central Runtime result as 6 passed / 67 deselected and the recipe proof as 67 passed. App TypeScript/generated-artifact integration remains out of scope; no new Runtime/App artifact claim is made.
+diff --git a/docs/design/m2-free-move-contract.md b/docs/design/m2-free-move-contract.md
+deleted file mode 100644
+index d9cbbdce3ee2c090966d12505a5ae4951615fa27..0000000000000000000000000000000000000000
+--- a/docs/design/m2-free-move-contract.md
++++ /dev/null
+@@ -1,15 +0,0 @@
+-# M2 free multi-clip move: Runtime proof
+-
+-Status: reviewed Agent/runtime acceptance proof; App TypeScript integration remains out of scope for this change.
+-
+-The real-daemon acceptance test is [test_commit_runtime_free_move_set.py](../../tests/editing_conformance/test_commit_runtime_free_move_set.py). It seeds a normal authenticated Runtime project through registered `track.create` and `clip.add` commands, then proves the reviewed App geometry:
+-
+-- `V1`, `V2`, `V3`; `clip-1` -> `V2 @ 1`, hold `2`; `clip-2` -> `V3 @ 3`, hold `2`;
+-- ordered selection `clip-2`, `clip-1`, with no `pinnedShotGroups`;
+-- `track.create(V3)` plus the sealed `clip.move-set` in one `/v1` publication;
+-- exact canonical reload, accepted history command captures, and opaque clip/app fields;
+-- durable lost-ACK retry after Runtime restart with the same request body, idempotency key, and receipt;
+-- guarded undo (moves restored before the created track is removed), redo with the same authored IDs, and refusal when a later clip depends on `V3`;
+-- disjoint-lane server rebase, and refusal after relevant lane-entry membership changes A -> B -> A.
+-
+-This is evidence for the Python/Runtime command contract only. It does not claim an official generated TypeScript consumer or App artifact: the App-side gesture producer, generated-client consumption, and shipped artifact scope still require their own integration proof.
+
+codex
+The requested move is applied, and both harness commit-message files plus the worker report are written. I’m running the narrow verification now: whitespace diff, test-file hash equality to `a5a1688c`, proof-text equality against the base commit, and a final status check for unintended source changes.
+exec
+/bin/bash -lc "set -e
+printf '%s\\n' '--- git status ---'
+git status --short
+printf '%s\\n' '--- worktree diff stat ---'
+git diff --stat
+printf '%s\\n' '--- worktree diff check ---'
+git diff --check
+printf '%s\\n' '--- test diff against base ---'
+git diff --exit-code a5a1688c -- tests/editing_conformance/test_commit_runtime_free_move_set.py
+printf '%s\\n' '--- test hash comparison ---'
+actual="'$(git hash-object tests/editing_conformance/test_commit_runtime_free_move_set.py)
+base=$(git rev-parse a5a1688c:tests/editing_conformance/test_commit_runtime_free_move_set.py)
+printf '"'actual=%s\\nbase=%s\\n' \""'$actual" "$base"
+test "$actual" = "$base"
+printf '"'%s\\n' '--- appended proof exactness ---'
+diff -u <(git show a5a1688c:docs/design/m2-free-move-contract.md) <(tail -n 15 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md)
+printf '%s\\n' '--- proof tail ---'
+tail -n 18 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md
+printf '%s\\n' '--- no accidental repo doc ---'
+test "'! -e docs/design/m2-free-move-contract.md && echo absent' in /home/user/work/wt/agt-m2-free-proof-doc-cleanup
+ succeeded in 835ms:
+--- git status ---
+ D docs/design/m2-free-move-contract.md
+--- worktree diff stat ---
+ docs/design/m2-free-move-contract.md | 15 ---------------
+ 1 file changed, 15 deletions(-)
+--- worktree diff check ---
+--- test diff against base ---
+--- test hash comparison ---
+actual=b29a198aaf5704ac8c597705368dbf7895436634
+base=b29a198aaf5704ac8c597705368dbf7895436634
+--- appended proof exactness ---
+--- proof tail ---
+restart, official artifacts and the three preserved App tests remain integration
+work, not claims of this candidate.
+
+# M2 free multi-clip move: Runtime proof
+
+Status: reviewed Agent/runtime acceptance proof; App TypeScript integration remains out of scope for this change.
+
+The real-daemon acceptance test is [test_commit_runtime_free_move_set.py](../../tests/editing_conformance/test_commit_runtime_free_move_set.py). It seeds a normal authenticated Runtime project through registered `track.create` and `clip.add` commands, then proves the reviewed App geometry:
+
+- `V1`, `V2`, `V3`; `clip-1` -> `V2 @ 1`, hold `2`; `clip-2` -> `V3 @ 3`, hold `2`;
+- ordered selection `clip-2`, `clip-1`, with no `pinnedShotGroups`;
+- `track.create(V3)` plus the sealed `clip.move-set` in one `/v1` publication;
+- exact canonical reload, accepted history command captures, and opaque clip/app fields;
+- durable lost-ACK retry after Runtime restart with the same request body, idempotency key, and receipt;
+- guarded undo (moves restored before the created track is removed), redo with the same authored IDs, and refusal when a later clip depends on `V3`;
+- disjoint-lane server rebase, and refusal after relevant lane-entry membership changes A -> B -> A.
+
+This is evidence for the Python/Runtime command contract only. It does not claim an official generated TypeScript consumer or App artifact: the App-side gesture producer, generated-client consumption, and shipped artifact scope still require their own integration proof.
+--- no accidental repo doc ---
+absent
+
+codex
+## Completed
+
+- Removed accidental `docs/design/m2-free-move-contract.md`.
+- Appended its exact 15-line proof to the absolute orchestrator contract.
+- Wrote both commit-message files and `notes/report.md`.
+- Product/test files unchanged.
+
+## Verification
+
+- `git diff --check` — passed.
+- Test diff against `a5a1688c` — empty.
+- Test hash matched base: `b29a198a...`.
+- Appended proof matched exactly.
+- No full or targeted tests rerun, as directed.
+
+No blockers or next steps.
+tokens used
+55,673
+## Completed
+
+- Removed accidental `docs/design/m2-free-move-contract.md`.
+- Appended its exact 15-line proof to the absolute orchestrator contract.
+- Wrote both commit-message files and `notes/report.md`.
+- Product/test files unchanged.
+
+## Verification
+
+- `git diff --check` — passed.
+- Test diff against `a5a1688c` — empty.
+- Test hash matched base: `b29a198a...`.
+- Appended proof matched exactly.
+- No full or targeted tests rerun, as directed.
+
+No blockers or next steps.

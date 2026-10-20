@@ -1,0 +1,9 @@
+name=agt-m2-timing-facade-name-fix
+repo=agent
+base=tl/integration
+base_sha=5430a971
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-timing-facade-name-fix
+started=2026-10-20T11:09:02Z

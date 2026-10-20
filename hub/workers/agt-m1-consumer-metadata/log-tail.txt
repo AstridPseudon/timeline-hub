@@ -1,0 +1,400 @@
+    "astrid/packs/local/shared/*.ts",
+    "astrid/packs/local/shared/*.tsx",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-1.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-2.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-3.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0-canonical-mink.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4-canonical-mink.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5-canonical-mink.png",
+    "astrid/packs/local/rendering/elements/effects/frame-overlay/assets/frame.png",
+    "astrid/packs/astrid_motion/rendering/elements/**/*.ts",
+    "astrid/packs/astrid_motion/rendering/elements/**/*.tsx",
+    "astrid/packs/astrid_motion/rendering/elements/**/*.yaml",
+    "astrid/packs/rendering/rendering/elements/**/*.ts",
+    "astrid/packs/rendering/rendering/elements/**/*.tsx",
+    "astrid/packs/rendering/rendering/elements/**/*.yaml",
+    "astrid/packs/rendering/shared/**/*.ts",
+    "astrid/packs/rendering/shared/**/*.tsx",
+    "astrid/packs/rendering/editor/**/*.ts",
+    "astrid/packs/rendering/editor/**/*.tsx",
+    "astrid/packs/rendering/ui/**/*.ts",
+    "astrid/packs/rendering/ui/**/*.tsx",
+    "remotion/src/fonts.ts",
+    "remotion/public/fonts/*.woff2",
+    "remotion/public/fonts/OFL-1.1.txt",
+    "remotion/public/fonts/FONT_PROVENANCE.md",
+]
+
+
+def _bound_pack_files(root: Path) -> set[Path]:
+    """The pack files each tool in the catalog binds (manifest, entry, resources)."""
+    try:
+        tools = json.loads((root / TOOL_CATALOG).read_text(encoding="utf-8"))["tools"]
+    except (OSError, ValueError, KeyError):
+        return set()
+    bound = set()
+    for tool in tools:
+        for ref in [tool["manifest"], tool["entry"], *tool.get("resources", [])]:
+            bound.add(root / "astrid" / "packs" / tool["pack_id"] / ref["path"])
+    return bound
+
+
+def digests(root: Path = ROOT, patterns: list[str] = PATTERNS) -> dict[str, str]:
+    paths = {p for pattern in patterns for p in root.glob(pattern) if p.is_file()} | {p for p in _bound_pack_files(root) if p.is_file()}
+    return {p.relative_to(root).as_posix(): "sha256:" + hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)}
+
+
+def build(root: Path = ROOT, patterns: list[str] = PATTERNS) -> dict:
+    artifacts = digests(root, patterns)
+    canonical = json.dumps(artifacts, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return {"producer": PRODUCER, "version": "sha256:" + hashlib.sha256(canonical).hexdigest(), "artifacts": artifacts}
+
+
+def write(root: Path = ROOT, patterns: list[str] = PATTERNS) -> dict:
+    manifest = build(root, patterns)
+    (root / MANIFEST).write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return manifest
+
+
+def check(root: Path = ROOT, patterns: list[str] = PATTERNS) -> list[str]:
+    """Return one line per artifact whose digest changed, appeared or disappeared."""
+    try:
+        committed = json.loads((root / MANIFEST).read_text(encoding="utf-8"))["artifacts"]
+    except (OSError, ValueError, KeyError):
+        return [f"{MANIFEST}: missing or unreadable"]
+    current = digests(root, patterns)
+    problems = [f"{path}: " + ("added" if path not in committed else "removed" if path not in current else "changed")
+                for path in sorted(committed.keys() | current.keys()) if committed.get(path) != current.get(path)]
+    if not problems and json.loads((root / MANIFEST).read_text(encoding="utf-8")) != build(root, patterns):
+        problems.append(f"{MANIFEST}: version does not match its artifacts")
+    return problems
+
+
+def main(argv: list[str]) -> int:
+    if "--check" in argv:
+        problems = check()
+        if problems:
+            print("artifact manifest is stale; run `python scripts/artifact_manifest.py`:\n  " + "\n  ".join(problems))
+            return 1
+        print(f"{MANIFEST} is current")
+        return 0
+    manifest = write()
+    print(f"wrote {MANIFEST}: {len(manifest['artifacts'])} artifacts, {manifest['version']}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
+
+codex
+The concrete stale entries match the review exactly: the bound `fade/component.tsx` hashes to `cd0a71e4…` while the manifest has `c7947bd7…`, and bound `text-card/component.tsx` hashes to `21da29ff…` while the manifest has `e12cb0d8…`. I’ll apply only the approved four-line immutable-fixture correction, then regenerate the CLI surface and artifact manifest from this package source.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m1-consumer-metadata/tests/sdk/test_timeline_cuts.py
+diff --git a/tests/sdk/test_timeline_cuts.py b/tests/sdk/test_timeline_cuts.py
+index e641308bc575e1aacae9bb86c28c82b97ebcf185..6a676568512e854dae7b9f848e2ac056d68e495f
+--- a/tests/sdk/test_timeline_cuts.py
++++ b/tests/sdk/test_timeline_cuts.py
+@@ -186,8 +186,12 @@
+     def open_bundle(self, project, ref, *, revision_id=None):
+         self.calls.append((project, ref, revision_id))
+         revision = revision_id or "head-2"
++        bundle = copy.deepcopy(self.bundles[revision])
++        # The immutable closure carries the identity of the exact parent
++        # revision it contains; envelope head metadata is not readback proof.
++        bundle.setdefault("base_parent", {})["revision_id"] = revision
+         return DomainResult.success({
+-            "bundle": self.bundles[revision], "project_id": "p-1", "timeline_id": "T1",
++            "bundle": bundle, "project_id": "p-1", "timeline_id": "T1",
+             "revision_id": revision, "head_revision_id": "head-2", "is_current_head": revision == "head-2",
+         })
+ 
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py && /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py && git status --short && git diff --stat && git diff --check' in /home/user/work/wt/agt-m1-consumer-metadata
+ succeeded in 971ms:
+wrote cli-surface.json
+wrote artifacts.json: 161 artifacts, sha256:e556b0d9215a1924f01d0526df886642b047af955c238ab3ebcf47d7b886083b
+ M artifacts.json
+ M cli-surface.json
+ M tests/sdk/test_timeline_cuts.py
+ artifacts.json                  | 24 ++++++++++++------------
+ cli-surface.json                | 12 ++++++++++++
+ tests/sdk/test_timeline_cuts.py |  6 +++++-
+ 3 files changed, 29 insertions(+), 13 deletions(-)
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- generated CLI identity ---'; sha256sum cli-surface.json; git show 319314c4:cli-surface.json | sha256sum; cmp -s cli-surface.json <(git show 319314c4:cli-surface.json); printf 'cli cmp exit=%s\\n' \""'$?"; printf '"'%s\\n' '--- exact fixture diff from approved ---'; git diff --no-ext-diff --unified=4 319314c4 -- tests/sdk/test_timeline_cuts.py; printf '%s\\n' '--- generated metadata diff from approved ---'; git diff --no-ext-diff --unified=2 319314c4 -- cli-surface.json artifacts.json; printf '%s\\n' '--- manifest actual bound hashes ---'; /home/user/work/venv-agent/bin/python - <<'PY'
+import json
+from pathlib import Path
+m=json.loads(Path('artifacts.json').read_text())['artifacts']
+for key in sorted(m):
+    if key.endswith(('animations/fade/component.tsx', 'effects/text-card/component.tsx')) or key == 'cli-surface.json':
+        print(key, m[key])
+PY" in /home/user/work/wt/agt-m1-consumer-metadata
+ succeeded in 0ms:
+--- generated CLI identity ---
+90d4bdaf7cf0a947567c385ade3ca7c4d9aee34eb8a384e97ac46d8c384d09f4  cli-surface.json
+90d4bdaf7cf0a947567c385ade3ca7c4d9aee34eb8a384e97ac46d8c384d09f4  -
+cli cmp exit=0
+--- exact fixture diff from approved ---
+--- generated metadata diff from approved ---
+diff --git a/artifacts.json b/artifacts.json
+index dde564f7..a6958299 100644
+--- a/artifacts.json
++++ b/artifacts.json
+@@ -106,25 +106,25 @@
+     "astrid/packs/rendering/editor/live-scenes/runtime.ts": "sha256:3bdfa73290d935699d3937798df950376cfd25209a442fc9b294fc12c98a14f2",
+     "astrid/packs/rendering/elements/catalog.ts": "sha256:b5bbae29786685482e77c9a7d8811b30c617496c669cbc2f70e5ea60be4ef75b",
+-    "astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx": "sha256:087e837820d4285d9aefdef10f0d9b6faaecb731f11e375cfa0208f68c4228d1",
++    "astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx": "sha256:5d0712d03bab1ccb4f3401b6ecef80c8c9c90c409d4067695d2542a84eac4cca",
+     "astrid/packs/rendering/rendering/elements/animations/fade-up/element.yaml": "sha256:2534d142fb47e573489ddc08727c26292492f377c6ba39881ee9d1005eb1081d",
+-    "astrid/packs/rendering/rendering/elements/animations/fade/component.tsx": "sha256:c7947bd7437038a726dab1850561ff67bca4139755b95907540d9c338108aa2e",
++    "astrid/packs/rendering/rendering/elements/animations/fade/component.tsx": "sha256:cd0a71e4c02debf9d326a6644b4d1c8a8de95a60bf60062201023da25abf52f3",
+     "astrid/packs/rendering/rendering/elements/animations/fade/element.yaml": "sha256:65df111c8e261dded80fb0be284d9aaaafc926dca8052e4e378225a5dcbd864b",
+-    "astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx": "sha256:91f37ef5420ac58ae8f681e82558497b2cbdfcf230cfd0600392beb22b676f8d",
++    "astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx": "sha256:18266de2a801583a23d35acb6d1e52e4cb871666522355c43777d74dfbefa369",
+     "astrid/packs/rendering/rendering/elements/animations/scale-in/element.yaml": "sha256:f69a5e42688a7d4f34297e8f10d7e0427aae412116766896bd9e4ee5174889ca",
+-    "astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx": "sha256:a524bb8df5fe7fda427661036652398bc10765e45beedb0b05af86a58ef87b26",
++    "astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx": "sha256:24d548c7e98148a64ef3b5036c6729f9b7d3acb7625ab0e4188eeeb810b3c9aa",
+     "astrid/packs/rendering/rendering/elements/animations/slide-left/element.yaml": "sha256:a5ef46a8f2c54c0a355759c049b2968ee76d69e0e31526100768a17d1c747f87",
+-    "astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx": "sha256:237d05cccff131e065a63972aea8d6e08f23258c0bb98739c6deb409251a0cf7",
++    "astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx": "sha256:de793efbfac6be7475abc4c44665ad128fadd7c6507c34f1f0ea0852920315e6",
+     "astrid/packs/rendering/rendering/elements/animations/slide-up/element.yaml": "sha256:bd3d0b249ddd8ac4f0f64e4874123ab3fdaf2afbed29dff65b0753543cb0a91b",
+-    "astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx": "sha256:43c2a76521ddbaacee46363392a90768570b930dae1beb27788460119763b0c4",
++    "astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx": "sha256:33825b710c72f5b2601d1d89cfd02c3375a2240a4ed750e214746dc7e50ec372",
+     "astrid/packs/rendering/rendering/elements/animations/type-on/element.yaml": "sha256:44d95f566471cda32ad0ab522f62e7a4ed730dc41098760f704b31c838bcfb1c",
+     "astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx": "sha256:c7b0fed74f60b78a49b5874c547bd1ef80f1e4ba625515bbca25442407b178a6",
+     "astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/element.yaml": "sha256:1554e36f53f9a69f07f132a31a6db373c9b9b9b1d77281171cefe15777e306a0",
+-    "astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx": "sha256:e12cb0d8dbd1aa141f26c671264c4363ba1f91ff759509068aee906e10200c4c",
++    "astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx": "sha256:21da29ff50c65882cb78805e55ba7d5b448bf49e193bf603920c9e80595db1bf",
+     "astrid/packs/rendering/rendering/elements/effects/text-card/element.yaml": "sha256:e478beaa5a0f949c472fcbfb8c21068381ef4181b5ed2eee7c48e1171663daea",
+-    "astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx": "sha256:1e269ed301ba2f1fe9e70cea506d4260c9936d5f62b2ce0571fa9cda0432ccdf",
++    "astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx": "sha256:5c16da20335c000d6a8fa76bd30bbc7d2d5746a88a8fb182c853e1bb85bdca91",
+     "astrid/packs/rendering/rendering/elements/transitions/cross-fade/element.yaml": "sha256:d1bf5a452ff6b8637e380a7eafb1bc90d4fcf5e3e91de557622ba727b7110eb4",
+-    "astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx": "sha256:f2805778ab387c1c044ddef563a3c1cfed4a2d8ea4659d0bacf4ada8fa5549ee",
++    "astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx": "sha256:80d4d7880bd2a223fe938d481afdf47f63a4e49dbcefd6381187176d9c55d2ef",
+     "astrid/packs/rendering/rendering/elements/transitions/fade/element.yaml": "sha256:28f1b4f74919f026418ee2b1d1d7a294a6674cb7ef5709e0db95ee6f9dc9c7c2",
+-    "astrid/packs/rendering/shared/element_contracts.ts": "sha256:433f0b6b81fcfc7826c4f434bb158c1a2a3dea4f71f99a6689226c9e0395f3b6",
++    "astrid/packs/rendering/shared/element_contracts.ts": "sha256:3d3f639bea957170408a69584da4bac932efe508769e1f5887007fd4eaaff066",
+     "astrid/packs/rendering/shared/managed-media-policy.ts": "sha256:712fc4cb008226ff9578f37fb857dc62ae8601c8b4ad4e2de6687fbc24d9c8d5",
+     "astrid/packs/rendering/shared/managed-media.tsx": "sha256:7e010dbd196c1c4dc00eaa40178e47b43ad4a8d203de8db536697b5137c23209",
+@@ -164,4 +164,4 @@
+   },
+   "producer": "astrid-agent",
+-  "version": "sha256:3c6e588b88bce5ec860b76703046d415f2dde67b1522d710dd6bb582718a4c6f"
++  "version": "sha256:e556b0d9215a1924f01d0526df886642b047af955c238ab3ebcf47d7b886083b"
+ }
+--- manifest actual bound hashes ---
+astrid/packs/local/rendering/elements/effects/text-card/component.tsx sha256:a717914bb0bcbeead78658bb9f05e9bd37a5545df49142d4e07cd73d27e39686
+astrid/packs/rendering/rendering/elements/animations/fade/component.tsx sha256:cd0a71e4c02debf9d326a6644b4d1c8a8de95a60bf60062201023da25abf52f3
+astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx sha256:21da29ff50c65882cb78805e55ba7d5b448bf49e193bf603920c9e80595db1bf
+cli-surface.json sha256:90d4bdaf7cf0a947567c385ade3ca7c4d9aee34eb8a384e97ac46d8c384d09f4
+
+codex
+The regenerated CLI surface is byte-identical to approved `319314c4` (hash `90d4bdaf…`). The artifact generator refreshed the CLI digest plus all changed bound rendering component/contract digests, including the two concrete stale hashes; no handwritten digest edits were made. The fixture diff is identical to `319314c4`. I’m moving to the required targeted validation now.
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_cuts.py tests/sdk/test_timeline_show_views.py tests/test_artifact_manifest.py' in /home/user/work/wt/agt-m1-consumer-metadata
+ succeeded in 8852ms:
+........................................                                 [100%]
+40 passed in 8.26s
+
+exec
+/bin/bash -lc "pytest -q -m 'not integration' tests/packs/rendering/test_composition_package.py" in /home/user/work/wt/agt-m1-consumer-metadata
+ exited 4 in 296ms:
+ImportError while loading conftest '/home/user/work/wt/agt-m1-consumer-metadata/tests/conftest.py'.
+tests/conftest.py:22: in <module>
+    from astrid.core.pack import source_setup
+astrid/core/pack/__init__.py:44: in <module>
+    from astrid.core.pack.canonical import (
+astrid/core/pack/canonical.py:20: in <module>
+    import jsonschema
+E   ModuleNotFoundError: No module named 'jsonschema'
+
+codex
+The first required lane passes (`40 passed`). The Composition-package command using the bare `pytest` executable is blocked before collection because that interpreter lacks `jsonschema`; I’ll rerun the same targeted suite through the prescribed shared Agent Python environment to distinguish an environment mismatch from a test failure, then run both generator checks and the final diff audit.
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/python -m pytest -q -m 'not integration' tests/packs/rendering/test_composition_package.py" in /home/user/work/wt/agt-m1-consumer-metadata
+ succeeded in 872ms:
+.....                                                                    [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/agt-m1-consumer-metadata/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+5 passed, 1 deselected, 5 warnings in 0.29s
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py --check && /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check && git diff --check' in /home/user/work/wt/agt-m1-consumer-metadata
+ succeeded in 424ms:
+cli-surface.json is current
+artifacts.json is current
+
+codex
+The shared-environment rerun passes (`5 passed, 1 deselected`); the bare `pytest` failure is isolated to its missing `jsonschema`, not the suite. Both generators report current and `git diff --check` passes. I’m doing the final scope/hash audit now and will write the conventional commit message for the harness.
+exec
+/bin/bash -lc "printf '%s\\n' '--- exact identity ---'; printf 'HEAD '; git rev-parse HEAD; printf 'branch '; git branch --show-current; printf '%s\\n' '--- changed paths ---'; git diff --name-only; printf '%s\\n' '--- artifact hash delta from base ---'; /home/user/work/venv-agent/bin/python - <<'PY'
+import json, subprocess
+base=json.loads(subprocess.check_output(['git','show','7a68b7ed:artifacts.json']))
+current=json.load(open('artifacts.json'))
+for key in sorted(set(base['artifacts']) | set(current['artifacts'])):
+    if base['artifacts'].get(key) "'!= current['"'artifacts'].get(key):
+        print(f\"{key}: {base['artifacts'].get(key)} -> {current['artifacts'].get(key)}\")
+print(f\"manifest version: {base['version']} -> {current['version']}\")
+PY
+printf '%s\\n' '--- cli hash delta from base ---'; git show 7a68b7ed:artifacts.json | /home/user/work/venv-agent/bin/python -c 'import json,sys; print(json.load(sys.stdin)[\"artifacts\"][\"cli-surface.json\"])'; sha256sum cli-surface.json; printf '%s\\n' '--- approved identity checks ---'; git diff --quiet 319314c4 -- cli-surface.json tests/sdk/test_timeline_cuts.py; printf 'approved cli+fixture diff exit=%s\\n' \""'$?"; printf '"'%s\\n' '--- status ---'; git status --short" in /home/user/work/wt/agt-m1-consumer-metadata
+ succeeded in 150ms:
+--- exact identity ---
+HEAD 7a68b7ed0d4ac640059194a70087369fe375bb6a
+branch tl/agt-m1-consumer-metadata
+--- changed paths ---
+artifacts.json
+cli-surface.json
+tests/sdk/test_timeline_cuts.py
+--- artifact hash delta from base ---
+astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx: sha256:087e837820d4285d9aefdef10f0d9b6faaecb731f11e375cfa0208f68c4228d1 -> sha256:5d0712d03bab1ccb4f3401b6ecef80c8c9c90c409d4067695d2542a84eac4cca
+astrid/packs/rendering/rendering/elements/animations/fade/component.tsx: sha256:c7947bd7437038a726dab1850561ff67bca4139755b95907540d9c338108aa2e -> sha256:cd0a71e4c02debf9d326a6644b4d1c8a8de95a60bf60062201023da25abf52f3
+astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx: sha256:91f37ef5420ac58ae8f681e82558497b2cbdfcf230cfd0600392beb22b676f8d -> sha256:18266de2a801583a23d35acb6d1e52e4cb871666522355c43777d74dfbefa369
+astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx: sha256:a524bb8df5fe7fda427661036652398bc10765e45beedb0b05af86a58ef87b26 -> sha256:24d548c7e98148a64ef3b5036c6729f9b7d3acb7625ab0e4188eeeb810b3c9aa
+astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx: sha256:237d05cccff131e065a63972aea8d6e08f23258c0bb98739c6deb409251a0cf7 -> sha256:de793efbfac6be7475abc4c44665ad128fadd7c6507c34f1f0ea0852920315e6
+astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx: sha256:43c2a76521ddbaacee46363392a90768570b930dae1beb27788460119763b0c4 -> sha256:33825b710c72f5b2601d1d89cfd02c3375a2240a4ed750e214746dc7e50ec372
+astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx: sha256:e12cb0d8dbd1aa141f26c671264c4363ba1f91ff759509068aee906e10200c4c -> sha256:21da29ff50c65882cb78805e55ba7d5b448bf49e193bf603920c9e80595db1bf
+astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx: sha256:1e269ed301ba2f1fe9e70cea506d4260c9936d5f62b2ce0571fa9cda0432ccdf -> sha256:5c16da20335c000d6a8fa76bd30bbc7d2d5746a88a8fb182c853e1bb85bdca91
+astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx: sha256:f2805778ab387c1c044ddef563a3c1cfed4a2d8ea4659d0bacf4ada8fa5549ee -> sha256:80d4d7880bd2a223fe938d481afdf47f63a4e49dbcefd6381187176d9c55d2ef
+astrid/packs/rendering/shared/element_contracts.ts: sha256:433f0b6b81fcfc7826c4f434bb158c1a2a3dea4f71f99a6689226c9e0395f3b6 -> sha256:3d3f639bea957170408a69584da4bac932efe508769e1f5887007fd4eaaff066
+cli-surface.json: sha256:0fd5a4564e4497aba7ab1218dd17596e1cbf15763e8afb73fdd216079d7993e7 -> sha256:90d4bdaf7cf0a947567c385ade3ca7c4d9aee34eb8a384e97ac46d8c384d09f4
+manifest version: sha256:15c96844499f55f9235e2d1b6a95ac69faf9a2989ed0ecfc1d2a256620564489 -> sha256:e556b0d9215a1924f01d0526df886642b047af955c238ab3ebcf47d7b886083b
+--- cli hash delta from base ---
+sha256:0fd5a4564e4497aba7ab1218dd17596e1cbf15763e8afb73fdd216079d7993e7
+90d4bdaf7cf0a947567c385ade3ca7c4d9aee34eb8a384e97ac46d8c384d09f4  cli-surface.json
+--- approved identity checks ---
+approved cli+fixture diff exit=0
+--- status ---
+ M artifacts.json
+ M cli-surface.json
+ M tests/sdk/test_timeline_cuts.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-consumer-metadata/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-consumer-metadata/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-consumer-metadata/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..44ece41db45371f3b7e44fa22e8a78bdf9912698
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-consumer-metadata/commit-msg
+@@ -0,0 +1,4 @@
++chore(agent): refresh timeline consumer metadata
++
++Regenerate CLI and artifact metadata for the reviewed Composition package chain.
++Carry the approved immutable cut fixture revision guard.
+diff --git a/tests/sdk/test_timeline_cuts.py b/tests/sdk/test_timeline_cuts.py
+index e641308bc575e1aacae9bb86c28c82b97ebcf185..6a676568512e854dae7b9f848e2ac056d68e495f
+--- a/tests/sdk/test_timeline_cuts.py
++++ b/tests/sdk/test_timeline_cuts.py
+@@ -186,8 +186,12 @@
+     def open_bundle(self, project, ref, *, revision_id=None):
+         self.calls.append((project, ref, revision_id))
+         revision = revision_id or "head-2"
++        bundle = copy.deepcopy(self.bundles[revision])
++        # The immutable closure carries the identity of the exact parent
++        # revision it contains; envelope head metadata is not readback proof.
++        bundle.setdefault("base_parent", {})["revision_id"] = revision
+         return DomainResult.success({
+-            "bundle": self.bundles[revision], "project_id": "p-1", "timeline_id": "T1",
++            "bundle": bundle, "project_id": "p-1", "timeline_id": "T1",
+             "revision_id": revision, "head_revision_id": "head-2", "is_current_head": revision == "head-2",
+         })
+ 
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- final diff stat ---'; git diff --stat; printf '%s\\n' '--- final scope check ---'; test \""'$(git diff --name-only | sort)" = "$(printf '"'%s\\n' artifacts.json cli-surface.json tests/sdk/test_timeline_cuts.py | sort)\"; printf 'scope check exit=%s\\n' \""'$?"; printf '"'%s\\n' '--- commit message ---'; sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-consumer-metadata/commit-msg; printf '%s\\n' '--- final status ---'; git status --short --branch" in /home/user/work/wt/agt-m1-consumer-metadata
+ succeeded in 175ms:
+--- final diff stat ---
+ artifacts.json                  | 24 ++++++++++++------------
+ cli-surface.json                | 12 ++++++++++++
+ tests/sdk/test_timeline_cuts.py |  6 +++++-
+ 3 files changed, 29 insertions(+), 13 deletions(-)
+--- final scope check ---
+scope check exit=0
+--- commit message ---
+chore(agent): refresh timeline consumer metadata
+
+Regenerate CLI and artifact metadata for the reviewed Composition package chain.
+Carry the approved immutable cut fixture revision guard.
+--- final status ---
+## tl/agt-m1-consumer-metadata...hub/tl/vw-m3-agent-gate
+ M artifacts.json
+ M cli-surface.json
+ M tests/sdk/test_timeline_cuts.py
+
+codex
+## Report
+
+Base/current HEAD: `7a68b7ed0d4ac640059194a70087369fe375bb6a` (harness commit pending).
+
+Changed only the 3 assigned files. CLI and fixture changes are byte-identical to approved `319314c4`. Artifact manifest contains 161 entries; 11 generated digests plus aggregate version refreshed.
+
+```text
+fade-up: 087e8378… -> 5d0712d0…
+fade:    c7947bd7… -> cd0a71e4…
+scale-in: 91f37ef5… -> 18266de2…
+slide-left: a524bb8d… -> 24d548c7…
+slide-up: 237d05cc… -> de793efb…
+type-on: 43c2a765… -> 33825b71…
+text-card: e12cb0d8… -> 21da29ff…
+cross-fade: 1e269ed3… -> 5c16da20…
+transition fade: f2805778… -> 80d4d788…
+element_contracts.ts: 433f0b6b… -> 3d3f639b…
+cli-surface.json: 0fd5a456… -> 90d4bdaf…
+manifest version: 15c96844… -> e556b0d9…
+```
+
+Tests:
+
+- Targeted SDK/artifact tests: `40 passed`.
+- Composition package via shared venv: `5 passed, 1 deselected`.
+- Both generator `--check` commands: passed.
+- `git diff --check`: passed.
+- Bare `pytest` was blocked by missing `jsonschema`; shared venv rerun passed.
+
+No full/browser/socket/Node suite run. Commit message written to the required path.
+tokens used
+71,380
+## Report
+
+Base/current HEAD: `7a68b7ed0d4ac640059194a70087369fe375bb6a` (harness commit pending).
+
+Changed only the 3 assigned files. CLI and fixture changes are byte-identical to approved `319314c4`. Artifact manifest contains 161 entries; 11 generated digests plus aggregate version refreshed.
+
+```text
+fade-up: 087e8378… -> 5d0712d0…
+fade:    c7947bd7… -> cd0a71e4…
+scale-in: 91f37ef5… -> 18266de2…
+slide-left: a524bb8d… -> 24d548c7…
+slide-up: 237d05cc… -> de793efb…
+type-on: 43c2a765… -> 33825b71…
+text-card: e12cb0d8… -> 21da29ff…
+cross-fade: 1e269ed3… -> 5c16da20…
+transition fade: f2805778… -> 80d4d788…
+element_contracts.ts: 433f0b6b… -> 3d3f639b…
+cli-surface.json: 0fd5a456… -> 90d4bdaf…
+manifest version: 15c96844… -> e556b0d9…
+```
+
+Tests:
+
+- Targeted SDK/artifact tests: `40 passed`.
+- Composition package via shared venv: `5 passed, 1 deselected`.
+- Both generator `--check` commands: passed.
+- `git diff --check`: passed.
+- Bare `pytest` was blocked by missing `jsonschema`; shared venv rerun passed.
+
+No full/browser/socket/Node suite run. Commit message written to the required path.

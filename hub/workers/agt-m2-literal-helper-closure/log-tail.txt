@@ -1,0 +1,400 @@
+diff --git a/astrid/sdk/timeline/model.py b/astrid/sdk/timeline/model.py
+index ce13ee96..d0f0ee18 100644
+--- a/astrid/sdk/timeline/model.py
++++ b/astrid/sdk/timeline/model.py
+@@ -438,9 +438,8 @@ class Clip(_Suggest):
+         source_out = (_num(self.data.get("to"), limit) if out_s is None else float(out_s))
+         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
+             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
+-        speed = _num(self.data.get("speed"), 1.0) or 1.0
+         self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
+-        self.data["hold"] = _r((source_out - source_in) / speed)
++        self.data["hold"] = _r(source_out - source_in)
+         intent.set_until(self.data, None)
+         intent.set_for(self.data, None)
+         self._tl._mcache = None
+--- helper identity ---
+edits._media_kind is _common._media_kind
+--- required external files ---
+-rw-r--r-- 1 root root  486 Oct 20 01:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/commit-msg
+-rw-r--r-- 1 root root  486 Oct 20 01:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/commit-msg.txt
+-rw-r--r-- 1 root root 3800 Oct 20 01:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/notes/report.md
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+from pathlib import Path
+import hashlib
+text = Path('astrid/sdk/timeline/_common.py').read_text()
+start = text.index('def _media_kind')
+end = text.index('\\ndef _length_seconds', start)
+source = text[start:end].rstrip() + '\\n'
+print(hashlib.sha1(source.encode()).hexdigest())
+print(repr(source))
+PY" in /home/user/work/wt/agt-m2-literal-helper-closure
+ succeeded in 0ms:
+58039d0446d44bc987c4efd4077fdb6211693bbf
+'def _media_kind(entry: Mapping[str, Any]) -> str | None:\n    """Normalize registry MIME types and legacy kind names to image/audio/video."""\n    value = str(entry.get("type") or "").strip().lower().split(";", 1)[0]\n    if "/" in value:\n        value = value.split("/", 1)[0]\n    if value.startswith(("image", "audio", "video")):\n        return value.split("-", 1)[0]\n    return value if value in {"image", "audio", "video"} else None\n'
+
+exec
+/bin/bash -lc "git show c17e8f3c:astrid/sdk/timeline/edits.py | sed -n '/"'^def _media_kind/,/''^class _EditMixin/{/''^class _EditMixin/!p;}'"' | sed '/"'^$/d'"' | git hash-object --stdin; git show c17e8f3c:astrid/sdk/timeline/edits.py | sed -n '/"'^def _media_kind/,/''^class _EditMixin/{/''^class _EditMixin/!p;}'"' | git hash-object --stdin" in /home/user/work/wt/agt-m2-literal-helper-closure
+ succeeded in 0ms:
+6b3d4684adb47a89a030abb2f3ddfda64b302050
+c65d76649c5d7f68c6b90feb858e7e2947a5d661
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e82af9cde794a00bd6f0ae0cd1fa1634f9d77fb9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/commit-msg
+@@ -0,0 +1,9 @@
++refactor(timeline): decouple native split media kind helper
++
++Move the exact reviewed MIME normalizer into the pure timeline common helpers,
++while preserving the old edits._media_kind import for existing callers. Make
++native clip split use only the pure helper and restore model.py to the current
++source formatting with the authorized source-unit trim hold formula.
++
++Add a fresh-interpreter move-to-split fixture that blocks renderer, runtime,
++legacy writer, model, and journal imports.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..e82af9cde794a00bd6f0ae0cd1fa1634f9d77fb9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/commit-msg.txt
+@@ -0,0 +1,9 @@
++refactor(timeline): decouple native split media kind helper
++
++Move the exact reviewed MIME normalizer into the pure timeline common helpers,
++while preserving the old edits._media_kind import for existing callers. Make
++native clip split use only the pure helper and restore model.py to the current
++source formatting with the authorized source-unit trim hold formula.
++
++Add a fresh-interpreter move-to-split fixture that blocks renderer, runtime,
++legacy writer, model, and journal imports.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..16bab88a8bdb042a31382e5a905ecd7da4239014
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/notes/report.md
+@@ -0,0 +1,98 @@
++# Report: native literal media helper closure
++
++## Result
++
++Implemented the bounded `c17e8f3c` cleanup:
++
++- Moved the exact existing `_media_kind` function body from
++  `astrid/sdk/timeline/edits.py` to `astrid/sdk/timeline/_common.py`.
++- Kept `astrid.sdk.timeline.edits._media_kind` as a compatibility import bound
++  to the same callable.
++- Changed native split to import only the pure `_common._media_kind`; it no
++  longer lazily imports `edits`, `model`, or `journal` through the save path.
++- Restored `model.py` import formatting to the `51948d40`/`3b03eee9` source
++  form, retaining only the authorized source-unit `hold` formula from `c17`.
++- Added a fresh-interpreter renderer/runtime/legacy-writer import fence covering
++  native move capture, MIME-typed move-to-split, and native split.
++
++No registry, schema, command-argument, MIME-normalization, or source behavior
++was widened. No frozen source worktree or Bundle2 WIP was changed.
++
++## Evidence
++
++Passed:
++
++```text
++PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/editing_conformance/test_recipe_m2_clip_split.py \
++  tests/editing_conformance/test_recipe_m2_clip_trim.py \
++  tests/sdk/test_timeline_commit_provider.py
++172 passed in 7.90s
++```
++
++Passed adjacent checkout/helper lane:
++
++```text
++PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/sdk/test_timeline_checkout.py \
++  tests/sdk/test_timeline_checkout_facade.py \
++  tests/test_timeline_editing_helpers.py
++110 passed, 17 deselected, 4 warnings in 2.55s
++```
++
++The direct compatibility check passed: `edits._media_kind is
++_common._media_kind`, and the reviewed `video/mp4; charset=...`, `video-h264`,
++and unsupported `model/gltf` cases retain their expected results.
++
++`git diff --check` passed.
++
++The requested narrow Ruff command was run but is not green:
++
++```text
++PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check \
++  astrid/sdk/timeline/_common.py astrid/sdk/timeline/_split_commands.py \
++  astrid/sdk/timeline/edits.py astrid/sdk/timeline/model.py \
++  tests/editing_conformance/test_recipe_m2_clip_split.py
++```
++
++It reports three `I001` import-format findings. The `_common.py` and
++`edits.py` findings already exist on `c17e8f3c`; the `model.py` finding also
++exists on the required `51948d40`/`3b03eee9` source form. I did not apply the
++prohibited broad Ruff cleanup to legacy files.
++
++No full suite, install, network, browser, merge, or artifact-pin run was made.
++
++## Exact c17-to-final manifest
++
++Base: `c17e8f3c4bf3c78fc7a4c2246a369c95e80cca79`
++
++All final worktree changes are modifications:
++
++```text
++astrid/sdk/timeline/_common.py                     8dd92614b7daaad3cde7ed9a74603f21e02e409a
++astrid/sdk/timeline/_split_commands.py             86d84c5bdff901b3eb44dd87fa4b18c812778567
++astrid/sdk/timeline/edits.py                       30e684d079ef2081eae29b6d4e34c0f146a701e1
++astrid/sdk/timeline/model.py                       d0f0ee1804d7ebe8980405d2f160f67cd49436bc
++tests/editing_conformance/test_recipe_m2_clip_split.py
++                                                    ef284eb2395ca825dbbaad5f5c7fe6a53fef071d
++```
++
++Final helper function SHA-1 (the exact `_media_kind` function source, hashed
++via `git hash-object --stdin`):
++`c65d76649c5d7f68c6b90feb858e7e2947a5d661`.
++
++Canonical function-only SHA-1 after trimming the separator blank line and
++retaining one terminal newline: `58039d0446d44bc987c4efd4077fdb6211693bbf`.
++
++The final `_common.py` blob SHA-1 is
++`8dd92614b7daaad3cde7ed9a74603f21e02e409a`.
++
++## Decisions, blockers, next steps
++
++Decision: put the helper in `_common.py` because it is already the shared pure
++timeline-helper module, and import it back into `edits.py` to preserve the old
++caller name. The exact c17 function body and behavior were retained.
++
++No blockers found within this task. The harness should commit the worktree
++using the supplied conventional message; the native literal media work remains
++held as directed by the orchestration plan.
+diff --git a/astrid/sdk/timeline/_common.py b/astrid/sdk/timeline/_common.py
+index 2acbe928696327b463c3b9c8dc68d8c6423457f3..8dd92614b7daaad3cde7ed9a74603f21e02e409a
+--- a/astrid/sdk/timeline/_common.py
++++ b/astrid/sdk/timeline/_common.py
+@@ -4,7 +4,7 @@
+ import difflib
+ import math
+ import re
+-from typing import Any
++from typing import Any, Mapping
+ 
+ 
+ 
+@@ -39,6 +39,16 @@
+     """An edit that cannot be applied; the message says what to do instead."""
+ 
+ 
++def _media_kind(entry: Mapping[str, Any]) -> str | None:
++    """Normalize registry MIME types and legacy kind names to image/audio/video."""
++    value = str(entry.get("type") or "").strip().lower().split(";", 1)[0]
++    if "/" in value:
++        value = value.split("/", 1)[0]
++    if value.startswith(("image", "audio", "video")):
++        return value.split("-", 1)[0]
++    return value if value in {"image", "audio", "video"} else None
++
++
+ def _length_seconds(value: Any, fps: float) -> float:
+     """``0.6`` · ``"0.6s"`` · ``"18f"`` → seconds."""
+     if isinstance(value, (int, float)) and not isinstance(value, bool):
+diff --git a/astrid/sdk/timeline/_split_commands.py b/astrid/sdk/timeline/_split_commands.py
+index b5a98ee7176de28af94157c41fc0f48d98755641..86d84c5bdff901b3eb44dd87fa4b18c812778567
+--- a/astrid/sdk/timeline/_split_commands.py
++++ b/astrid/sdk/timeline/_split_commands.py
+@@ -7,6 +7,7 @@
+ from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip_timeline_duration
+ 
+ from ._command_state import CommandError, equal
++from ._common import _media_kind
+ from .capture import RELATIONS, number, rate
+ 
+ 
+@@ -23,9 +24,6 @@
+     source = ctx.read('parent/registry', ['assets', row['asset']])
+     if not isinstance(source, dict):
+         raise CommandError('clip.split v1 requires a known media source', ref=ref)
+-    # Import lazily: the checkout module owns the shared normalizer and imports
+-    # the command package while the command registry is being initialized.
+-    from .edits import _media_kind
+     if _media_kind(source) not in ('image', 'video', 'audio'):
+         raise CommandError('clip.split v1 requires a known media source', ref=ref)
+     for key in ('clip_type', 'asset_id', 'media_id', 'object_id', 'at_ms', 'from_ms', 'to_ms',
+diff --git a/astrid/sdk/timeline/edits.py b/astrid/sdk/timeline/edits.py
+index 0de0dec3ea2e8a0e1c9c89b8229b1643817bac7c..30e684d079ef2081eae29b6d4e34c0f146a701e1
+--- a/astrid/sdk/timeline/edits.py
++++ b/astrid/sdk/timeline/edits.py
+@@ -11,22 +11,12 @@
+ from astrid.sdk import timeline_intent as intent
+ 
+ from astrid.sdk.timeline import store as _store
+-from astrid.sdk.timeline._common import (CANVAS, ELEMENT_TRACK, SAFE_MARGIN, TIME_RE, TimelineEditError, _num, _r)
++from astrid.sdk.timeline._common import (CANVAS, ELEMENT_TRACK, SAFE_MARGIN, TIME_RE, TimelineEditError, _media_kind, _num, _r)
+ from astrid.sdk.timeline.doc import (_free_key, _set_length)
+ from astrid.sdk.timeline.model import (Clip, Cut, Word, music_keyword, validate_param_value)
+ 
+ _ASSET_REGISTRY_FIELDS = ("media_id", "content_sha256", "type", "duration", "resolution", "size", "size_bytes",
+                           "handle", "filename", "pixel_provenance")
+-
+-
+-def _media_kind(entry: Mapping[str, Any]) -> str | None:
+-    """Normalize registry MIME types and legacy kind names to image/audio/video."""
+-    value = str(entry.get("type") or "").strip().lower().split(";", 1)[0]
+-    if "/" in value:
+-        value = value.split("/", 1)[0]
+-    if value.startswith(("image", "audio", "video")):
+-        return value.split("-", 1)[0]
+-    return value if value in {"image", "audio", "video"} else None
+ 
+ 
+ class _EditMixin:
+diff --git a/astrid/sdk/timeline/model.py b/astrid/sdk/timeline/model.py
+index 3a385bf7e63110790e61a5e5975924e9e4ff0b6c..d0f0ee1804d7ebe8980405d2f160f67cd49436bc
+--- a/astrid/sdk/timeline/model.py
++++ b/astrid/sdk/timeline/model.py
+@@ -8,38 +8,23 @@
+ import math
+ import re
+ from contextlib import contextmanager
+-from dataclasses import dataclass
+-from dataclasses import replace as _dc_replace
++from dataclasses import dataclass, replace as _dc_replace
+ from typing import Any, Mapping, Sequence
+ 
+ from astrid.core.timeline import clip_fields as cf
+ from astrid.core.timeline import moments as mo
++from astrid.sdk import timeline_intent as intent
+ from astrid.core.timeline.cuts import (
+     clip_duration,
+ )
+-from astrid.sdk import timeline_intent as intent
++
+ from astrid.sdk.timeline import look as _look
+ from astrid.sdk.timeline import store as _store
+-from astrid.sdk.timeline._common import (
+-    TIME_RE,
+-    TimelineEditError,
+-    _length_seconds,
+-    _norm,
+-    _num,
+-    _r,
+-    _Suggest,
+-)
+-from astrid.sdk.timeline.doc import _get_path, _read_words, _set_length, _set_path
++from astrid.sdk.timeline._common import (TIME_RE, TimelineEditError, _Suggest, _length_seconds, _norm, _num, _r)
+ from astrid.sdk.timeline.selection import ROLE_VOCABULARY, Selection
+-from astrid.sdk.timeline.units import (
+-    element_units,
+-    formula_from_spec,
+-    from_canvas,
+-    param_unit,
+-    parse_formula_value,
+-    parse_moment_value,
+-    to_canvas,
+-)
++from astrid.sdk.timeline.doc import (_get_path, _read_words, _set_length, _set_path)
++from astrid.sdk.timeline.units import (element_units, formula_from_spec, from_canvas, param_unit, parse_formula_value, parse_moment_value, to_canvas)
++
+ 
+ # ----------------------------------------------------------------------- views
+ 
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_split.py b/tests/editing_conformance/test_recipe_m2_clip_split.py
+index 82571e28ef6b8a2f9fc3f6dc14c309486028988d..ef284eb2395ca825dbbaad5f5c7fe6a53fef071d
+--- a/tests/editing_conformance/test_recipe_m2_clip_split.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_split.py
+@@ -249,6 +249,41 @@
+     assert plan.bundle['parent']['clips'][1]['asset'] == 'picture'
+ 
+ 
++def test_native_move_split_mime_fixture_has_no_renderer_or_legacy_writer_imports():
++    import os
++    import subprocess
++    import sys
++
++    source = '''
++import importlib.abc, json, sys
++class Block(importlib.abc.MetaPathFinder):
++    def find_spec(self, fullname, *args):
++        if fullname.startswith((
++                'astrid.packs.rendering', 'astrid.core.rendering', 'astrid.sdk.authoring_render_preview',
++                'astrid.core.timeline.compatibility', 'composition', 'runtime_protocol',
++                'astrid.sdk.timeline.edits', 'astrid.sdk.timeline.model', 'astrid.sdk.timeline.journal')):
++            raise AssertionError('native save imported ' + fullname)
++sys.meta_path.insert(0, Block())
++from astrid.sdk.timeline._split_commands import capture_clip_split
++from astrid.sdk.timeline.capture import capture_move
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.commit import bundle_from_document
++document = json.load(sys.stdin)
++original = bundle_from_document(document)
++moved = execute(original, [capture_move(original, 'parent/clip:clip-a', 3.003)]).bundle
++plan = execute(moved, [capture_clip_split(moved, 'parent/clip:clip-a', on=4, right_id='right')])
++assert [row['id'] for row in plan.bundle['parent']['clips'][:2]] == ['clip-a', 'right']
++assert plan.bundle['parent']['registry']['assets']['picture']['type'] == 'video/mp4'
++'''
++    result = subprocess.run(
++        [sys.executable, '-c', source],
++        input=json.dumps(source_document(source_type='video/mp4')),
++        env={**os.environ, 'PYTHONPATH': str(Path(__file__).parents[2]), 'PYTHONDONTWRITEBYTECODE': '1'},
++        capture_output=True, text=True, check=False,
++    )
++    assert result.returncode == 0, result.stderr
++
++
+ def test_split_preserves_static_move_intent_and_splits_literal_for():
+     from astrid.sdk.timeline.capture import capture_move
+ 
+
+codex
+Implemented the c17 helper-closure cleanup.
+
+- Relocated `_media_kind` to `_common.py`; preserved `edits._media_kind` compatibility.
+- Removed native split’s lazy `edits` import.
+- Restored `model.py` formatting while retaining source-unit hold semantics.
+- Added fresh-interpreter MIME move→split import fence.
+
+Tests:
+
+- Targeted split/trim/provider: **172 passed**
+- Adjacent checkout/helper tests: **110 passed, 17 deselected**
+- `git diff --check`: passed
+- Ruff: existing baseline `I001` findings only; no broad cleanup applied.
+
+Reports and messages:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/notes/report.md)
+- `commit-msg` and `commit-msg.txt` written at the worker path.
+
+No full suite, install, network, browser, merge, or artifact-pin runs were performed.
+tokens used
+228,186
+Implemented the c17 helper-closure cleanup.
+
+- Relocated `_media_kind` to `_common.py`; preserved `edits._media_kind` compatibility.
+- Removed native split’s lazy `edits` import.
+- Restored `model.py` formatting while retaining source-unit hold semantics.
+- Added fresh-interpreter MIME move→split import fence.
+
+Tests:
+
+- Targeted split/trim/provider: **172 passed**
+- Adjacent checkout/helper tests: **110 passed, 17 deselected**
+- `git diff --check`: passed
+- Ruff: existing baseline `I001` findings only; no broad cleanup applied.
+
+Reports and messages:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-helper-closure/notes/report.md)
+- `commit-msg` and `commit-msg.txt` written at the worker path.
+
+No full suite, install, network, browser, merge, or artifact-pin runs were performed.

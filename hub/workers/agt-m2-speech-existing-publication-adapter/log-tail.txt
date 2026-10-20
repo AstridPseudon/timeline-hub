@@ -1,0 +1,400 @@
+tests/sdk/test_projectless_admission.py-100-        "version": 1,
+tests/sdk/test_projectless_admission.py-101-        "modality": "audio",
+tests/sdk/test_projectless_admission.py:102:        "partial_success_policy": "reject",
+tests/sdk/test_projectless_admission.py-103-        "groups": [{"group_key": "main", "selectors": [{
+tests/sdk/test_projectless_admission.py-104-            "selector": "speech", "ordinal": 0, "variant_key": "original",
+tests/sdk/test_projectless_admission.py-105-        }]}],
+tests/sdk/test_projectless_admission.py-106-    }
+tests/sdk/test_projectless_admission.py-107-    fake_capability = SimpleNamespace(
+--
+tests/sdk/test_generation_publication_adapter.py-71-    }
+tests/sdk/test_generation_publication_adapter.py-72-    intent = first["generation_intent"]
+tests/sdk/test_generation_publication_adapter.py-73-    assert intent == {
+tests/sdk/test_generation_publication_adapter.py-74-        "version": 1,
+tests/sdk/test_generation_publication_adapter.py-75-        "modality": "image",
+tests/sdk/test_generation_publication_adapter.py:76:        "partial_success_policy": "reject",
+tests/sdk/test_generation_publication_adapter.py-77-        "groups": [
+tests/sdk/test_generation_publication_adapter.py-78-            {
+tests/sdk/test_generation_publication_adapter.py-79-                "group_key": "main",
+tests/sdk/test_generation_publication_adapter.py-80-                "selectors": [
+tests/sdk/test_generation_publication_adapter.py-81-                    {"selector": "main-0", "ordinal": 0, "variant_key": "original"},
+--
+astrid/sdk/invocation.py-1962-    partial_success_policy = value["partial_success_policy"]
+astrid/sdk/invocation.py-1963-    if not isinstance(partial_success_policy, str) or partial_success_policy not in {
+astrid/sdk/invocation.py-1964-        "reject", "allow"
+astrid/sdk/invocation.py-1965-    }:
+astrid/sdk/invocation.py-1966-        raise CapabilityValidationError(
+astrid/sdk/invocation.py:1967:            "generation_intent.partial_success_policy must be 'reject' or 'allow'"
+astrid/sdk/invocation.py-1968-        )
+astrid/sdk/invocation.py-1969-    groups = value["groups"]
+astrid/sdk/invocation.py-1970-    if not isinstance(groups, list):
+astrid/sdk/invocation.py-1971-        raise CapabilityValidationError("generation_intent.groups must be a list")
+astrid/sdk/invocation.py-1972-    if not groups:
+--
+astrid/sdk/invocation.py-2199-            "required": True,
+astrid/sdk/invocation.py-2200-        })
+astrid/sdk/invocation.py-2201-    return {
+astrid/sdk/invocation.py-2202-        "version": 1,
+astrid/sdk/invocation.py-2203-        "modality": modality,
+astrid/sdk/invocation.py:2204:        "partial_success_policy": "reject",
+astrid/sdk/invocation.py-2205-        "groups": [{"group_key": "main", "selectors": selectors}],
+astrid/sdk/invocation.py-2206-    }
+astrid/sdk/invocation.py-2207-
+astrid/sdk/invocation.py-2208-
+astrid/sdk/invocation.py-2209-def _generation_publish_effect(
+--
+tests/packs/h3_av/test_runtime_recovery_integration.py-131-        request = normalize_request(raw_request)
+tests/packs/h3_av/test_runtime_recovery_integration.py-132-        preparation = prepare_request(request, asset_map={"source": str(source)})
+tests/packs/h3_av/test_runtime_recovery_integration.py-133-        generation_intent = {
+tests/packs/h3_av/test_runtime_recovery_integration.py-134-            "version": 1,
+tests/packs/h3_av/test_runtime_recovery_integration.py-135-            "modality": "video",
+tests/packs/h3_av/test_runtime_recovery_integration.py:136:            "partial_success_policy": "reject",
+tests/packs/h3_av/test_runtime_recovery_integration.py-137-            "groups": [{
+tests/packs/h3_av/test_runtime_recovery_integration.py-138-                "group_key": "main",
+tests/packs/h3_av/test_runtime_recovery_integration.py-139-                "selectors": [{
+tests/packs/h3_av/test_runtime_recovery_integration.py-140-                    "selector": "main-0", "ordinal": 0,
+tests/packs/h3_av/test_runtime_recovery_integration.py-141-                    "variant_key": "original", "required": True,
+--
+tests/v10/test_domain_cli_tasks_runs.py-187-def test_tasks_create_forwards_generated_contract(capsys) -> None:
+tests/v10/test_domain_cli_tasks_runs.py-188-    client = _Client()
+tests/v10/test_domain_cli_tasks_runs.py-189-    generation_intent = {
+tests/v10/test_domain_cli_tasks_runs.py-190-        "version": 1,
+tests/v10/test_domain_cli_tasks_runs.py-191-        "modality": "video",
+tests/v10/test_domain_cli_tasks_runs.py:192:        "partial_success_policy": "reject",
+tests/v10/test_domain_cli_tasks_runs.py-193-        "groups": [{"group_key": "main", "selectors": []}],
+tests/v10/test_domain_cli_tasks_runs.py-194-        "metadata": {"shot_id": "shot-1"},
+tests/v10/test_domain_cli_tasks_runs.py-195-    }
+tests/v10/test_domain_cli_tasks_runs.py-196-    settlement_effect = {
+tests/v10/test_domain_cli_tasks_runs.py-197-        "effect_type": "generation.publish_v1",
+--
+tests/packs/h3_av/test_receipt.py-77-
+tests/packs/h3_av/test_receipt.py-78-def _generation_intent() -> dict[str, object]:
+tests/packs/h3_av/test_receipt.py-79-    return {
+tests/packs/h3_av/test_receipt.py-80-        "version": 1,
+tests/packs/h3_av/test_receipt.py-81-        "modality": "video",
+tests/packs/h3_av/test_receipt.py:82:        "partial_success_policy": "reject",
+tests/packs/h3_av/test_receipt.py-83-        "groups": [
+tests/packs/h3_av/test_receipt.py-84-            {
+tests/packs/h3_av/test_receipt.py-85-                "group_key": "main",
+tests/packs/h3_av/test_receipt.py-86-                "selectors": [
+tests/packs/h3_av/test_receipt.py-87-                    {
+--
+tests/packs/h3_av/test_receipt.py-115-        "payload": {
+tests/packs/h3_av/test_receipt.py-116-            "version": 1,
+tests/packs/h3_av/test_receipt.py-117-            "modality": "video",
+tests/packs/h3_av/test_receipt.py-118-            "generation_type": "vibecomfy.run",
+tests/packs/h3_av/test_receipt.py-119-            "metadata": intent["metadata"],
+tests/packs/h3_av/test_receipt.py:120:            "partial_success_policy": "reject",
+tests/packs/h3_av/test_receipt.py-121-            "groups": [{"group_key": "main", "selectors": [selector]}],
+tests/packs/h3_av/test_receipt.py-122-        },
+tests/packs/h3_av/test_receipt.py-123-    }
+tests/packs/h3_av/test_receipt.py-124-    output = {
+tests/packs/h3_av/test_receipt.py-125-        "name": "vibecomfy_run",
+--
+tests/packs/h3_av/test_receipt.py-286-    )
+tests/packs/h3_av/test_receipt.py-287-    task["result"] = settled
+tests/packs/h3_av/test_receipt.py-288-    task["generation_intent"] = {
+tests/packs/h3_av/test_receipt.py-289-        "version": 1,
+tests/packs/h3_av/test_receipt.py-290-        "modality": "video",
+tests/packs/h3_av/test_receipt.py:291:        "partial_success_policy": "reject",
+tests/packs/h3_av/test_receipt.py-292-        "groups": [{
+tests/packs/h3_av/test_receipt.py-293-            "group_key": "main",
+tests/packs/h3_av/test_receipt.py-294-            "selectors": [{
+tests/packs/h3_av/test_receipt.py-295-                "selector": "final-composition",
+tests/packs/h3_av/test_receipt.py-296-                "ordinal": 0,
+--
+tests/packs/video_editing/test_draft_voiceover.py-325-    assert request['inputs']['text'] == 'Hello'
+tests/packs/video_editing/test_draft_voiceover.py-326-    assert {key: request['inputs'][key] for key in vo.DEFAULT_SETTINGS} == vo.DEFAULT_SETTINGS
+tests/packs/video_editing/test_draft_voiceover.py-327-    assert request['inputs']['generation_intent'] == {
+tests/packs/video_editing/test_draft_voiceover.py-328-        'version': 1,
+tests/packs/video_editing/test_draft_voiceover.py-329-        'modality': 'audio',
+tests/packs/video_editing/test_draft_voiceover.py:330:        'partial_success_policy': 'reject',
+tests/packs/video_editing/test_draft_voiceover.py-331-        'groups': [{'group_key': 'main', 'selectors': [{
+tests/packs/video_editing/test_draft_voiceover.py-332-            'selector': 'speech', 'ordinal': 0, 'variant_key': 'original', 'required': True,
+tests/packs/video_editing/test_draft_voiceover.py-333-        }]}],
+tests/packs/video_editing/test_draft_voiceover.py-334-        'metadata': {
+tests/packs/video_editing/test_draft_voiceover.py:335:            'content_type': 'audio', 'voice': vo.DEFAULT_SETTINGS['voice'],
+tests/packs/video_editing/test_draft_voiceover.py-336-            'text_sha256': vo.digest('Hello'),
+tests/packs/video_editing/test_draft_voiceover.py-337-        },
+tests/packs/video_editing/test_draft_voiceover.py-338-    }
+tests/packs/video_editing/test_draft_voiceover.py-339-    assert request['idempotency_context']
+tests/packs/video_editing/test_draft_voiceover.py-340-    assert result['runtime_context'] == {
+--
+tests/packs/video_editing/test_draft_voiceover.py-343-        'managed_output': {'output_port': 'speech', 'object_id': audio_id,
+tests/packs/video_editing/test_draft_voiceover.py-344-                           'association_id': 'association'},
+tests/packs/video_editing/test_draft_voiceover.py-345-        'generation_publish_v1': publication,
+tests/packs/video_editing/test_draft_voiceover.py-346-    }
+tests/packs/video_editing/test_draft_voiceover.py-347-
+tests/packs/video_editing/test_draft_voiceover.py:348:    explicit = {'version': 1, 'modality': 'audio', 'partial_success_policy': 'reject',
+tests/packs/video_editing/test_draft_voiceover.py-349-                'groups': [{'group_key': 'main', 'selectors': [
+tests/packs/video_editing/test_draft_voiceover.py-350-                    {'selector': 'speech', 'ordinal': 0, 'variant_key': 'original'}]}]}
+tests/packs/video_editing/test_draft_voiceover.py-351-    vo.runtime_synthesizer(client, 'p', generation_intent=explicit)('Hello', vo.DEFAULT_SETTINGS)
+tests/packs/video_editing/test_draft_voiceover.py-352-    assert calls[1]['inputs']['generation_intent'] is explicit
+tests/packs/video_editing/test_draft_voiceover.py-353-
+--
+tests/packs/fal/test_fal_foley_contract.py-37-        "fal_submit_and_poll",
+tests/packs/fal/test_fal_foley_contract.py-38-        lambda *args, **kwargs: {
+tests/packs/fal/test_fal_foley_contract.py-39-            "request_id": "request-1",
+tests/packs/fal/test_fal_foley_contract.py-40-            "audio": {
+tests/packs/fal/test_fal_foley_contract.py-41-                "url": "https://example.test/audio.wav",
+tests/packs/fal/test_fal_foley_contract.py:42:                "content_type": "audio/wav",
+tests/packs/fal/test_fal_foley_contract.py-43-                "file_name": "provider.wav",
+tests/packs/fal/test_fal_foley_contract.py-44-            },
+tests/packs/fal/test_fal_foley_contract.py-45-        },
+tests/packs/fal/test_fal_foley_contract.py-46-    )
+tests/packs/fal/test_fal_foley_contract.py-47-
+--
+tests/packs/fal/test_fal_foley_receiver.py-175-
+tests/packs/fal/test_fal_foley_receiver.py-176-    synthetic_result = {
+tests/packs/fal/test_fal_foley_receiver.py-177-        "request_id": "fixture-request",
+tests/packs/fal/test_fal_foley_receiver.py-178-        "audio": {
+tests/packs/fal/test_fal_foley_receiver.py-179-            "url": "https://fixture.invalid/audio.wav",
+tests/packs/fal/test_fal_foley_receiver.py:180:            "content_type": "audio/wav",
+tests/packs/fal/test_fal_foley_receiver.py-181-            "file_name": "fixture.wav",
+
+exec
+/bin/bash -lc "sed -n '1,130p' tests/sdk/test_generation_publication_adapter.py && sed -n '100,180p' astrid/sdk/generation.py" in /home/user/work/wt/agt-m2-speech-existing-publication-adapter
+ succeeded in 63ms:
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from collections.abc import Mapping
+from pathlib import Path
+
+import pytest
+
+from astrid.core.execution.generic_host import GenericPackHost
+from astrid.sdk.exceptions import CapabilityValidationError
+from astrid.sdk.invocation import get_capability
+from astrid.sdk.generation_publication import (
+    CAPABILITY_ID,
+    compose_image_publication_request,
+)
+
+
+def _actual_capability():
+    capability = get_capability(CAPABILITY_ID, kind="executor", include_elements=False)
+    assert isinstance(capability.definition, Mapping)
+    assert any(output.name == "generated_images" for output in capability.outputs)
+    return capability
+
+
+def _actual_host_record():
+    host = GenericPackHost(
+        pack_roots=[Path(__file__).resolve().parents[2] / "astrid/packs/generation"]
+    )
+    host.discover()
+    return host.capabilities[CAPABILITY_ID]
+
+
+def _request(capability, *, count: int = 3) -> dict[str, object]:
+    return {
+        "project": "project-ordinary-image",
+        "capability_digest": _actual_host_record().capability_digest,
+        "params": {
+            "model": "z-image",
+            "mode": "t2i",
+            "execution": "cloud",
+            "prompt": "a blue ceramic vase on a wooden table",
+            "count": count,
+            "size": "1024x1024",
+            "seed": 42,
+            "negative_prompt": "blurry",
+            "guidance_scale": 7.5,
+            "steps": 28,
+        },
+    }
+
+
+def test_compose_is_deterministic_and_uses_real_capability_outputs() -> None:
+    capability = _actual_capability()
+    host_record = _actual_host_record()
+    request = _request(capability)
+
+    first = compose_image_publication_request(request)
+    second = compose_image_publication_request(request)
+
+    assert first == second
+    assert first["project"] == request["project"]
+    assert first["capability_id"] == CAPABILITY_ID
+    assert first["capability_digest"] == request["capability_digest"]
+    assert first["capability_digest"] == host_record.capability_digest
+    assert first["input_object_ids"] == []
+    assert first["storage_estimate"] == {
+        "scratch_bytes": 69_206_016,
+        "output_bytes": 269_484_032,
+    }
+    intent = first["generation_intent"]
+    assert intent == {
+        "version": 1,
+        "modality": "image",
+        "partial_success_policy": "reject",
+        "groups": [
+            {
+                "group_key": "main",
+                "selectors": [
+                    {"selector": "main-0", "ordinal": 0, "variant_key": "original"},
+                    {"selector": "main-1", "ordinal": 1, "variant_key": "variant-1"},
+                    {"selector": "main-2", "ordinal": 2, "variant_key": "variant-2"},
+                ],
+            }
+        ],
+    }
+    effect = first["settlement_effect"]
+    assert effect["effect_type"] == "generation.publish_v1"
+    assert effect["target_id"] == request["project"]
+    assert effect["payload"]["groups"][0]["selectors"] == [
+        {
+            "selector": "main-0",
+            "ordinal": 0,
+            "variant_key": "original",
+            "output_port": "generated_images",
+        },
+        {
+            "selector": "main-1",
+            "ordinal": 1,
+            "variant_key": "variant-1",
+            "output_port": "generated_images",
+        },
+        {
+            "selector": "main-2",
+            "ordinal": 2,
+            "variant_key": "variant-2",
+            "output_port": "generated_images",
+        },
+    ]
+    assert "image_manifest" not in json.dumps(effect)
+
+
+def test_compose_digest_matches_generic_pack_host_registration() -> None:
+    capability = _actual_capability()
+    host_record = _actual_host_record()
+    composed = compose_image_publication_request(_request(capability, count=1))
+
+    assert composed["capability_digest"] == host_record.capability_digest
+
+
+@pytest.mark.parametrize(
+    "mutator, match",
+    [
+        (lambda request: request.update({"settlement_effect": {}}), "unsupported field"),
+        (
+            lambda request: request["params"].update({"generation_intent": {}}),
+            "unsupported parameter",
+        ),
+        (
+
+
+def _infer_video_mode(
+    explicit_mode: str | None,
+    inputs: dict[str, Any],
+) -> str:
+    """Infer the video generation mode."""
+    if explicit_mode is not None:
+        return explicit_mode
+
+    has_image_ref = bool(inputs.get("image_ref"))
+    has_image_end_ref = bool(inputs.get("image_end_ref"))
+
+    if has_image_ref and has_image_end_ref:
+        return "flf"
+    if has_image_ref:
+        return "i2v"
+    return "t2v"
+
+
+def _resolve_execution(
+    model_entry: Any,
+    mode: str,
+    explicit_execution: str | None,
+    *,
+    model: str,
+) -> str:
+    """Validate or infer the execution backend for *(model, mode)*."""
+    mode_spec = model_entry.modes.get(mode)
+    if mode_spec is None:
+        available_modes = ", ".join(sorted(model_entry.modes))
+        raise CapabilityValidationError(
+            f"Model {model!r} does not support mode {mode!r}. "
+            f"Available modes: {available_modes}"
+        )
+
+    backend_ids = list(mode_spec.backends.keys())
+    if not backend_ids:
+        raise CapabilityValidationError(
+            f"Model {model!r} mode {mode!r} has no configured backends"
+        )
+
+    if explicit_execution is not None:
+        if explicit_execution not in backend_ids:
+            raise CapabilityValidationError(
+                f"Execution {explicit_execution!r} is not available for "
+                f"model {model!r} mode {mode!r}. "
+                f"Available: {', '.join(sorted(backend_ids))}"
+            )
+        return explicit_execution
+
+    inference_backend_ids = [
+        backend_id for backend_id in backend_ids if backend_id != "codex"
+    ] or backend_ids
+    if len(inference_backend_ids) == 1:
+        return inference_backend_ids[0]
+
+    raise CapabilityValidationError(
+        f"Ambiguous execution for model {model!r} mode {mode!r}. "
+        f"Available backends: {', '.join(sorted(backend_ids))}. "
+        f"Please specify one explicitly via the 'execution' parameter."
+    )
+
+
+def _resolve_invoke_destination(
+    *,
+    out: Path | str | None,
+    project: str | None,
+    project_root: str | Path | None,
+    client: Any | None = None,
+) -> tuple[Path | str | None, str | None]:
+    del project_root  # project roots discover packs; they never select ownership.
+    from astrid.core.project.guidance import (
+        format_project_required_guidance,
+        selected_project,
+    )
+
+    selected, _source = selected_project(project)
+    if selected is None:
+        from astrid.sdk.invocation import _runtime_selected_project
+
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-speech-existing-publication-adapter.md && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-existing-publication-adapter/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-existing-publication-adapter/commit-msg.txt && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-existing-publication-adapter/DONE && git diff --check && git status --short' in /home/user/work/wt/agt-m2-speech-existing-publication-adapter
+ succeeded in 683ms:
+ M astrid/packs/video_editing/shared/draft_voiceover.py
+ M astrid/sdk/invocation.py
+ M tests/packs/video_editing/test_draft_voiceover.py
+ M tests/sdk/test_projectless_admission.py
+
+codex
+Implemented the narrow speech publication adapter.
+
+- Added exact v1 audio intent for `speech/main/original/ordinal 0`.
+- Preserved explicit caller intent, text/settings, idempotency, readable audio, and RIPPLE behavior.
+- Retained terminal Runtime task/attempt/association/publication context.
+- Added focused admission/context tests; no Runtime/API/DTO or publisher changes.
+
+Tests: `76 passed in 3.42s`; `git diff --check` passed. Ruff remains non-clean due existing legacy findings.
+
+Report/design/commit message and `DONE` marker written under the orchestrator paths. Live Runtime settlement remains unverified pending the counterpart fixture.
+tokens used
+344,762
+Implemented the narrow speech publication adapter.
+
+- Added exact v1 audio intent for `speech/main/original/ordinal 0`.
+- Preserved explicit caller intent, text/settings, idempotency, readable audio, and RIPPLE behavior.
+- Retained terminal Runtime task/attempt/association/publication context.
+- Added focused admission/context tests; no Runtime/API/DTO or publisher changes.
+
+Tests: `76 passed in 3.42s`; `git diff --check` passed. Ruff remains non-clean due existing legacy findings.
+
+Report/design/commit message and `DONE` marker written under the orchestrator paths. Live Runtime settlement remains unverified pending the counterpart fixture.

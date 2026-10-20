@@ -1,0 +1,400 @@
++    assert _raw_audio_trim_pin(original, {'op': 'clip.trim', 'select': REF},
++        read_manifest=lambda: manifest) == (row if damage is None else None)
++
++
+ @pytest.mark.parametrize('metadata', [
+     None,
+     {'object_id': 'sha256:' + '4' * 64, 'media_type': 'audio/wav', 'size': 1234,
+diff --git a/tests/sdk/test_timeline_sync_native.py b/tests/sdk/test_timeline_sync_native.py
+index da007e2e26db2e1d6289a187ae0dbbaf52f5d8d6..7111fc46c1abe665626fc99c5003112c979982c4
+--- a/tests/sdk/test_timeline_sync_native.py
++++ b/tests/sdk/test_timeline_sync_native.py
+@@ -2,8 +2,11 @@
+ from __future__ import annotations
+ 
+ import copy
++import io
+ import json
+ from pathlib import Path
++from types import SimpleNamespace
++import wave
+ 
+ import pytest
+ 
+@@ -20,6 +23,52 @@
+ REF = 'parent/track:picture'
+ 
+ 
++@pytest.mark.parametrize('damage', [None, 'project_id', 'timeline_id', 'revision_id',
++                                  'content_digest', 'membership'])
++def test_raw_trim_reads_original_manifest_after_peer_head_advances(connected, monkeypatch, damage):
++    client, generated, path = connected
++    bundle = generated.bundles['r0']
++    media = 'sha256:' + '3' * 64
++    bundle['parent']['registry'] = {'assets': {'voice': {'object_id': media, 'type': 'audio'}}}
++    bundle['parent']['config']['tracks'][0]['kind'] = 'audio'
++    bundle['parent']['clips'][0].update(clipType='audio', asset='voice', params={})
++    original = {**bundle['base_parent'], 'project_id': 'p', 'timeline_id': 't',
++                'dependency_manifest': {'media': [{'media_id': media, 'content_digest': media}]}}
++    original['revision_id'] = 'r0'
++    if damage == 'membership':
++        original['dependency_manifest']['media'] = []
++    elif damage is not None:
++        original[damage] = 'peer-value'
++    audio = io.BytesIO()
++    with wave.open(audio, 'wb') as output:
++        output.setparams((1, 2, 8000, 0, 'NONE', 'not compressed'))
++        output.writeframes(b'\x00\x00' * 48000)
++    reads = []
++
++    def revision(project, timeline, identity):
++        reads.append((project, timeline, identity))
++        return copy.deepcopy(original)
++
++    monkeypatch.setattr(client._remote._transport, 'get_project_parent_composition_revision', revision)
++    client.media = SimpleNamespace(read_bytes=lambda identity: audio.getvalue()
++        if identity == media else pytest.fail('read another media object'))
++    session = open_session(connected)
++    monkeypatch.setattr(session, 'flush', lambda **options: session.outbox.read()['pending'])
++    generated.head = {'revision_id': 'peer', 'publication_id': 'peer-publication'}
++    persisted = path.read_bytes()
++    if damage is None:
++        command, = session.trim('parent/clip:a', out_s=4)
++        assert {'ref': 'media:' + media, 'path': ['duration_seconds'],
++                'state': {'state': 'present', 'value': 6}} in command['reads']
++        assert session.outbox.read()['base'] == {'revision_id': 'r0', 'publication_id': 'pub0'}
++    else:
++        with pytest.raises(TimelineEditError):
++            session.trim('parent/clip:a', out_s=4)
++        assert path.read_bytes() == persisted
++    assert reads == [('p', 't', 'r0')]
++    assert generated.calls == []
++
++
+ def label(value='', *, clear=False):
+     return {'schema_version': 1, 'op': 'track.set', 'version': '1', 'select': REF,
+             'args': {'values': {} if clear else {'label': value},
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sync_native.py -k raw_trim' in /home/user/work/wt/agt-m2-raw-public-base-manifest
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/sync.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_commit_runtime_raw_audio_trim.py tests/sdk/test_timeline_sync_native.py; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180418-5620/status; tail -25 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180418-5620/log.txt' in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ exited 1 in 219ms:
+tests/sdk/test_timeline_sync_native.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+   |
+ 1 |   """Native registry commands share the M1 outbox without recapturing claims."""
+ 2 | / from __future__ import annotations
+ 3 | |
+ 4 | | import copy
+ 5 | | import io
+ 6 | | import json
+ 7 | | from pathlib import Path
+ 8 | | from types import SimpleNamespace
+ 9 | | import wave
+10 | |
+11 | | import pytest
+12 | |
+13 | | from astrid.sdk.timeline._command_state import CommandError, State
+14 | | from astrid.sdk.timeline._common import TimelineEditError
+15 | | from astrid.sdk.timeline._track_commands import capture_track_set
+16 | | from astrid.sdk.timeline.commands import execute
+17 | | from astrid.sdk.timeline.sync import CommitConflict
+18 | | from astrid.sdk.workspace_client import WorkspaceClientError
+19 | | from tests.sdk import test_timeline_sync
+20 | | from tests.sdk.test_timeline_sync import initial_bundle, open_session
+   | |_____________________________________________________________________^ I001
+21 |
+22 |   connected = test_timeline_sync.connected
+   |
+   = help: Organize imports
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+error
+tail: cannot open '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180418-5620/log.txt' for reading: No such file or directory
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180418-5620/summary; tail -15 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/targeted.log; /home/user/work/venv-agent/bin/ruff check --fix tests/sdk/test_timeline_sync_native.py' in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 6288ms:
+......                                                                   [100%]
+6 passed, 31 deselected in 2.30s
+
+ succeeded in 399ms:
+bad file arg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/test_runtime_pair.py (relative path/glob/node-id, no ..)
+........................................................................ [ 30%]
+........................................................................ [ 61%]
+..................................................Found 1 error (1 fixed, 0 remaining).
+
+codex
+The first local run caught an unnecessary manifest read on trims that already had authored duration. I’ve made the read lazy; those existing expectations remain unchanged. Six focused checks now pass for original-base selection, peer head movement, scope mismatches, and missing pin membership. The central runner rejected my two request argument forms before starting tests; I’m correcting the invocation.
+ succeeded in 54654ms:
+exec
+/bin/bash -lc 'ln -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/test_runtime_pair.py _test_raw_runtime_pair.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-raw-public-base-manifest native014-sockets-integration --files _test_raw_runtime_pair.py' in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 231ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180515-5285/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180515-5285
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/sync.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_commit_runtime_raw_audio_trim.py tests/sdk/test_timeline_sync_native.py; git rev-parse HEAD HEAD''^{tree}; git -C /home/user/work/wt/rt-pin-7d1cfa6b rev-parse HEAD HEAD''^{tree}; git -C /home/user/work/wt/rt-pin-7d1cfa6b status --short' in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 106ms:
+All checks passed!
+f97b2b87688abb20280572a5fc23e4f69ec9e3f8
+b229a2856c7aad8afe2faf2fdf61fa4f78bcc2b6
+7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e
+ac693097189637d3bd0fc3a39299d9b166758853
+
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/targeted.log; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180515-5285/status; tail -30 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180515-5285/log.txt; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/progress-publish | head -30' in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 199ms:
+........................................................................ [ 30%]
+........................................................................ [ 61%]
+........................................................................ [ 91%]
+....................                                                     [100%]
+236 passed in 51.28s
+running
+
+=============================== warnings summary ===============================
+tests/editing_conformance/test_commit_runtime_m1.py:17
+  /home/user/work/wt/.test-agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180515-5285/tests/editing_conformance/test_commit_runtime_m1.py:17: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+tests/editing_conformance/test_commit_runtime_raw_audio_trim.py:15
+  /home/user/work/wt/.test-agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180515-5285/tests/editing_conformance/test_commit_runtime_raw_audio_trim.py:15: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2 deselected, 2 warnings in 0.33s
+#!/usr/bin/env bash
+# progress-publish: rebuild the tracker data, then print the upload steps.
+# Uploading to the dashboard needs the Artifact tool, which a shell script cannot call,
+# so the upload itself is done by a subagent following delivery/progress/HOWTO.md.
+set -euo pipefail
+ORCH="${ORCH:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+export ORCH
+"$ORCH/bin/progress-json"
+echo
+echo "Data is ready in $ORCH/delivery/progress/. Next: a subagent uploads it by following:"
+echo "  $ORCH/delivery/progress/HOWTO.md"
+echo "Files to upload: milestones m1_exit gates areas merges_by_hour blockers (.json)"
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/test_runtime_pair.py <<'PY'
+\"\"\"Central-only runner for the frozen Runtime raw-media port candidate.\"\"\"
+import os
+import pytest
+os.environ['ASTRID_RUNTIME_CHECKOUT'] = '/home/user/work/wt/rt-pin-7d1cfa6b'
+pytest_plugins = ['tests.conftest']
+pytestmark = pytest.mark.integration
+from tests.editing_conformance.test_commit_runtime_raw_audio_trim import test_public_raw_audio_trim_and_undo_without_authored_duration  # noqa: F401, E402
+PY
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-raw-public-base-manifest native014-sockets-integration --files _test_raw_runtime_pair.py --no-cache" in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 560ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366/
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366/status; tail -45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366/log.txt; git diff --check; git diff --numstat' in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 180ms:
+queued
+tail: cannot open '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366/log.txt' for reading: No such file or directory
+4	3	astrid/sdk/timeline/commit.py
+11	1	astrid/sdk/timeline/sync.py
+20	0	tests/editing_conformance/test_recipe_m2_clip_trim.py
+49	0	tests/sdk/test_timeline_sync_native.py
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366' in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 121ms:
+test agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366: pass exit=0 in 10s — native014-sockets-integration on agt-m2-raw-public-base-manifest (agent tree 071a0622ffe0f61c47888e92ea7796fb8c31e500)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration _test_raw_runtime_pair.py
+counts: 2 passed, 3 warnings in 6.42s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366/log.txt ---
+..                                                                       [100%]
+=============================== warnings summary ===============================
+_test_raw_runtime_pair.py:6
+  /home/user/work/wt/.test-agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366/_test_raw_runtime_pair.py:6: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+tests/editing_conformance/test_commit_runtime_m1.py:17
+  /home/user/work/wt/.test-agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366/tests/editing_conformance/test_commit_runtime_m1.py:17: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+tests/editing_conformance/test_commit_runtime_raw_audio_trim.py:15
+  /home/user/work/wt/.test-agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366/tests/editing_conformance/test_commit_runtime_raw_audio_trim.py:15: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2 passed, 3 warnings in 6.42s
+
+codex
+The central HTTP regression passed both cases: genuine WAV trim/undo with authored duration absent, and malformed-byte refusal with unchanged history and outbox. Local coverage also passed: 236 existing/neighbor tests plus six new authority checks. I’m writing the report and commit message, including the request for Runtime to rerun only the original failed node after the harness creates the new SHA.
+exec
+/bin/bash -lc "rg -n '"'^def test_|@pytest.mark.parametrize'"' /home/user/work/wt/rt-pin-7d1cfa6b/tests/test_timeline_public_s2_mixed_cli_journey.py; /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/sync.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_commit_runtime_raw_audio_trim.py tests/sdk/test_timeline_sync_native.py; git diff --check; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366/snap; sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/test_runtime_pair.py" in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 792ms:
+205:@pytest.mark.parametrize("journey_film", [
+214:def test_public_cli_stale_trim_rebases_label_lost_ack_restart_retry_and_undo(
+All checks passed!
+tree=071a0622ffe0f61c47888e92ea7796fb8c31e500
+key=ffce4234ed91174a7a90f688755e2799
+worktree=/home/user/work/wt/agt-m2-raw-public-base-manifest
+9cf53df1470bc761cb094d8f7ad34963c68516cfa8b8ce58fa71e695f829ca9f  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/test_runtime_pair.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib, subprocess
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest')
+tree = '071a0622ffe0f61c47888e92ea7796fb8c31e500'
+entries = subprocess.check_output(['git', 'ls-tree', '-z', tree]).split(b'\\0')
+content = b''
+for entry in entries:
+    if not entry:
+        continue
+    metadata, name = entry.split(b'\\t', 1)
+    if name == b'_test_raw_runtime_pair.py':
+        continue
+    mode, kind, identity = metadata.split()
+    content += mode.lstrip(b'0') + b' ' + name + b'\\0' + bytes.fromhex(identity.decode())
+final_tree = hashlib.sha1(b'tree ' + str(len(content)).encode() + b'\\0' + content).hexdigest()
+(root / 'source-tree.txt').write_text(final_tree + '\\n')
+Path('_test_raw_runtime_pair.py').unlink()
+print('Final tree without temporary central-runner symlink:', final_tree)
+PY" in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 517ms:
+Final tree without temporary central-runner symlink: 4812245b80d2e8b4180c930b6d7bb8264524c8df
+
+exec
+/bin/bash -lc "sed -n '203,217p' /home/user/work/wt/rt-pin-7d1cfa6b/tests/test_timeline_public_s2_mixed_cli_journey.py; git diff --stat; git status --short" in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 257ms:
+
+
+@pytest.mark.parametrize("journey_film", [
+    pytest.param("historical-audio", marks=pytest.mark.xfail(
+        strict=True, raises=HistoricalAudioCaptureGap,
+        reason="M2 historical audio capture: /tmp/claude-0/-home-user-repo/"
+               "7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/"
+               "runtime-public-s2-literal-journey.md#original-audio-requirement",
+    )),
+    "literal-media",
+], indirect=True)
+def test_public_cli_stale_trim_rebases_label_lost_ack_restart_retry_and_undo(
+    journey_film, renderer_off, tmp_path, monkeypatch, capsys,
+):
+    from astrid.sdk.timeline._scalar_commands import capture_track_set
+ astrid/sdk/timeline/commit.py                      |  7 ++--
+ astrid/sdk/timeline/sync.py                        | 12 +++++-
+ .../test_recipe_m2_clip_trim.py                    | 20 +++++++++
+ tests/sdk/test_timeline_sync_native.py             | 49 ++++++++++++++++++++++
+ 4 files changed, 84 insertions(+), 4 deletions(-)
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+ M tests/sdk/test_timeline_sync_native.py
+?? tests/editing_conformance/test_commit_runtime_raw_audio_trim.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest')
+paths = ['astrid/sdk/timeline/commit.py', 'astrid/sdk/timeline/sync.py', 'tests/editing_conformance/test_recipe_m2_clip_trim.py', 'tests/editing_conformance/test_commit_runtime_raw_audio_trim.py', 'tests/sdk/test_timeline_sync_native.py']
+(root / 'source-sha256.txt').write_text(''.join(hashlib.sha256(Path(p).read_bytes()).hexdigest() + '  ' + p + '\\n' for p in paths))
+msg = '''fix(timeline): read raw trim pins from the original public base
+
+Read the original revision manifest lazily for raw-audio trim preflight,
+checking scope and content identity without inventing a private bundle document.
+Keep Runtime duration verification and exact media read guards unchanged.
+
+Cover public HTTP WAV trim/undo without authored duration, malformed bytes
+with no accepted writes, and original-base authority after a peer advances.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (root / name).write_text(msg)
+(root / 'runtime-rerun-request.md').write_text('''After the harness creates the new Agent commit on "'`tl/agt-m2-raw-public-base-manifest`, rerun ONLY the original historical-audio failed node in `tests/test_timeline_public_s2_mixed_cli_journey.py::test_public_cli_stale_trim_rebases_label_lost_ack_restart_retry_and_undo` against that exact new SHA. Do not rerun a full suite or duplicate the whole journey. The Agent source tree to match is `4812245b80d2e8b4180c930b6d7bb8264524c8df`.
+
+Runtime owns the authorized fixture-only repair: genuine WAV bytes, authored duration ABSENT, original positive assertions preserved. Agent did not edit Runtime or that historical fixture. The new direct HTTP regression passed both genuine WAV trim/undo and malformed 19-byte refusal on frozen Runtime `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`.
+
+The earlier literal node passed accept/undo in the prior trace; its downstream wire-observation failure belongs to Runtime, with its original positive assertions retained.
+'"''')
+PY" in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180515-5285/exit; wc -l tests/editing_conformance/test_commit_runtime_raw_audio_trim.py; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/source-tree.txt' in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 12ms:
+5
+89 tests/editing_conformance/test_commit_runtime_raw_audio_trim.py
+4812245b80d2e8b4180c930b6d7bb8264524c8df
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/report.md <<'EOF'
+Implemented the public raw-audio trim preflight repair. "'`TimelineSession.trim` lazily reads the exact original outbox revision through the existing public composition-revision transport, verifies project/timeline/revision/content digest, and passes its manifest to the existing pin helper. No private `_runtime_document` is added to public bundles. Authored-duration trims keep their existing path without an extra read. Runtime still recomputes metadata and verifies the original exact duration read; no guard is refreshed.
+
+Source:
+
+- Agent parent commit: `f97b2b87688abb20280572a5fc23e4f69ec9e3f8`; parent tree `b229a2856c7aad8afe2faf2fdf61fa4f78bcc2b6`.
+- Final deliverable tree: `4812245b80d2e8b4180c930b6d7bb8264524c8df` (computed without writing Git objects, by removing the temporary runner symlink from the central snapshot'"'s top-level tree). Per-file hashes: "'`source-sha256.txt` in this directory. Harness creates the new commit after exit; no new commit SHA is available inside this worker.
+- Central tested tree `071a0622ffe0f61c47888e92ea7796fb8c31e500` differs only by `_test_raw_runtime_pair.py`, a temporary symlink to this worker'"'s central-only runner. The symlink was removed afterward; no product/test change followed the successful central run.
+- Frozen Runtime actually exercised: "'`7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`, clean tree `ac693097189637d3bd0fc3a39299d9b166758853`. The external runner explicitly overrides the named suite'"'s Runtime environment to this raw-media-port candidate. This is not qualification of current Runtime integration or a public release/pin.
+- Runner SHA-256: "'`9cf53df1470bc761cb094d8f7ad34963c68516cfa8b8ce58fa71e695f829ca9f` (`test_runtime_pair.py` in this directory).
+
+Validation commands and results:
+
+```bash
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/packs/timeline/test_cli_commit_trim.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_sync.py
+```
+
+**236 passed in 51.28s.** Captured in `targeted.log`. This run preceded addition of the six focused Session authority cases; the implementation was already final.
+
+```bash
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sync_native.py -k raw_trim
+```
+
+**6 passed, 31 deselected in 2.30s.** Covers original revision selection after a peer advances, scope/revision/content-digest mismatch refusal, and absent original manifest membership, with unchanged outbox on refusal.
+
+```bash
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+$O/bin/request-test agt-m2-raw-public-base-manifest native014-sockets-integration --files _test_raw_runtime_pair.py --no-cache
+$O/bin/wait-test agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366
+```
+
+**2 passed, 3 marker-registration warnings in 6.42s; service exit 0.** Full command/log/summary: `tests/agt-m2-raw-public-base-manifest-native014-sockets-integration-1020180536-17366/` under ORCH. The warnings come from running the external wrapper outside the repository'"'s pytest config; the integration marker is explicitly applied and both intended cases ran. The wrapper imports the committed test from "'`tests/editing_conformance/test_commit_runtime_raw_audio_trim.py` and registers the normal repository fixtures.
+
+The genuine WAV case uses six seconds of real WAV PCM bytes, with registry duration ABSENT, source `object_id` derived normally by Runtime ingestion, authored hold 2 and speed 2. Normal public HTTP hydration has no private Runtime document. Trim 1..4 accepts with source hold 3/speed 2, records the exact intrinsic-duration read of 6, reloads, and undoes to the exact original parent payload and dependency manifest. The malformed case uses the original 19 bytes `synthetic-music-bed`, refuses visibly before enqueue, and preserves outbox bytes and complete accepted history. Existing END/interior rounding/source-hold semantics and duration-change guard tests pass unchanged.
+
+```bash
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/sync.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_commit_runtime_raw_audio_trim.py tests/sdk/test_timeline_sync_native.py
+git diff --check
+```
+
+**Both passed.** Product delta: 15 additions / 4 deletions across commit.py and sync.py. Added direct tests only (no API/DTO/schema/Runtime/CLI/release/fixture-archive changes). No new skip/xfail, removed assertions, shared dependency writes, or full-suite requests.
+
+Superseded attempts, recorded honestly:
+
+- First local run: **10 failed / 226 passed** because an unconditional revision read affected existing authored-duration tests. Corrected by making manifest retrieval lazy; original tests unchanged and the subsequent 236-case run passed.
+- Central requests `...targeted-1020180310-4767` and `...native014-sockets-integration-1020180418-5620` were rejected by the service'"'s file-argument validator ("'`-m` and an absolute path respectively); no tests ran.
+- Central `...native014-sockets-integration-1020180515-5285`: **2 deselected, exit 5**, because the external wrapper had not inherited the imported test module'"'s integration marker. Added the wrapper marker and normal fixtures, then obtained the 2-pass run above. These wrapper corrections were outside product source.
+
+Decision: reused an exact public original-revision manifest read, delivered lazily to the existing helper. Inferring pins from registry content or using the current head would broaden authority; neither is used. The separate new test seeds a local genuine WAV fixture through normal Runtime APIs; it does not rewrite the historical fixture or inject authored duration. The authorized repair of the original historical fixture remains Runtime-owned.
+
+No worker implementation blocker remains. Integration follow-up is explicitly unverified: Runtime must perform its authorized genuine-WAV fixture repair while retaining absent authored duration and ALL original positive assertions, then rerun ONLY the original historical-audio failed node after the harness supplies this worker's new SHA. See "'`runtime-rerun-request.md`. I did not rerun the original journey, edit Runtime, change existing xfails, or claim current Runtime integration is qualified. The earlier literal observation failure is separately Runtime-owned; its prior actual accept/undo already passed. No full suite is requested or recommended for this bounded handoff.
+EOF
+: > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/DONE' in /home/user/work/wt/agt-m2-raw-public-base-manifest
+ succeeded in 38ms:
+codex
+Implemented public raw-audio trim preflight using the exact original revision manifest, preserving pin authority and Runtime duration guards.
+
+- Tests: 236 neighboring tests, 6 authority checks, and 2 central HTTP WAV/malformed cases passed. Ruff and diff checks passed.
+- Wrote both commit-message files and `DONE`.
+- Remaining: Runtime’s authorized historical fixture repair and original failed-node rerun after the harness creates the new SHA.
+
+[Report with exact commands, source tree, results, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/report.md).
+tokens used
+163,573
+Implemented public raw-audio trim preflight using the exact original revision manifest, preserving pin authority and Runtime duration guards.
+
+- Tests: 236 neighboring tests, 6 authority checks, and 2 central HTTP WAV/malformed cases passed. Ruff and diff checks passed.
+- Wrote both commit-message files and `DONE`.
+- Remaining: Runtime’s authorized historical fixture repair and original failed-node rerun after the harness creates the new SHA.
+
+[Report with exact commands, source tree, results, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-public-base-manifest/report.md).

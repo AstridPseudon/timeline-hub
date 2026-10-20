@@ -1,0 +1,400 @@
+     for key, value in (('from', source_in), ('to', source_out), ('hold', hold)):
+         ctx.write(ref, [key], value)
+@@ -92,10 +138,10 @@
+         ctx.clear(ref, ['app'])
+ 
+ 
+-def capture_clip_trim(bundle, select, *, in_s=None, out_s=None):
++def capture_clip_trim(bundle, select, *, in_s=None, out_s=None, verified_media=()):
+     """Capture original claims. Null endpoints retain the current/default bound."""
+     from .commands import execute
+ 
+     return execute(bundle, [{'schema_version': 1, 'op': 'clip.trim', 'version': '1',
+                              'select': select, 'args': {'in_s': in_s, 'out_s': out_s},
+-                             'intent': {}}]).commands[0]
++                             'intent': {}}], verified_media=verified_media).commands[0]
+diff --git a/astrid/sdk/timeline/native_occurrence_media_commands.py b/astrid/sdk/timeline/native_occurrence_media_commands.py
+index 6723a656e12e66c361e3230a7b89e0fc81860f97..bff9314a615f7d1b76bb0d79e27c37e0f4c709a6
+--- a/astrid/sdk/timeline/native_occurrence_media_commands.py
++++ b/astrid/sdk/timeline/native_occurrence_media_commands.py
+@@ -144,9 +144,10 @@
+     track = owner + '/track:' + str(row.get('track'))
+     ctx.select('collection.tracks', owner)
+     value = ctx.read(track)
+-    if (not isinstance(value, dict) or value.get('kind') != 'visual'
++    track_kind = 'audio' if kind == 'audio' else 'visual'
++    if (not isinstance(value, dict) or value.get('kind') != track_kind
+             or value.get('role', 'output') != 'output' or not active(value)):
+-        raise CommandError('media edit requires an active raw visual child track')
++        raise CommandError(f'media edit requires an active raw {track_kind} child track')
+     ctx.bind('media.track', track)
+ 
+ 
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_media.py b/tests/editing_conformance/test_commit_runtime_parent_media.py
+index de7bbd754076797f4287e0a8237ebcf10ed39d19..022110525953f2ad429a495065c3463b3cac1472
+--- a/tests/editing_conformance/test_commit_runtime_parent_media.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_media.py
+@@ -8,6 +8,8 @@
+ 
+ import copy
+ import hashlib
++import io
++import wave
+ from types import SimpleNamespace
+ 
+ import pytest
+@@ -24,6 +26,18 @@
+ pytestmark = pytest.mark.integration
+ 
+ 
++def tiny_wav(seed):
++    """Return a small, valid PCM WAV with a content-distinct first sample."""
++    samples = bytes((seed, 0)) + b'\x00\x00' * 1999
++    stream = io.BytesIO()
++    with wave.open(stream, 'wb') as output:
++        output.setnchannels(1)
++        output.setsampwidth(2)
++        output.setframerate(8000)
++        output.writeframes(samples)
++    return stream.getvalue()
++
++
+ def call(op, args, select='parent'):
+     return {'schema_version': 1, 'op': op, 'version': '1', 'select': select, 'args': args}
+ 
+@@ -54,13 +68,18 @@
+     return tuple(editing.service.store.conn.iterdump())
+ 
+ 
+-def row(editing, identity='reserved-row', *, asset=None, track='visual'):
+-    value = {'id': identity, 'clipType': editing.kind, 'track': track,
++def row(editing, identity='reserved-row', *, asset=None, track=None):
++    track = track or ('voiceover' if editing.kind == 'audio' else 'visual')
++    clip_type = 'media' if editing.kind == 'audio' else editing.kind
++    hold = .25 if editing.kind == 'audio' else 4 if editing.kind == 'video' else 1.25
++    value = {'id': identity, 'clipType': clip_type, 'track': track,
+              'asset': asset or editing.pins['new']['asset'], 'at': .125,
+-             'hold': 4 if editing.kind == 'video' else 1.25, 'params': None,
++             'hold': hold, 'params': None,
+              'opaque': {'values': [None, False, {}, []], 'literal': 'target'}}
+     if editing.kind == 'video':
+         value.update({'from': 2, 'to': 6, 'speed': 2})
++    elif editing.kind == 'audio':
++        value.update({'from': 0, 'to': hold})
+     else:
+         value['speed'] = None
+     return value
+@@ -106,7 +125,8 @@
+             {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': kind}
+             for index, name in enumerate(('old', 'new', 'unrelated'))]}])
+         value['payload']['metadata'] = {'prompt': 'parent media source',
+-                                       'params': {'duration_seconds': 6} if kind == 'video' else {}}
++                                       'params': {'duration_seconds': 6} if kind == 'video' else
++                                                 {'duration_seconds': .25} if kind == 'audio' else {}}
+         return value
+ 
+     if historical:
+@@ -147,9 +167,13 @@
+     monkeypatch.setattr(RequestCommitPort, 'selected_media', selected)
+     monkeypatch.setattr(RequestCommitPort, 'accept', accepted)
+     try:
+-        outputs = [_output(name.encode(), output_port=kind, group_key='main', variant_key=name,
+-                           ordinal=index, filename=name + ('.mp4' if kind == 'video' else '.png'),
+-                           media_type=kind + ('/mp4' if kind == 'video' else '/png'))
++        outputs = [_output(tiny_wav(index + 1) if kind == 'audio' else name.encode(),
++                           output_port=kind, group_key='main', variant_key=name,
++                           ordinal=index, filename=name + ('.wav' if kind == 'audio' else
++                                                           '.mp4' if kind == 'video' else '.png'),
++                           media_type='audio/wav' if kind == 'audio' else
++                                      kind + ('/mp4' if kind == 'video' else '/png'),
++                           **({'duration_seconds': .25} if kind == 'audio' else {}))
+                    for index, name in enumerate(('old', 'new', 'unrelated'))]
+         _settle(service, attempt, outputs, effect=admitted)
+         editing.associations = service.managed_outputs(task['task']['id'])
+@@ -165,8 +189,10 @@
+             # authenticated pre-cut backup, through the normal history read.
+             service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize)
+         if not pristine:
+-            tracked = capture_track_create(bundle_from_document(current(editing)), 'parent', {
+-                'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False]})
++            tracked = capture_track_create(bundle_from_document(current(editing)), 'parent',
++                                           {'id': 'voiceover', 'kind': 'audio'} if kind == 'audio' else {
++                                               'id': 'visual', 'kind': 'visual', 'role': 'output',
++                                               'opaque': [None, False]})
+             commit(editing, body(editing, [tracked]), 'visual-track')
+         editing.selected.clear()
+         editing.candidates.clear()
+@@ -185,6 +211,11 @@
+     yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+ 
+ 
++@pytest.fixture
++def real_audio(tmp_path, monkeypatch):
++    yield from media_realm(tmp_path, monkeypatch, 'audio', historical=False)
++
++
+ def test_fresh_film_first_media_birth_and_exact_inverse(custody, monkeypatch):
+     baseline = current(custody)
+     assert baseline['parent_revision']['payload']['registry'] == {}
+@@ -192,6 +223,46 @@
+     assert current(custody) == baseline
+ 
+ 
++def test_real_managed_audio_birth_reload_guarded_undo_and_redo(real_audio, monkeypatch):
++    from runtime_protocol.timeline_commit_validation import validate_commit_value
++
++    from tests.editing_conformance.test_next_command_cohort_runtime import reopen
++
++    baseline = current(real_audio)
++    value = row(real_audio, 'voiceover-new')
++    request = body(real_audio, [birth(real_audio, value)], dry_run=True)
++    validate_commit_value(request, 'CommitRequest')
++    preview = commit(real_audio, request, 'real-audio-preview')
++    assert preview['receipt'] is None
++    assert real_audio.selected[-1]['selection'] == real_audio.pins['new']
++    assert real_audio.selected[-1]['media_type'] == 'audio/wav'
++    assert real_audio.selected[-1]['duration_seconds'] == pytest.approx(.25)
++
++    request['dry_run'] = False
++    created = commit(real_audio, request, 'real-audio-birth')
++    document = created['data']['canonical_document']
++    created_row = next(clip for clip in document['parent_revision']['payload']['clips']
++                       if clip['id'] == 'voiceover-new')
++    assert created_row == value
++    assert created_row['clipType'] == 'media' and created_row['track'] == 'voiceover'
++    assert document['parent_revision']['payload']['registry']['assets'][value['asset']]['type'] == 'audio'
++    raw = real_audio.service.cas.read(real_audio.pins['new']['object_id'].removeprefix('sha256:'))
++    with wave.open(io.BytesIO(raw), 'rb') as source:
++        assert (source.getnchannels(), source.getframerate(), source.getnframes()) == (1, 8000, 2000)
++
++    reopen(real_audio)
++    assert current(real_audio) == document
++    with monkeypatch.context() as retry:
++        from astrid.sdk.timeline import commands
++        retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('exact retry executed semantics'))
++        assert commit(real_audio, request, 'real-audio-birth') == created
++    undone = undo(real_audio, created, 'real-audio-undo')
++    assert current(real_audio) == undone['data']['canonical_document'] == baseline
++    redone = undo(real_audio, undone, 'real-audio-redo')
++    assert current(real_audio) == redone['data']['canonical_document'] == document
++    assert real_audio.service.store.integrity_report()['ok']
++
++
+ @pytest.mark.parametrize('replace', [False, True])
+ def test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry(editing, monkeypatch, replace):
+     ordinary_roundtrip(editing, monkeypatch, replace=replace)
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index 62384aad61494c67a614ad1a7122fee4119e0829..9914f62fab9471f094858f0aa2a28873abcc9849
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -57,6 +57,44 @@
+     return State(value).entity(REF)
+ 
+ 
++def audio_bundle_without_registry_duration():
++    original = bundle()
++    parent = original['parent']
++    for rows in (parent['clips'], parent['config']['clips']):
++        rows[0].update({'asset': 'voice', 'clipType': 'audio', 'track': 'music',
++                        'from': 2, 'to': 6, 'hold': 4})
++    parent['config']['tracks'].append({'id': 'music', 'kind': 'audio'})
++    parent['registry']['assets']['voice'] = {'media_id': 'voice-object', 'type': 'audio'}
++    return original
++
++
++def test_audio_trim_uses_exact_verified_duration_when_registry_duration_is_missing():
++    original = audio_bundle_without_registry_duration()
++    verified = [{'selection': {'asset': 'voice', 'generation_id': 'generation-voice',
++                               'variant_id': 'variant-voice', 'object_id': 'voice-object',
++                               'catalog_digest': 'catalog-voice'},
++                 'media_type': 'audio/wav', 'size': 123, 'duration_seconds': 6}]
++    command = capture_clip_trim(original, REF, in_s=1, out_s=5, verified_media=verified)
++    plan = execute(original, [command], verified_media=verified)
++    assert (clip(plan.bundle)['from'], clip(plan.bundle)['to'], clip(plan.bundle)['hold']) == (1, 5, 4)
++    assert plan.records[0]['dependencies'][0]['pin']['verified_media'] == verified[0]
++    assert inverse(plan.bundle, plan.records).bundle == original
++    assert replay(plan, original, verified_media=verified).records == plan.records
++
++
++def test_audio_trim_without_the_exact_verified_input_refuses_without_writes():
++    original = audio_bundle_without_registry_duration()
++    verified = [{'selection': {'asset': 'voice', 'generation_id': 'generation-voice',
++                               'variant_id': 'variant-voice', 'object_id': 'voice-object',
++                               'catalog_digest': 'catalog-voice'},
++                 'media_type': 'audio/wav', 'size': 123, 'duration_seconds': 6}]
++    command = capture_clip_trim(original, REF, in_s=1, out_s=5, verified_media=verified)
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError, match='exact Runtime-verified media metadata'):
++        execute(original, [command])
++    assert original == before
++
++
+ @pytest.mark.parametrize('changes,args', [({}, {'in_s': 1, 'out_s': 5}),
+     ({'speed': None}, {'in_s': 0, 'out_s': 10}), ({'speed': .5}, {'out_s': 10}),
+     ({}, {'in_s': .000001, 'out_s': 1.000002}),
+diff --git a/tests/editing_conformance/test_recipe_m2_parent_media.py b/tests/editing_conformance/test_recipe_m2_parent_media.py
+index 6052a414c1c09d819e27de8d65d493ca9d1ba060..f2748a9546c048ea0c966daef9b9ca517e425a62
+--- a/tests/editing_conformance/test_recipe_m2_parent_media.py
++++ b/tests/editing_conformance/test_recipe_m2_parent_media.py
+@@ -51,7 +51,9 @@
+     """The occurrence fixture plus a free parent lane 'overlay' holding one media clip."""
+     document, old, new, verified = inputs(kind)
+     payload = document['parent_revision']['payload']
+-    payload['config']['tracks'].append({'id': 'overlay', 'kind': 'visual', 'role': 'output'})
++    payload['config']['tracks'].append({'id': 'overlay',
++                                       'kind': 'audio' if kind == 'audio' else 'visual',
++                                       'role': 'output'})
+     for identity, at in (('ov-a', 0), ('ov-b', 5)):
+         clip = {'id': identity, 'track': 'overlay', 'asset': 'picture', 'clipType': 'media', 'at': at, 'hold': 2}
+         payload['config']['clips'].append(copy.deepcopy(clip))
+@@ -64,8 +66,12 @@
+ 
+ def args(new, kind, **changes):
+     # Completion scalars are a thin builder; only the complete row crosses the wire.
+-    row = {'id': 'born', 'clipType': kind, 'asset': new['asset'], 'track': 'overlay',
++    row = {'id': 'born', 'clipType': 'media' if kind == 'audio' else kind,
++           'asset': new['asset'], 'track': 'overlay',
+            'at': 3, 'hold': 4 if kind == 'video' else 1.25}
++    if kind in ('video', 'audio'):
++        row.update({'from': 2 if kind == 'video' else 0,
++                    'to': 6 if kind == 'video' else 1.25})
+     if kind == 'video':
+         row.update({'from': 2, 'to': 6, 'speed': 2})
+     row.update(changes)
+@@ -119,7 +125,7 @@
+     return [row['id'] for row in State(bundle).collection('parent', 'clip')]
+ 
+ 
+-@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('kind', ['image', 'video', 'audio'])
+ def test_exact_capture_replay_scoped_birth_and_inverse(kind):
+     document, bundle, command, verified = captured(kind)
+     before = copy.deepcopy(bundle)
+@@ -135,7 +141,8 @@
+     assert birth(command)['created'] == [ASSET, CHILD]
+     assert plan.bundle['placements'] == before['placements'] and plan.bundle['shots'] == before['shots']
+     row = State(plan.bundle).entity(CHILD)
+-    assert (row['asset'], row['track'], row['clipType']) == ('reserved-new', 'overlay', kind)
++    assert (row['asset'], row['track'], row['clipType']) == (
++        'reserved-new', 'overlay', 'media' if kind == 'audio' else kind)
+     assert row['at'] == pytest.approx(round(3 * 30000 / 1001) * 1001 / 30000)
+     if kind == 'video':
+         assert (row['from'], row['to'], row['hold'], row['speed']) == (2, 6, 4, 2)
+diff --git a/tests/editing_conformance/test_recipe_occurrence_media.py b/tests/editing_conformance/test_recipe_occurrence_media.py
+index e0b6d8e3a8fe017b479df50d5d9e55e7f002185c..0cce88935b78739536b020280aa1a273ed37b214
+--- a/tests/editing_conformance/test_recipe_occurrence_media.py
++++ b/tests/editing_conformance/test_recipe_occurrence_media.py
+@@ -44,6 +44,9 @@
+     payload['registry']['assets']['picture']['type'] = kind
+     if kind == 'video':
+         payload['clips'][0].update({'from': 2, 'to': 6, 'hold': 4, 'speed': 2})
++    elif kind == 'audio':
++        payload['tracks'][0]['kind'] = 'audio'
++        payload['clips'][0].update({'clipType': 'audio', 'from': 0, 'to': 1, 'hold': 1})
+     for row in document['parent_revision']['payload']['occurrences']:
+         row.update(source_offset=0, speed=1)
+     document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
+@@ -56,7 +59,8 @@
+     new = {'asset': 'reserved-new', 'generation_id': 'generation-new', 'variant_id': 'variant-new',
+            'object_id': NEW, 'catalog_digest': 'sha256:' + 'b' * 64}
+     verified = [{'selection': copy.deepcopy(pin), 'media_type': kind + '/fixture', 'size': 123,
+-                 **({'duration_seconds': 6} if kind == 'video' else {})} for pin in (old, new)]
++                 **({'duration_seconds': 6} if kind in ('video', 'audio') else {})}
++                for pin in (old, new)]
+     return document, old, new, verified
+ 
+ 
+@@ -64,10 +68,12 @@
+     document, old, new, verified = inputs(kind)
+     bundle = bundle_from_document(document)
+     if operation == 'add':
+-        row = {'id': 'reserved-child', 'clipType': kind, 'asset': new['asset'], 'track': 'picture',
++        row = {'id': 'reserved-child', 'clipType': 'media' if kind == 'audio' else kind,
++               'asset': new['asset'], 'track': 'picture',
+                'at': .125, 'hold': 4 if kind == 'video' else 1.25,
+                'params': None, 'opaque': [None, False, {}],
+-               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else {})}
++               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else
++                  {'from': 0, 'to': 1.25} if kind == 'audio' else {})}
+         command = capture_occurrence_add_media(bundle, OWNER, row, new, verified_media=verified)
+     else:
+         command = capture_occurrence_swap_media(bundle, TARGET, old, new, verified_media=verified)
+@@ -75,7 +81,7 @@
+ 
+ 
+ @pytest.mark.parametrize('operation', ['add', 'swap'])
+-@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('kind', ['image', 'video', 'audio'])
+ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
+     document, bundle, command, verified = captured(operation, kind)
+     before = copy.deepcopy(bundle)
+
+codex
+The real parent managed-WAV lifecycle now passes with the paired Runtime checkout, and the existing voiceover tests pass. The child-scope audit confirms the bounded gap is in the producer’s direct internal-timeline mutation (`draft_voiceover.py`), not in a missing native operation; I’ve documented that without changing `bound.publish` or adding a proposal/writer layer. I’m doing the final cleanliness and artifact checks now.
+exec
+/bin/bash -lc "git diff --check && git diff --stat && printf '\\n--- status ---\\n' && git status --short && printf '\\n--- forbidden-scope diff check ---\\n' && git diff --name-only | rg -n 'schema|DTO|runtime|remote|client|draft_voiceover|authoring_remote' || true && printf '\\n--- handoff artifacts ---\\n' && WORKER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-managed-audio-current014-source; test -f \""'$WORKER/DONE" && test ! -s "$WORKER/DONE" && echo DONE=ok; wc -l "$WORKER/REPORT.md" "$WORKER/commit-msg" "$WORKER/commit-msg.txt" /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m2-managed-audio-current014-source.md; find . -maxdepth 3 -type d '"\\( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache \\) -print" in /home/user/work/wt/agt-m2-managed-audio-current014-source
+ succeeded in 57ms:
+ astrid/sdk/timeline/_media_inputs.py               |  6 +-
+ astrid/sdk/timeline/_trim_commands.py              | 58 ++++++++++++--
+ .../timeline/native_occurrence_media_commands.py   |  5 +-
+ .../test_commit_runtime_parent_media.py            | 89 +++++++++++++++++++---
+ .../test_recipe_m2_clip_trim.py                    | 38 +++++++++
+ .../test_recipe_m2_parent_media.py                 | 15 +++-
+ .../test_recipe_occurrence_media.py                | 14 +++-
+ 7 files changed, 197 insertions(+), 28 deletions(-)
+
+--- status ---
+ M astrid/sdk/timeline/_media_inputs.py
+ M astrid/sdk/timeline/_trim_commands.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M tests/editing_conformance/test_commit_runtime_parent_media.py
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+ M tests/editing_conformance/test_recipe_m2_parent_media.py
+ M tests/editing_conformance/test_recipe_occurrence_media.py
+
+--- forbidden-scope diff check ---
+4:tests/editing_conformance/test_commit_runtime_parent_media.py
+
+--- handoff artifacts ---
+DONE=ok
+  47 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-managed-audio-current014-source/REPORT.md
+   8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-managed-audio-current014-source/commit-msg
+   8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-managed-audio-current014-source/commit-msg.txt
+  24 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-m2-managed-audio-current014-source.md
+  87 total
+
+codex
+Implemented the approved seven-file managed-audio port.
+
+- Preserved five-field `MediaSelection` and existing media command carriers.
+- Added verified `audio/*` admission and bounded duration handling.
+- Added real PCM WAV CAS lifecycle coverage through reload, retry, inverse, and redo.
+- Identified the existing child-scope gap: `draft_voiceover.py` directly mutates internal timelines instead of capturing `track.create` + `occurrence.add-media`; no new writer/proposal layer or `bound.publish` deletion was added.
+- Wrote [REPORT.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-managed-audio-current014-source/REPORT.md), commit messages, shared handoff, and DONE marker.
+
+Tests:
+
+- 275 passed, 48 deselected targeted conformance tests.
+- Real managed WAV: 1 passed, 36 deselected.
+- Voiceover tests: 22 passed.
+- Ruff and `git diff --check`: passed.
+
+No full suite run.
+tokens used
+152,817
+Implemented the approved seven-file managed-audio port.
+
+- Preserved five-field `MediaSelection` and existing media command carriers.
+- Added verified `audio/*` admission and bounded duration handling.
+- Added real PCM WAV CAS lifecycle coverage through reload, retry, inverse, and redo.
+- Identified the existing child-scope gap: `draft_voiceover.py` directly mutates internal timelines instead of capturing `track.create` + `occurrence.add-media`; no new writer/proposal layer or `bound.publish` deletion was added.
+- Wrote [REPORT.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-managed-audio-current014-source/REPORT.md), commit messages, shared handoff, and DONE marker.
+
+Tests:
+
+- 275 passed, 48 deselected targeted conformance tests.
+- Real managed WAV: 1 passed, 36 deselected.
+- Voiceover tests: 22 passed.
+- Ruff and `git diff --check`: passed.
+
+No full suite run.

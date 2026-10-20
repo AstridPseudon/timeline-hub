@@ -1,0 +1,400 @@
++        def capture(state):
++            bundle = self._bundle(state)
++            # This is only a local convenience for the authoring preflight.
++            # Runtime recomputes the descriptor from the exact manifest pin.
++            from astrid.sdk.timeline.commit import _raw_audio_trim_pin
++
++            pin = _raw_audio_trim_pin(bundle, {
++                'op': 'clip.trim', 'select': select,
++            })
++            verified_media = ()
++            if pin is not None:
++                try:
++                    data = self.client.media.read_bytes(pin['media_id'])
++                    import io
++                    import math
++                    import wave
++
++                    with wave.open(io.BytesIO(data)) as wav:
++                        duration = wav.getnframes() / float(wav.getframerate())
++                    if data and math.isfinite(duration) and duration > 0:
++                        verified_media = ({
++                            'object_id': pin['media_id'], 'media_type': 'audio/wav',
++                            'size': len(data), 'duration_seconds': duration,
++                        },)
++                except Exception:  # noqa: BLE001 - preflight is nonauthoritative
++                    verified_media = ()
++            return capture_clip_trim(bundle, select, in_s=in_s, out_s=out_s,
++                                     verified_media=verified_media)
++
++        self._queue(capture,
+                     lambda pending: len(pending) == 1 and pending[0]["op"] == "clip.trim"
+                     and pending[0]["select"] == select
+                     and pending[0]["args"] == {"in_s": in_s, "out_s": out_s})
+diff --git a/docs/agent-raw-audio-trim-private-adapter.md b/docs/agent-raw-audio-trim-private-adapter.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..a049b501299c0d1c563565c0c5bee6d10d4b909d
+--- /dev/null
++++ b/docs/agent-raw-audio-trim-private-adapter.md
+@@ -0,0 +1,45 @@
++# Agent raw-audio trim private adapter
++
++This adapter preserves the historical `clip.trim` recipe for raw audio clips
++whose registry asset intentionally has no authored duration. It is private
++Runtime integration only; the command schema and public SDK surface remain
++unchanged.
++
++## Contract
++
++For a raw audio trim, Agent identifies the exact existing base media pin from
++the immutable dependency manifest. During Runtime commit it calls the optional
++private `RequestCommitPort.media_info` port with that pin. The returned
++request-scoped descriptor is checked for:
++
++- the exact `object_id`;
++- an audio `media_type`;
++- a positive integer `size`; and
++- a finite positive `duration_seconds`.
++
++The descriptor is consumed only by the trim handler to establish source-time
++defaults and bounds. It is not put in the command, an authoring DTO, a public
++endpoint, durable timeline metadata, or a registry duration. Runtime remains
++authoritative: it reloads the exact base closure, recomputes the descriptor,
++and the Runtime port rechecks the pin and bytes before the command is
++accepted.
++
++Raw audio also requires an active audio track and an audio registry asset.
++Hold, speed, half-open source intervals, and six-decimal boundaries continue
++to use the existing trim implementation. Missing/unknown metadata, a foreign
++descriptor, malformed WAV metadata, a changed CAS object, or an unavailable
++port refuses before writes.
++
++The authoring session has a nonauthoritative preflight convenience: it reads
++the existing exact media bytes and derives a positive WAV-header duration so a
++valid raw-audio trim can be queued. This claim is request-local and is never
++trusted by Runtime; a failed or stale preflight remains a visible refusal.
++
++## Pairing status
++
++The Agent adapter is prepared against the peer-acknowledged proposal. The
++Runtime counterpart is held until its worker commit is available, so this
++worktree does not claim an end-to-end paired acceptance test. Pure Agent
++conformance covers successful request-scoped metadata, absent/foreign/
++malformed metadata, zero-write refusal, source-time hold, and inverse
++preservation.
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index 62384aad61494c67a614ad1a7122fee4119e0829..524fd32fd80a4c8fcfce81ec73c42f240f297565
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -21,7 +21,12 @@
+ from astrid.sdk.timeline._trim_commands import capture_clip_trim
+ from astrid.sdk.timeline.capture import capture_move
+ from astrid.sdk.timeline.commands import execute
+-from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
++from astrid.sdk.timeline.commit import (
++    _digest,
++    _raw_audio_trim_pin,
++    bundle_from_document,
++    document_from_bundle,
++)
+ from astrid.sdk.timeline.rebase import replay
+ from astrid.sdk.timeline_checkout import Clip
+ from tests.editing_conformance.fixture_loader import load_fixture
+@@ -57,6 +62,17 @@
+     return State(value).entity(REF)
+ 
+ 
++def raw_audio_bundle():
++    value = bundle()
++    pin = 'sha256:' + '3' * 64
++    for rows in (value['parent']['clips'], value['parent']['config']['clips']):
++        rows[0].update({'track': 'music', 'asset': 'voice', 'clipType': 'audio',
++                        'from': 2, 'to': 6, 'hold': 4, 'speed': 2})
++    value['parent']['config']['tracks'].append({'id': 'music', 'kind': 'audio'})
++    value['parent']['registry']['assets']['voice'] = {'media_id': pin, 'type': 'audio'}
++    return value, pin
++
++
+ @pytest.mark.parametrize('changes,args', [({}, {'in_s': 1, 'out_s': 5}),
+     ({'speed': None}, {'in_s': 0, 'out_s': 10}), ({'speed': .5}, {'out_s': 10}),
+     ({}, {'in_s': .000001, 'out_s': 1.000002}),
+@@ -94,6 +110,51 @@
+     assert clip(plan.bundle)['to'] == 5
+ 
+ 
++def test_raw_audio_trim_uses_request_metadata_without_persisting_a_duration():
++    original, pin = raw_audio_bundle()
++    metadata = {'object_id': pin, 'media_type': 'audio/wav', 'size': 1234,
++                'duration_seconds': 8}
++
++    command = capture_clip_trim(original, REF, in_s=1, out_s=5,
++                                verified_media=[metadata])
++    plan = execute(original, [command], verified_media=[metadata])
++    row = clip(plan.bundle)
++    assert (row['from'], row['to'], row['hold']) == (1, 5, 4)
++    assert 'duration' not in plan.bundle['parent']['registry']['assets']['voice']
++    assert command['args'] == {'in_s': 1, 'out_s': 5}
++    assert 'verified_media' not in command
++    assert inverse(plan.bundle, plan.records).bundle == original
++
++
++def test_raw_audio_trim_pin_is_the_exact_retained_base_pin():
++    original, pin = raw_audio_bundle()
++    document = original['source_mapping']['_runtime_document']
++    document['dependency_manifest']['media'].append({'media_id': pin, 'content_digest': pin})
++
++    assert _raw_audio_trim_pin(original, {'op': 'clip.trim', 'select': REF}) == {
++        'media_id': pin, 'content_digest': pin,
++    }
++
++
++@pytest.mark.parametrize('metadata', [
++    None,
++    {'object_id': 'sha256:' + '4' * 64, 'media_type': 'audio/wav', 'size': 1234,
++     'duration_seconds': 8},
++    {'object_id': 'sha256:' + '3' * 64, 'media_type': 'audio/wav', 'size': 0,
++     'duration_seconds': 8},
++    {'object_id': 'sha256:' + '3' * 64, 'media_type': 'audio/wav', 'size': 1234,
++     'duration_seconds': None},
++])
++def test_raw_audio_trim_refuses_missing_or_foreign_metadata_without_writes(metadata):
++    original, _pin = raw_audio_bundle()
++    before = copy.deepcopy(original)
++    command = {'schema_version': 1, 'op': 'clip.trim', 'version': '1', 'select': REF,
++               'args': {'in_s': 1, 'out_s': 5}, 'intent': {}}
++    with pytest.raises(CommandError):
++        execute(original, [command], verified_media=(() if metadata is None else [metadata]))
++    assert original == before
++
++
+ def test_native_group_replaces_track_ripple_and_compiles_parent_extension():
+     original = bundle()
+     original['parent']['config']['output'] = {'fps': 30}
+
+codex
+Adjacent CLI and provider tests also pass (126 tests). The implementation is now documented and the worker artifacts are written; I’m doing the final hygiene check, including confirming the Runtime pairing is explicitly held rather than overstated.
+exec
+/bin/bash -lc 'git diff --check && git status --short && test -s docs/agent-raw-audio-trim-private-adapter.md && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-audio-trim-private-adapter/commit-msg && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-audio-trim-private-adapter/commit-msg.txt && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-audio-trim-private-adapter/report.md && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-audio-trim-private-adapter/DONE && echo '"'artifacts: ok'" in /home/user/work/wt/agt-m2-raw-audio-trim-private-adapter
+ succeeded in 1032ms:
+ M astrid/sdk/timeline/_trim_commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+?? docs/agent-raw-audio-trim-private-adapter.md
+artifacts: ok
+
+exec
+/bin/bash -lc "rg -n \"def active\" astrid/sdk/timeline/_recording.py && sed -n '1,35p' astrid/sdk/timeline/_recording.py; git diff -- docs/agent-raw-audio-trim-private-adapter tests/editing_conformance/test_recipe_m2_clip_trim.py | sed -n '1,260p'" in /home/user/work/wt/agt-m2-raw-audio-trim-private-adapter
+ succeeded in 41ms:
+11:def active(row):
+"""Instrumented authored-state primitives. Handlers never manufacture records."""
+from __future__ import annotations
+
+import copy
+
+from ._collections import KINDS, arrange, insertion_boundary, order, rows
+from ._command_state import ABSENT, CommandError, State, equal, present, spelling
+from ._common import AUDIO_KINDS
+
+
+def active(row):
+    return (row.get('enabled') is not False and row.get('active') is not False
+            and not any(row.get(key) is True for key in ('disabled', 'hidden', 'deleted')))
+
+
+def selection(state, key, owner, members=()):
+    boundaries = None
+    if key == "move.target":
+        result = [ref for ref in members if state.entity(ref, optional=True) is not None]
+    elif key == 'element.targets':
+        result = order(state, owner, 'clip', check_mirrors=False)
+    elif key in KINDS:
+        result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
+                  else order(state, owner, KINDS[key]))
+        if key.endswith('.after'):
+            return {"key": key, "query_version": 1, "owner": owner, "members": list(members),
+                    "order": result, "boundaries": insertion_boundary(result, members),
+                    "policy": "guard-membership"}
+    elif key == 'text-binding.owners':
+        origin = state.entity(owner + '/shot', optional=True)
+        source = origin['shot_id'] if origin is not None else None
+        result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
+                  if state.entity('occurrence:' + row['occurrence_id'] + '/shot')['shot_id'] == source]
+        boundaries = ['shot:' + source] if source is not None else []
+    elif key == 'placement.owners':
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index 62384aad..524fd32f 100644
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -21,7 +21,12 @@ from astrid.sdk.timeline._recording import Recording
+ from astrid.sdk.timeline._trim_commands import capture_clip_trim
+ from astrid.sdk.timeline.capture import capture_move
+ from astrid.sdk.timeline.commands import execute
+-from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
++from astrid.sdk.timeline.commit import (
++    _digest,
++    _raw_audio_trim_pin,
++    bundle_from_document,
++    document_from_bundle,
++)
+ from astrid.sdk.timeline.rebase import replay
+ from astrid.sdk.timeline_checkout import Clip
+ from tests.editing_conformance.fixture_loader import load_fixture
+@@ -57,6 +62,17 @@ def clip(value):
+     return State(value).entity(REF)
+ 
+ 
++def raw_audio_bundle():
++    value = bundle()
++    pin = 'sha256:' + '3' * 64
++    for rows in (value['parent']['clips'], value['parent']['config']['clips']):
++        rows[0].update({'track': 'music', 'asset': 'voice', 'clipType': 'audio',
++                        'from': 2, 'to': 6, 'hold': 4, 'speed': 2})
++    value['parent']['config']['tracks'].append({'id': 'music', 'kind': 'audio'})
++    value['parent']['registry']['assets']['voice'] = {'media_id': pin, 'type': 'audio'}
++    return value, pin
++
++
+ @pytest.mark.parametrize('changes,args', [({}, {'in_s': 1, 'out_s': 5}),
+     ({'speed': None}, {'in_s': 0, 'out_s': 10}), ({'speed': .5}, {'out_s': 10}),
+     ({}, {'in_s': .000001, 'out_s': 1.000002}),
+@@ -94,6 +110,51 @@ def test_trim_hold_is_source_time_and_playback_duration_applies_speed(monkeypatc
+     assert clip(plan.bundle)['to'] == 5
+ 
+ 
++def test_raw_audio_trim_uses_request_metadata_without_persisting_a_duration():
++    original, pin = raw_audio_bundle()
++    metadata = {'object_id': pin, 'media_type': 'audio/wav', 'size': 1234,
++                'duration_seconds': 8}
++
++    command = capture_clip_trim(original, REF, in_s=1, out_s=5,
++                                verified_media=[metadata])
++    plan = execute(original, [command], verified_media=[metadata])
++    row = clip(plan.bundle)
++    assert (row['from'], row['to'], row['hold']) == (1, 5, 4)
++    assert 'duration' not in plan.bundle['parent']['registry']['assets']['voice']
++    assert command['args'] == {'in_s': 1, 'out_s': 5}
++    assert 'verified_media' not in command
++    assert inverse(plan.bundle, plan.records).bundle == original
++
++
++def test_raw_audio_trim_pin_is_the_exact_retained_base_pin():
++    original, pin = raw_audio_bundle()
++    document = original['source_mapping']['_runtime_document']
++    document['dependency_manifest']['media'].append({'media_id': pin, 'content_digest': pin})
++
++    assert _raw_audio_trim_pin(original, {'op': 'clip.trim', 'select': REF}) == {
++        'media_id': pin, 'content_digest': pin,
++    }
++
++
++@pytest.mark.parametrize('metadata', [
++    None,
++    {'object_id': 'sha256:' + '4' * 64, 'media_type': 'audio/wav', 'size': 1234,
++     'duration_seconds': 8},
++    {'object_id': 'sha256:' + '3' * 64, 'media_type': 'audio/wav', 'size': 0,
++     'duration_seconds': 8},
++    {'object_id': 'sha256:' + '3' * 64, 'media_type': 'audio/wav', 'size': 1234,
++     'duration_seconds': None},
++])
++def test_raw_audio_trim_refuses_missing_or_foreign_metadata_without_writes(metadata):
++    original, _pin = raw_audio_bundle()
++    before = copy.deepcopy(original)
++    command = {'schema_version': 1, 'op': 'clip.trim', 'version': '1', 'select': REF,
++               'args': {'in_s': 1, 'out_s': 5}, 'intent': {}}
++    with pytest.raises(CommandError):
++        execute(original, [command], verified_media=(() if metadata is None else [metadata]))
++    assert original == before
++
++
+ def test_native_group_replaces_track_ripple_and_compiles_parent_extension():
+     original = bundle()
+     original['parent']['config']['output'] = {'fps': 30}
+
+exec
+/bin/bash -lc "find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers -maxdepth 2 -type f \\( -name 'report.md' -o -name 'commit-msg*' -o -path '*/report/*' \\) | head -50" in /home/user/work/wt/agt-m2-raw-audio-trim-private-adapter
+ succeeded in 114ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-current-s3-birth-reservation-proof/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-current-s3-birth-reservation-proof/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-stack-sync-2/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-stack-sync-2/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-spec-compaction-fixture/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-spec-compaction-fixture/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-paired-qualify/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-paired-qualify/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-track-union-generator/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-track-union-generator/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-crash-reconcile/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-crash-reconcile/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-deny-integrated-gates/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-deny-integrated-gates/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-direct-render-fixtures/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-direct-render-fixtures/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-empty-timeline-door-route/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-empty-timeline-door-route/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-deletion-core-split/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-deletion-core-split/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-deletion-core-split/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-element-retain/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-element-retain/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-artifact-plan/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-artifact-plan/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-artifact-plan/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-native-historical-render-admission/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-native-historical-render-admission/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-historical-retained-pack/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-historical-retained-pack/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-historical-retained-pack/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-admission-retry/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-admission-retry/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-delete-continue/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-delete-continue/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-catalog-fence-compose/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-catalog-fence-compose/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-catalog-fence-compose/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-pack-document-read/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-pack-document-read/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-pack-document-read/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-app-label-review/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-app-label-review/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-params-retained-wire/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-params-retained-wire/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-params-retained-wire/report.md
+find: ‘standard output’: Broken pipe
+find: write error
+
+codex
+Implemented Agent’s private raw-audio trim adapter.
+
+- Added exact base media-pin discovery and request-scoped `media_info` consumption.
+- Preserved existing trim timing, hold/speed, dependency, inverse, and zero-write semantics.
+- Added nonauthoritative WAV-header authoring preflight.
+- Added focused tests and documentation: [agent-raw-audio-trim-private-adapter.md](/home/user/work/wt/agt-m2-raw-audio-trim-private-adapter/docs/agent-raw-audio-trim-private-adapter.md).
+
+Tests:
+
+- `test_recipe_m2_clip_trim.py`: 121 passed
+- CLI/provider lanes: 126 passed
+- Compile check and `git diff --check`: passed
+
+Runtime counterpart is not committed, so end-to-end pairing remains intentionally unverified. `DONE`, report, and commit-message artifacts were created.
+tokens used
+363,990
+Implemented Agent’s private raw-audio trim adapter.
+
+- Added exact base media-pin discovery and request-scoped `media_info` consumption.
+- Preserved existing trim timing, hold/speed, dependency, inverse, and zero-write semantics.
+- Added nonauthoritative WAV-header authoring preflight.
+- Added focused tests and documentation: [agent-raw-audio-trim-private-adapter.md](/home/user/work/wt/agt-m2-raw-audio-trim-private-adapter/docs/agent-raw-audio-trim-private-adapter.md).
+
+Tests:
+
+- `test_recipe_m2_clip_trim.py`: 121 passed
+- CLI/provider lanes: 126 passed
+- Compile check and `git diff --check`: passed
+
+Runtime counterpart is not committed, so end-to-end pairing remains intentionally unverified. `DONE`, report, and commit-message artifacts were created.

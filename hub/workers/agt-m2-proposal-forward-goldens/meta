@@ -1,0 +1,9 @@
+name=agt-m2-proposal-forward-goldens
+repo=agent
+base=tl/agt-m2-settled-proposal-contract
+base_sha=f2df6c4f
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-proposal-forward-goldens
+started=2026-10-20T00:52:18Z

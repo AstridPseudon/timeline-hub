@@ -1,0 +1,400 @@
+- The candidate was composed before current e2. Comparing candidate 7b8 with
+  e2 shows it removes the current selected-media CAS-byte verification from
+  `RequestCommitPort`/`MediaReads`; this is the `3021a5b` protection and its
+  neighboring replacement tests and must survive. It also predates the
+  current catalog-text replay fixes and later parent-marker/current-main
+  changes. No wholesale candidate port/store/service replacement is safe.
+- The current e2 tree does not contain the source-bound helper at all, so the
+  counterpart must port the narrow join/port/store changes onto e2 while
+  preserving e2's current service and test bodies. Future composition must
+  also retain the separately reviewed raw-media exact-base feature
+  `dcac221296ef2c73e02d30534effb2a09d9a91bd`/`7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`
+  and the strict D05 parent-swap route checks (`d05e638`/`a18022d`), rather
+  than regressing them while carrying the materialization store changes.
+- The candidate's bounded native controls were against Agent 3730/f802 only.
+  They do not establish the requested 357 native lifetime: accepted-v1
+  ledger-first retry after lost ACK/restart, inverse/redo/history/restore,
+  obsolete-v1 refusal with draft preservation, current-v2 acceptance, own
+  slot/sibling/global-item/catalog-head occupancy, dependent-B ACK identity,
+  and retained ordinary operations.
+
+## Minimal Runtime counterpart delta
+
+1. Start from assigned current Runtime e2, not from 7b8's older parent. Port
+   only the reviewed source-bound join, authenticated result-map/closure
+   validation, own-slot/item/global occupancy checks, and catalog-head fence;
+   preserve current CAS, catalog-text, parent-marker, raw-base, service, and
+   strict D05 paths/tests.
+2. Replace the private Runtime command-schema resource and its bundled closure
+   with the exact Agent 357 schema `613123…aaad`, retaining all 55/29 ordinary
+   definitions/clauses and the same 13 v2 operations. Run normal private
+   generation only after Agent supplies the exact manager freeze ACK. Do not
+   bump or publish a public version, pin, release, or artifact adoption from
+   this review.
+3. Retain the old schema syntactically for the obsolete-v1 refusal path and
+   ledger-first accepted retries; refusal must preserve the exact draft. The
+
+--- relevant prior result report locations ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-current-peer-handoff/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-review-full-union357-source/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-version-boundary/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-union357-current-join-code/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-source-images-current-port/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-raw-base-contrast-independent/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-legacy-custody-fix/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-union-code-current4ec-carry/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-raw-base-eligibility-fix/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-compatibility-independent-review/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-union613-normal-private-gen/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-materialization-source-pair-audit/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-catalog-fence-compose/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-ledger-current-evidence-update/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-private952-handoff-finalize/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-cd0-marker-carry/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-83fe/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-final-source-review/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-private613-client-probes/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-catalog-fence/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-cas-text-compose/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-independent-review/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/report.md
+
+exec
+/bin/bash -lc "sed -n '1,280p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-reload-source-shape/report.md; printf '\\n--- native pair prepare ---\\n'; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/report.md; printf '\\n--- previous source result ---\\n'; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-source-images-current-port/report.md" in /home/user/work/wt/agt-m2-private952-http-result-triage
+ succeeded in 61ms:
+Implemented in [astrid/sdk/remote.py](/home/user/work/wt/agt-m2-private952-reload-source-shape/astrid/sdk/remote.py).
+
+- Canonicalized reloaded `_source_closure` rows using existing image fieldsets.
+- Preserved raw GET envelopes, payloads, pins, ordering, identities, and history.
+- Classified all six failures as outer `created_at`/duplicate-manifest decoration only.
+- No pin or public integration changes.
+
+Tests:
+
+- Native six-case reload: `6 passed`
+- Native ingress file: `40 passed`
+- Non-socket neighbors: `49 passed, 4 deselected`
+- Socket-dependent central run: queued due service capacity; unverified.
+- `git diff --check`: passed.
+
+Recorded `commit-msg`, `commit-msg.txt`, and `DONE`.
+--- native pair prepare ---
+Prepared the real private Agent `a53703ce…` / Runtime `95202c2b…` pair after pin ACK.
+
+Changed only [test_commit_runtime_occurrence_media.py](/home/user/work/wt/agt-m2-private952-native-pair-prepare/tests/editing_conformance/test_commit_runtime_occurrence_media.py), adapting setup to current authoritative Runtime bindings and v2 capture.
+
+Guards passed:
+
+- Vendor lock matches Runtime manifest.
+- Runtime artifact and generator checks passed.
+- Schema: `613123…`; bundle: `4a0779…`; manifest: `35aa9d…`.
+
+Tests:
+
+- Occurrence + identity: **51 passed**
+- Native lost-ACK/restart subset: **17 passed**
+- Materialization/version/map: **66 passed**
+- Schema/client controls: **59 passed**
+
+Full native batch remains **34 passed, 6 failed** on existing reload `_source_closure` shape assertions; assertions were preserved.
+
+Wrote `commit-msg`, `commit-msg.txt`, report, and `DONE`.
+--- previous source result ---
+Implemented the bounded SDK port.
+
+- Updated `astrid/sdk/remote.py` to project Runtime rows through existing canonical image fieldsets before `open_authoring_bundle`.
+- Added real HTTP regression coverage in `tests/sdk/test_timeline_checkout_history_runtime.py`.
+- No private952 schema/client/core changes.
+
+Tests:
+
+- Direct neighbors: `46 passed`.
+- Public013 HTTP suite: `3 passed in 17.78s`.
+- `git diff --check`: passed.
+- No full/private952 suites run.
+
+Created `commit-msg` and `DONE`.
+exec
+/bin/bash -lc "ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md 2>/dev/null || true; find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage -maxdepth 1 -type f -printf '%f\\n' 2>/dev/null || true; git diff --check; git status --short" in /home/user/work/wt/agt-m2-private952-http-result-triage
+ succeeded in 1417ms:
+log.txt
+brief.md
+tmpdir
+running
+meta
+
+exec
+/bin/bash -lc 'for f in brief.md meta status running; do echo ---$f; sed -n '"'1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/"'$f 2>/dev/null || true; done' in /home/user/work/wt/agt-m2-private952-http-result-triage
+ succeeded in 12ms:
+---brief.md
+Base: tl/agt-m2-private952-http-reload-finish. Own result analysis of manager-requested exact private952 pair28209 ONLY, result folder /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-private952-sockets-integration-1020193342-28209. Read status/log/exit/request and source909bfad8 predecessor. Wanted: classify result and fix bounded test/setup or existing canonical-image conversion issue if failure. Never retest successful nodes; one failed-node targeted rerun after concrete fix only. Source private357/613 and Runtime952 healthddf/artifactb397/rawbundle4a077 remain immutable. No public013/ordinary014 adoption, schema mutation, widened source/guard, refreshed captures, fake history or schema override. Cover accepted-v1 retry + current-v2 lifecycle/undo/redo/reload/ACK using original assertions; report exactly which passed and which not. If production semantics needs cross-contract decision, report precise counterexample before changing. No new field/store/framework. Never request full*; explicit bounded --files. Shared deps/runtimes/venvs READONLY. Report in workers/<you>/report.md and publish exact private result flat ORCH/design/agent-private952-http-result.md. commit-msg.txt/DONE.
+---meta
+name=agt-m2-private952-http-result-triage
+repo=agent
+base=tl/agt-m2-private952-http-reload-finish
+base_sha=909bfad8
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-private952-http-result-triage
+started=2026-10-20T19:54:33Z
+---status
+---running
+
+codex
+The predecessor fix is the bounded canonical-image conversion in `astrid/sdk/remote.py`; it projects only the source closure through existing image fieldsets while preserving GET rows, payloads, pins, identities, ordering, and history. The exact pair now passes every original assertion: 4 current HTTP lifecycle parameterizations, 1 HTTP lost-ACK/restart/ABA case, and 40 native ingress cases. I found no remaining counterexample and will record the result without changing production or tests.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..82ca2a2222bf37104274d03aad3758cedc54410b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md
+@@ -0,0 +1,26 @@
++# Agent private952 HTTP result
++
++## Qualification
++
++PASS — exact manager-requested pair `28209`, and only that pair.
++
++- Agent source: `909bfad8f9ae22d3e4b0dbb83fdcc07bcf1169c` / tree `3775e2e00c9e45999f6c0277f4dbc323079749b0`
++- Runtime: `rt-pin-95202c2b` (tree `d438d3e2…`)
++- Result folder: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-private952-sockets-integration-1020193342-28209`
++- Exact result: `44 passed in 55.07s`, exit `0`
++
++## Original assertions
++
++All passed; no successful node was rerun.
++
++- `test_native_sheet_current_runtime.py::test_http_semantic_batch_original_pins_reload_inverse_redo`: `4/4` (`python`, `cli`, `sheet-python`, `sheet-cli`). Original pins, semantic payload, canonical lifecycle, reload, inverse/undo, and redo assertions passed.
++- `test_native_sheet_current_runtime.py::test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba`: `1/1`. Lost-ACK acceptance, durable restart recovery, exact retry identity/body, no recapture, original guards, and A→B→A guarded-undo refusal passed.
++- `test_native_batch_ingress.py`: `40/40`. Accepted-v1 raw/captured batch publication, reload, inverse/redo, lost-ACK/restart exact retry, dependent suffix, ABA/delete-recreate, original-pair pinning, atomic refusal, boolean/numeric retry identity, explicit pin/parser, preview, and concurrent-ACK assertions all passed.
++
++## Scope
++
++The predecessor's bounded `astrid/sdk/remote.py` canonical-image conversion is validated by this pair. It canonicalizes only the reloaded source closure through existing image fieldsets; raw GET rows, payloads, pins, ordering, identities, opaque data, and history remain preserved. No further source/test fix is needed.
++
++This is private native HTTP evidence only. It does not adopt public013/ordinary014, mutate private357/613 or Runtime952 health/artifact/rawbundle inputs, refresh captures, create fake history, or establish a full-suite, browser, public-release, or integration claim. The transport and command records remain the existing `workspace.v1` / schema-version-1 path; no separate v2 wire-protocol run is claimed.
++
++Use this result for the private RT08 replacement qualification only. Keep pin adoption and public/integration claims separate.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7edbbe5562840823960d16f21478852fd6e87016
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md
+@@ -0,0 +1,42 @@
++## Result
++
++PASS for the manager-requested exact private952 HTTP pair only.
++
++The recorded result is:
++
++- result: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-private952-sockets-integration-1020193342-28209`
++- status/exit: `pass` / `0`
++- source: Agent `909bfad8f9ae22d3e4b0dbb83fdcc07bcf1169c6`, tree `3775e2e00c9e45999f6c0277f4dbc323079749b0`
++- Runtime: pinned `rt-pin-95202c2b` (tree `d438d3e2…`), private952 health `ddf6396d…`, artifact `b397e5…`, raw bundle `4a0779…`
++- result summary: `44 passed in 55.07s`
++
++The exact recorded command was:
++
++```text
++env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95202c2b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_semantic_batch_original_pins_reload_inverse_redo tests/editing_conformance/test_native_batch_ingress.py
++```
++
++## Assertion coverage
++
++All requested original assertions passed; no node was rerun.
++
++- Current HTTP semantic lifecycle: `4/4` parameterizations of `test_http_semantic_batch_original_pins_reload_inverse_redo` (`python`, `cli`, `sheet-python`, `sheet-cli`). These assert original revision/publication pins, exact semantic command payload, canonical state, one publication, restart/reload, inverse/undo, and redo's exact canonical document.
++- HTTP accepted-ACK retry path: `1/1` `test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba`. It asserts lost ACK after Runtime acceptance, durable outbox retention, restart recovery, refusal of a changed idempotency key, refusal of changed pending intent, byte-identical exact retry without recapture, and guarded undo refusal after an A→B→A intervening write.
++- Accepted-v1/native ingress: `40/40` in `test_native_batch_ingress.py`:
++  - `test_batch_original_claims_one_publication_reload_inverse`: `6/6` (raw/captured × queue/commit/CLI), including reload, inverse, redo, and source attribution.
++  - `test_file_lost_ack_restart_exact_retry_before_original_suffix`: `8/8` (raw/captured × disjoint/relevant/ABA/delete-recreate), including exact retry and dependent suffix handling.
++  - `test_guarded_undo_still_refuses_intervening_equal_state_writes`: `2/2`.
++  - `test_file_uses_original_pair_after_peer_advances_head`: `4/4`.
++  - `test_batch_retry_distinguishes_boolean_capture_and_intent`: `6/6`.
++  - `test_batch_retry_numeric_equivalence_sends_original_bytes`: `1/1`.
++  - Atomic refusal, explicit-pin, parser, captured-claim, preview, and concurrent-ACK controls: `13/13` across the remaining tests.
++
++## Classification and boundary
++
++This is a qualified private native HTTP result, not public013/ordinary014 adoption, schema mutation, refreshed capture, fake history, or a full-suite result. The predecessor's `909bfad8` canonical-image conversion is sufficient: the source closure now uses the existing canonical image fieldsets while raw GET decorations and authored/history data remain unchanged. No additional production or test change is justified by this passing result.
++
++The test records use the existing `workspace.v1` transport and schema/version-1 command records; this report does not claim a separate v2 wire-protocol run. The current lifecycle lane is the requested current-source lifecycle coverage.
++
++Not run: any full suite, public013 or ordinary014 adoption, source private357/613 mutation, Runtime952 artifact mutation, or any successful-node rerun. No blockers or cross-contract decision are present.
++
++Recommended next step: use this exact result for the private RT08 replacement qualification only; keep public release, pin adoption, and integration claims separate until their own evidence exists.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..82ca2a2222bf37104274d03aad3758cedc54410b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md
+@@ -0,0 +1,26 @@
++# Agent private952 HTTP result
++
++## Qualification
++
++PASS — exact manager-requested pair `28209`, and only that pair.
++
++- Agent source: `909bfad8f9ae22d3e4b0dbb83fdcc07bcf1169c` / tree `3775e2e00c9e45999f6c0277f4dbc323079749b0`
++- Runtime: `rt-pin-95202c2b` (tree `d438d3e2…`)
++- Result folder: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-private952-sockets-integration-1020193342-28209`
++- Exact result: `44 passed in 55.07s`, exit `0`
++
++## Original assertions
++
++All passed; no successful node was rerun.
++
++- `test_native_sheet_current_runtime.py::test_http_semantic_batch_original_pins_reload_inverse_redo`: `4/4` (`python`, `cli`, `sheet-python`, `sheet-cli`). Original pins, semantic payload, canonical lifecycle, reload, inverse/undo, and redo assertions passed.
++- `test_native_sheet_current_runtime.py::test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba`: `1/1`. Lost-ACK acceptance, durable restart recovery, exact retry identity/body, no recapture, original guards, and A→B→A guarded-undo refusal passed.
++- `test_native_batch_ingress.py`: `40/40`. Accepted-v1 raw/captured batch publication, reload, inverse/redo, lost-ACK/restart exact retry, dependent suffix, ABA/delete-recreate, original-pair pinning, atomic refusal, boolean/numeric retry identity, explicit pin/parser, preview, and concurrent-ACK assertions all passed.
++
++## Scope
++
++The predecessor's bounded `astrid/sdk/remote.py` canonical-image conversion is validated by this pair. It canonicalizes only the reloaded source closure through existing image fieldsets; raw GET rows, payloads, pins, ordering, identities, opaque data, and history remain preserved. No further source/test fix is needed.
++
++This is private native HTTP evidence only. It does not adopt public013/ordinary014, mutate private357/613 or Runtime952 health/artifact/rawbundle inputs, refresh captures, create fake history, or establish a full-suite, browser, public-release, or integration claim. The transport and command records remain the existing `workspace.v1` / schema-version-1 path; no separate v2 wire-protocol run is claimed.
++
++Use this result for the private RT08 replacement qualification only. Keep pin adoption and public/integration claims separate.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..896bf8fcab274e239d9be7b80c6f044ba2d459b0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/commit-msg
+@@ -0,0 +1,4 @@
++docs(agent): record private952 HTTP qualification
++
++Record the exact passing private Runtime952 HTTP pair and its original
++accepted-v1 retry and current-source lifecycle assertion coverage.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..896bf8fcab274e239d9be7b80c6f044ba2d459b0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(agent): record private952 HTTP qualification
++
++Record the exact passing private Runtime952 HTTP pair and its original
++accepted-v1 retry and current-source lifecycle assertion coverage.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7edbbe5562840823960d16f21478852fd6e87016
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md
+@@ -0,0 +1,42 @@
++## Result
++
++PASS for the manager-requested exact private952 HTTP pair only.
++
++The recorded result is:
++
++- result: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-private952-sockets-integration-1020193342-28209`
++- status/exit: `pass` / `0`
++- source: Agent `909bfad8f9ae22d3e4b0dbb83fdcc07bcf1169c6`, tree `3775e2e00c9e45999f6c0277f4dbc323079749b0`
++- Runtime: pinned `rt-pin-95202c2b` (tree `d438d3e2…`), private952 health `ddf6396d…`, artifact `b397e5…`, raw bundle `4a0779…`
++- result summary: `44 passed in 55.07s`
++
++The exact recorded command was:
++
++```text
++env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95202c2b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_semantic_batch_original_pins_reload_inverse_redo tests/editing_conformance/test_native_batch_ingress.py
++```
++
++## Assertion coverage
++
++All requested original assertions passed; no node was rerun.
++
++- Current HTTP semantic lifecycle: `4/4` parameterizations of `test_http_semantic_batch_original_pins_reload_inverse_redo` (`python`, `cli`, `sheet-python`, `sheet-cli`). These assert original revision/publication pins, exact semantic command payload, canonical state, one publication, restart/reload, inverse/undo, and redo's exact canonical document.
++- HTTP accepted-ACK retry path: `1/1` `test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba`. It asserts lost ACK after Runtime acceptance, durable outbox retention, restart recovery, refusal of a changed idempotency key, refusal of changed pending intent, byte-identical exact retry without recapture, and guarded undo refusal after an A→B→A intervening write.
++- Accepted-v1/native ingress: `40/40` in `test_native_batch_ingress.py`:
++  - `test_batch_original_claims_one_publication_reload_inverse`: `6/6` (raw/captured × queue/commit/CLI), including reload, inverse, redo, and source attribution.
++  - `test_file_lost_ack_restart_exact_retry_before_original_suffix`: `8/8` (raw/captured × disjoint/relevant/ABA/delete-recreate), including exact retry and dependent suffix handling.
++  - `test_guarded_undo_still_refuses_intervening_equal_state_writes`: `2/2`.
++  - `test_file_uses_original_pair_after_peer_advances_head`: `4/4`.
++  - `test_batch_retry_distinguishes_boolean_capture_and_intent`: `6/6`.
++  - `test_batch_retry_numeric_equivalence_sends_original_bytes`: `1/1`.
++  - Atomic refusal, explicit-pin, parser, captured-claim, preview, and concurrent-ACK controls: `13/13` across the remaining tests.
++
++## Classification and boundary
++
++This is a qualified private native HTTP result, not public013/ordinary014 adoption, schema mutation, refreshed capture, fake history, or a full-suite result. The predecessor's `909bfad8` canonical-image conversion is sufficient: the source closure now uses the existing canonical image fieldsets while raw GET decorations and authored/history data remain unchanged. No additional production or test change is justified by this passing result.
++
++The test records use the existing `workspace.v1` transport and schema/version-1 command records; this report does not claim a separate v2 wire-protocol run. The current lifecycle lane is the requested current-source lifecycle coverage.
++
++Not run: any full suite, public013 or ordinary014 adoption, source private357/613 mutation, Runtime952 artifact mutation, or any successful-node rerun. No blockers or cross-contract decision are present.
++
++Recommended next step: use this exact result for the private RT08 replacement qualification only; keep public release, pin adoption, and integration claims separate until their own evidence exists.
+
+codex
+The qualification report and flat ORCH result are written. They preserve the exact 44/44 breakdown and explicitly separate private evidence from public/adoption/full-suite claims; no test was rerun because the requested nodes already passed. I’m doing only final file and worktree hygiene checks now, then I’ll mark the task complete.
+exec
+/bin/bash -lc "printf '%s\\n' '--- worker outputs ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/{report.md,commit-msg,commit-msg.txt,DONE}; printf '%s\\n' '--- flat result ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md; printf '%s\\n' '--- report headings ---'; rg -n '"'^##|''^#|PASS|44 passed|Not run|Recommended'"' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md; printf '%s\\n' '--- worktree ---'; git status --short --branch; git diff --check" in /home/user/work/wt/agt-m2-private952-http-result-triage
+ succeeded in 1154ms:
+--- worker outputs ---
+-rw-r--r-- 1 root root    0 Oct 20 19:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/DONE
+-rw-r--r-- 1 root root  189 Oct 20 19:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/commit-msg
+-rw-r--r-- 1 root root  189 Oct 20 19:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/commit-msg.txt
+-rw-r--r-- 1 root root 4346 Oct 20 19:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md
+--- flat result ---
+-rw-r--r-- 1 root root 2299 Oct 20 19:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md
+--- report headings ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md:1:# Agent private952 HTTP result
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md:3:## Qualification
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md:5:PASS — exact manager-requested pair `28209`, and only that pair.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md:10:- Exact result: `44 passed in 55.07s`, exit `0`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md:12:## Original assertions
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md:20:## Scope
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md:1:## Result
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md:3:PASS for the manager-requested exact private952 HTTP pair only.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md:11:- result summary: `44 passed in 55.07s`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md:19:## Assertion coverage
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md:34:## Classification and boundary
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md:40:Not run: any full suite, public013 or ordinary014 adoption, source private357/613 mutation, Runtime952 artifact mutation, or any successful-node rerun. No blockers or cross-contract decision are present.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md:42:Recommended next step: use this exact result for the private RT08 replacement qualification only; keep public release, pin adoption, and integration claims separate until their own evidence exists.
+--- worktree ---
+## tl/agt-m2-private952-http-result-triage
+
+codex
+## Result
+
+PASS — exact private952 pair `28209`: **44 passed in 55.07s**, exit `0`.
+
+- Validated predecessor `909bfad8` canonical-image conversion.
+- Covered current HTTP lifecycle `4/4`, lost-ACK/restart/retry/ABA `1/1`, and native ingress controls `40/40`.
+- No source or test changes; no successful nodes rerun.
+- No blockers or cross-contract decisions.
+
+Exact command and assertion breakdown are in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md). Published [agent-private952-http-result.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md).
+
+`commit-msg`, `commit-msg.txt`, and `DONE` were written; worktree is clean.
+tokens used
+98,474
+## Result
+
+PASS — exact private952 pair `28209`: **44 passed in 55.07s**, exit `0`.
+
+- Validated predecessor `909bfad8` canonical-image conversion.
+- Covered current HTTP lifecycle `4/4`, lost-ACK/restart/retry/ABA `1/1`, and native ingress controls `40/40`.
+- No source or test changes; no successful nodes rerun.
+- No blockers or cross-contract decisions.
+
+Exact command and assertion breakdown are in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-http-result-triage/report.md). Published [agent-private952-http-result.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private952-http-result.md).
+
+`commit-msg`, `commit-msg.txt`, and `DONE` were written; worktree is clean.

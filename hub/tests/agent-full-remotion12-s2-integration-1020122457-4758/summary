@@ -1,0 +1,64 @@
+test agent-full-remotion12-s2-integration-1020122457-4758: fail exit=1 in 4909s — full-remotion12-s2-integration on integration:agent (agent tree a5e00ca29a72ba00d34c0d8b1bcea67132a8e954)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent-child-s2/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -n 3
+counts: 6 failed, 14577 passed, 452 skipped, 4 xfailed, 83 warnings, 565 subtests passed in 4905.65s (1:21:45) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-remotion12-s2-integration-1020122457-4758/log.txt ---
+E           AssertionError: giant-file-rationale.md entry 'astrid/core/execution/generic_host.py' claims 13798 lines but on-disk count is 13860
+E           assert 62 <= 50
+E            +  where 62 = abs((13860 - 13798))
+
+tests/test_structure_contracts.py:1029: AssertionError
+=============================== warnings summary ===============================
+tests/core/experiments/test_state.py::TestCrossProcessInit::test_two_experiments_exactly_one_initializes
+tests/core/experiments/test_state.py::TestCrossProcessInit::test_two_experiments_exactly_one_initializes
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+  /usr/lib/python3.13/multiprocessing/popen_fork.py:73: DeprecationWarning: This process (pid=21061) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    self.pid = os.fork()
+
+tests/packs/rendering/test_render_export_task_adapter.py: 57 warnings
+  /home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020122457-4758/tests/packs/rendering/test_render_export_task_adapter.py:51: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(runtime)
+
+tests/packs/rendering/test_timeline_filmstrip_execution.py::test_input_audio_rail_is_prominent_but_remains_timing_only
+  /home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020122457-4758/tests/packs/rendering/test_timeline_filmstrip_execution.py:345: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    pixels = list(image.getdata())
+
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020122457-4758/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+  /home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020122457-4758/tests/sdk/test_timeline_checkout.py:1573: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    assert set(image.convert("RGB").getdata()) == {colors[n]}
+
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[prepared-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[prepared-redo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[target-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[target-redo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[first-promotion-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[first-promotion-redo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[second-promotion-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[second-promotion-redo]
+  /home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020122457-4758/tests/sdk/test_timeline_checkout_restore_recovery.py:300: DeprecationWarning: This process (pid=21100) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    pid = os.fork()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/packs/timeline/test_cli_media.py::test_trim_and_slip_keep_the_film_span
+FAILED tests/packs/timeline/test_cli_media.py::test_a_trimmed_bed_is_extended_to_the_film_end_under_keep_end
+FAILED tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name
+FAILED tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary
+FAILED tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context
+FAILED tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+6 failed, 14577 passed, 452 skipped, 4 xfailed, 83 warnings, 565 subtests passed in 4905.65s (1:21:45)

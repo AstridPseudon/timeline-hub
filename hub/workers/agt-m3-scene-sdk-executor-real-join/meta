@@ -1,0 +1,9 @@
+name=agt-m3-scene-sdk-executor-real-join
+repo=agent
+base=tl/agt-m3-scene-caller-contract-reconcile
+base_sha=9b887e23
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-scene-sdk-executor-real-join
+started=2026-10-20T18:00:55Z

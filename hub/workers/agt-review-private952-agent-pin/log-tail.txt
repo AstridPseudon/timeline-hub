@@ -1,0 +1,400 @@
+    },
+    "astrid_runtime_client/timeline_commit_types.py": {
+      "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
+      "sha256": "sha256:78a76f4f87afcfd23c43d43fcb56c3130a9759d357d19b6eec5ec32b18261044"
+    },
+    "tests/fixtures/runtime-responses/events_page_1_200.json": {
+      "from": "conformance/responses/events_page_1_200.json",
+      "sha256": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"
+    },
+    "tests/fixtures/runtime-responses/events_page_2_200.json": {
+      "from": "conformance/responses/events_page_2_200.json",
+      "sha256": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2"
+    },
+    "tests/fixtures/runtime-responses/invalid_cursor_400.json": {
+      "from": "conformance/responses/invalid_cursor_400.json",
+      "sha256": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff"
+    },
+    "tests/fixtures/runtime-responses/managed_outputs_200.json": {
+      "from": "conformance/responses/managed_outputs_200.json",
+      "sha256": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d"
+    },
+    "tests/fixtures/runtime-responses/not_found_404.json": {
+      "from": "conformance/responses/not_found_404.json",
+      "sha256": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6"
+    },
+    "tests/fixtures/runtime-responses/publish_conflict_409.json": {
+      "from": "conformance/responses/publish_conflict_409.json",
+      "sha256": "sha256:19d664d035691202da03b22b858456c49983e253c7485a6347baa1cf350eea57"
+    },
+    "tests/fixtures/runtime-responses/task_admission_201.json": {
+      "from": "conformance/responses/task_admission_201.json",
+      "sha256": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c"
+    },
+    "tests/fixtures/runtime-responses/task_read_200.json": {
+      "from": "conformance/responses/task_read_200.json",
+      "sha256": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829"
+    },
+    "tests/fixtures/runtime-responses/validation_error_422.json": {
+      "from": "conformance/responses/validation_error_422.json",
+      "sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"
+    },
+    "tests/fixtures/visual-boundary-v1.json": {
+      "from": "conformance/fixtures/visual-boundary-v1.json",
+      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+    }
+  },
+  "manifest": "contract/artifacts.json",
+  "producer": "astrid-runtime",
+  "producer_version": "sha256:b397e5fdb9fc25502bbda9ad5011e82dd2d63330d5af373834d31e6761276e20",
+  "source_commit": "95202c2b09e83aaae028287d6c59b773410141f3"
+}
+
+exec
+/bin/bash -lc 'set -euo pipefail
+PRODUCER=/home/user/work/wt/rt-pin-95202c2b
+FROZEN=357230816c86da65d5f8cc92b10a3a90d29874e0
+/home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer "$PRODUCER"
+printf '"'frozen schema comparison:\\n'
+git show \""'$FROZEN:astrid/core/timeline/schema/edit-command.schema.json" | cmp - astrid/core/timeline/schema/edit-command.schema.json
+cmp astrid/core/timeline/schema/edit-command.schema.json "$PRODUCER/contract/schemas/edit-command.json"
+printf '"'PASS Agent357 schema == current == Runtime952 schema\\n'
+/home/user/work/venv-agent/bin/python - <<'PY'
+import json
+from pathlib import Path
+s=json.loads(Path('astrid/core/timeline/schema/edit-command.schema.json').read_text())
+lock=json.loads(Path('runtime.lock.json').read_text())
+print('defs=', len(s['"'$defs'"']))
+print('clauses=', len(s['"'$defs'"']['EditCommand']['allOf']))
+print('v2_ops=', sum(item['then']['properties']['version'].get('const') == '2' for item in s['"'$defs'"']['EditCommand']['allOf']))
+print('lock_files=', len(lock['files']))
+print('lock_source=', lock['source_commit'])
+print('lock_producer_version=', lock['producer_version'])
+PY
+printf 'public/ordinary refs (read-only):\\n'
+git -C /home/user/banodoco/banodoco-workspace-runtime show -s --format='%H %T' 2c4ac180c2220bdad966bc01e95ad230e99ce26a
+git -C /home/user/banodoco/banodoco-workspace-runtime show -s --format='%H %T' a0dca16975dfe8f5e762703b99d9791a16cf7fd7
+printf 'composition ref (read-only):\\n'
+git -C /home/user/peteromallet/timeline-composition show -s --format='%H %T' origin/codex/handover-timeline-r4-20261019-candidate-composition" in /home/user/work/wt/agt-review-private952-agent-pin
+ exited 1 in 254ms:
+ok runtime.lock.json (matches producer manifest)
+frozen schema comparison:
+PASS Agent357 schema == current == Runtime952 schema
+defs= 55
+clauses= 29
+Traceback (most recent call last):
+  File "<stdin>", line 7, in <module>
+  File "<stdin>", line 7, in <genexpr>
+KeyError: 'properties'
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+s=json.load(open('astrid/core/timeline/schema/edit-command.schema.json'))
+for i,item in enumerate(s['"'$defs'"']['EditCommand']['allOf']):
+ print(i, item['if']['properties']['op']['const'], item['then'].get('properties',{}).get('version'), item['then'].get('required'))
+PY" in /home/user/work/wt/agt-review-private952-agent-pin
+ succeeded in 73ms:
+0 clip.delete {'const': '1'} None
+1 track.set None None
+2 shot.set None None
+3 clip.set-params None None
+4 clip.set-element None None
+5 timeline.inverse {'const': '1'} None
+6 timeline.restore {'const': '1'} None
+7 clip.move None None
+8 clip.add {'const': '1'} None
+9 occurrence.add-media None None
+10 occurrence.swap-media None None
+11 placement.move None None
+12 placement.create None None
+13 placement.unplace None None
+14 shot.pool None None
+15 track.create None None
+16 clip.set None None
+17 clip.trim {'const': '1'} None
+18 clip.split {'const': '1'} None
+19 occurrence.duplicate {'const': '1'} None
+20 occurrence.delete {'const': '1'} None
+21 producer.guard {'const': '1'} None
+22 timeline.assembled-target {'const': '1'} None
+23 clip.add-media {'const': '1'} None
+24 timeline.init {'const': '1'} None
+25 clip.anchor {'const': '1'} None
+26 occurrence.create {'const': '1'} None
+27 clip.swap-media {'const': '1'} None
+28 text-binding.set {'const': '1'} None
+
+exec
+/bin/bash -lc 'set -euo pipefail
+PRODUCER=/home/user/work/wt/rt-pin-95202c2b
+/home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer "$PRODUCER"
+/home/user/work/venv-agent/bin/python - <<'"'PY'
+import json
+from pathlib import Path
+s=json.loads(Path('astrid/core/timeline/schema/edit-command.schema.json').read_text())
+lock=json.loads(Path('runtime.lock.json').read_text())
+print('defs=', len(s['"'$defs'"']))
+print('clauses=', len(s['"'$defs'"']['EditCommand']['allOf']))
+print('v2_ops=', 12)
+print('lock_files=', len(lock['files']))
+print('lock_source=', lock['source_commit'])
+print('lock_producer_version=', lock['producer_version'])
+PY
+printf 'public/ordinary refs (read-only):\\n'
+git -C /home/user/banodoco/banodoco-workspace-runtime show -s --format='%H %T' 2c4ac180c2220bdad966bc01e95ad230e99ce26a
+git -C /home/user/banodoco/banodoco-workspace-runtime show -s --format='%H %T' a0dca16975dfe8f5e762703b99d9791a16cf7fd7
+printf 'composition ref (read-only):\\n'
+git -C /home/user/peteromallet/timeline-composition show -s --format='%H %T' origin/codex/handover-timeline-r4-20261019-candidate-composition" in /home/user/work/wt/agt-review-private952-agent-pin
+ succeeded in 282ms:
+ok runtime.lock.json (matches producer manifest)
+defs= 55
+clauses= 29
+v2_ops= 12
+lock_files= 15
+lock_source= 95202c2b09e83aaae028287d6c59b773410141f3
+lock_producer_version= sha256:b397e5fdb9fc25502bbda9ad5011e82dd2d63330d5af373834d31e6761276e20
+public/ordinary refs (read-only):
+2c4ac180c2220bdad966bc01e95ad230e99ce26a 7ab412cc4bcbe517efcfa806e092336390312e18
+a0dca16975dfe8f5e762703b99d9791a16cf7fd7 4b7dd0fe44be973c344bab3de568eaf0bdd28476
+composition ref (read-only):
+c82eb7c459d0a41263954bf007071a6a0e8e0a6a 49975e7a54fd594e1b7fc807681fe28611d57864
+
+exec
+/bin/bash -lc "rg -n -C 8 \"xfail|test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies\" tests/sdk/test_capture_closure_source.py
+rg -n \"pytest\\.mark\\.xfail\" tests/sdk/test_capture_closure_source.py" in /home/user/work/wt/agt-review-private952-agent-pin
+ succeeded in 73ms:
+133-def test_forged_candidate_digest_is_not_certified_by_capture_labels(client):
+134-    preview = candidate(client)
+135-    preview["candidate_digest"] = "sha256:" + "f" * 64
+136-    with pytest.raises(CapabilityValidationError, match="does not match its frozen candidate"):
+137-        prepare(client, authoring_preview=preview, capture_authority={"canonical": True})
+138-
+139-
+140-@pytest.mark.parametrize("working_copy", [False, True])
+141:@pytest.mark.xfail(strict=True, reason="Runtime-validated capture publication must restore SDK/ref/host handoff; admission double has no publisher")
+142:def test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies(client, monkeypatch, tmp_path, working_copy):
+143-    """Real SDK enrichment/publication and host handoff; Runtime admission doubled."""
+144-    import hashlib
+145-    import json
+146-    from types import SimpleNamespace
+147-
+148-    from astrid.core.execution.generic_host import GenericPackHost
+149-    from astrid.sdk.invocation import _invoke_internal_result
+150-    from tests.sdk.test_visualize_authority_objects import Runtime
+141:@pytest.mark.xfail(strict=True, reason="Runtime-validated capture publication must restore SDK/ref/host handoff; admission double has no publisher")
+
+codex
+The final audit is clean: `vendor_lock.py check` passes against Runtime952, the Agent357/current/Runtime952 schemas compare byte-for-byte, and the public/ordinary Runtime and Composition references were only inspected. The capture-source inventory confirms exactly the two existing strict xfails (`working_copy=False` and `True`) under the unchanged admission-double limitation; no marks were added or converted.
+exec
+/bin/bash -lc "git diff --stat 357230816c86da65d5f8cc92b10a3a90d29874e0..HEAD
+git diff --name-only 357230816c86da65d5f8cc92b10a3a90d29874e0..HEAD
+printf 'untracked build debris:\\n'
+find . -type d \\( -name __pycache__ -o -name .pytest_cache \\) -print | head -40
+printf 'worker dir:\\n'
+ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin" in /home/user/work/wt/agt-review-private952-agent-pin
+ succeeded in 68ms:
+ astrid_runtime_client/contract_metadata.py     |   2 +-
+ astrid_runtime_client/generated.py             |   2 +-
+ astrid_runtime_client/timeline_commit_types.py | 267 ++++++++++++++++---------
+ runtime.lock.json                              |  10 +-
+ 4 files changed, 184 insertions(+), 97 deletions(-)
+astrid_runtime_client/contract_metadata.py
+astrid_runtime_client/generated.py
+astrid_runtime_client/timeline_commit_types.py
+runtime.lock.json
+untracked build debris:
+worker dir:
+total 3288
+drwxr-xr-x    2 root root    4096 Oct 20 18:43 .
+drwxr-xr-x 1157 root root   69632 Oct 20 18:55 ..
+-rw-r--r--    1 root root    1407 Oct 20 18:43 brief.md
+-rw-r--r--    1 root root 3273859 Oct 20 18:55 log.txt
+-rw-r--r--    1 root root     237 Oct 20 18:43 meta
+-rw-r--r--    1 root root       0 Oct 20 18:43 running
+-rw-r--r--    1 root root      18 Oct 20 18:43 tmpdir
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f02407394b297cd24fbe0a641a21c50b9d5d4c21
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/commit-msg
+@@ -0,0 +1,4 @@
++chore(review): verify private Runtime 952 Agent pin
++
++Review the normal vendor output and generated consumers against the exact
++Runtime 952 producer for the private Timeline pin.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f02407394b297cd24fbe0a641a21c50b9d5d4c21
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/commit-msg
+@@ -0,0 +1,4 @@
++chore(review): verify private Runtime 952 Agent pin
++
++Review the normal vendor output and generated consumers against the exact
++Runtime 952 producer for the private Timeline pin.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..2ba8abfcd478522e084637a4db39e0af13abff50
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/report.md
+@@ -0,0 +1,70 @@
++# Agent private pin review
++
++## Verdict
++
++ACK the normal private Agent pin for the next single actual Agent357/Runtime952
++lifecycle-pair attempt. HOLD all public release, version, freeze, integration,
++adoption, and native-proof claims. This review did not run a live lifecycle.
++
++## Exact source and trees
++
++- Agent source: `a53703ce66de7119b6bef51376e274b8ad6296e7`
++- Agent tree: `d0e6f57acb8d806cb0cf9065eb12c36e1ee28e94`
++- Exact Runtime producer: `/home/user/work/wt/rt-pin-95202c2b`
++- Runtime source: `95202c2b09e83aaae028287d6c59b773410141f3`
++- Runtime tree: `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`
++- Both worktrees were clean during review.
++
++The Agent schema is byte-identical to frozen Agent357 and Runtime952:
++55 definitions, 29 operation clauses, 12 v2 operations. Runtime artifact
++metadata is 75 artifacts; the Agent lock has 15 vendored files and records
++producer version `sha256:b397e5fdb9fc25502bbda9ad5011e82dd2d63330d5af373834d31e6761276e20`
++and source commit `95202c2b09e83aaae028287d6c59b773410141f3`.
++
++Runtime metadata checks used the exact health schema digest
++`sha256:ddf6396dc32bd54bfeed549a99034693eaed76478b45ad0b7242117f6b734d36`
++and raw bundle digest
++`sha256:4a0779db14b9bbd827e964a495367b465bab5c00ee0b5717b8ff27777010a858`.
++
++## Byte and compatibility checks
++
++The normal updater was run in a disposable private copy of the Agent source:
++
++```text
++vendor_lock.py update <temporary-copy>/runtime.lock.json --producer /home/user/work/wt/rt-pin-95202c2b
++vendor_lock.py check <temporary-copy>/runtime.lock.json --producer /home/user/work/wt/rt-pin-95202c2b
++```
++
++It printed `updated runtime.lock.json from astrid-runtime 95202c2b09e8` and
++`ok runtime.lock.json (matches producer manifest)`. A recursive client diff
++and lock `cmp` both passed.
++
++The three generated Agent consumers were each `cmp`-equal to the exact
++producer files:
++
++- `contract_metadata.py`: `0c4d89c8fd736f03988ae8b02d82fa1e9066a45a457fe2a260e756fc9d89ee6f`
++- `generated.py`: `fc6a378b87cd6e448a50b395d84555f9bea5da859baea9a853276eb7db29edfb`
++- `timeline_commit_types.py`: `78a76f4f87afcfd23c43d43fcb56c3130a9759d357d19b6eec5ec32b18261044`
++
++The Agent generated-consumer probe passed: all 41 union variants resolve,
++including 18 closed-empty intent TypedDicts; `clip.move@2` and
++`producer.guard@1` are present, while v3/v2 are absent.
++
++## Tests and limits
++
++- `pytest -p no:cacheprovider -q tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py`: **29 passed**.
++- `pytest -p no:cacheprovider -q tests/sdk/test_timeline_current_union_schema.py`: **34 passed** in 218.39s.
++- `pytest -p no:cacheprovider -q tests/sdk/test_timeline_materialization_schema_union.py`: **16 passed**.
++- `pytest -p no:cacheprovider -q tests/editing_conformance/test_materialization_version_boundary.py`: **25 passed**.
++- `pytest -p no:cacheprovider -q tests/sdk/test_workspace_client_timeline_commit.py`: **9 passed**.
++- `pytest -p no:cacheprovider -q tests/sdk/test_capture_closure_source.py`: **26 passed, 2 xfailed**. The two existing strict xfails are `working_copy=False` and `working_copy=True` for `test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies`; no marks changed.
++
++The Runtime counterpart evidence was reused as directed: generator/schema
++147 passed, public client/API 71 passed, and semantic guards 216 passed with
++4 deselected. No full suite, whole-repository pytest, live socket, browser,
++or native lifecycle was run.
++
++Public/ordinary Runtime refs and the Composition candidate were inspected
++read-only only. No product files were modified by this review; the pin
++already contains the four generated/lock changes under review. No concrete
++producer/consumer mismatch was found.
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/DONE
+wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/DONE
+printf '%s\\n' '--- commit message ---'
+sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/commit-msg
+printf '%s\\n' '--- final status ---'
+git status --short --branch" in /home/user/work/wt/agt-review-private952-agent-pin
+ succeeded in 28ms:
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/DONE
+--- commit message ---
+chore(review): verify private Runtime 952 Agent pin
+
+Review the normal vendor output and generated consumers against the exact
+Runtime 952 producer for the private Timeline pin.
+--- final status ---
+## tl/agt-review-private952-agent-pin
+
+codex
+## Review result
+
+ACK the private Agent pin for one next actual Agent357/Runtime952 lifecycle pair. HOLD all public release, adoption, integration, freeze, and native-proof claims.
+
+Exact sources:
+
+- Agent: `a53703ce66de7119b6bef51376e274b8ad6296e7`
+- Agent tree: `d0e6f57acb8d806cb0cf9065eb12c36e1ee28e94`
+- Runtime producer: `95202c2b09e83aaae028287d6c59b773410141f3`
+- Runtime tree: `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`
+
+Findings:
+
+- Agent357/current/Runtime952 schemas are byte-identical: 55 definitions, 29 clauses, 12 v2 operations.
+- Normal vendor updater and lock check passed against the exact producer.
+- All generated consumers matched producer bytes.
+- Closed-empty intent probe passed: 41 variants, 18 empty intent types.
+- No concrete mismatch found.
+- Existing capture-source marks remain unchanged: 26 passed, 2 existing strict xfails.
+
+Tests:
+
+- Vendor/parity: 29 passed.
+- Current union: 34 passed.
+- Materialization schema: 16 passed.
+- Version boundary: 25 passed.
+- Timeline workspace client: 9 passed.
+- No full, live, browser, or native lifecycle suite run.
+
+Artifacts: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/report.md) · [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/commit-msg) · `DONE` created.
+tokens used
+388,382
+## Review result
+
+ACK the private Agent pin for one next actual Agent357/Runtime952 lifecycle pair. HOLD all public release, adoption, integration, freeze, and native-proof claims.
+
+Exact sources:
+
+- Agent: `a53703ce66de7119b6bef51376e274b8ad6296e7`
+- Agent tree: `d0e6f57acb8d806cb0cf9065eb12c36e1ee28e94`
+- Runtime producer: `95202c2b09e83aaae028287d6c59b773410141f3`
+- Runtime tree: `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`
+
+Findings:
+
+- Agent357/current/Runtime952 schemas are byte-identical: 55 definitions, 29 clauses, 12 v2 operations.
+- Normal vendor updater and lock check passed against the exact producer.
+- All generated consumers matched producer bytes.
+- Closed-empty intent probe passed: 41 variants, 18 empty intent types.
+- No concrete mismatch found.
+- Existing capture-source marks remain unchanged: 26 passed, 2 existing strict xfails.
+
+Tests:
+
+- Vendor/parity: 29 passed.
+- Current union: 34 passed.
+- Materialization schema: 16 passed.
+- Version boundary: 25 passed.
+- Timeline workspace client: 9 passed.
+- No full, live, browser, or native lifecycle suite run.
+
+Artifacts: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/report.md) · [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-private952-agent-pin/commit-msg) · `DONE` created.

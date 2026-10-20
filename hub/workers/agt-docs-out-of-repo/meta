@@ -1,0 +1,9 @@
+name=agt-docs-out-of-repo
+repo=agent
+base=tl/integration
+base_sha=ef6eec55
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-docs-out-of-repo
+started=2026-10-20T06:29:38Z

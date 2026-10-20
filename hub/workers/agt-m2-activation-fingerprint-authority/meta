@@ -1,0 +1,9 @@
+name=agt-m2-activation-fingerprint-authority
+repo=agent
+base=tl/integration
+base_sha=f711cbd2
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-activation-fingerprint-authority
+started=2026-10-20T20:25:33Z

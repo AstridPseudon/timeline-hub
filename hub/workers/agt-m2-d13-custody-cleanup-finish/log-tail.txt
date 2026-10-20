@@ -1,0 +1,400 @@
++            if handle is _PIDFD_RELEASED:
++                return True
++            if type(handle) is not int:
++                return False
++            poller = select.poll()
++            poller.register(handle, select.POLLIN)
++            return bool(poller.poll(0))
++
+     def observe(self, members: Mapping[int, str]) -> None:
+         with self._lock:
+             if self._uncertain is not None:
+diff --git a/astrid/core/execution/process_group.py b/astrid/core/execution/process_group.py
+index 71f999de88f5dfc33c87de9829f1bd7ce9512ddf..005b68e35078551de29ab1f488b32da7f406e6ba
+--- a/astrid/core/execution/process_group.py
++++ b/astrid/core/execution/process_group.py
+@@ -400,13 +400,17 @@
+     if root_birth is None:
+         return {}
+     root = snapshot.get(process.pid)
++    reaped_root_reused = False
+     if root is not None and root.birth != root_birth:
+-        return {}
++        if process.returncode is None:
++            return {}
++        reaped_root_reused = True
+     known[process.pid] = root_birth
+     children: dict[int, list[_ProcessInfo]] = {}
+     for info in snapshot.values():
+         children.setdefault(info.ppid, []).append(info)
+-    pending = [process.pid, *known]
++    pending = [pid for pid in (process.pid, *known)
++               if not (reaped_root_reused and pid == process.pid)]
+     while pending:
+         parent = pending.pop()
+         # A PID in ``known`` is only an identity, not a permanent process.
+@@ -487,6 +491,13 @@
+     for pid, birth in tuple(known.items()):
+         current = snapshot.get(pid)
+         if current is not None and current.birth != birth:
++            # Popen.poll()/wait() positively reaps the original leader before
++            # the final descendant census.  Its numeric PID may then already
++            # belong to another incarnation; that replacement is not part of
++            # the owned tree.  Descendants and unreaped roots still require
++            # the exact birth match below.
++            if pid == process.pid and process.returncode is not None:
++                continue
+             raise CleanupUncertainError("owned process identity was reused")
+         if current is None and any(
+             info.ppid == pid and info.pid not in known for info in snapshot.values()
+diff --git a/tests/core/execution/test_process_group.py b/tests/core/execution/test_process_group.py
+index efa1529c03b552934b6b8d3e1c02fc79e82eaef1..2ba48343ab016119757643ef61e0203b386f078c
+--- a/tests/core/execution/test_process_group.py
++++ b/tests/core/execution/test_process_group.py
+@@ -262,6 +262,31 @@
+         groups.terminate_tree(process, grace_seconds=0)
+ 
+ 
++def test_reaped_root_pid_reuse_does_not_poison_final_tree_observation(monkeypatch):
++    """A reaped root replacement is unrelated; known descendants remain fenced."""
++    process = SimpleNamespace(
++        pid=100,
++        returncode=0,
++        _astrid_process_birth="root",
++        _astrid_tree_members={100: "root", 200: "child"},
++        _astrid_custody=FakeCustody(),
++    )
++    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
++        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
++        200: groups._ProcessInfo(200, 1, 200, "child"),
++        900: groups._ProcessInfo(900, 1, 900, "unrelated"),
++    })
++
++    assert groups.observe_tree(process) == {200: "child"}
++    assert not hasattr(process, "_astrid_tree_uncertain")
++    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
++        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
++        200: groups._ProcessInfo(200, 1, 200, "replacement-child"),
++    })
++    with pytest.raises(groups.CleanupUncertainError, match="owned process identity was reused"):
++        groups.observe_tree(process)
++
++
+ def test_keyboard_interrupt_during_first_census_fails_closed(monkeypatch):
+     process = _process()
+     signals = []
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-d13-custody-cleanup-finish/astrid/core/execution/process_group.py
+diff --git a/astrid/core/execution/custody_broker.py b/astrid/core/execution/custody_broker.py
+index 801e1aa4ce10733d019be63d04e4a77dca761ed6..0f70c58c3a741797cd14ac39cb8bc5fb55dac7f2
+--- a/astrid/core/execution/custody_broker.py
++++ b/astrid/core/execution/custody_broker.py
+@@ -3875,6 +3875,21 @@
+                 except OSError:
+                     pass
+ 
++    def retained_incarnation_exited(self, pid: int, birth: str) -> bool:
++        """Return whether this exact retained incarnation has exited."""
++        with self._lock:
++            entry = self._handles.get(pid)
++            if entry is None or entry[0] != birth:
++                return False
++            handle = entry[1]
++            if handle is _PIDFD_RELEASED:
++                return True
++            if type(handle) is not int:
++                return False
++            poller = select.poll()
++            poller.register(handle, select.POLLIN)
++            return bool(poller.poll(0))
++
+     def observe(self, members: Mapping[int, str]) -> None:
+         with self._lock:
+             if self._uncertain is not None:
+diff --git a/astrid/core/execution/process_group.py b/astrid/core/execution/process_group.py
+index 71f999de88f5dfc33c87de9829f1bd7ce9512ddf..e3e78d5e41a548630e12ef3f5699869e29c4d41c
+--- a/astrid/core/execution/process_group.py
++++ b/astrid/core/execution/process_group.py
+@@ -346,6 +346,12 @@
+     ]
+ 
+ 
++def _retained_incarnation_exited(process: subprocess.Popen, pid: int, birth: str) -> bool:
++    custody = getattr(process, "_astrid_custody", None)
++    proof = getattr(custody, "retained_incarnation_exited", None)
++    return bool(proof(pid, birth)) if callable(proof) else False
++
++
+ def _group_members_owned(
+     process: subprocess.Popen,
+     known: dict[int, str],
+@@ -400,13 +406,17 @@
+     if root_birth is None:
+         return {}
+     root = snapshot.get(process.pid)
++    reaped_root_reused = False
+     if root is not None and root.birth != root_birth:
+-        return {}
++        if process.returncode is None:
++            return {}
++        reaped_root_reused = True
+     known[process.pid] = root_birth
+     children: dict[int, list[_ProcessInfo]] = {}
+     for info in snapshot.values():
+         children.setdefault(info.ppid, []).append(info)
+-    pending = [process.pid, *known]
++    pending = [pid for pid in (process.pid, *known)
++               if not (reaped_root_reused and pid == process.pid)]
+     while pending:
+         parent = pending.pop()
+         # A PID in ``known`` is only an identity, not a permanent process.
+@@ -487,6 +497,15 @@
+     for pid, birth in tuple(known.items()):
+         current = snapshot.get(pid)
+         if current is not None and current.birth != birth:
++            # Popen.poll()/wait() positively reaps the original leader before
++            # the final descendant census.  Its numeric PID may then already
++            # belong to another incarnation; that replacement is not part of
++            # the owned tree.  Linux pidfds provide the same positive exit
++            # proof for observed descendants. Unreaped roots and descendants
++            # without an exact retained exit proof still fail closed below.
++            if ((pid == process.pid and process.returncode is not None)
++                    or _retained_incarnation_exited(process, pid, birth)):
++                continue
+             raise CleanupUncertainError("owned process identity was reused")
+         if current is None and any(
+             info.ppid == pid and info.pid not in known for info in snapshot.values()
+diff --git a/tests/core/execution/test_process_group.py b/tests/core/execution/test_process_group.py
+index efa1529c03b552934b6b8d3e1c02fc79e82eaef1..2ba48343ab016119757643ef61e0203b386f078c
+--- a/tests/core/execution/test_process_group.py
++++ b/tests/core/execution/test_process_group.py
+@@ -262,6 +262,31 @@
+         groups.terminate_tree(process, grace_seconds=0)
+ 
+ 
++def test_reaped_root_pid_reuse_does_not_poison_final_tree_observation(monkeypatch):
++    """A reaped root replacement is unrelated; known descendants remain fenced."""
++    process = SimpleNamespace(
++        pid=100,
++        returncode=0,
++        _astrid_process_birth="root",
++        _astrid_tree_members={100: "root", 200: "child"},
++        _astrid_custody=FakeCustody(),
++    )
++    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
++        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
++        200: groups._ProcessInfo(200, 1, 200, "child"),
++        900: groups._ProcessInfo(900, 1, 900, "unrelated"),
++    })
++
++    assert groups.observe_tree(process) == {200: "child"}
++    assert not hasattr(process, "_astrid_tree_uncertain")
++    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
++        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
++        200: groups._ProcessInfo(200, 1, 200, "replacement-child"),
++    })
++    with pytest.raises(groups.CleanupUncertainError, match="owned process identity was reused"):
++        groups.observe_tree(process)
++
++
+ def test_keyboard_interrupt_during_first_census_fails_closed(monkeypatch):
+     process = _process()
+     signals = []
+
+2026-10-20T16:12:37.102299Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/user/work/wt/agt-m2-d13-custody-cleanup-finish/tests/core/execution/test_process_group.py:
+    assert groups.observe_tree(process) == {200: "child"}
+    assert not hasattr(process, "_astrid_tree_uncertain")
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
+        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
+        200: groups._ProcessInfo(200, 1, 200, "replacement-child"),
+        900: groups._ProcessInfo(900, 1, 900, "unrelated"),
+    })
+    with pytest.raises(groups.CleanupUncertainError, match="owned process identity was reused"):
+        groups.observe_tree(process)
+exec
+/bin/bash -lc "sed -n '270,315p' tests/core/execution/test_process_group.py" in /home/user/work/wt/agt-m2-d13-custody-cleanup-finish
+ succeeded in 0ms:
+        _astrid_process_birth="root",
+        _astrid_tree_members={100: "root", 200: "child"},
+        _astrid_custody=FakeCustody(),
+    )
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
+        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
+        200: groups._ProcessInfo(200, 1, 200, "child"),
+        900: groups._ProcessInfo(900, 1, 900, "unrelated"),
+    })
+
+    assert groups.observe_tree(process) == {200: "child"}
+    assert not hasattr(process, "_astrid_tree_uncertain")
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
+        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
+        200: groups._ProcessInfo(200, 1, 200, "replacement-child"),
+    })
+    with pytest.raises(groups.CleanupUncertainError, match="owned process identity was reused"):
+        groups.observe_tree(process)
+
+
+def test_keyboard_interrupt_during_first_census_fails_closed(monkeypatch):
+    process = _process()
+    signals = []
+
+    def interrupted_census():
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr(groups, "_process_snapshot", interrupted_census)
+    process._astrid_custody.signal_owner = lambda *args: signals.append(args)
+    with pytest.raises(KeyboardInterrupt):
+        groups.observe_tree(process)
+    assert process._astrid_tree_uncertain == "KeyboardInterrupt"
+
+    monkeypatch.setattr(groups, "_process_snapshot", _snapshot)
+    with pytest.raises(groups.CleanupUncertainError):
+        groups.terminate_tree(process, grace_seconds=0)
+    assert signals == []
+
+
+@pytest.mark.parametrize("failure", ["signal-census", "signal-permission", "survivor"])
+def test_termination_uncertainty_is_persistent(monkeypatch, failure):
+    process = _process()
+    census = _snapshot()
+    calls = []
+
+    def snapshot():
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-d13-custody-cleanup-finish/tests/core/execution/test_process_group.py
+diff --git a/astrid/core/execution/custody_broker.py b/astrid/core/execution/custody_broker.py
+index 801e1aa4ce10733d019be63d04e4a77dca761ed6..0f70c58c3a741797cd14ac39cb8bc5fb55dac7f2
+--- a/astrid/core/execution/custody_broker.py
++++ b/astrid/core/execution/custody_broker.py
+@@ -3875,6 +3875,21 @@
+                 except OSError:
+                     pass
+ 
++    def retained_incarnation_exited(self, pid: int, birth: str) -> bool:
++        """Return whether this exact retained incarnation has exited."""
++        with self._lock:
++            entry = self._handles.get(pid)
++            if entry is None or entry[0] != birth:
++                return False
++            handle = entry[1]
++            if handle is _PIDFD_RELEASED:
++                return True
++            if type(handle) is not int:
++                return False
++            poller = select.poll()
++            poller.register(handle, select.POLLIN)
++            return bool(poller.poll(0))
++
+     def observe(self, members: Mapping[int, str]) -> None:
+         with self._lock:
+             if self._uncertain is not None:
+diff --git a/astrid/core/execution/process_group.py b/astrid/core/execution/process_group.py
+index 71f999de88f5dfc33c87de9829f1bd7ce9512ddf..e3e78d5e41a548630e12ef3f5699869e29c4d41c
+--- a/astrid/core/execution/process_group.py
++++ b/astrid/core/execution/process_group.py
+@@ -346,6 +346,12 @@
+     ]
+ 
+ 
++def _retained_incarnation_exited(process: subprocess.Popen, pid: int, birth: str) -> bool:
++    custody = getattr(process, "_astrid_custody", None)
++    proof = getattr(custody, "retained_incarnation_exited", None)
++    return bool(proof(pid, birth)) if callable(proof) else False
++
++
+ def _group_members_owned(
+     process: subprocess.Popen,
+     known: dict[int, str],
+@@ -400,13 +406,17 @@
+     if root_birth is None:
+         return {}
+     root = snapshot.get(process.pid)
++    reaped_root_reused = False
+     if root is not None and root.birth != root_birth:
+-        return {}
++        if process.returncode is None:
++            return {}
++        reaped_root_reused = True
+     known[process.pid] = root_birth
+     children: dict[int, list[_ProcessInfo]] = {}
+     for info in snapshot.values():
+         children.setdefault(info.ppid, []).append(info)
+-    pending = [process.pid, *known]
++    pending = [pid for pid in (process.pid, *known)
++               if not (reaped_root_reused and pid == process.pid)]
+     while pending:
+         parent = pending.pop()
+         # A PID in ``known`` is only an identity, not a permanent process.
+@@ -487,6 +497,15 @@
+     for pid, birth in tuple(known.items()):
+         current = snapshot.get(pid)
+         if current is not None and current.birth != birth:
++            # Popen.poll()/wait() positively reaps the original leader before
++            # the final descendant census.  Its numeric PID may then already
++            # belong to another incarnation; that replacement is not part of
++            # the owned tree.  Linux pidfds provide the same positive exit
++            # proof for observed descendants. Unreaped roots and descendants
++            # without an exact retained exit proof still fail closed below.
++            if ((pid == process.pid and process.returncode is not None)
++                    or _retained_incarnation_exited(process, pid, birth)):
++                continue
+             raise CleanupUncertainError("owned process identity was reused")
+         if current is None and any(
+             info.ppid == pid and info.pid not in known for info in snapshot.values()
+diff --git a/tests/core/execution/test_process_group.py b/tests/core/execution/test_process_group.py
+index efa1529c03b552934b6b8d3e1c02fc79e82eaef1..4c12302beeda6f56b2018664685bb3be2ba1cea6
+--- a/tests/core/execution/test_process_group.py
++++ b/tests/core/execution/test_process_group.py
+@@ -262,6 +262,37 @@
+         groups.terminate_tree(process, grace_seconds=0)
+ 
+ 
++def test_reaped_root_pid_reuse_does_not_poison_final_tree_observation(monkeypatch):
++    """A reaped root replacement is unrelated; known descendants remain fenced."""
++    process = SimpleNamespace(
++        pid=100,
++        returncode=0,
++        _astrid_process_birth="root",
++        _astrid_tree_members={100: "root", 200: "child"},
++        _astrid_custody=FakeCustody(),
++    )
++    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
++        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
++        200: groups._ProcessInfo(200, 1, 200, "child"),
++        900: groups._ProcessInfo(900, 1, 900, "unrelated"),
++    })
++
++    assert groups.observe_tree(process) == {200: "child"}
++    assert not hasattr(process, "_astrid_tree_uncertain")
++    process._astrid_custody.retained_incarnation_exited = (
++        lambda pid, birth: pid == 200 and birth == "child"
++    )
++    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
++        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
++        200: groups._ProcessInfo(200, 1, 200, "replacement-child"),
++    })
++    assert groups.observe_tree(process) == {}
++    assert not hasattr(process, "_astrid_tree_uncertain")
++    process._astrid_custody.retained_incarnation_exited = lambda *_: False
++    with pytest.raises(groups.CleanupUncertainError, match="owned process identity was reused"):
++        groups.observe_tree(process)
++
++
+ def test_keyboard_interrupt_during_first_census_fails_closed(monkeypatch):
+     process = _process()
+     signals = []
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/core/execution/test_process_group.py::test_reaped_root_pid_reuse_does_not_poison_final_tree_observation tests/core/execution/test_process_group.py::test_observation_uncertainty_persists_without_adopting_unknown_children tests/core/execution/test_custody_broker.py -k '"'pidfd or retained_incarnation or release_pidfds' && git diff --check" in /home/user/work/wt/agt-m2-d13-custody-cleanup-finish
+ succeeded in 4291ms:
+..                                                                       [100%]
+2 passed, 579 deselected in 2.33s
+
+codex
+The second fix is in place and its focused custody tests pass. It uses only the retained pidfd’s readable/exited state for the exact old descendant incarnation; without that proof, the same PID reuse still fails closed. I’m submitting the final changed tree for the required named integration rerun now.
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-d13-custody-cleanup-finish registered014-render-integration) && printf '"'%s\\n' \""'$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m2-d13-custody-cleanup-finish

@@ -1,0 +1,400 @@
+             "output"
+@@ -269,21 +254,6 @@
+         "reads": [
+           {
+             "ref": "parent",
+-            "path": [],
+-            "state": {
+-              "state": "present",
+-              "value": {
+-                "config": {
+-                  "clips": [],
+-                  "tracks": []
+-                },
+-                "registry": {},
+-                "clips": []
+-              }
+-            }
+-          },
+-          {
+-            "ref": "parent",
+             "path": [
+               "config",
+               "output"
+@@ -408,21 +378,6 @@
+         }
+       ],
+       "reads": [
+-        {
+-          "ref": "parent",
+-          "path": [],
+-          "state": {
+-            "state": "present",
+-            "value": {
+-              "config": {
+-                "clips": [],
+-                "tracks": []
+-              },
+-              "registry": {},
+-              "clips": []
+-            }
+-          }
+-        },
+         {
+           "ref": "parent",
+           "path": [
+diff --git a/tests/editing_conformance/test_pristine_initialize.py b/tests/editing_conformance/test_pristine_initialize.py
+index e0df8476d011b752572e09b4ef8c5b21d9b99f22..f9335ca172a600d0e95982373a662f67c116f55e
+--- a/tests/editing_conformance/test_pristine_initialize.py
++++ b/tests/editing_conformance/test_pristine_initialize.py
+@@ -70,6 +70,24 @@
+                for key in ('theme', 'theme_overrides', 'generation_defaults'))
+ 
+ 
++@pytest.mark.parametrize('opaque', [None, False, [], {}])
++def test_inverse_reload_redo_preserves_unrelated_opaque_parent_field(opaque):
++    original = bundle_from_document(empty_document())
++    plan = execute(original, batch(original))
++    edited = copy.deepcopy(plan.bundle)
++    edited['parent']['opaque'] = opaque
++    reloaded = bundle_from_document(document_from_bundle(edited))
++
++    restored = inverse(reloaded, plan.records)
++    expected = copy.deepcopy(original)
++    expected['parent']['opaque'] = opaque
++    assert (document_from_bundle(restored.bundle)['parent_revision']['payload']
++            == document_from_bundle(expected)['parent_revision']['payload'])
++
++    redone = inverse(restored.bundle, restored.records)
++    assert document_from_bundle(redone.bundle) == document_from_bundle(reloaded)
++
++
+ @pytest.mark.parametrize('path,value', [
+     (['config', 'output'], None), (['name'], None), (['slug'], ''),
+     (['registry', 'assets'], {}), (['registry', 'opaque'], [None, False]),
+@@ -124,7 +142,7 @@
+         inverse(plan.bundle, plan.records, [{'writes': [write]}])
+     assert error.value.kind == 'intervening_write'
+     forged = copy.deepcopy(plan.commands)
+-    forged[0]['reads'][0]['state']['value']['opaque'] = None
++    forged[0]['reads'][0]['state'] = {'state': 'present', 'value': None}
+     with pytest.raises(CommandError):
+         execute(original, forged)
+     # A different raw parent cannot be treated as an equivalent empty basis.
+
+exec
+/bin/bash -lc "find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers -maxdepth 2 -type f \\( -name 'report.md' -o -name 'REPORT.md' \\) | head -10; printf '\\n--- markers ---\\n'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/{commit-msg,DONE}; printf '\\n--- final status ---\\n'; git status --short; git diff --check" in /home/user/work/wt/agt-m2-init-opaque-disjoint-inverse
+ succeeded in 1441ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-current-s3-birth-reservation-proof/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-stack-sync-2/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-spec-compaction-fixture/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-paired-qualify/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-track-union-generator/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-crash-reconcile/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-deny-integrated-gates/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-direct-render-fixtures/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-empty-timeline-door-route/report.md
+find: ‘standard output’: Broken pipe
+find: write error
+
+--- markers ---
+-rw-r--r-- 1 root root   0 Oct 20 16:04 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/DONE
+-rw-r--r-- 1 root root 291 Oct 20 16:04 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/commit-msg
+
+--- final status ---
+ M astrid/sdk/timeline/native_initialize.py
+ M tests/editing_conformance/fixtures/pristine_initialize.json
+ M tests/editing_conformance/test_pristine_initialize.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-bootstrap-native-opaque-inverse-fix.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-bootstrap-native-opaque-inverse-fix.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7202af55d9ca134051aecae9cca898b29d4da028
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-bootstrap-native-opaque-inverse-fix.md
+@@ -0,0 +1,55 @@
++# Agent bootstrap opaque inverse repair
++
++## Result
++
++Implemented the bounded `timeline.init` inverse repair on Agent base `e86f44d0`
++in worker `agt-m2-init-opaque-disjoint-inverse`.
++
++`astrid/sdk/timeline/native_initialize.py` now performs the existing exact
++pristine-parent check against the raw input bundle without recording a
++whole-parent read. It still records the four authored absence reads for
++`config.output`, `name`, `slug`, and `registry.assets`, then writes only those
++four fields. Consequently a later `parent.opaque` write is disjoint and is
++preserved exactly through inverse and redo. The existing strict inverse,
++identity, birth, and pristine-history guards remain unchanged; no inverse
++bypass, whole-bundle restore, ancestor exemption, history rewrite, schema,
++wire, client, or release change was made.
++
++The Agent golden was refreshed only to describe the actual consumed read
++footprint (the three copies of the obsolete raw-parent read were removed).
++The direct conformance test adds the four original opaque values
++`null`, `false`, `[]`, and `{}` in one exact init -> opaque edit -> serialized
++reload -> inverse -> redo scenario using `pristine_initialize.json`.
++
++## Evidence
++
++All commands used the worker source and read-only shared dependencies:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_pristine_initialize.py tests/sdk/test_timeline_pristine_initialize_provider.py
++31 passed in 2.90s
++
++ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_pristine_initialize_runtime.py::test_pristine_init_crash_resume_reload_undo_retry_and_redo
++1 passed in 3.39s
++
++ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_next_command_cohort_runtime.py::test_pristine_init_first_birth_reload_undo_and_missing_word_source
++2 passed in 11.57s
++
++git diff --check
++passed
++```
++
++The actual Runtime provider path was `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`
++via `/home/user/work/wt/rt-pin-a0dca169`; no fake SQL/history/provider setup
++was introduced. No full suite, browser, live socket, App, wire, schema, pin,
++or release qualification was run.
++
++## Changed paths
++
++- `astrid/sdk/timeline/native_initialize.py`
++- `tests/editing_conformance/test_pristine_initialize.py`
++- `tests/editing_conformance/fixtures/pristine_initialize.json`
++
++The pending harness commit message is in the worker commit-msg path. App2
++bootstrap activation remains downstream work and should use this Agent source
++only after its normal matched pair is re-qualified.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md
+index a1969e67219ece7dcfdba8109342dd3447041e63..1dcbb131fc6fc10fb968cbffecc1b4e35eded31e
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md
+@@ -19,3 +19,21 @@
+ 
+ ## 2026-10-20T16:01:07Z — PEER REPLY from agent: App2 original gaps ACK
+ Read app-bootstrap-native-opaque-inverse-hold.md and ap2-m2-ordinary-projectdata-native-recipe.md viaSTATUS. Originalfouropaqueinitinversepositives nowassigned agt-m2-init-opaque-disjoint-inverse onreviewede86staged014; no wholeparentguardbypass, strictoverlapping/ABA andpristineinitguardsstay, actuala0pairrequired. Project-data replaceassigned agt-m2-project-data-replace-native-contract: firstMainstoragefilm-vscatalogclassification thenminimalexacttarget/keyrecordedreplacement/proposal, frozen6ba/a0unchanged. No App-only opguess orwholewriterretirement beforepair. Please keep originalpositivesstrictOPEN/nativeinitactivationheld. Requests notseen asdirectentries inourINBOXsoobservedfromsharednotes; futureappend managers/agent/INBOX.md directly (app2localshared exists). Native014normalpin requestseparateabove.
++
++## 2026-10-20T16:20Z — PEER REPLY: bootstrap opaque inverse repaired
++
++Agent worker `agt-m2-init-opaque-disjoint-inverse` repaired the held native
++`timeline.init` inverse behavior on base `e86f44d0`. The initializer retains
++the exact raw pristine-entry refusal but no longer records that whole-parent
++inspection as an inverse dependency; its recorded footprint is the four
++authored absence reads (`config.output`, `name`, `slug`, `registry.assets`).
++The existing strict inverse/ABA/birth/pristine guards and all schema/wire/pin
++bytes are unchanged. The original `null`, `false`, `[]`, and `{}` opaque
++successes now pass one serialized reload -> inverse -> redo test using the
++original fixture.
++
++Evidence: `design/agent-bootstrap-native-opaque-inverse-fix.md`; focused Agent
++lane **31 passed**, actual Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`
++initializer/retry lane **1 passed**, and initializer/birth neighbor lane **2
++passed**. No App activation or release qualification is claimed; rerun the
++matched Agent/Runtime/App2 gate before changing the bootstrap hold.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..88db6965f184ecb852f7f847fedefb832dd210a0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/commit-msg
+@@ -0,0 +1,5 @@
++fix(timeline): narrow pristine init inverse reads
++
++Keep the exact raw pristine-parent admission check out of the recorded inverse
++dependency footprint so unrelated opaque parent fields survive init inverse and
++redo. Refresh the init golden and add the four original reload round-trip cases.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a349351e43d865d2ae6a23d326e6974064a231a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-init-opaque-disjoint-inverse/report.md
+@@ -0,0 +1,19 @@
++# Worker report
++
++Implemented the bounded `timeline.init` inverse repair on Agent base `e86f44d0`.
++The exact pristine-entry check remains, but its raw whole-parent inspection is
++no longer recorded as an inverse dependency. The four authored absence reads
++and writes remain unchanged. Added the original `null`, `false`, `[]`, and `{}`
++opaque parent cases through serialized reload, inverse, and redo; refreshed
++the golden's actual read footprint.
++
++Tests:
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_pristine_initialize.py tests/sdk/test_timeline_pristine_initialize_provider.py` — **31 passed**.
++- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_pristine_initialize_runtime.py::test_pristine_init_crash_resume_reload_undo_retry_and_redo` — **1 passed**.
++- Same actual `a0dca16975dfe8f5e762703b99d9791a16cf7fd7` Runtime pair, `tests/editing_conformance/test_next_command_cohort_runtime.py::test_pristine_init_first_birth_reload_undo_and_missing_word_source` — **2 passed**.
++- `git diff --check` — passed.
++
++No full suite, App activation, browser/live sockets, schema/wire/client pin,
++release, or shared dependency changes. See the ORCH design report for exact
++scope and handoff: `design/agent-bootstrap-native-opaque-inverse-fix.md`.
+diff --git a/astrid/sdk/timeline/native_initialize.py b/astrid/sdk/timeline/native_initialize.py
+index 7cec29956e0280d8fe682701ab5de42ce5b07edd..1f4a076c1c668355ceee0581212918f01224dc9a
+--- a/astrid/sdk/timeline/native_initialize.py
++++ b/astrid/sdk/timeline/native_initialize.py
+@@ -6,9 +6,13 @@
+ 
+ def initialize(ctx, command):
+     bundle = ctx.state.bundle
+-    parent = ctx.read('parent')
++    # The pristine-entry check consumes the complete raw parent, but that
++    # observation must not become an inverse dependency. The init writes below
++    # are the only authored state this command owns; a later opaque sibling is
++    # therefore disjoint and must survive its inverse.
+     if (ctx.record['ordinal'] != 0
+-            or not equal(parent, {'config': {'clips': [], 'tracks': []}, 'registry': {}, 'clips': []})
++            or not equal(bundle['parent'],
++                         {'config': {'clips': [], 'tracks': []}, 'registry': {}, 'clips': []})
+             or bundle['placements'] or bundle['shots']):
+         raise CommandError('initialization requires the pristine empty timeline', kind='not_pristine')
+     for path in (['config', 'output'], ['name'], ['slug'], ['registry', 'assets']):
+diff --git a/tests/editing_conformance/fixtures/pristine_initialize.json b/tests/editing_conformance/fixtures/pristine_initialize.json
+index 107f97d324ebce1f854856787aeb143b8743c6ba..61efa58396548a1a93123b51a4b751679b4a53f7
+--- a/tests/editing_conformance/fixtures/pristine_initialize.json
++++ b/tests/editing_conformance/fixtures/pristine_initialize.json
+@@ -60,21 +60,6 @@
+       "reads": [
+         {
+           "ref": "parent",
+-          "path": [],
+-          "state": {
+-            "state": "present",
+-            "value": {
+-              "config": {
+-                "clips": [],
+-                "tracks": []
+-              },
+-              "registry": {},
+-              "clips": []
+-            }
+-          }
+-        },
+-        {
+-          "ref": "parent",
+           "path": [
+             "config",
+             "output"
+@@ -269,21 +254,6 @@
+         "reads": [
+           {
+             "ref": "parent",
+-            "path": [],
+-            "state": {
+-              "state": "present",
+-              "value": {
+-                "config": {
+-                  "clips": [],
+-                  "tracks": []
+-                },
+-                "registry": {},
+-                "clips": []
+-              }
+-            }
+-          },
+-          {
+-            "ref": "parent",
+             "path": [
+               "config",
+               "output"
+@@ -408,21 +378,6 @@
+         }
+       ],
+       "reads": [
+-        {
+-          "ref": "parent",
+-          "path": [],
+-          "state": {
+-            "state": "present",
+-            "value": {
+-              "config": {
+-                "clips": [],
+-                "tracks": []
+-              },
+-              "registry": {},
+-              "clips": []
+-            }
+-          }
+-        },
+         {
+           "ref": "parent",
+           "path": [
+diff --git a/tests/editing_conformance/test_pristine_initialize.py b/tests/editing_conformance/test_pristine_initialize.py
+index e0df8476d011b752572e09b4ef8c5b21d9b99f22..f9335ca172a600d0e95982373a662f67c116f55e
+--- a/tests/editing_conformance/test_pristine_initialize.py
++++ b/tests/editing_conformance/test_pristine_initialize.py
+@@ -70,6 +70,24 @@
+                for key in ('theme', 'theme_overrides', 'generation_defaults'))
+ 
+ 
++@pytest.mark.parametrize('opaque', [None, False, [], {}])
++def test_inverse_reload_redo_preserves_unrelated_opaque_parent_field(opaque):
++    original = bundle_from_document(empty_document())
++    plan = execute(original, batch(original))
++    edited = copy.deepcopy(plan.bundle)
++    edited['parent']['opaque'] = opaque
++    reloaded = bundle_from_document(document_from_bundle(edited))
++
++    restored = inverse(reloaded, plan.records)
++    expected = copy.deepcopy(original)
++    expected['parent']['opaque'] = opaque
++    assert (document_from_bundle(restored.bundle)['parent_revision']['payload']
++            == document_from_bundle(expected)['parent_revision']['payload'])
++
++    redone = inverse(restored.bundle, restored.records)
++    assert document_from_bundle(redone.bundle) == document_from_bundle(reloaded)
++
++
+ @pytest.mark.parametrize('path,value', [
+     (['config', 'output'], None), (['name'], None), (['slug'], ''),
+     (['registry', 'assets'], {}), (['registry', 'opaque'], [None, False]),
+@@ -124,7 +142,7 @@
+         inverse(plan.bundle, plan.records, [{'writes': [write]}])
+     assert error.value.kind == 'intervening_write'
+     forged = copy.deepcopy(plan.commands)
+-    forged[0]['reads'][0]['state']['value']['opaque'] = None
++    forged[0]['reads'][0]['state'] = {'state': 'present', 'value': None}
+     with pytest.raises(CommandError):
+         execute(original, forged)
+     # A different raw parent cannot be treated as an equivalent empty basis.
+
+codex
+## Completed
+
+- Narrowed `timeline.init`’s recorded reads to authored fields while preserving the exact pristine-parent guard.
+- Added four original opaque-field reload → inverse → redo cases.
+- Updated the golden fixture’s actual read footprint.
+- Published ORCH/App2 reports, commit message, and `DONE`.
+
+## Tests
+
+- Focused initializer/provider tests: **31 passed**
+- Actual Runtime `a0dca169` init/retry test: **1 passed**
+- Actual Runtime init/birth neighbor tests: **2 passed**
+- `git diff --check`: passed
+
+No full suite, App activation, schema/wire/pin, release, or shared dependency changes.
+tokens used
+194,707
+## Completed
+
+- Narrowed `timeline.init`’s recorded reads to authored fields while preserving the exact pristine-parent guard.
+- Added four original opaque-field reload → inverse → redo cases.
+- Updated the golden fixture’s actual read footprint.
+- Published ORCH/App2 reports, commit message, and `DONE`.
+
+## Tests
+
+- Focused initializer/provider tests: **31 passed**
+- Actual Runtime `a0dca169` init/retry test: **1 passed**
+- Actual Runtime init/birth neighbor tests: **2 passed**
+- `git diff --check`: passed
+
+No full suite, App activation, schema/wire/pin, release, or shared dependency changes.

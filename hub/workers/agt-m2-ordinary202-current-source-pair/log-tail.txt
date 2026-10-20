@@ -1,0 +1,400 @@
+            return ([{'project_id': project, 'timeline_id': 'film', 'slug': 'film'}], None)
+
+        def publish_parent_composition(self, *args, **kwargs):
+            pytest.fail('selected SDK adapter published a whole closure')
+
+        def commit_timeline(self, project, timeline, request, *, idempotency_key):
+            assert (project, timeline) == (editing.project, 'film')
+            return commit(editing, request, idempotency_key)
+
+    head = body(editing)
+    result = RemoteTimelines(Transport()).replace_parent_media(
+        editing.project, 'film', occurrence_id=None, clip_id='clip-a',
+        source_object_id=editing.old['object_id'], expected_head=head['base_revision_id'],
+        expected_publication=head['base_publication_id'], old_media=editing.new,
+        media=editing.old, idempotency_key='sdk-swap-back')
+    assert result.ok, result.error
+    assert State(bundle_from_document(result.data['canonical_document'])).entity(TARGET)['asset'] == editing.old['asset']
+
+
+@pytest.mark.parametrize('side', ['old_media', 'media'])
+    if touched_basis:
+        other.move("parent/clip:music-bed", 4)
+    before_restart = copy.deepcopy(history(client, fixture))
+    assert len(before_restart["items"]) == (6 if touched_basis else 5)
+    port, instance = daemon.httpd.server_port, daemon.instance_id
+    epoch = client._remote._transport.health()["runtime_epoch"]
+    daemon.stop()
+    del session, client
+
+    # Same realm and support root, actual startup provider/credentials and new
+    # validated public connection. No replacement of private client internals.
+    daemon = start(port)
+    assert daemon.instance_id != instance
+    with pytest.raises(ServiceUnavailableError):
+        open_client(daemon, realm="foreign-realm")
+    with pytest.raises(ServiceUnavailableError):
+        open_client(daemon, actor="foreign-actor")
+    client = open_client(daemon)
+    assert client._remote._transport.health()["runtime_epoch"] > epoch
+    session = TimelineSession.open(fixture.project_id, fixture.timeline_id,
+                                   client=client, outbox_path=outbox)
+    assert json.loads(outbox.read_bytes())["flight"] == flight_a
+    assert history(client, fixture) == before_restart
+    retried = session.flush()
+    retry_wire = observed[-1]
+    assert {key: retry_wire[key] for key in ("path", "key", "body")} == {
+        key: first_wire[key] for key in ("path", "key", "body")}
+    assert retry_wire["response"] == accepted_a
+    assert retried["receipt"] == accepted_a["receipt"]
+    assert history(client, fixture) == before_restart
+    pending = json.loads(outbox.read_bytes())
+    accepted_pair = {"revision_id": accepted_a["data"]["accepted_revision_id"],
+                     "publication_id": accepted_a["receipt"]["receipt_id"]}
+    assert pending["base"] == accepted_pair
+    assert pending["pending"] == [b] and pending["flight"] is None
+    assert json.dumps(pending["pending"][0], sort_keys=True) == guard_b
+    with pytest.raises(TimelineEditError, match="different realm, actor, project or timeline"):
+        _wrong_scope(daemon, fixture, outbox)
+
+    if touched_basis:
+        with pytest.raises(CommitConflict) as error:
+            session.flush()
+        assert error.value.failure["details"]["status"] == "conflict"
+        refused = json.loads(outbox.read_bytes())
+        assert refused["pending"] == [b]
+        assert refused["conflict"] == error.value.failure
+        assert refused["flight"]["key"] != flight_a["key"]
+        body_b = json.loads(refused["flight"]["body"])
+        assert body_b["commands"] == [b]
+        assert (body_b["base_revision_id"], body_b["base_publication_id"]) == (
+            accepted_pair["revision_id"], accepted_pair["publication_id"])
+        assert history(client, fixture) == before_restart
+        return
+
+    accepted_b = session.flush()
+    body_b = json.loads(observed[-1]["body"])
+    assert observed[-1]["key"] != flight_a["key"]
+    assert (body_b["base_revision_id"], body_b["base_publication_id"]) == (
+        accepted_pair["revision_id"], accepted_pair["publication_id"])
+    assert body_b["commands"] == [b]
+    assert json.dumps(body_b["commands"][0], sort_keys=True) == guard_b
+    assert accepted_b["data"]["status"] == "rebased"
+    assert_move(parent_of(disjoint), parent_of(accepted_b), "music-bed", 3)
+    assert json.loads(outbox.read_bytes())["pending"] == []
+    assert_readback(client, fixture, accepted_b)
+    after_b = history(client, fixture)["items"]
+    assert len(after_b) == 6
+    assert after_b[:-1] == before_restart["items"]
+
+    undone = cli(client, fixture, capsys, "undo", fixture.timeline_id,
+                 "--publication", accepted_b["receipt"]["receipt_id"])
+    assert json.loads(observed[-1]["body"])["commands"] == [{
+        "schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
+        "args": {"publications": [accepted_b["receipt"]["receipt_id"]]},
+    }]
+    assert parent_of(undone) == parent_of(disjoint)
+    assert_readback(client, fixture, undone)
+    revision = undone["data"]["accepted_revision_id"]
+    shown = cli(client, fixture, capsys, "show", fixture.timeline_id,
+                "--published", "--revision-id", revision)
+    assert shown["data"]["revision_id"] == revision
+    assert shown["data"]["working_copy"] is None
+    layers = cli(client, fixture, capsys, "show", fixture.timeline_id,
+                 "--published", "--revision-id", revision, "--layers", "--clip", "music-bed")
+    inspection = layers["data"]["native_inspection"]
+    assert inspection["revision_id"] == revision
+    clip = inspection["selected_parent_clips"][0]
+    assert clip["clip_id"] == "music-bed"
+    assert clip["start"] == [2, 1]
+    visualized = cli(client, fixture, capsys, "visualize", fixture.timeline_id,
+                     "--published", "--revision-id", revision, "--mode", "inputs", "--format", "md")
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary202-current-source-pair.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary202-current-source-pair.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary202-current-source-pair.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ff5f9e470678edc69a7f172f5683b5d9e6899036
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary202-current-source-pair.md
+@@ -0,0 +1,39 @@
++# Agent ordinary202 current-source pair qualification
++
++## Private same-cohort verdict
++
++The bounded Agent/Runtime pair is **qualified for private same-cohort review
++only**:
++
++| Item | Exact identity |
++| --- | --- |
++| Agent | `3c4f6de4fa777323b3386c01c7266b619b86af6d` / tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c` |
++| Runtime | `202074110717146fc7f08af2306a8dd7f695b0b1` / tree `ee39286bd0eb27d4075074cc4785d6d15e33f243` |
++| Producer | `a0dca16975dfe8f5e762703b99d9791a16cf7fd7` / tree `4b7dd0fe44be973c344bab3de568eaf0bdd28476` |
++| Contract | `0.2.14` unpublished; schema `ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59` |
++| Raw schema | `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`; 55 definitions / 29 operations |
++| Artifacts | `f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa`; 75 entries; manifest `ecda762ebe682f266395161af055921c3db33ee9914fb00860626e7e4852d815` |
++
++All 75 Runtime producer/current artifact bytes match; Agent vendor lock check
++against `/home/user/work/wt/rt-pin-a0dca169` passes. No private carrier, audio,
++or project-data artifact paths were found. The Agent worktree remains clean.
++
++## Evidence
++
++The single owned named central lane request
++`agt-m2-ordinary202-current-source-pair-ordinary202-current-source-pair-integration-1020163945-31961`
++ran the explicit bounded selectors against
++`ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-20207411`: **20 passed in
++60.80s**. The local Agent sanity lane passed **169 tests in 137.60s**. The
++selected IDs and exact body/key/receipt/closure assertions are recorded in the
++worker report at `workers/agt-m2-ordinary202-current-source-pair/report.md`.
++
++## Required next handoff
++
++This pair is not yet an integration pin. Runtime must carry the final `cd0`
++owner-strict test-only marker transition into `202074…` before integration
++adoption; that transition must preserve all positive assertions and must not
++change the 75 artifacts, `f021…`, `ce378…`, `6ba7…`, generated client, or
++producer `a0dca169`. App and App2 should qualify this exact pair and relay
++their results through the orchestrator. Public release, activation, frozen-pin
++movement, full suite, and browser/renderer/audio claims remain out of scope.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c02953e0694627581230b040e7441b1fc41a5c50
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): qualify ordinary202 current source pair
++
++Record bounded private Agent/Runtime same-cohort evidence and the required
++pre-integration Runtime marker carry boundary.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c02953e0694627581230b040e7441b1fc41a5c50
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(timeline): qualify ordinary202 current source pair
++
++Record bounded private Agent/Runtime same-cohort evidence and the required
++pre-integration Runtime marker carry boundary.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..dce6ee3503c492f312982fce35966cd0ba8668a5
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/report.md
+@@ -0,0 +1,105 @@
++# ordinary202 current-source same-cohort qualification
++
++## Verdict
++
++**APPROVE for bounded private same-cohort qualification only.** This is not an
++integration adoption, pin movement, release, activation, or App/browser claim.
++
++The exact Agent source is `3c4f6de4fa777323b3386c01c7266b619b86af6d`, tree
++`aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`. The exact Runtime server is
++`202074110717146fc7f08af2306a8dd7f695b0b1`, tree
++`ee39286bd0eb27d4075074cc4785d6d15e33f243`, from
++`/home/user/work/wt/rt-pin-20207411`. The immutable producer remains
++`a0dca16975dfe8f5e762703b99d9791a16cf7fd7`, tree
++`4b7dd0fe44be973c344bab3de568eaf0bdd28476`.
++
++## Contract and byte identity
++
++- Runtime package/normal client contract version: `0.2.14` (unpublished).
++- Shared Runtime schema digest: `sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59`.
++- Frozen raw edit-command schema: `sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
++- Schema shape: 55 definitions, 29 command operations.
++- Artifact version: `sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa`.
++- Runtime `contract/artifacts.json`: 75 entries, manifest SHA-256
++  `ecda762ebe682f266395161af055921c3db33ee9914fb00860626e7e4852d815`.
++- Direct producer/current comparison: 75/75 keys identical, zero missing,
++  manifest-hash, or byte mismatches.
++- `scripts/vendor_lock.py check runtime.lock.json --producer
++  /home/user/work/wt/rt-pin-a0dca169`: passed.
++- Forbidden private-carrier/audio/project-data artifact paths: zero.
++- Agent checkout and both Runtime checkouts were clean; no source files were
++  changed by this qualification.
++
++## Actual selected evidence
++
++Central request
++`agt-m2-ordinary202-current-source-pair-ordinary202-current-source-pair-integration-1020163945-31961`
++used the one temporary named `ordinary202-current-source-pair-integration`
++lane with `ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-20207411`,
++`PYTHONDONTWRITEBYTECODE=1`, `-p no:cacheprovider`, and explicit node files.
++Result: **20 passed in 60.80s**, exit 0, against Agent tree `aaf49eca…`.
++The temporary suite registration was removed after dispatch; the shared suite
++configuration is clean.
++
++Selected nodes were:
++
++```text
++tests/sdk/test_timeline_pristine_initialize_runtime.py::test_pristine_init_crash_resume_reload_undo_retry_and_redo
++tests/sdk/test_timeline_pristine_initialize_runtime.py::test_pristine_init_real_provider_preserves_disjoint_opaque_row_after_reload_undo_redo
++tests/editing_conformance/test_next_command_cohort_runtime.py::test_pristine_init_first_birth_reload_undo_and_missing_word_source
++tests/editing_conformance/test_commit_runtime_text_binding.py::test_first_use_capture_projects_exact_text_and_retry
++tests/editing_conformance/test_commit_runtime_text_binding.py::test_clear_existing_main_descriptor_and_inverse_are_exact
++tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry
++tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo
++tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_lost_ack_restart_and_fresh_head
++tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse
++tests/editing_conformance/test_commit_runtime_identity.py::test_fresh_shared_occurrence_retry_own_move_and_historical_restore
++tests/sdk/test_timeline_selected_schema_runtime.py::test_native_equal_json_opposite_selection_order_and_inverse_restore
++tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba
++```
++
++The selected tests retain the exact request and acceptance assertions: commit
++bodies carry the original base revision/publication pair and command list;
++lost-ACK flights persist the exact body and idempotency key; accepted retries
++return the original receipt without re-executing command semantics; inverse
++requests use the exact accepted receipt publication; and parent-media swap
++records and checks the selected-media values plus the full revision closure.
++Representative literal keys include `init-film`, `undo-init`, `redo-init`,
++`first-text`, `clear-main-transcript`, `undo-clear-main-transcript`,
++`selected-swap`, `undo`, `redo`, `original-view`, `python-flight-a`,
++`sheet-once`, and `sdk-swap-back`. The M1 lane also checks the exact persisted
++flight body/key after restart, accepted receipt, rebased base pair, and
++inverse command.
++
++Local Agent-only sanity lane:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_vendor_lock.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_pristine_initialize_provider.py tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_native_sheet_current.py tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_parent_media.py
++```
++
++Result: **169 passed in 137.60s**, exit 0.
++
++An initial central submission used the repository alias instead of this worker
++target and ran zero nodes (exit 4, nonexistent path); it is not evidence and
++was corrected before the passing request above. The first correctly-targeted
++run had 18 passes and 2 setup errors because a temporary seed override pointed
++at `/home/user/work/runtime`, whose old fixture lacked `_binding_descriptor`.
++Removing that override let the fixture archive its historical seed from the
++explicit Runtime202 Git checkout; the final run passed without skipping or
++weakening tests.
++
++## Boundary and handoff
++
++Runtime `202074…` does **not** contain the requested `cd0` owner-strict marker
++transition; its carried test still has the public-schema imperative strict
++`pytest.xfail` transition. Before any integration adoption, Runtime must carry
++that final test-only marker transition while retaining all positive assertions
++and the qualified-014 acceptance body. Do not alter schema, generated clients,
++artifact bytes, or producer `a0dca169` while doing so. No old imperative xfail
++was run with `--runxfail` or counted as proof here.
++
++App and App2 should qualify this exact Agent tree/Runtime202/producer-a0 pair
++on their own branches. Runtime should request the marker carry before the
++integration gate. No public release, Runtime integration pin, frozen-pin
++movement, activation, full suite, browser journey, renderer/audio, or
++project-data claim is supplied.
+
+codex
+The handoff and worker report are written with the exact pair, 75-byte proof, schema/artifact digests, selected node IDs, request IDs, body/key/receipt/closure assertions, and the Runtime marker boundary. I’m doing the final cleanliness check now; no Agent source changes or Runtime edits were made.
+exec
+/bin/bash -lc "set -e
+git diff --check
+git status --short
+printf '%s\\n' '--- identity ---'
+git rev-parse HEAD"'^{commit} HEAD''^{tree}
+printf '"'%s\\n' '--- handoff files ---'
+wc -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary202-current-source-pair.md
+printf '%s\\n' '--- markers ---'
+test "'! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/DONE && echo DONE-empty
+test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/commit-msg && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/commit-msg.txt && echo commit-messages-present
+printf '"'%s\\n' '--- Runtime boundary evidence ---'
+git -C /home/user/work/wt/rt-pin-20207411 show 202074110717146fc7f08af2306a8dd7f695b0b1:tests/test_timeline_clip_replacement.py | sed -n '410,428p'
+printf '%s\\n' '--- suite config ordinary202 entry ---'
+rg -n 'ordinary202-current-source-pair' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf || true" in /home/user/work/wt/agt-m2-ordinary202-current-source-pair
+ succeeded in 455ms:
+--- identity ---
+3c4f6de4fa777323b3386c01c7266b619b86af6d
+aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c
+--- handoff files ---
+ 105 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/report.md
+  39 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary202-current-source-pair.md
+ 144 total
+--- markers ---
+DONE-empty
+commit-messages-present
+--- Runtime boundary evidence ---
+    command = native_editing.native.capture_parent_swap_media(
+        native_editing.native.bundle_from_document(native_editing.document),
+        NATIVE_PARENT_TARGET, native_editing.old, native_editing.new,
+        verified_media=[native_editing.old_verified, native_editing.new_verified],
+    )
+    body = _native_body(native_editing.service, native_editing.project, [command])
+    try:
+        from runtime_protocol.timeline_commit_port import validate_request
+        validate_request(body)
+    except ValidationError as error:
+        if "one of ['shared', 'occurrence']" in str(error):
+            pytest.xfail("public Runtime schema is pre-0.2.14 and excludes parent clip.swap-media ownership")
+        raise
+    accepted = _native_commit(native_editing.service, native_editing.project, body, "native-parent-swap")
+    assert accepted["data"]["status"] in {"accepted", "rebased"}
+    assert accepted["data"]["canonical_document"]["parent_revision"]["payload"]["clips"][0]["asset"] == native_editing.new["asset"]
+
+
+@pytest.mark.integration
+--- suite config ordinary202 entry ---
+
+codex
+## Result
+
+Qualified the exact private pair:
+
+- Agent `3c4f6de4…` / tree `aaf49eca…`
+- Runtime `2020741107…` / tree `ee39286b…`
+- Producer `a0dca169…` / tree `4b7dd0fe…`
+
+Evidence:
+
+- Local Agent lane: **169 passed**
+- Central bounded integration lane: **20 passed in 60.80s**
+- Vendor lock check passed.
+- All 75 producer artifacts matched current bytes; zero forbidden carrier/audio/project-data paths.
+- Contract: `0.2.14`, 55 definitions, 29 operations; schema/artifact digests recorded.
+
+The Runtime `cd0` owner-strict marker is absent and its old imperative `xfail` remains. Runtime must carry that test-only transition before integration adoption.
+
+Reports:
+
+- [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/report.md)
+- [orchestrator handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary202-current-source-pair.md)
+
+No source changes were made. `DONE` and commit messages are present.
+tokens used
+259,694
+## Result
+
+Qualified the exact private pair:
+
+- Agent `3c4f6de4…` / tree `aaf49eca…`
+- Runtime `2020741107…` / tree `ee39286b…`
+- Producer `a0dca169…` / tree `4b7dd0fe…`
+
+Evidence:
+
+- Local Agent lane: **169 passed**
+- Central bounded integration lane: **20 passed in 60.80s**
+- Vendor lock check passed.
+- All 75 producer artifacts matched current bytes; zero forbidden carrier/audio/project-data paths.
+- Contract: `0.2.14`, 55 definitions, 29 operations; schema/artifact digests recorded.
+
+The Runtime `cd0` owner-strict marker is absent and its old imperative `xfail` remains. Runtime must carry that test-only transition before integration adoption.
+
+Reports:
+
+- [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ordinary202-current-source-pair/report.md)
+- [orchestrator handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-ordinary202-current-source-pair.md)
+
+No source changes were made. `DONE` and commit messages are present.

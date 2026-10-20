@@ -1,0 +1,400 @@
+47:            print('RUNTIME DESCRIPTOR', json.dumps(descriptor), flush=True)
+95:    def _request_id(self):
+96:        current = getattr(self, "_runtime_request_id", None)
+99:        supplied = self.headers.get("X-Request-ID", "")
+101:        self._runtime_request_id = value
+330:        self.send_header("X-Request-ID", self._request_id())
+350:            self.send_header("X-Request-ID", self._request_id())
+397:            payload["request_id"] = self._request_id()
+400:            self._send(500, error={"code": "internal_error", "message": "internal runtime error", "request_id": self._request_id()})
+105:    def __init__(self, status: int, code: str, message: str, request_id: str = "", details: Mapping[str, Any] | None = None):
+108:        self.request_id, self.details = request_id, dict(details or {})
+557:def _decode_error(status: int, body: bytes, *, request_id: str = "") -> ApiError:
+562:    return ApiError(status, str(value.get("code", "http_error")), str(value.get("message", f"HTTP {status}")), str(value.get("request_id") or request_id), value.get("details", {}))
+608:        request_id = request_headers.setdefault("X-Request-ID", f"request-{uuid.uuid4().hex}")
+631:                raise _decode_error(error.code, error.read(), request_id=request_id) from error
+634:                raise _decode_error(error.code, response_body, request_id=request_id) from error
+643:            raise ApiError(0, code, message, request_id=request_id) from error
+645:            raise _decode_error(status, response_body, request_id=request_id)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/test_trace.py'
+s=open(p).read().replace(\"    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client'))\", \"\"\"    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client'))
+    from runtime_protocol.server import RuntimeHandler
+    wire = []
+    original_send, original_file = RuntimeHandler._send, RuntimeHandler._send_file
+    def send(handler, status, *args, **kwargs):
+        if getattr(handler, '_defer_response', False):
+            wire.append({'method':handler.command, 'path':handler.path,
+                'status':status, 'request_id':handler._request_id()})
+        return original_send(handler, status, *args, **kwargs)
+    def send_file(handler, status, *args, **kwargs):
+        if getattr(handler, '_defer_response', False):
+            wire.append({'method':handler.command, 'path':handler.path,
+                'status':status, 'request_id':handler._request_id()})
+        return original_file(handler, status, *args, **kwargs)
+    monkeypatch.setattr(RuntimeHandler, '_send', send)
+    monkeypatch.setattr(RuntimeHandler, '_send_file', send_file)\"\"\")
+s=s.replace('    finally:\\n        world.stop()', \"    finally:\\n        with capsys.disabled():\\n            print('WIRE', json.dumps(wire), flush=True)\\n        world.stop()\")
+open(p,'w').write(s)
+PY
+sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/test_trace.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/run-trace
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-raw-cli-real-path-repair raw-cli-trace-integration --no-cache" in /home/user/work/wt/agt-m2-raw-cli-real-path-repair
+ succeeded in 0ms:
+0c54c3de21fc1cae8c7a3b1c203ec4a5c086061e885a45c9aded63fb727ecab8  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/test_trace.py
+b138235749655ae05be73a1076db9bee903999fe6277b074b316b278a1c57c5a  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/run-trace
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-raw-cli-real-path-repair-raw-cli-trace-integration-1020175323-12576
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-cli-real-path-repair-raw-cli-trace-integration-1020175323-12576/
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/packs/timeline/test_cli_commit_trim.py tests/sdk/test_timeline_clip_trim_provider.py' in /home/user/work/wt/agt-m2-raw-cli-real-path-repair
+ succeeded in 11249ms:
+........................................................................ [ 47%]
+........................................................................ [ 94%]
+........                                                                 [100%]
+152 passed in 10.38s
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-raw-cli-real-path-repair-raw-cli-trace-integration-1020175323-12576' in /home/user/work/wt/agt-m2-raw-cli-real-path-repair
+ exited 1 in 0ms:
+test agt-m2-raw-cli-real-path-repair-raw-cli-trace-integration-1020175323-12576: fail exit=1 in 8s — raw-cli-trace-integration on agt-m2-raw-cli-real-path-repair (agent tree b229a2856c7aad8afe2faf2fdf61fa4f78bcc2b6)
+cmd: bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/run-trace "$PWD"
+counts: 1 failed, 1 passed, 5 warnings in 6.63s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-cli-real-path-repair-raw-cli-trace-integration-1020175323-12576/log.txt ---
+        world = _start_door(journey_film, tmp_path)
+        try:
+            client = _client(world.daemon)
+            edit = Editing(world.daemon.service, journey_film, None)
+            timeline = journey_film.fixture.timeline_id
+            session = TimelineSession.open(edit.project, timeline, client=client)
+            bundle = session._bundle(session.outbox.read())
+            ref = 'parent/clip:' + getattr(journey_film, 'clip_id', 'music-bed')
+            source = State(bundle).registry('parent')['assets'][State(bundle).entity(ref)['asset']]
+            print('TRACE', json.dumps({'timeline':timeline, 'ref':ref, 'source':source,
+                'parent_source': edit.document()['parent_revision']['payload']['registry'],
+                'mapping_keys':list(bundle['source_mapping']), 'manifest':edit.document()['dependency_manifest']['media'],
+                'pin':_raw_audio_trim_pin(bundle, {'op':'clip.trim', 'select':ref})}), flush=True)
+            media = source.get('media_id') or source.get('object_id')
+            revision = client._remote._transport.get_project_parent_composition_revision(
+                edit.project, timeline, session.outbox.read()['base']['revision_id'])
+            from runtime_protocol.timeline_commit_port import MediaReads
+            descriptor = MediaReads(world.daemon.service).media_info(edit.project,
+                {'media_id':media, 'content_digest':media})
+            print('PUBLIC REVISION', json.dumps({key:revision[key] for key in
+                ('project_id', 'timeline_id', 'revision_id', 'content_digest', 'dependency_manifest')}), flush=True)
+            print('RUNTIME DESCRIPTOR', json.dumps(descriptor), flush=True)
+            data = client.media.read_bytes(media)
+            print('BYTES', len(data), repr(data[:32]), flush=True)
+            captured = capsys.readouterr()
+            code, result = _cli(client, journey_film.fixture, capsys, 'edit', timeline,
+                                '--clip', ref, '--trim-out', '4', '--idempotency-key', 'raw-path-trace')
+            with capsys.disabled():
+                print(captured.out, end='', flush=True)
+                print('CLI RESULT', code, json.dumps(result), flush=True)
+>           assert code == 0 and result['ok'], result
+E           AssertionError: {'data': None, 'error': {'code': 'timeline_edit_error', 'details': {}, 'message': 'registry source duration requires exact Runtime-verified media metadata'}, 'idempotency_key': '', 'ok': False, ...}
+E           assert (1 == 0)
+
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/test_trace.py:59: AssertionError
+=============================== warnings summary ===============================
+../rt-pin-7d1cfa6b/tests/test_timeline_commit_integration.py:21
+  /home/user/work/wt/rt-pin-7d1cfa6b/tests/test_timeline_commit_integration.py:21: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+../rt-pin-7d1cfa6b/tests/test_timeline_commit_acceptance.py:860
+  /home/user/work/wt/rt-pin-7d1cfa6b/tests/test_timeline_commit_acceptance.py:860: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+../rt-pin-7d1cfa6b/tests/test_timeline_projection_occupancy.py:360
+  /home/user/work/wt/rt-pin-7d1cfa6b/tests/test_timeline_projection_occupancy.py:360: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+../rt-pin-7d1cfa6b/tests/test_timeline_public_s2_mixed_cli_journey.py:31
+  /home/user/work/wt/rt-pin-7d1cfa6b/tests/test_timeline_public_s2_mixed_cli_journey.py:31: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/test_trace.py:10
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/test_trace.py:10: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ::test_trace[historical-audio] - AssertionError: {'data': None, 'error...
+1 failed, 1 passed, 5 warnings in 6.63s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-raw-cli-real-path-repair-raw-cli-trace-integration-1020175323-12576/log.txt')
+for line in p.read_text().splitlines():
+ if line.startswith('WIRE '):
+  wire=json.loads(line[5:]); print('WIRE CONTEXT')
+  for row in wire:
+   if '/v1/objects/' in row['path'] or '/composition-revisions/' in row['path'] or row['method']=='POST':print(json.dumps(row))
+ if line.startswith('CLI RESULT 0 '):
+  row=json.loads(line[len('CLI RESULT 0 '):]);print('ACCEPTED',json.dumps({key:row['data'].get(key) for key in ['status','accepted_revision_id','accepted_publication_id','publisher']}));print('KEY',row['idempotency_key']);print('SOURCE',row['data']['source']);print('RECEIPT',row['receipt']['receipt_id'])
+PY
+python3 - <<'PY'
+import json
+p=json.load(open('runtime.lock.json'))
+print({k:v for k,v in p.items() if k"'!='"'files'})
+PY
+sha256sum astrid_runtime_client/generated.py astrid/sdk/timeline/sync.py astrid/sdk/timeline/commit.py; git status --short" in /home/user/work/wt/agt-m2-raw-cli-real-path-repair
+ succeeded in 298ms:
+WIRE CONTEXT
+{"method": "POST", "path": "/v1/credentials", "status": 201, "request_id": "f733d2c4b6ef427282b8ed926307aecc"}
+{"method": "POST", "path": "/v1/handshake", "status": 200, "request_id": "b30e5e7c000a41a380fd3dae72ee407c"}
+{"method": "POST", "path": "/v1/handshake", "status": 200, "request_id": "request-e14881b20dda4c498758f7ef58a4c024"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/film/inspect", "status": 200, "request_id": "request-d8078883e3d44dd88fc57eef00adf6f6"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/film/inspect", "status": 200, "request_id": "request-56954f55614e4e369eb90e64ea3425a2"}
+{"method": "GET", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/film/composition-revisions/film-move-baseline", "status": 200, "request_id": "request-3cb3757113b1474986c2fb07e209b429"}
+{"method": "GET", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/film/composition-revisions/film-move-baseline", "status": 200, "request_id": "request-fb5e2de9235e401a87353bf86cf3b61e"}
+{"method": "GET", "path": "/v1/objects/sha256%3Ae29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65", "status": 200, "request_id": "request-84675fa9bac244059c51a12ea3a1b921"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/film/inspect", "status": 200, "request_id": "request-97f5607ffbb14dee965a0808bb0d319d"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/film/inspect", "status": 200, "request_id": "request-a02dcf81c9bf4cfb91c9b288e093daca"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/film/inspect", "status": 200, "request_id": "request-38be2f35db674da5bc15650f9c623688"}
+{"method": "GET", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/film/composition-revisions/film-move-baseline", "status": 200, "request_id": "request-b270f8dddb6849798babc78d613417b2"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/film/inspect", "status": 200, "request_id": "request-9cc103d36a68424da5b4b9d081263b19"}
+{"method": "GET", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/film/composition-revisions/film-move-baseline", "status": 200, "request_id": "request-c91bb172706e4e7aa426592a7e36a295"}
+ACCEPTED {"status": "accepted", "accepted_revision_id": "authoring-parent-revision-2a492e35c10e689210914f34ad1958991febb184e6a74eed7cba794c7e9e8649", "accepted_publication_id": "txn-de7fe9d2ac0e4e368e03433474faeae5", "publisher": "owner"}
+KEY raw-path-trace
+SOURCE {'via': 'cli'}
+RECEIPT txn-de7fe9d2ac0e4e368e03433474faeae5
+WIRE CONTEXT
+{"method": "POST", "path": "/v1/credentials", "status": 201, "request_id": "3f45a6a3a5ea411186fff7839cf5a28d"}
+{"method": "POST", "path": "/v1/handshake", "status": 200, "request_id": "fb5a28bf803843d2838097bc98d64c3e"}
+{"method": "POST", "path": "/v1/handshake", "status": 200, "request_id": "request-3c5fa01f395f449cb5d3e49b68a8bc3a"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/inspect", "status": 200, "request_id": "request-60e602c319794166854a95254d20e707"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/inspect", "status": 200, "request_id": "request-5a21d8444cda411ca0aeb93e923ccc52"}
+{"method": "GET", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/composition-revisions/literal-baseline", "status": 200, "request_id": "request-b86f970592d84847ae2c2388a90a7125"}
+{"method": "GET", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/composition-revisions/literal-baseline", "status": 200, "request_id": "request-98be8ef3b08d49af8d010afeb27c19b5"}
+{"method": "GET", "path": "/v1/objects/sha256%3A71d93ef76e5ff6087d522277e83309f1d8d790e9b756324dec73d216ea57cc75", "status": 200, "request_id": "request-de887cafa3614f50ae27cbce28aaccb7"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/inspect", "status": 200, "request_id": "request-5076add93d9c4a8492af6402268f7234"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/inspect", "status": 200, "request_id": "request-bd13ee099b7a40529ccdc2e1429e2cbd"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/inspect", "status": 200, "request_id": "request-cf75cc456cdc4779a56de0d22c2e8432"}
+{"method": "GET", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/composition-revisions/literal-baseline", "status": 200, "request_id": "request-adc3eec6bdaa4941ac11c4bb20865b2f"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/inspect", "status": 200, "request_id": "request-e6e482cb1452486c910c7bb91e4ac94c"}
+{"method": "GET", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/composition-revisions/literal-baseline", "status": 200, "request_id": "request-8e71870cbeea4384a0a303c919848cb8"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/commit", "status": 200, "request_id": "request-0666798f07d04088a10c6ca191391a7b"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/inspect", "status": 200, "request_id": "request-508f4a2f14744b59b4a3574c3b9b9cc8"}
+{"method": "POST", "path": "/v1/projects/7b6f2bae8ffe42bf925216c38249ed79/timelines/literal-film/commit", "status": 200, "request_id": "request-28427e5cc4844f06a99561dc99747c95"}
+{'manifest': 'contract/artifacts.json', 'producer': 'astrid-runtime', 'producer_version': 'sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0', 'source_commit': 'a0dca16975dfe8f5e762703b99d9791a16cf7fd7'}
+53c9fc48cb3c5d0eb6c0e990d46f0a8b3b566297a5f60c762004b1681a7ac656  astrid_runtime_client/generated.py
+ffeb343803af282fd68ede25c9cdd1d36e989d1f9f213a994aeca60491d0938f  astrid/sdk/timeline/sync.py
+ea7be020b9f7cbc378b3d6393735a3f3981e7c75b3873d199afe60593b746ab6  astrid/sdk/timeline/commit.py
+
+exec
+/bin/bash -lc 'cat docs/design/agent-fixture-trim-current.md' in /home/user/work/wt/agt-m2-raw-cli-real-path-repair
+ succeeded in 0ms:
+# Current M2 fixture trim and automatic placement reads
+
+This unit composes approved `db98206f` (automatic placement field reads) and
+`540d37b0` (current fixture trim) on Agent integration `df2739f9`.
+The intended expanded data comes from `db98206f` for
+`recipe_m2_auto_placement.json` and `recipe_m2_shared_auto_placement.json`,
+and from `df2739f9` for the other ten fixtures. The narrow commit changes four
+files, of which **two** are fixtures; neither is among the ten compact fixtures.
+Factoring is applied to the intended expanded data, never to older whole-clip
+reads. The auto goldens retain all seven consumed field reads: `at`, `at_ms`,
+`track`, `hold`, `from`, `to`, `speed`, including literal absent/null/false states.
+Pool, legacy eligibility, membership, order and ownership guards remain intact.
+
+The ten compact fixtures retain 15 golden cases: one each for scalar fields,
+clip add/split/trim, occurrence delete/duplicate; two each for occurrence media,
+placement and create/unplace; three for shot pool. The two expanded automatic
+placement fixtures retain four cases each. There are 23 cases across 12 files.
+Current positive equal-state occurrence-delete replay and D07 timing proofs
+retain their assertions.
+
+Python conformance tests use
+`tests.editing_conformance/fixture_loader.py`. Its explicit record paths restore
+only missing `created`, `reads` and `selections` from the same record's command.
+Only equal duplicate fields are factored. Named placement/occurrence-media
+inputs, occurrence-media verified pins, and create-output/unplace-input are
+shared at their known control locations. There is no recursive interpretation
+of opaque input/output `records`, `command` or `reads` keys, opaque compression,
+or general fixture language. Input and output preservation tests compare the
+opaque values and their UTF-8 JSON bytes. Product loaders use ordinary JSON.
+
+The flat handoffs are ordinary expanded JSON at
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agent-expanded-<stem>.json`.
+All 12 exports are byte-identical to their intended expanded sources. App must
+consume these exports or equivalent expanded copies, never the private Python
+encoding. This is Agent source evidence; actual Runtime/App qualification is
+not established here. Runtime schema/provider regeneration and attempt-fence
+qualification, plus App original-approval/outbox journeys, remain activation
+holds. Existing parent-owned completion, append beyond fixed occurrence extent,
+video unplace and legacy migration restrictions are unchanged.
+
+## Counts and hashes
+
+`current` is `df2739f9`; `source` is the intended expanded data above; `after`
+is the committed compact fixture (or expanded automatic-placement fixture).
+Line counts count an already-flat JSON file as one line. Existing formatting is
+retained; the reduction comes from duplicate removal rather than minification.
+Exact reconstruction is 10/10 fixtures and 15/15 compact cases. Semantic
+comparison of the two auto goldens permits only whole consumed-clip reads to
+become the seven field reads; it passes 2/2 fixtures and 8/8 cases. No other
+capture, command, child or case data changed.
+
+EditCommand schema is byte-unchanged from `df2739f9`: `astrid/core/timeline/schema/edit-command.schema.json`
+(SHA-256 `83a476f894f31dc359514e9c081bf28da2b1f8cd515bb30cce14292823753224`). No schema or dependency pin changes.
+
+| fixture stem | cases | current bytes / lines | source bytes / lines | after bytes / lines | source SHA-256 = handoff SHA-256 | after SHA-256 |
+| --- | ---: | ---: | ---: | ---: | --- | --- |
+| recipe_m2_app_clip_scalar_fields | 1 | 161268 / 6317 | 161268 / 6317 | 133227 / 5070 | `8bb75e23c10c9677635d85f33f219b7f1b2d89baf481e3b7ed21f425b76f0c06` | `52dac614ac1b13efda13de9b79ecd3a1713939fd7e6f5f7d07d57ca8ec500348` |
+| recipe_m2_clip_add | 1 | 20541 / 906 | 20541 / 906 | 17592 / 770 | `5e9a54e75a0901724dedd3e62c0f37f78840a8edee001f30b92306383800479b` | `cebe45dbf6806c2fb772665ad2c3a416eae172df48d1b0cc48d023cbc80345ff` |
+| recipe_m2_clip_split | 1 | 57241 / 2524 | 57241 / 2524 | 45197 / 1951 | `a0e24c1f78d8580f908973745950ed0196c17257831197ec2f75a55abc638f63` | `46bce505cbba3d72f7eb6c060ed9f1cf890e0c50c42a8f50a8edee7d6287e204` |
+| recipe_m2_clip_trim | 1 | 52208 / 2275 | 52208 / 2275 | 38282 / 1587 | `4d71a9d184db1b85c220de10842b2dc68e5eb9b48afee180b6c29cf0d5b06152` | `60fcc84d769a2a68b5330288e842ca286f3907510a5dd18bc240c6e314ee612c` |
+| recipe_m2_occurrence_delete | 1 | 123486 / 4491 | 123486 / 4491 | 116619 / 4236 | `e66b2464f5d0b779619554aaf2b7ff49e255941e1d3932c5ebe84ad78a0d50ac` | `9a52d55130a4c857e3cb4d8962ea63155c2d3c3b2a6ed035d8babf38666d1e96` |
+| recipe_m2_occurrence_duplicate | 1 | 94420 / 3469 | 94420 / 3469 | 88184 / 3230 | `2d0009f60947d4f5f2f8f8f204827315c14319f20da0373789578d0076b39b9f` | `b64b9f9bbed418c5a58455931ad0bdae549ed0ae6e0a6be5c79b30571f19d829` |
+| recipe_m2_occurrence_media | 2 | 108547 / 3898 | 108547 / 3898 | 82650 / 2919 | `761153bb5c9de335d212c033bce976315a6846c4bde456b1d32f6aeb35919ad6` | `cf9650d82a3171236dd72a14ca1df2fabee8184edbef63d2020f5eeebcc15d69` |
+| recipe_m2_placement | 2 | 79188 / 1 | 79188 / 1 | 58978 / 1 | `7404b665b2918ebf095abc68bd3a20176afb0589b79cf785887c1da50b68d271` | `49bf7e046e79c5d81b3ab183ac11868294a6e5261b727d876f782cf4e4700060` |
+| recipe_m2_placement_create_unplace | 2 | 177115 / 6815 | 177115 / 6815 | 124951 / 4742 | `2ee887fd375f9a68682843eb21c69323c2b8bb42d92230e8b50bf7c78791292a` | `e0f01074d0136990b9bc39d882f8015169240cb3167510d870491feeb32c55b0` |
+| recipe_m2_shot_pool | 3 | 43819 / 1642 | 43819 / 1642 | 34421 / 1269 | `13f59f8fd0734dff915515efcf2243ceeb1b3f026973793560a6b773ed634078` | `34edbb5e0f99a0b63b8ca8a5c087074ec871b99151df70e58a792ce806c4b484` |
+| recipe_m2_auto_placement | 4 | 47994 / 1896 | 53582 / 2166 | 53582 / 2166 | `2d79b76b4c54339460f0f5d1bd45083f83e2784b9dd45b683824362bc2cd1efa` | `2d79b76b4c54339460f0f5d1bd45083f83e2784b9dd45b683824362bc2cd1efa` |
+| recipe_m2_shared_auto_placement | 4 | 52232 / 2041 | 64102 / 2605 | 64102 / 2605 | `68934bfe05399636f54122149ac0aab8fce50e6a68c593c3938ec9af35fb7410` | `68934bfe05399636f54122149ac0aab8fce50e6a68c593c3938ec9af35fb7410` |
+
+Ten compact fixtures, current → after: **917,833 → 740,101 bytes** (-177,732) and **32,338 → 25,775 lines** (-6,563).
+
+All twelve changed fixtures, current → after: **1,018,059 → 857,785 bytes** (-160,274) and **36,275 → 30,546 lines** (-5,729).
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, hashlib, subprocess
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=root/'workers/agt-m2-raw-cli-real-path-repair'
+run='agt-m2-raw-cli-real-path-repair-raw-cli-trace-integration-1020175323-12576'
+lines=(root/'tests'/run/'log.txt').read_text().splitlines()
+summary={}
+wire=[]
+for line in lines:
+ if line.startswith('WIRE '):wire.append(json.loads(line[5:]))
+ if line.startswith('CLI RESULT 0 '):
+  row=json.loads(line[len('CLI RESULT 0 '):]); summary.update(key=row['idempotency_key'],source=row['data']['source'],receipt_id=row['receipt']['receipt_id'],revision_id=row['data']['accepted_revision_id'])
+summary['historical_wire']=wire[0];summary['literal_wire']=wire[1]
+summary['source']={'agent_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'agent_tree':subprocess.check_output(['git','rev-parse','HEAD"'^{tree}'"'],text=True).strip(),'runtime_commit':'7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e','generated_client_commit':json.load(open('runtime.lock.json'))['source_commit']}
+summary['diagnostic_sha256']={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [w/'test_trace.py',w/'run-trace']}
+(w/'normal-trace.json').write_text(json.dumps(summary,indent=2)+'\\n')
+report='''# Raw CLI real-path investigation — BLOCKED
+
+No product, repository test, fixture, schema, generated client or dependency changed. Agent remains clean at "'`f97b2b87688abb20280572a5fc23e4f69ec9e3f8`, tree `b229a2856c7aad8afe2faf2fdf61fa4f78bcc2b6`. Runtime is the clean read-only `rt-pin-7d1cfa6b` checkout of `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`. The normal generated client is the unchanged a0dca169 / producer f021 / 0.2.14 candidate; no health/schema override or provider patch.
+
+## Actual findings
+
+The task premise that the two failed nodes share an Agent metadata-capture failure is incorrect.
+
+1. **Historical audio:** the ORIGINAL committed `precut-music-documents-v31.tar.gz` realm has registry asset `music-bed = {object_id: sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65, type: audio}`. It has no authored duration. Its exact base is `film-move-baseline`, digest `sha256:42d267087e4854d16e35568f659fbdfc004fcc9e64af2b728ecf77ea613c991d`. Normal authorized public object download returns **19 bytes**, exactly `b'"'synthetic-music-bed'"'`. Runtime7d'"'s actual same-FD verifier/parser returns "'`{object_id: ..., media_type: audio/wav, size: 19}` with **no duration_seconds**. This is not a WAV file. Passing its exact pin to Runtime cannot create an intrinsic duration. Source hold=5.5 and requested end=4 are not file-duration authority.
+2. **Public manifest plumbing:** `TimelineSession._bundle -> store.fetch_bundle -> RemoteTimelines.open_bundle -> open_authoring_bundle` returns source_mapping with ONLY `placements` and `shots`. `_raw_audio_trim_pin` instead looks for `source_mapping._runtime_document.dependency_manifest.media`; therefore it returns None before byte IO. The existing public immutable parent-revision read DOES carry the exact media pin/manifest. That is a real unresolved client input mismatch. Merely feeding that manifest through would still leave the historical source above without a verified duration, so it cannot satisfy the unchanged positive or prove the requested repair. No speculative fix was shipped.
+3. **Literal control:** the ORIGINAL Runtime fixture creates valid 96,044-byte WAV `sha256:71d93ef76e5ff6087d522277e83309f1d8d790e9b756324dec73d216ea57cc75`, authored registry duration **6.0**, type audio. Normal public CLI `edit literal-film --clip parent/clip:literal-media --trim-out 4 --idempotency-key raw-path-trace` is **accepted**, and normal CLI undo succeeds on f97/7d with no Agent changes. It uses authored duration priority and needs no raw-duration descriptor. The earlier original-node `StopIteration` at Runtime test line 328 is a later journey/wire-observation failure, not evidence of the historical pre-POST refusal in this context. Its complete stale-head/lost-ACK/restart journey remains unqualified.
+
+## Commands and results
+
+Direct existing main-suite tests (unchanged source):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/packs/timeline/test_cli_commit_trim.py tests/sdk/test_timeline_clip_trim_provider.py
+```
+
+**152 passed in 10.38s.** This does not qualify the historical public caller. `git diff --check` passed; `git status --short` is empty.
+
+Final bounded normal-door diagnostic (central service, both ORIGINAL fixture builders imported read-only):
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+$ORCH/bin/request-test agt-m2-raw-cli-real-path-repair raw-cli-trace-integration --no-cache
+$ORCH/bin/wait-test agt-m2-raw-cli-real-path-repair-raw-cli-trace-integration-1020175323-12576
+```
+
+**1 failed (historical positive), 1 passed (literal actual CLI accept + undo), 5 marker warnings in 6.63s; exit 1.** This is a disposable diagnostic importing main'"'s existing Runtime fixture, not a newly committed regression or a replacement for the unchanged original two-node journey. Its historical success assertion remains a failure; no skip/xfail/assertion conversion. All socket work ran centrally. No full or comprehensive suite was requested.
+
+Resolved diagnostic command:
+
+"'```sh
+bash $ORCH/workers/agt-m2-raw-cli-real-path-repair/run-trace "$PWD"
+```
+
+The script uses `ASTRID_CHECKOUT=$PWD`, normal Runtime source `/home/user/work/wt/rt-pin-7d1cfa6b`, Runtime-first PYTHONPATH, the shared venv read-only, and pytest `-P -q -s -o addopts= -p no:cacheprovider -m integration`. It observes server send/file-send with pass-through wrappers solely to record request IDs; no response, auth, metadata, body or accept behavior is replaced. `MediaReads.media_info` is also inspected directly for the descriptor; that value is never injected into a client capture. Diagnostic hashes and complete relevant HTTP requests are in `normal-trace.json`. The service snapshot reports the exact Agent tree above; external harness hashes were frozen for the final request and rechecked afterwards.
+
+Final log: `$ORCH/tests/agt-m2-raw-cli-real-path-repair-raw-cli-trace-integration-1020175323-12576/log.txt`.
+
+Earlier diagnostic requests are not green evidence: 1020174713-20995 (collection error, incorrect helper import); 1020174737-9145 and 1020174804-17444 (Agent/Runtime `tests` package collision); 1020174843-5380 (real path: historical fails, literal dry-run passes); 1020175141-16559 (historical fails, literal acceptance then diagnostic stdout contaminates undo JSON); 1020175219-11482 (historical fails, literal accept/undo passes). These were small diagnostic iterations, never reruns of the unchanged original full journey. The final harness resolves the package/output issues.
+
+## Exact normal requests
+
+- Historical public immutable parent manifest GET: `request-fb5e2de9235e401a87353bf86cf3b61e` (200).
+- Historical source object GET: `request-84675fa9bac244059c51a12ea3a1b921` (200, 19 bytes). No historical `/commit` POST exists: capture refuses before POST.
+- Literal source object GET: `request-de887cafa3614f50ae27cbce28aaccb7` (200, 96,044 bytes).
+- Literal CLI commit POST: `request-0666798f07d04088a10c6ca191391a7b` (200), key `raw-path-trace`, source `{via: cli}`, receipt `txn-de7fe9d2ac0e4e368e03433474faeae5`.
+- Literal undo POST: `request-28427e5cc4844f06a99561dc99747c95` (200).
+
+## Handoff / required decision
+
+Agent and Runtime inboxes received the concrete trace and correction to the earlier report. The required historical positive cannot be achieved on these unchanged fixture bytes using exact verified intrinsic duration. The owner must identify an existing genuine historical media/duration source, or explicitly authorize fixing the invalid fixture while retaining ALL original positive expectations. Do not infer duration from hold/end/transcript, fabricate media, relax the authority guard, or relabel this as a passing historical workflow.
+
+Once that prerequisite is resolved, fix the client manifest input using the existing immutable public revision read and the existing media duration/read helpers; leave capture pure and Runtime verification authoritative. Then add ONE bounded public-client regression and ask Runtime to rerun ONLY the unchanged failed nodes after a NEW approved Agent SHA. No such successor SHA exists from this investigation, and no rerun of those original nodes was requested here.
+
+The original stale-head/lost-ACK/restart/key/body/inverse/public-view journey, source-END behavior on genuine raw source, and a permanent public-path regression remain **unverified / unfinished**. No DONE marker is appropriate; BLOCKED records the fixture prerequisite. No commit is proposed because the repository is unchanged; conventional commit-message files are supplied only to satisfy the worker handoff protocol.
+'"'''
+(w/'report.md').write_text(report)
+(w/'BLOCKED').write_text('Historical original fixture media is 19-byte b\\'synthetic-music-bed\\', with no authored duration and no Runtime-verified intrinsic duration. Need owner-provided genuine duration/media evidence or explicit fixture correction authorization; no product/test changes or new approved SHA. See report.md and normal-trace.json.\\n')
+msg='chore(timeline): record blocked raw CLI media investigation\\n\\nTrace the unchanged historical and literal fixtures through the normal public client and Runtime door. Historical source bytes have no intrinsic duration; literal CLI acceptance and undo succeed. No product change is proposed pending the fixture prerequisite.\\n'
+(w/'commit-msg').write_text(msg);(w/'commit-msg.txt').write_text(msg)
+print(str(w/'report.md'))
+PY" in /home/user/work/wt/agt-m2-raw-cli-real-path-repair
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/report.md
+
+codex
+The final trace confirms literal CLI acceptance and undo. The historical positive still fails before POST: its verified descriptor has no `duration_seconds`, because the source contains only `synthetic-music-bed`.
+
+The 152 existing trim tests pass, but they don’t qualify this caller. I’ve recorded the blocker and request IDs for the owners. The repository is unchanged, and I’m leaving `BLOCKED` rather than claiming completion.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import json, hashlib
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=root/'workers/agt-m2-raw-cli-real-path-repair'
+facts=json.loads((w/'normal-trace.json').read_text())
+for name,digest in facts['diagnostic_sha256'].items():
+ assert hashlib.sha256((w/name).read_bytes()).hexdigest()==digest, name
+snap=(root/'tests/agt-m2-raw-cli-real-path-repair-raw-cli-trace-integration-1020175323-12576/snap').read_text()
+assert 'tree='+facts['source']['agent_tree'] in snap
+print('Final external harness hashes match; central snapshot tree matches unchanged Agent tree.')
+note='''\\n## FINAL raw CLI real-path investigation — BLOCKED, no source successor\\nFinalcentral boundednormalHTTP/door trace 1020175323-12576 on exactcleanAgentf97/treeb229 +Runtime7d normal14a0: ORIGINAL literal actualCLI edit4 ACCEPTED+undo200 (request-0666798f07d04088a10c6ca191391a7b /request-28427e5cc4844f06a99561dc99747c95, receipt txn-de7fe9d2ac0e4e368e03433474faeae5); historical originalpositive FAILSprePOST. NormalobjectGET request-84675fa9bac244059c51a12ea3a1b921 gives19bytes b'synthetic-music-bed'; realRuntime MediaReads.media_info returns object_ide29d...,media_typeaudio/wav,size19, NOduration_seconds. ExactpublicbasemanifestGET doescontainpin. PublicSessionbundle dropsprivate_runtime_document expectedbyhelper, but fixingthat ALONE cannotproducehistoricalintrinsicdurationfrominvalidbytes. This invalidates sharedfailurepremise: earlier literalStopIteration is laterjourney observation, notsameAgentcaptureerror.\\nNo speculative productfix, fixtures/assertions/schema/clients/depsunchanged; no newapprovedSHA, no originalfailednode rerunrequested. Main targeted152PASS; diagnosticfinal1FAILhistorical/1PASSliteralaccept+undo. FullnormalrequestIDs/source/harnesshashes/commands/failedharnessiterations in workers/agt-m2-raw-cli-real-path-repair/report.md and normal-trace.json. BLOCKEDwritten, noDONE. Need owner to identify existinggenuinehistoricalduration/media source OR explicitlyauthorize correcting invalidfixture while keeping ALLoriginalpositiveassertions; hold/end/transcript/callerDuration are not authority. Then publicmanifestinputfix+one boundedrealregression+RuntimeONLYunchangedfailednodesafterNEWapprovedSHA. Prior message's tentative promise to repair manifest immediately is withdrawn because no permitted historicalpositive canvalidateit; I did not ship a unit-only patch.\\n'''
+for manager in ('runtime','agent'):
+ with (root/'managers'/manager/'INBOX.md').open('a') as f:f.write(note)
+PY
+git status --short
+git diff --check" in /home/user/work/wt/agt-m2-raw-cli-real-path-repair
+ succeeded in 650ms:
+Final external harness hashes match; central snapshot tree matches unchanged Agent tree.
+
+codex
+Blocked by the historical fixture: its audio object contains only 19 bytes, `synthetic-music-bed`, and Runtime verifies no intrinsic duration.
+
+- Normal public CLI literal trim **and undo pass**.
+- Existing targeted trim tests: **152 passed**.
+- Central diagnostic: **1 failed historical / 1 passed literal**.
+- Repository unchanged; `BLOCKED` and commit-message files written. No `DONE`.
+
+[Report with exact commands, source hashes and request IDs](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/report.md).
+
+Next: the owner must identify genuine historical duration/media evidence or authorize correcting the invalid fixture while preserving its positive assertions.
+tokens used
+201,103
+Blocked by the historical fixture: its audio object contains only 19 bytes, `synthetic-music-bed`, and Runtime verifies no intrinsic duration.
+
+- Normal public CLI literal trim **and undo pass**.
+- Existing targeted trim tests: **152 passed**.
+- Central diagnostic: **1 failed historical / 1 passed literal**.
+- Repository unchanged; `BLOCKED` and commit-message files written. No `DONE`.
+
+[Report with exact commands, source hashes and request IDs](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/report.md).
+
+Next: the owner must identify genuine historical duration/media evidence or authorize correcting the invalid fixture while preserving its positive assertions.

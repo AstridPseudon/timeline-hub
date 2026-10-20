@@ -1,0 +1,9 @@
+name=agt-m3-capture-source-recover
+repo=agent
+base=tl/agt-m3-verified-source-handoff
+base_sha=62e6d2c2
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-capture-source-recover
+started=2026-10-20T02:03:56Z

@@ -1,0 +1,9 @@
+name=agt-m2-placement-dup-corrections
+repo=agent
+base=tl/agt-m2-placement-create-unplace-b
+base_sha=a6c2db3d
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-placement-dup-corrections
+started=2026-10-20T04:01:45Z

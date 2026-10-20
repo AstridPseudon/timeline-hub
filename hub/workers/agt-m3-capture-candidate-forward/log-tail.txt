@@ -1,0 +1,400 @@
+     try:
++        from astrid.sdk.timeline.commit import create_runtime_commit_service
++
++        service.register_timeline_commit_provider(create_runtime_commit_service())
+         project = service.create_project({"slug": "source-probe", "name": "Source probe"})["id"]
+         service.create_timeline(project, "main", idempotency_key="timeline")
+         service.register_capability({"capability_id": CAPABILITY, "definition_digest": CAPABILITY_DIGEST})
+@@ -155,18 +168,55 @@
+     assert binding["authority"] == snapshot["metadata"]["capture_authority"]
+     assert binding["authority"]["expansion"]["shots"][0]["content_digest"]
+     assert binding["authority"]["expansion"]["children"][0]["config_hash"]
++    assert binding["authority"]["expansion"]["shots"][0]["content_digest"] == runtime.get_project_shot_revision(
++        runtime.project_id, "shot-shared", "shot-rev-1")["content_digest"]
++    assert binding["authority"]["expansion"]["children"][0]["config_hash"] == runtime.get_project_timeline_revision(
++        runtime.project_id, "main", "internal-1")["content_digest"]
+     assert binding["ref"]["source_kind"] == ("working_copy" if working_copy else "revision")
+     if working_copy:
+         marker = snapshot["metadata"]["working_copy"]
+         assert snapshot["config"]["opaque_parent_config"] == {"unsaved": True}
+         assert binding["ref"]["revision_digest"] == marker["candidate_digest"]
+         assert binding["ref"]["working_copy"]["base_revision_digest"] == marker["base_parent"]["content_digest"]
++        assert task["spec"]["spec"]["inputs"]["authoring_preview"] == runtime.authoring_preview
++        from runtime_protocol.errors import NotFoundError
++        with pytest.raises(NotFoundError):
++            runtime.get_project_parent_composition_revision(runtime.project_id, "main", marker["candidate_parent_revision_id"])
++    else:
++        assert "authoring_preview" not in task["spec"]["spec"]["inputs"]
+     monkeypatch.setenv(SOURCE_ENV, values.timeline_source._anchor)
+     parsed = RenderRequest(schema_version=1, timeline_path=values["timeline"],
+                            assets_registry_path=values["assets_registry"], output_name="probe.mp4")
+     assert parsed.verified_source.read() == binding
+ 
+ 
++def test_missing_candidate_explicit_cas_preview_stays_uncertified(runtime, tmp_path):
++    snapshot = runtime.snapshot(working_copy=True)
++    task = runtime.admit(snapshot, forward_candidate=False, uncertified=True)
++    values = runtime.materialize(task, tmp_path / "attempt")
++    assert values.timeline_source is None
++    assert json.loads(Path(values["timeline"]).read_text()) == snapshot["config"]
++    assert "authoring_preview" not in task["spec"]["spec"]["inputs"]
++
++
++@pytest.mark.parametrize("inline", [False, True])
++def test_missing_candidate_certificate_refuses_before_admission_writes(runtime, inline):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    snapshot = runtime.snapshot(working_copy=True)
++    body = runtime.request(snapshot, inline=inline, forward_candidate=False)
++    connection = runtime.service.store.conn
++    before = list(connection.iterdump())
++    root = Path(runtime.service.store.root)
++    files = {str(path.relative_to(root)): path.read_bytes() if path.is_file() else None
++             for directory in ("cas", "staging") for path in (root / directory).rglob("*")}
++    with pytest.raises(RuntimeErrorBase):
++        runtime.service.create_task(body)
++    assert list(connection.iterdump()) == before
++    assert {str(path.relative_to(root)): path.read_bytes() if path.is_file() else None
++            for directory in ("cas", "staging") for path in (root / directory).rglob("*")} == files
++
++
+ # All 12 cases are proven admitted: Runtime's public capture admission checks the parent revision row and the
+ # working-copy marker, not config/registry/shot digests against the saved or candidate closure. Restored by
+ # Runtime verifying capture content (design/runtime-coordination.md "capture content certification").
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_capture_closure_source.py tests/sdk/test_visualize_authority_objects.py' in /home/user/work/wt/agt-m3-capture-candidate-forward
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check --no-force-exclude tests/sdk/test_capture_closure_source.py tests/sdk/test_capture_source_runtime.py && git diff --check' in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 0ms:
+All checks passed!
+
+codex
+The broader run found one regression: the publication bypass also let an unqualified native snapshot reach task creation without an ingestion client. I narrowed the bypass to captures claiming an immutable parent. That run finished with 130 passes, two preserved strict xfails, and this one failure; the capture and authority-object tests are now rerunning after the fix.
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest --collect-only -q tests/sdk/test_capture_source_runtime.py' in /home/user/work/wt/agt-m3-capture-candidate-forward
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+cache=Path('/tmp/agt-m3-capture-candidate-forward-mypy')
+if cache.is_dir(): shutil.rmtree(cache)
+PY" in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 0ms:
+ exited 5 in 2600ms:
+
+no tests collected (21 deselected) in 0.73s
+
+exec
+/bin/bash -lc 'git diff -- astrid/sdk/invocation.py && tail -12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md' in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 0ms:
+diff --git a/astrid/sdk/invocation.py b/astrid/sdk/invocation.py
+index 08a463b8..79f3518c 100644
+--- a/astrid/sdk/invocation.py
++++ b/astrid/sdk/invocation.py
+@@ -2871,7 +2871,13 @@ def _kernel_invoke(
+         isinstance(snapshot_context.get(key), Mapping)
+         for key in ("filmstrip_snapshot", "input_snapshot", "capture_snapshot")
+     )
+-    if str(capability.id) in {"rendering.render", "rendering.timeline_visualize"} and has_inline_snapshot:
++    # Capture admission must validate the candidate and every duplicate before
++    # Runtime publishes anything. Leave its inline snapshot for that publisher.
++    capture_snapshot = snapshot_context.get("capture_snapshot")
++    capture_authority = capture_snapshot.get("metadata", {}).get("capture_authority", {}) if isinstance(capture_snapshot, Mapping) else {}
++    runtime_capture = (str(capability.id) == "rendering.timeline_visualize"
++                       and bool(capture_authority.get("parent_revision_id")))
++    if str(capability.id) in {"rendering.render", "rendering.timeline_visualize"} and has_inline_snapshot and not runtime_capture:
+         remote = getattr(_client, "_remote", _client)
+         transport = getattr(remote, "_transport", remote)
+         ingest = getattr(transport, "ingest_project_object", None)
+@@ -4241,6 +4247,13 @@ def invoke(
+     # a project tree or materialize a render snapshot.
+     if not dry_run:
+         if capability.id == "rendering.timeline_visualize":
++            inputs = dict(inputs or {})
++            preview = inputs.get("authoring_preview")
++            if preview is not None:
++                if not isinstance(preview, Mapping):
++                    raise CapabilityValidationError("authoring_preview must be a frozen candidate artifact")
++                # Keep the authored task data identical to what preflight projects.
++                inputs["authoring_preview"] = _json_safe_mapping(preview)
+             invocation_authority_context = _validate_timeline_visualize_inputs(
+                 inputs,
+                 project=project,
+@@ -4284,17 +4297,16 @@ def invoke(
+                 # and the admission receipt. Store the authority and the
+                 # snapshot's timeline and registry as managed objects instead;
+                 # the host materializes them as the executor's input files.
+-                # A canonical capture must reach the existing snapshot-ref
+-                # publisher below. Objectifying its authority first discards
+-                # the revision/working-copy binding before Runtime admission.
++                # Runtime must see a canonical capture before publishing it;
++                # objectifying authority first hides its binding from admission.
+                 capture_authority = authority_snapshot.get("metadata", {}).get("capture_authority", {})
+-                canonical_capture = (invocation_authority_context.get("mode") == "composed_capture"
++                canonical_capture = (isinstance(invocation_authority_context.get("capture_snapshot"), Mapping)
+                                      and bool(capture_authority.get("parent_revision_id")))
+                 stored = None if canonical_capture else _store_visualize_objects(
+                     _client, project, authority_json, authority_snapshot,
+                 )
+                 if stored is None:
+-                    inputs["filmstrip_authority"] = authority_json  # kernel publishes canonical snapshot refs
++                    inputs["filmstrip_authority"] = authority_json  # admission publishes snapshot refs
+                 else:
+                     inputs.update(stored)
+                     invocation_authority_context = {
+Provider source hydration is accepted-history-only and bounded to the request base; SDK ACK checks accepted history receipt command/map consistency before using the same helper and original immutable closures. Old accepted placement records were retained exactly and pass current provider undo/redo using their authenticated before/after boundaries. No Runtime receipt/retry path changed. Actual matched new-map admission, global/retired/own-slot occupancy, official generated artifact and coupled acceptance remain UNQUALIFIED. No full suite, installs, sockets, browsers, merges, pushes or pin/schema mutation. M2 integration remains HELD. Final test provenance: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-capture-compat/notes/report.md`.
+
+
+agt-m3-capture-projector FINAL handoff: source hashes above unchanged; report finalized at `workers/agt-m3-capture-projector/notes/report.md`, commit-msg AND commit-msg.txt ready (harness pending). Final read-only diagnostic on SAME real closure confirms the ONLY graph differences are five missing `created_at` keys: parent_revision, shots[0/1], internal_timeline_revisions[0/1]. No authored value or pin/order differs. Entire golden remains strict XFAIL and explicit --runxfail RED; no metadata stripped/synthesized. 184PASS/1XFAIL focused lane +6/6 full candidate variants, lint/whitespace PASS. Exact9-file M1 byte proof in notes. Existing29/socket lane and Runtime12-forgery pair not rerun/claimed. Resolve graph metadata/input sufficiency with orchestrator, then manager-reviewed harness source -> Runtime pair. M3 held; stopping bounded work.
+
+
+agt-m2-materialization-capture-compat FINAL evidence on tracked tree `2c98353028a09d3800300440f5a31cbb96fa2919`: pure source/provider/ACK group **634 passed, 7 deselected in 73.15s**; ordinary + SDK-native neighbors **763 passed, 1 deselected in 79.26s**; zero xfails in either. Ruff and git diff --check PASS. All18 conformance fixture blobs unchanged. Exact commands, initial failures and final fixture-boundary fixes are in this worker's notes/report.md linked above. No later product/test edits. Explicit legacy capture is proven; NEW old-sealed native submission version boundary and actual official Runtime admission remain unresolved. M2 integration HELD.
+
+
+agt-m3-capture-candidate-forward actual-test readiness detail: updated real Runtime fixture explicitly startup-registers `astrid.sdk.timeline.commit.create_runtime_commit_service()` (the ACTUAL Agent provider, no dummy/frozen projection). It will therefore require sibling project_capture implementation composed/reviewed before positives pass. No pair run submitted against absent method, no false clearance from blanket certificate refusal. Missing-candidate negatives call public create_task after existing ref ingest baseline and compare ALL SQLite dump + complete CAS/staging file/directory inventory. Exact original 12 malicious function/decorators/assertions verified AST-identical to435357ae. Current source files (harness pending):
+- `/home/user/work/wt/agt-m3-capture-candidate-forward/astrid/sdk/invocation.py` SHA256 `a35f6c011e81a8c3729bf41561b1e9e00ce560dadb844375d97749e905ac3c74`
+- `/home/user/work/wt/agt-m3-capture-candidate-forward/tests/sdk/test_capture_source_runtime.py` SHA256 `3f031754e4fa0efa3c892590a2bbef0e68de404ecf21de7757ed0eccf909c0e0`
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest --collect-only -q -m integration tests/sdk/test_capture_source_runtime.py' in /home/user/work/wt/agt-m3-capture-candidate-forward
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/notes')
+p.mkdir(parents=True,exist_ok=True)
+(p/'report.md').write_text('''Forwarding task: source is based on Agent435357aec6ad84648107c38f0d5469f052faa84b. Harness commit pending; M3 integration remains HELD.
+
+Implemented only in astrid/sdk/invocation.py (small product delta): freeze the complete existing authoring_preview before preflight, reject scalar/label substitutes, and leave canonical capture snapshots inline for Runtime validation before publication. The same path covers include_media, whose mode is filmstrip. Normal saved captures need no preview. Native authority-object optimization and render/save paths remain unchanged. No timeline_filmstrip, GenericPackHost, provider, Runtime, schema, pin or renderer edit was needed.
+
+Evidence corrected the premise: the real SDK ALREADY forwarded the complete preview in spec.inputs.authoring_preview on the base tree. The previous real-Runtime test adapter omitted it. Its updated adapter now forwards the actual authored candidate, startup-registers the real Agent commit provider, preserves all original positive assertions and all12 malicious cases, and adds missing-candidate CAS-only and zero-write certificate-refusal requirements. Candidate positive assertions retain exact full shot/internal digests, base binding and draft/nonpublication checks. No caller metadata becomes authority.
+
+Runtime worker ACKed the complete input path and capture-only inline publication order before wiring (design/runtime-coordination.md; manager ACK02:42). Provider sibling owns project_capture. Shared viewing-coordination.md records the required source-aware UNCERTIFIED labels; they remain unverified and unimplemented in this task. Host CAS-only metadata test verifies no internal canonical source; it does NOT qualify visible labels.
+
+Preserved behavior inventory: the original SDK prepublished-ref/host assertions remain verbatim as two strict xfails because their admission double has no Runtime publisher under the approved write ordering. They have not been changed to expect refusal/missing behavior. Actual Runtime saved/candidate x inline/ref positives keep their original full ref/snapshot/authority/prepared-file assertions. Ledger AG-M3-CAP-01..04 individually records old missing-candidate positives and pre-ingest assumptions, their replacement requirements, and the hold. All12 malicious test bodies/decorators/assertions are AST-identical to base and remain strict xfail pending real qualified Runtime validation. No skip/deletion or relabel-green.
+
+Commands and results (all from this worktree; shared venv unchanged):
+
+"'```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_capture_closure_source.py tests/sdk/test_visualize_authority_objects.py
+```
+
+Baseline before edits:21PASS103.69s. Final rerun pending below.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_capture_closure_source.py -k '"'frozen or shape'
+"'```
+
+4PASS18deselected50.07s during development.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_capture_closure_source.py tests/sdk/test_visualize_authority_objects.py tests/sdk/test_timeline_filmstrip.py tests/sdk/test_managed_render_invocation.py tests/sdk/test_invocation_observation.py tests/packs/rendering/test_verified_source.py tests/sdk/test_timeline_commit_provider.py::test_move_reload_and_inverse_import_no_renderer tests/sdk/test_timeline_commit_provider_document.py::test_pure_converter_imports_without_runtime_or_renderer
+```
+
+130PASS/2strictXFAIL/1FAIL218.33s. Sole failure: test_visualize_authority_objects.py::test_snapshot_admission_without_object_ingestion_is_refused. Initial bypass was too broad for unqualified/native capture snapshots; narrowed to captures claiming immutable parent. All other neighbor tests and BOTH M1 renderer-import fences passed. No broad rerun requested after the narrow fix; affected direct SDK/authority-object files rerun separately below.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_capture_closure_source.py::test_candidate_task_data_is_frozen_before_preflight_reads tests/sdk/test_capture_closure_source.py::test_cas_capture_metadata_cannot_mint_source_or_activate_canonical_compiler --maxfail=1
+```
+
+2PASS14.85s.
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-force-exclude tests/sdk/test_capture_closure_source.py tests/sdk/test_capture_source_runtime.py
+git diff --check
+```
+
+PASS. Invocation Ruff checked through --stdin-filename against git-show HEAD: same13 preexisting diagnostics (10I001,3BLE001), zero added; no lint fixes outside task.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=silent --cache-dir=/tmp/agt-m3-capture-candidate-forward-mypy astrid/sdk/invocation.py
+```
+
+BLOCKED exit2: installed NumPy __init__.pyi:737 uses Python3.12 type syntax while repo mypy target is older. No typecheck pass claimed, no environment/config workaround; own cache removed.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest --collect-only -q -m integration tests/sdk/test_capture_source_runtime.py
+```
+
+Collection result pending. Initial collection without -m integration default-deselected all21 (exit5); no actual Runtime test was executed.
+
+BLOCKED/next: sibling provider reports exact saved expansion.graph golden mismatch (five created_at keys unavailable in CanonicalDocument). Runtime retains exact comparison and declines genuine saved certification; owner decision plus reviewed provider+Runtime composition required before ONE actual paired run of these21 cases. New missing-candidate refusal tests are written but unrun requirements, not evidence of Runtime correctness. Visible UNCERTIFIED labels still require Viewing. After actual pair, only remove12 strict forgery markers if positives AND negatives prove the boundary; rehome/restore the two original SDK transport assertions on the real admission adapter before claiming that handoff green. No full suite, make check, installation, socket/browser/render run, commit/merge/push/pin or Runtime edits performed. No actualpair/renderer parity/M3 readiness claim.
+'"''')
+PY" in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 0ms:
+ succeeded in 1594ms:
+tests/sdk/test_capture_source_runtime.py::test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host[False-False]
+tests/sdk/test_capture_source_runtime.py::test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host[False-True]
+tests/sdk/test_capture_source_runtime.py::test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host[True-False]
+tests/sdk/test_capture_source_runtime.py::test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host[True-True]
+tests/sdk/test_capture_source_runtime.py::test_missing_candidate_explicit_cas_preview_stays_uncertified
+tests/sdk/test_capture_source_runtime.py::test_missing_candidate_certificate_refuses_before_admission_writes[False]
+tests/sdk/test_capture_source_runtime.py::test_missing_candidate_certificate_refuses_before_admission_writes[True]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[False-False-config]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[False-False-registry]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[False-False-shot_digest]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[False-True-config]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[False-True-registry]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[False-True-shot_digest]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[True-False-config]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[True-False-registry]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[True-False-shot_digest]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[True-True-config]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[True-True-registry]
+tests/sdk/test_capture_source_runtime.py::test_arbitrary_capture_cannot_acquire_canonical_source[True-True-shot_digest]
+tests/sdk/test_capture_source_runtime.py::test_replaced_duplicate_capture_ref_is_refused_at_host
+tests/sdk/test_capture_source_runtime.py::test_native_compiled_capture_does_not_acquire_canonical_source
+
+21 tests collected in 0.89s
+
+exec
+/bin/bash -lc 'git diff --check && git status --short && tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md' in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 0ms:
+ M astrid/sdk/invocation.py
+ M tests/sdk/test_capture_closure_source.py
+ M tests/sdk/test_capture_source_runtime.py
+Direct focused projector/provider/save fences + in-process M1 numeric/opaque/shared regressions: **184 PASS, 1 strict XFAIL (30.25s)** against archived real Runtime `4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136`. Added sixth candidate variant afterwards: all six REAL candidate goldens **6 PASS (2.44s)** (parent/child/new/duplicate/remove + plain SDK opener). Saved config/registry and every expansion shot digest/internal config_hash/occurrence/output/order compare exactly against managed opener on real public saved closure. REQUIRED entire saved expansion golden remains strict XFAIL: `--runxfail` is **1 FAIL (2.27s)**, seven identical top-level expansion items, only graph differs due read metadata absent from CanonicalDocument. No graph filtering, metadata invention, or weakening old expectations. Manager decision required; Runtime ACK keeps genuine saved certification blocked. M3 remains HELD; no 12-forgery or actual Runtime pair claim.
+
+121 additive product lines (vs target~80): majority is validation binding the untrusted draft's base images/source maps and frozen publication to the verified document; remainder closes reused/compiled child images and emits existing saved/candidate expansion shapes/order. No helper/projector copy added. `notes/m1-byte-proof.json` verifies authoring_bundle/_command_state unchanged, commit unchanged after removing ONLY method+import, all SIX files of the existing29 regression lane byte-identical. Focused Ruff and whitespace pass. No full/socket/browser/install/pin/merge/push run. Full report exactcommands/source IDs in `workers/agt-m3-capture-projector/notes/report.md` (being finalized). Obtain harness commit and manager review before consuming product source.
+
+
+agt-m3-capture-projector FINAL handoff: source hashes above unchanged; report finalized at `workers/agt-m3-capture-projector/notes/report.md`, commit-msg AND commit-msg.txt ready (harness pending). Final read-only diagnostic on SAME real closure confirms the ONLY graph differences are five missing `created_at` keys: parent_revision, shots[0/1], internal_timeline_revisions[0/1]. No authored value or pin/order differs. Entire golden remains strict XFAIL and explicit --runxfail RED; no metadata stripped/synthesized. 184PASS/1XFAIL focused lane +6/6 full candidate variants, lint/whitespace PASS. Exact9-file M1 byte proof in notes. Existing29/socket lane and Runtime12-forgery pair not rerun/claimed. Resolve graph metadata/input sufficiency with orchestrator, then manager-reviewed harness source -> Runtime pair. M3 held; stopping bounded work.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward')
+p=root/'notes/report.md'
+p.write_text(p.read_text().replace('Collection result pending. Initial collection','21 tests collected in0.89s, exit0. Initial collection'))
+message='''fix(timeline): retain capture candidates for Runtime certification
+
+Freeze the existing authoring preview before projecting it and submit canonical
+capture snapshots inline so Runtime can validate before CAS publication.
+Preserve the same path for capture requests with attached rendered media.
+
+Forward real candidates in the Runtime probe and keep exact draft/base/pin
+assertions. Add zero-write serialization and CAS-only host controls; retain the
+12 Runtime forgery xfails and original SDK handoff assertions pending a reviewed
+provider/Runtime pair. M3 certification and visible UNCERTIFIED labels stay held.
+'''
+for name in ('commit-msg','commit-msg.txt'):(root/name).write_text(message)
+PY" in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, subprocess
+from collections import Counter
+path='astrid/sdk/invocation.py'
+command=['/home/user/work/venv-agent/bin/ruff','check','--no-force-exclude','--output-format=json','--stdin-filename',path,'-']
+counts=[]
+for name,source in [('base',subprocess.check_output(['git','show','HEAD:'+path],text=True)),('current',open(path).read())]:
+    result=subprocess.run(command,input=source,text=True,capture_output=True)
+    findings=json.loads(result.stdout)
+    value=Counter(row['code'] for row in findings)
+    counts.append(value)
+    print(name,len(findings),dict(value))
+assert counts[0]==counts[1]
+PY" in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 165ms:
+base 13 {'I001': 10, 'BLE001': 3}
+current 13 {'I001': 10, 'BLE001': 3}
+
+codex
+The updated Runtime test file collects all 21 cases. I haven’t executed the pair because the exact saved-projection golden remains blocked. Final SDK verification is still running; the handoff report and commit messages are prepared, with the certification and visible-label gaps called out.
+exec
+/bin/bash -lc 'git diff --check && git diff --stat' in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 6ms:
+ astrid/sdk/invocation.py                 |  24 +++++--
+ tests/sdk/test_capture_closure_source.py | 111 +++++++++++++++++++++++++++++++
+ tests/sdk/test_capture_source_runtime.py |  56 +++++++++++++++-
+ 3 files changed, 182 insertions(+), 9 deletions(-)
+
+ succeeded in 185694ms:
+..........xx..................                                           [100%]
+28 passed, 2 xfailed in 185.02s (0:03:05)
+
+codex
+Final affected-file verification passed: 28 passed, with two preserved strict xfails. No full suite or actual Runtime pair was run. I’m recording the source hashes and handoff: Runtime certification still needs the projector metadata decision and a reviewed paired run, and visible UNCERTIFIED labels remain Viewing’s work.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-m3-capture-candidate-forward'
+p=worker/'notes/report.md'
+s=p.read_text().replace('Final rerun pending below.','FINAL affected-file rerun: **28PASS/2strictXFAIL185.02s**, exit0, after the native-only bypass correction. No later product/test edits.')
+s+='''
+
+Final source freeze (harness commit pending; base435357aec6ad84648107c38f0d5469f052faa84b):
+'''
+for filename in ('astrid/sdk/invocation.py','tests/sdk/test_capture_closure_source.py','tests/sdk/test_capture_source_runtime.py'):
+    path=Path(filename)
+    s+=f'- "'`{path.resolve()}` SHA256 `{hashlib.sha256(path.read_bytes()).hexdigest()}`'"\\n'
+s+='''
+Final product diff is24 inserted/6 removed physical lines in invocation.py (including comments), below the ~60-line target; all other changes are direct tests. Final Ruff test-file checks, invocation per-rule baseline comparison and git diff --check PASS. Worktree contains only the three intended source/test files. Reports/commit messages are under this absolute worker directory; no repository notes/build output introduced.
+
+Recommended single actual pair command AFTER owner metadata decision + reviewed provider/Runtime composition (NOT RUN here):
+
+"'```bash
+ASTRID_RUNTIME_CHECKOUT=<reviewed-runtime-worktree> PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration --runxfail tests/sdk/test_capture_source_runtime.py
+```
+
+Do not run against this uncomposed provider-less source, mask the golden with schema/provider overrides, or infer certification from missing-provider refusal. Remove strict markers only after genuine positives and all12 negative controls pass together. Both original SDK double assertions remain held until the actual SDK/admission adapter restores their post-admission handoff coverage.
+'"'''
+p.write_text(s)
+entry='''
+
+## agt-m3-capture-candidate-forward — FINAL bounded handoff (supersedes preliminary hashes)
+Harness commit PENDING, base435357aec6ad84648107c38f0d5469f052faa84b. Final affected SDK/authority-object lane28PASS/2preserved strictXFAIL185.02s, exit0; zero-write inline saved/candidate x attached-media/plain and CAS-metadata-no-source controls pass. Broader neighbors130PASS/2strictXFAIL/1FAIL218.33s included BOTH passing M1 import fences; sole failure was native missing-ingestion refusal accidentally bypassed, now corrected and passing in final affected lane. Original assertions retained; no full or actual Runtime pair run. Updated Runtime test file21 cases collected0.89s, all12 malicious bodies/decorators/assertions AST-identical tobase; actual provider registration/full candidate forwarding/zero-SQL-CAS-staging requirements ready but UNRUN. Ruff test files + unchanged invocation13-diagnostic baseline +diffcheckPASS; mypy blocked by installed NumPy Python3.12 stub syntax under older configured target.
+
+Runtime ACK full spec.inputs.authoring_preview and canonical-capture-only inline publication consumed before wiring. Native authority object path stays unchanged; GenericPackHost/timeline_filmstrip/provider/Runtime/save/schema/pins untouched. Visible UNCERTIFIED labels remain Viewing-owned and UNVERIFIED; no metadata flag or fake authority invented. Provider exact saved graph/created_at golden blocker remains; manager compose reviewed sources and resolve metadata contract before ONE actual21-case --runxfail pair. M3 integration HELD. Full exact commands/initial failure/correction/behavior inventory + next paired command: workers/agt-m3-capture-candidate-forward/notes/report.md. Both commit-msg files ready; no repository notes output.
+'''
+for filename in ('astrid/sdk/invocation.py','tests/sdk/test_capture_closure_source.py','tests/sdk/test_capture_source_runtime.py'):
+    path=Path(filename)
+    entry+=f'- "'`{path.resolve()}` SHA256 `{hashlib.sha256(path.read_bytes()).hexdigest()}`'"\\n'
+for name in ('runtime-coordination.md','viewing-coordination.md'):
+    with (root/'design'/name).open('a') as f:f.write(entry)
+with (root/'design/deletion-ledger.agent.md').open('a') as f:f.write('''
+AG-M3-CAP-01..04 bounded handoff: final SDK/authority-object28PASS/2strictXFAIL185.02s. Original two prepublished-ref assertions still strict/held, full actual Runtime positives and12 negatives preserved;21actual cases collected only, no paired green claim. UNCERTIFIED visible label pending Viewing; provider graph metadata agreement pending owner. Exact commands in workers/agt-m3-capture-candidate-forward/notes/report.md. No row marked DELETED or silently green.
+''')
+PY
+git diff --check" in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 141ms:
+exec
+/bin/bash -lc 'git diff --numstat && git status --short && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/commit-msg*' in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 32ms:
+18	6	astrid/sdk/invocation.py
+111	0	tests/sdk/test_capture_closure_source.py
+53	3	tests/sdk/test_capture_source_runtime.py
+ M astrid/sdk/invocation.py
+ M tests/sdk/test_capture_closure_source.py
+ M tests/sdk/test_capture_source_runtime.py
+-rw-r--r-- 1 root root 614 Oct 20 02:46 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/commit-msg
+-rw-r--r-- 1 root root 614 Oct 20 02:46 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/commit-msg.txt
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/notes/report.md')
+p.write_text(p.read_text().replace('Final product diff is24 inserted/6 removed physical lines','Final product diff is18 inserted/6 removed physical lines'))
+PY" in /home/user/work/wt/agt-m3-capture-candidate-forward
+ succeeded in 0ms:
+codex
+Implemented candidate freezing and capture-only inline submission so Runtime can validate before CAS publication. The SDK already forwarded the full candidate; the Runtime test adapter was omitting it.
+
+- Final focused command: `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_capture_closure_source.py tests/sdk/test_visualize_authority_objects.py` — **28 passed, 2 strict xfails**.
+- Both M1 import fences passed in the broader run. Its sole native-path regression was corrected and verified above.
+- Ruff/diff checks passed. Mypy was blocked by installed NumPy stub syntax.
+- All 12 forgery cases remain unchanged strict xfails. The 21 Runtime cases were collected only; paired execution awaits the projector metadata decision and reviewed sources. Visible UNCERTIFIED labels remain Viewing-owned. **M3 stays held.**
+
+Exact commands, assertion inventory, blockers, and next steps are in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/notes/report.md). Coordination docs, ledger rows, and both commit-message files are ready. No full suite or commit was run.
+tokens used
+194,877
+Implemented candidate freezing and capture-only inline submission so Runtime can validate before CAS publication. The SDK already forwarded the full candidate; the Runtime test adapter was omitting it.
+
+- Final focused command: `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_capture_closure_source.py tests/sdk/test_visualize_authority_objects.py` — **28 passed, 2 strict xfails**.
+- Both M1 import fences passed in the broader run. Its sole native-path regression was corrected and verified above.
+- Ruff/diff checks passed. Mypy was blocked by installed NumPy stub syntax.
+- All 12 forgery cases remain unchanged strict xfails. The 21 Runtime cases were collected only; paired execution awaits the projector metadata decision and reviewed sources. Visible UNCERTIFIED labels remain Viewing-owned. **M3 stays held.**
+
+Exact commands, assertion inventory, blockers, and next steps are in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/notes/report.md). Coordination docs, ledger rows, and both commit-message files are ready. No full suite or commit was run.

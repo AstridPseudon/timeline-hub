@@ -1,0 +1,400 @@
+|---|---|---|
+| `clip.move` | `capture.capture_move` | `ClipMoveArgs` |
+| `placement.move` | `native_placement_commands.capture_placement` | `ClipMoveArgs` |
+| `clip.delete` | `capture.capture_clip_delete` | `ClipDeleteArgs` |
+| `clip.add` | `_clip_commands.capture_clip_add` | `ClipAddArgs` |
+| `clip.set` | `_clip_scalar_commands.capture_clip_set` | `ClipSetArgs` |
+| `clip.trim` | `_trim_commands.capture_clip_trim` | `ClipTrimArgs` |
+| `clip.split` | `_split_commands.capture_clip_split` | `ClipSplitArgs` |
+| `clip.set-params` | `_scalar_commands.capture_clip_set_params` | `ClipSetParamsArgs` |
+| `track.create` | `capture.capture_track_create` | `TrackCreateArgs` |
+| `track.set` | `_track_commands.capture_track_set` | `TrackSetArgs` |
+| `occurrence.add-media` | `native_occurrence_media_commands.capture_occurrence_add_media` | `OccurrenceAddMediaArgs` |
+| `occurrence.swap-media` | `native_occurrence_media_commands.capture_occurrence_swap_media` | `OccurrenceSwapMediaArgs` |
+
+Selected PARAM capture additionally accepts `schema_source`, `schema_inputs`,
+`realm_id`; detached capture inputs never authorize server execution. The provider
+loads exact scoped immutable inputs. `sync.TimelineSession.queue/commit` stays the
+native ingress. MediaSelection'"'s five fields and ABI1 selected_media are unchanged.
+
+## Portable goldens
+
+All paths below are under "'`{root}/tests/editing_conformance/fixtures/`.
+M1/parent-label capture + records + output remain exactly **87776 bytes**,
+SHA256 `b7f84a929716c9fc479fff1ea99e26daeeeb49b72ddc7594562b929f0feb3ff8`.
+Original foundation/popup/placement/scalar/trim/split goldens are byte-preserved.
+
+| Golden filename | SHA256 |
+|---|---|
+{goldens}
+
+## Qualification
+
+- Local bounded conformance/provider/sync/native CLI + pack/schema lane:
+  **1496 passed, 4 existing platform skips, 65 integration deselected** (126.43s).
+- Supplemental provider/reservation lane: **52 passed, 2 integration deselected**
+  (3.84s). Canonical registry/closed args/reference union: **5 passed** (0.56s).
+- Direct normal PARAM source pair, Runtime `b3ce5aa6`: **15 passed** (10.38s).
+  No HTTP, mixed vendor-health claim, validator replacement or schema override.
+- Direct frozen Runtime `6be9706` ordinary/popup/provenance/shared-image pair:
+  **45 passed, 12 strict xfailed** (26.32s). The twelve popup positive/race
+  expectations are unchanged and remain held for normal asset-schema generation.
+- Final frozen Runtime HTTP proof: **PENDING CENTRAL RESULT**.
+- Focused timeline/new-test Ruff passes; mypy for 11 touched timeline modules
+  passes with Python 3.13 (the shared venv'"'s actual version). Default project
+  Python 3.11 checking hits installed NumPy's Python 3.12+ type syntax before
+  checking source. Full changed-file Ruff reports 175 existing/reviewed compact
+  style/import findings; no claim of a clean full lint gate. Four compact-style
+  fixture findings originate in exact approved portable-pack "'`b2b51c4a` additions;
+  the five affected files are byte-identical to their reviewed source except the
+  reviewed one-line model trim fix. No lint weakening or formatting churn.
+- Vendor lock against exact `6be9706`, unchanged frozen vendor, 47 byte/delta
+  checks, schema semantic union, M1 capture byte parity, and `git diff --check` pass.
+
+Exact commands and results are in `{notes}/report.md`.
+No full suite / make check, installs, App/browser runs, release/artifact generation,
+new Runtime contract qualification, merges, pushes or integration writes occurred.
+
+## Blocking followups before release
+
+1. Manager records the harness commit (helper above), reviews this exact tree and
+   freezes source. All M2 integration stays HELD until PLAN records M1.
+2. Resolve PARAM admission-object overfetch under the independent object-scope
+   review; do not pull its WIP into this candidate. Any accepted fix requires a
+   reviewed new source identity and bounded source-pair qualification.
+3. Runtime owner generates normal official Python/TypeScript artifacts and root
+   exports from this exact canonical schema/union, including all 12 args schemas,
+   DocumentPin/schema_source, MediaSelection, PreparedCommit recorder sites,
+   MatchedSnapshot/VerifiedDocumentObject and Protocol declarations. Runtime owns
+   artifact manifest, provider compatibility tuple and version choice.
+4. Agent/App consume the same official artifacts and refresh pins together.
+   Re-run the unchanged twelve positive/race popup tests on the managed provider
+   through acceptance/reload, restart/exact retry, changed-key refusal, inverses,
+   and lifecycle races. Source-pair results do not qualify that release tuple.
+5. App owner qualifies captures/browser consumers and zero legacy writers. No
+   readiness inference from local passes or preserved popup xfails.
+'"'''
+(orch/'design/m2-writer-bundle-2.md').write_text(doc)
+msg='''feat(timeline): compose reviewed Bundle2 editing source
+
+Combine scalar fields, root inverses, selected pack parameters, trim and split
+with the existing popup and media provenance foundation. Preserve the native
+recording input union, canonical closed schemas and frozen Runtime client pin.
+
+Retain the reviewed goldens and add shared-source inverse regression coverage.
+Keep popup artifact qualification and parameter object-scope release held.
+'''
+worker=notes.parent
+(worker/'commit-msg').write_text(msg)
+(worker/'commit-msg.txt').write_text(msg)
+PY
+python3 /tmp/write_bundle2_handoff.py" in /home/user/work/wt/agt-m2-bundle2-complete-source
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-complete-source-bundle1-runtime6be9706-integration-1020012332-852/snap && tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-complete-source-bundle1-runtime6be9706-integration-1020012332-852/log.txt && git diff --check' in /home/user/work/wt/agt-m2-bundle2-complete-source
+ succeeded in 252ms:
+tree=fe87ed862652e309a2dc86fd4845e859d3da5a9a
+key=fb20014b975aa789c3aa47b7b6c34809
+worktree=/home/user/work/wt/agt-m2-bundle2-complete-source
+..................................................
+codex
+The central run is still progressing, and its snapshot matches the audited tree, `fe87ed862652e309a2dc86fd4845e859d3da5a9a`. The absolute Bundle2 handoff now lists the schema SHA, operations, capture exports, and goldens. I’ll leave the commit cell pending until the harness creates the commit; a post-harness helper will verify its tree before filling it in.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/notes/finalize-handoff.py <<'PY'
+#"'!/usr/bin/env python3
+"""Publish the harness commit only after verifying the tested source tree."""
+from pathlib import Path
+import json
+import subprocess
+
+root = Path('"'/home/user/work/wt/agt-m2-bundle2-complete-source')
+notes = Path(__file__).parent
+orch = notes.parents[2]
+manifest = json.loads((notes / 'final-manifest.json').read_text())
+def git(*args):
+    return subprocess.check_output(['git', '-C', str(root), *args], text=True).strip()
+commit = git('rev-parse', 'HEAD')
+if commit == manifest['base']:
+    raise SystemExit('Harness has not committed this worker yet; no document changed.')
+if git('rev-parse', 'HEAD"'^{tree}'"') "'!= manifest['"'tree'] or git('rev-parse', 'HEAD"'^'"') "'!= manifest['"'base']:
+    raise SystemExit('Harness commit does not match the tested tree/base; no document changed.')
+for path in (orch / 'design/m2-writer-bundle-2.md', notes / 'report.md'):
+    source = path.read_text()
+    path.write_text(source.replace('**PENDING HARNESS COMMIT AFTER WORKER EXIT**', '"'`'"' + commit + '"'`'"'))
+print('Published verified manager review candidate:', commit)
+print('Tree:', manifest['tree'])
+PY
+python3 - <<'PY'
+from pathlib import Path
+import shutil
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md')
+s=p.read_text().replace('all 12 args schemas,','all 12 operations’ closed args,').replace('the five affected files are byte-identical to their reviewed source except the','the affected files retain their reviewed source, including the')
+p.write_text(s)
+shutil.rmtree('.pytest_cache', ignore_errors=True)
+shutil.rmtree('/tmp/agt-m2-bundle2-mypy', ignore_errors=True)
+PY
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/notes/report.md <<'MD'
+# Bundle2 complete source composition — manager review candidate
+
+Composed the required ordinary + popup + PARAM source on "'`7b61efd5` without
+changing frozen Bundle1/client 0.2.2. Final tested tree:
+`fe87ed862652e309a2dc86fd4845e859d3da5a9a`; canonical schema SHA256:
+`472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9`.
+Composed commit: **PENDING HARNESS COMMIT AFTER WORKER EXIT**.
+
+## Changes and decisions
+
+- Applied exact scalar `84db8bde..7b54ca92`, root-stage `84db8bde..1b52391e`,
+  pure pack `8b0946e6''^..8b0946e6`, portable `8b0946e6..b2b51c4a`, PARAM
+  `b2b51c4a..3565462c`, trim `51948d40..d82f6ef7` + `d82f6ef7..8de94595`,
+  split `51948d40..3b03eee9006990739fae19884389149c76d8fbd0`.
+  All per-overlay patches are adjacent to this report.
+- Manually reconciled shared recorder/execute/rebase/provider signatures to keep
+  `verified_media`, `schema_inputs`, `realm_id`; kept source-aware inverse state,
+  staged selection validation, clear-only scalar behavior, media provenance and
+  dependent guards. No older whole core/commands/schema copy. Added named closed
+  `DocumentPin` as the normal `schema_source` reference. Twelve operations share
+  one canonical closed args/source union. Reconciliation glue stays below 40 lines.
+- Added only the exact new shared-image inverse tests from `2ad74839`; no product
+  fix from that branch. Scalar/trim/split handlers, goldens and tests are exact.
+- Optional free moves excluded to keep required composition bounded. No
+  word/default compiler/physical-map WIP, PARAM object-scope WIP, Runtime artifacts,
+  release pin changes or new behavior expansion. No settled decision was changed.
+- Root two and PARAM three strict xfails now pass through reviewed fixes, with
+  positive assertions retained. All twelve popup positive/race xfails remain
+  byte-identical and held for normal Runtime asset generation.
+
+## Exact verification
+
+All local commands ran from `/home/user/work/wt/agt-m2-bundle2-complete-source`.
+No full suite, dependency installs, merge/commit/checkout/push, branch/ref changes,
+integration worktree edits, Runtime artifact edits or browser runs.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/sdk/test_timeline_selected_schema.py
+```
+
+Initial focused check: **275 passed in 18.37s**, exit 0. Superseded by the bounded
+lane below (no product changes after this check).
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m '"'not integration' tests/editing_conformance tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_clip_trim_provider.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_native.py tests/core/test_project_pack_inputs.py tests/core/test_project_pack_snapshots.py tests/core/test_project_packs.py tests/core/test_editor_element_catalog.py
+"'```
+
+**1496 passed, 4 existing platform skips, 65 integration deselected in 126.43s**,
+exit 0. Bounded conformance, providers, sync/native CLI and pack/schema tests; not
+the repository full suite. No remaining root/PARAM xfails in this lane.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m '"'not integration' tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_parent_track_label.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_semantic_reservations.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py
+```
+
+**52 passed, 2 deselected in 3.84s**; **5 passed in 0.56s**; both exit 0.
+The existing generic composed-schema tests cover every new operation'"'s closed args
+and golden plus preserved root/scoped asset patterns without test changes.
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-pack-custody-resume PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+**15 passed in 10.38s**, exit 0. Actual Runtime source
+`b3ce5aa65151a6174064d73838ad23da4a8a7141`, direct service/SQLite/CAS; no sockets,
+schema override, vendor-health substitution or official artifact compatibility
+claim. This reproduces the reviewed PARAM actual-source pair. PARAM release is
+still held for independent object-scope review.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+```
+
+**45 passed, 12 strict xfailed in 26.32s**, exit 0. Exact frozen Runtime
+`6be970633cc82ab412428151e6bf42f3e7fc3081`, direct normal service, no sockets.
+Shared-image inverse/redo/rematerialization and scalar acceptance pass; the twelve
+popup positive/race cases retain original assertions and narrowly scoped old
+asset-schema xfails. This is not popup acceptance.
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-bundle2-complete-source bundle1-runtime6be9706-integration --files '"'tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_shared_inverse.py'
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-bundle2-complete-source-bundle1-runtime6be9706-integration-1020012332-852 1
+"'```
+
+**PENDING CENTRAL RESULT**. Exactly one final-source request; first wait returned
+124 while running, so the same request was resumed. Central `snap` confirms tree
+`fe87ed862652e309a2dc86fd4845e859d3da5a9a`. Suite asserts the exact frozen Runtime
+HEAD and covers official HTTP parent-label/M1, identity, provider/client cutover,
+plus scalar/first-clip/add-delete/popup/provenance/shared inverse. PARAM b3 remains
+a separate direct process; no mixed source/vendor-health success claim.
+
+```sh
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/{_collections,_command_state,_recording,_scalar_commands,_clip_scalar_commands,_trim_commands,_split_commands,commands,commit,inverse,rebase}.py tests/core/test_project_pack_inputs.py tests/core/test_project_pack_snapshots.py tests/editing_conformance/{test_recorded_graph_roots,test_recipe_scalar_commands,test_recipe_clip_scalar_fields,test_recipe_m2_clip_trim,test_recipe_m2_clip_split,test_commit_runtime_clip_scalar_fields,test_commit_runtime_shared_inverse}.py tests/sdk/{test_timeline_clip_scalar_provider,test_timeline_clip_trim_provider,test_timeline_commit_graph_roots,test_timeline_commit_provider,test_timeline_commit_provider_scalar,test_timeline_selected_schema,test_timeline_selected_schema_runtime}.py --output-format concise
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --python-version 3.13 --follow-imports=silent --cache-dir=/tmp/agt-m2-bundle2-mypy astrid/sdk/timeline/{_collections,_command_state,_recording,_scalar_commands,_clip_scalar_commands,_trim_commands,_split_commands,commands,commit,inverse,rebase}.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-track-public-export
+git diff --check
+```
+
+All pass; mypy **no issues in 11 source files**, vendor lock matches exact producer.
+A prior mypy call without `--python-version 3.13` stopped on installed NumPy'"'s
+Python 3.12+ type syntax (project defaults to Python 3.11). Actual shared venv is
+Python 3.13; no source or checking rules were weakened.
+
+Broader Ruff including the exact legacy element/model/pack fixture files exits 1
+with **175 findings**: project_packs 96 (base 101), schema 4 (base 4), model 1
+(base 1), test_project_packs 74 (base 70). Four additional compact-style fixture
+findings are present verbatim in approved portable-pack "'`b2b51c4a`; no composition
+lint regression outside those exact reviewed additions. No clean full-lint claim;
+no formatting churn or lint suppression applied. Baseline-count diagnostic'"'s
+assertion flagged those four reviewed fixture lines, as expected on inspection.
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-recover/notes/capture-parity.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/notes/audit.py
+```
+
+Both pass. **47 byte/delta checks**, exact canonical semantic union, all M1 and
+parent-label goldens unchanged. Capture/records/output **87776 bytes**, SHA256
+`b7f84a929716c9fc479fff1ea99e26daeeeb49b72ddc7594562b929f0feb3ff8`.
+Initial audit incorrectly asked merged root/shared test files to equal one
+predecessor'"'s whole file; fixed the audit to compare exact applied deltas while
+preserving newer foundation/popup contents. No product changes were needed.
+
+## Handoff, blocked work and next steps
+
+Absolute handoff:
+"'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md`.
+It contains exact schema path/SHA, operation/capture export table, all golden
+hashes, source tree, normal generation request and blocking followups.
+`commit-msg` and `commit-msg.txt` are ready for the harness. No temporary/build
+outputs or repository-relative coordination docs remain.
+
+The exact commit cannot exist until the harness commits after this worker exits.
+Manager must then run adjacent `finalize-handoff.py`, which verifies parent/tree
+and publishes the exact SHA in the handoff and report. It never commits or alters
+refs. Source freeze remains the manager'"'s review decision.
+
+All M2 integration remains HELD until PLAN records M1. PARAM release remains HELD
+until the independent all-admission "'`_hydrate` overfetch review resolves. Runtime
+owner must generate official MatchedSnapshot/VerifiedDocumentObject/Protocol,
+root exports and compatible artifact tuple from this canonical union. Agent/App
+then refresh matching pins and rerun unchanged popup acceptance/race tests.
+No App readiness claim; full repository gates, official new-contract HTTP/package
+qualification, and App/browser journeys are unverified here.
+MD' in /home/user/work/wt/agt-m2-bundle2-complete-source
+ succeeded in 2116ms:
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-bundle2-complete-source-bundle1-runtime6be9706-integration-1020012332-852 1' in /home/user/work/wt/agt-m2-bundle2-complete-source
+ succeeded in 0ms:
+test agt-m2-bundle2-complete-source-bundle1-runtime6be9706-integration-1020012332-852: pass exit=0 in 109s — bundle1-runtime6be9706-integration on agt-m2-bundle2-complete-source (agent tree fe87ed862652e309a2dc86fd4845e859d3da5a9a)
+cmd: test "$(git -C /home/user/work/wt/rt-m2-track-public-export rev-parse HEAD)" = 6be970633cc82ab412428151e6bf42f3e7fc3081 && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/stage1/test_runtime_client_cutover.py tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_shared_inverse.py
+counts: 95 passed, 13 xfailed in 106.65s (0:01:46) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-complete-source-bundle1-runtime6be9706-integration-1020012332-852/log.txt ---
+..................................................x..xxxx............... [ 66%]
+.............xx..xx..xx..xx.........                                     [100%]
+95 passed, 13 xfailed in 106.65s (0:01:46)
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/notes/audit.py && git diff --check && git status --short' in /home/user/work/wt/agt-m2-bundle2-complete-source
+ succeeded in 1832ms:
+schema: 472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9
+tree: fe87ed862652e309a2dc86fd4845e859d3da5a9a
+exact byte checks: 47
+canonical schema union: PASS
+ M astrid/core/element/catalog.py
+ M astrid/core/element/project_packs.py
+ M astrid/core/element/schema.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_scalar_commands.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/model.py
+ M astrid/sdk/timeline/rebase.py
+ M tests/core/test_project_packs.py
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+ M tests/editing_conformance/test_recorded_graph_roots.py
+ M tests/sdk/test_timeline_commit_graph_roots.py
+ M tests/sdk/test_timeline_commit_provider.py
+ M tests/sdk/test_timeline_commit_provider_scalar.py
+ M tests/sdk/test_timeline_selected_schema.py
+?? astrid/sdk/timeline/_clip_scalar_commands.py
+?? astrid/sdk/timeline/_split_commands.py
+?? astrid/sdk/timeline/_trim_commands.py
+?? tests/core/test_project_pack_inputs.py
+?? tests/core/test_project_pack_snapshots.py
+?? tests/editing_conformance/fixtures/recipe_m2_app_clip_scalar_fields.json
+?? tests/editing_conformance/fixtures/recipe_m2_clip_split.json
+?? tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+?? tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+?? tests/editing_conformance/test_commit_runtime_shared_inverse.py
+?? tests/editing_conformance/test_recipe_clip_scalar_fields.py
+?? tests/editing_conformance/test_recipe_m2_clip_split.py
+?? tests/editing_conformance/test_recipe_m2_clip_trim.py
+?? tests/sdk/test_timeline_clip_scalar_provider.py
+?? tests/sdk/test_timeline_clip_trim_provider.py
+?? tests/sdk/test_timeline_selected_schema_runtime.py
+
+codex
+The final frozen Runtime HTTP run passed: 95 tests passed, with 13 strict xfails—the 12 preserved popup cases and the inherited nullable-speed case. No source changes followed the final snapshot. I’m recording the result; release remains held for PARAM object-scope review, official Runtime generation, and PLAN’s M1 gate.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+notes=orch/'workers/agt-m2-bundle2-complete-source/notes'
+result=orch/'tests/agt-m2-bundle2-complete-source-bundle1-runtime6be9706-integration-1020012332-852'
+p=orch/'design/m2-writer-bundle-2.md'
+s=p.read_text().replace('Final frozen Runtime HTTP proof: **PENDING CENTRAL RESULT**.', 'Final frozen Runtime HTTP proof: **95 passed, 13 strict xfailed** (106.65s),\\n  central exit 0 / 109s. Twelve popup cases plus the inherited first-clip\\n  nullable-speed case; no unexpected failures. One final-source request, exact\\n  snapshot tree matches the identity above. Result: "'`'"' + str(result) + '/"'`.'"')
+p.write_text(s)
+p=notes/'report.md';s=p.read_text().replace('**PENDING CENTRAL RESULT**. Exactly one final-source request; first wait returned', '**Central PASS: 95 passed, 13 strict xfailed in 106.65s; exit 0 / 109s**.\\nTwelve are the unchanged popup cases; one is the inherited first-clip nullable-speed\\ncase. Full result/log: "'`'"' + str(result) + '/"'`.'"\\nExactly one final-source request; first wait returned')
+needle='Broader Ruff including the exact legacy element/model/pack fixture files exits 1'
+cmd='''"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/core/element/{catalog,project_packs,schema}.py astrid/sdk/timeline/{_collections,_command_state,_recording,_scalar_commands,_clip_scalar_commands,_trim_commands,_split_commands,commands,commit,inverse,model,rebase}.py tests/core/test_project_pack*.py tests/editing_conformance/{test_recorded_graph_roots,test_recipe_scalar_commands,test_recipe_clip_scalar_fields,test_recipe_m2_clip_trim,test_recipe_m2_clip_split,test_commit_runtime_clip_scalar_fields,test_commit_runtime_shared_inverse}.py tests/sdk/{test_timeline_clip_scalar_provider,test_timeline_clip_trim_provider,test_timeline_commit_graph_roots,test_timeline_commit_provider,test_timeline_commit_provider_scalar,test_timeline_selected_schema,test_timeline_selected_schema_runtime}.py --output-format concise
+```
+
+'"'''
+s=s.replace(needle,cmd+needle)
+p.write_text(s)
+(notes/'central-summary.txt').write_text((result/'summary').read_text())
+PY
+rg -n 'PENDING|central|Final frozen|175|args' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md && cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/commit-msg.txt" in /home/user/work/wt/agt-m2-bundle2-complete-source
+ succeeded in 82ms:
+21:| Composed commit | **PENDING HARNESS COMMIT AFTER WORKER EXIT** |
+71:`timeline.inverse` and `timeline.restore` remain separate. Every registered args
+106:| `recipe_m1_shared.json` | `0828ae13255897d8bea25ba5fd28445835f374189e837b41b9f818bb017577d7` |
+125:  (3.84s). Canonical registry/closed args/reference union: **5 passed** (0.56s).
+131:- Final frozen Runtime HTTP proof: **95 passed, 13 strict xfailed** (106.65s),
+132:  central exit 0 / 109s. Twelve popup cases plus the inherited first-clip
+138:  checking source. Full changed-file Ruff reports 175 existing/reviewed compact
+158:   exports from this exact canonical schema/union, including all 12 operations’ closed args,
+
+codex
+Composed the required scalar, root, pack/PARAM, trim, and split overlays, preserving popup provenance guards and M1/parent-label bytes. Optional free-moves excluded.
+
+Verification:
+
+- Bounded local lanes: **1,553 passed**, 4 existing skips.
+- PARAM direct pair: **15 passed**.
+- Frozen Runtime direct pair: **45 passed, 12 xfailed**.
+- Final HTTP proof: **95 passed, 13 xfailed**.
+- Schema union, 47 byte/delta checks, focused lint and mypy passed. Broader lint findings are documented.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/notes/report.md) and [absolute Bundle2 handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md) are ready. Both commit-message files are written.
+
+Harness commit remains pending; the handoff includes a helper to verify and publish its exact SHA afterward. PARAM release, official Runtime generation, and M2 integration remain held.
+tokens used
+143,733
+Composed the required scalar, root, pack/PARAM, trim, and split overlays, preserving popup provenance guards and M1/parent-label bytes. Optional free-moves excluded.
+
+Verification:
+
+- Bounded local lanes: **1,553 passed**, 4 existing skips.
+- PARAM direct pair: **15 passed**.
+- Frozen Runtime direct pair: **45 passed, 12 xfailed**.
+- Final HTTP proof: **95 passed, 13 xfailed**.
+- Schema union, 47 byte/delta checks, focused lint and mypy passed. Broader lint findings are documented.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/notes/report.md) and [absolute Bundle2 handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md) are ready. Both commit-message files are written.
+
+Harness commit remains pending; the handoff includes a helper to verify and publish its exact SHA afterward. PARAM release, official Runtime generation, and M2 integration remain held.

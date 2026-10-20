@@ -1,0 +1,9 @@
+name=agt-area-size-ledger-audit
+repo=agent
+base=tl/integration
+base_sha=931d7ec5
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-area-size-ledger-audit
+started=2026-10-20T09:02:48Z

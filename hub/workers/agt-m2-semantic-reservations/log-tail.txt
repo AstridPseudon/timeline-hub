@@ -1,0 +1,400 @@
+ succeeded in 0ms:
+All checks passed!
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_semantic_reservations.py && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/sdk/test_timeline_commit_provider_runtime.py' in /home/user/work/wt/agt-m2-semantic-reservations
+exec
+/bin/bash -lc "git diff --check && git diff --stat && sed -n '1,110p' tests/sdk/test_timeline_semantic_reservations.py && sed -n '348,495p' astrid/sdk/timeline/commit.py" in /home/user/work/wt/agt-m2-semantic-reservations
+ succeeded in 542ms:
+ astrid/sdk/timeline/commit.py                 | 103 ++++++++++++++++++++------
+ tests/sdk/test_timeline_commit_graph_roots.py |  19 +++--
+ 2 files changed, 96 insertions(+), 26 deletions(-)
+"""Semantic retirement through the unit port, not Runtime atomic admission."""
+from __future__ import annotations
+
+import copy
+
+import pytest
+
+from astrid.sdk.timeline import commands
+from tests.editing_conformance.staging_recipes import install_staging_operations
+from tests.editing_conformance.test_recorded_graph_roots import create_command, root_values
+from tests.editing_conformance.test_recorded_graph_roots import root_ops as root_ops
+from tests.sdk.test_timeline_commit_provider import (
+    CommitRejected,
+    DetachedPort,
+    DetachedRealm,
+    detached,
+    inverse,
+    track_create,
+)
+from tests.sdk.test_timeline_commit_provider import runtime_abi as runtime_abi
+
+pytestmark = pytest.mark.usefixtures('root_ops')
+
+
+@pytest.fixture(autouse=True)
+def semantic_ops(monkeypatch):
+    install_staging_operations(monkeypatch)
+
+    def delete(ctx, command):
+        # The bbb60b5c structural deletion primitives, extended to the fixture's
+        # child owner. This test recipe makes no semantic dependency claim.
+        ref = command['select']
+        ctx.select('collection.clips', ref.rsplit('/', 1)[0])
+        ctx.read(ref)
+        ctx.clear(ref, [])
+
+    def churn(ctx, command):
+        for root in root_values():
+            ctx.create_entity(**root)
+        delete(ctx, deletion('occurrence:new-occ/clip:title'))
+        ctx.create('occurrence:new-occ', 'clip', root_values()[0]['value']['internal_timeline']['clips'][0])
+
+    registered = commands.operations()
+    registered['fixture.clip-delete'] = commands.Operation({'type': 'object'}, delete, {})
+    registered['fixture.root-churn'] = commands.Operation({'type': 'object'}, churn, {})
+    monkeypatch.setattr(commands, 'operations', lambda: registered)
+
+
+def deletion(ref):
+    return {'schema_version': 1, 'op': 'fixture.clip-delete', 'version': '1',
+            'select': ref, 'args': {}}
+
+
+def creation(owner, identity):
+    return {'schema_version': 1, 'op': 'fixture.clip-create', 'version': '1',
+            'select': owner, 'args': {'row': {'id': identity, 'track': 'picture', 'at': 0, 'hold': 2}}}
+
+
+def assert_collision(realm, calls):
+    head, entries, documents = detached(realm.head), detached(realm.entries), detached(realm.documents)
+    prepared = len(realm.prepared)
+    with pytest.raises(CommitRejected) as error:
+        realm.call(calls)
+    assert error.value.failure['details']['reason'] == 'identity_collision'
+    assert realm.head == head and realm.entries == entries and realm.documents == documents
+    assert len(realm.prepared) == prepared
+
+
+@pytest.mark.parametrize('intent', ['bootstrap', 'legacy_unknown'])
+def test_seeded_clip_deletion_retires_identity_without_retroactive_created_facts(intent):
+    realm = DetachedRealm()
+    realm.entries[0]['intent'] = intent
+    original = detached(realm.documents['parent-1'])
+    deleted = realm.call([deletion('parent/clip:clip-a')])
+    assert realm.entries[-1]['records']['commands'][0]['created'] == []
+    assert_collision(realm, [creation('parent', 'clip-a')])
+    undone = realm.call([inverse([deleted['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == original
+    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
+    assert redone['data']['canonical_document'] == deleted['data']['canonical_document']
+    assert_collision(realm, [creation('parent', 'clip-a')])
+
+
+def test_aggregate_children_are_retired_in_their_occurrence_scope():
+    realm = DetachedRealm()
+    introduced = realm.call([create_command()])
+    assert introduced['data']['commands'][0]['created'] == ['shot:new-shot', 'occurrence:new-occ']
+    deleted = realm.call([deletion('occurrence:new-occ/clip:title')])
+    assert realm.entries[-1]['records']['commands'][0]['created'] == []
+    assert_collision(realm, [creation('occurrence:new-occ', 'title')])
+    undone = realm.call([inverse([deleted['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == introduced['data']['canonical_document']
+    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
+    assert redone['data']['canonical_document'] == deleted['data']['canonical_document']
+
+
+@pytest.mark.parametrize('one_publication', [False, True])
+def test_aggregate_removal_without_child_writes_still_retires_children(one_publication):
+    realm = DetachedRealm()
+    aggregate = root_values()[0]['value']
+    aggregate['internal_timeline']['clips'] = []
+    replace = {'schema_version': 1, 'op': 'fixture.properties', 'version': '1',
+               'select': 'shot:new-shot', 'args': {'changes': [
+                   {'path': [], 'state': {'state': 'present', 'value': aggregate}},
+               ]}}
+    if one_publication:
+        realm.call([create_command(), replace])
+    else:
+        realm.call([create_command()])
+        realm.call([replace])
+    return records
+
+
+def _reservation_refs(state):
+    """Known authored identities only; opaque payloads never allocate IDs."""
+    bundle = state.bundle
+    refs = {'shot:' + bundle['source_mapping']['shots'].get(identity, {}).get('shot_id', identity)
+            for identity in bundle['shots']}
+    owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
+    refs.update(owners[1:])
+    for owner in owners:
+        for kind in ('clip', 'track'):
+            collection = state.collection(owner, kind)
+            if collection is None:
+                continue
+            _require(isinstance(collection, list), 'invalid semantic identity collection')
+            for row in collection:
+                _require(isinstance(row, Mapping) and _id(row.get('id')),
+                         'missing semantic identity')
+                refs.add(owner + '/' + kind + ':' + row['id'])
+    return refs
+
+
+def _check_reservations(port, plan, current, rejected, base):
+    from astrid.sdk.timeline.commands import CommandError
+
+    from ._command_state import State, root_identity
+
+    def valid(item):
+        if (not isinstance(item, Mapping) or set(item) != {'ref', 'kind', 'owner'}
+                or not _id(item['ref']) or not _id(item['kind'])):
+            return False
+        root = root_identity(item['ref'])
+        if root is not None:
+            return (item['kind'] == root[0]
+                    and item['owner'] == (None if root[0] == 'shot' else 'parent'))
+        owner = item['owner']
+        if not _id(owner) or not (owner == 'parent' or (
+                root_identity(owner) is not None and root_identity(owner)[0] == 'occurrence')):
+            return False
+        return (item['kind'] in ('track', 'clip')
+                and re.fullmatch(re.escape(owner + '/' + item['kind'] + ':') + r'(?!.*::)[^/]+',
+                                 item['ref']) is not None)
+
+    for record in plan.records:
+        if (any(not valid(item) for item in record['created'])
+                or record['command'].get('created') != [item['ref'] for item in record['created']]):
+            raise CommandError('invalid created identity scope', kind='identity_collision')
+
+    # This scan is timeline-local. Runtime atomic admission must additionally
+    # check project-wide shot occupancy/reservations before persisting a closure.
+    # Inverse creates restore authenticated accepted writes. Ordinary creates
+    # must never claim an identity retired by an earlier accepted publication.
+    created = [item["ref"] for record in plan.records
+               if record["command"]["op"] != "timeline.inverse" for item in record["created"]]
+    if not created:
+        return
+    reserved, recorded = set(), False
+    context = {'request': {key: plan.bundle[key] for key in ('project_id', 'timeline_id')}}
+
+    def boundary(revision):
+        return _load(port, context, revision)
+
+    def scan(records, bundle, *, ordinary=False):
+        state = State(bundle)
+        reserved.update(_reservation_refs(state))
+        for record in records:
+            items = record['created']
+            if (not isinstance(items, list) or any(not valid(item) for item in items)
+                    or not isinstance(record['command'], Mapping)
+                    or record['command'].get('created') != [item['ref'] for item in items]):
+                raise CommandError('created identity history is unavailable', kind='history_unavailable')
+            check = ordinary and record['command']['op'] != 'timeline.inverse'
+            claimed = set()
+            for item in items:
+                ref = item['ref']
+                if check and (ref in reserved or ref in claimed):
+                    raise CommandError('created identity was already reserved', kind='identity_collision', ref=ref)
+                claimed.add(ref)
+            for write in record['writes']:
+                if write['ref'] == 'timeline':
+                    for pin in (write['before']['value'], write['after']['value']):
+                        source = boundary(pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 'historical closure pin mismatch')
+                        state.closures[pin['revision_id']] = source
+                if not state.matches(write['ref'], write['path'], write['before']):
+                    raise CommandError('semantic identity boundary differs from writes', kind='history_unavailable')
+                before = _reservation_refs(state)
+                state.set(write['ref'], write['path'], write['after'])
+                if write['ref'] == 'timeline':
+                    state = State(state.bundle, closures=state.closures)
+                after = _reservation_refs(state)
+                collisions = (after - before) & reserved if check else set()
+                if collisions:
+                    raise CommandError('created identity was already reserved', kind='identity_collision',
+                                       ref=sorted(collisions)[0])
+                reserved.update(after)
+            reserved.update(claimed)
+            for write in record['derived_writes']:
+                state.set(write['ref'], write['path'], write['after'])
+
+    try:
+        for entry in _history(port, current, None, rejected, base):
+            if (not recorded and entry.get('intent') in {'bootstrap', 'legacy_unknown'}
+                    and entry.get('records') is None):
+                # Unknown legacy intent is not allocation proof. The first
+                # recorded edge supplies its authenticated original boundary.
+                continue
+            recorded = True
+            records = _records([entry], rejected, base, current)
+            _require(entry.get('previous') is not None, 'missing original identity boundary')
+            scan(records, boundary(entry['previous']['revision_id']))
+            reserved.update(_reservation_refs(State(boundary(entry['revision_id']))))
+    except (AuthoringBundleError, CommandError, KeyError, TypeError, ValueError) as exc:
+        raise rejected(_failure('history_unavailable', 'semantic identity history is unavailable',
+                                base, current)) from exc
+    scan(plan.records, boundary(current['revision_id']), ordinary=True)
+
+
+class RuntimeCommitService:
+    provider_id = "astrid-v1"
+    interface_version = 1
+
+    def __init__(self, contract_digest):
+        self.contract_digest = contract_digest
+
+    def commit(self, context, port):
+        from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+
+        from astrid.sdk.timeline._collections import AcceptedRecords
+        from astrid.sdk.timeline.commands import CommandError, execute
+        from astrid.sdk.timeline.inverse import check_intervening
+        from astrid.sdk.timeline.rebase import replay
+
+        context = copy.deepcopy(context)
+        request = context["request"]
+        base = {"revision_id": request["base_revision_id"],
+                "publication_id": request["base_publication_id"]}
+        current = None
+        try:
+            calls = request["commands"]
+            restore = any(call["op"] == "timeline.restore" for call in calls)
+            if restore:
+                current = port.head()
+                if len(calls) != 1:
+                    raise CommitRejected(_failure("invalid_commands", "restore must be the sole command",
+
+ succeeded in 3667ms:
+....................                                                     [100%]
+20 passed in 1.39s
+..                                                                       [100%]
+2 passed in 1.10s
+
+exec
+/bin/bash -lc 'git status --short --untracked-files=normal && /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_semantic_reservations.py && git diff --check' in /home/user/work/wt/agt-m2-semantic-reservations
+ succeeded in 546ms:
+ M astrid/sdk/timeline/commit.py
+ M tests/sdk/test_timeline_commit_graph_roots.py
+?? tests/sdk/test_timeline_semantic_reservations.py
+All checks passed!
+
+codex
+The final focused check passed all 20 new regressions, including removal through a whole-root write with no child write or child `created` fact. Both real Runtime qualification tests passed again, and lint and whitespace checks are clean. I’m recording the commands and the M1 integration hold in the report.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_semantic_reservations.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_sync.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py' in /home/user/work/wt/agt-m2-semantic-reservations
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md && wc -l tests/sdk/test_timeline_semantic_reservations.py && git diff --numstat' in /home/user/work/wt/agt-m2-semantic-reservations
+ succeeded in 255ms:
+- 2026-10-19: canonical clip.transition = INCOMING for every producer; the canonical→compiled compiler converts explicitly to the compiled outgoing form; Agent validator fixed; any historical Agent outgoing-meaning data only via a recorded guarded migration.
+- 2026-10-19 (OWNER): purge all Supabase canonical timeline writers (ai-timeline-agent, timeline-import, complete_task append + registry upsert, astridAppendService); keep task completion/billing/media prep/relational metadata.
+
+## Gate record (orchestrator updates this)
+- Checkpoint A (designs approved): **APPROVED 2026-10-19 ~19:05Z** by the orchestrator, after a fresh Astra review (APPROVE WITH CHANGES; all 5 required changes folded into the design docs; see reviews/checkpoint-a-changes.md). Runtime, App and Viewing M0 complete; Agent designs complete, with its main-baseline count still being recorded (non-blocking). **M1 is open.**
+- Hard stop (foundation complete, M0–M4 done): **NOT YET**
+216 tests/sdk/test_timeline_semantic_reservations.py
+82	21	astrid/sdk/timeline/commit.py
+14	5	tests/sdk/test_timeline_commit_graph_roots.py
+
+ succeeded in 20458ms:
+........................................................................ [ 14%]
+........................................................................ [ 29%]
+........................................................................ [ 44%]
+........................................................................ [ 59%]
+........................................................................ [ 74%]
+........................................................................ [ 89%]
+..................................................                       [100%]
+482 passed in 19.86s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-semantic-reservations')
+(worker / 'notes').mkdir(exist_ok=True)
+message = '''fix(timeline): retire implicit semantic identities within owner scope
+
+Reserve seeded and aggregate child identities from verified accepted boundaries
+and recorded writes without fabricating historical created facts. Reject fresh
+reuse within or across publications, while preserving scoped namespaces,
+authenticated inverses and the no-create history fast path.
+
+Cover missing history, whole-root removal, transient child creation, exact
+undo/redo and unrelated namespaces. Validate 482 targeted tests and two existing
+real Runtime restart/retry qualifications; keep integration held for M1.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+report = '''# agt-m2-semantic-reservations — complete, integration held
+
+Changed only "'`astrid/sdk/timeline/commit.py` and adjacent SDK tests. Product diff: 82 additions / 21 deletions, confined to `_check_reservations` and one private identity helper.
+
+- Reservations now include known shot/occurrence roots and owner-scoped tracks/clips from exact verified accepted boundaries. Project existing authored writes between those boundaries to retain identities introduced and removed inside one publication, including children embedded in a new root aggregate.
+- Seeded identities need no retroactive `created` facts. Whole-root removal needs no per-child fact or per-child deletion write. Missing/corrupt required boundaries or records refuse with `history_unavailable`.
+- Preserve authenticated inverse/redo restoration, different owner/kind namespaces, opaque data, and the no-history-scan path for ordinary operations without created IDs. Runtime acceptance, physical occupancy, receipt retries, State/Recording/inverse/schema/DTOs are unchanged.
+- Added 20 unit-port regressions and updated the existing local root-history fixture to supply exact trusted boundaries. The deletion fixture overlays only the structural select/read/clear primitives from bbb60b5c; it makes no claim to implement production semantic dependency checking. No behavior tests were weakened, skipped, deleted, or changed to expect lost behavior.
+
+Final validation, run from `/home/user/work/wt/agt-m2-semantic-reservations`:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_semantic_reservations.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_sync.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py
+482 passed in 19.86s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_semantic_reservations.py
+20 passed in 1.39s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/sdk/test_timeline_commit_provider_runtime.py
+2 passed in 1.10s
+
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_semantic_reservations.py
+All checks passed!
+
+git diff --check
+exit 0
+```
+
+The two integration tests instantiate actual RuntimeService/RealmStore through their public APIs, without a daemon or sockets. They qualify restart-safe reservations, original receipt-ledger-first retry (provider/check forbidden on retry), and restore/inverse/redo. New seeded/implicit-child cases are unit-port evidence only, not a claim of real Runtime acceptance qualification. Existing unchanged-write, ABA, dependency, inverse and rebase guards passed in the targeted provider/conformance lanes.
+
+Decisions: use the existing State reader/setter only to project accepted authored writes, never edit State or create another recorder. Read exact before/after closure boundaries under verified ancestry; skip unknown legacy intent itself and take seeded identities from the first recorded edge'"'s authenticated original boundary. New creates fail closed if required retained history is unavailable. Ordinary moves/deletions with no created IDs retain their fast path. No opaque JSON search, new record field, reservation table/journal, or duplicate Runtime occupancy guard.
+
+No plan decision contradicted by the evidence. No implementation blocker. Full suites, make check, browser/localhost/network tests, installs and builds were not run, as directed. No commit/merge/checkout/rebase/push/ref changes were performed; both commit messages are written beside this report's notes directory.
+
+Next: manager review; retain the explicit integration hold until the orchestrator records the required M1 result in PLAN. After that record, qualify the new seeded/root-child scenarios against actual Runtime before claiming end-to-end coverage. No merge requested.
+'''
+(worker / 'notes' / 'report.md').write_text(report)
+PY
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-semantic-reservations/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-semantic-reservations/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-semantic-reservations/commit-msg.txt
+git status --short" in /home/user/work/wt/agt-m2-semantic-reservations
+ succeeded in 369ms:
+-rw-r--r-- 1 root root  593 Oct 19 23:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-semantic-reservations/commit-msg
+-rw-r--r-- 1 root root  593 Oct 19 23:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-semantic-reservations/commit-msg.txt
+-rw-r--r-- 1 root root 4365 Oct 19 23:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-semantic-reservations/notes/report.md
+ M astrid/sdk/timeline/commit.py
+ M tests/sdk/test_timeline_commit_graph_roots.py
+?? tests/sdk/test_timeline_semantic_reservations.py
+
+codex
+Implemented scoped semantic ID retirement for seeded rows and implicit aggregate children, preserving inverse/redo and separate owner namespaces.
+
+- **482 targeted tests passed**, including 20 new regressions.
+- **2 existing real Runtime qualification tests passed.**
+- Ruff and `git diff --check` passed.
+- Full suites were not run, as directed.
+
+New retirement scenarios have unit-port coverage; real Runtime qualification remains a follow-up. Integration stays held pending the required M1 PLAN record.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-semantic-reservations/notes/report.md). Both commit-message files are written. No Git mutations performed.
+tokens used
+119,689
+Implemented scoped semantic ID retirement for seeded rows and implicit aggregate children, preserving inverse/redo and separate owner namespaces.
+
+- **482 targeted tests passed**, including 20 new regressions.
+- **2 existing real Runtime qualification tests passed.**
+- Ruff and `git diff --check` passed.
+- Full suites were not run, as directed.
+
+New retirement scenarios have unit-port coverage; real Runtime qualification remains a follow-up. Integration stays held pending the required M1 PLAN record.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-semantic-reservations/notes/report.md). Both commit-message files are written. No Git mutations performed.

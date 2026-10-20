@@ -1,0 +1,400 @@
++                member_bytes = archive.read(member_name)
++                if (entry.get("bytes") != len(member_bytes)
++                        or entry.get("content_hash") != "sha256:" + hashlib.sha256(member_bytes).hexdigest()):
++                    return None
++                verified.add(member_name)
++            actual_files = {member.filename for member in members if not member.is_dir()}
++            if actual_files != verified | {manifest_name}:
++                return None
++            entrypoints = manifest.get("entrypoints")
++            scene_name = entrypoints.get("scene_answers") if isinstance(entrypoints, Mapping) else None
++            if scene_name != "scene-answers.json" or scene_name not in names:
++                return None
++            if scene_name not in verified:
++                return None
++            scene_bytes = archive.read(scene_name)
++            payload = json.loads(scene_bytes)
++    except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError, zipfile.BadZipFile):
++        return None
++    if not isinstance(payload, Mapping) or set(payload) != {"answers", "scene_clips", "snapshot_label"}:
++        return None
++    if not isinstance(managed_row.get("provenance"), Mapping) and isinstance(artifact_row.get("provenance"), Mapping):
++        managed_row = {**managed_row, "provenance": artifact_row["provenance"]}
++    return payload, managed_row
++
++
++def _scene_only_result_payload(result: Any, *, client: Any = None) -> Mapping[str, Any] | None:
++    """Read the private Scene result from the existing managed bundle."""
++    source = _scene_only_bundle_payload(result, client=client)
++    return source[0] if source is not None else None
++
+ 
+ def _scene_only_spans(
+     result: Any, context: Mapping[str, Any], *, duration_frames: int | None = None,
++    client: Any = None,
+ ) -> list:
+     """Join a bound Scene result to the existing ``_scene_problems`` span shape.
+ 
+@@ -1391,39 +1553,44 @@
+     from types import SimpleNamespace
+ 
+     authority = _scene_only_authority(context)
+-    payload = _scene_only_result_payload(result)
++    source = _scene_only_bundle_payload(result, client=client)
++    payload = source[0] if source is not None else None
++    managed_row = source[1] if source is not None else None
+     if authority is None or payload is None:
+         return _scene_only_unavailable(context)
+-    if payload.get("capture_identity") != authority["capture_identity"]:
+-        return _scene_only_unavailable(context, reason="stale scene capture")
+-    source_label = payload.get("source_label")
+-    if not isinstance(source_label, str) or not source_label.strip():
+-        return _scene_only_unavailable(context, reason="scene source label unavailable")
+-    source_binding = payload.get("managed_object_reference") or payload.get("video_object_id")
+-    if source_binding is not None:
+-        allowed_bindings = {
+-            authority["managed_object_reference"], authority["video_object_id"], authority["video_digest"],
+-        }
+-        if isinstance(source_binding, Mapping):
+-            source_binding = source_binding.get("object_id") or source_binding.get("digest")
+-        if source_binding not in allowed_bindings:
+-            return _scene_only_unavailable(context, reason="stale scene source")
+-    compiled = payload.get("compiled_id_address_map")
++    provenance = managed_row.get("provenance") if isinstance(managed_row, Mapping) else None
++    if not isinstance(provenance, Mapping) or provenance.get("video_digest") != authority["capture_identity"]:
++        return _scene_only_unavailable(context, reason="scene source binding unavailable")
++    if authority.get("timeline_id") is not None and provenance.get("timeline_id") != authority["timeline_id"]:
++        return _scene_only_unavailable(context, reason="stale scene source")
++    label = payload.get("snapshot_label")
++    if not isinstance(label, Mapping) or label != authority["snapshot_label"]:
++        return _scene_only_unavailable(context, reason="scene snapshot label unavailable")
++    if label.get("status") not in {"committed", "candidate"}:
++        return _scene_only_unavailable(context, reason="scene snapshot label unavailable")
++    compiled = payload.get("scene_clips")
+     if not isinstance(compiled, Mapping):
+         return _scene_only_unavailable(context, reason="scene address map unavailable")
+     expected = authority["scene_clips"]
+     actual = {}
+     for key, value in compiled.items():
+-        if isinstance(value, Mapping):
+-            value = value.get("address")
+-        if not isinstance(key, str) or not isinstance(value, str):
++        if not isinstance(key, str) or not isinstance(value, Mapping) or not isinstance(value.get("address"), str):
+             return _scene_only_unavailable(context, reason="scene address map invalid")
+-        actual[key] = value
+-    if actual != {key: value["address"] for key, value in expected.items()}:
++        actual[key] = dict(value)
++    if actual != expected:
+         return _scene_only_unavailable(context, reason="stale scene address map")
+-    answers = payload.get("scene_answers")
++    addresses = {key: value["address"] for key, value in actual.items()}
++    answers = payload.get("answers")
+     if not isinstance(answers, list) or not answers:
+         return _scene_only_unavailable(context)
++    expected_duration = duration_frames
++    if expected_duration is None:
++        snapshot = context.get("capture_snapshot") or context.get("filmstrip_snapshot")
++        expected_duration = snapshot.get("duration_frames") if isinstance(snapshot, Mapping) else None
++    if type(expected_duration) is not int or expected_duration <= 0:
++        return _scene_only_unavailable(context, reason="scene frame extent unavailable")
++    if [answer.get("frame") if isinstance(answer, Mapping) else None for answer in answers] != list(range(expected_duration)):
++        return _scene_only_unavailable(context, reason="scene answers incomplete")
+ 
+     spans = []
+     for answer in sorted(answers, key=lambda item: item.get("frame", -1) if isinstance(item, Mapping) else -1):
+@@ -1439,7 +1606,7 @@
+             bounds_source = layer.get("bounds_source", layer.get("boundsSource"))
+             if bounds_source is not None and not isinstance(bounds_source, str):
+                 return _scene_only_unavailable(context, reason="scene bounds source unavailable")
+-            clips.append(actual[layer["clipId"]])
++            clips.append(addresses[layer["clipId"]])
+         findings = answer.get("findings") or ()
+         if isinstance(findings, Mapping):
+             findings = [json.dumps(dict(findings), sort_keys=True, separators=(",", ":"))]
+@@ -1461,11 +1628,6 @@
+                 previous.end_frame = span.end_frame
+                 continue
+         spans.append(span)
+-    if duration_frames is not None and spans and spans[-1].end_frame < duration_frames:
+-        spans.append(SimpleNamespace(
+-            start_frame=spans[-1].end_frame, end_frame=duration_frames,
+-            cls="UNAVAILABLE", content=None, clips=(), findings=("scene frame result incomplete",),
+-        ))
+     return spans
+ 
+ 
+@@ -1485,7 +1647,7 @@
+         "rendering.timeline_visualize", kind="executor", project=project,
+         inputs=request, wait=True, read_managed_outputs=True,
+     )
+-    return _scene_only_spans(result, context), context
++    return _scene_only_spans(result, context, client=client), context
+ 
+ 
+ def latest_render(client: Any, *, project_id: str, timeline_id: str, scan: int = 12) -> dict[str, Any] | None:
+diff --git a/tests/sdk/test_scene_caller_preservation.py b/tests/sdk/test_scene_caller_preservation.py
+index 18b083f0bf15e6bcfa7584b82ce36a4827680618..99d070280d24505d2c1059ce09d77233bb977763
+--- a/tests/sdk/test_scene_caller_preservation.py
++++ b/tests/sdk/test_scene_caller_preservation.py
+@@ -1,4 +1,9 @@
+ """Formatter positives with supplied scene spans; these do not certify a renderer/source."""
++import hashlib
++import io
++import json
++import zipfile
++from copy import deepcopy
+ from types import SimpleNamespace
+ 
+ import pytest
+@@ -101,9 +106,62 @@
+         'managed_object_reference': 'managed-1',
+         'capture_snapshot': {
+             'duration_frames': 2,
+-            'metadata': {'scene_clips': {'compiled-1': {'address': 'c01.field'}}},
++            'timeline_id': 'timeline-1',
++            'metadata': {
++                'capture_identity': 'capture-1',
++                'capture_authority': {'parent_revision_id': 'r1'},
++                'scene_clips': {'compiled-1': {'address': 'c01.field'}},
++            },
++        },
++    }
++
++
++def _scene_result(context, *, answers=None, scene_clips=None, label=None, provenance=True):
++    snapshot = context['capture_snapshot']
++    scene = {
++        'answers': answers if answers is not None else [
++            {'frame': 0, 'coverage': 'COVERED', 'content': 'CONTENT',
++             'layers': [{'clipId': 'compiled-1', 'bounds_source': 'declared'}], 'findings': []},
++            {'frame': 1, 'coverage': 'COVERED', 'content': 'CONTENT',
++             'layers': [{'clipId': 'compiled-1', 'bounds_source': 'declared'}], 'findings': []},
++        ],
++        'scene_clips': scene_clips if scene_clips is not None else snapshot['metadata']['scene_clips'],
++        'snapshot_label': label if label is not None else {
++            'status': 'committed', 'label': 'committed revision r1',
++            'actual_revision_id': 'r1', 'base_revision_id': None,
++        },
++    }
++    scene_bytes = json.dumps(scene, sort_keys=True, separators=(',', ':')).encode()
++    manifest = {
++        'kind': 'timeline_filmstrip',
++        'entrypoints': {'scene_answers': 'scene-answers.json'},
++        'outputs': [{
++            'path': 'scene-answers.json',
++            'content_hash': 'sha256:' + hashlib.sha256(scene_bytes).hexdigest(),
++            'bytes': len(scene_bytes),
++        }],
++    }
++    bundle_buffer = io.BytesIO()
++    with zipfile.ZipFile(bundle_buffer, 'w', zipfile.ZIP_DEFLATED) as archive:
++        archive.writestr('manifest.json', json.dumps(manifest))
++        archive.writestr('scene-answers.json', scene_bytes)
++    bundle = bundle_buffer.getvalue()
++    digest = 'sha256:' + hashlib.sha256(bundle).hexdigest()
++    managed = {
++        'output_port': 'filmstrip_bundle', 'role': 'result', 'digest': digest,
++        'size': len(bundle),
++    }
++    if provenance:
++        managed['provenance'] = {'video_digest': 'capture-1', 'timeline_id': 'timeline-1'}
++    result = {
++        'ok': True,
++        'outputs': {
++            'managed_outputs': [managed],
++            'artifacts': [{'name': 'filmstrip_bundle', 'digest': digest, 'size': len(bundle)}],
+         },
+     }
++    client = SimpleNamespace(media=SimpleNamespace(read_bytes=lambda object_id: bundle))
++    return result, client
+ 
+ 
+ def test_private_scene_only_request_reuses_managed_capture_without_png_or_caller_authority(monkeypatch):
+@@ -131,71 +189,69 @@
+ 
+ def test_private_scene_only_stale_result_is_advisory_unavailable():
+     context = _scene_context()
+-    result = {
+-        'ok': True,
+-        'scene_result': {
+-            'capture_identity': 'old-capture',
+-            'source_label': 'committed revision r1',
+-            'compiled_id_address_map': {'compiled-1': 'c01.field'},
+-            'scene_answers': [],
+-        },
+-    }
++    result, client = _scene_result(context, label={
++        'status': 'committed', 'label': 'committed revision old',
++        'actual_revision_id': 'old', 'base_revision_id': None,
++    })
+ 
+-    spans = timeline_filmstrip._scene_only_spans(result, context)
++    spans = timeline_filmstrip._scene_only_spans(result, context, client=client)
+ 
+     assert len(spans) == 1
+     assert spans[0].cls == 'UNAVAILABLE'
+-    assert 'stale scene capture' in spans[0].findings
++    assert 'scene snapshot label unavailable' in spans[0].findings
+ 
+ 
+ def test_private_scene_only_known_result_joins_compiled_addresses_and_findings():
+     context = _scene_context()
+-    result = {
+-        'ok': True,
+-        'scene_result': {
+-            'capture_identity': 'capture-1',
+-            'source_label': 'committed revision r1',
+-            'managed_object_reference': 'managed-1',
+-            'compiled_id_address_map': {'compiled-1': 'c01.field'},
+-            'scene_answers': [
+-                {'frame': 0, 'coverage': 'COVERED', 'content': 'CONTENT',
+-                 'layers': [{'clipId': 'compiled-1', 'bounds_source': 'declared'}],
+-                 'findings': []},
+-                {'frame': 1, 'coverage': 'COVERED', 'content': 'CONTENT',
+-                 'layers': [{'clipId': 'compiled-1', 'bounds_source': 'declared'}],
+-                 'findings': []},
+-            ],
+-        },
+-    }
++    result, client = _scene_result(context)
+ 
+-    spans = timeline_filmstrip._scene_only_spans(result, context)
++    spans = timeline_filmstrip._scene_only_spans(result, context, client=client)
+ 
+     assert [(span.start_frame, span.end_frame, span.cls, span.content, span.clips) for span in spans] == [
+         (0, 2, 'COVERED', 'CONTENT', ('c01.field',)),
+     ]
+ 
+ 
++def test_private_scene_only_missing_managed_source_binding_is_unavailable():
++    context = _scene_context()
++    result, client = _scene_result(context, provenance=False)
++
++    spans = timeline_filmstrip._scene_only_spans(result, context, client=client)
++
++    assert spans[0].cls == 'UNAVAILABLE'
++    assert 'scene source binding unavailable' in spans[0].findings
++
++
++def test_private_scene_only_candidate_label_is_bound_to_prepared_base():
++    context = _scene_context()
++    context = deepcopy(context)
++    context['capture_snapshot']['metadata']['capture_authority']['working_copy'] = {
++        'base_parent': {'revision_id': 'base-r1'},
++    }
++    result, client = _scene_result(context, label={
++        'status': 'candidate',
++        'label': 'unsaved candidate based on committed revision base-r1',
++        'actual_revision_id': None,
++        'base_revision_id': 'base-r1',
++    })
++
++    spans = timeline_filmstrip._scene_only_spans(result, context, client=client)
++
++    assert spans[0].cls == 'COVERED'
++
++
+ def test_private_scene_only_invokes_existing_managed_visualization(monkeypatch):
+     context = _scene_context()
+     calls = []
+ 
+     class Client:
++        media = SimpleNamespace()
++
+         def invoke_result(self, capability, **kwargs):
+             calls.append((capability, kwargs))
+-            return {
+-                'ok': True,
+-                'scene_result': {
+-                    'capture_identity': 'capture-1',
+-                    'source_label': 'committed revision r1',
+-                    'compiled_id_address_map': {'compiled-1': 'c01.field'},
+-                    'scene_answers': [
+-                        {'frame': 0, 'coverage': 'COVERED', 'content': 'CONTENT',
+-                         'layers': [{'clipId': 'compiled-1'}], 'findings': []},
+-                        {'frame': 1, 'coverage': 'COVERED', 'content': 'CONTENT',
+-                         'layers': [{'clipId': 'compiled-1'}], 'findings': []},
+-                    ],
+-                },
+-            }
++            result, artifact_client = _scene_result(context)
++            self.media.read_bytes = artifact_client.media.read_bytes
++            return result
+ 
+     monkeypatch.setattr(timeline_filmstrip, 'prepare_filmstrip', lambda inputs, **kwargs: context)
+     spans, _prepared = timeline_filmstrip._invoke_scene_only(
+
+exec
+/bin/bash -lc "find astrid/sdk -type f -name 'timeline_filmstrip*.pyc' -print; git diff --check; git status --short --untracked-files=all; sha256sum astrid/sdk/timeline_filmstrip.py tests/sdk/test_scene_caller_preservation.py; test "'! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-caller-contract-reconcile/BLOCKED && echo '"'not blocked'" in /home/user/work/wt/agt-m3-scene-caller-contract-reconcile
+ succeeded in 461ms:
+ M astrid/sdk/timeline_filmstrip.py
+ M tests/sdk/test_scene_caller_preservation.py
+a5a3e87821f2170435bca9244cbb7da0541aeca42ca2120a5b0cadc645d352fd  astrid/sdk/timeline_filmstrip.py
+7fcfb26b972058a46a9a5a6e879319dfd7890a05073346624180721e7e82698a  tests/sdk/test_scene_caller_preservation.py
+not blocked
+
+codex
+Final audit is clean: only the SDK caller and its preservation tests changed; the shared handoff/report, both commit-message filenames, and `DONE` marker are present. The final source hashes are recorded, and no build artifacts remain. Ordinary executor/Node qualification is still intentionally unverified and remains the next owner/test-service step.
+codex
+## Done
+
+- Reconciled SDK Scene-only caller with the managed `filmstrip_bundle` → `scene-answers.json` contract.
+- Added digest/ZIP integrity, source provenance, label, clip-map, layer, and full-frame validation.
+- Missing source binding now returns advisory `UNAVAILABLE`, never `COVERED`.
+- Updated fixtures; added source-binding negative and candidate-label positive.
+- No save/core, executor, D09 deletion, or parity changes.
+
+Tests:
+
+```text
+git diff --check
+```
+
+Passed.
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_scene_caller_preservation.py tests/sdk/test_scene_save_core.py tests/sdk/test_timeline_filmstrip.py tests/sdk/test_timeline_filmstrip_invocation.py
+```
+
+**89 passed in 4.27s**
+
+Ordinary live executor/Node qualification and full suites were not run. D09 remains held.
+
+Changed files:
+
+- [timeline_filmstrip.py](/home/user/work/wt/agt-m3-scene-caller-contract-reconcile/astrid/sdk/timeline_filmstrip.py)
+- [test_scene_caller_preservation.py](/home/user/work/wt/agt-m3-scene-caller-contract-reconcile/tests/sdk/test_scene_caller_preservation.py)
+
+Handoff, report, commit messages, and `DONE` marker published.
+tokens used
+260,746
+## Done
+
+- Reconciled SDK Scene-only caller with the managed `filmstrip_bundle` → `scene-answers.json` contract.
+- Added digest/ZIP integrity, source provenance, label, clip-map, layer, and full-frame validation.
+- Missing source binding now returns advisory `UNAVAILABLE`, never `COVERED`.
+- Updated fixtures; added source-binding negative and candidate-label positive.
+- No save/core, executor, D09 deletion, or parity changes.
+
+Tests:
+
+```text
+git diff --check
+```
+
+Passed.
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_scene_caller_preservation.py tests/sdk/test_scene_save_core.py tests/sdk/test_timeline_filmstrip.py tests/sdk/test_timeline_filmstrip_invocation.py
+```
+
+**89 passed in 4.27s**
+
+Ordinary live executor/Node qualification and full suites were not run. D09 remains held.
+
+Changed files:
+
+- [timeline_filmstrip.py](/home/user/work/wt/agt-m3-scene-caller-contract-reconcile/astrid/sdk/timeline_filmstrip.py)
+- [test_scene_caller_preservation.py](/home/user/work/wt/agt-m3-scene-caller-contract-reconcile/tests/sdk/test_scene_caller_preservation.py)
+
+Handoff, report, commit messages, and `DONE` marker published.

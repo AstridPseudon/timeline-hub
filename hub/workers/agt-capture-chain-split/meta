@@ -1,0 +1,9 @@
+name=agt-capture-chain-split
+repo=agent
+base=tl/integration
+base_sha=4a75f68f
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-capture-chain-split
+started=2026-10-20T05:07:37Z

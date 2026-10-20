@@ -1,0 +1,400 @@
+ print('IN-MEMORY ADDITIVE UNION compatibility against',ref,compatibility_errors(previous,union))
+assert all(not compatibility_errors(previous,union) for previous in s)
+print('Union differs from frozen in exactly:',[key for key in union['"'$defs'"'] if union['"'$defs'"'][key]"'!=s[1]['"'"'$defs'"'][key]])
+print('No schema file written; hash/freeze/generation remain owner actions.')
+PY" in /home/user/work/wt/agt-review-element-retain
+ succeeded in 4695ms:
+98c38a7c85a3f1d2a8c5a1019a5815898ec922f5 sha256:c520c7fa5269f837965b308607dcc7c73a9e4fd5f1da6bb09022996ba86620e6 43 21
+0a0ac7baaa74e15485b10bcbaa80eda1afe48c00 sha256:30da4fde84c328e7cb44035b50eb53fd2cd9637a14a0c948f4412f6469ce34bd 48 22
+df2739f903edac02bd36b4446deeea847524c040 sha256:83a476f894f31dc359514e9c081bf28da2b1f8cd515bb30cce14292823753224 43 21
+CANDIDATE compatibility against 0a0ac7baaa74e15485b10bcbaa80eda1afe48c00
+$/$defs/EditCommand/allOf/producer.guard: missing supported operation
+$/$defs/OccurrenceAddMediaArgs/properties/consumed: narrowed boolean schema
+$/$defs/PlacementCreateArgs/properties/consumed: narrowed boolean schema
+$/$defs/ProducerAdmittedTarget: missing definition
+$/$defs/ProducerAttemptPin: missing definition
+$/$defs/ProducerGuardArgs: missing definition
+$/$defs/ProducerIdentity: missing definition
+$/$defs/SettledProducerProposal: missing definition
+CANDIDATE compatibility against df2739f903edac02bd36b4446deeea847524c040
+$/$defs/OccurrenceAddMediaArgs/properties/consumed: narrowed boolean schema
+$/$defs/PlacementCreateArgs/properties/consumed: narrowed boolean schema
+IN-MEMORY ADDITIVE UNION compatibility against 98c38a7c85a3f1d2a8c5a1019a5815898ec922f5 []
+IN-MEMORY ADDITIVE UNION compatibility against 0a0ac7baaa74e15485b10bcbaa80eda1afe48c00 []
+IN-MEMORY ADDITIVE UNION compatibility against df2739f903edac02bd36b4446deeea847524c040 []
+Union differs from frozen in exactly: ['ClipSetElementArgs']
+No schema file written; hash/freeze/generation remain owner actions.
+
+exec
+/bin/bash -lc 'git diff 167d0505''^ 98c38a7c -- astrid/sdk/timeline_elements.py astrid/sdk/timeline/_clip_scalar_commands.py astrid/sdk/timeline/commit.py astrid/core/timeline/schema/edit-command.schema.json | git -C /home/user/work/agent apply --check; git diff --check; git status --short; rg -n '"'def compile_inputs|pinned_documents|params.snapshot|params.schema' astrid/sdk/timeline/_recording.py astrid/sdk/timeline/inverse.py | head -40; rg -n 'set-element|TypedDict.*Element' astrid_runtime_client/timeline_commit_types.py | head -12" in /home/user/work/wt/agt-review-element-retain
+ succeeded in 823ms:
+astrid/sdk/timeline/_recording.py:193:    def compile_inputs(self):
+astrid/sdk/timeline/_recording.py:199:        for capture in mapping.get('pinned_documents', []):
+
+exec
+/bin/bash -lc "sed -n '6555,6658p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-update-native/log.txt; sed -n '6789,6847p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-declaration-retain/log.txt; cat /home/user/work/runtime/generators/release.json; head -40 scripts/vendor_lock.py; rg -n 'add_argument|runtime' scripts/vendor_lock.py | tail -25; git -C /home/user/work/agent status --short" in /home/user/work/wt/agt-review-element-retain
+ succeeded in 240ms:
+ succeeded in 2ms:
+pass
+.............................                                            [100%]
+29 passed in 36.60s
+152 tests/core/test_timeline_element_publication_runtime.py
+
+codex
+Final verification passed: 204 local tests with one strict expected gap, plus 29 central integration tests. The legacy publisher and mirror-maintenance code are removed. I’ll mark the worker blocked on the empty-params case and document the native operation needed to restore that public behavior.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-update-native/report.md <<'EOF'
+# agt-m2-element-update-native
+
+Status: **BLOCKED on the empty-params element-only case.** The native migration and all other targeted acceptance tests are implemented and passing. Do not close WC4 as fully qualified until the native gap below is resolved.
+
+## Changes
+
+- "'`astrid/sdk/timeline_elements.py` emits one native Runtime commit: `clip.set-element`, optional `clip.set` for hold, and `clip.set-params` against the selected exact admitted declaration pin. No whole-row/root replacement or legacy publisher fallback remains.
+- Removed local `resolve_admitted_element`, candidate validation/publication, and helper-owned `config.clips` / `config.app.elements` maintenance. Native projection maintains the clip mirror; unrelated legacy element bytes and other unknown data survive.
+- Preserved the public result fields, receipt object, explicit/generated idempotency key, stale-head preflight, native failure passthrough, same element identity, params merge, and duration behavior for the qualified cases. Added a history read for the base publication/revision pair. `remote.py` is unchanged.
+- Parameter value authority is the existing native retained-snapshot validator, executed after the element revision command. No launcher, renderer, local pack source or build cache is used to authorize save-time parameters.
+
+## WC4 deletion and replacing tests
+
+Product diff: **58 lines deleted / 91 added / net +33** in `timeline_elements.py` (formatting included). In particular, old lines 44–67 (24 lines) contained direct clip/config mutations, mirror pruning, candidate validation, the `Writer` shim, and whole-candidate publication/error routing. These are replaced by the native command construction and sole `owner.commit` call at new lines 66–91. The old local snapshot resolver at line 33 and candidate deepcopy/publication imports are also gone.
+
+Exact replacing tests:
+
+- `tests/core/test_timeline_element_publication.py::test_sameclip_exacthead_publication_preserves_closure_and_user_params`: same original success expectation, actual native command execution in the test adapter, exact command operations/args and base pair, result/receipt/key, unknown fields, sibling, registry, transcript closure, compiler mirror, and untouched caller bundle.
+- `::test_stale_head_and_concurrent_cas_reject_without_rebase`, `::test_bad_duration_never_publishes`, `::test_unadmitted_owner_and_sourceclip_reject`: original error behaviors preserved on the new route.
+- `::test_element_only_and_same_revision_keep_unknown_props[elementRef/element_ref]`: same revision, alias normalization, omitted patch, opaque params, retained declaration validation.
+- `::test_invalid_known_param_is_validated_in_native_commit`, `::test_wrong_revision_cannot_use_an_admitted_sibling_schema`, `::test_history_head_race_never_submits`, and bounded JSON cases cover the new seams.
+- `tests/core/test_timeline_element_publication_runtime.py::test_native_element_update_reload_guarded_inverse_and_exact_retry[False/True]`: actual Runtime provider, changed and unchanged revisions, new revision'"'s schema (16 accepted only under the newer maximum 20), source/cache removed and launcher forbidden, success → reload → restart → exact request retry → inverse → redo, newer disjoint label preservation, and ABA undo refusal.
+- "'`::test_native_element_batch_refusal_is_atomic[params/revision]`: invalid params and unadmitted exact revision leave head and complete bundle unchanged despite preceding commands in the batch.
+- Existing native set-element/scalar/params recipe neighbors and retained-schema provider tests, including foreign admission provenance, are unchanged and passed.
+
+## Decisions and blocker
+
+1. **94114269 acceptance is NOT blocked by its missing generated set-element entry.** Static inspection found no generated `clip.set-element` variant, but real Runtime evidence shows that its generic envelope accepts the command and invokes the real provider. No schema/validator bypass or contract substitution was used. The paired tests explicitly select `vendored_runtime_commit()` = `94114269d1ce23ab3224d7eca5a85138ce2b5fed` through the standard Runtime helper.
+2. Element-only calls with existing params record unchanged params to invoke the native retained-declaration check. This preserves literal unknown values, including values outside the changed-property schema, and validates the exact selected ref even when no new params were requested.
+3. **Precise blocker:** if neither the request nor the existing clip has params, `ClipSetParamsArgs` requires `values.minProperties >= 1` or `clear.minItems >= 1`. `{values: {}, clear: [], schema_source: exact_pin}` is rejected. `clip.set-element` itself does not accept `schema_source` or resolve the retained declaration. Thus there is no allowed native operation to authenticate the changed admitted revision without inventing a parameter write or clear. No such workaround was added. `test_element_only_without_existing_params` retains the success expectation with `@pytest.mark.xfail(strict=True, raises=AssertionError)` naming this requirement. No original passing positive was changed to expect refusal.
+4. Native undo restores the exact authored parent payload, clips/params, shots and internals, but retains immutable declaration provenance in the dependency manifest for redo. Its revision ID can therefore differ from the original pre-pin document. The new test initially overasserted complete pre-pin document identity; it now separately asserts exact authored restoration and exactly retained input pins. This is existing native provider behavior; `commit.py` was not changed.
+5. The new path follows the settled server rebase policy after the stale-head preflight. It returns native conflict/error envelopes directly. Strict refusal of every disjoint race after preflight is not an extra client-side policy.
+
+Recommended next step: have the native-command owner provide retained exact-declaration validation with no params mutation (e.g. retained `schema_source` validation on `clip.set-element`, or an explicitly supported empty params validation command). Then remove only the strict gap marker and rerun these targeted lanes. No schema, commit provider, or command implementation was changed here because those paths are outside this task'"'s scope.
+
+## Verification
+
+Local, no sockets:
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/core/test_timeline_element_publication.py tests/editing_conformance/test_recipe_clip_set_element.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py
+```
+
+**204 passed, 1 xfailed in 23.08s.** The one strict gap is described above.
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/core/test_timeline_element_publication_runtime.py
+```
+
+**2 passed in 5.72s**, before adding the two atomic-refusal cases subsequently covered by the final central run. This test file uses direct RuntimeService calls, no localhost/sockets.
+
+Final central named request:
+
+```sh
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-element-update-native commit-integration --files '"'tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py') && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test \""'$R"
+```
+
+Result **agt-m2-element-update-native-commit-integration-1020093521-10245: 29 passed in 36.60s**, source tree `3d9080739b7fc38e9a406483628d049db5f6cd40`. Executed command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+```
+
+Although the named suite sets the locator to the integration checkout, the test module selects the immutable vendored 94114269 archive before any fixtures run. M1 daemon/lost-ACK/renderer-off tests were run by the central service only.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --runxfail tests/core/test_timeline_element_publication.py::test_element_only_without_existing_params
+```
+
+**1 failed in 1.33s**, deliberately confirming the exact unresolved schema gap. The ordinary lane retains its strict xfail.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline_elements.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py
+git diff --check
+```
+
+Both passed.
+
+Earlier central diagnostic run:
+
+```sh
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-element-update-native pin94114269-integration --files '"'tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py') && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test \""'$R"
+```
+
+Result **agt-m2-element-update-native-pin94114269-integration-1020093043-28861: 61 passed / 7 failed / 3 errors**. Two failures were the new tests'"' pre-pin whole-document inverse assertion described above, corrected and requalified in the final run. Five failures were untouched "'`tests/stage1/test_runtime_client_cutover.py` tests calling retired shot-write routes (including one resulting None dereference); three setup errors were untouched `test_commit_runtime_identity.py` tests importing unavailable `_media` from Runtime'"'s film fixture. These eight untouched nodes were not changed, and no baseline equivalence is claimed for them. Full log is in that central result directory.
+
+A subsequent "'`targeted --files '"'-m=integration ...'"'` service request was rejected before running tests because the service only accepts paths/node IDs in --files (result `agt-m2-element-update-native-targeted-1020093441-26362`). The supported named request above replaced it.
+
+No full suite, make check, macOS lane, push, commit, integration-worktree edit, shared dependency write, or shared ledger edit was performed. Only the assigned helper and its direct tests changed. The empty-params gap is unqualified; other targeted acceptance above passed.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-update-native/commit-msg <<'"'EOF'
+refactor(timeline): commit parent element updates with native commands
+
+Replace whole-candidate publication and helper-owned legacy mirrors with
+ M tests/sdk/test_timeline_selected_schema.py
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-declaration-retain/report.md <<'EOF'
+Implemented the Agent WC4 declaration-retention change. Qualification is blocked only on the required normal Runtime schema artifact/pin pair, which is outside this task's owned paths.
+
+- Base: "'`167d050506b9ae81fe8839f122de34d2082558cf` (`tl/agt-m2-element-update-native`). Delta: 9 files, 279 insertions / 43 deletions. No incoming integration deltas were needed for the owned files.
+- `clip.set-element` now validates its target admitted revision through the existing `_selected_schema` helper, with the same exact `config_source` / `document_object` input flow and retained `params.schema` / `params.snapshot` dependencies used by params edits. The commit resolver loads the target declaration rather than the previous selected revision. Existing inverse handling consumes these dependencies unchanged.
+- The command preserves id/kind and an already selected pack owner. Existing draft-to-admitted promotion stays supported; an admitted element cannot change or drop its owner. Explicit immutable revision changes remain supported.
+- The public helper emits `clip.set-element` plus requested native hold/params edits. It never copies old params for validation; `None` and an empty patch emit no params command. Stored absent/empty params remain distinct. The native compiler continues to own mirror projection; opaque fields, aliases, results, receipts and retry identities are covered.
+- The original strict-xfail success requirement is now an ordinary passing test, expanded over absent/empty stored params and absent/empty requested patches. The portable conformance fixture now contains actual admitted declaration bytes instead of the previous placeholder admission.
+- No new operation, DTO, endpoint, validator override, launcher, inline caller schema, producer/auto change, or whole-candidate writer was introduced. The prior native migration'"'s writer deletion stays in place.
+
+Schema handoff:
+
+- The only schema-definition change is optional "'`ClipSetElementArgs.schema_source` referencing the existing closed `DocumentPin`, plus its description. The native handler requires it for an admitted target.
+- Previous Agent schema SHA-256: `40ce6d81487f39236fbfb3adf13e6e0c3f43cfcc375b39b7badc32d65531fd4b`.
+- New schema SHA-256: `c520c7fa5269f837965b308607dcc7c73a9e4fd5f1da6bb09022996ba86620e6`.
+- Exact outgoing schema copied to this worker directory as `edit-command.schema.json`.
+- `runtime.lock.json` remains pinned to `94114269d1ce23ab3224d7eca5a85138ce2b5fed`. No generated Runtime artifact or Agent pin file was modified. The pinned Runtime'"'s generic operation handling accepts these commands, but passing service tests do not substitute for the required byte-identical artifact/pin publication.
+
+Final verification (all from this worktree):
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/test_timeline_element_publication.py tests/editing_conformance/test_recipe_clip_set_element.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_commit_provider_scalar.py
+```
+
+287 passed in 69.17s. No xfail remains in the original empty-params requirement.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/core/test_timeline_element_publication_runtime.py
+```
+
+9 passed in 21.32s. These are direct RuntimeService tests, without daemon/localhost/sockets. The module selects the immutable vendored Runtime archive `94114269`. Tests cover element+hold+params, atomic refusal including an element-only forged revision, exact retained target snapshot, absent/empty params, restart, identical retry without execution, V3/current-selection removal, authorized stale-base replay, and inverse/redo using the original retained inputs.
+
+Central named request (no full suite requested):
+
+```sh
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-element-declaration-retain commit-integration --files '"'tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py') && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test \""'$R"
+```
+
+Result `agt-m2-element-declaration-retain-commit-integration-1020094633-31228`: PASS, exit 0, 34 passed in 81.75s. Snapshot tree `f836181e24aee0213db5248ac4dc74b96ab986f0`. This preserves the preceding worker'"'s 29-case actual suite and adds five cases. Executed command:
+
+"'```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+```
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/_clip_scalar_commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline_elements.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py tests/editing_conformance/test_recipe_clip_set_element.py tests/sdk/test_timeline_selected_schema.py
+git diff --check
+```
+
+Both passed. `Draft202012Validator.check_schema` also passed for the outgoing schema.
+
+During development, two new detached-provider assertions initially included unrelated history reads; filtering only config-source reads fixed them. Four new Runtime replay cases initially used a base closure that did not authorize the retained pin, and correctly refused. The final cases base their intent on the post-inverse closure containing that pin, then introduce a real disjoint label edit and prove server rebase. No existing passing behavior expectation was changed to refusal, and no test was skipped, disabled, or weakened.
+
+Not run: full suites, make check, macOS lanes, or qualification against a newly generated Runtime artifact/pin pair. Shared dependencies stayed read-only. No commits, merges, checkouts, pushes, integration worktree edits or ledger edits were performed. The temporary fixture generator was removed; no build output/temp files remain in the worktree.
+
+Next step: Runtime owner imports the outgoing schema byte-for-byte, runs the normal contract generators/artifact checks, and supplies its immutable commit for the normal Agent client/lock refresh. Then rerun the central named qualification on that official pair. `commit-msg` is ready. `BLOCKED` records this exact coordination requirement; no `DONE` is claimed.
+{
+  "contract_version": "0.2.10"
+}
+#!/usr/bin/env python3
+"""Verify/update Astrid's vendored Runtime artifacts against one immutable producer pin.
+
+Usage: ``vendor_lock.py check runtime.lock.json [--producer CHECKOUT]`` or
+``vendor_lock.py update runtime.lock.json --producer CHECKOUT``. To select a
+release, set ``source_commit`` to its full commit SHA first, then run update.
+The update command never changes that selector.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+USAGE = "usage: vendor_lock.py check <lock> [--producer <checkout>] | update <lock> --producer <checkout>"
+COMMIT = re.compile(r"[0-9a-f]{40}")
+
+
+def digest(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _read(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _rel(path: Path, root: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def _re_vendor(lock_path: Path, lock: dict[str, Any], root: Path) -> str:
+    return f"re-vendor with: python scripts/vendor_lock.py update {_rel(lock_path, root)} --producer <{lock['producer']} checkout>"
+4:Usage: ``vendor_lock.py check runtime.lock.json [--producer CHECKOUT]`` or
+5:``vendor_lock.py update runtime.lock.json --producer CHECKOUT``. To select a
+126:        raise SystemExit("runtime.lock.json source_commit must be a full 40-character lowercase SHA")
+
+exec
+/bin/bash -lc "ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review*element* 2>/dev/null; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/brief.md | head -12; rg -n '"'^def test_|''^@pytest.mark.parametrize'"' tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema.py tests/core/test_timeline_element_publication.py | tail -25; git status --short" in /home/user/work/wt/agt-review-element-retain
+ succeeded in 552ms:
+Read-only review of 5c6467da (agt-m2-auto-placement-guards) against 931d7ec5, orchestrator 08:46 rule and App design/app-automatic-capture-contract-review.md. Does it actually guard EVERY read (not merely clip rows): output fps, occurrence start/home lane, current anchor membership/absence, selected track validity and timing? Test stale changes 390→391, 450→480, 510→540, retarget ALL add-media branches, missing-anchor saved fallback and preferred lane. Check public added consumed args cannot cause refreshed guards. Verify saved target invalid refuses/re-evaluation semantics, 5/5/4s and short video impact. Need concrete counterexamples for each blocker, otherwise approve with exact targeted evidence. Whole-row guards may overconflict unrelated volume: classify minimal safe fix, do not invent another recorder. No product edits; report flat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-auto-guards-current.md. If a tiny test-only repro is needed keep under worker scratch, not repo. No full. Runtime generation is pending and MUST be stated; cannot call this actual paired qualification.
+Base tl/agt-m2-auto-placement-guards. Shared dependency folders READ-ONLY; overlays/caches own worker only. Never request suite full*; only targeted/named suites. No push/integration edits. Write report.md and commit-msg (code changes only) under workers/agt-review-auto-guards; DONE when task complete or BLOCKED with reason. Read PLAN/repo AGENTS.
+
+tests/core/test_timeline_element_publication.py:197:@pytest.mark.parametrize('params', [None, {}, {'seed': 8}])
+tests/core/test_timeline_element_publication.py:198:def test_wrong_revision_cannot_use_an_admitted_sibling_schema(monkeypatch, configured, params):
+tests/core/test_timeline_element_publication.py:205:def test_history_head_race_never_submits(monkeypatch, configured):
+tests/sdk/test_timeline_selected_schema.py:72:def test_new_valid_selected_param_compiles_commits_reloads_and_roundtrips(selected_effect):
+tests/sdk/test_timeline_selected_schema.py:97:@pytest.mark.parametrize('stage', ['capture', 'compile', 'provider'])
+tests/sdk/test_timeline_selected_schema.py:100:def test_new_invalid_selected_param_refuses_without_acceptance(selected_effect, stage):
+tests/sdk/test_timeline_selected_schema.py:118:@pytest.mark.parametrize('damage', ['missing', 'pin', 'owner', 'id', 'kind', 'revision',
+tests/sdk/test_timeline_selected_schema.py:120:def test_selected_input_identity_and_portable_bytes_fail_closed(selected_effect, damage):
+tests/sdk/test_timeline_selected_schema.py:153:def test_raw_provider_rechecks_admission_instead_of_caller_catalog(selected_effect, monkeypatch):
+tests/sdk/test_timeline_selected_schema.py:167:def test_noop_declared_value_clear_and_opaque_values_preserve_literal_state(selected_effect):
+tests/sdk/test_timeline_selected_schema.py:186:@pytest.mark.parametrize('pin', [None, {}, {'document_id': 'x', 'version': True,
+tests/sdk/test_timeline_selected_schema.py:193:def test_schema_source_is_only_a_closed_exact_document_pin(selected_effect, pin):
+tests/sdk/test_timeline_selected_schema.py:201:def test_selected_pack_refuses_a_port_without_document_object(selected_effect, monkeypatch):
+tests/sdk/test_timeline_selected_schema.py:211:def test_inverse_of_older_param_record_uses_only_selected_identity(selected_effect, monkeypatch):
+tests/sdk/test_timeline_selected_schema.py:246:@pytest.mark.parametrize('params', [None, {}])
+tests/sdk/test_timeline_selected_schema.py:247:def test_element_only_retains_target_declaration_for_rebase_reload_and_inverse(selected_effect, params):
+tests/sdk/test_timeline_selected_schema.py:289:@pytest.mark.parametrize('damage', ['missing-pin', 'revision', 'owner', 'missing-object', 'corrupt-object'])
+tests/sdk/test_timeline_selected_schema.py:290:def test_element_only_refuses_before_provider_acceptance(selected_effect, damage):
+tests/core/test_timeline_element_publication_runtime.py:60:@pytest.mark.parametrize('same_revision', [False, True])
+tests/core/test_timeline_element_publication_runtime.py:61:def test_native_element_update_reload_guarded_inverse_and_exact_retry(retained_pack, monkeypatch,
+tests/core/test_timeline_element_publication_runtime.py:139:@pytest.mark.parametrize('damage', ['params', 'revision', 'element-only-revision'])
+tests/core/test_timeline_element_publication_runtime.py:140:def test_native_element_batch_refusal_is_atomic(retained_pack, monkeypatch, damage):
+tests/core/test_timeline_element_publication_runtime.py:157:@pytest.mark.parametrize('existing', [None, {}])
+tests/core/test_timeline_element_publication_runtime.py:158:@pytest.mark.parametrize('params', [None, {}])
+tests/core/test_timeline_element_publication_runtime.py:159:def test_element_only_retained_declaration_survives_removal_restart_and_replay(
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-element-retain-current.md <<'EOF'
+# Element declaration retention — source review
+
+2026-10-20. **APPROVE the bounded Agent source behavior; HOLD schema publication, pin changes and WC4 closure pending the additive canonical union and normal generated pair.** No source defect reproduced in the reviewed scope. This is not qualification of a new Agent/Runtime pair.
+
+Reviewed Agent "'`98c38a7c85a3f1d2a8c5a1019a5815898ec922f5`, predecessor `167d050506b9ae81fe8839f122de34d2082558cf`, their final reports/development reports in `workers/agt-m2-element-{update-native,declaration-retain}/{report.md,log.txt}`, PLAN and repository AGENTS. Source worktree: `/home/user/work/wt/agt-review-element-retain`. Current comparison: Agent `/home/user/work/agent` at `df2739f903edac02bd36b4446deeea847524c040`; Runtime `/home/user/work/runtime` at `c0dcd3871d78c405184506eb6735565592498c77` (observed refs, not a tested pair).
+
+## Source findings
+
+- `astrid/sdk/timeline_elements.py:53–92` retains the same parent clip and submits one native command batch: `clip.set-element`, optional `clip.set` hold, optional `clip.set-params` only for a nonempty explicit patch. Both helper and `astrid/sdk/timeline/_clip_scalar_commands.py:109–132` preserve existing id/kind and an already selected `packId`. The owner check is not just admission existence: a review probe admitted a second same-id/same-kind pack in the SAME project, then confirmed raw provider refusal and helper refusal before submission. Legacy owner-less drafts can still acquire an admitted owner; the owner guard cannot establish an owner absent from the original ref. That is the existing draft-adoption behavior exercised by the conformance fixtures.
+- `astrid/sdk/timeline/commit.py:350–460` hydrates the explicit pin and resolves the **target** element revision at the set-element stage. `_selected_schema` in `astrid/sdk/timeline/_scalar_commands.py:98–128` records `params.schema`, `params.snapshot` and the selected-element binding, and retains the exact document. `astrid/core/element/project_packs.py:536–700` checks scoped document id/version/digest, actual pack owner, unique id/kind/revision admission, snapshot descriptor/bytes, pack manifest and build receipt. Inline caller schemas, a catalog, source files and build caches do not establish save authority. The helper reads only Runtime declaration metadata; the provider reads the immutable selected object through `config_source`/`document_object`.
+- Element-only absent/empty params remain literally absent/empty; the recorded authored write is only `['"'elementRef']"'` (plus alias removal when needed). No copied params writes or phantom clears remain. Nonempty params merge through native changed-property validation; opaque existing values are preserved, not retroactively validated against a new full schema.
+- Hold uses the existing scalar recipe and literal source seconds. `_hold_extent` in `_clip_scalar_commands.py:14–76` retains rational-fps/frame, playback rate and occurrence-boundary rules. The 287-case rerun includes the speed-two/rational-fps/source-hold and move-then-hold neighbors. This is not renderer/pixel evidence.
+- `astrid/sdk/timeline/_recording.py:205–215` derives an existing `config.clips` mirror through `derived_writes`; the helper does not author that mirror or prune `config.app.elements`. Tests preserve sibling rows, registry/transcript data, opaque params/clip fields, shots and internals. The old whole-candidate publisher and its Writer shim remain deleted from this helper.
+- `timeline_elements.py:95–107` retains public result fields, receipt and explicit key, with native failed DomainResults passed through. Unit tests assert the complete success result, receipt/key and conflict/validation paths. Actual refusal tests use a direct RuntimeService adapter which raises Runtime errors; they do not independently prove HTTP-to-public-ErrorObject mapping.
+
+## Replay, inverse and public retry limits
+
+`tests/core/test_timeline_element_publication_runtime.py:61` proves changed/same revision + hold/params, reload, RuntimeService restart, exact captured-request retry without command execution, inverse/redo, preservation of a newer disjoint label and ABA inverse refusal. `:159` covers the four absent/empty existing/requested params combinations, reads exactly the target snapshot, asserts the source pin and absence of params writes, admits a later revision, removes the current admission selection, deletes source/cache, restarts, and proves replay/inverse/redo still use the original retained pin/object. The replay is based on the post-inverse closure that already authorizes this retained pin; it does not authorize arbitrary historical pins for fresh callers. Undo restores the exact authored parent payload while retaining provenance for redo, so pre-pin revision-id equality is not claimed.
+
+**Public helper retry is narrower than request retry.** `update_parent_element(... expected_head=old, idempotency_key=same)` reopens the head and returns `conflict` at `timeline_elements.py:35–39` after the first call was accepted; it never reaches the idempotency store. The supplementary diagnostic reproduced this, then replayed the stored original commit request successfully. This preflight predates these two commits. Do not describe the nine cases as a restart-safe helper/outbox workflow: they prove Runtime replay of the captured request. Any public helper retry guarantee needs its own requester/outbox requirement and test; this review does not invent one.
+
+## Mandatory canonical union — outgoing file is not the next source
+
+Canonical path in Agent: `astrid/core/timeline/schema/edit-command.schema.json`; Runtime counterpart: `contract/schemas/edit-command.json`.
+
+| Input | Raw SHA256 | Definitions / ops |
+| --- | --- | --- |
+| Candidate `98c38a7c` | `c520c7fa5269f837965b308607dcc7c73a9e4fd5f1da6bb09022996ba86620e6` | 43 / 21 |
+| FROZEN `0a0ac7baaa74e15485b10bcbaa80eda1afe48c00` | `30da4fde84c328e7cb44035b50eb53fd2cd9637a14a0c948f4412f6469ce34bd` | 48 / 22 |
+| Current `df2739f9` | `83a476f894f31dc359514e9c081bf28da2b1f8cd515bb30cce14292823753224` | 43 / 21 |
+
+**Conflict with the predecessor'"'s final recommendation:** copying its outgoing "'`workers/agt-m2-element-declaration-retain/edit-command.schema.json` byte-for-byte as the next Runtime source would drop frozen/current behavior. Its older base does not justify those deletions. The final report'"'s “generate that pair” needs this correction before generation.
+
+Exact required additive successor: **FROZEN 0a0ac7ba/30da unchanged, except replace "'`$defs.ClipSetElementArgs` with the reviewed candidate definition**: add optional `properties.schema_source = {"$ref":"#/$defs/DocumentPin"}` and its owner/retained-pin description; preserve `required: ["elementRef"]` and `additionalProperties: false`. Keep all five definitions `ProducerAdmittedTarget`, `ProducerIdentity`, `ProducerAttemptPin`, `ProducerGuardArgs`, `SettledProducerProposal`; the complete `EditCommand.allOf` condition for `producer.guard`; and the exact closed optional `consumed` array definitions in BOTH `OccurrenceAddMediaArgs.properties` and `PlacementCreateArgs.properties`. Preserve every other definition/condition and numeric constraint. Result: **48 definitions / 22 ops**. A new hash/freeze belongs to the manager, not this review.
+
+Read-only comparison with Runtime'"'s "'`generators/command_schema_compatibility.py` reports eight compatibility errors against the freeze (five missing definitions, missing operation, two removed consumed fields), and two against current (the consumed fields). An in-memory union constructed exactly as above passes whole-schema compatibility against candidate, frozen AND current, plus `Draft202012Validator.check_schema`. No schema file was written. Read-only `git apply --check` of the combined two-commit product delta onto observed current passed: no textual conflict requires replacing a whole source file. The conflict is semantic if an old full schema is used as the canonical source.
+
+Before generation, carry forward and extend `tests/sdk/test_timeline_current_union_schema.py` from the frozen source: protect the ENTIRE frozen/current inputs and update `test_only_reviewed_producer_and_consumed_additions_change_current_schema` to allow exactly the new optional field/description. Its old exact-equality allowance does not yet include this change; do not remove producer definitions or weaken containment checks to make it pass.
+
+Normal Runtime generation remains required: publish the byte-identical approved union, run `python generators/generate.py` and `python scripts/artifact_manifest.py` with their normal checks/release procedure, then refresh Agent through `scripts/vendor_lock.py` and rerun the named qualification on that immutable pair. `runtime.lock.json` in this candidate is still `94114269d1ce23ab3224d7eca5a85138ce2b5fed`; its generated client has no typed set-element variant. Acceptance via that Runtime'"'s generic envelope does not qualify the new schema/type publication. No schema, generated file, release or pin was edited here.
+
+## Evidence and remaining regression gaps
+
+Commands below ran from "'`/home/user/work/wt/agt-review-element-retain`; shared dependencies remained read-only.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/test_timeline_element_publication.py tests/editing_conformance/test_recipe_clip_set_element.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_commit_provider_scalar.py
+```
+
+**287 passed in 65.57s, exit 0.** The original empty-params success test is passing, not xfail.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/core/test_timeline_element_publication_runtime.py
+```
+
+**9 passed in 19.64s, exit 0.** Direct RuntimeService only; no daemon/sockets. The module'"'s "'`use_runtime(commit=vendored_runtime_commit())` selects immutable `94114269`, regardless of the locator'"'s current HEAD.
+
+Prior central evidence independently inspected, not resubmitted: "'`tests/agt-m2-element-declaration-retain-commit-integration-1020094633-31228/{snap,summary,log.txt,status,exit}` under the orchestrator directory. **34 passed in 81.75s, exit 0.** Its snapshot tree `f836181e24aee0213db5248ac4dc74b96ab986f0` equals this review HEAD'"'s tree exactly ("'`git diff <tree> HEAD` empty). Executed command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+```
+
+Supplementary review-only command:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -c /dev/null -p no:cacheprovider /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-element-retain/scratch/test_review.py
+```
+
+**15 passed in 21.41s, exit 0**; two unknown-integration-marker warnings because `-c /dev/null` bypasses repository marker configuration. Thirteen actual element-only refusals cover missing pin, inline schema, wrong version/digest, changed id/kind/owner, revoked/legacy admission, missing/corrupt object, foreign project and denied authorization. One authentic second-owner test and the public-retry diagnostic complete the count. These are supplementary probes, not new permanent conformance evidence.
+
+Permanent gaps: `tests/sdk/test_timeline_selected_schema.py:290` has five detached-provider element-only negatives, while the new actual-service module has only the forged revision element-only refusal; the larger actual-service refusal matrix in `tests/sdk/test_timeline_selected_schema_runtime.py:463` exercises **set-params**, not set-element. Promote the relevant supplementary element-only refusals and genuinely admitted second-owner case into the existing main-suite files. Also qualify changed payload under the same key and public error/receipt mapping on the generated pair; the nine cases do not establish those specifically for this helper. No demonstrated authority bypass is being reported.
+
+`git diff --check`: exit 0. Product worktree remains unchanged. No full suite, make check, browser/live-door journey, App, render or macOS qualification was run/requested; no new pair qualification or WC4 deletion-ledger closure is claimed. Review task is complete and unblocked. Recommended next step: manager composes/freezes the exact additive successor, preserves the source tests and strengthens the missing permanent negatives, then obtains normal generation/pin qualification before closure.
+EOF
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-element-retain-current.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-element-retain/report.md
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-element-retain/commit-msg <<'"'EOF'
+docs(timeline): review retained element declaration updates
+
+Approve the bounded Agent behavior and record targeted Runtime evidence.
+Hold publication for the additive frozen producer/element schema union and
+normal generated pair; document missing permanent negatives and retry scope.
+EOF
+git diff --check
+git status --short" in /home/user/work/wt/agt-review-element-retain
+ succeeded in 971ms:
+codex
+The verdict approves the bounded Agent behavior and holds publication for the additive schema union and normal generation. The report names the exact union required, distinguishes captured-request replay from helper retry, and lists the missing permanent tests. Product code, schemas and pins remain unchanged.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=root/'workers/agt-review-element-retain'
+assert (w/'report.md').read_bytes()==(root/'design/agent-review-element-retain-current.md').read_bytes()
+assert (w/'commit-msg').stat().st_size>0
+assert (w/'scratch/test_review.py').is_file()
+(w/'DONE').touch()
+print('Review report, commit-msg and DONE written; supplementary probe retained under worker scratch.')
+PY
+git status --short" in /home/user/work/wt/agt-review-element-retain
+ succeeded in 624ms:
+Review report, commit-msg and DONE written; supplementary probe retained under worker scratch.
+
+codex
+[Verdict](./design/agent-review-element-retain-current.md): approve bounded Agent behavior; hold publication pending the exact additive frozen/current schema union and normal generated pair.
+
+- Rerun: **287 targeted + 9 direct passed**.
+- Verified prior **34 central passed** on the identical source tree.
+- **15 supplementary probes passed**; documented permanent-test gaps and helper retry limits.
+
+No product/schema/pin changes or full suites. Review unblocked; `report.md`, `commit-msg`, and `DONE` written.
+tokens used
+135,016
+[Verdict](./design/agent-review-element-retain-current.md): approve bounded Agent behavior; hold publication pending the exact additive frozen/current schema union and normal generated pair.
+
+- Rerun: **287 targeted + 9 direct passed**.
+- Verified prior **34 central passed** on the identical source tree.
+- **15 supplementary probes passed**; documented permanent-test gaps and helper retry limits.
+
+No product/schema/pin changes or full suites. Review unblocked; `report.md`, `commit-msg`, and `DONE` written.

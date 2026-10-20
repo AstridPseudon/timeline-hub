@@ -1,0 +1,6 @@
+test agent-client-cutover-integration-1019192950-24951: pass exit=0 in 118s — client-cutover-integration on integration:agent (agent tree 25ae6d8ca2f26851b2cf4471fad88eb4685b98ef)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/stage1/test_runtime_client_cutover.py
+counts: 39 passed in 105.45s (0:01:45) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-client-cutover-integration-1019192950-24951/log.txt ---
+.......................................                                  [100%]
+39 passed in 105.45s (0:01:45)

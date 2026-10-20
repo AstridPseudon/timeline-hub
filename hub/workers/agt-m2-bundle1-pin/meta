@@ -1,0 +1,9 @@
+name=agt-m2-bundle1-pin
+repo=agent
+base=tl/integration
+base_sha=fc324e83
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-bundle1-pin
+started=2026-10-20T00:07:17Z

@@ -1,0 +1,400 @@
++## Distinct producer digests
++
++These are different identities and must not be substituted for one another:
++
++| Meaning | Exact digest |
++| --- | --- |
++| Runtime health/schema digest (`SCHEMA_DIGEST`) | `sha256:242d2bc193bf16b699eb87592736769aacd8fdb75a1bb859dff3255d83ea5042` |
++| Raw timeline commit bundle schema (`runtime_protocol/schemas/timeline-commit-bundle.json`) | `sha256:fa7717e25c95126b18bb6f37b4c2d813d4a815456a06d438d52ef41c2cf1eab3` |
++| Producer artifact manifest version (`contract/artifacts.json`) | `sha256:52df520b8384c70dc10d0b15bdce00e758c153019d26ddb9e141f5840885ba2d` |
++| Producer artifact count | `75` |
++
++The consumer lock contains the normal 15 copied paths. The producer manifest
++contains 75 artifacts; these counts refer to different layers and are both
++intentional.
++
++## Allowed scope
++
++- Update the Agent `runtime.lock.json` through `python scripts/vendor_lock.py
++  update runtime.lock.json --producer /home/user/work/wt/rt-pin-f8da4b6d`.
++- Carry the previously approved `909bfad8` `_source_closure` canonical-image
++  conversion when absent. It projects raw Runtime revision envelopes onto the
++  existing canonical image fieldsets while preserving raw rows and authored
++  payload, pins, order, and identity.
++- Run generated-client parity, vendor-lock, schema-floor, and small
++  project-data source-neighbor checks.
++
++## Explicit exclusions and limits
++
++- Private-only: no `tl/integration` adoption, public release, or fake override.
++- No native pair in this pin; the manager must independently review this pin
++  before one bounded new392 + existing-lifecycle pair.
++- No new source semantics, fields, schema changes, or image normalization.
++- Do not include future group, word, audio, provenance, transition, or opacity
++  work.
++- Leave old952, 613, a0, and public013 paths untouched.
++- The next lifecycle step is not an old44 replay.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c5a69f96c108c177863c5a27d00fc7272be90ceb
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/commit-msg
+@@ -0,0 +1,4 @@
++chore(timeline): pin private Runtime 392 artifacts
++
++Update the normal private Runtime consumer pin to the verified f8da4b6d
++producer and preserve the approved source-closure canonical-image conversion.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c5a69f96c108c177863c5a27d00fc7272be90ceb
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/commit-msg.txt
+@@ -0,0 +1,4 @@
++chore(timeline): pin private Runtime 392 artifacts
++
++Update the normal private Runtime consumer pin to the verified f8da4b6d
++producer and preserve the approved source-closure canonical-image conversion.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..a696229a68e8a3ede3e014e276b23aa50ccaf253
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/report.md
+@@ -0,0 +1,40 @@
++# Worker report: private392 normal owned pin
++
++## Completed
++
++- Verified the requested detached Runtime checkout `/home/user/work/wt/rt-pin-f8da4b6d` was actually at `f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414`, with tree `8be43e13acb436120f8a63b1a178d64c49422461`. The incomplete `e63` revision was not used.
++- Updated Agent `runtime.lock.json` with `scripts/vendor_lock.py update` against that checkout. The lock remains a 15-consumer-file lock over the producer's 75-artifact manifest.
++- Vendored the producer's generated client artifacts through the supported script; no generated files were edited manually.
++- Carried only the missing approved `909bfad8` `_source_closure` canonical-image conversion in `astrid/sdk/remote.py`. It preserves raw Runtime rows and authored payload/pins/order/identity while projecting the source closure onto existing canonical image fieldsets.
++- Published exact identities, versions, digests, and private-only limits in `design/agent-private392-owned-pin.md` under the real orchestrator design directory.
++
++## Checks and tests
++
++Passed:
++
++- `python generators/generate.py --check` in `/home/user/work/wt/rt-pin-f8da4b6d`
++- `node tools/generate_typescript_conformance.mjs --contract contract/openapi/workspace-v1.yaml --schema-manifest contract/manifest.json --component-manifest contract/component-manifest.json --fixture-root conformance/fixtures --check` in the producer checkout
++- `python scripts/artifact_manifest.py --check` in the producer checkout (`75` artifacts)
++- `python3 scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-pin-f8da4b6d`
++- Byte identity, package/version, schema, and requested health/rawbundle/artifact digest assertions
++- `git diff --check`
++- `diff` against the `909bfad8` source patch
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py tests/editing_conformance/test_recipe_m2_project_data.py tests/sdk/test_timeline_capture_projection.py tests/sdk/test_timeline_materialization_schema_union.py` — **98 passed, 9 deselected**
++
++Not clean / not run:
++
++- `/home/user/work/venv-agent/bin/ruff check astrid/sdk/remote.py` reports 121 existing violations in this large pre-existing file, including unrelated one-line statements and import ordering. No broad reformat was made.
++- No full suite, localhost/live-socket suite, browser suite, native pair, integration adoption, or public release was run.
++
++## Exact pin tuple
++
++- Runtime producer: `astrid-runtime`, committed SHA `f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414`, tree `8be43e13acb436120f8a63b1a178d64c49422461`
++- Contract/package: `0.2.13`, protocol `workspace.v1`
++- Health/schema digest: `sha256:242d2bc193bf16b699eb87592736769aacd8fdb75a1bb859dff3255d83ea5042`
++- Raw timeline bundle schema digest: `sha256:fa7717e25c95126b18bb6f37b4c2d813d4a815456a06d438d52ef41c2cf1eab3`
++- Producer artifact manifest digest: `sha256:52df520b8384c70dc10d0b15bdce00e758c153019d26ddb9e141f5840885ba2d`
++- Frozen Agent command schema digest: `sha256:39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d`
++
++## Next step
++
++Manager performs the independent pin review. This worker does not authorize a native pair or any old44 replay.
+diff --git a/astrid/sdk/remote.py b/astrid/sdk/remote.py
+index ff7ba062b4d89a949cb2440d2061fbe263c90e3c..00cef07645b9f736e32880bb9c45f1f6ca3a527c
+--- a/astrid/sdk/remote.py
++++ b/astrid/sdk/remote.py
+@@ -1198,6 +1198,11 @@
+         is_current_head}``.
+         """
+         from astrid.core.timeline.authoring_bundle import open_authoring_bundle
++        from astrid.sdk.timeline.commit import (
++            INTERNAL_IMAGE_FIELDS,
++            PARENT_IMAGE_FIELDS,
++            SHOT_IMAGE_FIELDS,
++        )
+ 
+         opened = self.open_composition(project, ref, revision_id=revision_id, limit=1)
+         if not opened.ok or not isinstance(opened.data, Mapping):
+@@ -1238,11 +1243,33 @@
+                     return internal
+                 internals[internal_revision] = internal.data
+         try:
++            # The source closure is a canonical image graph derived from the
++            # read envelope.  Keep the raw GET rows above unchanged, but do
++            # not carry their storage-only decoration into the graph.
++            parent_image = {
++                **{key: parent.data[key] for key in PARENT_IMAGE_FIELDS},
++                "project_id": project_id,
++                "timeline_id": timeline_id,
++            }
++            shot_images = [
++                {
++                    **{key: row[key] for key in SHOT_IMAGE_FIELDS},
++                    "project_id": row.get("project_id", project_id),
++                }
++                for row in shots.values()
++            ]
++            internal_images = [
++                {
++                    **{key: row[key] for key in INTERNAL_IMAGE_FIELDS},
++                    "project_id": row.get("project_id", project_id),
++                }
++                for row in internals.values()
++            ]
+             bundle = open_authoring_bundle(
+-                parent.data,
++                parent_image,
+                 capture_sources=True,
+-                shot_revisions=list(shots.values()),
+-                internal_timeline_revisions=list(internals.values()),
++                shot_revisions=shot_images,
++                internal_timeline_revisions=internal_images,
+             )
+         except Exception as exc:  # the bundle compiler names the inconsistent field
+             return DomainResult.failure(ErrorObject(
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 47d6b8841c966b848169ede525869d090ee05ff0..40dbf624310cac1c0c93b4a9dec115faf8de7652
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -64,5 +64,5 @@
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+   "producer_version": "sha256:b397e5fdb9fc25502bbda9ad5011e82dd2d63330d5af373834d31e6761276e20",
+-  "source_commit": "95202c2b09e83aaae028287d6c59b773410141f3"
++  "source_commit": "f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414"
+ }
+
+exec
+/bin/bash -lc "set -eu
+printf '%s\\n' '--- final worktree status ---'
+git status --short --branch
+printf '%s\\n' '--- final diff stat ---'
+git diff --stat
+printf '%s\\n' '--- final diff names ---'
+git diff --name-only
+printf '%s\\n' '--- markers ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/{report.md,commit-msg,commit-msg.txt,DONE}
+printf '%s\\n' '--- source lines ---'
+nl -ba astrid/sdk/remote.py | sed -n '1192,1278p'
+printf '%s\\n' '--- lock tail ---'
+tail -n 8 runtime.lock.json
+printf '%s\\n' '--- design doc ---'
+sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-owned-pin.md" in /home/user/work/wt/agt-m2-private392-normal-owned-pin
+ succeeded in 326ms:
+--- final worktree status ---
+## tl/agt-m2-private392-normal-owned-pin
+ M astrid/sdk/remote.py
+ M astrid_runtime_client/__init__.py
+ M astrid_runtime_client/contract_metadata.py
+ M astrid_runtime_client/generated.py
+ M astrid_runtime_client/timeline_commit_types.py
+ M runtime.lock.json
+--- final diff stat ---
+ astrid/sdk/remote.py                           |  33 +++-
+ astrid_runtime_client/__init__.py              |  16 +-
+ astrid_runtime_client/contract_metadata.py     |   4 +-
+ astrid_runtime_client/generated.py             |   2 +-
+ astrid_runtime_client/timeline_commit_types.py | 262 +++++++++----------------
+ runtime.lock.json                              |  12 +-
+ 6 files changed, 135 insertions(+), 194 deletions(-)
+--- final diff names ---
+astrid/sdk/remote.py
+astrid_runtime_client/__init__.py
+astrid_runtime_client/contract_metadata.py
+astrid_runtime_client/generated.py
+astrid_runtime_client/timeline_commit_types.py
+runtime.lock.json
+--- markers ---
+-rw-r--r-- 1 root root    0 Oct 20 20:49 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/DONE
+-rw-r--r-- 1 root root  202 Oct 20 20:49 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/commit-msg
+-rw-r--r-- 1 root root  202 Oct 20 20:49 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/commit-msg.txt
+-rw-r--r-- 1 root root 3265 Oct 20 20:49 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private392-normal-owned-pin/report.md
+--- source lines ---
+  1192	        """Read one complete, read-only authoring bundle (parent → shots → internal timelines).
+  1193	
+  1194	        The same closure ``timeline_document.py checkout`` writes, pinned to the
+  1195	        current head or to ``revision_id``. ``timelines show`` builds its cut
+  1196	        table from it and ``timelines diff`` compares two of them. Nothing is
+  1197	        written. Returns ``{bundle, project_id, timeline_id, revision_id,
+  1198	        is_current_head}``.
+  1199	        """
+  1200	        from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+  1201	        from astrid.sdk.timeline.commit import (
+  1202	            INTERNAL_IMAGE_FIELDS,
+  1203	            PARENT_IMAGE_FIELDS,
+  1204	            SHOT_IMAGE_FIELDS,
+  1205	        )
+  1206	
+  1207	        opened = self.open_composition(project, ref, revision_id=revision_id, limit=1)
+  1208	        if not opened.ok or not isinstance(opened.data, Mapping):
+  1209	            return opened
+  1210	        native = opened.data.get("native_inspection") if isinstance(opened.data.get("native_inspection"), Mapping) else {}
+  1211	        summary = opened.data.get("summary") if isinstance(opened.data.get("summary"), Mapping) else {}
+  1212	        project_id = native.get("project_id")
+  1213	        timeline_id = native.get("timeline_id")
+  1214	        head = summary.get("head_revision_id") or native.get("head_revision_id")
+  1215	        revision = revision_id or summary.get("revision_id") or head
+  1216	        if not all(isinstance(value, str) and value for value in (project_id, timeline_id, revision)):
+  1217	            return DomainResult.failure(ErrorObject(
+  1218	                "protocol_error",
+  1219	                "timeline inspection did not return a project id, timeline id and revision",
+  1220	                {"project": str(project), "timeline": str(ref)},
+  1221	            ))
+  1222	        parent = self._typed("get_project_parent_composition_revision", project_id, timeline_id, revision)
+  1223	        if not parent.ok or not isinstance(parent.data, Mapping):
+  1224	            return parent
+  1225	        payload = parent.data.get("payload") if isinstance(parent.data.get("payload"), Mapping) else {}
+  1226	        shots: dict[str, Any] = {}
+  1227	        internals: dict[str, Any] = {}
+  1228	        for occurrence in payload.get("occurrences") or []:
+  1229	            if not isinstance(occurrence, Mapping):
+  1230	                continue
+  1231	            shot_revision = occurrence.get("shot_revision_id") or occurrence.get("revision_id")
+  1232	            if shot_revision not in shots:
+  1233	                shot = self._typed("get_project_shot_revision", project_id, occurrence.get("shot_id"), shot_revision)
+  1234	                if not shot.ok or not isinstance(shot.data, Mapping):
+  1235	                    return shot
+  1236	                shots[shot_revision] = shot.data
+  1237	            shot_data = shots[shot_revision]
+  1238	            shot_payload = shot_data.get("payload") if isinstance(shot_data.get("payload"), Mapping) else {}
+  1239	            internal_revision = shot_data.get("internal_timeline_revision_id") or shot_payload.get("internal_timeline_revision_id")
+  1240	            if internal_revision not in internals:
+  1241	                internal = self._typed("get_project_timeline_revision", project_id, timeline_id, internal_revision)
+  1242	                if not internal.ok or not isinstance(internal.data, Mapping):
+  1243	                    return internal
+  1244	                internals[internal_revision] = internal.data
+  1245	        try:
+  1246	            # The source closure is a canonical image graph derived from the
+  1247	            # read envelope.  Keep the raw GET rows above unchanged, but do
+  1248	            # not carry their storage-only decoration into the graph.
+  1249	            parent_image = {
+  1250	                **{key: parent.data[key] for key in PARENT_IMAGE_FIELDS},
+  1251	                "project_id": project_id,
+  1252	                "timeline_id": timeline_id,
+  1253	            }
+  1254	            shot_images = [
+  1255	                {
+  1256	                    **{key: row[key] for key in SHOT_IMAGE_FIELDS},
+  1257	                    "project_id": row.get("project_id", project_id),
+  1258	                }
+  1259	                for row in shots.values()
+  1260	            ]
+  1261	            internal_images = [
+  1262	                {
+  1263	                    **{key: row[key] for key in INTERNAL_IMAGE_FIELDS},
+  1264	                    "project_id": row.get("project_id", project_id),
+  1265	                }
+  1266	                for row in internals.values()
+  1267	            ]
+  1268	            bundle = open_authoring_bundle(
+  1269	                parent_image,
+  1270	                capture_sources=True,
+  1271	                shot_revisions=shot_images,
+  1272	                internal_timeline_revisions=internal_images,
+  1273	            )
+  1274	        except Exception as exc:  # the bundle compiler names the inconsistent field
+  1275	            return DomainResult.failure(ErrorObject(
+  1276	                "protocol_error", f"could not open the timeline closure: {exc}",
+  1277	                {"timeline": timeline_id, "revision_id": revision},
+  1278	            ))
+--- lock tail ---
+      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+    }
+  },
+  "manifest": "contract/artifacts.json",
+  "producer": "astrid-runtime",
+  "producer_version": "sha256:52df520b8384c70dc10d0b15bdce00e758c153019d26ddb9e141f5840885ba2d",
+  "source_commit": "f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414"
+}
+--- design doc ---
+# Agent private392 normal owned pin
+
+Status: prepared on the Agent worker for manager review. This is one normal
+private owned pin only; it is not an integration or public-release adoption.
+
+## Exact identities
+
+| Item | Exact value |
+| --- | --- |
+| Agent frozen base committed SHA | `e010e6a3868e963471244491bb6672c3e4a5135e` |
+| Agent frozen base tree | `70414cf6875d2c97c45f33e0a5158c80bd7391d9` |
+| Runtime producer committed SHA (`source_commit`) | `f8da4b6d46b0ec5ebeb7a42be47c5bf3438c5414` |
+| Runtime producer tree | `8be43e13acb436120f8a63b1a178d64c49422461` |
+| Runtime producer identity | `astrid-runtime` |
+| Runtime protocol | `workspace.v1` |
+| Runtime contract/package version (read from producer files) | `0.2.13` |
+| Release declaration | `generators/release.json: contract_version 0.2.13` |
+| Component manifest digest | `sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5` |
+| Frozen Agent command schema digest | `sha256:39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d` |
+| Frozen Agent command schema shape | `56 definitions, 30 operations, schema v2` |
+
+## Distinct producer digests
+
+These are different identities and must not be substituted for one another:
+
+| Meaning | Exact digest |
+| --- | --- |
+| Runtime health/schema digest (`SCHEMA_DIGEST`) | `sha256:242d2bc193bf16b699eb87592736769aacd8fdb75a1bb859dff3255d83ea5042` |
+| Raw timeline commit bundle schema (`runtime_protocol/schemas/timeline-commit-bundle.json`) | `sha256:fa7717e25c95126b18bb6f37b4c2d813d4a815456a06d438d52ef41c2cf1eab3` |
+| Producer artifact manifest version (`contract/artifacts.json`) | `sha256:52df520b8384c70dc10d0b15bdce00e758c153019d26ddb9e141f5840885ba2d` |
+| Producer artifact count | `75` |
+
+The consumer lock contains the normal 15 copied paths. The producer manifest
+contains 75 artifacts; these counts refer to different layers and are both
+intentional.
+
+## Allowed scope
+
+- Update the Agent `runtime.lock.json` through `python scripts/vendor_lock.py
+  update runtime.lock.json --producer /home/user/work/wt/rt-pin-f8da4b6d`.
+- Carry the previously approved `909bfad8` `_source_closure` canonical-image
+  conversion when absent. It projects raw Runtime revision envelopes onto the
+  existing canonical image fieldsets while preserving raw rows and authored
+  payload, pins, order, and identity.
+- Run generated-client parity, vendor-lock, schema-floor, and small
+  project-data source-neighbor checks.
+
+## Explicit exclusions and limits
+
+- Private-only: no `tl/integration` adoption, public release, or fake override.
+- No native pair in this pin; the manager must independently review this pin
+  before one bounded new392 + existing-lifecycle pair.
+- No new source semantics, fields, schema changes, or image normalization.
+- Do not include future group, word, audio, provenance, transition, or opacity
+  work.
+- Leave old952, 613, a0, and public013 paths untouched.
+- The next lifecycle step is not an old44 replay.
+
+codex
+Implemented the private392 Agent pin.
+
+- Verified Runtime HEAD `f8da4b6d…`, tree `8be43e13…`; excluded `e63`.
+- Updated generated client artifacts via `vendor_lock.py update`.
+- Carried approved `909bfad8` source-closure canonical-image conversion.
+- Published pin details: [agent-private392-owned-pin.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-owned-pin.md>).
+- Runtime package `0.2.13`; health `242d…`, raw bundle `fa7717…`, artifact manifest `52df…`.
+
+Checks: producer generators/artifact manifest, vendor lock, byte identity, diff check, and targeted tests passed: **98 passed, 9 deselected**.
+
+Ruff reports 121 pre-existing violations in `remote.py`; no unrelated reformatting was made. No full/live/native-pair suites run.
+
+Required `report.md`, `commit-msg`, `commit-msg.txt`, and `DONE` markers were created.
+tokens used
+190,926
+Implemented the private392 Agent pin.
+
+- Verified Runtime HEAD `f8da4b6d…`, tree `8be43e13…`; excluded `e63`.
+- Updated generated client artifacts via `vendor_lock.py update`.
+- Carried approved `909bfad8` source-closure canonical-image conversion.
+- Published pin details: [agent-private392-owned-pin.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-private392-owned-pin.md>).
+- Runtime package `0.2.13`; health `242d…`, raw bundle `fa7717…`, artifact manifest `52df…`.
+
+Checks: producer generators/artifact manifest, vendor lock, byte identity, diff check, and targeted tests passed: **98 passed, 9 deselected**.
+
+Ruff reports 121 pre-existing violations in `remote.py`; no unrelated reformatting was made. No full/live/native-pair suites run.
+
+Required `report.md`, `commit-msg`, `commit-msg.txt`, and `DONE` markers were created.

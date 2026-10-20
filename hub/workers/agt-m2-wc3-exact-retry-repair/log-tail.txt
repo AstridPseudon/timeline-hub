@@ -1,0 +1,400 @@
+         def replace_timeline_clip(self, *args, **kwargs):
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-exact-retry-repair/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-exact-retry-repair.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-exact-retry-repair.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..78e7e0cf99b87a09c4ce3d82dfce93184a55e7a7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-exact-retry-repair.md
+@@ -0,0 +1,37 @@
++# WC3 exact media-swap retry repair
++
++The adapter's retry branch is guarded by the original logical request:
++
++- original Runtime base revision and, when supplied, publication;
++- resolved owner (`parent` or the exact occurrence), raw clip selector, and
++  source object identity;
++- both persisted old/new media selections, each with exactly the five
++  selection fields; caller-supplied selections must equal those pins exactly.
++
++One pending command is required. An unrelated command, multiple commands,
++malformed selection, owner/clip/source mismatch, or stale head/publication
++returns a visible validation failure before `TimelineSession.flush`; the
++outbox is not written and no POST is attempted. The full in-flight body and
++key remain delegated to `TimelineSession._flight_body`, so an exact retry can
++reuse the persisted request after restart or a later Runtime head. An omitted
++caller key is preserved for that case; the typed receipt supplies the returned
++key after acknowledgement.
++
++The old whole-publication route remains deleted. The repair uses the existing
++native swap commands and adds no DTO, endpoint, alias, or generic retry
++framework.
++
++Targeted evidence:
++
++- `tests/test_timeline_clip_replacement.py`: 13 passed, including unrelated
++  and multiple pending adversaries, source/selection/owner/head/publication
++  controls, restart/lost-ACK retry, opaque pending command preservation, and
++  no-key replay.
++- `tests/sdk/test_timeline_sync.py`,
++  `tests/sdk/test_timeline_native_frontends.py`,
++  `tests/editing_conformance/test_recipe_parent_media.py`, and
++  `tests/editing_conformance/test_recipe_occurrence_media.py` were run with
++  the targeted local command; no broad 2478-test conformance run was used.
++
++The real Runtime-backed parent provider lane remains a central integration
++qualification, not a local fake-provider claim.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-exact-retry-repair/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-exact-retry-repair/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-exact-retry-repair/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-exact-retry-repair/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f291ceacc8350755db9da19d68cd9105ecb9b785
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-exact-retry-repair/commit-msg
+@@ -0,0 +1,4 @@
++fix(timeline): bind media swap retries to exact intent
++
++Refuse unrelated or ambiguous pending swaps without touching the outbox, and
++preserve the persisted flight key/body for exact adapter retries.
+diff --git a/astrid/sdk/remote.py b/astrid/sdk/remote.py
+index dd26f8c2c4cdf5b6e8396dca3d18fa3833277714..a438399545cb0d5453014e5f11e922672eab2aea
+--- a/astrid/sdk/remote.py
++++ b/astrid/sdk/remote.py
+@@ -1290,7 +1290,6 @@
+         expected_publication: str | None = None,
+     ):
+         """Replace one exact occurrence clip through the native commit session."""
+-        key = idempotency_key or uuid.uuid4().hex
+         from .timeline_media_replacement import replace_selected_media
+ 
+         return replace_selected_media(
+@@ -1304,7 +1303,7 @@
+             expected_publication=expected_publication,
+             old_media=old_media,
+             media=media,
+-            idempotency_key=key,
++            idempotency_key=idempotency_key,
+         )
+     def commit(self, project, ref, body: Mapping[str, Any], *, idempotency_key=None):
+         """Commit a scoped command batch without changing its request body."""
+diff --git a/astrid/sdk/timeline_media_replacement.py b/astrid/sdk/timeline_media_replacement.py
+index 259d3af6e90f2ec2e88268febdf94601863d930a..97cca2563b1e7e52cfdb4f78c45ac40dc906a75d
+--- a/astrid/sdk/timeline_media_replacement.py
++++ b/astrid/sdk/timeline_media_replacement.py
+@@ -10,6 +10,7 @@
+ from .contracts import DomainResult, ErrorObject
+ 
+ _OBJECT_ID = re.compile(r"sha256:[0-9a-f]{64}")
++_SELECTION_KEYS = ("asset", "generation_id", "variant_id", "object_id", "catalog_digest")
+ 
+ 
+ class _SelectionHold(ValueError):
+@@ -17,7 +18,10 @@
+ 
+ 
+ def _failure(message, *, key, details=None, code="validation_error"):
+-    return DomainResult.failure(ErrorObject(code, message, details or {}), idempotency_key=key)
++    return DomainResult.failure(
++        ErrorObject(code, message, details or {}),
++        idempotency_key=key if isinstance(key, str) else "",
++    )
+ 
+ 
+ def _plain(value):
+@@ -187,7 +191,37 @@
+     except (TypeError, ValueError) as exc:
+         return _failure("Runtime returned an invalid native timeline receipt", key=key,
+                         details={"reason": str(exc)}, code="protocol_error")
+-    return DomainResult.success(dict(data), receipt=receipt, idempotency_key=key)
++    return DomainResult.success(
++        dict(data), receipt=receipt,
++        idempotency_key=key if key is not None else receipt.idempotency_key,
++    )
++
++
++def _pending_matches(command, *, owner, clip_id, source_object_id, old_media, media):
++    """Prove that one persisted swap is this caller's logical request."""
++    expected_select = owner + "/clip:" + clip_id
++    expected_intent = {"ownership": "parent" if owner == "parent" else "occurrence"}
++    if not isinstance(command, Mapping) or command.get("select") != expected_select:
++        return False
++    if command.get("op") != ("clip.swap-media" if owner == "parent" else "occurrence.swap-media"):
++        return False
++    if command.get("intent") != expected_intent:
++        return False
++    args = command.get("args")
++    if not isinstance(args, Mapping) or set(args) != {"old_media", "media"}:
++        return False
++    original_old, original_new = args["old_media"], args["media"]
++    for pin in (original_old, original_new):
++        if not isinstance(pin, Mapping) or set(pin) != set(_SELECTION_KEYS):
++            return False
++    if original_new["object_id"] != source_object_id or original_old["object_id"] == source_object_id:
++        return False
++    if isinstance(old_media, Mapping) or isinstance(media, Mapping):
++        if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
++            return False
++        if dict(old_media) != dict(original_old) or dict(media) != dict(original_new):
++            return False
++    return True
+ 
+ 
+ def replace_selected_media(timelines, project, ref, *, occurrence_id, clip_id, source_object_id,
+@@ -195,7 +229,7 @@
+                            idempotency_key):
+     """Capture one exact native swap and flush it through a durable session."""
+     key = idempotency_key
+-    if not isinstance(key, str) or not key:
++    if key is not None and (not isinstance(key, str) or not key):
+         return _failure("native media replacement requires an idempotency key", key=key or "")
+     if not all(isinstance(value, str) and value.strip()
+                for value in (project, ref, clip_id, source_object_id, expected_head)):
+@@ -232,10 +266,20 @@
+         state = session._state()
+         pending = state.get("pending") or []
+         if pending or state.get("flight") is not None:
+-            if state["base"]["revision_id"] != expected_head:
++            if state["base"] != {
++                "revision_id": expected_head,
++                "publication_id": state["base"].get("publication_id")
++                if expected_publication is None else expected_publication,
++            }:
+                 raise _SelectionHold("pending native replacement belongs to a different expected head")
+-            if len(pending) != 1 or pending[0].get("op") not in {"occurrence.swap-media", "clip.swap-media"}:
++            if (len(pending) != 1 or not isinstance(pending[0], Mapping)
++                    or pending[0].get("op") not in {"occurrence.swap-media", "clip.swap-media"}):
+                 raise _SelectionHold("another native edit is already pending in this timeline session")
++            owner = "parent" if occurrence_id is None else "occurrence:" + occurrence_id
++            if not _pending_matches(
++                    pending[0], owner=owner, clip_id=clip_id,
++                    source_object_id=source_object_id, old_media=old_media, media=media):
++                raise _SelectionHold("pending native replacement does not match this exact request")
+             return _domain(session.flush(idempotency_key=key), key)
+ 
+         project_id, timeline_id = session.project_id, session.timeline_id
+diff --git a/tests/test_timeline_clip_replacement.py b/tests/test_timeline_clip_replacement.py
+index 6beb947d2d7cd4cd826eaf01bfb3a7a02f85a67f..54391deeae3be275388e2d01ab140ec3dc6d6f75
+--- a/tests/test_timeline_clip_replacement.py
++++ b/tests/test_timeline_clip_replacement.py
+@@ -1,12 +1,162 @@
+ from __future__ import annotations
+ 
++import copy
+ import json
+ 
++import pytest
++
+ from astrid.packs.timeline.cli import build_parser
+ from astrid.sdk.contracts import DomainResult
+ from astrid.sdk.remote import RemoteTimelines
+ 
+ 
++def _pending_occurrence_swap():
++    from tests.editing_conformance.test_recipe_occurrence_media import inputs
++
++    _, old, new, _ = inputs()
++    command = {
++        "schema_version": 1,
++        "op": "occurrence.swap-media",
++        "version": "1",
++        "select": "occurrence:occ-a/clip:clip-a",
++        "args": {"old_media": old, "media": new},
++        "intent": {"ownership": "occurrence"},
++        "opaque": {"preserve": ["source-window", None]},
++    }
++    return command, old, new
++
++
++def _pending_session(command, *, flight=True, fail_flush=False):
++    from astrid.sdk.timeline.sync import TimelineSession
++
++    class Outbox:
++        def __init__(self, state):
++            self.state = state
++
++        class _Lock:
++            def __enter__(self):
++                return self
++
++            def __exit__(self, *args):
++                return False
++
++        def locked(self):
++            return self._Lock()
++
++        def write(self, state):
++            self.state = copy.deepcopy(state)
++
++    class Session:
++        def __init__(self):
++            self.project_id, self.timeline_id = "project-1", "main"
++            self.state = {
++                "base": {"revision_id": "parent-1", "publication_id": "publication-1"},
++                "pending": [copy.deepcopy(command)],
++                "flight": ({"path": "/v1/projects/project-1/timelines/main/commit",
++                             "body": '{"opaque":"body"}', "key": "original-key",
++                             "count": 1, "fence": "fence-1"} if flight else None),
++            }
++            self.outbox = Outbox(self.state)
++            self.flush_calls = []
++
++        def _state(self):
++            return self.state
++
++        def flush(self, *, idempotency_key):
++            self.flush_calls.append((idempotency_key, copy.deepcopy(self.state["pending"])))
++            if fail_flush:
++                raise ConnectionError("response lost after acceptance")
++            data = {"status": "accepted"}
++            receipt = {
++                "receipt_id": "publication-2", "command_kind": "timeline.commit",
++                "idempotency_key": "original-key", "request_hash": "hash",
++                "project_id": "project-1", "project_seq": [1, 1],
++                "event_ids": ["event-1"], "result": data, "created_at": "now",
++            }
++            return {"data": data, "receipt": receipt}
++
++    return TimelineSession, Session()
++
++
++def test_pending_unrelated_or_ambiguous_swap_refuses_without_flush(monkeypatch):
++    command, old, new = _pending_occurrence_swap()
++    TimelineSession, session = _pending_session(command)
++    before = copy.deepcopy(session.state)
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
++
++    result = RemoteTimelines(object()).replace_parent_media(
++        "project-1", "main", occurrence_id="other-occ", clip_id="other-clip",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=old, media=new,
++        idempotency_key="other-key",
++    )
++
++    assert not result.ok and "pending native replacement" in result.error.message
++    assert session.flush_calls == [] and session.state == before
++
++    session.state["pending"].append(copy.deepcopy(command))
++    before = copy.deepcopy(session.state)
++    result = RemoteTimelines(object()).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=old, media=new,
++        idempotency_key="original-key",
++    )
++    assert not result.ok and session.flush_calls == [] and session.state == before
++
++
++@pytest.mark.parametrize("change", ["source", "selection", "owner", "head", "publication"])
++def test_pending_swap_identity_controls_refuse_without_post(monkeypatch, change):
++    command, old, new = _pending_occurrence_swap()
++    TimelineSession, session = _pending_session(command)
++    before = copy.deepcopy(session.state)
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
++    kwargs = {
++        "occurrence_id": "occ-a", "clip_id": "clip-a", "source_object_id": new["object_id"],
++        "expected_head": "parent-1", "expected_publication": "publication-1",
++        "old_media": old, "media": new, "idempotency_key": "original-key",
++    }
++    if change == "source":
++        kwargs["source_object_id"] = old["object_id"]
++    elif change == "selection":
++        kwargs["media"] = {**new, "catalog_digest": old["catalog_digest"]}
++    elif change == "owner":
++        kwargs["occurrence_id"] = None
++    elif change == "head":
++        kwargs["expected_head"] = "later-head"
++    else:
++        kwargs["expected_publication"] = "later-publication"
++
++    result = RemoteTimelines(object()).replace_parent_media("project-1", "main", **kwargs)
++    assert not result.ok and session.flush_calls == [] and session.state == before
++
++
++def test_exact_pending_swap_retry_survives_restart_and_keeps_opaque_body(monkeypatch):
++    command, old, new = _pending_occurrence_swap()
++    TimelineSession, first = _pending_session(command, fail_flush=True)
++    restored = _pending_session(command)[1]
++    sessions = iter((first, restored))
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: next(sessions))
++    transport = object()
++
++    failed = RemoteTimelines(transport).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=old, media=new,
++        idempotency_key="original-key",
++    )
++    assert not failed.ok
++    assert first.flush_calls == [("original-key", [command])]
++
++    retried = RemoteTimelines(transport).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=old, media=new,
++    )
++    assert retried.ok and retried.idempotency_key == "original-key"
++    assert restored.flush_calls == [(None, [command])]
++
++
+ def test_remote_timelines_replace_clip_is_typed_410() -> None:
+     class Transport:
+         def replace_timeline_clip(self, *args, **kwargs):
+
+codex
+Central targeted HTTP qualification passed on the final snapshot: 165 passed in 24.79s across the adapter, sync, frontend, and parent/occurrence recipe lanes. I’m doing the final hygiene check now, then I’ll hand off the commit message and completion marker; the separate real Runtime parent-provider qualification remains an orchestrator/central private-runtime concern and is not being misrepresented as a local fake-provider pass.
+exec
+/bin/bash -lc 'git diff --check; git status --short; test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-exact-retry-repair/DONE; wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-exact-retry-repair/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-exact-retry-repair.md; find . -type d '"\\( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache \\) -print" in /home/user/work/wt/agt-m2-wc3-exact-retry-repair
+ succeeded in 334ms:
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline_media_replacement.py
+ M tests/test_timeline_clip_replacement.py
+ 199 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-exact-retry-repair/commit-msg
+1839 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-exact-retry-repair.md
+2038 total
+
+codex
+Implemented WC3 exact retry repair.
+
+- Pending swaps now require exact owner, clip, source object, head/publication, and old/new five-field media pins.
+- Unrelated, ambiguous, stale, or multiple pending intents visibly refuse with no flush, POST, or outbox mutation.
+- Omitted keys replay the persisted flight key/body; opaque command data is preserved.
+- Added adversarial and restart/lost-ACK tests.
+
+Validation:
+
+- Central targeted: **165 passed**
+- Replacement tests: **13 passed**
+- Sync: **61 passed**
+- Native frontends: **10 passed**
+- Media recipes: **81 passed**
+- `git diff --check`: passed
+- Ruff on changed adapter/tests: passed
+
+Real private Runtime parent-provider qualification remains for the orchestrator’s approved private-runtime lane; no public13 or fake-provider qualification was claimed.
+
+Commit message and `DONE` marker written.
+tokens used
+233,297
+Implemented WC3 exact retry repair.
+
+- Pending swaps now require exact owner, clip, source object, head/publication, and old/new five-field media pins.
+- Unrelated, ambiguous, stale, or multiple pending intents visibly refuse with no flush, POST, or outbox mutation.
+- Omitted keys replay the persisted flight key/body; opaque command data is preserved.
+- Added adversarial and restart/lost-ACK tests.
+
+Validation:
+
+- Central targeted: **165 passed**
+- Replacement tests: **13 passed**
+- Sync: **61 passed**
+- Native frontends: **10 passed**
+- Media recipes: **81 passed**
+- `git diff --check`: passed
+- Ruff on changed adapter/tests: passed
+
+Real private Runtime parent-provider qualification remains for the orchestrator’s approved private-runtime lane; no public13 or fake-provider qualification was claimed.
+
+Commit message and `DONE` marker written.

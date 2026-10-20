@@ -1,0 +1,400 @@
++    },
++    {
++      "ref": "shot:new-shot",
++      "path": [],
++      "state": {
++        "state": "absent"
++      }
++    },
++    {
++      "ref": "occurrence:new-occ",
++      "path": [],
++      "state": {
++        "state": "absent"
++      }
++    }
++  ],
++  "selections": [
++    {
++      "key": "migration.groups",
++      "query_version": 1,
++      "owner": "parent",
++      "members": [
++        "occurrence:new-occ"
++      ],
++      "order": [
++        "occurrence:new-occ"
++      ],
++      "boundaries": [
++        "occurrence:new-occ"
++      ],
++      "policy": "guard-membership"
++    },
++    {
++      "key": "collection.clips",
++      "query_version": 1,
++      "owner": "parent",
++      "members": [
++        "parent/clip:before",
++        "parent/clip:c1",
++        "parent/clip:c2",
++        "parent/clip:after"
++      ],
++      "order": [
++        "parent/clip:before",
++        "parent/clip:c1",
++        "parent/clip:c2",
++        "parent/clip:after"
++      ],
++      "boundaries": [
++        "parent/clip:before",
++        "parent/clip:c1",
++        "parent/clip:c2",
++        "parent/clip:after"
++      ],
++      "policy": "guard-membership"
++    },
++    {
++      "key": "collection.occurrences",
++      "query_version": 1,
++      "owner": "parent",
++      "members": [],
++      "order": [],
++      "boundaries": [],
++      "policy": "guard-membership"
++    },
++    {
++      "key": "collection.shots",
++      "query_version": 1,
++      "owner": "parent",
++      "members": [],
++      "order": [],
++      "boundaries": [],
++      "policy": "guard-membership"
++    },
++    {
++      "key": "collection.tracks",
++      "query_version": 1,
++      "owner": "parent",
++      "members": [
++        "parent/track:V1",
++        "parent/track:A1"
++      ],
++      "order": [
++        "parent/track:V1",
++        "parent/track:A1"
++      ],
++      "boundaries": [
++        "parent/track:V1",
++        "parent/track:A1"
++      ],
++      "policy": "guard-membership"
++    }
++  ],
++  "bindings": {
++    "migration.member:0:0": "parent/clip:c1",
++    "migration.destination:0:0": "occurrence:new-occ/clip:c1",
++    "migration.member:0:1": "parent/clip:c2",
++    "migration.destination:0:1": "occurrence:new-occ/clip:c2",
++    "migration.shot:0": "shot:new-shot",
++    "migration.group:0": "occurrence:new-occ"
++  },
++  "created": [
++    "shot:new-shot",
++    "occurrence:new-occ"
++  ],
++  "expect": {
++    "shot:new-shot::": {
++      "state": "absent"
++    },
++    "occurrence:new-occ::": {
++      "state": "absent"
++    },
++    "parent/clip:c1::": {
++      "state": "present",
++      "value": {
++        "id": "c1",
++        "track": "V1",
++        "at": 0,
++        "hold": 2,
++        "asset": "image",
++        "clipType": "media",
++        "params": null,
++        "app": {
++          "astrid": null
++        },
++        "opaque": {
++          "pinnedShotGroups": null,
++          "clipType": "shot",
++          "order": [
++            null,
++            false,
++            0
++          ]
++        }
++      }
++    },
++    "parent/clip:c2::": {
++      "state": "present",
++      "value": {
++        "id": "c2",
++        "track": "V1",
++        "at": 2,
++        "hold": 2,
++        "asset": "image",
++        "clipType": "media",
++        "unknown": {
++          "id": "c1",
++          "empty": {}
++        }
++      }
++    },
++    "parent::config.pinnedShotGroups": {
++      "state": "present",
++      "value": [
++        {
++          "shotId": "legacy",
++          "trackId": "V1",
++          "clipIds": [
++            "c1",
++            "c2"
++          ],
++          "mode": "images",
++          "items": [],
++          "nullable": null,
++          "unknown": {
++            "pinnedShotGroups": [
++              null
++            ],
++            "clipType": "shot"
++          },
++          "imageClipSnapshot": [
++            {
++              "id": "c1",
++              "track": "V1",
++              "at": 0,
++              "hold": 2,
++              "asset": "image",
++              "clipType": "media",
++              "params": null,
++              "app": {
++                "astrid": null
++              },
++              "opaque": {
++                "pinnedShotGroups": null,
++                "clipType": "shot",
++                "order": [
++                  null,
++                  false,
++                  0
++                ]
++              }
++            },
++            {
++              "id": "c2",
++              "track": "V1",
++              "at": 2,
++              "hold": 2,
++              "asset": "image",
++              "clipType": "media",
++              "unknown": {
++                "id": "c1",
++                "empty": {}
++              }
++            }
++          ]
++        }
++      ]
++    }
++  },
++  "authorship": {
++    "shot:new-shot::": "direct",
++    "occurrence:new-occ::": "direct",
++    "parent/clip:c1::": "direct",
++    "parent/clip:c2::": "direct",
++    "parent::config.pinnedShotGroups": "direct"
++  }
++}
++
+diff --git a/tests/editing_conformance/test_edit_command_schema_shot_roots.py b/tests/editing_conformance/test_edit_command_schema_shot_roots.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..250c9acc83d17342ec3853ac2b7a25d8677e177b
+--- /dev/null
++++ b/tests/editing_conformance/test_edit_command_schema_shot_roots.py
+@@ -0,0 +1,85 @@
++"""Draft 2020-12 coverage for the canonical shot-root reference spellings."""
++from __future__ import annotations
++
++import json
++from pathlib import Path
++
++import pytest
++from jsonschema import Draft202012Validator
++
++from astrid.sdk.timeline._command_state import CommandError
++from astrid.sdk.timeline.commands import validate_command
++
++SCHEMA = json.loads(
++    (Path(__file__).parents[2] / "astrid/core/timeline/schema/edit-command.schema.json").read_text()
++)
++
++
++def validator(definition: str) -> Draft202012Validator:
++    return Draft202012Validator({"$defs": SCHEMA["$defs"], "$ref": f"#/$defs/{definition}"})
++
++
++@pytest.mark.parametrize(
++    ("definition", "value"),
++    [
++        ("ScopedId", "shot:shot-1"),
++        ("EntityRef", "shot:shot-1"),
++        ("AnchorIdentity", "shot:shot-1"),
++        ("TargetKey", "shot:shot-1::"),
++        ("TargetKey", "shot:shot-1::payload.metadata"),
++    ],
++)
++def test_shot_root_refs_admit_root_and_empty_root_path(definition: str, value: str) -> None:
++    validator(definition).validate(value)
++
++
++@pytest.mark.parametrize("definition", ["ScopedId", "EntityRef", "AnchorIdentity"])
++@pytest.mark.parametrize("value", ["shot:", "shot:shot/child", "shot:shot::other"])
++def test_shot_root_ids_reject_empty_slash_and_ambiguous_ids(
++    definition: str, value: str
++) -> None:
++    assert not validator(definition).is_valid(value)
++
++
++@pytest.mark.parametrize(
++    "value",
++    ["shot:", "shot:shot/child::", "shot:shot::path::again", "shot::", "::"],
++)
++def test_shot_root_target_keys_reject_malformed_closed_forms(value: str) -> None:
++    assert not validator("TargetKey").is_valid(value)
++
++
++def test_sealed_group_wire_envelope_admits_shot_root_facts() -> None:
++    """The root-bearing command shape is from the sealed a0dad5fc fixture.
++
++    This checks the wire envelope only. The migration operation remains unknown to
++    this branch's registry and therefore has no handler or Runtime acceptance claim.
++    """
++    command = json.loads(
++        (Path(__file__).parent / "fixtures/recipe_m2_group_migration_command.json").read_text()
++    )
++
++    Draft202012Validator(SCHEMA).validate(command)
++    with pytest.raises(CommandError, match="unsupported operation"):
++        validate_command(command)
++
++
++def test_original_m1_envelopes_remain_schema_valid() -> None:
++    fixtures = Path(__file__).parent / "fixtures"
++    for name in ("recipe_m1_move.json", "recipe_m1_occurrence.json", "recipe_m1_shared.json"):
++        fixture = json.loads((fixtures / name).read_text())
++        Draft202012Validator(SCHEMA).validate(fixture["command"])
++
++
++def test_unknown_operation_schema_is_general_but_registry_meaning_is_separate() -> None:
++    command = {
++        "schema_version": 1,
++        "op": "timeline.provider-defined",
++        "version": "future",
++        "select": "shot:shot-1",
++        "args": {"opaque": {"shot": "shot:shot-1", "root": {"empty": True}}},
++    }
++
++    Draft202012Validator(SCHEMA).validate(command)
++    with pytest.raises(CommandError, match="unsupported operation"):
++        validate_command(command)
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worktree status ---'; git status --short --branch; printf '%s\\n' '--- tracked diff ---'; git diff --stat; git diff -- astrid/core/timeline/schema/edit-command.schema.json docs/design/runtime-coordination.md tests/editing_conformance/test_edit_command_schema_shot_roots.py | sed -n '1,360p'; printf '%s\\n' '--- untracked sizes ---'; wc -c docs/design/runtime-coordination.md tests/editing_conformance/test_edit_command_schema_shot_roots.py tests/editing_conformance/fixtures/recipe_m2_group_migration_command.json; printf '%s\\n' '--- required handoff files ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-slice/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-slice/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-slice/commit-msg.txt" in /home/user/work/wt/agt-m2-root-schema-slice
+ succeeded in 36ms:
+--- worktree status ---
+## tl/agt-m2-root-schema-slice
+ M astrid/core/timeline/schema/edit-command.schema.json
+?? docs/design/runtime-coordination.md
+?? tests/editing_conformance/fixtures/recipe_m2_group_migration_command.json
+?? tests/editing_conformance/test_edit_command_schema_shot_roots.py
+--- tracked diff ---
+ astrid/core/timeline/schema/edit-command.schema.json | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+diff --git a/astrid/core/timeline/schema/edit-command.schema.json b/astrid/core/timeline/schema/edit-command.schema.json
+index 62fcc254..f92563c1 100644
+--- a/astrid/core/timeline/schema/edit-command.schema.json
++++ b/astrid/core/timeline/schema/edit-command.schema.json
+@@ -40,11 +40,11 @@
+     },
+     "ScopedId": {
+       "type": "string",
+-      "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$"
++      "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$"
+     },
+     "EntityRef": {
+       "type": "string",
+-      "pattern": "^(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))$"
++      "pattern": "^(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))$"
+     },
+     "PropertyPath": {
+       "type": "string",
+@@ -53,12 +53,12 @@
+     },
+     "TargetKey": {
+       "type": "string",
+-      "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
++      "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
+       "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token."
+     },
+     "AnchorIdentity": {
+       "type": "string",
+-      "pattern": "^(?:(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$",
++      "pattern": "^(?:(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$",
+       "description": "R4 string binding values. Legacy word/beat indices are meaningful only against verified immutable source reads; not stable identities across republication. Exact source-word provenance is captured in reads/dependencies."
+     },
+     "AgentState": {
+--- untracked sizes ---
+ 1312 docs/design/runtime-coordination.md
+ 3032 tests/editing_conformance/test_edit_command_schema_shot_roots.py
+10537 tests/editing_conformance/fixtures/recipe_m2_group_migration_command.json
+14881 total
+--- required handoff files ---
+-rw-r--r-- 1 root root  205 Oct 19 23:53 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-slice/commit-msg
+-rw-r--r-- 1 root root  205 Oct 19 23:53 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-slice/commit-msg.txt
+-rw-r--r-- 1 root root 2286 Oct 19 23:53 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-slice/notes/report.md
+
+codex
+## Completed
+
+- Added the four canonical `shot:S` schema patterns.
+- Added focused Draft 2020-12 tests and the exact sealed `a0dad5fc` command fixture.
+- Added held Runtime handoff: [runtime-coordination.md](/home/user/work/wt/agt-m2-root-schema-slice/docs/design/runtime-coordination.md).
+- Wrote both required commit-message files and [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-slice/notes/report.md).
+
+Tests:
+
+- Targeted pytest: **99 passed**
+- Ruff: passed
+- `git diff --check`: passed
+- Sealed fixture comparison: exact match
+- Schema JSON parse: passed
+
+No Runtime acceptance, handler registration, full suite, install, socket, browser, or network testing was claimed. M2 remains held pending PLAN M1.
+tokens used
+128,265
+## Completed
+
+- Added the four canonical `shot:S` schema patterns.
+- Added focused Draft 2020-12 tests and the exact sealed `a0dad5fc` command fixture.
+- Added held Runtime handoff: [runtime-coordination.md](/home/user/work/wt/agt-m2-root-schema-slice/docs/design/runtime-coordination.md).
+- Wrote both required commit-message files and [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-root-schema-slice/notes/report.md).
+
+Tests:
+
+- Targeted pytest: **99 passed**
+- Ruff: passed
+- `git diff --check`: passed
+- Sealed fixture comparison: exact match
+- Schema JSON parse: passed
+
+No Runtime acceptance, handler registration, full suite, install, socket, browser, or network testing was claimed. M2 remains held pending PLAN M1.

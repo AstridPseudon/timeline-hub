@@ -1,0 +1,400 @@
+57:    x: visibleBounds.x - fullWidth * normalizedCrop.cropLeft,
+59:    width: fullWidth,
+84:  const width = bounds.width * scale;
+87:    x: centerX + (bounds.x + bounds.width / 2 - centerX) * scale - width / 2,
+89:    width,
+100:  left: (bounds.x / compositionWidth) * layout.width,
+102:  width: (bounds.width / compositionWidth) * layout.width,
+
+ succeeded in 19217ms:
+........................................................................ [ 22%]
+........................................................................ [ 45%]
+........................................................................ [ 68%]
+........................................................................ [ 91%]
+............................                                             [100%]
+316 passed in 18.42s
+
+exec
+/bin/bash -lc "sed -n '600,665p' /home/user/work/app/src/tools/video-editor/hooks/useTimelineCommandsService.ts; rg -n 'updateClip|patch:.*x|x: 100|cropTop' /home/user/work/app/src/tools/video-editor/hooks/useTimelineCommandsService*.test* | head -45; rg -n 'export.*updateClipInConfig|function updateClipInConfig' /home/user/work/app/src/tools/video-editor/lib/editor-utils.ts; sed -n '185,224p' astrid/sdk/timeline/_recording.py; git diff --exit-code -- tests/editing_conformance/fixtures; git status --short" in /home/user/work/wt/agt-m2-position-set
+ succeeded in 73ms:
+        targetPlan.preparedCurrent,
+      );
+    },
+
+    updateClip(input) {
+      const readOnly = checkTimelineEditable();
+      if (readOnly) return readOnly;
+      const state = getMountedState();
+      if (!state) {
+        return failure('editor_not_mounted', 'Timeline commands are only available in a mounted editor.');
+      }
+
+      const current = getCurrentData(state);
+      if (!current) {
+        return failure('timeline_unavailable', 'Timeline data is not loaded.');
+      }
+
+      const clip = getResolvedClip(current, input.clipId);
+      if (!clip) {
+        return failure('clip_not_found', `Clip '${input.clipId}' was not found.`);
+      }
+
+      // --- M3 managed-object guard ---
+      const managedBlock = checkManagedClip(input.clipId);
+      if (managedBlock) return managedBlock;
+
+      if (input.patch.track) {
+        const targetTrack = getTrackById(current.resolvedConfig, input.patch.track);
+        if (!targetTrack) {
+          return failure('track_not_found', `Track '${input.patch.track}' was not found.`);
+        }
+        const clipTrackKind = getClipTrackKind(current, clip);
+        if (targetTrack.kind !== clipTrackKind) {
+          return failure('invalid_argument', `Clip '${input.clipId}' cannot be moved to ${targetTrack.kind} track '${targetTrack.id}'.`);
+        }
+      }
+
+      const nextConfig = updateClipInConfig(current.resolvedConfig, input.clipId, (existingClip) => ({
+        ...existingClip,
+        ...input.patch,
+        ...(typeof input.patch.at === 'number' ? { at: Math.max(0, roundTimelineValue(input.patch.at)) } : {}),
+      }));
+
+      return applyValidatedMutation(
+        store,
+        current,
+        {
+          type: 'config',
+          resolvedConfig: nextConfig,
+        },
+        { clipId: input.clipId },
+        {
+          selectedClipId: input.clipId,
+          selectedTrackId: input.patch.track ?? clip.track,
+        },
+      );
+    },
+
+    moveClip(input) {
+      const readOnly = checkTimelineEditable();
+      if (readOnly) return readOnly;
+      const state = getMountedState();
+      if (!state) {
+        return failure('editor_not_mounted', 'Timeline commands are only available in a mounted editor.');
+      }
+
+rg: /home/user/work/app/src/tools/video-editor/hooks/useTimelineCommandsService*.test*: IO error for operation on /home/user/work/app/src/tools/video-editor/hooks/useTimelineCommandsService*.test*: No such file or directory (os error 2)
+152:export const updateClipInConfig = (
+            self.read(owner + '/shot', ['shot_id'])
+        if self.state.get(ref, []) != ABSENT:
+            raise CommandError('created identity is occupied', kind='identity_collision', ref=ref)
+        self.read(ref)
+        self.write(ref, [], value)
+        self.record['created'].append({'ref': ref, 'kind': 'asset', 'owner': owner})
+        return ref
+
+    def compile_inputs(self):
+        # The compiler retains this immutable input closure. These pins do not
+        # imply that the move evaluated an anchor or any document settings.
+        mapping = self.state.bundle.get('source_mapping', {})
+        retained = mapping.get('_runtime_document', {}).get('dependency_manifest', {}).get('documents', [])
+        from astrid.core.timeline.authoring_bundle import _digest
+        for capture in mapping.get('pinned_documents', []):
+            pin = capture['pin']
+            if pin in retained:
+                kind = 'transcript' if capture['document']['kind'] == 'media.transcript' else 'source'
+                self.dependency('compile.document:' + _digest(pin), kind, pin)
+
+    def compile_mirrors(self):
+        parent = self.state.bundle['parent']
+        if self.mirrored_clips:
+            before = self.state.get('parent', ['config', 'clips'])
+            after = present(parent['clips'])
+            if not equal(before, after):
+                self.record['derived_writes'].append({
+                    "ref": "parent", "path": ['config', 'clips'], "before": before,
+                    "after": after, "cause": self.record['ordinal']})
+                self.state.set('parent', ['config', 'clips'], after)
+
+    def finish(self, *, capture=False):
+        command = self.record['command']
+        if capture:
+            # Public replay guards describe the input; the record retains actual
+            # observations made between the deterministic recipe's own writes.
+            command['reads'], command['selections'] = [], []
+            for read in self.record['reads']:
+                claim = {**read, 'state': self.command_input.get(read['ref'], read['path'])}
+                if not any(equal(claim, prior) for prior in command['reads']):
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+?? design/
+?? tests/editing_conformance/fixtures/recipe_m2_app_clip_position.json
+?? tests/editing_conformance/test_recipe_clip_position.py
+?? tests/fixtures/published-command-schemas/
+?? tests/sdk/command_schema_compatibility.py
+?? tests/sdk/test_timeline_clip_position_provider.py
+
+codex
+All 316 targeted tests pass, including provider acceptance, exact undo/redo, conflicts and ABA refusal. Lint passed, and all existing tracked golden fixtures are unchanged. I’m finishing the report; full suites and browser/socket tests are excluded by the brief.
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_clip_scalar_commands.py tests/editing_conformance/test_recipe_clip_position.py tests/sdk/test_timeline_clip_position_provider.py tests/sdk/command_schema_compatibility.py; git diff --check; git diff --exit-code -- tests/editing_conformance/fixtures; git ls-files tests/editing_conformance/fixtures | wc -l; git status --short' in /home/user/work/wt/agt-m2-position-set
+ succeeded in 193ms:
+All checks passed!
+16
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+?? design/
+?? tests/editing_conformance/fixtures/recipe_m2_app_clip_position.json
+?? tests/editing_conformance/test_recipe_clip_position.py
+?? tests/fixtures/published-command-schemas/
+?? tests/sdk/command_schema_compatibility.py
+?? tests/sdk/test_timeline_clip_position_provider.py
+
+exec
+/bin/bash -lc "sed -n '150,175p' /home/user/work/app/src/tools/video-editor/lib/editor-utils.ts; rg --files /home/user/work/app/src/tools/video-editor | rg 'ommandsService.*test|commands.*test' | head -15" in /home/user/work/wt/agt-m2-position-set
+ succeeded in 0ms:
+};
+
+export const updateClipInConfig = (
+  config: ResolvedTimelineConfig,
+  clipId: string,
+  updater: (clip: ResolvedTimelineClip) => ResolvedTimelineClip,
+): ResolvedTimelineConfig => {
+  let didUpdate = false;
+  const clips = config.clips.map((clip) => {
+    if (clip.id !== clipId) {
+      return clip;
+    }
+
+    didUpdate = true;
+    return updater(clip);
+  });
+
+  return didUpdate ? { ...config, clips } : config;
+};
+
+export const getClipVolume = (clip: ResolvedTimelineClip): number => {
+  return clip.volume ?? 1;
+};
+
+export const isClipMuted = (clip: ResolvedTimelineClip): boolean => {
+  return getClipVolume(clip) <= 0;
+/home/user/work/app/src/tools/video-editor/commands/authoringBundle.moveOpaque.test.ts
+/home/user/work/app/src/tools/video-editor/commands/clipMoveCapture.test.ts
+/home/user/work/app/src/tools/video-editor/commands/semanticGestures.test.ts
+/home/user/work/app/src/tools/video-editor/commands/media.test.ts
+/home/user/work/app/src/tools/video-editor/commands/commitSession.test.ts
+/home/user/work/app/src/tools/video-editor/commands/authoringBundle.test.ts
+/home/user/work/app/src/tools/video-editor/commands/commitOutbox.test.ts
+/home/user/work/app/src/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts
+/home/user/work/app/src/tools/video-editor/lib/shot-group-commands.test.ts
+/home/user/work/app/src/tools/video-editor/lib/shot-group-pack-commands.test.ts
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-position-set/design/m2-position-contract.md
+diff --git a/astrid/sdk/timeline/_clip_scalar_commands.py b/astrid/sdk/timeline/_clip_scalar_commands.py
+index bedbed1643d7c18129c08d4cef3b5cd264402903..a72eecff5ad5b424a26421ac630a8a7e16686180
+--- a/astrid/sdk/timeline/_clip_scalar_commands.py
++++ b/astrid/sdk/timeline/_clip_scalar_commands.py
+@@ -104,5 +104,5 @@
+ 
+ 
+ def capture_clip_set(bundle, select, *, values=None, clear=()):
+-    """Capture source hold set/clear and explicit raw asset/transition removal."""
++    """Capture hold/position leaves and explicit raw asset/transition removal."""
+     return _capture(bundle, 'clip.set', select, values, clear)
+diff --git a/design/m2-position-contract.md b/design/m2-position-contract.md
+index 3182b261ed16fb591f3915e4822158a4a1477cc3..47af24e6ac70c94561ccb92074f6e3a201805114
+--- a/design/m2-position-contract.md
++++ b/design/m2-position-contract.md
+@@ -9,6 +9,9 @@
+ `hooks/clip-editing/useClipPositioning.ts` resets those four plus `cropTop`,
+ `cropBottom`, `cropLeft`, `cropRight` by removing their presence.
+ `lib/timeline-data.ts` copies these exact flat raw clip fields to/from ClipMeta.
++`hooks/useTimelineCommandsService.ts#updateClip` spreads `input.patch` onto
++the existing clip through `lib/editor-utils.ts#updateClipInConfig`, which updates
++only the matching clip ID. Its special rounding applies only to timing `at`.
+ There is **no nested `position` object**. The raw Agent/main
+ `astrid/core/timeline/schema/timeline-config.schema.json#/definitions/TimelineClip`
+ declares all eight as numbers, without ranges. The panel's opacity slider is a
+diff --git a/tests/editing_conformance/test_recipe_clip_position.py b/tests/editing_conformance/test_recipe_clip_position.py
+index 60ee5fa10693c652929732bf0432eadef025733e..044745d23a1ebb1ea5855d920d41397696829fff
+--- a/tests/editing_conformance/test_recipe_clip_position.py
++++ b/tests/editing_conformance/test_recipe_clip_position.py
+@@ -165,8 +165,14 @@
+     assert all(dep['kind'] != 'time-map' for dep in plan.records[0]['dependencies'])
+     assert not any(read['path'] in [['at'], ['hold'], ['speed']] for read in plan.records[0]['reads'])
+     before, after = (compile_authoring_candidate(value) for value in (original, plan.bundle))
+-    assert [(c['at'], c.get('hold'), c.get('speed')) for c in before.parent_payload['clips']] == [
+-        (c['at'], c.get('hold'), c.get('speed')) for c in after.parent_payload['clips']]
++    def timing(compilation):
++        publication = compilation.publication
++        configs = [publication['parent_composition'], *(
++            image['payload'] for image in publication['internal_timeline_revisions'])]
++        return sorted(json.dumps([{key: value for key, value in row.items() if key in (
++            'id', 'at', 'hold', 'from', 'to', 'speed', 'app')}
++            for row in config['clips']], sort_keys=True) for config in configs)
++    assert timing(before) == timing(after)
+ 
+ 
+ def test_position_schema_is_closed_numeric_and_preserves_published_ordinary_args():
+diff --git a/tests/sdk/test_timeline_clip_position_provider.py b/tests/sdk/test_timeline_clip_position_provider.py
+index 3431bfd3d23c8468cace8b447816daf3f4d4b543..f40346aa9d3a3586b3dd4d65416c717c477d248e
+--- a/tests/sdk/test_timeline_clip_position_provider.py
++++ b/tests/sdk/test_timeline_clip_position_provider.py
+@@ -6,6 +6,7 @@
+ import pytest
+ 
+ from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
++from astrid.sdk.timeline._command_state import State
+ from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+ from astrid.sdk.timeline.capture import capture_move
+ from astrid.sdk.timeline.commands import execute
+@@ -29,9 +30,16 @@
+     positioned = copy.deepcopy(first['data']['canonical_document'])
+     assert clip(current(realm), 'occurrence:shared-sibling/clip:f2-agent-clip') == clip(
+         current(DetachedRealm(original)), 'occurrence:shared-sibling/clip:f2-agent-clip')
++    undo_set = realm.call([inverse([first['receipt']['receipt_id']])])
++    assert undo_set['data']['canonical_document'] == original
++    redo_set = realm.call([inverse([undo_set['receipt']['receipt_id']])])
++    assert redo_set['data']['canonical_document'] == positioned
+     reset = realm.call([capture_clip_set(current(realm), ref, clear=FIELDS)])
+     assert all(field not in clip(current(realm), ref) for field in FIELDS)
+-    assert reset['data']['canonical_document'] == original
++    # A new reset publication has new revision IDs even when raw content
++    # returns to its original value. Compare every owner's complete config.
++    for owner in ('parent', 'occurrence:f2-occurrence', 'occurrence:shared-sibling'):
++        assert State(current(realm)).config(owner) == State(current(DetachedRealm(original))).config(owner)
+     undo_reset = realm.call([inverse([reset['receipt']['receipt_id']])])
+     assert undo_reset['data']['canonical_document'] == positioned
+     redo_reset = realm.call([inverse([undo_reset['receipt']['receipt_id']])])
+
+exec
+/bin/bash -lc "cat > notes/report.md <<'EOF'
+# agt-m2-position-set
+
+Implemented the ordinary position family on existing version-1 "'`clip.set`.
+M2 remains held.
+
+- Published `/home/user/work/wt/agt-m2-position-set/design/m2-position-contract.md`
+  before implementation with App mapping, units, API exports and golden path.
+- Actual App position/updateClip writes are flat `x`, `y`, `width`, `height`;
+  reset also removes `cropTop`, `cropBottom`, `cropLeft`, `cropRight`.
+  Extended the existing closed args for precisely those eight numeric leaves.
+- Existing handler already does the requested stable-ref, leaf-recorded writes
+  and clears. Product Python change is one docstring line; no new handler,
+  operation, normalization, bounds, timing policy or save dependencies.
+- Tests cover App panel/update/reset golden, independent leaves/properties,
+  same-leaf conflicts, tagged opaque/null/empty/ABSENT/expression restoration,
+  full inverse/redo, occurrence isolation, dependency changes, unchanged writes,
+  ABA, rational fps and unchanged compiled timing, unknown namespaces.
+- Imported only the test helper and ordinary Runtime 0.2.3 frozen schema from
+  `752c43ad55a588de2058ec85218b3f97ebe921b7` to prove schema containment.
+  No item-pattern schema import. All 16 existing golden files are byte-identical.
+
+Validation (from `/home/user/work/wt/agt-m2-position-set`):
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_clip_position.py tests/sdk/test_timeline_clip_position_provider.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_composed_schema.py
+```
+
+**316 passed in 18.42s.** Real provider via the suite'"'s existing in-memory Runtime
+ABI fixture; no sockets. Earlier development runs had new-test assertion errors
+(1 failed / 271 passed, then 3 failed / 313 passed): a nonexistent compilation
+attribute, revision-order comparison, and comparing newly published revision IDs
+to bootstrap IDs. Corrected the assertions to compare compiled timing independent
+of revision sorting and complete owner configs on reset. Exact canonical-document
+comparison remains asserted for inverse/redo; no passing behavior tests changed.
+
+"'```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_clip_scalar_commands.py tests/editing_conformance/test_recipe_clip_position.py tests/sdk/test_timeline_clip_position_provider.py tests/sdk/command_schema_compatibility.py
+```
+
+**All checks passed.**
+
+```sh
+git diff --check
+git diff --exit-code -- tests/editing_conformance/fixtures
+git ls-files tests/editing_conformance/fixtures | wc -l
+```
+
+**Both diff commands passed; 16 tracked existing fixtures, unchanged.**
+
+Decisions: follow the actual flat App/raw-schema mapping, including reset crop
+leaves. Position-pane opacity is a separate property, outside the position/reset
+family. Raw schema numbers have no ranges, so preserve negative/offscreen values,
+zero/negative sizes and out-of-range crop fractions without clamping. Keep
+Runtime-owned generated DTOs/lock untouched; the canonical JSON args are the
+closed typed source of truth and must feed the next normal Runtime generation.
+
+Blocked: none in this worker scope. No evidence contradicts the plan.
+
+Not run: full suites, make check, Runtime/App suites, installs, network, browser,
+localhost, or live socket tests, per brief. No commits, ref operations or pushes.
+
+Next: manager reviews/integrates while holding M2; App consumes the absolute
+contract and portable fixture. Runtime owner regenerates its existing closed
+ClipSetArgs/client artifacts from the widened canonical schema during normal
+cross-repo qualification. This worker does not claim cross-product qualification.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-position-set/commit-msg <<'"'EOF'
+feat(timeline): support position leaf set and clear
+
+Extend existing closed clip.set args with the App's flat canvas box and
+crop fields. Preserve raw numeric units, stable references, leaf guards,
+opaque state and exact inverses without adding normalization or save work.
+
+Add App-shaped portable goldens, provider and conformance coverage, plus
+published ordinary schema containment. Keep all 16 existing goldens intact.
+EOF
+git diff --check" in /home/user/work/wt/agt-m2-position-set
+ succeeded in 117ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+for root in (Path('astrid'), Path('tests')):
+    for cache in root.rglob('__pycache__'):
+        shutil.rmtree(cache)
+for name in ('.pytest_cache', '.ruff_cache'):
+    path = Path(name)
+    if path.is_dir():
+        shutil.rmtree(path)
+PY
+git status --short" in /home/user/work/wt/agt-m2-position-set
+ succeeded in 158ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+?? design/
+?? notes/
+?? tests/editing_conformance/fixtures/recipe_m2_app_clip_position.json
+?? tests/editing_conformance/test_recipe_clip_position.py
+?? tests/fixtures/published-command-schemas/
+?? tests/sdk/command_schema_compatibility.py
+?? tests/sdk/test_timeline_clip_position_provider.py
+
+codex
+Implemented `clip.set` SET/CLEAR for App’s eight flat position/crop leaves, preserving raw units and existing leaf guards/inverses.
+
+- **316 targeted tests passed**; Ruff and diff checks passed.
+- All **16 existing goldens remain byte-identical**.
+- No blockers. Full suites, browsers and sockets were not run.
+- Contract published; commit message written. **M2 remains held**.
+
+[Contract](/home/user/work/wt/agt-m2-position-set/design/m2-position-contract.md) · [Report with exact test commands/results](/home/user/work/wt/agt-m2-position-set/notes/report.md)
+
+Next: manager review, App adoption, then Runtime-owned schema/client regeneration during cross-repo qualification.
+tokens used
+125,517
+Implemented `clip.set` SET/CLEAR for App’s eight flat position/crop leaves, preserving raw units and existing leaf guards/inverses.
+
+- **316 targeted tests passed**; Ruff and diff checks passed.
+- All **16 existing goldens remain byte-identical**.
+- No blockers. Full suites, browsers and sockets were not run.
+- Contract published; commit message written. **M2 remains held**.
+
+[Contract](/home/user/work/wt/agt-m2-position-set/design/m2-position-contract.md) · [Report with exact test commands/results](/home/user/work/wt/agt-m2-position-set/notes/report.md)
+
+Next: manager review, App adoption, then Runtime-owned schema/client regeneration during cross-repo qualification.

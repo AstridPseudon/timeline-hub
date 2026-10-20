@@ -1,0 +1,9 @@
+name=agt-m2-private392-matched-native-door-pair
+repo=agent
+base=1303ce6be32e7bd96ed5c6b35afcb15819e81b50
+base_sha=1303ce6b
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-private392-matched-native-door-pair
+started=2026-10-20T21:03:23Z

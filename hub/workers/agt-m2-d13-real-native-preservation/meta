@@ -1,0 +1,9 @@
+name=agt-m2-d13-real-native-preservation
+repo=agent
+base=tl/agt-m2-d13-native-current-cut
+base_sha=22cc4559
+model=gpt-5.6-luna
+effort=high
+heavy=1
+worktree=/home/user/work/wt/agt-m2-d13-real-native-preservation
+started=2026-10-20T14:23:56Z

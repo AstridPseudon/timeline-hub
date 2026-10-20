@@ -1,0 +1,400 @@
++
++def test_parent_source_window_and_disjoint_opaque_edit_survive_replay_and_inverse():
++    before = target_bundle()
++    assembled, pins, verified = assembled_inputs()
++    row = {**assembled['timeline']['clips'][0], 'from': .5, 'to': 2, 'hold': 1.5, 'speed': 1.25}
++    plan = commands.execute(before, [call('spike.add-media', {'row': row, 'media': pins[0]})],
++                            verified_media=verified)
++    head = copy.deepcopy(before)
++    head['parent']['unknown']['later'] = {'asset': row['asset'], 'literal': None}
++    rebased = replay(plan, head, verified_media=verified)
++    assert rebased.bundle['parent']['clips'] == [row]
++    # Opaque values on the parent are neither normalized nor treated as edges.
++    assert inverse(rebased.bundle, rebased.records).bundle == head
++    with pytest.raises(CommandError, match='intervening'):
++        inverse(plan.bundle, plan.records, [later('parent',
++            ['registry', 'assets', row['asset'], 'type'], 'video')])
++
++
++def test_explicit_replacement_refuses_occurrence_ownership():
++    before = bundle_from_document(document_fixture())
++    refs = ['parent/clip:' + row['id'] for row in before['parent']['clips']]
++    with pytest.raises(CommandError, match='flat parent ownership'):
++        lower(before, replace_clips=refs)
++
++
++def test_populated_target_requires_explicit_observed_replacement():
++    before = target_bundle(True)
++    with pytest.raises(CommandError, match='explicit prior populated target'):
++        lower(before)
++    assert before == target_bundle(True)
++
++
++@pytest.mark.parametrize('damage', ['clip-collision', 'asset-collision', 'missing-media',
++    'wrong-variant', 'wrong-catalog', 'target-value', 'target-order', 'target-member', 'track'])
++def test_original_capture_refuses_collisions_missing_media_and_target_change(damage):
++    before = target_bundle(True)
++    refs = ['parent/clip:' + row['id'] for row in before['parent']['clips']]
++    plan, verified = lower(before, replace_clips=refs)
++    head = copy.deepcopy(before)
++    if damage == 'clip-collision':
++        row = copy.deepcopy(plan.commands[-1]['args']['row'])
++        head['parent']['clips'].append(row)
++    elif damage == 'asset-collision':
++        State(head).config('parent')['registry']['assets'][derive_asset_key('stitch-task-42', 0)] = None
++    elif damage == 'missing-media':
++        verified.pop()
++    elif damage in ('wrong-variant', 'wrong-catalog'):
++        verified[0]['selection']['variant_id' if damage == 'wrong-variant' else 'catalog_digest'] = 'other'
++    elif damage == 'target-value':
++        head['parent']['clips'][0]['opaque']['values'].append('changed')
++    elif damage == 'target-order':
++        head['parent']['clips'].reverse()
++    elif damage == 'target-member':
++        head['parent']['clips'].pop()
++    else:
++        State(head).config('parent')['tracks'][0]['hidden'] = True
++    head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
++    immutable = copy.deepcopy(head)
++    with pytest.raises(CommandError):
++        replay(plan, head, verified_media=verified)
++    assert head == immutable
++
++
++def test_registry_create_or_require_never_upserts_or_removes_reused_binding():
++    before = target_bundle()
++    alias = derive_asset_key('stitch-task-42', 0)
++    pin = assembled_inputs()[1][0]
++    binding = {'media_id': MEDIA, 'type': 'video',
++               'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
++    State(before).config('parent')['registry']['assets'][alias] = binding
++    plan, _ = lower(before)
++    assert 'parent/asset:' + alias not in plan.commands[-2]['created']
++    assert inverse(plan.bundle, plan.records).bundle == before
++    binding['opaque'] = None
++    with pytest.raises(CommandError, match='existing registry binding'):
++        lower(before)
++
++
++def test_intervening_aba_and_later_created_asset_dependents_refuse_undo():
++    before = target_bundle()
++    plan, _ = lower(before)
++    ref = 'parent/asset:' + derive_asset_key('stitch-task-42', 0)
++    with pytest.raises(CommandError, match='intervening'):
++        inverse(plan.bundle, plan.records, [later(ref, ['type'], 'video')])
++    head = copy.deepcopy(plan.bundle)
++    row = {**head['parent']['clips'][0], 'id': 'later-clip'}
++    head['parent']['clips'].append(row)
++    head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
++    with pytest.raises(CommandError):
++        inverse(head, plan.records)
++
++
++@pytest.mark.parametrize('args', [{'replace_clips': [], 'extra': None}, {'replace_clips': ['parent/clip:x'] * 2},
++    {'replace_clips': ['occurrence:x/clip:y']}, {}])
++def test_target_guard_args_are_closed(args):
++    with pytest.raises(CommandError):
++        commands.execute(target_bundle(), [call('spike.assembled-target', args)])
++
++
++def test_settled_assembly_normalization_numeric_forwarding_and_normal_outbox(connected):
++    plan, verified = lower(target_bundle())
++    proposal = {'schema_version': 1, 'producer': {'task_id': 'stitch-task-42', 'attempt_id': 'attempt',
++        'executor_id': 'worker', 'fence': 1, 'runtime_epoch': 2},
++        'admitted_target': {'project_id': 'p', 'timeline_id': 't',
++            'base_revision_id': 'r0', 'base_publication_id': 'pub0'},
++        'commands': plan.commands, 'rationale': 'Review café assembly'}
++    proposal['proposal_digest'] = _digest(proposal)
++    raw = _json(proposal).encode()
++    forwarded = subprocess.run(['node', '-e',
++        "process.stdout.write(JSON.stringify(JSON.parse(require('fs').readFileSync(0,'utf8'))))"],
++        input=raw, capture_output=True, check=True, timeout=15)
++    forwarded = json.loads(forwarded.stdout)
++    assert type(proposal['commands'][-2]['args']['row']['at']) is float
++    assert type(forwarded['commands'][-2]['args']['row']['at']) is int
++    batch = build_producer_batch(forwarded)
++    descriptor = {'size': len(raw), 'digest': 'sha256:' + hashlib.sha256(raw).hexdigest()}
++    check_forwarding(batch, descriptor, raw=raw)
++    assert equal(batch['commands'][1:], plan.commands)
++    assert commands.execute(target_bundle(), batch['commands'], verified_media=verified).bundle == plan.bundle
++    session = open_session(connected)
++    assert session.queue_proposal(forwarded) == batch['commands']
++    state = session.outbox.read()
++    assert state['base'] == {'revision_id': 'r0', 'publication_id': 'pub0'}
++    assert state['pending'] == batch['commands']
++    assert state['rationale'] == proposal['rationale']
++    changed = copy.deepcopy(batch)
++    changed['commands'][-2]['args']['row']['at'] = True
++    with pytest.raises(ValueError, match='forwarded commands'):
++        check_forwarding(changed, descriptor, raw=raw)
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-producer-insertion-contract /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider tests/editing_conformance/test_producer_insertion_spike.py tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/packs/rendering/test_assemble_timeline.py tests/sdk/test_timeline_producer_guard.py --tb=short' in /home/user/work/wt/agt-m2-producer-insertion-contract
+exec
+/bin/bash -lc 'wc -lw /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-producer-insertion.md tests/editing_conformance/test_producer_insertion_spike.py && /home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/test_producer_insertion_spike.py && git diff --check && git status --short' in /home/user/work/wt/agt-m2-producer-insertion-contract
+ succeeded in 484ms:
+   55  1232 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-producer-insertion.md
+  356  1400 tests/editing_conformance/test_producer_insertion_spike.py
+  411  2632 total
+All checks passed!
+?? tests/editing_conformance/test_producer_insertion_spike.py
+
+ succeeded in 16578ms:
+........................................................................ [ 32%]
+........................................................................ [ 65%]
+........................................................................ [ 97%]
+.....                                                                    [100%]
+221 passed in 15.88s
+
+exec
+/bin/bash -lc "nl -ba tests/editing_conformance/test_producer_insertion_spike.py | sed -n '130,250p' && nl -ba tests/editing_conformance/test_producer_insertion_spike.py | tail -50 && git diff --numstat" in /home/user/work/wt/agt-m2-producer-insertion-contract
+ succeeded in 143ms:
+   130	    parent['clips'] = rows
+   131	    parent['config']['clips'] = copy.deepcopy(rows)
+   132	    document['shot_revisions'] = []
+   133	    document['internal_timeline_revisions'] = []
+   134	    document['dependency_manifest']['shots'] = []
+   135	    document['dependency_manifest']['internal_timelines'] = []
+   136	    document['parent_revision']['content_digest'] = _digest(parent)
+   137	    return bundle_from_document(document)
+   138	
+   139	
+   140	def lower(bundle, *, replace_clips=(), guarded=True):
+   141	    """Normalize legacy assembly ONCE, before capturing/hashing the settled proposal."""
+   142	    assembled, pins, verified = assembled_inputs()
+   143	    calls = [call('spike.assembled-target', {'replace_clips': list(replace_clips)})] if guarded else []
+   144	    calls.extend(call('clip.delete', {}, ref) for ref in replace_clips)
+   145	    if not any(row['id'] == 'visual' for row in State(bundle).config('parent')['tracks']):
+   146	        calls.append(call('track.create', {'row': assembled['timeline']['tracks'][0]}))
+   147	    for row, pin in zip(assembled['timeline']['clips'], pins):
+   148	        # Legacy assembly emits [from,to); native media recipes also require hold.
+   149	        row = {**row, 'hold': row['to'] - row['from']}
+   150	        calls.append(call('spike.add-media', {'row': row, 'media': pin}))
+   151	    return commands.execute(bundle, calls, verified_media=verified), verified
+   152	
+   153	
+   154	@pytest.mark.parametrize('populated', [False, True])
+   155	def test_assembled_insert_or_explicit_replace_exact_inverse_redo(populated):
+   156	    before = target_bundle(populated)
+   157	    old = copy.deepcopy(before)
+   158	    refs = ['parent/clip:' + row['id'] for row in before['parent']['clips']]
+   159	    plan, verified = lower(before, replace_clips=refs)
+   160	    assert before == old
+   161	    assert replay(plan, before, verified_media=verified).records == plan.records
+   162	    result = document_from_bundle(plan.bundle)
+   163	    reloaded = bundle_from_document(json.loads(json.dumps(result)))
+   164	    undone = inverse(reloaded, plan.records)
+   165	    # Pure immutable boundary fixture exercises existing manifest restoration;
+   166	    # it is not an acceptance receipt or a provider-acceptance simulation.
+   167	    entry = {'revision_id': result['parent_revision']['revision_id'],
+   168	             'previous': {'revision_id': before['source_mapping']['_runtime_document']['parent_revision']['revision_id']},
+   169	             'records': {'commands': plan.records}}
+   170	    history = AcceptedRecords([entry], plan.records, lambda _: (before, reloaded))
+   171	    assert document_from_bundle(undone.bundle, source_bundles=(before,), inverse_records=history) == document_from_bundle(before)
+   172	    accepted = accepted_boundaries(undone.records, reloaded, undone.bundle)
+   173	    assert document_from_bundle(inverse(undone.bundle, accepted).bundle) == result
+   174	    parent = result['parent_revision']['payload']
+   175	    assert parent['config']['tracks'] == old['parent']['config']['tracks']
+   176	    assert parent['config']['output'] == old['parent']['config']['output']
+   177	    assert parent['unknown'] == old['parent']['unknown']
+   178	    assert parent['registry']['assets']['picture'] == old['parent']['registry']['assets']['picture']
+   179	    assert document_from_bundle(before)['dependency_manifest']['media'][0] in result['dependency_manifest']['media']
+   180	    assert [row['id'] for row in parent['clips']] == [derive_clip_id('stitch-task-42', i) for i in (0, 1)]
+   181	    assert [row['asset'] for row in parent['clips']] == [derive_asset_key('stitch-task-42', i) for i in (0, 1)]
+   182	    assert [(row['at'], row['from'], row['to'], row['hold']) for row in parent['clips']] == [
+   183	        (0, 0, 1.5, 1.5), (1.5, 0, 2.5, 2.5)]
+   184	    media_records = plan.records[-2:]
+   185	    for i, record in enumerate(media_records):
+   186	        assert record['dependencies'] == [{'key': 'media.new', 'kind': 'media', 'policy': 'exact',
+   187	                                            'pin': verified[i]['selection']}]
+   188	        alias = derive_asset_key('stitch-task-42', i)
+   189	        assert alias != verified[i]['selection']['asset']
+   190	        assert {item['ref'] for item in record['created']} == {
+   191	            'parent/asset:' + alias, 'parent/clip:' + derive_clip_id('stitch-task-42', i)}
+   192	    assert plan.records[0]['writes'] == []
+   193	    assert all(write['ref'] != 'parent' for record in plan.records for write in record['writes'])
+   194	
+   195	
+   196	def test_parent_media_append_creates_visual_track_and_keeps_shared_closure_pins():
+   197	    document = document_fixture()
+   198	    before = bundle_from_document(document)
+   199	    # Generic parent add also composes without replacing existing occurrences.
+   200	    plan, _ = lower(before, guarded=False)
+   201	    after = document_from_bundle(plan.bundle)
+   202	    assert plan.records[0]['command']['op'] == 'track.create'
+   203	    for key in ('shot_revisions', 'internal_timeline_revisions'):
+   204	        assert after[key] == document[key]
+   205	    for key in ('shots', 'internal_timelines', 'documents'):
+   206	        assert after['dependency_manifest'][key] == document['dependency_manifest'][key]
+   207	    assert after['parent_revision']['payload']['occurrences'] == document['parent_revision']['payload']['occurrences']
+   208	    assert inverse(plan.bundle, plan.records).bundle == before
+   209	
+   210	
+   211	def test_empty_target_creates_first_track_without_overwriting_parent():
+   212	    before = target_bundle()
+   213	    before['parent']['config']['tracks'] = []
+   214	    plan, _ = lower(before)
+   215	    assert [record['command']['op'] for record in plan.records] == [
+   216	        'spike.assembled-target', 'track.create', 'spike.add-media', 'spike.add-media']
+   217	    assert inverse(plan.bundle, plan.records).bundle == before
+   218	
+   219	
+   220	def test_ordinary_add_collision_never_becomes_replacement():
+   221	    plan, verified = lower(target_bundle())
+   222	    before = copy.deepcopy(plan.bundle)
+   223	    with pytest.raises(CommandError) as error:
+   224	        commands.execute(plan.bundle, plan.commands[-2:], verified_media=verified)
+   225	    assert error.value.kind == 'identity_collision'
+   226	    assert plan.bundle == before
+   227	
+   228	
+   229	def test_parent_source_window_and_disjoint_opaque_edit_survive_replay_and_inverse():
+   230	    before = target_bundle()
+   231	    assembled, pins, verified = assembled_inputs()
+   232	    row = {**assembled['timeline']['clips'][0], 'from': .5, 'to': 2, 'hold': 1.5, 'speed': 1.25}
+   233	    plan = commands.execute(before, [call('spike.add-media', {'row': row, 'media': pins[0]})],
+   234	                            verified_media=verified)
+   235	    head = copy.deepcopy(before)
+   236	    head['parent']['unknown']['later'] = {'asset': row['asset'], 'literal': None}
+   237	    rebased = replay(plan, head, verified_media=verified)
+   238	    assert rebased.bundle['parent']['clips'] == [row]
+   239	    # Opaque values on the parent are neither normalized nor treated as edges.
+   240	    assert inverse(rebased.bundle, rebased.records).bundle == head
+   241	    with pytest.raises(CommandError, match='intervening'):
+   242	        inverse(plan.bundle, plan.records, [later('parent',
+   243	            ['registry', 'assets', row['asset'], 'type'], 'video')])
+   244	
+   245	
+   246	def test_explicit_replacement_refuses_occurrence_ownership():
+   247	    before = bundle_from_document(document_fixture())
+   248	    refs = ['parent/clip:' + row['id'] for row in before['parent']['clips']]
+   249	    with pytest.raises(CommandError, match='flat parent ownership'):
+   250	        lower(before, replace_clips=refs)
+   307	    before = target_bundle()
+   308	    plan, _ = lower(before)
+   309	    ref = 'parent/asset:' + derive_asset_key('stitch-task-42', 0)
+   310	    with pytest.raises(CommandError, match='intervening'):
+   311	        inverse(plan.bundle, plan.records, [later(ref, ['type'], 'video')])
+   312	    head = copy.deepcopy(plan.bundle)
+   313	    row = {**head['parent']['clips'][0], 'id': 'later-clip'}
+   314	    head['parent']['clips'].append(row)
+   315	    head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
+   316	    with pytest.raises(CommandError):
+   317	        inverse(head, plan.records)
+   318	
+   319	
+   320	@pytest.mark.parametrize('args', [{'replace_clips': [], 'extra': None}, {'replace_clips': ['parent/clip:x'] * 2},
+   321	    {'replace_clips': ['occurrence:x/clip:y']}, {}])
+   322	def test_target_guard_args_are_closed(args):
+   323	    with pytest.raises(CommandError):
+   324	        commands.execute(target_bundle(), [call('spike.assembled-target', args)])
+   325	
+   326	
+   327	def test_settled_assembly_normalization_numeric_forwarding_and_normal_outbox(connected):
+   328	    plan, verified = lower(target_bundle())
+   329	    proposal = {'schema_version': 1, 'producer': {'task_id': 'stitch-task-42', 'attempt_id': 'attempt',
+   330	        'executor_id': 'worker', 'fence': 1, 'runtime_epoch': 2},
+   331	        'admitted_target': {'project_id': 'p', 'timeline_id': 't',
+   332	            'base_revision_id': 'r0', 'base_publication_id': 'pub0'},
+   333	        'commands': plan.commands, 'rationale': 'Review café assembly'}
+   334	    proposal['proposal_digest'] = _digest(proposal)
+   335	    raw = _json(proposal).encode()
+   336	    forwarded = subprocess.run(['node', '-e',
+   337	        "process.stdout.write(JSON.stringify(JSON.parse(require('fs').readFileSync(0,'utf8'))))"],
+   338	        input=raw, capture_output=True, check=True, timeout=15)
+   339	    forwarded = json.loads(forwarded.stdout)
+   340	    assert type(proposal['commands'][-2]['args']['row']['at']) is float
+   341	    assert type(forwarded['commands'][-2]['args']['row']['at']) is int
+   342	    batch = build_producer_batch(forwarded)
+   343	    descriptor = {'size': len(raw), 'digest': 'sha256:' + hashlib.sha256(raw).hexdigest()}
+   344	    check_forwarding(batch, descriptor, raw=raw)
+   345	    assert equal(batch['commands'][1:], plan.commands)
+   346	    assert commands.execute(target_bundle(), batch['commands'], verified_media=verified).bundle == plan.bundle
+   347	    session = open_session(connected)
+   348	    assert session.queue_proposal(forwarded) == batch['commands']
+   349	    state = session.outbox.read()
+   350	    assert state['base'] == {'revision_id': 'r0', 'publication_id': 'pub0'}
+   351	    assert state['pending'] == batch['commands']
+   352	    assert state['rationale'] == proposal['rationale']
+   353	    changed = copy.deepcopy(batch)
+   354	    changed['commands'][-2]['args']['row']['at'] = True
+   355	    with pytest.raises(ValueError, match='forwarded commands'):
+   356	        check_forwarding(changed, descriptor, raw=raw)
+
+codex
+All 221 targeted tests passed, and Ruff and whitespace checks passed. I’ll leave the contract ready for manager review. Runtime custody and one-shot acceptance, dual-registry handling, and receipt-to-historical-render crash recovery remain unqualified; the old endpoint, frozen schema and pins are unchanged.
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-producer-insertion.md <<'EOF'
+
+Validation: 24 new pure spike cases plus unchanged assembler/native-media/producer/outbox neighbours, **221 passed in 15.88s**. Exact command and limitations: [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-insertion-contract/notes/report.md). Ruff and diff whitespace checks passed; no full/network/browser/localhost/install runs.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-insertion-contract/commit-msg <<'EOF'
+test(timeline): spike producer insertion and guarded replacement
+
+Exercise assembler identity order, independent immutable media aliases,
+explicit populated-target replacement and exact authored undo/redo through
+existing recipe primitives. Cover refusal, numeric forwarding and normal
+proposal outbox queueing with bounded test-local operations and adapters.
+
+Document the proposed schema and parent registry/inverse gaps in the shared
+orchestrator design. Leave product code, frozen artifacts and the existing
+publication endpoint unchanged pending review and paired qualification.
+EOF
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-insertion-contract/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-insertion-contract/commit-msg.txt
+mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-insertion-contract/notes
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-insertion-contract/notes/report.md <<'EOF'
+# D13 insertion/replacement contract and pure spike
+
+Delivered shared "'`design/m2-producer-insertion.md` (57 lines) and one new test file, `tests/editing_conformance/test_producer_insertion_spike.py` (24 cases). Product code, frozen Bundle2 schema/pins and the old publication writer are unchanged. Both commit-msg and commit-msg.txt are ready.
+
+The design maps actual assembler → host pre-settlement publication → normal uploaded/settled task-output seams, native operations, registered-media reads and main legacy publish behavior, with absolute source links. It preserves source windows, ordered child/clip/asset identities, independent reserved aliases, exact media selections, registry create-or-require, opaque metadata and historical media pins.
+
+Proposed minimal delta for manager review: `timeline.assembled-target {replace_clips:[ordered parent refs]}` explicitly distinguishes empty insertion from populated replacement; `clip.add-media {row,media}` supplies parent insertion with a separate row.asset alias. Replacement composes existing clip.delete, track.create and scoped asset creation in a single batch. This refines the earlier replace-assembled sketch into a read-only guard plus ordinary writes, avoiding another replacement writer. Scope is flat parent replacement; unsupported ownership/dependency shapes refuse visibly. Catalog KEEP and post-Bundle2 text first use remain separate.
+
+Two concrete implementation gaps were exposed and prototyped ONLY under test monkeypatches: State'"'s asset access assumes config.registry despite main's direct parent.registry; inverse asset dependency checking sees stale config.clips during staged parent-row reversal. Proposed implementation budget is ~110 authored lines including registry storage/alias/mirror handling; no product implementation or schema release is authorized by this report. The spike refuses dual registry storage, so that shape still needs native tests/implementation. Immutable-boundary and VerifiedMedia fixtures prove pure semantics, not actual Runtime custody, prepared-provider acceptance or durable one-shot acceptance.
+
+Validation (final source tree):
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-producer-insertion-contract /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider tests/editing_conformance/test_producer_insertion_spike.py tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/packs/rendering/test_assemble_timeline.py tests/sdk/test_timeline_producer_guard.py --tb=short
+```
+
+**221 passed in 15.88s**, including all 24 new spike cases. Earlier exploratory failures identified the test-local parent registry and canonical dependency adaptations, and the need for the existing immutable-boundary media-pin restoration seam; final expectations retain exact document/pin equality.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/test_producer_insertion_spike.py
+git diff --check
+```
+
+Both passed. No full/install/network/browser/localhost tests were run. No tests were weakened, skipped or marked xfail. No build/temp output remains in the worktree.
+
+Permanent native replacement test names and retained old-endpoint tests are listed in the design. Next: manager reviews exact two-op schema/budget; implement and qualify parent registry shapes and canonical dependency reads, then pair with Runtime'"'s settled artifact custody/child-selection fencing/one-shot transactional acceptance. Actual commit→render recovery still requires admitted original base-pair builder, artifact-only host settlement, paired official artifacts, durable receipt+pending-render ACK transition, Runtime accepted checkpoint/historical selector, and exact admission body/key/task locator recovery after later head C. No final Runtime artifact/pin or actual acceptance/historical-render claim. D13 endpoint retirement stays held until full replacement qualification; M2 integration remains held pending PLAN M1.
+EOF
+wc -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-producer-insertion.md
+/home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/test_producer_insertion_spike.py
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-producer-insertion-contract
+ succeeded in 432ms:
+57 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-producer-insertion.md
+All checks passed!
+?? tests/editing_conformance/test_producer_insertion_spike.py
+
+codex
+Delivered the [57-line contract](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-producer-insertion.md) and 24 pure spike cases.
+
+- **Tests:** 221 passed in 15.88s; Ruff and whitespace checks passed. [Full report with exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-insertion-contract/notes/report.md).
+- **Design:** explicit replacement guard plus ordinary delete/add operations; independent reserved aliases and immutable media selections.
+- **Gaps found:** parent registry addressing and stale clip mirrors during inverse dependency checks. Adaptations remain test-local.
+- **Next:** manager review, native implementation and paired Runtime acceptance/recovery qualification. No actual acceptance claim; old endpoint, frozen schema and pins remain unchanged.
+
+Both harness commit-message files are ready. No full, network or browser tests ran.
+tokens used
+172,544
+Delivered the [57-line contract](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-producer-insertion.md) and 24 pure spike cases.
+
+- **Tests:** 221 passed in 15.88s; Ruff and whitespace checks passed. [Full report with exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-insertion-contract/notes/report.md).
+- **Design:** explicit replacement guard plus ordinary delete/add operations; independent reserved aliases and immutable media selections.
+- **Gaps found:** parent registry addressing and stale clip mirrors during inverse dependency checks. Adaptations remain test-local.
+- **Next:** manager review, native implementation and paired Runtime acceptance/recovery qualification. No actual acceptance claim; old endpoint, frozen schema and pins remain unchanged.
+
+Both harness commit-message files are ready. No full, network or browser tests ran.

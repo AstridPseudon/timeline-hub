@@ -1,0 +1,400 @@
+ ProducerAttemptPin = TypedDict('ProducerAttemptPin', {'task_id': str, 'attempt_id': str, 'executor_id': str, 'fence': int, 'runtime_epoch': int, 'admitted_target': 'ProducerAdmittedTarget', 'proposal_digest': 'Digest'})
+ ProducerGuardArgs = TypedDict('ProducerGuardArgs', {'pin': 'ProducerAttemptPin'})
+ SettledProducerProposal = TypedDict('SettledProducerProposal', {'schema_version': Literal[1], 'producer': 'ProducerIdentity', 'admitted_target': 'ProducerAdmittedTarget', 'commands': 'CommandBatch', 'rationale': str, 'proposal_digest': 'Digest'})
++AssembledTargetArgs = TypedDict('AssembledTargetArgs', {'replace_clips': list[str]})
++ClipAddMediaArgs = TypedDict('ClipAddMediaArgs', {'row': 'ClipAddArgsRow', 'media': 'MediaSelection'})
++TimelineInitArgs = TypedDict('TimelineInitArgs', {'name': str, 'slug': str, 'output': 'TimelineInitArgsOutput'})
++WordAnchor = TypedDict('WordAnchor', {'source': str, 'document': 'WordAnchorDocument', 'word_ids': list[str], 'edge': NotRequired[Literal['start', 'end']], 'offset_s': NotRequired[float], 'offset_frames': NotRequired[int]})
++ClipAnchorArgs = TypedDict('ClipAnchorArgs', {'field': Literal['on', 'until'], 'declaration': Union[str, None], 'choice': Union[None, 'WordAnchor']})
++OccurrenceCreateArgs = TypedDict('OccurrenceCreateArgs', {'occurrence_id': str, 'shot_id': str, 'name': str, 'track': str, 'on': float, 'duration': float})
++TextBindingSetArgs = Union[Any, Any]
+ AgentCommandBatch = list['EditCommand']
+ ParentComposition = dict[str, Any]
+ ShotPayload = dict[str, Any]
+@@ -110,6 +117,8 @@
+ TrackCreateArgsRow = TypedDict('TrackCreateArgsRow', {'id': str, 'kind': str})
+ ClipSetArgsVariant1 = TypedDict('ClipSetArgsVariant1', {'values': 'ClipSetArgsVariant1Values', 'clear': list[Literal['hold', 'asset', 'transition']]})
+ ClipSetArgsVariant2 = TypedDict('ClipSetArgsVariant2', {'values': 'ClipSetArgsVariant2Values', 'clear': list[Literal['hold', 'asset', 'transition']]})
++TimelineInitArgsOutput = TypedDict('TimelineInitArgsOutput', {'resolution': Literal['1280x720'], 'fps': Literal[30], 'file': Literal['output.mp4'], 'background': None, 'background_scale': None})
++WordAnchorDocument = TypedDict('WordAnchorDocument', {'document_id': str, 'version': int, 'content_digest': str})
+ MediaSelectionQueryVariant1 = TypedDict('MediaSelectionQueryVariant1', {'asset': 'ID', 'generation_id': 'ID', 'variant_id': 'ID'})
+ MediaSelectionQueryVariant2 = TypedDict('MediaSelectionQueryVariant2', {'association_id': 'ID', 'object_id': 'Digest', 'version': int})
+ TrackSetArgsVariant1Values = TypedDict('TrackSetArgsVariant1Values', {'label': str})
+diff --git a/runtime.lock.json b/runtime.lock.json
+index e9732a2b21243bbf697d192197eff22c85e13a7b..83e150eeb945a224b2b0c2ad0ea7cf01c1ed986c
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -6,19 +6,19 @@
+     },
+     "astrid_runtime_client/__init__.py": {
+       "from": "packages/python/astrid_runtime_client/__init__.py",
+-      "sha256": "sha256:e2525b02f113d46db5380a70cc23567de8ac721fce487338c37c7c34b5d4b45f"
++      "sha256": "sha256:5e0b9adee1649d89d5447b5affb888b680943e992be6ef639cbf794acc68195d"
+     },
+     "astrid_runtime_client/contract_metadata.py": {
+       "from": "packages/python/astrid_runtime_client/contract_metadata.py",
+-      "sha256": "sha256:b8f40d8ea55d5e72beb6e043f74eff60bf81634cac3b8c27d13415e9180b3cca"
++      "sha256": "sha256:2c6e10946af46f0dfe2b66a299121fcdc1c45e8c0166ad6183e7b7a312fae2b5"
+     },
+     "astrid_runtime_client/generated.py": {
+       "from": "packages/python/astrid_runtime_client/generated.py",
+-      "sha256": "sha256:2db50f1b36e0b2113da2521f04a2a431f4edfd6f9ade7b4dc156e098aa0b215f"
++      "sha256": "sha256:53c9fc48cb3c5d0eb6c0e990d46f0a8b3b566297a5f60c762004b1681a7ac656"
+     },
+     "astrid_runtime_client/timeline_commit_types.py": {
+       "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
+-      "sha256": "sha256:a3c9ce015dff4cfbbc669b42ff44f2f12aec012745d6ea7421804a350384b473"
++      "sha256": "sha256:4b23c46311210f5fa3a5684eceeab2772b30c40b61c623eacf0fcd1183d45457"
+     },
+     "tests/fixtures/runtime-responses/events_page_1_200.json": {
+       "from": "conformance/responses/events_page_1_200.json",
+@@ -63,6 +63,6 @@
+   },
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+-  "producer_version": "sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56",
+-  "source_commit": "2c4ac180c2220bdad966bc01e95ad230e99ce26a"
++  "producer_version": "sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0",
++  "source_commit": "a0dca16975dfe8f5e762703b99d9791a16cf7fd7"
+ }
+diff --git a/tests/packs/video_editing/test_runtime_publication_chain.py b/tests/packs/video_editing/test_runtime_publication_chain.py
+index ad3705d12a4f9ddef04ea475fa09ee5d5dc1df59..4ced92ad01700d9dceb0488c82db67d6e9e80f01
+--- a/tests/packs/video_editing/test_runtime_publication_chain.py
++++ b/tests/packs/video_editing/test_runtime_publication_chain.py
+@@ -464,7 +464,7 @@
+                 "{voice}", "{rate}", "{volume}", "{pitch}", "{malformed}",
+             ]},
+             "outputs": [
+-                {"name": "speech", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
++                {"name": "audio", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
+                 {"name": "speech_manifest", "type": "file", "path_template": "{out}/speech-provenance.json", "artifact_type": "application/json"},
+             ],
+             "isolation": {"mode": "subprocess", "network": False},
+@@ -530,7 +530,7 @@
+     host = GenericPackHost(
+         pack_roots=[_speech_fixture_pack(tmp_path, malformed=malformed)],
+         client=worker,
+-        executor_id="speech-fixture-host",
++        executor_id="astrid-pack-host",
+         attempt_root=tmp_path / "attempts",
+     )
+     transport = WorkspaceClient(daemon.endpoint, daemon.token)
+
+exec
+/bin/bash -lc "date -u; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-speech-ad97-normal-pin-pair-native014-sockets-integration-1020183350-13220/status; stat -c '%s %y' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-speech-ad97-normal-pin-pair-native014-sockets-integration-1020183350-13220/log.txt" in /home/user/work/wt/agt-m2-speech-ad97-normal-pin-pair
+ succeeded in 0ms:
+Tue Oct 20 18:38:59 UTC 2026
+running
+0 2026-10-20 18:35:03.720861646 +0000
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_projectless_admission.py' in /home/user/work/wt/agt-m2-speech-ad97-normal-pin-pair
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/video_editing/test_draft_voiceover.py' in /home/user/work/wt/agt-m2-speech-ad97-normal-pin-pair
+ succeeded in 1267ms:
+...................                                                      [100%]
+19 passed in 0.48s
+
+ succeeded in 1352ms:
+.......................                                                  [100%]
+23 passed in 0.41s
+
+exec
+/bin/bash -lc 'date -u; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-speech-ad97-normal-pin-pair-native014-sockets-integration-1020183350-13220/status' in /home/user/work/wt/agt-m2-speech-ad97-normal-pin-pair
+ succeeded in 0ms:
+Tue Oct 20 18:39:05 UTC 2026
+running
+
+codex
+All local non-socket evidence is green: the full draft-voiceover unit file (23), projectless-admission unit file (19), and vendor-lock/client parity checks (29). The central two-node run is still queued/running with no log output; I’m finalizing the worktree and will report that integration limitation explicitly rather than claim qualification.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-ad97-normal-pin-pair/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-ad97-normal-pin-pair/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-ad97-normal-pin-pair/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-ad97-normal-pin-pair/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-ad97-normal-pin-pair/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e7fc34b31dbcc40d9c9ccdf6604e60db0c4f7a14
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-ad97-normal-pin-pair/commit-msg
+@@ -0,0 +1,6 @@
++test(agent): qualify managed speech publication seam
++
++Pin the normal014 generated Runtime client and lock while keeping the exact
++ad97 server archive in the bounded real-speech integration seam. Align the
++fixture with the bound pack-host executor and audio output port so Runtime
++derives WAV duration during settlement.
+diff --git a/astrid_runtime_client/__init__.py b/astrid_runtime_client/__init__.py
+index 28cefc648eaa1235a8ac53932035c56ce4fde346..d6093b7ed8ad5e88dee0ed40beca66859a4665a7
+--- a/astrid_runtime_client/__init__.py
++++ b/astrid_runtime_client/__init__.py
+@@ -34,12 +34,16 @@
+     WorkspaceClient,
+ )
+ from .timeline_commit_types import (
++    AssembledTargetArgs,
+     ClipAddArgs,
++    ClipAddMediaArgs,
++    ClipAnchorArgs,
+     ClipDeleteArgs,
+     ClipMoveArgs,
+     ClipSetArgs,
+     ClipSetElementArgs,
+     ElementRef,
++    OccurrenceCreateArgs,
+     OccurrenceDeleteArgs,
+     OccurrenceDuplicateArgs,
+     PlacementCreateArgs,
+@@ -62,9 +66,12 @@
+     RestoreArgs,
+     TrackCreateArgs,
+     TrackSetArgs,
++    TimelineInitArgs,
++    TextBindingSetArgs,
+     VerifiedDocument,
+     VerifiedDocumentObject,
+     VerifiedMedia,
++    WordAnchor,
+ )
+ 
+-__all__ = ['ClipSetElementArgs', 'ElementRef', 'OccurrenceDeleteArgs', 'OccurrenceDuplicateArgs', 'PlacementCreateArgs', 'PlacementUnplaceArgs', 'ProducerAdmittedTarget', 'ProducerAttemptPin', 'ProducerGuardArgs', 'ProducerIdentity', 'SettledProducerProposal', 'ShotPoolArgs', 'ShotSetArgs', "CONTRACT_VERSION", "ApiError", "AttemptFence", "ByteResponse", "Capability", "ClaimWaiting", 'ClipAddArgs', 'ClipDeleteArgs', 'ClipMoveArgs', 'ClipSetArgs', 'ClipSetParamsArgs', 'ClipSplitArgs', 'ClipTrimArgs', 'DocumentPin', "Event", "Executor", "Generation", "GenerationVariant", "Handshake", "Health", "IntegrityCheck", "IntegrityReport", 'InverseArgs', "ManagedObject", "ManagedOutput", 'MediaSelection', "MutationResult", "ObjectLocation", 'OccurrenceAddMediaArgs', 'OccurrenceSwapMediaArgs', "PreferenceMutationResult", "PreferenceResource", "Project", "ProjectDocument", "Realm", "RealmLifecycle", "RecoveryAuthorization", "RecoveryCheckpointReceipt", "RecoveryReceipt", "RecoveryResumeReceipt", 'RestoreArgs', "ShotTextBinding", "Task", 'TrackCreateArgs', 'TrackSetArgs', 'VerifiedDocument', 'VerifiedDocumentObject', 'VerifiedMedia', "WorkspaceClient"]
++__all__ = ['AssembledTargetArgs', 'ClipSetElementArgs', 'ClipAddArgs', 'ClipAddMediaArgs', 'ClipAnchorArgs', 'ElementRef', 'OccurrenceCreateArgs', 'OccurrenceDeleteArgs', 'OccurrenceDuplicateArgs', 'PlacementCreateArgs', 'PlacementUnplaceArgs', 'ProducerAdmittedTarget', 'ProducerAttemptPin', 'ProducerGuardArgs', 'ProducerIdentity', 'SettledProducerProposal', 'ShotPoolArgs', 'ShotSetArgs', 'TimelineInitArgs', 'TextBindingSetArgs', 'WordAnchor', "CONTRACT_VERSION", "ApiError", "AttemptFence", "ByteResponse", "Capability", "ClaimWaiting", 'ClipDeleteArgs', 'ClipMoveArgs', 'ClipSetArgs', 'ClipSetParamsArgs', 'ClipSplitArgs', 'ClipTrimArgs', 'DocumentPin', "Event", "Executor", "Generation", "GenerationVariant", "Handshake", "Health", "IntegrityCheck", "IntegrityReport", 'InverseArgs', "ManagedObject", "ManagedOutput", 'MediaSelection', "MutationResult", "ObjectLocation", 'OccurrenceAddMediaArgs', 'OccurrenceSwapMediaArgs', "PreferenceMutationResult", "PreferenceResource", "Project", "ProjectDocument", "Realm", "RealmLifecycle", "RecoveryAuthorization", "RecoveryCheckpointReceipt", "RecoveryReceipt", "RecoveryResumeReceipt", 'RestoreArgs', "ShotTextBinding", "Task", 'TrackCreateArgs', 'TrackSetArgs', 'VerifiedDocument', 'VerifiedDocumentObject', 'VerifiedMedia', "WorkspaceClient"]
+diff --git a/astrid_runtime_client/contract_metadata.py b/astrid_runtime_client/contract_metadata.py
+index 3b8189acd33b8800d34ab31fc0d9c6103f9b2081..ac5cc075984331ba646ba9c6050c833a4e239758
+--- a/astrid_runtime_client/contract_metadata.py
++++ b/astrid_runtime_client/contract_metadata.py
+@@ -1,7 +1,7 @@
+ """Generated contract metadata; do not edit by hand."""
+ 
+-CONTRACT_VERSION = '0.2.13'
++CONTRACT_VERSION = '0.2.14'
+ PROTOCOL = "workspace.v1"
+ COMPONENT_MANIFEST_SHA256 = 'sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5'
+-SCHEMA_DIGEST = 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4'
++SCHEMA_DIGEST = 'sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59'
+ OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection', 'getProjectVerifiedMedia', 'getProjectVerifiedDocumentObject', 'getProjectVerifiedDocument', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'getShot', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+diff --git a/astrid_runtime_client/generated.py b/astrid_runtime_client/generated.py
+index 51f77eac955313b116dd3a87294145ecead8635d..938da62f511d098a08b1c665ea6f68048c1bc68b
+--- a/astrid_runtime_client/generated.py
++++ b/astrid_runtime_client/generated.py
+@@ -16,7 +16,7 @@
+ 
+ PROTOCOL = "workspace.v1"
+ _UNSET = object()
+-SCHEMA_DIGEST = "sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4"
++SCHEMA_DIGEST = "sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59"
+ OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection', 'getProjectVerifiedMedia', 'getProjectVerifiedDocumentObject', 'getProjectVerifiedDocument', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'getShot', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+ _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
+ 
+diff --git a/astrid_runtime_client/timeline_commit_types.py b/astrid_runtime_client/timeline_commit_types.py
+index b653b7441d2375d5d605baa27bd6325a755982de..e4605ad9dca1733bc9547fdfa8ef5e80e00ce008
+--- a/astrid_runtime_client/timeline_commit_types.py
++++ b/astrid_runtime_client/timeline_commit_types.py
+@@ -5,15 +5,15 @@
+ JSON = Union[Union[None, bool, float, str], list['JSON'], dict[str, 'JSON']]
+ ID = str
+ Digest = str
+-ScopedId = str
+-EntityRef = str
++ScopedId = Union[str, str, str]
++EntityRef = Union[str, str, str]
+ PropertyPath = str
+-TargetKey = str
++TargetKey = Union[str, str, str]
+ AnchorIdentity = str
+ AgentState = Union['AgentStateVariant1', 'AgentStateVariant2']
+ AgentRead = TypedDict('AgentRead', {'ref': str, 'path': 'TokenPath', 'state': 'AgentState'})
+ AgentSelection = TypedDict('AgentSelection', {'key': str, 'query_version': int, 'owner': str, 'members': list[str], 'order': list[str], 'boundaries': list[str], 'policy': Literal['guard-membership', 'include-concurrent']})
+-Intent = TypedDict('Intent', {'ripple': NotRequired[Literal['none', 'selected', 'include-concurrent']], 'anchor': NotRequired[Literal['follow', 'fixed']], 'ownership': NotRequired[Literal['shared', 'occurrence']], 'position': NotRequired[Literal['absolute', 'relative']]})
++Intent = TypedDict('Intent', {'ripple': NotRequired[Literal['none', 'selected', 'include-concurrent']], 'anchor': NotRequired[Literal['follow', 'fixed']], 'ownership': NotRequired[Literal['shared', 'occurrence', 'parent']], 'position': NotRequired[Literal['absolute', 'relative']]})
+ AgentWrite = TypedDict('AgentWrite', {'ref': str, 'path': 'TokenPath', 'before': 'AgentState', 'after': 'AgentState'})
+ AgentDerivedWrite = TypedDict('AgentDerivedWrite', {'ref': str, 'path': 'TokenPath', 'before': 'AgentState', 'after': 'AgentState', 'cause': int})
+ AgentBinding = TypedDict('AgentBinding', {'key': str, 'ref': str, 'policy': Literal['follow', 'fixed'], 'dependencies': list[str]})
+@@ -50,6 +50,13 @@
+ ProducerAttemptPin = TypedDict('ProducerAttemptPin', {'task_id': str, 'attempt_id': str, 'executor_id': str, 'fence': int, 'runtime_epoch': int, 'admitted_target': 'ProducerAdmittedTarget', 'proposal_digest': 'Digest'})
+ ProducerGuardArgs = TypedDict('ProducerGuardArgs', {'pin': 'ProducerAttemptPin'})
+ SettledProducerProposal = TypedDict('SettledProducerProposal', {'schema_version': Literal[1], 'producer': 'ProducerIdentity', 'admitted_target': 'ProducerAdmittedTarget', 'commands': 'CommandBatch', 'rationale': str, 'proposal_digest': 'Digest'})
++AssembledTargetArgs = TypedDict('AssembledTargetArgs', {'replace_clips': list[str]})
++ClipAddMediaArgs = TypedDict('ClipAddMediaArgs', {'row': 'ClipAddArgsRow', 'media': 'MediaSelection'})
++TimelineInitArgs = TypedDict('TimelineInitArgs', {'name': str, 'slug': str, 'output': 'TimelineInitArgsOutput'})
++WordAnchor = TypedDict('WordAnchor', {'source': str, 'document': 'WordAnchorDocument', 'word_ids': list[str], 'edge': NotRequired[Literal['start', 'end']], 'offset_s': NotRequired[float], 'offset_frames': NotRequired[int]})
++ClipAnchorArgs = TypedDict('ClipAnchorArgs', {'field': Literal['on', 'until'], 'declaration': Union[str, None], 'choice': Union[None, 'WordAnchor']})
++OccurrenceCreateArgs = TypedDict('OccurrenceCreateArgs', {'occurrence_id': str, 'shot_id': str, 'name': str, 'track': str, 'on': float, 'duration': float})
++TextBindingSetArgs = Union[Any, Any]
+ AgentCommandBatch = list['EditCommand']
+ ParentComposition = dict[str, Any]
+ ShotPayload = dict[str, Any]
+@@ -110,6 +117,8 @@
+ TrackCreateArgsRow = TypedDict('TrackCreateArgsRow', {'id': str, 'kind': str})
+ ClipSetArgsVariant1 = TypedDict('ClipSetArgsVariant1', {'values': 'ClipSetArgsVariant1Values', 'clear': list[Literal['hold', 'asset', 'transition']]})
+ ClipSetArgsVariant2 = TypedDict('ClipSetArgsVariant2', {'values': 'ClipSetArgsVariant2Values', 'clear': list[Literal['hold', 'asset', 'transition']]})
++TimelineInitArgsOutput = TypedDict('TimelineInitArgsOutput', {'resolution': Literal['1280x720'], 'fps': Literal[30], 'file': Literal['output.mp4'], 'background': None, 'background_scale': None})
++WordAnchorDocument = TypedDict('WordAnchorDocument', {'document_id': str, 'version': int, 'content_digest': str})
+ MediaSelectionQueryVariant1 = TypedDict('MediaSelectionQueryVariant1', {'asset': 'ID', 'generation_id': 'ID', 'variant_id': 'ID'})
+ MediaSelectionQueryVariant2 = TypedDict('MediaSelectionQueryVariant2', {'association_id': 'ID', 'object_id': 'Digest', 'version': int})
+ TrackSetArgsVariant1Values = TypedDict('TrackSetArgsVariant1Values', {'label': str})
+diff --git a/runtime.lock.json b/runtime.lock.json
+index e9732a2b21243bbf697d192197eff22c85e13a7b..83e150eeb945a224b2b0c2ad0ea7cf01c1ed986c
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -6,19 +6,19 @@
+     },
+     "astrid_runtime_client/__init__.py": {
+       "from": "packages/python/astrid_runtime_client/__init__.py",
+-      "sha256": "sha256:e2525b02f113d46db5380a70cc23567de8ac721fce487338c37c7c34b5d4b45f"
++      "sha256": "sha256:5e0b9adee1649d89d5447b5affb888b680943e992be6ef639cbf794acc68195d"
+     },
+     "astrid_runtime_client/contract_metadata.py": {
+       "from": "packages/python/astrid_runtime_client/contract_metadata.py",
+-      "sha256": "sha256:b8f40d8ea55d5e72beb6e043f74eff60bf81634cac3b8c27d13415e9180b3cca"
++      "sha256": "sha256:2c6e10946af46f0dfe2b66a299121fcdc1c45e8c0166ad6183e7b7a312fae2b5"
+     },
+     "astrid_runtime_client/generated.py": {
+       "from": "packages/python/astrid_runtime_client/generated.py",
+-      "sha256": "sha256:2db50f1b36e0b2113da2521f04a2a431f4edfd6f9ade7b4dc156e098aa0b215f"
++      "sha256": "sha256:53c9fc48cb3c5d0eb6c0e990d46f0a8b3b566297a5f60c762004b1681a7ac656"
+     },
+     "astrid_runtime_client/timeline_commit_types.py": {
+       "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
+-      "sha256": "sha256:a3c9ce015dff4cfbbc669b42ff44f2f12aec012745d6ea7421804a350384b473"
++      "sha256": "sha256:4b23c46311210f5fa3a5684eceeab2772b30c40b61c623eacf0fcd1183d45457"
+     },
+     "tests/fixtures/runtime-responses/events_page_1_200.json": {
+       "from": "conformance/responses/events_page_1_200.json",
+@@ -63,6 +63,6 @@
+   },
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+-  "producer_version": "sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56",
+-  "source_commit": "2c4ac180c2220bdad966bc01e95ad230e99ce26a"
++  "producer_version": "sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0",
++  "source_commit": "a0dca16975dfe8f5e762703b99d9791a16cf7fd7"
+ }
+diff --git a/tests/packs/video_editing/test_runtime_publication_chain.py b/tests/packs/video_editing/test_runtime_publication_chain.py
+index ad3705d12a4f9ddef04ea475fa09ee5d5dc1df59..4ced92ad01700d9dceb0488c82db67d6e9e80f01
+--- a/tests/packs/video_editing/test_runtime_publication_chain.py
++++ b/tests/packs/video_editing/test_runtime_publication_chain.py
+@@ -464,7 +464,7 @@
+                 "{voice}", "{rate}", "{volume}", "{pitch}", "{malformed}",
+             ]},
+             "outputs": [
+-                {"name": "speech", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
++                {"name": "audio", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
+                 {"name": "speech_manifest", "type": "file", "path_template": "{out}/speech-provenance.json", "artifact_type": "application/json"},
+             ],
+             "isolation": {"mode": "subprocess", "network": False},
+@@ -530,7 +530,7 @@
+     host = GenericPackHost(
+         pack_roots=[_speech_fixture_pack(tmp_path, malformed=malformed)],
+         client=worker,
+-        executor_id="speech-fixture-host",
++        executor_id="astrid-pack-host",
+         attempt_root=tmp_path / "attempts",
+     )
+     transport = WorkspaceClient(daemon.endpoint, daemon.token)
+
+exec
+/bin/bash -lc 'git diff --check && git status --short && git diff --stat' in /home/user/work/wt/agt-m2-speech-ad97-normal-pin-pair
+exec
+/bin/bash -lc 'test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-ad97-normal-pin-pair/DONE && echo DONE_empty; sed -n '"'1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-ad97-normal-pin-pair/commit-msg" in /home/user/work/wt/agt-m2-speech-ad97-normal-pin-pair
+ succeeded in 0ms:
+DONE_empty
+test(agent): qualify managed speech publication seam
+
+Pin the normal014 generated Runtime client and lock while keeping the exact
+ad97 server archive in the bounded real-speech integration seam. Align the
+fixture with the bound pack-host executor and audio output port so Runtime
+derives WAV duration during settlement.
+
+exec
+/bin/bash -lc 'git diff -- tests/packs/video_editing/test_runtime_publication_chain.py && git diff --quiet e86f44d0 -- astrid_runtime_client runtime.lock.json; echo reviewed_pin_match_exit=$?' in /home/user/work/wt/agt-m2-speech-ad97-normal-pin-pair
+ succeeded in 0ms:
+diff --git a/tests/packs/video_editing/test_runtime_publication_chain.py b/tests/packs/video_editing/test_runtime_publication_chain.py
+index ad3705d1..4ced92ad 100644
+--- a/tests/packs/video_editing/test_runtime_publication_chain.py
++++ b/tests/packs/video_editing/test_runtime_publication_chain.py
+@@ -464,7 +464,7 @@ provenance = {
+                 "{voice}", "{rate}", "{volume}", "{pitch}", "{malformed}",
+             ]},
+             "outputs": [
+-                {"name": "speech", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
++                {"name": "audio", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
+                 {"name": "speech_manifest", "type": "file", "path_template": "{out}/speech-provenance.json", "artifact_type": "application/json"},
+             ],
+             "isolation": {"mode": "subprocess", "network": False},
+@@ -530,7 +530,7 @@ def _run_real_speech_sync(tmp_path: Path, real_runtime, *, malformed: bool):
+     host = GenericPackHost(
+         pack_roots=[_speech_fixture_pack(tmp_path, malformed=malformed)],
+         client=worker,
+-        executor_id="speech-fixture-host",
++        executor_id="astrid-pack-host",
+         attempt_root=tmp_path / "attempts",
+     )
+     transport = WorkspaceClient(daemon.endpoint, daemon.token)
+reviewed_pin_match_exit=0
+
+ succeeded in 374ms:
+ M astrid_runtime_client/__init__.py
+ M astrid_runtime_client/contract_metadata.py
+ M astrid_runtime_client/generated.py
+ M astrid_runtime_client/timeline_commit_types.py
+ M runtime.lock.json
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+ astrid_runtime_client/__init__.py                       |  9 ++++++++-
+ astrid_runtime_client/contract_metadata.py              |  4 ++--
+ astrid_runtime_client/generated.py                      |  2 +-
+ astrid_runtime_client/timeline_commit_types.py          | 17 +++++++++++++----
+ runtime.lock.json                                       | 12 ++++++------
+ .../video_editing/test_runtime_publication_chain.py     |  4 ++--
+ 6 files changed, 32 insertions(+), 16 deletions(-)
+
+exec
+/bin/bash -lc 'if test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-speech-ad97-normal-pin-pair-native014-sockets-integration-1020183350-13220/summary; then cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-speech-ad97-normal-pin-pair-native014-sockets-integration-1020183350-13220/summary; else echo pending:$(cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-speech-ad97-normal-pin-pair-native014-sockets-integration-1020183350-13220/status); fi' in /home/user/work/wt/agt-m2-speech-ad97-normal-pin-pair
+ succeeded in 0ms:
+pending:running
+
+codex
+Implemented WC5 managed speech seam changes:
+
+- Restored normal014 SDK client/lock bytes (`a0dca169…`, artifact `f021e771…`).
+- Kept exact ad97 Runtime archive selection read-only.
+- Updated fixture output to `audio` so ad97 derives WAV duration.
+- Bound fixture executor to `astrid-pack-host`.
+- No Runtime/API/adapter changes.
+
+Tests:
+
+- Draft voiceover: 23 passed.
+- Projectless admission: 19 passed.
+- Vendor lock/client parity: 29 passed.
+- Neighbor publication tests: 1 passed, 2 skipped.
+- Central two-node integration rerun remains `running`; qualification is unverified. Initial run failed pre-test due executor credential mismatch, now corrected.
+
+Created commit message and `DONE`. Outer authoring remains a test double; no full D13/WC5 claim.
+2026-10-20T18:39:21.130749Z ERROR codex_core::session: failed to record rollout items: thread 01a15a93-50de-7cc0-b585-f654e63b0067 not found
+2026-10-20T18:39:21.130888Z ERROR codex_core::session: failed to record rollout items: thread 01a15a93-50de-7cc0-b585-f654e63b0067 not found
+2026-10-20T18:39:21.130909Z ERROR codex_core::session: failed to record rollout items: thread 01a15a93-50de-7cc0-b585-f654e63b0067 not found
+2026-10-20T18:39:21.130923Z ERROR codex_core::session: failed to record rollout items: thread 01a15a93-50de-7cc0-b585-f654e63b0067 not found
+2026-10-20T18:39:21.130935Z ERROR codex_core::session: failed to record rollout items: thread 01a15a93-50de-7cc0-b585-f654e63b0067 not found
+2026-10-20T18:39:21.130947Z ERROR codex_core::session: failed to record rollout items: thread 01a15a93-50de-7cc0-b585-f654e63b0067 not found
+2026-10-20T18:39:21.130959Z ERROR codex_core::session: failed to record rollout items: thread 01a15a93-50de-7cc0-b585-f654e63b0067 not found
+tokens used
+372,172
+Implemented WC5 managed speech seam changes:
+
+- Restored normal014 SDK client/lock bytes (`a0dca169…`, artifact `f021e771…`).
+- Kept exact ad97 Runtime archive selection read-only.
+- Updated fixture output to `audio` so ad97 derives WAV duration.
+- Bound fixture executor to `astrid-pack-host`.
+- No Runtime/API/adapter changes.
+
+Tests:
+
+- Draft voiceover: 23 passed.
+- Projectless admission: 19 passed.
+- Vendor lock/client parity: 29 passed.
+- Neighbor publication tests: 1 passed, 2 skipped.
+- Central two-node integration rerun remains `running`; qualification is unverified. Initial run failed pre-test due executor credential mismatch, now corrected.
+
+Created commit message and `DONE`. Outer authoring remains a test double; no full D13/WC5 claim.

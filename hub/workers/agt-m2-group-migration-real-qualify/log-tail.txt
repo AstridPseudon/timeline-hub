@@ -1,0 +1,400 @@
++
++The unchanged nine-case integration file was run against the pinned normal
++Runtime 0.2.3 source at `/home/user/work/wt/rt-m2-bundle2-runtime-artifacts`
++(`d691ddadb4ef3f5881a25fa893b4fb812211f102`) with Agent HEAD
++`746440c4c4a6bf7dd8a89500c2bef21a3721efef`: **7 passed, 2 failed**. Both
++golden and opaque migration cases now pass request/schema admission and reach
++the Agent provider. They fail before accepted migration at
++`astrid/sdk/timeline/commit.py:596`, while `_check_reservations` scans the
++trusted setup history: `semantic identity boundary differs from writes`,
++returned publicly as `semantic identity history is unavailable`.
++
++The setup itself is genuinely accepted by Runtime: the passing readback
++assertions prove exact parent payload/digest/dependency-manifest closure,
++retained transcript pin/source capture, and the same closure after source-v2
++and Runtime reopen. No migration receipt, accepted migration history,
++inverse, redo, or same-created-ID result is claimed because the first real
++migration is refused. The minimal follow-up is to reconcile the trusted
++bootstrap parent-replacement record with the Agent provider's loaded boundary
++bundle in `_check_reservations`/`_load` while retaining the existing semantic
++guard; do not weaken the guard or rewrite Runtime history.
++
++Neighboring Agent migration/recipe/provider/retained-document tests remain
++green: **68 passed**. M2 remains held; no App or three-product qualification
++is implied.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..ddc7f4184dfafc05ac4f6f68791295b6931f6b30
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): pin corrected trusted bootstrap helper
++
++Use the Runtime helper capture that records an empty created list before
++request hashing and acceptance, preserving the real migration assertions.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ad0e19526f2241252a8e14ed1ef2ccfd867633ff
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/notes/report.md
+@@ -0,0 +1,91 @@
++# agt-m2-group-migration-real-qualify — held
++
++## Change
++
++Changed only the existing trusted-bootstrap archive loader in
++`tests/sdk/test_timeline_group_migration_runtime.py`:
++
++```python
++runtime_checkout('382f523ef957afb2bd299c5e21424ca821b23f05')
++```
++
++The old `7c6e4eabf88d914d9c98c0097b06ea298ba11866` pin was removed. No
++product, Runtime, SQL, schema, history, guard, fixture, assertion, skip, or
++xfail change was made. The full parent/opaque, rational-fps, real-CAS,
++DocumentPin, retained-source, and positive migration assertions remain
++unchanged.
++
++## Source identities
++
++- Agent worktree: `/home/user/work/wt/agt-m2-group-migration-real-qualify`,
++  HEAD `746440c4c4a6bf7dd8a89500c2bef21a3721efef` before the harness commit.
++- Selected qualification Runtime: `/home/user/work/wt/rt-m2-bundle2-runtime-artifacts`,
++  HEAD `d691ddadb4ef3f5881a25fa893b4fb812211f102` (normal Runtime 0.2.3
++  source pinned by `runtime.lock.json`).
++- Trusted helper archive commit:
++  `382f523ef957afb2bd299c5e21424ca821b23f05`.
++- Exact helper file:
++  `/home/user/work/wt/rt-m2-trusted-bootstrap-empty-capture/tests/timeline_trusted_bootstrap.py`
++  SHA256 `5e152bfa716b9003b831648cad16f6adb9c334cd18a6a7cf32a31accefe82617`.
++
++The helper is test-only setup. It authors `command.created=[]` before request
++identity/hash and normal storage acceptance; its accepted setup record also
++has `created=[]`. This does not qualify the Agent migration provider.
++
++## Tests
++
++Pinned normal Runtime, unchanged whole migration file:
++
++```sh
++ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-bundle2-runtime-artifacts \
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
++/home/user/work/venv-agent/bin/python -m pytest -q -m integration \
++tests/sdk/test_timeline_group_migration_runtime.py
++```
++
++Result: **7 passed, 2 failed** in 3.46s. The two failures are the original
++golden-parent and opaque-parent positive migration cases. Both pass Runtime
++schema/RootTargetKey admission and reach Agent `RuntimeCommitService`; both
++are refused before migration acceptance while `_check_reservations` scans the
++trusted setup history:
++
++```text
++astrid/sdk/timeline/commit.py:596
++CommandError: semantic identity boundary differs from writes
++runtime_protocol.errors.RuntimeErrorBase: semantic identity history is unavailable
++```
++
++The failing operation is the first `capture_migrate_groups` submit. Therefore
++there is no accepted migration receipt and no accepted migration reload,
++inverse, redo, or same-created-ID proof. The minimal product follow-up is to
++reconcile the trusted bootstrap parent-replacement record with the loaded
++boundary bundle used by `_check_reservations`/`_load`, preserving the semantic
++guard. Do not relax the guard or rewrite accepted history.
++
++Neighboring migration/provider/recipe/retained-source tests:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
++/home/user/work/venv-agent/bin/python -m pytest -q \
++tests/editing_conformance/test_recipe_m2_group_migration.py \
++tests/sdk/test_timeline_group_migration_provider.py \
++tests/sdk/test_timeline_commit_provider_document.py
++```
++
++Result: **68 passed** in 3.55s.
++
++Static checks:
++
++```sh
++git diff --check
++```
++
++Result: passed. No full suite, socket/browser journey, install, network,
++pin, merge, push, or Runtime product modification was run.
++
++The passing setup/readback cases prove Runtime accepted the trusted seed and
++that exact parent payload/digest/dependency closure, retained transcript
++source/pin data, and the same closure after source-v2 and Runtime reopen are
++preserved. They do not prove Agent migration acceptance.
++
++M2 remains held. No App or three-product claim is made.
+diff --git a/tests/sdk/test_timeline_group_migration_runtime.py b/tests/sdk/test_timeline_group_migration_runtime.py
+index 947a5677c598092f043b5965cc45e2e5a093926d..597478b85238d5e0e6ffe2af5863b63447dd2a9a
+--- a/tests/sdk/test_timeline_group_migration_runtime.py
++++ b/tests/sdk/test_timeline_group_migration_runtime.py
+@@ -57,7 +57,7 @@
+     use_runtime()
+     # Runtime owns this helper: it uses normal storage acceptance and retained
+     # inputs, without claiming an Agent migration or repairing the old writer.
+-    helper = runtime_checkout('7c6e4eabf88d914d9c98c0097b06ea298ba11866')
++    helper = runtime_checkout('382f523ef957afb2bd299c5e21424ca821b23f05')
+     monkeypatch.syspath_prepend(str(helper / 'tests'))
+     from runtime_protocol.service import RuntimeService
+     from runtime_protocol.store import RealmStore
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-contract.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-contract.md
+index ceabd47547b637644b0e8a3f28fac0be82d8aacf..3049ca756226b227be914632f71235b317ea9272
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-contract.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-contract.md
+@@ -72,3 +72,38 @@
+ No App/browser or full-suite pass is claimed. Detailed exact commands and counts are in the worker `notes/report.md`.
+ 
+ Agentmanager02:23 actualmigrationboundary: reviewedcurrentcorecandidate746440c4 648purePASS/38registry+48actualpopup; normal0.2.3rootkeyvalidationpasses. Twooriginal/opaque positivecases remainrealFAIL at trustedbootstraprecorderhistory: record.created=[] while command.createdmissing. Runtimehelperownerrequested completeoriginalcommandcapture BEFOREaccept, no history/SQLrepair/guardweakening. No acceptedmigration/reload/undo/redo claim. Existinglane/readderivedAppview next, occurrence.deleteworker activewithstableO only. All13ops source union completeordinarydefs unchanged; newpublicgroupartifactpendingnormalfreeze.
++
++## Corrected trusted-bootstrap qualification — 2026-10-20
++
++The owned Agent loader now archives Runtime helper commit
++`382f523ef957afb2bd299c5e21424ca821b23f05` in
++`tests/sdk/test_timeline_group_migration_runtime.py`. The exact helper file
++`tests/timeline_trusted_bootstrap.py` is SHA256
++`5e152bfa716b9003b831648cad16f6adb9c334cd18a6a7cf32a31accefe82617`.
++The helper authors `command.created=[]` before request identity/hash and
++normal Runtime acceptance; this is test-only trusted setup, not Agent
++provider acceptance.
++
++The unchanged nine-case integration file was run against the pinned normal
++Runtime 0.2.3 source at `/home/user/work/wt/rt-m2-bundle2-runtime-artifacts`
++(`d691ddadb4ef3f5881a25fa893b4fb812211f102`) with Agent HEAD
++`746440c4c4a6bf7dd8a89500c2bef21a3721efef`: **7 passed, 2 failed**. Both
++golden and opaque migration cases now pass request/schema admission and reach
++the Agent provider. They fail before accepted migration at
++`astrid/sdk/timeline/commit.py:596`, while `_check_reservations` scans the
++trusted setup history: `semantic identity boundary differs from writes`,
++returned publicly as `semantic identity history is unavailable`.
++
++The setup itself is genuinely accepted by Runtime: the passing readback
++assertions prove exact parent payload/digest/dependency-manifest closure,
++retained transcript pin/source capture, and the same closure after source-v2
++and Runtime reopen. No migration receipt, accepted migration history,
++inverse, redo, or same-created-ID result is claimed because the first real
++migration is refused. The minimal follow-up is to reconcile the trusted
++bootstrap parent-replacement record with the Agent provider's loaded boundary
++bundle in `_check_reservations`/`_load` while retaining the existing semantic
++guard; do not weaken the guard or rewrite Runtime history.
++
++Neighboring Agent migration/recipe/provider/retained-document tests remain
++green: **68 passed**. M2 remains held; no App or three-product qualification
++is implied.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..ddc7f4184dfafc05ac4f6f68791295b6931f6b30
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): pin corrected trusted bootstrap helper
++
++Use the Runtime helper capture that records an empty created list before
++request hashing and acceptance, preserving the real migration assertions.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ddc7f4184dfafc05ac4f6f68791295b6931f6b30
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(timeline): pin corrected trusted bootstrap helper
++
++Use the Runtime helper capture that records an empty created list before
++request hashing and acceptance, preserving the real migration assertions.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ad0e19526f2241252a8e14ed1ef2ccfd867633ff
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/notes/report.md
+@@ -0,0 +1,91 @@
++# agt-m2-group-migration-real-qualify — held
++
++## Change
++
++Changed only the existing trusted-bootstrap archive loader in
++`tests/sdk/test_timeline_group_migration_runtime.py`:
++
++```python
++runtime_checkout('382f523ef957afb2bd299c5e21424ca821b23f05')
++```
++
++The old `7c6e4eabf88d914d9c98c0097b06ea298ba11866` pin was removed. No
++product, Runtime, SQL, schema, history, guard, fixture, assertion, skip, or
++xfail change was made. The full parent/opaque, rational-fps, real-CAS,
++DocumentPin, retained-source, and positive migration assertions remain
++unchanged.
++
++## Source identities
++
++- Agent worktree: `/home/user/work/wt/agt-m2-group-migration-real-qualify`,
++  HEAD `746440c4c4a6bf7dd8a89500c2bef21a3721efef` before the harness commit.
++- Selected qualification Runtime: `/home/user/work/wt/rt-m2-bundle2-runtime-artifacts`,
++  HEAD `d691ddadb4ef3f5881a25fa893b4fb812211f102` (normal Runtime 0.2.3
++  source pinned by `runtime.lock.json`).
++- Trusted helper archive commit:
++  `382f523ef957afb2bd299c5e21424ca821b23f05`.
++- Exact helper file:
++  `/home/user/work/wt/rt-m2-trusted-bootstrap-empty-capture/tests/timeline_trusted_bootstrap.py`
++  SHA256 `5e152bfa716b9003b831648cad16f6adb9c334cd18a6a7cf32a31accefe82617`.
++
++The helper is test-only setup. It authors `command.created=[]` before request
++identity/hash and normal storage acceptance; its accepted setup record also
++has `created=[]`. This does not qualify the Agent migration provider.
++
++## Tests
++
++Pinned normal Runtime, unchanged whole migration file:
++
++```sh
++ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-bundle2-runtime-artifacts \
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
++/home/user/work/venv-agent/bin/python -m pytest -q -m integration \
++tests/sdk/test_timeline_group_migration_runtime.py
++```
++
++Result: **7 passed, 2 failed** in 3.46s. The two failures are the original
++golden-parent and opaque-parent positive migration cases. Both pass Runtime
++schema/RootTargetKey admission and reach Agent `RuntimeCommitService`; both
++are refused before migration acceptance while `_check_reservations` scans the
++trusted setup history:
++
++```text
++astrid/sdk/timeline/commit.py:596
++CommandError: semantic identity boundary differs from writes
++runtime_protocol.errors.RuntimeErrorBase: semantic identity history is unavailable
++```
++
++The failing operation is the first `capture_migrate_groups` submit. Therefore
++there is no accepted migration receipt and no accepted migration reload,
++inverse, redo, or same-created-ID proof. The minimal product follow-up is to
++reconcile the trusted bootstrap parent-replacement record with the loaded
++boundary bundle used by `_check_reservations`/`_load`, preserving the semantic
++guard. Do not relax the guard or rewrite accepted history.
++
++Neighboring migration/provider/recipe/retained-source tests:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
++/home/user/work/venv-agent/bin/python -m pytest -q \
++tests/editing_conformance/test_recipe_m2_group_migration.py \
++tests/sdk/test_timeline_group_migration_provider.py \
++tests/sdk/test_timeline_commit_provider_document.py
++```
++
++Result: **68 passed** in 3.55s.
++
++Static checks:
++
++```sh
++git diff --check
++```
++
++Result: passed. No full suite, socket/browser journey, install, network,
++pin, merge, push, or Runtime product modification was run.
++
++The passing setup/readback cases prove Runtime accepted the trusted seed and
++that exact parent payload/digest/dependency closure, retained transcript
++source/pin data, and the same closure after source-v2 and Runtime reopen are
++preserved. They do not prove Agent migration acceptance.
++
++M2 remains held. No App or three-product claim is made.
+diff --git a/tests/sdk/test_timeline_group_migration_runtime.py b/tests/sdk/test_timeline_group_migration_runtime.py
+index 947a5677c598092f043b5965cc45e2e5a093926d..597478b85238d5e0e6ffe2af5863b63447dd2a9a
+--- a/tests/sdk/test_timeline_group_migration_runtime.py
++++ b/tests/sdk/test_timeline_group_migration_runtime.py
+@@ -57,7 +57,7 @@
+     use_runtime()
+     # Runtime owns this helper: it uses normal storage acceptance and retained
+     # inputs, without claiming an Agent migration or repairing the old writer.
+-    helper = runtime_checkout('7c6e4eabf88d914d9c98c0097b06ea298ba11866')
++    helper = runtime_checkout('382f523ef957afb2bd299c5e21424ca821b23f05')
+     monkeypatch.syspath_prepend(str(helper / 'tests'))
+     from runtime_protocol.service import RuntimeService
+     from runtime_protocol.store import RealmStore
+
+codex
+The requested reports are now written. They record the exact helper SHA, Agent/Runtime heads, the 7-pass/2-fail pinned-runtime result, the accepted trusted-setup closure/readback boundary, and the precise pre-acceptance provider failure. I’m doing the final diff/status and lint checks now; no additional product change is planned.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check tests/sdk/test_timeline_group_migration_runtime.py && git diff --check && printf '"'\\n--- status ---\\n' && git status --short && printf '\\n--- source diff ---\\n' && git diff -- tests/sdk/test_timeline_group_migration_runtime.py && printf '\\n--- source diff stat ---\\n' && git diff --stat && printf '\\n--- report paths ---\\n' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-contract.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg*" in /home/user/work/wt/agt-m2-group-migration-real-qualify
+ succeeded in 410ms:
+All checks passed!
+
+--- status ---
+ M tests/sdk/test_timeline_group_migration_runtime.py
+
+--- source diff ---
+diff --git a/tests/sdk/test_timeline_group_migration_runtime.py b/tests/sdk/test_timeline_group_migration_runtime.py
+index 947a5677..597478b8 100644
+--- a/tests/sdk/test_timeline_group_migration_runtime.py
++++ b/tests/sdk/test_timeline_group_migration_runtime.py
+@@ -57,7 +57,7 @@ def legacy_runtime(tmp_path, monkeypatch, request):
+     use_runtime()
+     # Runtime owns this helper: it uses normal storage acceptance and retained
+     # inputs, without claiming an Agent migration or repairing the old writer.
+-    helper = runtime_checkout('7c6e4eabf88d914d9c98c0097b06ea298ba11866')
++    helper = runtime_checkout('382f523ef957afb2bd299c5e21424ca821b23f05')
+     monkeypatch.syspath_prepend(str(helper / 'tests'))
+     from runtime_protocol.service import RuntimeService
+     from runtime_protocol.store import RealmStore
+
+--- source diff stat ---
+ tests/sdk/test_timeline_group_migration_runtime.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- report paths ---
+-rw-r--r-- 1 root root 16026 Oct 20 02:46 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-contract.md
+-rw-r--r-- 1 root root   203 Oct 20 02:46 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg
+-rw-r--r-- 1 root root   203 Oct 20 02:46 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/commit-msg.txt
+-rw-r--r-- 1 root root  3596 Oct 20 02:46 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/notes/report.md
+
+codex
+## Report
+
+- Updated only the trusted Runtime helper pin in `tests/sdk/test_timeline_group_migration_runtime.py` from `7c6e4e...` to `382f523...`.
+- Helper SHA256: `5e152bfa716b9003b831648cad16f6adb9c334cd18a6a7cf32a31accefe82617`.
+- Agent: `746440c4...`; Runtime: `d691ddad...`.
+
+Tests:
+
+- Pinned Runtime migration file: **7 passed, 2 failed**. Both failures reach Agent provider, then fail with `semantic identity boundary differs from writes` / `semantic identity history is unavailable` before migration acceptance.
+- Neighbor migration/provider/retained-source tests: **68 passed**.
+- Ruff and `git diff --check`: passed.
+
+No accepted migration, undo/redo, or same-created-ID proof is claimed. Minimal fix recommendation: reconcile trusted bootstrap’s parent-replacement record with the Agent boundary bundle used by `_check_reservations`/`_load`, preserving existing guards.
+
+Reports:
+
+- [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/notes/report.md)
+- [m2-group-contract.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-contract.md)
+
+Commit message written; harness should commit the worktree.
+tokens used
+133,759
+## Report
+
+- Updated only the trusted Runtime helper pin in `tests/sdk/test_timeline_group_migration_runtime.py` from `7c6e4e...` to `382f523...`.
+- Helper SHA256: `5e152bfa716b9003b831648cad16f6adb9c334cd18a6a7cf32a31accefe82617`.
+- Agent: `746440c4...`; Runtime: `d691ddad...`.
+
+Tests:
+
+- Pinned Runtime migration file: **7 passed, 2 failed**. Both failures reach Agent provider, then fail with `semantic identity boundary differs from writes` / `semantic identity history is unavailable` before migration acceptance.
+- Neighbor migration/provider/retained-source tests: **68 passed**.
+- Ruff and `git diff --check`: passed.
+
+No accepted migration, undo/redo, or same-created-ID proof is claimed. Minimal fix recommendation: reconcile trusted bootstrap’s parent-replacement record with the Agent boundary bundle used by `_check_reservations`/`_load`, preserving existing guards.
+
+Reports:
+
+- [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-real-qualify/notes/report.md)
+- [m2-group-contract.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-contract.md)
+
+Commit message written; harness should commit the worktree.

@@ -1,0 +1,400 @@
++    ctx.bind('media.target', ref, dependencies=['media.old', 'media.new'])
++    ctx.write(ref, ['asset'], pin['asset'])
++
++
++def capture_occurrence_media_add(bundle, owner, row, media, registry_entry, *, verified_media):
++    return _capture(bundle, 'occurrence.add-media', owner,
++                    {'row': row, 'media': media, 'registry_entry': registry_entry}, verified_media)
++
++
++def capture_occurrence_media_swap(bundle, select, old_media, media, registry_entry, *, verified_media):
++    return _capture(bundle, 'occurrence.swap-media', select,
++                    {'old_media': old_media, 'media': media, 'registry_entry': registry_entry}, verified_media)
++
++
++def _capture(bundle, op, select, args, verified_media):
++    from .commands import execute
++
++    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1', 'select': select,
++                             'args': copy.deepcopy(args), 'intent': MEDIA_INTENT}],
++                   verified_media=verified_media).commands[0]
+diff --git a/tests/editing_conformance/test_occurrence_media_manifest_inverse.py b/tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..b85d9c3e9e7fd2e8871993b33c62cedd1a53d309
+--- /dev/null
++++ b/tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+@@ -0,0 +1,112 @@
++"""Popup foundation probe; test-only handlers are not a published media contract."""
++from __future__ import annotations
++
++import copy
++
++import pytest
++
++from astrid.sdk.timeline import commands
++from astrid.sdk.timeline._command_state import State
++from astrid.sdk.timeline.commit import (
++    _digest,
++    _manifest,
++    bundle_from_document,
++    document_from_bundle,
++)
++from tests.editing_conformance.test_recipe_m1_commands import inverse
++from tests.sdk.test_timeline_commit_provider_document import document_fixture
++
++OWNER = 'occurrence:occ-a'
++NEW = 'sha256:' + '2' * 64
++
++
++def popup_document():
++    document = document_fixture()
++    internal = document['internal_timeline_revisions'][0]
++    internal['payload'].pop('source_window')
++    internal['payload']['registry'] = copy.deepcopy(internal['payload']['registry'])
++    internal['payload']['registry']['assets']['picture'].update(
++        generationId='generation-old', variantId='variant-old', opaque=[None, False])
++    internal['content_digest'] = _digest(internal['payload'])
++    parent = document['parent_revision']
++    parent['payload']['occurrences'][0]['placement']['start_ms'] = 8000
++    parent['content_digest'] = _digest(parent['payload'])
++    document['dependency_manifest'] = _manifest(
++        document['shot_revisions'], document['internal_timeline_revisions'],
++        document['dependency_manifest']['media'], [])
++    return document
++
++
++@pytest.fixture(params=['add', 'swap'])
++def popup_edit(request, monkeypatch):
++    """Use actual recorder writes to isolate compilation from media admission.
++
++    The detached IDs are unit-fixture values. This deliberately makes no claim
++    about Runtime selection, provider acceptance or an installed popup opcode.
++    """
++    operation = request.param
++
++    def handler(ctx, command):
++        ctx.read(OWNER + '/source')
++        ctx.write(OWNER + '/source', ['registry', 'assets', 'new'],
++                  {'media_id': NEW, 'type': 'image', 'generationId': 'generation-new',
++                   'variantId': 'variant-new', 'opaque': [None, False, {}]})
++        if operation == 'add':
++            ctx.create(OWNER, 'clip', {
++                'id': 'reserved-child', 'track': 'picture', 'asset': 'new',
++                'clipType': 'image', 'at': .125, 'hold': 1.25, 'params': None})
++        else:
++            ctx.read(OWNER + '/clip:clip-a')
++            ctx.write(OWNER + '/clip:clip-a', ['asset'], 'new')
++
++    installed = commands.operations()
++    installed['test.popup-media'] = commands.Operation(
++        {'type': 'object', 'additionalProperties': False}, handler,
++        {'ownership': 'occurrence'})
++    monkeypatch.setattr(commands, 'operations', lambda: installed)
++    document = popup_document()
++    original = bundle_from_document(document)
++    call = {'schema_version': 1, 'op': 'test.popup-media', 'version': '1',
++            'select': OWNER, 'args': {}}
++    plan = commands.execute(original, [call])
++    return document, original, plan
++
++
++def test_recorded_registry_creation_and_child_inverse_preserve_authored_state(popup_edit):
++    document, original, plan = popup_edit
++    assert commands.execute(original, plan.commands).records == plan.records
++    assert original == bundle_from_document(document)
++    assert plan.bundle['parent'] == original['parent']
++    sibling = original['placements'][1]['shot_id']
++    assert plan.bundle['shots'][sibling] == original['shots'][sibling]
++    assert inverse(plan.bundle, plan.records).bundle == original
++    assert document_from_bundle(inverse(plan.bundle, plan.records).bundle) == document
++    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
++    undone = inverse(reloaded, plan.records)
++    restored = document_from_bundle(undone.bundle, source_bundles=(original,))
++    assert State(undone.bundle).config(OWNER)['registry'] == State(original).config(OWNER)['registry']
++    assert restored['parent_revision']['payload'] == document['parent_revision']['payload']
++    assert restored['shot_revisions'] == document['shot_revisions']
++    assert restored['internal_timeline_revisions'] == document['internal_timeline_revisions']
++
++
++@pytest.mark.xfail(
++    strict=True,
++    reason='PLAN 4.1 / popup bundle2 requires media-manifest provenance for exact inverse',
++)
++def test_compiled_popup_inverse_restores_exact_original_document(popup_edit):
++    # Restore this expectation through the shared recipe; do not preseed NEW in
++    # the baseline, drop the manifest comparison or accept a different revision.
++    document, original, plan = popup_edit
++    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
++    undone = inverse(reloaded, plan.records)
++    assert document_from_bundle(undone.bundle, source_bundles=(original,)) == document
++
++
++def test_unselected_retained_media_pins_cannot_be_globally_pruned():
++    document = popup_document()
++    # Retained media can belong to immutable sources rather than selected clips.
++    # The current converter explicitly preserves such pins; fixing popup undo by
++    # pruning all unselected media would silently lose this existing behavior.
++    document['dependency_manifest']['media'].append({'media_id': NEW, 'content_digest': NEW})
++    assert document_from_bundle(bundle_from_document(document)) == document
+diff --git a/tests/editing_conformance/test_recipe_m2_occurrence_media.py b/tests/editing_conformance/test_recipe_m2_occurrence_media.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..7fd3d504c8e229c28e0b5524e0a13d92b42786e2
+--- /dev/null
++++ b/tests/editing_conformance/test_recipe_m2_occurrence_media.py
+@@ -0,0 +1,217 @@
++"""Detached native popup captures; real Runtime provenance is tested separately."""
++from __future__ import annotations
++
++import copy
++import json
++from pathlib import Path
++
++import pytest
++
++from astrid.sdk.timeline._command_state import CommandError, State
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.commit import _digest, _manifest, bundle_from_document, document_from_bundle
++from astrid.sdk.timeline.native_occurrence_media_commands import (
++    capture_occurrence_media_add,
++    capture_occurrence_media_swap,
++)
++from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse
++from tests.sdk.test_timeline_commit_provider_document import document_fixture
++
++OWNER = 'occurrence:occ-a'
++TARGET = OWNER + '/clip:clip-a'
++FIXTURE = Path(__file__).parent / 'fixtures/recipe_m2_occurrence_media.json'
++
++
++def pin(name):
++    return {'asset': name, 'generation_id': 'generation-' + name, 'variant_id': 'variant-' + name,
++            'object_id': 'sha256:' + ('1' if name == 'old' else '2') * 64,
++            'catalog_digest': 'sha256:' + ('3' if name == 'old' else '4') * 64}
++
++
++def entry(selection, kind='image'):
++    return {'media_id': selection['object_id'], 'type': kind,
++            'generationId': selection['generation_id'], 'variantId': selection['variant_id'],
++            'opaque': {'ordered': [None, False, 0, {}, []]}}
++
++
++def verified(kind='image'):
++    return [{'selection': pin(name), 'media_type': kind + ('/png' if kind == 'image' else '/mp4'),
++             'size': 17, **({'duration_seconds': 6} if kind == 'video' else {})}
++            for name in ('old', 'new')]
++
++
++def fixture_document(kind='image'):
++    document = document_fixture()
++    internal = document['internal_timeline_revisions'][0]['payload']
++    internal.pop('source_window')
++    internal['registry']['assets']['old'] = entry(pin('old'), kind)
++    for row in internal['clips']:
++        row.update(asset='old', clipType=kind)
++        if kind == 'video':
++            row.update({'from': 1, 'to': 3})
++    # Nonzero placement makes accidental parent-relative child timing visible.
++    document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
++    document['parent_revision']['payload']['registry']['opaque'] = [None, False]
++    document['shot_revisions'][0]['payload']['unknown']['nullable'] = None
++    for image in (document['parent_revision'], *document['shot_revisions'], *document['internal_timeline_revisions']):
++        image['content_digest'] = _digest(image['payload'])
++    document['dependency_manifest'] = _manifest(
++        document['shot_revisions'], document['internal_timeline_revisions'],
++        document['dependency_manifest']['media'], [])
++    return document
++
++
++def add_row(kind='image'):
++    return {'id': 'reserved-child', 'track': 'picture', 'asset': 'new', 'clipType': kind,
++            'at': .125, **({'hold': 1.25} if kind == 'image' else {'from': 1, 'to': 3}),
++            'app': {'astrid': {'on': None}, 'org.example': [None, False]},
++            'params': None, 'opaque': {'id': 'reserved-child', 'order': [None, {}, []]}}
++
++
++def capture(bundle, operation, kind='image', **changes):
++    media = changes.pop('media', pin('new'))
++    registry = changes.pop('registry_entry', entry(media, kind))
++    if operation == 'add':
++        return capture_occurrence_media_add(bundle, changes.pop('select', OWNER),
++                                            changes.pop('row', add_row(kind)), media, registry,
++                                            verified_media=changes.pop('verified_media', verified(kind)))
++    return capture_occurrence_media_swap(bundle, changes.pop('select', TARGET),
++                                        changes.pop('old_media', pin('old')), media, registry,
++                                        verified_media=changes.pop('verified_media', verified(kind)))
++
++
++@pytest.mark.parametrize('operation', ['add', 'swap'])
++@pytest.mark.parametrize('kind', ['image', 'video'])
++def test_exact_roundtrip_reload_inverse_redo_shared_isolation(operation, kind):
++    original = bundle_from_document(fixture_document(kind))
++    before = copy.deepcopy(original)
++    command = capture(original, operation, kind)
++    plan = execute(original, [command], verified_media=verified(kind))
++    assert original == before
++    assert replay(plan, original, verified_media=verified(kind)).records == plan.records
++    result = document_from_bundle(plan.bundle)
++    reloaded = bundle_from_document(result)
++    assert document_from_bundle(reloaded) == result
++    assert original['shots'][original['placements'][1]['shot_id']] == plan.bundle['shots'][plan.bundle['placements'][1]['shot_id']]
++    assert original['parent'] == plan.bundle['parent']
++    assert original['placements'] == plan.bundle['placements']
++    source = State(plan.bundle).config(OWNER)
++    assert source['registry']['assets']['new'] == entry(pin('new'), kind)
++    if operation == 'swap':
++        expected = copy.deepcopy(State(original).entity(TARGET))
++        expected['asset'] = 'new'
++        assert State(plan.bundle).entity(TARGET) == expected
++        assert plan.records[0]['created'] == []
++    else:
++        assert source['clips'] == State(original).config(OWNER)['clips'] + [add_row(kind)]
++        assert plan.records[0]['created'] == [{'ref': OWNER + '/clip:reserved-child', 'kind': 'clip', 'owner': OWNER}]
++    undone = inverse(reloaded, plan.records)
++    assert document_from_bundle(undone.bundle, source_bundles=(original,)) == fixture_document(kind)
++    redone = inverse(undone.bundle, undone.records)
++    assert document_from_bundle(redone.bundle) == result
++    accepted = accepted_boundaries(redone.records, undone.bundle, redone.bundle)
++    assert document_from_bundle(inverse(redone.bundle, accepted).bundle, source_bundles=(original,)) == fixture_document(kind)
++
++
++def test_golden_exact_command_records_and_closed_document():
++    golden = json.loads(FIXTURE.read_text())
++    for case in golden['cases']:
++        original = bundle_from_document(case['input'])
++        command = capture(original, case['operation'], case['kind'])
++        assert command == case['command']
++        plan = execute(original, [command], verified_media=case['verified_media'])
++        assert plan.records == case['records']
++        assert document_from_bundle(plan.bundle) == case['output']
++
++
++@pytest.mark.parametrize('operation', ['add', 'swap'])
++def test_registry_create_or_require_exact_null_and_collision(operation):
++    original = bundle_from_document(fixture_document())
++    State(original).config(OWNER)['registry']['assets']['new'] = entry(pin('new'))
++    plan = execute(original, [capture(original, operation)], verified_media=verified())
++    assert not any(write['ref'].endswith('/source') for write in plan.records[0]['writes'])
++    for changed in (None, {}, dict(entry(pin('new')), opaque=None), entry(pin('old'))):
++        bundle = copy.deepcopy(original)
++        State(bundle).config(OWNER)['registry']['assets']['new'] = changed
++        with pytest.raises(CommandError):
++            capture(bundle, operation)
++
++
++@pytest.mark.parametrize('operation', ['add', 'swap'])
++@pytest.mark.parametrize('damage', ['owner', 'track', 'membership', 'order', 'registry', 'target', 'pin'])
++def test_capture_guards_replay_and_aba_refuse(operation, damage):
++    original = bundle_from_document(fixture_document())
++    plan = execute(original, [capture(original, operation)], verified_media=verified())
++    head = copy.deepcopy(original)
++    source = State(head).config(OWNER)
++    if damage == 'owner':
++        head['placements'][0]['duration_ms'] = 9000
++    elif damage == 'track':
++        source['tracks'][0]['hidden'] = True
++    elif damage == 'membership':
++        source['clips'].append(dict(source['clips'][0], id='later'))
++    elif damage == 'order':
++        source['clips'].reverse()
++    elif damage == 'registry':
++        source['registry']['assets']['new'] = entry(pin('new'))
++    elif damage == 'target':
++        source['clips'][0]['asset'] = 'picture'
++    else:
++        with pytest.raises(CommandError):
++            replay(plan, head, verified_media=[dict(row, selection=dict(row['selection'], catalog_digest='sha256:' + '5' * 64)) for row in verified()])
++        return
++    with pytest.raises(CommandError):
++        replay(plan, head, verified_media=verified())
++    later = {'writes': [{'ref': OWNER + '/source', 'path': ['clips'],
++                         'before': {'state': 'present', 'value': []},
++                         'after': {'state': 'present', 'value': []}}]}
++    with pytest.raises(CommandError, match='intervening'):
++        replay(plan, original, intervening_records=[later], verified_media=verified())
++
++
++@pytest.mark.parametrize('operation', ['add', 'swap'])
++def test_inverse_refuses_new_consumer_and_changed_registry(operation):
++    original = bundle_from_document(fixture_document())
++    plan = execute(original, [capture(original, operation)], verified_media=verified())
++    for damage in ('consumer', 'existing-consumer', 'binding'):
++        head = copy.deepcopy(plan.bundle)
++        source = State(head).config(OWNER)
++        if damage == 'consumer':
++            source['clips'].append(dict(source['clips'][0], id='later', asset='new'))
++        elif damage == 'existing-consumer':
++            source['clips'][1]['asset'] = 'new'
++        else:
++            source['registry']['assets']['new']['opaque'] = None
++        with pytest.raises(CommandError):
++            inverse(head, plan.records)
++
++
++@pytest.mark.parametrize('operation', ['add', 'swap'])
++@pytest.mark.parametrize('select', ['parent', 'parent/clip:clip-a', 'occurrence:missing',
++                                  'occurrence:occ-b/clip:occ-a:clip-a', 'occurrence:occ-a/clip:occ-a:clip-a'])
++def test_wrong_owner_and_display_selectors_refuse(operation, select):
++    with pytest.raises(CommandError):
++        capture(bundle_from_document(fixture_document()), operation, select=select)
++
++
++@pytest.mark.parametrize('changes', [{'at': -1}, {'at': 9, 'hold': 2}, {'speed': 2}, {'hold': None},
++    {'from': 0}, {'at_ms': 125}, {'track': 'occ-a:picture'}, {'asset': 'old'},
++    {'app': {'astrid': {'on': 9}}}, {'app': {'astrid': {'until_film_end': True}}}])
++def test_add_unsupported_shapes_refuse_atomically(changes):
++    original = bundle_from_document(fixture_document())
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        capture(original, 'add', row=dict(add_row(), **changes))
++    assert original == before
++
++
++@pytest.mark.parametrize('operation', ['add', 'swap'])
++def test_missing_verified_input_and_shared_intent_refuse(operation):
++    original = bundle_from_document(fixture_document())
++    with pytest.raises(CommandError, match='Runtime-verified'):
++        capture(original, operation, verified_media=[])
++    command = capture(original, operation)
++    command['intent']['ownership'] = 'shared'
++    with pytest.raises(CommandError, match='intention'):
++        execute(original, [command], verified_media=verified())
+
+exec
+/bin/bash -lc 'git status --short; git diff --check; ls -d .pytest_cache .ruff_cache tests/editing_conformance/__pycache__ 2>/dev/null; wc -l tests/editing_conformance/test_occurrence_media_manifest_inverse.py; cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media/commit-msg.txt' in /home/user/work/wt/agt-m2-popup-media
+ succeeded in 31ms:
+?? tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+.pytest_cache
+.ruff_cache
+112 tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+for name in ('.pytest_cache', '.ruff_cache'):
+    path = Path(name)
+    if path.is_dir():
+        shutil.rmtree(path)
+PY
+" in /home/user/work/wt/agt-m2-popup-media
+ succeeded in 0ms:
+codex
+Blocked on the shared recipe: reload/undo retains newly introduced media pins, preventing exact document and revision restoration. Stopped popup implementation as instructed.
+
+- Added a permanent reproducer; product code is unchanged.
+- Targeted tests: **47 passed, 2 strict xfailed**. `--runxfail` confirms both exact-inverse failures.
+- Ruff and whitespace checks passed. No full suite or real popup acceptance claimed.
+- Wrote the [contract handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-popup-native-contract.md), [report with exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media/notes/report.md), and both commit-message files.
+
+Next: fix guarded media-manifest provenance, then resume popup commands and real acceptance proof. No merge requested.
+tokens used
+170,321
+Blocked on the shared recipe: reload/undo retains newly introduced media pins, preventing exact document and revision restoration. Stopped popup implementation as instructed.
+
+- Added a permanent reproducer; product code is unchanged.
+- Targeted tests: **47 passed, 2 strict xfailed**. `--runxfail` confirms both exact-inverse failures.
+- Ruff and whitespace checks passed. No full suite or real popup acceptance claimed.
+- Wrote the [contract handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-popup-native-contract.md), [report with exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-media/notes/report.md), and both commit-message files.
+
+Next: fix guarded media-manifest provenance, then resume popup commands and real acceptance proof. No merge requested.

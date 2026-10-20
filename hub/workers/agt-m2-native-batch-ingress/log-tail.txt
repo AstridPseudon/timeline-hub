@@ -1,0 +1,400 @@
+-    track_label_parser: TimelinesParser
++    native_edit_parsers: dict[str, TimelinesParser]
+ 
+     def parse_args(self, args: Any = None, namespace: Any = None) -> argparse.Namespace:
+         args = list(sys.argv[1:] if args is None else args)
+-        if args[:2] == ["edit", "move"] and hasattr(self, "move_parser"):
+-            return self.move_parser.parse_args(args[2:], namespace)
+-        if args[:2] == ["edit", "track-label"] and hasattr(self, "track_label_parser"):
+-            return self.track_label_parser.parse_args(args[2:], namespace)
++        native = getattr(self, "native_edit_parsers", {})
++        if len(args) >= 2 and args[0] == "edit" and args[1] in native:
++            return native[args[1]].parse_args(args[2:], namespace)
+         parsed, extras = self.parse_known_args(args, namespace)
+         loose = [e for e in extras if not e.startswith("-")]
+         if extras and len(loose) == len(extras):
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index 06484f5584da3ee4bb506a707c5f25d2fdf43dcb..268001a8c37fca4d9a2c796295feb7ca18c8ae86
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -128,10 +128,13 @@
+         self.path = f"/v1/projects/{quote(project_id, safe='')}/timelines/{quote(timeline_id, safe='')}/commit"
+ 
+     @classmethod
+-    def open(cls, project, timeline, *, client, outbox_path=None):
++    def open(cls, project, timeline, *, client, outbox_path=None,
++             base_revision_id=None, base_publication_id=None):
+         from astrid.sdk.storage_root import resolve_runtime_data_root
+         from astrid.sdk.timeline.store import resolve_ids
+ 
++        base = None if base_revision_id is None and base_publication_id is None else _pin({
++            "revision_id": base_revision_id, "publication_id": base_publication_id})
+         identity = _connection(client)
+         project_id, timeline_id, _ = resolve_ids(project, timeline, client=client)
+         scope = {**identity, "project_id": project_id, "timeline_id": timeline_id}
+@@ -147,8 +150,10 @@
+                         raise TimelineEditError("outbox belongs to a different realm, actor, project or timeline")
+                     if state["pending"] or state["flight"] is not None:
+                         session._state()
++                        if base is not None and state["base"] != base:
++                            raise TimelineEditError("pending intent belongs to a different original base")
+                         return session
+-            head = _pin(_response(client.timelines.history(project_id, timeline_id, limit=1))["data"]["head"])
++            head = base or _pin(_response(client.timelines.history(project_id, timeline_id, limit=1))["data"]["head"])
+             with session.outbox.locked():
+                 if _connection(client) != identity:
+                     raise TimelineEditError("outbox identity changed while reading its head")
+@@ -188,39 +193,58 @@
+ 
+         Supplied capture claims are verified by execute, never refreshed.
+         """
++        return self.queue_many([command])[0]
++
++    def queue_many(self, commands):
++        """Atomically capture a batch on the original base, staging its own prefix.
++
++        Commands are registered EditCommands; supplied claims are never refreshed.
++        Missing capture inputs fail before any command is added to the outbox.
++        """
+         from astrid.sdk.timeline.commands import execute
+ 
+-        command = _native_command(command)
+-        return self._queue(lambda state: execute(self._bundle(state), [command]).commands[0])
++        commands = [_native_command(command) for command in commands]
++        return self._stage(lambda state: execute(self._bundle(state), commands).commands)
+ 
+     def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
+         """Capture and flush one native command, or retry its original flight."""
++        return self.commit_many([command], idempotency_key=idempotency_key, dry_run=dry_run, via=via)
++
++    def commit_many(self, commands, *, idempotency_key=None, dry_run=False, via="python"):
++        """Capture and flush a batch, or retry its exact flight before a suffix."""
+         from astrid.sdk.timeline._command_state import equal
+         from astrid.sdk.timeline.commands import execute
+ 
+-        command = _native_command(command)
+-        self._queue(lambda state: execute(self._bundle(state), [command]).commands[0],
+-                    lambda pending: len(pending) == 1 and all(
+-                        equal(pending[0].get(key), value) for key, value in command.items() if key != "intent")
+-                    and all(equal(pending[0]["intent"].get(key), value)
+-                            for key, value in command.get("intent", {}).items()))
++        commands = [_native_command(command) for command in commands]
++        self._stage(lambda state: execute(self._bundle(state), commands).commands,
++                    lambda pending: len(pending) == len(commands) and all(
++                        all(equal(saved.get(key), value) for key, value in command.items() if key != "intent")
++                        and all(equal(saved["intent"].get(key), value)
++                                for key, value in command.get("intent", {}).items())
++                        for saved, command in zip(pending, commands)))
+         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+ 
+     def _queue(self, capture, matches=None):
++        return self._stage(lambda state: [capture(state)], matches)[0]
++
++    def _stage(self, capture, matches=None):
++        from astrid.sdk.timeline._command_state import equal
++
+         while True:
+             with self.outbox.locked():
+                 state = self._state()
+                 if matches is not None and state["pending"]:
+-                    if not matches(state["pending"]):
++                    prefix = state["pending"][:state["flight"]["count"]] if state["flight"] else state["pending"]
++                    if not matches(prefix):
+                         raise TimelineEditError("pending intent differs; flush the original request before another edit")
+-                    return copy.deepcopy(state["pending"][0])
+-            command = capture(state)
++                    return copy.deepcopy(prefix)
++            commands = capture(state)
+             with self.outbox.locked():
+-                if self._state() != state:
+-                    continue
+-                state["pending"].append(copy.deepcopy(command))
++                if not equal(self._state(), state):
++                    raise TimelineEditError("outbox changed during capture; original intent was not queued")
++                state["pending"].extend(copy.deepcopy(commands))
+                 self.outbox.write(state)
+-                return copy.deepcopy(command)
++                return copy.deepcopy(commands)
+ 
+     def move(self, select, on, *, idempotency_key=None, dry_run=False, via="python"):
+         # A repeated one-shot CLI/SDK invocation retries original intent, never
+@@ -313,13 +337,15 @@
+         return result
+ 
+     def _flight_body(self, state, flight, key, dry_run):
++        from astrid.sdk.timeline._command_state import equal
++
+         try:
+             body = json.loads(flight["body"])
+             count = flight["count"]
+             valid = (type(count) is int and 0 < count <= len(state["pending"])
+                      and isinstance(flight["key"], str) and bool(flight["key"])
+                      and flight["path"] == self.path
+-                     and body["commands"] == state["pending"][:count]
++                     and equal(body["commands"], state["pending"][:count])
+                      and request_bytes(body).decode() == flight["body"]
+                      and body["project_id"] == self.project_id and body["timeline_id"] == self.timeline_id
+                      and body["base_revision_id"] == state["base"]["revision_id"]
+diff --git a/scripts/gen_cli_surface.py b/scripts/gen_cli_surface.py
+index 201da3790e333ad8e96013653aeea1f0b39a89e6..51dcbf3e9a7c837b71b5065fb34b4b5accf2843d
+--- a/scripts/gen_cli_surface.py
++++ b/scripts/gen_cli_surface.py
+@@ -38,6 +38,9 @@
+                 node["flags"][name] = flag
+         else:
+             node["positionals"].append(action.dest)
++    # Native edit parsers share the legacy edit positional through its dispatcher.
++    for name, sub in getattr(parser, "native_edit_parsers", {}).items():
++        node["verbs"]["edit"]["verbs"][name] = _walk(sub)
+     node["flags"] = dict(sorted(node["flags"].items()))
+     return node
+ 
+diff --git a/tests/editing_conformance/test_native_batch_ingress.py b/tests/editing_conformance/test_native_batch_ingress.py
+index a35ae250fe6f616b448cd6d29535ef36f00af922..f0313e6c3be3260e74874a06b9606b1b9de2dca3
+--- a/tests/editing_conformance/test_native_batch_ingress.py
++++ b/tests/editing_conformance/test_native_batch_ingress.py
+@@ -196,7 +196,9 @@
+ 
+ 
+ @pytest.mark.parametrize('captured', [False, True])
+-@pytest.mark.parametrize('peer', ['disjoint', 'relevant', 'aba'])
++@pytest.mark.parametrize('peer', ['disjoint', 'relevant', pytest.param('aba', marks=pytest.mark.xfail(
++    strict=True, reason='PLAN dependent edits: equal-state ABA must allow the original suffix; '
++                        'the frozen official provider currently refuses intervening_write'))])
+ def test_file_lost_ack_restart_exact_retry_before_original_suffix(runtime, tmp_path, capsys, captured, peer):
+     runtime.session().commit_many(batch())
+     base = runtime.history()['head']
+@@ -385,3 +387,76 @@
+     assert all(op in help_text for op in operations())
+     assert '--base-revision-id' in help_text and '--base-publication-id' in help_text
+     assert runtime.calls == []
++
++
++@pytest.mark.parametrize('field', ['reads', 'expect'])
++def test_captured_file_retry_refuses_boolean_to_number_claim(runtime, tmp_path, capsys, field):
++    initial = batch()
++    initial[2]['args']['row']['enabled'] = True
++    runtime.session().commit_many(initial)
++    runtime.session().move('parent/clip:title', 1)
++    head = runtime.history()['head']
++    pins = {'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id']}
++    bundle = runtime.client().timelines.open_bundle(runtime.project, 'film', revision_id=head['revision_id']).data['bundle']
++    calls = execute(bundle, [command('clip.move', 'parent/clip:title', {'on': 2}), label('Moved')]).commands
++    path = tmp_path / 'commands.json'
++    path.write_text(json.dumps(calls))
++    runtime.lost.add('claims')
++    assert cli(runtime, capsys, path, '--idempotency-key', 'claims', base=pins)[0] == 1
++    original = copy.deepcopy(runtime.calls[-1])
++    altered = copy.deepcopy(calls)
++    if field == 'reads':
++        claim = next(read['state'] for read in altered[0]['reads']
++                     if read['ref'] == 'parent/clip:title' and read['path'] == ['enabled'])
++    else:
++        claim = altered[0]['expect']['parent/clip:title::app.astrid.fixed_start']
++    assert claim['value'] is True
++    claim['value'] = 1
++    path.write_text(json.dumps(altered))
++    session = TimelineSession.open(runtime.project, 'film', client=runtime.client())
++    persisted = session.outbox.path.read_bytes()
++    reads, count = len(runtime.reads), len(runtime.calls)
++    code, failure = cli(runtime, capsys, path, base=pins)
++    assert code == 1 and 'pending intent differs' in failure['error']['message']
++    assert session.outbox.path.read_bytes() == persisted
++    assert len(runtime.reads) == reads and len(runtime.calls) == count
++    path.write_text(json.dumps(calls))
++    runtime.restart()
++    assert cli(runtime, capsys, path, base=pins)[0] == 0
++    assert runtime.calls[-1][:2] == original[:2]
++
++
++def test_file_preview_keeps_batch_for_one_real_publication(runtime, tmp_path, capsys):
++    path = tmp_path / 'commands.json'
++    path.write_text(json.dumps(batch()))
++    before = copy.deepcopy(runtime.history())
++    code, preview = cli(runtime, capsys, path, '--dry-run')
++    assert code == 0 and preview['data']['status'] == 'preview' and preview['receipt'] is None
++    assert runtime.history() == before
++    code, accepted = cli(runtime, capsys, path)
++    assert code == 0 and len(runtime.history()['items']) == len(before['items']) + 1
++    assert accepted['data']['commands'] == preview['data']['commands']
++    assert runtime.calls[-1][1] != runtime.calls[-2][1]
++
++
++def test_batch_capture_never_refreshes_after_concurrent_ack(runtime, monkeypatch):
++    session = runtime.session(base=runtime.base)
++    session.queue_many(batch())
++    snapshots = []
++    original_bundle = session._bundle
++
++    def acknowledged_during_read(state):
++        snapshots.append(copy.deepcopy(state['base']))
++        bundle = original_bundle(state)
++        session.flush()  # Completes while capture is outside the outbox lock.
++        return bundle
++
++    monkeypatch.setattr(session, '_bundle', acknowledged_during_read)
++    with pytest.raises(TimelineEditError, match='outbox changed during capture'):
++        session.queue_many([label('Suffix')])
++    assert snapshots == [{'revision_id': runtime.base['base_revision_id'],
++                          'publication_id': runtime.base['base_publication_id']}]
++    state = json.loads(runtime.path.read_bytes())
++    assert state['pending'] == [] and state['flight'] is None
++    assert state['base'] == runtime.history()['head']
++    assert len(runtime.history()['items']) == 2
+
+exec
+/bin/bash -lc 'PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_native_batch_ingress.py::test_batch_capture_never_refreshes_after_concurrent_ack' in /home/user/work/wt/agt-m2-native-batch-ingress
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+Path('/tmp/native_batch_test_placeholder').unlink(missing_ok=True)
+PY
+rg -n '"'^SCHEMA_DIGEST'"' astrid_runtime_client/contract_metadata.py /home/user/work/runtime/runtime_protocol/contract_metadata.py && git diff --check && git status --short" in /home/user/work/wt/agt-m2-native-batch-ingress
+ succeeded in 431ms:
+/home/user/work/runtime/runtime_protocol/contract_metadata.py:5:SCHEMA_DIGEST = 'sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d'
+astrid_runtime_client/contract_metadata.py:6:SCHEMA_DIGEST = 'sha256:89a396aaa10a5ab6c29fb5f053bf12dd031be4a259c33ebc6a53489fcd5878d3'
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_native.py
+ M astrid/packs/timeline/cli_parser.py
+ M astrid/sdk/timeline/sync.py
+ M cli-surface.json
+ M scripts/gen_cli_surface.py
+?? tests/editing_conformance/test_native_batch_ingress.py
+
+ succeeded in 1889ms:
+.                                                                        [100%]
+1 passed in 1.31s
+
+codex
+Verification is nearly complete: 295 neighboring tests passed with one existing environment-dependent skip. The new Runtime tests passed 33 cases, with two strict ABA expected failures. The current integration Runtime’s contract digest differs from this base’s vendored client, so the report will identify `6be9706` as the tested pair and leave integration held.
+exec
+/bin/bash -lc 'PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/sync.py astrid/packs/timeline/cli_native.py astrid/packs/timeline/cli_parser.py scripts/gen_cli_surface.py tests/editing_conformance/test_native_batch_ingress.py && PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py --check && git diff --check && git status --short --ignored' in /home/user/work/wt/agt-m2-native-batch-ingress
+ succeeded in 968ms:
+All checks passed!
+cli-surface.json is current
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_native.py
+ M astrid/packs/timeline/cli_parser.py
+ M astrid/sdk/timeline/sync.py
+ M cli-surface.json
+ M scripts/gen_cli_surface.py
+?? tests/editing_conformance/test_native_batch_ingress.py
+!! .pytest_cache/
+!! .ruff_cache/
+!! astrid/__pycache__/
+!! astrid/core/__pycache__/
+!! astrid/core/cli/__pycache__/
+!! astrid/core/contracts/__pycache__/
+!! astrid/core/foundation/__pycache__/
+!! astrid/core/gateway/__pycache__/
+!! astrid/core/receipts/__pycache__/
+!! astrid/sdk/__pycache__/
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root = Path.cwd()
+for path in [root / '.pytest_cache', root / '.ruff_cache', *list((root / 'astrid').rglob('__pycache__'))]:
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-batch-ingress')
+(worker / 'notes').mkdir(exist_ok=True)
+message = '''feat(timeline): add pinned native command batches
+
+Add atomic queue_many/commit_many through TimelineSession's existing outbox.
+Accept JSON command arrays through edit commands-file with explicit original
+revision and publication pins. Keep capture claims and exact in-flight retries,
+including retry before a newer pending suffix and JSON boolean distinctions.
+
+Export native edit parsers through the CLI surface generator and cover batches
+with the official Runtime pair over an in-memory HTTP transport. Preserve the
+plan's equal-state ABA success expectation as strict expected failures while
+the frozen provider still rejects intervening writes.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+report = '''# Native batch ingress — ready for review, integration held
+
+Implemented on Agent base "'`7b61efd5`; no commits, merges, pin changes, installs, network, browser or full-suite runs.
+
+- Added public `TimelineSession.queue_many` / `commit_many`. Existing `queue` / `commit` delegate to them; all persistence still goes through the same outbox staging and flush path.
+- `TimelineSession.open` accepts optional `base_revision_id` and `base_publication_id` together. Explicit pins initialize the outbox without substituting the current head; a different pending base refuses.
+- Added `astrid timelines edit commands-file TL FILE --base-revision-id REV --base-publication-id PUB`. FILE is a nonempty JSON array of existing registered EditCommands, with no new command/envelope fields. Original claims and rationale survive; CLI source is recorded as `via: cli`. Unsupported capture/schema/media inputs refuse atomically and retain the file.
+- Raw native batches execute once against the original immutable bundle plus existing local commands, staging their own prefix. A racing outbox change refuses without recapture. Existing specialized move callback concurrency remains unchanged, sharing the same staging implementation.
+- Lost-ACK batch retry matches the original flight prefix even with a newer pending suffix. Flush retries original bytes/key before the suffix. JSON equality distinguishes booleans from numbers while retaining numeric equivalence.
+- Native parser dispatch is shared in one mapping; `scripts/gen_cli_surface.py` now exports these real parsers. Regenerated `cli-surface.json` normally, including move, track-label and commands-file.
+- No `NativeSheet` exists in this base, so no sheet adapter was migrated. No additional writer, journal, media loader, per-operation CLI capture table or client rebase was added. Product changes are about 100 added lines, plus generated output and tests.
+
+## Verification
+
+All commands ran from `/home/user/work/wt/agt-m2-native-batch-ingress` using dependency-only shared venvs and this worktree'"'s code.
+
+"'```sh
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_native.py tests/packs/timeline/test_cli_commit_move.py tests/test_cli_surface_conformance.py tests/test_public_boundary.py tests/v10/test_domain_cli_surface.py tests/v10/test_domain_cli_projects_timelines.py
+```
+
+**295 passed, 1 skipped in 28.34s.** Existing skip requires `ASTRID_RUNTIME_SOURCE_ROOT` for the paired execution worktree. No existing behavior test was changed. A concurrency regression encountered during development was fixed by preserving the existing move callback'"'s retry behavior.
+
+"'```sh
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_native_batch_ingress.py -rx
+```
+
+**33 passed, 2 strict xfailed in 63.16s.** This run predates the final added capture-race test below; no product code changed afterward. Tests use `use_runtime(vendored_runtime_commit())`, extracting the existing official Runtime pair `6be970633cc82ab412428151e6bf42f3e7fc3081`. Generated client transport runs real Runtime HTTP handlers in memory, real credential checks, real realm persistence, the standard `astrid` provider loader, and unmodified schemas. No sockets or fake provider. Coverage includes raw/captured SDK queue/commit and CLI arrays; parent track creation/label, nonmedia clip add/delete/set-params; one publication; reload, inverse/redo; lost ACK/restart/exact prefix retry/pending suffix; disjoint server rebase; relevant conflict retaining pending work; rationale/source; stale claims/atomic refusal/file retention; bool-vs-number intent and capture claims; numeric equivalence; preview; explicit pin validation.
+
+```sh
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_native_batch_ingress.py::test_batch_capture_never_refreshes_after_concurrent_ack
+```
+
+**1 passed in 1.31s.** Confirms a native batch reads/captures the original base once and refuses a concurrent ACK race instead of deriving a new base or refreshing claims.
+
+```sh
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py --check
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/sync.py astrid/packs/timeline/cli_native.py astrid/packs/timeline/cli_parser.py scripts/gen_cli_surface.py tests/editing_conformance/test_native_batch_ingress.py
+git diff --check
+```
+
+**Passed.** Including `astrid/packs/timeline/cli.py` in direct Ruff reports 15 inherited diagnostics. Comparing `(code, message)` against `git show HEAD:astrid/packs/timeline/cli.py` using the same `pyproject.toml` confirmed identical diagnostics, with none added. Caches and temporary build artifacts were cleaned from the worktree. `make check`, full suites, sockets/browser journeys and current Runtime integration were not run, per task scope.
+
+## Findings / decisions for the orchestrator
+
+1. **Frozen-provider behavior conflicts with the plan'"'s dependent-edit ABA decision.** Both original raw and captured command files successfully retry A exactly after Runtime restart, but after peer A→Peer→A, the original suffix B is refused with "'`intervening_write`. The plan says equal-state ABA is not a conflict. Both success expectations remain as `xfail(strict=True)`, with the restoring requirement named in the test. No provider semantics were changed in this task. Disjoint rebase and relevant conflict pass without expected failures.
+2. **This base needs the frozen official pair for these proofs.** The vendored client contract is `sha256:89a396aaa10a5ab6c29fb5f053bf12dd031be4a259c33ebc6a53489fcd5878d3`; current `/home/user/work/runtime` advertises `sha256:4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`. Tests use the existing `runtime.lock.json` pair, not a schema override or pin change. Current integration compatibility remains unverified.
+3. Explicit native spelling chosen from the existing `edit move` / `edit track-label` parser pattern. Required base pins are CLI flags and SDK open parameters; the file remains only existing EditCommands. Media/shared schema input loading remains with the separate params worker.
+
+Recommended next steps: review the small ingress change, keep M2 integration HELD until PLAN M1, resolve the provider'"'s equal-state ABA discrepancy through its owner, and test the paired integration tree centrally once the contract/params work is composed. Reports and both commit-message files are written; harness owns committing.
+'''
+(worker / 'notes/report.md').write_text(report)
+PY
+git status --short --ignored" in /home/user/work/wt/agt-m2-native-batch-ingress
+ succeeded in 214ms:
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_native.py
+ M astrid/packs/timeline/cli_parser.py
+ M astrid/sdk/timeline/sync.py
+ M cli-surface.json
+ M scripts/gen_cli_surface.py
+?? tests/editing_conformance/test_native_batch_ingress.py
+
+codex
+Implemented atomic `queue_many`/`commit_many` and pinned `edit commands-file` through the existing outbox. Regenerated the CLI surface.
+
+- Neighboring tests: **295 passed, 1 skipped**.
+- New Runtime proofs: **34 passed, 2 strict xfailed**.
+- Outstanding: frozen provider rejects equal-state ABA contrary to PLAN; current Runtime/client contracts differ.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-batch-ingress/notes/report.md)
+
+Both commit-message files are written. M2 integration remains held pending PLAN M1 and orchestrator review of the findings.
+tokens used
+182,629
+Implemented atomic `queue_many`/`commit_many` and pinned `edit commands-file` through the existing outbox. Regenerated the CLI surface.
+
+- Neighboring tests: **295 passed, 1 skipped**.
+- New Runtime proofs: **34 passed, 2 strict xfailed**.
+- Outstanding: frozen provider rejects equal-state ABA contrary to PLAN; current Runtime/client contracts differ.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-batch-ingress/notes/report.md)
+
+Both commit-message files are written. M2 integration remains held pending PLAN M1 and orchestrator review of the findings.

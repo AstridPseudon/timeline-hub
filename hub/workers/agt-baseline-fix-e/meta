@@ -1,0 +1,9 @@
+name=agt-baseline-fix-e
+repo=agent
+base=tl/integration
+base_sha=6c5aab20
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-baseline-fix-e
+started=2026-10-20T06:52:18Z

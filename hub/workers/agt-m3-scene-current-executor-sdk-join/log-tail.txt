@@ -1,0 +1,400 @@
++    """Invoke the existing managed visualization executor in private Scene mode."""
++    if client is None:
++        from astrid.sdk import AstridClient
++        with AstridClient.open_from_launcher(start_pack_host=False) as connected:
++            return _invoke_scene_only(inputs, project=project, client=connected)
++    request, context = _scene_only_request(inputs, project=project, client=client)
++    invoke_result = getattr(client, "invoke_result", None)
++    if not callable(invoke_result):
++        return _scene_only_unavailable(
++            context, reason="managed visualization invocation unavailable"
++        ), context
++    result = invoke_result(
++        "rendering.timeline_visualize", kind="executor", project=project,
++        inputs=request, wait=True, read_managed_outputs=True,
++    )
++    return _scene_only_spans(result, context, client=client), context
++
++
+ def latest_render(client: Any, *, project_id: str, timeline_id: str, scan: int = 12) -> dict[str, Any] | None:
+     """The newest successful ``rendering.render`` run of one timeline: ``{run_id, revision, created_at,
+     candidate}`` (bounded: the last ``scan`` render runs), or None. Read-only; used by ``timelines status``."""
+diff --git a/tests/packs/rendering/test_scene_only_executor.py b/tests/packs/rendering/test_scene_only_executor.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..5d4da65b731f5f6d388ca66d022697dfdc4fa420
+--- /dev/null
++++ b/tests/packs/rendering/test_scene_only_executor.py
+@@ -0,0 +1,160 @@
++"""Private Scene-only visualization reuses the managed filmstrip artifact."""
++
++import json
++import zipfile
++from argparse import Namespace
++from pathlib import Path
++from types import SimpleNamespace
++
++from astrid.core.timeline import scene_answers
++from astrid.sdk import timeline_filmstrip
++from astrid.packs.rendering.actions.timeline_visualize import filmstrip_execution
++
++
++def _args(tmp_path: Path) -> Namespace:
++    timeline = tmp_path / "timeline.json"
++    assets = tmp_path / "assets.json"
++    timeline.write_text("{}", encoding="utf-8")
++    assets.write_text('{"assets": {}}', encoding="utf-8")
++    return Namespace(
++        filmstrip_authority=None,
++        project_slug="demo",
++        out=tmp_path / "output",
++        timeline=timeline,
++        assets_registry=assets,
++        materialized_root=None,
++        materialized_objects=None,
++        theme_path=None,
++    )
++
++
++def _authority() -> dict:
++    capture_identity = "sha256:" + "a" * 64
++    return {
++        "mode": "scene_only",
++        "capture_identity": capture_identity,
++        "capture_snapshot": {
++            "project_slug": "demo",
++            "timeline_id": "timeline",
++            "render_run_id": "capture:timeline:revision",
++            "duration_frames": 4,
++            "config": {"tracks": [], "clips": [{"id": "compiled:clip"}]},
++            "registry": {"assets": {}},
++            "metadata": {
++                "capture_identity": capture_identity,
++                "capture_authority": {"parent_revision_id": "revision"},
++                "scene_clips": {"compiled:clip": {"address": "c01.layer"}},
++            },
++        },
++    }
++
++
++class _Source:
++    def __init__(self, snapshot):
++        self.snapshot = snapshot
++
++    def validate_snapshot(self, snapshot):
++        assert snapshot == self.snapshot
++
++    def read(self):
++        return {"snapshot": self.snapshot}
++
++
++def test_scene_only_writes_no_png_and_binds_receipt_to_capture(tmp_path, monkeypatch):
++    args = _args(tmp_path)
++    authority = _authority()
++    source = _Source(authority["capture_snapshot"])
++    monkeypatch.setattr(
++        "astrid.core.rendering.verified_source.inherited_source",
++        lambda timeline, assets: source,
++    )
++    monkeypatch.setattr(
++        filmstrip_execution,
++        "snapshot_label",
++        lambda snapshot, *, source: {
++            "status": "committed", "label": "committed revision revision",
++            "actual_revision_id": "revision", "base_revision_id": None,
++        },
++    )
++    monkeypatch.setattr(
++        scene_answers,
++        "_prepared_host_frames_at",
++        lambda timeline, assets, frames, **kwargs: [
++            {
++                "frame": frame,
++                "width": 1920,
++                "height": 1080,
++                "coverage": "COVERED",
++                "content": "CONTENT",
++                "layers": [{"clipId": "compiled:clip"}],
++                "findings": [],
++            }
++            for frame in frames
++        ],
++    )
++
++    result = filmstrip_execution.execute_filmstrip(args, authority=authority)
++
++    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
++    assert [answer["frame"] for answer in payload["answers"]] == [0, 1, 2, 3]
++    assert payload["scene_clips"] == {"compiled:clip": {"address": "c01.layer"}}
++    assert not list((args.out / "filmstrip-view").glob("*.png"))
++    host_manifest = json.loads((args.out / "manifest.json").read_text(encoding="utf-8"))
++    bundle = next(row for row in host_manifest["outputs"] if row["name"] == "filmstrip_bundle")
++    assert bundle["provenance"] == {
++        "video_digest": "sha256:" + "a" * 64, "timeline_id": "timeline",
++    }
++    with zipfile.ZipFile(result["outputs"]["filmstrip_bundle"]) as archive:
++        assert archive.namelist() == ["manifest.json", "scene-answers.json"]
++    bundle_bytes = Path(result["outputs"]["filmstrip_bundle"]).read_bytes()
++    sdk_context = {
++        **authority,
++        "mode": "composed_capture",
++        "scene_only": True,
++        "video_digest": "sha256:" + "b" * 64,
++        "video_object_id": "sha256:" + "b" * 64,
++        "managed_object_reference": "sha256:" + "b" * 64,
++    }
++    sdk_result = {
++        "ok": True,
++        "outputs": {
++            "managed_outputs": [{
++                "output_port": "filmstrip_bundle",
++                "role": "result",
++                "digest": bundle["content_hash"],
++                "size": len(bundle_bytes),
++                "provenance": bundle["provenance"],
++            }],
++        },
++    }
++    assert timeline_filmstrip._scene_only_authority(sdk_context) is not None
++    bundle_source = timeline_filmstrip._scene_only_bundle_payload(
++        sdk_result,
++        client=SimpleNamespace(media=SimpleNamespace(read_bytes=lambda _: bundle_bytes)),
++    )
++    assert bundle_source is not None
++    assert bundle_source[0]["snapshot_label"] == timeline_filmstrip._scene_only_authority(sdk_context)["snapshot_label"]
++    spans = timeline_filmstrip._scene_only_spans(
++        sdk_result,
++        sdk_context,
++        client=SimpleNamespace(media=SimpleNamespace(read_bytes=lambda _: bundle_bytes)),
++    )
++    assert [(item.start_frame, item.end_frame, item.cls, item.clips) for item in spans] == [
++        (0, 4, "COVERED", ("c01.layer",)),
++    ], spans[0].findings
++
++
++def test_scene_only_failure_is_advisory_and_has_no_partial_answers(tmp_path, monkeypatch):
++    args = _args(tmp_path)
++    monkeypatch.setattr(
++        "astrid.core.rendering.verified_source.inherited_source",
++        lambda timeline, assets: None,
++    )
++
++    result = filmstrip_execution.execute_filmstrip(args, authority=_authority())
++
++    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
++    assert result["returncode"] == 0
++    assert payload["answers"] == []
++    assert payload["scene_clips"] == {}
++    assert payload["snapshot_label"]["status"] == "unavailable"
+diff --git a/tests/sdk/test_scene_caller_preservation.py b/tests/sdk/test_scene_caller_preservation.py
+index 3b9f55abc3ac878c75f7f05256fc67ed7c9aa562..1488ea20be3ce56b7abda19dd3ee607c7074c347
+--- a/tests/sdk/test_scene_caller_preservation.py
++++ b/tests/sdk/test_scene_caller_preservation.py
+@@ -1,8 +1,13 @@
+ """Formatter positives with supplied scene spans; these do not certify a renderer/source."""
++import hashlib
++import io
++import json
++import zipfile
+ from types import SimpleNamespace
+ 
+ import pytest
+ 
++from astrid.sdk import timeline_filmstrip
+ from astrid.sdk.timeline_checkout import Checkout
+ from tests.sdk.test_coverage_empty_cut import _empty_cut_bundle
+ from tests.sdk.test_timeline_reflow_golden import film
+@@ -89,3 +94,108 @@
+     report = checkout.check()
+     assert not report.valid
+     assert any('invalid:' in line for line in report.problems)
++
++
++def _scene_context():
++    return {
++        'mode': 'composed_capture',
++        'scene_only': True,
++        'capture_identity': 'sha256:capture',
++        'video_digest': 'sha256:video',
++        'video_object_id': 'sha256:video',
++        'managed_object_reference': 'sha256:video',
++        'capture_snapshot': {
++            'duration_frames': 2,
++            'timeline_id': 'timeline-1',
++            'metadata': {
++                'capture_identity': 'sha256:capture',
++                'capture_authority': {'parent_revision_id': 'r1'},
++                'scene_clips': {'compiled-1': {'address': 'c01.field'}},
++            },
++        },
++    }
++
++
++def _scene_result(context, *, provenance=True):
++    scene = {
++        'answers': [
++            {'frame': 0, 'coverage': 'COVERED', 'content': 'CONTENT',
++             'layers': [{'clipId': 'compiled-1'}], 'findings': []},
++            {'frame': 1, 'coverage': 'COVERED', 'content': 'CONTENT',
++             'layers': [{'clipId': 'compiled-1'}], 'findings': []},
++        ],
++        'scene_clips': context['capture_snapshot']['metadata']['scene_clips'],
++        'snapshot_label': {
++            'status': 'committed', 'label': 'committed revision r1',
++            'actual_revision_id': 'r1', 'base_revision_id': None,
++        },
++    }
++    scene_bytes = json.dumps(scene, sort_keys=True, separators=(',', ':')).encode()
++    manifest = {
++        'kind': 'timeline_filmstrip',
++        'entrypoints': {'scene': 'scene-answers.json'},
++        'outputs': [{
++            'path': 'scene-answers.json',
++            'content_hash': 'sha256:' + hashlib.sha256(scene_bytes).hexdigest(),
++            'bytes': len(scene_bytes),
++        }],
++    }
++    bundle_buffer = io.BytesIO()
++    with zipfile.ZipFile(bundle_buffer, 'w', zipfile.ZIP_DEFLATED) as archive:
++        archive.writestr('manifest.json', json.dumps(manifest))
++        archive.writestr('scene-answers.json', scene_bytes)
++    bundle = bundle_buffer.getvalue()
++    digest = 'sha256:' + hashlib.sha256(bundle).hexdigest()
++    managed = {
++        'output_port': 'filmstrip_bundle', 'role': 'result', 'digest': digest,
++        'size': len(bundle),
++    }
++    if provenance:
++        managed['provenance'] = {
++            'video_digest': 'sha256:capture', 'timeline_id': 'timeline-1',
++        }
++    result = {'ok': True, 'outputs': {'managed_outputs': [managed]}}
++    client = SimpleNamespace(media=SimpleNamespace(read_bytes=lambda object_id: bundle))
++    return result, client
++
++
++def test_private_scene_only_reads_real_bundle_and_receipt_provenance():
++    context = _scene_context()
++    result, client = _scene_result(context)
++
++    spans = timeline_filmstrip._scene_only_spans(result, context, client=client)
++
++    assert [(item.start_frame, item.end_frame, item.cls, item.clips) for item in spans] == [
++        (0, 2, 'COVERED', ('c01.field',)),
++    ]
++
++
++def test_private_scene_only_missing_receipt_provenance_is_unavailable():
++    context = _scene_context()
++    result, client = _scene_result(context, provenance=False)
++
++    spans = timeline_filmstrip._scene_only_spans(result, context, client=client)
++
++    assert spans[0].cls == 'UNAVAILABLE'
++    assert 'scene source binding unavailable' in spans[0].findings
++
++
++def test_private_scene_only_request_reuses_managed_capture_without_caller_source(monkeypatch):
++    context = _scene_context()
++    seen = {}
++
++    def prepare(inputs, **kwargs):
++        seen['inputs'] = dict(inputs)
++        return context
++
++    monkeypatch.setattr(timeline_filmstrip, 'prepare_filmstrip', prepare)
++    request, prepared = timeline_filmstrip._scene_only_request(
++        {'timeline_ref': 'tl'}, project='project', client=object(),
++    )
++
++    assert prepared is context
++    assert request['mode'] == 'scene_only'
++    assert request['formats'] == ['md']
++    assert request['composed_capture'] is True
++    assert 'source_ref' not in request and 'authority_context' not in request
++    assert seen['inputs'] == request
+
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" python -m pytest -q tests/packs/rendering/test_scene_only_executor.py::test_scene_only_writes_no_png_and_binds_receipt_to_capture' in /home/user/work/wt/agt-m3-scene-current-executor-sdk-join
+ succeeded in 1862ms:
+.                                                                        [100%]
+=============================== warnings summary ===============================
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout_method
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 2 warnings in 0.68s
+
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" python -m pytest -q tests/packs/rendering/test_scene_only_executor.py tests/sdk/test_scene_caller_preservation.py tests/packs/rendering/test_scene_answers.py' in /home/user/work/wt/agt-m3-scene-current-executor-sdk-join
+ succeeded in 7984ms:
+...........................................                              [100%]
+=============================== warnings summary ===============================
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout_method
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+43 passed, 2 warnings in 7.01s
+
+exec
+/bin/bash -lc "find . -type f -name '*.pyc' -delete; find . -type d -name '__pycache__' -empty -delete; find . -type f -path '*/.pytest_cache/*' -delete; find . -type d -name '.pytest_cache' -empty -delete; git diff --check; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-current-executor-sdk-join/DONE && exit 1 || true; git status --short --branch" in /home/user/work/wt/agt-m3-scene-current-executor-sdk-join
+ succeeded in 77ms:
+## tl/agt-m3-scene-current-executor-sdk-join
+ M astrid/core/timeline/scene_answers.py
+ M astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+ M astrid/sdk/timeline_filmstrip.py
+ M tests/sdk/test_scene_caller_preservation.py
+?? tests/packs/rendering/test_scene_only_executor.py
+
+codex
+## Done
+
+Implemented the narrow D09 Scene-only caller join:
+
+- Root-backed public Scene queries with exact source/clip/frame validation.
+- Managed `filmstrip_bundle.zip` consumption via `scene-answers.json`.
+- Existing managed receipt provenance bound to capture identity and timeline.
+- Missing/stale results remain advisory `UNAVAILABLE`.
+- Added focused executor and SDK tests.
+
+Tests:
+
+- `PYTHONPATH="$PWD" python -m pytest -q tests/packs/rendering/test_scene_only_executor.py tests/sdk/test_scene_caller_preservation.py tests/packs/rendering/test_scene_answers.py` — **43 passed**
+- `ASTRID_TEST_NODE_MODULES=/home/user/work/app/node_modules PYTHONPATH="$PWD" python -m pytest -q tests/packs/rendering/test_capture_scene_labels.py tests/packs/rendering/test_scene_host.py` — **35 passed**
+- `git diff --check` — passed
+- No full suite run.
+
+Commit message written to the requested path; empty `DONE` marker created.
+tokens used
+271,185
+## Done
+
+Implemented the narrow D09 Scene-only caller join:
+
+- Root-backed public Scene queries with exact source/clip/frame validation.
+- Managed `filmstrip_bundle.zip` consumption via `scene-answers.json`.
+- Existing managed receipt provenance bound to capture identity and timeline.
+- Missing/stale results remain advisory `UNAVAILABLE`.
+- Added focused executor and SDK tests.
+
+Tests:
+
+- `PYTHONPATH="$PWD" python -m pytest -q tests/packs/rendering/test_scene_only_executor.py tests/sdk/test_scene_caller_preservation.py tests/packs/rendering/test_scene_answers.py` — **43 passed**
+- `ASTRID_TEST_NODE_MODULES=/home/user/work/app/node_modules PYTHONPATH="$PWD" python -m pytest -q tests/packs/rendering/test_capture_scene_labels.py tests/packs/rendering/test_scene_host.py` — **35 passed**
+- `git diff --check` — passed
+- No full suite run.
+
+Commit message written to the requested path; empty `DONE` marker created.

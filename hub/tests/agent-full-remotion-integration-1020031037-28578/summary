@@ -1,0 +1,64 @@
+test agent-full-remotion-integration-1020031037-28578: fail exit=1 in 2389s — full-remotion-integration on integration:agent (agent tree d8ee74e07ad86e9f5ceb15546804c17be9aaaead)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 3
+counts: 79 failed, 11732 passed, 453 skipped, 75 warnings, 30 errors, 563 subtests passed in 2387.46s (0:39:47) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-remotion-integration-1020031037-28578/log.txt ---
+FAILED tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]
+FAILED tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]
+FAILED tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]
+FAILED tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]
+FAILED tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]
+FAILED tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]
+FAILED tests/packs/test_vibecomfy_metadata.py::VibeComfyStructuredMetadataTest::test_run_rejects_missing_or_empty_engine_inventory
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_installed_profile_launch_preserves_identity_and_uses_isolated_interpreter
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]
+FAILED tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]
+FAILED tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[False-selected-False-False]
+FAILED tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[False-selected-True-False]
+FAILED tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[True-selected-False-False]
+FAILED tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[True-selected-True-False]
+FAILED tests/test_generic_host.py::test_failed_worker_release_retains_original
+FAILED tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+ERROR tests/sdk/test_admission_recovery.py - ImportError while importing test...
+ERROR tests/packs/runpod/test_worker_staging.py::test_preparation_runs_real_child_probe_and_reuses_verified_content
+ERROR tests/packs/runpod/test_worker_staging.py::test_materialized_h3_bundle_stages_as_an_owned_workflow_root
+ERROR tests/packs/runpod/test_worker_staging.py::test_interrupted_upload_reconciles_remote_bytes_without_reupload
+ERROR tests/packs/runpod/test_worker_staging.py::test_remote_drift_fails_closed_then_explicit_refresh_repairs_owned_source
+ERROR tests/packs/runpod/test_worker_staging.py::test_workflow_pack_requires_its_unique_lock_pin_and_exact_checkout
+ERROR tests/packs/runpod/test_worker_staging.py::test_manifest_pinned_workflow_pack_cannot_omit_its_checkout_root
+ERROR tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[lock_leaf]
+ERROR tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[lock_parent]
+ERROR tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[node_leaf]
+ERROR tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[node_parent]
+ERROR tests/packs/runpod/test_worker_staging.py::test_changed_config_corrupt_journal_and_account_or_volume_mismatch_refuse_reuse
+ERROR tests/packs/runpod/test_worker_staging.py::test_empty_remote_observation_and_model_shadow_remain_unresolved
+ERROR tests/packs/runpod/test_worker_staging.py::test_release_manifest_datacenter_and_account_reference_are_mandatory
+ERROR tests/packs/runpod/test_worker_staging.py::test_manifest_volume_alias_is_optional_but_mismatch_and_effective_path_drift_fail_closed
+ERROR tests/packs/runpod/test_worker_staging.py::test_json_selection_uses_production_composition_and_real_cpu_staging
+ERROR tests/sdk/test_host_recovery.py::test_launcher_attaches_to_healthy_host_from_another_checkout
+ERROR tests/sdk/test_host_recovery.py::test_launcher_replaces_cross_checkout_host_when_resident_is_unhealthy[unready-registration]
+ERROR tests/sdk/test_host_recovery.py::test_launcher_replaces_cross_checkout_host_when_resident_is_unhealthy[changed-registration-generation]
+ERROR tests/sdk/test_host_recovery.py::test_launcher_replaces_cross_checkout_host_when_resident_is_unhealthy[changed-resident-source]
+ERROR tests/sdk/test_host_recovery.py::test_gone_host_with_empty_group_is_dropped_and_relaunched
+ERROR tests/sdk/test_host_recovery.py::test_dead_leader_with_surviving_member_is_killed_then_dropped
+ERROR tests/sdk/test_host_recovery.py::test_live_host_with_stale_source_is_retired_by_registration_when_idle
+ERROR tests/sdk/test_host_recovery.py::test_busy_live_host_is_deferred_and_untouched
+ERROR tests/sdk/test_host_recovery.py::test_live_matching_host_is_reused - as...
+ERROR tests/sdk/test_host_recovery.py::test_spawn_env_excludes_job_lease - as...
+ERROR tests/sdk/test_host_recovery.py::test_pid_reused_by_unrelated_process_is_never_signalled
+ERROR tests/sdk/test_host_recovery.py::test_host_whose_validation_does_not_cover_this_caller_is_replaced_not_refused
+ERROR tests/sdk/test_host_recovery.py::test_host_helper_in_its_own_group_is_not_work
+ERROR tests/sdk/test_host_recovery.py::test_published_busy_record_decides - a...
+79 failed, 11732 passed, 453 skipped, 75 warnings, 30 errors, 563 subtests passed in 2387.46s (0:39:47)

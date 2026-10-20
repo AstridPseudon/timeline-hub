@@ -1,0 +1,400 @@
+    ]
+    return bundle, internal["clips"]
+
+
+def test_directed_cycle_is_stable_across_repeat_and_storage_order():
+    bundle, clips = cuts()
+    clips[0]["app"]["on"], clips[1]["app"]["on"] = "c2", "c1"
+    before = encoded(bundle)
+    paths = []
+    for _ in range(2):
+        with pytest.raises(TimingCycleError) as error:
+            compile_timing(TimingInputs(bundle))
+?? astrid/sdk/timeline/_timing_evaluators.py
+?? astrid/sdk/timeline/compiler.py
+?? tests/sdk/test_timing_compiler.py
+?? tests/sdk/test_timing_cycles.py
+
+exec
+/bin/bash -lc "rg -n 'fixed_start|until_film_end' astrid/sdk/timeline/capture.py astrid/sdk/timeline/commands.py | head -25; sed -n '178,205p' astrid/sdk/timeline/capture.py; sed -n '200,224p' astrid/sdk/timeline/capture.py" in /home/user/work/wt/agt-m2-timing-kernel
+ succeeded in 0ms:
+astrid/sdk/timeline/capture.py:17:RELATIONS = ('on', 'fixed_start', 'until', 'until_film_end', 'for', 'cut', 'sequence',
+astrid/sdk/timeline/capture.py:218:        for key in ('on', 'until', 'until_film_end'):
+astrid/sdk/timeline/capture.py:220:    ctx.write(ref, ['app', 'astrid', 'fixed_start'], True)
+        row = ctx.state.occurrence(owner)
+        for path in MAP_FIELDS:
+            ctx.read(owner, path)
+        for key in ('time_map', 'timeMap'):
+            if row.get(key) is not None:
+                raise CommandError(f"unsupported occurrence {key}", kind='unsupported_map', ref=owner)
+        offset, speed = row.get('source_offset'), row.get('speed')
+        if (isinstance(offset, bool) or isinstance(speed, bool)
+                or offset not in (None, 0) or speed not in (None, 1)):
+            raise CommandError("clip.move v1 requires a translation-only occurrence map",
+                               kind='unsupported_map', ref=owner)
+        origin = occurrence_start(row)
+        lane = (row.get('placement') or {}).get('track', row.get('track'))
+        if isinstance(lane, str):
+            for field in ('id', 'kind', 'role', 'enabled', 'active', 'disabled', 'hidden', 'deleted'):
+                ctx.read('parent/track:' + lane, [field])
+        blockers = ctx.select('move.blockers', owner)
+        next_start = math.inf
+        for other in blockers:
+            for path in (('placement', 'start_ms'), ('at_ms',), ('track',), ('placement', 'track'),
+                         ('enabled',), ('active',), ('disabled',), ('hidden',), ('deleted',)):
+                ctx.read(other, path)
+            other_row = ctx.state.occurrence(other)
+            start = occurrence_start(other_row)
+            if other != owner and start > origin:
+                next_start = min(next_start, start)
+        if float(quantized) + duration > next_start + 1e-9:
+            raise CommandError("moved interval crosses the next occurrence", kind='occurrence_boundary', ref=owner)
+            other_row = ctx.state.occurrence(other)
+            start = occurrence_start(other_row)
+            if other != owner and start > origin:
+                next_start = min(next_start, start)
+        if float(quantized) + duration > next_start + 1e-9:
+            raise CommandError("moved interval crosses the next occurrence", kind='occurrence_boundary', ref=owner)
+    local = float(quantized) - origin
+    if local < 0:
+        raise CommandError("moved interval precedes its occurrence", kind='occurrence_boundary', ref=owner)
+    _provenance(ctx, owner)
+    ctx.bind('move.target', ref, dependencies=['move.images', 'move.quantization', *source_dependencies])
+    ctx.write(ref, ['at_ms'] if 'at_ms' in clip and 'at' not in clip else ['at'],
+              local * 1000 if 'at_ms' in clip and 'at' not in clip else local)
+    if 'at' in clip and 'at_ms' in clip:
+        ctx.write(ref, ['at_ms'], local * 1000)
+    ctx.object(ref, ['app'])
+    ctx.object(ref, ['app', 'astrid'])
+    for prefix in (['app'], ['app', 'astrid']):
+        for key in ('on', 'until', 'until_film_end'):
+            ctx.clear(ref, prefix + [key])
+    ctx.write(ref, ['app', 'astrid', 'fixed_start'], True)
+    ctx.write(ref, ['app', 'astrid', 'for'], duration)
+
+
+def track_create(ctx, command):
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='astrid/sdk/timeline/_timing_evaluators.py'
+s=open(p).read().replace('        for key in (\"on\", \"until\"):\\n', '''        if declarations.get(\"until_film_end\") is not None:
+            raise TimingCompileError(\"unsupported until_film_end timing basis\")
+        if declarations.get(\"fixed_start\") is not None and type(declarations[\"fixed_start\"]) is not bool:
+            raise TimingCompileError(\"fixed_start must be a boolean or clear\")
+        for key in (\"on\", \"until\"):
+''')
+s=s.replace('elif cut in bases and bases[cut] "'!= owner and not audio:'"', 'elif (cut in bases and bases[cut] "'!= owner and not audio'"\\n              and not declarations.get(\"fixed_start\")):')
+s=s.replace('        elif length is not None:\\n            add(node(owner, \"end\")', '''        elif cut in bases and bases[cut] "'!= owner and not audio:
+            forward(node(owner, "end"), node(bases[cut], "end"))
+        elif length is not None:
+            add(node(owner, "end")'"''')
+open(p,'w').write(s)
+p='astrid/sdk/timeline/compiler.py'
+s=open(p).read().replace('Supported: fixed clips, on/until/for, main word/cut/end/offset Moments, linear source', 'Supported: fixed clips (including fixed_start), on/until/for, main\\nword/cut/end/offset Moments, linear source')
+s=s.replace('fits, formulas, orphan caches, beats/markers and authored reflow operations are', 'fits, formulas, orphan caches, until_film_end bases, beats/markers and authored reflow operations are')
+open(p,'w').write(s)
+PY
+cat >> tests/sdk/test_timing_compiler.py <<'PY'
+
+
+@pytest.mark.parametrize(\"failure\", [\"corrupt_content\", \"binding_digest\", \"foreign_project\", \"header_version\"])
+def test_verified_document_content_header_and_complete_binding_pin_must_agree(failure):
+    bundle, document, pin = captured()
+    if failure == \"corrupt_content\":
+        document[\"document\"][\"content\"][\"segments\"][0][\"words\"][1][\"start\"] = 4
+    elif failure == \"binding_digest\":
+        pin = replace(pin, content_digest=\"sha256:\" + \"0\" * 64)
+    elif failure == \"foreign_project\":
+        document[\"document\"][\"project_id\"] = \"other-project\"
+    else:
+        document[\"document\"][\"version\"] = 99
+    before = encoded([bundle, document])
+    with pytest.raises(TimingCompileError, match=\"digest|identity\"):
+        project(bundle, document, [pin])
+    assert encoded([bundle, document]) == before
+PY
+cat >> tests/sdk/test_timing_cycles.py <<'PY'
+
+
+def test_main_fixed_move_intent_keeps_authored_start_even_with_cut_membership():
+    bundle, clips = cuts()
+    clips.append({\"id\": \"layer\", \"track\": \"type\", \"at\": 0.7, \"hold\": 1,
+                  \"app\": {\"astrid\": {\"cut\": \"c01\", \"fixed_start\": True, \"for\": 0.5}}})
+    interval = compile_timing(TimingInputs(bundle)).timings[\"occ\", \"shot\", \"layer\"]
+    assert (interval[\"start\"], interval[\"end\"]) == (2.7, 3.2)  # compare exactly below
+PY
+# Decimal floats above are deliberately converted to exact rational authored seconds.
+python3 - <<'PY'
+p='tests/sdk/test_timing_cycles.py'
+s=open(p).read().replace('import copy\\n','import copy\\nfrom fractions import Fraction\\n')
+s=s.replace('(2.7, 3.2)  # compare exactly below', '(Fraction(27, 10), Fraction(16, 5))')
+open(p,'w').write(s)
+PY
+cat >> tests/sdk/test_timing_cycles.py <<'PY'
+
+
+def test_terminal_cut_layer_follows_picture_end_without_changing_authored_hold():
+    bundle, clips = cuts()
+    clips[-1][\"hold\"] = 2
+    clips.append({\"id\": \"layer\", \"track\": \"type\", \"at\": 4.5, \"hold\": 0.5,
+                  \"app\": {\"cut\": \"c02\"}})
+    interval = compile_timing(TimingInputs(bundle)).timings[\"occ\", \"shot\", \"layer\"]
+    assert (interval[\"start\"], interval[\"end\"]) == (6, 8)
+    assert clips[-1][\"hold\"] == 0.5
+PY
+/home/user/work/venv-agent/bin/ruff check --fix astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_reflow_golden.py tests/sdk/test_timeline_reflow_keep.py tests/sdk/test_media_transcript.py tests/sdk/test_intent_app_astrid.py tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_cuts.py --tb=short' in /home/user/work/wt/agt-m2-timing-kernel
+exec
+/bin/bash -lc "wc -l astrid/sdk/timeline/{compiler,_timing_evaluators}.py tests/sdk/test_timing_{compiler,cycles}.py; git diff --check; git status --short; sed -n '1,31p' astrid/sdk/timeline/compiler.py; sed -n '56,78p' astrid/sdk/timeline/compiler.py; sed -n '290,333p' astrid/sdk/timeline/_timing_evaluators.py" in /home/user/work/wt/agt-m2-timing-kernel
+ succeeded in 558ms:
+  125 astrid/sdk/timeline/compiler.py
+  393 astrid/sdk/timeline/_timing_evaluators.py
+  320 tests/sdk/test_timing_compiler.py
+  114 tests/sdk/test_timing_cycles.py
+  952 total
+?? astrid/sdk/timeline/_timing_evaluators.py
+?? astrid/sdk/timeline/compiler.py
+?? tests/sdk/test_timing_compiler.py
+?? tests/sdk/test_timing_cycles.py
+"""Pure timing projection of the canonical authoring bundle (first M2 slice).
+
+``compile_timing(TimingInputs(bundle, sources=rows, bindings=pins))`` returns an
+owned, unchanged authored bundle plus derived half-open intervals keyed by
+``(occurrence_id, shot_id, clip_id)``; parent clips use ``('parent', '', id)``.
+Intervals contain exact Fraction seconds and a separately quantized frame view.
+No declaration, source window, explicit clear, command, or opaque field is rewritten.
+
+Captured-input adapter still required before provider integration: capture authorized
+Runtime VerifiedDocument captures at EXACT document_id/version/content_digest, and record a
+WordBinding per on/until declaration, including the selected source clip/occurrence
+and stable v1 word IDs. Existing source_mapping.pinned_documents can supply
+these VerifiedDocuments; the adapter must still capture the word/occurrence binding. A phrase binds all its consecutive IDs. A changed declaration
+needs a new binding. Missing/revoked inputs must be omitted, never fetched as latest;
+authority and exact historical reads belong to the caller. Main has no persisted
+representation of this binding yet. These records are consumed inputs, not a new
+stored authoring format. Inputs snapshot their JSON at construction, including rows.
+
+Supported: fixed clips (including fixed_start), on/until/for, main
+word/cut/end/offset Moments, linear source
+windows/rates, occurrence isolation and rational fps. Explicit time maps, sequence
+fits, formulas, orphan caches, until_film_end bases, beats/markers and authored reflow operations are
+refused. Nontrivial placement source maps require the main authoring adapter first.
+The graph walk comes from R4's compiler; Moment/cut rules and exact-time arithmetic
+come from main. This bounded slice targets <=600 product lines across two modules.
+
+This is NOT yet the only derived writer. Checkout.retime/resolve/reflow, model timing
+setters, narration/music/sequence writers and their consumers still require migration
+and parity before integration can claim one compiler. Reflow is untouched here.
+"""
+from __future__ import annotations
+class WordBinding:
+    target: Owner
+    field: str
+    declaration: str
+    source: Owner
+    document_id: str
+    version: int
+    content_digest: str
+    word_ids: tuple[str, ...]
+
+    def __post_init__(self):
+        for name in ("target", "source", "word_ids"):
+            object.__setattr__(self, name, tuple(getattr(self, name)))
+        if (len(self.target) != 3 or len(self.source) != 3 or not self.word_ids
+                or self.field not in ("on", "until") or isinstance(self.version, bool)
+                or not isinstance(self.version, int) or self.version < 1
+                or not isinstance(self.declaration, str) or not isinstance(self.document_id, str)
+                or not isinstance(self.content_digest, str)
+                or any(not isinstance(x, str) for x in (*self.target, *self.source))
+                or any(not isinstance(x, str) or not x for x in self.word_ids)):
+            raise TimingCompileError("invalid captured word binding")
+
+
+            raise TimingCompileError("clip millisecond timing needs an explicit authoring adapter")
+        declarations = intent._app(clip)
+        for key in ("sequence", "sequence_fit", "formulas", "orphan", "gap_after_s"):
+            if declarations.get(key):
+                raise TimingCompileError(f"unsupported timing declaration {owner}.{key}")
+        if declarations.get("until_film_end") is not None:
+            raise TimingCompileError("unsupported until_film_end timing basis")
+        if declarations.get("fixed_start") is not None and type(declarations["fixed_start"]) is not bool:
+            raise TimingCompileError("fixed_start must be a boolean or clear")
+        for key in ("on", "until"):
+            if declarations.get(key) is not None and not isinstance(declarations[key], str):
+                raise TimingCompileError(f"unsupported {key} declaration: expected main Moment text")
+        length = _duration(clip)
+        start = offsets[owner] + _number(clip.get("at", 0))
+        cut = intent.cut_of(clip)
+        audio = owner[1] and lookup._is_audio(owner[1], clip)
+        on, until = intent.on(clip), intent.until(clip)
+        if on:
+            add(node(owner, "start"), *moment_rule(owner, "on", on, bases.get(cut) == owner))
+        elif (cut in bases and bases[cut] != owner and not audio
+              and not declarations.get("fixed_start")):
+            forward(node(owner, "start"), cut_node(cut, "start"))
+        else:
+            add(node(owner, "start"), [], lambda values, start=start: start)
+        if until:
+            add(node(owner, "end"), *moment_rule(owner, "until", until))
+        elif declarations.get("for") is not None:
+            length = _number(declarations["for"])
+            if length <= 0:
+                raise TimingCompileError("declared duration must be positive")
+            add(node(owner, "end"), [node(owner, "start")],
+                lambda values, owner=owner, length=length: values[node(owner, "start")] + length)
+        elif cut in bases and not audio and group_has_successor(groups, cut):
+            forward(node(owner, "end"), cut_node(cut, "end"))
+        elif cut in bases and bases[cut] != owner and not audio:
+            forward(node(owner, "end"), node(bases[cut], "end"))
+        elif length is not None:
+            add(node(owner, "end"), [node(owner, "start")],
+                lambda values, owner=owner, length=length: values[node(owner, "start")] + length)
+        else:
+            raise TimingCompileError(f"missing interval end for {owner}")
+    if used != set(pins):
+        raise TimingCompileError("unused or stale captured word binding")
+    values = _walk(graph, functions)
+
+ succeeded in 20086ms:
+All checks passed!
+........................................................................ [ 35%]
+........................................................................ [ 71%]
+..........................................................               [100%]
+=============================== warnings summary ===============================
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+  /home/user/work/wt/agt-m2-timing-kernel/tests/sdk/test_timeline_checkout.py:1573: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    assert set(image.convert("RGB").getdata()) == {colors[n]}
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+202 passed, 17 deselected, 4 warnings in 19.38s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='astrid/sdk/timeline/compiler.py'
+s=open(p).read()
+a=s.index('Captured-input adapter')
+b=s.index('The graph walk',a)
+s=s[:a]+'''Captured-input adapter still required before provider integration: capture authorized
+Runtime VerifiedDocuments at EXACT document_id/version/content_digest, and record a
+WordBinding per on/until declaration, including the selected source clip/occurrence
+and stable v1 word IDs. Existing source_mapping.pinned_documents can supply these
+VerifiedDocuments; the adapter must still capture the word/occurrence binding.
+A phrase binds all its consecutive IDs. A changed declaration needs a new binding.
+Missing/revoked inputs must be omitted, never fetched as latest; authority and exact
+historical reads belong to the caller. Main has no persisted representation of this
+binding yet. These records are consumed inputs, not a new stored authoring format.
+Inputs snapshot their JSON at construction, including captured documents.
+
+Supported: fixed clips (including fixed_start), on/until/for, main word/cut/end/offset
+Moments, linear source windows/rates, occurrence isolation and rational fps. Explicit
+time maps, sequence fits, formulas, orphan caches, until_film_end bases, beats/markers
+and authored reflow operations are refused. Nontrivial placement source maps and
+clip millisecond codecs require an explicit main authoring adapter first.
+''' +s[b:]
+open(p,'w').write(s)
+PY
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py
+python3 - <<'PY'
+from pathlib import Path
+folder = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-timing-kernel')
+message = '''feat(timeline): add pure pinned-source timing compiler slice
+
+Compile fixed and supported Moment declarations from immutable captured inputs.
+Reuse main word/cut semantics and exact source/frame arithmetic; verify Runtime
+VerifiedDocument pins before resolving stable transcript word identities.
+
+Keep authored bundles unchanged and return derived intervals atomically.
+Refuse unsupported maps and unmigrated evaluators. Leave provider integration
+and legacy timing writer migration for subsequent work.
+
+Validation: 202 targeted compiler and adjacent SDK tests passed, 17 deselected;
+ruff passed on all four added files. No full or integration suites run.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (folder / name).write_text(message)
+PY
+wc -l astrid/sdk/timeline/{compiler,_timing_evaluators}.py tests/sdk/test_timing_{compiler,cycles}.py
+git diff --check" in /home/user/work/wt/agt-m2-timing-kernel
+ succeeded in 317ms:
+All checks passed!
+  126 astrid/sdk/timeline/compiler.py
+  393 astrid/sdk/timeline/_timing_evaluators.py
+  320 tests/sdk/test_timing_compiler.py
+  114 tests/sdk/test_timing_cycles.py
+  953 total
+
+codex
+The final targeted run passed: 202 tests passed, 17 were deselected, and Ruff passed on all four added files. The slice is 519 product lines plus 434 test lines. Both commit-message files are written. The module documents the remaining integration work: capture exact word/occurrence bindings, then migrate legacy timing writers and prove consumer parity before claiming one compiler.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import os
+import shutil
+from pathlib import Path
+root = Path.cwd()
+removed = 0
+for folder, directories, _ in os.walk(root, topdown=True, followlinks=False):
+    for name in list(directories):
+        if name in {'.git', '.venv', 'node_modules'}:
+            directories.remove(name)
+        elif name in {'__pycache__', '.pytest_cache', '.ruff_cache'}:
+            path = Path(folder) / name
+            if not path.is_symlink():
+                shutil.rmtree(path)
+                removed += 1
+            directories.remove(name)
+print(f'Removed {removed} generated cache directories from the assigned worktree')
+PY
+git status --short" in /home/user/work/wt/agt-m2-timing-kernel
+ succeeded in 352ms:
+Removed 3 generated cache directories from the assigned worktree
+?? astrid/sdk/timeline/_timing_evaluators.py
+?? astrid/sdk/timeline/compiler.py
+?? tests/sdk/test_timing_compiler.py
+?? tests/sdk/test_timing_cycles.py
+
+codex
+Implemented the branch-only pure compiler: immutable captured inputs, verified transcript pins, stable word bindings, rational timing, and atomic refusal. Authored data stays unchanged; derived intervals are returned separately. Added 519 product lines and 434 test lines.
+
+Validation:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_reflow_golden.py tests/sdk/test_timeline_reflow_keep.py tests/sdk/test_media_transcript.py tests/sdk/test_intent_app_astrid.py tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_cuts.py --tb=short
+```
+
+**202 passed, 17 deselected**, four Pillow deprecation warnings.
+
+```bash
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py
+```
+
+Passed.
+
+No task blockers. Integration still needs the word/occurrence capture adapter and legacy-writer migration/parity. Unsupported maps, formulas, sequences, beats, and reflow declarations refuse explicitly. Full and integration suites remain unverified.
+
+Both required absolute `commit-msg` files were written. Generated caches cleaned; no commits, merges, pushes, or merge requests.
+tokens used
+198,054
+Implemented the branch-only pure compiler: immutable captured inputs, verified transcript pins, stable word bindings, rational timing, and atomic refusal. Authored data stays unchanged; derived intervals are returned separately. Added 519 product lines and 434 test lines.
+
+Validation:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_reflow_golden.py tests/sdk/test_timeline_reflow_keep.py tests/sdk/test_media_transcript.py tests/sdk/test_intent_app_astrid.py tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_cuts.py --tb=short
+```
+
+**202 passed, 17 deselected**, four Pillow deprecation warnings.
+
+```bash
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py
+```
+
+Passed.
+
+No task blockers. Integration still needs the word/occurrence capture adapter and legacy-writer migration/parity. Unsupported maps, formulas, sequences, beats, and reflow declarations refuse explicitly. Full and integration suites remain unverified.
+
+Both required absolute `commit-msg` files were written. Generated caches cleaned; no commits, merges, pushes, or merge requests.

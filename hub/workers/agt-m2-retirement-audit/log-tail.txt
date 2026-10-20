@@ -1,0 +1,400 @@
++After timing/helper migration, run the focused behavior lane:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_transaction.py \
++  tests/sdk/test_timeline_sheet.py tests/packs/timeline/test_cli_edit_flags.py
++```
++
++After ordinary-writer migration, run the Runtime/outbox/history lane:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/editing_conformance/test_commit_runtime_m1.py \
++  tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_history.py \
++  tests/packs/timeline/test_cli_log.py tests/packs/timeline/test_cli_v3_sweep_log.py
++```
++
++## Verification status
++
++Audit commands were read-only `git status`, `git ls-tree`, `find`, `sed`, `nl`,
++`wc`, and targeted `rg` searches. No pytest, make, install, network, full suite,
++or test-service request was run, per task instructions. No product file was
++changed. The shared `design/port-manifest.md` received one current M2 retirement
++table; this report is the only worker note.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md
+index ee84bd9044ab16ea07a6d23d9fafe9596de296a5..2dc21fb6796033722c8a37abe9c5ee27e954ab01
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md
+@@ -379,6 +379,15 @@
+ by the same crude count (docstrings included). No complete four-repo census is
+ claimed; managers must reconcile aggregate size before accepting a larger port.
+ 
++### Current M2 retirement audit (Agent integration, 2026-10-19)
++
++| Target | Actual callers / registry evidence | Native replacement | Deletion readiness | Next small deletion |
++|---|---|---|---|---|
++| `astrid/core/timeline/inverses.py:1-783` | No production Python import/call; only `tests/timeline/test_inverses.py:45-48` imports `InverseRequest`, `plan_inverse`, `plan_inverses`. | `astrid/sdk/timeline/inverse.py:24-148` plus `timeline.inverse` in `commands.py:62,132`; accepted history/records come from Runtime. | Production-dead now. Delete with its legacy test after native inverse/ABA/structural coverage is retained; do not delete `sdk/timeline/inverse.py`. | PR 1: remove file + old test; negative import grep and targeted `test_recipe_m1_commands.py`, `test_timeline_commit_provider.py`, `test_timeline_sync.py`. |
++| `astrid/core/extensions/:1-636` (7 files) | No production import outside the package. Dedicated legacy tests only: `tests/core/extensions/{test_model,test_registry,test_scopes,test_sidecar}.py`; current discovery/registries are `astrid/core/pack/{loader,registry,permissions}.py` and Pack-declared metadata tests. | Normal Pack discovery/registry (`astrid.core.pack.discover_packs`, element/timeline extension descriptors); no second core-extension registry. | Production-dead now. Remove package and its self-tests together; replacement Pack tests must remain. | PR 2: remove `core/extensions` + `tests/core/extensions`; negative import grep and targeted `test_sdk_public_surface.py`, `test_pack_rendering_extensions.py`, editor extension catalog tests. |
++| Deprecated retime helpers `astrid/sdk/timeline_editing.py:351-433` (plus timing utilities `436-540`) | No internal production import of `retime`/`retime_with_ripple`; both remain public lazy exports at `astrid/sdk/__init__.py:53,64`, and helper behavior is covered by `tests/test_timeline_editing_helpers.py:7-171`. Whole module remains production-live: `add_authoring_shot` is imported by `timeline_structure.py:8`, `timeline_adopt.py:10`, `timeline_duplicate.py:21`, `timeline_restructure.py:401`; CLI imports only `TimelineEditError` at `cli.py:3176,3315,3504`. | Move exact time/source/quantization utilities to the compiler/`timeline/units.py` seam; migrate supported timing edits to registry handlers and `compile_timing`. Migrate `add_authoring_shot` consumers to retained structural command adapters; no canonical new op is authorized here. | Helper block is deletion-ready only after public Python export compatibility is intentionally cut and utility tests move. Whole module is blocked by four structural callers and public exports. | Follow-up slice: relocate utilities, migrate the four `add_authoring_shot` callers, then remove helper block and lazy exports; retain `timeline_editing.py` until no supported structural caller remains. |
++| Local durable journal/history `astrid/sdk/timeline/journal.py:1-335` | Active legacy writers: `checkout.py:188,242,264,285,307,339`, `publish.py:79`, `transaction.py:83`; `cli_log.py:11,39-82` reads/verifies it; `timeline/api.py:6,12` publicly exports `JournalRecord`. Legacy local save/undo/redo remains in `checkout.py:116-265` and `store.py:117,257`. Runtime history is separately read by `revisions.py`/`cli_history.py`; native pending path is `sync.py:19,114-280` + `outbox.py`. | Ordinary CLI/Python/sheet producers -> `EditCommand` capture/`TimelineSession.flush` -> Runtime `/v1`; accepted log/history -> `revisions.py`/`cli_history.py`. Keep `outbox.py` for pending, exact flight, retry identity and newer suffix only. | Not ready. Remove accepted-history writes and local accepted-save/undo authority only after ordinary writer migration and direct legacy-endpoint rejection. Journal compatibility reads may remain transiently for diagnostics, never publication truth. | After M2 writer migration: delete journal append hooks/`cli_log` accepted-history surface and local `_journaled`/snapshot publication path in a separately tested cleanup; do not delete `outbox.py` or Runtime history adapters. |
++
+ ### Known alternate writers and deletion conditions
+ 
+ | Current writer / callable consumer | Required one-path replacement before deletion |
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..cbdc67f3747bcb7414e301f686f43fe473f196f8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/commit-msg
+@@ -0,0 +1,4 @@
++docs(timeline): audit duplicate Agent retirement paths
++
++Record current production callers, native replacements, deletion readiness, and
++targeted follow-up checks for M2 cleanup.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..2d81083498a3e93524263a88eb1f0cf5efc474ba
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md
+@@ -0,0 +1,109 @@
++# Agent M2 retirement audit
++
++Date: 2026-10-19  
++Worktree: `/home/user/work/wt/agt-m2-retirement-audit`  
++Scope: current Agent integration snapshot; PLAN and shared port manifest are authoritative.
++
++## Verdict
++
++Two duplicate paths are production-dead and can be deleted in small follow-ups. The
++deprecated timing block and local journal are not yet deletable: ordinary legacy
++writers and public Python/CLI surfaces still reach them. The native outbox is
++correctly retained as pending intent only.
++
++## Findings
++
++| Target | Evidence-backed callers | Replacement and readiness |
++|---|---|---|
++| `astrid/core/timeline/inverses.py:1-783` | No production import/call found under `astrid/`, `scripts/`, `tools/`, or `examples/`. Only `tests/timeline/test_inverses.py:45-48` imports it. | Replace with `astrid/sdk/timeline/inverse.py:24-148`, `timeline.inverse` dispatch in `commands.py:62,132`, and Runtime accepted records. Production deletion is ready; remove the legacy test with the file after native inverse coverage remains. |
++| `astrid/core/extensions/:1-636` | No production import outside the package. Only `tests/core/extensions/test_{model,registry,scopes,sidecar}.py` imports it. Current registry/discovery is `astrid/core/pack/{loader,registry,permissions}.py`; Pack-declared extension tests use that path. | Replace with normal Pack discovery/registry and descriptors. Production deletion is ready; delete the package and self-tests together. Do not remove Pack extension tests. |
++| `timeline_editing.py:351-433` deprecated `retime`/`retime_with_ripple` | No internal production import of either helper. They remain public lazy exports at `astrid/sdk/__init__.py:53,64` and are directly tested by `tests/test_timeline_editing_helpers.py:7-171`. | Move exact time/source/quantization utilities (`:436-540`) to compiler/`timeline/units.py`; migrate timing edits to registry handlers plus `compile_timing`. Public export compatibility still blocks deletion of the helper block. |
++| `timeline_editing.py` retained structural helper | `add_authoring_shot` is imported/called by `timeline_structure.py:8,86`, `timeline_adopt.py:10,60`, `timeline_duplicate.py:21,106`, and `timeline_restructure.py:401,458`. CLI imports only `TimelineEditError` at `cli.py:3176,3315,3504`. | Migrate these four callers to retained structural command adapters, using the existing registry/runner boundary; no new operation name is inferred here. The whole module remains blocked until then. |
++| `journal.py:1-335` and local history | Active writes: `checkout.py:188,242,264,285,307,339`, `publish.py:79`, `transaction.py:83`; `cli_log.py:11,39-82` reads/verifies it; `api.py:6,12` exports `JournalRecord`. Snapshot undo/redo and `_journaled` remain in `checkout.py:116-265` and `store.py:117,257`. | Migrate supported CLI/Python/sheet writers to `EditCommand` capture and `TimelineSession.flush` (`sync.py:114-280`) through Runtime `/v1`; accepted history/log reads use `revisions.py`/`cli_history.py`. Journal removal is blocked until those consumers migrate and the old endpoint is rejected. |
++| `outbox.py:1-56` | `sync.py:19,114-280` is the native client path; conformance and commit-move tests persist pending/flight state. | Keep. It stores unsent commands, one exact in-flight request, retry identity, and newer suffix; it is not accepted history and must not be folded into journal deletion. |
++
++## Important distinction
++
++The old journal is not the Runtime’s canonical accepted-history implementation,
++but it is still a durable, user-visible local record of save/publish/undo/redo and
++is therefore an alternate history surface. `timelines history` already reads
++Runtime revisions (`cli_history.py:9-59`), while `timelines log` still reads the
++local journal (`cli_log.py:35-82`). Do not claim the history cut is complete until
++ordinary `Checkout`/sheet/Python writers stop calling local `save()`/`publish()`;
++read-only legacy fixtures are not evidence of supported native command coverage.
++
++## Deletion order
++
++1. Delete `core/timeline/inverses.py` and `tests/timeline/test_inverses.py`.
++2. Delete `core/extensions/` and `tests/core/extensions/`.
++3. Relocate timing utilities, migrate the four structural callers, then remove
++   the deprecated helper block and its lazy exports.
++4. Migrate ordinary writers; only then remove local accepted-history append hooks,
++   `cli_log`’s accepted-history surface, and snapshot publication machinery. Keep
++   `outbox.py`, `sync.py`, Runtime history, and revision readers.
++
++## Exact follow-up checks (not run in this audit)
++
++After deletion of the old inverse package:
++
++```sh
++! rg -n --glob '*.py' 'astrid\.core\.timeline\.inverses|from astrid\.core\.timeline\.inverses' astrid
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python - <<'PY'
++import importlib
++try:
++    importlib.import_module("astrid.core.timeline.inverses")
++except ModuleNotFoundError:
++    pass
++else:
++    raise SystemExit("retired inverse module still imports")
++PY
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/editing_conformance/test_recipe_m1_commands.py \
++  tests/sdk/test_timeline_commit_provider.py \
++  tests/sdk/test_timeline_sync.py
++```
++
++After deletion of `core/extensions` and its self-tests:
++
++```sh
++! rg -n --glob '*.py' 'astrid\.core\.extensions|from astrid\.core\.extensions' astrid
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python - <<'PY'
++import importlib
++try:
++    importlib.import_module("astrid.core.extensions")
++except ModuleNotFoundError:
++    pass
++else:
++    raise SystemExit("retired core extension package still imports")
++PY
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/test_sdk_public_surface.py \
++  tests/packs/test_pack_rendering_extensions.py \
++  tests/test_editor_extension_catalog.py \
++  tests/test_editor_extension_catalog_v3.py
++```
++
++After timing/helper migration, run the focused behavior lane:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_transaction.py \
++  tests/sdk/test_timeline_sheet.py tests/packs/timeline/test_cli_edit_flags.py
++```
++
++After ordinary-writer migration, run the Runtime/outbox/history lane:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/editing_conformance/test_commit_runtime_m1.py \
++  tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_history.py \
++  tests/packs/timeline/test_cli_log.py tests/packs/timeline/test_cli_v3_sweep_log.py
++```
++
++## Verification status
++
++Audit commands were read-only `git status`, `git ls-tree`, `find`, `sed`, `nl`,
++`wc`, and targeted `rg` searches. No pytest, make, install, network, full suite,
++or test-service request was run, per task instructions. No product file was
++changed. The shared `design/port-manifest.md` received one current M2 retirement
++table; this report is the only worker note.
+
+codex
+The requested manifest table and external report are written. I’m doing a final read-only consistency pass now: checking line count, confirming the table is present once, confirming the worktree has no product edits/build output, and ensuring the report’s follow-up commands match files that exist.
+exec
+/bin/bash -lc "printf '%s\\n' '--- report stats ---'; wc -l -w /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md; printf '%s\\n' '--- commit msg ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/commit-msg; printf '%s\\n' '--- manifest marker count/tail ---'; rg -n 'Current M2 retirement audit|core/timeline/inverses.py:1-783|Local durable journal/history' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md; tail -34 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md; printf '%s\\n' '--- worktree status ---'; git status --short; printf '%s\\n' '--- report referenced files ---'; for f in tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_sync.py tests/test_sdk_public_surface.py tests/packs/test_pack_rendering_extensions.py tests/test_editor_extension_catalog.py tests/test_editor_extension_catalog_v3.py tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_sheet.py tests/packs/timeline/test_cli_edit_flags.py tests/editing_conformance/test_commit_runtime_m1.py tests/packs/timeline/test_cli_history.py tests/packs/timeline/test_cli_log.py tests/packs/timeline/test_cli_v3_sweep_log.py; do test -f \""'$f" || echo "MISSING $f"; done' in /home/user/work/wt/agt-m2-retirement-audit
+ succeeded in 155ms:
+--- report stats ---
+ 109  723 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md
+--- commit msg ---
+docs(timeline): audit duplicate Agent retirement paths
+
+Record current production callers, native replacements, deletion readiness, and
+targeted follow-up checks for M2 cleanup.
+--- manifest marker count/tail ---
+382:### Current M2 retirement audit (Agent integration, 2026-10-19)
+386:| `astrid/core/timeline/inverses.py:1-783` | No production Python import/call; only `tests/timeline/test_inverses.py:45-48` imports `InverseRequest`, `plan_inverse`, `plan_inverses`. | `astrid/sdk/timeline/inverse.py:24-148` plus `timeline.inverse` in `commands.py:62,132`; accepted history/records come from Runtime. | Production-dead now. Delete with its legacy test after native inverse/ABA/structural coverage is retained; do not delete `sdk/timeline/inverse.py`. | PR 1: remove file + old test; negative import grep and targeted `test_recipe_m1_commands.py`, `test_timeline_commit_provider.py`, `test_timeline_sync.py`. |
+389:| Local durable journal/history `astrid/sdk/timeline/journal.py:1-335` | Active legacy writers: `checkout.py:188,242,264,285,307,339`, `publish.py:79`, `transaction.py:83`; `cli_log.py:11,39-82` reads/verifies it; `timeline/api.py:6,12` publicly exports `JournalRecord`. Legacy local save/undo/redo remains in `checkout.py:116-265` and `store.py:117,257`. Runtime history is separately read by `revisions.py`/`cli_history.py`; native pending path is `sync.py:19,114-280` + `outbox.py`. | Ordinary CLI/Python/sheet producers -> `EditCommand` capture/`TimelineSession.flush` -> Runtime `/v1`; accepted log/history -> `revisions.py`/`cli_history.py`. Keep `outbox.py` for pending, exact flight, retry identity and newer suffix only. | Not ready. Remove accepted-history writes and local accepted-save/undo authority only after ordinary writer migration and direct legacy-endpoint rejection. Journal compatibility reads may remain transiently for diagnostics, never publication truth. | After M2 writer migration: delete journal append hooks/`cli_log` accepted-history surface and local `_journaled`/snapshot publication path in a separately tested cleanup; do not delete `outbox.py` or Runtime history adapters. |
+`tests/sdk/test_timeline_inverse_compiled_timing.py::test_source_window_convention_is_preserved`,
+`::test_restored_until_remains_live_when_its_anchor_moves`. Add supported exact
+source-word DocumentPin, rational tie/half-open boundary and composed map vectors,
+ordered delete restoration/staged inverse, stable add/swap IDs, and unchanged-write
+clear/null concurrency cases. Adapt R4 raw-dict setup to real recorded commands;
+`port-failure-index.tsv` identifies those setup/admission failures and absent
+curve-generator/parity artifacts. Never add a Pack V3 stub or suppress the runner
+guard. Preserve existing successful behavior expectations; if temporarily lost,
+use only strict expected failures naming restoration, never refusal rewrites.
+Provider `test_restore_is_sole_and_strictly_pair_guarded_until_adapter_lands`'s
+unsupported branch is not the desired outcome: the authorized M1 fix must replace
+it with positive main restore/semantic inverse coverage before this queue opens.
+
+**Extension seams, no M5:** `core/timeline/moments.py:Context/resolve`, compiler
+reference/dependency validation and main pinned source maps expose `MarkerRef` /
+`resolve_marker(ref, pinned_marker_table, occurrence/time_map)` and `SignalRef` /
+pinned resolver interfaces plus core fixtures only. Fixtures cover valid/missing,
+ambiguous, foreign pin, domain mapping and out-of-range inputs; missing marker
+fails closed without changing bindings or materialized state. No detector,
+publication/republication service, generalized signal binding, sampling host,
+extension discovery or new authoring UI before the hard stop. Follow the bounded
+interfaces in `extensions.md`, not its future M5 publication model.
+
+**Pending handoffs:** group ownership/move operation design (Agent/App/orchestrator);
+Runtime scope of lifecycle/bootstrap and legacy endpoint rejection; exact explicit
+map support shared with Runtime Read/Viewing; compiler inputs to the published
+Composition consumer (Viewing owns See, no scene-in-save); log/local compatibility
+presentation with Runtime/App. These are dependencies to confirm against behavior,
+not decisions made here. Existing advisory-check/scene-gap tests must be reviewed
+with Viewing to preserve the finding while removing renderer-dependent acceptance.
+M1 restore implementation/evidence and closure are prerequisite gates. This task
+ran only read-only `git show`/`rg`/`sed` inspection and a stdlib AST/line-count probe
+(exit 0); no pytest, make, network, installs, full suite or test-service requests,
+and no claim that any proposed regression passes. Product worktree unchanged.
+--- worktree status ---
+--- report referenced files ---
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md
+index ee84bd9044ab16ea07a6d23d9fafe9596de296a5..0786dfb3a26730a220911a25848308a2294a0c35
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/port-manifest.md
+@@ -379,6 +379,15 @@
+ by the same crude count (docstrings included). No complete four-repo census is
+ claimed; managers must reconcile aggregate size before accepting a larger port.
+ 
++### Current M2 retirement audit (Agent integration, 2026-10-19)
++
++| Target | Actual callers / registry evidence | Native replacement | Deletion readiness | Next small deletion |
++|---|---|---|---|---|
++| `astrid/core/timeline/inverses.py:1-783` | No production Python import/call; only `tests/timeline/test_inverses.py:45-48` imports `InverseRequest`, `plan_inverse`, `plan_inverses`. | `astrid/sdk/timeline/inverse.py:24-148` plus `timeline.inverse` in `commands.py:62,132`; accepted history/records come from Runtime. | Production-dead now. Delete with its legacy test after native inverse/ABA/structural coverage is retained; do not delete `sdk/timeline/inverse.py`. | PR 1: remove file + old test; negative import grep and targeted `test_recipe_m1_commands.py`, `test_timeline_commit_provider.py`, `test_timeline_sync.py`. |
++| `astrid/core/extensions/:1-636` (7 Python files + 2 schemas) | No production import outside the package. Dedicated legacy tests only: `tests/core/extensions/{test_model,test_registry,test_scopes,test_sidecar}.py`; current discovery/registries are `astrid/core/pack/{loader,registry,permissions}.py` and Pack-declared metadata tests. | Normal Pack discovery/registry (`astrid.core.pack.discover_packs`, element/timeline extension descriptors); no second core-extension registry. | Production-dead now. Remove package and its self-tests together; replacement Pack tests must remain. | PR 2: remove `core/extensions` + `tests/core/extensions`; negative import grep and targeted `test_sdk_public_surface.py`, `test_pack_rendering_extensions.py`, editor extension catalog tests. |
++| Deprecated retime helpers `astrid/sdk/timeline_editing.py:351-433` (plus timing utilities `436-540`) | No internal production import of `retime`/`retime_with_ripple`; both remain public lazy exports at `astrid/sdk/__init__.py:53,64`, and helper behavior is covered by `tests/test_timeline_editing_helpers.py:7-171`. Whole module remains production-live: `add_authoring_shot` is imported by `timeline_structure.py:8`, `timeline_adopt.py:10`, `timeline_duplicate.py:21`, `timeline_restructure.py:401`; CLI imports only `TimelineEditError` at `cli.py:3176,3315,3504`. | Move exact time/source/quantization utilities to the compiler/`timeline/units.py` seam; migrate supported timing edits to registry handlers and `compile_timing`. Migrate `add_authoring_shot` consumers to retained structural command adapters; no canonical new op is authorized here. | Helper block is deletion-ready only after public Python export compatibility is intentionally cut and utility tests move. Whole module is blocked by four structural callers and public exports. | Follow-up slice: relocate utilities, migrate the four `add_authoring_shot` callers, then remove helper block and lazy exports; retain `timeline_editing.py` until no supported structural caller remains. |
++| Local durable journal/history `astrid/sdk/timeline/journal.py:1-335` | Active legacy writers: `checkout.py:188,242,264,285,307,339`, `publish.py:79`, `transaction.py:83`; `cli_log.py:11,39-82` reads/verifies it; `timeline/api.py:6,12` publicly exports `JournalRecord`. Legacy local save/undo/redo remains in `checkout.py:116-265` and `store.py:117,257`. Runtime history is separately read by `revisions.py`/`cli_history.py`; native pending path is `sync.py:19,114-280` + `outbox.py`. | Ordinary CLI/Python/sheet producers -> `EditCommand` capture/`TimelineSession.flush` -> Runtime `/v1`; accepted log/history -> `revisions.py`/`cli_history.py`. Keep `outbox.py` for pending, exact flight, retry identity and newer suffix only. | Not ready. Remove accepted-history writes and local accepted-save/undo authority only after ordinary writer migration and direct legacy-endpoint rejection. Journal compatibility reads may remain transiently for diagnostics, never publication truth. | After M2 writer migration: delete journal append hooks/`cli_log` accepted-history surface and local `_journaled`/snapshot publication path in a separately tested cleanup; do not delete `outbox.py` or Runtime history adapters. |
++
+ ### Known alternate writers and deletion conditions
+ 
+ | Current writer / callable consumer | Required one-path replacement before deletion |
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..cbdc67f3747bcb7414e301f686f43fe473f196f8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/commit-msg
+@@ -0,0 +1,4 @@
++docs(timeline): audit duplicate Agent retirement paths
++
++Record current production callers, native replacements, deletion readiness, and
++targeted follow-up checks for M2 cleanup.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..e904bece45bc50c7f477cfc5377bdaf28d1bc05d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md
+@@ -0,0 +1,109 @@
++# Agent M2 retirement audit
++
++Date: 2026-10-19  
++Worktree: `/home/user/work/wt/agt-m2-retirement-audit`  
++Scope: current Agent integration snapshot; PLAN and shared port manifest are authoritative.
++
++## Verdict
++
++Two duplicate paths are production-dead and can be deleted in small follow-ups. The
++deprecated timing block and local journal are not yet deletable: ordinary legacy
++writers and public Python/CLI surfaces still reach them. The native outbox is
++correctly retained as pending intent only.
++
++## Findings
++
++| Target | Evidence-backed callers | Replacement and readiness |
++|---|---|---|
++| `astrid/core/timeline/inverses.py:1-783` | No production import/call found under `astrid/`, `scripts/`, `tools/`, or `examples/`. Only `tests/timeline/test_inverses.py:45-48` imports it. | Replace with `astrid/sdk/timeline/inverse.py:24-148`, `timeline.inverse` dispatch in `commands.py:62,132`, and Runtime accepted records. Production deletion is ready; remove the legacy test with the file after native inverse coverage remains. |
++| `astrid/core/extensions/:1-636` (7 Python files + 2 schemas) | No production import outside the package. Only `tests/core/extensions/test_{model,registry,scopes,sidecar}.py` imports it. Current registry/discovery is `astrid/core/pack/{loader,registry,permissions}.py`; Pack-declared extension tests use that path. | Replace with normal Pack discovery/registry and descriptors. Production deletion is ready; delete the package and self-tests together. Do not remove Pack extension tests. |
++| `timeline_editing.py:351-433` deprecated `retime`/`retime_with_ripple` | No internal production import of either helper. They remain public lazy exports at `astrid/sdk/__init__.py:53,64` and are directly tested by `tests/test_timeline_editing_helpers.py:7-171`. | Move exact time/source/quantization utilities (`:436-540`) to compiler/`timeline/units.py`; migrate timing edits to registry handlers plus `compile_timing`. Public export compatibility still blocks deletion of the helper block. |
++| `timeline_editing.py` retained structural helper | `add_authoring_shot` is imported/called by `timeline_structure.py:8,86`, `timeline_adopt.py:10,60`, `timeline_duplicate.py:21,106`, and `timeline_restructure.py:401,458`. CLI imports only `TimelineEditError` at `cli.py:3176,3315,3504`. | Migrate these four callers to retained structural command adapters, using the existing registry/runner boundary; no new operation name is inferred here. The whole module remains blocked until then. |
++| `journal.py:1-335` and local history | Active writes: `checkout.py:188,242,264,285,307,339`, `publish.py:79`, `transaction.py:83`; `cli_log.py:11,39-82` reads/verifies it; `api.py:6,12` exports `JournalRecord`. Snapshot undo/redo and `_journaled` remain in `checkout.py:116-265` and `store.py:117,257`. | Migrate supported CLI/Python/sheet writers to `EditCommand` capture and `TimelineSession.flush` (`sync.py:114-280`) through Runtime `/v1`; accepted history/log reads use `revisions.py`/`cli_history.py`. Journal removal is blocked until those consumers migrate and the old endpoint is rejected. |
++| `outbox.py:1-56` | `sync.py:19,114-280` is the native client path; conformance and commit-move tests persist pending/flight state. | Keep. It stores unsent commands, one exact in-flight request, retry identity, and newer suffix; it is not accepted history and must not be folded into journal deletion. |
++
++## Important distinction
++
++The old journal is not the Runtime’s canonical accepted-history implementation,
++but it is still a durable, user-visible local record of save/publish/undo/redo and
++is therefore an alternate history surface. `timelines history` already reads
++Runtime revisions (`cli_history.py:9-59`), while `timelines log` still reads the
++local journal (`cli_log.py:35-82`). Do not claim the history cut is complete until
++ordinary `Checkout`/sheet/Python writers stop calling local `save()`/`publish()`;
++read-only legacy fixtures are not evidence of supported native command coverage.
++
++## Deletion order
++
++1. Delete `core/timeline/inverses.py` and `tests/timeline/test_inverses.py`.
++2. Delete `core/extensions/` and `tests/core/extensions/`.
++3. Relocate timing utilities, migrate the four structural callers, then remove
++   the deprecated helper block and its lazy exports.
++4. Migrate ordinary writers; only then remove local accepted-history append hooks,
++   `cli_log`’s accepted-history surface, and snapshot publication machinery. Keep
++   `outbox.py`, `sync.py`, Runtime history, and revision readers.
++
++## Exact follow-up checks (not run in this audit)
++
++After deletion of the old inverse package:
++
++```sh
++! rg -n --glob '*.py' 'astrid\.core\.timeline\.inverses|from astrid\.core\.timeline\.inverses' astrid
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python - <<'PY'
++import importlib
++try:
++    importlib.import_module("astrid.core.timeline.inverses")
++except ModuleNotFoundError:
++    pass
++else:
++    raise SystemExit("retired inverse module still imports")
++PY
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/editing_conformance/test_recipe_m1_commands.py \
++  tests/sdk/test_timeline_commit_provider.py \
++  tests/sdk/test_timeline_sync.py
++```
++
++After deletion of `core/extensions` and its self-tests:
++
++```sh
++! rg -n --glob '*.py' 'astrid\.core\.extensions|from astrid\.core\.extensions' astrid
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python - <<'PY'
++import importlib
++try:
++    importlib.import_module("astrid.core.extensions")
++except ModuleNotFoundError:
++    pass
++else:
++    raise SystemExit("retired core extension package still imports")
++PY
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/test_sdk_public_surface.py \
++  tests/packs/test_pack_rendering_extensions.py \
++  tests/test_editor_extension_catalog.py \
++  tests/test_editor_extension_catalog_v3.py
++```
++
++After timing/helper migration, run the focused behavior lane:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_transaction.py \
++  tests/sdk/test_timeline_sheet.py tests/packs/timeline/test_cli_edit_flags.py
++```
++
++After ordinary-writer migration, run the Runtime/outbox/history lane:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/editing_conformance/test_commit_runtime_m1.py \
++  tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_history.py \
++  tests/packs/timeline/test_cli_log.py tests/packs/timeline/test_cli_v3_sweep_log.py
++```
++
++## Verification status
++
++Audit commands were read-only `git status`, `git ls-tree`, `find`, `sed`, `nl`,
++`wc`, and targeted `rg` searches. No pytest, make, install, network, full suite,
++or test-service request was run, per task instructions. No product file was
++changed. The shared `design/port-manifest.md` received one current M2 retirement
++table; this report is the only worker note.
+
+codex
+## Completed
+
+- Audited Agent integration callers, registries, imports, tests, and public CLI/Python surfaces.
+- Appended one M2 retirement table to `design/port-manifest.md`.
+- Identified `core/timeline/inverses.py` and `core/extensions/` as production-dead; journal and deprecated timing paths remain blocked.
+- Confirmed `outbox.py` remains pending-intent-only.
+- Wrote the 109-line report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md)
+- Wrote commit message handoff.
+
+Tests: none run, per instruction. No product files or worktree files were modified; no build output created.
+tokens used
+183,009
+## Completed
+
+- Audited Agent integration callers, registries, imports, tests, and public CLI/Python surfaces.
+- Appended one M2 retirement table to `design/port-manifest.md`.
+- Identified `core/timeline/inverses.py` and `core/extensions/` as production-dead; journal and deprecated timing paths remain blocked.
+- Confirmed `outbox.py` remains pending-intent-only.
+- Wrote the 109-line report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-retirement-audit/notes/report.md)
+- Wrote commit message handoff.
+
+Tests: none run, per instruction. No product files or worktree files were modified; no build output created.

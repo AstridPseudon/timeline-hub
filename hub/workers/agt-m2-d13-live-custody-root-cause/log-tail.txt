@@ -1,0 +1,400 @@
+
+ exited 124 in 60019ms:
+still running after 1 min ; rerun wait-test
+
+ exited 1 in 60034ms:
+test agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183341-27606: fail exit=1 in 31s — root-prep-current-integration on agt-m2-d13-live-custody-root-cause (agent tree ecaa29bfa38ba33bbe754e823574d3363788735f)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py
+counts: 12 failed, 640 passed, 16 skipped in 29.10s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183341-27606/log.txt ---
+            snapshot = groups._process_snapshot()
+            snapshot[process.pid] = groups._ProcessInfo(process.pid, 1, process.pid, birth + "-reused")
+            monkeypatch.setattr(groups, "_process_snapshot", lambda: snapshot)
+            with pytest.raises(groups.CleanupUncertainError, match="identity was reused"):
+>               groups.observe_tree(process)
+
+tests/core/execution/test_process_group.py:1132: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/core/execution/process_group.py:514: in observe_tree
+    return _observe_tree(process, deadline=deadline if bounded else None)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+process = <Popen: returncode: -9 args: ['/home/user/work/venv-agent/bin/python', '-c',...>
+
+    def _observe_tree(process: subprocess.Popen, *, deadline: float | None = None) -> dict[int, str]:
+        snapshot = _process_snapshot()
+        if not snapshot:
+            raise CleanupUncertainError(_census_message("owned process census unavailable", snapshot))
+        known = getattr(process, "_astrid_tree_members", None)
+        if known is None:
+            known = {}
+            process._astrid_tree_members = known
+        if not known and process.pid not in snapshot:
+            # An unreaped leader that already exited is a known outcome when the
+            # census lists exactly the incarnation custody bound at launch.
+            bound = getattr(process, "_astrid_process_birth", None)
+            if not (bound and getattr(snapshot, "exited", {}).get(process.pid) == bound):
+                raise CleanupUncertainError("owned leader exited before ancestry capture")
+        for pid, birth in tuple(known.items()):
+            current = snapshot.get(pid)
+            if current is not None and current.birth != birth:
+                # Popen.poll()/wait() positively reaps the original leader before
+                # the final descendant census.  Its numeric PID may then already
+                # belong to another incarnation; that replacement is not part of
+                # the owned tree.  Linux pidfds provide the same positive exit
+                # proof for observed descendants. Unreaped roots and descendants
+                # without an exact retained exit proof still fail closed below.
+                if ((pid == process.pid and process.returncode is not None)
+                        or _retained_incarnation_exited(process, pid, birth)):
+                    continue
+>               entry = custody._handles.get(pid) if isinstance(custody, ProcessCustody) else None
+                                                                ^^^^^^^
+E               UnboundLocalError: cannot access local variable 'custody' where it is not associated with a value
+
+astrid/core/execution/process_group.py:549: UnboundLocalError
+=========================== short test summary info ============================
+FAILED tests/core/execution/test_process_group.py::test_observation_uncertainty_persists_without_adopting_unknown_children[pid-reuse]
+FAILED tests/core/execution/test_process_group.py::test_reaped_root_pid_reuse_does_not_poison_final_tree_observation
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[live-False]
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[live-True]
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[closed-False]
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[closed-True]
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[ordinary-False]
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[ordinary-True]
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[other-live-False]
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[other-live-True]
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[other-exited-False]
+FAILED tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata[other-exited-True]
+12 failed, 640 passed, 16 skipped in 29.10s
+
+exec
+/bin/bash -lc "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-d13-live-custody-root-cause root-prep-current-integration --files 'tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py'" in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 111ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125
+
+exec
+/bin/bash -lc 'date -u; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183325-14937/status; tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183325-14937/log.txt; tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/log.txt' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ exited 1 in 122ms:
+Tue Oct 20 18:36:17 UTC 2026
+running
+tail: cannot open '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/log.txt' for reading: No such file or directory
+
+codex
+The corrected failure-context diagnostic passes the five targeted guard tests and the focused undefined-name check. I’ve queued the original custody suite and will rerun the normal render on that corrected revision once the current run finishes. No tests or guard conditions have been changed.
+exec
+/bin/bash -lc 'date -u; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183325-14937/status; tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183325-14937/log.txt; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/status' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 0ms:
+Tue Oct 20 18:37:23 UTC 2026
+pass
+.                                                                        [100%]
+1 passed in 201.38s (0:03:21)
+queued
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-d13-live-custody-root-cause custody-root-cause-exact7d-guard-context' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336
+
+exec
+/bin/bash -lc 'date -u; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/status; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/status; tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/log.txt; git status --short' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 192ms:
+Tue Oct 20 18:38:37 UTC 2026
+queued
+queued
+tail: cannot open '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/log.txt' for reading: No such file or directory
+ M astrid/core/execution/process_group.py
+
+codex
+The first run using the unmodified launcher passed without hitting the diagnostic guard. The corrected run and original custody suite are waiting for central slots. I’m checking the descriptor-fault cases locally while they wait, since those exposed the temporary diagnostic error.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 1221ms:
+..........                                                               [100%]
+10 passed in 0.63s
+
+exec
+/bin/bash -lc 'date -u; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/status; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/status; ls -ld .ruff_cache .pytest_cache' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ exited 2 in 0ms:
+Tue Oct 20 18:39:17 UTC 2026
+queued
+queued
+ls: cannot access '.pytest_cache': No such file or directory
+drwxr-xr-x 3 root root 4096 Oct 20 18:35 .ruff_cache
+
+exec
+/bin/bash -lc 'date -u; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/status; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/status; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/*/running' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 0ms:
+Tue Oct 20 18:40:17 UTC 2026
+pass
+queued
+-rw-r--r-- 1 root root 5 Oct 20 18:35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-speech-ad97-normal-pin-pair-native014-sockets-integration-1020183350-13220/running
+
+exec
+/bin/bash -lc 'head -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/summary; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/snap; sha256sum astrid/core/execution/process_group.py; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/why' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 0ms:
+test agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125: pass exit=0 in 32s — root-prep-current-integration on agt-m2-d13-live-custody-root-cause (agent tree 6d0690760cd6b09d814b2674c62c441cf3ba3724)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py
+counts: 652 passed, 16 skipped in 29.82s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125/log.txt ---
+tree=6d0690760cd6b09d814b2674c62c441cf3ba3724
+key=93954466dc1e085b8cc9488b656cf37a
+worktree=/home/user/work/wt/agt-m2-d13-live-custody-root-cause
+5de2f05461eb543576a80ac2192e4fa66fdf7a41a1712f3f09861846b691c3be  astrid/core/execution/process_group.py
+2 targeted/named runs already running
+
+codex
+The corrected diagnostic tree passed all 652 original Linux tests, with the same 16 Darwin skips. The normal render is still queued. I’m also checking the pinned Runtime and renderer package identities before concluding what the successful replays establish.
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/status; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/snap; date -u' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 0ms:
+running
+tree=6d0690760cd6b09d814b2674c62c441cf3ba3724
+key=658d44e6c1d945199f242a5480517309
+worktree=/home/user/work/wt/agt-m2-d13-live-custody-root-cause
+Tue Oct 20 18:40:53 UTC 2026
+
+exec
+/bin/bash -lc "git -C /home/user/work/wt/rt-pin-7d1cfa6b rev-parse HEAD; git -C /home/user/work/wt/rt-pin-7d1cfa6b status --short; realpath /home/user/work/runtimes/agent-remotion-current/node_modules/@banodoco/timeline-composition; cat /home/user/work/runtimes/agent-remotion-current/node_modules/@banodoco/timeline-composition/package.json | head -28; stat -c '%y %n' /home/user/work/runtimes/agent-remotion-current/node_modules/@banodoco/timeline-composition/package.json /home/user/work/runtimes/agent-remotion-current/node_modules/@remotion/renderer/package.json; /home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node --version" in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 0ms:
+7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e
+/home/user/work/runtimes/agent-remotion-current/node_modules/@banodoco/timeline-composition
+{
+  "name": "@banodoco/timeline-composition",
+  "version": "0.0.12",
+  "private": true,
+  "description": "Portable timeline evaluator and Remotion composition with scoped element registries.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "remotion": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./evaluation": {
+      "types": "./dist/evaluation.d.ts",
+      "import": "./dist/evaluation.js",
+      "remotion": "./dist/evaluation.js",
+      "default": "./dist/evaluation.js"
+    },
+    "./theme-api": {
+      "types": "./dist/theme-api.d.ts",
+      "import": "./dist/theme-api.js",
+      "remotion": "./dist/theme-api.js",
+      "default": "./dist/theme-api.js"
+    },
+    "./registry.generated": {
+2026-10-20 06:55:22.130366135 +0000 /home/user/work/runtimes/agent-remotion-current/node_modules/@banodoco/timeline-composition/package.json
+2026-10-19 23:08:02.835901003 +0000 /home/user/work/runtimes/agent-remotion-current/node_modules/@remotion/renderer/package.json
+v20.19.4
+
+exec
+/bin/bash -lc "env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/bin:/bin PYTHONPATH=/home/user/work/wt/agt-m2-d13-live-custody-root-cause:/home/user/work/wt/rt-pin-7d1cfa6b /home/user/work/venv-agent-child-s2/bin/python -c 'import hashlib; from pathlib import Path; import astrid.core.execution.custody_broker as c, astrid.core.execution.process_group as p, runtime_protocol as r; print(\"child-profile-imports\"); [(print(m.__name__,m.__file__,hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest())) for m in (c,p,r)]'" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause
+ succeeded in 525ms:
+child-profile-imports
+astrid.core.execution.custody_broker /home/user/work/wt/agt-m2-d13-live-custody-root-cause/astrid/core/execution/custody_broker.py 9675a9ba92a7d2a14c440f91d13ba2886b48e328d3cc3917538465cc526e4cf2
+astrid.core.execution.process_group /home/user/work/wt/agt-m2-d13-live-custody-root-cause/astrid/core/execution/process_group.py 5de2f05461eb543576a80ac2192e4fa66fdf7a41a1712f3f09861846b691c3be
+runtime_protocol /home/user/work/wt/rt-pin-7d1cfa6b/runtime_protocol/__init__.py ab861f37552e1a27a706ffc1499a720ef8274248be3e4cb7e18dcbc8526261b1
+
+exec
+/bin/bash -lc 'date -u; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/status; tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/log.txt; git diff --numstat; sha256sum /home/user/work/runtimes/agent-remotion-current/node_modules/@banodoco/timeline-composition/package.json /home/user/work/runtimes/agent-remotion-current/node_modules/@remotion/renderer/package.json' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 426ms:
+Tue Oct 20 18:42:23 UTC 2026
+running
+8	1	astrid/core/execution/process_group.py
+16db2715ea7643aa02d7c47c7d76cc80eeaca6bf22475549e6fa70fa311e12bb  /home/user/work/runtimes/agent-remotion-current/node_modules/@banodoco/timeline-composition/package.json
+f716e3e3d99af220ecda19c4f97919d66b9139ab9229ac50dbdf1a49a1b36af0  /home/user/work/runtimes/agent-remotion-current/node_modules/@remotion/renderer/package.json
+
+codex
+The pinned Runtime is clean at `7d1cfa6b`, the renderer package is Composition `0.0.12`, and Node is `v20.19.4`. An isolated startup probe also selects the worktree’s custody modules with the child interpreter. The remaining gap is capturing a failed PID/birth/handle tuple from the normal render.
+exec
+/bin/bash -lc 'date -u; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/status; tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336/log.txt' in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 0ms:
+Tue Oct 20 18:43:29 UTC 2026
+pass
+.                                                                        [100%]
+1 passed in 155.97s (0:02:35)
+
+codex
+The final normal render also passed on the same diagnostic tree as the 652-test custody suite. I haven’t captured the first failed witness from result 1092, so I can’t justify a guard change under the task’s “only if proven” requirement. I’m restoring the product file and preparing a blocked handoff with the exact results and private diagnostic patch.
+exec
+/bin/bash -lc "git diff -- astrid/core/execution/process_group.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/temporary-guard-context.patch
+sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/temporary-guard-context.patch
+python3 - <<'PY'
+from pathlib import Path
+import re
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+prefix='agt-m2-d13-live-custody-root-cause-'
+for p in sorted(root.joinpath('tests').glob(prefix+'*'), key=lambda p:p.joinpath('request').stat().st_mtime):
+    print(p.name)
+    print(p.joinpath('status').read_text().strip())
+    summary=p.joinpath('summary').read_text()
+    print('\\n'.join(summary.splitlines()[:3]))
+PY" in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 50ms:
+3e75633702fe07da9f10708a7ee74c04368491640ff8e9977598fe3de4be1577  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/temporary-guard-context.patch
+agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-trace-1020180844-24531
+fail
+test agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-trace-1020180844-24531: fail exit=1 in 55s — custody-root-cause-exact7d-trace on agt-m2-d13-live-custody-root-cause (agent tree d4871247bc072c5c32b3c6366e79ae2df33aa930)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -s -q -p custody_trace -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+counts: 1 failed in 50.89s 
+agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-trace-clean-1020181657-28727
+pass
+test agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-trace-clean-1020181657-28727: pass exit=0 in 203s — custody-root-cause-exact7d-trace-clean on agt-m2-d13-live-custody-root-cause (agent tree d4871247bc072c5c32b3c6366e79ae2df33aa930)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -c 'import importlib.util,sys,pytest; spec=importlib.util.spec_from_file_location("custody_trace",'"'"'/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/custody_trace.py'"'"'); module=importlib.util.module_from_spec(spec); sys.modules["custody_trace"]=module; spec.loader.exec_module(module); raise SystemExit(pytest.main(sys.argv[1:]))' -s -q -p custody_trace -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+counts: 1 passed, 1 warning in 197.17s (0:03:17) 
+agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-trace-clean-1020182117-5637
+pass
+test agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-trace-clean-1020182117-5637: pass exit=0 in 227s — custody-root-cause-exact7d-trace-clean on agt-m2-d13-live-custody-root-cause (agent tree d4871247bc072c5c32b3c6366e79ae2df33aa930)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -c 'import importlib.util,sys,pytest; spec=importlib.util.spec_from_file_location("custody_trace",'"'"'/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/custody_trace.py'"'"'); module=importlib.util.module_from_spec(spec); sys.modules["custody_trace"]=module; spec.loader.exec_module(module); raise SystemExit(pytest.main(sys.argv[1:]))' -s -q -p custody_trace -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+counts: 1 passed, 1 warning in 223.67s (0:03:43) 
+agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-trace-clean-1020182626-26337
+pass
+test agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-trace-clean-1020182626-26337: pass exit=0 in 197s — custody-root-cause-exact7d-trace-clean on agt-m2-d13-live-custody-root-cause (agent tree d4871247bc072c5c32b3c6366e79ae2df33aa930)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -c 'import importlib.util,sys,pytest; spec=importlib.util.spec_from_file_location("custody_trace",'"'"'/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/custody_trace.py'"'"'); module=importlib.util.module_from_spec(spec); sys.modules["custody_trace"]=module; spec.loader.exec_module(module); raise SystemExit(pytest.main(sys.argv[1:]))' -s -q -p custody_trace -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+counts: 1 passed, 1 warning in 167.56s (0:02:47) 
+agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-original-order-1020182954-14761
+pass
+test agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-original-order-1020182954-14761: pass exit=0 in 164s — custody-root-cause-exact7d-original-order on agt-m2-d13-live-custody-root-cause (agent tree d4871247bc072c5c32b3c6366e79ae2df33aa930)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -c 'import importlib.util,sys,pytest; spec=importlib.util.spec_from_file_location("custody_trace",'"'"'/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/custody_trace.py'"'"'); module=importlib.util.module_from_spec(spec); sys.modules["custody_trace"]=module; spec.loader.exec_module(module); raise SystemExit(pytest.main(sys.argv[1:]))' -s -q -p custody_trace -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+counts: 2 passed, 1 deselected, 1 warning in 159.90s (0:02:39) 
+agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183325-14937
+pass
+test agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183325-14937: pass exit=0 in 206s — custody-root-cause-exact7d-guard-context on agt-m2-d13-live-custody-root-cause (agent tree ecaa29bfa38ba33bbe754e823574d3363788735f)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+counts: 1 passed in 201.38s (0:03:21) 
+agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183341-27606
+fail
+test agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183341-27606: fail exit=1 in 31s — root-prep-current-integration on agt-m2-d13-live-custody-root-cause (agent tree ecaa29bfa38ba33bbe754e823574d3363788735f)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py
+counts: 12 failed, 640 passed, 16 skipped in 29.10s 
+agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125
+pass
+test agt-m2-d13-live-custody-root-cause-root-prep-current-integration-1020183521-125: pass exit=0 in 32s — root-prep-current-integration on agt-m2-d13-live-custody-root-cause (agent tree 6d0690760cd6b09d814b2674c62c441cf3ba3724)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py
+counts: 652 passed, 16 skipped in 29.82s 
+agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336
+pass
+test agt-m2-d13-live-custody-root-cause-custody-root-cause-exact7d-guard-context-1020183733-1336: pass exit=0 in 159s — custody-root-cause-exact7d-guard-context on agt-m2-d13-live-custody-root-cause (agent tree 6d0690760cd6b09d814b2674c62c441cf3ba3724)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+counts: 1 passed in 155.97s (0:02:35) 
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-d13-live-custody-root-cause/astrid/core/execution/process_group.py
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+p=Path('.ruff_cache')
+assert p.is_dir() and not p.is_symlink()
+assert p.resolve().parent == Path.cwd()
+shutil.rmtree(p)
+PY
+git diff --check
+git status --short
+sha256sum astrid/core/execution/custody_broker.py astrid/core/execution/process_group.py astrid/core/execution/generic_host.py
+git rev-parse HEAD 'HEAD"'^{tree}'"'" in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 555ms:
+9675a9ba92a7d2a14c440f91d13ba2886b48e328d3cc3917538465cc526e4cf2  astrid/core/execution/custody_broker.py
+1234b73f61ee47de14f9006fdd0bf7c8b958da16e9d54ea15ac7fdbe0d4321d2  astrid/core/execution/process_group.py
+d352695a342e3851995c5a00ed328b844fee8e5fca660a88e13b2d2ff24a8724  astrid/core/execution/generic_host.py
+cd85667f75a5dbeab0d5037a915beb2d9170a2a9
+d4871247bc072c5c32b3c6366e79ae2df33aa930
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=root/'workers/agt-m2-d13-live-custody-root-cause'
+runs=sorted(root.joinpath('tests').glob('agt-m2-d13-live-custody-root-cause-*'), key=lambda p:p.joinpath('request').stat().st_mtime)
+commands=[]
+for run in runs:
+    commands.extend([run.name,run.joinpath('request').read_text(),*run.joinpath('summary').read_text().splitlines()[:3],''])
+commands.extend([
+'Local checks on corrected diagnostic source:',
+'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\""'$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py::test_observation_uncertainty_persists_without_adopting_unknown_children tests/core/execution/test_process_group.py::test_reaped_root_pid_reuse_does_not_poison_final_tree_observation'"',
+'5 passed in 0.41s',
+'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\""'$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py::test_pidfd_kernel_watch_refuses_descriptor_faults_with_shared_metadata'"',
+'10 passed in 0.63s',
+'/home/user/work/venv-agent/bin/ruff check --select F821,F822,F823,E9 astrid/core/execution/process_group.py',
+'All checks passed"'!'"',
+'git diff --check',
+'PASS; final git status --short is empty.',
+])
+w.joinpath('commands.txt').write_text('\\n'.join(commands)+'\\n')
+report='''Blocked: no proven source repair. The original first failed PID/birth/retained-handle tuple could not be recovered or reproduced. Product files and tests are restored byte for byte to the assigned source. No commit message or DONE is written.
+
+Read PLAN.md and all 3,677 lines of central result 1092. The first failure is the background observer's "'`owned process identity was reused`, propagated through `observe_tree` into render command cleanup. The later unresolved command scope, unverified managed release, and CPU cleanup errors are consequences. The first failing condition is `current.birth != known_birth`, without either positive direct-child reap or retained-incarnation exit proof. Result 1092 does not record the candidate PID or whether that candidate ever acquired a handle, so it cannot distinguish failed retained proof from a never-admitted census row. Original best-effort containment `/tmp/astrid-custody-8oquoxqn/retained-cleanup-containment.json` recorded root 23008, 221 handles, and no retained signal errors; it does not contain the missing first witness.
+
+The normal path was replayed on the exact assigned tree four times: three isolated original render cases and then the original two-case integration order. All passed. A fifth valid replay used the ordinary pytest launcher and only failure-message context at the original guard; it also passed, together with all 652 original Linux controls and 16 existing Darwin skips on that same diagnostic tree. These passes do not establish a repair.
+
+Verified source/environment:
+
+- Assigned commit `cd85667f75a5dbeab0d5037a915beb2d9170a2a9`, tree `d4871247bc072c5c32b3c6366e79ae2df33aa930`. The retained-epoll source is unchanged.
+- Actual parent imports in the central trace matched these SHA-256 values: custody_broker.py `9675a9ba92a7d2a14c440f91d13ba2886b48e328d3cc3917538465cc526e4cf2`; process_group.py `1234b73f61ee47de14f9006fdd0bf7c8b958da16e9d54ea15ac7fdbe0d4321d2`; generic_host.py `d352695a342e3851995c5a00ed328b844fee8e5fca660a88e13b2d2ff24a8724`. Final restored files have these same hashes.
+- Runtime pin is clean at `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`; Composition is `0.0.12` under the specified current Remotion install; Node is `v20.19.4`. Composition package.json SHA-256 `16db2715ea7643aa02d7c47c7d76cc80eeaca6bf22475549e6fa70fa311e12bb`; @remotion/renderer package.json SHA-256 `f716e3e3d99af220ecda19c4f97919d66b9139ab9229ac50dbdf1a49a1b36af0`.
+- The actual registered command was `venv-agent-child-s2/bin/python -m astrid.packs.rendering.actions.render.run`, with attempt cwd and snapshot-only PYTHONPATH; no installed execution-profile selection or `-I`. The installed child-s2 Astrid files are older, but the captured launch selects snapshot source. An isolated startup probe with the same interpreter confirms that source precedence. No evidence supports changing a product guard for an installed-old-profile problem.
+- One captured render admission: capability digest `sha256:2e79644c4d399a4dd35d086555626293f8e8405963e49e3a4d09446936d01322`, source digest `dc5843439419fdb565e827a42407b5d2c33427f54d2afe7f99f9f9c598f454ef`, dependency digest `46e5649a00529d5f6a043c7391a10bf08be32adff1731e2bf518240535ec51bd`. Each trace names its absolute snapshot source root; digests are not assumed interchangeable across snapshots.
+- The central PID namespace has pid_max=32768; one actual render launched at PID 25017. No artificial process churn or PID-reuse injection was used.
+
+Confirmed fault seam, not a confirmed cause of 1092: normal rendering really observes candidates that disappear/zombie before Linux pidfd binding. Instrumented successful runs recorded 159, 49, and 59 declined bindings with no retained handle. In the 159-event run, candidate 4158 under root 3746 was already the same-birth zombie when register returned without admission; other candidates were absent. `_tree_members` records ancestry before `ProcessCustody.register` can decline binding. A later reused census PID could therefore encounter historical ancestry without a retained capability. No replay captured that later failed comparison, so this remains a hypothesis rather than authorization for a behavioral fix.
+
+Do not erase those ancestry rows as a speculative fix. The missing-parent-child guard still needs historical ancestry, and the original Darwin test `test_unadmitted_disappearance_reconciles_and_cleanup_waits_only_retained_root` explicitly requires the unadmitted row to remain in `_astrid_tree_members`. No guard, ownership authority, exit certificate, timeout, publication, rendering behavior, or original test was changed in the final worktree.
+
+Central results (full ID = `agt-m2-d13-live-custody-root-cause-` plus the suffix below). Exact request fields, executed commands, trees, and result counts are in commands.txt; each result directory retains log.txt and summary.
+
+| Suffix | Tree | Result |
+| --- | --- | --- |
+| custody-root-cause-exact7d-trace-clean-1020181657-28727 | d4871247 | original failing node: 1 pass, 197.17s |
+| custody-root-cause-exact7d-trace-clean-1020182117-5637 | d4871247 | original failing node: 1 pass, 223.67s; 159 declined bindings |
+| custody-root-cause-exact7d-trace-clean-1020182626-26337 | d4871247 | original failing node: 1 pass, 167.56s; 49 declined bindings |
+| custody-root-cause-exact7d-original-order-1020182954-14761 | d4871247 | 2 pass, 1 deselected, 159.90s; 59 declined bindings |
+| root-prep-current-integration-1020183521-125 | 6d069076 | 652 pass, 16 existing Darwin skips, 29.82s |
+| custody-root-cause-exact7d-guard-context-1020183733-1336 | 6d069076 | original failing node: 1 pass, 155.97s |
+
+The four plugin-based runs have one benign pytest assertion-rewrite warning for the already-imported diagnostic plugin. The corrected guard-context run has no diagnostic launcher/plugin.
+
+Diagnostic mistakes, excluded from qualification: initial trace 1020180844-24531 added the mutable worker directory to PYTHONPATH and failed readiness corpus membership validation before render (1 failed, 50.89s). First inline-context revision ecaa29bf referenced custody before local assignment; its strict run 1020183341-27606 correctly failed 12 original negatives (640 pass / 16 skip). Its normal run 1020183325-14937 passed without hitting that branch (201.38s), but is excluded. The corrected context uses the process'"'s owner directly; local original guard checks passed 5/5, descriptor-fault checks passed 10/10, focused Ruff passed, and the central 652/16 controls passed unchanged.
+
+The corrected temporary diagnostic patch is retained privately as temporary-guard-context.patch, SHA-256 "'`3e75633702fe07da9f10708a7ee74c04368491640ff8e9977598fe3de4be1577`. It only enriches the existing failure message; it is not a repair or a port candidate. Diagnostic tree `6d0690760cd6b09d814b2674c62c441cf3ba3724`, process_group.py SHA-256 `5de2f05461eb543576a80ac2192e4fa66fdf7a41a1712f3f09861846b691c3be`. The patch has been removed from the worktree. Shared installs were read-only; own Ruff cache removed. No full suite was requested; native Darwin remains unverified.
+
+Recommended next step: retain CURRENT19e4. Reproduce result 1092'"'s concurrency/load with the private failure-only context, or supply the original first failed candidate/known-birth/current-birth/handle tuple. Then choose the smallest repair at the census-to-registration lifetime seam and independently review it. A passing replay alone, or deleting unadmitted history, is insufficient evidence for that repair. This missing causal witness is the genuine blocker under the brief's explicit only-if-proven constraint.
+'''
+w.joinpath('BLOCKED').write_text(report)
+w.joinpath('progress.md').write_text('Final: BLOCKED; see BLOCKED and commands.txt. Product/test worktree restored clean at cd85667f / d4871247. Four unchanged-tree normal replays passed; corrected failure-context tree passed original normal render and 652 original Linux controls / 16 existing Darwin skips. No failed PID/birth/handle tuple captured. No behavioral repair, commit message, or DONE. Private diagnostic patch retained for reproducing the original concurrency/load.\\n')
+print('Wrote BLOCKED and exact command/results record; no completion marker.')
+print('Diagnostic patch hash:',hashlib.sha256(w.joinpath('temporary-guard-context.patch').read_bytes()).hexdigest())
+PY
+git status --short" in /home/user/work/wt/agt-m2-d13-live-custody-root-cause
+ succeeded in 295ms:
+Wrote BLOCKED and exact command/results record; no completion marker.
+Diagnostic patch hash: 3e75633702fe07da9f10708a7ee74c04368491640ff8e9977598fe3de4be1577
+
+codex
+Blocked on causal evidence; no product changes remain.
+
+- Four unchanged-tree replays passed.
+- Diagnostic-only tree: original render passed; **652 passed, 16 existing Darwin skips**.
+- Normal rendering exposed declined pidfd bindings, but no replay captured the original failed witness. A behavioral fix remains unproven.
+
+[Detailed report and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/BLOCKED) · [Exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/commands.txt)
+
+`BLOCKED` written; no commit message or `DONE`.
+tokens used
+320,723
+Blocked on causal evidence; no product changes remain.
+
+- Four unchanged-tree replays passed.
+- Diagnostic-only tree: original render passed; **652 passed, 16 existing Darwin skips**.
+- Normal rendering exposed declined pidfd bindings, but no replay captured the original failed witness. A behavioral fix remains unproven.
+
+[Detailed report and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/BLOCKED) · [Exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause/commands.txt)
+
+`BLOCKED` written; no commit message or `DONE`.

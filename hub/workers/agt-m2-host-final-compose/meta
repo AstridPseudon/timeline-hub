@@ -1,0 +1,9 @@
+name=agt-m2-host-final-compose
+repo=agent
+base=tl/agt-m2-host-bound-recover
+base_sha=c9284b89
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-host-final-compose
+started=2026-10-20T01:06:48Z

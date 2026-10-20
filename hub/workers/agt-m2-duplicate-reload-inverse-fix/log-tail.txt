@@ -1,0 +1,400 @@
++    copied = rows[-1]
++    revision = copied['shot_revision_id']
++    derived = {
++        'stable_deep_link': stable_occurrence_deep_link(
++            'project-1', document_id or 'film', 'shot-copy', revision, 'occ-copy'),
++        'output_identity': stable_output_identity('project-1', document_id or 'film', 'occ-copy'),
++    }
++    assert _json(copied) == _json({**document['parent_revision']['payload']['occurrences'][0],
++                                 'occurrence_id': 'occ-copy', 'shot_id': 'shot-copy',
++                                 'shot_revision_id': revision, **{key: derived[key] for key in fields}})
++    raw = compile_authoring_candidate(plan.bundle).publication
++    assert _json(raw['parent_composition']['occurrences'][-1]) == _json(copied)
++    assert _json(rows[:-1]) == _json(document['parent_revision']['payload']['occurrences'])
++    assert _json(original) == _json(before)
++    assert original['source_mapping']['_runtime_document'] == document
++    shot = next(row for row in compiled['shot_revisions'] if row['shot_id'] == 'shot-copy')
++    assert shot['revision_id'] == revision
++    assert shot['payload']['internal_timeline_revision_id'] == shot['internal_timeline_revision_id']
++    internal = next(row for row in compiled['internal_timeline_revisions']
++                    if row['revision_id'] == shot['internal_timeline_revision_id'])
++    assert internal['payload'] == document['internal_timeline_revisions'][0]['payload']
++    assert compiled['dependency_manifest']['media'] == document['dependency_manifest']['media']
++    reloaded = bundle_from_document(compiled)
++    undone = inverse(reloaded, accepted(plan.records, original, reloaded))
++    assert document_from_bundle(undone.bundle, source_bundles=(original, reloaded)) == document
++    restored = reload(undone.bundle, (original, reloaded))
++    redone = inverse(restored, accepted(undone.records, reloaded, restored))
++    assert document_from_bundle(redone.bundle, source_bundles=(original, reloaded)) == compiled
++    recorded = next(write['after']['value'] for write in plan.records[0]['writes']
++                    if write['ref'] == 'occurrence:occ-copy' and not write['path'])
++    assert _json(recorded) == _json(preview) == _json(State(reloaded).entity('occurrence:occ-copy'))
++    assert replay(plan, original).records == plan.records
++
++
++@pytest.mark.parametrize('change', [
++    'stable_deep_link', 'output_identity', 'unknown', 'output_records', 'task', 'associations', 'app',
++    'identity-aba', 'opaque-aba', 'source-aba', 'source-order', 'dependent',
++])
++def test_reloaded_identity_duplicate_keeps_strict_inverse_guards(change):
++    original = bundle_from_document(identity_document(2, ('stable_deep_link', 'output_identity'), None))
++    plan = execute(original, [duplicate(original, 'occ-0')])
++    copied = reload(plan.bundle)
++    head = copy.deepcopy(copied)
++    state = State(head)
++    intervening = []
++    if change.endswith('-aba'):
++        ref, path = {
++            'identity-aba': ('occurrence:occ-copy', ['output_identity']),
++            'opaque-aba': ('occurrence:occ-copy', ['output_records']),
++            'source-aba': ('occurrence:occ-0', []),
++        }[change]
++        intervening = [later(ref, path, state.get(ref, path)['value'])]
++    elif change == 'source-order':
++        state.config('occurrence:occ-0')['clips'].reverse()
++    elif change == 'dependent':
++        head['placements'].append({**copy.deepcopy(state.entity('occurrence:occ-copy')),
++                                   'occurrence_id': 'dependent'})
++    elif change in ('stable_deep_link', 'output_identity'):
++        state.entity('occurrence:occ-copy')[change] = 'changed'
++    else:
++        nested = state.entity('occurrence:occ-copy')[change]
++        nested = nested[0] if isinstance(nested, list) else nested
++        nested = nested['org.example'] if change == 'app' else nested
++        nested['output_identity'] = 'changed'
++    before = copy.deepcopy(head)
++    with pytest.raises(CommandError) as error:
++        inverse(head, accepted(plan.records, original, copied), intervening)
++    assert error.value.kind == ('intervening_write' if change.endswith('-aba') else
++                                'inverse_dependency_changed' if change == 'source-order' else
++                                'surviving_dependents' if change == 'dependent' else 'inverse_conflict')
++    assert head == before
++
++
+ def test_copy_preserves_exact_source_content_and_only_identity_changes():
+     original = bundle_from_document(duplicate_document())
+     State(original).entity('occurrence:occ-0')['metadata'] = {'explicit': None, 'ordered': [False, 0, []]}
+@@ -167,8 +273,9 @@
+ @pytest.mark.parametrize('occurrence_id,shot_id', [
+     ('occ-1', 'shot-copy'), ('occ-copy', 'chapter-shot'),
+ ])
+-def test_reserved_identity_collisions_refuse(occurrence_id, shot_id):
+-    original = bundle_from_document(duplicate_document())
++@pytest.mark.parametrize('fields', [(), ('stable_deep_link', 'output_identity')])
++def test_reserved_identity_collisions_refuse(occurrence_id, shot_id, fields):
++    original = bundle_from_document(identity_document(2, fields, None))
+     with pytest.raises(CommandError) as error:
+         execute(original, [capture_occurrence_duplicate(original, 'occurrence:occ-0', occurrence_id, shot_id)])
+     assert error.value.kind == 'identity_collision'
+
+exec
+/bin/bash -lc 'git rev-parse HEAD; git diff --shortstat; git diff --check; PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_duplicate.py tests/editing_conformance/test_recipe_occurrence_duplicate.py' in /home/user/work/wt/agt-m2-duplicate-reload-inverse-fix
+ succeeded in 917ms:
+cf7448ed6c1298b172d004914cfe2bb8c99048e7
+ 2 files changed, 122 insertions(+), 5 deletions(-)
+All checks passed!
+
+ succeeded in 81239ms:
+........................................................................ [ 12%]
+........................................................................ [ 25%]
+........................................................................ [ 37%]
+........................................................................ [ 50%]
+........................................................................ [ 63%]
+........................................................................ [ 75%]
+........................................................................ [ 88%]
+..................................................................       [100%]
+570 passed, 1 deselected in 79.60s (0:01:19)
+
+codex
+Final verification passed: 570 targeted tests, with one existing integration test deselected by the default lane. Lint and whitespace checks also pass. The existing portable duplicate golden is unchanged.
+
+I’m writing the report and harness completion files now. Runtime pair acceptance, App activation, and full-suite qualification remain unverified.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..afdee504b1ccd114b17e645151eea37097e2eda9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/commit-msg
+@@ -0,0 +1,10 @@
++fix(timeline): record duplicate destination root identities
++
++Derive stable_deep_link and output_identity through the existing compiler
++before recording an occurrence copy, so the authored preview and whole-root
++creation record match the immutable destination after reload.
++
++Add combined raw compile, immutable reload, guarded undo and redo coverage
++for single and shared sources, optional identity fields and document IDs.
++Keep opaque output, task and association values exact and retain strict
++identity collision, inverse, ABA, source order and dependency controls.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..4ec91c0bd75ff6b27623d5853667a5e01b7fb71f
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/notes/report.md
+@@ -0,0 +1,51 @@
++# Duplicate immutable-reload inverse repair
++
++Completed against Agent base `cf7448ed6c1298b172d004914cfe2bb8c99048e7` in `/home/user/work/wt/agt-m2-duplicate-reload-inverse-fix`.
++
++## Change
++
++`astrid/sdk/timeline/native_occurrence_duplicate.py` now derives exactly the two approved root fields, `stable_deep_link` and `output_identity`, before recording the destination occurrence. A detached provisional candidate goes through the existing `compile_authoring_candidate`; only those two fields, when present on the source, are copied from its destination row. This reuses the compiler's existing factories and exact immutable shot-revision derivation. The authored preview, raw creation `after.value`, raw compiler destination and reopened occurrence now agree.
++
++The existing `create_entity` collision validation remains authoritative. An already occupied occurrence bypasses provisional compilation and reaches that original validation, retaining the `identity_collision` error. No inverse implementation or guard was changed. No suffix remapping, broad root exemption, operation/schema/public pin, DTO, hash normalization, or grouped-root-cache repair was introduced. Only two repository files changed: the duplicate handler and its existing conformance test module; +122/-5 lines. The portable golden fixture is unchanged and passes.
++
++The tests combine raw compiler output and immutable document compilation, actual `bundle_from_document` reload, guarded undo, immutable reload of undo, and guarded redo in the same test. Sixteen combinations cover single/shared sources; neither/either/both root fields; and default/escaped explicit parent-document identity. They assert the exact destination factories against the raw row before reopening, complete unchanged source rows and immutable source input, shot/internal closure links, media preservation, exact opaque JSON, record/preview/reload consistency, deterministic replay, exact undo and redo documents. Nested output records, task values, associations, namespaced app data, explicit clears and historical identity-like strings remain unchanged.
++
++Twelve additional controls retain refusals for changed root identities; changed nested opaque/output/task/association/namespaced identities; equal-state/ABA publication touches; changed source order; and surviving dependents. Existing collision tests now also cover identity-bearing sources. No passing behavior expectation was weakened, removed, skipped or changed to an expected failure.
++
++## Commands and results
++
++All test invocations used the shared dependency venv read-only, this worktree's code through `PYTHONPATH`, `PYTHONDONTWRITEBYTECODE=1`, and no pytest cache. No dependency installation or shared-cache mutation was performed.
++
++Red phase, before the product fix:
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_duplicate.py -k root_identities_raw --tb=short
++```
++
++Result: **12 failed, 4 passed, 33 deselected in 3.18s**. Every identity-bearing combination reached raw destination/closure checks and then failed at `inverse.py:366`, `CommandError: original authored guard changed`. All no-root controls passed. The final test fixture also uses the normal factories for source root values.
++
++Final targeted verification, after all edits:
++
++```bash
++set -o pipefail
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_occurrence_delete.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/timeline/test_authoring_bundle.py tests/timeline/test_shot_composition.py --tb=short 2>&1 | tee /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/notes/targeted.log
++```
++
++Result: **570 passed, 1 deselected in 79.60s**, exit 0. The deselected test is the existing integration-marked `tests/timeline/test_authoring_bundle.py::test_candidate_compiler_integrates_with_runtime_atomic_publication`, excluded by the repository's normal default-lane marker expression. It was not altered. The duplicate module contributes **63 passing cases**. Full output is `notes/targeted.log` beside this report.
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_duplicate.py tests/editing_conformance/test_recipe_occurrence_duplicate.py
++git diff --check
++```
++
++Results: **All checks passed**, exit 0; whitespace check exit 0.
++
++## Decisions, limits and next step
++
++Read the orchestrator PLAN, repository AGENTS and `design/app-refreshed-duplicate-source-port.md`. The standalone `repro-native-duplicate-inverse.py` linked by that note is absent from the supplied filesystem; searching the shared scratchpad and workspace did not locate it. The new executable regression reproduced the exact documented error directly in the existing suite. This did not block the repair.
++
++Used provisional compilation rather than duplicating the compiler's revision hash algorithm or relaxing inverse comparisons. This adds one detached pure compilation to execution/capture of identity-bearing duplicates; no performance benchmark is claimed. All decisions in the plan remain unchanged.
++
++No full/full* suite, `make check`, browser/socket/live Runtime suite, Runtime direct pair, private client staging, App activation, or rendering qualification was run or requested. Provider controls here use the existing dependency-independent provider harness; immutable reload is the real native document converter, not a simulated root comparison. No actual publishedS2 installed-pair acceptance is claimed. No other worker/integration tree, dependency installation, public pin, orchestration ledger, or git ref was modified; no commit/push/merge/checkout was run. No build/temp output remains in this worktree.
++
++Nothing is blocked. Recommend review and harness commit of this narrow Agent repair, then fresh publishedS2 pair qualification and the bounded App duplicate source-port retry under the orchestrator's existing gates. Keep the separate `9ccf10ec` grouped-root-cache review separate.
+diff --git a/astrid/sdk/timeline/native_occurrence_duplicate.py b/astrid/sdk/timeline/native_occurrence_duplicate.py
+index 3f47ab718159fcd019817d4fc965ba5e6ae532f7..e5cd6bf9e0d1006e3269862ba2cb055a735f7bbf
+--- a/astrid/sdk/timeline/native_occurrence_duplicate.py
++++ b/astrid/sdk/timeline/native_occurrence_duplicate.py
+@@ -26,7 +26,10 @@
+     if occurrence_id == row['occurrence_id'] or shot_id == source_shot:
+         raise CommandError('duplicate requires reserved identities distinct from the source',
+                            kind='identity_collision', ref=owner)
+-    from astrid.core.timeline.authoring_bundle import _copy_shot_for_placement
++    from astrid.core.timeline.authoring_bundle import (
++        _copy_shot_for_placement,
++        compile_authoring_candidate,
++    )
+     bundle = ctx.state.bundle
+     copied, remap = _copy_shot_for_placement(
+         payload, project_id=bundle['project_id'], timeline_id=bundle['timeline_id'],
+@@ -42,6 +45,13 @@
+     created.pop('shot_revision_id', None)
+     created.pop('revision_id', None)
+     created.update(occurrence_id=occurrence_id, shot_id=shot_id)
++    fields = [key for key in ('stable_deep_link', 'output_identity') if key in created]
++    if fields and ctx.state.entity('occurrence:' + occurrence_id, optional=True) is None:
++        # Record the same factory-derived destination values as immutable compilation.
++        candidate = copy.deepcopy(bundle)
++        candidate['placements'].append(created)
++        compiled = compile_authoring_candidate(candidate).publication['parent_composition']['occurrences'][-1]
++        created.update({key: compiled[key] for key in fields})
+     ctx.create_entity('occurrence:' + occurrence_id, kind='occurrence', owner='parent', value=created)
+ 
+ 
+diff --git a/tests/editing_conformance/test_recipe_occurrence_duplicate.py b/tests/editing_conformance/test_recipe_occurrence_duplicate.py
+index dccadbf036c886341fbd24e149e5fa67c16c11b5..b9ed0e84fc173ab441c197fe14799bc9d332d2c4
+--- a/tests/editing_conformance/test_recipe_occurrence_duplicate.py
++++ b/tests/editing_conformance/test_recipe_occurrence_duplicate.py
+@@ -7,7 +7,7 @@
+ import pytest
+ from jsonschema import Draft202012Validator
+ 
+-from astrid.core.timeline.authoring_bundle import _identity
++from astrid.core.timeline.authoring_bundle import _identity, compile_authoring_candidate
+ from astrid.core.timeline.shot_composition import (
+     stable_occurrence_deep_link,
+     stable_output_identity,
+@@ -15,7 +15,7 @@
+ from astrid.sdk.timeline._collections import AcceptedRecords
+ from astrid.sdk.timeline._command_state import CommandError, State
+ from astrid.sdk.timeline.commands import _SCHEMA, execute
+-from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
++from astrid.sdk.timeline.commit import _digest, _json, bundle_from_document, document_from_bundle
+ from astrid.sdk.timeline.native_occurrence_duplicate import capture_occurrence_duplicate
+ from astrid.sdk.timeline.rebase import replay
+ from tests.editing_conformance.fixture_loader import load_fixture
+@@ -83,6 +83,112 @@
+     assert replay(plan, original).records == plan.records
+ 
+ 
++def identity_document(count, fields, document_id):
++    document = duplicate_document(count)
++    source = document['parent_revision']['payload']['occurrences'][0]
++    derived = {
++        'stable_deep_link': stable_occurrence_deep_link(
++            'project-1', document_id or 'film', source['shot_id'], source['shot_revision_id'], 'occ-0'),
++        'output_identity': stable_output_identity('project-1', document_id or 'film', 'occ-0'),
++    }
++    source.update({field: derived[field] for field in fields})
++    if document_id is not None:
++        source['parent_document_id'] = document_id
++    opaque = {'stable_deep_link': 'deep:occ-0', 'output_identity': 'out:occ-0',
++              'shot_id': 'chapter-shot', 'occurrence_id': 'occ-0',
++              'ordered': [None, False, 0, 1.0, {}, []]}
++    source.update(output_records=[copy.deepcopy(opaque)], task=copy.deepcopy(opaque),
++                  associations=[copy.deepcopy(opaque)], unknown=copy.deepcopy(opaque),
++                  app={'org.example': copy.deepcopy(opaque)}, metadata=None)
++    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
++    return document
++
++
++@pytest.mark.parametrize('count', [1, 2], ids=['single-source', 'shared-source'])
++@pytest.mark.parametrize('fields', [(), ('stable_deep_link',), ('output_identity',),
++                                   ('stable_deep_link', 'output_identity')])
++@pytest.mark.parametrize('document_id', [None, 'doc /?%'])
++def test_root_identities_raw_compile_reload_guarded_undo_redo(count, fields, document_id):
++    document = identity_document(count, fields, document_id)
++    original = bundle_from_document(document)
++    before = copy.deepcopy(original)
++    plan = execute(original, [duplicate(original, 'occ-0')])
++    preview = copy.deepcopy(State(plan.bundle).entity('occurrence:occ-copy'))
++    compiled = document_from_bundle(plan.bundle)
++    rows = compiled['parent_revision']['payload']['occurrences']
++    copied = rows[-1]
++    revision = copied['shot_revision_id']
++    derived = {
++        'stable_deep_link': stable_occurrence_deep_link(
++            'project-1', document_id or 'film', 'shot-copy', revision, 'occ-copy'),
++        'output_identity': stable_output_identity('project-1', document_id or 'film', 'occ-copy'),
++    }
++    assert _json(copied) == _json({**document['parent_revision']['payload']['occurrences'][0],
++                                 'occurrence_id': 'occ-copy', 'shot_id': 'shot-copy',
++                                 'shot_revision_id': revision, **{key: derived[key] for key in fields}})
++    raw = compile_authoring_candidate(plan.bundle).publication
++    assert _json(raw['parent_composition']['occurrences'][-1]) == _json(copied)
++    assert _json(rows[:-1]) == _json(document['parent_revision']['payload']['occurrences'])
++    assert _json(original) == _json(before)
++    assert original['source_mapping']['_runtime_document'] == document
++    shot = next(row for row in compiled['shot_revisions'] if row['shot_id'] == 'shot-copy')
++    assert shot['revision_id'] == revision
++    assert shot['payload']['internal_timeline_revision_id'] == shot['internal_timeline_revision_id']
++    internal = next(row for row in compiled['internal_timeline_revisions']
++                    if row['revision_id'] == shot['internal_timeline_revision_id'])
++    assert internal['payload'] == document['internal_timeline_revisions'][0]['payload']
++    assert compiled['dependency_manifest']['media'] == document['dependency_manifest']['media']
++    reloaded = bundle_from_document(compiled)
++    undone = inverse(reloaded, accepted(plan.records, original, reloaded))
++    assert document_from_bundle(undone.bundle, source_bundles=(original, reloaded)) == document
++    restored = reload(undone.bundle, (original, reloaded))
++    redone = inverse(restored, accepted(undone.records, reloaded, restored))
++    assert document_from_bundle(redone.bundle, source_bundles=(original, reloaded)) == compiled
++    recorded = next(write['after']['value'] for write in plan.records[0]['writes']
++                    if write['ref'] == 'occurrence:occ-copy' and not write['path'])
++    assert _json(recorded) == _json(preview) == _json(State(reloaded).entity('occurrence:occ-copy'))
++    assert replay(plan, original).records == plan.records
++
++
++@pytest.mark.parametrize('change', [
++    'stable_deep_link', 'output_identity', 'unknown', 'output_records', 'task', 'associations', 'app',
++    'identity-aba', 'opaque-aba', 'source-aba', 'source-order', 'dependent',
++])
++def test_reloaded_identity_duplicate_keeps_strict_inverse_guards(change):
++    original = bundle_from_document(identity_document(2, ('stable_deep_link', 'output_identity'), None))
++    plan = execute(original, [duplicate(original, 'occ-0')])
++    copied = reload(plan.bundle)
++    head = copy.deepcopy(copied)
++    state = State(head)
++    intervening = []
++    if change.endswith('-aba'):
++        ref, path = {
++            'identity-aba': ('occurrence:occ-copy', ['output_identity']),
++            'opaque-aba': ('occurrence:occ-copy', ['output_records']),
++            'source-aba': ('occurrence:occ-0', []),
++        }[change]
++        intervening = [later(ref, path, state.get(ref, path)['value'])]
++    elif change == 'source-order':
++        state.config('occurrence:occ-0')['clips'].reverse()
++    elif change == 'dependent':
++        head['placements'].append({**copy.deepcopy(state.entity('occurrence:occ-copy')),
++                                   'occurrence_id': 'dependent'})
++    elif change in ('stable_deep_link', 'output_identity'):
++        state.entity('occurrence:occ-copy')[change] = 'changed'
++    else:
++        nested = state.entity('occurrence:occ-copy')[change]
++        nested = nested[0] if isinstance(nested, list) else nested
++        nested = nested['org.example'] if change == 'app' else nested
++        nested['output_identity'] = 'changed'
++    before = copy.deepcopy(head)
++    with pytest.raises(CommandError) as error:
++        inverse(head, accepted(plan.records, original, copied), intervening)
++    assert error.value.kind == ('intervening_write' if change.endswith('-aba') else
++                                'inverse_dependency_changed' if change == 'source-order' else
++                                'surviving_dependents' if change == 'dependent' else 'inverse_conflict')
++    assert head == before
++
++
+ def test_copy_preserves_exact_source_content_and_only_identity_changes():
+     original = bundle_from_document(duplicate_document())
+     State(original).entity('occurrence:occ-0')['metadata'] = {'explicit': None, 'ordered': [False, 0, []]}
+@@ -167,8 +273,9 @@
+ @pytest.mark.parametrize('occurrence_id,shot_id', [
+     ('occ-1', 'shot-copy'), ('occ-copy', 'chapter-shot'),
+ ])
+-def test_reserved_identity_collisions_refuse(occurrence_id, shot_id):
+-    original = bundle_from_document(duplicate_document())
++@pytest.mark.parametrize('fields', [(), ('stable_deep_link', 'output_identity')])
++def test_reserved_identity_collisions_refuse(occurrence_id, shot_id, fields):
++    original = bundle_from_document(identity_document(2, fields, None))
+     with pytest.raises(CommandError) as error:
+         execute(original, [capture_occurrence_duplicate(original, 'occurrence:occ-0', occurrence_id, shot_id)])
+     assert error.value.kind == 'identity_collision'
+
+exec
+/bin/bash -lc 'git status --short --untracked-files=all; git diff --check; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/commit-msg; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/notes/report.md' in /home/user/work/wt/agt-m2-duplicate-reload-inverse-fix
+ succeeded in 560ms:
+ M astrid/sdk/timeline/native_occurrence_duplicate.py
+ M tests/editing_conformance/test_recipe_occurrence_duplicate.py
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/DONE' in /home/user/work/wt/agt-m2-duplicate-reload-inverse-fix
+ succeeded in 0ms:
+codex
+Fixed duplicate creation to record the two factory-derived destination root identities before recording the occurrence. Preview, raw records, immutable compilation, and reload now agree; strict inverse guards remain intact.
+
+- Combined compile → reload → undo → redo regression and safety controls pass.
+- Targeted verification: **570 passed, 1 integration test deselected**.
+- Ruff and `git diff --check`: passed.
+- No full suite, Runtime pair acceptance, or App activation performed.
+- No blockers. `commit-msg` and `DONE` written.
+
+[Detailed report with exact commands, results, decisions, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/notes/report.md)
+
+Next: review the repair, then qualify the publishedS2 pair before retrying the App port.
+tokens used
+124,602
+Fixed duplicate creation to record the two factory-derived destination root identities before recording the occurrence. Preview, raw records, immutable compilation, and reload now agree; strict inverse guards remain intact.
+
+- Combined compile → reload → undo → redo regression and safety controls pass.
+- Targeted verification: **570 passed, 1 integration test deselected**.
+- Ruff and `git diff --check`: passed.
+- No full suite, Runtime pair acceptance, or App activation performed.
+- No blockers. `commit-msg` and `DONE` written.
+
+[Detailed report with exact commands, results, decisions, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-duplicate-reload-inverse-fix/notes/report.md)
+
+Next: review the repair, then qualify the publishedS2 pair before retrying the App port.

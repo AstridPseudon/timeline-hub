@@ -1,0 +1,400 @@
+/bin/bash -lc "sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md && printf '\\n--- repo guidance ---\\n' && find .. -name AGENTS.md -o -name CLAUDE.md -o -name CONTRIBUTING.md | sort" in /home/user/work/wt/agt-review-public13-current-adoption
+ succeeded in 122ms:
+# Timeline — the plan
+
+**Single source of truth.** Owner: Hannah (AstridPseudon). Orchestrator: Claude. Revised 2026-10-19 after two Astra reviews and a Sol code-verified cut review.
+If anything elsewhere disagrees with this page, this page wins. Only the orchestrator edits it; items marked **[owner]** change only with the owner.
+
+## In one paragraph
+
+We are turning a good idea with messy structure into a clean foundation: **one timeline, three ways in — Read it as text, See it as images/video, Edit it through one path — all extensible.** The valuable parts of the frozen R4 project (the edit-command system, server-side rebase, timing compiler, App gesture commands, the Composition evaluator) are ported **forward onto current main** in small units; main's newer infrastructure wins; old duplicate paths are deleted. Work runs as four long-running Codex managers who dispatch Codex workers; the orchestrator trusts but verifies. The owner is involved at one hard stop (foundation complete, before extensions), gets a non-blocking summary at checkpoint A, and decides [owner] items.
+
+---
+
+## 1. End state (non-negotiable)
+
+| Way in | What it means | Builds on (already on main) |
+|---|---|---|
+| **Read** — as text | One canonical text view for exploring and reviewing a project, for people and agents. Every text view is a projection of the one model, so they always agree. | `astrid timelines show`, `script`, `lines`, `words`, `find`, `shots`, `elements`, `inspect`, `history`, `diff`, `log`, `status` |
+| **See** — visually | Frames, filmstrips, App preview and final render, all asking **one evaluator** what is on screen. | `timelines visualize` (kept and strengthened), `render`, `check`, `lint`, App preview |
+| **Edit** | Every edit — App gesture, agent, CLI, Python, editable text sheet, JSON — goes through **one path**: an `EditCommand` committed to the Runtime. Every edit is validated, undoable, attributed, and safe when someone else edited first. | `timelines edit`, `apply`, `undo`, `redo`, `history`; R4's command registry |
+
+The foundation comes first and leaves clean seams; the **five extension types** (section 4) plug into Read, See and Edit and are built last.
+
+---
+
+## 2. Settled decisions
+
+1. **Port forward onto current main in small units.** No rebase of R4, no merging main into R4, no waiting until the end. R4 is frozen and used as a parts bin. **[owner]**
+2. **main's infrastructure wins:** Runtime door, warm-hold host leases, platform layer, custody ABI, Astrid rename, chapters-as-shots, transcripts. R4 infrastructure is ported only when a test proves the need.
+3. **One command format, `EditCommand`, and one recipe for every edit** (section 4.1). App `TimelineCommand` / `TimelinePatch` become thin builders of EditCommands (keeping gesture intent, grouping and instant local preview) or are deleted. **[owner]**
+4. **Commit is a normal `/v1` Runtime-door operation** using main's `CommittedMutation` receipt. Command meaning lives in the Agent's provider, loaded by the Runtime at startup. No `/astrid/v1` side route, no gateway.
+5. **Saving never needs the renderer.** A commit checks commands, document structure, timing, references and authority. Previews and checks run separately and always say which revision they show.
+6. **The Runtime holds the only accepted history.** Each client keeps a small crash-safe **outbox**: unsent edits, the exact in-flight request and its retry identity, and newer local edits. Undo adds a guarded reversing edit; it never rewinds another author's work.
+7. **One rebase, on the server.** Clients send *(base revision, commands)*. Newer edits that don't really clash are rebased automatically; only real clashes become conflicts. (main's three-products test, which expects a conflict, is updated.)
+8. **One timing compiler** (R4's, with its timing evaluators), adopting main's rules: rational frame rates, half-open intervals, explicit time maps. Making the compiler the *only* writer of derived timing is a migration goal, verified before old paths are removed.
+9. **One evaluator** for See: the Composition scene evaluator, as one published package (no vendored copies). It answers "what is on screen"; pixel/audio parity is still proven by a test.
+10. **Deletions are deliverables.** Done means the old path is gone, not bypassed.
+11. **Output is a ZIP** (git bundles + patch series per repo, applying cleanly to current main). Nothing is pushed to GitHub. **[owner]**
+12. **Local Runtime door only** (hosted/paired relay deferred). **Linux** testing; anything macOS-only is flagged, never claimed.
+13. **Extensions are the final milestone, behind the one hard stop;** their seams are designed and proven now. **[owner]**
+
+---
+
+## 3. Keep / cut / defer (verified against code)
+
+### Keep
+- **Agent:** `astrid/sdk/timeline/` model, commands/registry/runner, commit provider, rebase, compiler + `_timing_evaluators.py`, guarded inverse machinery (`inverse.py` — generalised, not deleted), revisions, sync; recorded writes/expectations/bindings/created IDs.
+- **Runtime:** slim commit acceptance — provider compatibility check, exact reads of the media/revisions a command refers to, idempotent retry, accepted-revision identity; history and restore; immutable media-selection read (for add/swap).
+- **Publication ancestry and intervening-write checks** (safe undo, detects A→B→A).
+- **App:** semantic gesture producers, commit session, outbox/recovery, conflict UI.
+- **Read/See tools:** `show` and the text views, `timelines visualize` including its pixel-verification lane.
+- **Playback of features existing films use** (music beds, fades, transitions).
+- **Local-door security:** origin, credential and project checks.
+
+### Cut
+- Scene evaluation inside the save path (~0.5k Runtime + ~1.1k Agent lines).
+- R4 host custody / attestation / launch expansion (~6.0k Agent + ~1.5k Runtime added lines).
+- R4 extra contract ops: capability-storage preparation, purge plan/execute, receiptless credential ops.
+- Paired relay, paired route-policy generation, loopback gateway (~0.9k).
+- Draft leases/expiry, retention/purge machinery (~0.5k).
+- Evidence/receipt/handback decoration in product code (Runtime's real idempotency receipts stay).
+- `astrid/core/timeline/inverses.py` (783, after registry inverses land) and `astrid/core/extensions/` (1.7k).
+- Deprecated retime helpers in `timeline_editing.py` (relocate the useful utilities first).
+- Private visibility math duplicated inside visualize (not visualize itself, not its pixel lane).
+- App fallback writers and whole-document fallback save — each removed once its consumer produces commands (target: zero). Retired providers (`AstridBridgeDataProvider`, `SupabaseDataProvider`) stay dead.
+- Vendored Composition copies in Agent and App (~12.6k lines), stale `dist/`, the build's failure masking (`|| true`).
+- Unrelated R4 extras: chiptune planner expansion, caption-foundry demo.
+- R4 tests for unported machinery and literal-criteria/receipt tests (keep every distinct behaviour; expect ~15–30k of ~135k test lines to survive).
+
+### Defer (re-planned after stop point B from the owner's needs)
+- New authoring features: story, motion, ducking, music-bed authoring, copy-sync, lint expansion.
+- Hosted security (paired relay); retention/purge; generation duplication.
+
+**Size target:** ~20–26k authored product lines for the whole consolidated core (R4 added ~73k). **Owner ruling 2026-10-20: this is a ROUGH GUIDE, not a hard limit or gate.** Balance pragmatism with solid engineering: land every planned duplicate/legacy deletion; prefer the simpler design; avoid speculative machinery and test or fixture bloat. Do NOT rewrite working main features just to hit a number. Report honest size numbers (main baseline, current, delta per area) at the hard stop.
+
+### Process cut
+95-card literal closure, IP0–IP8 gates, review budgets, receipts, ceremonial digests, handover manifests, advisory heartbeats, mandatory second opinions. R4's `docs/projects/timeline-r4/` is archived, not ported; replaced by one architecture page and runnable build/test instructions.
+
+---
+
+## 4. The edit recipe and the extension model
+
+### 4.1 One recipe for every edit (core and extension)
+
+**What the edit author writes:**
+1. a **parameter schema** (with units, defaults, how to clear a value, reference pickers);
+2. a **deterministic, versioned function** that applies the edit to the authored timeline — no clock, randomness or side effects; IDs it creates are allocated once and recorded;
+3. **stable references** (IDs and anchors such as a word, beat, clip, cut, shot), never positions;
+4. a few **declared intentions** where they apply: *ripple or not*, *follow the anchor or stay fixed*, *shared shot or this occurrence only*.
+
+**What the framework records for each edit:** what it wrote (including writes of unchanged values), what it read and selected (membership and order), the references it bound, and the IDs it created. A plain before/after diff is not enough.
+
+**What every edit then gets for free:**
+- **Validation** — parameters, document structure, timing, references, authority.
+- **Undo/redo** — restores the authored state using R4's generalised guarded inverse machinery; refuses cleanly if anyone wrote there since (including A→B→A), if something now depends on what it created, or if a selection/order it relied on changed. Derived timing is recompiled.
+- **Rebase** — replays the edit's recorded intent, bindings and created IDs on the new version; conflicts only when what it read, selected or depends on really changed, unless the edit declares a merge policy.
+- **Preview / dry run**, **retry safety**, **history and attribution** — from the one commit path.
+- **CLI flags, App property controls and help text** generated from the schema. Gestures, keybindings and custom panels are thin adapters that emit commands.
+- **A conformance harness** — author supplies fixtures and the intent to assert; the harness checks exact round-trip, deterministic replay, clears, A→B→A, structural dependencies, concurrent edits and stable created IDs, plus randomised cases.
+
+Edits with unusual merge needs may override the defaults.
+
+**Proof before stop point A:** small executable experiments cover ripple/insert, transitions, shared shots/occurrences (chapters-as-shots), music beds, transcript anchors, track creation/deletion, ID collisions, explicit clears, and media add/swap. M1 then proves the recipe end to end with a clip move and restart-safe retry. The **Agent manager owns this contract**, with App and Viewing managers reviewing it.
+
+### 4.2 The five extension types
+
+| Type | Way in | The extension author writes | What they get for free |
+|---|---|---|---|
+| **Commands** (absorbs macros) | Edit | an edit using the 4.1 recipe | everything in 4.1 |
+| **Views** | Read, See (and Edit, if editable) | a projection of the timeline (or a region) to text or frames, pinned to a revision; includes exporters (EDL, subtitles…). Optionally **editable** *(proposal — validated in the M0 extension design: does the existing cut-sheet approach generalise?)*: also supply a parser; the framework diffs the edited text into commands through the one path (the existing cut sheet becomes a built-in editable view) | `show --view`, App panel, agent access, before/after diff of the view across revisions; for editable views, full undo/rebase via commands |
+| **Elements** — sub-kinds: components, modifiers, transitions; plus reusable curves | See | a typed contract, schema, deterministic evaluation and declared capabilities | shared preview/render integration with tested parity; animation of parameters declared animatable; unknown internals reported as unknown, never guessed |
+| **Checks** | Read, See | findings at references, pinned to a revision | shown in text and as visualize overlays; proposed fixes go through the one path. Advisory: never block a save (core validity rules always do) |
+| **Producers** (was "generator"; includes importers) | Edit | slow/AI work (transcription, beats, generation, import) that stores immutable media/data and **proposes** edits | artifacts stored directly; timeline changes go through the commit path, reviewed or explicitly auto-approved |
+
+### 4.3 Shared primitives the core provides early
+- **References and anchors** (word, clip, cut, shot, marker) — what makes rebase work.
+- **Markers** *(proposal — validated in the M0 extension design against R4's compiler/anchor code; decided at stop point A)* — any extension can publish a named, versioned set of time markers (beats, downbeats, bars, scene changes, lyric lines…) with stable IDs; any edit can anchor to any marker and follows it when the set is re-published. The timing compiler knows one generic kind, *marker*, so anchoring is extensible while the compiler stays closed and simple.
+- **One selection/query language** — used by edits, views, checks and `timelines find --where`.
+- **Signals** *(proposal, from the persona test)* — named, versioned time series published by producers (loudness, pitch, stem energy, motion, tracked positions). Elements can bind a parameter to a signal; views can plot them. Markers are moments; signals are curves.
+- **Rationale** — every command may carry a short human/agent-readable reason; shown in history and diffs.
+- **Grouping** — many edits as one undo step (a gesture, a macro, a producer's batch).
+- **Namespaced, versioned extension data** at every scope (project, timeline, shot, occurrence, track, clip); unknown data preserved; each field/collection declares its migration, references and merge policy.
+- **Proposals** — a reviewable batch of edits (used by producers and agents).
+
+**Golden path — one obvious way per job:**
+
+| I want to… | The one way |
+|---|---|
+| add a new kind of edit | Command |
+| analyse media (beats, faces, speech, stems) | Producer -> artifacts, markers, signals, data |
+| suggest edits (AI or otherwise) | Producer emitting a proposal |
+| show the timeline differently (text, picture, App panel) | View |
+| let people edit through a new representation | Editable View — only emits existing Commands, never defines new edits |
+| add something seen or heard in the film | Element |
+| make something follow music/speech/motion | anchor to markers (moments) or bind to signals (curves) |
+| flag problems and suggest fixes | Check |
+| attach your own info to things | namespaced data |
+
+Tie-break rules: fast and deterministic -> Command; slow/analysing/AI -> Producer. A View presents, a Check judges (its findings appear in views automatically). Hand-authored animation -> curves; analysis-driven -> signal binding.
+
+**Policies:** checks never block a human save, but a project may require named checks to pass before a proposal is auto-approved or before export (e.g. licence or flash-hazard checks).
+
+**Persona validation (2026-10-19):** 10 personas x 10 ideas; one sweet-spot pick each (Foley Ghost, Stem Triggers, Corkboard argument view, Cold Open Lab, Replay Diff, Shot Match Lab, sign-language inset, kinetic subtitles, Gaze Veto, plain-text round-trip timeline) all map onto the types above once signals, rationale and policies exist. The M0 extension design must re-walk these ten against the real code.
+
+**Future core feature (after M2, not an extension):** forks/variants of a timeline — a fork is a duplicate with ancestry; merging replays its commands via the existing rebase.
+
+**Author experience target** *(illustrative; the M0 design proposes the actual API)*: one small manifest plus one decorated function per piece (`@command`, `@view`, `@element`, `@check`, `@producer`); `astrid ext new` scaffolds, `astrid ext test` runs the conformance harness against the author's extension. Packaging builds on main's existing pack system, not a new framework.
+
+**Litmus examples** (M5 acceptance includes these working end to end): beat detector (producer -> markers), beat-snap (command anchoring clips to markers; clips follow when beats are re-detected), beat-grid (text view + visualize overlay), off-beat check (findings with beat-snap fix), a script/shot-list text view and an editable text view.
+
+**Later (after M5):** automatic triggers (extensions that react to edits by editing). Checks re-run on new revisions from the start.
+
+---
+
+## 5. Milestones
+
+| # | Milestone | Done when (all proven by tests on Linux unless flagged) |
+|---|---|---|
+| **M0** | **Groundwork** | Shared environments; main's test baselines recorded; R4 timeline core imports on main and its tests are classified; Composition builds without masking and has evaluator unit tests; App writer inventory; **edit-contract design** and **extension/primitives design**, each backed by the 4.1 hard-case experiments. **Checkpoint A (non-blocking, per owner 2026-10-19):** the orchestrator approves the two designs with a fresh Astra second opinion, records the approval on this page, sends the owner a short summary, and work continues unless the owner objects. |
+| **M1** | **Walking skeleton** | A clip move from CLI, Python and App -> `/v1` commit -> survives a lost acknowledgement *and a restart* (persisted in-flight identity) with the same result -> undo works -> visible in `show` and `visualize`; commit works with the renderer off. |
+| **M2** | **Widen editing** | Full registry and compiler on main; editing-conformance scenarios across CLI, Python and sheet; every App gesture produces EditCommands; outbox in place; fallback writers deleted to zero; three-products journey extended. |
+| **M3** | **Unify viewing** (starts during M0) | One Composition package used by Agent and App; visualize, preview and render use it; duplicate evaluator math retired; frame + audio parity check catches a planted mismatch. |
+| **M4** | **Cleanup and delivery** | Deletions complete; one architecture page; all gates green; ZIP verified to apply to fresh main. **⏸ HARD STOP (the only one) — foundation complete. Owner receives the ZIP and the gate results, and watches their almost-ready film (on a duplicate) edited end to end. Nothing in M5 starts until the owner says so.** |
+| **M5** | **Extensions** | Acceptance criteria per type written and approved *before* implementation; each type implemented on the seams with at least one real example meeting its criteria; final ZIP. |
+
+---
+
+## 6. The seven gates (the only evidence we produce)
+
+1. **Lossless semantics** — `tests/editing_conformance` across CLI/Python/sheet: opaque fields, explicit clears, occurrence isolation, transcript/source bindings, rational fps, half-open boundaries, deterministic timing, exact undo/redo.
+2. **Atomic acceptance** — concurrent commits; stale-head rebase vs real conflict; crash before commit and after commit/before response; identical retry returns the original result; changed payload under the same key refused; no partial writes or duplicate revisions.
+3. **Renderer-independent save** — commit, reload and undo with the renderer stopped; preview reports unavailability honestly.
+4. **Transport** — Runtime door route/transport/lock/idempotency tests extended for `/v1` commit authorization and project scope; generated-client contract tests.
+5. **Adversarial App journey** — `test:e2e:three-products`: App edit -> intervening Agent edit -> lost acknowledgement -> newer local edit -> exact retry -> restart/reload -> undo; asserts preserved intent.
+6. **One writer, one viewer** — zero legacy save traffic on representative gestures (incl. popup add/swap); Player/export frame + audio comparison catches a planted mismatch.
+7. **Delivery** — repository gates green, real Composition build, ZIP applies to fresh main, owner film viewing.
+
+Every report says exactly what passed and what was not run.
+
+---
+
+## 7. Organisation and oversight
+
+```
+Owner (Hannah)            the hard stop before M5; [owner] decisions; notified at checkpoint A
+ Orchestrator (Claude)    this page; boundaries; decisions on escalations; trust-but-verify oversight
+  Manager: Runtime + delivery   commit contract, durability, generated clients, integration queue, shared envs, cross-product journeys, ZIP
+  Manager: Agent editing        edit recipe + registry, compiler, rebase, inverses, CLI/SDK/sheet, Read views, conformance (owns the 4.1 contract)
+  Manager: App editing          gestures, outbox, conflicts, history UI, writer deletion
+  Manager: Viewing              Composition package, evaluator integration, visualize/preview/render parity, duplicate-evaluator retirement
+   Workers (Codex)              one bounded task each, launched via the queue
+```
+
+**Managers are long-running** (hours to days). Each owns its area end to end, keeps going until its milestone is done or it is blocked, and:
+- dispatches workers through the queue and reviews their results;
+- merges good work via the merge queue (it may reject and redo);
+- updates its `STATUS.md` at least every ~30 minutes: integrated head, what works now, failing tests, next steps, blockers, resource use;
+- checks its `INBOX.md` regularly for orchestrator redirects and acknowledges them in STATUS;
+- **escalates only** for cross-manager contract changes, data-loss/security findings, resource exhaustion, or blockers needing another owner — with a recommended decision and evidence — and keeps working meanwhile.
+
+**Managers only see work up to the next gate.** M1+ backlog items wait until the orchestrator records checkpoint A as approved below; nothing past M4 exists in any backlog.
+
+**Path ownership** (avoids collisions): Runtime repo -> Runtime manager. Agent `astrid/sdk/timeline*`, `astrid/packs/timeline/` (except visualize) -> Agent manager. App `src/tools/video-editor/` (except preview/player/render), `src/integrations/runtime/` -> App manager. Composition repo, Agent `astrid/packs/rendering/` + `remotion/`, App preview/player/render/vendor composition -> Viewing manager. Shared files change via their owner.
+
+**Orchestrator oversight — trust but verify:**
+- **Hourly (light):** read the one-screen digest — progress (new merges), managers alive, failed/stuck workers, disk, open escalations. If it is moving, do nothing. Restart a dead manager; decide escalations.
+- **Every 3 hours (deep):** a fresh audit sub-agent reviews merges since the last audit against this page — direction, minimality/bloat, deletions really happening, tests that really test, drift from the end state. The orchestrator reads its short verdict and redirects through manager inboxes only where needed.
+- **About daily:** refresh main into `tl/integration`, re-run gates.
+- The owner hears from the orchestrator at stop points, for [owner] decisions, or if something is seriously off.
+
+**Models:** managers Sol 6.1 high; normal workers Luna xhigh; hard coupled workers Sol 6.1 high; Astra only for genuinely contested decisions.
+
+---
+
+
+--- meta ---
+name=agt-review-public13-current-adoption
+repo=agent
+base=tl/agt-m3-public13-current-adoption
+base_sha=30da0a5e
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-public13-current-adoption
+started=2026-10-20T17:44:14Z
+
+exec
+/bin/bash -lc "rg -n 'addopts|integration' pyproject.toml pytest.ini setup.cfg tox.ini 2>/dev/null | sed -n '1,120p'; sed -n '1,120p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test; sed -n '1,160p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test" in /home/user/work/wt/agt-review-public13-current-adoption
+ succeeded in 7ms:
+pyproject.toml:264:addopts = "-m 'not integration and not darwin_native and not live and not opt_in'"
+pyproject.toml:278:# The lane markers (integration, darwin_native, live, opt_in) are registered by
+#!/bin/bash
+# request-test WORKER|integration:REPO SUITE [--files "a b c"] [--no-cache]  — queue a test run (done by the dispatcher OUTSIDE the
+# sandbox, so localhost/browsers work). SUITE: full | targeted (needs --files) | a named suite from $ORCH/tests/suites.conf.
+# Prints the result dir $ORCH/tests/<id>/ ; then: $ORCH/bin/wait-test <id>. Only writes under $ORCH.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+T=$1; S=$2; shift 2 || { sed -n 2,4p $0; exit 2; }; F=; NC=0
+while [ $# -gt 0 ]; do case $1 in --files) F=$2; shift 2;; --no-cache) NC=1; shift;; *) echo "unknown arg $1"; exit 2;; esac; done
+case $T in integration:*) R=${T#integration:}; [ -d /home/user/work/$R ] || { echo "no repo $R"; exit 2; };;
+  *) [ -f $O/workers/$T/meta ] || { echo "no worker $T"; exit 2; }; R=$(sed -n 's/^repo=//p' $O/workers/$T/meta);; esac
+awk -v r=$R -v s=$S '$1==r && $2==s {f=1} END {exit !f}' $O/tests/suites.conf || { echo "suite '$S' not in suites.conf for $R:"; awk -v r=$R '$1==r {print "  " $2}' $O/tests/suites.conf; exit 2; }
+[ $S = targeted ] && [ -z "$F" ] && { echo "targeted needs --files"; exit 2; }
+ID=$(echo "${T#integration:}" | tr -c 'a-zA-Z0-9-\n' -)-$S-$(date -u +%m%d%H%M%S)-$RANDOM; D=$O/tests/$ID; mkdir -p $D
+printf 'target=%q\nrepo=%q\nsuite=%q\nfiles=%q\nnocache=%s\nrequested=%s\n' "$T" "$R" "$S" "$F" $NC $(date -u +%FT%TZ) > $D/request
+echo queued > $D/status; echo "TEST $ID" > $O/queue/pending/.test-$ID.tmp && mv $O/queue/pending/.test-$ID.tmp $O/queue/pending/test-$ID
+echo "$D/"; echo "wait: $O/bin/wait-test $ID" >&2
+#!/bin/bash
+# wait-test ID|RESULT-DIR [MAX-MIN]  — poll every 30 s until the test run is done, print its summary, exit with its exit code.
+# Exits 124 (still queued/running) after MAX-MIN minutes (default 100); just run it again.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+D=$O/tests/$(basename "$1"); [ -f $D/status ] || { echo "no test run $1"; exit 2; }; END=$(( $(date +%s) + ${2:-100}*60 ))
+while grep -qE '^(queued|running)' $D/status; do
+  [ $(date +%s) -ge $END ] && { echo "still $(cat $D/status) after ${2:-100} min $(cat $D/why 2>/dev/null); rerun wait-test"; exit 124; }; sleep 30; done
+cat $D/summary; exit $(cat $D/exit 2>/dev/null || echo 1)
+
+codex
+The isolated qualification is green: the 0.0.12 consumer gives the expected red named-import failure, while the 0.0.13 archive passes the Node 20 public-root/type/theme checks and the four forged-source negatives. The direct Python run is also green for all non-socket/non-integration cases (187 passed); six journey cases require localhost and are being delegated to the central targeted runner per the repo rule.
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-review-public13-current-adoption targeted --files "tests/packs/rendering/test_composition_package.py tests/core/timeline/test_clip_fields.py tests/journeys/test_journey_plumbing.py") && echo "$R"' in /home/user/work/wt/agt-review-public13-current-adoption
+ succeeded in 57ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-review-public13-current-adoption-targeted-1020174720-18073
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-public13-current-adoption-targeted-1020174720-18073/
+
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-public13-current-adoption-targeted-1020174720-18073; cat "$D/status"; test -f "$D/summary" && cat "$D/summary" || true; test -f "$D/why" && cat "$D/why" || true' in /home/user/work/wt/agt-review-public13-current-adoption
+ succeeded in 0ms:
+queued
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-public13-current-adoption-targeted-1020174720-18073 2' in /home/user/work/wt/agt-review-public13-current-adoption
+ succeeded in 29955ms:
+test agt-review-public13-current-adoption-targeted-1020174720-18073: pass exit=0 in 14s — targeted on agt-review-public13-current-adoption (agent tree 0dacaabb6cbb42bebc09b6677983814ad2f4d237)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_composition_package.py tests/core/timeline/test_clip_fields.py tests/journeys/test_journey_plumbing.py
+counts: 193 passed, 3 deselected, 6 warnings in 11.88s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-public13-current-adoption-targeted-1020174720-18073/log.txt ---
+........................................................................ [ 37%]
+........................................................................ [ 74%]
+.................................................                        [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_public13_evaluation_admits_valid_source_and_rejects_four_forged_sources
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/.test-agt-review-public13-current-adoption-targeted-1020174720-18073/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+193 passed, 3 deselected, 6 warnings in 11.88s
+
+codex
+Central targeted evidence is green on the exact tree: 193 passed, 3 deselected, 6 warnings. The remaining boundary is qualification only: the shared normal/current host remains 0.0.12, so I’m recording the exact 0.0.13 lock/artifact/source identities and will mark approval as pin-only, with normal-render activation held until the owner builds a separate 0.0.13 profile.
+exec
+/bin/bash -lc "printf '%s\\n' '--- final identities ---'; git rev-parse HEAD HEAD"'^{tree}; sha256sum remotion/package-lock.json remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz; printf '"'%s\\n' '--- exact changed paths from parent ---'; git diff --name-status HEAD"'^ HEAD; printf '"'%s\\n' '--- current shared host identity (read-only) ---'; jq -r '[.version,.name] | @tsv' /home/user/work/runtimes/agent-remotion-current/node_modules/@banodoco/timeline-composition/package.json; jq -r '.packages[\"node_modules/@banodoco/timeline-composition\"] | [.version,.resolved,.integrity] | @tsv' /home/user/work/runtimes/agent-remotion-current/package-lock.json; printf '%s\\n' '--- status/check ---'; git status --short --branch; git diff --check" in /home/user/work/wt/agt-review-public13-current-adoption
+ succeeded in 636ms:
+--- final identities ---
+30da0a5e05d4529a2b97b3c1818cf9e15842d628
+0dacaabb6cbb42bebc09b6677983814ad2f4d237
+c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24  remotion/package-lock.json
+9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738  remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3  remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+--- exact changed paths from parent ---
+M	astrid/core/rendering/remotion_runtime.py
+A	remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+A	remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256
+M	remotion/package-lock.json
+M	remotion/package.json
+M	tests/core/timeline/test_clip_fields.py
+M	tests/journeys/test_journey_plumbing.py
+M	tests/packs/rendering/test_capture_scene_labels.py
+M	tests/packs/rendering/test_composition_package.py
+--- current shared host identity (read-only) ---
+0.0.12	@banodoco/timeline-composition
+0.0.12	file:artifacts/banodoco-timeline-composition-0.0.12.tgz	sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==
+--- status/check ---
+## tl/agt-review-public13-current-adoption
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- owner build source identity ---'; git -C /home/user/work/composition show -s --format='%H%n%T%n%s' 73bd62b1e1b710a730545c862bd2da76e324ca46; printf '%s\\n' '--- App public13 confirmation identities ---'; for rev in ea38656fe62950440b36cafee780698cff2c3f9c d08e969b07f01ea013585fe8ed746e92b6b8a9a9 2b3c431fb0efb967c59662c50f5a5bd694f9157e; do git -C /home/user/work/app show -s --format='%H %T %s' \""'$rev"; done; printf '"'%s\\n' '--- runtime untouched identity ---'; git -C /home/user/work/runtime show -s --format='%H%n%T%n%s' HEAD; git -C /home/user/work/runtime status --short --branch" in /home/user/work/wt/agt-review-public13-current-adoption
+ succeeded in 0ms:
+--- owner build source identity ---
+73bd62b1e1b710a730545c862bd2da76e324ca46
+13e375534fffd704305eced5686699d2c8c9c948
+chore(composition): release 0.0.13
+--- App public13 confirmation identities ---
+ea38656fe62950440b36cafee780698cff2c3f9c 8bd8f741f7c8b28b8682aa960a658417f70c8522 Merge tl/app-m3-pcm13-main574-progress-repair-port
+d08e969b07f01ea013585fe8ed746e92b6b8a9a9 be033455c82b47e47d2786f40aa5ade38a1223aa feat(app): adopt public13 continuous PCM consumer
+2b3c431fb0efb967c59662c50f5a5bd694f9157e eff2edbae8cf7cc4a68d3861873267f9795992bd chore(app): pin Composition public13 archive
+--- runtime untouched identity ---
+285a3b437c69d20e2af281c3d7fdd212cb784d1a
+b2b731c486f53d7a94589b71da18c665f67333e0
+Merge tl/rt-m2-voiceover-script-input-retention
+## tl/integration
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-public13-current-adoption/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-public13-current-adoption/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-public13-current-adoption/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..877c7cf095d564cda869ab5ab79da4a2e24f8ecd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-public13-current-adoption/commit-msg
+@@ -0,0 +1,4 @@
++chore(rendering): adopt Composition 0.0.13 consumer pin
++
++Carry the reviewed public13 archive and exact lock integrity onto current
++Agent integration; qualify the pin separately from the still-0.0.12 host.
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-public13-current-adoption/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-public13-current-adoption/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-public13-current-adoption/DONE && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-public13-current-adoption/commit-msg' in /home/user/work/wt/agt-review-public13-current-adoption
+ succeeded in 24ms:
+chore(rendering): adopt Composition 0.0.13 consumer pin
+
+Carry the reviewed public13 archive and exact lock integrity onto current
+Agent integration; qualify the pin separately from the still-0.0.12 host.
+
+codex
+## Result
+
+**APPROVE pin-only. HOLD normal-render qualification** until a separate 0.0.13 installed profile exists.
+
+- Agent tree: `30da0a5e`, tree `0dacaabb`.
+- Archive: 58,477 bytes, 77 members, SHA256 `9412ae25…d54738`.
+- Lock integrity: `sha512-6qgEAcfY…WgLOuQ==`; lockfile SHA256 `c4d7030b…7a4e24`.
+- Composition source: `73bd62b1`, tree `13e37553`.
+- Existing 0.0.12 artifact remains unchanged: SHA256 `0a7b6152…f0f1a3`.
+
+Verified only metadata plus the existing `encodedEnvelopeSource` evaluation export/type re-export changed. Root behavior, defaults, theme, labels, scene, loop, mouth, and compatibility assertions remain intact. No Runtime changes were made.
+
+Tests:
+
+- Central targeted: **193 passed, 3 deselected**.
+- Node 20 isolated consumer: **31 assertions passed**, including public evaluation/theme/type checks and four forged-source negatives.
+- 0.0.12 consumer produced the expected red failure for the new named import.
+- Direct local non-socket tests: **187 passed**; six socket tests were sandbox-blocked and covered by central testing.
+
+The shared `agent-remotion-current` profile is still 0.0.12, so it was not treated as HostReady. `commit-msg` and `DONE` were written.
+tokens used
+200,559
+## Result
+
+**APPROVE pin-only. HOLD normal-render qualification** until a separate 0.0.13 installed profile exists.
+
+- Agent tree: `30da0a5e`, tree `0dacaabb`.
+- Archive: 58,477 bytes, 77 members, SHA256 `9412ae25…d54738`.
+- Lock integrity: `sha512-6qgEAcfY…WgLOuQ==`; lockfile SHA256 `c4d7030b…7a4e24`.
+- Composition source: `73bd62b1`, tree `13e37553`.
+- Existing 0.0.12 artifact remains unchanged: SHA256 `0a7b6152…f0f1a3`.
+
+Verified only metadata plus the existing `encodedEnvelopeSource` evaluation export/type re-export changed. Root behavior, defaults, theme, labels, scene, loop, mouth, and compatibility assertions remain intact. No Runtime changes were made.
+
+Tests:
+
+- Central targeted: **193 passed, 3 deselected**.
+- Node 20 isolated consumer: **31 assertions passed**, including public evaluation/theme/type checks and four forged-source negatives.
+- 0.0.12 consumer produced the expected red failure for the new named import.
+- Direct local non-socket tests: **187 passed**; six socket tests were sandbox-blocked and covered by central testing.
+
+The shared `agent-remotion-current` profile is still 0.0.12, so it was not treated as HostReady. `commit-msg` and `DONE` were written.

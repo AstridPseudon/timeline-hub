@@ -1,0 +1,400 @@
+astrid/sdk/remote.py:2302:31: E701 Multiple statements on one line (colon)
+     |
+2300 |     def update(self, project, ref, *, expected_version=None, name=None, description=None, metadata=None, idempotency_key=None):
+2301 |         ref, failure = self._resolve(project, ref)
+2302 |         if failure is not None: return failure
+     |                               ^ E701
+2303 |         if project is None:
+2304 |             return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation":…
+     |
+
+astrid/sdk/remote.py:2305:12: E701 Multiple statements on one line (colon)
+     |
+2303 | …     if project is None:
+2304 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "…
+2305 | …     try: version = self._version(ref, expected_version, project)
+     |          ^ E701
+2306 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2307 | …     key = idempotency_key or uuid.uuid4().hex
+     |
+
+astrid/sdk/remote.py:2306:43: E701 Multiple statements on one line (colon)
+     |
+2304 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "…
+2305 | …     try: version = self._version(ref, expected_version, project)
+2306 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^ E701
+2307 | …     key = idempotency_key or uuid.uuid4().hex
+2308 | …     return self._typed("update_project_reference", project, ref, key=key, expected_version=version, name=name, description=descrip…
+     |
+
+astrid/sdk/remote.py:2311:31: E701 Multiple statements on one line (colon)
+     |
+2309 |     def archive(self, project, ref, *, expected_version=None, idempotency_key=None):
+2310 |         ref, failure = self._resolve(project, ref)
+2311 |         if failure is not None: return failure
+     |                               ^ E701
+2312 |         if project is None:
+2313 |             return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation":…
+     |
+
+astrid/sdk/remote.py:2314:12: E701 Multiple statements on one line (colon)
+     |
+2312 | …     if project is None:
+2313 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "…
+2314 | …     try: version = self._version(ref, expected_version, project)
+     |          ^ E701
+2315 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2316 | …     key = idempotency_key or uuid.uuid4().hex
+     |
+
+astrid/sdk/remote.py:2315:43: E701 Multiple statements on one line (colon)
+     |
+2313 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "…
+2314 | …     try: version = self._version(ref, expected_version, project)
+2315 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^ E701
+2316 | …     key = idempotency_key or uuid.uuid4().hex
+2317 | …     return self._typed("archive_project_reference", project, ref, key=key, expected_version=version, idempotency_key=key)
+     |
+
+astrid/sdk/remote.py:2320:31: E701 Multiple statements on one line (colon)
+     |
+2318 |     def recover(self, project, ref, *, expected_version=None, idempotency_key=None):
+2319 |         ref, failure = self._resolve(project, ref)
+2320 |         if failure is not None: return failure
+     |                               ^ E701
+2321 |         if project is None:
+2322 |             return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation":…
+     |
+
+astrid/sdk/remote.py:2323:12: E701 Multiple statements on one line (colon)
+     |
+2321 | …     if project is None:
+2322 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "…
+2323 | …     try: version = self._version(ref, expected_version, project)
+     |          ^ E701
+2324 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2325 | …     key = idempotency_key or uuid.uuid4().hex
+     |
+
+astrid/sdk/remote.py:2324:43: E701 Multiple statements on one line (colon)
+     |
+2322 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "…
+2323 | …     try: version = self._version(ref, expected_version, project)
+2324 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^ E701
+2325 | …     key = idempotency_key or uuid.uuid4().hex
+2326 | …     return self._typed("recover_project_reference", project, ref, key=key, expected_version=version, idempotency_key=key)
+     |
+
+astrid/sdk/remote.py:2332:31: E701 Multiple statements on one line (colon)
+     |
+2330 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "…
+2331 | …     ref, failure = self._resolve(project, ref)
+2332 | …     if failure is not None: return failure
+     |                             ^ E701
+2333 | …     metadata = dict(metadata or {})
+2334 | …     if context_task:
+     |
+
+astrid/sdk/remote.py:2352:31: E701 Multiple statements on one line (colon)
+     |
+2350 | …         return DomainResult.failure(ErrorObject("validation_error", "media reference association is required", {}), idempotency_ke…
+2351 | …     ref, failure = self._resolve(project, ref)
+2352 | …     if failure is not None: return failure
+     |                             ^ E701
+2353 | …     try: version = self._version(ref, expected_version, project)
+2354 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |
+
+astrid/sdk/remote.py:2353:12: E701 Multiple statements on one line (colon)
+     |
+2351 | …     ref, failure = self._resolve(project, ref)
+2352 | …     if failure is not None: return failure
+2353 | …     try: version = self._version(ref, expected_version, project)
+     |          ^ E701
+2354 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2355 | …     return self._typed("set_primary_reference", project, ref, association_id, key=key, expected_version=version, idempotency_key=k…
+     |
+
+astrid/sdk/remote.py:2354:43: E701 Multiple statements on one line (colon)
+     |
+2352 | …     if failure is not None: return failure
+2353 | …     try: version = self._version(ref, expected_version, project)
+2354 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^ E701
+2355 | …     return self._typed("set_primary_reference", project, ref, association_id, key=key, expected_version=version, idempotency_key=k…
+     |
+
+astrid/sdk/remote.py:2384:40: E701 Multiple statements on one line (colon)
+     |
+2382 |         return self._typed("create_project_shot", project, body, key=key, idempotency_key=key)
+2383 |     def _version(self, shot_id, expected_version, project=None):
+2384 |         if expected_version is not None: return int(expected_version)
+     |                                        ^ E701
+2385 |         current = self._client.get_project_shot(project, shot_id)
+2386 |         return int(current.get("version", 1))
+     |
+
+astrid/sdk/remote.py:2390:12: E701 Multiple statements on one line (colon)
+     |
+2388 | …     if project is None:
+2389 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "updat…
+2390 | …     try: version = self._version(shot_id, expected_version, project)
+     |          ^ E701
+2391 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2392 | …     key = idempotency_key or uuid.uuid4().hex
+     |
+
+astrid/sdk/remote.py:2391:43: E701 Multiple statements on one line (colon)
+     |
+2389 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "updat…
+2390 | …     try: version = self._version(shot_id, expected_version, project)
+2391 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^ E701
+2392 | …     key = idempotency_key or uuid.uuid4().hex
+2393 | …     return self._typed("update_project_shot", project, shot_id, key=key, expected_version=version, name=name, metadata=metadata, i…
+     |
+
+astrid/sdk/remote.py:2397:12: E701 Multiple statements on one line (colon)
+     |
+2395 | …     if project is None:
+2396 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "archi…
+2397 | …     try: version = self._version(shot_id, expected_version, project)
+     |          ^ E701
+2398 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2399 | …     key = idempotency_key or uuid.uuid4().hex
+     |
+
+astrid/sdk/remote.py:2398:43: E701 Multiple statements on one line (colon)
+     |
+2396 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "archi…
+2397 | …     try: version = self._version(shot_id, expected_version, project)
+2398 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^ E701
+2399 | …     key = idempotency_key or uuid.uuid4().hex
+2400 | …     return self._typed("archive_project_shot", project, shot_id, key=key, expected_version=version, idempotency_key=key)
+     |
+
+astrid/sdk/remote.py:2404:12: E701 Multiple statements on one line (colon)
+     |
+2402 | …     if project is None:
+2403 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "recov…
+2404 | …     try: version = self._version(shot_id, expected_version, project)
+     |          ^ E701
+2405 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2406 | …     key = idempotency_key or uuid.uuid4().hex
+     |
+
+astrid/sdk/remote.py:2405:43: E701 Multiple statements on one line (colon)
+     |
+2403 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "recov…
+2404 | …     try: version = self._version(shot_id, expected_version, project)
+2405 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^ E701
+2406 | …     key = idempotency_key or uuid.uuid4().hex
+2407 | …     return self._typed("recover_project_shot", project, shot_id, key=key, expected_version=version, idempotency_key=key)
+     |
+
+astrid/sdk/remote.py:2418:12: E701 Multiple statements on one line (colon)
+     |
+2416 | …     if project is None:
+2417 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "remov…
+2418 | …     try: version = self._version(shot_id, expected_version, project)
+     |          ^ E701
+2419 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2420 | …     return self._typed("remove_shot_item", project, shot_id, item_id, key=key, expected_version=version, idempotency_key=key)
+     |
+
+astrid/sdk/remote.py:2419:43: E701 Multiple statements on one line (colon)
+     |
+2417 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "remov…
+2418 | …     try: version = self._version(shot_id, expected_version, project)
+2419 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^ E701
+2420 | …     return self._typed("remove_shot_item", project, shot_id, item_id, key=key, expected_version=version, idempotency_key=key)
+     |
+
+astrid/sdk/remote.py:2456:12: E701 Multiple statements on one line (colon)
+     |
+2454 | …     if project is None:
+2455 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "reord…
+2456 | …     try: version = self._version(shot_id, expected_version, project)
+     |          ^ E701
+2457 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+2458 | …     return self._typed("reorder_shot_items", project, shot_id, list(item_ids or []), key=key, expected_version=version, idempotenc…
+     |
+
+astrid/sdk/remote.py:2457:43: E701 Multiple statements on one line (colon)
+     |
+2455 | …         return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped shots are required", {"operation": "reord…
+2456 | …     try: version = self._version(shot_id, expected_version, project)
+2457 | …     except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_k…
+     |                                         ^ E701
+2458 | …     return self._typed("reorder_shot_items", project, shot_id, list(item_ids or []), key=key, expected_version=version, idempotenc…
+     |
+
+astrid/sdk/remote.py:2496:28: E701 Multiple statements on one line (colon)
+     |
+2494 |         key = idempotency_key or uuid.uuid4().hex
+2495 |         body = {"shot_id": shot_id, "kind": kind, "text": text, "expected_head": expected_head}
+2496 |         if slot is not None: body["slot"] = slot
+     |                            ^ E701
+2497 |         if binding_id is not None:
+2498 |             body = {"binding_id": binding_id, "text": text, "expected_head": expected_head}
+     |
+
+Found 121 errors.
+[*] 6 fixable with the `--fix` option.
+ruff_exit=1
+
+exec
+/bin/bash -lc "rg -n '"'^pytestmark|@pytest.mark|''^def test_'"' tests/sdk/test_timeline_capture_projection.py tests/sdk/test_capture_closure_source.py tests/sdk/test_timeline_sync_native.py tests/timeline/test_authoring_bundle.py | head -220" in /home/user/work/wt/agt-m2-private952-http-reload-finish
+ succeeded in 48ms:
+tests/timeline/test_authoring_bundle.py:202:def test_open_is_lossless_read_only_and_independent_for_shared_placements():
+tests/timeline/test_authoring_bundle.py:233:def test_compile_materializes_shared_identity_and_keeps_untouched_content():
+tests/timeline/test_authoring_bundle.py:263:@pytest.mark.parametrize("codec", ["item_id", "id", "both", "opaque-id"])
+tests/timeline/test_authoring_bundle.py:264:@pytest.mark.parametrize("descriptor_location", ["metadata", "root"])
+tests/timeline/test_authoring_bundle.py:265:def test_materialization_remaps_only_item_codec_and_declared_source_links(codec, descriptor_location):
+tests/timeline/test_authoring_bundle.py:320:def test_independent_unique_shot_reuses_untouched_revision_and_direct_edits_compile_identically():
+tests/timeline/test_authoring_bundle.py:344:def test_reopen_materialized_candidate_keeps_independent_shot_ids_stable():
+tests/timeline/test_authoring_bundle.py:385:def test_timing_is_admitted_but_competing_selected_media_fails_before_publish():
+tests/timeline/test_authoring_bundle.py:403:def test_target_bound_transport_key_normalizes_digest_prefix_and_punctuation():
+tests/timeline/test_authoring_bundle.py:421:def test_publish_uses_one_compilation_and_returns_complete_mapping():
+tests/timeline/test_authoring_bundle.py:439:def test_group_move_compiles_and_uses_existing_publication_boundary():
+tests/timeline/test_authoring_bundle.py:458:def test_approval_is_bound_to_candidate_and_base_revision():
+tests/timeline/test_authoring_bundle.py:483:def test_frozen_render_restart_then_approval_promotion_is_single_generation(tmp_path):
+tests/timeline/test_authoring_bundle.py:630:def test_full_authored_field_edits_compile_without_normalizing_opaque_fields():
+tests/timeline/test_authoring_bundle.py:659:@pytest.mark.parametrize(
+tests/timeline/test_authoring_bundle.py:667:def test_placement_edits_without_shared_projection_semantics_fail_before_publish(field, value):
+tests/timeline/test_authoring_bundle.py:677:def test_new_placement_is_checked_even_with_self_pinned_source_mapping():
+tests/timeline/test_authoring_bundle.py:693:def test_conflicting_parent_registry_locations_rejected_by_compiler():
+tests/timeline/test_authoring_bundle.py:710:def test_live_runtime_bare_item_media_id_is_accepted_without_rewriting_payload():
+tests/timeline/test_authoring_bundle.py:727:def test_live_source_asset_authority_resolves_child_selector_without_local_registry():
+tests/timeline/test_authoring_bundle.py:772:def test_bundle_structure_helpers_duplicate_and_remove_independent_placements():
+tests/timeline/test_authoring_bundle.py:798:def test_diff_baseline_normalizes_placements_and_rejects_malformed_mapping():
+tests/timeline/test_authoring_bundle.py:822:def test_validate_diff_preview_and_media_inventory_are_read_only_and_frozen():
+tests/timeline/test_authoring_bundle.py:848:def test_frozen_candidate_projects_to_labelled_managed_render_without_publication():
+tests/timeline/test_authoring_bundle.py:1000:def test_compact_inspection_pins_head_and_reports_bounded_structure_without_opaque_payloads():
+tests/timeline/test_authoring_bundle.py:1034:@pytest.mark.integration  # a real Runtime from a second checkout
+tests/timeline/test_authoring_bundle.py:1035:def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path):
+tests/timeline/test_authoring_bundle.py:1136:def test_diff_of_an_unedited_checkout_is_empty_and_names_clips_by_id():
+tests/timeline/test_authoring_bundle.py:1153:def test_diff_ignores_float_noise_but_reports_real_clip_edits():
+tests/sdk/test_timeline_sync_native.py:29:@pytest.mark.parametrize('captured', [False, True])
+tests/sdk/test_timeline_sync_native.py:30:def test_native_queue_and_commit_match_full_portable_golden(connected, captured):
+tests/sdk/test_timeline_sync_native.py:43:@pytest.mark.parametrize('before', [None, '', 'Old'])
+tests/sdk/test_timeline_sync_native.py:44:@pytest.mark.parametrize('clear', [False, True])
+tests/sdk/test_timeline_sync_native.py:45:def test_native_session_preserves_presence_clear_and_unchanged_history(connected, before, clear):
+tests/sdk/test_timeline_sync_native.py:62:def test_native_queue_uses_prior_pending_commands_and_stable_created_identity(connected):
+tests/sdk/test_timeline_sync_native.py:76:def test_native_move_ingress_matches_existing_move_capture(connected):
+tests/sdk/test_timeline_sync_native.py:83:@pytest.mark.parametrize('intent', [{}, {'ripple': 'none'},
+tests/sdk/test_timeline_sync_native.py:85:def test_native_move_with_default_intent_retries_without_recapture(connected, intent):
+tests/sdk/test_timeline_sync_native.py:97:@pytest.mark.parametrize('value,changed', [(True, 1), (False, 0)])
+tests/sdk/test_timeline_sync_native.py:98:@pytest.mark.parametrize('nested', [False, True])
+tests/sdk/test_timeline_sync_native.py:99:def test_native_lost_ack_refuses_changed_json_type_before_send(connected, value, changed, nested):
+tests/sdk/test_timeline_sync_native.py:122:@pytest.mark.parametrize('field', ['reads', 'expect'])
+tests/sdk/test_timeline_sync_native.py:123:def test_native_lost_ack_refuses_changed_boolean_capture_claim(connected, field):
+tests/sdk/test_timeline_sync_native.py:153:def test_native_lost_ack_numeric_equivalence_retries_original_bytes(connected):
+tests/sdk/test_timeline_sync_native.py:168:@pytest.mark.parametrize('peer', ['disjoint', 'label', 'aba'])
+tests/sdk/test_timeline_sync_native.py:169:def test_native_lost_ack_retry_precedes_original_suffix_with_fresh_key(connected, peer):
+tests/sdk/test_timeline_sync_native.py:213:def test_native_one_shot_retry_never_reads_or_recaptures(connected):
+tests/sdk/test_timeline_sync_native.py:228:def test_stale_captured_claims_are_refused_without_refresh_or_persistence(connected):
+tests/sdk/test_timeline_sync_native.py:240:@pytest.mark.parametrize('damage', ['unknown-op', 'patch', 'inverse', 'restore', 'null', 'overlap'])
+tests/sdk/test_timeline_sync_native.py:241:def test_native_ingress_rejects_unsupported_operations_and_open_patches(connected, damage):
+tests/sdk/test_capture_closure_source.py:59:def test_historical_capture_keeps_exact_parent_and_child_pins(client):
+tests/sdk/test_capture_closure_source.py:76:def test_saved_capture_keeps_the_entire_managed_expansion(client):
+tests/sdk/test_capture_closure_source.py:88:@pytest.mark.parametrize("field,value", [
+tests/sdk/test_capture_closure_source.py:92:def test_saved_closure_scope_and_revision_mismatch_refuse_without_head_fallback(client, field, value):
+tests/sdk/test_capture_closure_source.py:99:def test_caller_labels_and_flags_do_not_replace_opened_source(client):
+tests/sdk/test_capture_closure_source.py:113:def test_candidate_capture_preserves_compiled_digest_and_unpublished_identity(client):
+tests/sdk/test_capture_closure_source.py:125:@pytest.mark.parametrize("scope", ["project_id", "timeline_id"])
+tests/sdk/test_capture_closure_source.py:126:def test_candidate_from_another_selected_scope_is_refused(client, scope):
+tests/sdk/test_capture_closure_source.py:133:def test_forged_candidate_digest_is_not_certified_by_capture_labels(client):
+tests/sdk/test_capture_closure_source.py:140:@pytest.mark.parametrize("working_copy", [False, True])
+tests/sdk/test_capture_closure_source.py:141:@pytest.mark.xfail(strict=True, reason="Runtime-validated capture publication must restore SDK/ref/host handoff; admission double has no publisher")
+tests/sdk/test_capture_closure_source.py:142:def test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies(client, monkeypatch, tmp_path, working_copy):
+tests/sdk/test_capture_closure_source.py:203:@pytest.mark.parametrize('working_copy', [False, True])
+tests/sdk/test_capture_closure_source.py:204:@pytest.mark.parametrize('include_media', [False, True])
+tests/sdk/test_capture_closure_source.py:205:def test_sdk_capture_reaches_runtime_before_any_snapshot_write(client, monkeypatch, working_copy, include_media):
+tests/sdk/test_capture_closure_source.py:241:def test_cas_capture_metadata_cannot_mint_source_or_activate_canonical_compiler(tmp_path):
+tests/sdk/test_capture_closure_source.py:267:def test_candidate_task_data_is_frozen_before_preflight_reads(client, monkeypatch):
+tests/sdk/test_capture_closure_source.py:292:@pytest.mark.parametrize('preview', [True, 'canonical', {'candidate_digest': 'sha256:' + 'f' * 64}])
+tests/sdk/test_capture_closure_source.py:293:def test_candidate_shape_or_label_cannot_replace_authored_data(client, preview):
+tests/sdk/test_capture_closure_source.py:309:@pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
+tests/sdk/test_capture_closure_source.py:310:def test_sdk_capture_reserved_source_ports_are_refused(client, key):
+tests/sdk/test_capture_closure_source.py:315:@pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
+tests/sdk/test_capture_closure_source.py:316:def test_sdk_capture_invocation_refuses_source_before_admission(key):
+tests/sdk/test_timeline_capture_projection.py:31:@pytest.mark.parametrize("changed", [False, True])
+tests/sdk/test_timeline_capture_projection.py:32:def test_capture_candidate_inputs_exact_pure_detached_golden(monkeypatch, changed):
+tests/sdk/test_timeline_capture_projection.py:57:@pytest.mark.parametrize("candidate", [False, True])
+tests/sdk/test_timeline_capture_projection.py:58:def test_projection_is_detached_json_deterministic_without_io(monkeypatch, candidate):
+tests/sdk/test_timeline_capture_projection.py:99:@pytest.mark.parametrize("damage", ["parent_digest", "shot_digest", "internal_digest", "missing_shot",
+tests/sdk/test_timeline_capture_projection.py:101:def test_inconsistent_saved_closure_refuses(damage):
+tests/sdk/test_timeline_capture_projection.py:124:@pytest.mark.parametrize("damage", ["kind", "head", "candidate_digest", "publication_digest", "publication",
+tests/sdk/test_timeline_capture_projection.py:128:def test_inconsistent_candidate_refuses_even_with_recomputed_preview(damage):
+tests/sdk/test_timeline_capture_projection.py:158:@pytest.mark.parametrize("value", [True, 2.0])
+tests/sdk/test_timeline_capture_projection.py:159:def test_json_distinct_base_values_are_not_equal(value):
+tests/sdk/test_timeline_capture_projection.py:168:def test_reused_candidate_pin_is_compared_with_verified_image():
+tests/sdk/test_timeline_capture_projection.py:177:def test_capture_method_imports_and_runs_without_renderer_or_runtime():
+tests/sdk/test_timeline_capture_projection.py:260:@pytest.mark.integration
+tests/sdk/test_timeline_capture_projection.py:261:def test_real_saved_projection_config_registry_and_full_pins_golden(saved_closure):
+tests/sdk/test_timeline_capture_projection.py:280:@pytest.mark.integration
+tests/sdk/test_timeline_capture_projection.py:281:def test_real_saved_entire_expansion_golden(saved_closure):
+tests/sdk/test_timeline_capture_projection.py:293:@pytest.mark.integration
+tests/sdk/test_timeline_capture_projection.py:294:def test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows(saved_closure, monkeypatch):
+tests/sdk/test_timeline_capture_projection.py:342:@pytest.mark.integration
+tests/sdk/test_timeline_capture_projection.py:343:@pytest.mark.parametrize("change", ["parent", "child", "new_shot", "duplicate", "remove", "sdk_bundle"])
+tests/sdk/test_timeline_capture_projection.py:344:def test_real_candidate_matches_sdk_opener_exactly(saved_closure, change):
+
+codex
+The direct neighbors also pass (53 passed). The source diff is limited to `astrid/sdk/remote.py`; no authored payload, pin, order, opaque, identity, or history assertions were changed. The repo’s standalone Ruff run reports 121 pre-existing `remote.py` violations (including the existing import block), so I’m not broadening this minimal fix to reformat unrelated code. I’m submitting one explicit-node named central run now; its result will be accepted only if its log shows the required Runtime952 source and real socket path.
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-private952-http-reload-finish registered-native-render-integration --files '"'tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_history tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_semantic_batch_original_pins_reload_inverse_redo tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba tests/editing_conformance/test_native_batch_ingress.py') && printf '%s\\n' \""'$R"' in /home/user/work/wt/agt-m2-private952-http-reload-finish
+ succeeded in 124ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-private952-http-reload-finish-registered-native-render-integration-1020193251-15307
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-registered-native-render-integration-1020193251-15307/
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-private952-http-reload-finish-registered-native-render-integration-1020193251-15307' in /home/user/work/wt/agt-m2-private952-http-reload-finish
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-registered-native-render-integration-1020193251-15307; cat "$D/status"; cat "$D/why" 2>/dev/null || true; cat "$D/snap" 2>/dev/null || true; tail -20 "$D/log.txt" 2>/dev/null || true; echo '"'old:'; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-reload-source-shape-targeted-1020191723-3480/status; echo 'pending:'; ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/pending/*private952* 2>/dev/null" in /home/user/work/wt/agt-m2-private952-http-reload-finish
+ exited 2 in 46ms:
+running
+tree=3775e2e00c9e45999f6c0277f4dbc323079749b0
+key=dc5802539bb8ce07259bc4ce7ec35b0e
+worktree=/home/user/work/wt/agt-m2-private952-http-reload-finish
+.old:
+pass
+pending:
+
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-registered-native-render-integration-1020193251-15307; echo status=$(cat "$D/status"); ls -l "$D"; wc -c "$D/log.txt" 2>/dev/null || true; tail -30 "$D/runner.log" 2>/dev/null || true; ps -eo pid,etime,args | rg '"'test-run|pytest|\\.test-agt-m2-private952-http-reload-finish' | rg -v rg | head -20" in /home/user/work/wt/agt-m2-private952-http-reload-finish
+ succeeded in 76ms:
+status=running
+total 24
+-rw-r--r-- 1 root root 157 Oct 20 19:32 ext
+-rw-r--r-- 1 root root   3 Oct 20 19:33 log.txt
+-rw-r--r-- 1 root root 746 Oct 20 19:32 request
+-rw-r--r-- 1 root root   0 Oct 20 19:32 runner.log
+-rw-r--r-- 1 root root   5 Oct 20 19:32 running
+-rw-r--r-- 1 root root 148 Oct 20 19:32 snap
+-rw-r--r-- 1 root root   8 Oct 20 19:32 status
+3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-registered-native-render-integration-1020193251-15307/log.txt
+
+exec
+/bin/bash -lc "D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-registered-native-render-integration-1020193251-15307; stat -c '%s %y' \""'$D/log.txt"; cat "$D/log.txt"; cat "$D/ext"; sed -n '"'1,15p' \""'$D/request"' in /home/user/work/wt/agt-m2-private952-http-reload-finish
+ succeeded in 0ms:
+7 2026-10-20 19:33:39.301070622 +0000
+.......external=runtime=8f105c26e3b62f9c2683f717a9773a12bc775a8e app=dcb9f9c7095b0a8438291c8949029122c7c98ad3 composition=5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8 
+target=agt-m2-private952-http-reload-finish
+repo=agent
+suite=registered-native-render-integration
+files=tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo\ tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_history\ tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_semantic_batch_original_pins_reload_inverse_redo\ tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba\ tests/editing_conformance/test_native_batch_ingress.py
+nocache=0
+requested=2026-10-20T19:32:51Z
+
+codex
+The central named run has started with explicit nodes and is producing test output. Its preflight metadata confirms the Agent snapshot tree, but the cross-product record currently identifies `/home/user/work/runtime` at `8f105c26…`, not the exact Runtime952 KEEP checkout. I will not count this run as the native gate unless its test/log evidence proves the test itself archives/uses `95202c2b`; otherwise I’ll report it as a useful but mismatched transport check.
+exec
+/bin/bash -lc 'sleep 20; D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-private952-http-reload-finish-registered-native-render-integration-1020193251-15307; echo status=$(cat "$D/status"); stat -c '"'%s %y' \""'$D/log.txt"; tail -25 "$D/log.txt"' in /home/user/work/wt/agt-m2-private952-http-reload-finish

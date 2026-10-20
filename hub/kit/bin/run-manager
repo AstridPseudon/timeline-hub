@@ -20,9 +20,11 @@ mkdir -p /home/user/timeline-hub; R=$(date -u +%Y%m%dT%H%MZ); touch $D/running; 
     # Codex: bounded rounds (2026-10-20). A single 7-day session drifted for hours without re-reading its inbox, so each round
     # is at most 3 h; a fresh round then starts from the CURRENT STATUS.md and INBOX.md, until STOP.
     cat > /dev/null; first=1
-    while [ ! -f $D/STOP ]; do [ $first = 1 ] || R=$(date -u +%Y%m%dT%H%MZ); first=0
+    while [ ! -f $D/STOP ] && [ ! -f $O/CODEX_UNAVAILABLE ]; do [ $first = 1 ] || R=$(date -u +%Y%m%dT%H%MZ); first=0
       mkprompt | AREA=$N timeout 3h codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write -C /home/user/work --skip-git-repo-check \
         --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir /home/user/timeline-hub --add-dir $O -o $D/rounds/$R.md - > $D/rounds/$R.log 2>&1; echo $? > $D/rounds/$R.exit
       [ -f $D/STOP ] && break; sleep 20; done
-  fi; rm -f $D/running ) >/dev/null 2>&1 &
+  fi; rm -f $D/running
+  # automatic model switching at round boundaries: Codex limit -> Claude (Sonnet) manager; Codex back -> Codex manager again
+  [ -f $D/STOP ] || { if [ -f $O/CODEX_UNAVAILABLE ] && [[ $M != claude-* ]]; then exec $O/bin/run-manager $N gpt-6.1-sol $E; elif [ ! -f $O/CODEX_UNAVAILABLE ] && [[ $M == claude-* ]]; then exec $O/bin/run-manager $N gpt-6.1-sol $E; fi; } ) >/dev/null 2>&1 &
 echo "manager $N round $R started"

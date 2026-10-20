@@ -1,0 +1,400 @@
++  preflights use `_check_core()`. Ordinary save/native commit code is not
++  routed through a renderer or Node.
++- The OFFCANVAS counterexample remains visible after the accepted core-valid
++  save: explicit check is invalid solely for OFFCANVAS, while save/reload and
++  publication preserve `params.x=10000` exactly. No clamp or autofix was added.
++- Unknown scene results remain advisory and unavailable source/query state is
++  not converted into a canonical answer or a silent fallback.
++- Changed old test stubs preserve their original semantic assertions; they
++  only patch the new private seam or import the defining pure authoring
++  module. No test was skipped, weakened, deleted, or newly xfailed.
++
++## Commands and results
++
++```sh
++git diff --stat 4ef1391c f5d0b4e0
++git diff --numstat 4ef1391c f5d0b4e0
++git diff --check f5d0b4e0^ f5d0b4e0
++```
++
++Passed. The candidate is 14 files with `tests/sdk/test_scene_save_core.py`
++adding 191 lines; the six production files total +33/-25 by `git numstat`
++and the complete candidate is +236/-31. `git diff --check` is clean.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
++  /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/sdk/test_scene_save_core.py \
++  tests/sdk/test_timeline_transaction.py \
++  tests/sdk/test_timeline_publish_connection.py \
++  tests/sdk/test_timeline_checkout_facade.py \
++  tests/sdk/test_timeline_checkout_history_boundaries.py \
++  tests/packs/timeline/test_verbs_working_copy.py
++```
++
++**83 passed in 13.28s.** This includes the source/import, renderer/Node
++process-launch, save/reload, transaction, publish, duplicate, CLI, and
++core-invalid refusal fences.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
++  /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/sdk/test_scene_caller_preservation.py \
++  tests/sdk/test_timeline_checkout.py -k \
++  'nested_param or offcanvas or moment_outside or duplicate_is_all_or_nothing or check_blocks_a_literal_formula_string or check_flags_offcanvas'
++```
++
++**5 passed, 107 deselected in 1.92s.** This preserves the explicit scene
++formatter/unknown findings and structural-invalidity assertions.
++
++## Non-blocking note and limits
++
++The fresh-process import test is cwd-sensitive when invoked from a different
++checkout: its child inherits cwd and does not set an explicit candidate-root
++cwd/PYTHONPATH. It passes from the candidate worktree and is a test harness
++portability follow-up, not a product save-path defect.
++
++No full suite was requested or run. The existing central native qualification
++was not duplicated. D09 remains **HELD** for Viewing Root-prep lifetime,
++cache/physical-key parity, and physical pixel/audio parity. No public13
++adoption, pin change, public API/DTO/SourceFactory change, Runtime/App
++qualification, renderer parity, or owner-film claim is made.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc4e8044a22dd3a44ef78ac56c197776882560ee
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/commit-msg
+@@ -0,0 +1,4 @@
++docs(review): approve scene save-core separation
++
++Record the independent owner-gate approval, exact candidate identity, focused
++test results, non-blocking cwd note, and held D09 qualification boundaries.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..e8e695a7f1668eb7eaa20e288af8f4bec0514657
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/notes/report.md
+@@ -0,0 +1,104 @@
++# Final independent owner gate: scene/save-core separation
++
++## Verdict
++
++**APPROVE**, bounded to Agent commit
++`f5d0b4e090fba31a6e3c55baa55b63b2e739d337` (tree
++`f4d74d55c77c76b8d20e5e4b3fd7bb2719f4d1be`, parent
++`4ef1391c2c104d5d11b3a27265035c51be296045`). Current integration is
++`8e3107853d17453758a933d1f47215cc1c002660`; its four post-base paths do not
++overlap the candidate's 14 paths.
++
++## Findings
++
++The candidate obeys the settled save policy. Explicit `Checkout.check()` still
++retains geometry/visual, lint, text, look/music, scene and UNKNOWN/UNAVAILABLE
++advice, including the original OFFCANVAS blocking finding. Private
++`Checkout._check_core()` reuses the existing implementation and keeps the
++authoritative structure/schema, formula/reference, type, outside, stale-beat,
++timing/length, shot-length and publication/transaction guards while omitting
++scene, Node, renderer/visual, lint and text diagnostics.
++
++Publication, checked transactions, detached CLI edit reporting and duplicate
++preflights use `_check_core()`. Ordinary save/native commit remains on its
++existing pure path. Core validator/publisher imports use
++`astrid.core.timeline.authoring_bundle`, avoiding the eager renderer-bearing
++SDK facade. There is no new public API, DTO, SourceFactory, pin, cache, Root
++preparation, or renderer change.
++
++The explicit OFFCANVAS counterexample is covered one-to-one: raw
++`c1.rocket.params.x=10000` remains explicitly invalid solely for OFFCANVAS,
++while the private core report is valid, ordinary save/reload and real
++publication succeed, and the raw coordinate remains exactly `10000` in the
++publication payload and checkout. No silent clamp/fix was introduced. Unknown
++scene remains advisory; unavailable scene/source state is not certified as a
++canonical answer.
++
++Changed old stubs retain their original semantic assertions: they only move
++the monkeypatch to `_check_core()` or import the defining pure authoring
++module. No tests were skipped, weakened, deleted, or newly xfailed.
++
++## Exact review and test evidence
++
++Read-only identity/overlap checks:
++
++```sh
++git rev-parse HEAD
++git rev-parse HEAD^{tree}
++git rev-parse HEAD^
++git merge-base 8e310785 f5d0b4e0
++git diff --name-status 4ef1391c 8e310785
++git diff --stat 8e310785 f5d0b4e0
++git diff --check f5d0b4e0^ f5d0b4e0
++git status --short --branch
++```
++
++Results: exact commit/tree/parent above; merge-base is `4ef1391c`; current
++integration changes since that base are only `commands.py`, `inverse.py`, and
++two unrelated test files; no candidate save-core path overlaps; diff check is
++clean; review worktree is clean.
++
++Focused save-core and direct neighbors:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python \
++  -m pytest -q -p no:cacheprovider \
++  tests/sdk/test_scene_save_core.py \
++  tests/sdk/test_timeline_transaction.py \
++  tests/sdk/test_timeline_publish_connection.py \
++  tests/sdk/test_timeline_checkout_facade.py \
++  tests/sdk/test_timeline_checkout_history_boundaries.py \
++  tests/packs/timeline/test_verbs_working_copy.py
++```
++
++**83 passed in 13.28s.** This directly covers the new source/import and
++saveNoNode/process-launch fences, core-invalid refusal matrix, publication,
++transaction, duplicate, CLI and guard override behavior.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python \
++  -m pytest -q -p no:cacheprovider \
++  tests/sdk/test_scene_caller_preservation.py \
++  tests/sdk/test_timeline_checkout.py -k \
++  'nested_param or offcanvas or moment_outside or duplicate_is_all_or_nothing or check_blocks_a_literal_formula_string or check_flags_offcanvas'
++```
++
++**5 passed, 107 deselected in 1.92s.** Explicit scene-preservation,
++OFFCANVAS and structural-invalidity neighbors remain green.
++
++No full or full* suite was requested. Existing central native qualification was
++not duplicated per the brief. D09/cache/physical/renderer parity stays HELD.
++
++## Non-blocking follow-up
++
++The fresh-process import test is cwd-sensitive outside the candidate worktree:
++the child inherits cwd and does not explicitly set the candidate root. It is a
++test harness portability issue only; the candidate-root run passed and no
++production save-path issue was found. Fixing it is recommended separately if
++the test must be run from arbitrary checkouts.
++
++## Recommended next step
++
++Merge/qualify this bounded Agent seam through the normal harness, retain the
++explicit OFFCANVAS diagnostic and the core-valid save positive, and keep D09
++held until Viewing's Root-prep/cache/physical parity gates qualify.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worktree ---'; git status --short --branch; printf '%s\\n' '--- report tail ---'; tail -80 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/notes/report.md; printf '%s\\n' '--- design tail ---'; tail -80 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core-final.md; printf '%s\\n' '--- required artifacts ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/{commit-msg,DONE,notes/report.md}" in /home/user/work/wt/agt-review-scene-save-core-final
+ succeeded in 884ms:
+--- worktree ---
+## tl/agt-review-scene-save-core-final
+--- report tail ---
+`astrid.core.timeline.authoring_bundle`, avoiding the eager renderer-bearing
+SDK facade. There is no new public API, DTO, SourceFactory, pin, cache, Root
+preparation, or renderer change.
+
+The explicit OFFCANVAS counterexample is covered one-to-one: raw
+`c1.rocket.params.x=10000` remains explicitly invalid solely for OFFCANVAS,
+while the private core report is valid, ordinary save/reload and real
+publication succeed, and the raw coordinate remains exactly `10000` in the
+publication payload and checkout. No silent clamp/fix was introduced. Unknown
+scene remains advisory; unavailable scene/source state is not certified as a
+canonical answer.
+
+Changed old stubs retain their original semantic assertions: they only move
+the monkeypatch to `_check_core()` or import the defining pure authoring
+module. No tests were skipped, weakened, deleted, or newly xfailed.
+
+## Exact review and test evidence
+
+Read-only identity/overlap checks:
+
+```sh
+git rev-parse HEAD
+git rev-parse HEAD^{tree}
+git rev-parse HEAD^
+git merge-base 8e310785 f5d0b4e0
+git diff --name-status 4ef1391c 8e310785
+git diff --stat 8e310785 f5d0b4e0
+git diff --check f5d0b4e0^ f5d0b4e0
+git status --short --branch
+```
+
+Results: exact commit/tree/parent above; merge-base is `4ef1391c`; current
+integration changes since that base are only `commands.py`, `inverse.py`, and
+two unrelated test files; no candidate save-core path overlaps; diff check is
+clean; review worktree is clean.
+
+Focused save-core and direct neighbors:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python \
+  -m pytest -q -p no:cacheprovider \
+  tests/sdk/test_scene_save_core.py \
+  tests/sdk/test_timeline_transaction.py \
+  tests/sdk/test_timeline_publish_connection.py \
+  tests/sdk/test_timeline_checkout_facade.py \
+  tests/sdk/test_timeline_checkout_history_boundaries.py \
+  tests/packs/timeline/test_verbs_working_copy.py
+```
+
+**83 passed in 13.28s.** This directly covers the new source/import and
+saveNoNode/process-launch fences, core-invalid refusal matrix, publication,
+transaction, duplicate, CLI and guard override behavior.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python \
+  -m pytest -q -p no:cacheprovider \
+  tests/sdk/test_scene_caller_preservation.py \
+  tests/sdk/test_timeline_checkout.py -k \
+  'nested_param or offcanvas or moment_outside or duplicate_is_all_or_nothing or check_blocks_a_literal_formula_string or check_flags_offcanvas'
+```
+
+**5 passed, 107 deselected in 1.92s.** Explicit scene-preservation,
+OFFCANVAS and structural-invalidity neighbors remain green.
+
+No full or full* suite was requested. Existing central native qualification was
+not duplicated per the brief. D09/cache/physical/renderer parity stays HELD.
+
+## Non-blocking follow-up
+
+The fresh-process import test is cwd-sensitive outside the candidate worktree:
+the child inherits cwd and does not explicitly set the candidate root. It is a
+test harness portability issue only; the candidate-root run passed and no
+production save-path issue was found. Fixing it is recommended separately if
+the test must be run from arbitrary checkouts.
+
+## Recommended next step
+
+Merge/qualify this bounded Agent seam through the normal harness, retain the
+explicit OFFCANVAS diagnostic and the core-valid save positive, and keep D09
+held until Viewing's Root-prep/cache/physical parity gates qualify.
+--- design tail ---
+`f5d0b4e090fba31a6e3c55baa55b63b2e739d337`, tree
+`f4d74d55c77c76b8d20e5e4b3fd7bb2719f4d1be`, parent
+`4ef1391c2c104d5d11b3a27265035c51be296045`.
+
+The review worktree is `tl/agt-review-scene-save-core-final`. The current
+integration baseline is `8e3107853d17453758a933d1f47215cc1c002660`; its
+changes since the candidate base are confined to four unrelated command,
+inverse, and Runtime-schema test paths, with no overlap in the candidate's
+14 changed paths.
+
+## Review result
+
+- `Checkout.check()` retains the explicit diagnostic path, including the
+  original OFFCANVAS blocking finding and UNKNOWN/UNAVAILABLE scene advice.
+- `Checkout._check_core()` shares the existing validation implementation and
+  retains schema, structure, formula/reference, type, outside, stale-beat,
+  length, and shot-length guards. It omits scene, sprite/visual, lint, text,
+  look, and music diagnostics.
+- Publication, checked transactions, detached CLI edit reports, and duplicate
+  preflights use `_check_core()`. Ordinary save/native commit code is not
+  routed through a renderer or Node.
+- The OFFCANVAS counterexample remains visible after the accepted core-valid
+  save: explicit check is invalid solely for OFFCANVAS, while save/reload and
+  publication preserve `params.x=10000` exactly. No clamp or autofix was added.
+- Unknown scene results remain advisory and unavailable source/query state is
+  not converted into a canonical answer or a silent fallback.
+- Changed old test stubs preserve their original semantic assertions; they
+  only patch the new private seam or import the defining pure authoring
+  module. No test was skipped, weakened, deleted, or newly xfailed.
+
+## Commands and results
+
+```sh
+git diff --stat 4ef1391c f5d0b4e0
+git diff --numstat 4ef1391c f5d0b4e0
+git diff --check f5d0b4e0^ f5d0b4e0
+```
+
+Passed. The candidate is 14 files with `tests/sdk/test_scene_save_core.py`
+adding 191 lines; the six production files total +33/-25 by `git numstat`
+and the complete candidate is +236/-31. `git diff --check` is clean.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
+  /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
+  tests/sdk/test_scene_save_core.py \
+  tests/sdk/test_timeline_transaction.py \
+  tests/sdk/test_timeline_publish_connection.py \
+  tests/sdk/test_timeline_checkout_facade.py \
+  tests/sdk/test_timeline_checkout_history_boundaries.py \
+  tests/packs/timeline/test_verbs_working_copy.py
+```
+
+**83 passed in 13.28s.** This includes the source/import, renderer/Node
+process-launch, save/reload, transaction, publish, duplicate, CLI, and
+core-invalid refusal fences.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
+  /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
+  tests/sdk/test_scene_caller_preservation.py \
+  tests/sdk/test_timeline_checkout.py -k \
+  'nested_param or offcanvas or moment_outside or duplicate_is_all_or_nothing or check_blocks_a_literal_formula_string or check_flags_offcanvas'
+```
+
+**5 passed, 107 deselected in 1.92s.** This preserves the explicit scene
+formatter/unknown findings and structural-invalidity assertions.
+
+## Non-blocking note and limits
+
+The fresh-process import test is cwd-sensitive when invoked from a different
+checkout: its child inherits cwd and does not set an explicit candidate-root
+cwd/PYTHONPATH. It passes from the candidate worktree and is a test harness
+portability follow-up, not a product save-path defect.
+
+No full suite was requested or run. The existing central native qualification
+was not duplicated. D09 remains **HELD** for Viewing Root-prep lifetime,
+cache/physical-key parity, and physical pixel/audio parity. No public13
+adoption, pin change, public API/DTO/SourceFactory change, Runtime/App
+qualification, renderer parity, or owner-film claim is made.
+--- required artifacts ---
+-rw-r--r-- 1 root root    0 Oct 20 14:12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/DONE
+-rw-r--r-- 1 root root  204 Oct 20 14:12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/commit-msg
+-rw-r--r-- 1 root root 4521 Oct 20 14:12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/notes/report.md
+
+codex
+Review is complete and the worktree remains clean. I recorded `APPROVE` in the requested design review, wrote the detailed worker report and conventional commit message, and created `DONE`; D09 remains held as instructed.
+codex
+## Review result
+
+**APPROVE** — candidate `f5d0b4e090fba31a6e3c55baa55b63b2e739d337`, tree `f4d74d55c77c76b8d20e5e4b3fd7bb2719f4d1be`.
+
+- Core structure/timing/reference/authority guards preserved.
+- Scene, Node, visual/lint diagnostics omitted from save paths.
+- OFFCANVAS remains visible in explicit checks but no longer blocks a core-valid save; raw coordinates remain unchanged.
+- Unknown scene remains advisory; no silent fixes.
+- Current integration overlap is unrelated.
+- Tests: **83 passed**, plus **5 passed / 107 deselected**.
+- No full suite run, per instructions. D09/cache/physical parity remains HELD.
+- Non-blocking note: fresh-process import test is cwd-sensitive outside the candidate worktree.
+
+Artifacts written:
+
+- [Review decision](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core-final.md>)
+- [Worker report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/notes/report.md>)
+- `commit-msg`
+- `DONE` created.
+tokens used
+155,779
+## Review result
+
+**APPROVE** — candidate `f5d0b4e090fba31a6e3c55baa55b63b2e739d337`, tree `f4d74d55c77c76b8d20e5e4b3fd7bb2719f4d1be`.
+
+- Core structure/timing/reference/authority guards preserved.
+- Scene, Node, visual/lint diagnostics omitted from save paths.
+- OFFCANVAS remains visible in explicit checks but no longer blocks a core-valid save; raw coordinates remain unchanged.
+- Unknown scene remains advisory; no silent fixes.
+- Current integration overlap is unrelated.
+- Tests: **83 passed**, plus **5 passed / 107 deselected**.
+- No full suite run, per instructions. D09/cache/physical parity remains HELD.
+- Non-blocking note: fresh-process import test is cwd-sensitive outside the candidate worktree.
+
+Artifacts written:
+
+- [Review decision](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core-final.md>)
+- [Worker report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core-final/notes/report.md>)
+- `commit-msg`
+- `DONE` created.

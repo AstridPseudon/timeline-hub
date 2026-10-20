@@ -1,0 +1,400 @@
+All M2 integration merges HELD until PLAN records M1; do not request merge. Write absolute report to /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/report.md and BOTH /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/commit-msg plus commit-msg.txt (except readonly review). Never write repo-relative coordination docs. Workers do not git commit; harness commits on exit. Use /home/user/work/venv-agent; targeted tests only.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/running
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/meta
+name=agt-m2-pack-helper-review
+repo=agent
+base=tl/agt-m2-real-pack-host-helper
+base_sha=3f100a06
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-pack-helper-review
+started=2026-10-20T00:20:23Z
+
+exec
+/bin/bash -lc 'mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes' in /home/user/work/wt/agt-m2-pack-helper-review
+ succeeded in 0ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/review.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..101c64e68b4bac83bd4248e966eaeb6d4050bc80
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/commit-msg
+@@ -0,0 +1,3 @@
++review(timeline): block unsafe pack-host cleanup handoff
++
++Record independent review findings for the real pack-host test helper.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..101c64e68b4bac83bd4248e966eaeb6d4050bc80
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/commit-msg.txt
+@@ -0,0 +1,3 @@
++review(timeline): block unsafe pack-host cleanup handoff
++
++Record independent review findings for the real pack-host test helper.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f76a94af4d2f3352a2dadc0871c44b38755dc6f8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/report.md
+@@ -0,0 +1,36 @@
++# Independent review report: `agt-m2-real-pack-host-helper`
++
++Verdict: **blocking cleanup-ownership findings**. The production credential,
++scope, source-closure, boot-manifest, selected-environment, and real
++`rendering.render` readiness paths are sound and the existing central smoke
++proved real startup/catalog/explicit cleanup. The adapter must close the
++post-start race/signal windows before it can claim that cleanup reaps only its
++own process group or that signal cleanup is qualified.
++
++Findings and bounded fixes are in
++[`review.md`](./review.md):
++
++1. Lines 95-106 can adopt a replacement registration after `ensure_pack_host`
++   returns, then line 121 can retire that replacement on validation failure.
++2. A termination signal can arrive after production startup returns but before
++   the cleanup handle/`with` exists, stranding the fresh host.
++3. The raising signal handler remains active while `close()` performs group
++   retirement and `waitpid`, so cleanup itself can be interrupted.
++
++The helper uses no broad/owner authority, mock validation, alternate launcher,
++or source-closure bypass. EOF cleanup is structurally present, but EOF and
++signal journeys were not run.
++
++Test evidence:
++
++- Offline reviewer rerun: `PYTHONDONTWRITEBYTECODE=1
++  PYTHONPATH=/home/user/work/wt/agt-m2-real-pack-host-helper
++  /home/user/work/venv-agent/bin/python -m pytest -q -m 'not integration'
++  tests/packs/rendering/test_real_pack_host.py` — **6 passed, 1 deselected in
++  0.59s**.
++- Existing unchanged central evidence: `real-pack-host-integration` — **1
++  passed, 6 deselected in 56.50s**; not repeated per task instruction.
++- No full suite, install, browser, render, or App journey run.
++
++No repository files or coordination documents were modified; no merge was
++requested. Candidate remains held pending the orchestrator’s M1 decision.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a0df28cd185ac022b0f74a6274496c3b03d60cc
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/review.md
+@@ -0,0 +1,113 @@
++# Review: `agt-m2-real-pack-host-helper`
++
++Reviewed the candidate additions on base `3f100a06`:
++
++- `tests/packs/rendering/real_pack_host.py` (161 lines)
++- `tests/packs/rendering/test_real_pack_host.py` (106 lines)
++
++## Blocking findings
++
++### 1. Post-start ownership is not established before cleanup can run
++
++`real_pack_host.py:95-106` calls production `ensure_pack_host`, then performs a
++child check and reads the current `generic-host.json` before constructing the
++`RealPackHost` handle.  The `try` whose `BaseException` path calls
++`handle.close()` starts only at line 107.  A concurrent launcher can replace
++the registration after `ensure_pack_host` releases its lock and before line
++105.  If the replacement marker is read, line 109 raises, but line 121 then
++calls `close()` on a handle containing the replacement state.  `close()` sees
++that replacement as the current registration and can retire/signal the other
++launcher’s process group.  This violates the helper’s stated “only its own
++process group” ownership boundary.
++
++Bounded fix: reacquire the existing pack-host lock while adopting the marker,
++and do not construct or close a cleanup handle unless the marker is proven to
++name the exact `result["host_pid"]`/birth identity returned by the production
++launch.  On any mismatch, refuse without calling `close()` on the newly read
++state; let the production registration/retirement path reconcile the raced
++host.  Keep the equality check in `close()` as the final guard.
++
++### 2. A signal can strand the fresh host before the cleanup handle exists
++
++`real_pack_host.py:95-106` runs after `ensure_pack_host` has returned a ready
++host, but before the handle-owning `try` at line 107 and before the outer CLI
++`with` at line 139.  The CLI installs handlers at lines 132-138 that raise
++`SystemExit`.  SIGTERM, SIGINT, or the 180-second SIGALRM during `waitpid`,
++marker adoption, or the intervening instructions exits without invoking
++`RealPackHost.close()`, leaving the host registration/process behind.  The
++production `ensure_pack_host` protects its own startup wait, but it cannot
++protect this post-return window.
++
++Bounded fix: put the entire post-`ensure_pack_host` adoption sequence under a
++cleanup guard that already knows the exact child identity, or defer the three
++termination signals while that guard is installed and replay the pending
++signal after ownership has been established/cleaned.  The guard must refuse a
++registration mismatch without adopting or stopping the replacement.
++
++### 3. Signals are still live during owned cleanup
++
++`real_pack_host.py:132-138` leaves the raising signal handler installed while
++`RealPackHost.__exit__` calls `close()` (`lines 69-73`), and the same is true
++for the exception cleanup at lines 120-121.  A signal during
++`_retire_host_locked`, group termination, or `waitpid` interrupts cleanup with
++`SystemExit`; `close()` has no deferred-signal/cleanup shield.  The helper can
++therefore report neither a clean stop nor a durable cleanup failure while its
++own group or markers remain.
++
++Bounded fix: make `close()` signal-safe on Linux by temporarily blocking or
++deferring SIGTERM/SIGINT/SIGALRM around the existing production retirement,
++group-survivor check, and wait, then restore the handler and deliver the
++pending termination after cleanup.  Preserve the existing identity checks and
++surface cleanup failure rather than swallowing it.
++
++## Verified-good paths and limits
++
++- Discovery handoff (`real_pack_host.py:23-41`) checks the supplied realm,
++  support directory, Runtime instance, credential location, actor, and exact
++  production scope tuple.  Production `ensure_pack_host` independently checks
++  the worker file, mode, exact actor/scopes, Runtime health, source checkout
++  digest/closure, and the boot manifest (`astrid/sdk/host_bootstrap.py:1339-1492`).
++  The worker handshake is the existing `RuntimeProtocolClient` path, not an
++  owner credential or a fabricated token.
++- Production environment selection is retained: `ensure_pack_host` calls
++  `_host_render_environment(source_path)` (`astrid/sdk/host_bootstrap.py:1575-1579`),
++  which starts from the caller’s environment and provisions the selected
++  source/runtime settings.  The helper does not add a parallel environment or
++  launcher.  The integration fixture removes only pytest’s unsupported
++  `PYTHONPYCACHEPREFIX`; that is test-process setup, not helper validation
++  bypass.
++- Manifest and source-closure evidence are real production values.  The
++  launcher composes/stamps the manifest and passes both digests to the host;
++  the central smoke compares the returned closure digest and manifest hash and
++  observes `state["remotion_validation"]`.
++- Readiness is checked against the production `ensure_pack_host` receipt and
++  its host ready-capability list (`real_pack_host.py:110-112`), then against
++  the authenticated Runtime capability catalog for a ready
++  `rendering.render` (`lines 113-119`).  The central smoke passed real startup,
++  catalog readiness, validation, explicit stop, group absence, marker removal,
++  and Runtime health.  It did not render frames or qualify the App wrapper.
++- Cleanup reuses the production lifecycle lock, registration identity checks,
++  retirement, process-group survivor census, and `waitpid` (`lines 51-66`);
++  the explicit-stop smoke passed.  EOF behavior is structurally correct in
++  the CLI (`lines 141-147`): empty `readline()` exits the `with` and invokes
++  cleanup.  EOF and signal journeys were not exercised by the supplied
++  central smoke, and the three findings above prevent treating those paths as
++  qualified.
++
++## Test evidence
++
++Reviewer rerun (offline only, candidate worktree):
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 \
++PYTHONPATH=/home/user/work/wt/agt-m2-real-pack-host-helper \
++/home/user/work/venv-agent/bin/python -m pytest -q -m 'not integration' \
++tests/packs/rendering/test_real_pack_host.py
++```
++
++Result: **6 passed, 1 deselected in 0.59s**.
++
++Existing central evidence was not repeated because the source was unchanged:
++`real-pack-host-integration` reported **1 passed, 6 deselected in 56.50s** on
++the final candidate tree.  No full suite, install, browser, render, or App
++journey was run by this review.
+
+codex
+The offline lane independently passed 6 tests. The report now records three concrete blockers: a replacement-registration race that can make `close()` retire another launcher’s host, a signal window before ownership is installed, and signal interruption during cleanup itself. I’m doing a final file/status check and will hand off without touching repository or coordination files.
+exec
+/bin/bash -lc 'test -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md && git -C /home/user/work/wt/agt-m2-pack-helper-review status --short -- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md || true' in /home/user/work/wt/agt-m2-pack-helper-review
+ succeeded in 0ms:
+fatal: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md: '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md' is outside repository at '/home/user/work/wt/agt-m2-pack-helper-review'
+
+exec
+/bin/bash -lc "sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/review.md; printf '\\n--- report ---\\n'; sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/report.md; printf '\\n--- commit files ---\\n'; for f in commit-msg commit-msg.txt; do echo \"["'$f]"; sed -n '"'1,20p' \"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/"'$f"; done' in /home/user/work/wt/agt-m2-pack-helper-review
+ succeeded in 0ms:
+# Review: `agt-m2-real-pack-host-helper`
+
+Reviewed the candidate additions on base `3f100a06`:
+
+- `tests/packs/rendering/real_pack_host.py` (161 lines)
+- `tests/packs/rendering/test_real_pack_host.py` (106 lines)
+
+## Blocking findings
+
+### 1. Post-start ownership is not established before cleanup can run
+
+`real_pack_host.py:95-106` calls production `ensure_pack_host`, then performs a
+child check and reads the current `generic-host.json` before constructing the
+`RealPackHost` handle.  The `try` whose `BaseException` path calls
+`handle.close()` starts only at line 107.  A concurrent launcher can replace
+the registration after `ensure_pack_host` releases its lock and before line
+105.  If the replacement marker is read, line 109 raises, but line 121 then
+calls `close()` on a handle containing the replacement state.  `close()` sees
+that replacement as the current registration and can retire/signal the other
+launcher’s process group.  This violates the helper’s stated “only its own
+process group” ownership boundary.
+
+Bounded fix: reacquire the existing pack-host lock while adopting the marker,
+and do not construct or close a cleanup handle unless the marker is proven to
+name the exact `result["host_pid"]`/birth identity returned by the production
+launch.  On any mismatch, refuse without calling `close()` on the newly read
+state; let the production registration/retirement path reconcile the raced
+host.  Keep the equality check in `close()` as the final guard.
+
+### 2. A signal can strand the fresh host before the cleanup handle exists
+
+`real_pack_host.py:95-106` runs after `ensure_pack_host` has returned a ready
+host, but before the handle-owning `try` at line 107 and before the outer CLI
+`with` at line 139.  The CLI installs handlers at lines 132-138 that raise
+`SystemExit`.  SIGTERM, SIGINT, or the 180-second SIGALRM during `waitpid`,
+marker adoption, or the intervening instructions exits without invoking
+`RealPackHost.close()`, leaving the host registration/process behind.  The
+production `ensure_pack_host` protects its own startup wait, but it cannot
+protect this post-return window.
+
+Bounded fix: put the entire post-`ensure_pack_host` adoption sequence under a
+cleanup guard that already knows the exact child identity, or defer the three
+termination signals while that guard is installed and replay the pending
+signal after ownership has been established/cleaned.  The guard must refuse a
+registration mismatch without adopting or stopping the replacement.
+
+### 3. Signals are still live during owned cleanup
+
+`real_pack_host.py:132-138` leaves the raising signal handler installed while
+`RealPackHost.__exit__` calls `close()` (`lines 69-73`), and the same is true
+for the exception cleanup at lines 120-121.  A signal during
+`_retire_host_locked`, group termination, or `waitpid` interrupts cleanup with
+`SystemExit`; `close()` has no deferred-signal/cleanup shield.  The helper can
+therefore report neither a clean stop nor a durable cleanup failure while its
+own group or markers remain.
+
+Bounded fix: make `close()` signal-safe on Linux by temporarily blocking or
+deferring SIGTERM/SIGINT/SIGALRM around the existing production retirement,
+group-survivor check, and wait, then restore the handler and deliver the
+pending termination after cleanup.  Preserve the existing identity checks and
+surface cleanup failure rather than swallowing it.
+
+## Verified-good paths and limits
+
+- Discovery handoff (`real_pack_host.py:23-41`) checks the supplied realm,
+  support directory, Runtime instance, credential location, actor, and exact
+  production scope tuple.  Production `ensure_pack_host` independently checks
+  the worker file, mode, exact actor/scopes, Runtime health, source checkout
+  digest/closure, and the boot manifest (`astrid/sdk/host_bootstrap.py:1339-1492`).
+  The worker handshake is the existing `RuntimeProtocolClient` path, not an
+  owner credential or a fabricated token.
+- Production environment selection is retained: `ensure_pack_host` calls
+  `_host_render_environment(source_path)` (`astrid/sdk/host_bootstrap.py:1575-1579`),
+  which starts from the caller’s environment and provisions the selected
+  source/runtime settings.  The helper does not add a parallel environment or
+  launcher.  The integration fixture removes only pytest’s unsupported
+  `PYTHONPYCACHEPREFIX`; that is test-process setup, not helper validation
+  bypass.
+- Manifest and source-closure evidence are real production values.  The
+  launcher composes/stamps the manifest and passes both digests to the host;
+  the central smoke compares the returned closure digest and manifest hash and
+  observes `state["remotion_validation"]`.
+- Readiness is checked against the production `ensure_pack_host` receipt and
+  its host ready-capability list (`real_pack_host.py:110-112`), then against
+  the authenticated Runtime capability catalog for a ready
+  `rendering.render` (`lines 113-119`).  The central smoke passed real startup,
+  catalog readiness, validation, explicit stop, group absence, marker removal,
+  and Runtime health.  It did not render frames or qualify the App wrapper.
+- Cleanup reuses the production lifecycle lock, registration identity checks,
+  retirement, process-group survivor census, and `waitpid` (`lines 51-66`);
+  the explicit-stop smoke passed.  EOF behavior is structurally correct in
+  the CLI (`lines 141-147`): empty `readline()` exits the `with` and invokes
+  cleanup.  EOF and signal journeys were not exercised by the supplied
+  central smoke, and the three findings above prevent treating those paths as
+  qualified.
+
+## Test evidence
+
+Reviewer rerun (offline only, candidate worktree):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 \
+PYTHONPATH=/home/user/work/wt/agt-m2-real-pack-host-helper \
+/home/user/work/venv-agent/bin/python -m pytest -q -m 'not integration' \
+tests/packs/rendering/test_real_pack_host.py
+```
+
+Result: **6 passed, 1 deselected in 0.59s**.
+
+Existing central evidence was not repeated because the source was unchanged:
+`real-pack-host-integration` reported **1 passed, 6 deselected in 56.50s** on
+the final candidate tree.  No full suite, install, browser, render, or App
+journey was run by this review.
+
+--- report ---
+# Independent review report: `agt-m2-real-pack-host-helper`
+
+Verdict: **blocking cleanup-ownership findings**. The production credential,
+scope, source-closure, boot-manifest, selected-environment, and real
+`rendering.render` readiness paths are sound and the existing central smoke
+proved real startup/catalog/explicit cleanup. The adapter must close the
+post-start race/signal windows before it can claim that cleanup reaps only its
+own process group or that signal cleanup is qualified.
+
+Findings and bounded fixes are in
+[`review.md`](./review.md):
+
+1. Lines 95-106 can adopt a replacement registration after `ensure_pack_host`
+   returns, then line 121 can retire that replacement on validation failure.
+2. A termination signal can arrive after production startup returns but before
+   the cleanup handle/`with` exists, stranding the fresh host.
+3. The raising signal handler remains active while `close()` performs group
+   retirement and `waitpid`, so cleanup itself can be interrupted.
+
+The helper uses no broad/owner authority, mock validation, alternate launcher,
+or source-closure bypass. EOF cleanup is structurally present, but EOF and
+signal journeys were not run.
+
+Test evidence:
+
+- Offline reviewer rerun: `PYTHONDONTWRITEBYTECODE=1
+  PYTHONPATH=/home/user/work/wt/agt-m2-real-pack-host-helper
+  /home/user/work/venv-agent/bin/python -m pytest -q -m 'not integration'
+  tests/packs/rendering/test_real_pack_host.py` — **6 passed, 1 deselected in
+  0.59s**.
+- Existing unchanged central evidence: `real-pack-host-integration` — **1
+  passed, 6 deselected in 56.50s**; not repeated per task instruction.
+- No full suite, install, browser, render, or App journey run.
+
+No repository files or coordination documents were modified; no merge was
+requested. Candidate remains held pending the orchestrator’s M1 decision.
+
+--- commit files ---
+[commit-msg]
+review(timeline): block unsafe pack-host cleanup handoff
+
+Record independent review findings for the real pack-host test helper.
+[commit-msg.txt]
+review(timeline): block unsafe pack-host cleanup handoff
+
+Record independent review findings for the real pack-host test helper.
+
+exec
+/bin/bash -lc 'git status --short --branch; git diff --check' in /home/user/work/wt/agt-m2-pack-helper-review
+ succeeded in 542ms:
+## tl/agt-m2-pack-helper-review
+
+codex
+Reviewed the helper against production `ensure_pack_host` and wrote:
+
+- [review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/review.md)
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/report.md)
+- Both requested commit-message files.
+
+Verdict: three blocking cleanup findings—replacement-registration race, signal window before ownership installation, and signal interruption during cleanup. Credential/scopes, source closure, manifest, selected environment, real readiness, and no-broad-authority claims otherwise checked out.
+
+Test: offline targeted lane **6 passed, 1 deselected in 0.59s**. Central result was unchanged and not rerun: **1 passed, 6 deselected in 56.50s**. No repository or coordination files were modified.
+tokens used
+124,581
+Reviewed the helper against production `ensure_pack_host` and wrote:
+
+- [review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/review.md)
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-review/notes/report.md)
+- Both requested commit-message files.
+
+Verdict: three blocking cleanup findings—replacement-registration race, signal window before ownership installation, and signal interruption during cleanup. Credential/scopes, source closure, manifest, selected environment, real readiness, and no-broad-authority claims otherwise checked out.
+
+Test: offline targeted lane **6 passed, 1 deselected in 0.59s**. Central result was unchanged and not rerun: **1 passed, 6 deselected in 56.50s**. No repository or coordination files were modified.

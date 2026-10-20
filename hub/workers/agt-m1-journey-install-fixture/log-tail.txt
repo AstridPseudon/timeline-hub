@@ -1,0 +1,400 @@
+            if proto == -1:
+                proto = 0
+>       _socket.socket.__init__(self, family, type, proto, fileno)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/usr/lib/python3.13/socket.py:233: PermissionError
+_______ test_runtime_request_adds_the_bearer_token_and_reports_refusals ________
+
+runtime_server = <function runtime_server.<locals>.make at 0x7f9e4ec22020>
+
+    def test_runtime_request_adds_the_bearer_token_and_reports_refusals(runtime_server) -> None:
+>       server = runtime_server({("GET", "/v1/ok"): lambda p, b: (200, {"fine": True}),
+                                 ("GET", "/v1/no"): lambda p, b: (409, {"error": "stale"})})
+
+tests/journeys/test_journey_plumbing.py:355: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/journeys/test_journey_plumbing.py:338: in make
+    servers.append(FakeRuntime(routes))
+                   ^^^^^^^^^^^^^^^^^^^
+tests/journeys/test_journey_plumbing.py:324: in __init__
+    self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/socketserver.py:453: in __init__
+    self.socket = socket.socket(self.address_family,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <socket.socket fd=-1, family=0, type=0, proto=0>
+family = <AddressFamily.AF_INET: 2>, type = <SocketKind.SOCK_STREAM: 1>
+proto = 0, fileno = None
+
+    def __init__(self, family=-1, type=-1, proto=-1, fileno=None):
+        # For user code address family and type values are IntEnum members, but
+        # for the underlying _socket.socket they're just integers. The
+        # constructor of _socket.socket converts the given argument to an
+        # integer automatically.
+        if fileno is None:
+            if family == -1:
+                family = AF_INET
+            if type == -1:
+                type = SOCK_STREAM
+            if proto == -1:
+                proto = 0
+>       _socket.socket.__init__(self, family, type, proto, fileno)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/usr/lib/python3.13/socket.py:233: PermissionError
+______________________ test_task_events_follow_the_cursor ______________________
+
+runtime_server = <function runtime_server.<locals>.make at 0x7f9e4ec22840>
+
+    def test_task_events_follow_the_cursor(runtime_server) -> None:
+        pages = {None: {"items": [{"sequence": 1}], "next_cursor": "c1"}, "c1": {"items": [{"sequence": 2}], "next_cursor": None}}
+>       server = runtime_server({("GET", "/v1/tasks/t1/events"):
+                                 lambda path, body: (200, pages["c1" if "cursor=c1" in path else None])})
+
+tests/journeys/test_journey_plumbing.py:375: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/journeys/test_journey_plumbing.py:338: in make
+    servers.append(FakeRuntime(routes))
+                   ^^^^^^^^^^^^^^^^^^^
+tests/journeys/test_journey_plumbing.py:324: in __init__
+    self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/socketserver.py:453: in __init__
+    self.socket = socket.socket(self.address_family,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <socket.socket fd=-1, family=0, type=0, proto=0>
+family = <AddressFamily.AF_INET: 2>, type = <SocketKind.SOCK_STREAM: 1>
+proto = 0, fileno = None
+
+    def __init__(self, family=-1, type=-1, proto=-1, fileno=None):
+        # For user code address family and type values are IntEnum members, but
+        # for the underlying _socket.socket they're just integers. The
+        # constructor of _socket.socket converts the given argument to an
+        # integer automatically.
+        if fileno is None:
+            if family == -1:
+                family = AF_INET
+            if type == -1:
+                type = SOCK_STREAM
+            if proto == -1:
+                proto = 0
+>       _socket.socket.__init__(self, family, type, proto, fileno)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/usr/lib/python3.13/socket.py:233: PermissionError
+_____ test_runtime_restart_restarts_then_admits_the_apps_request_and_waits _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-251/test_runtime_restart_restarts_0')
+runtime_server = <function runtime_server.<locals>.make at 0x7f9e4ec74cc0>
+
+    def test_runtime_restart_restarts_then_admits_the_apps_request_and_waits(tmp_path: Path, runtime_server) -> None:
+>       server = runtime_server(_runtime_routes("succeeded"))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/journeys/test_journey_plumbing.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/journeys/test_journey_plumbing.py:338: in make
+    servers.append(FakeRuntime(routes))
+                   ^^^^^^^^^^^^^^^^^^^
+tests/journeys/test_journey_plumbing.py:324: in __init__
+    self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/socketserver.py:453: in __init__
+    self.socket = socket.socket(self.address_family,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <socket.socket fd=-1, family=0, type=0, proto=0>
+family = <AddressFamily.AF_INET: 2>, type = <SocketKind.SOCK_STREAM: 1>
+proto = 0, fileno = None
+
+    def __init__(self, family=-1, type=-1, proto=-1, fileno=None):
+        # For user code address family and type values are IntEnum members, but
+        # for the underlying _socket.socket they're just integers. The
+        # constructor of _socket.socket converts the given argument to an
+        # integer automatically.
+        if fileno is None:
+            if family == -1:
+                family = AF_INET
+            if type == -1:
+                type = SOCK_STREAM
+            if proto == -1:
+                proto = 0
+>       _socket.socket.__init__(self, family, type, proto, fileno)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/usr/lib/python3.13/socket.py:233: PermissionError
+_______ test_runtime_restart_fails_when_the_app_render_does_not_complete _______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-251/test_runtime_restart_fails_whe0')
+runtime_server = <function runtime_server.<locals>.make at 0x7f9e4ec75580>
+
+    def test_runtime_restart_fails_when_the_app_render_does_not_complete(tmp_path: Path, runtime_server) -> None:
+>       j, _ = _restart_journey(tmp_path, runtime_server(_runtime_routes("failed")))
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/journeys/test_journey_plumbing.py:474: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/journeys/test_journey_plumbing.py:338: in make
+    servers.append(FakeRuntime(routes))
+                   ^^^^^^^^^^^^^^^^^^^
+tests/journeys/test_journey_plumbing.py:324: in __init__
+    self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/socketserver.py:453: in __init__
+    self.socket = socket.socket(self.address_family,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <socket.socket fd=-1, family=0, type=0, proto=0>
+family = <AddressFamily.AF_INET: 2>, type = <SocketKind.SOCK_STREAM: 1>
+proto = 0, fileno = None
+
+    def __init__(self, family=-1, type=-1, proto=-1, fileno=None):
+        # For user code address family and type values are IntEnum members, but
+        # for the underlying _socket.socket they're just integers. The
+        # constructor of _socket.socket converts the given argument to an
+        # integer automatically.
+        if fileno is None:
+            if family == -1:
+                family = AF_INET
+            if type == -1:
+                type = SOCK_STREAM
+            if proto == -1:
+                proto = 0
+>       _socket.socket.__init__(self, family, type, proto, fileno)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/usr/lib/python3.13/socket.py:233: PermissionError
+_________________ test_runtime_restart_can_skip_the_app_render _________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-251/test_runtime_restart_can_skip_0')
+runtime_server = <function runtime_server.<locals>.make at 0x7f9e4ec76b60>
+
+    def test_runtime_restart_can_skip_the_app_render(tmp_path: Path, runtime_server) -> None:
+>       server = runtime_server({})
+                 ^^^^^^^^^^^^^^^^^^
+
+tests/journeys/test_journey_plumbing.py:480: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/journeys/test_journey_plumbing.py:338: in make
+    servers.append(FakeRuntime(routes))
+                   ^^^^^^^^^^^^^^^^^^^
+tests/journeys/test_journey_plumbing.py:324: in __init__
+    self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/socketserver.py:453: in __init__
+    self.socket = socket.socket(self.address_family,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <socket.socket fd=-1, family=0, type=0, proto=0>
+family = <AddressFamily.AF_INET: 2>, type = <SocketKind.SOCK_STREAM: 1>
+proto = 0, fileno = None
+
+    def __init__(self, family=-1, type=-1, proto=-1, fileno=None):
+        # For user code address family and type values are IntEnum members, but
+        # for the underlying _socket.socket they're just integers. The
+        # constructor of _socket.socket converts the given argument to an
+        # integer automatically.
+        if fileno is None:
+            if family == -1:
+                family = AF_INET
+            if type == -1:
+                type = SOCK_STREAM
+            if proto == -1:
+                proto = 0
+>       _socket.socket.__init__(self, family, type, proto, fileno)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/usr/lib/python3.13/socket.py:233: PermissionError
+=========================== short test summary info ============================
+FAILED tests/journeys/test_journey_plumbing.py::test_the_admission_travels_unchanged_over_http
+FAILED tests/journeys/test_journey_plumbing.py::test_runtime_request_adds_the_bearer_token_and_reports_refusals
+FAILED tests/journeys/test_journey_plumbing.py::test_task_events_follow_the_cursor
+FAILED tests/journeys/test_journey_plumbing.py::test_runtime_restart_restarts_then_admits_the_apps_request_and_waits
+FAILED tests/journeys/test_journey_plumbing.py::test_runtime_restart_fails_when_the_app_render_does_not_complete
+FAILED tests/journeys/test_journey_plumbing.py::test_runtime_restart_can_skip_the_app_render
+6 failed, 79 passed, 2 deselected in 6.95s
+
+codex
+The changed journey test passes, and the full journey module reached 79 passing tests. Six unrelated HTTP/socket tests fail because this sandbox forbids localhost socket creation (`PermissionError: [Errno 1] Operation not permitted`); I’ll record that as an environment limitation, then run the direct Composition readiness tests and lint/diff checks.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix tests/packs/rendering/test_composition_package.py' in /home/user/work/wt/agt-m1-journey-install-fixture
+ succeeded in 1212ms:
+......                                                                   [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/agt-m1-journey-install-fixture/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+6 passed, 1 deselected, 5 warnings in 0.65s
+
+exec
+/bin/bash -lc "set -o pipefail
+if command -v ruff >/dev/null 2>&1; then ruff check tests/journeys/test_journey_plumbing.py; else /home/user/work/venv-agent/bin/python -m ruff check tests/journeys/test_journey_plumbing.py; fi
+
+git diff --check
+git status --short --branch
+printf '\\n--- diff stat ---\\n'
+git diff --stat
+printf '\\n--- diff ---\\n'
+git diff -- tests/journeys/test_journey_plumbing.py" in /home/user/work/wt/agt-m1-journey-install-fixture
+ succeeded in 951ms:
+All checks passed!
+## tl/agt-m1-journey-install-fixture
+ M tests/journeys/test_journey_plumbing.py
+
+--- diff stat ---
+ tests/journeys/test_journey_plumbing.py | 24 ++++++++++++++++++------
+ 1 file changed, 18 insertions(+), 6 deletions(-)
+
+--- diff ---
+diff --git a/tests/journeys/test_journey_plumbing.py b/tests/journeys/test_journey_plumbing.py
+index 723a8d9e..cec143e0 100644
+--- a/tests/journeys/test_journey_plumbing.py
++++ b/tests/journeys/test_journey_plumbing.py
+@@ -111,14 +111,26 @@ def test_journey_render_calls_use_the_backend_and_kill_render_drops_review_for_f
+ 
+ 
+ def test_renderer_install_problem_names_the_missing_install_and_the_fix(tmp_path: Path) -> None:
+-    from astrid.core.rendering.remotion_runtime import REMOTION_CLI_RELATIVE_PATH
++    from astrid.core.rendering import remotion_runtime
++
+     assert "npm ci" in journey.renderer_install_problem(tmp_path)
+-    for name in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
+-        package = tmp_path / "node_modules" / "@banodoco" / name
+-        package.mkdir(parents=True)
+-        (package / "package.json").write_text("{}")
++
++    package = tmp_path / "node_modules" / "@banodoco" / "timeline-composition"
++    package.mkdir(parents=True)
++    exports = {}
++    for export in remotion_runtime._REQUIRED_COMPOSITION_EXPORTS:
++        filename = "index" if export == "." else export.removeprefix("./")
++        exports[export] = {"import": f"./dist/{filename}.js"}
++        (package / "dist" / f"{filename}.js").parent.mkdir(parents=True, exist_ok=True)
++        (package / "dist" / f"{filename}.js").write_text("export {};\n")
++    (package / "package.json").write_text(json.dumps({
++        "name": "@banodoco/timeline-composition",
++        "version": "0.0.8",
++        "exports": exports,
++    }))
++
+     assert "remotion-cli" in journey.renderer_install_problem(tmp_path)
+-    cli = tmp_path / REMOTION_CLI_RELATIVE_PATH
++    cli = tmp_path / remotion_runtime.REMOTION_CLI_RELATIVE_PATH
+     cli.parent.mkdir(parents=True)
+     cli.write_text("")
+     assert journey.renderer_install_problem(tmp_path) is None
+
+codex
+The focused journey assertion and direct Composition readiness suite both pass. Ruff and `git diff --check` also pass; the only broader-suite failures are the pre-existing socket-restricted tests. The diff is limited to the one requested test, with no schema/theme stubs, product code, or dependency changes. I’m writing the required conventional commit message files and doing a final status check.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-journey-install-fixture/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-journey-install-fixture/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-journey-install-fixture/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-journey-install-fixture/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..3455824c7453d109075504bd3001bb545a935c7d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-journey-install-fixture/commit-msg
+@@ -0,0 +1,4 @@
++test(agent): update Remotion journey install fixture
++
++Use a minimal valid named and versioned Composition package with compiled
++export targets while preserving the npm ci, CLI, and success readiness steps.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-journey-install-fixture/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-journey-install-fixture/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..3455824c7453d109075504bd3001bb545a935c7d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-journey-install-fixture/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(agent): update Remotion journey install fixture
++
++Use a minimal valid named and versioned Composition package with compiled
++export targets while preserving the npm ci, CLI, and success readiness steps.
+diff --git a/tests/journeys/test_journey_plumbing.py b/tests/journeys/test_journey_plumbing.py
+index 723a8d9ef590ef34bf8776c3abdb631ea3e0a38e..cec143e0eb4e042eb68c3d66a99ad2f2f925c571
+--- a/tests/journeys/test_journey_plumbing.py
++++ b/tests/journeys/test_journey_plumbing.py
+@@ -111,14 +111,26 @@
+ 
+ 
+ def test_renderer_install_problem_names_the_missing_install_and_the_fix(tmp_path: Path) -> None:
+-    from astrid.core.rendering.remotion_runtime import REMOTION_CLI_RELATIVE_PATH
++    from astrid.core.rendering import remotion_runtime
++
+     assert "npm ci" in journey.renderer_install_problem(tmp_path)
+-    for name in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
+-        package = tmp_path / "node_modules" / "@banodoco" / name
+-        package.mkdir(parents=True)
+-        (package / "package.json").write_text("{}")
++
++    package = tmp_path / "node_modules" / "@banodoco" / "timeline-composition"
++    package.mkdir(parents=True)
++    exports = {}
++    for export in remotion_runtime._REQUIRED_COMPOSITION_EXPORTS:
++        filename = "index" if export == "." else export.removeprefix("./")
++        exports[export] = {"import": f"./dist/{filename}.js"}
++        (package / "dist" / f"{filename}.js").parent.mkdir(parents=True, exist_ok=True)
++        (package / "dist" / f"{filename}.js").write_text("export {};\n")
++    (package / "package.json").write_text(json.dumps({
++        "name": "@banodoco/timeline-composition",
++        "version": "0.0.8",
++        "exports": exports,
++    }))
++
+     assert "remotion-cli" in journey.renderer_install_problem(tmp_path)
+-    cli = tmp_path / REMOTION_CLI_RELATIVE_PATH
++    cli = tmp_path / remotion_runtime.REMOTION_CLI_RELATIVE_PATH
+     cli.parent.mkdir(parents=True)
+     cli.write_text("")
+     assert journey.renderer_install_problem(tmp_path) is None
+
+codex
+## Done
+
+Updated only `tests/journeys/test_journey_plumbing.py`:
+
+- Replaced obsolete empty schema/theme package stubs.
+- Added minimal valid `@banodoco/timeline-composition@0.0.8` manifest.
+- Added required compiled `dist` export files.
+- Preserved `npm ci` hint, `remotion-cli` hint, and final success.
+
+Checks:
+
+- Focused test: passed.
+- Composition readiness tests: `6 passed, 1 deselected`.
+- Full journey file: `79 passed, 6 failed, 2 deselected`; failures are unrelated localhost socket restrictions.
+- Ruff: passed.
+- `git diff --check`: passed.
+- Commit messages written to both required paths.
+
+No product, dependency, lockfile, or other test changes.
+tokens used
+64,601
+## Done
+
+Updated only `tests/journeys/test_journey_plumbing.py`:
+
+- Replaced obsolete empty schema/theme package stubs.
+- Added minimal valid `@banodoco/timeline-composition@0.0.8` manifest.
+- Added required compiled `dist` export files.
+- Preserved `npm ci` hint, `remotion-cli` hint, and final success.
+
+Checks:
+
+- Focused test: passed.
+- Composition readiness tests: `6 passed, 1 deselected`.
+- Full journey file: `79 passed, 6 failed, 2 deselected`; failures are unrelated localhost socket restrictions.
+- Ruff: passed.
+- `git diff --check`: passed.
+- Commit messages written to both required paths.
+
+No product, dependency, lockfile, or other test changes.

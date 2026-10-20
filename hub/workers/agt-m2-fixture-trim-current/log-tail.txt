@@ -1,0 +1,400 @@
++
++    return fixture
++
++
++def _restore_record_fields(
++    fixture: Any,
++    record_paths: tuple[tuple[str | int, ...], ...],
++) -> None:
++    for record_path in record_paths:
++        records = fixture
++        for part in record_path:
++            records = records[part]
++        for record in records:
++            command = record.get('command')
++            if not isinstance(command, dict):
++                continue
++            for key in ('created', 'reads', 'selections'):
++                if key not in record and key in command:
++                    record[key] = copy.deepcopy(command[key])
+diff --git a/tests/editing_conformance/test_fixture_loader.py b/tests/editing_conformance/test_fixture_loader.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..6eb4e3ad511594c1dcbf22227e312926509a5cd3
+--- /dev/null
++++ b/tests/editing_conformance/test_fixture_loader.py
+@@ -0,0 +1,27 @@
++from __future__ import annotations
++
++import copy
++import json
++from pathlib import Path
++
++from tests.editing_conformance.fixture_loader import load_fixture
++
++
++FIXTURES = Path(__file__).parent / 'fixtures'
++
++
++def test_record_restoration_does_not_rewrite_opaque_input_payload(tmp_path):
++    source = json.loads((FIXTURES / 'recipe_m2_clip_add.json').read_text())
++    opaque = {
++        'records': [{
++            'command': {'created': ['authored'], 'reads': ['authored']},
++            'reads': ['authored'],
++        }],
++    }
++    source['input']['parent_revision']['payload']['opaque'] = copy.deepcopy(opaque)
++    fixture = tmp_path / 'recipe_m2_clip_add.json'
++    fixture.write_text(json.dumps(source))
++
++    loaded = load_fixture(fixture)
++
++    assert loaded['input']['parent_revision']['payload']['opaque'] == opaque
+diff --git a/tests/editing_conformance/test_recipe_clip_scalar_fields.py b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+index 4319da921dd31e9b67d74127936222a1111e88d0..1773269f8b1a600e049f89b2dda5e9af65db6011
+--- a/tests/editing_conformance/test_recipe_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+@@ -13,6 +13,7 @@
+ from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+ from astrid.sdk.timeline.commands import execute
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse, later
+ from tests.timeline.test_authoring_bundle import OLD, _closure, _digest
+ 
+@@ -89,7 +90,7 @@
+                    inverse(plan.bundle, plan.records).records).bundle == plan.bundle
+     assert replay(plan, original).records == plan.records
+     compile_authoring_candidate(plan.bundle)
+-    fixture = json.loads((FIXTURES / 'recipe_m2_app_clip_scalar_fields.json').read_text())
++    fixture = load_fixture(FIXTURES / 'recipe_m2_app_clip_scalar_fields.json')
+     assert fixture == {'bundle': original, 'commands': plan.commands, 'records': plan.records,
+                        'after_bundle': plan.bundle}
+     assert execute(fixture['bundle'], fixture['commands']).bundle == fixture['after_bundle']
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_add.py b/tests/editing_conformance/test_recipe_m2_clip_add.py
+index e435e24041bfab9087502ad345fe8a27e5c0d781..ebc23a55bf0722812522a7982f308b5e65e43919
+--- a/tests/editing_conformance/test_recipe_m2_clip_add.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_add.py
+@@ -21,6 +21,7 @@
+     document_from_bundle,
+ )
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse
+ from tests.sdk.test_timeline_commit_provider_document import document_fixture
+ 
+@@ -55,7 +56,7 @@
+ 
+ 
+ def test_empty_bootstrap_explicit_track_then_first_clip_golden():
+-    golden = json.loads(FIXTURE.read_text())
++    golden = load_fixture(FIXTURE)
+     original = bundle_from_document(golden['input'])
+     plan = execute(original, golden['commands'])
+     assert plan.records == golden['records']
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_split.py b/tests/editing_conformance/test_recipe_m2_clip_split.py
+index 06e3b35d972da63789dc73f9a9d1d5fc7414728c..46338c4ebf739bd6721112285d24842cb8e1f495
+--- a/tests/editing_conformance/test_recipe_m2_clip_split.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_split.py
+@@ -26,6 +26,7 @@
+     document_from_bundle,
+ )
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse, later
+ from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
+ 
+@@ -328,7 +329,7 @@
+ 
+ 
+ def test_portable_golden_capture_and_accepted_record_output():
+-    golden = json.loads(FIXTURE.read_text())
++    golden = load_fixture(FIXTURE)
+     original = bundle_from_document(golden['input'])
+     plan = execute(original, golden['commands'])
+     assert plan.records == golden['records']
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index da9ad99dca8b1abfb93018a02b1b53210d7598c6..428d12246421a1030418f335ac7c4d2c78344280
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -22,6 +22,7 @@
+ from astrid.sdk.timeline.commands import execute
+ from astrid.sdk.timeline.rebase import replay
+ from astrid.sdk.timeline_checkout import Clip
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import inverse, later
+ from tests.sdk.test_timeline_commit_provider_document import document_fixture
+ 
+@@ -281,7 +282,7 @@
+ 
+ 
+ def test_portable_golden_and_closed_schema():
+-    golden = json.loads(FIXTURE.read_text())
++    golden = load_fixture(FIXTURE)
+     original = bundle_from_document(golden['input'])
+     plan = execute(original, golden['commands'])
+     assert plan.records == golden['records']
+diff --git a/tests/editing_conformance/test_recipe_m2_placement.py b/tests/editing_conformance/test_recipe_m2_placement.py
+index cfa734fa277c90553aa8a41f86e39ec5d367fa32..7abea1d50e91db77407ba57c3ce3c6e1cc8228ab
+--- a/tests/editing_conformance/test_recipe_m2_placement.py
++++ b/tests/editing_conformance/test_recipe_m2_placement.py
+@@ -14,6 +14,7 @@
+ from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+ from astrid.sdk.timeline.native_placement_commands import capture_placement
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import inverse, later
+ from tests.sdk.test_timeline_commit_provider_document import document_fixture
+ 
+@@ -35,7 +36,7 @@
+ 
+ 
+ def test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo():
+-    for case in json.loads(FIXTURE.read_text())['cases']:
++    for case in load_fixture(FIXTURE)['cases']:
+         original = bundle_from_document(case['input'])
+         before = copy.deepcopy(original)
+         command = capture_placement(original, **case['request'])
+diff --git a/tests/editing_conformance/test_recipe_m2_placement_create_unplace.py b/tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
+index 1bb4e9c77aedf8bdb2aecf6940bc9202a5b8c3c1..0d68df393d6409b5d35089abe079b1c6dd9ba0e4
+--- a/tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
++++ b/tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
+@@ -15,6 +15,7 @@
+     capture_placement_unplace,
+ )
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse, later
+ from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
+ from tests.sdk.test_timeline_commit_provider import (
+@@ -62,7 +63,7 @@
+ 
+ @pytest.mark.parametrize('operation', ['create', 'unplace'])
+ def test_portable_goldens(operation):
+-    golden = json.loads(FIXTURE.read_text())[operation]
++    golden = load_fixture(FIXTURE)[operation]
+     document, bundle, command, verified = case(operation)
+     plan = execute(bundle, [command], verified_media=verified)
+     assert golden == {'input': document, 'verified_media': verified, 'commands': [command],
+diff --git a/tests/editing_conformance/test_recipe_m2_shot_pool.py b/tests/editing_conformance/test_recipe_m2_shot_pool.py
+index 6019ea62d5519a13c7f0b521c92750ba83cedd2c..2412153308efb840a72b82d7e514d3ca6215d66d
+--- a/tests/editing_conformance/test_recipe_m2_shot_pool.py
++++ b/tests/editing_conformance/test_recipe_m2_shot_pool.py
+@@ -14,6 +14,7 @@
+ from astrid.sdk.timeline.native_auto_placement import auto_place_shared, unplace_shared
+ from astrid.sdk.timeline.native_shot_pool_commands import POOL, capture_shot_pool
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse, later
+ from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
+ from tests.sdk.test_timeline_commit_provider import (
+@@ -66,7 +67,7 @@
+ def test_portable_goldens(name):
+     _, bundle, action, pin, verified = build(name)
+     command, plan = step(bundle, action, pin, verified)
+-    assert json.loads(FIXTURE.read_text())[name] == {
++    assert load_fixture(FIXTURE)[name] == {
+         'commands': [command], 'records': plan.records, 'pool': pool(plan.bundle)}
+ 
+ 
+diff --git a/tests/editing_conformance/test_recipe_occurrence_delete.py b/tests/editing_conformance/test_recipe_occurrence_delete.py
+index 343dd7f037b26782d0ab1f5e7f54aca5f2f78a3c..a19fd40e85188d5bce003de7c9559ac4abef8d71
+--- a/tests/editing_conformance/test_recipe_occurrence_delete.py
++++ b/tests/editing_conformance/test_recipe_occurrence_delete.py
+@@ -2,7 +2,6 @@
+ from __future__ import annotations
+ 
+ import copy
+-import json
+ from pathlib import Path
+ 
+ import pytest
+@@ -14,6 +13,7 @@
+ from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+ from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import inverse, later
+ from tests.sdk.test_timeline_commit_provider_document import document_fixture
+ 
+@@ -187,7 +187,7 @@
+ 
+ 
+ def test_closed_schema_and_portable_native_capture_golden():
+-    fixture = json.loads(FIXTURE.read_text())
++    fixture = load_fixture(FIXTURE)
+     assert portable_golden() == fixture
+     validator = Draft202012Validator(_SCHEMA)
+     validator.validate(fixture['command'])
+diff --git a/tests/editing_conformance/test_recipe_occurrence_duplicate.py b/tests/editing_conformance/test_recipe_occurrence_duplicate.py
+index 013c203f71e64c6202acfa1e32ccf7372a261e6d..8752a9e042617769d96f674e1c39aabf98d00a13
+--- a/tests/editing_conformance/test_recipe_occurrence_duplicate.py
++++ b/tests/editing_conformance/test_recipe_occurrence_duplicate.py
+@@ -2,7 +2,6 @@
+ from __future__ import annotations
+ 
+ import copy
+-import json
+ from pathlib import Path
+ 
+ import pytest
+@@ -16,6 +15,7 @@
+ from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+ from astrid.sdk.timeline.native_occurrence_duplicate import capture_occurrence_duplicate
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import inverse, later
+ from tests.sdk.test_timeline_commit_provider_document import document_fixture
+ 
+@@ -226,7 +226,7 @@
+ 
+ 
+ def test_portable_native_capture_golden_matches_fixture():
+-    assert portable_golden() == json.loads(FIXTURE.read_text())
++    assert portable_golden() == load_fixture(FIXTURE)
+ 
+ 
+ @pytest.mark.parametrize('field,value', [
+diff --git a/tests/editing_conformance/test_recipe_occurrence_media.py b/tests/editing_conformance/test_recipe_occurrence_media.py
+index 152477f2c5f31f46059ec224645226554b716ea9..e0b6d8e3a8fe017b479df50d5d9e55e7f002185c
+--- a/tests/editing_conformance/test_recipe_occurrence_media.py
++++ b/tests/editing_conformance/test_recipe_occurrence_media.py
+@@ -2,7 +2,6 @@
+ from __future__ import annotations
+ 
+ import copy
+-import json
+ from pathlib import Path
+ 
+ import pytest
+@@ -20,6 +19,7 @@
+     capture_occurrence_swap_media,
+ )
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import inverse, later
+ from tests.sdk.test_timeline_commit_provider import (
+     CommitRejected,
+@@ -100,7 +100,7 @@
+ 
+ @pytest.mark.parametrize('operation', ['add', 'swap'])
+ def test_portable_goldens(operation):
+-    golden = json.loads(FIXTURE.read_text())[operation]
++    golden = load_fixture(FIXTURE)[operation]
+     document, bundle, command, verified = captured(operation, 'video')
+     plan = execute(bundle, [command], verified_media=verified)
+     assert golden == {'input': document, 'verified_media': verified, 'commands': [command],
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- status ---'; git status --short; printf '%s\\n' '--- diff check ---'; git diff --check; printf '%s\\n' '--- commit message ---'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-fixture-trim-current/commit-msg; printf 'DONE bytes: '; wc -c < /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-fixture-trim-current/DONE; printf '%s\\n' '--- compact loader references ---'; rg -n \"load_fixture|json.loads\\(FIXTURE.read_text\" tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_recipe_occurrence_delete.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_occurrence_media.py" in /home/user/work/wt/agt-m2-fixture-trim-current
+ succeeded in 314ms:
+--- status ---
+ M tests/editing_conformance/fixtures/recipe_m2_app_clip_scalar_fields.json
+ M tests/editing_conformance/fixtures/recipe_m2_clip_add.json
+ M tests/editing_conformance/fixtures/recipe_m2_clip_split.json
+ M tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+ M tests/editing_conformance/fixtures/recipe_m2_occurrence_delete.json
+ M tests/editing_conformance/fixtures/recipe_m2_occurrence_duplicate.json
+ M tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+ M tests/editing_conformance/fixtures/recipe_m2_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_placement_create_unplace.json
+ M tests/editing_conformance/fixtures/recipe_m2_shot_pool.json
+ M tests/editing_conformance/test_recipe_clip_scalar_fields.py
+ M tests/editing_conformance/test_recipe_m2_clip_add.py
+ M tests/editing_conformance/test_recipe_m2_clip_split.py
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+ M tests/editing_conformance/test_recipe_m2_placement.py
+ M tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
+ M tests/editing_conformance/test_recipe_m2_shot_pool.py
+ M tests/editing_conformance/test_recipe_occurrence_delete.py
+ M tests/editing_conformance/test_recipe_occurrence_duplicate.py
+ M tests/editing_conformance/test_recipe_occurrence_media.py
+?? docs/design/agent-fixture-trim-current.md
+?? tests/editing_conformance/fixture_loader.py
+?? tests/editing_conformance/test_fixture_loader.py
+--- diff check ---
+--- commit message ---
+test(timeline): compact current M2 editing fixtures
+
+Factor duplicate fixture inputs and recorder metadata on current integration,
+with explicit context-aware restoration and expanded handoff exports.
+DONE bytes: 0
+--- compact loader references ---
+tests/editing_conformance/test_recipe_m2_clip_add.py:24:from tests.editing_conformance.fixture_loader import load_fixture
+tests/editing_conformance/test_recipe_m2_clip_add.py:59:    golden = load_fixture(FIXTURE)
+tests/editing_conformance/test_recipe_m2_placement_create_unplace.py:18:from tests.editing_conformance.fixture_loader import load_fixture
+tests/editing_conformance/test_recipe_m2_placement_create_unplace.py:66:    golden = load_fixture(FIXTURE)[operation]
+tests/editing_conformance/test_recipe_m2_clip_split.py:29:from tests.editing_conformance.fixture_loader import load_fixture
+tests/editing_conformance/test_recipe_m2_clip_split.py:332:    golden = load_fixture(FIXTURE)
+tests/editing_conformance/test_recipe_m2_shot_pool.py:17:from tests.editing_conformance.fixture_loader import load_fixture
+tests/editing_conformance/test_recipe_m2_shot_pool.py:70:    assert load_fixture(FIXTURE)[name] == {
+tests/editing_conformance/test_recipe_occurrence_media.py:22:from tests.editing_conformance.fixture_loader import load_fixture
+tests/editing_conformance/test_recipe_occurrence_media.py:103:    golden = load_fixture(FIXTURE)[operation]
+tests/editing_conformance/test_recipe_m2_placement.py:17:from tests.editing_conformance.fixture_loader import load_fixture
+tests/editing_conformance/test_recipe_m2_placement.py:39:    for case in load_fixture(FIXTURE)['cases']:
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:18:from tests.editing_conformance.fixture_loader import load_fixture
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:229:    assert portable_golden() == load_fixture(FIXTURE)
+tests/editing_conformance/test_recipe_clip_scalar_fields.py:16:from tests.editing_conformance.fixture_loader import load_fixture
+tests/editing_conformance/test_recipe_clip_scalar_fields.py:93:    fixture = load_fixture(FIXTURES / 'recipe_m2_app_clip_scalar_fields.json')
+tests/editing_conformance/test_recipe_occurrence_delete.py:16:from tests.editing_conformance.fixture_loader import load_fixture
+tests/editing_conformance/test_recipe_occurrence_delete.py:190:    fixture = load_fixture(FIXTURE)
+tests/editing_conformance/test_recipe_m2_clip_trim.py:25:from tests.editing_conformance.fixture_loader import load_fixture
+tests/editing_conformance/test_recipe_m2_clip_trim.py:285:    golden = load_fixture(FIXTURE)
+
+exec
+/bin/bash -lc "find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design -maxdepth 1 -type f -name 'handoff-agent-expanded-recipe_m2_*.json' -printf '%f %s bytes\\n' | sort" in /home/user/work/wt/agt-m2-fixture-trim-current
+ succeeded in 0ms:
+handoff-agent-expanded-recipe_m2_app_clip_scalar_fields.json 161268 bytes
+handoff-agent-expanded-recipe_m2_clip_add.json 20541 bytes
+handoff-agent-expanded-recipe_m2_clip_split.json 57241 bytes
+handoff-agent-expanded-recipe_m2_clip_trim.json 52208 bytes
+handoff-agent-expanded-recipe_m2_occurrence_delete.json 123486 bytes
+handoff-agent-expanded-recipe_m2_occurrence_duplicate.json 94420 bytes
+handoff-agent-expanded-recipe_m2_occurrence_media.json 108547 bytes
+handoff-agent-expanded-recipe_m2_placement.json 79188 bytes
+handoff-agent-expanded-recipe_m2_placement_create_unplace.json 177115 bytes
+handoff-agent-expanded-recipe_m2_shot_pool.json 43819 bytes
+
+codex
+## Report
+
+Completed current `df2739f9` fixture trim.
+
+- Factored 10 fixtures, preserving all 15 distinct cases and current pool/legacy-read/delete/D07 data.
+- Added context-aware Python loader; opaque nested `records` payloads remain untouched.
+- Exported 10 expanded handoff fixtures under `/tmp/.../orch/design/`.
+- Added design documentation and reconstruction proof: `10/10` exact JSON matches.
+- Size: `917,833 → 740,101` bytes; `32,338 → 25,775` logical lines.
+
+Tests:
+
+```text
+PYTHONPATH=. python3 -m pytest -q [10 touched conformance files + loader test]
+555 passed
+```
+
+Also passed `git diff --check` and AST parsing. Ruff was unavailable (`No module named ruff`). No full suite run.
+
+Commit message written and `DONE` marker created.
+tokens used
+170,654
+## Report
+
+Completed current `df2739f9` fixture trim.
+
+- Factored 10 fixtures, preserving all 15 distinct cases and current pool/legacy-read/delete/D07 data.
+- Added context-aware Python loader; opaque nested `records` payloads remain untouched.
+- Exported 10 expanded handoff fixtures under `/tmp/.../orch/design/`.
+- Added design documentation and reconstruction proof: `10/10` exact JSON matches.
+- Size: `917,833 → 740,101` bytes; `32,338 → 25,775` logical lines.
+
+Tests:
+
+```text
+PYTHONPATH=. python3 -m pytest -q [10 touched conformance files + loader test]
+555 passed
+```
+
+Also passed `git diff --check` and AST parsing. Ruff was unavailable (`No module named ruff`). No full suite run.
+
+Commit message written and `DONE` marker created.

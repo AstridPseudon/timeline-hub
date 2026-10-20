@@ -1,0 +1,9 @@
+name=agt-m2-clear-batch-inverse
+repo=agent
+base=tl/agt-m2-clear-absent
+base_sha=8600e018
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-clear-batch-inverse
+started=2026-10-20T00:32:49Z

@@ -1,0 +1,9 @@
+name=agt-d09-join-2
+repo=agent
+base=tl/integration
+base_sha=4a75f68f
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-d09-join-2
+started=2026-10-20T05:07:20Z

@@ -1,0 +1,400 @@
++  }
++}
++```
++
++Derived values are `clipOrder:{V1:["clip-1","clip-2"],V2:[]}`, group display ID
++`shot-1:V1`, bounding interval `[0,4)`. A local
++`pinnedShotGroupsOverride:[{...group,trackId:"V2"}]` is an instruction to replace
++the authored array during preview (`P/lib/timeline-mutation-engine.ts:188`, under
++`src/tools/video-editor/`); the `Override` key itself is not saved group ownership.
++
++By comparison, actual `commands/fixtures/authoringBundle.json`, case
++`trimmed-child` (single-line fixture), contains this canonical occurrence/child
++excerpt; these are two ownership levels, not an alternative soft-tag row:
++
++```json
++{
++  "occurrence": {
++    "occurrence_id":"occ-0","shot_id":"source-shot","shot_revision_id":"shot-r1",
++    "placement":{"start_ms":10000,"track":"picture"},
++    "duration_ms":10000,"source_offset":0,"speed":1
++  },
++  "internalClip": {
++    "id":"raw-child-clip","track":"picture","asset":"media",
++    "at":1,"from":2,"to":8,"speed":2
++  }
++}
++```
++
++Parent lane is the occurrence placement's lane; child lane is in the pinned
++internal timeline. The child's source window is `[2,8)` at speed 2, not the
++occurrence span. Projection creates occurrence-qualified display IDs, preserving
++`rawClipId`, `ownerRef`, `clipRef` at
++`P/src/tools/video-editor/data/shotCompositionProjection.ts:334`. Probe sample:
++`occ-1:alpha-video` → `occurrence:occ-1/clip:alpha-video`. Never parse a display
++ID or media alias to infer ownership. Main copies internal bytes unchanged while
++materializing independent repeated-shot owners and known item references
++(`A/authoring_bundle.py:218`, `:403`, under `astrid/core/timeline/`;
++`P/commands/authoringBundle.ts:160`, under `src/tools/video-editor/`). Do not
++conflate asset aliases, shot-item IDs, raw clip IDs and occurrence IDs.
++
++## Recorder mapping and exact inverse
++
++Existing primitives are `A/astrid/sdk/timeline/_recording.py:43` (read/select/bind),
++`:64` (tagged before/after, including unchanged writes), `:85` (create).
++`_command_state.py:144` resolves only existing entity kinds; `:204` writes a full
++row or a dict property. Array-index mutation is not supported. Current queries
++are only `move.target`, `track.create`, `move.blockers` (`_recording.py:15`).
++All move-set queries in the draft are therefore proposed, not current APIs.
++
++| Requested effect | Existing support / genuinely needed change |
++| --- | --- |
++| Add/delete/update/reorder soft tags | A guarded write/clear of `parent`, path `["config","pinnedShotGroups"]`, already represents the entire raw array, including absent/null/empty distinctions and complete objects. It can add/remove/reorder rows without a new store or group ID. Python primitive probe restores exact bytes. This is conservative: concurrent edits to any row conflict. A semantic per-row primitive is needed only to promise independent row concurrency; it is not required by these three fixtures. |
++| Group retrack | Translate every selected raw clip once, write each `track`, update the matching group's `trackId` while preserving its complete object, `clipIds`, mode, snapshots and original array position. Do not rebuild through App's lossy clone. If using per-row addresses, bind the original exact `(shotId,trackId)` tuple; old present→absent and destination absent→present must be one guarded relocation. Refuse duplicate keys and occupied destination. Frozen R4 `astrid/sdk/timeline/shot_groups.py:27` encodes that tuple as base64url JSON; it is an address convention, not proof of a main persistent identity. |
++| Clip order | The three exact examples already have the required raw clip order: changing tracks yields the expected projected per-lane order without rearranging `clips[]`. The draft's **general** promise to append incoming clips in explicit `members` order needs a reusable owner-scoped collection-order primitive when the existing array differs. Record complete ordered stable refs before/after; reorder full existing objects, not reconstructed rows; derive App `clipOrder`. Do not persist another order map. |
++| Row create/delete/order | Existing track create appends and reserves the ID. `State.set` restores a deleted row by append (`_command_state.py:208`); probe `[A,B]→delete A→restore A` yields `[B,A]`. Exact middle-row restoration and explicit reorder genuinely need collection-position/order restoration. Bottom append alone does not need a new lane-order operation. |
++
++For a future order/per-row primitive, record collection membership/order and the
++row's absence/presence with ownership edges. Extend overlap checks between a
++collection address and its member addresses: current token overlap compares
++equal entity refs (`_command_state.py:109`), so replacing `parent.clips` cannot
++silently stand in for writes addressed as `parent/clip:c`. Preserve the current
++top-level/config clip alias rule and derived mirror compilation
++(`_recording.py:113`); do not author two independent clip arrays. Whole-array
++group writes and future semantic row writes likewise need common overlap rules
++if both address spellings are admitted. These changes are **UNIMPLEMENTED/UNRUN**;
++the probes establish current limits, not conformance of a proposed primitive.
++
++Exact guarded inverse must retain first-before/last-after including presence,
++full raw group/clip/track objects and order; restore starts/source fields and
++group key, then recompile mirrors/timing. Verify original read/selection/identity
++guards and complete publication ancestry; overlapping same-value/ABA writes
++still refuse. Existing mechanics: `inverse.py:24`, `:46`, `:105`. Do not replace
++them with snapshots or a new undo stack.
++
++There is also a concrete composed-batch gap: `inverse.py:138` checks created-track
++dependents **before** reversing the batch's moves (`:142`). The primitive probe
++of create C + move its own clip to C refuses with `created track has surviving
++dependents`. The shared inverse must distinguish dependents removed by the
++guarded reversing batch from surviving later dependents, stage that reversal,
++then remove the empty track; it must still refuse later clips/references.
++This is a required future fix, not evidence that grouped undo currently works.
++Keep ID reservations monotonic (`commit.py:317`); retrack does not allocate a new
++group, and track create/retry/redo must use the original reserved ID.
++
++## Preserve the three fixtures exactly
++
++All remain `it.fails` in `P/src/tools/video-editor/hooks/useClipDrag.test.tsx`.
++No assertions or tests were edited. The offline planner checks use V3 already
++present to test geometry; they do **not** exercise track creation or dispatch.
++
++| Exact test name / line | Required authored outcome |
++| --- | --- |
++| `commits a config edit when a free multi-clip drag drops onto a new bottom track` / 827 | Create V3 once; ordered selection/members `[clip-2,clip-1]`; anchor clip-2 from 2/V2 to 3/V3, clip-1 from 0/V1 to 1/V2; hold 2 each, lanes V1,V2,V3, no pinned override, secondary ghosts, one transaction. |
++| `updates pinnedShotGroupsOverride when a pinned group is dragged across tracks` / 1173 | Both parent clips move V1→V2 by +1: `[1,3)`, `[3,5)`; V1 empty, V2 order c1,c2; same group at V2 with ordered membership/mode preserved; one transaction and selection. |
++| `updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track` / 1283 | Create V3 once; group moves by +3: `[3,5)`, `[5,7)` there; group track V3, ordered membership/mode retained. Existing test checks config/group; draft's extra geometry and accepted-readback coverage remains required. |
++
++Planner evidence: `P/src/tools/video-editor/lib/multi-drag-utils.ts:193` computes
++row delta and expands complete groups; `:224` explicitly leaves group-row update
++to caller; `:351` applies moves; `:480` derives clip order. Its collision path can
++change source windows (`:470`); do not port that as fixed-window move semantics.
++`clip-drag-planner.ts:329` also resolves UI targets/snaps/routes; these are not
++authoritative replay choices. Keep the draft's original frozen basis, common
++translation/relative offsets, source windows, explicit collision refusal and
++original guards. Runtime local door, dependent B, sole recorder and no-receipts
++decisions are unchanged.
++
++## Owner handoff and verification limits
++
++1. Agent/App: approve or reject continued **authored soft-tag** use of the existing
++   parent array versus canonical occurrence conversion. Main has no demonstrated
++   canonical persisted soft-tag contract after migration. Do not add the draft's
++   `memberSelectors`/`ownerOccurrenceId` fields by assumption. The three fixtures
++   need only parent clips; occurrence-local free selections retain scoped refs
++   and main materialization. For a parent group naming occurrence children,
++   explicit persisted scoped provenance and its codec/migration are missing;
++   fail ambiguous repeated IDs. Evidence: type/projection/migration/codec rows
++   above. Such publication and occurrence-group interoperability are **UNRUN**.
++2. Agent: choose conservative whole-array group conflicts for this first slice,
++   or require per-row concurrency now. Prefer existing whole-array recording for
++   the three fixtures; order restoration is a separate real shared-primitive
++   gap. Before implementing the draft's broader append/order claim, add the
++   collection-order and composed-inverse proofs to the existing conformance
++   suites, including exact unknown fields/absence, reordered membership,
++   same-value/ABA publications and later dependents. Evidence: primitive probes
++   and recorder/inverse lines above. Those suite proofs are **UNRUN**.
++3. App: preserve original success assertions; observe the command service's
++   preview/accepted result rather than restoring legacy publication authority.
++   Current single move refuses groups/retrack
++   (`P/src/tools/video-editor/commands/semanticGestures.ts:62`, `:77`). Flip the
++   exact three expected failures only with capture→preview→commit/readback→grouped
++   inverse coverage. Evidence: fixture lines and three planner probes above.
++   Hook suites and real browser coverage are **UNRUN** by this audit.
++
++Offline commands run (both final runs exit **0**); set
++`W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit`:
++
++```bash
++# cwd /home/user/work/app; installed tsx loader, no IPC/servers/install
++TSX_TSCONFIG_PATH="$W/tsconfig.json" node --import /home/user/work/app/node_modules/tsx/dist/loader.mjs "$W/probe.mts"
++# cwd /home/user/work/wt/agt-m2-group-audit
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-group-audit /home/user/work/venv-agent/bin/python "$W/probe.py"
++```
++
++Final output: `W/probe-ts.log`, `W/probe-python.log`. TS: known group-field
++round-trip, observed unknown-field loss, stable equal-time ordering, three drag
++plans, canonical group omission and scoped clip identity. Python: lossless raw
++group encode/decode, graph rejection, unsupported group entity, nonexact row
++restore order, exact whole-group-array primitive inverse, composed-track inverse
++refusal. Scripts assert observations; they are external audit probes, not tests
++of an implemented M2 command. Initial TS attempts exposed missing bundler aliases
++(external tsconfig now mirrors existing workspace aliases), probe track/signature
++mistakes (corrected), and the real opaque-field loss (retained as a finding).
++
++No pytest/vitest repository suites, full suite, sockets, live publish/readback,
++crash/restart/outbox, browser, renderer or macOS tests were run. No full test
++request was submitted for this design-only task. Product worktree remains clean.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/REPORT.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/REPORT.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..b3ddd75a0f5394cd3b947c9bdb05d67a85fc1554
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/REPORT.md
+@@ -0,0 +1,46 @@
++# agt-m2-group-audit — design only
++
++Delivered `ORCH/design/m2-group-ownership.md`: source map, actual authored and
++derived shapes, persistence/codec/undo paths, recorder mapping, three unchanged
++App expected-failure fixtures, and explicit Agent/App owner decisions. No
++product/test repository changes, git mutations, dependency installs or servers.
++
++Findings: existing App parent soft-tag rows survive the CanonicalDocument codec,
++but are migration-only in the canonical graph and omitted from App's canonical
++projection. App's old group serializer drops unknown fields. The existing recorder
++can exactly inverse a whole group-array write; semantic group entities/order
++operations are absent. Deleted rows restore at the end. A created track populated
++by its own batch's clip move currently fails the shared inverse's dependent check.
++
++Recommended decision: explicitly approve reuse of existing authored parent
++`config.pinnedShotGroups` for the three parent-clip fixtures, or choose canonical
++occurrence conversion and adjust that operation contract. Do not silently add
++group fields or conflate projected groups with occurrence ownership. Prefer
++existing whole-array group recording for the initial slice; independent row
++concurrency, general clip append order and exact structural restoration require
++the common recorder/inverse work described in the design.
++
++Exact final verification commands (executed from App and Agent cwd respectively):
++
++```bash
++W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit
++TSX_TSCONFIG_PATH="$W/tsconfig.json" node --import /home/user/work/app/node_modules/tsx/dist/loader.mjs "$W/probe.mts"
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-group-audit /home/user/work/venv-agent/bin/python "$W/probe.py"
++```
++
++Both exit **0**; logs `probe-ts.log` and `probe-python.log`. TS reproduces all
++three geometry plans with V3 supplied, without claiming create/dispatch support;
++also verifies codec/order/projection observations. Python verifies codec and
++recorder/inverse observations. `git diff --check` exits 0; Agent status clean.
++App advanced from `2d8eac72e` to `dd376d5e0` during inspection; only four e2e files
++changed, outside all probe inputs/product references.
++
++UNRUN: repository pytest/vitest suites, full suite, actual Runtime publication,
++browser, sockets, restart/outbox, renderer, macOS, and all proposed M2 primitives.
++The scripts are offline audit probes, not M2 implementation/conformance evidence.
++
++Next: Agent/App resolve the explicit storage compatibility and conflict-granularity
++questions, then add exact collection/inverse proofs when implementation is
++authorized. M1 real browser remains the milestone gate; this task does not wait
++for it or authorize M2 implementation/merge. Commit message written; no repo
++changes exist for the harness to commit.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f0aea6d1961b66a704fb8c2ed0254786989dd3a4
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/commit-msg
+@@ -0,0 +1,5 @@
++docs(timeline): audit M2 group ownership (design-only, no repo changes)
++
++Document authored group ownership, codec and persistence boundaries, exact
++fixture mappings, and the shared recorder/inverse gaps in the external design.
++No product or test repository changes; no M2 implementation or merge.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/probe.mts b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/probe.mts
+new file mode 100644
+index 0000000000000000000000000000000000000000..f2328cf54cb4c271e8e4acb7cbacae7572629c2d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/probe.mts
+@@ -0,0 +1,52 @@
++import assert from 'node:assert/strict';
++import { readFileSync } from 'node:fs';
++import { serializeTimelinePair } from '/home/user/work/app/src/tools/video-editor/lib/timeline-domain.ts';
++import { configToRows, rowsToConfig } from '/home/user/work/app/src/tools/video-editor/lib/timeline-data.ts';
++import { planMultiDragMoves, applyMultiDragMoves } from '/home/user/work/app/src/tools/video-editor/lib/multi-drag-utils.ts';
++import { orderClipIdsByAt } from '/home/user/work/app/src/tools/video-editor/lib/pinned-group-projection.ts';
++import { createShotCompositionAdapter } from '/home/user/work/app/src/tools/video-editor/data/shotCompositionAdapter.ts';
++import { projectCanonicalComposition } from '/home/user/work/app/src/tools/video-editor/data/shotCompositionProjection.ts';
++
++const tracks = ['V1', 'V2', 'V3'].map(id => ({id, label:id, kind:'visual'}));
++const clips = [
++  {id:'clip-1', track:'V1', at:0, clipType:'hold', hold:2},
++  {id:'clip-2', track:'V1', at:2, clipType:'hold', hold:2},
++];
++const group = {shotId:'shot-1', trackId:'V1', clipIds:['clip-1','clip-2'], mode:'images', opaque:{keep:null}};
++const config = {output:{resolution:'1920x1080',fps:30,file:'out.mp4'}, tracks, clips, pinnedShotGroups:[group]};
++const pair = serializeTimelinePair(config as any, {assets:{}});
++const {opaque: discardedOpaque, ...knownGroup} = group;
++assert.deepEqual(JSON.parse(JSON.stringify(pair.config.pinnedShotGroups)), [knownGroup]);
++// Observational audit: this clone is lossy, so it cannot materialize M2 authorship.
++assert.equal('opaque' in pair.config.pinnedShotGroups![0],false);
++const projected = configToRows(pair.config);
++const roundTrip = rowsToConfig(projected.rows, projected.meta, config.output, projected.clipOrder, projected.tracks, pair.config.pinnedShotGroups);
++assert.deepEqual(JSON.parse(JSON.stringify(roundTrip.pinnedShotGroups)), [knownGroup]);
++assert.deepEqual(orderClipIdsByAt(['clip-2','clip-1'], {clips:clips as any}), ['clip-1','clip-2']);
++assert.deepEqual(orderClipIdsByAt(['b','a'], {clips:[{id:'a',at:0},{id:'b',at:0}] as any}), ['b','a']);
++let cases = 0;
++for (const [target, delta] of [['V2',1],['V3',3]] as const) {
++  const data = {...projected, config, resolvedConfig:{...config,registry:{}}, registry:{assets:{}},output:config.output} as any;
++  const offsets = clips.map(c=>({clipId:c.id,rowId:c.track,deltaTime:c.at,initialStart:c.at,initialEnd:c.at+c.hold}));
++  const plan = planMultiDragMoves(data, offsets, 'clip-1', target, 'V1', delta, {groupKey:{shotId:'shot-1',trackId:'V1'},originStart:0,originTrackId:'V1'});
++  assert.equal(plan.canMove,true);
++  assert.deepEqual(plan.moves.map(m=>[m.clipId,m.targetRowId,m.newStart]), [['clip-1',target,delta],['clip-2',target,2+delta]]);
++  const applied = applyMultiDragMoves(data,plan.moves);
++  assert.deepEqual(applied.nextClipOrder[target], ['clip-1','clip-2']);
++  assert.equal(data.config.pinnedShotGroups[0].trackId,'V1'); // caller owns override
++  cases++;
++}
++const free = clips.map((c,i)=>({...c,track:i?'V2':'V1'}));
++const freeConfig = {...config, clips:free, pinnedShotGroups:undefined};
++const freeData = {...configToRows(freeConfig as any),config:freeConfig,output:config.output} as any;
++const freeOffsets = [free[1],free[0]].map(c=>({clipId:c.id,rowId:c.track,deltaTime:c.at-2,initialStart:c.at,initialEnd:c.at+2}));
++const freePlan = planMultiDragMoves(freeData,freeOffsets,'clip-2','V3','V2',1);
++assert.deepEqual(freePlan.moves.map(m=>[m.clipId,m.targetRowId,m.newStart]), [['clip-2','V3',3],['clip-1','V2',1]]);
++cases++;
++const graph = JSON.parse(readFileSync('/home/user/work/app/src/tools/video-editor/data/shotComposition.fixture.json','utf8'));
++const adapter = createShotCompositionAdapter({} as any);
++const canonical = projectCanonicalComposition(adapter.prepare(graph), {...config,registry:{}} as any);
++assert.equal('pinnedShotGroups' in canonical.config,false);
++assert.ok(canonical.clipIdentities.size > 0);
++assert.equal([...canonical.clipIdentities.values()].every((v:any)=>typeof v.rawClipId==='string'),true);
++console.log(JSON.stringify({outcome:'passed',dragPlans:cases,serializedGroup:pair.config.pinnedShotGroups,serializerDroppedOpaque:discardedOpaque,clipOrder:projected.clipOrder,canonicalGroupFieldPresent:false,canonicalClipSample:[...canonical.clipIdentities.entries()][0]},null,2));
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/probe.py b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/probe.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..17dcebca29d328d7c59c1c79fbf455394c350746
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/probe.py
+@@ -0,0 +1,63 @@
++import copy
++import json
++from pathlib import Path
++
++from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
++from astrid.core.timeline.shot_composition import validate_shot_composition, ShotCompositionValidationError
++from astrid.sdk.timeline._command_state import State, CommandError, ABSENT, present
++from astrid.sdk.timeline._recording import Recording
++from astrid.sdk.timeline.inverse import apply_inverse
++
++fixture = json.loads(Path('/home/user/work/app/src/tools/video-editor/commands/fixtures/authoringBundle.json').read_text())
++bundle = bundle_from_document(fixture['cases'][0]['document'])
++group = {'shotId':'shot-1','trackId':'picture','clipIds':['parent-clip'],'mode':'images','opaque':{'keep':None}}
++bundle['parent']['config']['pinnedShotGroups'] = [group]
++encoded = document_from_bundle(bundle)
++decoded = bundle_from_document(json.loads(json.dumps(encoded)))
++assert decoded['parent']['config']['pinnedShotGroups'] == [group]
++# This is the separate canonical graph codec, not CanonicalDocument.
++graph = json.loads(Path('/home/user/work/app/src/tools/video-editor/data/shotComposition.fixture.json').read_text())
++validate_shot_composition(graph)
++graph['parent_composition']['config']['pinnedShotGroups'] = [group]
++try:
++    validate_shot_composition(graph)
++except ShotCompositionValidationError as exc:
++    rejected = str(exc)
++else:
++    raise AssertionError('graph unexpectedly accepted migration-only key')
++# Probe current structural semantics; never touch a DB or product source.
++state = State(decoded)
++try:
++    state.entity('parent/shot-group:any')
++except CommandError as exc:
++    unsupported = str(exc)
++else:
++    raise AssertionError('group entity unexpectedly supported')
++config = decoded['parent']['config']
++config['tracks'] = [{'id':'A','kind':'visual','opaque':None},{'id':'B','kind':'visual'}]
++first = copy.deepcopy(config['tracks'][0])
++state.set('parent/track:A', [], ABSENT)
++state.set('parent/track:A', [], present(first))
++assert [r['id'] for r in config['tracks']] == ['B','A']
++assert config['tracks'][1] == first
++# Existing whole-array recording can restore exact group bytes and absence.
++before = copy.deepcopy(bundle)
++ctx = Recording(bundle, {}, 0)
++ctx.write('parent', ['config','pinnedShotGroups'], [{**group,'trackId':'B'}])
++undo = Recording(bundle, {}, 0)
++apply_inverse(undo, [ctx.record], [])
++assert bundle == before
++# Created-track inverse currently checks even dependents from its own batch.
++batch = bundle_from_document(fixture['cases'][0]['document'])
++create = Recording(batch, {}, 0)
++create.create('parent','track',{'id':'C','kind':'visual'})
++move = Recording(batch, {}, 1)
++move.read('parent/clip:parent-clip',['track'])
++move.write('parent/clip:parent-clip',['track'],'C')
++try:
++    apply_inverse(Recording(batch, {}, 0), [create.record,move.record], [])
++except CommandError as exc:
++    own_dependents = str(exc)
++else:
++    raise AssertionError('populated created track inverse unexpectedly succeeded')
++print(json.dumps({'outcome':'passed','authoringCodecPreservesGroup':True,'graphRejection':rejected,'groupEntity':unsupported,'deleteRestoreOrder':[r['id'] for r in config['tracks']],'wholeGroupArrayInverse':'exact','createdTrackOwnBatchInverse':own_dependents},indent=2))
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/tsconfig.json b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..64670235142ae5ff4026e5bd939ceec1f50cdfa1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/tsconfig.json
+@@ -0,0 +1,12 @@
++{
++  "extends": "/home/user/work/app/tsconfig.json",
++  "compilerOptions": {
++    "paths": {
++      "@/*": ["/home/user/work/app/src/*"],
++      "@astrid/editor-sdk": ["/home/user/work/app/src/sdk/index.ts"],
++      "@workspace-animations/*": ["/home/user/work/app/vendor/banodoco-animations/*"],
++      "@workspace-effects/*": ["/home/user/work/app/vendor/banodoco-effects/*"],
++      "@workspace-transitions/*": ["/home/user/work/app/vendor/banodoco-transitions/*"]
++    }
++  }
++}
+
+exec
+/bin/bash -lc "git diff --check && git status --porcelain=v1; python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+for rel in ('design/m2-group-ownership.md','workers/agt-m2-group-audit/REPORT.md','workers/agt-m2-group-audit/commit-msg'):
+    value=(root/rel).read_text()
+    assert value.endswith('\\n')
+    assert all(line.rstrip()==line for line in value.splitlines())
+    assert value.count('"'```'"') % 2 == 0
+print('Design/report/commit-message formatting: passed; Agent worktree clean')
+PY" in /home/user/work/wt/agt-m2-group-audit
+ succeeded in 552ms:
+Design/report/commit-message formatting: passed; Agent worktree clean
+
+codex
+Created [m2-group-ownership.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-ownership.md).
+
+Findings: raw groups survive the authoring codec, but canonical graph/projection behavior differs; App serialization drops unknown group fields. Exact row-order restoration and created-track batch undo need shared inverse work.
+
+Recommends explicit Agent/App approval before reusing the existing parent group array. The three `it.fails` fixtures remain unchanged.
+
+Both offline probes passed, exit 0. Exact commands, results, limitations and next steps are in [REPORT.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/REPORT.md). Repository suites and browser/live publication were not run.
+
+No product/test changes; Agent worktree clean. Commit message written.
+tokens used
+208,407
+Created [m2-group-ownership.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-ownership.md).
+
+Findings: raw groups survive the authoring codec, but canonical graph/projection behavior differs; App serialization drops unknown group fields. Exact row-order restoration and created-track batch undo need shared inverse work.
+
+Recommends explicit Agent/App approval before reusing the existing parent group array. The three `it.fails` fixtures remain unchanged.
+
+Both offline probes passed, exit 0. Exact commands, results, limitations and next steps are in [REPORT.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-audit/REPORT.md). Repository suites and browser/live publication were not run.
+
+No product/test changes; Agent worktree clean. Commit message written.

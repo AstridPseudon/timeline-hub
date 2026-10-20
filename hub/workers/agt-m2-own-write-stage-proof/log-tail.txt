@@ -1,0 +1,400 @@
+ succeeded in 22606ms:
+........................................................................ [ 15%]
+........................................................................ [ 30%]
+........................................................................ [ 45%]
+........................................................................ [ 60%]
+........................................................................ [ 76%]
+........................................................................ [ 91%]
+.........................................                                [100%]
+473 passed in 21.95s
+
+codex
+The final targeted run passed: 473 tests. The new cases cover whole-bundle undo/redo, original and inverse replay, bool/number/null reads, two creates with intervening reads and selections, disjoint source edits, ABA rejection and surviving dependents. Lint and whitespace checks also passed. I’m writing the report and both commit-message files; integration remains held until PLAN clears M1.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..00aeedf6eb43f93bc563401c68051d57f9b03a58
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/commit-msg
+@@ -0,0 +1,11 @@
++fix(timeline): validate recipe observations across authored stages
++
++Prove internal reads and selections against trusted ordered write prefixes,
++including multiple recorded creates, while preserving disjoint current data
++and existing inverse boundaries and conflict guards.
++
++Capture public replay claims against the command input while retaining actual
++internal observations in unchanged recorder fields. Add native conformance
++coverage for exact undo/redo, replay, bool/number/null, ABA and dependents.
++
++Integration remains held until PLAN clears M1. Targeted validation: 473 passed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..00aeedf6eb43f93bc563401c68051d57f9b03a58
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/commit-msg.txt
+@@ -0,0 +1,11 @@
++fix(timeline): validate recipe observations across authored stages
++
++Prove internal reads and selections against trusted ordered write prefixes,
++including multiple recorded creates, while preserving disjoint current data
++and existing inverse boundaries and conflict guards.
++
++Capture public replay claims against the command input while retaining actual
++internal observations in unchanged recorder fields. Add native conformance
++coverage for exact undo/redo, replay, bool/number/null, ABA and dependents.
++
++Integration remains held until PLAN clears M1. Targeted validation: 473 passed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..10887ae51b24c9be2af461812c0c1929d0720a91
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/notes/report.md
+@@ -0,0 +1,49 @@
++# agt-m2-own-write-stage-proof — complete, integration held
++
++Confirmed the counterexample and fixed it using existing recorder data. No schema, DTO, Runtime, App, production operation, or historical fixture changes.
++
++## Changes and decisions
++
++- `inverse.py`: when a trusted ordinary recipe observation differs from its restored input, reconstruct the recipe's ordered write prefixes on a private copy of that restored input. Check every write's recorded before-state and accept only reads/selections exactly witnessed at those stages. Keep the existing accepted-boundary path for historical inverse records. Use JSON equality, preserving bool/number distinctions. Unrelated mismatches and missing non-created bindings still refuse.
++- `_collections.py`: the adjacent inverse order validator now permits intermediate selection orders only for ordinary appends proven by the existing created facts and writes. Every selection must match a reconstructed membership/order stage; arbitrary alternative orders still refuse. This small adjacent change was necessary because two creates in one recipe failed here before reaching inverse input validation.
++- `_recording.py`: keep actual internal observations in the existing record fields, while capturing public command reads, selections and expectations against the immutable command input. This was necessary because the original recipe's captured command otherwise failed replay by treating its own intermediate observations as pre-execution guards. No additional serialized fields.
++- Added one registered fixture recipe in `tests/editing_conformance/test_recipe_internal_stages.py`. It writes/reads True, 1, null and absence; creates two tracks with reads, bindings and selections between them; and consumes the created tracks itself. Parent and occurrence source cases compare the entire serialized authoring bundle across undo/redo. Tests also check original-command replay, exact new-inverse input-head claims and replay, real executor-generated disjoint C records and equal-state ABA records, surviving source effects, invalid stage values, unrelated observations, missing bindings and selection corruption. Refusals leave the caller's head unchanged.
++- Existing M1 golden records and legacy inverse/root tests remain unchanged and pass. No passing behaviour expectations were weakened, skipped or replaced.
++
++The proof establishes that each recorded observation occurs at a write prefix; the existing format does not encode the exact chronological index of each read. It uses trusted accepted records and current restored input, preserving disjoint data. It neither re-executes an operation-specific undo nor restores a whole parent.
++
++## Verification
++
++Before the product changes, the new counterexample lane:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_internal_stages.py
++```
++
++Result at that stage: **5 failed, 4 passed**. Scalar-only cases failed with `original read stage is unavailable`; two-create cases failed with `inconsistent structural order proof`. A subsequent original-recipe replay test also reproduced `original authored guard changed` before the recorder correction.
++
++Final targeted command, after all edits:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_internal_stages.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_sync.py
++```
++
++Result: **473 passed in 21.95s**.
++
++```sh
++/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/inverse.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py tests/editing_conformance/test_recipe_internal_stages.py
++```
++
++Result: **All checks passed!**
++
++```sh
++git diff --check
++```
++
++Result: **exit 0**.
++
++Not run: full suite, `make check`, network/socket/browser suites, or real Runtime acceptance/restart integration. The provider lanes above use in-process test ports; they are regression coverage, not Runtime acceptance evidence. New recipe acceptance claims are limited to the real native executor/conformance assertions described above. General root-descendant/internal-step combinations beyond the covered scoped tracks are not newly claimed.
++
++## Holds and next steps
++
++No technical blocker for the bounded cases. Review the generic recorder/input-claim change and the collection-prefix proof together. **Do not merge M2 until PLAN records the required M1 completion.** No commits, merges, ref changes or pushes were performed. Both `commit-msg` and `commit-msg.txt` accompany this report for the harness.
+diff --git a/astrid/sdk/timeline/_collections.py b/astrid/sdk/timeline/_collections.py
+index 311ac5b9cb27847f4b8d0b6a8085ed6abb06586c..9c7f26790f749ed3eb18671bb0586cdbc274181c
+--- a/astrid/sdk/timeline/_collections.py
++++ b/astrid/sdk/timeline/_collections.py
+@@ -179,8 +179,8 @@
+                 original = order(boundary[0], owner, kind)
+             else:
+                 original = list(selected[0]['order'])
+-                if any(s['members'] != original or s['order'] != original
+-                       or s['boundaries'] != original or s['query_version'] != 1
++                if any(s['members'] != s['order']
++                       or s['boundaries'] != s['order'] or s['query_version'] != 1
+                        or s['policy'] != 'guard-membership' for s in selected):
+                     raise CommandError('inconsistent structural order proof', kind='history_unavailable')
+             if len(original) != len(set(original)) or any(
+@@ -205,6 +205,10 @@
+                 elif write['after'] == ABSENT:
+                     final.remove(ref)
+                 stages.append(list(final))
++            if not legacy_inverse and any(s['order'] != original for s in selected):
++                if not _ordinary_append(record, writes, owner, kind) or any(
++                        s['order'] not in stages for s in selected):
++                    raise CommandError('unrecoverable creation selection stage', kind='history_unavailable')
+             if legacy_inverse and any(s['members'] != s['order'] or s['boundaries'] != s['order']
+                                       or s['order'] not in stages for s in selected):
+                 raise CommandError('unrecoverable legacy selection stage', kind='history_unavailable')
+diff --git a/astrid/sdk/timeline/_recording.py b/astrid/sdk/timeline/_recording.py
+index 029ec680931189af6f048a617238bb8f5c01d380..e25d77042f1c03a48551401f4bb68f98577e5087
+--- a/astrid/sdk/timeline/_recording.py
++++ b/astrid/sdk/timeline/_recording.py
+@@ -38,6 +38,7 @@
+     def __init__(self, bundle, command, ordinal, *, closures=None):
+         self.state = State(bundle, closures=closures)
+         self.input_state = None
++        self.command_input = State(copy.deepcopy(bundle), closures=closures)
+         parent = bundle['parent']
+         config = parent.get('config')
+         self.mirrored_clips = (isinstance(parent.get('clips'), list)
+@@ -168,8 +169,17 @@
+     def finish(self, *, capture=False):
+         command = self.record['command']
+         if capture:
+-            command['reads'] = copy.deepcopy(self.record['reads'])
+-            command['selections'] = copy.deepcopy(self.record['selections'])
++            # Public replay guards describe the input; the record retains actual
++            # observations made between the deterministic recipe's own writes.
++            command['reads'], command['selections'] = [], []
++            for read in self.record['reads']:
++                claim = {**read, 'state': self.command_input.get(read['ref'], read['path'])}
++                if not any(equal(claim, prior) for prior in command['reads']):
++                    command['reads'].append(claim)
++            for selected in self.record['selections']:
++                claim = selection(self.command_input, selected['key'], selected['owner'], selected['members'])
++                if claim not in command['selections']:
++                    command['selections'].append(claim)
+             command['bindings'] = {b['key']: b['ref'] for b in self.record['bindings']
+                                    if '/clip:' in b['ref'] or '/track:' in b['ref']
+                                    or (b['ref'].startswith('occurrence:') and '/' not in b['ref'])}
+@@ -181,8 +191,7 @@
+                 if write['ref'] == 'timeline':
+                     continue
+                 key = write['ref'] + '::' + spelling(write['path'])
+-                before = (self.input_state.get(write['ref'], write['path'])
+-                          if self.input_state is not None else write['before'])
++                before = self.command_input.get(write['ref'], write['path'])
+                 command['expect'].setdefault(key, copy.deepcopy(before))
+                 command['authorship'][key] = 'direct'
+         return self.record
+diff --git a/astrid/sdk/timeline/inverse.py b/astrid/sdk/timeline/inverse.py
+index fdcfe37491b92a2adcface370115bbdd865670fa..de9b944c64a988dcfb13291688397a90e400d8d2
+--- a/astrid/sdk/timeline/inverse.py
++++ b/astrid/sdk/timeline/inverse.py
+@@ -192,22 +192,41 @@
+ 
+ 
+ def _validate_inputs(state, record, records):
+-    legacy = None
++    sites = None
++
++    def proven_sites():
++        if record['command']['op'] == 'timeline.inverse':
++            return _legacy_inverse_sites(records, record)
++        # Recorder writes are ordered even though reads and selections are not.
++        # Reconstruct only those stages, retaining unrelated current authored data.
++        stage = State(copy.deepcopy(state.bundle), closures=state.closures)
++        reads, selections = [], []
++        for write in [None, *record['writes']]:
++            if write is not None:
++                guard(stage, write['ref'], write['path'], write['before'], kind='history_unavailable')
++                stage.set(write['ref'], write['path'], write['after'])
++            reads.extend(read for read in record['reads']
++                         if stage.matches(read['ref'], read['path'], read['state']))
++            selections.extend(selected for selected in record['selections']
++                              if equal(selection(stage, selected['key'], selected['owner'],
++                                                 selected['members']), selected))
++        return reads, selections
++
+     for read in record['reads']:
+         if state.matches(read['ref'], read['path'], read['state']):
+             continue
+-        if legacy is None:
+-            legacy = _legacy_inverse_sites(records, record)
+-        if read not in legacy[0]:
++        if sites is None:
++            sites = proven_sites()
++        if not any(equal(read, site) for site in sites[0]):
+             raise CommandError('original inverse read changed', kind='inverse_dependency_changed',
+                                ref=read['ref'], path=read['path'])
+     for selected in record['selections']:
+         actual = selection(state, selected['key'], selected['owner'], selected['members'])
+         if equal(actual, selected):
+             continue
+-        if legacy is None:
+-            legacy = _legacy_inverse_sites(records, record)
+-        if selected not in legacy[1]:
++        if sites is None:
++            sites = proven_sites()
++        if not any(equal(selected, site) for site in sites[1]):
+             raise CommandError('inverse selection changed', kind='selection_changed', ref=selected['owner'])
+     created = {item['ref'] for item in record['created']}
+     for binding in record.get('bindings', []):
+diff --git a/tests/editing_conformance/test_recipe_internal_stages.py b/tests/editing_conformance/test_recipe_internal_stages.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e732b51453a8056d96e9cf32465a35249a66aa91
+--- /dev/null
++++ b/tests/editing_conformance/test_recipe_internal_stages.py
+@@ -0,0 +1,119 @@
++"""One deterministic recipe may observe its own intermediate authored state."""
++from __future__ import annotations
++
++import copy
++import json
++
++import pytest
++
++from astrid.sdk.timeline import commands
++from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
++from astrid.sdk.timeline._recording import selection
++from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
++from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.test_recipe_m1_commands import bundle, inverse
++
++
++@pytest.fixture
++def recipe(monkeypatch):
++    def apply(ctx, command):
++        ref = command['select']
++        owner = ref.rsplit('/', 1)[0]
++        ctx.read(ref, ['opaque'])
++        ctx.bind('consumer', ref)
++        for value in (True, 1, None):
++            ctx.write(ref, ['probe'], value)
++            ctx.read(ref, ['probe'])
++        ctx.clear(ref, ['probe'])
++        ctx.read(ref, ['probe'])
++        for identity in command['args']['tracks']:
++            created = ctx.create(owner, 'track', {'id': identity, 'kind': 'visual'})
++            ctx.read(created, ['kind'])
++            ctx.bind(identity, created)
++            ctx.select('collection.tracks', owner)
++            ctx.write(ref, ['track'], identity)
++            ctx.read(ref, ['track'])
++
++    registered = commands.operations()
++    registered['fixture.internal-stages'] = commands.Operation({'type': 'object'}, apply, {}, True)
++    monkeypatch.setattr(commands, 'operations', lambda: registered)
++    return lambda ref, tracks: {'schema_version': 1, 'op': 'fixture.internal-stages',
++                               'version': '1', 'select': ref, 'args': {'tracks': tracks}}
++
++
++@pytest.mark.parametrize('ref', ['parent/clip:direct', 'occurrence:occ-1/clip:picture-1'])
++@pytest.mark.parametrize('tracks', [[], ['c', 'd']])
++def test_internal_stages_whole_authored_roundtrip_redo_and_current_head_claims(recipe, ref, tracks):
++    original = bundle()
++    plan = commands.execute(original, [recipe(ref, tracks)])
++    records = copy.deepcopy(plan.records)
++    assert len(records) == 1
++    assert [r['state'] for r in records[0]['reads'] if r['path'] == ['probe']] == [
++        present(True), present(1), present(None), ABSENT]
++    undone = inverse(plan.bundle, plan.records)
++    assert json.dumps(undone.bundle) == json.dumps(original)
++    assert plan.records == records
++    for read in undone.commands[0]['reads']:
++        assert State(plan.bundle).matches(read['ref'], read['path'], read['state'])
++    for selected in undone.commands[0]['selections']:
++        assert selection(State(plan.bundle), selected['key'], selected['owner'],
++                         selected['members']) == selected
++    assert replay(undone, plan.bundle, inverse_records=plan.records).records == undone.records
++    assert json.dumps(inverse(undone.bundle, undone.records).bundle) == json.dumps(plan.bundle)
++
++
++@pytest.mark.parametrize('ref', ['parent/clip:direct', 'occurrence:occ-1/clip:picture-1'])
++def test_internal_recipe_captured_intent_replays(recipe, ref):
++    original = bundle()
++    plan = commands.execute(original, [recipe(ref, ['c', 'd'])])
++    for read in plan.commands[0]['reads']:
++        assert State(original).matches(read['ref'], read['path'], read['state'])
++    assert replay(plan, original).records == plan.records
++
++
++def test_internal_stages_preserve_source_disjoint_c_and_reject_aba_dependents(recipe):
++    ref = 'occurrence:occ-1/clip:picture-1'
++    original = bundle()
++    plan = commands.execute(original, [recipe(ref, ['c', 'd'])])
++
++    def edit_c(state):
++        command = capture_clip_set_params(state, ref, values={'future': [None, False, 1]})
++        return commands.execute(state, [command])
++
++    concurrent = edit_c(plan.bundle)
++    head, history = concurrent.bundle, concurrent.records
++    assert replay(plan, edit_c(original).bundle, intervening_records=history).bundle == head
++    undone = inverse(head, plan.records, history)
++    assert undone.bundle == edit_c(original).bundle
++    assert inverse(undone.bundle, undone.records).bundle == head
++    aba = commands.execute(head, [recipe(ref, [])])
++    assert aba.bundle == head
++    with pytest.raises(CommandError) as error:
++        inverse(aba.bundle, plan.records, [*history, *aba.records])
++    assert error.value.kind == 'intervening_write'
++    dependent = copy.deepcopy(head)
++    State(dependent).config('occurrence:occ-1').setdefault('effects', []).append({'track': 'c'})
++    before = copy.deepcopy(dependent)
++    with pytest.raises(CommandError) as error:
++        inverse(dependent, plan.records, history)
++    assert error.value.kind == 'surviving_dependents'
++    assert dependent == before
++
++
++@pytest.mark.parametrize('failure', ['unrelated-read', 'bool-number', 'missing-binding', 'selection'])
++def test_internal_stages_require_exact_proof_and_refuse_atomically(recipe, failure):
++    ref = 'parent/clip:direct'
++    plan = commands.execute(bundle(), [recipe(ref, ['c', 'd'])])
++    broken = copy.deepcopy(plan.records)
++    if failure == 'unrelated-read':
++        broken[0]['reads'][0]['state'] = present('never observed')
++    elif failure == 'bool-number':
++        broken[0]['writes'][1]['after'] = present(True)
++    elif failure == 'missing-binding':
++        broken[0]['bindings'].append({'key': 'missing', 'ref': 'parent/track:missing'})
++    else:
++        broken[0]['selections'][-1]['members'].append('parent/track:missing')
++    before = copy.deepcopy(plan.bundle)
++    with pytest.raises(CommandError):
++        inverse(plan.bundle, broken)
++    assert plan.bundle == before
+
+exec
+/bin/bash -lc 'git diff --check && git status --short && cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/commit-msg.txt' in /home/user/work/wt/agt-m2-own-write-stage-proof
+ succeeded in 106ms:
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/inverse.py
+?? tests/editing_conformance/test_recipe_internal_stages.py
+
+codex
+Implemented generic stage validation and input-head replay claims without new record fields. One registered fixture recipe proves own-write reads, two creates, exact undo/redo, disjoint C preservation, ABA rejection and surviving-dependent refusal. Existing M1 goldens remain unchanged.
+
+Final targeted command:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_internal_stages.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_sync.py
+```
+
+**473 passed in 21.95s.**
+
+```sh
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/inverse.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py tests/editing_conformance/test_recipe_internal_stages.py
+git diff --check
+```
+
+Both passed. Full suites, network tests and real Runtime acceptance were not run.
+
+[Report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/notes/report.md>) and both commit-message files are written. No technical blocker for the covered cases. Review the recorder and collection-proof changes together; **M2 integration remains held until PLAN clears M1**.
+tokens used
+103,342
+Implemented generic stage validation and input-head replay claims without new record fields. One registered fixture recipe proves own-write reads, two creates, exact undo/redo, disjoint C preservation, ABA rejection and surviving-dependent refusal. Existing M1 goldens remain unchanged.
+
+Final targeted command:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_internal_stages.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_sync.py
+```
+
+**473 passed in 21.95s.**
+
+```sh
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/inverse.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py tests/editing_conformance/test_recipe_internal_stages.py
+git diff --check
+```
+
+Both passed. Full suites, network tests and real Runtime acceptance were not run.
+
+[Report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-own-write-stage-proof/notes/report.md>) and both commit-message files are written. No technical blocker for the covered cases. Review the recorder and collection-proof changes together; **M2 integration remains held until PLAN clears M1**.

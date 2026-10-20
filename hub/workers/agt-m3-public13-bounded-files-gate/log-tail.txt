@@ -1,0 +1,400 @@
+/home/user/work/runtimes/agent-remotion-0013/node_modules/react
+/home/user/work/runtimes/agent-remotion-0013/node_modules/@banodoco/timeline-composition
+
+ succeeded in 1737ms:
+89cdb91d chore(rendering): adopt Composition 0.0.13 consumer pin
+
+exec
+/bin/bash -lc "sed -n '84,112p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf && printf '\\n--- related worker artifacts ---\\n' && find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers -maxdepth 2 -type f \\( -name 'brief.md' -o -name 'Report.md' -o -name 'commit-msg*' \\) -path '*public13*' -print -exec sed -n '1,180p' {} \\;" in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+ succeeded in 87ms:
+
+agent root-prep-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+
+agent native-script-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+agent ordinary014-consumer-integration env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_PARENT_MEDIA_SEED_RUNTIME=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration
+agent registered014-render-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+
+agent native014-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+
+runtime cli-agent2f8-integration env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-2f8b9cc5 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-2f8b9cc5 /home/user/work/venv-agent/bin/python -m pytest -q -m integration /home/user/work/wt/agt-pin-2f8b9cc5/tests/sdk/test_timeline_commit_provider_runtime.py
+runtime current-http-cli-durability bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-current-http-cli.sh
+agent agt-m3-labels-current-socket-gate-root-prep env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules ASTRID_PACKS_PATH="$PWD/astrid/packs:$PWD/astrid/packs/local" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+
+agent raw-cli-trace-integration bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/run-trace "$PWD"
+agent agent-remotion-0013-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2
+
+agent custody-root-cause-exact7d-trace env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -s -q -p custody_trace -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+
+--- related worker artifacts ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/brief.md
+AppFIRST13 ACTUALLYlandedd12/lead1643, owner13:25/INBOX17:14 nowAgentmayadopt. PortONLYreviewedremote04f59c0c1 pinunit ontocURRENTc73b1ab1 (notold30fcwholesalemerge). PreserveMouth567/labels79b/Scene-core/WC4/F1/source-reusefold/currentRuntime013pin. Exactarchive9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738/58477bytes/77members; no12repack. Normalpackage/vendorpin/pkg+lock+tgz update, all77source/integrityidentity; SourceRootsemanticsunchangedreleaseONLYpublicencodedEnvelopeSource+type. UseONLYpublicrootexports no copy/deepimport/DSPmath. Targetedsuitesownconsumer red12->green13+existingplantednegative, staticpackage/Root/generator/themeequality/actualNode; physicalPCM/frameparity separateUNQUALIFIED. Sharedruntimes/current/0012,node_modules,venvs READONLY. Privateoverlaycanreusepeersread-only+own13leaf, no sharedwrites; normalinstaller/bootstrapifhostreadinessneeded, NEVERfakevalidation/HostReadyclaim. Ifexactseparatecentral13profileownerneededpreparecommittedlock+reviewablepatchfirstthenreportpathneed; donotmutateshared12. No Runtimeclientpin014/unrelatedcode/shapechange. Follow release13-current-consumer-handoff.md +Viewingflatreport. Existing0.0.12archiveonlydeleteifnoactualcompatconsumer needsit; keeporiginalcompatassertions. No full/newskip/xfail/testweakening. Luna high; report/sharedORCHhandoff/commit-msg.txt/DONE. Smallcurrentpinunitnotparityclaim.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg.txt
+chore(rendering): adopt Composition 0.0.13 consumer pin
+
+Carry the reviewed public13 archive, exact package integrity, runtime pin,
+and focused admission checks onto current Agent integration while retaining
+the existing 0.0.12 compatibility artifact and assertions.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg
+chore(rendering): adopt Composition 0.0.13 consumer pin
+
+Carry the reviewed public13 archive, exact package integrity, runtime pin,
+and focused admission checks onto current Agent integration while retaining
+the existing 0.0.12 compatibility artifact and assertions.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/brief.md
+Correct prior worker error: manager requested owner cancel its unintended whole-suite30947; NEVER wait for it orrun no-files named suite. Source89cdb91d exactapprovedcurrent13 pin/kernel remains unchanged, no productedits. Run ONLY explicitpackage/readiness/TextCard publicSSR/admission files: tests/packs/rendering/test_composition_package.py (exclude its custom_elements integration ifsnapshotborrowed12 deps incompatible, run it correctlyprivateoverlay13 ifincluded), tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest, tests/core/timeline/test_clip_fields.py, tests/packs/rendering/test_capture_scene_labels.py. Manager-authorized agent-remotion-0013.env runtimeREADONLY, exactlock/all77; create OWN bounded suite WITH THESE DEFAULTFILES and correct Runtimeimportpaths/readonlypeer env, then request that named suite (defaults +explicitfiles guard). No full/defaultrootpytest/no tests outsideenumeratedfiles, no broadrepo/ORCHrecursive logsearch. Actualhostvalidation onlyproductionbootstrap, no HostReadyclaimunlessnormalpositive. Independentpin reviewalreadyAPPROVE; don'tre-reviewunchangedsource. Resolve onlyactualenvironmenttestwiring to proper13 profile/privateoverlay, no productbehaviorchange. No Runtime014pin/adoption/DTO/scopes, old12compat kept. ShareddepsREADONLY/privatecache. Reportexactsource/tree/testIDs/results+limits; no physicalPCM/frame/allproductparity. Never suitefull* or any broadwhole suite; all requestsMUST selectexactfiles. commit-msg.txt/DONE. Luna high./tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-public13-current-adoption/brief.md
+READONLY finalreviewComposition13pin30da0a5e currentc73 portof04f59. AppFIRSTconfirmed ea386/d12/current308. Exactarchive9412ae25...d54738 58477B/all77, SHA5126qgE... unchanged12compatartifacts. Verifyminimalpkg/lock/compositionvendorpin/tgz only+necessarydirecttests; Runtimeclient013/producer2c4/lockUNCHANGED (report'runtimepin' maymeancomposition-only). PreserveMouth/labels/Scene/P1F1/loopfold/explicitold6/7/8/10/12compat matrix; no authored/Rootbehavior/default change release13ONLYexistingencodedEnvelopeSource+type reexport. ConsumerusesPUBLICroot no DSPcopy/deepimport; targeted85central+20Node evidence, ownred->green+negative ifcurrentactualconsumerpresent (pin-onlyqualificationdistinctfromphysicalactivation). Missingnormal13installedprofile notfake HostReady; identifyexactpackage-lockSHA/newsourceforownerbuild separate0013 beforecurrentnormalrendergate. Sharedruntimes12/currentREADONLY. Focusedartifact+Root/type/theme/publicAPIconsumertestsproportionate, no full/install/sharedwrites/newskip/xfail/assertionloss. ReportAPPROVE/HOLDpin-only/currentruntimequalification boundary exacthash/tree, ORCHdesign/commit-msg.txt/DONE. Luna high.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-public13-current-adoption/commit-msg
+chore(rendering): adopt Composition 0.0.13 consumer pin
+
+Carry the reviewed public13 archive and exact lock integrity onto current
+Agent integration; qualify the pin separately from the still-0.0.12 host.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/brief.md
+Port ONLY approved pin delta c73..tl/agt-m3-public13-current-adoption (30da0a5e) onto CURRENT d999, preserving Kernel19e4/labels/Mouth/F1/P1/init. App FIRST ea386 is landed. Immutable13 archive SHA9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738,77members; Runtime client013 bytes unchanged, no014 adoption. Independent pin review already APPROVE193central/187local/31Node; do not spawn/repeat review unchanged pin bytes. Verify exact delta/archive/lock and applicable affected targeted suite on current source. Shared current Remotion remains12 READONLY; never claim host13 readiness from it. Publish FINALcurrent descendant SHA and full package-lock SHA to ORCH/design/agent-public13-current-adoption.md so manager requests owner separate installed13 profile then normal gate. Keep old12 compat archive if still consumed. Source preparation only, no merge request itself.
+Never request suite full*; only targeted/named suites. Shared dependencies, venvs, runtimes and node_modules READ-ONLY; private overlays only. No new skip/xfail, assertion loss, refreshed guards, public pin/release or unrelated edits. Report exact source/tree, commands/results and remaining limits to workers/<you>/report.md; write commit-msg.txt and DONE only when complete. Luna high unless HARD header.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/commit-msg.txt
+chore(rendering): adopt Composition 0.0.13 consumer pin
+
+Port the approved public13 archive, exact package integrity, runtime pin, and
+focused admission checks onto current Agent while retaining public12
+compatibility and current kernel behavior.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/commit-msg
+chore(rendering): adopt Composition 0.0.13 consumer pin
+
+Port the approved public13 archive, exact package integrity, runtime pin, and
+focused admission checks onto current Agent while retaining public12
+compatibility and current kernel behavior.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-installed-host-gate/brief.md
+Qualify approved current Composition13 source89cdb91da8aa8195955bca55752df018647ef4e4/tree2a796642 on newly OWNER-PROVISIONED read-only /home/user/work/runtimes/agent-remotion-0013 from30da, exact same lockSHA c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24/archive9412/all77. App-first13 alreadylanded. Sourcepin exactdelta unchanged fromindependentlyAPPROVED30da, currentKernel19e4/labels/Mouth retained. No second independentreview unchangedpins. Run proportional normal package/readiness/actual public TextCardSSR + four forgedSource admission negatives + current labels relevantcases, correctNode20/runtime13, sourceRuntimepublic013 unchanged. Existing agent-remotion-0013-nodes suite authorized; mayadd OWN current13-integration suite with correct runtime importpaths and readonly peers, no-defaultfiles; don't rerun known missingRuntime-importenv mistake. Use proper production hostbootstrap launchvalidation for available (no fabricatedvalidation); package install alone is not HostReady. No physicalPCM/frameparity orall-productclaim. Iftestsneedisolatedlocalnode overlay, privateworktree only, sharednodes/venvs/runtimes READONLY. Do not change productbehavior to make13match12. No newfull/sourceDTO/014pin/skip/xfail/assertionloss; allfull*forbidden. Exacttree/commands/testIDs/result+limits/ORCHhandoff/commit-msg.txt/DONE, source changesonly if narrow discoveredbug then report. Luna high.
+exec
+/bin/bash -lc "printf '%s\\n' '--- worktree Remotion install ---'; ls -ld remotion/node_modules remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz remotion/package-lock.json; realpath remotion/node_modules 2>/dev/null || true; realpath remotion/node_modules/@banodoco/timeline-composition 2>/dev/null || true; node - <<'NODE'
+const fs=require('fs');
+for(const f of ['remotion/package.json','remotion/package-lock.json']){const d=JSON.parse(fs.readFileSync(f)); console.log(f, d.dependencies?.['@banodoco/timeline-composition'], d.packages?.['node_modules/@banodoco/timeline-composition']);}
+NODE
+printf '%s\\n' '--- 0013 runtime peer versions ---'; for p in react react-dom remotion @remotion/media @remotion/layout-utils esbuild; do node -e \"const d=require('/home/user/work/runtimes/agent-remotion-0013/node_modules/"'$p/package.json'"'); console.log('"'$p'"', d.version)\" 2>/dev/null || echo \""'$p missing"; done' in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+ succeeded in 461ms:
+--- worktree Remotion install ---
+ls: cannot access 'remotion/node_modules': No such file or directory
+-rw-r--r-- 1 root root  58477 Oct 20 18:14 remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+-rw-r--r-- 1 root root 151350 Oct 20 18:14 remotion/package-lock.json
+/home/user/work/wt/agt-m3-public13-bounded-files-gate/remotion/node_modules
+remotion/package.json file:artifacts/banodoco-timeline-composition-0.0.13.tgz undefined
+remotion/package-lock.json undefined {
+  version: '0.0.13',
+  resolved: 'file:artifacts/banodoco-timeline-composition-0.0.13.tgz',
+  integrity: 'sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ==',
+  peerDependencies: {
+    '@remotion/layout-utils': '4.0.509',
+    '@remotion/media': '4.0.509',
+    react: '18.3.1',
+    'react-dom': '18.3.1',
+    remotion: '4.0.509'
+  }
+}
+--- 0013 runtime peer versions ---
+react 18.3.1
+react-dom 18.3.1
+remotion 4.0.509
+@remotion/media 4.0.509
+@remotion/layout-utils 4.0.509
+esbuild 0.28.1
+
+exec
+/bin/bash -lc "ls -ld /home/user/work/agent/remotion/node_modules /home/user/work/runtimes/agent-remotion-0013/node_modules; realpath /home/user/work/agent/remotion/node_modules; realpath /home/user/work/agent/remotion/node_modules/@banodoco/timeline-composition 2>/dev/null || true; for p in react react-dom remotion @remotion/media @remotion/layout-utils esbuild @banodoco/timeline-composition; do node -e \"const d=require('/home/user/work/agent/remotion/node_modules/"'$p/package.json'"'); console.log('"'$p'"', d.version)\" 2>/dev/null || echo \""'$p missing"; done' in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+ succeeded in 813ms:
+ls: cannot access '/home/user/work/agent/remotion/node_modules': No such file or directory
+drwxr-xr-x 171 root root 4096 Oct 20 18:03 /home/user/work/runtimes/agent-remotion-0013/node_modules
+/home/user/work/agent/remotion/node_modules
+react missing
+react-dom missing
+remotion missing
+@remotion/media missing
+@remotion/layout-utils missing
+esbuild missing
+@banodoco/timeline-composition missing
+
+codex
+The 0.0.13 runtime is present with the exact package lock and 77-member artifact, and its peers resolve to the pinned Remotion 4.0.509 / React 18.3.1 graph. The worktree has no local Remotion install, so I’m adding one bounded named-suite command that points all peer reads at the read-only 0.0.13 runtime and creates only a snapshot-local `remotion/node_modules` link for the custom-elements test; no shared install is modified.
+2026-10-20T18:15:18.414389Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:
+agent agent-remotion-0013-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2
+
+agent custody-root-cause-exact7d-trace env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b PYTHONDONTWRITEBYTECODE=1 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -s -q -p custody_trace -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+exec
+/bin/bash -lc "sed -n '94,104p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf" in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+ succeeded in 0ms:
+runtime current-http-cli-durability bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-current-http-cli.sh
+agent agt-m3-labels-current-socket-gate-root-prep env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules ASTRID_PACKS_PATH="$PWD/astrid/packs:$PWD/astrid/packs/local" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider
+
+agent raw-cli-trace-integration bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-cli-real-path-repair/run-trace "$PWD"
+agent agent-remotion-0013-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2
+
+agent custody-root-cause-exact7d-trace env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -s -q -p custody_trace -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+
+2026-10-20T18:15:26.182994Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:
+agent agent-remotion-0013-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2
+
+agent custody-root-cause-exact7d-trace env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-live-custody-root-cause" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -s -q -p custody_trace -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+2026-10-20T18:15:30.399420Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:
+agent agent-remotion-0013-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2
+2026-10-20T18:15:36.472296Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:
+agent agent-remotion-0013-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2
+2026-10-20T18:15:42.156589Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:
+agent agent-remotion-0013-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2
+exec
+/bin/bash -lc 'tail -n 8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf | sed -n l' in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+ succeeded in 0ms:
+runtime cli-agent2f8-integration env ASTRID_RUNTIME_CHECKOUT=$PWD AST\
+RID_CHECKOUT=/home/user/work/wt/agt-pin-2f8b9cc5 PYTHONDONTWRITEBYTEC\
+ODE=1 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-2f8b9cc5 /home/user/\
+work/venv-agent/bin/python -m pytest -q -m integration /home/user/wor\
+k/wt/agt-pin-2f8b9cc5/tests/sdk/test_timeline_commit_provider_runtime\
+.py$
+runtime current-http-cli-durability bash /tmp/claude-0/-home-user-rep\
+o/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-\
+current-http-cli.sh$
+agent agt-m3-labels-current-socket-gate-root-prep env -i HOME=/root L\
+ANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/us\
+er/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/d\
+efault/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/n\
+ode22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bi\
+n:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJE\
+CT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EX\
+ECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node A\
+STRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/pytho\
+n3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime A\
+STRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-curre\
+nt/node_modules ASTRID_PACKS_PATH="$PWD/astrid/packs:$PWD/astrid/pack\
+s/local" /home/user/work/venv-agent/bin/python -m pytest -q -o addopt\
+s= -p no:cacheprovider$
+$
+agent raw-cli-trace-integration bash /tmp/claude-0/-home-user-repo/7d\
+c61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw\
+-cli-real-path-repair/run-trace "$PWD"$
+agent agent-remotion-0013-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/\
+home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/pro\
+files/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin\
+:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/\
+.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\
+ ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-\
+0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-l\
+inux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/v\
+env-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/\
+user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agen\
+t/bin/python -m pytest -q -n 2$
+$
+agent custody-root-cause-exact7d-trace env -i HOME=/root LANG=C.UTF-8\
+ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/tmp/claude-0/-home-user-\
+repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt\
+-m2-d13-live-custody-root-cause" PATH=/home/user/work/toolchain/node-\
+v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local\
+/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin\
+:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sb\
+in:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-re\
+motion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-\
+v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/u\
+ser/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECK\
+OUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home\
+/user/work/runtimes/agent-remotion-current/node_modules /home/user/wo\
+rk/venv-agent-child-s2/bin/python -m pytest -s -q -p custody_trace -o\
+ addopts= -p no:cacheprovider -m integration tests/packs/video_editin\
+g/test_runtime_publication_chain.py::test_daemon_backed_host_executes\
+_authoring_and_final_render$
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index 76bb153fdb5536b97911a6e90b7998a7bda29863..ba5ed5af295773a179c54c0784a115b6c7ce83bd
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -1,4 +1,5 @@
+ # Test-service allow-list: one line per "REPO SUITE COMMAND...". Run by bin/test-run (outside the sandbox) via bash -c
++agent m3-public13-bounded-files-gate env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules ASTRID_TEST_COMPOSITION_ARTIFACT=/home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_capture_scene_labels.py
+ agent registered7d-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+ # in a throwaway snapshot of the target worktree (node_modules symlinked for app/composition).
+ # SUITE "full" (and any name starting with "full") is heavy: at most one runs at a time.
+
+exec
+/bin/bash -lc "sed -n '1,4p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf" in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+ succeeded in 94ms:
+# Test-service allow-list: one line per "REPO SUITE COMMAND...". Run by bin/test-run (outside the sandbox) via bash -c
+agent m3-public13-bounded-files-gate env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules ASTRID_TEST_COMPOSITION_ARTIFACT=/home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_capture_scene_labels.py
+agent registered7d-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+# in a throwaway snapshot of the target worktree (node_modules symlinked for app/composition).
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index 76bb153fdb5536b97911a6e90b7998a7bda29863..07b696e4a1240047af784870a70f282dcb1b6030
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -1,4 +1,5 @@
+ # Test-service allow-list: one line per "REPO SUITE COMMAND...". Run by bin/test-run (outside the sandbox) via bash -c
++agent m3-public13-bounded-files-gate test -e remotion/node_modules || ln -s /home/user/work/runtimes/agent-remotion-0013/node_modules remotion/node_modules; env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules ASTRID_TEST_COMPOSITION_ARTIFACT=/home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_capture_scene_labels.py
+ agent registered7d-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+ # in a throwaway snapshot of the target worktree (node_modules symlinked for app/composition).
+ # SUITE "full" (and any name starting with "full") is heavy: at most one runs at a time.
+
+codex
+The bounded suite is now registered with the four default paths and an explicit snapshot-local peer link to the 0.0.13 runtime. I’m running the same four paths directly in this worktree first, with the temporary link cleaned up afterward; then I’ll queue exactly the named suite with the same explicit file list.
+exec
+/bin/bash -lc 'set -eu
+cleanup() { if [ -L remotion/node_modules ]; then rm remotion/node_modules; fi; }
+trap cleanup EXIT
+ln -s /home/user/work/runtimes/agent-remotion-0013/node_modules remotion/node_modules
+env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules ASTRID_TEST_COMPOSITION_ARTIFACT=/home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_capture_scene_labels.py' in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+ succeeded in 18845ms:
+........................................................................ [ 55%]
+..........................................................               [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_public13_evaluation_admits_valid_source_and_rejects_four_forged_sources
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/agt-m3-public13-bounded-files-gate/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+130 passed, 6 warnings in 17.94s
+
+codex
+The direct bounded run passed: 130 tests, 6 expected archive-extraction deprecation warnings, 17.94s. The temporary worktree link was removed; no shared runtime/node_modules files were changed. I’m now submitting the required central named-suite run with the exact four explicit paths, never the cancelled whole-suite request.
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-public13-bounded-files-gate m3-public13-bounded-files-gate --files "tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_capture_scene_labels.py") && printf '"'%s\\n' \""'$R"' in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+ succeeded in 43ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-public13-bounded-files-gate-m3-public13-bounded-files-gate-1020181632-7373
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-bounded-files-gate-m3-public13-bounded-files-gate-1020181632-7373/
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-public13-bounded-files-gate-m3-public13-bounded-files-gate-1020181632-7373' in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+codex
+The central request is queued/running under the bounded suite ID `agt-m3-public13-bounded-files-gate-m3-public13-bounded-files-gate-1020181632-7373`. I’m waiting only on that named run; the direct result is already independently green.
+ succeeded in 60066ms:
+test agt-m3-public13-bounded-files-gate-m3-public13-bounded-files-gate-1020181632-7373: pass exit=0 in 21s — m3-public13-bounded-files-gate on agt-m3-public13-bounded-files-gate (agent tree 85ec9b7bd39f053e1d5b4eca3d4a06c2c7f4f4a2)
+cmd: test -e remotion/node_modules || ln -s /home/user/work/runtimes/agent-remotion-0013/node_modules remotion/node_modules; env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules ASTRID_TEST_COMPOSITION_ARTIFACT=/home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_capture_scene_labels.py tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_capture_scene_labels.py
+counts: 130 passed, 6 warnings in 17.13s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-public13-bounded-files-gate-m3-public13-bounded-files-gate-1020181632-7373/log.txt ---
+........................................................................ [ 55%]
+..........................................................               [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_public13_evaluation_admits_valid_source_and_rejects_four_forged_sources
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/.test-agt-m3-public13-bounded-files-gate-m3-public13-bounded-files-gate-1020181632-7373/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+130 passed, 6 warnings in 17.13s
+
+codex
+The central bounded suite passed as well: 130 tests in 21s, with the same 6 non-failing deprecation warnings. Its command shows only the four authorized paths (the defaults plus the explicitly supplied guard paths), and the snapshot-local link resolved the 0.0.13 peers successfully. I’m doing the final source/lock/status checks and writing the required handoff markers.
+exec
+/bin/bash -lc "set -eu
+printf '%s\\n' '--- source ---'
+git rev-parse HEAD
+git status --short
+printf '%s\\n' '--- public13 lock/artifact ---'
+sha256sum remotion/package-lock.json remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+python3 - <<'PY'
+import tarfile
+from pathlib import Path
+p = Path('remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz')
+with tarfile.open(p) as archive:
+    members = archive.getmembers()
+print('artifact_members', len(members), 'all_files', all(m.isfile() for m in members))
+PY
+printf '%s\\n' '--- readonly runtime ---'
+git -C /home/user/work/runtime rev-parse HEAD
+git -C /home/user/work/runtime status --short
+printf '%s\\n' '--- suite registration ---'
+sed -n '1,3p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+printf '%s\\n' '--- cleanup ---'
+test "'! -e remotion/node_modules && echo '"'worktree remotion/node_modules absent'" in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+ succeeded in 643ms:
+--- source ---
+89cdb91da8aa8195955bca55752df018647ef4e4
+--- public13 lock/artifact ---
+c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24  remotion/package-lock.json
+9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738  remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+artifact_members 77 all_files True
+--- readonly runtime ---
+7e160c5d254a9b3d42a28672a2d7e2ac1acd5ca8
+--- suite registration ---
+# Test-service allow-list: one line per "REPO SUITE COMMAND...". Run by bin/test-run (outside the sandbox) via bash -c
+agent m3-public13-bounded-files-gate test -e remotion/node_modules || ln -s /home/user/work/runtimes/agent-remotion-0013/node_modules remotion/node_modules; env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules ASTRID_TEST_COMPOSITION_ARTIFACT=/home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_capture_scene_labels.py
+agent registered7d-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+--- cleanup ---
+worktree remotion/node_modules absent
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index 76bb153fdb5536b97911a6e90b7998a7bda29863..07b696e4a1240047af784870a70f282dcb1b6030
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -1,4 +1,5 @@
+ # Test-service allow-list: one line per "REPO SUITE COMMAND...". Run by bin/test-run (outside the sandbox) via bash -c
++agent m3-public13-bounded-files-gate test -e remotion/node_modules || ln -s /home/user/work/runtimes/agent-remotion-0013/node_modules remotion/node_modules; env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules ASTRID_TEST_COMPOSITION_ARTIFACT=/home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_capture_scene_labels.py
+ agent registered7d-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+ # in a throwaway snapshot of the target worktree (node_modules symlinked for app/composition).
+ # SUITE "full" (and any name starting with "full") is heavy: at most one runs at a time.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..7ee7f36cd921f27be824b0b7c19016c64e1dacc7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/commit-msg
+@@ -0,0 +1,4 @@
++test(rendering): qualify bounded public13 readiness suite
++
++Register a read-only Composition 0.0.13 environment and run only the
++authorized package, SSR, clip-field, and capture-label files.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..7ee7f36cd921f27be824b0b7c19016c64e1dacc7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(rendering): qualify bounded public13 readiness suite
++
++Register a read-only Composition 0.0.13 environment and run only the
++authorized package, SSR, clip-field, and capture-label files.
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-bounded-files-gate/BLOCKED && git status --short' in /home/user/work/wt/agt-m3-public13-bounded-files-gate
+ succeeded in 370ms:
+codex
+Implemented bounded readiness wiring only; no product changes.
+
+- Added named suite `m3-public13-bounded-files-gate` using read-only Runtime/remotion-0013 paths and snapshot-local peer linking.
+- Source: `89cdb91da8aa8195955bca55752df018647ef4e4`
+- Public13 lock SHA: `c4d7030b…7a4e24`
+- Artifact SHA: `9412ae25…d54738`, 77 files.
+
+Tests:
+
+- Direct pytest: 130 passed, 6 warnings.
+- Central suite `agt-m3-public13-bounded-files-gate-m3-public13-bounded-files-gate-1020181632-7373`: 130 passed, 6 warnings, exit 0.
+
+Only the four authorized test targets ran. No full suite, host-readiness claim, PCM/frame parity, or Runtime/product edits. No blockers. Required `commit-msg`, `commit-msg.txt`, and `DONE` created.
+tokens used
+110,669
+Implemented bounded readiness wiring only; no product changes.
+
+- Added named suite `m3-public13-bounded-files-gate` using read-only Runtime/remotion-0013 paths and snapshot-local peer linking.
+- Source: `89cdb91da8aa8195955bca55752df018647ef4e4`
+- Public13 lock SHA: `c4d7030b…7a4e24`
+- Artifact SHA: `9412ae25…d54738`, 77 files.
+
+Tests:
+
+- Direct pytest: 130 passed, 6 warnings.
+- Central suite `agt-m3-public13-bounded-files-gate-m3-public13-bounded-files-gate-1020181632-7373`: 130 passed, 6 warnings, exit 0.
+
+Only the four authorized test targets ran. No full suite, host-readiness claim, PCM/frame parity, or Runtime/product edits. No blockers. Required `commit-msg`, `commit-msg.txt`, and `DONE` created.

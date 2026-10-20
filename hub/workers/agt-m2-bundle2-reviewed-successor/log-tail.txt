@@ -1,0 +1,400 @@
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+```
+
+**3 passed in 5.61s.** Actual RuntimeService/RealmStore, API-ingested media, normal official validation, no schema substitution, no sockets. Runtime HEAD: `9f9b25c000485e919f30f1411831fe2d5a3c1316`. Covers existing scalar-only case plus compound move→hold and separate accepted commands, persisted reload/reopen, exact idempotent retry, inverse/redo, ABA refusal. Provider tests separately use the pre-existing detached ABI fixture; they are not presented as actual Runtime evidence.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_clip_scalar_commands.py
+git diff --check
+```
+
+**Passed.** During test development, newly added fixture tests initially failed because their app containers were absent (3 failures), and a new provider assertion initially used the wrong records envelope (2 failures). Both test-construction mistakes were corrected; final commands above are green.
+
+## Contract, decisions and remaining work
+
+Updated the requested absolute contract with successor source, exact supported/refused cases and immutable schema/golden hashes:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-clip-scalar-contract.md`.
+
+Schema SHA-256 remains `cdab9bf609b901fab591a45e262719e05945435b8e1b260d109f2538a509be24`; App golden remains `8bb75e23c10c9677635d85f33f219b7f1b2d89baf481e3b7ed21f425b76f0c06`.
+
+Routine bounded decisions: synchronize all existing agreeing `for` declarations rather than add fields or rewrite containers; reuse `_duration` and its comparison tolerance; continue refusing incompatible duration/duration_ms codecs rather than rewrite them; permit only boolean static fixed_start. No settled-plan deviation.
+
+No blockers. Full suites/make check, browsers/App journeys, and composed successor artifact qualification were not run, as instructed. No schema/DTO/ABI/artifact/pin changed. Recommend orchestrator review and successor-source composition when authorized; retain the Bundle 2 freeze and M2 integration hold. Both `commit-msg` and `commit-msg.txt` are ready in this worker's shared directory for the harness.
+# Worker report
+
+## What changed
+
+- `clip.split v1` now uses the existing `_media_kind` normalizer, so the
+  actual main registry spellings `image/*`, `video/*`, and `audio/*` are
+  accepted alongside the canonical `image`, `video`, and `audio` values. The
+  import is lazy to avoid the checkout/command-registry circular import.
+- Literal splits now accept and preserve only the static boolean
+  `fixed_start: true` emitted by `clip.move`; literal numeric `for` is divided
+  across the two halves. Dynamic anchors, maps, transitions, animations, and
+  non-static intent remain refused.
+- Ported the bounded native parent `clip.trim v1` handler and schema registry
+  entry. It reads the authored registry duration without media fetches,
+  preserves the authored start/asset/opaque fields, clears `for`/`until` using
+  main intent semantics, and keeps `hold` in source seconds.
+- Updated the main `Clip.trim` model path to the same source-unit hold rule.
+- Added main-fixture split coverage for default registry data and MIME types,
+  move-then-split coverage, native trim/model parity, refusal of transitions and
+  dynamic follow intent, and provider-level move-then-trim undo coverage.
+
+## Tests and checks
+
+Passed:
+
+```text
+PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_media_verbs.py tests/sdk/test_timeline_commit_provider.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_commit_provider_scalar.py
+415 passed, 17 deselected, 4 warnings in 14.95s
+```
+
+```text
+PYTHONPATH=. /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_split_commands.py astrid/sdk/timeline/_trim_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/model.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_commit_provider.py
+All checks passed!
+git diff --check
+passed
+```
+
+The warnings are the existing Pillow `Image.getdata` deprecation warnings in
+`tests/sdk/test_timeline_checkout.py`. No full suite, install, network,
+browser, merge, or artifact-pin run was performed.
+
+## Bundle2 source-compatibility deltas
+
+Bundle2 consumers need these exact assumptions:
+
+1. The Agent command registry/schema must include `clip.trim` v1. Its select is
+   a literal `parent/clip:<id>` only; args are optional/null `in_s` and
+   `out_s`. Occurrence clips and other ownership forms are not compatible.
+2. Trim requires a positive numeric authored registry `duration`; it does not
+   fetch media. Split requires a registry `type` whose family is recognized by
+   the existing `_media_kind` normalizer. No new MIME guessing is introduced.
+3. `clip.move` may leave `app.astrid.fixed_start == true` and numeric `for`.
+   Static values are accepted by split/trim; split preserves `fixed_start` and
+   divides `for`, while trim clears `for`/`until` after applying source bounds.
+4. Trim writes `hold = to - from` in source seconds. Playback duration remains
+   `hold / speed`, including non-unit speed. A consumer must not pre-divide the
+   stored hold by speed.
+5. Dynamic follow/anchor intent, time maps, transitions, animations, and
+   unsupported source maps remain explicit refusals; Bundle2 must not widen
+   these codecs as part of this integration.
+
+## Blockers / next steps
+
+Nothing is blocked in this worker. The orchestrator/harness still needs to
+review and commit the worktree; broader M2 integration remains held by the
+plan's M1 condition.
+
+exec
+/bin/bash -lc "rg -n 'transition|effects|enter|exit|continuous' tests/sdk/test_timeline_clip_trim_provider.py tests/editing_conformance/test_recipe_m2_clip_trim.py && git diff --check && git rev-parse HEAD && git diff --shortstat" in /home/user/work/wt/agt-m2-bundle2-reviewed-successor
+ exited 1 in 0ms:
+exec
+/bin/bash -lc 'head -100 tests/sdk/test_timeline_clip_trim_provider.py && git show 8de94595 --stat && git diff --check && git rev-parse HEAD && git diff --shortstat' in /home/user/work/wt/agt-m2-bundle2-reviewed-successor
+ succeeded in 505ms:
+"""Trim acceptance/replay through the native provider; Runtime ABI is stubbed."""
+from __future__ import annotations
+
+import copy
+import json
+
+import pytest
+
+from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
+from astrid.sdk.timeline._trim_commands import capture_clip_trim
+from astrid.sdk.timeline.commit import _digest, bundle_from_document
+from tests.editing_conformance.test_recipe_m2_clip_trim import REF, clip, media_document
+from tests.sdk.test_timeline_commit_provider import CommitRejected, DetachedRealm, inverse
+from tests.sdk.test_timeline_commit_provider import runtime_abi as runtime_abi
+
+
+def current(realm):
+    return bundle_from_document(realm.documents[realm.head['revision_id']])
+
+
+def trim(realm, **args):
+    return capture_clip_trim(current(realm), REF, **args)
+
+
+def test_trim_committed_reload_exact_inverse_redo_keeps_registry_and_child_pins():
+    original = media_document()
+    realm = DetachedRealm(original)
+    command = trim(realm, in_s=1, out_s=5)
+    accepted = realm.call([command])
+    assert accepted['data']['commands'] == [command]
+    document = accepted['data']['canonical_document']
+    reloaded = bundle_from_document(json.loads(json.dumps(document)))
+    assert (clip(reloaded)['from'], clip(reloaded)['to'], clip(reloaded)['hold']) == (1, 5, 4)
+    assert clip(reloaded)['at'] == 1 and clip(reloaded)['speed'] == 2
+    for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
+        assert document[key] == original[key]
+    for key in ('registry', 'occurrences'):
+        assert document['parent_revision']['payload'][key] == original['parent_revision']['payload'][key]
+    assert all(item[0] not in ('transcript', 'config') for item in realm.reads)
+    undo = realm.call([inverse([accepted['receipt']['receipt_id']])])
+    assert undo['data']['canonical_document'] == original
+    redo = realm.call([inverse([undo['receipt']['receipt_id']])])
+    assert redo['data']['canonical_document'] == document
+
+
+def test_move_then_trim_is_an_ordinary_native_writer_and_undo_keeps_the_move():
+    realm = DetachedRealm(media_document())
+    moved = realm.call([realm.move()])
+    moved_document = moved['data']['canonical_document']
+    accepted = realm.call([trim(realm, in_s=1, out_s=5)])
+    row = clip(current(realm))
+    assert row['at'] == 3.003
+    assert row['app']['astrid']['fixed_start'] is True
+    assert 'for' not in row['app']['astrid']
+    assert row['app']['astrid']['opaque'] == [None, False]
+    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == moved_document
+
+
+def test_stale_trim_rebases_over_disjoint_params_with_original_claims_and_guarded_inverse():
+    realm = DetachedRealm(media_document(params={}))
+    base = copy.deepcopy(realm.head)
+    command = trim(realm, in_s=1, out_s=5)
+    other = capture_clip_set_params(current(realm), REF, values={'opaque': [None, False, 0]})
+    before_trim = realm.call([other])['data']['canonical_document']
+    accepted = realm.call([command], base=base)
+    assert accepted['data']['status'] == 'rebased'
+    assert accepted['data']['commands'] == [command]
+    assert clip(current(realm))['params'] == {'opaque': [None, False, 0]}
+    later = realm.call([capture_track_set(current(realm), 'parent/track:picture', values={'label': 'other'})])
+    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
+    expected = copy.deepcopy(before_trim)
+    # Compare payloads because a disjoint label gives the parent a new identity.
+    expected['parent_revision']['payload']['config']['tracks'][0]['label'] = 'other'
+    assert undone['data']['canonical_document']['parent_revision']['payload'] == expected['parent_revision']['payload']
+    assert undone['data']['canonical_document']['dependency_manifest'] == later['data']['canonical_document']['dependency_manifest']
+
+
+@pytest.mark.parametrize('aba', [False, True])
+def test_same_value_and_aba_trim_publications_block_original_inverse(aba):
+    realm = DetachedRealm(media_document())
+    first = realm.call([trim(realm, in_s=1, out_s=5)])
+    revision = realm.head['revision_id']
+    if aba:
+        realm.call([trim(realm, in_s=2, out_s=4)])
+    again = realm.call([trim(realm, in_s=1, out_s=5)])
+    assert realm.head['revision_id'] == revision
+    assert first['receipt']['receipt_id'] != again['receipt']['receipt_id']
+    record = realm.entries[-1]['records']['commands'][0]
+    if not aba:
+        assert all(write['before'] == write['after'] for write in record['writes'])
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([first['receipt']['receipt_id']])])
+    assert error.value.failure['details']['reason'] == 'intervening_write'
+    assert (realm.head, realm.entries, realm.documents) == before
+
+
+def test_original_trim_dependency_change_and_forged_capture_are_atomic():
+    realm = DetachedRealm(media_document())
+commit 8de94595ba62ebe11d8bc30e6effc1e2d257ecf7
+Author: Claude <noreply@anthropic.com>
+Date:   Tue Oct 20 00:25:08 2026 +0000
+
+    fix(timeline): keep trim holds in source units
+    
+    Write native and legacy trim holds as source-window seconds so playback
+    duration applies speed exactly once. Refresh trim goldens and add nonunit-speed,
+    rational-fps, half-open, and stored-hold preservation coverage.
+
+ astrid/sdk/timeline/_trim_commands.py              |  4 ++--
+ astrid/sdk/timeline/model.py                       |  3 +--
+ .../fixtures/recipe_m2_clip_trim.json              | 12 +++++------
+ .../test_recipe_m2_clip_trim.py                    | 23 ++++++++++++++++++++++
+ tests/sdk/test_timeline_clip_trim_provider.py      |  2 +-
+ 5 files changed, 33 insertions(+), 11 deletions(-)
+d4743e2984cef0908fa0b6bef166aa801f2bde8f
+ 21 files changed, 960 insertions(+), 74 deletions(-)
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor/notes/final_audit.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor/notes/final-audit.log && python3 - <<'"'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor')
+message='''feat(timeline): compose reviewed Bundle2 product successor
+
+Resolve PARAM snapshots at the selected command stage and preserve exact
+existing admissions across mixed pack revisions. Compose source holds with
+native fixed moves and accept registry MIME kinds in native literal splits.
+
+Move the unchanged media-kind helper into the pure common module, retain its
+compatibility import, and remap only declared shot item references so opaque
+fields survive materialization. Prove exact historical-image undo for all
+three item codecs and remove the restored requirement's inherited xfail.
+
+Preserve the twelve-operation schema, frozen goldens, source-unit trim
+semantics, and Runtime pin. Remove four compact fixture lint findings.
+'''
+for name in ('commit-msg','commit-msg.txt'):
+    (root/name).write_text(message)
+PY" in /home/user/work/wt/agt-m2-bundle2-reviewed-successor
+ succeeded in 682ms:
+codex
+The focused run finished: 1,618 passed, 4 existing skips, and 74 integration tests deselected. The fresh-interpreter provider test also passed with legacy editing, Checkout, journal, and renderer imports blocked. I’m writing the report and both harness commit-message files; integration remains held and the Runtime pin stays unchanged.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor/notes/report.md <<'EOF'
+# Bundle2 reviewed product successor
+
+Ready for review and harness commit on "'`tl/agt-m2-bundle2-reviewed-successor`, based on frozen `d4743e2984cef0908fa0b6bef166aa801f2bde8f`. M2 integration remains **HELD until PLAN records M1**. No pin change or integration approval.
+
+Applied file-aware deltas sequentially: `45c3f328383a5c927c4b5ee5b2a19fe7b537f760` selected PARAM object resolution, then `28561c7efb9c5f5aefdefd56cb5549425e6e0c88` exact mixed-admission retention, then `0edcbc005fea180eab7e663f20ee45ebb278153a` hold after move. Read their worker reports and diffs. Kept their direct tests unchanged. Adapted only execute/replay/provider wiring around d474'"'s existing "'`verified_media`, state-aware inverse checks, accepted-boundary machinery and historical-image reuse. Preserved d474'"'s "'`_clip_basis` and clear-only container behavior.
+
+Ported ONLY split MIME/static-fixed-start deltas and new split/provider tests from `c17e8f3c4bf3c78fc7a4c2246a369c95e80cca79`, followed by exact pure-helper changes and split import-fence test from `ccd8e830dbff3977438dd8f78ad3d921ad7e1d8d`. `_media_kind` has its exact original function body in `_common`, with the compatibility import in `edits`. Native split imports the pure helper. No model, registry or schema overlay.
+
+Current trim already accepts positive numeric app/app.astrid `for` and static `fixed_start: true` from native moves, clears `for` through main'"'s existing helpers, and stores source-unit holds. No trim/model product change was necessary. Added the compatible static-intent/dynamic-follow regression using the current fixture, plus c17's unchanged provider move→trim→undo regression. Did **not** port c17's broader transition/effects refusals or its trim fixture/module: those would add restrictions outside the requested compatible delta and change d474's capture footprint. No new transition support is claimed. Existing unsupported dynamic/map cases remain guarded.
+
+Applied "'`875a9aff4e658def3fa912cacd13f28a911fe89a` as its exact opaque remapper/helper tests and opaque6 Runtime regressions. Before removing the inherited exact-inverse xfail, all six cases passed with `--runxfail` against b3. Then removed only that marker; all six also passed normally on frozen6be within the final direct run. No provider code from the active M1 exact-inverse worker was imported. Expanded only the four new compact-style warnings in `FakeMedia`; no broad legacy formatting.
+
+Final product diff is ten files: core `element/project_packs.py`, core `timeline/authoring_bundle.py`, SDK timeline `_clip_scalar_commands.py`, `_common.py`, `_scalar_commands.py`, `_split_commands.py`, `commands.py`, `commit.py`, `edits.py`, `rebase.py`. Twelve direct-test files changed/added. Tracked diff: 960 insertions / 74 deletions; new opaque test: 183 lines. Full review patch, including that untracked file, is `notes/final.patch`, SHA256 `08e36e213132675502816a89205ceb80579b64710c2f53ce1178ecaa78aed973`.
+
+## Frozen invariants and capture footprint
+
+- Canonical schema SHA256 remains `472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9`; exactly twelve registered operations. No DTO, ABI, schema or operation expansion.
+- All sixteen conformance JSON goldens are byte-identical to d474. M1 move/occurrence/shared and App track-label bytes also match frozen Bundle1 `3bf9e536`. Scalar, trim and split goldens are unchanged; no regeneration needed.
+- Runtime lock/vendor and `model.py` are untouched. The source-hold formula and d474 import formatting are preserved.
+- PARAM now records the reviewed `params.snapshot` entity dependency (exact source, selected element and object descriptor), alongside `params.schema`; its element binding references both. Inverse/redo carry this provenance. Object reads are narrowed to selected staged admissions; full original Document pins remain intact.
+- Hold after move records writes to existing agreeing static `for` declarations, including unchanged writes; it does not create declarations. Ordinary existing captures/goldens remain unchanged. Split/helper changes introduce no additional reads or writes. Opaque remapping changes only known projection codec/reference locations, without adding authored writes.
+- No added xfails. Existing popup old-asset-reference and nullable-speed expectations/markers remain unchanged.
+
+## Exact validation
+
+All commands ran from `/home/user/work/wt/agt-m2-bundle2-reviewed-successor` with dependency-only shared environments. Logs live beside this report. No tests were disabled or weakened.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m '"'not integration' tests/editing_conformance tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_clip_trim_provider.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_native.py tests/core/test_project_pack_inputs.py tests/core/test_project_pack_snapshots.py tests/core/test_project_packs.py tests/core/test_editor_element_catalog.py tests/timeline/test_authoring_bundle.py tests/sdk/test_timeline_composed_schema.py
+"'```
+
+**1618 passed, 4 existing skips, 74 deselected in 239.23s; exit 0** (`focused.log`). Includes stage/clear/scalar/trim/split/native CLI/provider/pack coverage and all final edited pure tests. The sole later test edit during this run removed the integration-only opaque xfail; those cases were deselected here and separately tested below.
+
+Actual Runtime source `/home/user/work/wt/rt-m2-pack-custody-resume`, clean HEAD `b3ce5aa65151a6174064d73838ad23da4a8a7141`:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-pack-custody-resume PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py --tb=short
+```
+
+**22 passed in 35.14s; exit 0** (`runtime-b3-param.log`). Real admission/custody, original pins, mixed snapshots, staged add/PARAM, rebase, missing unselected objects, inverse/redo/restore and restart/retry; direct service, no sockets or schema/provider override. This is source-pair evidence, not an official mixed-version HTTP release claim.
+
+Before inherited marker removal:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-pack-custody-resume PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration --runxfail tests/editing_conformance/test_commit_runtime_opaque_items.py --tb=short
+```
+
+**6 passed in 15.77s; exit 0** (`opaque-requirement.log`). No product changes afterward.
+
+Actual frozen Runtime `/home/user/work/wt/rt-m2-track-public-export`, clean HEAD `6be970633cc82ab412428151e6bf42f3e7fc3081`, after marker removal:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py --tb=short
+```
+
+**53 passed, 12 existing strict xfailed in 81.03s; exit 0** (`runtime-6be-direct.log`). All twelve xfails are the unchanged old asset-reference contract refusal cases; these are not popup acceptance. Includes scalar/compound/separate move→hold, opaque6, shared exact undo/redo, restart/retry, media inverse and add/delete. No sockets.
+
+Fresh interpreter import fence: the exact stdin script is retained in `notes/native_save_import_fence.py`; it installs an import finder rejecting legacy edits/model/Checkout/journal and renderer modules, then calls `pytest.main(['"'-q', '-p', 'no:cacheprovider', 'tests/sdk/test_timeline_commit_provider.py::test_provider_accepts_trim_after_move_and_undoes_only_trim'])"'`. Executed with `env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'"'` and that script as stdin: **1 passed in 0.53s; exit 0** (`native-save-import-fence.log`). The unchanged ccd move→MIME-split kernel fence also passed in the focused run.
+
+```sh
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/core/timeline/authoring_bundle.py astrid/sdk/timeline/{_clip_scalar_commands,_scalar_commands,_split_commands,commands,commit,rebase}.py tests/core/test_project_pack_snapshots.py tests/editing_conformance/{test_commit_runtime_clip_scalar_fields,test_commit_runtime_opaque_items,test_recipe_clip_scalar_fields,test_recipe_m2_clip_split,test_recipe_m2_clip_trim}.py tests/sdk/{test_timeline_clip_scalar_provider,test_timeline_commit_provider,test_timeline_selected_schema,test_timeline_selected_schema_runtime}.py tests/timeline/test_authoring_bundle.py --output-format concise
+```
+
+**All checks passed; exit 0.**
+
+```sh
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/core/element/project_packs.py astrid/core/timeline/authoring_bundle.py astrid/sdk/timeline/{_clip_scalar_commands,_common,_scalar_commands,_split_commands,commands,commit,edits,rebase}.py tests/core/test_project_pack_snapshots.py tests/core/test_project_packs.py tests/editing_conformance/{test_commit_runtime_clip_scalar_fields,test_commit_runtime_opaque_items,test_recipe_clip_scalar_fields,test_recipe_m2_clip_split,test_recipe_m2_clip_trim}.py tests/sdk/{test_timeline_clip_scalar_provider,test_timeline_commit_provider,test_timeline_selected_schema,test_timeline_selected_schema_runtime}.py tests/timeline/test_authoring_bundle.py --output-format json
+```
+
+**Exit 1, baseline only: 168 findings**, versus d474'"'s 172 in this same scope. Per-code/message comparison against each original git blob: project_packs 96→96, _common 1→1, edits 1→1, test_project_packs 74→70; zero new findings. Exactly the requested E701 and three E702 fixture findings removed ("'`ruff.json`, `ruff-baseline.json`).
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --python-version 3.13 --follow-imports=silent --cache-dir=/tmp/agt-m2-reviewed-mypy astrid/sdk/timeline/{_clip_scalar_commands,_common,_scalar_commands,_split_commands,commands,commit,rebase}.py
+```
+
+**Success: no issues in 7 source files; exit 0** (`mypy-native.log`). Shared dependency environment uses Python3.13.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --python-version 3.13 --follow-imports=silent --cache-dir=/tmp/agt-m2-reviewed-mypy astrid/core/element/project_packs.py astrid/core/timeline/authoring_bundle.py astrid/sdk/timeline/{_clip_scalar_commands,_common,_scalar_commands,_split_commands,commands,commit,edits,rebase}.py
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor/notes/check_mypy_baseline.py
+```
+
+Broader check **exit 1, 104 baseline errors in 3 files**: edits98, project_packs4, authoring_bundle2. The baseline script repeats the exact ten-file scope with `--no-pretty` and uses mypy `--shadow-file` for each d474 original; **104→104 identical file/message diagnostics, zero new/removed, comparison exit 0** (`mypy-baseline-comparison.log`). No typing suppressions or dependency installation.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-track-public-export
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor/notes/final_audit.py
+git diff --check
+```
+
+**All exit 0**. Final audit verifies twelve exact reviewed product/test blobs, the selected-schema function, exact helper bodies, opaque tests except the restored marker, schema/registry/goldens/pin/model invariants and no added xfails (`final-audit.log`). Its first draft incorrectly expected the entire scalar module to equal45; corrected the audit to verify only the selected-schema function and retain d474'"'s clip-basis/clear semantics. No product change resulted.
+
+## Interrupted invocation and remaining qualification
+
+One mistaken overbroad direct Runtime selection included the daemon-based scalar and first-clip files before I checked their fixture requirements. Exact invocation:
+
+"'```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py --tb=short
+```
+
+Stopped with SIGINT (**exit130**, partial `FFx` among progress, no completed diagnostic summary; `runtime-6be.log`). These are unqualified partial results, not counted as product failures or passes. Replaced it with the completed socket-free selection above. The original nullable-speed expectation/strict marker is unchanged and **not requalified**. No completed socket/daemon test claim. Future daemon/HTTP/browser testing must use the central service.
+
+No implementation blocker within scope. No full suite/make check, install, browser, merge, rebase, checkout, commit, push, branch/ref or integration-worktree mutation occurred. No build/temp output remains in the worktree. Both `commit-msg` and `commit-msg.txt` are supplied in the worker'"'s shared root. Results are appended to absolute "'`design/m2-writer-bundle-2.md`.
+
+Recommended next steps: harness commit this new candidate; manager record its resulting SHA; Runtime finish/review official0.2.3 artifacts from the frozen schema; separately coordinate normal consumer pins and central exact-pair HTTP/host/App popup/legacy-journey qualification. Preserve frozen d474 and Bundle1. M2 remains held until the orchestrator records M1 in PLAN.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor/notes/native_save_import_fence.py <<'"'PY'
+import importlib.abc
+import sys
+
+class Block(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, *args):
+        if fullname.startswith(('astrid.sdk.timeline.edits', 'astrid.sdk.timeline.model',
+                                'astrid.sdk.timeline.journal', 'astrid.sdk.timeline_checkout',
+                                'astrid.sdk.checkout', 'astrid.core.rendering',
+                                'astrid.packs.rendering', 'astrid.sdk.authoring_render_preview')):
+            raise AssertionError('native save imported ' + fullname)
+
+sys.meta_path.insert(0, Block())
+import pytest
+sys.exit(pytest.main(['-q', '-p', 'no:cacheprovider', 'tests/sdk/test_timeline_commit_provider.py::test_provider_accepts_trim_after_move_and_undoes_only_trim']))
+PY
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md <<'EOF'
+
+## Reviewed product successor — agt-m2-bundle2-reviewed-successor (2026-10-20)
+
+New candidate on "'`tl/agt-m2-bundle2-reviewed-successor`, base frozen `d4743e2984cef0908fa0b6bef166aa801f2bde8f`; harness commit pending. Applied selected deltas in order45c3f328→28561c7→0edcbc0, preserving d474'"'s media/accepted-boundary/clear machinery; added only c17 split MIME/static-intent changes plus ccd pure-helper closure and direct tests. Current trim already supports native move static "'`for`; no trim/model product overlay. Applied exact875a9aff opaque remapper and opaque6 tests; all six passed before removing their restored exact-undo xfail. No M1 worker provider imported. Removed exactly four portable-fixture compact-style warnings.
+
+Schema remains SHA256 `472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9`, twelve operations. All16 JSON goldens unchanged; M1+label also exact Bundle1 bytes. No pin/vendor/model change. PARAM adds reviewed selected snapshot dependency; hold after move records existing agreeing static `for` writes. No other capture footprint change requiring golden regeneration. No new xfails.
+
+Final focused own-domain run: **1618 passed, 4 existing skips, 74 integration deselected** (239.23s). Actual clean Runtimeb3ce5aa custody/PARAM/provider: **22 passed** (35.14s). Actual clean frozen Runtime6be9706 direct scalar/shared/opaque/add-delete/occurrence-media/media-inverse: **53 passed, 12 unchanged old-assetref strict xfailed** (81.03s). Opaque6 also **6 passed with --runxfail** on b3 before marker removal. Fresh-interpreter native provider move→trim→undo import fence **1 passed** with legacy edits/model/Checkout/journal/renderer imports forbidden. Scoped Ruff clean on18 changed files; broader172→168 baseline findings, zero new. Native mypy7 files clean; broader ten-file104→104 identical baseline diagnostics. Vendor check, frozen invariants and diffcheck pass.
+
+One mistaken direct invocation included daemon scalar/first-clip tests; interrupted exit130 with incomplete `FFx` output, not qualification. Replaced by the completed socket-free selection above. Nullable-speed test expectation/marker unchanged, not requalified; no socket/HTTP/browser success claim. Official0.2.3 and central exact-pair/App popup/legacy journeys remain pending. M2 integration **HELD until PLAN M1**; frozen d474 and Bundle1 untouched.
+
+Exact commands, decisions, source manifest and logs: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor/notes/report.md`. Full diff including new opaque test: `notes/final.patch`, SHA256 `08e36e213132675502816a89205ceb80579b64710c2f53ce1178ecaa78aed973`. Both worker-root commit-message files ready; manager should record harness SHA here after commit, then coordinate the official pair without changing this task'"'s pin.
+EOF" in /home/user/work/wt/agt-m2-bundle2-reviewed-successor
+ succeeded in 0ms:
+codex
+Composed the reviewed successor; both harness commit-message files are ready.
+
+- Schema, 12 operations, all 16 goldens, and Runtime pin unchanged.
+- Focused tests: **1,618 passed**, 4 existing skips.
+- Runtime b3 PARAM/provider: **22 passed**.
+- Runtime6be direct tests: **53 passed**, 12 existing xfails.
+- No new Ruff/mypy diagnostics or xfails.
+- Daemon run interrupted and unqualified; official0.2.3/App qualification remains pending. M2 integration stays held.
+
+[Report with exact sources, commands, results, decisions, and remaining work](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor/notes/report.md).
+tokens used
+167,659
+Composed the reviewed successor; both harness commit-message files are ready.
+
+- Schema, 12 operations, all 16 goldens, and Runtime pin unchanged.
+- Focused tests: **1,618 passed**, 4 existing skips.
+- Runtime b3 PARAM/provider: **22 passed**.
+- Runtime6be direct tests: **53 passed**, 12 existing xfails.
+- No new Ruff/mypy diagnostics or xfails.
+- Daemon run interrupted and unqualified; official0.2.3/App qualification remains pending. M2 integration stays held.
+
+[Report with exact sources, commands, results, decisions, and remaining work](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor/notes/report.md).

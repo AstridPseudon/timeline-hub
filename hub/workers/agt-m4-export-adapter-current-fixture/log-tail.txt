@@ -1,0 +1,400 @@
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[added_package_file]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_home_refuses_before_launch[None]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_home_refuses_before_launch[]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_home_refuses_before_launch[relative]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_rejects_unsupported_consuming_overrides[DYLD_INSERT_LIBRARIES]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_rejects_unsupported_consuming_overrides[LD_PRELOAD]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_rejects_unsupported_consuming_overrides[PYTHONHOME]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_rejects_unsupported_consuming_overrides[PYTHONEXECUTABLE]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_rejects_unsupported_consuming_overrides[__PYVENV_LAUNCHER__]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_rejects_unsupported_consuming_overrides[NODE_OPTIONS]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_rejects_unsupported_consuming_overrides[NODE_PATH]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_rejects_unsupported_consuming_overrides[NODE_ICU_DATA]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_rejects_unsupported_consuming_overrides[OPENSSL_CONF]
+tests/packs/rendering/test_render_export_task_adapter.py::test_clean_probe_projection_preserves_values_absence_and_excludes_task_metadata
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_missing_reference_does_not_spawn
+tests/packs/rendering/test_render_export_task_adapter.py::test_owned_probe_positive_original_wait_precedes_final_census
+tests/packs/rendering/test_render_export_task_adapter.py::test_owned_probe_timeout_preserves_primary_when_cleanup_refuses
+tests/packs/rendering/test_render_export_task_adapter.py::test_owned_probe_empty_env_refuses_before_launch
+tests/packs/rendering/test_render_export_task_adapter.py::test_validation_failure_never_publishes_ready_artifact_and_preserves_receipt
+tests/packs/rendering/test_render_export_task_adapter.py::test_parent_owned_reference_survives_worker_and_renderer_filters
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[editable.pth]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[safe_finder.py]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/extension.so]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/resources.json]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[sitecustomize.py]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[idna.py]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_missing_role_and_tampered_artifact_refuse_without_probe
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_explicitly_validates_startup_locale_transition
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unsupported_startup_transition[second_transition]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unsupported_startup_transition[foreign_interpreter]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unsupported_startup_transition[changed_home]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_dependency_change_during_qualifying_import_refuses_publication
+tests/packs/rendering/test_render_export_task_adapter.py::test_validation_acquisition_failure_retains_handle_and_blocks_replacement
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[delete]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[replace]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_settling_owned_generator_four_file_readback_and_unchanged_skip
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_qualifying_discovery_refuses_corpus_change[new_manifest]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_qualifying_discovery_refuses_corpus_change[state_appears]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_qualifying_discovery_refuses_corpus_change[component_changed]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_settling_requires_all_three_hashes_not_legacy_subset
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_settling_wheel_binds_provisioned_outputs_without_generator
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_generator_custody_refusal_preserves_primary_and_no_state_publication
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unqualified_ordinary_python_startup[PYTHONCASEOK]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unqualified_ordinary_python_startup[PYTHONCOERCECLOCALE]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unqualified_ordinary_python_startup[PYTHONNOUSERSITE]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unqualified_ordinary_python_startup[PYTHONPLATLIBDIR]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unqualified_ordinary_python_startup[PYTHONPYCACHEPREFIX]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unqualified_ordinary_python_startup[PYTHONSAFEPATH]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unqualified_ordinary_python_startup[PYTHONSTARTUP]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unqualified_ordinary_python_startup[PYTHONUSERBASE]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_refuses_unqualified_ordinary_python_startup[PYTHONUTF8]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_git_configuration_indirection_refuses[include]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_git_configuration_indirection_refuses[includeIf "gitdir:/any/"]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_import_archive_and_child_cwd_binding[appears]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_import_archive_and_child_cwd_binding[replace]
+tests/packs/rendering/test_render_export_task_adapter.py::test_schema_import_archive_absence_to_presence_refuses_without_fallback
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_oversized_artifact_refuses_before_publication
+tests/packs/rendering/test_render_export_task_adapter.py::test_source_settled_locale_transition_preserves_shared_complete_state[False]
+tests/packs/rendering/test_render_export_task_adapter.py::test_source_settled_locale_transition_preserves_shared_complete_state[True]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_probe_preserves_distinct_renderer_and_generator_startup
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_readiness_qualifies_actual_canonical_transport_projection
+tests/packs/rendering/test_render_export_task_adapter.py::test_managed_git_indirection_refuses_before_verified_discovery[include]
+tests/packs/rendering/test_render_export_task_adapter.py::test_managed_git_indirection_refuses_before_verified_discovery[include_if]
+tests/packs/rendering/test_render_export_task_adapter.py::test_managed_git_indirection_refuses_before_verified_discovery[include_if_tab]
+tests/packs/rendering/test_render_export_task_adapter.py::test_managed_git_indirection_refuses_before_verified_discovery[worktree_include]
+tests/packs/rendering/test_render_export_task_adapter.py::test_managed_git_indirection_refuses_before_verified_discovery[pointer]
+tests/packs/rendering/test_render_export_task_adapter.py::test_managed_git_indirection_refuses_before_verified_discovery[common_directory]
+tests/packs/rendering/test_render_export_task_adapter.py::test_managed_git_indirection_refuses_before_verified_discovery[symlink]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shares_only_isolated_proof_preserving_six_registries
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shared_proof_rejects_between_variants_and_before_publish[5]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[LANG-C]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[PATH-/different]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[TMPDIR-/different]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_proofs_never_cross_launch_transactions
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_timing_metadata_contains_no_arguments_or_error_messages
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shared_proof_keeps_registry_output_mutation_rejection
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_node_configuration_has_separate_proof
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_schema_configuration_is_not_reused
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_reuses_bytes_but_keeps_fences_and_fresh_consumers
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[same_size_restored_mtime-5]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[add-5]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[remove-5]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[replace-5]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[chmod-5]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_conservative_timestamps[recent]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_conservative_timestamps[future]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_conservative_timestamps[backward]
+tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_mutation_during_read
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_probe90_timeout_is_not_proven_and_preserves_original_cleanup[False-registry_discovery]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_probe90_timeout_is_not_proven_and_preserves_original_cleanup[False-registry_generator]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_probe90_timeout_is_not_proven_and_preserves_original_cleanup[True-registry_discovery]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_probe90_timeout_is_not_proven_and_preserves_original_cleanup[True-registry_generator]
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_generator90_timeout_never_publishes_state
+
+124/125 tests collected (1 deselected) in 1.32s
+
+exec
+/bin/bash -lc "sed -n '1,280p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run && printf '\\n--- wait ---\\n' && sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test" in /home/user/work/wt/agt-m4-export-adapter-current-fixture
+ succeeded in 262ms:
+#!/bin/bash
+# test-run ID — called by dispatcher-daemon (outside the sandbox) for queue/pending/test-ID. Exit 0 = started in background or served
+# from cache, 3 = wait (slot busy / identical run in flight / low disk), 1 = bad request. "test-run --run ID" is the background job.
+# Caps: one heavy ("full*") suite at a time, plus up to 2 other runs. Cache key: repo + tree of the worktree (incl. uncommitted
+# changes) + suite + files + command. Result: tests/ID/{status,exit,summary,log.txt}; status = queued|running|pass|fail|timeout|error.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+[ "$1" = --run ] && { RUN=1; shift; }; ID=$1; D=$O/tests/$ID; C=$O/tests/cache
+bad() { echo "$*" > $D/summary; echo 1 > $D/exit; echo error > $D/status; echo "$*"; exit 1; }
+alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/dev/null && [ "$1" = $( [ -f ${r%running}heavy ] && echo heavy || echo light) ] && echo x; done | wc -l; }
+. $D/request 2>/dev/null && { [ -z "$RUN" ] || . $D/snap; } || { echo "no request for $ID"; exit 1; }
+case $target in integration:*) W=/home/user/work/$repo;; *) W=$(sed -n 's/^worktree=//p' $O/workers/$target/meta);; esac
+if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled worker: recreate a detached worktree from its branch
+  git -C /home/user/work/$repo worktree add -q --detach "$W" "tl/$target" 2>/dev/null || git -C /home/user/work/$repo worktree add -q --detach "$W" "hub/tl/$target" 2>/dev/null; fi
+[ -d "$W" ] || bad "worktree $W not found (and no tl/$target branch to recreate it from)"
+CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
+OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
+HV=light; case $suite in full*) HV=heavy;; esac
+if [ -z "$RUN" ]; then
+  IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null
+  TREE=$(GIT_INDEX_FILE=$IDX git -C $W write-tree); rm -f $IDX; [ -n "$TREE" ] || bad "could not compute tree of $W"
+  # cross-product suites (e2e, journeys, commit-integration, or a command naming another repo) also depend on the
+  # other repos' integration code: add their tl/integration heads to the key so a stale pass is never reused
+  EXT=""; case "$suite $CMD" in *e2e*|*integration*|*three-products*|*journey*) EXT=x;; esac
+  for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
+  [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
+  KEY=$(echo "$repo $TREE $suite $files $CMD $EXT" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
+  if [ $nocache = 0 ] && [ -f $C/$KEY ] && SRC=$O/tests/$(cat $C/$KEY) && [ -f $SRC/summary ]; then
+    cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
+    basename $SRC > $D/cached_from; cp $SRC/status $D/status; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
+  [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
+  [ $HV = heavy ] && [ $(alive heavy) -ge 1 ] && { echo "a full suite is already running" | tee $D/why; exit 3; }
+  [ $HV = light ] && [ $(alive light) -ge 2 ] && { echo "2 targeted/named runs already running" | tee $D/why; exit 3; }
+  FLOOR=5; [ $HV = heavy ] && FLOOR=8; [ $(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9) -lt $FLOOR ] && { echo "low disk (<${FLOOR}G free; heavy runs need 8G so Runtime storage preflight does not cause false reds)" | tee $D/why; exit 3; }
+  [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
+  setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+fi
+echo $$ > $D/running; SNAP=/home/user/work/wt/.test-$ID; T0=$(date +%s)
+COMMIT=$(git -C $W commit-tree $tree -p HEAD -m "test snapshot $ID") && git -C $W worktree add -q --detach $SNAP $COMMIT || { echo 1 > $D/exit; echo error > $D/status; echo "snapshot failed" > $D/summary; rm -f $D/running $C/$key.running; exit 1; }
+NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules; case $repo in app|composition) [ -e $SNAP/node_modules ] || ln -s "$(readlink -f $NM)" $SNAP/node_modules;; esac
+# agent: link the worktree's installed Remotion runtime (remotion/node_modules), else the integration checkout's, read-only by convention
+if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
+  [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
+( cd $SNAP && PYTHONPATH=$SNAP timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
+git -C $W worktree remove --force $SNAP 2>/dev/null || { rm -rf $SNAP; git -C $W worktree prune; }
+ST=fail; [ $RC = 0 ] && ST=pass; [ $RC = 124 -o $RC = 137 ] && ST=timeout
+{ echo "test $ID: $ST exit=$RC in $(( $(date +%s) - T0 ))s — $suite on $target ($repo tree $tree)"; echo "cmd: $CMD"
+  echo "counts: $(grep -aE '[0-9]+ (passed|failed)|Tests +[0-9]|^# (pass|fail) ' $D/log.txt | tail -3 | tr '\n' ' ')"; echo "--- last 60 lines of $D/log.txt ---"; tail -60 $D/log.txt; } > $D/summary
+[ -f $D/CANCELLED ] && { ST=cancelled; RC=130; }   # stopped by request-stop-test: never a result, never cached
+echo $RC > $D/exit; echo $ST > $D/status; [ $RC = 0 -o $RC = 1 ] && echo $ID > $C/$key; rm -f $D/running $C/$key.running
+
+--- wait ---
+#!/bin/bash
+# wait-test ID|RESULT-DIR [MAX-MIN]  — poll every 30 s until the test run is done, print its summary, exit with its exit code.
+# Exits 124 (still queued/running) after MAX-MIN minutes (default 100); just run it again.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+D=$O/tests/$(basename "$1"); [ -f $D/status ] || { echo "no test run $1"; exit 2; }; END=$(( $(date +%s) + ${2:-100}*60 ))
+while grep -qE '^(queued|running)' $D/status; do
+  [ $(date +%s) -ge $END ] && { echo "still $(cat $D/status) after ${2:-100} min $(cat $D/why 2>/dev/null); rerun wait-test"; exit 124; }; sleep 30; done
+cat $D/summary; exit $(cat $D/exit 2>/dev/null || echo 1)
+
+codex
+The collection confirms the intended parameter IDs and no fixture import errors. I’m submitting one named central `agent-remotion-0013-nodes` job containing only the 51 classified node IDs; no full suite or unrelated tests will be requested.
+exec
+/bin/bash -lc "FILES='tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[__init__.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[generated.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[materialize.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[theme.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[timeline.schema.json] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[validate.py] tests/packs/rendering/test_render_export_task_adapter.py::test_remotion_runtime_uses_absolute_node_not_hostile_path tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_owned_waits_before_publish_and_reuse_without_probe tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[HOME-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[LANG-] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[PATH-/other] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[TMPDIR-/other] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[ASTRID_REMOTION_VALIDATION_LAUNCH-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[ASTRID_REMOTION_VALIDATION_ROLE-foreign] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[node] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[cli] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[schema] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[lock] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[package] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[added_package_file] tests/packs/rendering/test_render_export_task_adapter.py::test_validation_failure_never_publishes_ready_artifact_and_preserves_receipt tests/packs/rendering/test_render_export_task_adapter.py::test_parent_owned_reference_survives_worker_and_renderer_filters tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[editable.pth] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[safe_finder.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/extension.so] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/resources.json] tests/packs/rendering/test_launch_validation_startup_import_and_optional_availability_invalidation[sitecustomize.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[idna.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_missing_role_and_tampered_artifact_refuse_without_probe tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_explicitly_validates_startup_locale_transition tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_dependency_change_during_qualifying_import_refuses_publication tests/packs/rendering/test_render_export_task_adapter.py::test_validation_acquisition_failure_retains_handle_and_blocks_replacement tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[delete] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[replace] tests/packs/rendering/test_render_export_task_adapter.py::test_schema_import_archive_absence_to_presence_refuses_without_fallback tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_oversized_artifact_refuses_before_publication tests/packs/rendering/test_render_export_task_adapter.py::test_registry_readiness_qualifies_actual_canonical_transport_projection tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shares_only_isolated_proof_preserving_six_registries tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shared_proof_rejects_between_variants_and_before_publish[5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[LANG-C] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[PATH-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[TMPDIR-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_proofs_never_cross_launch_transactions tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_node_configuration_has_separate_proof tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_schema_configuration_is_not_reused tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_reuses_bytes_but_keeps_fences_and_fresh_consumers tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[same_size_restored_mtime-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[add-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[remove-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[replace-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[chmod-5]'
+R="'$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agent-remotion-0013-nodes agent-remotion-0013-nodes --files "$FILES")
+printf '"'%s\\n' \""'$R"' in /home/user/work/wt/agt-m4-export-adapter-current-fixture
+ succeeded in 30ms:
+no worker agent-remotion-0013-nodes
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/meta && printf '\\n--- request dirs ---\\n' && find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests -maxdepth 1 -type d -name '*agent-remotion-0013*' -printf '%f\\n' | sort" in /home/user/work/wt/agt-m4-export-adapter-current-fixture
+ succeeded in 35ms:
+name=agt-m4-export-adapter-current-fixture
+repo=agent
+base=tl/integration
+base_sha=53af5383
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m4-export-adapter-current-fixture
+started=2026-10-20T20:17:24Z
+
+--- request dirs ---
+agt-m3-public13-installed-host-gate-agent-remotion-0013-nodes-1020180723-30947
+
+codex
+The first submission attempt was rejected before queueing because I passed the suite name as the worker target; no test job was created. The worker target is this worktree, with `agent-remotion-0013-nodes` as the suite. I’m resubmitting the same 51 selectors correctly now.
+exec
+/bin/bash -lc "FILES='tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[__init__.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[generated.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[materialize.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[theme.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[timeline.schema.json] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[validate.py] tests/packs/rendering/test_render_export_task_adapter.py::test_remotion_runtime_uses_absolute_node_not_hostile_path tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_owned_waits_before_publish_and_reuse_without_probe tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[HOME-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[LANG-] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[PATH-/other] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[TMPDIR-/other] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[ASTRID_REMOTION_VALIDATION_LAUNCH-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[ASTRID_REMOTION_VALIDATION_ROLE-foreign] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[node] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[cli] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[schema] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[lock] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[package] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[added_package_file] tests/packs/rendering/test_render_export_task_adapter.py::test_validation_failure_never_publishes_ready_artifact_and_preserves_receipt tests/packs/rendering/test_render_export_task_adapter.py::test_parent_owned_reference_survives_worker_and_renderer_filters tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[editable.pth] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[safe_finder.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/extension.so] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/resources.json] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[sitecustomize.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[idna.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_missing_role_and_tampered_artifact_refuse_without_probe tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_explicitly_validates_startup_locale_transition tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_dependency_change_during_qualifying_import_refuses_publication tests/packs/rendering/test_render_export_task_adapter.py::test_validation_acquisition_failure_retains_handle_and_blocks_replacement tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[delete] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[replace] tests/packs/rendering/test_render_export_task_adapter.py::test_schema_import_archive_absence_to_presence_refuses_without_fallback tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_oversized_artifact_refuses_before_publication tests/packs/rendering/test_render_export_task_adapter.py::test_registry_readiness_qualifies_actual_canonical_transport_projection tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shares_only_isolated_proof_preserving_six_registries tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shared_proof_rejects_between_variants_and_before_publish[5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[LANG-C] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[PATH-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[TMPDIR-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_proofs_never_cross_launch_transactions tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_node_configuration_has_separate_proof tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_schema_configuration_is_not_reused tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_reuses_bytes_but_keeps_fences_and_fresh_consumers tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[same_size_restored_mtime-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[add-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[remove-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[replace-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[chmod-5]'
+R="'$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m4-export-adapter-current-fixture agent-remotion-0013-nodes --files "$FILES")
+printf '"'%s\\n' \""'$R"' in /home/user/work/wt/agt-m4-export-adapter-current-fixture
+ succeeded in 0ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m4-export-adapter-current-fixture-agent-remotion-0013-nodes-1020201834-6597
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m4-export-adapter-current-fixture-agent-remotion-0013-nodes-1020201834-6597/
+
+codex
+The single central job is queued successfully with the requested 51 selectors. I’m waiting on its result; the central service will snapshot this worktree and use the provisioned Remotion 0.0.13 environment.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m4-export-adapter-current-fixture-agent-remotion-0013-nodes-1020201834-6597 100' in /home/user/work/wt/agt-m4-export-adapter-current-fixture
+ succeeded in 30085ms:
+test agt-m4-export-adapter-current-fixture-agent-remotion-0013-nodes-1020201834-6597: pass exit=0 in 20s — agent-remotion-0013-nodes on agt-m4-export-adapter-current-fixture (agent tree 6244013e094909bed1da6d92a5e5d55981386382)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[__init__.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[generated.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[materialize.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[theme.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[timeline.schema.json] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[validate.py] tests/packs/rendering/test_render_export_task_adapter.py::test_remotion_runtime_uses_absolute_node_not_hostile_path tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_owned_waits_before_publish_and_reuse_without_probe tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[HOME-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[LANG-] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[PATH-/other] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[TMPDIR-/other] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[ASTRID_REMOTION_VALIDATION_LAUNCH-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[ASTRID_REMOTION_VALIDATION_ROLE-foreign] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[node] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[cli] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[schema] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[lock] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[package] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[added_package_file] tests/packs/rendering/test_render_export_task_adapter.py::test_validation_failure_never_publishes_ready_artifact_and_preserves_receipt tests/packs/rendering/test_render_export_task_adapter.py::test_parent_owned_reference_survives_worker_and_renderer_filters tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[editable.pth] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[safe_finder.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/extension.so] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/resources.json] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[sitecustomize.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[idna.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_missing_role_and_tampered_artifact_refuse_without_probe tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_explicitly_validates_startup_locale_transition tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_dependency_change_during_qualifying_import_refuses_publication tests/packs/rendering/test_render_export_task_adapter.py::test_validation_acquisition_failure_retains_handle_and_blocks_replacement tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[delete] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[replace] tests/packs/rendering/test_render_export_task_adapter.py::test_schema_import_archive_absence_to_presence_refuses_without_fallback tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_oversized_artifact_refuses_before_publication tests/packs/rendering/test_render_export_task_adapter.py::test_registry_readiness_qualifies_actual_canonical_transport_projection tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shares_only_isolated_proof_preserving_six_registries tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shared_proof_rejects_between_variants_and_before_publish[5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[LANG-C] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[PATH-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[TMPDIR-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_proofs_never_cross_launch_transactions tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_node_configuration_has_separate_proof tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_schema_configuration_is_not_reused tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_reuses_bytes_but_keeps_fences_and_fresh_consumers tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[same_size_restored_mtime-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[add-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[remove-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[replace-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[chmod-5]
+counts: 51 passed, 52 warnings in 11.88s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m4-export-adapter-current-fixture-agent-remotion-0013-nodes-1020201834-6597/log.txt ---
+bringing up nodes...
+bringing up nodes...
+
+...................................................                      [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_render_export_task_adapter.py: 52 warnings
+  /home/user/work/wt/.test-agt-m4-export-adapter-current-fixture-agent-remotion-0013-nodes-1020201834-6597/tests/packs/rendering/test_render_export_task_adapter.py:53: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(runtime)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+51 passed, 52 warnings in 11.88s
+
+codex
+The central run is green: all 51 requested nodes passed in 11.88s, with only the existing tar extraction deprecation warnings. I’m doing the final source/tree/artifact checks now, then I’ll write the conventional commit message and DONE marker.
+exec
+/bin/bash -lc "git status --short && printf '\\nsource commit/tree:\\n' && git rev-parse HEAD && git write-tree && printf '\\nfixture diff:\\n' && git diff --stat && git diff --check && printf '\\nartifact pin and identity:\\n' && python3 - <<'PY'
+import hashlib, json
+from pathlib import Path
+root = Path('remotion')
+pin = json.loads((root / 'package.json').read_text())['dependencies']['@banodoco/timeline-composition']
+artifact = root / pin.removeprefix('file:')
+print('pin:', pin)
+print('artifact:', artifact)
+print('sha256:', hashlib.sha256(artifact.read_bytes()).hexdigest())
+print('bytes:', artifact.stat().st_size)
+PY
+printf '\\nmarker directory:\\n' && ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture | sed -n '1,120p'" in /home/user/work/wt/agt-m4-export-adapter-current-fixture
+ succeeded in 147ms:
+ M tests/packs/rendering/test_render_export_task_adapter.py
+
+source commit/tree:
+53af5383802e995f78b3693a22d54b3e86062eff
+fatal: Unable to create '/home/user/peteromallet/astrid-agent/.git/worktrees/agt-m4-export-adapter-current-fixture/index.lock': Read-only file system
+
+marker directory:
+total 412
+drwxr-xr-x    2 root root   4096 Oct 20 20:17 .
+drwxr-xr-x 1246 root root  69632 Oct 20 20:19 ..
+-rw-r--r--    1 root root   1352 Oct 20 20:17 brief.md
+-rw-r--r--    1 root root 329261 Oct 20 20:19 log.txt
+-rw-r--r--    1 root root    226 Oct 20 20:17 meta
+-rw-r--r--    1 root root      0 Oct 20 20:17 running
+-rw-r--r--    1 root root     18 Oct 20 20:17 tmpdir
+
+exec
+/bin/bash -lc "git diff --stat && git diff --check && python3 - <<'PY'
+import hashlib, json
+from pathlib import Path
+root = Path('remotion')
+pin = json.loads((root / 'package.json').read_text(encoding='utf-8'))['dependencies']['@banodoco/timeline-composition']
+artifact = root / pin.removeprefix('file:')
+print('pin:', pin)
+print('artifact:', artifact)
+print('sha256:', hashlib.sha256(artifact.read_bytes()).hexdigest())
+print('bytes:', artifact.stat().st_size)
+PY
+printf '\\ncentral result:\\n' && sed -n '1,18p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m4-export-adapter-current-fixture-agent-remotion-0013-nodes-1020201834-6597/summary" in /home/user/work/wt/agt-m4-export-adapter-current-fixture
+ succeeded in 248ms:
+ tests/packs/rendering/test_render_export_task_adapter.py | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+pin: file:artifacts/banodoco-timeline-composition-0.0.13.tgz
+artifact: remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+sha256: 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+bytes: 58477
+
+central result:
+test agt-m4-export-adapter-current-fixture-agent-remotion-0013-nodes-1020201834-6597: pass exit=0 in 20s — agent-remotion-0013-nodes on agt-m4-export-adapter-current-fixture (agent tree 6244013e094909bed1da6d92a5e5d55981386382)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[__init__.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[generated.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[materialize.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[theme.py] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[timeline.schema.json] tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[validate.py] tests/packs/rendering/test_render_export_task_adapter.py::test_remotion_runtime_uses_absolute_node_not_hostile_path tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_owned_waits_before_publish_and_reuse_without_probe tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[HOME-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[LANG-] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[PATH-/other] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[TMPDIR-/other] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[ASTRID_REMOTION_VALIDATION_LAUNCH-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[ASTRID_REMOTION_VALIDATION_ROLE-foreign] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[node] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[cli] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[schema] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[lock] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[package] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[added_package_file] tests/packs/rendering/test_render_export_task_adapter.py::test_validation_failure_never_publishes_ready_artifact_and_preserves_receipt tests/packs/rendering/test_render_export_task_adapter.py::test_parent_owned_reference_survives_worker_and_renderer_filters tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[editable.pth] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[safe_finder.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/extension.so] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/resources.json] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[sitecustomize.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[idna.py] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_missing_role_and_tampered_artifact_refuse_without_probe tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_explicitly_validates_startup_locale_transition tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_dependency_change_during_qualifying_import_refuses_publication tests/packs/rendering/test_render_export_task_adapter.py::test_validation_acquisition_failure_retains_handle_and_blocks_replacement tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[delete] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[replace] tests/packs/rendering/test_render_export_task_adapter.py::test_schema_import_archive_absence_to_presence_refuses_without_fallback tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_oversized_artifact_refuses_before_publication tests/packs/rendering/test_render_export_task_adapter.py::test_registry_readiness_qualifies_actual_canonical_transport_projection tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shares_only_isolated_proof_preserving_six_registries tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shared_proof_rejects_between_variants_and_before_publish[5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[LANG-C] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[PATH-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[TMPDIR-/different] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_proofs_never_cross_launch_transactions tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_node_configuration_has_separate_proof tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_schema_configuration_is_not_reused tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_reuses_bytes_but_keeps_fences_and_fresh_consumers tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[same_size_restored_mtime-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[add-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[remove-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[replace-5] tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[chmod-5]
+counts: 51 passed, 52 warnings in 11.88s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m4-export-adapter-current-fixture-agent-remotion-0013-nodes-1020201834-6597/log.txt ---
+bringing up nodes...
+bringing up nodes...
+
+...................................................                      [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_render_export_task_adapter.py: 52 warnings
+  /home/user/work/wt/.test-agt-m4-export-adapter-current-fixture-agent-remotion-0013-nodes-1020201834-6597/tests/packs/rendering/test_render_export_task_adapter.py:53: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(runtime)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+51 passed, 52 warnings in 11.88s
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..0743c4b366afc76ee52ddb096b77a03b2dc7f345
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/commit-msg
+@@ -0,0 +1,5 @@
++test(rendering): follow the pinned Composition artifact in adapter fixtures
++
++Resolve the temporary render runtime fixture through the committed package.json
++pin so it installs the current Composition archive while preserving compatibility
++fixtures and the adapter's existing assertions.
+diff --git a/tests/packs/rendering/test_render_export_task_adapter.py b/tests/packs/rendering/test_render_export_task_adapter.py
+index 5ef5b59fc20f3d8b89845b462bfa77173d009088..351840d5c1e4f5e249b8c8af5f1405c9c4749c0b
+--- a/tests/packs/rendering/test_render_export_task_adapter.py
++++ b/tests/packs/rendering/test_render_export_task_adapter.py
+@@ -40,8 +40,10 @@
+ 
+ FIXTURE_VIDEO = Path(__file__).resolve().parents[2] / "fixtures" / "reshape" / "hype_regression" / "broll.mp4"
+ TS = "2026-08-25T00:00:00.000000+00:00"
+-COMPOSITION_ARTIFACT = (Path(remotion_runtime.REPO_ROOT) /
+-                        "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz")
++REMOTION_ROOT = Path(remotion_runtime.REPO_ROOT) / "remotion"
++COMPOSITION_ARTIFACT = REMOTION_ROOT / json.loads(
++    (REMOTION_ROOT / "package.json").read_text(encoding="utf-8")
++)["dependencies"]["@banodoco/timeline-composition"].removeprefix("file:")
+ 
+ 
+ def _install_composition_package(runtime: Path) -> Path:
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..0743c4b366afc76ee52ddb096b77a03b2dc7f345
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/commit-msg
+@@ -0,0 +1,5 @@
++test(rendering): follow the pinned Composition artifact in adapter fixtures
++
++Resolve the temporary render runtime fixture through the committed package.json
++pin so it installs the current Composition archive while preserving compatibility
++fixtures and the adapter's existing assertions.
+diff --git a/tests/packs/rendering/test_render_export_task_adapter.py b/tests/packs/rendering/test_render_export_task_adapter.py
+index 5ef5b59fc20f3d8b89845b462bfa77173d009088..351840d5c1e4f5e249b8c8af5f1405c9c4749c0b
+--- a/tests/packs/rendering/test_render_export_task_adapter.py
++++ b/tests/packs/rendering/test_render_export_task_adapter.py
+@@ -40,8 +40,10 @@
+ 
+ FIXTURE_VIDEO = Path(__file__).resolve().parents[2] / "fixtures" / "reshape" / "hype_regression" / "broll.mp4"
+ TS = "2026-08-25T00:00:00.000000+00:00"
+-COMPOSITION_ARTIFACT = (Path(remotion_runtime.REPO_ROOT) /
+-                        "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz")
++REMOTION_ROOT = Path(remotion_runtime.REPO_ROOT) / "remotion"
++COMPOSITION_ARTIFACT = REMOTION_ROOT / json.loads(
++    (REMOTION_ROOT / "package.json").read_text(encoding="utf-8")
++)["dependencies"]["@banodoco/timeline-composition"].removeprefix("file:")
+ 
+ 
+ def _install_composition_package(runtime: Path) -> Path:
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/DONE && sed -n '"'1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-export-adapter-current-fixture/commit-msg && printf '\\n--- final status ---\\n' && git status --short && printf '\\n--- changed lines ---\\n' && nl -ba tests/packs/rendering/test_render_export_task_adapter.py | sed -n '38,52p'" in /home/user/work/wt/agt-m4-export-adapter-current-fixture
+ succeeded in 42ms:
+test(rendering): follow the pinned Composition artifact in adapter fixtures
+
+Resolve the temporary render runtime fixture through the committed package.json
+pin so it installs the current Composition archive while preserving compatibility
+fixtures and the adapter's existing assertions.
+
+--- final status ---
+ M tests/packs/rendering/test_render_export_task_adapter.py
+
+--- changed lines ---
+    38	from astrid.sdk import workspace_client
+    39	from astrid.sdk.workspace_client import WorkspaceClient
+    40	
+    41	FIXTURE_VIDEO = Path(__file__).resolve().parents[2] / "fixtures" / "reshape" / "hype_regression" / "broll.mp4"
+    42	TS = "2026-08-25T00:00:00.000000+00:00"
+    43	REMOTION_ROOT = Path(remotion_runtime.REPO_ROOT) / "remotion"
+    44	COMPOSITION_ARTIFACT = REMOTION_ROOT / json.loads(
+    45	    (REMOTION_ROOT / "package.json").read_text(encoding="utf-8")
+    46	)["dependencies"]["@banodoco/timeline-composition"].removeprefix("file:")
+    47	
+    48	
+    49	def _install_composition_package(runtime: Path) -> Path:
+    50	    package = runtime / "node_modules/@banodoco/timeline-composition"
+    51	    package.parent.mkdir(parents=True, exist_ok=True)
+    52	    with tarfile.open(COMPOSITION_ARTIFACT) as archive:
+
+codex
+Implemented the fixture-only fix in [test_render_export_task_adapter.py](/home/user/work/wt/agt-m4-export-adapter-current-fixture/tests/packs/rendering/test_render_export_task_adapter.py:43).
+
+- Fixture now follows `remotion/package.json` and installs Composition `0.0.13`.
+- Artifact: 58,477 bytes, SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`.
+- Source: `53af5383`; tested snapshot tree `6244013e094909bed1da6d92a5e5d55981386382`.
+- Central job `agent-remotion-0013-nodes`: **51 passed**, 0 failed, 52 existing deprecation warnings.
+- No production, schema, compatibility, or assertion changes. No full suite run.
+- Commit message written and `DONE` created.
+tokens used
+101,229
+Implemented the fixture-only fix in [test_render_export_task_adapter.py](/home/user/work/wt/agt-m4-export-adapter-current-fixture/tests/packs/rendering/test_render_export_task_adapter.py:43).
+
+- Fixture now follows `remotion/package.json` and installs Composition `0.0.13`.
+- Artifact: 58,477 bytes, SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`.
+- Source: `53af5383`; tested snapshot tree `6244013e094909bed1da6d92a5e5d55981386382`.
+- Central job `agent-remotion-0013-nodes`: **51 passed**, 0 failed, 52 existing deprecation warnings.
+- No production, schema, compatibility, or assertion changes. No full suite run.
+- Commit message written and `DONE` created.

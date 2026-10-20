@@ -1,0 +1,400 @@
+tests/sdk/test_timeline_commit_provider_document.py-179-    assert changed['revision_id'] != image['revision_id']
+--
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-44-        entry['records']['undo_of'] = records[0]['command']['args']['publications']
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-45-    return AcceptedRecords([entry], records, lambda _: (copy.deepcopy(before), copy.deepcopy(after)))
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-46-
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-47-
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-48-def reload(bundle, sources=()):
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:49:    return bundle_from_document(document_from_bundle(bundle, source_bundles=sources))
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-50-
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-51-
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-52-def duplicate(bundle, source, occurrence_id='occ-copy', shot_id='shot-copy'):
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-53-    return capture_occurrence_duplicate(bundle, 'occurrence:' + source, occurrence_id, shot_id)
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-54-
+--
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-74-    copied_document = document_from_bundle(plan.bundle)
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-75-    copied = bundle_from_document(copied_document)
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-76-    assert len(copied['placements']) == count + 1
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-77-    assert copied_document['dependency_manifest']['media'] == document['dependency_manifest']['media']
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-78-    undone = inverse(copied, accepted(plan.records, original, copied))
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:79:    assert document_from_bundle(undone.bundle, source_bundles=(original, copied)) == document
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-80-    restored = reload(undone.bundle, (original, copied))
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-81-    redone = inverse(restored, accepted(undone.records, copied, restored))
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:82:    assert document_from_bundle(redone.bundle, source_bundles=(original, copied)) == copied_document
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-83-    assert replay(plan, original).records == plan.records
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-84-
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-85-
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-86-def identity_document(count, fields, document_id):
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-87-    document = duplicate_document(count)
+--
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-138-                    if row['revision_id'] == shot['internal_timeline_revision_id'])
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-139-    assert internal['payload'] == document['internal_timeline_revisions'][0]['payload']
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-140-    assert compiled['dependency_manifest']['media'] == document['dependency_manifest']['media']
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-141-    reloaded = bundle_from_document(compiled)
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-142-    undone = inverse(reloaded, accepted(plan.records, original, reloaded))
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:143:    assert document_from_bundle(undone.bundle, source_bundles=(original, reloaded)) == document
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-144-    restored = reload(undone.bundle, (original, reloaded))
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-145-    redone = inverse(restored, accepted(undone.records, reloaded, restored))
+tests/editing_conformance/test_recipe_occurrence_duplicate.py:146:    assert document_from_bundle(redone.bundle, source_bundles=(original, reloaded)) == compiled
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-147-    recorded = next(write['after']['value'] for write in plan.records[0]['writes']
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-148-                    if write['ref'] == 'occurrence:occ-copy' and not write['path'])
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-149-    assert _json(recorded) == _json(preview) == _json(State(reloaded).entity('occurrence:occ-copy'))
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-150-    assert replay(plan, original).records == plan.records
+tests/editing_conformance/test_recipe_occurrence_duplicate.py-151-
+--
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-96-    assert plan.bundle['shots'][sibling] == original['shots'][sibling]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-97-    assert inverse(plan.bundle, plan.records).bundle == original
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-98-    assert document_from_bundle(inverse(plan.bundle, plan.records).bundle) == document
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-99-    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-100-    undone = inverse(reloaded, plan.records)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:101:    restored = document_from_bundle(undone.bundle, source_bundles=(original,))
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-102-    assert State(undone.bundle).config(OWNER)['registry'] == State(original).config(OWNER)['registry']
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-103-    assert restored['parent_revision']['payload'] == document['parent_revision']['payload']
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-104-    assert restored['shot_revisions'] == document['shot_revisions']
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-105-    assert restored['internal_timeline_revisions'] == document['internal_timeline_revisions']
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-106-
+--
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-130-    # the baseline, drop the manifest comparison or accept a different revision.
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-131-    document, original, plan = popup_edit
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-132-    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-133-    undone = inverse(reloaded, plan.records)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-134-    realm, created, records = accepted_popup(popup_edit)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:135:    assert document_from_bundle(undone.bundle, source_bundles=(original,)) != document
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:136:    assert document_from_bundle(undone.bundle, source_bundles=(original,), inverse_records=records) == document
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-137-    accepted = copy.deepcopy(realm.entries)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-138-    undo = realm.call([inverse_call([created['receipt']['receipt_id']])])
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-139-    assert undo['data']['canonical_document'] == document
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-140-    assert realm.entries[:-1] == accepted
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-141-    # A reloaded, guarded inverse of undo restores the exact introduced pin and revision.
+--
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-208-    reloaded = bundle_from_document(created['data']['canonical_document'])
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-209-    undone = inverse(reloaded, records)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-210-    before, after = records.load_boundary(records.entries[0])
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-211-    if damage == 'missing':
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-212-        with pytest.raises(CommandError, match='accepted boundaries'):
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:213:            document_from_bundle(undone.bundle, source_bundles=(original,), inverse_records=list(records))
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-214-        return
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-215-    if damage == 'writes':
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-216-        records = copy.deepcopy(records)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-217-        records[0]['writes'] = []
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-218-    else:
+--
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-220-        if damage == 'digest':
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-221-            image['parent_revision']['content_digest'] = NEW
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-222-        elif damage == 'foreign':
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-223-            image['project_id'] = 'other-project'
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-224-        elif damage == 'revision':
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:225:            image['parent_revision']['revision_id'] = 'wrong-boundary'
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-226-        elif damage == 'document-pin':
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-227-            image['dependency_manifest']['documents'] = [{
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-228-                'document_id': 'other.config', 'version': 1, 'content_digest': NEW}]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-229-        elif damage == 'extra-pin':
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-230-            pin = 'sha256:' + '9' * 64
+--
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-233-            image['parent_revision']['payload']['unknown']['corrupt'] = True
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-234-            image['parent_revision']['content_digest'] = _digest(image['parent_revision']['payload'])
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-235-        records.load_boundary = lambda entry: (before, after)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-236-    from astrid.core.timeline.authoring_bundle import AuthoringBundleError
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-237-    with pytest.raises((CommandError, AuthoringBundleError)):
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:238:        document_from_bundle(undone.bundle, source_bundles=(original,), inverse_records=records)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-239-
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-240-
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-241-@pytest.mark.parametrize('pair', ['create-undo', 'undo-redo'])
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-242-def test_multiple_target_pin_changes_use_reverse_publication_order(popup_edit, pair):
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-243-    document, _, _ = popup_edit
+--
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-261-    pin = {'document_id': 'example.config', 'version': 1, 'content_digest': _digest(content)}
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-262-    if source != 'missing':
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-263-        undone.bundle['source_mapping']['pinned_documents'] = [{
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-264-            'pin': pin, 'document': {'content': content}}]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-265-    if source == 'disjoint':
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:266:        result = document_from_bundle(undone.bundle, document_pins=[pin], source_bundles=(original,),
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-267-                                      inverse_records=records)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-268-        assert result['dependency_manifest']['documents'] == [pin]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-269-        assert NEW not in {row['media_id'] for row in result['dependency_manifest']['media']}
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-270-    else:
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-271-        with pytest.raises(CommandError) as error:
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:272:            document_from_bundle(undone.bundle, document_pins=[pin], source_bundles=(original,),
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-273-                                 inverse_records=records)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-274-        assert error.value.kind == ('history_unavailable' if source == 'missing' else 'surviving_dependents')
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-275-
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-276-
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py-277-@pytest.mark.parametrize('damage', ['missing-before', 'foreign-before', 'broken-link'])
+
+codex
+The focused suite passed: 159 tests in 11.38s across the document converter, scalar closure, retained-media inverse, and occurrence-duplicate paths. I’m doing the final diff/status check now, then I’ll write the required conventional commit message and `DONE` marker.
+exec
+/bin/bash -lc "git diff --check && git status --short && git diff --numstat && git diff --unified=80 -- astrid/sdk/timeline/commit.py | sed -n '1,180p'" in /home/user/work/wt/agt-m2-commit-source-reuse-loop-fold
+ succeeded in 1188ms:
+ M astrid/sdk/timeline/commit.py
+7	10	astrid/sdk/timeline/commit.py
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index a6e3bdf6..6a4c0a88 100644
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -226,174 +226,171 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
+     shot_index = {row["revision_id"]: copy.deepcopy(row) for row in source["shot_revisions"]}
+     internal_index = {row["revision_id"]: copy.deepcopy(row)
+                       for row in source["internal_timeline_revisions"]}
+     shot_index.update({row["revision_id"]: copy.deepcopy(row)
+                        for row in publication["shot_revisions"]})
+     internal_index.update({row["revision_id"]: copy.deepcopy(row)
+                            for row in publication["internal_timeline_revisions"]})
+     # Only authenticated publication boundaries may supply earlier immutable
+     # images. Reuse them after exact authored-content comparison, never restore
+     # a parent snapshot or replace a sibling's currently accepted pins.
+     for historical in source_bundles:
+         document = historical['source_mapping']['_runtime_document']
+         _verify_document(document)
+         _require((document['project_id'], document['timeline_id']) ==
+                  (bundle['project_id'], bundle['timeline_id']), 'foreign inverse source')
+         shot_index.update({row['revision_id']: copy.deepcopy(row) for row in document['shot_revisions']})
+         internal_index.update({row['revision_id']: copy.deepcopy(row)
+                                for row in document['internal_timeline_revisions']})
+     parent = copy.deepcopy(publication["parent_composition"])
+     # Opening shared occurrences gives them independent editing identities. A
+     # parent-only edit must still reuse their ORIGINAL immutable shot images.
+     for occurrence in parent["occurrences"]:
+         identity = occurrence["shot_id"]
+         shot = bundle["shots"][identity]
+         origin = bundle["source_mapping"]["shots"].get(identity)
+         if (origin is not None and _json(shot["payload"]) == _json(shot["base_payload"])
+                 and _json(shot["internal_timeline"]) == _json(shot["base_internal_timeline"])
+                 and origin.get("revision_id") in shot_index):
+             occurrence["shot_id"] = origin["shot_id"]
+             occurrence["shot_revision_id"] = origin["revision_id"]
+             continue
+         for historical in source_bundles:
+             prior = next((row for row in historical['placements']
+                           if row['occurrence_id'] == occurrence['occurrence_id']), None)
+             if prior is None or prior['shot_id'] != identity:
+                 continue
+             old = historical['shots'][identity]
+             payload, old_payload = copy.deepcopy(shot['payload']), copy.deepcopy(old['payload'])
+             payload.pop('internal_timeline_revision_id', None)
+             old_payload.pop('internal_timeline_revision_id', None)
+             if (_json(payload) != _json(old_payload)
+                     or _json(shot['internal_timeline']) != _json(old['internal_timeline'])):
+                 continue
+             origin = historical['source_mapping']['shots'][identity]
+             occurrence['shot_id'] = origin['shot_id']
+             occurrence['shot_revision_id'] = origin['revision_id']
+             break
+     shot_ids = {row["shot_revision_id"] for row in parent["occurrences"]}
+     shots = sorted((shot_index[key] for key in shot_ids),
+                    key=lambda row: (row["shot_id"], row["revision_id"]))
+     internal_ids = {row["internal_timeline_revision_id"] for row in shots}
+     internals = sorted((internal_index[key] for key in internal_ids),
+                        key=lambda row: (row["timeline_id"], row["revision_id"]))
+     documents = (source["dependency_manifest"]["documents"]
+                  if document_pins is None else document_pins)
+     if document_pins is None:
+         documents = copy.deepcopy(documents)
+         for capture in bundle['source_mapping'].get('pinned_documents', []):
+             if capture['pin'] not in documents:
+                 documents.append(copy.deepcopy(capture['pin']))
+     # Retained inputs may include media consumed through a transcript or other
+     # immutable binding rather than a selected clip. Keep those existing pins.
+     media = {row["media_id"]: row for row in source["dependency_manifest"]["media"]}
+     media.update({row["media_id"]: row for row in publication["dependency_manifest"]["media"]})
+     removals = _inverse_media_removals(inverse_records, bundle)
+     if removals:
+         from ._command_state import CommandError
+ 
+         required = _collect_media([parent, *[row['payload'] for row in shots + internals]])
+         captures = bundle['source_mapping'].get('pinned_documents', [])
+         if any(not any(capture['pin'] == pin for capture in captures) for pin in documents):
+             raise CommandError('media inverse source scope is unavailable', kind='history_unavailable')
+         required.update(_collect_media([capture['document']['content'] for capture in captures
+                                        if capture['pin'] in documents]))
+         if required & removals:
+             raise CommandError('introduced media has surviving dependents', kind='surviving_dependents')
+         for identity in removals:
+             media.pop(identity, None)
+     manifest = _manifest(shots, internals, list(media.values()), documents)
+     digest = _digest(parent)
+-    if (digest == source["parent_revision"]["content_digest"]
+-            and _json(manifest) == _json(source["dependency_manifest"])):
+-        revision = source["parent_revision"]["revision_id"]
+-    else:
++    # A historical publication boundary wins over the opened source image.
++    priors = [historical["source_mapping"]["_runtime_document"]
++              for historical in source_bundles] + [source]
++    revision = next((prior["parent_revision"]["revision_id"] for prior in priors
++                     if digest == prior["parent_revision"]["content_digest"]
++                     and _json(manifest) == _json(prior["dependency_manifest"])), None)
++    if revision is None:
+         revision = "authoring-parent-revision-" + _digest({
+             "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
+             "parent": parent, "manifest": manifest,
+         }).removeprefix("sha256:")
+-    for historical in source_bundles:
+-        prior = historical['source_mapping']['_runtime_document']
+-        if (digest == prior['parent_revision']['content_digest']
+-                and _json(manifest) == _json(prior['dependency_manifest'])):
+-            revision = prior['parent_revision']['revision_id']
+-            break
+     document = {
+         "schema_version": 1, "project_id": bundle["project_id"],
+         "timeline_id": bundle["timeline_id"],
+         "parent_revision": {"revision_id": revision, "content_digest": digest, "payload": parent},
+         "shot_revisions": shots, "internal_timeline_revisions": internals,
+         "dependency_manifest": manifest,
+     }
+     _verify_document(document)
+     return copy.deepcopy(document)
+ 
+ 
+ def _failure(reason, message, base, current=None, *, conflicts=None):
+     return {
+         "http_status": 409, "code": "conflict", "message": message,
+         "details": {"status": "conflict" if conflicts else "refused", "reason": reason,
+                     "base": copy.deepcopy(base), "current": copy.deepcopy(current),
+                     "conflicts": conflicts or []},
+     }
+ 
+ 
+ def _load(port, context, revision):
+     document = port.revision_closure(revision)
+     request = context["request"]
+     _require(document.get("project_id") == request["project_id"]
+              and document.get("timeline_id") == request["timeline_id"]
+              and document.get("parent_revision", {}).get("revision_id") == revision,
+              "Runtime returned a different revision or project/timeline scope")
+     return bundle_from_document(document)
+ 
+ 
+ def _hydrate(port, bundle, calls=()):
+     captures, schema_inputs = [], []
+     document = bundle["source_mapping"]["_runtime_document"]
+     pins = copy.deepcopy(document["dependency_manifest"]["documents"])
+     for call in calls:
+         pin = call.get('args', {}).get('schema_source')
+         if call['op'] in ('clip.set-params', 'clip.set-element') and pin is not None:
+             pin = _document_pin(pin)
+             if pin not in pins:
+                 pins.append(pin)
+     for pin in pins:
+         transcript = pin["document_id"].startswith("transcript:")
+         verified = (port.transcript_source(pin) if transcript else port.config_source(pin))
+         _require(isinstance(verified, Mapping) and isinstance(verified.get("document"), Mapping),
+                  "invalid scoped source capture")
+         source = verified["document"]
+         _require(verified["pin"] == pin and source.get("document_id") == pin["document_id"]
+                  and source.get("project_id") == bundle["project_id"]
+                  and type(source.get("version")) is int
+                  and source.get("version") == pin["version"]
+                  and _digest(source.get("content")) == pin["content_digest"],
+                  "captured document does not match its exact scoped pin")
+         if transcript:
+             from astrid.sdk.media_transcript import transcript_document_id
+             content = source["content"]
+             _require(isinstance(content, Mapping) and source.get("kind") == "media.transcript"
+                      and content.get("schema") == "media.transcript/v1"
+                      and isinstance(content.get("media_id"), str)
+                      and _DIGEST.fullmatch(content["media_id"])
+                      and _id(content.get("source_id"))
+                      and content["media_id"] in {
+                          row["media_id"] for row in document["dependency_manifest"]["media"]}
+                      and pin["document_id"] == transcript_document_id(
+                          bundle["project_id"], content.get("media_id"), content.get("source_id")),
+                      "invalid transcript source identity")
+         elif source.get('kind') == 'astrid.project-pack':
+             schema_inputs.append((copy.deepcopy(verified), {}))
+         else:
+             _require(isinstance(source.get("kind"), str) and source["kind"].endswith(".config"),
+                      "unregistered config source kind")
+         captures.append(copy.deepcopy(verified))
+     bundle["source_mapping"]["pinned_documents"] = captures
+     return schema_inputs
+ 
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-commit-source-reuse-loop-fold/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-commit-source-reuse-loop-fold/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-commit-source-reuse-loop-fold/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..dba53537d5a8691b2c1ffd4fb6d7cec5f26d3085
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-commit-source-reuse-loop-fold/commit-msg
+@@ -0,0 +1,5 @@
++refactor(timeline): fold prior revision reuse checks
++
++Use one ordered prior-revision scan for historical publication boundaries
++and the opened source image, preserving historical precedence and exact
++digest/manifest matching.
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index a6e3bdf61227d16ebfb87c799b1174d96f3ef5c6..6a4c0a88abc9454d33c41668e02fb4bdef7946a6
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -303,20 +303,17 @@
+             media.pop(identity, None)
+     manifest = _manifest(shots, internals, list(media.values()), documents)
+     digest = _digest(parent)
+-    if (digest == source["parent_revision"]["content_digest"]
+-            and _json(manifest) == _json(source["dependency_manifest"])):
+-        revision = source["parent_revision"]["revision_id"]
+-    else:
++    # A historical publication boundary wins over the opened source image.
++    priors = [historical["source_mapping"]["_runtime_document"]
++              for historical in source_bundles] + [source]
++    revision = next((prior["parent_revision"]["revision_id"] for prior in priors
++                     if digest == prior["parent_revision"]["content_digest"]
++                     and _json(manifest) == _json(prior["dependency_manifest"])), None)
++    if revision is None:
+         revision = "authoring-parent-revision-" + _digest({
+             "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
+             "parent": parent, "manifest": manifest,
+         }).removeprefix("sha256:")
+-    for historical in source_bundles:
+-        prior = historical['source_mapping']['_runtime_document']
+-        if (digest == prior['parent_revision']['content_digest']
+-                and _json(manifest) == _json(prior['dependency_manifest'])):
+-            revision = prior['parent_revision']['revision_id']
+-            break
+     document = {
+         "schema_version": 1, "project_id": bundle["project_id"],
+         "timeline_id": bundle["timeline_id"],
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-commit-source-reuse-loop-fold/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-commit-source-reuse-loop-fold/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-commit-source-reuse-loop-fold/DONE && printf '%s\\n' '--- commit message ---' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-commit-source-reuse-loop-fold/commit-msg && printf '%s\\n' '--- final status ---' && git status --short && printf '%s\\n' '--- diff check ---' && git diff --check" in /home/user/work/wt/agt-m2-commit-source-reuse-loop-fold
+ succeeded in 999ms:
+--- commit message ---
+refactor(timeline): fold prior revision reuse checks
+
+Use one ordered prior-revision scan for historical publication boundaries
+and the opened source image, preserving historical precedence and exact
+digest/manifest matching.
+--- final status ---
+ M astrid/sdk/timeline/commit.py
+--- diff check ---
+
+codex
+Implemented the cleanup in [commit.py](/home/user/work/wt/agt-m2-commit-source-reuse-loop-fold/astrid/sdk/timeline/commit.py:306):
+
+- Folded opened-source and historical parent-revision reuse into one ordered scan.
+- Preserved historical precedence, exact digest/manifest matching, and all existing source/closure behavior.
+- No tests or schemas changed.
+
+Tested:
+
+`python3 -m pytest -q tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_occurrence_duplicate.py`
+
+Result: **159 passed**, 2 existing config warnings.
+
+Commit message written and `DONE` created. No blockers; no full suite run.
+tokens used
+109,795
+Implemented the cleanup in [commit.py](/home/user/work/wt/agt-m2-commit-source-reuse-loop-fold/astrid/sdk/timeline/commit.py:306):
+
+- Folded opened-source and historical parent-revision reuse into one ordered scan.
+- Preserved historical precedence, exact digest/manifest matching, and all existing source/closure behavior.
+- No tests or schemas changed.
+
+Tested:
+
+`python3 -m pytest -q tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_occurrence_duplicate.py`
+
+Result: **159 passed**, 2 existing config warnings.
+
+Commit message written and `DONE` created. No blockers; no full suite run.

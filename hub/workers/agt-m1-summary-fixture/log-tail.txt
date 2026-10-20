@@ -1,0 +1,400 @@
+    if findings:
+        lines.append("findings:")
+        lines.extend(f"  {line}" for line in findings[:14])
+        if len(findings) > 14:
+            lines.append(f"  … {len(findings) - 14} more in findings.txt next to the page")
+    project = str(parsed.project or "<project>")
+    timeline = str(inputs.get("timeline_slug") or "<timeline>")
+    base = ["python3", "-m", "astrid", "timelines", "visualize", timeline, "--project", project]
+    if inputs.get("revision_id"):
+        base += ["--revision-id", str(inputs["revision_id"])]
+    lint = ["python3", "-m", "astrid", "timelines", "lint", timeline, "--project", project]
+    show = ["python3", "-m", "astrid", "timelines", "show", timeline, "--project", project]
+    beats = ["--beats", str(parsed.beats)] if getattr(parsed, "beats", None) else []
+    window = outputs.get("window") if isinstance(outputs.get("window"), Mapping) else None
+    if view == "motion" and window and inputs.get("preset") != "cut":
+        nexts = _window_navigation(window, base)
+    elif view == "motion":
+        cut = str(inputs.get("cut") or "N")
+        following = str(int(cut) + 1) if cut.isdigit() else "N"
+        nexts = [
+            ("next cut", base + ["--cut", following] + beats),
+            ("lint the whole edit", lint + beats),
+            ("whole film again", base + ["--preset", "overview"]),
+        ]
+        if window and window.get("busiest") is not None:
+            t = float(window["busiest"])
+            nexts.insert(1, (f"biggest frames at the busiest moment ({t:.2f} s)",
+                             base + ["--preset", "motion", "--range", f"{max(0.0, t - 1.5):.2f}..{t + 1.5:.2f}"]))
+    else:
+        nexts = [
+            ("motion of one cut", base + ["--view", "motion", "--cut", "N"] + beats),
+            ("lint composition + timing", lint + beats),
+            ("cut table (numbers, words)", show),
+        ]
+    lines.append("next:")
+    width = max(len(name) for name, _argv in nexts)
+    lines.extend(f"  {name:<{width}}  {shlex.join(argv)}" for name, argv in nexts)
+    lines.append("(--json prints the full SDK envelope; --list-layers lists the views you can add with --layer)")
+    return "\n".join(lines)
+
+
+def _visualize_plan(parsed: argparse.Namespace, inputs: Mapping[str, Any]) -> int:
+    """``--plan``: resolve the view, window and frames without capturing (reads the timeline only)."""
+--- source commit introducing summary behavior ---
+8ca850b1 fix(timeline): make visualize revision identity truthful
+ astrid/packs/timeline/cli_visualize.py        | 30 +++++++++++++++
+ astrid/sdk/timeline_filmstrip.py              | 25 ++++++++++++-
+ tests/packs/timeline/test_visualize_drafts.py | 34 ++++++++++++++++-
+ tests/sdk/test_timeline_filmstrip.py          | 54 +++++++++++++++++++++++++++
+ 4 files changed, 140 insertions(+), 3 deletions(-)
+commit 8ca850b1b60ff95a39f45c239e3ad74f8eddf4ef
+Author:     Claude <noreply@anthropic.com>
+AuthorDate: Mon Oct 19 19:31:18 2026 +0000
+Commit:     Claude <noreply@anthropic.com>
+CommitDate: Mon Oct 19 19:31:18 2026 +0000
+
+    fix(timeline): make visualize revision identity truthful
+    
+    Use native inspection or admitted snapshot provenance for CLI revision labels,
+    and pin requested input-only reads to their exact immutable parent closure.
+    Add divergent-head coverage for historical content and candidate/unavailable
+    human labels.
+
+diff --git a/astrid/packs/timeline/cli_visualize.py b/astrid/packs/timeline/cli_visualize.py
+index 29b74cb5..cb6551b3 100644
+--- a/astrid/packs/timeline/cli_visualize.py
++++ b/astrid/packs/timeline/cli_visualize.py
+@@ -356,6 +356,35 @@ def _seconds(value: Any) -> str:
+     return f"{float(value):.0f} s" if isinstance(value, (int, float)) and not isinstance(value, bool) else "?"
+ 
+ 
++def _visualization_revision_lines(outputs: Mapping[str, Any]) -> list[str]:
++    """Describe the revision the returned view actually consumed.
++
++    The request is only a selector.  Native views prove identity with their
++    Runtime inspection; rendered views prove it with the admission-owned
++    snapshot label.  Keep a missing label visible instead of guessing from
++    the requested revision or current head.
++    """
++    inspection = outputs.get("inspection")
++    if isinstance(inspection, Mapping):
++        actual = inspection.get("revision_id")
++        if isinstance(actual, str) and actual:
++            lines = [f"  committed revision {actual}"]
++            head = inspection.get("head_revision_id") or outputs.get("head_revision_id")
++            if isinstance(head, str) and head:
++                lines.append(f"  known head {head}")
++            return lines
++
++    snapshot_label = outputs.get("snapshot_label")
++    if isinstance(snapshot_label, Mapping):
++        label = snapshot_label.get("label")
++        if isinstance(label, str) and label:
++            return [f"  {label}"]
++        if snapshot_label.get("status") == "candidate":
++            return ["  unsaved candidate (committed base unavailable)"]
++        return ["  revision unavailable"]
++    return ["  revision unavailable"]
++
++
+ def _visualization_summary(outputs: Mapping[str, Any], *, parsed: argparse.Namespace, inputs: Mapping[str, Any]) -> str:
+     """The human result: where the picture is, what it holds, how long it took, what to run next."""
+     view = str(inputs.get("view") or "filmstrip")
+@@ -385,6 +414,7 @@ def _visualization_summary(outputs: Mapping[str, Any], *, parsed: argparse.Names
+                    + (f" (window {float(window_info.get('end', 0)) - float(window_info.get('start', 0)):.2f} s: "
+                       f"--window S widens it, up to {_preset_max()[str(preset)]:g} s)" if str(preset) in _preset_max() else "")),
+     }.get(view, f"{frames} frames")
++    lines.extend(_visualization_revision_lines(outputs))
+     lines.append(f"  {what}" + (f" · frames {resolution}" if resolution else ""))
+     if timing.get("capture_s") is not None:
+         lines.append(
+diff --git a/tests/packs/timeline/test_visualize_drafts.py b/tests/packs/timeline/test_visualize_drafts.py
+index fb75ffd3..13f2eeff 100644
+--- a/tests/packs/timeline/test_visualize_drafts.py
++++ b/tests/packs/timeline/test_visualize_drafts.py
+@@ -11,7 +11,7 @@ from types import SimpleNamespace
+ 
+ import pytest
+ 
+-from astrid.packs.timeline import cli
++from astrid.packs.timeline import cli, cli_visualize
+ from astrid.sdk.contracts import DomainResult
+ 
+ 
+@@ -98,6 +98,38 @@ def _render(argv, client):
+     return cli._cmd_render(parsed)
+ 
+ 
++def _summary(outputs, *, requested_revision='requested-revision'):
++    return cli_visualize._visualization_summary(
++        outputs,
++        parsed=SimpleNamespace(project='demo', beats=None),
++        inputs={'view': 'filmstrip', 'timeline_slug': 'main', 'revision_id': requested_revision},
++    )
++
++
++def test_visualize_summary_uses_native_actual_revision_and_separate_head():
++    summary = _summary({'inspection': {
++        'revision_id': 'native-actual', 'head_revision_id': 'native-head',
++    }})
++
++    lines = summary.splitlines()
++    assert '  committed revision native-actual' in lines
++    assert '  known head native-head' in lines
++    assert not any('requested-revision' in line for line in lines if line.startswith('  committed revision'))
++
++
++def test_visualize_summary_uses_rendered_snapshot_label_for_candidate_and_unavailable():
++    candidate = _summary({'snapshot_label': {
++        'status': 'candidate',
++        'label': 'unsaved candidate based on committed revision accepted-base',
++    }})
++    unavailable = _summary({'snapshot_label': {'status': 'unavailable', 'label': 'revision unavailable'}})
++
++    candidate_lines = candidate.splitlines()
++    assert '  unsaved candidate based on committed revision accepted-base' in candidate_lines
++    assert not any('requested-revision' in line for line in candidate_lines if line.startswith('  unsaved candidate'))
++    assert '  revision unavailable' in unavailable.splitlines()
++
++
+ def test_visualize_reads_the_working_copy_with_banner_and_changed_cuts(draft, capsys, monkeypatch):
+     import astrid.core.timeline.authoring_bundle as ab
+ 
+diff --git a/tests/sdk/test_timeline_filmstrip.py b/tests/sdk/test_timeline_filmstrip.py
+index e8e7b83d..c29dbffa 100644
+--- a/tests/sdk/test_timeline_filmstrip.py
++++ b/tests/sdk/test_timeline_filmstrip.py
+@@ -164,6 +164,44 @@ class ComposedCaptureClient:
+         return [[{'object_id': MANAGED_VIDEO_REFERENCE, 'digest': VIDEO, 'size': 100}], None]
+ 
+ 
++class DivergentInputClient:
++    """A current listing whose requested input view is an older exact parent."""
++
++    def get_project(self, project):
++        return {'project_id': 'p', 'id': 'p', 'slug': 'demo'}
++
++    def list_timelines(self, project, **kwargs):
++        return [[{
++            'project_id': 'p', 'timeline_id': 'tl', 'slug': 'cut',
++            'head_revision_id': 'current-revision',
++            'parent_revision_id': 'current-revision',
++            'config_version': 9, 'head_event_id': 'current-event',
++            'head_hash': 'current-head-hash', 'config_hash': 'current-config-hash',
++            'registry_hash': 'current-registry-hash',
++        }], None]
++
++    def get_project_parent_composition_revision(self, project, timeline, revision):
++        assert (project, timeline, revision) == ('p', 'tl', 'historical-revision')
++        return {
++            'project_id': 'p', 'timeline_id': 'tl', 'revision_id': revision,
++            'content_digest': 'sha256:' + 'd' * 64,
++            'payload': {
++                'config': {
++                    'theme_overrides': {'visual': {'canvas': {'fps': 24}}},
++                    'tracks': [{'id': 'picture', 'kind': 'visual'}],
++                    'clips': [{'id': 'historical-clip', 'track': 'picture', 'at': 0, 'hold': 1}],
++                },
++                'registry': {'assets': {}}, 'occurrences': [],
++            },
++        }
++
++    def get_project_shot_revision(self, *_args):
++        raise AssertionError('the flat historical fixture has no child reads')
++
++    def get_project_timeline_revision(self, *_args):
++        raise AssertionError('the flat historical fixture has no child reads')
++
++
+ def test_exact_old_render_uses_frozen_script_without_current_binding_reads():
+     client = FakeClient(); client.current_version = 9; client.current_head = 7
+     value = envelope()
+@@ -319,6 +357,22 @@ def test_exact_pinned_input_inspection_does_not_fall_back_to_current_timeline():
+     assert result['input_snapshot']['metadata']['selection'] == 'render_pinned_input_only'
+ 
+ 
++def test_requested_input_revision_reads_historical_content_when_head_diverges():
++    result = prepare_filmstrip(
++        {
++            'timeline_ref': 'tl', 'revision_id': 'historical-revision',
++            'show': ['inputs'], 'hide': ['output'],
++        },
++        project='p', client=DivergentInputClient(),
++    )
++
++    snapshot = result['input_snapshot']
++    assert snapshot['clips'][0]['id'] == 'historical-clip'
++    assert snapshot['metadata']['parent_revision_id'] == 'historical-revision'
++    assert snapshot['metadata']['parent_revision_id'] != 'current-revision'
++    assert snapshot['metadata']['timeline_identity'] == {'timeline_id': 'tl', 'slug': 'cut'}
++
++
+ def _patch_composed_parent(monkeypatch, *, unresolvable=()):
+     from astrid.packs.rendering.actions.render import managed_timeline
+ 
+
+codex
+The existing neighbor fixture establishes `R1` as a committed parent revision and the returned rendered-view shape is `snapshot_label = {status: committed, label: "committed revision R1", ...}`. I’ll use that exact shape, assert `lines[1]` verbatim, and move the original tile assertion to `lines[2]`; all other assertions remain unchanged.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m1-summary-fixture/tests/packs/rendering/test_timeline_visualize_motion_views.py
+diff --git a/tests/packs/rendering/test_timeline_visualize_motion_views.py b/tests/packs/rendering/test_timeline_visualize_motion_views.py
+index 78d38fa1214d936168e6f0f4d3136bb4af3cc0b0..bc26173f31f32174c1e6876daa710eba2c154ca3
+--- a/tests/packs/rendering/test_timeline_visualize_motion_views.py
++++ b/tests/packs/rendering/test_timeline_visualize_motion_views.py
+@@ -313,13 +313,16 @@
+ 
+     outputs = {
+         "pages": ["/x/contact-sheet.png"], "primary_page": "/x/contact-sheet.png",
++        "snapshot_label": {"status": "committed", "label": "committed revision R1",
++                           "actual_revision_id": "R1", "base_revision_id": None},
+         "timing": {"frames": 30, "resolution": [480, 270], "wall_s": 61.2, "queued_s": 3.0, "capture_s": 48.0, "compose_s": 6.0},
+     }
+     text = cli._visualization_summary(outputs, parsed=Namespace(project="demo", beats=None),
+                                       inputs={"view": "contact", "timeline_slug": "T1"})
+     lines = text.splitlines()
+     assert lines[0] == "contact sheet: /x/contact-sheet.png"
+-    assert "30 tiles, one per picture cut" in lines[1] and "480x270" in lines[1]
++    assert lines[1] == "  committed revision R1"
++    assert "30 tiles, one per picture cut" in lines[2] and "480x270" in lines[2]
+     assert "wall 61 s = queued 3 s + capture 48 s + compose 6 s" in text
+     assert "--view motion --cut N" in text and "timelines lint T1" in text and "timelines show T1" in text
+     parser_args = cli.build_parser(object()).parse_args(["visualize", "T1", "--project", "demo"])
+
+exec
+/bin/bash -lc 'git diff --check && git diff -- tests/packs/rendering/test_timeline_visualize_motion_views.py && /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_timeline_visualize_motion_views.py' in /home/user/work/wt/agt-m1-summary-fixture
+ succeeded in 14576ms:
+diff --git a/tests/packs/rendering/test_timeline_visualize_motion_views.py b/tests/packs/rendering/test_timeline_visualize_motion_views.py
+index 78d38fa1..bc26173f 100644
+--- a/tests/packs/rendering/test_timeline_visualize_motion_views.py
++++ b/tests/packs/rendering/test_timeline_visualize_motion_views.py
+@@ -313,13 +313,16 @@ def test_visualize_prints_page_counts_timing_and_next_commands():
+ 
+     outputs = {
+         "pages": ["/x/contact-sheet.png"], "primary_page": "/x/contact-sheet.png",
++        "snapshot_label": {"status": "committed", "label": "committed revision R1",
++                           "actual_revision_id": "R1", "base_revision_id": None},
+         "timing": {"frames": 30, "resolution": [480, 270], "wall_s": 61.2, "queued_s": 3.0, "capture_s": 48.0, "compose_s": 6.0},
+     }
+     text = cli._visualization_summary(outputs, parsed=Namespace(project="demo", beats=None),
+                                       inputs={"view": "contact", "timeline_slug": "T1"})
+     lines = text.splitlines()
+     assert lines[0] == "contact sheet: /x/contact-sheet.png"
+-    assert "30 tiles, one per picture cut" in lines[1] and "480x270" in lines[1]
++    assert lines[1] == "  committed revision R1"
++    assert "30 tiles, one per picture cut" in lines[2] and "480x270" in lines[2]
+     assert "wall 61 s = queued 3 s + capture 48 s + compose 6 s" in text
+     assert "--view motion --cut N" in text and "timelines lint T1" in text and "timelines show T1" in text
+     parser_args = cli.build_parser(object()).parse_args(["visualize", "T1", "--project", "demo"])
+..............................s.s                                        [100%]
+31 passed, 2 skipped in 13.43s
+
+codex
+The authorized test file now has the exact committed-view provenance fixture and ordering assertion. The full requested unit file passes locally (31 passed, 2 pre-existing skips); I’m doing the final scope/diff checks and recording the harness commit message.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-summary-fixture/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-summary-fixture/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-summary-fixture/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..3223589bd716624c3cc45552635833ed2c555277
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-summary-fixture/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): pin visualize summary revision fixture
++
++Use the existing committed R1 snapshot label in the contact-sheet summary
++fixture and assert its provenance line before the timing details.
+diff --git a/tests/packs/rendering/test_timeline_visualize_motion_views.py b/tests/packs/rendering/test_timeline_visualize_motion_views.py
+index 78d38fa1214d936168e6f0f4d3136bb4af3cc0b0..bc26173f31f32174c1e6876daa710eba2c154ca3
+--- a/tests/packs/rendering/test_timeline_visualize_motion_views.py
++++ b/tests/packs/rendering/test_timeline_visualize_motion_views.py
+@@ -313,13 +313,16 @@
+ 
+     outputs = {
+         "pages": ["/x/contact-sheet.png"], "primary_page": "/x/contact-sheet.png",
++        "snapshot_label": {"status": "committed", "label": "committed revision R1",
++                           "actual_revision_id": "R1", "base_revision_id": None},
+         "timing": {"frames": 30, "resolution": [480, 270], "wall_s": 61.2, "queued_s": 3.0, "capture_s": 48.0, "compose_s": 6.0},
+     }
+     text = cli._visualization_summary(outputs, parsed=Namespace(project="demo", beats=None),
+                                       inputs={"view": "contact", "timeline_slug": "T1"})
+     lines = text.splitlines()
+     assert lines[0] == "contact sheet: /x/contact-sheet.png"
+-    assert "30 tiles, one per picture cut" in lines[1] and "480x270" in lines[1]
++    assert lines[1] == "  committed revision R1"
++    assert "30 tiles, one per picture cut" in lines[2] and "480x270" in lines[2]
+     assert "wall 61 s = queued 3 s + capture 48 s + compose 6 s" in text
+     assert "--view motion --cut N" in text and "timelines lint T1" in text and "timelines show T1" in text
+     parser_args = cli.build_parser(object()).parse_args(["visualize", "T1", "--project", "demo"])
+
+exec
+/bin/bash -lc "git diff --check && printf '%s\\n' '--- changed paths ---' && git status --short && printf '%s\\n' '--- diff stat ---' && git diff --stat && printf '%s\\n' '--- final diff ---' && git diff -- tests/packs/rendering/test_timeline_visualize_motion_views.py && printf '%s\\n' '--- commit message ---' && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-summary-fixture/commit-msg" in /home/user/work/wt/agt-m1-summary-fixture
+ succeeded in 1222ms:
+--- changed paths ---
+ M tests/packs/rendering/test_timeline_visualize_motion_views.py
+--- diff stat ---
+ tests/packs/rendering/test_timeline_visualize_motion_views.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+--- final diff ---
+diff --git a/tests/packs/rendering/test_timeline_visualize_motion_views.py b/tests/packs/rendering/test_timeline_visualize_motion_views.py
+index 78d38fa1..bc26173f 100644
+--- a/tests/packs/rendering/test_timeline_visualize_motion_views.py
++++ b/tests/packs/rendering/test_timeline_visualize_motion_views.py
+@@ -313,13 +313,16 @@ def test_visualize_prints_page_counts_timing_and_next_commands():
+ 
+     outputs = {
+         "pages": ["/x/contact-sheet.png"], "primary_page": "/x/contact-sheet.png",
++        "snapshot_label": {"status": "committed", "label": "committed revision R1",
++                           "actual_revision_id": "R1", "base_revision_id": None},
+         "timing": {"frames": 30, "resolution": [480, 270], "wall_s": 61.2, "queued_s": 3.0, "capture_s": 48.0, "compose_s": 6.0},
+     }
+     text = cli._visualization_summary(outputs, parsed=Namespace(project="demo", beats=None),
+                                       inputs={"view": "contact", "timeline_slug": "T1"})
+     lines = text.splitlines()
+     assert lines[0] == "contact sheet: /x/contact-sheet.png"
+-    assert "30 tiles, one per picture cut" in lines[1] and "480x270" in lines[1]
++    assert lines[1] == "  committed revision R1"
++    assert "30 tiles, one per picture cut" in lines[2] and "480x270" in lines[2]
+     assert "wall 61 s = queued 3 s + capture 48 s + compose 6 s" in text
+     assert "--view motion --cut N" in text and "timelines lint T1" in text and "timelines show T1" in text
+     parser_args = cli.build_parser(object()).parse_args(["visualize", "T1", "--project", "demo"])
+--- commit message ---
+test(timeline): pin visualize summary revision fixture
+
+Use the existing committed R1 snapshot label in the contact-sheet summary
+fixture and assert its provenance line before the timing details.
+
+codex
+## Report
+
+- Updated only `tests/packs/rendering/test_timeline_visualize_motion_views.py`.
+- Added the existing committed `R1` snapshot-label fixture.
+- Asserted exact provenance at `lines[1]`; preserved timing/tile checks at `lines[2]`.
+
+Tests:
+
+- `/home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_timeline_visualize_motion_views.py` — **31 passed, 2 skipped**
+- `git diff --check` — passed
+- Diff scope — exactly one test file
+
+Known revision proof: existing `test_input_only_is_a_materializable_compact_filmstrip_bundle` fixture uses canonical committed revision `R1`.
+
+Commit message written to the requested harness path.
+tokens used
+66,388
+## Report
+
+- Updated only `tests/packs/rendering/test_timeline_visualize_motion_views.py`.
+- Added the existing committed `R1` snapshot-label fixture.
+- Asserted exact provenance at `lines[1]`; preserved timing/tile checks at `lines[2]`.
+
+Tests:
+
+- `/home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_timeline_visualize_motion_views.py` — **31 passed, 2 skipped**
+- `git diff --check` — passed
+- Diff scope — exactly one test file
+
+Known revision proof: existing `test_input_only_is_a_materializable_compact_filmstrip_bundle` fixture uses canonical committed revision `R1`.
+
+Commit message written to the requested harness path.

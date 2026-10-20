@@ -1,0 +1,400 @@
+-        if not isinstance(receipt, Mapping):
+-            receipt = {}
+-        source = row.get("source", _UNREPORTED_PROVENANCE)
+-        provenance = row.get("provenance", source)
+-        head_revision = _text((head or {}).get("revision_id"))
+-        head_publication = _text((head or {}).get("publication_id"))
+-        publication_id = _text(row.get("publication_id"))
++        assert isinstance(previous, Mapping)
++        assert isinstance(receipt, Mapping)
+         return Revision(
+             id=revision_id,
+-            source=revision_source(revision_id, provenance),
+-            created_at=_text(row.get("created_at")) or _text(receipt.get("created_at")),
+-            parent=_text(previous.get("revision_id")) or _text(row.get("previous_revision_id")),
+-            message=_text(row.get("message")) or _text(row.get("label")),
+-            publication_id=publication_id,
+-            previous_publication_id=_text(previous.get("publication_id")) or _text(row.get("previous_publication_id")),
+-            restored_from_revision_id=_text(row.get("restored_from_revision_id")),
+-            provenance=None if provenance is _UNREPORTED_PROVENANCE else provenance,
+-            is_current_head=(publication_id == head_publication if head_publication is not None
+-                             else revision_id == head_revision if head_revision is not None else None),
+-            content_digest=_text(row.get("content_digest")),
++            source=revision_source(revision_id, row.get("source")),
++            created_at=_text(receipt.get("created_at")),
++            parent=_text(previous.get("revision_id")),
++            message=_text(row.get("label")),
++            publication_id=_text(row.get("publication_id")),
++            previous_publication_id=_text(previous.get("publication_id")),
+         )
+ 
+     @classmethod
+@@ -254,51 +232,66 @@
+         if limit <= 0:
+             return []
+         rows: list[Mapping[str, Any]] = []
+-        head: Mapping[str, Any] | None = None
++        head_pair: tuple[str, str] | None = None
+         cursor: str | None = None
+-        seen_cursors: set[str] = set()
++        seen_cursors: set[str | None] = {None}
+         while True:
+             page = cls._result_data(reader(project, timeline, cursor=cursor, limit=min(200, max(50, limit))),
+                                      timeline=timeline, operation="list")
+             if page is None:
+-                return None
++                raise TimelineEditError(f"Runtime revision history returned no page for {timeline!r}")
++            current_head = cls._head_pair(page, timeline=timeline)
++            if head_pair is None:
++                head_pair = current_head
++            elif current_head != head_pair:
++                raise TimelineEditError(f"Runtime revision history changed its head while paging {timeline!r}")
+             raw_items = page.get("items")
+             if not isinstance(raw_items, list):
+                 raise TimelineEditError("Runtime revision history returned invalid items")
+-            rows.extend(row for row in raw_items if isinstance(row, Mapping))
+-            raw_head = page.get("head")
+-            if isinstance(raw_head, Mapping):
+-                head = raw_head
++            for row in raw_items:
++                if not isinstance(row, Mapping):
++                    raise TimelineEditError(f"Runtime revision history returned an invalid item for {timeline!r}")
++                cls._history_item(row, timeline=timeline)
++                rows.append(row)
+             next_cursor = page.get("next_cursor")
+-            if not isinstance(next_cursor, str) or not next_cursor or next_cursor in seen_cursors:
++            if next_cursor is not None and not isinstance(next_cursor, str):
++                raise TimelineEditError(f"Runtime revision history returned an invalid cursor for {timeline!r}")
++            if next_cursor is None:
+                 break
++            if not next_cursor or next_cursor in seen_cursors:
++                raise TimelineEditError(f"Runtime revision history cursor loop for {timeline!r}")
+             seen_cursors.add(next_cursor)
+             cursor = next_cursor
+ 
+-        revisions = [cls._history_revision(row, head=head) for row in rows]
+-        by_publication = {revision.publication_id: revision for revision in revisions
+-                          if revision.publication_id is not None}
+-        head_publication = _text((head or {}).get("publication_id"))
+-        if head_publication is not None and head_publication in by_publication:
+-            ordered: list[Revision] = []
+-            seen: set[str] = set()
+-            current = by_publication[head_publication]
+-            while current.publication_id is not None and current.publication_id not in seen:
+-                seen.add(current.publication_id)
+-                ordered.append(current)
+-                previous = by_publication.get(current.previous_publication_id)
+-                if previous is None:
+-                    break
+-                current = previous
+-            revisions = ordered + [revision for revision in revisions
+-                                   if revision.publication_id not in seen]
+-        elif head is not None:
+-            # Legacy-shaped pages may mark the head without publication IDs.
+-            head_revision = _text(head.get("revision_id"))
+-            marked = next((revision for revision in revisions
+-                           if revision.id == head_revision or revision.is_current_head is True), None)
+-            if marked is not None:
+-                revisions = [marked, *[revision for revision in revisions if revision is not marked]]
++        assert head_pair is not None
++        head_revision_id, head_publication_id = head_pair
++        by_publication: dict[str, Mapping[str, Any]] = {}
++        for row in rows:
++            publication_id = row["publication_id"]
++            if publication_id in by_publication:
++                raise TimelineEditError(f"Runtime revision history repeated publication {publication_id!r}")
++            by_publication[publication_id] = row
++        current = by_publication.get(head_publication_id)
++        if current is None or current["revision_id"] != head_revision_id:
++            raise TimelineEditError(f"Runtime revision history head is not present in its items for {timeline!r}")
++        ordered_rows: list[Mapping[str, Any]] = []
++        seen_publications: set[str] = set()
++        while current is not None:
++            publication_id = current["publication_id"]
++            if publication_id in seen_publications:
++                raise TimelineEditError(f"Runtime revision history contains a publication cycle for {timeline!r}")
++            seen_publications.add(publication_id)
++            ordered_rows.append(current)
++            previous = current["previous"]
++            if previous is None:
++                current = None
++                continue
++            current = by_publication.get(previous["publication_id"])
++            if current is None or current["revision_id"] != previous["revision_id"]:
++                raise TimelineEditError(f"Runtime revision history has a missing or conflicting ancestor for {timeline!r}")
++        if len(seen_publications) != len(by_publication):
++            raise TimelineEditError(f"Runtime revision history contains a disconnected or incomplete chain for {timeline!r}")
++        revisions = [cls._history_revision(row) for row in ordered_rows]
+         return revisions[:limit]
+ 
+ 
+diff --git a/tests/sdk/test_timeline_revisions.py b/tests/sdk/test_timeline_revisions.py
+index 10602764c3a227ede2b2e8dd113f6e225adfd7b7..75ba720c433de9e313973085270e3ed904fb1f57
+--- a/tests/sdk/test_timeline_revisions.py
++++ b/tests/sdk/test_timeline_revisions.py
+@@ -24,6 +24,25 @@
+     return Revision(id=rid, source=revision_source(rid), created_at="2026-10-01T00:00:00Z", parent=parent, message=None)
+ 
+ 
++def _history_item(publication_id, revision_id, previous=None, *, label=None, source=None):
++    item = {
++        "publication_id": publication_id,
++        "revision_id": revision_id,
++        "previous": previous,
++        "receipt": {"created_at": f"{publication_id}-time"},
++        "intent": "recorded",
++        "records": {},
++        "provider_version": "astrid-v1",
++        "compiler_version": "compiler-v1",
++        "publisher": "actor-1",
++    }
++    if label is not None:
++        item["label"] = label
++    if source is not None:
++        item["source"] = {"via": source}
++    return item
++
++
+ class FakeStore:
+     """A chain newest first: chain[0] is the head. ``listable=False`` models a Runtime with no list route."""
+ 
+@@ -160,7 +179,8 @@
+ 
+ def test_runtime_list_stops_on_a_cycle():
+     store = RuntimeRevisions(FakeTimelines({A: B, B: A}))
+-    assert [r.id for r in store.list("P", "TL", limit=50)] == [A, B]
++    with pytest.raises(TimelineEditError, match="cyclic"):
++        store.list("P", "TL", limit=50)
+ 
+ 
+ def test_runtime_get_and_head_and_missing_revision():
+@@ -202,14 +222,10 @@
+                 # adapter must expose newest-first refs without deduplicating
+                 # the two accepted writes of identical content.
+                 "items": [
+-                    {"publication_id": "pub-0", "revision_id": same,
+-                     "previous": None, "receipt": {"created_at": "t0"}},
+-                    {"publication_id": "pub-1", "revision_id": same,
+-                     "previous": {"publication_id": "pub-0", "revision_id": same},
+-                     "receipt": {"created_at": "t1"}, "label": "same value"},
+-                    {"publication_id": "pub-2", "revision_id": later,
+-                     "previous": {"publication_id": "pub-1", "revision_id": same},
+-                     "receipt": {"created_at": "t2"}, "source": {"via": "app"}},
++                    _history_item("pub-0", same),
++                    _history_item("pub-1", same, {"publication_id": "pub-0", "revision_id": same},
++                                  label="same value"),
++                    _history_item("pub-2", later, {"publication_id": "pub-1", "revision_id": same}, source="app"),
+                 ],
+                 "next_cursor": None,
+                 "head": {"revision_id": later, "publication_id": "pub-2"},
+@@ -233,20 +249,91 @@
+     assert runtime.calls
+ 
+ 
+-def test_runtime_commit_history_uses_wrapped_generated_read_adapter():
++def test_runtime_commit_history_does_not_bypass_public_client_for_private_generated_method():
+     class Generated:
+         def list_timeline_commits(self, project, timeline, *, cursor=None, limit=50):
+-            assert (project, timeline) == ("project-id", "timeline-id")
+-            return {"items": [], "next_cursor": None,
+-                    "head": {"revision_id": "head", "publication_id": "pub-head"}}
++            pytest.fail("private generated client must not bypass the public adapter")
+ 
+     class Wrapped:
+         _client = type("Workspace", (), {"_generated": Generated()})()
+ 
+-        def resolve_scope(self, project, timeline):
++        def open_composition(self, project, timeline, *, revision_id=None, **_):
+             assert (project, timeline) == ("project", "main")
+-            return DomainResult.success({"project_ref": "project-id", "timeline_id": "timeline-id"})
++            rid = revision_id or A
++            parent = B if rid == A else None
++            summary = {"revision_id": rid, "head_revision_id": A}
++            if parent is not None:
++                summary["parent_revision_id"] = parent
++            return DomainResult.success({"summary": summary})
+ 
+     store = RuntimeRevisions(Wrapped())
+-    assert store.head("project", "main") == "head"
+-    assert store.list("project", "main") == []
++    assert store.head("project", "main") == A
++    assert [revision.id for revision in store.list("project", "main")] == [A, B]
++
++
++def test_frozen_history_rejects_duplicate_publication_ids():
++    class Client:
++        def list_timeline_commits(self, *args, **kwargs):
++            return {
++                "items": [_history_item("pub", A), _history_item("pub", B)],
++                "next_cursor": None,
++                "head": {"revision_id": B, "publication_id": "pub"},
++            }
++
++    with pytest.raises(TimelineEditError, match="repeated publication"):
++        RuntimeRevisions(Client()).list("P", "TL")
++
++
++def test_frozen_history_rejects_publication_cycle():
++    class Client:
++        def list_timeline_commits(self, *args, **kwargs):
++            return {
++                "items": [
++                    _history_item("pub-a", A, {"publication_id": "pub-b", "revision_id": B}),
++                    _history_item("pub-b", B, {"publication_id": "pub-a", "revision_id": A}),
++                ],
++                "next_cursor": None,
++                "head": {"revision_id": B, "publication_id": "pub-b"},
++            }
++
++    with pytest.raises(TimelineEditError, match="cycle"):
++        RuntimeRevisions(Client()).list("P", "TL")
++
++
++def test_frozen_history_rejects_changing_head_and_cursor_loop():
++    class Client:
++        def __init__(self, pages):
++            self.pages = pages
++
++        def list_timeline_commits(self, project, timeline, *, cursor=None, limit=50):
++            return self.pages[cursor]
++
++    first = {
++        "items": [_history_item("pub-a", A)],
++        "next_cursor": "next",
++        "head": {"revision_id": A, "publication_id": "pub-a"},
++    }
++    second = {
++        "items": [_history_item("pub-b", B, {"publication_id": "pub-a", "revision_id": A})],
++        "next_cursor": None,
++        "head": {"revision_id": B, "publication_id": "pub-b"},
++    }
++    with pytest.raises(TimelineEditError, match="changed its head"):
++        RuntimeRevisions(Client({None: first, "next": second})).list("P", "TL")
++
++    loop = dict(first, head={"revision_id": A, "publication_id": "pub-a"}, next_cursor="next")
++    with pytest.raises(TimelineEditError, match="cursor loop"):
++        RuntimeRevisions(Client({None: loop, "next": loop})).list("P", "TL")
++
++
++def test_frozen_history_rejects_missing_ancestor_instead_of_guessing_order():
++    class Client:
++        def list_timeline_commits(self, *args, **kwargs):
++            return {
++                "items": [_history_item("pub-b", B, {"publication_id": "missing", "revision_id": A})],
++                "next_cursor": None,
++                "head": {"revision_id": B, "publication_id": "pub-b"},
++            }
++
++    with pytest.raises(TimelineEditError, match="missing or conflicting ancestor"):
++        RuntimeRevisions(Client()).list("P", "TL")
+diff --git a/tests/sdk/test_timeline_show_views.py b/tests/sdk/test_timeline_show_views.py
+index 840f076dfb20f4bffb377aa8d0a36d33c8973e76..af929c82d4b28eccc0fa8ec22b36c9d5f69ba418
+--- a/tests/sdk/test_timeline_show_views.py
++++ b/tests/sdk/test_timeline_show_views.py
+@@ -274,3 +274,35 @@
+     payload = json.loads(capsys.readouterr().out)["data"]
+     assert code == 0
+     assert payload["revision_id"] == "accepted-revision"
++
++
++def test_exact_published_show_rejects_a_different_loaded_revision(capsys):
++    doc = bundle()
++    doc["base_parent"]["revision_id"] = "loaded-revision"
++
++    def open_wrong(project, ref, revision_id=None):
++        return DomainResult.success({"bundle": copy.deepcopy(doc), "project_id": "p", "timeline_id": "t"})
++
++    code = cli._print_cut_table(ns(published=True, revision_id="requested-revision"), open_wrong)
++    captured = capsys.readouterr()
++    out = captured.out + captured.err
++
++    assert code == 1
++    assert "different revision than requested" in out
++
++
++def test_published_show_rejects_missing_immutable_revision_identity(capsys):
++    doc = bundle()
++    doc["base_parent"].pop("revision_id")
++
++    def open_missing(project, ref, revision_id=None):
++        return DomainResult.success({
++            "bundle": copy.deepcopy(doc), "revision_id": revision_id, "head_revision_id": revision_id,
++        })
++
++    code = cli._print_cut_table(ns(published=True, revision_id="requested-revision"), open_missing)
++    captured = capsys.readouterr()
++    out = captured.out + captured.err
++
++    assert code == 1
++    assert "omitted its revision identity" in out
+
+exec
+/bin/bash -lc "git status --short --branch; printf '%s\\n' '--- diff stat/numstat ---'; git diff --stat; git diff --numstat; printf '%s\\n' '--- commit message ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-readback-fix/commit-msg; printf '%s\\n' '--- final diff check ---'; git diff --check; printf '%s\\n' '--- changed paths ---'; git diff --name-only" in /home/user/work/wt/agt-m1-readback-fix
+ succeeded in 2213ms:
+## tl/agt-m1-readback-fix
+ M astrid/packs/timeline/cli_show.py
+ M astrid/sdk/timeline/revisions.py
+ M tests/sdk/test_timeline_revisions.py
+ M tests/sdk/test_timeline_show_views.py
+--- diff stat/numstat ---
+ astrid/packs/timeline/cli_show.py     |  64 +++++----
+ astrid/sdk/timeline/revisions.py      | 249 +++++++++++++++++-----------------
+ tests/sdk/test_timeline_revisions.py  | 121 ++++++++++++++---
+ tests/sdk/test_timeline_show_views.py |  32 +++++
+ 4 files changed, 296 insertions(+), 170 deletions(-)
+39	25	astrid/packs/timeline/cli_show.py
+121	128	astrid/sdk/timeline/revisions.py
+104	17	tests/sdk/test_timeline_revisions.py
+32	0	tests/sdk/test_timeline_show_views.py
+--- commit message ---
+fix(timeline): validate immutable readback history
+
+Require exact loaded revision identity for published reads and fail closed on
+malformed or inconsistent frozen commit-history pages while preserving
+publication ancestry and legacy-client fallback.
+--- final diff check ---
+--- changed paths ---
+astrid/packs/timeline/cli_show.py
+astrid/sdk/timeline/revisions.py
+tests/sdk/test_timeline_revisions.py
+tests/sdk/test_timeline_show_views.py
+
+codex
+## Changes
+
+- Enforced exact immutable readback via `bundle.base_parent.revision_id`.
+- Strictly validated frozen history pages, ancestry, heads, publications, and cursors.
+- Removed private generated-client access and guessed head APIs.
+- Added malformed/cycle/duplicate/gap/changing-head/readback tests.
+- Commit message written to the requested path.
+
+## Tests
+
+- Targeted: `38 passed`
+- Neighbours: `166 passed, 1 skipped`
+- Ruff: passed
+- `git diff --check`: passed
+
+No full suite run, per instructions. No blockers.
+
+Net diff: `+126` lines.
+tokens used
+208,505
+## Changes
+
+- Enforced exact immutable readback via `bundle.base_parent.revision_id`.
+- Strictly validated frozen history pages, ancestry, heads, publications, and cursors.
+- Removed private generated-client access and guessed head APIs.
+- Added malformed/cycle/duplicate/gap/changing-head/readback tests.
+- Commit message written to the requested path.
+
+## Tests
+
+- Targeted: `38 passed`
+- Neighbours: `166 passed, 1 skipped`
+- Ruff: passed
+- `git diff --check`: passed
+
+No full suite run, per instructions. No blockers.
+
+Net diff: `+126` lines.

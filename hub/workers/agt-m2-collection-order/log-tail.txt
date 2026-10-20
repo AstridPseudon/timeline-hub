@@ -1,0 +1,400 @@
+@@ -3,6 +3,7 @@
+ 
+ import copy
+ 
++from ._collections import KINDS, order, rows
+ from ._command_state import ABSENT, CommandError, State, equal, present, spelling
+ from ._common import AUDIO_KINDS
+ 
+@@ -15,8 +16,8 @@
+ def selection(state, key, owner, members=()):
+     if key == "move.target":
+         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
+-    elif key == "track.create":
+-        result = [owner + '/track:' + row['id'] for row in state.collection(owner, 'track')]
++    elif key in KINDS:
++        result = order(state, owner, KINDS[key])
+     elif key == "move.blockers":
+         origin = state.occurrence(owner)
+         lane = (origin.get('placement') or {}).get('track', origin.get('track'))
+@@ -36,6 +37,11 @@
+ class Recording:
+     def __init__(self, bundle, command, ordinal, *, closures=None):
+         self.state = State(bundle, closures=closures)
++        parent = bundle['parent']
++        config = parent.get('config')
++        self.mirrored_clips = (isinstance(parent.get('clips'), list)
++                               and isinstance(config, dict) and isinstance(config.get('clips'), list)
++                               and equal(parent['clips'], config['clips']))
+         self.record = {"ordinal": ordinal, "command": copy.deepcopy(command), "writes": [],
+                        "reads": [], "selections": [], "bindings": [], "created": [],
+                        "dependencies": [], "derived_writes": []}
+@@ -50,6 +56,12 @@
+     def select(self, key, owner, members=()):
+         value = selection(self.state, key, owner, members)
+         if value not in self.record['selections']:
++            if key.startswith('collection.'):
++                self.read(owner + '/collection:' + KINDS[key])
++                if owner != 'parent':
++                    self.read(owner, ['occurrence_id'])
++                    self.read(owner + '/shot', ['shot_id'])
++                    self.bind('collection.owner:' + key, owner)
+             self.record['selections'].append(value)
+         return value['members']
+ 
+@@ -82,14 +94,14 @@
+             raise CommandError("intent container must be object or null", ref=ref, path=path)
+         self.write(ref, path, {})
+ 
+-    def create(self, owner, kind, row):
+-        if not isinstance(self.state.config(owner).get(kind + 's'), list):
+-            raise CommandError('structural create requires an authored entity collection', ref=owner)
++    def create(self, owner, kind, row, *, restoring=False):
++        rows(self.state, owner, kind, check_mirrors=not restoring)
+         if owner != 'parent':
+             self.read(owner, ['occurrence_id'])
+             self.read(owner + '/shot', ['shot_id'])
+             self.bind('create.owner', owner)
+-        self.select('track.create', owner)
++        if not restoring:
++            self.select('track.create' if kind == 'track' else 'collection.' + kind + 's', owner)
+         ref = owner + '/' + kind + ':' + row['id']
+         if self.state.get(ref, []) != ABSENT:
+             raise CommandError("created identity is occupied", kind="identity_collision", ref=ref)
+@@ -112,8 +124,7 @@
+ 
+     def compile_mirrors(self):
+         parent = self.state.bundle['parent']
+-        config = parent.get('config', {})
+-        if parent.get('clips') and config.get('clips'):
++        if self.mirrored_clips:
+             before = self.state.get('parent', ['config', 'clips'])
+             after = present(parent['clips'])
+             if not equal(before, after):
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index d28d4c7da1be48240d19603b1234f2aaad2c8b15..54e316da819eea9d631aed40c2a60decf7213951
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -361,6 +361,7 @@
+         from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+ 
+         from astrid.sdk.timeline.commands import CommandError, execute
++        from astrid.sdk.timeline._collections import AcceptedRecords
+         from astrid.sdk.timeline.inverse import coalesce
+         from astrid.sdk.timeline.rebase import replay
+ 
+@@ -415,9 +416,22 @@
+                     raise CommitRejected(_failure("invalid_inverse_order",
+                                                   "inverse publications must be oldest to newest",
+                                                   base, current))
+-                inverse_records = _records([entry for entry in ordered
+-                                            if entry["publication_id"] in undo_of],
+-                                           CommitRejected, base, current)
++                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
++
++                def load_boundary(entry):
++                    previous = entry.get('previous')
++                    if not previous:
++                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
++                    prior = port.history_entry(previous['publication_id'])
++                    if prior['revision_id'] != previous['revision_id']:
++                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
++                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
++                    _history(port, pin, previous, CommitRejected, base)
++                    return (_load(port, context, previous['revision_id']),
++                            _load(port, context, entry['revision_id']))
++
++                inverse_records = AcceptedRecords(accepted, _records(
++                    accepted, CommitRejected, base, current), load_boundary)
+                 inverse_intervening = _records([entry for entry in ordered
+                                                 if entry["publication_id"] not in undo_of],
+                                                CommitRejected, base, current)
+diff --git a/astrid/sdk/timeline/inverse.py b/astrid/sdk/timeline/inverse.py
+index 630b4797990aa9f5d649f8c5a79c0fe5453176de..0c3c2c8bb7f2626a28e87d68c9603a610aebbb78
+--- a/astrid/sdk/timeline/inverse.py
++++ b/astrid/sdk/timeline/inverse.py
+@@ -3,7 +3,8 @@
+ 
+ import copy
+ 
+-from ._command_state import ABSENT, CommandError, overlaps, present
++from ._collections import KINDS, arrange, restoration_orders, selection_overlap
++from ._command_state import ABSENT, CommandError, logical_address, overlaps, present
+ from ._recording import guard, selection
+ 
+ 
+@@ -13,7 +14,35 @@
+     value = copy.deepcopy(state.get('value', {}))
+     node = value
+     for token in path[:-1]:
+-        node = node.setdefault(token, {})
++        if isinstance(token, tuple):
++            matches = [row for row in node if row.get('id') == token[1]]
++            if len(matches) != 1:
++                raise CommandError('ambiguous collection alias', kind='identity_conflict')
++            node = matches[0]
++        elif isinstance(node, list):
++            node = node[int(token)]
++        else:
++            node = node.setdefault(token, {})
++    if isinstance(path[-1], tuple):
++        identity = path[-1][1]
++        indices = [i for i, row in enumerate(node) if row.get('id') == identity]
++        if len(indices) > 1:
++            raise CommandError('ambiguous collection alias', kind='identity_conflict')
++        if replacement['state'] == 'absent':
++            if indices:
++                node.pop(indices[0])
++        elif indices:
++            node[indices[0]] = copy.deepcopy(replacement['value'])
++        else:
++            raise CommandError('collection alias insertion needs historical order', kind='history_unavailable')
++        return present(value)
++    if isinstance(node, list):
++        index = int(path[-1])
++        if replacement['state'] == 'absent':
++            node.pop(index)
++        else:
++            node[index] = copy.deepcopy(replacement['value'])
++        return present(value)
+     if replacement['state'] == 'absent':
+         node.pop(path[-1], None)
+     else:
+@@ -23,21 +52,30 @@
+ 
+ def coalesce(records):
+     """Retain first-before/last-after, folding descendants into authored roots."""
++    def value_address(write):
++        ref, path = logical_address(write['ref'], write['path'])
++        # Source rows are owned by an occurrence, but aren't JSON children of
++        # its placement row. Ownership overlap must not fold them into that row.
++        if ref.startswith('occurrence:') and path[:1] == ('source',):
++            return ref + '/source', path[1:]
++        return ref, path
++
+     result = []
+     for record in records:
+         for raw in record['writes']:
+             write = copy.deepcopy(raw)
+-            address = write['ref'], tuple(write['path'])
+-            ancestor = next((old for old in result if old['ref'] == address[0]
+-                             and address[1][:len(old['path'])] == tuple(old['path'])), None)
++            address = value_address(write)
++            ancestor = next((old for old in result if value_address(old)[0] == address[0]
++                             and address[1][:len(value_address(old)[1])] == value_address(old)[1]), None)
+             if ancestor is not None:
+-                ancestor['after'] = _patch(ancestor['after'], write['path'][len(ancestor['path']):],
++                ancestor['after'] = _patch(ancestor['after'], address[1][len(value_address(ancestor)[1]):],
+                                            write['after'])
+                 continue
+-            descendants = [old for old in result if old['ref'] == address[0] and overlaps(
+-                (old['ref'], tuple(old['path'])), address)]
++            descendants = [old for old in result
++                           if value_address(old)[0] == address[0]
++                           and value_address(old)[1][:len(address[1])] == address[1]]
+             for old in reversed(descendants):
+-                write['before'] = _patch(write['before'], old['path'][len(write['path']):], old['before'])
++                write['before'] = _patch(write['before'], value_address(old)[1][len(address[1]):], old['before'])
+                 result.remove(old)
+             result.append(write)
+     return result
+@@ -47,21 +85,26 @@
+     if intervening_records is None:
+         raise CommandError('complete intervening history is required', kind='history_unavailable')
+     guarded = []
++    selections = []
+     for record in records:
+         if not isinstance(record, dict) or any(key not in record for key in ('writes', 'reads', 'selections', 'created')):
+             raise CommandError('complete accepted recorder history is required', kind='history_unavailable')
+         guarded.extend((w['ref'], tuple(w['path'])) for w in record['writes'])
++        selections.extend(record['selections'])
+         if include_reads:
+             for read in record['reads']:
+                 guarded.append((read['ref'], tuple(read['path'])))
+                 if read['ref'].endswith('/shot'):
+                     guarded.append((read['ref'].removesuffix('/shot'), ('shot_id',)))
++                    if read['path'] == ['shot_id'] and isinstance(read['state'].get('value'), str):
++                        guarded.append(('shot:' + read['state']['value'], ()))
+     for record in intervening_records:
+         if not isinstance(record, dict) or 'writes' not in record:
+             raise CommandError("complete intervening write history is required", kind='history_unavailable')
+         for write in record['writes']:
+             address = write['ref'], tuple(write['path'])
+-            if any(overlaps(address, prior) for prior in guarded):
++            if (any(overlaps(address, prior) for prior in guarded)
++                    or any(selection_overlap(s, write) for s in selections)):
+                 raise CommandError("an intervening publication wrote a guarded address",
+                                    kind='intervening_write', ref=address[0], path=address[1])
+             if not write['path']:
+@@ -109,6 +152,12 @@
+         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
+     check_intervening(records, intervening_records)
+     changes = coalesce(records)
++    orders = restoration_orders(records)
++    for (owner, kind), (_, expected) in orders.items():
++        actual = ctx.select('collection.' + kind + 's', owner)
++        if actual != expected:
++            raise CommandError('inverse collection membership/order changed',
++                               kind='selection_changed', ref=owner)
+     for write in changes:
+         guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+     # Selection and identity guards remain relevant; value reads changed by the
+@@ -120,19 +169,10 @@
+                 guard(ctx.state, read['ref'], read['path'], read['state'], kind='inverse_dependency_changed')
+                 ctx.read(read['ref'], read['path'])
+         for selected in record['selections']:
+-            expected = copy.deepcopy(selected)
+-            if selected['key'] == 'track.create':
+-                members = list(selected['members'])
+-                for change in changes:
+-                    if change['path'] or not change['ref'].startswith(selected['owner'] + '/track:'):
+-                        continue
+-                    if change['before'] == ABSENT and change['ref'] not in members:
+-                        members.append(change['ref'])
+-                    elif change['after'] == ABSENT and change['ref'] in members:
+-                        members.remove(change['ref'])
+-                expected.update(members=members, order=list(members), boundaries=list(members))
++            if (selected['owner'], KINDS.get(selected['key'])) in orders:
++                continue
+             actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
+-            if actual != expected:
++            if actual != selected:
+                 raise CommandError("inverse selection changed", kind='selection_changed', ref=selected['owner'])
+             ctx.select(selected['key'], selected['owner'], selected['members'])
+         for created in record['created']:
+@@ -143,6 +183,8 @@
+         ctx.read(write['ref'], write['path'])
+         if not write['path'] and write['after'] == ABSENT:
+             owner, entity = write['ref'].rsplit('/', 1)
+-            ctx.create(owner, entity.split(':', 1)[0], write['before']['value'])
++            ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)
+         else:
+             ctx.assign(write['ref'], write['path'], write['before'])
++    for (owner, kind), (original, _) in orders.items():
++        arrange(ctx.state, owner, kind, original)
+diff --git a/tests/sdk/test_timeline_commit_provider.py b/tests/sdk/test_timeline_commit_provider.py
+index fcf6410953b2242187e74a8872026c77f2efae02..5e080ac74e79b1e7ef1114aece5a346dde64c19d
+--- a/tests/sdk/test_timeline_commit_provider.py
++++ b/tests/sdk/test_timeline_commit_provider.py
+@@ -1025,7 +1025,9 @@
+     accepted_records = detached(realm.entries[-1]['records'])
+     removed_document = detached(realm.documents[realm.head['revision_id']])
+     undone = realm.call([inverse([target])])
+-    assert json.dumps(undone['data']['canonical_document']['parent_revision']['payload']) == json.dumps(parent)
++    restored_parent = undone['data']['canonical_document']['parent_revision']['payload']
++    assert restored_parent == parent
++    assert json.dumps(restored_parent['clips']) == json.dumps(rows)
+     assert realm.entries[-2]['records'] == accepted_records
+     undo_target = undone['receipt']['receipt_id']
+     assert realm.entries[-1]['records']['commands'][0]['selections'][0]['order'] == [
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py' in /home/user/work/wt/agt-m2-collection-order
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py && git diff --check && git diff --numstat && git status --short' in /home/user/work/wt/agt-m2-collection-order
+ succeeded in 96ms:
+All checks passed!
+43	1	astrid/sdk/timeline/_command_state.py
+19	8	astrid/sdk/timeline/_recording.py
+17	3	astrid/sdk/timeline/commit.py
+65	23	astrid/sdk/timeline/inverse.py
+244	0	tests/editing_conformance/test_recipe_m1_commands.py
+159	0	tests/sdk/test_timeline_commit_provider.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+ M tests/sdk/test_timeline_commit_provider.py
+?? astrid/sdk/timeline/_collections.py
+
+ succeeded in 10333ms:
+........................................................................ [ 34%]
+........................................................................ [ 68%]
+.................................................................        [100%]
+209 passed in 9.76s
+
+exec
+/bin/bash -lc 'wc -l astrid/sdk/timeline/_collections.py && rg --files --hidden --no-ignore .pytest_cache' in /home/user/work/wt/agt-m2-collection-order
+ succeeded in 0ms:
+209 astrid/sdk/timeline/_collections.py
+.pytest_cache/v/cache/nodeids
+.pytest_cache/v/cache/lastfailed
+.pytest_cache/.gitignore
+.pytest_cache/README.md
+.pytest_cache/CACHEDIR.TAG
+
+codex
+Final verification passed: 209 tests in the required three files, changed-file Ruff, and `git diff --check`. The `timeline.restore` tests remain unchanged and pass. I’ll remove the test cache and write the commit message. Merge remains held for recorded M1 completion; dependent staged reversal remains the next slice.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+
+shutil.rmtree('.pytest_cache')
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-collection-order')
+message = '''feat(timeline): restore scoped rows in verified historical order
+
+Share collection queries and container-shape guards across recording and inverse.
+Restore complete rows by stable identity while retaining untouched member fields.
+Normalize collection aliases for coalescing and publication conflicts.
+Preserve accepted M1 records and verify historical boundaries for legacy inverses.
+
+Validation: 209 targeted conformance/provider/document tests passed; changed-file
+Ruff and git diff --check passed. Full suite remains with integration management.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+print('Removed test cache; wrote commit-msg and commit-msg.txt.')
+PY
+ git diff --check" in /home/user/work/wt/agt-m2-collection-order
+ succeeded in 0ms:
+Removed test cache; wrote commit-msg and commit-msg.txt.
+
+codex
+Implemented scoped collection queries, exact clip/track row restoration, container-shape guards, and shared alias overlap. Restored rows retain historical order and raw JSON; untouched rows retain newer fields. Legacy M1 records remain unchanged.
+
+Validation: **209 passed in 9.76s**:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py
+```
+
+Changed-file Ruff passed:
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py
+git diff --check
+```
+
+- Line effect: product **+353/−35**; tests **+403**.
+- Historical boundaries supply missing legacy inverse order proof; missing proof refuses.
+- `timeline.restore` tests are unchanged and pass.
+- No full suite, sockets, merge, or git mutation performed.
+- Commit messages written as `commit-msg` and `commit-msg.txt`; test cache removed.
+
+No implementation blockers. Merge remains held until recorded M1 completion. Next slice: staged dependent reversal, including reversing consumers before checking creator removal.
+tokens used
+153,205
+Implemented scoped collection queries, exact clip/track row restoration, container-shape guards, and shared alias overlap. Restored rows retain historical order and raw JSON; untouched rows retain newer fields. Legacy M1 records remain unchanged.
+
+Validation: **209 passed in 9.76s**:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py
+```
+
+Changed-file Ruff passed:
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py
+git diff --check
+```
+
+- Line effect: product **+353/−35**; tests **+403**.
+- Historical boundaries supply missing legacy inverse order proof; missing proof refuses.
+- `timeline.restore` tests are unchanged and pass.
+- No full suite, sockets, merge, or git mutation performed.
+- Commit messages written as `commit-msg` and `commit-msg.txt`; test cache removed.
+
+No implementation blockers. Merge remains held until recorded M1 completion. Next slice: staged dependent reversal, including reversing consumers before checking creator removal.

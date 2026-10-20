@@ -1,0 +1,400 @@
+def consume(bundle, records, *, closures=None):
+    """Restore captured editing slots when a sibling or undo made S unshared."""
+    from astrid.core.timeline.authoring_bundle import _remap_shot_items
+
+    if any(not isinstance(record, dict) or not all(isinstance(record.get(key), list)
+               for key in ('bindings', 'dependencies')) for record in records):
+        raise CommandError('complete allocation history is required', kind='history_unavailable')
+    verify_sources(State(bundle, closures=closures), records)
+    bundle = copy.deepcopy(bundle)
+    for destination, owner, pin in recorded_allocations(records):
+        source = pin['source']
+        row = State(bundle).occurrence(owner)
+        if row['shot_id'] == destination:
+            continue
+        current = row['shot_id']
+        if (current != source['shot_id'] or
+                not equal(bundle['source_mapping']['shots'][current], {**source, 'item_id_map': {}})):
+            raise CommandError('materialization source changed', kind='identity_conflict', ref=owner)
+        shot = bundle['shots'][current]
+        replacement = copy.deepcopy(shot)
+        replacement['shot_id'] = destination
+        for field in ('payload', 'base_payload'):
+            items = {item.get('item_id', item.get('id')) for item in shot[field].get('items', [])}
+            if items != source['item_id_map'].keys():
+                raise CommandError('materialization source items changed', kind='identity_conflict')
+            replacement[field] = _remap_shot_items(shot[field], source['item_id_map'])
+        row['shot_id'] = destination
+        bundle['shots'][destination] = replacement
+        bundle['source_mapping']['shots'][destination] = copy.deepcopy(source)
+        if not any(other['shot_id'] == current for other in bundle['placements']):
+            bundle['shots'].pop(current)
+            bundle['source_mapping']['shots'].pop(current)
+    return bundle
+                        self._flight_body(state, flight, idempotency_key, dry_run)
+                        state["conflict"] = failure
+                        self.outbox.write(state)
+                raise CommitConflict(failure) from exc
+            raise  # Ambiguous failure: never replace the durable flight.
+        from ._command_state import equal
+
+        source_bundle, inverse_records, closures = None, [], {}
+        inverse = len(body['commands']) == 1 and body['commands'][0]['op'] == 'timeline.inverse'
+        if inverse or any(key.startswith('materialization.owner:')
+                          for command in body['commands'] for key in command.get('bindings', {})):
+            from .store import fetch_bundle
+            source_bundle = fetch_bundle(self.project_id, self.timeline_id,
+                                         revision_id=body['base_revision_id'], client=self.client)
+        if inverse:
+            targets = body['commands'][0]['args']['publications']
+            from ._materialization import id_map
+            entries, cursor = {}, None
+            while True:
+                page = _response(self.client.timelines.history(
+                    self.project_id, self.timeline_id, cursor=cursor, limit=200))['data']
+                entries.update({entry['publication_id']: entry for entry in page['items']})
+                cursor = page['next_cursor']
+                if all(target in entries for target in targets) or cursor is None:
+                    break
+            for target in targets:
+                entry = entries.get(target, {})
+                records = (entry.get('records') or {}).get('commands', [])
+                receipt = entry.get('receipt', {})
+                if (receipt.get('receipt_id') != target or receipt.get('project_id') != self.project_id
+                        or not equal(receipt.get('result', {}).get('commands'), [r['command'] for r in records])
+                        or {key: value for key, value in receipt.get('result', {}).get('id_map', {}).items()
+                            if key != value} != id_map(records)):
+                    raise TimelineEditError('inverse acknowledgement requires verified accepted history')
+                inverse_records.extend(records)
+            for record in inverse_records:
+                for dep in record['dependencies']:
+                    if dep['key'].startswith('materialization.source:'):
+                        revision = dep['pin']['parent']['revision_id']
+                        closures[revision] = fetch_bundle(self.project_id, self.timeline_id,
+                                                         revision_id=revision, client=self.client)
+            from ._collections import AcceptedRecords
+
+            def load_boundary(entry):
+                return tuple(fetch_bundle(self.project_id, self.timeline_id, revision_id=revision,
+                                          client=self.client) for revision in (
+                    entry['previous']['revision_id'], entry['revision_id']))
+
+            inverse_records = AcceptedRecords([entries[target] for target in targets],
+                                              inverse_records, load_boundary)
+        data, receipt = _ack(result, body, flight, self.identity, source_bundle=source_bundle,
+                             inverse_records=inverse_records, closures=closures)
+        with self.outbox.locked():
+            state = self._state()
+            # A duplicate send may finish after another send acknowledged this
+            # prefix and even started the next flight. Its response is read-only.
+            if state["flight"] == flight:
+                self._flight_body(state, flight, idempotency_key, dry_run)
+                if dry_run:
+                    state["preview_key"] = flight["key"]
+                else:
+                    state["base"] = _pin({"revision_id": data["accepted_revision_id"],
+                                           "publication_id": receipt["receipt_id"]})
+                    del state["pending"][:flight["count"]]
+                state["flight"] = None
+                state.pop("conflict", None)
+                self.outbox.write(state)
+        result = copy.deepcopy(result)
+        result["data"] = copy.deepcopy(data)
+        if not dry_run:
+from __future__ import annotations
+
+import copy
+import json
+import sys
+import types
+
+import pytest
+
+from astrid.sdk.timeline.commit import (
+    _digest,
+    bundle_from_document,
+    create_runtime_commit_service,
+)
+from tests.editing_conformance.staging_recipes import (
+    install_staging_operations,
+    staged_move,
+)
+from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
+
+
+class CommitRejected(Exception):
+    def __init__(self, failure):
+        self.failure = copy.deepcopy(failure)
+        super().__init__(failure["message"])
+
+
+class StaleHead(Exception):
+    def __init__(self, current_head):
+        self.current_head = copy.deepcopy(current_head)
+        super().__init__("timeline head changed")
+
+
+@pytest.fixture(autouse=True)
+def runtime_abi(monkeypatch):
+    # Agent's dependency-only environment need not install Runtime. Only its
+    # two ABI exceptions/metadata are faked; all command execution is real.
+    runtime = types.ModuleType("runtime_protocol")
+    runtime.__path__ = []
+    metadata = types.ModuleType("runtime_protocol.contract_metadata")
+    metadata.SCHEMA_DIGEST = "exact-installed-runtime-digest"
+    abi = types.ModuleType("runtime_protocol.timeline_commit")
+    abi.CommitRejected, abi.StaleHead = CommitRejected, StaleHead
+    for module in (runtime, metadata, abi):
+        monkeypatch.setitem(sys.modules, module.__name__, module)
+
+
+@pytest.fixture
+def native_staging_operations(monkeypatch):
+    install_staging_operations(monkeypatch)
+
+
+def detached(value):
+    return json.loads(json.dumps(value, allow_nan=False))
+
+
+def refusal(reason):
+    return CommitRejected({"http_status": 409, "code": "conflict", "message": reason,
+                           "details": {"status": "refused", "reason": reason,
+                                       "base": None, "current": None, "conflicts": []}})
+
+
+class DetachedRealm:
+    """Small scoped in-memory Runtime with immutable reads and acceptance CAS."""
+
+    def __init__(self, document=None):
+        document = document or document_fixture()
+        revision = document["parent_revision"]["revision_id"]
+        self.documents = {revision: detached(document)}
+        self.head = {"revision_id": revision, "publication_id": "bootstrap"}
+        receipt = {"receipt_id": "bootstrap", "command_kind": "timeline.create",
+                   "idempotency_key": "bootstrap-key", "request_hash": _digest(document),
+                   "project_id": "project-1", "project_seq": [0], "event_ids": ["event-bootstrap"],
+                   "result": {"parent_revision_id": revision}, "created_at": "2026-10-18T00:00:00Z"}
+        self.entries = [{"publication_id": "bootstrap", "revision_id": revision,
+                         "previous": None, "intent": "bootstrap", "records": None, "receipt": receipt,
+                         "provider_version": None, "compiler_version": None, "publisher": "actor-1"}]
+        self.live_sources, self.retained_sources = {}, {}
+        self.accepted, self.prepared, self.reads = [], [], []
+        self.before_accept = None
+        self.page_size = 100
+        self.request_count = 0
+
+    def context(self, calls, *, base=None, dry_run=False):
+        base = base or self.head
+        body = {"api_version": 1, "project_id": "project-1", "timeline_id": "film",
+                "base_revision_id": base["revision_id"],
+                "base_publication_id": base["publication_id"], "commands": detached(calls),
+                "dry_run": dry_run, "source": {"via": "python"}, "rationale": "test intent"}
+        invocation = {"operation": "commitTimeline",
+                      "path": "/v1/projects/project-1/timelines/film/commit", "body": body}
+        self.request_count += 1
+        return {"request": body, "invocation": invocation,
+                "idempotency_key": "request-" + str(self.request_count),
+                "request_hash": _digest(invocation), "realm_id": "realm-1", "publisher": "actor-1"}
+
+    def call(self, calls, *, base=None, dry_run=False):
+        context = self.context(calls, base=base, dry_run=dry_run)
+        return create_runtime_commit_service().commit(context, DetachedPort(self, context))
+
+    def move(self, ref="parent/clip:clip-a", on=3.003, *, base=None):
+        from astrid.sdk.timeline.capture import capture_move
+        base = base or self.head
+        bundle = bundle_from_document(self.documents[base["revision_id"]])
+        return capture_move(bundle, ref, on)
+
+
+class DetachedPort:
+    def __init__(self, realm, context):
+        self.realm, self.context = realm, detached(context)
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py --output-format concise; git diff --check; git status --short' in /home/user/work/wt/agt-m2-materialization-review
+ succeeded in 103ms:
+All checks passed!
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_materialization.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/test_materialization_map.py
+ M tests/sdk/test_timeline_sync.py
+ M tests/timeline/test_authoring_bundle.py
+?? tests/editing_conformance/test_commit_runtime_opaque_items.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+for ref in ('HEAD', 'HEAD"'^'"'):
+    rows=subprocess.check_output(['git','diff',ref,'--numstat','--','astrid'],text=True).splitlines()
+    added=sum(int(row.split('\\t')[0]) for row in rows)
+    deleted=sum(int(row.split('\\t')[1]) for row in rows)
+    print(ref, '+%d/-%d net %+d' % (added,deleted,added-deleted))
+PY
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-review/meta" in /home/user/work/wt/agt-m2-materialization-review
+ succeeded in 0ms:
+HEAD +114/-124 net -10
+HEAD^ +448/-61 net +387
+name=agt-m2-materialization-review
+repo=agent
+base=tl/agt-m2-materialization-map-impl
+base_sha=c65c50b8
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-materialization-review
+started=2026-10-20T01:46:26Z
+
+ succeeded in 50363ms:
+........................................................................ [ 11%]
+........................................................................ [ 23%]
+........................................................................ [ 35%]
+........................................................................ [ 46%]
+........................................................................ [ 58%]
+........................................................................ [ 70%]
+........................................................................ [ 81%]
+........................................................................ [ 93%]
+.......................................                                  [100%]
+615 passed, 7 deselected in 49.25s
+
+codex
+The final focused run passed: **615 tests**, with **7 deselected**—the existing default exclusion plus the six real Runtime cases held for the generated pair. Ruff and whitespace checks pass. Product code is **10 lines smaller** than the candidate, for **net +387** against its parent. Actual Runtime admission and own-slot qualification remain unverified.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-review/report.txt <<'EOF'
+Reviewed source-bound materialization on base c65c50b8e9c77248c55a68ac159c9b2f517c34d8, branch tl/agt-m2-materialization-review. All changes remain in the assigned Agent worktree and authorized coordination/report/commit-message paths. Harness assigns the successor source SHA after exit; no new commit SHA exists yet.
+
+Findings and fixes
+
+- Replaced suffix-recursive item remapping with exactly the approved 875a9aff item-codec/source-descriptor semantics, under the candidate's single shared _remap_shot_items helper. Deleted its duplicate equal-id mirror loop. Unknown namespaces, opaque secondary IDs, metadata internals, and unrelated payload fields survive. Added the eight direct approved cases and six positive real-service cases; removed the imported M1 test's xfail decoration rather than adding an xfail. No old M1 provider import.
+- Centralized allocation joining in recorded_allocations: capture, map derivation, source verification and replay now share the same checked facts. Reject duplicate/conflicting binding keys, extra dependent bindings, noncanonical/nonbijective item mappings and boolean/numeric disagreement between repeated pins. Source entities require canonical item refs; an empty /item: suffix no longer returns an entire shot payload.
+- Applied the existing JSON equality helper to source/map facts, SDK command/receipt/history comparisons, and document reuse. A true-vs-1 authored edit no longer silently reuses the original shot. History schema_version/ordinal must be actual integers.
+- Replaced the partial inverse ACK interpreter with the existing execute engine and AcceptedRecords boundary helper. Fetch accepted target history for EVERY inverse, so stripping the returned allocation map cannot bypass verification. Verify all reconstructed claims, including created refs, reads, expect and bindings. This reuses existing scoped history/bundle APIs; no new parser, registry, DTO, schema, endpoint or authority. Lazy legacy inverse boundary reads use the same helper as the provider.
+- Typed item birth now handles an absent items collection and refuses allocating one identity twice inside a recipe after deleting its first allocation. Existing typed birth, ownership, reservation, sibling-first replay, original pins, claims and exact inverse/redo controls remain positive.
+
+Decisions and size
+
+The original +397 product lines were not just a 175-line map formatter: they also added source retention at SDK ingress, item addressing/aliases and typed births, replay installation before guards, provider history/source hydration, retired-item reservations, and SDK ACK verification. Those checks protect demonstrated behaviors and cannot simply be removed to meet 150–220 lines.
+
+The minimal defensible successor in this worktree is net +387 product lines against c65c50b8"'^ (+448/-61), 10 fewer than the candidate (+114/-124 relative to c65c50b8). The helper is 176 lines versus 175: centralized joining removes duplicate interpretation while additional canonical/binding checks consume the savings there. The large deletion is the recursive remapper plus mirror loop; SDK inverse reconstruction replaces a hand-maintained subset of the engine. No required guard was removed to meet a size target. Further large cuts would require restructuring shared source/closure or ACK APIs across consumers; that is a manager decision, not this bounded review.
+
+The inverse ACK question was recorded in the absolute design/runtime-coordination.md BEFORE widening the implementation. It was resolved within the existing execute/AcceptedRecords path and existing APIs. No settled contract decision was changed. One existing inverse transport test now supplies its exact published boundary for the new read (its old fake held an older base pin); all original behavior assertions remain unchanged. The fake'"'s history response was extended only for the new limit=200 target-history call. No broad fixture normalization, skipped behavior, or added xfail.
+
+Verification (cwd /home/user/work/wt/agt-m2-materialization-review)
+
+Final focused command:
+
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recording_clear.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_commit_runtime_opaque_items.py
+
+Result: 615 passed, 7 deselected in 49.25s. This is the original 584-test set plus 31 new pure regressions. Six real-service opaque tests were collected but excluded by the existing integration marker; the seventh deselection is the candidate'"'s original default-marker exclusion. No xfails or skips added. The six real-service tests remain positive requirements, not qualification evidence.
+
+Final scoped lint command:
+
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py --output-format concise
+
+Result: All checks passed.
+
+git diff --check
+
+Result: passed.
+
+Earlier neighbor runs: 122 passed/1 default deselection in 34.27s; final expanded materialization/SDK neighbors 110 passed in 11.18s. Exploratory new-test failures were fixture setup errors (single-item duplicate test, stale fake publication pin, local renamed variable), corrected without changing old behavioral expectations.
+
+Independent RED check: loaded HEAD'"'s original product modules into a throwaway Python process, leaving all worktree files untouched, and ran new regressions. Exact command:
+
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import importlib
+import subprocess
+import pytest
+for name in ('astrid.core.timeline.authoring_bundle', 'astrid.sdk.timeline._materialization',
+             'astrid.sdk.timeline.sync'):
+    module = importlib.import_module(name)
+    path = name.replace('.', '/') + '.py'
+    exec(compile(subprocess.check_output(['git', 'show', 'HEAD:' + path]), path, 'exec'), module.__dict__)
+raise SystemExit(pytest.main(['-q', '--tb=line',
+    'tests/editing_conformance/test_materialization_map.py',
+    'tests/timeline/test_authoring_bundle.py', 'tests/sdk/test_timeline_sync.py',
+    '-k', 'allocation_join_rejects or source_entity_requires or materialization_remaps_only or paired_ack_distinguishes or ack_receipt_echo_distinguishes or inverse_ack_reconstructs']))
+PY
+
+Result: expected exit1, 18 failed/5 passed/121 deselected in 2.24s. Failures expose opaque corruption (8), ambiguous bindings (2), boolean pin disagreement (1), empty item ref (1), ACK bool/receipt disagreement (2), and inverse claim forgery (4). The missing-map direct check already refused when records were explicitly supplied; the additional production fix is ensuring history is always supplied rather than selecting verification from the returned map.
+
+Blocked / next steps
+
+Runtime rt-m2-materialization-own-slot remains at 237c51a, a staged-test successor; its own report explicitly says the new-form admission/own-slot implementation and matching normally generated item-ref artifact are unavailable. No actual pair run was attempted, no validator override, and no qualification claimed. No Runtime files, pin/release artifacts, Bundle2, integration checkout, git refs, installs, full suites, sockets, browsers or pushes were touched.
+
+After harness commit, publish the actual successor Agent source SHA from tl/agt-m2-materialization-review to design/runtime-coordination.md. Runtime should implement/review the source-bound join and authenticated own-slot authority against that successor, generate the official paired schema normally, and coordinate consumer pins/ACKs under their owners. Then run central actual acceptance, unrelated/retired/global-item occupancy, stale sibling replay, inverse/redo/restore/retry and all six opaque real-service requirements. The SDK inverse reconstruction path (including lazy legacy boundary reads) also needs that actual paired qualification. M2 remains held under PLAN's M1 gate.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-review/commit-msg <<'EOF'
+fix(timeline): preserve opaque materialization and verify inverse claims
+
+Use one schema-aware item remapper and one checked allocation join, retaining
+original source pins and captured destinations across replay and inverse.
+Reject ambiguous bindings, malformed item references and boolean identity
+confusion without changing the agreed carrier or allocation seeds.
+
+Reconstruct inverse acknowledgements with the existing command engine and
+accepted boundaries, including when a response omits its allocation map.
+Add direct opaque, replay, typed-birth and ACK regressions plus six positive
+real Runtime requirements held for the official generated pair.
+EOF
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-review/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-review/commit-msg.txt
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md <<'EOF'
+
+agt-m2-materialization-review FINAL source successor: branch tl/agt-m2-materialization-review, worktree /home/user/work/wt/agt-m2-materialization-review, base c65c50b8e9c77248c55a68ac159c9b2f517c34d8; NEW SOURCE SHA IS PENDING HARNESS COMMIT (worker cannot commit). Manager must append that new SHA after worker exit and use it for generation/qualification, not c65c50b8 or the M1 remapper-only branch. Source now uses exactly the approved 875a9aff context-aware codec/source-descriptor remap, one checked allocation join, JSON equality and canonical item refs. The inverse ACK issue above is resolved by reusing execute + AcceptedRecords with existing scoped history/bundle APIs, fetching target history regardless of returned map; no new contract or second inverse parser. Original claims, fixed D/J, original source pins and exact inverse/redo controls remain positive. Product net +387 versus candidate +397 (10 fewer); helper176 versus175 includes stronger binding/ref checks. Final focused615PASS/7deselect49.25s = original584 +31 new pure cases; six positive real opaque cases are integration-deselected pending actual Runtime/artifact pair. Scoped Ruff/diff checks PASS. Independent original-product RED18fails/5pass confirms concrete defects. Runtime237c51a still staged-only; no normal matching generated artifact, no actual qualification or overrides. Report with exact commands/limits: workers/agt-m2-materialization-review/report.txt. Both commit-message files ready. No Runtime/pin/Bundle2/full/install/socket/browser/integration mutation. All M2 integration remains HELD under PLAN.
+EOF" in /home/user/work/wt/agt-m2-materialization-review
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root = Path.cwd()
+for path in list(root.rglob('__pycache__')):
+    if path.is_dir() and not path.is_symlink() and path.resolve().is_relative_to(root):
+        shutil.rmtree(path)
+cache = root / '.pytest_cache'
+if cache.is_dir():
+    shutil.rmtree(cache)
+PY
+git diff --check; git status --short" in /home/user/work/wt/agt-m2-materialization-review
+ succeeded in 225ms:
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_materialization.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/test_materialization_map.py
+ M tests/sdk/test_timeline_sync.py
+ M tests/timeline/test_authoring_bundle.py
+?? tests/editing_conformance/test_commit_runtime_opaque_items.py
+
+codex
+Implemented the reviewed successor:
+
+- Applied the approved opaque remapper and removed duplicate logic.
+- Tightened allocation, reference, typed-birth and boolean/numeric checks.
+- Reused the command engine for complete inverse ACK verification.
+- Reduced product growth from **+397 to +387 lines**.
+
+Focused tests: **615 passed, 7 deselected**. Scoped Ruff and `git diff --check` passed. Six positive Runtime tests await the official generated pair; actual admission/own-slot qualification remains unverified.
+
+[Report with exact commands, findings and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-review/report.txt). Coordination and both commit-message files are ready. The harness must publish the successor SHA after committing.
+tokens used
+163,302
+Implemented the reviewed successor:
+
+- Applied the approved opaque remapper and removed duplicate logic.
+- Tightened allocation, reference, typed-birth and boolean/numeric checks.
+- Reused the command engine for complete inverse ACK verification.
+- Reduced product growth from **+397 to +387 lines**.
+
+Focused tests: **615 passed, 7 deselected**. Scoped Ruff and `git diff --check` passed. Six positive Runtime tests await the official generated pair; actual admission/own-slot qualification remains unverified.
+
+[Report with exact commands, findings and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-review/report.txt). Coordination and both commit-message files are ready. The harness must publish the successor SHA after committing.

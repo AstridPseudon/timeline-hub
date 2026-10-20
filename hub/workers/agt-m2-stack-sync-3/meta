@@ -1,0 +1,9 @@
+name=agt-m2-stack-sync-3
+repo=agent
+base=tl/agt-m2-stack-sync-2
+base_sha=2431ae1f
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-stack-sync-3
+started=2026-10-20T08:16:45Z

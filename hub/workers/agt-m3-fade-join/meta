@@ -1,0 +1,9 @@
+name=agt-m3-fade-join
+repo=agent
+base=tl/integration
+base_sha=6c5aab20
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-fade-join
+started=2026-10-20T06:52:19Z

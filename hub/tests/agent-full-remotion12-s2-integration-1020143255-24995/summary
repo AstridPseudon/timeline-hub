@@ -1,0 +1,64 @@
+test agent-full-remotion12-s2-integration-1020143255-24995: fail exit=1 in 3882s — full-remotion12-s2-integration on integration:agent (agent tree 236c3e57e0265c52b81ba8085de3193026176bff)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent-child-s2/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -n 3
+counts: 3 failed, 14696 passed, 452 skipped, 4 xfailed, 83 warnings, 565 subtests passed in 3879.09s (1:04:39) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-remotion12-s2-integration-1020143255-24995/log.txt ---
+        if not changed:
+            print("no change (the working copy already matches)")
+            return 3
+>       report = tl._check_core()
+                 ^^^^^^^^^^^^^^
+E       AttributeError: 'FakeCheckout' object has no attribute '_check_core'
+
+astrid/packs/timeline/cli.py:3298: AttributeError
+=============================== warnings summary ===============================
+tests/core/experiments/test_state.py::TestCrossProcessInit::test_two_experiments_exactly_one_initializes
+tests/core/experiments/test_state.py::TestCrossProcessInit::test_two_experiments_exactly_one_initializes
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+tests/core/experiments/test_state.py::TestCrossProcessCAS::test_concurrent_saves_at_same_base_exactly_one_wins
+  /usr/lib/python3.13/multiprocessing/popen_fork.py:73: DeprecationWarning: This process (pid=11083) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    self.pid = os.fork()
+
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020143255-24995/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+tests/packs/rendering/test_render_export_task_adapter.py: 57 warnings
+  /home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020143255-24995/tests/packs/rendering/test_render_export_task_adapter.py:51: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(runtime)
+
+tests/packs/rendering/test_timeline_filmstrip_execution.py::test_input_audio_rail_is_prominent_but_remains_timing_only
+  /home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020143255-24995/tests/packs/rendering/test_timeline_filmstrip_execution.py:345: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    pixels = list(image.getdata())
+
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+  /home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020143255-24995/tests/sdk/test_timeline_checkout.py:1573: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    assert set(image.convert("RGB").getdata()) == {colors[n]}
+
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[prepared-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[prepared-redo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[target-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[target-redo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[first-promotion-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[first-promotion-redo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[second-promotion-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[second-promotion-redo]
+  /home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020143255-24995/tests/sdk/test_timeline_checkout_restore_recovery.py:300: DeprecationWarning: This process (pid=10987) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    pid = os.fork()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/packs/timeline/test_cli_assets.py::test_edit_replace_asset_and_swap_asset_forward_to_the_sdk
+FAILED tests/packs/timeline/test_cli_voice_bindings.py::test_replace_insert_and_from_script_forward_existing_sdk_arguments
+FAILED tests/packs/timeline/test_cli_voice_bindings.py::test_repeated_gap_flags_and_script_gap_override_preserve_sdk_rules
+3 failed, 14696 passed, 452 skipped, 4 xfailed, 83 warnings, 565 subtests passed in 3879.09s (1:04:39)

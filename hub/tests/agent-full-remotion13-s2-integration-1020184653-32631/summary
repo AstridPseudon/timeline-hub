@@ -1,0 +1,64 @@
+test agent-full-remotion13-s2-integration-1020184653-32631: fail exit=1 in 5123s — full-remotion13-s2-integration on integration:agent (agent tree bf423cf5aeee9ca9081d22c4727e8f34a905ee45)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent-child-s2-c13/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent-child-s2-c13/bin/python -m pytest -q -n 3
+counts: 52 failed, 14760 passed, 452 skipped, 4 xfailed, 83 warnings, 565 subtests passed in 5118.19s (1:25:18) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-remotion13-s2-integration-1020184653-32631/log.txt ---
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[second-promotion-undo]
+tests/sdk/test_timeline_checkout_restore_recovery.py::test_process_exit_recovers_through_public_reload[second-promotion-redo]
+  /home/user/work/wt/.test-agent-full-remotion13-s2-integration-1020184653-32631/tests/sdk/test_timeline_checkout_restore_recovery.py:300: DeprecationWarning: This process (pid=27767) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    pid = os.fork()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[__init__.py]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[generated.py]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[materialize.py]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[theme.py]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[timeline.schema.json]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_trusted_schema_readiness_requires_complete_install[validate.py]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_remotion_runtime_uses_absolute_node_not_hostile_path
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_owned_waits_before_publish_and_reuse_without_probe
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[HOME-/different]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[LANG-]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[PATH-/other]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[TMPDIR-/other]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[ASTRID_REMOTION_VALIDATION_LAUNCH-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_context_or_foreign_launch_without_fallback[ASTRID_REMOTION_VALIDATION_ROLE-foreign]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[node]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[cli]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[schema]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[lock]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[package]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_rejects_changed_installed_content[added_package_file]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_validation_failure_never_publishes_ready_artifact_and_preserves_receipt
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_parent_owned_reference_survives_worker_and_renderer_filters
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[editable.pth]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[safe_finder.py]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/extension.so]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[native_dep/resources.json]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[sitecustomize.py]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_startup_import_and_optional_availability_invalidation[idna.py]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_missing_role_and_tampered_artifact_refuse_without_probe
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_explicitly_validates_startup_locale_transition
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_dependency_change_during_qualifying_import_refuses_publication
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_validation_acquisition_failure_retains_handle_and_blocks_replacement
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[delete]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_loaded_bytecode_change_refuses_without_fallback[replace]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_schema_import_archive_absence_to_presence_refuses_without_fallback
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_oversized_artifact_refuses_before_publication
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_registry_readiness_qualifies_actual_canonical_transport_projection
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shares_only_isolated_proof_preserving_six_registries
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_shared_proof_rejects_between_variants_and_before_publish[5]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[LANG-C]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[PATH-/different]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_separate_effective_contexts_have_fresh_owned_proofs[TMPDIR-/different]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_proofs_never_cross_launch_transactions
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_node_configuration_has_separate_proof
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_validation_changed_schema_configuration_is_not_reused
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_reuses_bytes_but_keeps_fences_and_fresh_consumers
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[same_size_restored_mtime-5]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[add-5]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[remove-5]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[replace-5]
+FAILED tests/packs/rendering/test_render_export_task_adapter.py::test_launch_digest_memo_rejects_changes_at_every_fence[chmod-5]
+FAILED tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+52 failed, 14760 passed, 452 skipped, 4 xfailed, 83 warnings, 565 subtests passed in 5118.19s (1:25:18)

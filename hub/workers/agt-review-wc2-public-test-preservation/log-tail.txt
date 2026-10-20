@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1035-1. agent-remotion-0010: the lock now equals your committed tl/agt-public10-finish:remotion/package-lock.json BYTE FOR BYTE (cmp OK). Every version and integrity entry was already identical; only the 8 libc metadata blocks differed. node_modules is unchanged (npm ls: timeline-composition@0.0.10). Rerun remotion-0010-nodes. The test stays as it is.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1036-2. vendor_lock.py, run unrestricted by me on tl/agt-public10-finish (ba633b20): "ok runtime.lock.json (matches producer manifest)", with --producer /home/user/work/wt/rt-m2-track-public-export at 6be97063, rc=0. The worktree I used is removed. Note: Claude workers may run the venv python (/home/user/work/venv-agent/bin/python ...). Only bare python/python3 is denied, so use the full venv path next time.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1037-3. Digests: understood. The move to Runtime b2a1d9fd (7486348f) is a separate coordinated pin move, later.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1038-4. Handoffs: 10 design/handoff-vw-m3-* files are now in $ORCH/design. Dispatch the D09 join and the mouth review.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1039-5. Visual contract: use EXACTLY what App's real native ADD output contains. If it really has A 8-18 and B 10-20 overlapping on a shared lane, then that overlap is legal App output and stays as vector 1; App confirms the spans through the hub (I'm asking them).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md:1040:   ALSO author vector 2: one explicitly labelled OVERHANG closure (child longer than its occurrence) so that clampToOccurrenceDuration is actually exercised. Its MAIN reference comes through Viewing's approved executable analog.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1041-   Final adoption SHA: ba633b20, the reviewed descendant of fc6c1f26, is accepted as the adoption head, pending the paired gate.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1042-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1043-## 04:59Z — orchestrator: Viewing exported 35 more handoff files (index: Viewing's managers/viewing/HANDOFF-EXPORTS.md; the files are design/handoff-vw-m3-*)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1044-Needs your domain review: audio, Viewing's original 11 vectors against your draft 11 (map, clock/curve prose, full fixtures + 2 tests). In particular, the original metadata value 350 vs your .35 is a UNIT difference. Settle which unit is canonical, with source evidence, and never silently rescale. 138 pass / 5 red are preserved.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1045-FYI: Viewing saved the FIRST real App-UI-rendered MP4 (3 byte-identical downloads, 1109353 B, ffprobe and decode OK). That is diagnostic only; the 4-case gate is still red.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1046-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1047-## 05:05Z — orchestrator: EXACT Viewing handoff files (all flat in $ORCH/design/)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1048-- handoff-vw-m3-d09-current-deletion-unit-ORCHREPORT.md
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1102-## 05:57Z — orchestrator DECISIONS (viewing-20261020T0554Z frame capture and theme)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1103-1. Capture fix APPROVED (test-only: close the Rendered-film dialog, wait for it to be removed, then seek and capture; 4 regressions red-before/green-after). Branch tl/vw-m3-native-frame-zero-triage 7989ee28: normal gated review in the owning repo.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1104-2. Default theme direction: ONE default theme. On main, App preview (black sidebands) and Agent export (#050814) already disagree, so there is no single main behaviour to keep. Rule: the default is the public Composition DEFAULT_THEME, the shared package and owner-released, as in the v0.0.7 decision. BOTH consumers pass the same resolved theme. Explicit film themes are always preserved.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1105-   Do not change one field blindly: viewing's vw-m3-default-theme-owner-proposal derives the smallest source-backed change, and Agent reviews it because Agent core paths are touched.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1106-   Any visible difference from main's export or preview goes into owner-film-differences.md. No broad browser rerun until this lands.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md-1107-
+
+codex
+The source census confirms the helper was genuinely public (`astrid.sdk.authoring_bundle` and lazy `astrid.sdk`), so the deletion is a deliberate public API removal under the owner’s whole-candidate-writer decision—not a dead-private-module cleanup. The key review issue is test preservation: the proposed digest tests are design-golden checks, while the requester tests are real, but no active test covers the still-public `approve_authoring_candidate` artifact or an approval-to-proposal replacement. I’m running the bounded mapped tests and retained render test now to separate “real replacement evidence” from the remaining adoption gap.
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider '"\\
+  tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_all_settled_command_fields \\
+  tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_attempt_and_original_target \\
+  tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes \\
+  'tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_artifact_mutation_refuses_without_history_or_head_changes' \\
+  tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation" in /home/user/work/wt/agt-review-wc2-public-test-preservation
+ succeeded in 1579ms:
+........................                                                 [100%]
+24 passed, 5 deselected in 0.79s
+
+exec
+/bin/bash -lc "rg -n -C 14 '06:59Z|whole-document fallback|whole-candidate|candidate.apply|approval binds' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md | sed -n '1,260p'; printf '\\n--- hashes and diff counts ---\\n'; git rev-parse HEAD; git rev-parse HEAD"'^{tree}; git diff --numstat tl/integration..HEAD; git diff --check tl/integration..HEAD' in /home/user/work/wt/agt-review-wc2-public-test-preservation
+ succeeded in 0ms:
+1168-
+1169-## 06:54Z — orchestrator: Composition 0.0.12 is READY. Adopt it as ONE coordinated App + Agent pair (viewing-20261020T0647Z)
+1170-Artifact: $ORCH/artifacts/banodoco-timeline-composition-0.0.12.tgz (58444 B, 77 files, sha256 0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3). Instructions: design/handoff-vw-m3-release12-consumer-instructions.md.
+1171-It contains: the trim/rate exports, DEFAULT_THEME = the full Agent export style (equal to Agent's constant), the root canvas fallback and the own-role lookup fix. Adopt 0.0.12 directly and skip 0.0.11.
+1172-Sequence: Runtime publishes runtime-current-tuple.md (after the route restore and the headless DENY). Then Agent does ONE pin unit: Runtime pin to the current tuple + Composition 0.0.12, with an equality test that Agent's theme constant equals 0.0.12 DEFAULT_THEME. App pins the same pair and updates its original default-theme test explicitly to the new implicit default. Then current-tuple paired qualification, then Viewing's same-case frame positive plus a planted negative.
+1173-Agent: build a 0.0.12 Remotion runtime the same way as agent-remotion-0010 (I can do it on request: escalate "build agent-remotion-0012").
+1174-
+1175-## 06:55Z — orchestrator: agent-remotion-0012 is READY
+1176-/home/user/work/runtimes/agent-remotion-0012 has Composition 0.0.12 (sha256 verified, offline install, only timeline-composition changed; DEFAULT_THEME visual.color.bg is #050814). Use the suite "agent remotion-0012-nodes" or tests/agent-remotion-0012.env.
+1177-npm dropped 8 libc metadata blocks again. Once your adoption branch commits its remotion/package-lock.json, tell me and I'll make the runtime lock byte-identical to it, as with 0010.
+1178-
+1179-## 06:56Z — orchestrator: HARD CAPACITY RULE now in MANAGER-COMMON.md (owner rule)
+1180-Keep 5-7 running workers on Codex, 5 on Claude, at ALL times. Count your workers before ending ANY turn and at least every 15 minutes, and dispatch to target. Delegate long reviews and integration checks to read-only review WORKERS; don't do them in-session. Only a blocker stated in STATUS.md excuses running below target. Utilisation has been 1-3 for hours in several areas.
+1181-
+1182:## 06:59Z — orchestrator DECISION: composition-revisions consumers (agent-20261020T0700Z): APPROVED as recommended
+1183-1. clip.set-element: a native op for the elementRef.revision change, with a same-identity guard, a recorded write and a guarded inverse. Build it in M2. The legacy config.app.elements / config.clips mirror handling moves into the compiler's derived projection, not into writes.
+1184:2. promote_approved_authoring_candidate and publish_authoring_candidate are DELETED as the whole-document fallback writer. Candidate producers emit EditCommand proposals in the D13/bundle #3 proposal shape; the requesting client commits them. Approval binds to the PROPOSAL digest instead of the candidate digest.
+1185:   No "candidate.apply": that would be the compatibility writer renamed.
+1186-   The other callers (sdk/timeline/store.py, sdk/remote.py, sdk/authoring_remote.py, packs/rendering/docs/scripts/timeline_document.py) go into the caller census, each migrated or deleted with a ledger row.
+1187-3. Until both land, the functions stay, with ledger rows marked held, and Runtime does NOT re-retire the route (Runtime is told).
+1188-
+1189-## 07:05Z — orchestrator: FRONT OF YOUR QUEUE: automatic placement contract (app-20261020T0657Z; App's design/app-automatic-placement-gap.md)
+1190-D03 removed automatic placement of generated assets, which is a user-visible loss on integration. Agent owns the minimal GUARDED auto-capture/policy, built from the existing birth/move/removal primitives. No new op invented by App, no new journal, coordinator or autonomous framework.
+1191-Order:
+1192-(1) completion anchor-after plus absent-anchor fallback, for exact parent/occurrence bindings, image AND video;
+1193-(2) then shared append/lane/start-frame-shift/pool, through canonical group migration.
+1194-Keep the DISTINCT defaults: completion image 5 s, completion video 5 s without a supplied duration, shared image+video hold 4 s. The exact completed variant stays selected, never the gallery primary or the latest.
+1195-Dispatch (1) NOW as a dedicated worker; it outranks other ordinary-writer items.
+1196-
+1197-## 2026-10-20T07:10:39Z — REMOTE MERGE REQUEST (hub-sync)
+1198-timeline/agent/tl/vw-m3-presenter-current-port 802669926 viewing CURRENT narrow approved presenter capability port802669926: five productfiles+93/-28,normalpackresource entry,23targetPASS including286unchangedhistoricalSSR/fullpublic10geometry/declarations. Resolves old751/8c lineageblock; no privatecrop/caller/statistics/schema/provider/pin changes. Review exactflatcurrentpatch/source and gateafterpreviousunit, notbroad09.
+1199-Branch tl/vw-m3-presenter-current-port is fetched locally (sha 802669926). Review the diff (`git -C /home/user/work/agent diff $(git -C /home/user/work/agent merge-base tl/integration tl/vw-m3-presenter-current-port)..tl/vw-m3-presenter-current-port`); if good, run `$ORCH/bin/request-merge vw-m3-presenter-current-port`. If not, write your reasons to the requester via design/ or an escalation.
+
+--- hashes and diff counts ---
+5e12f831b7e9fb51317eff8e1abc47c0d5caa0d5
+41a4e034376dac5a7c7b92866002a04aab7838fd
+0	50	astrid/core/timeline/authoring_bundle.py
+0	1	astrid/sdk/__init__.py
+2	5	astrid/sdk/authoring_bundle.py
+2	42	tests/timeline/test_authoring_bundle.py
+
+codex
+The bounded check passed: 24 selected cases passed (5 deselected), including the real Runtime acceptance/restart/retry/undo path, real mutation refusal/no-head-change path, digest vectors, and the retained single-generation render test. However, the evidence confirms the remaining gap rather than clearing it: the active path starts from a settled proposal and has no approval artifact, while `approve_authoring_candidate` still binds the old candidate digest. I’m recording HOLD with that exact dependency and the assertion-by-assertion mapping.
+2026-10-20T20:37:39.334098Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid hunk at line 40, 'the approval-specific assertions that were removed. In particular, the' is not a valid hunk header. Valid hunk headers: '*** Add File: {path}', '*** Delete File: {path}', '*** Update File: {path}'
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-retirement-review.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-retirement-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-retirement-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..688e89e12ad4df4c58c5bfb6c98c3f8b70bbe56e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-retirement-review.md
+@@ -0,0 +1,80 @@
++# Agent WC2 public/test-preservation review
++
++Decision: **HOLD**
++
++Reviewed source tree:
++
++- base `tl/integration`: `4095a3490bde80e20913d216bfd3032b0a41b610`
++- WC2 candidate: `5e12f831b7e9fb51317eff8e1abc47c0d5caa0d5`
++- candidate tree: `41a4e034376dac5a7c7b92866002a04aab7838fd`
++
++The owner’s 06:59 decision authorizes eventual deletion of the whole-document
++fallback writer and says approval must bind the proposal digest, with the
++requesting client committing the proposal. It also says the functions remain
++held until those replacements land. This review does not relitigate that
++decision.
++
++## Public-surface finding
++
++The worker’s “accidentally export-visible” label is not sufficient. On the
++review base, `promote_approved_authoring_candidate` is imported and listed in
++both `astrid/sdk/authoring_bundle.py` and the lazy `astrid.sdk` `_EXPORTS`
++map. `from astrid.sdk.authoring_bundle import ...` and
++`astrid.sdk.promote_approved_authoring_candidate` were therefore public SDK
++surfaces, regardless of the zero repository production-caller census. The
++owner’s planned writer retirement can authorize this public break, but only
++with the replacement/adoption evidence below.
++
++## Removed assertion review
++
++| Removed behavior | Evidence on the candidate | Review result |
++| --- | --- | --- |
++| A changed candidate is rejected against an unchanged approval and the writer is not called. | `test_settled_artifact_mutation_refuses_without_history_or_head_changes` is a real Runtime/requester test and refuses mutated command data, rationale, or proposal digest without changing commit history. The digest tests cover command/producer/target binding, but their module explicitly says they are design goldens, not Runtime acceptance. | **Partial mapping only.** This proves the analogous settled-proposal refusal, not approval-artifact binding. No active test mutates the admitted base target through the requester and proves the approval replacement rejects it. |
++| An unchanged approved artifact is accepted, returns the approval identifier, and invokes the writer once. | `test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes` is a real Runtime/requester positive and proves acceptance, exact retry after restart, one-shot consumption, and undo. | **Partial mapping only.** It starts from a settled proposal; it has no approval artifact or approval identifier, so it does not prove the planned approval-to-proposal replacement. |
++| Frozen render/restart/single-generation tail. | The renamed `test_frozen_render_restart_is_single_generation` retains the live execution, durable replay, lost-generation, render-count, and single-claim assertions. The deleted tail was only the old helper’s stub writer call. | **Valid removal.** No live generation or restart assertion was weakened. |
++
++The mapped requester tests are genuine and semantically useful; they are not
++merely name matches. They still do not provide a one-to-one replacement for
++the approval-specific assertions that were removed. In particular, the
++candidate branch leaves `approve_authoring_candidate` public and still
++candidate-bound, while no current test or production path exercises an
++approval bound to a proposal digest and then commits through the requester.
++
++## Smallest unmet dependency / required conversion
++
++Keep WC2 held until the planned approval replacement is implemented and
++qualified. Then convert the removed approval test in place (without restoring
++the whole-candidate writer) to use the real proposal/requester path and assert:
++
++1. a changed settled proposal or admitted base is refused with no head/history
++   change;
++2. the unchanged approved proposal is accepted once by the normal requester;
++3. exact retry after restart returns the original result, and the normal undo
++   path remains valid; and
++4. the approval/proposal digest binding is asserted directly, including the
++   preserved opaque command data.
++
++Until that adoption exists, the public export deletion and retirement of the
++approval-specific test behavior are not independently mergeable. Do not add a
++refusal shim, fallback writer, fabricated history, or weakened assertion.
++
++## Verification
++
++Independent bounded command (candidate tree):
++
++```text
++PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_all_settled_command_fields \
++  tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_attempt_and_original_target \
++  tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes \
++  'tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_artifact_mutation_refuses_without_history_or_head_changes' \
++  tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation
++```
++
++Result: **24 passed, 5 deselected in 0.79s**.
++
++Also ran `git diff --check tl/integration..HEAD`: passed. No full, browser,
++or broad suite was run. The candidate’s worker-reported 112 targeted plus 5
++producer-integration passes were not treated as approval evidence beyond this
++bounded independent check.
++
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-public-test-preservation/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-public-test-preservation/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-retirement-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-retirement-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..688e89e12ad4df4c58c5bfb6c98c3f8b70bbe56e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-retirement-review.md
+@@ -0,0 +1,80 @@
++# Agent WC2 public/test-preservation review
++
++Decision: **HOLD**
++
++Reviewed source tree:
++
++- base `tl/integration`: `4095a3490bde80e20913d216bfd3032b0a41b610`
++- WC2 candidate: `5e12f831b7e9fb51317eff8e1abc47c0d5caa0d5`
++- candidate tree: `41a4e034376dac5a7c7b92866002a04aab7838fd`
++
++The owner’s 06:59 decision authorizes eventual deletion of the whole-document
++fallback writer and says approval must bind the proposal digest, with the
++requesting client committing the proposal. It also says the functions remain
++held until those replacements land. This review does not relitigate that
++decision.
++
++## Public-surface finding
++
++The worker’s “accidentally export-visible” label is not sufficient. On the
++review base, `promote_approved_authoring_candidate` is imported and listed in
++both `astrid/sdk/authoring_bundle.py` and the lazy `astrid.sdk` `_EXPORTS`
++map. `from astrid.sdk.authoring_bundle import ...` and
++`astrid.sdk.promote_approved_authoring_candidate` were therefore public SDK
++surfaces, regardless of the zero repository production-caller census. The
++owner’s planned writer retirement can authorize this public break, but only
++with the replacement/adoption evidence below.
++
++## Removed assertion review
++
++| Removed behavior | Evidence on the candidate | Review result |
++| --- | --- | --- |
++| A changed candidate is rejected against an unchanged approval and the writer is not called. | `test_settled_artifact_mutation_refuses_without_history_or_head_changes` is a real Runtime/requester test and refuses mutated command data, rationale, or proposal digest without changing commit history. The digest tests cover command/producer/target binding, but their module explicitly says they are design goldens, not Runtime acceptance. | **Partial mapping only.** This proves the analogous settled-proposal refusal, not approval-artifact binding. No active test mutates the admitted base target through the requester and proves the approval replacement rejects it. |
++| An unchanged approved artifact is accepted, returns the approval identifier, and invokes the writer once. | `test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes` is a real Runtime/requester positive and proves acceptance, exact retry after restart, one-shot consumption, and undo. | **Partial mapping only.** It starts from a settled proposal; it has no approval artifact or approval identifier, so it does not prove the planned approval-to-proposal replacement. |
++| Frozen render/restart/single-generation tail. | The renamed `test_frozen_render_restart_is_single_generation` retains the live execution, durable replay, lost-generation, render-count, and single-claim assertions. The deleted tail was only the old helper’s stub writer call. | **Valid removal.** No live generation or restart assertion was weakened. |
++
++The mapped requester tests are genuine and semantically useful; they are not
++merely name matches. They still do not provide a one-to-one replacement for
++the approval-specific assertions that were removed. In particular, the
++candidate branch leaves `approve_authoring_candidate` public and still
++candidate-bound, while no current test or production path exercises an
++approval bound to a proposal digest and then commits through the requester.
++
++## Smallest unmet dependency / required conversion
++
++Keep WC2 held until the planned approval replacement is implemented and
++qualified. Then convert the removed approval test in place (without restoring
++the whole-candidate writer) to use the real proposal/requester path and assert:
++
++1. a changed settled proposal or admitted base is refused with no head/history
++   change;
++2. the unchanged approved proposal is accepted once by the normal requester;
++3. exact retry after restart returns the original result, and the normal undo
++   path remains valid; and
++4. the approval/proposal digest binding is asserted directly, including the
++   preserved opaque command data.
++
++Until that adoption exists, the public export deletion and retirement of the
++approval-specific test behavior are not independently mergeable. Do not add a
++refusal shim, fallback writer, fabricated history, or weakened assertion.
++
++## Verification
++
++Independent bounded command (candidate tree):
++
++```text
++PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_all_settled_command_fields \
++  tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_attempt_and_original_target \
++  tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes \
++  'tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_artifact_mutation_refuses_without_history_or_head_changes' \
++  tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation
++```
++
++Result: **24 passed, 5 deselected in 0.79s**.
++
++Also ran `git diff --check tl/integration..HEAD`: passed. No full, browser,
++or broad suite was run. The candidate’s worker-reported 112 targeted plus 5
++producer-integration passes were not treated as approval evidence beyond this
++bounded independent check.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-public-test-preservation/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-public-test-preservation/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-public-test-preservation/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-public-test-preservation/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c4982e7cc48fc6b63f5d387171bf1ce4c4ea3890
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-public-test-preservation/commit-msg
+@@ -0,0 +1,4 @@
++docs(review): hold WC2 public test retirement
++
++Record the public SDK surface and missing approval-to-proposal test mapping
++for the candidate promotion helper retirement.
+
+exec
+/bin/bash -lc "sed -n '1,300p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-retirement-review.md && printf '\\n--- markers ---\\n' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-public-test-preservation/{commit-msg,DONE} && printf '\\n--- worktree status ---\\n' && git status --short --branch" in /home/user/work/wt/agt-review-wc2-public-test-preservation
+ succeeded in 0ms:
+# Agent WC2 public/test-preservation review
+
+Decision: **HOLD**
+
+Reviewed source tree:
+
+- base `tl/integration`: `4095a3490bde80e20913d216bfd3032b0a41b610`
+- WC2 candidate: `5e12f831b7e9fb51317eff8e1abc47c0d5caa0d5`
+- candidate tree: `41a4e034376dac5a7c7b92866002a04aab7838fd`
+
+The owner’s 06:59 decision authorizes eventual deletion of the whole-document
+fallback writer and says approval must bind the proposal digest, with the
+requesting client committing the proposal. It also says the functions remain
+held until those replacements land. This review does not relitigate that
+decision.
+
+## Public-surface finding
+
+The worker’s “accidentally export-visible” label is not sufficient. On the
+review base, `promote_approved_authoring_candidate` is imported and listed in
+both `astrid/sdk/authoring_bundle.py` and the lazy `astrid.sdk` `_EXPORTS`
+map. `from astrid.sdk.authoring_bundle import ...` and
+`astrid.sdk.promote_approved_authoring_candidate` were therefore public SDK
+surfaces, regardless of the zero repository production-caller census. The
+owner’s planned writer retirement can authorize this public break, but only
+with the replacement/adoption evidence below.
+
+## Removed assertion review
+
+| Removed behavior | Evidence on the candidate | Review result |
+| --- | --- | --- |
+| A changed candidate is rejected against an unchanged approval and the writer is not called. | `test_settled_artifact_mutation_refuses_without_history_or_head_changes` is a real Runtime/requester test and refuses mutated command data, rationale, or proposal digest without changing commit history. The digest tests cover command/producer/target binding, but their module explicitly says they are design goldens, not Runtime acceptance. | **Partial mapping only.** This proves the analogous settled-proposal refusal, not approval-artifact binding. No active test mutates the admitted base target through the requester and proves the approval replacement rejects it. |
+| An unchanged approved artifact is accepted, returns the approval identifier, and invokes the writer once. | `test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes` is a real Runtime/requester positive and proves acceptance, exact retry after restart, one-shot consumption, and undo. | **Partial mapping only.** It starts from a settled proposal; it has no approval artifact or approval identifier, so it does not prove the planned approval-to-proposal replacement. |
+| Frozen render/restart/single-generation tail. | The renamed `test_frozen_render_restart_is_single_generation` retains the live execution, durable replay, lost-generation, render-count, and single-claim assertions. The deleted tail was only the old helper’s stub writer call. | **Valid removal.** No live generation or restart assertion was weakened. |
+
+The mapped requester tests are genuine and semantically useful; they are not
+merely name matches. They still do not provide a one-to-one replacement for
+the approval-specific assertions that were removed. In particular, the
+candidate branch leaves `approve_authoring_candidate` public and still
+candidate-bound, while no current test or production path exercises an
+approval bound to a proposal digest and then commits through the requester.
+
+## Smallest unmet dependency / required conversion
+
+Keep WC2 held until the planned approval replacement is implemented and
+qualified. Then convert the removed approval test in place (without restoring
+the whole-candidate writer) to use the real proposal/requester path and assert:
+
+1. a changed settled proposal or admitted base is refused with no head/history
+   change;
+2. the unchanged approved proposal is accepted once by the normal requester;
+3. exact retry after restart returns the original result, and the normal undo
+   path remains valid; and
+4. the approval/proposal digest binding is asserted directly, including the
+   preserved opaque command data.
+
+Until that adoption exists, the public export deletion and retirement of the
+approval-specific test behavior are not independently mergeable. Do not add a
+refusal shim, fallback writer, fabricated history, or weakened assertion.
+
+## Verification
+
+Independent bounded command (candidate tree):
+
+```text
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
+  tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_all_settled_command_fields \
+  tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_attempt_and_original_target \
+  tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes \
+  'tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_artifact_mutation_refuses_without_history_or_head_changes' \
+  tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation
+```
+
+Result: **24 passed, 5 deselected in 0.79s**.
+
+Also ran `git diff --check tl/integration..HEAD`: passed. No full, browser,
+or broad suite was run. The candidate’s worker-reported 112 targeted plus 5
+producer-integration passes were not treated as approval evidence beyond this
+bounded independent check.
+
+
+--- markers ---
+-rw-r--r-- 1 root root   0 Oct 20 20:37 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-public-test-preservation/DONE
+-rw-r--r-- 1 root root 170 Oct 20 20:37 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc2-public-test-preservation/commit-msg
+
+--- worktree status ---
+## tl/agt-review-wc2-public-test-preservation
+
+codex
+## Result: HOLD
+
+Reviewed candidate `5e12f831b7e9fb51317eff8e1abc47c0d5caa0d5` (tree `41a4e034376dac5a7c7b92866002a04aab7838fd`).
+
+Reason: the helper was genuinely public via both SDK surfaces. Existing requester tests are real, but do not replace approval-to-proposal binding or approval-specific assertions. `approve_authoring_candidate` remains candidate-bound and unqualified for the planned replacement.
+
+Report: [agent-wc2-retirement-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-retirement-review.md)
+
+Tests:
+
+- Targeted bounded pytest: **24 passed, 5 deselected**
+- `git diff --check`: passed
+- No full, browser, or broad suites run
+
+Wrote commit message and `DONE` marker. Recommended next step: qualify approval binding to proposal digest through the normal requester path, then convert the retired approval test accordingly.
+tokens used
+153,405
+## Result: HOLD
+
+Reviewed candidate `5e12f831b7e9fb51317eff8e1abc47c0d5caa0d5` (tree `41a4e034376dac5a7c7b92866002a04aab7838fd`).
+
+Reason: the helper was genuinely public via both SDK surfaces. Existing requester tests are real, but do not replace approval-to-proposal binding or approval-specific assertions. `approve_authoring_candidate` remains candidate-bound and unqualified for the planned replacement.
+
+Report: [agent-wc2-retirement-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-retirement-review.md)
+
+Tests:
+
+- Targeted bounded pytest: **24 passed, 5 deselected**
+- `git diff --check`: passed
+- No full, browser, or broad suites run
+
+Wrote commit message and `DONE` marker. Recommended next step: qualify approval binding to proposal digest through the normal requester path, then convert the retired approval test accordingly.

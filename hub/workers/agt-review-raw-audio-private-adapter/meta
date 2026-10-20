@@ -1,0 +1,9 @@
+name=agt-review-raw-audio-private-adapter
+repo=agent
+base=tl/agt-m2-raw-audio-trim-private-adapter
+base_sha=8f15518e
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-raw-audio-private-adapter
+started=2026-10-20T16:07:25Z

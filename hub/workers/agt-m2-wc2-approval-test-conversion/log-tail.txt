@@ -1,0 +1,400 @@
+   108	    return case.service.commit_timeline(case.target['project_id'], 'film', request,
+   109	        idempotency_key=key, publisher='requester',
+   110	        invocation_path=route_path(case.target['project_id'], 'film'), authorize=lambda: None)
+   111	
+   112	
+   113	def requester_session(case, path):
+   114	    """Use the real Runtime service behind the existing requester queue boundary."""
+   115	    from runtime_protocol.errors import RuntimeErrorBase
+   116	    from runtime_protocol.timeline_commit_port import route_path
+   117	
+   118	    identity = {'realm_id': case.service.realm['id'], 'actor_id': 'requester'}
+   119	
+   120	    class Client:
+   121	        def __init__(self):
+   122	            self._remote = SimpleNamespace(
+   123	                _transport=SimpleNamespace(_last_handshake=dict(identity)))
+   124	            self.timelines = SimpleNamespace(commit=self.commit)
+   125	
+   126	        def commit(self, project, timeline, body, *, idempotency_key):
+   127	            try:
+   128	                result = case.service.commit_timeline(
+   129	                    project, timeline, body, idempotency_key=idempotency_key,
+   130	                    publisher='requester', invocation_path=route_path(project, timeline),
+   131	                    authorize=lambda: None)
+   132	            except RuntimeErrorBase as error:
+   133	                return DomainResult.failure(
+   134	                    ErrorObject('conflict', str(error), dict(error.details)),
+   135	                    idempotency_key=idempotency_key)
+   136	            return DomainResult.success(
+   137	                result['data'], receipt=CommandReceipt.from_dict(result['receipt']),
+   138	                idempotency_key=idempotency_key)
+   139	
+   140	    outbox = Outbox(path)
+   141	    outbox.write({
+   142	        'scope': {**identity, 'project_id': case.target['project_id'], 'timeline_id': 'film'},
+   143	        'base': dict(case.target), 'pending': [], 'flight': None,
+   144	    })
+   145	    return TimelineSession(
+   146	        Client(), outbox, identity, case.target['project_id'], 'film')
+   147	
+   148	
+   149	def test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes(settled):
+   150	    from runtime_protocol.errors import RuntimeErrorBase
+   151	    from runtime_protocol.service import RuntimeService
+   152	
+   153	    case = settled
+   154	    original = body(case)
+   155	    forwarded = subprocess.run(['node', '-e',
+   156	        'process.stdout.write(JSON.stringify(JSON.parse(require("fs").readFileSync(0,"utf8"))))'],
+   157	        input=commit._json(original), text=True, capture_output=True, check=True, timeout=15)
+   158	    request = json.loads(forwarded.stdout)
+   159	    assert type(original['commands'][1]['args']['row']['opaque'][0]) is float
+   160	    assert type(request['commands'][1]['args']['row']['opaque'][0]) is int
+   161	    assert request['commands'][0]['args']['pin']['proposal_digest'] == case.proposal['proposal_digest']
+   162	    preview = submit(case, {**request, 'dry_run': True}, 'preview')
+   163	    assert preview['data']['status'] == 'preview' and preview['receipt'] is None
+   164	    accepted = submit(case, request, 'accept')
+   165	    assert accepted['data']['status'] == 'accepted'
+   166	    assert accepted['data']['canonical_document']['parent_revision']['payload']['config']['tracks'] == [
+   167	        request['commands'][1]['args']['row']]
+   168	    case.service.close()
+   169	    case.service = RuntimeService(case.root)
+   170	    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+   171	    assert submit(case, request, 'accept') == accepted
+   172	    with pytest.raises(RuntimeErrorBase) as error:
+   173	        submit(case, request, 'second-key')
+   174	    assert error.value.details['reason'] == 'producer_proposal_consumed'
+   175	    current = {'base_revision_id': accepted['data']['accepted_revision_id'],
+   176	               'base_publication_id': accepted['receipt']['receipt_id']}
+   177	    inverse = {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
+   178	               'args': {'publications': [accepted['receipt']['receipt_id']]}}
+   179	    undone = submit(case, {**request, **current, 'commands': [inverse]}, 'undo')
+   180	    assert undone['data']['canonical_document']['parent_revision']['payload']['config']['tracks'] == []
+   181	
+   182	
+   183	@pytest.mark.parametrize('mutation', ['number', 'boolean', 'reason', 'digest'])
+   184	def test_settled_artifact_mutation_refuses_without_history_or_head_changes(settled, mutation):
+   185	    from runtime_protocol.errors import RuntimeErrorBase
+   186	
+   187	    case = settled
+   188	    request = copy.deepcopy(body(case))
+   189	    if mutation in ('number', 'boolean'):
+   190	        request['commands'][1]['args']['row']['opaque'][0] = 2 if mutation == 'number' else True
+   191	    elif mutation == 'reason':
+   192	        request['rationale'] = 'Changed'
+   193	    else:
+   194	        request['commands'][0]['args']['pin']['proposal_digest'] = 'sha256:' + 'f' * 64
+   195	    before = case.service.list_timeline_commits(case.target['project_id'], 'film', authorize=lambda: None)
+   196	    with pytest.raises(RuntimeErrorBase) as error:
+   197	        submit(case, request, 'mutated')
+   198	    assert error.value.details['reason'] in {'producer_dependency_unavailable', 'producer_attempt_mismatch'}
+   199	    assert case.service.list_timeline_commits(
+   200	        case.target['project_id'], 'film', authorize=lambda: None) == before
+   201	
+   202	
+   203	@pytest.mark.parametrize('mutation', ['digest', 'target'])
+   204	def test_settled_proposal_queue_refuses_tampering_preserves_draft_then_accepts_fresh_request(
+   205	        settled, tmp_path, mutation):
+   206	    case = settled
+   207	    tampered = copy.deepcopy(case.proposal)
+   208	    if mutation == 'digest':
+   209	        tampered['proposal_digest'] = 'sha256:' + 'f' * 64
+   210	    else:
+   211	        tampered['admitted_target']['base_revision_id'] = 'sha256:' + 'e' * 64
+   212	
+   213	    before = case.service.list_timeline_commits(
+   214	        case.target['project_id'], 'film', authorize=lambda: None)
+   215	    rejected = requester_session(case, tmp_path / 'rejected.json')
+   216	    rejected.queue_proposal(tampered)
+   217	    with pytest.raises(CommitConflict) as error:
+   218	        rejected.flush(idempotency_key='refused-' + mutation)
+   219	    assert error.value.failure['details']['reason'] in {
+   220	        'producer_dependency_unavailable', 'producer_attempt_mismatch', 'stale_head'}
+   221	    assert case.service.list_timeline_commits(
+   222	        case.target['project_id'], 'film', authorize=lambda: None) == before
+   223	    draft = rejected.outbox.read()
+   224	    assert draft['pending'] == build_producer_batch(tampered)['commands']
+   225	    assert draft['flight']['key'] == 'refused-' + mutation
+   226	    assert draft['conflict']['details'] == error.value.failure['details']
+   227	
+   228	    fresh = requester_session(case, tmp_path / 'fresh.json')
+   229	    fresh.queue_proposal(copy.deepcopy(case.proposal))
+   230	    accepted = fresh.flush(idempotency_key='accepted-' + mutation)
+   231	    assert accepted['data']['status'] == 'accepted'
+   232	    assert accepted['data']['publisher'] == 'requester'
+   233	    assert accepted['data']['canonical_document']['parent_revision']['payload']['config']['tracks'] == [
+   234	        accepted['data']['commands'][1]['args']['row']]
+   235	    assert accepted['data']['commands'][1]['args']['row']['opaque'] == [1.0, -0.0, False]
+
+--- frozen test location ---
+456:def test_frozen_render_restart_is_single_generation(tmp_path):
+
+codex
+All targeted evidence is green: 7 Runtime-backed integration tests and 24 conformance/frozen-render tests, plus Ruff and diff checks. The patch is test-only (75 lines in the existing Runtime requester test); no approval DTO/API/store or legacy writer was restored. I’m recording the required mapping/report artifacts and then I’ll do a final status check.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-approval-conversion.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-approval-conversion.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-approval-conversion.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7b624271b4a862b0c75cdcb8a6b151b9e7d661ee
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-approval-conversion.md
+@@ -0,0 +1,47 @@
++# Agent WC2 approval assertion conversion
++
++Status: **ready for final independent review**.
++
++## Exact source and tree
++
++- Worker worktree: `/home/user/work/wt/agt-m2-wc2-approval-test-conversion`
++- Base commit: `5e12f831b7e9fb51317eff8e1abc47c0d5caa0d5`
++- Base tree: `41a4e034376dac5a7c7b92866002a04aab7838fd`
++- Working-tree change: `tests/sdk/test_timeline_producer_guard_runtime.py`, 75 added
++  lines; no product source, schema, DTO, API, store, fixture, or legacy writer
++  changes.
++- Working diff SHA-256: `e58b698b2fec39f6f100b19964f4b12a7956b7d8723c675e287dcb07606aa8bb`
++
++## One-to-one assertion mapping
++
++| Retired test/assertion | Current proof | Mapping |
++| --- | --- | --- |
++| `tests/timeline/test_authoring_bundle.py::test_approval_is_bound_to_candidate_and_base_revision`: changed approved artifact refuses and writer is not called | `tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_proposal_queue_refuses_tampering_preserves_draft_then_accepts_fresh_request[digest]` and `[target]` | The real settled proposal is queued through `TimelineSession.queue_proposal`; a tampered proposal digest or original admitted target is refused by the real Runtime requester path. Accepted history/head is byte-equal before and after refusal, and the queued commands plus in-flight key remain in the outbox draft. |
++| Same retired test: unchanged approved artifact is accepted once under the approval | Same test, after refusal, using a fresh requester outbox and an unchanged copy of the actual settled proposal | The normal requester commits it with `publisher == 'requester'`; the accepted canonical document contains the proposed opaque command row unchanged. Queueing the immutable verified proposal is the explicit approval intent; no snapshot promotion or candidate writer exists. |
++| `tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation`: live render, durable replay, lost acknowledgement, render count and single claim | `tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation` (existing cut test, line 456) | The candidate-promotion tail was removed, but all frozen render/restart/single-generation assertions remain in place and pass. |
++
++The existing `test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes`
++remains unchanged and supplies exact requester retry-after-Restart, one-shot
++consumption, and normal inverse/undo evidence. The existing direct mutation test
++also remains unchanged; this conversion adds the missing queue-boundary proof.
++
++## Verification
++
++Exact commands from the worker tree:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_producer_guard_runtime.py
++7 passed in 2.67s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_all_settled_command_fields tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_attempt_and_original_target
++24 passed in 0.61s
++
++/home/user/work/venv-agent/bin/ruff check --no-cache tests/sdk/test_timeline_producer_guard_runtime.py
++All checks passed!
++
++git diff --check
++passed
++```
++
++No full suite, browser, localhost, live-socket suite, or unrelated passing-case
++repeat was run. Final independent review is still required before merge.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..b86dcde0982fbda793af543451ad0cc3a66895c9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): preserve settled proposal approval assertions
++
++Route WC2 approval replacement coverage through the existing requester
++queue_proposal boundary, preserving refusal drafts and opaque proposal data.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..553904ed074b8a5ed85d1947e2b19d98ba21611a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/report.md
+@@ -0,0 +1,29 @@
++# WC2 approval test conversion report
++
++Implemented the held WC2 test-preservation conversion in
++`tests/sdk/test_timeline_producer_guard_runtime.py`.
++
++- Added a real Runtime-backed requester adapter solely in the existing
++  integration test, so the test calls `TimelineSession.queue_proposal` and
++  `flush` rather than simulating approval or restoring the retired writer.
++- Added one parameterized replacement covering tampered settled proposal digest
++  and tampered original admitted target. Both refuse with unchanged Runtime
++  history/head and a preserved outbox draft.
++- The unchanged actual settled proposal is then queued in a fresh requester
++  draft and accepted under `publisher='requester'`, with opaque command data
++  asserted unchanged.
++- Kept the existing frozen render/restart/single-generation test and the
++  existing exact retry/undo requester test unchanged.
++- No product code, schema, DTO, API, store, frozen fixture, or legacy writer
++  changed.
++
++Tests and checks:
++
++- `PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_producer_guard_runtime.py` — **7 passed**.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_is_single_generation tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_all_settled_command_fields tests/editing_conformance/test_settled_proposal_contract.py::test_digest_binds_attempt_and_original_target` — **24 passed**.
++- `/home/user/work/venv-agent/bin/ruff check --no-cache tests/sdk/test_timeline_producer_guard_runtime.py` — **passed**.
++- `git diff --check` — **passed**.
++
++No full suite was requested. Final independent review remains required before
++merge. The exact old-to-new mapping is in
++`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-approval-conversion.md`.
+diff --git a/tests/sdk/test_timeline_producer_guard_runtime.py b/tests/sdk/test_timeline_producer_guard_runtime.py
+index e0ca1987164ef3f0bfb17a243826d1ac804a9a07..aeeb2de79f7af75f298c5d33fecdfec6714f2b4e
+--- a/tests/sdk/test_timeline_producer_guard_runtime.py
++++ b/tests/sdk/test_timeline_producer_guard_runtime.py
+@@ -14,8 +14,12 @@
+ 
+ import pytest
+ 
++from astrid.core.receipts.contract import CommandReceipt
++from astrid.sdk.contracts import DomainResult, ErrorObject
+ from astrid.sdk.timeline import build_producer_batch, commit
+ from astrid.sdk.timeline.capture import capture_track_create
++from astrid.sdk.timeline.outbox import Outbox
++from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+ from tests.helpers.runtime import use_runtime
+ 
+ pytestmark = pytest.mark.integration
+@@ -106,6 +110,42 @@
+         invocation_path=route_path(case.target['project_id'], 'film'), authorize=lambda: None)
+ 
+ 
++def requester_session(case, path):
++    """Use the real Runtime service behind the existing requester queue boundary."""
++    from runtime_protocol.errors import RuntimeErrorBase
++    from runtime_protocol.timeline_commit_port import route_path
++
++    identity = {'realm_id': case.service.realm['id'], 'actor_id': 'requester'}
++
++    class Client:
++        def __init__(self):
++            self._remote = SimpleNamespace(
++                _transport=SimpleNamespace(_last_handshake=dict(identity)))
++            self.timelines = SimpleNamespace(commit=self.commit)
++
++        def commit(self, project, timeline, body, *, idempotency_key):
++            try:
++                result = case.service.commit_timeline(
++                    project, timeline, body, idempotency_key=idempotency_key,
++                    publisher='requester', invocation_path=route_path(project, timeline),
++                    authorize=lambda: None)
++            except RuntimeErrorBase as error:
++                return DomainResult.failure(
++                    ErrorObject('conflict', str(error), dict(error.details)),
++                    idempotency_key=idempotency_key)
++            return DomainResult.success(
++                result['data'], receipt=CommandReceipt.from_dict(result['receipt']),
++                idempotency_key=idempotency_key)
++
++    outbox = Outbox(path)
++    outbox.write({
++        'scope': {**identity, 'project_id': case.target['project_id'], 'timeline_id': 'film'},
++        'base': dict(case.target), 'pending': [], 'flight': None,
++    })
++    return TimelineSession(
++        Client(), outbox, identity, case.target['project_id'], 'film')
++
++
+ def test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes(settled):
+     from runtime_protocol.errors import RuntimeErrorBase
+     from runtime_protocol.service import RuntimeService
+@@ -158,3 +198,38 @@
+     assert error.value.details['reason'] in {'producer_dependency_unavailable', 'producer_attempt_mismatch'}
+     assert case.service.list_timeline_commits(
+         case.target['project_id'], 'film', authorize=lambda: None) == before
++
++
++@pytest.mark.parametrize('mutation', ['digest', 'target'])
++def test_settled_proposal_queue_refuses_tampering_preserves_draft_then_accepts_fresh_request(
++        settled, tmp_path, mutation):
++    case = settled
++    tampered = copy.deepcopy(case.proposal)
++    if mutation == 'digest':
++        tampered['proposal_digest'] = 'sha256:' + 'f' * 64
++    else:
++        tampered['admitted_target']['base_revision_id'] = 'sha256:' + 'e' * 64
++
++    before = case.service.list_timeline_commits(
++        case.target['project_id'], 'film', authorize=lambda: None)
++    rejected = requester_session(case, tmp_path / 'rejected.json')
++    rejected.queue_proposal(tampered)
++    with pytest.raises(CommitConflict) as error:
++        rejected.flush(idempotency_key='refused-' + mutation)
++    assert error.value.failure['details']['reason'] in {
++        'producer_dependency_unavailable', 'producer_attempt_mismatch', 'stale_head'}
++    assert case.service.list_timeline_commits(
++        case.target['project_id'], 'film', authorize=lambda: None) == before
++    draft = rejected.outbox.read()
++    assert draft['pending'] == build_producer_batch(tampered)['commands']
++    assert draft['flight']['key'] == 'refused-' + mutation
++    assert draft['conflict']['details'] == error.value.failure['details']
++
++    fresh = requester_session(case, tmp_path / 'fresh.json')
++    fresh.queue_proposal(copy.deepcopy(case.proposal))
++    accepted = fresh.flush(idempotency_key='accepted-' + mutation)
++    assert accepted['data']['status'] == 'accepted'
++    assert accepted['data']['publisher'] == 'requester'
++    assert accepted['data']['canonical_document']['parent_revision']['payload']['config']['tracks'] == [
++        accepted['data']['commands'][1]['args']['row']]
++    assert accepted['data']['commands'][1]['args']['row']['opaque'] == [1.0, -0.0, False]
+
+exec
+/bin/bash -lc "git status --short --branch; printf '\\n--- worktree artifacts ---\\n'; find . -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -print | head -20; printf '\\n--- required artifacts ---\\n'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-approval-conversion.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/{report.md,commit-msg,DONE}; printf '\\n--- diff check ---\\n'; git diff --check" in /home/user/work/wt/agt-m2-wc2-approval-test-conversion
+ succeeded in 441ms:
+## tl/agt-m2-wc2-approval-test-conversion
+ M tests/sdk/test_timeline_producer_guard_runtime.py
+
+--- worktree artifacts ---
+
+--- required artifacts ---
+-rw-r--r-- 1 root root 3652 Oct 20 20:56 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc2-approval-conversion.md
+-rw-r--r-- 1 root root    0 Oct 20 20:56 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/DONE
+-rw-r--r-- 1 root root  211 Oct 20 20:56 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/commit-msg
+-rw-r--r-- 1 root root 2103 Oct 20 20:56 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc2-approval-test-conversion/report.md
+
+--- diff check ---
+
+codex
+## Report
+
+Implemented WC2 approval-test preservation in [test_timeline_producer_guard_runtime.py](/home/user/work/wt/agt-m2-wc2-approval-test-conversion/tests/sdk/test_timeline_producer_guard_runtime.py).
+
+- Added real Runtime-backed `queue_proposal` coverage for tampered digest and original target.
+- Asserted refusal preserves history/head and durable draft.
+- Asserted unchanged settled proposal commits under requester authority with opaque data preserved.
+- Existing render/restart/single-generation and retry/undo tests remain intact.
+- No product, DTO, API, store, fixture, or legacy writer changes.
+
+Tests:
+
+- Runtime integration: **7 passed**
+- Frozen render + digest conformance: **24 passed**
+- Ruff: **passed**
+- `git diff --check`: **passed**
+
+No full suite run. Final independent review remains required.
+
+Artifacts written: conversion design, report, commit message, and `DONE`.
+tokens used
+167,823
+## Report
+
+Implemented WC2 approval-test preservation in [test_timeline_producer_guard_runtime.py](/home/user/work/wt/agt-m2-wc2-approval-test-conversion/tests/sdk/test_timeline_producer_guard_runtime.py).
+
+- Added real Runtime-backed `queue_proposal` coverage for tampered digest and original target.
+- Asserted refusal preserves history/head and durable draft.
+- Asserted unchanged settled proposal commits under requester authority with opaque data preserved.
+- Existing render/restart/single-generation and retry/undo tests remain intact.
+- No product, DTO, API, store, fixture, or legacy writer changes.
+
+Tests:
+
+- Runtime integration: **7 passed**
+- Frozen render + digest conformance: **24 passed**
+- Ruff: **passed**
+- `git diff --check`: **passed**
+
+No full suite run. Final independent review remains required.
+
+Artifacts written: conversion design, report, commit message, and `DONE`.

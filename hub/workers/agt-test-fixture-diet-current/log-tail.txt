@@ -1,0 +1,400 @@
+     path = Path(path)
+     fixture = json.loads(path.read_text(encoding='utf-8'))
++    if path.name in _SCALAR_VARIANTS:
++        _restore_scalar_fixture(path.parent, fixture, path.name)
+     if path.name == 'recipe_m2_placement_create_unplace.json':
+         for operation in fixture.values():
+             for record, command in zip(operation['records'], operation['commands'], strict=True):
+@@ -60,6 +70,45 @@
+     return fixture
+ 
+ 
++def _restore_scalar_fixture(directory: Path, fixture: dict[str, Any], name: str) -> None:
++    """Expand scalar inputs and expected after-patches from one hand-authored source.
++
++    The command and guard records remain independent capture goldens.  Only the
++    repeated timeline input and unchanged after-document are factored; applying
++    the small, hand-authored expected patch here keeps the full raw document
++    equality assertion in the consumer tests without using production code to
++    manufacture an oracle.
++    """
++    if name != _SCALAR_SOURCE:
++        source = json.loads((directory / _SCALAR_SOURCE).read_text(encoding='utf-8'))
++        fixture['bundle'] = copy.deepcopy(source['bundle'])
++        clip = fixture['bundle']['shots'][
++            'shot-placement-365d0383838d687737f499dfcdc96e880baaf8d4747ecf5f657993be89d8522b'
++        ]['internal_timeline']['clips'][0]
++        variant = _SCALAR_VARIANTS[name]
++        if variant == 'null':
++            clip['params'] = None
++        elif variant == 'object':
++            clip['params'] = {
++                'old': None,
++                'opaque': {'keep': [False, {}, '']},
++                'x': 1,
++                'y': None,
++            }
++    patch = fixture.pop('expected_patch', None)
++    if patch is not None:
++        expected = copy.deepcopy(fixture['bundle'])
++        for item in patch:
++            target = expected
++            for part in item['path'][:-1]:
++                target = target[part]
++            if item.get('delete'):
++                del target[item['path'][-1]]
++            else:
++                target[item['path'][-1]] = copy.deepcopy(item['value'])
++        fixture['after_bundle'] = expected
++
++
+ def _restore_record_fields(
+     fixture: Any,
+     record_paths: tuple[tuple[str | int, ...], ...],
+diff --git a/tests/editing_conformance/test_recipe_scalar_commands.py b/tests/editing_conformance/test_recipe_scalar_commands.py
+index 83041541a5ec57813b7aa96519de87e25493f388..41b2fcb1411f8c0ec1285c4a3626e24d09b7cfbe
+--- a/tests/editing_conformance/test_recipe_scalar_commands.py
++++ b/tests/editing_conformance/test_recipe_scalar_commands.py
+@@ -20,6 +20,7 @@
+ from astrid.sdk.timeline.commands import execute, operations
+ from astrid.sdk.timeline.rebase import replay
+ from tests.core import test_project_packs
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse, later
+ 
+ FIXTURES = Path(__file__).parent / 'fixtures'
+@@ -414,7 +415,7 @@
+ 
+ @pytest.mark.parametrize('name', ['track', 'params_object', 'params_null', 'params_absent', 'disjoint'])
+ def test_portable_scalar_capture_goldens(name):
+-    fixture = json.loads((FIXTURES / f'recipe_m2_scalar_{name}.json').read_text())
++    fixture = load_fixture(FIXTURES / f'recipe_m2_scalar_{name}.json')
+     plan = execute(fixture['bundle'], [fixture['command']])
+     assert plan.commands == [fixture['command']]
+     assert execute(fixture['bundle'], [fixture['request']]).commands == plan.commands
+@@ -436,8 +437,9 @@
+             raise AssertionError(fullname)
+ sys.meta_path.insert(0, Block())
+ from astrid.sdk.timeline.commands import execute
++from tests.editing_conformance.fixture_loader import load_fixture
+ for path in sys.argv[1:]:
+-    f = json.load(open(path))
++    f = load_fixture(path)
+     assert execute(f['bundle'], [f['request']]).commands == [f['command']]
+ '''
+     result = subprocess.run([sys.executable, '-c', script,
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-test-fixture-diet-current.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-test-fixture-diet-current.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c156f0600bd69ef659151bed33e9e4f2d84bc3e0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-test-fixture-diet-current.md
+@@ -0,0 +1,92 @@
++# Agent fixture diet: scalar M2 recipe family
++
++## Scope and decision
++
++Selected one family only: the five `recipe_m2_scalar_*` portable capture
++cases consumed by `tests/editing_conformance/test_recipe_scalar_commands.py`.
++The cases remain distinct: `track`, `params_absent`, `params_null`,
++`params_object`, and `disjoint`. No product, schema, Runtime pin, published
++schema floor, frozen M1 capture, or exported shared handoff fixture changed.
++
++The four clip-parameter JSON captures repeated the same large timeline input
++and nearly the same full after-document. The absent-params capture remains the
++single shared hand-authored input source. The other three retain their full
++independent command/request/read/expectation goldens and now carry only an
++independent expected patch. `fixture_loader.py` expands that patch into a full
++expected document by copying the input and applying literal path assignments;
++it never calls production capture, execute, compiler, or capture-provider code.
++The object case records deletion of `params.old` explicitly, preserving the
++absent-vs-null distinction.
++
++## Exact paths and physical size
++
++Changed paths:
++
++- `tests/editing_conformance/fixture_loader.py`
++- `tests/editing_conformance/test_recipe_scalar_commands.py`
++- `tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json`
++- `tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json`
++- `tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json`
++- `tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json`
++
++`tests/editing_conformance/fixtures/recipe_m2_scalar_track.json` was not
++changed. No fixture path was deleted. Removed JSON data is the repeated
++`after_bundle` from all four changed files, and the repeated `bundle` from the
++null/object/disjoint files; the loader reconstructs the same complete values.
++
++| case | before bytes | after bytes | before lines | after lines |
++|---|---:|---:|---:|---:|
++| params_absent | 10,763 | 6,667 | 1 | 1 |
++| params_null | 10,805 | 2,447 | 1 | 1 |
++| params_object | 10,730 | 2,724 | 1 | 1 |
++| disjoint | 18,806 | 10,339 | 1 | 1 |
++| track (unchanged) | 2,606 | 2,606 | 1 | 1 |
++| **total** | **53,710** | **24,783** | **5** | **5** |
++
++Net fixture reduction: 28,927 bytes (53.9%). The selected consumer test grew
++from 448 to 450 physical lines; the shared loader grew from 78 to 127 lines.
++
++## Equivalence and tests
++
++Before editing, the selected consumer baseline passed:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_fixture_loader.py
++75 passed in 11.49s
++```
++
++After editing, the same selected family and portable subprocess parity lane
++passed:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_fixture_loader.py
++75 passed in 12.76s
++```
++
++An independent comparison loaded each compact fixture through the new loader
++and compared it to the pre-edit `HEAD` JSON for all five cases:
++
++```text
++params_absent expanded-equivalent
++params_null expanded-equivalent
++params_object expanded-equivalent
++disjoint expanded-equivalent
++track expanded-equivalent
++all 5 scalar expanded fixtures exactly match pre-edit JSON
++```
++
++Additional checks:
++
++```text
++ruff check tests/editing_conformance/fixture_loader.py tests/editing_conformance/test_recipe_scalar_commands.py
++All checks passed!
++
++pyright tests/editing_conformance/fixture_loader.py
++0 errors, 0 warnings, 0 informations
++
++git diff --check
++pass
++```
++
++No full or localhost suite was requested. No remaining uncertainty is known
++within this selected fixture family.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..da2ea1ea2e5c4cc5d7a7eb54b346696db0fb8c71
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): compact scalar recipe fixtures
++
++Factor the shared scalar recipe input and independent expected patches while
++preserving all five portable capture cases and full expanded-document checks.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7d84a701115aed89d77bd6cfd92b4c6276453c9d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/notes/report.md
+@@ -0,0 +1,21 @@
++# agt-test-fixture-diet-current
++
++- Scope: one scalar M2 recipe fixture family; no product changes.
++- Cases retained: `track`, `params_absent`, `params_null`, `params_object`,
++  `disjoint` (5 total).
++- Changed paths: `tests/editing_conformance/fixture_loader.py`,
++  `tests/editing_conformance/test_recipe_scalar_commands.py`, and the four
++  clip scalar JSON fixtures (`params_absent`, `params_null`, `params_object`,
++  `disjoint`).
++- Deleted paths: none. Deleted duplicated JSON fields: four `after_bundle`
++  values and three repeated `bundle` values; exact expanded documents remain
++  asserted.
++- Physical fixture bytes: 53,710 -> 24,783 (28,927 saved, 53.9%); all five
++  files remain one physical line. `recipe_m2_scalar_track.json` is byte-exact.
++- Baseline: targeted scalar + loader tests, 75 passed in 11.49s.
++- Final: same command including portable subprocess parity, 75 passed in
++  12.76s.
++- Equivalence: loader-expanded current fixtures exactly equal all five pre-edit
++  `HEAD` JSON fixtures.
++- Additional: Ruff passed, Pyright passed, `git diff --check` passed.
++- Blocked: nothing known. Full/localhost suites intentionally not run per brief.
+diff --git a/tests/editing_conformance/fixture_loader.py b/tests/editing_conformance/fixture_loader.py
+index eb0d9433be0533419f57d06efa2b62e0f0ddf6b1..aa374f230a44db7ed2fd0dd073883e57e5c9df5f
+--- a/tests/editing_conformance/fixture_loader.py
++++ b/tests/editing_conformance/fixture_loader.py
+@@ -29,11 +29,21 @@
+     ),
+ }
+ 
++_SCALAR_SOURCE = 'recipe_m2_scalar_params_absent.json'
++_SCALAR_VARIANTS = {
++    'recipe_m2_scalar_params_absent.json': 'absent',
++    'recipe_m2_scalar_params_null.json': 'null',
++    'recipe_m2_scalar_params_object.json': 'object',
++    'recipe_m2_scalar_disjoint.json': 'object',
++}
++
+ 
+ def load_fixture(path: str | Path) -> Any:
+     """Load a compact fixture and restore only its known factored values."""
+     path = Path(path)
+     fixture = json.loads(path.read_text(encoding='utf-8'))
++    if path.name in _SCALAR_VARIANTS:
++        _restore_scalar_fixture(path.parent, fixture, path.name)
+     if path.name == 'recipe_m2_placement_create_unplace.json':
+         for operation in fixture.values():
+             for record, command in zip(operation['records'], operation['commands'], strict=True):
+@@ -60,6 +70,45 @@
+     return fixture
+ 
+ 
++def _restore_scalar_fixture(directory: Path, fixture: dict[str, Any], name: str) -> None:
++    """Expand scalar inputs and expected after-patches from one hand-authored source.
++
++    The command and guard records remain independent capture goldens.  Only the
++    repeated timeline input and unchanged after-document are factored; applying
++    the small, hand-authored expected patch here keeps the full raw document
++    equality assertion in the consumer tests without using production code to
++    manufacture an oracle.
++    """
++    if name != _SCALAR_SOURCE:
++        source = json.loads((directory / _SCALAR_SOURCE).read_text(encoding='utf-8'))
++        fixture['bundle'] = copy.deepcopy(source['bundle'])
++        clip = fixture['bundle']['shots'][
++            'shot-placement-365d0383838d687737f499dfcdc96e880baaf8d4747ecf5f657993be89d8522b'
++        ]['internal_timeline']['clips'][0]
++        variant = _SCALAR_VARIANTS[name]
++        if variant == 'null':
++            clip['params'] = None
++        elif variant == 'object':
++            clip['params'] = {
++                'old': None,
++                'opaque': {'keep': [False, {}, '']},
++                'x': 1,
++                'y': None,
++            }
++    patch = fixture.pop('expected_patch', None)
++    if patch is not None:
++        expected = copy.deepcopy(fixture['bundle'])
++        for item in patch:
++            target = expected
++            for part in item['path'][:-1]:
++                target = target[part]
++            if item.get('delete'):
++                del target[item['path'][-1]]
++            else:
++                target[item['path'][-1]] = copy.deepcopy(item['value'])
++        fixture['after_bundle'] = expected
++
++
+ def _restore_record_fields(
+     fixture: Any,
+     record_paths: tuple[tuple[str | int, ...], ...],
+diff --git a/tests/editing_conformance/test_recipe_scalar_commands.py b/tests/editing_conformance/test_recipe_scalar_commands.py
+index 83041541a5ec57813b7aa96519de87e25493f388..41b2fcb1411f8c0ec1285c4a3626e24d09b7cfbe
+--- a/tests/editing_conformance/test_recipe_scalar_commands.py
++++ b/tests/editing_conformance/test_recipe_scalar_commands.py
+@@ -20,6 +20,7 @@
+ from astrid.sdk.timeline.commands import execute, operations
+ from astrid.sdk.timeline.rebase import replay
+ from tests.core import test_project_packs
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse, later
+ 
+ FIXTURES = Path(__file__).parent / 'fixtures'
+@@ -414,7 +415,7 @@
+ 
+ @pytest.mark.parametrize('name', ['track', 'params_object', 'params_null', 'params_absent', 'disjoint'])
+ def test_portable_scalar_capture_goldens(name):
+-    fixture = json.loads((FIXTURES / f'recipe_m2_scalar_{name}.json').read_text())
++    fixture = load_fixture(FIXTURES / f'recipe_m2_scalar_{name}.json')
+     plan = execute(fixture['bundle'], [fixture['command']])
+     assert plan.commands == [fixture['command']]
+     assert execute(fixture['bundle'], [fixture['request']]).commands == plan.commands
+@@ -436,8 +437,9 @@
+             raise AssertionError(fullname)
+ sys.meta_path.insert(0, Block())
+ from astrid.sdk.timeline.commands import execute
++from tests.editing_conformance.fixture_loader import load_fixture
+ for path in sys.argv[1:]:
+-    f = json.load(open(path))
++    f = load_fixture(path)
+     assert execute(f['bundle'], [f['request']]).commands == [f['command']]
+ '''
+     result = subprocess.run([sys.executable, '-c', script,
+
+exec
+/bin/bash -lc "git status --short --untracked-files=all; printf '\\n--- worker artifacts ---\\n'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-test-fixture-diet-current.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/DONE; printf '\\n--- final diff check ---\\n'; git diff --check" in /home/user/work/wt/agt-test-fixture-diet-current
+ succeeded in 753ms:
+ M tests/editing_conformance/fixture_loader.py
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+
+--- worker artifacts ---
+-rw-r--r-- 1 root root 3759 Oct 20 13:47 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-test-fixture-diet-current.md
+-rw-r--r-- 1 root root    0 Oct 20 13:47 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/DONE
+-rw-r--r-- 1 root root  203 Oct 20 13:47 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/commit-msg
+-rw-r--r-- 1 root root 1152 Oct 20 13:47 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/notes/report.md
+
+--- final diff check ---
+
+codex
+Implemented scalar M2 fixture diet.
+
+- Factored shared input and independent expected patches across four scalar JSON fixtures.
+- Preserved all 5 cases, command/guard goldens, full expanded-document equality, and portable parity.
+- Reduced fixture bytes: 53,710 → 24,783 (53.9%).
+- No product/schema/public fixture paths changed.
+
+Tests:
+
+```text
+pytest ...test_recipe_scalar_commands.py ...test_fixture_loader.py
+75 passed
+ruff: passed
+pyright: 0 errors
+git diff --check: passed
+```
+
+Reports written:
+
+- [design report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-test-fixture-diet-current.md)
+- [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/notes/report.md)
+
+Commit message and `DONE` marker created.
+tokens used
+181,764
+Implemented scalar M2 fixture diet.
+
+- Factored shared input and independent expected patches across four scalar JSON fixtures.
+- Preserved all 5 cases, command/guard goldens, full expanded-document equality, and portable parity.
+- Reduced fixture bytes: 53,710 → 24,783 (53.9%).
+- No product/schema/public fixture paths changed.
+
+Tests:
+
+```text
+pytest ...test_recipe_scalar_commands.py ...test_fixture_loader.py
+75 passed
+ruff: passed
+pyright: 0 errors
+git diff --check: passed
+```
+
+Reports written:
+
+- [design report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-test-fixture-diet-current.md)
+- [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-test-fixture-diet-current/notes/report.md)
+
+Commit message and `DONE` marker created.

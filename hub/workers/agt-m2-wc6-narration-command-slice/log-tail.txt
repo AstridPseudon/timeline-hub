@@ -1,0 +1,400 @@
++  sandbox-blocked from binding a socket; the central named lane is the live
++  evidence.
+diff --git a/astrid/sdk/timeline/document_diff.py b/astrid/sdk/timeline/document_diff.py
+index 1d5f735a962fa6de5b4776b284e801cefc2c0112..12af6f76686d1dc9a8c20b094abf406983b4dc65
+--- a/astrid/sdk/timeline/document_diff.py
++++ b/astrid/sdk/timeline/document_diff.py
+@@ -312,13 +312,6 @@
+                            f"candidate.shots[{shot_id!r}].internal_timeline.clips")
+         if list(before_rows) != list(pinned_rows) or list(before_rows) != list(after_rows):
+             raise DocumentDiffError(f"{owner} clip membership/order is held by the document view")
+-        for clip_id, before in before_rows.items():
+-            _check_clip_baseline(before, pinned_rows[clip_id], owner=owner, clip_id=clip_id)
+-            after = after_rows[clip_id]
+-            _check_clip_shape(before, after, owner=owner, clip_id=clip_id)
+-            working, emitted = _emit_clip_commands(working, owner, before, after)
+-            commands.extend(emitted)
+-
+         media_changes = _same_alias_changes(
+             canonical_shots[shot_id]["internal_timeline"], shot["internal_timeline"], owner=owner
+         )
+@@ -353,6 +346,12 @@
+                 ) from exc
+             commands.append(command)
+             working = result.bundle
++        for clip_id, before in before_rows.items():
++            _check_clip_baseline(before, pinned_rows[clip_id], owner=owner, clip_id=clip_id)
++            after = after_rows[clip_id]
++            _check_clip_shape(before, after, owner=owner, clip_id=clip_id)
++            working, emitted = _emit_clip_commands(working, owner, before, after)
++            commands.extend(emitted)
+         _require_explicit_rows(
+             shot["internal_timeline"].get("clips", []),
+             working["shots"][shot_id]["internal_timeline"].get("clips", []),
+diff --git a/tests/timeline/test_authoring_media.py b/tests/timeline/test_authoring_media.py
+index 96ee7cd74c70f4a1a8360be744157f8be200bb55..9493966974fec34ad5c88f43a4fea16177c0ff7f
+--- a/tests/timeline/test_authoring_media.py
++++ b/tests/timeline/test_authoring_media.py
+@@ -600,7 +600,16 @@
+     run_script('checkout', '--project', project, '--timeline', 'film', '--file', str(document))
+     checkout = json.loads(document.read_text())
+     first_id = first_shot['shot_id']
+-    checkout['shots'][first_id]['internal_timeline']['registry']['assets']['picture-1']['local_path'] = new_path.name
++    checkout_shot = checkout['shots'][first_id]
++    checkout_timeline = checkout_shot['internal_timeline']
++    checkout_clip = next(row for row in checkout_timeline['clips'] if row['id'] == 'clip-1')
++    original_narration = copy.deepcopy(checkout_shot['payload'].get('text_bindings'))
++    original_metadata = copy.deepcopy(checkout_shot['payload'].get('metadata'))
++    original_source_window = {
++        key: checkout_clip.get(key) for key in ('from', 'to', 'source_window')
++    }
++    checkout_clip.update(at=0.125, hold=0.75)
++    checkout_timeline['registry']['assets']['picture-1']['local_path'] = new_path.name
+     document.write_text(json.dumps(checkout))
+ 
+     base_bundle = fetch_bundle(project, 'film', revision_id='wc6-baseline', client=client)
+@@ -613,13 +622,19 @@
+     publication_receipt = json.loads(publication_file.read_text())
+     publication = publication_receipt['publication']
+     assert publication['data']['status'] == 'accepted'
+-    assert publication['data']['commands'][0]['op'] == 'occurrence.swap-media'
++    assert [command['op'] for command in publication['data']['commands']] == [
++        'occurrence.swap-media', 'clip.move', 'clip.set',
++    ]
+     published_document = publication['data']['canonical_document']
+     new_digest = 'sha256:' + hashlib.sha256(new_path.read_bytes()).hexdigest()
+     published_internal = next(
+         row for row in published_document['internal_timeline_revisions']
+         if row['revision_id'] == published_document['shot_revisions'][0]['internal_timeline_revision_id']
+     )
++    published_clip = next(row for row in published_internal['payload']['clips'] if row['id'] == 'clip-1')
++    assert published_clip['at'] == 0.125
++    assert published_clip['hold'] == 0.75
++    assert {key: published_clip.get(key) for key in ('from', 'to', 'source_window')} == original_source_window
+     published_entry = published_internal['payload']['registry']['assets']['picture-1']
+     assert published_entry['media_id'] == new_digest
+     assert list(published_internal['payload']['registry']['assets']) == original_alias_order
+@@ -629,12 +644,15 @@
+     assert published_shot['payload']['items'][0]['media_id'] == new_digest
+     assert published_shot['payload']['assets'][0]['source']['media_id'] == new_digest
+     assert published_shot['payload']['opaque_namespace']['media'] == old_media['object_id']
++    assert published_shot['payload']['text_bindings'] == original_narration
++    assert published_shot['payload']['metadata'] == original_metadata
+     second_shot = next(row for row in published_document['shot_revisions'] if row['shot_id'] == 'shot-2')
+     baseline_second = next(row for row in baseline['shot_revisions'] if row['shot_id'] == 'shot-2')
+     assert second_shot == baseline_second
+-    record = publication['data']['commands'][0]
+-    assert record['args']['old_media']['object_id'] == old_media['object_id']
+-    assert record['args']['media']['object_id'] == new_digest
++    records = publication['data']['commands']
++    media_record = next(record for record in records if record['op'] == 'occurrence.swap-media')
++    assert media_record['args']['old_media']['object_id'] == old_media['object_id']
++    assert media_record['args']['media']['object_id'] == new_digest
+     history = client.timelines.history(project, 'film', limit=100).data
+     assert any(row['receipt']['receipt_id'] == publication['receipt']['receipt_id'] for row in history['items'])
+ 
+@@ -744,14 +762,21 @@
+     # Re-read the exact Runtime-verified inputs after restart; this preserves
+     # the F1 media guard while replaying the unchanged command record.
+     redo_verified_media = [
+-        transport.get_project_verified_media(project, record['args'][key])
++        transport.get_project_verified_media(project, media_record['args'][key])
+         for key in ('old_media', 'media')
+     ]
+     redone = redo_session.commit_many(
+-        [record], idempotency_key='wc6-aba-rebind', via='python',
++        records, idempotency_key='wc6-aba-rebind', via='python',
+         verified_media=redo_verified_media,
+     )
+-    assert redone['data']['canonical_document']['shot_revisions'][0]['payload']['items'][0]['media_id'] == new_digest
++    redone_document = redone['data']['canonical_document']
++    assert redone_document['shot_revisions'][0]['payload']['items'][0]['media_id'] == new_digest
++    redone_internal = next(
++        row for row in redone_document['internal_timeline_revisions']
++        if row['revision_id'] == redone_document['shot_revisions'][0]['internal_timeline_revision_id']
++    )
++    redone_clip = next(row for row in redone_internal['payload']['clips'] if row['id'] == 'clip-1')
++    assert (redone_clip['at'], redone_clip['hold']) == (0.125, 0.75)
+     aba_before = client2.timelines.history(project, 'film', limit=100).data
+     with pytest.raises(CommitConflict) as conflict:
+         redo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-aba-undo')
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..0925e18698cde7e92fc79ef38f708468ff3f1499
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/commit-msg
+@@ -0,0 +1,6 @@
++fix(timeline): preserve timing edits with media rebind
++
++Capture the existing native same-alias media swap before clip timing commands
++in the detached document view, allowing one file edit to retain media,
++narration, metadata, opaque fields, and source windows. Extend the exact
++ordinary014 HTTP proof through the timing batch and inverse/redo lifecycle.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..0925e18698cde7e92fc79ef38f708468ff3f1499
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/commit-msg.txt
+@@ -0,0 +1,6 @@
++fix(timeline): preserve timing edits with media rebind
++
++Capture the existing native same-alias media swap before clip timing commands
++in the detached document view, allowing one file edit to retain media,
++narration, metadata, opaque fields, and source windows. Extend the exact
++ordinary014 HTTP proof through the timing batch and inverse/redo lifecycle.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..22d58934c36e3f5b7be6187295ce4389ff070997
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/notes/report.md
+@@ -0,0 +1,9 @@
++# Shared handoff
++
++The WC6 document consumer now proves one bounded detached-file edit through
++the existing native command batch: same-alias media swap, frame-aligned
++`clip.move`, and `clip.set` hold. The exact ordinary014/a0 provider HTTP
++proof passes through reload, dropped-ACK inverse retry, redo, and ABA guard.
++Narration, metadata, source windows, opaque data, ordering, and unrelated
++shot data remain intact. The SDK whole-candidate publication positive was not
++claimed or changed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..079d3c2769c49f74c3893916c3dc05620366cbde
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/report.md
+@@ -0,0 +1,36 @@
++# WC6 narration/timing document-view slice
++
++## What changed
++
++- Kept the detached `timeline_document.py` consumer on the native
++  `document_diff_to_commands` / `TimelineSession.commit_many` path; the SDK
++  `publish_authoring_candidate` WC2 positive remains untouched.
++- Ordered the existing same-alias media swap before existing `clip.move` and
++  `clip.set` timing capture within one occurrence. This preserves the native
++  literal timing intent required by the timing commands without making the
++  media command consume generated timing-intent fields.
++- Extended the exact current014 proof with a 24-fps-aligned file edit that
++  changes clip start/hold alongside media replacement, and asserts narration,
++  metadata, source-window fields, opaque fields, alias order, unrelated shot
++  data, reload, lost-ACK undo/retry, redo, and A-to-B-to-A refusal.
++
++## Evidence
++
++- `ruff check astrid/sdk/timeline/document_diff.py tests/timeline/test_authoring_media.py` — passed.
++- `git diff --check` — passed.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/timeline/test_authoring_feedback.py tests/timeline/test_authoring_media.py -m 'not integration' -k 'not real_runtime'` — 88 passed, 2 deselected.
++- Central `native-script-current-integration` named lane for
++  `tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba` — 1 passed in 9.11s, using exact Runtime `a0dca169…` and generated014 provider.
++
++## Decisions and limits
++
++- The first central attempt used `0.1` seconds and correctly exposed the
++  existing frame-quantization contract; the proof now uses `0.125` seconds at
++  24 fps rather than weakening round-trip semantics.
++- The second central attempt exposed the combined media/timing ordering gap;
++  the minimal ordering fix was made. No new operation/schema, whole-parent
++  replacement, generic diff engine, duration inference, skip/xfail, or
++  legacy SDK-positive rewrite was added.
++- No full suite was run. The direct worker attempt at the live HTTP test was
++  sandbox-blocked from binding a socket; the central named lane is the live
++  evidence.
+diff --git a/astrid/sdk/timeline/document_diff.py b/astrid/sdk/timeline/document_diff.py
+index 1d5f735a962fa6de5b4776b284e801cefc2c0112..12af6f76686d1dc9a8c20b094abf406983b4dc65
+--- a/astrid/sdk/timeline/document_diff.py
++++ b/astrid/sdk/timeline/document_diff.py
+@@ -312,13 +312,6 @@
+                            f"candidate.shots[{shot_id!r}].internal_timeline.clips")
+         if list(before_rows) != list(pinned_rows) or list(before_rows) != list(after_rows):
+             raise DocumentDiffError(f"{owner} clip membership/order is held by the document view")
+-        for clip_id, before in before_rows.items():
+-            _check_clip_baseline(before, pinned_rows[clip_id], owner=owner, clip_id=clip_id)
+-            after = after_rows[clip_id]
+-            _check_clip_shape(before, after, owner=owner, clip_id=clip_id)
+-            working, emitted = _emit_clip_commands(working, owner, before, after)
+-            commands.extend(emitted)
+-
+         media_changes = _same_alias_changes(
+             canonical_shots[shot_id]["internal_timeline"], shot["internal_timeline"], owner=owner
+         )
+@@ -353,6 +346,12 @@
+                 ) from exc
+             commands.append(command)
+             working = result.bundle
++        for clip_id, before in before_rows.items():
++            _check_clip_baseline(before, pinned_rows[clip_id], owner=owner, clip_id=clip_id)
++            after = after_rows[clip_id]
++            _check_clip_shape(before, after, owner=owner, clip_id=clip_id)
++            working, emitted = _emit_clip_commands(working, owner, before, after)
++            commands.extend(emitted)
+         _require_explicit_rows(
+             shot["internal_timeline"].get("clips", []),
+             working["shots"][shot_id]["internal_timeline"].get("clips", []),
+diff --git a/tests/timeline/test_authoring_media.py b/tests/timeline/test_authoring_media.py
+index 96ee7cd74c70f4a1a8360be744157f8be200bb55..9493966974fec34ad5c88f43a4fea16177c0ff7f
+--- a/tests/timeline/test_authoring_media.py
++++ b/tests/timeline/test_authoring_media.py
+@@ -600,7 +600,16 @@
+     run_script('checkout', '--project', project, '--timeline', 'film', '--file', str(document))
+     checkout = json.loads(document.read_text())
+     first_id = first_shot['shot_id']
+-    checkout['shots'][first_id]['internal_timeline']['registry']['assets']['picture-1']['local_path'] = new_path.name
++    checkout_shot = checkout['shots'][first_id]
++    checkout_timeline = checkout_shot['internal_timeline']
++    checkout_clip = next(row for row in checkout_timeline['clips'] if row['id'] == 'clip-1')
++    original_narration = copy.deepcopy(checkout_shot['payload'].get('text_bindings'))
++    original_metadata = copy.deepcopy(checkout_shot['payload'].get('metadata'))
++    original_source_window = {
++        key: checkout_clip.get(key) for key in ('from', 'to', 'source_window')
++    }
++    checkout_clip.update(at=0.125, hold=0.75)
++    checkout_timeline['registry']['assets']['picture-1']['local_path'] = new_path.name
+     document.write_text(json.dumps(checkout))
+ 
+     base_bundle = fetch_bundle(project, 'film', revision_id='wc6-baseline', client=client)
+@@ -613,13 +622,19 @@
+     publication_receipt = json.loads(publication_file.read_text())
+     publication = publication_receipt['publication']
+     assert publication['data']['status'] == 'accepted'
+-    assert publication['data']['commands'][0]['op'] == 'occurrence.swap-media'
++    assert [command['op'] for command in publication['data']['commands']] == [
++        'occurrence.swap-media', 'clip.move', 'clip.set',
++    ]
+     published_document = publication['data']['canonical_document']
+     new_digest = 'sha256:' + hashlib.sha256(new_path.read_bytes()).hexdigest()
+     published_internal = next(
+         row for row in published_document['internal_timeline_revisions']
+         if row['revision_id'] == published_document['shot_revisions'][0]['internal_timeline_revision_id']
+     )
++    published_clip = next(row for row in published_internal['payload']['clips'] if row['id'] == 'clip-1')
++    assert published_clip['at'] == 0.125
++    assert published_clip['hold'] == 0.75
++    assert {key: published_clip.get(key) for key in ('from', 'to', 'source_window')} == original_source_window
+     published_entry = published_internal['payload']['registry']['assets']['picture-1']
+     assert published_entry['media_id'] == new_digest
+     assert list(published_internal['payload']['registry']['assets']) == original_alias_order
+@@ -629,12 +644,15 @@
+     assert published_shot['payload']['items'][0]['media_id'] == new_digest
+     assert published_shot['payload']['assets'][0]['source']['media_id'] == new_digest
+     assert published_shot['payload']['opaque_namespace']['media'] == old_media['object_id']
++    assert published_shot['payload']['text_bindings'] == original_narration
++    assert published_shot['payload']['metadata'] == original_metadata
+     second_shot = next(row for row in published_document['shot_revisions'] if row['shot_id'] == 'shot-2')
+     baseline_second = next(row for row in baseline['shot_revisions'] if row['shot_id'] == 'shot-2')
+     assert second_shot == baseline_second
+-    record = publication['data']['commands'][0]
+-    assert record['args']['old_media']['object_id'] == old_media['object_id']
+-    assert record['args']['media']['object_id'] == new_digest
++    records = publication['data']['commands']
++    media_record = next(record for record in records if record['op'] == 'occurrence.swap-media')
++    assert media_record['args']['old_media']['object_id'] == old_media['object_id']
++    assert media_record['args']['media']['object_id'] == new_digest
+     history = client.timelines.history(project, 'film', limit=100).data
+     assert any(row['receipt']['receipt_id'] == publication['receipt']['receipt_id'] for row in history['items'])
+ 
+@@ -744,14 +762,21 @@
+     # Re-read the exact Runtime-verified inputs after restart; this preserves
+     # the F1 media guard while replaying the unchanged command record.
+     redo_verified_media = [
+-        transport.get_project_verified_media(project, record['args'][key])
++        transport.get_project_verified_media(project, media_record['args'][key])
+         for key in ('old_media', 'media')
+     ]
+     redone = redo_session.commit_many(
+-        [record], idempotency_key='wc6-aba-rebind', via='python',
++        records, idempotency_key='wc6-aba-rebind', via='python',
+         verified_media=redo_verified_media,
+     )
+-    assert redone['data']['canonical_document']['shot_revisions'][0]['payload']['items'][0]['media_id'] == new_digest
++    redone_document = redone['data']['canonical_document']
++    assert redone_document['shot_revisions'][0]['payload']['items'][0]['media_id'] == new_digest
++    redone_internal = next(
++        row for row in redone_document['internal_timeline_revisions']
++        if row['revision_id'] == redone_document['shot_revisions'][0]['internal_timeline_revision_id']
++    )
++    redone_clip = next(row for row in redone_internal['payload']['clips'] if row['id'] == 'clip-1')
++    assert (redone_clip['at'], redone_clip['hold']) == (0.125, 0.75)
+     aba_before = client2.timelines.history(project, 'film', limit=100).data
+     with pytest.raises(CommitConflict) as conflict:
+         redo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-aba-undo')
+
+exec
+/bin/bash -lc "git status --short; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/DONE && echo DONE=present; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/commit-msg; git diff --check" in /home/user/work/wt/agt-m2-wc6-narration-command-slice
+ succeeded in 413ms:
+ M astrid/sdk/timeline/document_diff.py
+ M tests/timeline/test_authoring_media.py
+fix(timeline): preserve timing edits with media rebind
+
+Capture the existing native same-alias media swap before clip timing commands
+in the detached document view, allowing one file edit to retain media,
+narration, metadata, opaque fields, and source windows. Extend the exact
+ordinary014 HTTP proof through the timing batch and inverse/redo lifecycle.
+
+exec
+/bin/bash -lc "ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice; find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice -maxdepth 1 -type f -printf '%f\\n' | sort" in /home/user/work/wt/agt-m2-wc6-narration-command-slice
+ succeeded in 0ms:
+total 912
+drwxr-xr-x   3 root root   4096 Oct 20 16:22 .
+drwxr-xr-x 979 root root  65536 Oct 20 16:22 ..
+-rw-r--r--   1 root root   1402 Oct 20 16:17 brief.md
+-rw-r--r--   1 root root    354 Oct 20 16:22 commit-msg
+-rw-r--r--   1 root root    354 Oct 20 16:22 commit-msg.txt
+-rw-r--r--   1 root root 833558 Oct 20 16:22 log.txt
+-rw-r--r--   1 root root    245 Oct 20 16:17 meta
+drwxr-xr-x   2 root root   4096 Oct 20 16:22 notes
+-rw-r--r--   1 root root   2198 Oct 20 16:22 report.md
+-rw-r--r--   1 root root      0 Oct 20 16:17 running
+brief.md
+commit-msg
+commit-msg.txt
+log.txt
+meta
+report.md
+running
+
+exec
+/bin/bash -lc "find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a -path '*agt-m2-wc6-narration-command-slice*' -name DONE -print; find /home/user/work/wt/agt-m2-wc6-narration-command-slice -name DONE -print" in /home/user/work/wt/agt-m2-wc6-narration-command-slice
+ succeeded in 200ms:
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-narration-command-slice/DONE && echo DONE=present' in /home/user/work/wt/agt-m2-wc6-narration-command-slice
+ succeeded in 0ms:
+DONE=present
+
+codex
+Implemented the WC6 document-view timing slice.
+
+- Reordered existing native media swap before `clip.move`/`clip.set` timing capture.
+- Extended exact ordinary014/generated014 HTTP proof with timing, narration/metadata/source-window/opaque preservation, inverse/redo, and ABA checks.
+- SDK `publish_authoring_candidate` positive remains unchanged.
+
+Tests:
+
+- Local: `88 passed, 2 deselected`
+- Ruff and `git diff --check`: passed
+- Central HTTP proof: `1 passed`
+- Full suite: not run.
+
+Files: [document_diff.py](/home/user/work/wt/agt-m2-wc6-narration-command-slice/astrid/sdk/timeline/document_diff.py), [test_authoring_media.py](/home/user/work/wt/agt-m2-wc6-narration-command-slice/tests/timeline/test_authoring_media.py)
+tokens used
+204,058
+Implemented the WC6 document-view timing slice.
+
+- Reordered existing native media swap before `clip.move`/`clip.set` timing capture.
+- Extended exact ordinary014/generated014 HTTP proof with timing, narration/metadata/source-window/opaque preservation, inverse/redo, and ABA checks.
+- SDK `publish_authoring_candidate` positive remains unchanged.
+
+Tests:
+
+- Local: `88 passed, 2 deselected`
+- Ruff and `git diff --check`: passed
+- Central HTTP proof: `1 passed`
+- Full suite: not run.
+
+Files: [document_diff.py](/home/user/work/wt/agt-m2-wc6-narration-command-slice/astrid/sdk/timeline/document_diff.py), [test_authoring_media.py](/home/user/work/wt/agt-m2-wc6-narration-command-slice/tests/timeline/test_authoring_media.py)

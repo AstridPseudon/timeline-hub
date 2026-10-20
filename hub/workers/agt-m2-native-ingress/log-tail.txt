@@ -1,0 +1,400 @@
+expected "tuple[Mapping[str, Any], Mapping[str, Any]]"  [arg-type]
+            placements.setdefault(key, []).append((occurrence, track))
+                                                  ^~~~~~~~~~~~~~~~~~~
+astrid/packs/timeline/cli.py:910: error: Argument "summary" to
+"_human_omission_lines" has incompatible type "Any | dict[Any, Any] | None";
+expected "Mapping[str, Any]"  [arg-type]
+                        ], summary=summary, scope=scope,
+                                   ^~~~~~~
+astrid/packs/timeline/cli.py:910: error: Argument "scope" to
+"_human_omission_lines" has incompatible type "Any | dict[Any, Any] | None";
+expected "Mapping[str, Any]"  [arg-type]
+                        ], summary=summary, scope=scope,
+                                                  ^~~~~
+astrid/packs/timeline/cli.py:920: error: Item "None" of
+"Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+        if not pagination and isinstance(native.get("next_cursor"), str):
+                                         ^~~~~~~~~~
+astrid/packs/timeline/cli.py:921: error: Item "None" of
+"Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+            pagination = {"next_cursor": native.get("next_cursor")}
+                                         ^~~~~~~~~~
+astrid/packs/timeline/cli.py:922: error: Item "None" of
+"Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+    ...") if isinstance(data.get("page"), Mapping) else native.get("page") if...
+                                                        ^~~~~~~~~~
+astrid/packs/timeline/cli.py:923: error: Item "None" of
+"Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+        if page.get("returned_clips") is not None:
+           ^~~~~~~~
+astrid/packs/timeline/cli.py:924: error: Value of type
+"Any | dict[Any, Any] | None" is not indexable  [index]
+            page_line = f"page: returned {page['returned_clips']} of {page...
+                                         ^~~~~~~~~~~~~~~~~~~~~~~
+astrid/packs/timeline/cli.py:924: error: Item "None" of
+"Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+    ... = f"page: returned {page['returned_clips']} of {page.get('total_selec...
+                                                        ^~~~~~~~
+astrid/packs/timeline/cli.py:925: error: Item "None" of
+"Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+            if page.get("remaining_clips") not in (None, 0):
+               ^~~~~~~~
+astrid/packs/timeline/cli.py:926: error: Value of type
+"Any | dict[Any, Any] | None" is not indexable  [index]
+                page_line += f"; {page['remaining_clips']} remain after th...
+                                 ^~~~~~~~~~~~~~~~~~~~~~~~
+astrid/packs/timeline/cli.py:928: error: Item "None" of
+"Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+        if pagination.get("next_cursor"):
+           ^~~~~~~~~~~~~~
+astrid/packs/timeline/cli.py:929: error: Value of type
+"Any | dict[Any, Any] | None" is not indexable  [index]
+    ....append(f"  page: more results available (cursor {pagination['next_cur...
+                                                        ^~~~~~~~~~~~~~~~~~~~~...
+astrid/packs/timeline/cli.py:930: error: Item "None" of
+"Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+    ...nce(data.get("omission_metadata"), Mapping) else native.get("omission_...
+                                                        ^~~~~~~~~~
+astrid/packs/timeline/cli.py:931: error: Item "None" of
+"Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+        omitted_count = omissions.get("authored_values_omitted")
+                        ^~~~~~~~~~~~~
+astrid/packs/timeline/cli.py:1191: error: Argument 2 to "first" has
+incompatible type "str | None"; expected "str"  [arg-type]
+            first(("project_slug", "project_id", "project"), project),
+                                                             ^~~~~~~
+astrid/packs/timeline/cli.py:1192: error: Argument 2 to "first" has
+incompatible type "str | None"; expected "str"  [arg-type]
+    ... first(("timeline_slug", "timeline_id", "timeline", "ref"), timeline),
+                                                                   ^~~~~~~~
+astrid/packs/timeline/cli.py:1962: error: Argument 1 to "int" has incompatible
+type "Any | None"; expected
+"str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"  [arg-type]
+                start = Fraction(int(frame), 1) / fps
+                                     ^~~~~
+astrid/packs/timeline/cli.py:1965: error: Argument 1 to "int" has incompatible
+type "Any | None"; expected
+"str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"  [arg-type]
+            end = Fraction(int(frame) + 1, 1) / fps
+                               ^~~~~
+Found 82 errors in 2 files (checked 4 source files)
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-native-ingress-commit-integration-1019233442-28534' in /home/user/work/wt/agt-m2-native-ingress
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_parity.py tests/sdk/test_native_timeline_facades.py tests/editing_conformance/test_recipe_m1_commands.py' in /home/user/work/wt/agt-m2-native-ingress
+ succeeded in 7680ms:
+........................................................................ [ 47%]
+........................................................................ [ 94%]
+.........                                                                [100%]
+153 passed in 7.12s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-native-ingress-commit-integration-1019233442-28534/status; tail -35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-native-ingress-commit-integration-1019233442-28534/log.txt' in /home/user/work/wt/agt-m2-native-ingress
+ succeeded in 0ms:
+pass
+....                                                                     [100%]
+4 passed in 19.56s
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import collections, json, pathlib, subprocess, tempfile
+paths = ['astrid/sdk/timeline/sync.py', 'astrid/packs/timeline/cli_native.py', 'astrid/packs/timeline/cli_parser.py', 'astrid/packs/timeline/cli.py']
+py = '/home/user/work/venv-agent/bin/python'
+current = subprocess.run([py, '-m', 'mypy', '--no-pretty', '--no-error-summary', *paths], capture_output=True, text=True)
+notes = pathlib.Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-ingress/notes')
+notes.mkdir(exist_ok=True)
+with tempfile.TemporaryDirectory(dir=notes) as td:
+    command = [py, '-m', 'mypy', '--no-pretty', '--no-error-summary']
+    for i, path in enumerate(paths):
+        if path.endswith('cli_native.py'):
+            continue
+        original = subprocess.run(['git', 'show', 'HEAD:' + path], check=True, capture_output=True, text=True).stdout
+        shadow = pathlib.Path(td) / f'base{i}.py'
+        shadow.write_text(original)
+        command += ['--shadow-file', path, str(shadow)]
+    base = subprocess.run([*command, *paths], capture_output=True, text=True)
+def diagnostics(output):
+    return collections.Counter((line.split(':', 1)[0], line.split('error: ', 1)[1]) for line in output.splitlines() if 'error: ' in line)
+a, b = diagnostics(current.stdout), diagnostics(base.stdout)
+text = f'Current errors: {a.total()}; HEAD shadows: {b.total()}; new: {(a-b).total()}; resolved: {(b-a).total()}\\n'
+print(text)
+(notes / 'mypy-comparison.txt').write_text(text + '\\nCURRENT\\n' + current.stdout + '\\nHEAD SHADOWS\\n' + base.stdout)
+path = paths[-1]
+original = subprocess.run(['git', 'show', 'HEAD:' + path], check=True, capture_output=True, text=True).stdout
+a = subprocess.run([py, '-m', 'ruff', 'check', '--output-format=json', path], capture_output=True, text=True)
+b = subprocess.run([py, '-m', 'ruff', 'check', '--output-format=json', '--stdin-filename', path, '-'], input=original, capture_output=True, text=True)
+def lint(s):
+    return collections.Counter((d['code'], d['message']) for d in json.loads(s))
+x, y = lint(a.stdout), lint(b.stdout)
+print(f'cli.py Ruff: current {x.total()}, HEAD {y.total()}, new {(x-y).total()}')
+PY" in /home/user/work/wt/agt-m2-native-ingress
+ succeeded in 2415ms:
+Current errors: 82; HEAD shadows: 82; new: 0; resolved: 0
+
+cli.py Ruff: current 15, HEAD 15, new 0
+
+codex
+The central Runtime lane passed all 4 tests, including CLI label submission, a lost acknowledgement, Runtime restart, exact retry, and a queued Python clear that preserves a concurrent clip move. Another 153 adjacent tests passed locally. This proves the source path; the official Runtime artifact pin is still pending, and the branch remains held.
+
+ succeeded in 29926ms:
+test agt-m2-native-ingress-commit-integration-1019233442-28534: pass exit=0 in 21s — commit-integration on agt-m2-native-ingress (agent tree 39e0777be957aeb5b4a4c8b58dd4e8ef956af0dc)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_parent_track_label.py
+counts: 4 passed in 19.56s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-native-ingress-commit-integration-1019233442-28534/log.txt ---
+....                                                                     [100%]
+4 passed in 19.56s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-native-ingress-commit-integration-1019233442-28534/summary; ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-native-ingress-commit-integration-1019233442-28534; git diff --numstat; git diff -- tests/editing_conformance/test_commit_runtime_parent_track_label.py' in /home/user/work/wt/agt-m2-native-ingress
+ succeeded in 214ms:
+test agt-m2-native-ingress-commit-integration-1019233442-28534: pass exit=0 in 21s — commit-integration on agt-m2-native-ingress (agent tree 39e0777be957aeb5b4a4c8b58dd4e8ef956af0dc)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_parent_track_label.py
+counts: 4 passed in 19.56s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-native-ingress-commit-integration-1019233442-28534/log.txt ---
+....                                                                     [100%]
+4 passed in 19.56s
+exit
+ext
+log.txt
+request
+runner.log
+snap
+status
+summary
+14	4	astrid/packs/timeline/cli.py
+4	1	astrid/packs/timeline/cli_parser.py
+33	1	astrid/sdk/timeline/sync.py
+63	3	tests/editing_conformance/test_commit_runtime_parent_track_label.py
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_track_label.py b/tests/editing_conformance/test_commit_runtime_parent_track_label.py
+index f9360400..5dc37597 100644
+--- a/tests/editing_conformance/test_commit_runtime_parent_track_label.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_track_label.py
+@@ -14,7 +14,7 @@ from astrid.sdk.timeline._track_commands import capture_track_set
+ from astrid.sdk.timeline.commit import bundle_from_document
+ from tests.editing_conformance import test_commit_runtime_m1 as m1
+ 
+-film, renderer_off = m1.film, m1.renderer_off
++film, renderer_off, wire = m1.film, m1.renderer_off, m1.wire
+ 
+ pytestmark = pytest.mark.integration
+ 
+@@ -38,8 +38,10 @@ def test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move(
+     m1.assert_readback(client, fixture, moved)
+     moved_bundle = bundle_from_document(moved['data']['canonical_document'])
+     assert State(moved_bundle).entity('parent/clip:music-bed')['at'] == 1
+-    label = session._queue(lambda state: capture_track_set(
+-        session._bundle(state), 'parent/track:music', values={'label': 'Music'}))
++    label = session.queue({'schema_version': 1, 'op': 'track.set', 'version': '1',
++                           'select': 'parent/track:music',
++                           'args': {'values': {'label': 'Music'}, 'clear': []}})
++    assert label == capture_track_set(moved_bundle, 'parent/track:music', values={'label': 'Music'})
+     accepted = session.flush()
+     assert json.loads(outbox.read_bytes())['pending'] == []
+     assert accepted['data']['commands'] == [label]
+@@ -77,3 +79,61 @@ def test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move(
+         current = result['data']['canonical_document']
+         assert {key: value for key, value in current.items() if key != 'parent_revision'} == {
+             key: value for key, value in moved_document.items() if key != 'parent_revision'}
++
++
++def test_native_label_cli_lost_ack_then_python_suffix_keeps_original_claims(
++    tmp_path, monkeypatch, film, renderer_off, wire, real_runtime, capsys,
++):
++    from astrid.sdk.timeline.sync import TimelineSession
++
++    fixture, _, _ = film
++    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
++    support = tmp_path / 'support'
++    daemon = real_runtime(fixture.duplicate_root, support_root=support, authoring_profile='astrid')
++    client = m1.open_client(daemon)
++    observed, lose = wire
++    lose.add('native-label-A')
++    from astrid.packs.timeline.cli import build_parser
++
++    parsed = build_parser(client).parse_args([
++        'edit', 'track-label', fixture.timeline_id, '--project', fixture.project_id,
++        '--track', 'parent/track:music', '--set', '', '--idempotency-key', 'native-label-A', '--json',
++    ])
++    assert parsed.handler(parsed) == 1
++    assert not json.loads(capsys.readouterr().out)['ok']
++    original = copy.deepcopy(observed[-1])
++    assert original['status'] == 200
++    empty_bundle = bundle_from_document(original['response']['data']['canonical_document'])
++    session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client)
++    suffix = session.queue({'schema_version': 1, 'op': 'track.set', 'version': '1',
++                            'select': 'parent/track:music',
++                            'args': {'values': {}, 'clear': ['label']}})
++    assert suffix == capture_track_set(empty_bundle, 'parent/track:music', clear=['label'])
++    # A second author advances the head while A's acknowledgement is missing.
++    other = TimelineSession.open(fixture.project_id, fixture.timeline_id,
++                                 client=client, outbox_path=tmp_path / 'peer.json')
++    disjoint = other.move('parent/clip:music-other', 2)
++    daemon.stop()
++    daemon = real_runtime(fixture.duplicate_root, support_root=support, authoring_profile='astrid')
++    client = m1.open_client(daemon)
++    session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client)
++    retried = session.flush()
++    assert observed[-1]['key'] == original['key']
++    assert observed[-1]['body'] == original['body']
++    assert retried['receipt'] == original['response']['receipt']
++    cleared = session.flush()
++    assert observed[-1]['key'] != 'native-label-A'
++    body = json.loads(observed[-1]['body'])
++    assert body['commands'] == [suffix]
++    assert body['base_revision_id'] == retried['data']['accepted_revision_id']
++    assert body['base_publication_id'] == retried['receipt']['receipt_id']
++    assert cleared['data']['commands'] == [suffix]
++    result = bundle_from_document(cleared['data']['canonical_document'])
++    assert 'label' not in State(result).entity('parent/track:music')
++    assert State(result).entity('parent/clip:music-other')['at'] == 2
++    m1.assert_readback(client, fixture, cleared)
++    undone = session.undo([cleared['receipt']['receipt_id']])
++    result = bundle_from_document(undone['data']['canonical_document'])
++    assert State(result).entity('parent/track:music')['label'] == ''
++    assert State(result).entity('parent/clip:music-other')['at'] == 2
++    assert disjoint['receipt']['receipt_id'] != undone['receipt']['receipt_id']
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-native-ingress-commit-integration-1019233442-28534/ext; wc -l astrid/packs/timeline/cli_native.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_native.py; git diff --check; git status --short' in /home/user/work/wt/agt-m2-native-ingress
+ succeeded in 586ms:
+external=runtime=9f9b25c000485e919f30f1411831fe2d5a3c1316 app=bdc9dcd9b5bacb5ef0466e167b7af06d15c2d362 composition=7aa384a9f3c815f78ce88ff9b47de5adee7bf34a 
+   35 astrid/packs/timeline/cli_native.py
+  187 tests/sdk/test_timeline_sync_native.py
+   85 tests/packs/timeline/test_cli_native.py
+  307 total
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_parser.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/test_commit_runtime_parent_track_label.py
+?? astrid/packs/timeline/cli_native.py
+?? tests/packs/timeline/test_cli_native.py
+?? tests/sdk/test_timeline_sync_native.py
+
+exec
+/bin/bash -lc 'git status --short --ignored | head -30' in /home/user/work/wt/agt-m2-native-ingress
+ succeeded in 233ms:
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_parser.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/test_commit_runtime_parent_track_label.py
+?? astrid/packs/timeline/cli_native.py
+?? tests/packs/timeline/test_cli_native.py
+?? tests/sdk/test_timeline_sync_native.py
+!! .mypy_cache/
+!! .pytest_cache/
+!! .ruff_cache/
+!! tests/__pycache__/
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+import shutil
+root = Path('/home/user/work/wt/agt-m2-native-ingress')
+for relative in ('.mypy_cache', '.pytest_cache', '.ruff_cache', 'tests/__pycache__'):
+    shutil.rmtree(root / relative, ignore_errors=True)
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-ingress')
+message = '''feat(timeline): accept native commands through SDK and CLI outbox
+
+Add TimelineSession.queue and commit using registered native operations and
+existing authoritative capture. Preserve original claims and exact in-flight
+retry identity while retaining the move and undo APIs.
+
+Route edit track-label through track.set with explicit set/clear semantics,
+using schema parameter metadata and the existing result renderer. Keep the
+detached working-copy path explicitly legacy.
+
+Prove portable Python/CLI golden parity, guarded suffix recovery, clears,
+unchanged writes, and real Runtime restart/retry with concurrent edits.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+report = '''# Native Python/CLI ingress — held
+
+Implemented on "'`/home/user/work/wt/agt-m2-native-ingress`, base `86bfe186`.
+
+- Added `TimelineSession.queue(command)` and `commit(command, ...)` for operations from the sole native registry. Raw requests capture through `execute` against original base plus pending commands; supplied claims are verified and retained. Existing move/undo entry points and flush protocol remain compatible.
+- Added `astrid timelines edit track-label TL --track parent/track:ID --set LABEL` or `--clear`, including empty-string values, current-project resolution, preview, idempotency and normal result/receipt output. Parameter field/type metadata comes from the registered schema. Existing detached working-copy editing is explicitly described as legacy.
+- No new operation, schema, registry, provider, writer or artifact pin. Product diff: 86 added / 6 removed lines across sync and CLI adapter/routing.
+- Tests cover full portable Python/CLI golden equality, raw and already-captured requests, prior pending track creation, absent/empty/clear round trips, unchanged history edges, stale-claim refusal, unsupported/open-patch refusal, disjoint and conflicting suffixes, equal-state ABA intent, and existing provider ABA undo protection. Original M1 sync/move tests pass unchanged.
+- Real Runtime tests now use public queueing and prove CLI empty-label acceptance with lost ACK, Python clear queued over unacknowledged A, concurrent disjoint move, actual Runtime restart, exact A request/key/receipt retry, B original claims at HA with fresh key, published readback and guarded undo restoring the empty string.
+
+## Verification
+
+Run from the assigned worktree:
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_native.py tests/editing_conformance/test_parent_track_label.py tests/sdk/test_timeline_commit_provider_parent_track_label.py
+```
+
+**125 passed in 6.35s.**
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_parity.py tests/sdk/test_native_timeline_facades.py tests/editing_conformance/test_recipe_m1_commands.py
+```
+
+**153 passed in 7.12s.**
+
+Central service, submitted after final source edits:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-native-ingress commit-integration --files tests/editing_conformance/test_commit_runtime_parent_track_label.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-native-ingress-commit-integration-1019233442-28534
+```
+
+Executed centrally:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_parent_track_label.py
+```
+
+**4 passed in 19.56s; exit 0; no skips/xfails.** Snapshot tree `39e0777be957aeb5b4a4c8b58dd4e8ef956af0dc`; external Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316`, App `bdc9dcd9b5bacb5ef0466e167b7af06d15c2d362`, Composition `7aa384a9f3c815f78ce88ff9b47de5adee7bf34a`. Results: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-native-ingress-commit-integration-1019233442-28534/`.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/sync.py astrid/packs/timeline/cli_native.py astrid/packs/timeline/cli_parser.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_native.py tests/editing_conformance/test_commit_runtime_parent_track_label.py
+git diff --check
+```
+
+**Both passed.** Separate JSON comparison of `ruff check astrid/packs/timeline/cli.py` against `git show HEAD:astrid/packs/timeline/cli.py` found **15 existing diagnostics on each, zero new**.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy astrid/sdk/timeline/sync.py astrid/packs/timeline/cli_native.py astrid/packs/timeline/cli_parser.py astrid/packs/timeline/cli.py
+```
+
+**Exit 1: 82 existing errors in cli.py/cli_parser.py.** Repeated with original HEAD files supplied through mypy `--shadow-file`: same 82 error messages/codes, zero new/resolved. Details in `notes/mypy-comparison.txt`. No new errors in sync.py or cli_native.py. No full suite, make check, installs or direct localhost tests run.
+
+## Decisions and limits
+
+- Generic ingress accepts registered native handlers; history operations retain their existing undo/provider paths. This avoids exposing arbitrary document restore or unregistered operations through the new convenience API.
+- One-shot retries match supplied intent and preserve captured defaults without executing capture again. Queue plus flush handles batches and suffixes; flush still sends only the original in-flight prefix before the unsent suffix.
+- Clear removes label; empty string remains a real value. No frozen wire form changed.
+- No decision deviation found. No implementation blocker remains. This branch stays **HELD**: official Runtime artifact release/pin is pending; source-level actual Runtime success does not qualify that release. M2 merge still requires the M1 projection fix and explicit PLAN record, as directed.
+- Recommended next steps: review this bounded diff, qualify the official Runtime artifact pin when released, then let the orchestrator authorize M2 integration. Broader working-copy/sheet/App writer migration remains separate.
+
+Both `commit-msg` and `commit-msg.txt` are written for the harness. No commit, merge, checkout, push or integration-worktree edit performed. Test/lint caches created in this worktree were removed.
+'"'''
+(worker / 'notes' / 'report.md').write_text(report)
+print('Wrote report and both commit messages; removed local test/lint caches.')
+PY" in /home/user/work/wt/agt-m2-native-ingress
+ succeeded in 43ms:
+Wrote report and both commit messages; removed local test/lint caches.
+
+codex
+Implemented native `TimelineSession.queue/commit` and `edit track-label --set/--clear`, reusing the registry, capture engine and outbox.
+
+- Tests: **125 targeted + 153 adjacent + 4 central Runtime passed**.
+- Exact retry, restart, original suffix guards and concurrent-edit preservation verified.
+- No new lint/type errors; existing diagnostics documented.
+- **HELD** pending official Runtime artifact qualification and orchestrator M2 approval.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-ingress/notes/report.md). Both commit-message files are written.
+tokens used
+117,069
+Implemented native `TimelineSession.queue/commit` and `edit track-label --set/--clear`, reusing the registry, capture engine and outbox.
+
+- Tests: **125 targeted + 153 adjacent + 4 central Runtime passed**.
+- Exact retry, restart, original suffix guards and concurrent-edit preservation verified.
+- No new lint/type errors; existing diagnostics documented.
+- **HELD** pending official Runtime artifact qualification and orchestrator M2 approval.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-ingress/notes/report.md). Both commit-message files are written.

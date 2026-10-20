@@ -1,0 +1,6 @@
+test agent-commit-integration-1019212309-21871: pass exit=0 in 17s — commit-integration on integration:agent (agent tree 8caa134dbb2b55b2db597a599475f977f24f8de7)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py
+counts: 2 passed in 14.84s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-commit-integration-1019212309-21871/log.txt ---
+..                                                                       [100%]
+2 passed in 14.84s

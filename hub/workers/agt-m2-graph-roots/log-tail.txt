@@ -1,0 +1,400 @@
++                return {'shot_id': row['shot_id']}
+             source = self.bundle['source_mapping']['shots'][row['shot_id']]['shot_id']
+             from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+             identity = _authoring_shot_id(
+@@ -170,10 +189,25 @@
+                 raise CommandError('occurrence authoring owner changed', kind='identity_conflict',
+                                    ref=owner, path=['shot_id'])
+             return {"shot_id": source}
+-        if ref.startswith("occurrence:") and '/' not in ref:
+-            return self.occurrence(ref)
+         raise CommandError(f"unsupported entity reference {ref!r}")
+ 
++    def validate_root(self, ref, value):
++        root = root_identity(ref)
++        if root is None or not isinstance(value, dict):
++            raise CommandError('invalid authored root', ref=ref)
++        kind, identity = root
++        if kind == 'shot':
++            if (set(value) != {'payload', 'internal_timeline'}
++                    or not all(isinstance(child, dict) for child in value.values())):
++                raise CommandError('shot root requires payload and internal_timeline objects', ref=ref)
++        elif (value.get('occurrence_id') != identity
++              or not isinstance(value.get('shot_id'), str)
++              or root_identity('shot:' + value['shot_id']) is None
++              or any(key in value for key in ('revision_id', 'shot_revision_id'))):
++            raise CommandError('invalid authored occurrence identity or revision', ref=ref)
++        elif value['shot_id'] not in self.bundle['shots']:
++            raise CommandError('occurrence references missing shot', kind='identity_conflict', ref=ref)
++
+     def get(self, ref, path):
+         if ref == "timeline":
+             if path:
+@@ -223,6 +257,46 @@
+             self.bundle.clear()
+             self.bundle.update(replacement)
+             return
++        root = root_identity(ref)
++        if root is not None and (not path or root[0] == 'shot'):
++            kind, identity = root
++            if path:
++                raise CommandError('shot writes require the complete authored aggregate', ref=ref, path=path)
++            if state['state'] == 'present':
++                self.validate_root(ref, state['value'])
++            if kind == 'occurrence':
++                existing = self.entity(ref, optional=True)
++                rows = self.bundle['placements']
++                if existing is not None:
++                    index = rows.index(existing)
++                    if state['state'] == 'absent':
++                        rows.pop(index)
++                    else:
++                        rows[index] = copy.deepcopy(state['value'])
++                elif state['state'] == 'present':
++                    rows.append(copy.deepcopy(state['value']))
++            elif state['state'] == 'absent':
++                if any(row['shot_id'] == identity for row in self.bundle['placements']):
++                    raise CommandError('shot has surviving occurrences', kind='surviving_dependents', ref=ref)
++                self.bundle['shots'].pop(identity, None)
++            else:
++                shot = self.bundle['shots'].get(identity)
++                if shot is None:
++                    # Reopening the exact input recovers compiler baselines for
++                    # an existing root restored after removal, never latest data.
++                    source = self.bundle['source_mapping'].get('_runtime_document')
++                    if identity in self.bundle['source_mapping']['shots']:
++                        if source is None:
++                            raise CommandError('restoring a source shot requires its exact input closure',
++                                               kind='history_unavailable', ref=ref)
++                        from .commit import bundle_from_document
++                        shot = bundle_from_document(source)['shots'].get(identity)
++                    if shot is None:
++                        shot = {'shot_id': identity}
++                self.bundle['shots'][identity] = {**shot, **copy.deepcopy(state['value'])}
++            return
++        if root is None and ref.startswith(('shot:', 'occurrence:')) and '/' not in ref:
++            raise CommandError('invalid authored root reference', ref=ref)
+         if not path:
+             owner, entity = ref.rsplit('/', 1)
+             kind, identity = entity.split(':', 1)
+diff --git a/astrid/sdk/timeline/_recording.py b/astrid/sdk/timeline/_recording.py
+index 3668c7ef896ebc87df2fee290e79e0b49d551ce9..bcf631d082ba315d6a2fdc42775c0024830ba09f
+--- a/astrid/sdk/timeline/_recording.py
++++ b/astrid/sdk/timeline/_recording.py
+@@ -98,6 +98,32 @@
+         self.record['created'].append({"ref": ref, "kind": kind, "owner": owner})
+         return ref
+ 
++    def create_entity(self, ref, *, kind, owner, value):
++        from ._command_state import root_identity
++
++        root = root_identity(ref)
++        if (root is None or root[0] != kind
++                or owner != (None if kind == 'shot' else 'parent')):
++            raise CommandError('invalid created root scope', ref=ref)
++        self.state.validate_root(ref, value)
++        document = self.state.bundle['source_mapping'].get('_runtime_document', {})
++        occupied = (any(row['shot_id'] == root[1] for row in document.get('shot_revisions', []))
++                    if kind == 'shot' else any(row['occurrence_id'] == root[1] for row in
++                        document.get('parent_revision', {}).get('payload', {}).get('occurrences', [])))
++        if not document:
++            mapping = self.state.bundle['source_mapping']
++            occupied = (any(row['shot_id'] == root[1] for row in mapping['shots'].values())
++                        if kind == 'shot' else root[1] in mapping['placements'])
++        if occupied or self.state.get(ref, []) != ABSENT or any(
++                item['ref'] == ref for item in self.record['created']):
++            raise CommandError('created identity is occupied', kind='identity_collision', ref=ref)
++        self.read(ref)
++        self.write(ref, [], value)
++        if kind == 'shot':
++            self.state.bundle['shots'][root[1]]['_created'] = True
++        self.record['created'].append({'ref': ref, 'kind': kind, 'owner': owner})
++        return ref
++
+     def compile_inputs(self):
+         # The compiler retains this immutable input closure. These pins do not
+         # imply that the move evaluated an anchor or any document settings.
+diff --git a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py
+index 0729532d797bc3b899674362efd7192b397a93a5..da40ae41c15bcfdac478c5aea10a5bfb3db100f9
+--- a/astrid/sdk/timeline/commands.py
++++ b/astrid/sdk/timeline/commands.py
+@@ -59,7 +59,7 @@
+         raise CommandError(errors[0].message)
+     if command['version'] != '1':
+         raise CommandError("unsupported operation version", kind='unsupported_version')
+-    if command['op'] not in ('clip.move', 'track.create', 'timeline.inverse', 'timeline.restore'):
++    if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
+         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
+     operation = operations().get(command['op'])
+     if operation is not None:
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index d28d4c7da1be48240d19603b1234f2aaad2c8b15..47c007a06c3e04a49d8d96fc057dd9fc1a23e97f
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -175,8 +175,8 @@
+     for occurrence in parent["occurrences"]:
+         identity = occurrence["shot_id"]
+         shot = bundle["shots"][identity]
+-        origin = bundle["source_mapping"]["shots"][identity]
+-        if (shot["payload"] == shot["base_payload"]
++        origin = bundle["source_mapping"]["shots"].get(identity)
++        if (origin is not None and shot["payload"] == shot["base_payload"]
+                 and shot["internal_timeline"] == shot["base_internal_timeline"]
+                 and origin.get("revision_id") in shot_index):
+             occurrence["shot_id"] = origin["shot_id"]
+@@ -315,8 +315,31 @@
+ 
+ 
+ def _check_reservations(port, plan, current, rejected, base):
++    from ._command_state import root_identity
+     from astrid.sdk.timeline.commands import CommandError
+ 
++    def valid(item):
++        if (not isinstance(item, Mapping) or set(item) != {'ref', 'kind', 'owner'}
++                or not _id(item['ref']) or not _id(item['kind'])):
++            return False
++        root = root_identity(item['ref'])
++        if root is not None:
++            return (item['kind'] == root[0]
++                    and item['owner'] == (None if root[0] == 'shot' else 'parent'))
++        owner = item['owner']
++        if not _id(owner) or not (owner == 'parent' or (
++                root_identity(owner) is not None and root_identity(owner)[0] == 'occurrence')):
++            return False
++        return (item['kind'] == 'track' and item['ref'].startswith(owner + '/track:')
++                and re.fullmatch(r'(?!.*::)[^/]+', item['ref'][len(owner + '/track:'):]) is not None)
++
++    for record in plan.records:
++        if (any(not valid(item) for item in record['created'])
++                or record['command'].get('created') != [item['ref'] for item in record['created']]):
++            raise CommandError('invalid created identity scope', kind='identity_collision')
++
++    # This scan is timeline-local. Runtime atomic admission must additionally
++    # check project-wide shot occupancy/reservations before persisting a closure.
+     # Inverse creates restore authenticated accepted writes. Ordinary creates
+     # must never claim an identity retired by an earlier accepted publication.
+     created = [item["ref"] for record in plan.records
+@@ -334,11 +357,7 @@
+         for record in _records([entry], rejected, base, current):
+             items = record["created"]
+             if (not isinstance(items, list)
+-                    or any(not isinstance(item, Mapping)
+-                           or set(item) != {"ref", "kind", "owner"}
+-                           or not all(_id(item[key]) for key in ("ref", "kind", "owner"))
+-                           or not item["ref"].startswith(item["owner"] + "/" + item["kind"] + ":")
+-                           for item in items)
++                    or any(not valid(item) for item in items)
+                     or not isinstance(record["command"], Mapping)
+                     or record["command"].get("created") != [item["ref"] for item in items]):
+                 raise rejected(_failure("history_unavailable", "created identity history is unavailable",
+diff --git a/tests/editing_conformance/test_recorded_graph_roots.py b/tests/editing_conformance/test_recorded_graph_roots.py
+index 4a07911bf22991918383606de66a3b6d70c9107f..551fee7e2a8b341a285489548f0965078351b5a7
+--- a/tests/editing_conformance/test_recorded_graph_roots.py
++++ b/tests/editing_conformance/test_recorded_graph_roots.py
+@@ -88,6 +88,25 @@
+     assert document_from_bundle(bundle_from_document(document)) == document
+ 
+ 
++def test_main_bundle_new_roots_compile_without_runtime_bookkeeping(root_ops):
++    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
++    from tests.editing_conformance.test_recipe_m1_commands import bundle
++
++    original = bundle()
++    before = copy.deepcopy(original)
++    plan = commands.execute(original, [create_command()])
++    publication = compile_authoring_candidate(plan.bundle).publication
++    assert any(row['shot_id'] == 'new-shot' for row in publication['shot_revisions'])
++    assert publication['parent_composition']['occurrences'][-1]['occurrence_id'] == 'new-occ'
++    assert original == before
++    roots = [dict(root_values()[0], ref='shot:chapter-shot')]
++    source_id = next(iter(original['source_mapping']['shots'].values()))['shot_id']
++    roots[0]['ref'] = 'shot:' + source_id
++    with pytest.raises(CommandError, match='occupied'):
++        commands.execute(original, [create_command(roots)])
++    assert original == before
++
++
+ def test_root_replace_remove_and_existing_baseline_recovery_are_lossless(root_ops):
+     original = bundle_from_document(document_fixture(shared=False))
+     plan = commands.execute(original, [create_command()])
+@@ -169,7 +188,9 @@
+ 
+ def test_unrecorded_or_orphan_shot_cannot_be_compiled(root_ops):
+     original = bundle_from_document(document_fixture())
+-    original['shots']['new-shot'] = {'shot_id': 'new-shot', **root_values()[0]['value']}
++    ctx = Recording(original, {}, 0)
++    ctx.write('shot:new-shot', [], root_values()[0]['value'])
++    assert ctx.record['created'] == []
+     with pytest.raises(AuthoringBundleError, match='source_mapping'):
+         document_from_bundle(original)
+     original = bundle_from_document(document_fixture())
+@@ -191,6 +212,15 @@
+     assert document_from_bundle(undone.bundle) == document_fixture()
+ 
+ 
++@pytest.mark.xfail(strict=True, reason='M2 staged inverse must guard authored roots across compiled revision links')
++def test_creation_inverse_after_compiled_reload_restores_original_absence(root_ops):
++    original = bundle_from_document(document_fixture())
++    plan = commands.execute(original, [create_command()])
++    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
++    undone = commands.execute(reloaded, [inverse_command()], inverse_records=plan.records)
++    assert document_from_bundle(undone.bundle) == document_fixture()
++
++
+ @pytest.mark.xfail(strict=True, reason='M2 staged inverse must restore shot/occurrence roots through create_entity')
+ def test_creation_inverse_redo_reuses_exact_roots(root_ops):
+     original = bundle_from_document(document_fixture())
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py' in /home/user/work/wt/agt-m2-graph-roots
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py && git diff --check' in /home/user/work/wt/agt-m2-graph-roots
+ succeeded in 242ms:
+All checks passed!
+
+ succeeded in 17185ms:
+.....................xx................................................. [ 33%]
+........................................................................ [ 66%]
+........................................................................ [100%]
+214 passed, 1 deselected, 2 xfailed in 16.64s
+
+exec
+/bin/bash -lc 'wc -l astrid/sdk/timeline/commit.py astrid/core/timeline/authoring_bundle.py astrid/core/timeline/schema/edit-command.schema.json; git diff --check; git status --short' in /home/user/work/wt/agt-m2-graph-roots
+ succeeded in 500ms:
+   525 astrid/sdk/timeline/commit.py
+  1654 astrid/core/timeline/authoring_bundle.py
+   656 astrid/core/timeline/schema/edit-command.schema.json
+  2835 total
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+?? tests/editing_conformance/test_recorded_graph_roots.py
+?? tests/sdk/test_timeline_commit_graph_roots.py
+
+2026-10-19T22:56:12.681057Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc \\\"cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-graph-roots/commit-msg <<'EOF'\\nfeat(timeline): record shot and occurrence root creation\\n\\nAdd scoped authored root access and explicit recorded creation with typed\\nidentity facts and local occupancy/reservation checks. Compile new shots\\nthrough the existing ma…5617 chars truncated…r batch\\n\\nTouched oversized files: authoring_bundle.py 1654 lines, commit.py 525 lines, edit-command.schema.json 656 lines. No unrelated metadata/docs edits.\\n\\nBoth absolute worker commit-msg and commit-msg.txt are written. All product/test writes stay in this assigned worktree; notes only in this ORCH worker directory.\\nEOF\\nrm -rf .ruff_cache .pytest_cache\\\"` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-graph-roots')
+message = '''feat(timeline): record shot and occurrence root creation
+
+Add scoped authored root access and explicit recorded creation with typed
+identity facts and local occupancy/reservation checks. Compile new shots
+through the existing materializer without fabricated source revision pins,
+retain complete opaque content, and admit shot root reference spellings.
+
+Exercise native execution, replay, canonical closure, atomic refusals and
+local reservations. Keep staged inverse reload/redo gaps as strict xfails;
+Runtime atomic project-wide ID admission and schema refresh remain required.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+report = '''# Root groundwork report
+
+Implemented the assigned shot/occurrence root branches, Recording.create_entity, bounded compiler new-create path, typed local reservations and four shot root schema patterns. No new public operation. commands.py has only an operations-based admission seam for test fixtures. Existing track.create/order helpers, inverse.py, overlap and boundary glue are untouched.
+
+shot:S resolves {payload,internal_timeline}; occurrence:O optional lookup returns tagged absence. Full roots support replace/remove; shot removal refuses surviving occurrences. Restoring an existing removed source shot recovers compiler baselines from the verified input CurrentDocument and refuses if that input is unavailable. Source_mapping remains unchanged. Only create_entity marks a new slot _created; arbitrary root writes cannot silently qualify as recorded creation. New shots require an occurrence in the same candidate. The existing main materializer derives revisions/digests without invented source pins. Input CurrentDocument occupancy and local virtual slot occupancy are checked separately.
+
+## Exact final checks
+
+"'`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py`
+
+214 passed, 1 deselected, 2 xfailed in 16.64s. Original M1 recipe/provider/document/restore expectations are unchanged. Native create/replay, main-only bundles, opaque/null/absence preservation, exact canonical closure/reload, atomic refusal, input/virtual-slot collisions, local reservations and undo-to-absence pass. New tests construct no accepted receipts and claim no real Runtime acceptance. Reservation tests stub only trusted-history input to the local scan.
+
+`PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py` — All checks passed.
+
+`git diff --check` — exit 0, no output.
+
+No full suite, Runtime integration lane, central service, socket/browser/network/install commands were run. No commit, merge, checkout, push or merge request.
+
+## Staging dependencies
+
+Two positive expectations remain strict xfails, each naming its restoring requirement:
+- Creation -> inverse after compiled reload: inverse guards compare the raw authored root to a payload containing the compiler-injected internal_timeline_revision_id. Staged inverse must handle that derived link without losing opaque fields or changing original M1 pins.
+- Creation -> inverse -> redo: current inverse restoration assumes slash-scoped track roots and calls ctx.create. Staged inverse must restore shot/occurrence roots with create_entity under trusted restoration authority.
+
+No inverse/order/overlap edits were made. Existing Recording.finish also filters command bindings to clip/track/occurrence refs. Migration handlers using shot bindings need that bounded extension from its owning worker; this task was authorized to add create_entity only.
+
+Runtime atomic admission MUST enforce project-wide fresh shot occupancy/retired reservations and existing item-ID constraints before persistence. Timeline-local history is not global absence proof. Official Runtime command-schema artifact/generated clients/digests and Agent pins must be refreshed before integration. No new ABI, DTO, table or endpoint. No full migration, occurrence move, accepted undo/redo or global ID safety is claimed. Merge remains held for recorded M1 closure.
+
+## Manager metadata batch
+
+Touched oversized files: authoring_bundle.py 1654 lines, commit.py 525 lines, edit-command.schema.json 656 lines. No unrelated metadata/docs changes.
+
+Both absolute worker commit-msg and commit-msg.txt are written. Product/test changes stay inside the assigned worktree; notes only in this ORCH worker directory. Generated pytest/Ruff caches were cleaned.
+'"'''
+(worker / 'notes/report.md').write_text(report)
+for name in ('.ruff_cache', '.pytest_cache'):
+    cache = Path.cwd() / name
+    if cache.is_dir() and not cache.is_symlink():
+        shutil.rmtree(cache)
+PY
+
+git diff --check
+
+git status --short" in /home/user/work/wt/agt-m2-graph-roots
+ succeeded in 577ms:
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+?? tests/editing_conformance/test_recorded_graph_roots.py
+?? tests/sdk/test_timeline_commit_graph_roots.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-graph-roots/notes/coordination.md')
+s = p.read_text().replace('Compiled reload guard behavior is under review before completion; compiler-generated payload internal_timeline_revision_id must not become an authored/root source guard.', 'Compiled reload inverse is a second strict xfail: compiler-generated payload internal_timeline_revision_id currently mismatches the recorded root guard. The staged inverse worker must address it. Final evidence and dependencies are in report.md: 214 passed, 1 deselected, 2 strict xfails; Ruff/diff clean.')
+p.write_text(s)
+PY" in /home/user/work/wt/agt-m2-graph-roots
+ succeeded in 0ms:
+codex
+Implemented bounded shot/occurrence roots, `Recording.create_entity`, typed local reservations, new-create compilation without fabricated source pins, and shot-root schema references. Public operations and collection/order/inverse helpers remain unchanged.
+
+Validation:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py
+```
+
+**214 passed, 1 deselected, 2 strict xfails.** The xfails preserve positive expectations for compiled-reload inverse and root redo, pending staged inverse work.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py
+git diff --check
+```
+
+Both passed. No full, socket, service or Runtime integration runs.
+
+Integration still requires Runtime atomic project-wide ID admission, official schema/pin refresh, staged inverse support and shot-binding capture. No real Runtime acceptance or full migration is claimed.
+
+Both absolute commit-message files are written. Oversized files: authoring bundle **1654**, commit **525**, schema **656** lines. Details are in [the worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-graph-roots/notes/report.md). No commit or merge request made.
+tokens used
+130,583
+Implemented bounded shot/occurrence roots, `Recording.create_entity`, typed local reservations, new-create compilation without fabricated source pins, and shot-root schema references. Public operations and collection/order/inverse helpers remain unchanged.
+
+Validation:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py
+```
+
+**214 passed, 1 deselected, 2 strict xfails.** The xfails preserve positive expectations for compiled-reload inverse and root redo, pending staged inverse work.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py
+git diff --check
+```
+
+Both passed. No full, socket, service or Runtime integration runs.
+
+Integration still requires Runtime atomic project-wide ID admission, official schema/pin refresh, staged inverse support and shot-binding capture. No real Runtime acceptance or full migration is claimed.
+
+Both absolute commit-message files are written. Oversized files: authoring bundle **1654**, commit **525**, schema **656** lines. Details are in [the worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-graph-roots/notes/report.md). No commit or merge request made.

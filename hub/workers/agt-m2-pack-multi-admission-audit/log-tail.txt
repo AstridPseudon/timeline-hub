@@ -1,0 +1,400 @@
++  /tmp/pack_multi_admission_probe.py::test_candidate_retains_old_a_and_adds_new_b_without_duplicate_identity
++CANDIDATE_LOSSLESS=True
++CANDIDATE_IDENTITIES=[old fade, old reveal, new fade]
++1 passed
++```
++
++Untouched M1/integration behavior:
++
++```text
++PYTHONPATH=/home/user/work/agent \
++  /home/user/work/venv-agent/bin/python -m pytest -q -s \
++  /tmp/pack_multi_admission_probe.py::test_two_element_edit_only_b_and_one_element_metadata_case
++TWO_ELEMENT_OUTCOME={"kind": "admitted", "document_version": 3, "...": "4 admissions"}
++TWO_ELEMENT_DUPLICATE_IDENTITIES=1
++TWO_ELEMENT_OLD_A_RESOLUTION=Element owner/revision is not admitted for this project
++ONE_ELEMENT_OUTCOME={"kind": "admitted", "...": "2 admissions"}
++ONE_ELEMENT_DUPLICATE_IDENTITIES=1
++ONE_ELEMENT_OLD_RESOLUTION=Element owner/revision is not admitted for this project
++1 passed
++```
++
++The old two-element admission list contains old A, old B, new B, and a second
++old-revision A row under the new closure. The old one-element list contains
++the same element revision twice under different closure digests.
++
++## Tests
++
++Targeted Agent pack suites:
++
++```text
++/home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/core/test_project_packs.py \
++  tests/core/test_project_pack_snapshots.py \
++  tests/core/test_project_pack_inputs.py
++83 passed in 24.27s
++```
++
++No full suite, install, network, live Runtime pair, browser, merge, pin, or
++leased-tree operation was run. The probe itself ran only the existing fixture
++and pure Agent admission/resolution code.
++
++## Minimal fix recommendation
++
++Classify each current exact `(id, kind, revision)` independently during
++admission:
++
++1. Existing tuple with a different closure: refuse exactly as current code
++   does. This is required for the one-element manifest-only case and prevents
++   quiet rebinding of a known immutable pin.
++2. Existing tuple with the same closure: retain its admission, snapshot object,
++   receipt, and history bytes byte-for-byte; do not compare it to the new
++   whole-pack closure.
++3. New tuple (B's changed revision): append one new admission and ingest one
++   new full-pack portable snapshot verified from the new closure. Retain older
++   revisions in the same Document. Never append a second row for an existing
++   tuple.
++
++This is a narrow Agent admission/index change. It needs no schema, Runtime
++authority, SQL/CAS shortcut, or duplicate host pair. No product implementation
++was made by this audit. M2 integration remains held until the PLAN M1 record.
+diff --git a//tmp/pack_multi_admission_probe.py b//tmp/pack_multi_admission_probe.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..5c40fb52985e9038bf68987a74ca30dce0ddef0d
+--- /dev/null
++++ b//tmp/pack_multi_admission_probe.py
+@@ -0,0 +1,209 @@
++from __future__ import annotations
++
++import copy
++import base64
++import hashlib
++import json
++from pathlib import Path
++
++import pytest
++import yaml
++
++from astrid.core.element import project_packs as packs
++from tests.core import test_project_packs
++
++configured = test_project_packs.configured
++
++
++def add_second_element(root: Path, manifest: dict) -> Path:
++    directory = root / "rendering/elements/effects/fade"
++    directory.mkdir(parents=True)
++    (directory / "component.tsx").write_text(
++        "import React from 'react';\n"
++        "import {AbsoluteFill} from 'remotion';\n"
++        "export default function Fade(){return <AbsoluteFill/>;}\n"
++    )
++    (directory / "element.yaml").write_text(
++        yaml.safe_dump(
++            {
++                "schema_version": 1,
++                "id": "fade",
++                "kind": "effect",
++                "pack_id": manifest["id"],
++                "short_description": "Test fade.",
++                "defaults": {"seed": 7},
++                "schema": {"type": "object", "properties": {"seed": {"type": "number"}}},
++                "runtime": {"adapter": "remotion"},
++            }
++        )
++    )
++    manifest["rendering"]["effects/fade"] = {
++        "type": "element",
++        "path": "rendering/elements/effects/fade/element.yaml",
++        "resources": [
++            {"kind": "implementation", "path": "rendering/elements/effects/fade/component.tsx"}
++        ],
++    }
++    (root / "pack.yaml").write_text(yaml.safe_dump(manifest))
++    return directory
++
++
++def refs(result):
++    return {
++        item["descriptor"]["id"]: {
++            key: item["descriptor"][key]
++            for key in ("packId", "id", "kind", "revision")
++        }
++        for item in result["elements"]
++    }
++
++
++def content(configured):
++    row = configured.rows[("project", next(iter(configured.rows))[1])]
++    return row["content"]
++
++
++def test_two_element_edit_only_b_and_one_element_metadata_case(configured):
++    root, directory, manifest = test_project_packs.seed()
++    b_directory = add_second_element(root, manifest)
++    first = packs.admit_project_pack("realm", "project")
++    first_refs = refs(first)
++    first_content = copy.deepcopy(content(configured))
++    first_rows = copy.deepcopy(configured.rows)
++    first_snapshot_bytes = {
++        admission["id"]: configured.media.objects[("project", admission["snapshot_object"]["object_id"])]
++        for admission in first_content["admissions"]
++        if "snapshot_object" in admission
++    }
++
++    # Edit B only. A's exact source revision must remain unchanged.
++    (b_directory / "component.tsx").write_text(
++        (b_directory / "component.tsx").read_text() + "\n// B only\n"
++    )
++    second_refs = refs(packs.inspect_project_pack("realm", "project"))
++    assert second_refs["reveal"]["revision"] == first_refs["reveal"]["revision"]
++    assert second_refs["fade"]["revision"] != first_refs["fade"]["revision"]
++
++    try:
++        second = packs.admit_project_pack("realm", "project")
++    except ValueError as exc:
++        outcome = {"kind": "refused", "message": str(exc)}
++    else:
++        outcome = {
++            "kind": "admitted",
++            "document_version": second["documentVersion"],
++            "admissions": copy.deepcopy(content(configured)["admissions"]),
++        }
++    print("TWO_ELEMENT_OUTCOME=" + json.dumps(outcome, sort_keys=True))
++    print("TWO_ELEMENT_FIRST_ADMISSIONS=" + json.dumps(first_content["admissions"], sort_keys=True))
++    print("TWO_ELEMENT_ROWS_UNCHANGED=" + str(configured.rows == first_rows))
++    if outcome["kind"] == "refused":
++        assert configured.rows == first_rows
++        assert all(configured.media.objects[("project", descriptor["snapshot_object"]["object_id"])] == first_snapshot_bytes[descriptor["id"]]
++                   for descriptor in first_content["admissions"])
++    else:
++        identities = [(admission["id"], admission["kind"], admission["revision"])
++                      for admission in outcome["admissions"]]
++        print("TWO_ELEMENT_DUPLICATE_IDENTITIES=" + str(len(identities) - len(set(identities))))
++        assert len(identities) != len(set(identities))
++        try:
++            packs.resolve_admitted_element("realm", "project", first_refs["reveal"])
++        except ValueError as exc:
++            print("TWO_ELEMENT_OLD_A_RESOLUTION=" + str(exc))
++        else:
++            raise AssertionError("old A unexpectedly resolved despite duplicate identity")
++
++    # One-element pack: manifest metadata changes, element revision does not.
++    one_root, _, _ = test_project_packs.seed(project="one")
++    one_first = packs.admit_project_pack("realm", "one")
++    one_row = configured.rows[("one", next(identity for project, identity in configured.rows if project == "one"))]
++    one_before = copy.deepcopy(one_row)
++    one_manifest = yaml.safe_load((one_root / "pack.yaml").read_text())
++    one_manifest["description"] += " metadata-only"
++    (one_root / "pack.yaml").write_text(yaml.safe_dump(one_manifest))
++    assert packs.inspect_project_pack("realm", "one")["elements"][0]["descriptor"]["revision"] == one_first["elements"][0]["descriptor"]["revision"]
++    try:
++        packs.admit_project_pack("realm", "one")
++    except ValueError as exc:
++        one_outcome = {"kind": "refused", "message": str(exc)}
++    else:
++        one_outcome = {"kind": "admitted", "admissions": copy.deepcopy(configured.rows[("one", one_row["document_id"])] ["content"]["admissions"])}
++    print("ONE_ELEMENT_OUTCOME=" + json.dumps(one_outcome, sort_keys=True))
++    print("ONE_ELEMENT_ROW_UNCHANGED=" + str(configured.rows[("one", one_row["document_id"])] == one_before))
++    if one_outcome["kind"] == "admitted":
++        identities = [(admission["id"], admission["kind"], admission["revision"])
++                      for admission in one_outcome["admissions"]]
++        print("ONE_ELEMENT_DUPLICATE_IDENTITIES=" + str(len(identities) - len(set(identities))))
++        assert len(identities) != len(set(identities))
++        try:
++            packs.resolve_admitted_element("realm", "one", {
++                key: one_first["elements"][0]["descriptor"][key]
++                for key in ("packId", "id", "kind", "revision")
++            })
++        except ValueError as exc:
++            print("ONE_ELEMENT_OLD_RESOLUTION=" + str(exc))
++        else:
++            raise AssertionError("old element unexpectedly resolved despite duplicate identity")
++
++
++def test_candidate_retains_old_a_and_adds_new_b_without_duplicate_identity(configured):
++    from tests.core.test_project_pack_inputs import capture_input
++
++    root, _, manifest = test_project_packs.seed()
++    b_directory = add_second_element(root, manifest)
++    first = packs.admit_project_pack("realm", "project")
++    row_key = next(key for key in configured.rows if key[0] == "project")
++    old_row = copy.deepcopy(configured.rows[row_key])
++    old_content = old_row["content"]
++    old_records = {item["descriptor"]["id"]: item for item in first["elements"]}
++    old_inputs = {item_id: capture_input(configured, record)
++                  for item_id, record in old_records.items()}
++    (b_directory / "component.tsx").write_text((b_directory / "component.tsx").read_text() + "\n// B only\n")
++    entry, resources = packs._resources(root)
++    files = {name: (root / name).read_bytes() for name in resources}
++    closure = [{"path": name, "sha256": hashlib.sha256(raw).hexdigest()}
++               for name, raw in sorted(files.items())]
++    new_digest = packs._closure_digest(closure)
++    definitions = packs._definitions(root, entry)
++    new_records = []
++    for definition, descriptor_path in definitions:
++        descriptor = packs._element_descriptor(definition)
++        component = definition.component.relative_to(root).as_posix()
++        descriptor["componentPath"] = f"external/{entry.definition.id}/{new_digest}/{component}"
++        new_records.append({"projectId": "project", "descriptor": descriptor,
++                            "authoring": {"packRoot": str(root), "descriptorPath": str(descriptor_path),
++                                           "componentPath": str(definition.component), "status": "admitted"},
++                            "snapshot": {"root": str(root), "componentPath": component,
++                                         "files": [{"path": item["path"], "sha256": item["sha256"]} for item in closure]}})
++    new_b = next(item for item in new_records if item["descriptor"]["id"] == "fade")
++    old_admissions = copy.deepcopy(old_content["admissions"])
++    new_admission = {key: new_b["descriptor"][key] for key in ("id", "kind", "revision")}
++    new_admission["snapshot_digest"] = new_digest
++    candidate_content = {**old_content, "admissions": [*old_admissions, new_admission]}
++    candidate = packs._index("realm", "project", old_row["document_id"], old_row["version"] + 1,
++                             candidate_content, new_records)
++    receipt = packs._verify_build(candidate, Path(first["manifestPath"]))
++    receipt_bytes = (json.dumps(receipt, indent=2, sort_keys=True) + "\n").encode()
++    portable = packs._portable_snapshot(files, receipt_bytes)
++    new_object = packs._ingest_snapshot(configured.media and type("Client", (), {"media": configured.media})(), "project", portable)
++    new_admission["snapshot_object"] = new_object
++    candidate_content = {**old_content, "admissions": [*old_admissions, new_admission]}
++    verified = {"document": {**old_row, "version": old_row["version"] + 1,
++                             "content": candidate_content, "project_id": "project"},
++                "pin": {"document_id": old_row["document_id"], "version": old_row["version"] + 1,
++                        "content_digest": packs._json_digest(candidate_content)}}
++    snapshot = {**new_object, "bytes_base64": base64.b64encode(portable).decode()}
++    new_ref = {key: new_b["descriptor"][key] for key in ("packId", "id", "kind", "revision")}
++    assert packs.admitted_element_snapshot_descriptor("realm", "project", new_ref, verified, snapshot)
++    old_ref = {key: old_records["reveal"]["descriptor"][key] for key in ("packId", "id", "kind", "revision")}
++    old_reference, old_verified, old_files, old_receipt = old_inputs["reveal"]
++    old_snapshot = next(admission for admission in old_content["admissions"] if admission["id"] == "reveal")
++    old_object = old_snapshot["snapshot_object"]
++    old_bytes = configured.media.objects[("project", old_object["object_id"])]
++    old_payload = {**old_object, "bytes_base64": base64.b64encode(old_bytes).decode()}
++    assert packs.admitted_element_snapshot_descriptor("realm", "project", old_ref, old_verified, old_payload)
++    identities = [(admission["id"], admission["kind"], admission["revision"])
++                  for admission in candidate_content["admissions"]]
++    assert len(identities) == len(set(identities))
++    print("CANDIDATE_LOSSLESS=True")
++    print("CANDIDATE_IDENTITIES=" + str(identities))
+
+exec
+/bin/bash -lc "git status --short --branch && git diff --check && printf '\\n--- required artifacts ---\\n' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/commit-msg.txt && printf '\\n--- coordination section ---\\n' && sed -n '760,825p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md" in /home/user/work/wt/agt-m2-pack-multi-admission-audit
+ succeeded in 429ms:
+## tl/agt-m2-pack-multi-admission-audit
+
+--- required artifacts ---
+-rw-r--r-- 1 root root  224 Oct 20 01:23 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/commit-msg
+-rw-r--r-- 1 root root  224 Oct 20 01:23 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/commit-msg.txt
+-rw-r--r-- 1 root root 5064 Oct 20 01:23 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/notes/report.md
+
+--- coordination section ---
+## Agent pack admission audit — multi-element preservation probe (2026-10-20)
+
+Worker: `agt-m2-pack-multi-admission-audit`, read-only product audit at Agent
+`b2b51c4a` (the portable-snapshot commit). The executable probe is
+`/tmp/pack_multi_admission_probe.py`; it uses the existing
+`tests.core.test_project_packs.seed`, configured in-memory Documents/Media
+client, and the normal build verifier. It adds a real second element, admits
+both, edits only B, and exercises the one-element manifest-metadata case.
+
+### Observed old/new behavior
+
+- Current `b2b51c4a`, two elements: A's revision remains unchanged and B's
+  revision changes. Re-admission refuses with
+  `Selected pack admission closure changed; cannot replace immutable snapshot`.
+  The Document row, old admission list, and old snapshot bytes remain
+  unchanged. The one-element manifest-only edit (same element revision) gets
+  the same refusal and also leaves its row unchanged.
+- Untouched Agent M1/integration `f6fbe741` admits the changed pack, but
+  appends a second row for unchanged A with the same `(id, kind, revision)`
+  and a new `snapshot_digest`. In the two-element probe the document has four
+  rows with one duplicate identity; resolving old A then refuses
+  `Element owner/revision is not admitted for this project`. The one-element
+  metadata-only probe likewise admits two rows for the same identity and exact
+  resolution refuses. This is the pre-port duplicate-identity bug, not a
+  reason to relax the current immutable-mismatch refusal.
+
+### Lossless candidate proven
+
+The same probe constructs, without publishing, a candidate new Document
+version using the real verifier and portable snapshot serializer: retain A's
+old admission and object unchanged; retain B's old admission; append only B's
+new revision with a new portable **full-pack** snapshot object (the resolver
+requires `pack.yaml`, the complete declared closure, and that object's real
+build receipt). The pure resolver accepts both the retained old A object and
+new B object, and the admission identities are unique. Output:
+`CANDIDATE_LOSSLESS=True`.
+
+### Minimal fix recommendation
+
+Admission should classify each current exact `(id, kind, revision)` separately:
+
+1. If that exact tuple already exists and its closure digest differs, refuse
+   exactly as current code does. This covers manifest-only metadata changes and
+   prevents silent rebinding of a known immutable pin.
+2. If the tuple already exists with the same closure, retain its complete
+   admission/object/receipt byte-for-byte and do not validate it against the
+   new whole-pack closure.
+3. If the tuple is new (B's changed revision), append one new admission and
+   ingest one new full-pack portable snapshot built and verified from the new
+   closure. Keep older revisions in the same Document history. Never append a
+   second row for an existing tuple.
+
+This is a narrow per-revision admission/index change; it requires no schema,
+Runtime authority, SQL/CAS shortcut, or duplicate host pair. It must preserve
+the existing immutable descriptor/object and history bytes, and must continue
+to fail closed on duplicate existing tuples. No implementation is made by this
+audit; M2 integration remains held until the PLAN M1 record.
+
+codex
+## Result
+
+Found a real multi-admission preservation gap.
+
+- Current `b2b51c4a`: rejects B-only re-admission because the whole-pack closure changed, while preserving A’s old document/snapshot bytes.
+- Untouched M1: admits but duplicates A’s `(id, kind, revision)`; resolving old A then fails. The one-element metadata-only case has the same duplicate-identity bug.
+- A candidate retaining A’s old snapshot and adding B’s new full-pack snapshot resolved losslessly with unique identities.
+
+Tests:
+
+```text
+/home/user/work/venv-agent/bin/python -m pytest -q \
+  tests/core/test_project_packs.py \
+  tests/core/test_project_pack_snapshots.py \
+  tests/core/test_project_pack_inputs.py
+83 passed in 24.27s
+```
+
+No full suite, install, network, Runtime pair, browser, merge, or product changes were performed. Worktree remains clean.
+
+Reports and messages:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/notes/report.md)
+- [runtime-coordination.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md)
+- [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/commit-msg)
+- [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/commit-msg.txt)
+tokens used
+176,328
+## Result
+
+Found a real multi-admission preservation gap.
+
+- Current `b2b51c4a`: rejects B-only re-admission because the whole-pack closure changed, while preserving A’s old document/snapshot bytes.
+- Untouched M1: admits but duplicates A’s `(id, kind, revision)`; resolving old A then fails. The one-element metadata-only case has the same duplicate-identity bug.
+- A candidate retaining A’s old snapshot and adding B’s new full-pack snapshot resolved losslessly with unique identities.
+
+Tests:
+
+```text
+/home/user/work/venv-agent/bin/python -m pytest -q \
+  tests/core/test_project_packs.py \
+  tests/core/test_project_pack_snapshots.py \
+  tests/core/test_project_pack_inputs.py
+83 passed in 24.27s
+```
+
+No full suite, install, network, Runtime pair, browser, merge, or product changes were performed. Worktree remains clean.
+
+Reports and messages:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/notes/report.md)
+- [runtime-coordination.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md)
+- [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/commit-msg)
+- [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-multi-admission-audit/commit-msg.txt)

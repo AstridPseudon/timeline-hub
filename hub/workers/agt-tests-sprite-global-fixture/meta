@@ -1,0 +1,9 @@
+name=agt-tests-sprite-global-fixture
+repo=agent
+base=tl/agt-tests-full10744-sprite-setup
+base_sha=2394b60a
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-tests-sprite-global-fixture
+started=2026-10-20T17:59:37Z

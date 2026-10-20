@@ -1,0 +1,400 @@
++                          if row.get("occurrence_id") == oid and row.get("shot_id") == shot_id), None)
++        shot = candidate.get("shots", {}).get(shot_id, {})
++        internal = shot.get("internal_timeline", {})
++        tracks = internal.get("tracks")
++        registry = internal.get("registry", {}).get("assets") if isinstance(internal.get("registry"), Mapping) else None
++        clips = internal.get("clips")
++        if (not isinstance(placement, Mapping) or not isinstance(tracks, list)
++                or not isinstance(registry, dict) or not isinstance(clips, list)):
++            return False
++        clip_id = item.get("clip_id")
++        if not isinstance(clip_id, str) or any(clip.get("id") == clip_id for clip in clips):
++            return False
++        if sum(track.get("kind") == "audio" for track in tracks) > 1:
++            return False
++        size = output.get("size", output.get("bytes"))
++        duration = item.get("duration_seconds")
++        if (type(size) is not int or size <= 0 or not isinstance(duration, (int, float))
++                or isinstance(duration, bool) or not math.isfinite(duration) or duration <= 0):
++            return False
++        if _script_binding_pin(candidate, scripts, oid, shot_id) is None:
++            return False
++    return producer is not None
++
++
+ def _script_binding_pin(candidate: Mapping, scripts: Mapping, occurrence_id: str,
+                         shot_id: str) -> tuple[dict, dict] | None:
+     """Find only a registered, frozen UTF-8 script binding that captures cleanly."""
+@@ -247,20 +301,10 @@
+                 or manifest.get("audio_sha256") != audio_id.removeprefix("sha256:")
+                 or manifest.get("text_sha256") != digest(text).removeprefix("sha256:")):
+             raise VoiceoverSyncError("Managed speech provenance failed hash verification")
+-        provenance = audio_row.get("provenance")
+-        if not isinstance(provenance, Mapping):
+-            provenance = audio_row.get("producer")
+-        if not isinstance(provenance, Mapping):
+-            provenance = {key: audio_row.get(key) for key in _PRODUCER_FIELDS}
+-        selection = audio_row.get("selection")
+-        if not isinstance(selection, Mapping):
+-            selection = {key: audio_row.get(key) for key in _MEDIA_SELECTION_FIELDS}
+         return {"text": manifest["text"], "settings": manifest["settings"],
+                 "audio_media_id": audio_id, "duration_seconds": manifest["duration_seconds"],
+                 "run_id": result.run_id, "task_id": result.kernel_task_id,
+-                "project_id": project, "output": {**dict(audio_row),
+-                "selection": dict(selection), "provenance": dict(provenance),
+-                "object_id": audio_id}}
++                "project_id": project, "output": dict(audio_row)}
+     return synthesize
+ 
+ 
+diff --git a/tests/packs/video_editing/test_draft_voiceover.py b/tests/packs/video_editing/test_draft_voiceover.py
+index 2adaccaaef71dee0f7034c3a494f62525197c232..c88a4f7235cd8b01376969234d52a4666345b367
+--- a/tests/packs/video_editing/test_draft_voiceover.py
++++ b/tests/packs/video_editing/test_draft_voiceover.py
+@@ -200,113 +200,14 @@
+     bound=Bound(); calls=[0]
+     def opened(*args,**kwargs):
+         calls[0]+=1
+-        return {'summary':{'head_revision_id':'h' if calls[0]==1 else current,
+-                            'head_publication_id':'pub0'}}
++        return {'summary':{'head_revision_id':'h' if calls[0]==1 else current}}
+     client=SimpleNamespace(endpoint='http://localhost:8787', media=Media(),
+         projects=SimpleNamespace(show=lambda *a:{'project_id':'p'}),
+         timelines=SimpleNamespace(open_composition=opened,resolve_scope=lambda *a:{'project_id':'p','timeline_id':'t'},script=lambda *a,**k:s),
+         open_authoring_target=lambda target:bound)
+     return client,bound
+-
+-
+-def enable_known_requester(monkeypatch, *, fail=False):
+-    producer = {'task_id': 'speech-task', 'attempt_id': 'speech-attempt',
+-                'executor_id': 'speech-worker', 'fence': 1, 'runtime_epoch': 1}
+-    command = {'schema_version': 1, 'op': 'track.create', 'version': '1',
+-               'select': 'occurrence:o1', 'args': {'row': {'id': 'voice', 'kind': 'audio'}}}
+-    monkeypatch.setattr(vo, '_capture_voiceover_commands', lambda *args: ([command], [], producer))
+-    if fail:
+-        def refused(*args):
+-            raise RuntimeError('CAS conflict')
+-        monkeypatch.setattr(vo, '_commit_voiceover_proposal', refused)
+-    else:
+-        monkeypatch.setattr(vo, '_commit_voiceover_proposal',
+-                            lambda client, proposal: {'publication': {'head': 'new'}, 'proposal': proposal})
+-
+-
+-def known_capture_case(*, selection=True, media_type='audio/wav', text_provenance='registered_pin',
+-                       text_mime='text/plain; charset=utf-8'):
+-    from astrid.sdk.timeline.commit import bundle_from_document
+-    from tests.editing_conformance.test_recipe_occurrence_media import inputs
+-
+-    document, *_ = inputs('audio')
+-    candidate = bundle_from_document(document)
+-    candidate['placements'] = candidate['placements'][:1]
+-    placement = candidate['placements'][0]
+-    occurrence_id, shot_id = placement['occurrence_id'], placement['shot_id']
+-    shot = candidate['shots'][shot_id]
+-    shot['internal_timeline']['tracks'] = []
+-    shot['internal_timeline']['clips'] = []
+-    shot['internal_timeline']['registry']['assets'] = {}
+-    text = 'New voiceover'
+-    text_id = vo.digest(text)
+-    shot['payload']['text_bindings'] = [{
+-        'kind': 'voiceover_script', 'slot': None, 'media_id': text_id,
+-        'content_hash': text_id, 'byte_size': len(text.encode()), 'mime_type': text_mime,
+-    }]
+-    scripts = {'occurrences': [{
+-        'occurrence_id': occurrence_id, 'status': 'present', 'text': text,
+-        'bindings': [{'media_id': text_id, 'content_hash': text_id,
+-                      'byte_size': len(text.encode()), 'provenance': text_provenance}],
+-    }]}
+-    selected = {
+-        'asset': 'voice', 'generation_id': 'generation-new', 'variant_id': 'variant-new',
+-        'object_id': NEW, 'catalog_digest': 'sha256:' + 'b' * 64,
+-    }
+-    producer = {'task_id': 'speech-task', 'attempt_id': 'speech-attempt',
+-                'executor_id': 'speech-worker', 'fence': 1, 'runtime_epoch': 1}
+-    output = {**selected, 'selection': selected, 'provenance': producer,
+-              'media_type': media_type, 'size': 1234, 'project_id': candidate['project_id']}
+-    if not selection:
+-        output['selection'] = {key: selected[key] for key in selected if key != 'variant_id'}
+-    generated = [{'occurrence_id': occurrence_id, 'shot_id': shot_id,
+-                  'clip_id': 'draft-voiceover-' + occurrence_id,
+-                  'duration_seconds': 4, 'project_id': candidate['project_id'], 'output': output}]
+-    return candidate, scripts, generated, producer, selected
+ 
+ 
+-def test_known_voiceover_capture_orders_native_commands_and_preserves_exact_pins():
+-    candidate, scripts, generated, producer, selected = known_capture_case()
+-    commands, gaps, actual_producer = vo._capture_voiceover_commands(candidate, scripts, generated)
+-
+-    assert not gaps and actual_producer == producer
+-    assert [command['op'] for command in commands] == [
+-        'track.create', 'occurrence.add-media', 'text-binding.set']
+-    media = commands[1]['args']['media']
+-    assert media == selected
+-    assert set(media) == {'asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'}
+-    assert commands[1]['args']['row'] == {
+-        'id': 'draft-voiceover-occ-a', 'clipType': 'media', 'asset': 'voice',
+-        'track': 'draft-voiceover-occ-a', 'at': 0, 'from': 0, 'to': 4, 'hold': 4,
+-    }
+-    assert commands[2]['args']['binding'] == {'kind': 'voiceover_script', 'slot': None}
+-    assert commands[2]['args']['text'] == {
+-        'object_id': vo.digest('New voiceover'), 'digest': vo.digest('New voiceover'),
+-        'size': len('New voiceover'.encode()), 'media_type': 'text/plain; charset=utf-8',
+-    }
+-    proposal = vo._voiceover_proposal(producer, candidate, 'pub-1', commands)
+-    assert set(proposal) == {
+-        'schema_version', 'producer', 'admitted_target', 'commands', 'rationale', 'proposal_digest'}
+-    assert proposal['admitted_target']['base_publication_id'] == 'pub-1'
+-
+-
+-@pytest.mark.parametrize('case', [
+-    {'selection': False},
+-    {'media_type': 'audio/mp3'},
+-    {'text_provenance': 'legacy_unregistered_pin'},
+-    {'text_mime': 'text/plain'},
+-])
+-def test_known_voiceover_capture_keeps_unsettled_media_or_text_open(case):
+-    candidate, scripts, generated, _producer, _selected = known_capture_case(**case)
+-    commands, gaps, _actual_producer = vo._capture_voiceover_commands(candidate, scripts, generated)
+-
+-    assert commands == []
+-    if case.get('text_provenance', 'registered_pin') != 'registered_pin' or case.get('text_mime'):
+-        assert any(gap['capability'] == 'text-binding.set' for gap in gaps)
+-    else:
+-        assert any(gap['capability'] == 'settled voiceover variant' for gap in gaps)
+-
+-
+ def test_coordinator_noop_and_plan_do_not_synthesize_or_publish(monkeypatch):
+     c,s=fixture();client,bound=coordinator_client(c,s)
+     monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:pytest.fail('No synthesis'))
+@@ -327,28 +228,16 @@
+     client,bound=coordinator_client(c,s,fail_publish=True)
+     with pytest.raises(RuntimeError,match='CAS conflict'):
+         vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
+-    assert not bound.published
+-    c,s=fixture(audio=False);s['occurrences'][0]['text']='New'
+-    client,bound=coordinator_client(c,s)
+-    monkeypatch.setattr(vo, 'runtime_synthesizer',
+-                        lambda *a: lambda text, settings: {**synthesis(text, settings), 'duration_seconds': 2})
+-    enable_known_requester(monkeypatch, fail=True)
+-    with pytest.raises(RuntimeError,match='CAS conflict'):
+-        vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
+     assert not bound.published
+ 
+ 
+ def test_coordinator_publishes_once_with_provenance(monkeypatch):
+-    c,s=fixture(audio=False);s['occurrences'][0]['text']='New'
+-    monkeypatch.setattr(vo, 'runtime_synthesizer',
+-                        lambda *a: lambda text, settings: {**synthesis(text, settings), 'duration_seconds': 2})
++    c,s=fixture();s['occurrences'][0]['text']='New'
++    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:synthesis)
+     client,bound=coordinator_client(c,s)
+-    enable_known_requester(monkeypatch)
+-    result=vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
+-    assert result['published'] and not bound.published
++    result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
++    assert result['published'] and bound.published
+     assert result['generated'][0]['text']=='New'
+-    assert result['proposal']['admitted_target']['base_publication_id']=='pub0'
+-    assert result['proposal']['producer']['task_id']=='speech-task'
+ 
+ 
+ def test_coordinator_regenerates_missing_fresh_audio_and_surfaces_other_read_errors(monkeypatch):
+@@ -358,7 +247,7 @@
+         error=RuntimeError('missing');error.code='not_found';raise error
+     client.media.read_bytes=missing
+     result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
+-    assert result['published'] and len(result['generated'])==2 and bound.published
++    assert result['published'] and len(result['generated'])==2
+ 
+     c,s=fixture();client,bound=coordinator_client(c,s)
+     def forbidden(_object_id):
+diff --git a/tests/packs/video_editing/test_draft_voiceover_proposal.py b/tests/packs/video_editing/test_draft_voiceover_proposal.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..c16885dd2c3105b1a6b9a743edea951dfd26833b
+--- /dev/null
++++ b/tests/packs/video_editing/test_draft_voiceover_proposal.py
+@@ -0,0 +1,78 @@
++from __future__ import annotations
++
++import pytest
++
++from astrid.packs.video_editing.shared import draft_voiceover as voiceover
++from astrid.packs.video_editing.shared import draft_voiceover_proposal as proposal
++from tests.packs.video_editing.test_draft_voiceover import (
++    coordinator_client,
++    fixture,
++    synthesis,
++)
++
++
++def _normal_speech_output() -> dict:
++    return {
++        "association_id": "association-speech",
++        "task_id": "speech-task",
++        "attempt_id": "speech-attempt",
++        "output_port": "generated_audio",
++        "ordinal": 0,
++        "role": "result",
++        "filename": "speech.wav",
++        "media_type": "audio/wav",
++        "size": 1234,
++        "digest": "sha256:" + "a" * 64,
++        "durability": "durable",
++    }
++
++
++def test_normal_registered_speech_output_does_not_invent_selection_or_producer_pin():
++    result = {
++        "project_id": "p",
++        "task_id": "speech-task",
++        "attempt_id": "speech-attempt",
++        "output": _normal_speech_output(),
++    }
++
++    assert proposal._completed_voiceover_output(result) is None
++
++
++def test_native_voiceover_ready_requires_real_output_and_admitted_head():
++    candidate = {
++        "placements": [],
++        "shots": {},
++    }
++    generated = [{
++        "occurrence_id": "o1",
++        "shot_id": "s1",
++        "clip_id": "draft-vo-o1",
++        "duration_seconds": 1,
++        "output": _normal_speech_output(),
++    }]
++
++    assert not proposal._native_voiceover_ready(candidate, {}, generated, "pub-1")
++    assert not proposal._native_voiceover_ready(candidate, {}, generated, None)
++
++
++@pytest.mark.parametrize("timing_policy", ["preserve", "ripple"])
++def test_unqualified_new_child_keeps_legacy_publish_route(monkeypatch, timing_policy):
++    candidate, scripts = fixture(audio=False)
++    scripts["occurrences"][0]["text"] = "New"
++    client, bound = coordinator_client(candidate, scripts)
++    monkeypatch.setattr(
++        voiceover,
++        "runtime_synthesizer",
++        lambda *_args: lambda text, settings: {
++            **synthesis(text, settings),
++            "duration_seconds": 2,
++        },
++    )
++
++    result = voiceover.sync_draft_voiceover(
++        client, "p", "t", timing_policy=timing_policy,
++    )
++
++    assert result["status"] == "published"
++    assert result["published"] and bound.published
++    assert "proposal" not in result
+
+exec
+/bin/bash -lc "test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc5-original-mode-and-output-seam/DONE && echo DONE; sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc5-original-mode-and-output-seam/report.md; printf '\\n--- status ---\\n'; git status --short; printf '\\n--- diff summary ---\\n'; git diff --stat; printf '\\n--- changed files ---\\n'; git diff --name-only; printf '\\n--- untracked ---\\n'; git ls-files --others --exclude-standard" in /home/user/work/wt/agt-m2-wc5-original-mode-and-output-seam
+ succeeded in 37ms:
+DONE
+# WC5 original-mode/output-seam repair
+
+## Completed
+
+- Restored `tests/packs/video_editing/test_draft_voiceover.py` exactly to the
+  pre-prototype `04e5737b` version, including all original fixtures and 22
+  assertions. `git diff --quiet 04e5737b -- tests/packs/video_editing/test_draft_voiceover.py`
+  passed.
+- Kept `TargetBound.publish` as the pre-capture route for existing-clip
+  regeneration and all ripple requests. Unqualified new-child preserve cases
+  also publish through that route; they are not relabelled `proposal_open`.
+- Tightened the private native seam so it cannot synthesize a five-field media
+  selection or producer pin from a normal speech artifact. Native preflight
+  now requires an explicit task/attempt-bound managed association, explicit
+  completed selection, real WAV metadata, a valid admitted publication head,
+  and the registered UTF-8 text binding. The native branch remains held on
+  the current normal speech output shape.
+- Added separate tests for the normal managed-output witness, native
+  fail-closed preflight, and preserve/ripple legacy publication behavior.
+
+## Evidence
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/video_editing/test_draft_voiceover_proposal.py tests/packs/video_editing/test_draft_voiceover.py`
+  -> **26 passed**.
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_generate_audio_tts_routing.py tests/sdk/test_invoke_settlement_and_replay.py tests/sdk/test_rrp_managed_output_consumer.py tests/sdk/test_media_handles.py`
+  -> **26 passed**.
+- `ruff check` on the changed proposal module and new tests: passed. The
+  restored `draft_voiceover.py` still has two pre-existing E702 semicolon
+  findings at its existing retime assignments; they were not changed.
+- `git diff --check` -> passed.
+
+## Decision / hold
+
+The Runtime peer response confirms the normal speech managed-output rows
+provide task/output/CAS identity but not the exact completed five-field
+project media selection plus producer attempt pin required by the native
+commands. No existing approved public/port read supplies that missing
+association for this path, and no new API/argument/carrier was authorized.
+Therefore no fabricated positive or native activation is claimed. The exact
+normal result witness is retained as an explicit managed-output row and is
+rejected by `_completed_voiceover_output` until the Runtime carrier exists.
+
+No full suite or live producer/requester qualification was run; native
+activation remains held pending the coordinated Runtime carrier and one real
+normal WAV producer/requester proof.
+
+--- status ---
+ M astrid/packs/video_editing/shared/draft_voiceover.py
+ M astrid/packs/video_editing/shared/draft_voiceover_proposal.py
+ M tests/packs/video_editing/test_draft_voiceover.py
+?? tests/packs/video_editing/test_draft_voiceover_proposal.py
+
+--- diff summary ---
+ .../packs/video_editing/shared/draft_voiceover.py  |  33 +++---
+ .../shared/draft_voiceover_proposal.py             |  72 +++++++++---
+ tests/packs/video_editing/test_draft_voiceover.py  | 123 +--------------------
+ 3 files changed, 82 insertions(+), 146 deletions(-)
+
+--- changed files ---
+astrid/packs/video_editing/shared/draft_voiceover.py
+astrid/packs/video_editing/shared/draft_voiceover_proposal.py
+tests/packs/video_editing/test_draft_voiceover.py
+
+--- untracked ---
+tests/packs/video_editing/test_draft_voiceover_proposal.py
+
+codex
+Implemented WC5 repair.
+
+- Restored all original 22 voiceover tests/fixtures exactly.
+- Preserved legacy `TargetBound.publish` for ripple, regeneration, and unqualified native cases.
+- Native activation now requires real managed output selection/producer authority; normal speech output fails closed without fabrication.
+- Added separate regression tests.
+
+Evidence:
+
+- Voiceover tests: **26 passed**
+- Adjacent SDK tests: **26 passed**
+- `git diff --check`: passed
+- No full suite run.
+- Native activation remains held pending Runtime carrier qualification.
+
+Report, commit message, and `DONE` were written under the assigned worker directory.
+tokens used
+220,834
+Implemented WC5 repair.
+
+- Restored all original 22 voiceover tests/fixtures exactly.
+- Preserved legacy `TargetBound.publish` for ripple, regeneration, and unqualified native cases.
+- Native activation now requires real managed output selection/producer authority; normal speech output fails closed without fabrication.
+- Added separate regression tests.
+
+Evidence:
+
+- Voiceover tests: **26 passed**
+- Adjacent SDK tests: **26 passed**
+- `git diff --check`: passed
+- No full suite run.
+- Native activation remains held pending Runtime carrier qualification.
+
+Report, commit message, and `DONE` were written under the assigned worker directory.

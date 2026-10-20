@@ -1,0 +1,400 @@
+    project_id = _string(parent.get("project_id"), "parent_revision.project_id")
+    timeline_id = _string(parent.get("timeline_id"), "parent_revision.timeline_id")
+    revision_id = _string(parent.get("revision_id"), "parent_revision.revision_id")
+    payload = _mapping(parent.get("payload"), "parent_revision.payload")
+    parent_digest = _verify_digest(
+        payload, parent.get("content_digest"), "parent_revision.content_digest"
+    )
+    occurrences = _sequence(payload.get("occurrences"), "parent_revision.payload.occurrences")
+    shot_index = _records_by_identity(shot_revisions, identity="revision_id", path="shot_revisions")
+    internal_index = _records_by_identity(
+        internal_timeline_revisions,
+        identity="revision_id",
+        path="internal_timeline_revisions",
+    )
+
+    source_counts = Counter(
+        _string(
+            _mapping(row, f"occurrences[{index}]").get("shot_id"), f"occurrences[{index}].shot_id"
+        )
+        for index, row in enumerate(occurrences)
+    )
+    candidate_parent = _copy(dict(payload))
+    candidate_parent.pop("occurrences", None)
+    placements: list[dict[str, Any]] = []
+    base_placements: dict[str, dict[str, Any]] = {}
+    shots: dict[str, dict[str, Any]] = {}
+    shot_sources: dict[str, dict[str, Any]] = {}
+    seen_occurrences: set[str] = set()
+    seen_authoring_shots: set[str] = set()
+    seen_items: set[str] = set()
+
+    for ordinal, raw_occurrence in enumerate(occurrences):
+        occurrence = _copy(dict(_mapping(raw_occurrence, f"occurrences[{ordinal}]")))
+        occurrence_id = _string(
+            occurrence.get("occurrence_id"), f"occurrences[{ordinal}].occurrence_id"
+        )
+        if occurrence_id in seen_occurrences:
+            raise AuthoringBundleError(f"duplicate occurrence identity {occurrence_id!r}")
+        seen_occurrences.add(occurrence_id)
+        source_shot_id = _string(occurrence.get("shot_id"), f"occurrences[{ordinal}].shot_id")
+        source_revision_id = _string(
+            occurrence.get("shot_revision_id"), f"occurrences[{ordinal}].shot_revision_id"
+        )
+        shot = shot_index.get(source_revision_id)
+        if (
+            shot is None
+            or shot.get("shot_id") != source_shot_id
+            or shot.get("project_id") != project_id
+        ):
+            raise AuthoringBundleError(
+                f"occurrence {occurrence_id!r} does not resolve to its pinned shot revision"
+            )
+        shot_payload = _mapping(
+            shot.get("payload"), f"shot_revisions[{source_revision_id}].payload"
+        )
+        shot_digest = _verify_digest(
+            shot_payload,
+            shot.get("content_digest"),
+            f"shot_revisions[{source_revision_id}].content_digest",
+        )
+        internal_revision_id = _string(
+            shot.get(
+                "internal_timeline_revision_id", shot_payload.get("internal_timeline_revision_id")
+            ),
+            f"shot_revisions[{source_revision_id}].internal_timeline_revision_id",
+        )
+        internal = internal_index.get(internal_revision_id)
+        if internal is None or internal.get("project_id") != project_id:
+            raise AuthoringBundleError(
+                f"shot revision {source_revision_id!r} is missing its pinned internal timeline"
+            )
+        internal_payload = _mapping(
+            internal.get("payload"), f"internal_timeline_revisions[{internal_revision_id}].payload"
+        )
+        internal_digest = _verify_digest(
+            internal_payload,
+            internal.get("content_digest"),
+            f"internal_timeline_revisions[{internal_revision_id}].content_digest",
+        )
+        internal_timeline_id = _string(
+            internal.get("timeline_id"),
+            f"internal_timeline_revisions[{internal_revision_id}].timeline_id",
+        )
+        authoring_shot_id = _authoring_shot_id(
+            project_id,
+            timeline_id,
+            occurrence_id,
+            source_shot_id,
+            shared=source_counts[source_shot_id] > 1,
+        )
+        if authoring_shot_id in seen_authoring_shots:
+            raise AuthoringBundleError(f"independent shot identity collision {authoring_shot_id!r}")
+        seen_authoring_shots.add(authoring_shot_id)
+        copied_shot, item_id_map = _copy_shot_for_placement(
+            shot_payload,
+            project_id=project_id,
+            timeline_id=timeline_id,
+            occurrence_id=occurrence_id,
+            authoring_shot_id=authoring_shot_id,
+            source_shot_id=source_shot_id,
+        )
+        for item in copied_shot.get("items", []):
+            item_id = _string(item.get("item_id", item.get("id")), "shot payload item identity")
+            if item_id in seen_items:
+                raise AuthoringBundleError(f"authoring shot item identity collision {item_id!r}")
+            seen_items.add(item_id)
+        copied_internal = _copy(dict(internal_payload))
+        source = {
+            "shot_id": source_shot_id,
+            "revision_id": source_revision_id,
+            "content_digest": shot_digest,
+            "internal_timeline_id": internal_timeline_id,
+            "internal_timeline_revision_id": internal_revision_id,
+            "internal_timeline_content_digest": internal_digest,
+            "item_id_map": item_id_map,
+        }
+        shots[authoring_shot_id] = {
+            "shot_id": authoring_shot_id,
+            "base_payload": _copy(copied_shot),
+            "payload": _copy(copied_shot),
+            "base_internal_timeline": _copy(copied_internal),
+            "internal_timeline": _copy(copied_internal),
+        }
+        shot_sources[authoring_shot_id] = source
+        occurrence.pop("shot_revision_id", None)
+        occurrence.pop("revision_id", None)
+        occurrence["shot_id"] = authoring_shot_id
+        placements.append(occurrence)
+        base_placements[occurrence_id] = _copy(occurrence)
+
+    return {
+        "schema_version": AUTHORING_BUNDLE_SCHEMA_VERSION,
+        "project_id": project_id,
+        "timeline_id": timeline_id,
+        "base_parent": {"revision_id": revision_id, "content_digest": parent_digest},
+        "base_parent_payload": _copy(candidate_parent),
+        "base_placements": _copy(base_placements),
+        "parent": _copy(candidate_parent),
+        "placements": placements,
+        "shots": shots,
+        "source_mapping": {
+            "placements": base_placements,
+            "shots": shot_sources,
+        },
+    }
+
+
+def _changed_media_selector(base: Mapping[str, Any], candidate: Mapping[str, Any]) -> bool:
+    return any(base.get(key) != candidate.get(key) for key in _MEDIA_SELECTOR_KEYS)
+
+
+def _media_identity(value: Any, path: str) -> str:
+    if not isinstance(value, str) or not (
+        _DIGEST_RE.fullmatch(value) or _BARE_DIGEST_RE.fullmatch(value)
+    ):
+        raise AuthoringBundleError(f"{path} must be a SHA-256 media identity")
+    # Runtime accepts both historical bare object IDs and canonical wire IDs.
+    # Normalize only comparison/dependency identities; authored bytes remain
+    # untouched in the publication payload.
+    return value if value.startswith("sha256:") else "sha256:" + value
+
+--- artifacts diff after generated check preview ---
+cli-surface.json is stale; run `python scripts/gen_cli_surface.py`:
+  timelines undo: changed
+artifacts.json is current
+
+exec
+/bin/bash -lc 'ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-read-fixtures 2>/dev/null || true; git status --short' in /home/user/work/wt/agt-m1-read-fixtures
+ succeeded in 265ms:
+total 240
+drwxr-xr-x   2 root root   4096 Oct 19 20:54 .
+drwxr-xr-x 109 root root   4096 Oct 19 20:54 ..
+-rw-r--r--   1 root root   2283 Oct 19 20:54 brief.md
+-rw-r--r--   1 root root 226743 Oct 19 20:55 log.txt
+-rw-r--r--   1 root root    193 Oct 19 20:54 meta
+-rw-r--r--   1 root root      0 Oct 19 20:54 running
+
+codex
+The readback contract is explicit: `timelines show` trusts only `bundle.base_parent.revision_id`; envelope `revision_id`/head fields are intentionally insufficient. The neighboring show fixtures use that embedded immutable identity. I’ll update only the cut-test fake opener to deep-copy its selected bundle and attach the exact requested/default revision there, preserving all existing behavior assertions, then regenerate the CLI surface and artifact manifest only as required by their checks.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m1-read-fixtures/tests/sdk/test_timeline_cuts.py
+diff --git a/tests/sdk/test_timeline_cuts.py b/tests/sdk/test_timeline_cuts.py
+index e641308bc575e1aacae9bb86c28c82b97ebcf185..6a676568512e854dae7b9f848e2ac056d68e495f
+--- a/tests/sdk/test_timeline_cuts.py
++++ b/tests/sdk/test_timeline_cuts.py
+@@ -186,8 +186,12 @@
+     def open_bundle(self, project, ref, *, revision_id=None):
+         self.calls.append((project, ref, revision_id))
+         revision = revision_id or "head-2"
++        bundle = copy.deepcopy(self.bundles[revision])
++        # The immutable closure carries the identity of the exact parent
++        # revision it contains; envelope head metadata is not readback proof.
++        bundle.setdefault("base_parent", {})["revision_id"] = revision
+         return DomainResult.success({
+-            "bundle": self.bundles[revision], "project_id": "p-1", "timeline_id": "T1",
++            "bundle": bundle, "project_id": "p-1", "timeline_id": "T1",
+             "revision_id": revision, "head_revision_id": "head-2", "is_current_head": revision == "head-2",
+         })
+ 
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_cuts.py tests/sdk/test_timeline_show_views.py' in /home/user/work/wt/agt-m1-read-fixtures
+ succeeded in 5128ms:
+................................                                         [100%]
+32 passed in 4.54s
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py && /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check' in /home/user/work/wt/agt-m1-read-fixtures
+ exited 1 in 256ms:
+wrote cli-surface.json
+artifact manifest is stale; run `python scripts/artifact_manifest.py`:
+  cli-surface.json: changed
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python scripts/artifact_manifest.py' in /home/user/work/wt/agt-m1-read-fixtures
+ succeeded in 0ms:
+wrote artifacts.json: 161 artifacts, sha256:3c6e588b88bce5ec860b76703046d415f2dde67b1522d710dd6bb582718a4c6f
+
+codex
+The fixture repair is now passing the two timeline test files (32 passed). Regenerating the CLI surface produced the expected `timelines undo` update; the artifact check then correctly required its digest refresh, so I regenerated `artifacts.json` through the ordinary generator. I’m running the full requested acceptance set and reviewing the final diff for scope/format issues.
+exec
+/bin/bash -lc "set -o pipefail
+/home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_cuts.py tests/sdk/test_timeline_show_views.py tests/test_artifact_manifest.py
+/home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py --check
+/home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
+git diff --check
+printf '%s\\n' '--- diff stat ---'
+git diff --stat
+printf '%s\\n' '--- diff ---'
+git diff -- tests/sdk/test_timeline_cuts.py cli-surface.json artifacts.json" in /home/user/work/wt/agt-m1-read-fixtures
+ succeeded in 9550ms:
+........................................                                 [100%]
+40 passed in 7.95s
+cli-surface.json is current
+artifacts.json is current
+--- diff stat ---
+ artifacts.json                  |  4 ++--
+ cli-surface.json                | 12 ++++++++++++
+ tests/sdk/test_timeline_cuts.py |  6 +++++-
+ 3 files changed, 19 insertions(+), 3 deletions(-)
+--- diff ---
+diff --git a/artifacts.json b/artifacts.json
+index 0e255e08..dde564f7 100644
+--- a/artifacts.json
++++ b/artifacts.json
+@@ -141,7 +141,7 @@
+     "astrid/packs/video_editing/pack.yaml": "sha256:53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
+     "astrid/packs/video_editing/ui/video-editor/entry.json": "sha256:ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
+     "astrid/tools/catalog.json": "sha256:05677b1f9cd9f931c9681edee821e848f243159787e44cdc2cda2e4136fdf237",
+-    "cli-surface.json": "sha256:0fd5a4564e4497aba7ab1218dd17596e1cbf15763e8afb73fdd216079d7993e7",
++    "cli-surface.json": "sha256:90d4bdaf7cf0a947567c385ade3ca7c4d9aee34eb8a384e97ac46d8c384d09f4",
+     "remotion/public/fonts/DepartureMono-Regular.woff2": "sha256:5b4fed1daa90708aa9c6ee1190abca9dc22164a1c1def0020386e46b61038cfb",
+     "remotion/public/fonts/FONT_PROVENANCE.md": "sha256:f67cf424fcb63d4fc17e5cef0e4dbeea837aae1eb3f1eb1e081170c5822e2eec",
+     "remotion/public/fonts/Gelasio-Bold.woff2": "sha256:2fdaa469d51ef618d648e27819f10a1df08721ed2331614c3123850162cc147a",
+@@ -163,5 +163,5 @@
+     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
+   },
+   "producer": "astrid-agent",
+-  "version": "sha256:15c96844499f55f9235e2d1b6a95ac69faf9a2989ed0ecfc1d2a256620564489"
++  "version": "sha256:3c6e588b88bce5ec860b76703046d415f2dde67b1522d710dd6bb582718a4c6f"
+ }
+diff --git a/cli-surface.json b/cli-surface.json
+index cb148eb7..fac8baf3 100644
+--- a/cli-surface.json
++++ b/cli-surface.json
+@@ -2969,9 +2969,21 @@
+             "--draft": {
+               "required": false
+             },
++            "--dry-run": {
++              "required": false
++            },
++            "--idempotency-key": {
++              "required": false
++            },
++            "--json": {
++              "required": false
++            },
+             "--project": {
+               "required": false
+             },
++            "--publication": {
++              "required": false
++            },
+             "--steps": {
+               "required": false
+             }
+diff --git a/tests/sdk/test_timeline_cuts.py b/tests/sdk/test_timeline_cuts.py
+index e641308b..6a676568 100644
+--- a/tests/sdk/test_timeline_cuts.py
++++ b/tests/sdk/test_timeline_cuts.py
+@@ -186,8 +186,12 @@ class _Timelines:
+     def open_bundle(self, project, ref, *, revision_id=None):
+         self.calls.append((project, ref, revision_id))
+         revision = revision_id or "head-2"
++        bundle = copy.deepcopy(self.bundles[revision])
++        # The immutable closure carries the identity of the exact parent
++        # revision it contains; envelope head metadata is not readback proof.
++        bundle.setdefault("base_parent", {})["revision_id"] = revision
+         return DomainResult.success({
+-            "bundle": self.bundles[revision], "project_id": "p-1", "timeline_id": "T1",
++            "bundle": bundle, "project_id": "p-1", "timeline_id": "T1",
+             "revision_id": revision, "head_revision_id": "head-2", "is_current_head": revision == "head-2",
+         })
+ 
+
+codex
+Acceptance is green: 40 tests passed, both generators report current, and `git diff --check` is clean. The final diff is limited to the requested three files: one immutable-read fixture correction plus generator-derived `cli-surface.json`/`artifacts.json`; no product files or behavior assertions were changed. I’m recording the harness commit message and doing the final status check.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-read-fixtures/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-read-fixtures/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-read-fixtures/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-read-fixtures/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..220aadf61378f2e947b6a55301faf87a7547171a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-read-fixtures/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): restore immutable read fixtures
++
++Pin cut/show fixture bundles to the exact requested revision and refresh the
++generated CLI surface and artifact digest.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-read-fixtures/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-read-fixtures/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..220aadf61378f2e947b6a55301faf87a7547171a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-read-fixtures/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(timeline): restore immutable read fixtures
++
++Pin cut/show fixture bundles to the exact requested revision and refresh the
++generated CLI surface and artifact digest.
+diff --git a/tests/sdk/test_timeline_cuts.py b/tests/sdk/test_timeline_cuts.py
+index e641308bc575e1aacae9bb86c28c82b97ebcf185..6a676568512e854dae7b9f848e2ac056d68e495f
+--- a/tests/sdk/test_timeline_cuts.py
++++ b/tests/sdk/test_timeline_cuts.py
+@@ -186,8 +186,12 @@
+     def open_bundle(self, project, ref, *, revision_id=None):
+         self.calls.append((project, ref, revision_id))
+         revision = revision_id or "head-2"
++        bundle = copy.deepcopy(self.bundles[revision])
++        # The immutable closure carries the identity of the exact parent
++        # revision it contains; envelope head metadata is not readback proof.
++        bundle.setdefault("base_parent", {})["revision_id"] = revision
+         return DomainResult.success({
+-            "bundle": self.bundles[revision], "project_id": "p-1", "timeline_id": "T1",
++            "bundle": bundle, "project_id": "p-1", "timeline_id": "T1",
+             "revision_id": revision, "head_revision_id": "head-2", "is_current_head": revision == "head-2",
+         })
+ 
+
+exec
+/bin/bash -lc "git status --short --branch; printf '%s\\n' '--- changed paths ---'; git diff --name-only; printf '%s\\n' '--- commit message ---'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-read-fixtures/commit-msg" in /home/user/work/wt/agt-m1-read-fixtures
+ succeeded in 554ms:
+## tl/agt-m1-read-fixtures
+ M artifacts.json
+ M cli-surface.json
+ M tests/sdk/test_timeline_cuts.py
+--- changed paths ---
+artifacts.json
+cli-surface.json
+tests/sdk/test_timeline_cuts.py
+--- commit message ---
+test(timeline): restore immutable read fixtures
+
+Pin cut/show fixture bundles to the exact requested revision and refresh the
+generated CLI surface and artifact digest.
+
+codex
+## Done
+
+- Fixed `_Timelines.open_bundle` to carry the exact immutable `base_parent.revision_id`.
+- Regenerated `cli-surface.json` and `artifacts.json`.
+- No product code changed.
+
+## Evidence
+
+- `pytest ...`: **40 passed**
+- `scripts/gen_cli_surface.py --check`: current
+- `scripts/artifact_manifest.py --check`: current
+- `git diff --check`: clean
+
+No full/socket/browser suite was run. Commit message written to the requested worker paths.
+tokens used
+75,247
+## Done
+
+- Fixed `_Timelines.open_bundle` to carry the exact immutable `base_parent.revision_id`.
+- Regenerated `cli-surface.json` and `artifacts.json`.
+- No product code changed.
+
+## Evidence
+
+- `pytest ...`: **40 passed**
+- `scripts/gen_cli_surface.py --check`: current
+- `scripts/artifact_manifest.py --check`: current
+- `git diff --check`: clean
+
+No full/socket/browser suite was run. Commit message written to the requested worker paths.

@@ -1,0 +1,400 @@
+./tests/__pycache__
+./tests/__pycache__/__init__.cpython-313.pyc
+./tests/sdk/__pycache__
+./tests/sdk/__pycache__/test_timeline_sync.cpython-313.pyc
+./astrid/__pycache__
+./astrid/__pycache__/__init__.cpython-313.pyc
+./astrid/__pycache__/version.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__
+./astrid/core/timeline/validators/__pycache__/registry.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/timeline.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/arrangement.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/metadata.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/__init__.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/pool.cpython-313.pyc
+./astrid/core/timeline/__pycache__
+./astrid/core/timeline/__pycache__/banodoco_composer.cpython-313.pyc
+./astrid/core/timeline/__pycache__/shot_composition.cpython-313.pyc
+./astrid/core/timeline/__pycache__/kinds.cpython-313.pyc
+./astrid/core/timeline/__pycache__/banodoco_schema.cpython-313.pyc
+./astrid/core/timeline/__pycache__/moments.cpython-313.pyc
+./astrid/core/timeline/__pycache__/clip_fields.cpython-313.pyc
+./astrid/core/timeline/__pycache__/audio_curves.cpython-313.pyc
+./astrid/core/timeline/__pycache__/parent_registry.cpython-313.pyc
+./astrid/core/timeline/__pycache__/arrangement_rules.cpython-313.pyc
+./astrid/core/timeline/__pycache__/astrid_ns.cpython-313.pyc
+./astrid/core/timeline/__pycache__/music_edit.cpython-313.pyc
+./astrid/core/timeline/__pycache__/shot_composition_migration.cpython-313.pyc
+./astrid/core/timeline/__pycache__/shot_composition_projection.cpython-313.pyc
+./astrid/core/timeline/__pycache__/__init__.cpython-313.pyc
+./astrid/core/timeline/__pycache__/authoring_bundle.cpython-313.pyc
+./astrid/core/timeline/__pycache__/cuts.cpython-313.pyc
+./astrid/core/timeline/__pycache__/duration.cpython-313.pyc
+./astrid/core/receipts/__pycache__
+./astrid/core/receipts/__pycache__/contract.cpython-313.pyc
+./astrid/core/receipts/__pycache__/canonical.cpython-313.pyc
+find: ‘standard output’: Broken pipe
+find: write error
+
+--- status ---
+ M astrid/sdk/timeline/native_checkout.py
+ M tests/sdk/test_timeline_native_checkout.py
+
+exec
+/bin/bash -lc "if command -v ruff >/dev/null 2>&1; then ruff check astrid/sdk/timeline/native_checkout.py tests/sdk/test_timeline_native_checkout.py; else echo 'ruff not installed'; fi; if [ -x /home/user/work/venv-agent/bin/ruff ]; then /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/native_checkout.py tests/sdk/test_timeline_native_checkout.py; fi; git diff --check" in /home/user/work/wt/agt-m2-wc7-sdk-property-first-consumer
+ succeeded in 25ms:
+I001 [*] Import block is un-sorted or un-formatted
+  --> astrid/sdk/timeline/native_checkout.py:2:1
+   |
+ 1 |   """Bounded ordinary clip verbs over the existing durable command session."""
+ 2 | / from __future__ import annotations
+ 3 | |
+ 4 | | import copy
+ 5 | |
+ 6 | | from astrid.core.timeline import clip_fields
+ 7 | | from astrid.sdk import timeline_intent as intent
+ 8 | |
+ 9 | | from ._command_state import State, equal
+10 | | from ._common import AUDIO_KINDS, TIME_RE, TimelineEditError, _length_seconds, _r
+11 | | from ._clip_scalar_commands import capture_clip_set
+12 | | from .capture import move_intent, number, occurrence_start, rate
+13 | | from .checkout import Checkout
+14 | | from .commands import execute
+15 | | from .model import Clip, _is_formula_or_moment
+16 | | from .selection import Selection
+17 | | from .units import from_canvas
+   | |______________________________^
+help: Organize imports
+   |
+8  |
+9  + from ._clip_scalar_commands import capture_clip_set
+10 | from ._command_state import State, equal
+11 | from ._common import AUDIO_KINDS, TIME_RE, TimelineEditError, _length_seconds, _r
+   - from ._clip_scalar_commands import capture_clip_set
+12 | from .capture import move_intent, number, occurrence_start, rate
+   |
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+astrid/sdk/timeline/native_checkout.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+   |
+ 1 |   """Bounded ordinary clip verbs over the existing durable command session."""
+ 2 | / from __future__ import annotations
+ 3 | |
+ 4 | | import copy
+ 5 | |
+ 6 | | from astrid.core.timeline import clip_fields
+ 7 | | from astrid.sdk import timeline_intent as intent
+ 8 | |
+ 9 | | from ._command_state import State, equal
+10 | | from ._common import AUDIO_KINDS, TIME_RE, TimelineEditError, _length_seconds, _r
+11 | | from ._clip_scalar_commands import capture_clip_set
+12 | | from .capture import move_intent, number, occurrence_start, rate
+13 | | from .checkout import Checkout
+14 | | from .commands import execute
+15 | | from .model import Clip, _is_formula_or_moment
+16 | | from .selection import Selection
+17 | | from .units import from_canvas
+   | |______________________________^ I001
+   |
+   = help: Organize imports
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-wc7-sdk-property-first-consumer/astrid/sdk/timeline/native_checkout.py
+diff --git a/astrid/sdk/timeline/native_checkout.py b/astrid/sdk/timeline/native_checkout.py
+index 80a6232b3d18b94e01a99d7911bb03eaec12b8b3..dbb9ec1eba336af6fa4a1032765e61a2c42b5699
+--- a/astrid/sdk/timeline/native_checkout.py
++++ b/astrid/sdk/timeline/native_checkout.py
+@@ -6,6 +6,7 @@
+ from astrid.core.timeline import clip_fields
+ from astrid.sdk import timeline_intent as intent
+ 
++from ._clip_scalar_commands import capture_clip_set
+ from ._command_state import State, equal
+ from ._common import AUDIO_KINDS, TIME_RE, TimelineEditError, _length_seconds, _r
+ from .capture import move_intent, number, occurrence_start, rate
+@@ -56,7 +57,7 @@
+         if not equal(state['base'], self._basis) or not equal(state['pending'], self._pending):
+             raise TimelineEditError('attached checkout basis changed; reattach before editing')
+ 
+-    def _queue(self, command):
++    def _queue(self, command=None, *, builder=None):
+         self._unchanged_preview()
+         plans = []
+ 
+@@ -65,7 +66,8 @@
+             bundle = self.session._bundle(state)
+             if not equal(bundle, self._preview):
+                 raise TimelineEditError('attached checkout basis changed; reattach before editing')
+-            plan = execute(bundle, [command])
++            captured = builder(bundle) if builder is not None else command
++            plan = execute(bundle, [captured])
+             plans.append(plan)
+             return plan.commands
+ 
+@@ -194,6 +196,18 @@
+ 
+     def set(self, **params):
+         allow_new = params.pop('_allow_new', False)
++        if 'hold' in params:
++            # This is the one ordinary scalar carried by the current registry.
++            # Keep the first consumer deliberately narrower than the registry:
++            # parent clips only, one declared property, and no mixed PARAM edit.
++            if self.shot_id != 'parent' or set(params) != {'hold'}:
++                _held()
++            value = params['hold']
++            return self._tl._queue(
++                builder=lambda bundle: capture_clip_set(
++                    bundle, self._ref,
++                    values={} if value is None else {'hold': value},
++                    clear=[] if value is not None else ['hold']))
+         selected = self.data.get('elementRef') or self.data.get('element_ref')
+         if isinstance(selected, dict) and selected.get('packId'):
+             # Session queue currently has no exact selected-schema input reader.
+diff --git a/tests/sdk/test_timeline_native_checkout.py b/tests/sdk/test_timeline_native_checkout.py
+index 66edc5461c01796a11ac6904a806fba15d26af6e..b56980293621c4c4adb6e1b714a8df373e772051
+--- a/tests/sdk/test_timeline_native_checkout.py
++++ b/tests/sdk/test_timeline_native_checkout.py
+@@ -107,6 +107,49 @@
+     assert loaded.clip('a').params == {'text': 'café'}
+ 
+ 
++def test_parent_property_set_lost_ack_restart_exact_retry_reload_and_guarded_undo(connected):
++    tl = attached(connected)
++    tl.clip('a').set(hold=2)
++    command = pending(connected)['pending'][0]
++    assert command['op'] == 'clip.set'
++    assert command['select'] == 'parent/clip:a'
++    assert command['args'] == {'values': {'hold': 2}, 'clear': []}
++    assert command['expect']['parent/clip:a::hold'] == {'state': 'present', 'value': 1}
++
++    generated = connected[1]
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        tl.flush(idempotency_key='property-A')
++    flight = pending(connected)['flight']
++
++    # A restarted Checkout keeps the original request and base; it does not
++    # recapture the property against the accepted head after the lost ACK.
++    restarted = Checkout.attach(open_session(connected))
++    assert pending(connected)['flight'] == flight
++    accepted = restarted.flush(idempotency_key='property-A')
++    assert generated.calls[0] == generated.calls[1] == (flight['body'].encode(), 'property-A')
++    state = pending(connected)
++    assert state['base'] == {'revision_id': 'r1', 'publication_id': 'pub1'}
++    assert state['pending'] == [] and state['flight'] is None
++    assert accepted['data']['accepted_revision_id'] == 'r1'
++    assert restarted.clip('a').data['hold'] == 2
++
++    reloaded = Checkout.attach(open_session(connected))
++    undone = reloaded.undo([accepted['receipt']['receipt_id']])
++    assert undone['data']['accepted_revision_id'] == 'r2'
++    assert Checkout.attach(open_session(connected)).clip('a').data['hold'] == 1
++
++
++def test_parent_property_mixed_with_param_refuses_before_capture(connected):
++    tl = attached(connected)
++    before, state = copy.deepcopy(tl.bundle), pending(connected)
++    with pytest.raises(TimelineEditError, match='held'):
++        tl.clip('a').set(hold=2, text='next')
++    assert tl.bundle == before
++    assert pending(connected) == state
++    assert connected[1].calls == []
++
++
+ def test_move_then_trim_then_reload_preserves_source_hold_and_opaque_fields(connected):
+     tl = attached(connected, bundle_from_document(media_document()))
+     clip = tl.clip('parent/clip:clip-a')
+
+codex
+The bounded tests pass (148 tests), and the only lint finding was import ordering; I corrected it. I’m doing the final lint/diff checks now, then I’ll clean generated caches, write the harness commit message, and mark the worker complete.
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/native_checkout.py tests/sdk/test_timeline_native_checkout.py && git diff --check && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_native_checkout.py' in /home/user/work/wt/agt-m2-wc7-sdk-property-first-consumer
+ succeeded in 4353ms:
+All checks passed!
+......................                                                   [100%]
+22 passed in 3.08s
+
+exec
+/bin/bash -lc 'find . -type d -name __pycache__ -prune -exec rm -rf {} +; git status --short; git diff --stat; git diff --check' in /home/user/work/wt/agt-m2-wc7-sdk-property-first-consumer
+ succeeded in 417ms:
+ M astrid/sdk/timeline/native_checkout.py
+ M tests/sdk/test_timeline_native_checkout.py
+ astrid/sdk/timeline/native_checkout.py     | 18 +++++++++++--
+ tests/sdk/test_timeline_native_checkout.py | 43 ++++++++++++++++++++++++++++++
+ 2 files changed, 59 insertions(+), 2 deletions(-)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-sdk-property-first-consumer/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-sdk-property-first-consumer/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-sdk-property-first-consumer/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a004249c4ed63a07044644bf2a818a5c5723a6e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-sdk-property-first-consumer/commit-msg
+@@ -0,0 +1,5 @@
++feat(timeline): route connected checkout property sets natively
++
++Capture parent clip hold edits through the existing clip.set registry and
++TimelineSession outbox, preserving original guards across retry and restart.
++Keep mixed and unsupported Checkout shapes on the existing held path.
+diff --git a/astrid/sdk/timeline/native_checkout.py b/astrid/sdk/timeline/native_checkout.py
+index 80a6232b3d18b94e01a99d7911bb03eaec12b8b3..dbb9ec1eba336af6fa4a1032765e61a2c42b5699
+--- a/astrid/sdk/timeline/native_checkout.py
++++ b/astrid/sdk/timeline/native_checkout.py
+@@ -6,6 +6,7 @@
+ from astrid.core.timeline import clip_fields
+ from astrid.sdk import timeline_intent as intent
+ 
++from ._clip_scalar_commands import capture_clip_set
+ from ._command_state import State, equal
+ from ._common import AUDIO_KINDS, TIME_RE, TimelineEditError, _length_seconds, _r
+ from .capture import move_intent, number, occurrence_start, rate
+@@ -56,7 +57,7 @@
+         if not equal(state['base'], self._basis) or not equal(state['pending'], self._pending):
+             raise TimelineEditError('attached checkout basis changed; reattach before editing')
+ 
+-    def _queue(self, command):
++    def _queue(self, command=None, *, builder=None):
+         self._unchanged_preview()
+         plans = []
+ 
+@@ -65,7 +66,8 @@
+             bundle = self.session._bundle(state)
+             if not equal(bundle, self._preview):
+                 raise TimelineEditError('attached checkout basis changed; reattach before editing')
+-            plan = execute(bundle, [command])
++            captured = builder(bundle) if builder is not None else command
++            plan = execute(bundle, [captured])
+             plans.append(plan)
+             return plan.commands
+ 
+@@ -194,6 +196,18 @@
+ 
+     def set(self, **params):
+         allow_new = params.pop('_allow_new', False)
++        if 'hold' in params:
++            # This is the one ordinary scalar carried by the current registry.
++            # Keep the first consumer deliberately narrower than the registry:
++            # parent clips only, one declared property, and no mixed PARAM edit.
++            if self.shot_id != 'parent' or set(params) != {'hold'}:
++                _held()
++            value = params['hold']
++            return self._tl._queue(
++                builder=lambda bundle: capture_clip_set(
++                    bundle, self._ref,
++                    values={} if value is None else {'hold': value},
++                    clear=[] if value is not None else ['hold']))
+         selected = self.data.get('elementRef') or self.data.get('element_ref')
+         if isinstance(selected, dict) and selected.get('packId'):
+             # Session queue currently has no exact selected-schema input reader.
+diff --git a/tests/sdk/test_timeline_native_checkout.py b/tests/sdk/test_timeline_native_checkout.py
+index 66edc5461c01796a11ac6904a806fba15d26af6e..b56980293621c4c4adb6e1b714a8df373e772051
+--- a/tests/sdk/test_timeline_native_checkout.py
++++ b/tests/sdk/test_timeline_native_checkout.py
+@@ -107,6 +107,49 @@
+     assert loaded.clip('a').params == {'text': 'café'}
+ 
+ 
++def test_parent_property_set_lost_ack_restart_exact_retry_reload_and_guarded_undo(connected):
++    tl = attached(connected)
++    tl.clip('a').set(hold=2)
++    command = pending(connected)['pending'][0]
++    assert command['op'] == 'clip.set'
++    assert command['select'] == 'parent/clip:a'
++    assert command['args'] == {'values': {'hold': 2}, 'clear': []}
++    assert command['expect']['parent/clip:a::hold'] == {'state': 'present', 'value': 1}
++
++    generated = connected[1]
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        tl.flush(idempotency_key='property-A')
++    flight = pending(connected)['flight']
++
++    # A restarted Checkout keeps the original request and base; it does not
++    # recapture the property against the accepted head after the lost ACK.
++    restarted = Checkout.attach(open_session(connected))
++    assert pending(connected)['flight'] == flight
++    accepted = restarted.flush(idempotency_key='property-A')
++    assert generated.calls[0] == generated.calls[1] == (flight['body'].encode(), 'property-A')
++    state = pending(connected)
++    assert state['base'] == {'revision_id': 'r1', 'publication_id': 'pub1'}
++    assert state['pending'] == [] and state['flight'] is None
++    assert accepted['data']['accepted_revision_id'] == 'r1'
++    assert restarted.clip('a').data['hold'] == 2
++
++    reloaded = Checkout.attach(open_session(connected))
++    undone = reloaded.undo([accepted['receipt']['receipt_id']])
++    assert undone['data']['accepted_revision_id'] == 'r2'
++    assert Checkout.attach(open_session(connected)).clip('a').data['hold'] == 1
++
++
++def test_parent_property_mixed_with_param_refuses_before_capture(connected):
++    tl = attached(connected)
++    before, state = copy.deepcopy(tl.bundle), pending(connected)
++    with pytest.raises(TimelineEditError, match='held'):
++        tl.clip('a').set(hold=2, text='next')
++    assert tl.bundle == before
++    assert pending(connected) == state
++    assert connected[1].calls == []
++
++
+ def test_move_then_trim_then_reload_preserves_source_hold_and_opaque_fields(connected):
+     tl = attached(connected, bundle_from_document(media_document()))
+     clip = tl.clip('parent/clip:clip-a')
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-sdk-property-first-consumer/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-sdk-property-first-consumer/BLOCKED && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-sdk-property-first-consumer/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-sdk-property-first-consumer/DONE && sed -n '"'1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc7-sdk-property-first-consumer/commit-msg && git status --short --branch" in /home/user/work/wt/agt-m2-wc7-sdk-property-first-consumer
+ succeeded in 145ms:
+feat(timeline): route connected checkout property sets natively
+
+Capture parent clip hold edits through the existing clip.set registry and
+TimelineSession outbox, preserving original guards across retry and restart.
+Keep mixed and unsupported Checkout shapes on the existing held path.
+## tl/agt-m2-wc7-sdk-property-first-consumer
+ M astrid/sdk/timeline/native_checkout.py
+ M tests/sdk/test_timeline_native_checkout.py
+
+codex
+Implemented WC7 SDK consumer slice on base `0b2f662e`.
+
+- Parent `Checkout.attach(...).clip(...).set(hold=...)` now captures via existing `clip.set` and `TimelineSession` outbox.
+- Added lost-ACK/restart/exact-retry/reload/guarded-undo proof.
+- Added mixed SET/PARAM atomic-refusal proof.
+- Unsupported occurrence, narration, draft, and other property shapes remain held.
+- No wire/client API, Node save path, or private014 dependency added.
+
+Tests:
+
+- 148 passed: native Checkout, native sync, scalar conformance.
+- 22 passed: native Checkout rerun.
+- Ruff and `git diff --check` passed.
+- No full suite requested.
+
+Remaining old writer: detached `_PublishMixin.publish` → `store.publish_bundle` at `astrid/sdk/timeline/publish.py:44`; narration’s secondary call remains at line 119.
+
+Commit message written and `DONE` marker created.
+tokens used
+224,836
+Implemented WC7 SDK consumer slice on base `0b2f662e`.
+
+- Parent `Checkout.attach(...).clip(...).set(hold=...)` now captures via existing `clip.set` and `TimelineSession` outbox.
+- Added lost-ACK/restart/exact-retry/reload/guarded-undo proof.
+- Added mixed SET/PARAM atomic-refusal proof.
+- Unsupported occurrence, narration, draft, and other property shapes remain held.
+- No wire/client API, Node save path, or private014 dependency added.
+
+Tests:
+
+- 148 passed: native Checkout, native sync, scalar conformance.
+- 22 passed: native Checkout rerun.
+- Ruff and `git diff --check` passed.
+- No full suite requested.
+
+Remaining old writer: detached `_PublishMixin.publish` → `store.publish_bundle` at `astrid/sdk/timeline/publish.py:44`; narration’s secondary call remains at line 119.
+
+Commit message written and `DONE` marker created.

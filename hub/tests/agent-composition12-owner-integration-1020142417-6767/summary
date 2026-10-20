@@ -1,0 +1,64 @@
+test agent-composition12-owner-integration-1020142417-6767: fail exit=1 in 8s — composition12-owner-integration on integration:agent (agent tree 4ebb3cdacf820f4e3d6d1f90e58d1f02d45ad7e8)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_series_inspection.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_composition_package.py tests/test_artifact_manifest.py
+counts: 1 failed, 16 passed, 5 warnings, 30 errors in 5.98s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-composition12-owner-integration-1020142417-6767/log.txt ---
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node', '/home/user/work/wt/.test-agent-composition12-owner-integration-1020142417-6767/remotion/tests/composition-package.mjs', '/tmp/pytest-of-root/pytest-2675/test_generated_custom_elements0']' returned non-zero exit status 1.
+
+/usr/lib/python3.13/subprocess.py:578: CalledProcessError
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/.test-agent-composition12-owner-integration-1020142417-6767/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_composition_package.py::test_generated_custom_elements_reach_shared_render_and_scene_unchanged
+ERROR tests/packs/rendering/test_presenter_scene_capability.py::test_presenter_existing_registered_ssr_markup
+ERROR tests/packs/rendering/test_presenter_scene_capability.py::test_presenter_public_scene_contract[states]
+ERROR tests/packs/rendering/test_presenter_scene_capability.py::test_presenter_public_scene_contract[geometry]
+ERROR tests/packs/rendering/test_presenter_scene_capability.py::test_presenter_public_scene_contract[unknowns]
+ERROR tests/packs/rendering/test_presenter_scene_capability.py::test_presenter_public_scene_contract[clock]
+ERROR tests/packs/rendering/test_presenter_scene_capability.py::test_presenter_public_scene_contract[registration]
+ERROR tests/packs/rendering/test_presenter_scene_capability.py::test_presenter_public12_declarations
+ERROR tests/packs/rendering/test_presenter_crop_equivalence.py::test_registered_default_and_clamped_anchors_are_not_legacy_defaults
+ERROR tests/packs/rendering/test_presenter_crop_equivalence.py::test_same_frame_compatibility_and_separate_erase_denominators[size0]
+ERROR tests/packs/rendering/test_presenter_crop_equivalence.py::test_same_frame_compatibility_and_separate_erase_denominators[size1]
+ERROR tests/packs/rendering/test_presenter_crop_equivalence.py::test_same_frame_compatibility_and_separate_erase_denominators[size2]
+ERROR tests/packs/rendering/test_presenter_crop_equivalence.py::test_same_frame_compatibility_and_separate_erase_denominators[size3]
+ERROR tests/packs/rendering/test_presenter_crop_equivalence.py::test_minimal_two_percent_counterexample_without_invented_pixels
+ERROR tests/packs/rendering/test_presenter_crop_equivalence.py::test_frame_zero_series_crop_cannot_follow_a_moving_region
+ERROR tests/packs/rendering/test_presenter_crop_equivalence.py::test_source_bound_unknown_is_not_a_replacement_crop
+ERROR tests/packs/rendering/test_presenter_crop_equivalence.py::test_public_known_normalization_is_not_legacy_qualification
+ERROR tests/packs/rendering/test_presenter_series_inspection.py::test_series_inspection_retains_one_component_zero_query
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_actual_selected_cut_aggregate
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_order_and_duplicate_frame_keys[order0]
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_order_and_duplicate_frame_keys[order1]
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_missing_key_changes_adjacency_and_denominator
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_missing_image_resets_pairs_but_retains_key_denominator[3-pairs0]
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_missing_image_resets_pairs_but_retains_key_denominator[4-pairs1]
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_selection_window_boundaries[0-0.16666666666666666-selected0-2-2]
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_selection_window_boundaries[0.1-2-selected1-2-2]
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_selection_window_boundaries[0.13333333333333333-2-selected2-0-None]
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_selection_window_boundaries[0-0.1-selected3-0-None]
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_absent_file_is_an_error_not_zero_motion
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_strict_two_percent_boundary_on_memory_only_copy[15]
+ERROR tests/packs/rendering/test_presenter_selected_cut_aggregate.py::test_strict_two_percent_boundary_on_memory_only_copy[16]
+1 failed, 16 passed, 5 warnings, 30 errors in 5.98s

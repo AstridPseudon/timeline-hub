@@ -1,0 +1,400 @@
++def test_requester_refuses_proposal_without_original_pair(connected, field):
++    from astrid.sdk.timeline.capture import capture_move
++
++    session = open_session(connected)
++    proposal = proposal_for({'project_id': 'p', 'timeline_id': 't', 'base_revision_id': 'r0',
++                            'base_publication_id': 'pub0'},
++                           [capture_move(initial_bundle(), 'parent/clip:a', 3)])
++    (proposal if field == 'admitted_target' else proposal['admitted_target']).pop(field)
++    before = session.outbox.read()
++    with pytest.raises(TimelineEditError, match='required property'):
++        session.queue_proposal(proposal)
++    assert session.outbox.read() == before
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -B -m ruff check --no-cache --fix tests/packs/rendering/test_runtime_stitch.py' in /home/user/work/wt/agt-m2-producer-requester-target
+ succeeded in 134ms:
+Found 1 error (1 fixed, 0 remaining).
+
+ succeeded in 27128ms:
+........................................................................ [ 48%]
+........................................................................ [ 97%]
+...                                                                      [100%]
+147 passed in 25.85s
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md <<'EOF'
+
+## agt-m2-producer-requester-target — actual D13 requester/output gap (2026-10-20)
+Agent base "'`1441bdf1a4795aad318cf27e8b26331146bc0d92`; Runtime read-only main `9f9b25c`, candidate `8a8dcde` ProducerReads inspected. Exact handoff: [m2-producer-requester.md](m2-producer-requester.md) (67 lines). No product/schema/handler/credential/legacy-writer changes in this slice.
+Concrete blocker: build_stitch_admission/admit_runtime_stitch has ONLY test callers and maps to **rendering.render**; pack **rendering.assemble_timeline** owns the authoring_proposal file declaration. Neither builder nor generic SDK captures the original revision/publication pair; SDK spec.outputs is caller-supplied, not copied from the registry. Host _materialize_inputs also omits publication and producer attempt identity from resolved-children.json. Existing assembler emits the legacy timeline/registry payload; pre-settlement host publication remains active. Adding an unused optional target or declaring an assembler port on rendering.render would not close the actual requester chain and was deliberately not implemented.
+Agent/App manager action: bind the real existing authorized requesting session BEFORE slow work, freeze canonical project/timeline + original revision/publication in spec.runtime_dependencies.publication.admitted_target, and freeze spec.outputs.authoring_proposal={type:file,artifact_type:"timeline/authoring-proposal"} on the actual assembler task. Agent producer/host owner must propagate admitted context, generate registered native captured commands and canonical artifact through the existing file/manifest upload/settlement path. No JSON proposal-mode toggle, role/schema guessing, new coordinator or renderer write scope.
+Runtime owner action: consume that immutable declaration and exact task/run/project/current-attempt/result/managed-association/object/CAS join in the custody descendant; fail closed when target or declaration is missing. Existing output wire already supports kind:object, application/json, raw digest/size/name/filename with normal role/ordinal metadata; **no Runtime public output schema change is needed**. Pack type:file and artifact_type remain declaration metadata, not new settlement fields. New local tests verify bytes and upload binding construction only; recording upload does not prove Runtime custody/acceptance.
+Separate requester ACK/recovery owner: queue_proposal/flush already retain original base through head advance/lost ACK; flush currently clears flight after ACK without pending-render intent. Future work must atomically preserve receipt+historical render body/key before clearing, recover accepted A via exact replay/existing publication checkpoint, then first admit historical A after C/restart. No journal or current-head substitution. M2 integration and D13 retirement remain HELD; coupled real authorized requester acceptance/render journey remains unqualified. Exact test command/results: workers/agt-m2-producer-requester-target/notes/report.md.
+EOF' in /home/user/work/wt/agt-m2-producer-requester-target
+ succeeded in 0ms:
+codex
+All 147 targeted tests passed, including the existing head-advance, target-mismatch, worker-scope and legacy-publication checks. I’ve added the cross-owner handoff and am finishing the report. No product code changed; the actual requester capture and settled-proposal emitter remain unqualified.
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -B -m ruff check --no-cache tests/packs/rendering/test_runtime_stitch.py tests/packs/rendering/test_proposal_output_contract.py tests/sdk/test_timeline_producer_guard.py' in /home/user/work/wt/agt-m2-producer-requester-target
+exec
+/bin/bash -lc "git diff --check; git status --short; git diff --numstat; sed -n '1,105p' tests/packs/rendering/test_proposal_output_contract.py" in /home/user/work/wt/agt-m2-producer-requester-target
+ succeeded in 57ms:
+All checks passed!
+
+ succeeded in 780ms:
+ M tests/packs/rendering/test_runtime_stitch.py
+ M tests/sdk/test_timeline_producer_guard.py
+?? tests/packs/rendering/test_proposal_output_contract.py
+3	1	tests/packs/rendering/test_runtime_stitch.py
+15	0	tests/sdk/test_timeline_producer_guard.py
+"""Declared-file serialization only; no Runtime custody or acceptance claim."""
+from __future__ import annotations
+
+import hashlib
+import json
+from types import SimpleNamespace
+
+import pytest
+
+from astrid.core._shared.result_manifest import harvest_staged_outputs, write_manifest
+from astrid.core.execution.executor.registry import load_default_registry
+from astrid.core.execution.generic_host import GenericPackHost
+from tests.editing_conformance.test_settled_proposal_contract import FIXTURES, golden
+from tests.packs.rendering.test_assemble_timeline import _payload, main
+
+
+@pytest.mark.parametrize("settled_fixture", [False, True])
+def test_registered_authoring_file_preserves_bytes_and_attempt_upload_binding(tmp_path, settled_fixture):
+    definition = load_default_registry().get("rendering.assemble_timeline")
+    port = next(output for output in definition.outputs if output.name == "authoring_proposal")
+    assert (port.type, port.artifact_type, port.path_template) == (
+        "file", "timeline/authoring-proposal", "{out}/authoring-proposal.json")
+    output_root = tmp_path / "outputs"
+    source = tmp_path / "children.json"
+    source.write_text(json.dumps(_payload()), encoding="utf-8")
+    assert main(["--resolved-children", str(source), "--out", str(output_root)]) == 0
+    path = output_root / "authoring-proposal.json"
+    if settled_fixture:
+        # Exercise the existing file port with frozen canonical JSON bytes.
+        # The actual assembler still emits the legacy whole-timeline proposal.
+        path.write_bytes((FIXTURES / golden()["artifact"]["fixture"]).read_bytes())
+        manifest_path = output_root / "manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        for output in manifest["outputs"]:
+            output.pop("content_hash", None)
+            output.pop("bytes", None)
+        write_manifest(manifest_path, manifest)
+    raw = path.read_bytes()
+    harvested = harvest_staged_outputs(
+        output_root, definition=definition, declared_outputs=definition.outputs,
+        values={"out": str(output_root)}, require=True)
+    host = GenericPackHost.__new__(GenericPackHost)
+    typed = host._typed_outputs(SimpleNamespace(definition=definition), harvested, tmp_path)
+    descriptor = next(item for item in typed if item["name"] == port.name)
+    digest = "sha256:" + hashlib.sha256(raw).hexdigest()
+    assert descriptor["digest"] == digest and descriptor["size"] == len(raw)
+    calls = []
+
+    def upload_object(upload_path, **binding):
+        calls.append((upload_path.read_bytes(), binding))
+        return SimpleNamespace(digest=digest, size=len(raw))
+
+    host.client = SimpleNamespace(upload_object=upload_object)
+    rows = host._upload_outputs(
+        [descriptor], project_id="project", run_id="run", task_id="task",
+        attempt_id="attempt", lease_id="lease", fence=2, runtime_epoch=3)
+    assert calls == [(raw, {
+        "project_id": "project", "run_id": "run", "task_id": "task",
+        "attempt_id": "attempt", "lease_id": "lease", "fence": 2, "runtime_epoch": 3,
+        "media_type": "application/json", "filename": "authoring-proposal.json",
+        "output_key": "authoring_proposal", "output_port": "authoring_proposal"})]
+    assert {key: rows[0][key] for key in ("name", "kind", "digest", "size", "media_type")} == {
+        "name": "authoring_proposal", "kind": "object", "digest": digest,
+        "size": len(raw), "media_type": "application/json"}
+    assert "path" not in rows[0] and "data_base64" not in rows[0]
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-producer-requester.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-producer-requester.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..4c263e3d410b7b96e4b5b10d4beb4a9d9393ed20
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-producer-requester.md
+@@ -0,0 +1,67 @@
++# D13 requester and declared proposal output: exact remaining handoff
++2026-10-20; Agent source `1441bdf1a4795aad318cf27e8b26331146bc0d92`.
++Runtime main read-only `9f9b25c`; candidate authority inspected with `git show 8a8dcde`.
++PLAN/producer-commit-port.md govern; M2 integration and old-writer retirement HELD.
++
++## Actual request seams and the blocker
++- Agent `astrid/packs/rendering/shared/runtime_stitch.py:27` build_stitch_admission
++  emits publication.timeline_id/expected_version/render, with no original head pair or outputs.
++- `astrid/core/contracts/runtime_orchestration.py:12` maps BOTH stitch names to
++  rendering.render, NOT rendering.assemble_timeline. Do not add assembler ports to render.
++- `astrid/packs/video_editing/shared/runtime_orchestration.py:399` admit_runtime_stitch
++  forwards these settings through admit_runtime_task -> supplied client.tasks.create;
++  only tests call it. No existing App/CLI production requester/consumer was found.
++- `astrid/sdk/invocation.py:2480` _kernel_invoke serializes outputs supplied by its caller
++  into spec.outputs; it does not copy pack output declarations or capture a target pair.
++- `astrid/core/execution/generic_host.py:6600` _materialize_inputs stages ONLY family,
++  continuation_id, resolved_children, edges, aggregation. It drops publication and
++  supplies no producer attempt/executor/fence/epoch to the assembler JSON envelope.
++- `astrid/packs/rendering/actions/assemble_timeline/run.py:309` still emits whole
++  timeline/registry/publication, not SettledProducerProposal commands/pin/digest.
++  Host :9631 publishes BEFORE normal upload/settlement. Keep that behavior until qualified.
++No safe actual-caller change exists within this slice: an unused parameter/declaration
++would not bind an authorized requester or make the existing assembler a proposal producer.
++
++## Existing normal output contract (no new Runtime public output type needed)
++- Registered `astrid/packs/rendering/pack.yaml:69`: authoring_proposal, type:file,
++  artifact_type:timeline/authoring-proposal, path_template:{out}/authoring-proposal.json.
++  Existing main writes that file plus a normal hashed manifest (:451-479).
++- Host _typed_outputs (:7064) verifies declared port/path/hash/size; _upload_outputs
++  (:7716) sends file bytes via upload_object, retaining attempt-bound output identity.
++- RuntimeProtocolClient.upload_object (:4839) binds project/run/task/attempt/executor,
++  lease/fence/persisted epoch/output key/port/filename to ordinary object ingestion.
++- Settlement row is kind:object, name:authoring_proposal, digest:sha256:<raw bytes>,
++  size:<integer>, media_type:application/json, filename:authoring-proposal.json;
++  normal role/ordinal metadata remain. Pack type:file is NOT a new settlement kind.
++  artifact_type is declaration metadata, not an extra settlement descriptor field.
++- Runtime service.py:7479 settle_attempt stages outputs, then store.py:5201 settles
++  result.outputs and task completed + attempt settled atomically with managed associations.
++  service.py:6716 exposes succeeded task + immutable spec/current attempt/result.
++- Candidate 8a8dcde timeline_commit_producer.py ProducerReads.capture joins tasks->runs
++  project, current attempts.task_id/executor/fence/epoch/settled, immutable stored spec,
++  unique result.outputs name, exact managed task/attempt/project/port/ordinal association,
++  durable available/promoted lifecycle and project_objects/object/CAS size/SHA bytes.
++  Require spec.outputs.authoring_proposal={type:file,artifact_type:timeline/authoring-proposal}
++  and spec.runtime_dependencies.publication.admitted_target EXACTLY equal the pin/request.
++  Runtime rechecks captured custody at acceptance; no inline caller authority.
++
++## Required owner handoff, preserving the existing requester/outbox
++1. Agent/App owner identifies the real authorized request entrypoint. Before slow work,
++   resolve canonical project/timeline IDs and capture ONCE the session's original
++   {project_id,timeline_id,base_revision_id,base_publication_id}; retain it unchanged in
++   immutable admission spec.runtime_dependencies.publication.admitted_target.
++   Freeze the registered file declaration in that SAME actual assembler task spec.
++   Numeric expected_version, labels or completion-time head never supply either pin.
++2. Agent producer/host owner supplies admitted target + host-owned attempt identity and
++   native captured registered-media commands, writes canonical proposal JSON/digest through
++   that declared file, and settles normally. Do not select this using caller toggles.
++   Missing/mismatched target refuses replacement. No renderer projects:write/tasks:write.
++3. Requester reads task/managed outputs through existing tasks.show/list_managed_outputs
++   and authorized object read; queues the unchanged proposal via TimelineSession.queue_proposal
++   then flush. Pending unrelated intent must finish first; retain ORIGINAL base after head C.
++4. Separate ACK/recovery work: sync.py:309-325 currently advances base and clears flight;
++   atomically retain verified receipt + pending historical-render body/key BEFORE clearing.
++   Recover receipt from exact commit replay/existing publication checkpoint; admit accepted A
++   with the approved historical selector after C/restart. Never recapture or recommit at C.
++Tests here prove serialization/requester refusal only; actual custody/one-shot/render recovery
++still require the coupled Runtime descendant + registered producer + authorized requester journey.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e0c342cea20b60c1d6f13fb8e8fb086c14e73256
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/commit-msg
+@@ -0,0 +1,9 @@
++test(timeline): verify declared producer proposal output seam
++
++Verify the registered authoring file preserves JSON bytes and attempt-bound
++upload metadata through the normal output path. Cover missing original
++target pins without changing the requester outbox and round-trip the real
++stitch admission serialization.
++
++Keep legacy publication behavior intact while the actual requesting-session
++capture and settled producer handoff remain unqualified.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..e0c342cea20b60c1d6f13fb8e8fb086c14e73256
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/commit-msg.txt
+@@ -0,0 +1,9 @@
++test(timeline): verify declared producer proposal output seam
++
++Verify the registered authoring file preserves JSON bytes and attempt-bound
++upload metadata through the normal output path. Cover missing original
++target pins without changing the requester outbox and round-trip the real
++stitch admission serialization.
++
++Keep legacy publication behavior intact while the actual requesting-session
++capture and settled producer handoff remain unqualified.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0fec1b672946a6934d1434a94c678083ec98647f
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/notes/report.md
+@@ -0,0 +1,38 @@
++# agt-m2-producer-requester-target
++
++Result: precisely traced the actual requester/declaration seam; replacement remains unqualified. Agent base `1441bdf1a4795aad318cf27e8b26331146bc0d92`, branch `tl/agt-m2-producer-requester-target`. Runtime main `9f9b25c000485e919f30f1411831fe2d5a3c1316` and candidate `8a8dcde7823b85d946096b87a0d018ee2ee57945` inspected read-only. No product code/schema/handler/guard/pin/credential changes, old writer deletion or proposal-mode activation.
++
++Changes:
++- `tests/packs/rendering/test_runtime_stitch.py`: real builder canonical serialization round-trip assertion.
++- `tests/packs/rendering/test_proposal_output_contract.py`: two cases exercising registered assembler file declaration, actual assembler file/manifest generation, normal harvest/typed outputs and non-inline upload request construction. One uses unchanged actual legacy output; one explicitly substitutes the existing frozen canonical proposal fixture and regenerates its ordinary manifest. Both preserve exact raw bytes/SHA/size/application-json identity and project/run/task/attempt/lease/fence/epoch/output binding. Upload adapter is a recording double: NO Runtime custody or acceptance claim.
++- `tests/sdk/test_timeline_producer_guard.py`: three missing original-target/pair refusal cases, valid captured edit otherwise, unchanged requester outbox on refusal.
++- Shared [design/m2-producer-requester.md](../../../design/m2-producer-requester.md): 67-line source trace and exact remaining handoff. Appended concrete Agent/App/Runtime coordination to shared [design/runtime-coordination.md](../../../design/runtime-coordination.md).
++
++Actual source findings and decisions:
++- `astrid/packs/rendering/shared/runtime_stitch.py:27` emits numeric publication settings, no immutable pair/declaration. `astrid/core/contracts/runtime_orchestration.py:12` maps stitches to rendering.render. `astrid/packs/video_editing/shared/runtime_orchestration.py:399` has only test callers. The actual assembler capability/declaration is separate. No existing authorized production App/CLI requester consumes this seam; no safe bounded actual-caller edit was identified. Did not add an unused optional target or misdeclare assembler outputs on rendering.render.
++- `astrid/sdk/invocation.py:2480` serializes caller outputs into spec.outputs without copying declarations/capturing original target. `generic_host.py:6600` drops publication and lacks producer attempt identity in staged resolved_children. Assembler `run.py:309` emits whole timeline/registry, while host `:9631` publishes before ordinary settlement. This cannot become a qualified producer with just an output declaration.
++- `pack.yaml:69` already declares authoring_proposal as file, timeline/authoring-proposal, {out}/authoring-proposal.json. Host `:7064/:7716/:4839` types/uploads it; Runtime `service.py:7479/7888/8051`, `store.py:5201/5287` settle normal kind:object JSON descriptors and managed custody atomically. No new Runtime public output schema is required. artifact_type is declaration metadata, not a new settlement field.
++- Candidate Runtime `timeline_commit_producer.py:ProducerReads.capture/_output` joins immutable spec/declaration/target, task->run project, current attempt task/executor/fence/persisted epoch/settled, unique result.outputs, managed association and durable lifecycle, project object and CAS raw size/SHA. This source inspection does not qualify custody or acceptance with this Agent.
++- Existing SDK `sync.py:186 queue_proposal` preserves original pair and commands, including after head advance/lost ACK. Existing `flush:309-325` clears acknowledged flight without pending render; separate work must persist receipt+historical render intent/body/key atomically first, recover via exact replay/existing checkpoint and admit accepted A after C/restart.
++- Real target capture must occur once in the actual requesting authorized session before slow work; immutable admission retains project_id/timeline_id/base_revision_id/base_publication_id. Missing/mismatched pair refuses. No numeric-version/label/current-head guessing; no renderer write scopes, coordinator, endpoint or journal.
++
++Final targeted command (no sockets/browser/network):
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-producer-requester-target /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider tests/packs/rendering/test_proposal_output_contract.py tests/packs/rendering/test_runtime_stitch.py tests/packs/rendering/test_assemble_timeline.py tests/packs/video_editing/test_runtime_orchestration.py tests/sdk/test_timeline_producer_guard.py tests/editing_conformance/test_producer_guard.py tests/editing_conformance/test_settled_proposal_contract.py tests/test_generic_host.py::test_runtime_protocol_client_uses_worker_token_contract_without_user_handshake tests/packs/video_editing/test_runtime_publication_chain.py::test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke
++```
++Result: **147 passed in 25.85s**. Includes existing original-pair preservation after head advance, four-field target mismatch before capture, missing/forged capture refusal, worker-scope contract and unchanged legacy host publication behavior. Provider tests are detached preparation only, not acceptance.
++
++Additional exact commands/results:
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-producer-requester-target /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider tests/packs/rendering/test_proposal_output_contract.py tests/packs/rendering/test_runtime_stitch.py tests/sdk/test_timeline_producer_guard.py
++```
++First draft: 2 failed, 24 passed in 11.28s; new test passed long inline JSON to existing `_load_json_argument`, whose Path.is_file raises ENAMETOOLONG. Switched test input to the actual host's existing staged-file route. This unrelated inline-input bug remains unchanged. After correction: **26 passed in 22.18s**.
++```sh
++/home/user/work/venv-agent/bin/python -B -m ruff check --no-cache tests/packs/rendering/test_runtime_stitch.py tests/packs/rendering/test_proposal_output_contract.py tests/sdk/test_timeline_producer_guard.py
++git diff --check
++```
++Both passed. Ruff initially requested import spacing; fixed with the same command's `--fix` on test_runtime_stitch.py only. No test expectations weakened/skipped/xfail'ed.
++
++Not run: full suite/make check, actual Runtime custody/one-shot acceptance, real authorized requester journey, historical render admission/restart/ACK recovery, socket/browser/network/install commands. No commits/merge/checkout/push or other worktree writes. No build output/temp files left in this worktree.
++
++Next: Agent/App manager bind the actual requesting entrypoint and immutable target/declaration; producer/host owner supply admitted context and native captured commands through normal file settlement; Runtime owner pair custody descendant with that real artifact; separate ACK/recovery owner qualify receipt->pending historical render. Keep M2 integration and old-writer retirement HELD until coupled replacement behavior passes.
+diff --git a/tests/packs/rendering/test_proposal_output_contract.py b/tests/packs/rendering/test_proposal_output_contract.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..a9946feb179bbc2298efb0afbb565cecb30136ad
+--- /dev/null
++++ b/tests/packs/rendering/test_proposal_output_contract.py
+@@ -0,0 +1,65 @@
++"""Declared-file serialization only; no Runtime custody or acceptance claim."""
++from __future__ import annotations
++
++import hashlib
++import json
++from types import SimpleNamespace
++
++import pytest
++
++from astrid.core._shared.result_manifest import harvest_staged_outputs, write_manifest
++from astrid.core.execution.executor.registry import load_default_registry
++from astrid.core.execution.generic_host import GenericPackHost
++from tests.editing_conformance.test_settled_proposal_contract import FIXTURES, golden
++from tests.packs.rendering.test_assemble_timeline import _payload, main
++
++
++@pytest.mark.parametrize("settled_fixture", [False, True])
++def test_registered_authoring_file_preserves_bytes_and_attempt_upload_binding(tmp_path, settled_fixture):
++    definition = load_default_registry().get("rendering.assemble_timeline")
++    port = next(output for output in definition.outputs if output.name == "authoring_proposal")
++    assert (port.type, port.artifact_type, port.path_template) == (
++        "file", "timeline/authoring-proposal", "{out}/authoring-proposal.json")
++    output_root = tmp_path / "outputs"
++    source = tmp_path / "children.json"
++    source.write_text(json.dumps(_payload()), encoding="utf-8")
++    assert main(["--resolved-children", str(source), "--out", str(output_root)]) == 0
++    path = output_root / "authoring-proposal.json"
++    if settled_fixture:
++        # Exercise the existing file port with frozen canonical JSON bytes.
++        # The actual assembler still emits the legacy whole-timeline proposal.
++        path.write_bytes((FIXTURES / golden()["artifact"]["fixture"]).read_bytes())
++        manifest_path = output_root / "manifest.json"
++        manifest = json.loads(manifest_path.read_text())
++        for output in manifest["outputs"]:
++            output.pop("content_hash", None)
++            output.pop("bytes", None)
++        write_manifest(manifest_path, manifest)
++    raw = path.read_bytes()
++    harvested = harvest_staged_outputs(
++        output_root, definition=definition, declared_outputs=definition.outputs,
++        values={"out": str(output_root)}, require=True)
++    host = GenericPackHost.__new__(GenericPackHost)
++    typed = host._typed_outputs(SimpleNamespace(definition=definition), harvested, tmp_path)
++    descriptor = next(item for item in typed if item["name"] == port.name)
++    digest = "sha256:" + hashlib.sha256(raw).hexdigest()
++    assert descriptor["digest"] == digest and descriptor["size"] == len(raw)
++    calls = []
++
++    def upload_object(upload_path, **binding):
++        calls.append((upload_path.read_bytes(), binding))
++        return SimpleNamespace(digest=digest, size=len(raw))
++
++    host.client = SimpleNamespace(upload_object=upload_object)
++    rows = host._upload_outputs(
++        [descriptor], project_id="project", run_id="run", task_id="task",
++        attempt_id="attempt", lease_id="lease", fence=2, runtime_epoch=3)
++    assert calls == [(raw, {
++        "project_id": "project", "run_id": "run", "task_id": "task",
++        "attempt_id": "attempt", "lease_id": "lease", "fence": 2, "runtime_epoch": 3,
++        "media_type": "application/json", "filename": "authoring-proposal.json",
++        "output_key": "authoring_proposal", "output_port": "authoring_proposal"})]
++    assert {key: rows[0][key] for key in ("name", "kind", "digest", "size", "media_type")} == {
++        "name": "authoring_proposal", "kind": "object", "digest": digest,
++        "size": len(raw), "media_type": "application/json"}
++    assert "path" not in rows[0] and "data_base64" not in rows[0]
+diff --git a/tests/packs/rendering/test_runtime_stitch.py b/tests/packs/rendering/test_runtime_stitch.py
+index 7eac95bf3d73fb765e576075a18b1e98497650f6..ff7d4af45d5ee1af858709bf79bc154176dcd3ea
+--- a/tests/packs/rendering/test_runtime_stitch.py
++++ b/tests/packs/rendering/test_runtime_stitch.py
+@@ -1,5 +1,7 @@
+ from __future__ import annotations
+ 
++import json
++
+ import pytest
+ 
+ from astrid.packs.rendering.shared.runtime_stitch import build_stitch_admission
+@@ -27,6 +29,7 @@
+     assert [edge["from_task_id"] for edge in edges] == ["child-1", "child-2"]
+     assert all(edge["requires_event"] == "task.succeeded" for edge in edges)
+     assert "idempotency_key" not in admission.body
++    assert json.loads(admission.canonical_bytes) == admission.body
+ 
+ 
+ def test_stitch_rejects_duplicate_or_unknown_identity():
+diff --git a/tests/sdk/test_timeline_producer_guard.py b/tests/sdk/test_timeline_producer_guard.py
+index e1aaed0781f15d8ffb34489f209120a5d2161666..2e194421649a9ec385938e84b80f95ca7a401fa7
+--- a/tests/sdk/test_timeline_producer_guard.py
++++ b/tests/sdk/test_timeline_producer_guard.py
+@@ -181,3 +181,18 @@
+     with pytest.raises(TimelineEditError):
+         session.queue_proposal(proposal)
+     assert session.outbox.read() == before
++
++
++@pytest.mark.parametrize('field', ['admitted_target', 'base_revision_id', 'base_publication_id'])
++def test_requester_refuses_proposal_without_original_pair(connected, field):
++    from astrid.sdk.timeline.capture import capture_move
++
++    session = open_session(connected)
++    proposal = proposal_for({'project_id': 'p', 'timeline_id': 't', 'base_revision_id': 'r0',
++                            'base_publication_id': 'pub0'},
++                           [capture_move(initial_bundle(), 'parent/clip:a', 3)])
++    (proposal if field == 'admitted_target' else proposal['admitted_target']).pop(field)
++    before = session.outbox.read()
++    with pytest.raises(TimelineEditError, match='required property'):
++        session.queue_proposal(proposal)
++    assert session.outbox.read() == before
+
+codex
+Traced D13 and added output-contract and missing-target tests. **147 targeted tests passed**; Ruff and whitespace checks passed.
+
+The production requester capture remains missing. Stitch admission targets `rendering.render`, while the proposal file belongs to `rendering.assemble_timeline`. Product code and legacy publication remain unchanged.
+
+Exact commands, findings and next steps: [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/notes/report.md). The 67-line handoff, coordination update and harness commit messages are written.
+
+Actual Runtime acceptance/render recovery remains unverified. M2 integration stays held.
+tokens used
+147,094
+Traced D13 and added output-contract and missing-target tests. **147 targeted tests passed**; Ruff and whitespace checks passed.
+
+The production requester capture remains missing. Stitch admission targets `rendering.render`, while the proposal file belongs to `rendering.assemble_timeline`. Product code and legacy publication remain unchanged.
+
+Exact commands, findings and next steps: [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-requester-target/notes/report.md). The 67-line handoff, coordination update and harness commit messages are written.
+
+Actual Runtime acceptance/render recovery remains unverified. M2 integration stays held.

@@ -1,0 +1,400 @@
+            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
+            original = execute(bundle, calls, inverse_records=inverse_records,
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media, realm_id=context['realm_id'],
+                               resolve_inputs=resolve_inputs)
+            for attempt in range(3):
+                if attempt:
+                    current = port.head()
+                if current == base:
+                    plan = original
+                else:
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                      base, current))
+                    entries = _history(port, current, base, CommitRejected, base)
+                    head_bundle = _load(port, context, current["revision_id"])
+                    if not closures:
+                        schema_inputs = _hydrate(port, head_bundle, calls)
+                    resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
+                    plan = replay(original, head_bundle, inverse_records=inverse_records,
+                                  intervening_records=[*inverse_intervening, *_records(
+                                      entries, CommitRejected, base, current)], closures=closures,
+                                  verified_media=verified_media, realm_id=context['realm_id'],
+                                  resolve_inputs=resolve_inputs)
+                _check_reservations(port, plan, current, CommitRejected, base)
+                document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
+                                                inverse_records=inverse_records)
+                prepared = {
+                    "expected_head": copy.deepcopy(current), "canonical_document": document,
+                    "document_digest": _digest(document),
+                    "records": {"schema_version": 1, "commands": copy.deepcopy(plan.records),
+                                "undo_of": undo_of, "restored_from": restored_from},
+                    "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
+                    "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
+                }
+                try:
+852:            closures, restored_from = {}, None
+854:                restored_from = copy.deepcopy(calls[0]['args'])
+855:                source = _load(port, context, restored_from['revision_id'])
+857:                _require(image['content_digest'] == restored_from['content_digest'],
+859:                closures[restored_from['revision_id']] = source
+909:                                "undo_of": undo_of, "restored_from": restored_from},
+        document = prepared["canonical_document"]
+        if (document["project_id"], document["timeline_id"]) != (request["project_id"], request["timeline_id"]):
+            reject("invalid_closure", status=422)
+        if prepared["document_digest"] != digest(document):
+            reject("invalid_closure", "whole-document digest mismatch", status=422)
+        self._validate_closure(document)
+        records = prepared["records"]
+        commands = records["commands"]
+        if not commands or [r["ordinal"] for r in commands] != list(range(len(commands))):
+            reject("invalid_records", status=422)
+        if any(key != value for key, value in prepared["id_map"].items()):
+            reject("invalid_records", "id_map must contain identity pairs", status=422)
+        for record in commands:
+            if any(write["cause"] >= len(commands) for write in record["derived_writes"]):
+                reject("invalid_records", status=422)
+        undo_seqs = [self.history_entry(request["project_id"], request["timeline_id"], publication_id)["receipt"]["project_seq"][0]
+                     for publication_id in records["undo_of"]]
+        if undo_seqs != sorted(set(undo_seqs)):
+            reject("invalid_records", "undo targets must follow acceptance order", status=422)
+        restored = records["restored_from"]
+        if restored is not None:
+            source = self.revision_closure(request["project_id"], request["timeline_id"], restored["revision_id"])
+            if source["parent_revision"]["content_digest"] != restored["content_digest"]:
+                reject("invalid_records", status=422)
+        for event in prepared["semantic_events"]:
+            if event["command_ordinal"] >= len(commands) or self.validate_event is None:
+                reject("invalid_event", status=422)
+            self.validate_event(event)
+        if inputs is not None:
+            inputs.validate(prepared)
+        elif document["dependency_manifest"]["documents"] or any(r["dependencies"] for r in commands):
+            reject("dependency_unavailable", "request-private dependency captures required")
+        return {"canonical_document": document, "document_digest": prepared["document_digest"],
+                "commands": [r["command"] for r in commands], "id_map": prepared["id_map"],
+                "provider_version": prepared["provider_version"], "compiler_version": prepared["compiler_version"]}
+
+exec
+/bin/bash -lc "rg -n '"'^def document_from_bundle|_runtime_document|parent_revision'"' astrid/sdk/timeline/commit.py | head -25; sed -n '250,295p' astrid/sdk/timeline/commit.py; rg -n '"'^def document_from_bundle'"' astrid/sdk/timeline -g '*.py'; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-local-history-targeted-1020093902-2453/status; du -sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-local-history/{candidate,baseline}" in /home/user/work/wt/agt-review-local-history
+ succeeded in 176ms:
+77:        "schema_version", "project_id", "timeline_id", "parent_revision", "shot_revisions",
+84:    parent = document["parent_revision"]
+155:        {**document["parent_revision"], "project_id": project, "timeline_id": timeline},
+160:    bundle["source_mapping"]["_runtime_document"] = document
+179:        images = [value['source_mapping']['_runtime_document'] for value in (before, after)]
+184:                     and image['parent_revision']['revision_id'] == pin['revision_id'],
+206:        if (not equal(replayed['parent_revision']['payload'], images[1]['parent_revision']['payload'])
+218:def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
+224:    source = bundle["source_mapping"]["_runtime_document"]
+237:        document = historical['source_mapping']['_runtime_document']
+306:    if (digest == source["parent_revision"]["content_digest"]
+308:        revision = source["parent_revision"]["revision_id"]
+315:        prior = historical['source_mapping']['_runtime_document']
+316:        if (digest == prior['parent_revision']['content_digest']
+318:            revision = prior['parent_revision']['revision_id']
+323:        "parent_revision": {"revision_id": revision, "content_digest": digest, "payload": parent},
+345:             and document.get("parent_revision", {}).get("revision_id") == revision,
+352:    document = bundle["source_mapping"]["_runtime_document"]
+586:                        image = source['source_mapping']['_runtime_document']['parent_revision']
+645:        parent = {**document["parent_revision"], "project_id": project, "timeline_id": timeline}
+679:            if "_runtime_document" in source:
+680:                _require(_json(source["_runtime_document"]) == _json(document),
+707:            document["parent_revision"] = {
+708:                "revision_id": publication["parent_revision_id"],
+715:            parent = {**document["parent_revision"], "project_id": project, "timeline_id": timeline}
+        origin = bundle["source_mapping"]["shots"].get(identity)
+        if (origin is not None and _json(shot["payload"]) == _json(shot["base_payload"])
+                and _json(shot["internal_timeline"]) == _json(shot["base_internal_timeline"])
+                and origin.get("revision_id") in shot_index):
+            occurrence["shot_id"] = origin["shot_id"]
+            occurrence["shot_revision_id"] = origin["revision_id"]
+            continue
+        for historical in source_bundles:
+            prior = next((row for row in historical['placements']
+                          if row['occurrence_id'] == occurrence['occurrence_id']), None)
+            if prior is None or prior['shot_id'] != identity:
+                continue
+            old = historical['shots'][identity]
+            payload, old_payload = copy.deepcopy(shot['payload']), copy.deepcopy(old['payload'])
+            payload.pop('internal_timeline_revision_id', None)
+            old_payload.pop('internal_timeline_revision_id', None)
+            if (_json(payload) != _json(old_payload)
+                    or _json(shot['internal_timeline']) != _json(old['internal_timeline'])):
+                continue
+            origin = historical['source_mapping']['shots'][identity]
+            occurrence['shot_id'] = origin['shot_id']
+            occurrence['shot_revision_id'] = origin['revision_id']
+            break
+    shot_ids = {row["shot_revision_id"] for row in parent["occurrences"]}
+    shots = sorted((shot_index[key] for key in shot_ids),
+                   key=lambda row: (row["shot_id"], row["revision_id"]))
+    internal_ids = {row["internal_timeline_revision_id"] for row in shots}
+    internals = sorted((internal_index[key] for key in internal_ids),
+                       key=lambda row: (row["timeline_id"], row["revision_id"]))
+    documents = (source["dependency_manifest"]["documents"]
+                 if document_pins is None else document_pins)
+    if document_pins is None:
+        documents = copy.deepcopy(documents)
+        for capture in bundle['source_mapping'].get('pinned_documents', []):
+            if capture['pin'] not in documents:
+                documents.append(copy.deepcopy(capture['pin']))
+    # Retained inputs may include media consumed through a transcript or other
+    # immutable binding rather than a selected clip. Keep those existing pins.
+    media = {row["media_id"]: row for row in source["dependency_manifest"]["media"]}
+    media.update({row["media_id"]: row for row in publication["dependency_manifest"]["media"]})
+    removals = _inverse_media_removals(inverse_records, bundle)
+    if removals:
+        from ._command_state import CommandError
+
+        required = _collect_media([parent, *[row['payload'] for row in shots + internals]])
+        captures = bundle['source_mapping'].get('pinned_documents', [])
+astrid/sdk/timeline/commit.py:218:def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
+queued
+111M	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-local-history/candidate
+111M	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-local-history/baseline
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-review-local-history-targeted-1020093902-2453 1' in /home/user/work/wt/agt-review-local-history
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-local-history')
+worker.joinpath('test_review_publication_retry.py').write_text('''\"\"\"Independent positive review of undo AND redo publication lost-ACK retries.\"\"\"
+import json
+
+import pytest
+from astrid.sdk.timeline_checkout import Checkout
+from astrid.sdk.timeline.sync import TimelineSession
+from astrid.sdk.workspace_client import WorkspaceClientError
+from tests.sdk.test_timeline_checkout_history import native  # noqa: F401
+from tests.sdk.test_timeline_sync import connected  # noqa: F401
+
+
+@pytest.mark.parametrize(\"operation\", [\"undo\", \"redo\"])
+def test_publication_retry_survives_handle_reload(operation, native, tmp_path):
+    client, generated = native
+    accepted = TimelineSession.open(\"p\", \"t\", client=client).move(\"parent/clip:a\", 5)
+    checkout = Checkout.open(\"p\", \"t\", revision_id=generated.head[\"revision_id\"], client=client)
+    publication = accepted[\"receipt\"][\"receipt_id\"]
+    expected = \"r0\"
+    if operation == \"redo\":
+        undone = checkout.undo(publications=[publication], client=client)
+        publication = undone[\"receipt\"][\"receipt_id\"]
+        expected = \"r1\"
+    checkout.save(tmp_path / \"detached.json\", quiet=True)
+    saved = checkout.path.read_bytes()
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        getattr(checkout, operation)(publications=[publication], client=client,
+                                     idempotency_key=\"review-\" + operation)
+    flight = json.loads(generated.path.read_text())[\"flight\"]
+    reloaded = Checkout.load(checkout.path)
+    result = getattr(reloaded, operation)(publications=[publication], client=client)
+    assert generated.calls[-1] == generated.calls[-2]
+    assert generated.calls[-1][0].decode() == flight[\"body\"]
+    assert generated.calls[-1][1] == flight[\"key\"] == \"review-\" + operation
+    assert generated.bundles[result[\"data\"][\"accepted_revision_id\"]] == generated.bundles[expected]
+    assert checkout.path.read_bytes() == saved
+    state = json.loads(generated.path.read_text())
+    assert state[\"flight\"] is None and state[\"pending\"] == []
+''')
+PY
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider ../test_review_publication_retry.py' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-local-history/candidate
+ succeeded in 2472ms:
+..                                                                       [100%]
+2 passed in 1.55s
+
+codex
+The baseline comparison confirms that the patch fixes crossing into a different base, while the two boundary bypasses and write-failure issue already existed. I’ll report these as incomplete guarantees, not new regressions. The native path looks sound; I’m checking lost-acknowledgement retry for both undo and redo. The independent HTTP rerun is queued with the central service.
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-local-history-targeted-1020093902-2453/status; git status --short' in /home/user/work/wt/agt-review-local-history
+ succeeded in 686ms:
+running
+?? test_review_local_history_service.py
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-local-history-targeted-1020093902-2453/log.txt; sed -n '300,323p' astrid/sdk/timeline/commit.py; git status --short; git diff --check c456b328 tl/agt-m2-local-history-cut" in /home/user/work/wt/agt-review-local-history
+ succeeded in 486ms:
+.                                                                        [100%]
+1 passed in 38.81s
+        if required & removals:
+            raise CommandError('introduced media has surviving dependents', kind='surviving_dependents')
+        for identity in removals:
+            media.pop(identity, None)
+    manifest = _manifest(shots, internals, list(media.values()), documents)
+    digest = _digest(parent)
+    if (digest == source["parent_revision"]["content_digest"]
+            and _json(manifest) == _json(source["dependency_manifest"])):
+        revision = source["parent_revision"]["revision_id"]
+    else:
+        revision = "authoring-parent-revision-" + _digest({
+            "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
+            "parent": parent, "manifest": manifest,
+        }).removeprefix("sha256:")
+    for historical in source_bundles:
+        prior = historical['source_mapping']['_runtime_document']
+        if (digest == prior['parent_revision']['content_digest']
+                and _json(manifest) == _json(prior['dependency_manifest'])):
+            revision = prior['parent_revision']['revision_id']
+            break
+    document = {
+        "schema_version": 1, "project_id": bundle["project_id"],
+        "timeline_id": bundle["timeline_id"],
+        "parent_revision": {"revision_id": revision, "content_digest": digest, "payload": parent},
+?? test_review_local_history_service.py
+
+ succeeded in 60298ms:
+test agt-review-local-history-targeted-1020093902-2453: pass exit=0 in 46s — targeted on agt-review-local-history (agent tree 6a3954782812676fa4398d52d7d7b83acd18c582)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q test_review_local_history_service.py
+counts: 1 passed in 38.81s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-local-history-targeted-1020093902-2453/log.txt ---
+.                                                                        [100%]
+1 passed in 38.81s
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-review-local-history-targeted-1020093902-2453 1' in /home/user/work/wt/agt-review-local-history
+ succeeded in 121ms:
+test agt-review-local-history-targeted-1020093902-2453: pass exit=0 in 46s — targeted on agt-review-local-history (agent tree 6a3954782812676fa4398d52d7d7b83acd18c582)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q test_review_local_history_service.py
+counts: 1 passed in 38.81s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-local-history-targeted-1020093902-2453/log.txt ---
+.                                                                        [100%]
+1 passed in 38.81s
+
+codex
+Both undo and redo preserved their exact in-flight request body and idempotency key after reload. The central HTTP rerun also passed. I’m finishing the report: the native publication entrypoints pass review, while the local-boundary guarantee remains incomplete in the two reproduced cases. Product code and existing tests are unchanged.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = orch / 'workers/agt-review-local-history'
+report = '''# Agent local-history review — current
+
+Reviewed "'`tl/agt-m2-local-history-cut` at `88dd38f13137f274e8a02aa1d9e65ebe39cbf531` against `c456b328`. Read PLAN, repository AGENTS.md, the worker report, its detailed report embedded in log.txt (the report.md was subsequently replaced by its short final response), all seven changed files, and the surrounding publish/store/outbox/sheet/CLI paths.
+
+**Verdict: approve the native publication entrypoints; request changes before claiming the local-history boundary guarantee complete.** The patch is a useful bounded improvement and introduces no regression in the exercised existing positives. Two reproducible boundary gaps remain within the guarantee it claims. A third recovery issue is inherited. This is not a rejection for the separately documented, unmigrated writers, and is not evidence that the native inverse can directly rewind Runtime accepted history.
+
+## Findings
+
+1. **P2 — Revision equality does not identify an accepted-head boundary.** Reviewed `astrid/sdk/timeline/checkout.py:272–279`, with `publish.py:96–102`. `_restore_draft` compares only `base_parent`, whose canonical shape is revision ID plus content digest (`astrid/core/timeline/authoring_bundle.py:464`), without publication identity. `_reset_base(record=False)` preserves the old step files and inserts no boundary. Reproduction: save two draft edits on base A; accept/reset to B; reset to the retained A closure after a later accepted restore. Without any new unsent edit, `undo()` succeeds and restores the intermediate old A draft. This passes the new comparison even though those steps precede the accepted transition. Runtime restore/inverse can reuse a retained revision while recording a new publication: `timeline/commit.py:306–319` explicitly reuses revision IDs; Runtime'"'s restore retains that closure. This is not hypothetical hash collision or an illicit modification of step files. The review probe uses mocked exact head reads/reset, not real HTTP restore. The same predicate in "'`timeline_sheet.py:630,649` cannot distinguish such generations either. Invalidate consumed stacks across acknowledged publication/reset boundaries; a revision-only comparison is insufficient. Keep newly authored unsent intent reversible.
+
+2. **P2 — Successful publication followed by failed head reread leaves published steps locally undoable.** Reviewed `checkout.py:272–279`, existing `publish.py:76–93`. Reproduction calls public `Checkout.publish()` with successful publication and an injected failure only in the subsequent head reread. Publication returns its new head, `_reset_base` notes the failure and leaves the old base and old snapshots in place; `undo()` then succeeds without a publication ID. Loading the draft again cannot discover a durable boundary because none was written. The warning does not make these now-published snapshots unsent intent. The reset-write failure path has the same stale-base fallback. Record/invalidate the consumed local history when acceptance is known, even when refreshing the detached file fails; do not require an available renderer. This finding does not propose blocking independent unsent drafts merely because a peer advanced the Runtime head.
+
+3. **P2, inherited recovery follow-up — Failed draft write consumes undo sources before committing the restore.** Reviewed `checkout.py:287–292`. Inject failure in `Path.write_text` only for the target draft after two saved edits, then call `undo(2)`. The draft bytes remain unchanged but both original history files have been removed. The reverse stack contains the later states, not the earliest source state; subsequent retry cannot recover the original undo operation. A partial write or process death can also expose a torn target because this path uses an in-place write instead of save'"'s temporary-file replacement. The file lock does not address this ordering. Stage/replace the restored draft before retiring its recovery sources, with a recoverable stack transition. This is pre-existing, not a new regression from consolidation.
+
+Baseline comparison: the same four review probes on "'`c456b328` give **4 failed**; candidate gives **3 failed, 1 passed**. The newly passing positive proves that many-step undo stops at a genuinely different base and that the new unsent edit still round-trips. Thus findings 1–3 are demonstrated residual holes, not attributed as newly introduced bugs. Findings 1–2 prevent certifying the stated boundary guarantee; finding 3 is a separate inherited recovery follow-up.
+
+## What passes review
+
+- `Checkout.undo(publications=...)` and `redo(publications=...)` both call `TimelineSession.undo`, which submits `timeline.inverse` through Runtime'"'s guarded commit path. No local snapshot is used to choose the accepted result. Redo correctly names the **undo publication**. Detached checkout bytes remain unchanged.
+- In independent positive probes, both undo and redo survive an accepted-but-lost acknowledgement plus handle reload: persisted flight body and key are exactly reused, accepted state is correct, and pending/flight clear after acknowledgement. The original sync tests also exercise concurrency, refusals, identity and retry fencing.
+- CLI "'`redo --publication` uses the accepted undo dispatch, preserving a disjoint edit. Commit options require publication selection; draft/step options cannot be combined with publication undo/redo. Dry run/key/JSON handling is inherited from the native dispatcher. No JSON/whole-candidate fallback was added to these entrypoints.
+- Sheet retained-basis lookup uses Runtime history and `Checkout.open(..., revision_id=row["revision_id"])`; it does not select the current shot/internal heads. Existing `store.fetch_bundle` and pinned closure reads retain revision references. The real-service test compares the entire recovered document with the original, including provenance/pins. Lookup returns a detached merge basis; it does not publish or restore accepted history. A distinct media-head-rollover case was not independently added.
+- Renderer-off acceptance/readback/inverse is covered by the existing M1 tripwire and new real-service test. The tripwire blocks scene imports/evaluation; this is not a claim that every renderer process on the machine was shut down.
+- Existing test expectations are unchanged: the diff adds tests, with no removed assertions, skips, xfails or converted passing expectations. The broad targeted positive set below passes.
+
+## Remaining authority and scope
+
+AG01/AG03/WC7/WC8 must remain open. These are documented, pre-existing migration work, not independent reasons to reject the native entrypoints:
+
+- `timeline/publish.py:27,77–82,108–117` and `store.publish_bundle` still publish whole candidates, perform client-side merge/CAS, reset drafts and append local `publish` journal records. This accepted-publication bookkeeping/reset is the remaining actor relevant to findings 1–2.
+- `Checkout.log` (reviewed checkout.py:436) and `packs/timeline/cli_log.py:39–73` still serve local journal records, including publication-labelled records. They are not a complete Runtime acceptance history. Native publication undo does not consult them.
+- `timeline_sheet.py` still merges/applies detached documents directly; CLI `_cmd_apply` does not pass its available client, so CLI cannot use the new retained-basis fallback. This limitation is disclosed by the worker and is not a complete sheet migration.
+- `Checkout._merge_writer`, `store.three_way`, narration publication and the other sheet/checkout producers remain. Removing them requires preserving their current positive behaviors through command producers; this review does not certify their retirement.
+
+No ledger changes, product edits, dependency changes, pushes or integration-tree edits were made.
+
+## Exact validation
+
+Used private `git archive` copies under the review worker directory, never checked out another branch. `candidate` was extracted from `88dd38f1`; `baseline` from `c456b328`. Both archives were removed after validation. Commands below ran with the indicated archive as cwd.
+
+Candidate:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_verbs_working_copy.py tests/sdk/test_undo_a1_legacy_open.py tests/packs/timeline/test_cli_parity.py tests/sdk/test_timeline_checkout_facade.py
+```
+
+**375 passed, 17 deselected, 4 existing Pillow warnings, 23.43s.** Integration/lane deselections are not green claims.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider ../test_review_publication_retry.py
+```
+
+**2 passed, 1.55s**: parameterized undo/redo lost-ACK identity probes.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider ../test_review_boundaries.py
+```
+
+Candidate: **3 failed, 1 passed, 0.93s**. Baseline: **4 failed, 0.55s**. Failures correspond exactly to findings 1–3; baseline additionally crosses the distinct-base boundary. Review-only probe sources are retained under `workers/agt-review-local-history/`; no product test was changed.
+
+Central HTTP verification (only the service launched sockets):
+
+```sh
+$ORCH/bin/request-test agt-review-local-history targeted --files test_review_local_history_service.py
+$ORCH/bin/wait-test agt-review-local-history-targeted-1020093902-2453 1
+```
+
+**PASS, outer wrapper 1 passed, 38.81s, exit 0.** Its exact child command, run in the candidate archive:
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
+```
+
+The wrapper asserts the child exits zero; passing child stdout is captured by outer pytest, so the fresh service summary counts the wrapper, not three individual cases. The existing worker service result `agt-m2-local-history-cut-commit-integration-1020092855-26871` was also inspected: explicitly **3 passed, 22.14s**, source tree `45bf98980f1ab2386f37d6f5302e2612bc6bce5d`. The new module selects the locked Runtime `94114269d1ce23ab3224d7eca5a85138ce2b5fed` using the normal helper at collection; these results do not qualify the currently drifting Runtime/client integration pair.
+
+Initial review-service request `agt-review-local-history-targeted-1020093804-10420` was rejected before running because absolute test paths are disallowed. The corrected request used a temporary relative-path wrapper in this assigned worktree; it is removed, with its source retained in the worker directory. No full suite was requested or run. No make check/lint/typecheck gate was run for this read-only review. `git diff --check c456b328 tl/agt-m2-local-history-cut`: **exit 0**.
+
+Next: retain the native entrypoint work, close the two boundary holes with positive regression coverage for new unsent edits, address the inherited write-failure recovery separately, and continue the documented writer/journal migration. Do not mark AG01/AG03/WC7/WC8 deleted on this evidence.
+'"'''
+(orch / 'design/agent-review-local-history-current.md').write_text(report)
+(worker / 'report.md').write_text('''# agt-review-local-history
+
+Reviewed 88dd38f1 against c456b328. Native publication entrypoints pass review; request changes before certifying the local-history boundary guarantee. Reproduced same-revision and failed-reset boundary bypasses, plus inherited undo-source loss on draft write failure. All three also exist on baseline; the patch fixes the distinct-base case.
+
+Full findings and exact commands/results: ../../design/agent-review-local-history-current.md
+
+Validation: 375 targeted positives passed (17 deselected); 2 independent undo/redo retry probes passed; boundary probes candidate 3 failed/1 passed vs baseline 4 failed; central HTTP wrapper passed (child existing three-case command exited zero). Inspected original service's explicit 3-pass result. No full, product edits or ledger changes. No review blocker. Next: close boundary gaps while preserving unsent undo/redo; continue documented migrations.
+''')
+(worker / 'commit-msg').write_text('''docs(timeline): review local history boundary safety
+
+Review native publication entrypoints and retained sheet basis reads against
+c456b328. Record targeted validation, residual accepted-boundary holes and
+inherited draft restore recovery risks without changing product code.
+''')
+Path('/home/user/work/wt/agt-review-local-history/test_review_local_history_service.py').unlink()
+PY" in /home/user/work/wt/agt-review-local-history
+ succeeded in 102ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-local-history')
+for name in ('candidate', 'baseline'):
+    shutil.rmtree(worker / name)
+assert (worker / 'report.md').is_file()
+assert (worker / 'commit-msg').is_file()
+assert (worker.parent.parent / 'design/agent-review-local-history-current.md').is_file()
+PY
+git status --short; git diff --check; wc -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-local-history-current.md" in /home/user/work/wt/agt-review-local-history
+ succeeded in 8395ms:
+78 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-local-history-current.md
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-local-history/DONE' in /home/user/work/wt/agt-review-local-history
+ succeeded in 88ms:
+codex
+Review complete: [findings and exact test commands](../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-local-history-current.md).
+
+Native publication entrypoints pass review. Local-history guarantees need fixes for two boundary bypasses; inherited write-failure recovery also loses undo sources.
+
+Validation: 375 regression tests and 2 retry probes passed; central HTTP rerun passed. No product edits or full suite. Worktree clean; `report.md`, `commit-msg`, and `DONE` written.
+tokens used
+143,516
+Review complete: [findings and exact test commands](../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-local-history-current.md).
+
+Native publication entrypoints pass review. Local-history guarantees need fixes for two boundary bypasses; inherited write-failure recovery also loses undo sources.
+
+Validation: 375 regression tests and 2 retry probes passed; central HTTP rerun passed. No product edits or full suite. Worktree clean; `report.md`, `commit-msg`, and `DONE` written.

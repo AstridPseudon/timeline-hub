@@ -1,0 +1,400 @@
+     from ._split_commands import clip_split
++    from ._trim_commands import clip_trim
+     from .capture import MOVE_INTENT, move, track_create
+     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
+             'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
++            'clip.trim': Operation(_SCHEMA['$defs']['ClipTrimArgs'], clip_trim, {}, True),
+             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
+             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
+ 
+diff --git a/astrid/sdk/timeline/model.py b/astrid/sdk/timeline/model.py
+index ce13ee9603d737d8605a2a1fc1e842adf2b6de26..3a385bf7e63110790e61a5e5975924e9e4ff0b6c
+--- a/astrid/sdk/timeline/model.py
++++ b/astrid/sdk/timeline/model.py
+@@ -8,24 +8,39 @@
+ import math
+ import re
+ from contextlib import contextmanager
+-from dataclasses import dataclass, replace as _dc_replace
++from dataclasses import dataclass
++from dataclasses import replace as _dc_replace
+ from typing import Any, Mapping, Sequence
+ 
+ from astrid.core.timeline import clip_fields as cf
+ from astrid.core.timeline import moments as mo
+-from astrid.sdk import timeline_intent as intent
+ from astrid.core.timeline.cuts import (
+     clip_duration,
+ )
+-
++from astrid.sdk import timeline_intent as intent
+ from astrid.sdk.timeline import look as _look
+ from astrid.sdk.timeline import store as _store
+-from astrid.sdk.timeline._common import (TIME_RE, TimelineEditError, _Suggest, _length_seconds, _norm, _num, _r)
++from astrid.sdk.timeline._common import (
++    TIME_RE,
++    TimelineEditError,
++    _length_seconds,
++    _norm,
++    _num,
++    _r,
++    _Suggest,
++)
++from astrid.sdk.timeline.doc import _get_path, _read_words, _set_length, _set_path
+ from astrid.sdk.timeline.selection import ROLE_VOCABULARY, Selection
+-from astrid.sdk.timeline.doc import (_get_path, _read_words, _set_length, _set_path)
+-from astrid.sdk.timeline.units import (element_units, formula_from_spec, from_canvas, param_unit, parse_formula_value, parse_moment_value, to_canvas)
++from astrid.sdk.timeline.units import (
++    element_units,
++    formula_from_spec,
++    from_canvas,
++    param_unit,
++    parse_formula_value,
++    parse_moment_value,
++    to_canvas,
++)
+ 
+-
+ # ----------------------------------------------------------------------- views
+ 
+ @dataclass(frozen=True)
+@@ -438,9 +453,8 @@
+         source_out = (_num(self.data.get("to"), limit) if out_s is None else float(out_s))
+         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
+             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
+-        speed = _num(self.data.get("speed"), 1.0) or 1.0
+         self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
+-        self.data["hold"] = _r((source_out - source_in) / speed)
++        self.data["hold"] = _r(source_out - source_in)
+         intent.set_until(self.data, None)
+         intent.set_for(self.data, None)
+         self._tl._mcache = None
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_split.py b/tests/editing_conformance/test_recipe_m2_clip_split.py
+index f88e2b0a6fa0c598c60f0b34cfcf793c0c5ae4f3..82571e28ef6b8a2f9fc3f6dc14c309486028988d
+--- a/tests/editing_conformance/test_recipe_m2_clip_split.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_split.py
+@@ -229,6 +229,38 @@
+     assert_refusal_unchanged(original, lambda: split(original))
+ 
+ 
++def test_split_accepts_the_default_main_registry_fixture():
++    document = document_fixture(shared=False)
++    payload = document['parent_revision']['payload']
++    for rows in (payload['clips'], payload['config']['clips']):
++        rows[0].update(at=1, **{'from': 2, 'to': 10, 'speed': 2})
++        rows[0].pop('hold', None)
++    payload['registry'] = copy.deepcopy(payload['registry'])
++    payload['registry']['assets']['picture']['duration'] = 20
++    document['parent_revision']['content_digest'] = _digest(payload)
++    plan = split(bundle_from_document(document))
++    assert [row['id'] for row in plan.bundle['parent']['clips'][:2]] == ['clip-a', 'right']
++
++
++@pytest.mark.parametrize('source_type', ['video/mp4', 'audio/wav', 'image/png'])
++def test_split_uses_main_registry_mime_kind_normalizer(source_type):
++    original = bundle_from_document(source_document(source_type=source_type))
++    plan = split(original)
++    assert plan.bundle['parent']['clips'][1]['asset'] == 'picture'
++
++
++def test_split_preserves_static_move_intent_and_splits_literal_for():
++    from astrid.sdk.timeline.capture import capture_move
++
++    original = bundle_from_document(source_document())
++    moved = execute(original, [capture_move(original, TARGET, 3.003)]).bundle
++    plan = split(moved, on=4, right_id='right')
++    left, right = plan.bundle['parent']['clips'][:2]
++    assert left['app']['astrid']['fixed_start'] is True
++    assert right['app']['astrid']['fixed_start'] is True
++    assert left['app']['astrid']['for'] + right['app']['astrid']['for'] == pytest.approx(4)
++
++
+ @pytest.mark.parametrize('change', [
+     {'args': {'on': 3}}, {'args': {'on': 3, 'right_id': 'r', 'index': 1}},
+     {'args': {'on': 3, 'right_id': 'bad/id'}}, {'args': {'on': 3, 'right_id': 'bad::id'}},
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..0f0a7073ed1066946bcd9b88499deead956d8ace
+--- /dev/null
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -0,0 +1,59 @@
++"""Native parent media trim: main source-unit semantics and exact preservation."""
++from __future__ import annotations
++
++import copy
++from types import SimpleNamespace
++
++import pytest
++
++from astrid.core.timeline.duration import clip_timeline_duration
++from astrid.sdk.timeline._command_state import CommandError, State
++from astrid.sdk.timeline._trim_commands import capture_clip_trim
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.commit import _digest, bundle_from_document
++from astrid.sdk.timeline_checkout import Clip
++from tests.sdk.test_timeline_commit_provider_document import document_fixture
++
++REF = 'parent/clip:clip-a'
++
++
++def media_bundle(*, source_type='image', app=None):
++    document = document_fixture(shared=False)
++    payload = document['parent_revision']['payload']
++    for rows in (payload['clips'], payload['config']['clips']):
++        rows[0].update(at=1, **{'from': 2, 'to': 6, 'speed': 2, 'hold': 17})
++        rows[0]['app'] = copy.deepcopy(app or {'astrid': {'for': 19, 'until': None},
++                                               'org.example': {'literal': 'clip-a'}})
++    payload['registry'] = copy.deepcopy(payload['registry'])
++    payload['registry']['assets']['picture'].update(type=source_type, duration=10)
++    document['parent_revision']['content_digest'] = _digest(payload)
++    return bundle_from_document(document)
++
++
++def clip(bundle):
++    return State(bundle).entity(REF)
++
++
++def test_trim_matches_main_model_and_keeps_hold_in_source_units(monkeypatch):
++    original = media_bundle()
++    row = copy.deepcopy(clip(original))
++    monkeypatch.setattr(Clip, '_source_duration', lambda self: 10)
++    Clip(SimpleNamespace(_is_audio=lambda *args: False), None, row).trim(in_s=1, out_s=5)
++    plan = execute(original, [capture_clip_trim(original, REF, in_s=1, out_s=5)])
++    assert clip(plan.bundle) == row
++    assert clip(plan.bundle)['hold'] == 4
++    assert clip_timeline_duration(clip(plan.bundle)) == pytest.approx(2)
++
++
++def test_trim_accepts_static_move_intent_but_refuses_dynamic_follow():
++    original = media_bundle(app={'astrid': {'fixed_start': True, 'for': 2}})
++    plan = execute(original, [capture_clip_trim(original, REF, in_s=1, out_s=5)])
++    assert clip(plan.bundle)['app']['astrid']['fixed_start'] is True
++    assert 'for' not in clip(plan.bundle)['app']['astrid']
++    dynamic = media_bundle(app={'astrid': {'on': 'word:one'}})
++    with pytest.raises(CommandError, match='does not support'):
++        capture_clip_trim(dynamic, REF, in_s=1, out_s=5)
++    transitioned = media_bundle()
++    clip(transitioned)['transition'] = 'crossfade'
++    with pytest.raises(CommandError, match='does not support transition'):
++        capture_clip_trim(transitioned, REF, in_s=1, out_s=5)
+diff --git a/tests/sdk/test_timeline_commit_provider.py b/tests/sdk/test_timeline_commit_provider.py
+index 183197ef573555719b7ff1f9be827a71d443dd9c..538a9e81938a28d8ae703426d69a259b8b28d7e1
+--- a/tests/sdk/test_timeline_commit_provider.py
++++ b/tests/sdk/test_timeline_commit_provider.py
+@@ -7,6 +7,7 @@
+ 
+ import pytest
+ 
++from astrid.sdk.timeline._trim_commands import capture_clip_trim
+ from astrid.sdk.timeline.commit import (
+     _digest,
+     bundle_from_document,
+@@ -242,6 +243,33 @@
+             "select": None, "args": {"publications": publications}}
+ 
+ 
++def trim_document():
++    document = document_fixture(shared=False)
++    payload = document["parent_revision"]["payload"]
++    for rows in (payload["clips"], payload["config"]["clips"]):
++        rows[0].update(at=1, **{"from": 2, "to": 6, "speed": 2, "hold": 17})
++    payload["registry"] = copy.deepcopy(payload["registry"])
++    payload["registry"]["assets"]["picture"].update(type="image", duration=10)
++    document["parent_revision"]["content_digest"] = _digest(payload)
++    return document
++
++
++def test_provider_accepts_trim_after_move_and_undoes_only_trim():
++    realm = DetachedRealm(trim_document())
++    moved = realm.call([realm.move()])
++    command = capture_clip_trim(
++        bundle_from_document(realm.documents[realm.head["revision_id"]]),
++        "parent/clip:clip-a", in_s=1, out_s=5)
++    accepted = realm.call([command])
++    row = bundle_from_document(realm.documents[realm.head["revision_id"]])["parent"]["clips"][0]
++    assert row["at"] == 3.003
++    assert row["hold"] == 4
++    assert row["app"]["astrid"]["fixed_start"] is True
++    assert "for" not in row["app"]["astrid"]
++    undone = realm.call([inverse([accepted["receipt"]["receipt_id"]])])
++    assert undone["data"]["canonical_document"] == moved["data"]["canonical_document"]
++
++
+ def track_create(identity="reserved-track", owner="parent"):
+     return {"schema_version": 1, "op": "track.create", "version": "1",
+             "select": owner, "args": {"row": {"id": identity, "kind": "visual",
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- status ---'; git status --short; printf '%s\\n' '--- required files ---'; sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-media-main-codecs/commit-msg; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-media-main-codecs/commit-msg.txt && echo commit-msg.txt-ok; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-media-main-codecs/notes/report.md && echo report-ok; printf '%s\\n' '--- untracked worktree files ---'; find . -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -print | sed -n '1,80p'" in /home/user/work/wt/agt-m2-literal-media-main-codecs
+ succeeded in 195ms:
+--- status ---
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_split_commands.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/model.py
+ M tests/editing_conformance/test_recipe_m2_clip_split.py
+ M tests/sdk/test_timeline_commit_provider.py
+?? astrid/sdk/timeline/_trim_commands.py
+?? tests/editing_conformance/test_recipe_m2_clip_trim.py
+--- required files ---
+feat(timeline): add native literal media trim compatibility
+
+Accept main registry media MIME kinds and static move intent in literal splits.
+Register bounded parent media trim with source-unit holds and guarded provider tests.
+commit-msg.txt-ok
+report-ok
+--- untracked worktree files ---
+./tests/timeline/__pycache__/test_authoring_bundle.cpython-313.pyc
+./tests/timeline/__pycache__/__init__.cpython-313.pyc
+./tests/__pycache__/conftest.cpython-313-pytest-9.0.2.pyc
+./tests/__pycache__/__init__.cpython-313.pyc
+./tests/editing_conformance/__pycache__/test_recipe_m2_clip_split.cpython-313.pyc
+./tests/editing_conformance/__pycache__/staging_recipes.cpython-313.pyc
+./tests/editing_conformance/__pycache__/__init__.cpython-313.pyc
+./tests/editing_conformance/__pycache__/test_recipe_m1_commands.cpython-313.pyc
+./tests/sdk/__pycache__/test_timeline_commit_provider_document.cpython-313.pyc
+./astrid/packs/rendering/actions/render/__pycache__/managed_timeline.cpython-313.pyc
+./astrid/packs/rendering/actions/render/__pycache__/__init__.cpython-313.pyc
+./astrid/packs/__pycache__/__init__.cpython-313.pyc
+./astrid/__pycache__/__init__.cpython-313.pyc
+./astrid/__pycache__/version.cpython-313.pyc
+./astrid/core/audit/__pycache__/util.cpython-313.pyc
+./astrid/core/audit/__pycache__/context.cpython-313.pyc
+./astrid/core/audit/__pycache__/__init__.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/registry.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/timeline.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/arrangement.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/metadata.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/__init__.cpython-313.pyc
+./astrid/core/timeline/validators/__pycache__/pool.cpython-313.pyc
+./astrid/core/timeline/__pycache__/banodoco_composer.cpython-313.pyc
+./astrid/core/timeline/__pycache__/shot_composition.cpython-313.pyc
+./astrid/core/timeline/__pycache__/kinds.cpython-313.pyc
+./astrid/core/timeline/__pycache__/banodoco_schema.cpython-313.pyc
+./astrid/core/timeline/__pycache__/moments.cpython-313.pyc
+./astrid/core/timeline/__pycache__/clip_fields.cpython-313.pyc
+./astrid/core/timeline/__pycache__/audio_curves.cpython-313.pyc
+./astrid/core/timeline/__pycache__/parent_registry.cpython-313.pyc
+./astrid/core/timeline/__pycache__/arrangement_rules.cpython-313.pyc
+./astrid/core/timeline/__pycache__/astrid_ns.cpython-313.pyc
+./astrid/core/timeline/__pycache__/music_edit.cpython-313.pyc
+./astrid/core/timeline/__pycache__/shot_composition_migration.cpython-313.pyc
+./astrid/core/timeline/__pycache__/shot_composition_projection.cpython-313.pyc
+./astrid/core/timeline/__pycache__/__init__.cpython-313.pyc
+./astrid/core/timeline/__pycache__/authoring_bundle.cpython-313.pyc
+./astrid/core/timeline/__pycache__/cuts.cpython-313.pyc
+./astrid/core/timeline/__pycache__/duration.cpython-313.pyc
+./astrid/core/receipts/__pycache__/contract.cpython-313.pyc
+./astrid/core/receipts/__pycache__/canonical.cpython-313.pyc
+./astrid/core/receipts/__pycache__/__init__.cpython-313.pyc
+./astrid/core/foundation/__pycache__/atomic_io.cpython-313.pyc
+./astrid/core/foundation/__pycache__/project_paths.cpython-313.pyc
+./astrid/core/foundation/__pycache__/__init__.cpython-313.pyc
+./astrid/core/foundation/__pycache__/hash.cpython-313.pyc
+./astrid/core/__pycache__/env_vars.cpython-313.pyc
+./astrid/core/__pycache__/ids.cpython-313.pyc
+./astrid/core/__pycache__/__init__.cpython-313.pyc
+./astrid/core/contracts/__pycache__/project_theme.cpython-313.pyc
+./astrid/core/contracts/__pycache__/artifact_types.cpython-313.pyc
+./astrid/core/contracts/__pycache__/scoped_config.cpython-313.pyc
+./astrid/core/contracts/__pycache__/exec_error.cpython-313.pyc
+./astrid/core/contracts/__pycache__/identifiers.cpython-313.pyc
+./astrid/core/contracts/__pycache__/errors.cpython-313.pyc
+./astrid/core/contracts/__pycache__/binding.cpython-313.pyc
+./astrid/core/contracts/__pycache__/writer.cpython-313.pyc
+./astrid/core/contracts/__pycache__/__init__.cpython-313.pyc
+./astrid/core/contracts/__pycache__/schema.cpython-313.pyc
+./astrid/core/_shared/__pycache__/jsonio.cpython-313.pyc
+./astrid/core/_shared/__pycache__/__init__.cpython-313.pyc
+./astrid/core/pack/__pycache__/permissions.cpython-313.pyc
+./astrid/core/pack/__pycache__/registry.cpython-313.pyc
+./astrid/core/pack/__pycache__/walkers.cpython-313.pyc
+./astrid/core/pack/__pycache__/canonical.cpython-313.pyc
+./astrid/core/pack/__pycache__/_common.cpython-313.pyc
+./astrid/core/pack/__pycache__/loader.cpython-313.pyc
+./astrid/core/pack/__pycache__/__init__.cpython-313.pyc
+./astrid/core/pack/__pycache__/definition.cpython-313.pyc
+./astrid/sdk/timeline/__pycache__/store.cpython-313.pyc
+./astrid/sdk/timeline/__pycache__/publish.cpython-313.pyc
+./astrid/sdk/timeline/__pycache__/capture.cpython-313.pyc
+./astrid/sdk/timeline/__pycache__/check.cpython-313.pyc
+./astrid/sdk/timeline/__pycache__/units.cpython-313.pyc
+./astrid/sdk/timeline/__pycache__/doc.cpython-313.pyc
+./astrid/sdk/timeline/__pycache__/_command_state.cpython-313.pyc
+./astrid/sdk/timeline/__pycache__/_collections.cpython-313.pyc
+./astrid/sdk/timeline/__pycache__/_common.cpython-313.pyc
+./astrid/sdk/timeline/__pycache__/commit.cpython-313.pyc
+
+exec
+/bin/bash -lc "find . -type d \\( -name __pycache__ -o -name .pytest_cache \\) -prune -print | sed -n '1,120p'; find . -type d \\( -name __pycache__ -o -name .pytest_cache \\) -prune -exec rm -rf '{}' +; printf '%s\\n' '--- remaining generated dirs ---'; find . -type d \\( -name __pycache__ -o -name .pytest_cache \\) -print | sed -n '1,40p'; git status --short" in /home/user/work/wt/agt-m2-literal-media-main-codecs
+ succeeded in 246ms:
+./tests/timeline/__pycache__
+./tests/__pycache__
+./tests/editing_conformance/__pycache__
+./tests/sdk/__pycache__
+./astrid/packs/rendering/actions/render/__pycache__
+./astrid/packs/__pycache__
+./astrid/__pycache__
+./astrid/core/audit/__pycache__
+./astrid/core/timeline/validators/__pycache__
+./astrid/core/timeline/__pycache__
+./astrid/core/receipts/__pycache__
+./astrid/core/foundation/__pycache__
+./astrid/core/__pycache__
+./astrid/core/contracts/__pycache__
+./astrid/core/_shared/__pycache__
+./astrid/core/pack/__pycache__
+./astrid/sdk/timeline/__pycache__
+./astrid/sdk/__pycache__
+./.pytest_cache
+--- remaining generated dirs ---
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_split_commands.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/model.py
+ M tests/editing_conformance/test_recipe_m2_clip_split.py
+ M tests/sdk/test_timeline_commit_provider.py
+?? astrid/sdk/timeline/_trim_commands.py
+?? tests/editing_conformance/test_recipe_m2_clip_trim.py
+
+codex
+## Completed
+
+- Added native `clip.trim v1` with source-unit `hold` semantics.
+- Updated `clip.split` to accept MIME media types via the shared normalizer.
+- Preserved static `fixed_start`/`for` intent from `clip.move`.
+- Added split, trim, model-parity, refusal, and provider undo coverage.
+- Wrote required commit messages and report.
+
+## Verification
+
+- Targeted tests: **415 passed, 17 deselected**
+- Ruff: passed
+- `git diff --check`: passed
+- Full/browser/install/network suites: not run.
+
+Report: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-media-main-codecs/notes/report.md`
+
+No blockers.
+tokens used
+190,885
+## Completed
+
+- Added native `clip.trim v1` with source-unit `hold` semantics.
+- Updated `clip.split` to accept MIME media types via the shared normalizer.
+- Preserved static `fixed_start`/`for` intent from `clip.move`.
+- Added split, trim, model-parity, refusal, and provider undo coverage.
+- Wrote required commit messages and report.
+
+## Verification
+
+- Targeted tests: **415 passed, 17 deselected**
+- Ruff: passed
+- `git diff --check`: passed
+- Full/browser/install/network suites: not run.
+
+Report: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-literal-media-main-codecs/notes/report.md`
+
+No blockers.

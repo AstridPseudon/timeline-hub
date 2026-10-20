@@ -1,0 +1,9 @@
+name=agt-m2-occurrence-retrack
+repo=agent
+base=tl/agt-m2-placement-native
+base_sha=e4338c48
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-occurrence-retrack
+started=2026-10-20T00:39:22Z

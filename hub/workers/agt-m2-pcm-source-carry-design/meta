@@ -1,0 +1,9 @@
+name=agt-m2-pcm-source-carry-design
+repo=agent
+base=tl/integration
+base_sha=aa02a691
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-pcm-source-carry-design
+started=2026-10-20T07:54:58Z

@@ -1,0 +1,9 @@
+name=agt-m2-wc7-owned-move-outbox
+repo=agent
+base=tl/integration
+base_sha=f82da322
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-wc7-owned-move-outbox
+started=2026-10-20T19:47:17Z

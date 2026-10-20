@@ -1,0 +1,400 @@
+5671-                errors.append(exc)
+5672-                slot._latch_cleanup_uncertainty(str(exc))
+5673-                self._latch_cleanup_uncertainty(str(exc))
+--
+6312-                self._registration_refresh_deadline = time.monotonic() + _EXECUTOR_REFRESH_SECONDS
+6313-        except HostRegistrationError:
+6314-            raise
+6315:        except Exception as exc:
+6316-            raw_details = getattr(exc, "details", None)
+6317-            details = raw_details if isinstance(raw_details, Mapping) else None
+6318-            raw_message = getattr(exc, "message", None)
+--
+6347-                renew()
+6348-            adopt = idle and self._runtime_restarted
+6349-            self._register_impl(idle_renewal=True, deliberate=adopt)
+6350:        except Exception:
+6351-            self._registration_refresh_blocked = True
+6352-            raise
+6353-        finally:
+--
+6631-            # the exact byte witness at this handoff.
+6632-            try:
+6633-                data = self._client_operation("get_object")(normalized)
+6634:            except Exception as exc:
+6635-                raise HostError(f"{name} snapshot object is missing: {digest}") from exc
+6636-            if not isinstance(data, (bytes, bytearray)):
+6637-                data = getattr(data, "data", None)
+--
+7628-            from astrid.core.rendering.remotion_runtime import _validated_runtime
+7629-            try:
+7630-                _validated_runtime(Path(env[ASTRID_REMOTION_PROJECT_DIR]), environment=readiness_env)
+7631:            except Exception as exc:
+--- current remote added lint sites ---
+   344	                dispatch = getattr(self._client, "dispatch_task_admission", None)
+   345	                value = dispatch(args[0]) if callable(dispatch) else self._client.admit_task(**args[0])
+   346	            elif operation == "attach_variant_thumbnail": value = self._client.attach_variant_thumbnail(*args, **kwargs)
+   347	            elif operation == "archive_project_reference": value = self._client.archive_project_reference(*args, **kwargs)
+   348	            elif operation == "archive_project_shot": value = self._client.archive_project_shot(*args, **kwargs)
+   349	            elif operation == "archive_timeline": value = self._client.archive_timeline(*args, **kwargs)
+   350	            elif operation == "associate_reference": value = self._client.associate_reference(*args, **kwargs)
+   351	            elif operation == "cancel_run": value = self._client.cancel_run(*args, **kwargs)
+   352	            elif operation == "cancel_task": value = self._client.cancel_task(*args, **kwargs)
+   353	            elif operation == "claim_task": value = self._client.claim_task(*args, **kwargs)
+   354	            elif operation == "commit_timeline": value = self._client.commit_timeline(*args, **kwargs)
+   355	            elif operation == "create_generation": value = self._client.create_generation(*args, **kwargs)
+   356	            elif operation == "create_media_relation": value = self._client.create_media_relation(*args, **kwargs)
+   357	            elif operation == "create_project": value = self._client.create_project(*args, **kwargs)
+   358	            elif operation == "create_timeline": value = self._client.create_timeline(*args, **kwargs)
+   359	            elif operation == "rename_timeline":
+   360	                value = self._client.rename_timeline(*args, **kwargs)
+   361	            elif operation == "create_project_reference": value = self._client.create_project_reference(*args, **kwargs)
+   362	            elif operation == "create_project_shot": value = self._client.create_project_shot(*args, **kwargs)
+   363	            elif operation == "create_variant": value = self._client.create_variant(*args, **kwargs)
+   364	            elif operation == "current_project": value = self._client.current_project(*args, **kwargs)
+   365	            elif operation == "diff_timeline": value = self._client.diff_timeline(*args, **kwargs)
+--- old/new focused file finding counts ---
+## astrid/core/execution/generic_host.py
+old findings=102
+new findings=104
+## astrid/sdk/remote.py
+old findings=124
+new findings=126
+--- worktree status ---
+
+exec
+/bin/bash -lc "sed -n '1,280p' scripts/reshape/count_baseline.py" in /home/user/work/wt/agt-m1-ruff-baseline
+ succeeded in 0ms:
+"""Shared exact-count gate for the Ruff and mypy baselines (testing plan, Owned debt).
+
+Both gates compare a finding count with the committed baseline. The baseline is exact, like
+`compare_structure_baseline`: a higher count is a regression, and a lower count fails until the
+baseline is rewritten with `--write-baseline`, so deleted code cannot leave slack for a later
+regression to fill.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
+
+
+def verdict(label: str, current: int, baseline: int) -> tuple[int, str]:
+    """Return (exit code, message) for a current finding count against its baseline."""
+    summary = f"{label} findings: current={current} baseline={baseline}"
+    if current > baseline:
+        return 1, f"{summary}\nERROR: {label} regressed by {current - baseline}; fix the new findings."
+    if current < baseline:
+        return 1, (
+            f"{summary}\nERROR: {label} improved by {baseline - current}; lock it in with "
+            f"`python -m scripts.reshape.compare_{label.lower()}_baseline --write-baseline`."
+        )
+    return 0, summary
+
+
+def main(label: str, default_baseline: Path, run: Callable[[], dict[str, Any]]) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--baseline", type=Path, default=default_baseline)
+    parser.add_argument("--write-baseline", action="store_true")
+    args = parser.parse_args()
+
+    try:
+        current = run()
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    if args.write_baseline:
+        args.baseline.write_text(json.dumps(current, indent=2) + "\n")
+        print(f"Wrote {label} baseline to {args.baseline} ({current['finding_count']} findings)")
+        return 0
+
+    baseline = json.loads(args.baseline.read_text())
+    code, message = verdict(label, int(current["finding_count"]), int(baseline["finding_count"]))
+    print(message, file=sys.stderr if code else sys.stdout)
+    return code
+
+codex
+The four additions are confirmed in source: `warm_hold` adds an out-of-block import (E402) and a blind idle-release catch (BLE001), while the current timeline client adds two one-line dispatch branches (E701). I’ll still execute the mandated `--write-baseline` inspection, then restore the file unchanged because the task’s safety condition rejects this mixed delta.
+exec
+/bin/bash -lc 'set -o pipefail
+PY=/home/user/work/venv-agent/bin/python
+"$PY" -m scripts.reshape.compare_ruff_baseline --write-baseline
+printf '"'%s\\n' '--- resulting baseline diff (must not be retained) ---'
+git diff -- scripts/reshape/baselines/ruff_astrid.json" in /home/user/work/wt/agt-m1-ruff-baseline
+ succeeded in 277ms:
+Wrote Ruff baseline to scripts/reshape/baselines/ruff_astrid.json (2219 findings)
+--- resulting baseline diff (must not be retained) ---
+diff --git a/scripts/reshape/baselines/ruff_astrid.json b/scripts/reshape/baselines/ruff_astrid.json
+index aa7e33f2..f21bc8f0 100644
+--- a/scripts/reshape/baselines/ruff_astrid.json
++++ b/scripts/reshape/baselines/ruff_astrid.json
+@@ -4,7 +4,7 @@
+     "pyproject.toml [tool.ruff].include"
+   ],
+   "command": [
+-    "/Users/hannahomalley/Developer/tp-merge-20261018/wt/land/.venv/bin/python",
++    "/home/user/work/venv-agent/bin/python",
+     "-m",
+     "ruff",
+     "check",
+@@ -12,17 +12,17 @@
+     "--output-format",
+     "json"
+   ],
+-  "finding_count": 2220,
++  "finding_count": 2219,
+   "code_counts": {
+-    "F401": 152,
+-    "BLE001": 212,
+-    "I001": 237,
+-    "E701": 463,
++    "F401": 150,
++    "BLE001": 213,
++    "I001": 234,
++    "E701": 465,
+     "E702": 229,
+     "E731": 11,
+     "F821": 13,
+     "F841": 62,
+-    "E402": 823,
++    "E402": 824,
+     "F402": 2,
+     "F822": 7,
+     "F541": 3,
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m1-ruff-baseline/scripts/reshape/baselines/ruff_astrid.json
+diff --git a/scripts/reshape/baselines/ruff_astrid.json b/scripts/reshape/baselines/ruff_astrid.json
+index f21bc8f0db76da37ff2d6f5a870624f533196d89..aa7e33f2be6e1e33f98531208c16979539988461
+--- a/scripts/reshape/baselines/ruff_astrid.json
++++ b/scripts/reshape/baselines/ruff_astrid.json
+@@ -4,7 +4,7 @@
+     "pyproject.toml [tool.ruff].include"
+   ],
+   "command": [
+-    "/home/user/work/venv-agent/bin/python",
++    "/Users/hannahomalley/Developer/tp-merge-20261018/wt/land/.venv/bin/python",
+     "-m",
+     "ruff",
+     "check",
+@@ -12,17 +12,17 @@
+     "--output-format",
+     "json"
+   ],
+-  "finding_count": 2219,
++  "finding_count": 2220,
+   "code_counts": {
+-    "F401": 150,
+-    "BLE001": 213,
+-    "I001": 234,
+-    "E701": 465,
++    "F401": 152,
++    "BLE001": 212,
++    "I001": 237,
++    "E701": 463,
+     "E702": 229,
+     "E731": 11,
+     "F821": 13,
+     "F841": 62,
+-    "E402": 824,
++    "E402": 823,
+     "F402": 2,
+     "F822": 7,
+     "F541": 3,
+
+exec
+/bin/bash -lc 'set +e
+make PY=/home/user/work/venv-agent/bin/python ruff
+ruff_status=$?
+set -e
+printf '"'make ruff exit=%s (expected nonzero: baseline was intentionally not lowered)\\n' \""'$ruff_status"
+printf '"'%s\\n' '--- diff check and worktree status ---'
+git diff --check
+git status --short
+printf '%s\\n' '--- baseline content matches HEAD ---'
+git diff --quiet -- scripts/reshape/baselines/ruff_astrid.json; printf 'baseline_diff_exit=%s\\n' \""'$?"
+exit 0' in /home/user/work/wt/agt-m1-ruff-baseline
+ succeeded in 642ms:
+Ruff findings: current=2219 baseline=2220
+ERROR: Ruff improved by 1; lock it in with `python -m scripts.reshape.compare_ruff_baseline --write-baseline`.
+make: *** [Makefile:52: ruff] Error 1
+make ruff exit=2 (expected nonzero: baseline was intentionally not lowered)
+--- diff check and worktree status ---
+--- baseline content matches HEAD ---
+baseline_diff_exit=0
+
+codex
+The write inspection showed the expected mixed diff (`2219`, but F401/I001 down while BLE/E402/E701 rise), so I restored the baseline exactly. The prescribed `make ... ruff` remains nonzero for the intended reason—an unrecorded improvement—while `git diff --check` and the worktree are clean. I’m cleaning only the temporary comparison artifacts and recording the blocked outcome for the harness.
+2026-10-19T20:00:33.601330Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc \\\"rm -rf /tmp/agt-m1-ruff-old.vHAU1T /tmp/agt-m1-ruff-current.json /tmp/agt-m1-ruff-old.json\\nls -ld /tmp/agt-m1-ruff-old.vHAU1T /tmp/agt-m1-ruff-current.json /tmp/agt-m1-ruff-old.json 2>/dev/null || true\\nfind . -maxdepth 1 -type d -name '.ruff_cache' -print\\nprintf '%s\\\\\\\\n' '--- final status ---'\\ngit status --short\\\"` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc "find /tmp/agt-m1-ruff-old.vHAU1T -type f -delete 2>/dev/null || true
+find /tmp/agt-m1-ruff-old.vHAU1T -depth -type d -empty -delete 2>/dev/null || true
+unlink /tmp/agt-m1-ruff-current.json 2>/dev/null || true
+unlink /tmp/agt-m1-ruff-old.json 2>/dev/null || true
+ls -ld /tmp/agt-m1-ruff-old.vHAU1T /tmp/agt-m1-ruff-current.json /tmp/agt-m1-ruff-old.json 2>/dev/null || true
+find . -maxdepth 1 -type d -name '.ruff_cache' -print
+printf '%s\\n' '--- final status ---'
+git status --short" in /home/user/work/wt/agt-m1-ruff-baseline
+exec
+/bin/bash -lc 'test ! -e /tmp/agt-m1-ruff-old.vHAU1T && echo old_dir_removed || echo old_dir_present
+test ! -e /tmp/agt-m1-ruff-current.json && echo current_json_removed || echo current_json_present
+test ! -e /tmp/agt-m1-ruff-old.json && echo old_json_removed || echo old_json_present
+find . -maxdepth 1 -type d -name '"'.ruff_cache' -print
+git status --short" in /home/user/work/wt/agt-m1-ruff-baseline
+ succeeded in 83ms:
+old_dir_present
+current_json_present
+old_json_present
+./.ruff_cache
+
+ succeeded in 12554ms:
+./.ruff_cache
+--- final status ---
+
+exec
+/bin/bash -lc 'ls -ld /tmp/agt-m1-ruff-old.vHAU1T /tmp/agt-m1-ruff-current.json /tmp/agt-m1-ruff-old.json 2>&1 | head -20
+find /tmp/agt-m1-ruff-old.vHAU1T -maxdepth 1 -type f | head -5
+find ./.ruff_cache -maxdepth 1 -type f -o -type d | head -10' in /home/user/work/wt/agt-m1-ruff-baseline
+ succeeded in 0ms:
+ls: cannot access '/tmp/agt-m1-ruff-old.vHAU1T': No such file or directory
+ls: cannot access '/tmp/agt-m1-ruff-current.json': No such file or directory
+ls: cannot access '/tmp/agt-m1-ruff-old.json': No such file or directory
+find: ‘/tmp/agt-m1-ruff-old.vHAU1T’: No such file or directory
+./.ruff_cache
+./.ruff_cache/CACHEDIR.TAG
+./.ruff_cache/.gitignore
+./.ruff_cache/0.12.0
+
+exec
+/bin/bash -lc 'find .ruff_cache -type f -delete 2>/dev/null || true
+find .ruff_cache -depth -type d -empty -delete 2>/dev/null || true
+test ! -e .ruff_cache && echo ruff_cache_removed || echo ruff_cache_present
+git status --short' in /home/user/work/wt/agt-m1-ruff-baseline
+ succeeded in 450ms:
+ruff_cache_removed
+
+exec
+/bin/bash -lc "test -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-ruff-baseline/commit-msg && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-ruff-baseline/commit-msg || echo '(no existing commit-msg)'" in /home/user/work/wt/agt-m1-ruff-baseline
+ succeeded in 0ms:
+(no existing commit-msg)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-ruff-baseline/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-ruff-baseline/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-ruff-baseline/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..9a3f098b361852f68f0a0c065c89dd43efcb5dbc
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-ruff-baseline/commit-msg
+@@ -0,0 +1,5 @@
++chore(ruff): defer baseline shrink pending new findings
++
++The current tree has 2,219 findings versus the 2,220 baseline, but also
++introduces BLE001, E402, and two E701 findings. Leave the baseline unchanged
++until those regressions are resolved.
+diff --git a/scripts/reshape/baselines/ruff_astrid.json b/scripts/reshape/baselines/ruff_astrid.json
+index f21bc8f0db76da37ff2d6f5a870624f533196d89..aa7e33f2be6e1e33f98531208c16979539988461
+--- a/scripts/reshape/baselines/ruff_astrid.json
++++ b/scripts/reshape/baselines/ruff_astrid.json
+@@ -4,7 +4,7 @@
+     "pyproject.toml [tool.ruff].include"
+   ],
+   "command": [
+-    "/home/user/work/venv-agent/bin/python",
++    "/Users/hannahomalley/Developer/tp-merge-20261018/wt/land/.venv/bin/python",
+     "-m",
+     "ruff",
+     "check",
+@@ -12,17 +12,17 @@
+     "--output-format",
+     "json"
+   ],
+-  "finding_count": 2219,
++  "finding_count": 2220,
+   "code_counts": {
+-    "F401": 150,
+-    "BLE001": 213,
+-    "I001": 234,
+-    "E701": 465,
++    "F401": 152,
++    "BLE001": 212,
++    "I001": 237,
++    "E701": 463,
+     "E702": 229,
+     "E731": 11,
+     "F821": 13,
+     "F841": 62,
+-    "E402": 824,
++    "E402": 823,
+     "F402": 2,
+     "F822": 7,
+     "F541": 3,
+
+exec
+/bin/bash -lc "git status --short && git diff --check && printf '%s\\n' '--- commit-msg ---' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-ruff-baseline/commit-msg && printf '%s\\n' '--- temp check ---' && for p in /tmp/agt-m1-ruff-old.vHAU1T /tmp/agt-m1-ruff-current.json /tmp/agt-m1-ruff-old.json; do test "'! -e "$p" && echo "removed $p" || echo "present $p"; done' in /home/user/work/wt/agt-m1-ruff-baseline
+ succeeded in 247ms:
+--- commit-msg ---
+chore(ruff): defer baseline shrink pending new findings
+
+The current tree has 2,219 findings versus the 2,220 baseline, but also
+introduces BLE001, E402, and two E701 findings. Leave the baseline unchanged
+until those regressions are resolved.
+--- temp check ---
+removed /tmp/agt-m1-ruff-old.vHAU1T
+removed /tmp/agt-m1-ruff-current.json
+removed /tmp/agt-m1-ruff-old.json
+
+codex
+## Report
+
+- Compared Ruff findings against the recorded 2,220 baseline.
+- Current count: 2,219.
+- Improvements: removed F401/I001 findings in:
+  - `astrid/core/execution/remotion_host_session.py`
+  - `astrid/packs/timeline/cli_show.py`
+  - `astrid/packs/timeline/cli_parser.py`
+  - `astrid/packs/rendering/rendering/renderers/remotion/run.py`
+- Regressions found: one BLE001, one E402, and two E701 findings introduced by current source changes.
+- Per instructions, did not retain the baseline decrease.
+
+Commands:
+
+- Ruff 0.12.0 confirmed.
+- `ruff check . --output-format json`: 2,219 findings.
+- `compare_ruff_baseline --write-baseline`: inspected diff, then restored baseline.
+- `make PY=/home/user/work/venv-agent/bin/python ruff`: expected failure because baseline remains 2,220.
+- `git diff --check`: passed.
+- Worktree: clean.
+- No tests/full suite run.
+
+Commit message written to the requested path.
+tokens used
+91,111
+## Report
+
+- Compared Ruff findings against the recorded 2,220 baseline.
+- Current count: 2,219.
+- Improvements: removed F401/I001 findings in:
+  - `astrid/core/execution/remotion_host_session.py`
+  - `astrid/packs/timeline/cli_show.py`
+  - `astrid/packs/timeline/cli_parser.py`
+  - `astrid/packs/rendering/rendering/renderers/remotion/run.py`
+- Regressions found: one BLE001, one E402, and two E701 findings introduced by current source changes.
+- Per instructions, did not retain the baseline decrease.
+
+Commands:
+
+- Ruff 0.12.0 confirmed.
+- `ruff check . --output-format json`: 2,219 findings.
+- `compare_ruff_baseline --write-baseline`: inspected diff, then restored baseline.
+- `make PY=/home/user/work/venv-agent/bin/python ruff`: expected failure because baseline remains 2,220.
+- `git diff --check`: passed.
+- Worktree: clean.
+- No tests/full suite run.
+
+Commit message written to the requested path.

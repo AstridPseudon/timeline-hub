@@ -1,0 +1,400 @@
+base=subprocess.check_output(['git','show','HEAD:astrid/sdk/timeline/commit.py'],text=True)
+old=ast.parse(base); new=ast.parse(Path(files[0]).read_text())
+def method(tree,name):
+ cls=next(n for n in tree.body if isinstance(n,ast.ClassDef) and n.name=='RuntimeCommitService')
+ return ast.dump(next(n for n in cls.body if isinstance(n,ast.FunctionDef) and n.name==name),include_attributes=False)
+proof={name:method(old,name)==method(new,name) for name in ['project_capture','commit']}
+assert all(proof.values()), proof
+changes={}
+for path in files:
+ data=Path(path).read_bytes()
+ changes[path]={'sha256':hashlib.sha256(data).hexdigest(),'git_blob':hashlib.sha1(b'blob '+str(len(data)).encode()+b'\\0'+data).hexdigest()}
+tree={}
+for entry in subprocess.check_output(['git','ls-tree','-rz','HEAD']).split(b'\\0'):
+ if not entry: continue
+ meta,path=entry.split(b'\\t',1); mode,kind,oid=meta.split(b' ')
+ p=path.decode(); parts=p.split('/'); node=tree
+ for part in parts[:-1]: node=node.setdefault(part,{})
+ node[parts[-1]]=(mode,bytes.fromhex(changes[p]['git_blob']) if p in changes else bytes.fromhex(oid.decode()))
+def treehash(node):
+ content=b''
+ for name,item in sorted(node.items(),key=lambda row:row[0]+('/' if isinstance(row[1],dict) else '')):
+  mode,oid=(b'40000',treehash(item)) if isinstance(item,dict) else item
+  content+=mode+b' '+name.encode()+b'\\0'+oid
+ return hashlib.sha1(b'tree '+str(len(content)).encode()+b'\\0'+content).digest()
+report={'base_head':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'prospective_tree':treehash(tree).hex(),'method_ast_unchanged':proof,'files':changes}
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/notes')
+notes.mkdir(exist_ok=True)
+(notes/'source-proof.json').write_text(json.dumps(report,indent=2)+'\\n')
+print(json.dumps(report,indent=2))
+PY" in /home/user/work/wt/agt-m3-capture-projection-exact
+ succeeded in 86ms:
+{
+  "base_head": "bb0161c3f7ba1a4a273a6430dddcddcd38638021",
+  "prospective_tree": "13240cbc642e6090bc0a3d7bcb76e04021f7bbf5",
+  "method_ast_unchanged": {
+    "project_capture": true,
+    "commit": true
+  },
+  "files": {
+    "astrid/sdk/timeline/commit.py": {
+      "sha256": "631daf891b23fa20d20f38c4a03d1f5a1d2ace9000063d96ad3142ef99f25429",
+      "git_blob": "19ad733e1c58309dd086624809fe1e7959e5fbc3"
+    },
+    "astrid/packs/rendering/actions/render/managed_timeline.py": {
+      "sha256": "490a3098dec6e04595087c88f153e05590f4c51968e76e9c2b71683523dd74b1",
+      "git_blob": "3828d371dec68f51c8227062b513e28f57e7b255"
+    },
+    "tests/sdk/test_timeline_capture_projection.py": {
+      "sha256": "ab63f80449c0be0f9e78624562816090f5eabe8febc439ce4d40b07de671e4a5",
+      "git_blob": "067181f1d29726ddd9d98d45d305badcd0388b9f"
+    }
+  }
+}
+
+exec
+/bin/bash -lc "sed -n '250,325p' astrid/core/timeline/snapshot.py; sed -n '260,302p' astrid/packs/rendering/actions/timeline_storyboard/run.py; sed -n '330,352p' astrid/packs/rendering/actions/timeline_visualize/select.py; rg -n 'graph\\[|graph.get\\(|dependency_manifest|created_at' astrid/core/timeline/snapshot.py astrid/packs/rendering/actions/timeline_storyboard/run.py | head -50; rg -n 'providerless|missing.provider|provider.*unavailable' tests/sdk/test_capture_source_runtime.py tests/sdk/test_timeline_capture_projection.py tests/sdk/test_timeline_commit_provider.py" in /home/user/work/wt/agt-m3-capture-projection-exact
+ exited 1 in 0ms:
+        raise ValueError("registry.assets must be an object")
+    for asset_key, entry in assets.items():
+        if not isinstance(asset_key, str) or not asset_key:
+            raise ValueError("registry asset keys must be non-empty strings")
+        if not isinstance(entry, dict):
+            raise ValueError(f"registry asset {asset_key!r} must be an object")
+    canonical_json_bytes(registry)
+
+
+def _canonical_digest(value: Any) -> str:
+    try:
+        return sha256_bytes(canonical_json_bytes(value))
+    except (TypeError, ValueError) as exc:
+        raise SnapshotIntegrityError(f"value is not canonical JSON: {exc}") from exc
+
+
+def _project_canonical_composition(
+    assembly: Mapping[str, Any], registry: Mapping[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Apply the editor's prepared graph before any downstream snapshot read."""
+    app = assembly.get("app") if isinstance(assembly, Mapping) else None
+    graph = None
+    if isinstance(app, Mapping):
+        candidate = app.get("shot_composition_graph") or app.get("canonical_shot_composition")
+        if isinstance(candidate, Mapping) and isinstance(candidate.get("shot_revisions"), list):
+            graph = candidate
+    if graph is None:
+        return deepcopy(dict(assembly)), deepcopy(dict(registry))
+    from .shot_composition_projection import project_shot_composition
+
+    try:
+        projected = project_shot_composition(graph, base_config=assembly, base_registry=registry)
+    except ValueError as exc:
+        raise SnapshotIntegrityError(f"canonical shot-composition projection failed: {exc}") from exc
+    return deepcopy(dict(projected.config)), deepcopy(dict(projected.registry))
+
+
+def _resolve_media_hashes(
+    registry: dict[str, Any],
+    *,
+    project_ref: str | None,
+    runtime_client: Any | None = None,
+    media_snapshot: Any | None = None,
+) -> tuple[dict[str, str], list[str]]:
+    """Record digests admitted by the neutral runtime's scoped object read.
+
+    Deterministic diagnostics make every unadmitted entry explicit. No URL,
+    project path, CAS locator, or filesystem fingerprint is read here.
+    """
+
+    if project_ref is None:
+        return {}, []
+    assets = registry.get("assets", {})
+    if not isinstance(assets, dict):
+        raise SnapshotIntegrityError("registry.assets must be an object")
+
+    hashes: dict[str, str] = {}
+    diagnostics: list[str] = []
+    for asset_key in sorted(assets):
+        entry = assets[asset_key]
+        if not isinstance(entry, dict):
+            diagnostics.append(
+                f"MEDIA_INVALID_ENTRY: asset {asset_key!r} is not an object"
+            )
+            continue
+        integrity = classify_asset(
+            asset_key,
+            entry,
+            project_ref=project_ref,
+            runtime_client=runtime_client,
+            media_snapshot=media_snapshot,
+        )
+        if integrity.state == "verified_original" and integrity.observed_sha256:
+            hashes[asset_key] = integrity.observed_sha256
+        else:
+            diagnostics.append(
+            metadata = generation.get("metadata")
+            if isinstance(metadata, Mapping):
+                merged.update(metadata)
+    return merged
+
+
+def build_view_model(
+    timeline_config: Mapping[str, Any],
+    asset_registry: Mapping[str, Any],
+    *,
+    registry_dir: Path,
+    shot_id: str | None = None,
+) -> dict[str, Any]:
+    # Canonical shot-composition graphs are already prepared by the editor
+    # lane. Project them in memory for the preview; the storyboard must never
+    # reconstruct a shot from legacy pinned membership.
+    app = timeline_config.get("app") if isinstance(timeline_config, Mapping) else None
+    graph = None
+    if isinstance(timeline_config.get("shot_revisions"), list):
+        graph = timeline_config
+    elif isinstance(app, Mapping):
+        candidate = app.get("shot_composition_graph") or app.get("canonical_shot_composition")
+        if isinstance(candidate, Mapping) and isinstance(candidate.get("shot_revisions"), list):
+            graph = candidate
+    if graph is not None:
+        from astrid.core.timeline.shot_composition_projection import project_shot_composition
+        projected = project_shot_composition(
+            graph,
+            base_config=timeline_config if isinstance(timeline_config.get("clips"), list) else None,
+            base_registry=asset_registry,
+        )
+        timeline_config = projected.config
+        asset_registry = projected.registry
+    clips_raw = timeline_config.get("clips")
+    clips = clips_raw if isinstance(clips_raw, list) else []
+    clips_by_id: dict[str, Mapping[str, Any]] = {
+        clip_id: clip
+        for clip in clips
+        if isinstance(clip, Mapping)
+        and (clip_id := _string(clip.get("id"))) is not None
+    }
+    canonical = timeline_config.get("app", {}).get("astrid_shot_composition") if isinstance(timeline_config.get("app"), Mapping) else None
+    canonical_occurrences = canonical.get("occurrences") if isinstance(canonical, Mapping) else None
+            continue
+        timelines.append(
+            KernelTimeline(
+                timeline_id=str(timeline_id),
+                timeline_ulid=str(timeline_ulid),
+                slug=str(alias),
+                name=str(row.get("name", alias)),
+                is_default=str(default_id) == str(timeline_id),
+                config=config,
+                registry={"assets": assets},
+                config_version=int(row.get("config_version", row.get("version", 1))),
+                head_event_id=str(head_event_id),
+                head_hash=str(head_hash),
+                head_created_at=str(head_created_at),
+                composition_graph=(
+                    dict(row.get("shot_composition"))
+                    if isinstance(row.get("shot_composition"), Mapping)
+                    else dict(row.get("composition_graph"))
+                    if isinstance(row.get("composition_graph"), Mapping)
+                    else None
+                ),
+            )
+        )
+
+exec
+/bin/bash -lc "ps -eo pid,etime,args | rg 'pytest.*test_timeline_capture_projection|pytest.*test_managed' | head -6; /home/user/work/venv-agent/bin/ruff check --no-cache --no-force-exclude astrid/sdk/timeline/commit.py astrid/packs/rendering/actions/render/managed_timeline.py tests/sdk/test_timeline_capture_projection.py; git diff --check; rg -n 'agt-m3-capture-projection-exact|no.consumer|AG05' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md | tail -8" in /home/user/work/wt/agt-m3-capture-projection-exact
+ succeeded in 706ms:
+      1       00:00 codex-linux-sandbox --sandbox-policy-cwd /home/user/work/wt/agt-m3-capture-projection-exact --command-cwd /home/user/work/wt/agt-m3-capture-projection-exact --permission-profile {"type":"managed","file_system":{"type":"restricted","entries":[{"path":{"type":"special","value":{"kind":"root"}},"access":"read"},{"path":{"type":"path","path":"/home/user/work/wt/agt-m3-capture-projection-exact"},"access":"write"},{"path":{"type":"path","path":"/home/user/work"},"access":"write"},{"path":{"type":"path","path":"/home/user/peteromallet"},"access":"write"},{"path":{"type":"path","path":"/home/user/banodoco"},"access":"write"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch"},"access":"write"},{"path":{"type":"special","value":{"kind":"slash_tmp"}},"access":"write"},{"path":{"type":"special","value":{"kind":"tmpdir"}},"access":"write"},{"path":{"type":"path","path":"/home/user/work/wt/agt-m3-capture-projection-exact/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/wt/agt-m3-capture-projection-exact/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/wt/agt-m3-capture-projection-exact/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/wt/agt-m3-capture-projection-exact/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.aws"},"access":"read","missing_path_behavior":"skip"}]},"network":"restricted"} --apply-seccomp-then-exec -- /bin/bash -c __CODEX_SNAPSHOT_OVERRIDE_SET_0="${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS+x}" __CODEX_SNAPSHOT_OVERRIDE_0="${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS-}" __CODEX_SNAPSHOT_OVERRIDE_SET_1="${CODEX_PERMISSION_PROFILE+x}" __CODEX_SNAPSHOT_OVERRIDE_1="${CODEX_PERMISSION_PROFILE-}" __CODEX_SNAPSHOT_OVERRIDE_SET_2="${CODEX_PLUGIN_METRICS_OUTPUT+x}" __CODEX_SNAPSHOT_OVERRIDE_2="${CODEX_PLUGIN_METRICS_OUTPUT-}" __CODEX_SNAPSHOT_OVERRIDE_SET_3="${CODEX_SESSION_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_3="${CODEX_SESSION_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_4="${CODEX_THREAD_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_4="${CODEX_THREAD_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_5="${CODEX_TOOL_CALL_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_5="${CODEX_TOOL_CALL_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_6="${CODEX_VERSION+x}" __CODEX_SNAPSHOT_OVERRIDE_6="${CODEX_VERSION-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0="${ALL_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_0="${ALL_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1="${BUNDLE_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_1="${BUNDLE_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2="${BUNDLE_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_2="${BUNDLE_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3="${BUNDLE_NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_3="${BUNDLE_NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4="${BUNDLE_SSL_CA_CERT+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_4="${BUNDLE_SSL_CA_CERT-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5="${CARGO_HTTP_CAINFO+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_5="${CARGO_HTTP_CAINFO-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6="${CODEX_CA_CERTIFICATE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_6="${CODEX_CA_CERTIFICATE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7="${CODEX_NETWORK_ALLOW_LOCAL_BINDING+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_7="${CODEX_NETWORK_ALLOW_LOCAL_BINDING-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8="${CODEX_NETWORK_PROXY_ACTIVE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_8="${CODEX_NETWORK_PROXY_ACTIVE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9="${CODEX_NETWORK_PROXY_ATTRIBUTION+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_9="${CODEX_NETWORK_PROXY_ATTRIBUTION-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10="${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_10="${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11="${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_11="${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12="${CURL_CA_BUNDLE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_12="${CURL_CA_BUNDLE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13="${DOCKER_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_13="${DOCKER_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14="${DOCKER_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_14="${DOCKER_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15="${ELECTRON_GET_USE_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_15="${ELECTRON_GET_USE_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16="${FTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_16="${FTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17="${GIT_SSL_CAINFO+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_17="${GIT_SSL_CAINFO-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18="${HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_18="${HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19="${HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_19="${HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20="${NODE_EXTRA_CA_CERTS+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_20="${NODE_EXTRA_CA_CERTS-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21="${NODE_USE_ENV_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_21="${NODE_USE_ENV_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22="${NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_22="${NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23="${NPM_CONFIG_CAFILE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_23="${NPM_CONFIG_CAFILE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24="${NPM_CONFIG_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_24="${NPM_CONFIG_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25="${NPM_CONFIG_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_25="${NPM_CONFIG_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26="${NPM_CONFIG_NOPROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_26="${NPM_CONFIG_NOPROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27="${NPM_CONFIG_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_27="${NPM_CONFIG_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28="${PIP_CERT+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_28="${PIP_CERT-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29="${PIP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_29="${PIP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30="${REQUESTS_CA_BUNDLE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_30="${REQUESTS_CA_BUNDLE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31="${SSL_CERT_FILE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_31="${SSL_CERT_FILE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32="${WSS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_32="${WSS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33="${WS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_33="${WS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34="${YARN_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_34="${YARN_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35="${YARN_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_35="${YARN_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36="${YARN_NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_36="${YARN_NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37="${all_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_37="${all_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38="${ftp_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_38="${ftp_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39="${http_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_39="${http_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40="${https_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_40="${https_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41="${no_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_41="${no_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42="${npm_config_cafile+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_42="${npm_config_cafile-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43="${npm_config_http_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_43="${npm_config_http_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44="${npm_config_https_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_44="${npm_config_https_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45="${npm_config_noproxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_45="${npm_config_noproxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46="${npm_config_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_46="${npm_config_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47="${ws_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_47="${ws_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48="${wss_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_48="${wss_proxy-}" __CODEX_SNAPSHOT_PROXY_ENV_SET="${CODEX_NETWORK_PROXY_ACTIVE+x}"  if . '/root/.codex/shell_snapshots/01a1573b-a994-7383-9a72-d616c2333e5d.1792464890309033105.sh' >/dev/null 2>&1; then :; fi  if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_0}" ]; then   if [ -z "${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS+x}" ] || [ "${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS-}" != "${__CODEX_SNAPSHOT_OVERRIDE_0}" ]; then export CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS="${__CODEX_SNAPSHOT_OVERRIDE_0}"; else export CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS; fi else builtin unset CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS 2>/dev/null || command unset CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_0 __CODEX_SNAPSHOT_OVERRIDE_0 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_0 __CODEX_SNAPSHOT_OVERRIDE_0 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_1}" ]; then   if [ -z "${CODEX_PERMISSION_PROFILE+x}" ] || [ "${CODEX_PERMISSION_PROFILE-}" != "${__CODEX_SNAPSHOT_OVERRIDE_1}" ]; then export CODEX_PERMISSION_PROFILE="${__CODEX_SNAPSHOT_OVERRIDE_1}"; else export CODEX_PERMISSION_PROFILE; fi else builtin unset CODEX_PERMISSION_PROFILE 2>/dev/null || command unset CODEX_PERMISSION_PROFILE; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_1 __CODEX_SNAPSHOT_OVERRIDE_1 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_1 __CODEX_SNAPSHOT_OVERRIDE_1 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_2}" ]; then   if [ -z "${CODEX_PLUGIN_METRICS_OUTPUT+x}" ] || [ "${CODEX_PLUGIN_METRICS_OUTPUT-}" != "${__CODEX_SNAPSHOT_OVERRIDE_2}" ]; then export CODEX_PLUGIN_METRICS_OUTPUT="${__CODEX_SNAPSHOT_OVERRIDE_2}"; else export CODEX_PLUGIN_METRICS_OUTPUT; fi else builtin unset CODEX_PLUGIN_METRICS_OUTPUT 2>/dev/null || command unset CODEX_PLUGIN_METRICS_OUTPUT; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_2 __CODEX_SNAPSHOT_OVERRIDE_2 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_2 __CODEX_SNAPSHOT_OVERRIDE_2 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_3}" ]; then   if [ -z "${CODEX_SESSION_ID+x}" ] || [ "${CODEX_SESSION_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_3}" ]; then export CODEX_SESSION_ID="${__CODEX_SNAPSHOT_OVERRIDE_3}"; else export CODEX_SESSION_ID; fi else builtin unset CODEX_SESSION_ID 2>/dev/null || command unset CODEX_SESSION_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_3 __CODEX_SNAPSHOT_OVERRIDE_3 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_3 __CODEX_SNAPSHOT_OVERRIDE_3 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_4}" ]; then   if [ -z "${CODEX_THREAD_ID+x}" ] || [ "${CODEX_THREAD_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_4}" ]; then export CODEX_THREAD_ID="${__CODEX_SNAPSHOT_OVERRIDE_4}"; else export CODEX_THREAD_ID; fi else builtin unset CODEX_THREAD_ID 2>/dev/null || command unset CODEX_THREAD_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_4 __CODEX_SNAPSHOT_OVERRIDE_4 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_4 __CODEX_SNAPSHOT_OVERRIDE_4 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_5}" ]; then   if [ -z "${CODEX_TOOL_CALL_ID+x}" ] || [ "${CODEX_TOOL_CALL_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_5}" ]; then export CODEX_TOOL_CALL_ID="${__CODEX_SNAPSHOT_OVERRIDE_5}"; else export CODEX_TOOL_CALL_ID; fi else builtin unset CODEX_TOOL_CALL_ID 2>/dev/null || command unset CODEX_TOOL_CALL_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_5 __CODEX_SNAPSHOT_OVERRIDE_5 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_5 __CODEX_SNAPSHOT_OVERRIDE_5 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_6}" ]; then   if [ -z "${CODEX_VERSION+x}" ] || [ "${CODEX_VERSION-}" != "${__CODEX_SNAPSHOT_OVERRIDE_6}" ]; then export CODEX_VERSION="${__CODEX_SNAPSHOT_OVERRIDE_6}"; else export CODEX_VERSION; fi else builtin unset CODEX_VERSION 2>/dev/null || command unset CODEX_VERSION; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_6 __CODEX_SNAPSHOT_OVERRIDE_6 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_6 __CODEX_SNAPSHOT_OVERRIDE_6 if [ -n "$__CODEX_SNAPSHOT_PROXY_ENV_SET" ] || [ -n "${CODEX_NETWORK_PROXY_ACTIVE+x}" ]; then if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0}" ]; then   if [ -z "${ALL_PROXY+x}" ] || [ "${ALL_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_0}" ]; then export ALL_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_0}"; else export ALL_PROXY; fi else builtin unset ALL_PROXY 2>/dev/null || command unset ALL_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0 __CODEX_SNAPSHOT_PROXY_OVERRIDE_0 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0 __CODEX_SNAPSHOT_PROXY_OVERRIDE_0 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1}" ]; then   if [ -z "${BUNDLE_HTTPS_PROXY+x}" ] || [ "${BUNDLE_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_1}" ]; then export BUNDLE_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_1}"; else export BUNDLE_HTTPS_PROXY; fi else builtin unset BUNDLE_HTTPS_PROXY 2>/dev/null || command unset BUNDLE_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1 __CODEX_SNAPSHOT_PROXY_OVERRIDE_1 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1 __CODEX_SNAPSHOT_PROXY_OVERRIDE_1 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2}" ]; then   if [ -z "${BUNDLE_HTTP_PROXY+x}" ] || [ "${BUNDLE_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_2}" ]; then export BUNDLE_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_2}"; else export BUNDLE_HTTP_PROXY; fi else builtin unset BUNDLE_HTTP_PROXY 2>/dev/null || command unset BUNDLE_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2 __CODEX_SNAPSHOT_PROXY_OVERRIDE_2 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2 __CODEX_SNAPSHOT_PROXY_OVERRIDE_2 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3}" ]; then   if [ -z "${BUNDLE_NO_PROXY+x}" ] || [ "${BUNDLE_NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_3}" ]; then export BUNDLE_NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_3}"; else export BUNDLE_NO_PROXY; fi else builtin unset BUNDLE_NO_PROXY 2>/dev/null || command unset BUNDLE_NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3 __CODEX_SNAPSHOT_PROXY_OVERRIDE_3 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3 __CODEX_SNAPSHOT_PROXY_OVERRIDE_3 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4}" ]; then   if [ -z "${BUNDLE_SSL_CA_CERT+x}" ] || [ "${BUNDLE_SSL_CA_CERT-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_4}" ]; then export BUNDLE_SSL_CA_CERT="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_4}"; else export BUNDLE_SSL_CA_CERT; fi else builtin unset BUNDLE_SSL_CA_CERT 2>/dev/null || command unset BUNDLE_SSL_CA_CERT; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4 __CODEX_SNAPSHOT_PROXY_OVERRIDE_4 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4 __CODEX_SNAPSHOT_PROXY_OVERRIDE_4 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5}" ]; then   if [ -z "${CARGO_HTTP_CAINFO+x}" ] || [ "${CARGO_HTTP_CAINFO-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_5}" ]; then export CARGO_HTTP_CAINFO="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_5}"; else export CARGO_HTTP_CAINFO; fi else builtin unset CARGO_HTTP_CAINFO 2>/dev/null || command unset CARGO_HTTP_CAINFO; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5 __CODEX_SNAPSHOT_PROXY_OVERRIDE_5 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5 __CODEX_SNAPSHOT_PROXY_OVERRIDE_5 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6}" ]; then   if [ -z "${CODEX_CA_CERTIFICATE+x}" ] || [ "${CODEX_CA_CERTIFICATE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_6}" ]; then export CODEX_CA_CERTIFICATE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_6}"; else export CODEX_CA_CERTIFICATE; fi else builtin unset CODEX_CA_CERTIFICATE 2>/dev/null || command unset CODEX_CA_CERTIFICATE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6 __CODEX_SNAPSHOT_PROXY_OVERRIDE_6 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6 __CODEX_SNAPSHOT_PROXY_OVERRIDE_6 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7}" ]; then   if [ -z "${CODEX_NETWORK_ALLOW_LOCAL_BINDING+x}" ] || [ "${CODEX_NETWORK_ALLOW_LOCAL_BINDING-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_7}" ]; then export CODEX_NETWORK_ALLOW_LOCAL_BINDING="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_7}"; else export CODEX_NETWORK_ALLOW_LOCAL_BINDING; fi else builtin unset CODEX_NETWORK_ALLOW_LOCAL_BINDING 2>/dev/null || command unset CODEX_NETWORK_ALLOW_LOCAL_BINDING; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7 __CODEX_SNAPSHOT_PROXY_OVERRIDE_7 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7 __CODEX_SNAPSHOT_PROXY_OVERRIDE_7 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_ACTIVE+x}" ] || [ "${CODEX_NETWORK_PROXY_ACTIVE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_8}" ]; then export CODEX_NETWORK_PROXY_ACTIVE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_8}"; else export CODEX_NETWORK_PROXY_ACTIVE; fi else builtin unset CODEX_NETWORK_PROXY_ACTIVE 2>/dev/null || command unset CODEX_NETWORK_PROXY_ACTIVE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8 __CODEX_SNAPSHOT_PROXY_OVERRIDE_8 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8 __CODEX_SNAPSHOT_PROXY_OVERRIDE_8 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_ATTRIBUTION+x}" ] || [ "${CODEX_NETWORK_PROXY_ATTRIBUTION-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_9}" ]; then export CODEX_NETWORK_PROXY_ATTRIBUTION="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_9}"; else export CODEX_NETWORK_PROXY_ATTRIBUTION; fi else builtin unset CODEX_NETWORK_PROXY_ATTRIBUTION 2>/dev/null || command unset CODEX_NETWORK_PROXY_ATTRIBUTION; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9 __CODEX_SNAPSHOT_PROXY_OVERRIDE_9 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9 __CODEX_SNAPSHOT_PROXY_OVERRIDE_9 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS+x}" ] || [ "${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_10}" ]; then export CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_10}"; else export CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS; fi else builtin unset CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS 2>/dev/null || command unset CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10 __CODEX_SNAPSHOT_PROXY_OVERRIDE_10 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10 __CODEX_SNAPSHOT_PROXY_OVERRIDE_10 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE+x}" ] || [ "${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_11}" ]; then export CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_11}"; else export CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE; fi else builtin unset CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE 2>/dev/null || command unset CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11 __CODEX_SNAPSHOT_PROXY_OVERRIDE_11 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11 __CODEX_SNAPSHOT_PROXY_OVERRIDE_11 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12}" ]; then   if [ -z "${CURL_CA_BUNDLE+x}" ] || [ "${CURL_CA_BUNDLE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_12}" ]; then export CURL_CA_BUNDLE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_12}"; else export CURL_CA_BUNDLE; fi else builtin unset CURL_CA_BUNDLE 2>/dev/null || command unset CURL_CA_BUNDLE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12 __CODEX_SNAPSHOT_PROXY_OVERRIDE_12 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12 __CODEX_SNAPSHOT_PROXY_OVERRIDE_12 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13}" ]; then   if [ -z "${DOCKER_HTTPS_PROXY+x}" ] || [ "${DOCKER_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_13}" ]; then export DOCKER_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_13}"; else export DOCKER_HTTPS_PROXY; fi else builtin unset DOCKER_HTTPS_PROXY 2>/dev/null || command unset DOCKER_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13 __CODEX_SNAPSHOT_PROXY_OVERRIDE_13 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13 __CODEX_SNAPSHOT_PROXY_OVERRIDE_13 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14}" ]; then   if [ -z "${DOCKER_HTTP_PROXY+x}" ] || [ "${DOCKER_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_14}" ]; then export DOCKER_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_14}"; else export DOCKER_HTTP_PROXY; fi else builtin unset DOCKER_HTTP_PROXY 2>/dev/null || command unset DOCKER_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14 __CODEX_SNAPSHOT_PROXY_OVERRIDE_14 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14 __CODEX_SNAPSHOT_PROXY_OVERRIDE_14 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15}" ]; then   if [ -z "${ELECTRON_GET_USE_PROXY+x}" ] || [ "${ELECTRON_GET_USE_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_15}" ]; then export ELECTRON_GET_USE_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_15}"; else export ELECTRON_GET_USE_PROXY; fi else builtin unset ELECTRON_GET_USE_PROXY 2>/dev/null || command unset ELECTRON_GET_USE_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15 __CODEX_SNAPSHOT_PROXY_OVERRIDE_15 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15 __CODEX_SNAPSHOT_PROXY_OVERRIDE_15 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16}" ]; then   if [ -z "${FTP_PROXY+x}" ] || [ "${FTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_16}" ]; then export FTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_16}"; else export FTP_PROXY; fi else builtin unset FTP_PROXY 2>/dev/null || command unset FTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16 __CODEX_SNAPSHOT_PROXY_OVERRIDE_16 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16 __CODEX_SNAPSHOT_PROXY_OVERRIDE_16 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17}" ]; then   if [ -z "${GIT_SSL_CAINFO+x}" ] || [ "${GIT_SSL_CAINFO-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_17}" ]; then export GIT_SSL_CAINFO="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_17}"; else export GIT_SSL_CAINFO; fi else builtin unset GIT_SSL_CAINFO 2>/dev/null || command unset GIT_SSL_CAINFO; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17 __CODEX_SNAPSHOT_PROXY_OVERRIDE_17 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17 __CODEX_SNAPSHOT_PROXY_OVERRIDE_17 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18}" ]; then   if [ -z "${HTTPS_PROXY+x}" ] || [ "${HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_18}" ]; then export HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_18}"; else export HTTPS_PROXY; fi else builtin unset HTTPS_PROXY 2>/dev/null || command unset HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18 __CODEX_SNAPSHOT_PROXY_OVERRIDE_18 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18 __CODEX_SNAPSHOT_PROXY_OVERRIDE_18 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19}" ]; then   if [ -z "${HTTP_PROXY+x}" ] || [ "${HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_19}" ]; then export HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_19}"; else export HTTP_PROXY; fi else builtin unset HTTP_PROXY 2>/dev/null || command unset HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19 __CODEX_SNAPSHOT_PROXY_OVERRIDE_19 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19 __CODEX_SNAPSHOT_PROXY_OVERRIDE_19 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20}" ]; then   if [ -z "${NODE_EXTRA_CA_CERTS+x}" ] || [ "${NODE_EXTRA_CA_CERTS-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_20}" ]; then export NODE_EXTRA_CA_CERTS="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_20}"; else export NODE_EXTRA_CA_CERTS; fi else builtin unset NODE_EXTRA_CA_CERTS 2>/dev/null || command unset NODE_EXTRA_CA_CERTS; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20 __CODEX_SNAPSHOT_PROXY_OVERRIDE_20 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20 __CODEX_SNAPSHOT_PROXY_OVERRIDE_20 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21}" ]; then   if [ -z "${NODE_USE_ENV_PROXY+x}" ] || [ "${NODE_USE_ENV_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_21}" ]; then export NODE_USE_ENV_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_21}"; else export NODE_USE_ENV_PROXY; fi else builtin unset NODE_USE_ENV_PROXY 2>/dev/null || command unset NODE_USE_ENV_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21 __CODEX_SNAPSHOT_PROXY_OVERRIDE_21 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21 __CODEX_SNAPSHOT_PROXY_OVERRIDE_21 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22}" ]; then   if [ -z "${NO_PROXY+x}" ] || [ "${NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_22}" ]; then export NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_22}"; else export NO_PROXY; fi else builtin unset NO_PROXY 2>/dev/null || command unset NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22 __CODEX_SNAPSHOT_PROXY_OVERRIDE_22 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22 __CODEX_SNAPSHOT_PROXY_OVERRIDE_22 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23}" ]; then   if [ -z "${NPM_CONFIG_CAFILE+x}" ] || [ "${NPM_CONFIG_CAFILE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_23}" ]; then export NPM_CONFIG_CAFILE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_23}"; else export NPM_CONFIG_CAFILE; fi else builtin unset NPM_CONFIG_CAFILE 2>/dev/null || command unset NPM_CONFIG_CAFILE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23 __CODEX_SNAPSHOT_PROXY_OVERRIDE_23 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23 __CODEX_SNAPSHOT_PROXY_OVERRIDE_23 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24}" ]; then   if [ -z "${NPM_CONFIG_HTTPS_PROXY+x}" ] || [ "${NPM_CONFIG_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_24}" ]; then export NPM_CONFIG_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_24}"; else export NPM_CONFIG_HTTPS_PROXY; fi else builtin unset NPM_CONFIG_HTTPS_PROXY 2>/dev/null || command unset NPM_CONFIG_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24 __CODEX_SNAPSHOT_PROXY_OVERRIDE_24 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24 __CODEX_SNAPSHOT_PROXY_OVERRIDE_24 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25}" ]; then   if [ -z "${NPM_CONFIG_HTTP_PROXY+x}" ] || [ "${NPM_CONFIG_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_25}" ]; then export NPM_CONFIG_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_25}"; else export NPM_CONFIG_HTTP_PROXY; fi else builtin unset NPM_CONFIG_HTTP_PROXY 2>/dev/null || command unset NPM_CONFIG_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25 __CODEX_SNAPSHOT_PROXY_OVERRIDE_25 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25 __CODEX_SNAPSHOT_PROXY_OVERRIDE_25 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26}" ]; then   if [ -z "${NPM_CONFIG_NOPROXY+x}" ] || [ "${NPM_CONFIG_NOPROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_26}" ]; then export NPM_CONFIG_NOPROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_26}"; else export NPM_CONFIG_NOPROXY; fi else builtin unset NPM_CONFIG_NOPROXY 2>/dev/null || command unset NPM_CONFIG_NOPROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26 __CODEX_SNAPSHOT_PROXY_OVERRIDE_26 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26 __CODEX_SNAPSHOT_PROXY_OVERRIDE_26 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27}" ]; then   if [ -z "${NPM_CONFIG_PROXY+x}" ] || [ "${NPM_CONFIG_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_27}" ]; then export NPM_CONFIG_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_27}"; else export NPM_CONFIG_PROXY; fi else builtin unset NPM_CONFIG_PROXY 2>/dev/null || command unset NPM_CONFIG_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27 __CODEX_SNAPSHOT_PROXY_OVERRIDE_27 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27 __CODEX_SNAPSHOT_PROXY_OVERRIDE_27 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28}" ]; then   if [ -z "${PIP_CERT+x}" ] || [ "${PIP_CERT-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_28}" ]; then export PIP_CERT="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_28}"; else export PIP_CERT; fi else builtin unset PIP_CERT 2>/dev/null || command unset PIP_CERT; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28 __CODEX_SNAPSHOT_PROXY_OVERRIDE_28 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28 __CODEX_SNAPSHOT_PROXY_OVERRIDE_28 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29}" ]; then   if [ -z "${PIP_PROXY+x}" ] || [ "${PIP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_29}" ]; then export PIP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_29}"; else export PIP_PROXY; fi else builtin unset PIP_PROXY 2>/dev/null || command unset PIP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29 __CODEX_SNAPSHOT_PROXY_OVERRIDE_29 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29 __CODEX_SNAPSHOT_PROXY_OVERRIDE_29 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30}" ]; then   if [ -z "${REQUESTS_CA_BUNDLE+x}" ] || [ "${REQUESTS_CA_BUNDLE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_30}" ]; then export REQUESTS_CA_BUNDLE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_30}"; else export REQUESTS_CA_BUNDLE; fi else builtin unset REQUESTS_CA_BUNDLE 2>/dev/null || command unset REQUESTS_CA_BUNDLE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30 __CODEX_SNAPSHOT_PROXY_OVERRIDE_30 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30 __CODEX_SNAPSHOT_PROXY_OVERRIDE_30 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31}" ]; then   if [ -z "${SSL_CERT_FILE+x}" ] || [ "${SSL_CERT_FILE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_31}" ]; then export SSL_CERT_FILE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_31}"; else export SSL_CERT_FILE; fi else builtin unset SSL_CERT_FILE 2>/dev/null || command unset SSL_CERT_FILE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31 __CODEX_SNAPSHOT_PROXY_OVERRIDE_31 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31 __CODEX_SNAPSHOT_PROXY_OVERRIDE_31 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32}" ]; then   if [ -z "${WSS_PROXY+x}" ] || [ "${WSS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_32}" ]; then export WSS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_32}"; else export WSS_PROXY; fi else builtin unset WSS_PROXY 2>/dev/null || command unset WSS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32 __CODEX_SNAPSHOT_PROXY_OVERRIDE_32 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32 __CODEX_SNAPSHOT_PROXY_OVERRIDE_32 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33}" ]; then   if [ -z "${WS_PROXY+x}" ] || [ "${WS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_33}" ]; then export WS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_33}"; else export WS_PROXY; fi else builtin unset WS_PROXY 2>/dev/null || command unset WS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33 __CODEX_SNAPSHOT_PROXY_OVERRIDE_33 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33 __CODEX_SNAPSHOT_PROXY_OVERRIDE_33 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34}" ]; then   if [ -z "${YARN_HTTPS_PROXY+x}" ] || [ "${YARN_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_34}" ]; then export YARN_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_34}"; else export YARN_HTTPS_PROXY; fi else builtin unset YARN_HTTPS_PROXY 2>/dev/null || command unset YARN_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34 __CODEX_SNAPSHOT_PROXY_OVERRIDE_34 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34 __CODEX_SNAPSHOT_PROXY_OVERRIDE_34 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35}" ]; then   if [ -z "${YARN_HTTP_PROXY+x}" ] || [ "${YARN_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_35}" ]; then export YARN_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_35}"; else export YARN_HTTP_PROXY; fi else builtin unset YARN_HTTP_PROXY 2>/dev/null || command unset YARN_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35 __CODEX_SNAPSHOT_PROXY_OVERRIDE_35 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35 __CODEX_SNAPSHOT_PROXY_OVERRIDE_35 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36}" ]; then   if [ -z "${YARN_NO_PROXY+x}" ] || [ "${YARN_NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_36}" ]; then export YARN_NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_36}"; else export YARN_NO_PROXY; fi else builtin unset YARN_NO_PROXY 2>/dev/null || command unset YARN_NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36 __CODEX_SNAPSHOT_PROXY_OVERRIDE_36 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36 __CODEX_SNAPSHOT_PROXY_OVERRIDE_36 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37}" ]; then   if [ -z "${all_proxy+x}" ] || [ "${all_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_37}" ]; then export all_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_37}"; else export all_proxy; fi else builtin unset all_proxy 2>/dev/null || command unset all_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37 __CODEX_SNAPSHOT_PROXY_OVERRIDE_37 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37 __CODEX_SNAPSHOT_PROXY_OVERRIDE_37 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38}" ]; then   if [ -z "${ftp_proxy+x}" ] || [ "${ftp_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_38}" ]; then export ftp_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_38}"; else export ftp_proxy; fi else builtin unset ftp_proxy 2>/dev/null || command unset ftp_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38 __CODEX_SNAPSHOT_PROXY_OVERRIDE_38 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38 __CODEX_SNAPSHOT_PROXY_OVERRIDE_38 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39}" ]; then   if [ -z "${http_proxy+x}" ] || [ "${http_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_39}" ]; then export http_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_39}"; else export http_proxy; fi else builtin unset http_proxy 2>/dev/null || command unset http_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39 __CODEX_SNAPSHOT_PROXY_OVERRIDE_39 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39 __CODEX_SNAPSHOT_PROXY_OVERRIDE_39 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40}" ]; then   if [ -z "${https_proxy+x}" ] || [ "${https_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_40}" ]; then export https_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_40}"; else export https_proxy; fi else builtin unset https_proxy 2>/dev/null || command unset https_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40 __CODEX_SNAPSHOT_PROXY_OVERRIDE_40 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40 __CODEX_SNAPSHOT_PROXY_OVERRIDE_40 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41}" ]; then   if [ -z "${no_proxy+x}" ] || [ "${no_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_41}" ]; then export no_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_41}"; else export no_proxy; fi else builtin unset no_proxy 2>/dev/null || command unset no_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41 __CODEX_SNAPSHOT_PROXY_OVERRIDE_41 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41 __CODEX_SNAPSHOT_PROXY_OVERRIDE_41 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42}" ]; then   if [ -z "${npm_config_cafile+x}" ] || [ "${npm_config_cafile-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_42}" ]; then export npm_config_cafile="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_42}"; else export npm_config_cafile; fi else builtin unset npm_config_cafile 2>/dev/null || command unset npm_config_cafile; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42 __CODEX_SNAPSHOT_PROXY_OVERRIDE_42 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42 __CODEX_SNAPSHOT_PROXY_OVERRIDE_42 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43}" ]; then   if [ -z "${npm_config_http_proxy+x}" ] || [ "${npm_config_http_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_43}" ]; then export npm_config_http_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_43}"; else export npm_config_http_proxy; fi else builtin unset npm_config_http_proxy 2>/dev/null || command unset npm_config_http_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43 __CODEX_SNAPSHOT_PROXY_OVERRIDE_43 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43 __CODEX_SNAPSHOT_PROXY_OVERRIDE_43 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44}" ]; then   if [ -z "${npm_config_https_proxy+x}" ] || [ "${npm_config_https_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_44}" ]; then export npm_config_https_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_44}"; else export npm_config_https_proxy; fi else builtin unset npm_config_https_proxy 2>/dev/null || command unset npm_config_https_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44 __CODEX_SNAPSHOT_PROXY_OVERRIDE_44 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44 __CODEX_SNAPSHOT_PROXY_OVERRIDE_44 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45}" ]; then   if [ -z "${npm_config_noproxy+x}" ] || [ "${npm_config_noproxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_45}" ]; then export npm_config_noproxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_45}"; else export npm_config_noproxy; fi else builtin unset npm_config_noproxy 2>/dev/null || command unset npm_config_noproxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45 __CODEX_SNAPSHOT_PROXY_OVERRIDE_45 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45 __CODEX_SNAPSHOT_PROXY_OVERRIDE_45 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46}" ]; then   if [ -z "${npm_config_proxy+x}" ] || [ "${npm_config_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_46}" ]; then export npm_config_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_46}"; else export npm_config_proxy; fi else builtin unset npm_config_proxy 2>/dev/null || command unset npm_config_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46 __CODEX_SNAPSHOT_PROXY_OVERRIDE_46 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46 __CODEX_SNAPSHOT_PROXY_OVERRIDE_46 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47}" ]; then   if [ -z "${ws_proxy+x}" ] || [ "${ws_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_47}" ]; then export ws_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_47}"; else export ws_proxy; fi else builtin unset ws_proxy 2>/dev/null || command unset ws_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47 __CODEX_SNAPSHOT_PROXY_OVERRIDE_47 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47 __CODEX_SNAPSHOT_PROXY_OVERRIDE_47 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48}" ]; then   if [ -z "${wss_proxy+x}" ] || [ "${wss_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_48}" ]; then export wss_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_48}"; else export wss_proxy; fi else builtin unset wss_proxy 2>/dev/null || command unset wss_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48 __CODEX_SNAPSHOT_PROXY_OVERRIDE_48 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48 __CODEX_SNAPSHOT_PROXY_OVERRIDE_48 fi if [ -n "${PATH:-}" ]; then export PATH='/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path':"$PATH"; else export PATH='/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path'; fi  exec '/bin/bash' -c 'ps -eo pid,etime,args | rg '"'"'pytest.*test_timeline_capture_projection|pytest.*test_managed'"'"' | head -6; /home/user/work/venv-agent/bin/ruff check --no-cache --no-force-exclude astrid/sdk/timeline/commit.py astrid/packs/rendering/actions/render/managed_timeline.py tests/sdk/test_timeline_capture_projection.py; git diff --check; rg -n '"'"'agt-m3-capture-projection-exact|no.consumer|AG05'"'"' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md | tail -8'
+      2       00:00 /bin/bash -c ps -eo pid,etime,args | rg 'pytest.*test_timeline_capture_projection|pytest.*test_managed' | head -6; /home/user/work/venv-agent/bin/ruff check --no-cache --no-force-exclude astrid/sdk/timeline/commit.py astrid/packs/rendering/actions/render/managed_timeline.py tests/sdk/test_timeline_capture_projection.py; git diff --check; rg -n 'agt-m3-capture-projection-exact|no.consumer|AG05' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md | tail -8
+      4       00:00 rg pytest.*test_timeline_capture_projection|pytest.*test_managed
+All checks passed!
+142:## agt-m3-capture-projection-exact — required pre-merge consumer confirmation
+143:Implementing orchestrator 02:42 canonical-image decision in `/home/user/work/wt/agt-m3-capture-projection-exact/astrid/packs/rendering/actions/render/managed_timeline.py::_project_exact_parent_head`, before its SAME `project_runtime_parent_composition` call. Existing CanonicalDocument image fieldsets in `/home/user/work/wt/agt-m3-capture-projection-exact/astrid/sdk/timeline/commit.py::_verify_document` will be shared as constants. Pure `project_capture(document, *, authoring_preview=None) -> {config, registry, expansion}` stays unchanged.
+145:Stored snapshots/CAS/tasks are never rewritten or reprojected by this change; Runtime owns certification, reads already-admitted refs in their recorded form, and legacy uncertified labels remain Viewing-owned. No silent recertification authorized. M3/AG05 HELD until integration and your confirmation; report evidence at workers/agt-m3-capture-projection-exact/notes/report.md.
+
+ succeeded in 110893ms:
+........................................................................ [ 23%]
+........................................................................ [ 47%]
+........................................................................ [ 71%]
+........................................................................ [ 94%]
+................                                                         [100%]
+304 passed in 109.06s (0:01:49)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import ast, copy, subprocess
+from pathlib import Path
+old=ast.parse(subprocess.check_output(['git','show','HEAD:astrid/sdk/timeline/commit.py'],text=True))
+new=ast.parse(Path('astrid/sdk/timeline/commit.py').read_text())
+constants={
+'PARENT_IMAGE_FIELDS':ast.parse('{\"revision_id\", \"content_digest\", \"payload\"}',mode='eval').body,
+'SHOT_IMAGE_FIELDS':ast.parse('{\"shot_id\", \"revision_id\", \"internal_timeline_revision_id\", \"content_digest\", \"payload\"}',mode='eval').body,
+'INTERNAL_IMAGE_FIELDS':ast.parse('{\"timeline_id\", \"revision_id\", \"content_digest\", \"payload\"}',mode='eval').body,
+}
+class Expand(ast.NodeTransformer):
+ def visit_Name(self,node):
+  return copy.deepcopy(constants.get(node.id,node))
+def function(tree):
+ return next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='_verify_document')
+assert ast.dump(function(old),include_attributes=False)==ast.dump(Expand().visit(function(new)),include_attributes=False)
+print('_verify_document AST exactly matches base after expanding ONLY the extracted image field constants')
+PY" in /home/user/work/wt/agt-m3-capture-projection-exact
+ succeeded in 37ms:
+_verify_document AST exactly matches base after expanding ONLY the extracted image field constants
+
+codex
+All 304 focused tests passed, including the six candidate goldens, managed snapshot neighbors, provider checks, and M1 import fences. The provider’s `project_capture` and `commit` methods are unchanged; canonical-document validation is also unchanged after expanding the shared field constants. I’ll finish the source-hash handoff and held-status report.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts='"'' -q -p no:cacheprovider --runxfail --tb=short tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly" in /home/user/work/wt/agt-m3-capture-projection-exact
+exec
+/bin/bash -lc 'tail -10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md; git diff --numstat; git status --short; git diff --check' in /home/user/work/wt/agt-m3-capture-projection-exact
+ succeeded in 1142ms:
+Runtime ACK full spec.inputs.authoring_preview and canonical-capture-only inline publication consumed before wiring. Native authority object path stays unchanged; GenericPackHost/timeline_filmstrip/provider/Runtime/save/schema/pins untouched. Visible UNCERTIFIED labels remain Viewing-owned and UNVERIFIED; no metadata flag or fake authority invented. Provider exact saved graph/created_at golden blocker remains; manager compose reviewed sources and resolve metadata contract before ONE actual21-case --runxfail pair. M3 integration HELD. Full exact commands/initial failure/correction/behavior inventory + next paired command: workers/agt-m3-capture-candidate-forward/notes/report.md. Both commit-msg files ready; no repository notes output.
+- `/home/user/work/wt/agt-m3-capture-candidate-forward/astrid/sdk/invocation.py` SHA256 `6ed48bd36f9b4d1e7b989cedda884e4934d9600538036c652c660c808cfcb841`
+- `/home/user/work/wt/agt-m3-capture-candidate-forward/tests/sdk/test_capture_closure_source.py` SHA256 `6ece74c1f5e3de8194f95bc731364f62ad7dac034a65f780833fd7af56b50d13`
+- `/home/user/work/wt/agt-m3-capture-candidate-forward/tests/sdk/test_capture_source_runtime.py` SHA256 `3f031754e4fa0efa3c892590a2bbef0e68de404ecf21de7757ed0eccf909c0e0`
+
+
+## agt-m3-capture-projection-exact — required pre-merge consumer confirmation
+Implementing orchestrator 02:42 canonical-image decision in `/home/user/work/wt/agt-m3-capture-projection-exact/astrid/packs/rendering/actions/render/managed_timeline.py::_project_exact_parent_head`, before its SAME `project_runtime_parent_composition` call. Existing CanonicalDocument image fieldsets in `/home/user/work/wt/agt-m3-capture-projection-exact/astrid/sdk/timeline/commit.py::_verify_document` will be shared as constants. Pure `project_capture(document, *, authoring_preview=None) -> {config, registry, expansion}` stays unchanged.
+Viewing: please CONFIRM before merge that no viewer, host or check consumes these excluded OUTER read fields: `expansion.graph.parent_revision.created_at`, `expansion.graph.parent_revision.dependency_manifest`, `expansion.graph.shot_revisions[*].created_at`, `expansion.graph.internal_timeline_revisions[*].created_at` (also the corresponding ManagedRenderSnapshot.composition_graph paths). All `payload.*`, root dependency manifest, all IDs/digests/child/document/media pins and first-reference order remain intact; normal GET responses untouched. Exact full golden and authored payload.created_at/nested dependency_manifest positives will run while awaiting.
+Stored snapshots/CAS/tasks are never rewritten or reprojected by this change; Runtime owns certification, reads already-admitted refs in their recorded form, and legacy uncertified labels remain Viewing-owned. No silent recertification authorized. M3/AG05 HELD until integration and your confirmation; report evidence at workers/agt-m3-capture-projection-exact/notes/report.md.
+13	3	astrid/packs/rendering/actions/render/managed_timeline.py
+6	4	astrid/sdk/timeline/commit.py
+60	5	tests/sdk/test_timeline_capture_projection.py
+ M astrid/packs/rendering/actions/render/managed_timeline.py
+ M astrid/sdk/timeline/commit.py
+ M tests/sdk/test_timeline_capture_projection.py
+
+ succeeded in 5433ms:
+........                                                                 [100%]
+8 passed in 4.72s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-m3-capture-projection-exact'
+proof=json.loads((worker/'notes/source-proof.json').read_text())
+report='''# Exact saved capture projection — M3 HELD
+
+Implemented the approved 02:42 canonical read-envelope projection on base "'`bb0161c3f7ba1a4a273a6430dddcddcd38638021` (base tree `8c2aa5300ab211e061f26f5577494258a767c778`). Harness successor HEAD is **pending**; no commit performed. Prospective complete tracked source tree, computed read-only from Git tree/blob encodings: `13240cbc642e6090bc0a3d7bcb76e04021f7bbf5`. Harness should verify this tree after committing. Per-file SHA256 and method AST proof: `notes/source-proof.json`.
+
+## Change and decisions
+
+- `managed_timeline._project_exact_parent_head` projects GET rows onto the existing CanonicalDocument image fieldsets BEFORE calling the SAME core `project_runtime_parent_composition`. Fieldsets were extracted from existing `_verify_document` assertions into shared immutable constants; no duplicate projector, ignore list, recursive stripping, DTO, IO/provider refinement or evaluator introduced. Product diff: 19 additions / 7 deletions across two files.
+- Only outer GET decoration is absent from the new snapshot graph: row.created_at and duplicated parent dependency_manifest. Complete payloads (including authored created_at and nested manifests), immutable IDs/digests, child pin order and original GET/returned parent remain intact. Root canonical-document manifest is unchanged. The duplicate-manifest preservation test supplies a synthetic read-envelope document pin; it is NOT evidence of Runtime retained-document authorization.
+- `project_capture(document, *, authoring_preview=None) -> {config, registry, expansion}` is frozen unchanged. `project_capture` AND `commit` method ASTs are identical to base. `_verify_document` AST matches base exactly after substituting ONLY the extracted constants with the original literal sets. Candidate validation remains intact.
+- Required entire saved golden now asserts the whole `{config, registry, expansion}` result exactly. Only its strict xfail marker/comment was removed, AFTER an actual --runxfail pass. All six existing candidate variants and all negative/detached/no-IO/finite controls remain. No original positive was changed to refusal.
+- New real saved fixture carries authored parent/shot/internal `payload.created_at`, opaque nested `dependency_manifest`, rational fps, and first-reference order z/a versus canonical sorted a/z. New test compares complete payloads, all graph pins and first-reference order; confirms normal read timestamps remain, root manifest/pins survive, inputs and cached API read rows remain unchanged, and projected output mutation cannot alter them.
+- No snapshot reader, CAS/task record, legacy artifact or certification path was changed. Already stored snapshots remain in their recorded form; existing old-render/frozen-input neighbors pass. Runtime owns admission and certification; no silent recertification or legacy label authority is claimed.
+
+## Exact commands and results
+
+All commands below ran from `/home/user/work/wt/agt-m3-capture-projection-exact`.
+
+First, BEFORE marker removal and fixture strengthening:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts='"'' -q -p no:cacheprovider --runxfail --tb=short tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden
+"'```
+
+**1 passed in 1.37s**, exit 0. The original full expansion assertion passed without weakening.
+
+Final focused lane:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts='"'' -q -p no:cacheprovider --tb=short tests/sdk/test_timeline_capture_projection.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/packs/rendering/test_managed_timeline_render.py tests/sdk/test_managed_render_invocation.py tests/sdk/test_timeline_filmstrip.py tests/sdk/test_capture_closure_source.py tests/timeline/test_shot_composition_projection.py tests/core/timeline/test_shot_composition_projection_volume.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_shared_inverse.py
+"'```
+
+**304 passed in 109.06s**, exit 0; no xfails/skips/deselections. Includes saved/candidate projection, complete authored payload/pin/order/read immutability, no-IO/single-projector/detached/finite JSON controls, managed render/capture/frozen legacy input neighbors, existing renderer-independent provider import fences, numeric/opaque/shared inverse regressions.
+
+Final explicit strict goldens:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts='"'' -q -p no:cacheprovider --runxfail --tb=short tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly
+"'```
+
+**8 passed in 4.72s**, exit 0: full saved result, authored-field/immutability control, all six candidate variants.
+
+Important source boundary: the real saved/candidate golden fixture deliberately archives Runtime `4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136` via `tests.helpers.runtime.use_runtime(commit=...)`. These results establish exact pure/provider/managed construction parity, NOT current Runtime task-admission certification. No claim that the twelve forgeries are qualified by a missing-provider refusal.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache --no-force-exclude astrid/sdk/timeline/commit.py astrid/packs/rendering/actions/render/managed_timeline.py tests/sdk/test_timeline_capture_projection.py
+git diff --check
+```
+
+Both PASS, exit 0. Read-only AST comparisons described above PASS. No failed test runs in this task.
+
+## Coordination, remaining conditions and next steps
+
+Required no-consumer confirmation requested, with exact excluded graph paths and exact source function, in ABSOLUTE `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md`. **No Viewing confirmation received as of final check.** Before merging, Viewing must confirm no viewer/host/check reads those outer fields; escalate a consumer finding. Read-only search found graph carriers into visualize/storyboard/snapshot; owner confirmation is still necessary.
+
+Exact contract/source/result handoff appended to ABSOLUTE sibling `design/runtime-coordination.md`. Own deletion row **AG05 HELD** added to `design/deletion-ledger.agent.md`; no integration/deletion claim.
+
+No real Runtime 18/21-case capture admission pair run: this worktree intentionally does not contain the sibling'"'s reviewed candidate-forward/inline/no-preingest fixture changes, and current capture tests still use the old adapter. Runtime validation worker is available as clean "'`634b4de859b9e1c4a038af85b3b9496012e7151c`, but the final composed Agent source and reviewed paired fixture must be frozen by the manager first. Preserve all native/saved/real-candidate positives and providerless/malicious negatives; run with --runxfail only on the reviewed pair, never count fail-closed false positives as certification.
+
+Next: harness commit and verify tree/hashes; obtain Viewing confirmation; manager compose this exact successor with candidate-forward; publish clean Agent/Runtime pair; perform actual admission/claim/host positives plus original forgeries, then integration review. M3 remains HELD. No full suite, localhost, sockets, browser, install, network, Runtime edit, source pin, package, renderer/evaluator, merge or push performed. No repository docs/build/temp outputs added. Commit messages supplied in both worker `commit-msg` and `commit-msg.txt`.
+'"'''
+report+='\\n| Source path | SHA256 |\\n| --- | --- |\\n'
+for path, hashes in proof['files'].items(): report+=f'| "'`{path}` | `{hashes["sha256"]}` |'"\\n'
+(worker/'notes/report.md').write_text(report)
+message='''fix(timeline): project saved capture reads onto canonical images
+
+Share existing canonical image fieldsets with managed capture construction before
+calling the core projector. Preserve authored payloads, immutable pins, read rows
+and first-reference order while excluding outer GET decoration from new graphs.
+
+Restore the exact full saved capture golden and add authored timestamp, nested
+manifest and read-row immutability coverage. Focused suite: 304 passed; explicit
+strict saved and six-candidate goldens: 8 passed. M3 remains held pending Viewing
+consumer confirmation and reviewed Runtime integration qualification.
+'''
+for name in ('commit-msg','commit-msg.txt'): (worker/name).write_text(message)
+handoff='''\\n\\n## agt-m3-capture-projection-exact — final exact golden/source handoff (M3 HELD)\\nBase HEAD "'`bb0161c3f7ba1a4a273a6430dddcddcd38638021`; harness successor HEAD pending (no worker commit). Prospective exact tracked tree `13240cbc642e6090bc0a3d7bcb76e04021f7bbf5` (read-only Git object hash calculation; verify after harness). Managed source SHA256 `490a3098dec6e04595087c88f153e05590f4c51968e76e9c2b71683523dd74b1`; provider source SHA256 `631daf891b23fa20d20f38c4a03d1f5a1d2ace9000063d96ad3142ef99f25429`; test SHA256 `ab63f80449c0be0f9e78624562816090f5eabe8febc439ce4d40b07de671e4a5`. Absolute source root `/home/user/work/wt/agt-m3-capture-projection-exact`.'"\\nFrozen "'`project_capture(document, *, authoring_preview=None) -> {config, registry, expansion}` unchanged; method and commit ASTs identical to base. Shared fieldsets extracted from existing closed CanonicalDocument assertions; validator identical after constant expansion. ONLY new managed GET construction changes, before SAME core projector; no ignore list/DTO/IO/save/candidate changes. Normal GET and complete payloads/rootmanifest/pins/order retained. Existing stored snapshots remain recorded/unmodified, never silently recertified; Runtime owns certification.'"\\nActual strict full saved golden passed before only its xfail removal. FINAL full-result saved + authored nested-field/immutability + all six candidate goldens: **8 PASS/4.72s with --runxfail**. Full focused managed/provider/M1 neighbors **304 PASS/109.06s**, no xfails/skips/deselections. Ruff/diffcheck PASS. Goldens archive Runtime4bb1d0f7 and establish projection parity ONLY, not current admission. No real Runtime capture pair: manager must compose reviewed candidate-forward/inline fixture source with this successor, then run genuine saved/candidate/native positives plus original negatives on reviewed validation source. Never count missing-provider refusal as positive certification.\\nAG05 HELD. Viewing no-consumer confirmation requested above and still PENDING before merge; no legacy UNCERTIFIED label qualification here. Full exact commands and source proof: "'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/notes/report.md` and `source-proof.json`. No full/socket/browser/install/network/merge/push.'"\\n'''
+for name in ('runtime-coordination.md','viewing-coordination.md'):
+ with (root/'design'/name).open('a') as f: f.write(handoff)
+with (root/'design/deletion-ledger.agent.md').open('a') as f:
+ f.write('\\nAG05 final evidence: **304 focused PASS**, explicit strict entire-result saved + authored-field control + six candidate goldens **8 PASS**. Source tree13240cbc; successor HEAD harness pending. Report workers/agt-m3-capture-projection-exact/notes/report.md. Status remains **HELD**: Viewing confirmation, composed Runtime pair and integration unqualified.\\n')
+print('Wrote notes/report.md, source-proof.json, both commit messages; appended final source/results to both absolute coordination files and AG05 evidence.')
+PY" in /home/user/work/wt/agt-m3-capture-projection-exact
+ succeeded in 0ms:
+Wrote notes/report.md, source-proof.json, both commit messages; appended final source/results to both absolute coordination files and AG05 evidence.
+
+exec
+/bin/bash -lc "git diff --check; git status --short; rg -n 'projection-exact|AG05|CONFIRM|no.consumer|no viewer' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md | tail -8; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/commit-msg.txt" in /home/user/work/wt/agt-m3-capture-projection-exact
+ succeeded in 517ms:
+ M astrid/packs/rendering/actions/render/managed_timeline.py
+ M astrid/sdk/timeline/commit.py
+ M tests/sdk/test_timeline_capture_projection.py
+142:## agt-m3-capture-projection-exact — required pre-merge consumer confirmation
+143:Implementing orchestrator 02:42 canonical-image decision in `/home/user/work/wt/agt-m3-capture-projection-exact/astrid/packs/rendering/actions/render/managed_timeline.py::_project_exact_parent_head`, before its SAME `project_runtime_parent_composition` call. Existing CanonicalDocument image fieldsets in `/home/user/work/wt/agt-m3-capture-projection-exact/astrid/sdk/timeline/commit.py::_verify_document` will be shared as constants. Pure `project_capture(document, *, authoring_preview=None) -> {config, registry, expansion}` stays unchanged.
+144:Viewing: please CONFIRM before merge that no viewer, host or check consumes these excluded OUTER read fields: `expansion.graph.parent_revision.created_at`, `expansion.graph.parent_revision.dependency_manifest`, `expansion.graph.shot_revisions[*].created_at`, `expansion.graph.internal_timeline_revisions[*].created_at` (also the corresponding ManagedRenderSnapshot.composition_graph paths). All `payload.*`, root dependency manifest, all IDs/digests/child/document/media pins and first-reference order remain intact; normal GET responses untouched. Exact full golden and authored payload.created_at/nested dependency_manifest positives will run while awaiting.
+145:Stored snapshots/CAS/tasks are never rewritten or reprojected by this change; Runtime owns certification, reads already-admitted refs in their recorded form, and legacy uncertified labels remain Viewing-owned. No silent recertification authorized. M3/AG05 HELD until integration and your confirmation; report evidence at workers/agt-m3-capture-projection-exact/notes/report.md.
+148:## agt-m3-capture-projection-exact — final exact golden/source handoff (M3 HELD)
+149:Base HEAD `bb0161c3f7ba1a4a273a6430dddcddcd38638021`; harness successor HEAD pending (no worker commit). Prospective exact tracked tree `13240cbc642e6090bc0a3d7bcb76e04021f7bbf5` (read-only Git object hash calculation; verify after harness). Managed source SHA256 `490a3098dec6e04595087c88f153e05590f4c51968e76e9c2b71683523dd74b1`; provider source SHA256 `631daf891b23fa20d20f38c4a03d1f5a1d2ace9000063d96ad3142ef99f25429`; test SHA256 `ab63f80449c0be0f9e78624562816090f5eabe8febc439ce4d40b07de671e4a5`. Absolute source root `/home/user/work/wt/agt-m3-capture-projection-exact`.
+152:AG05 HELD. Viewing no-consumer confirmation requested above and still PENDING before merge; no legacy UNCERTIFIED label qualification here. Full exact commands and source proof: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/notes/report.md` and `source-proof.json`. No full/socket/browser/install/network/merge/push.
+-rw-r--r-- 1 root root 623 Oct 20 03:00 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/commit-msg
+-rw-r--r-- 1 root root 623 Oct 20 03:00 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/commit-msg.txt
+
+codex
+Implemented canonical image projection before the existing core projector. The entire saved golden now passes; removed only its strict xfail. Added authored-field, pin/order, and read-row immutability coverage.
+
+- Focused tests: **304 passed**.
+- Explicit saved/control/six-candidate goldens with `--runxfail`: **8 passed**.
+- Ruff and `git diff --check`: **passed**.
+- Provider contract, capture method, and commit method unchanged.
+
+Exact commands, hashes, decisions, and results: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/notes/report.md). Both commit-message files are ready; successor HEAD awaits the harness.
+
+**M3/AG05 remain HELD.** Viewing confirmation is requested and pending. Next: compose the reviewed candidate-forward source, freeze the pair, then qualify actual Runtime admission. No full/socket/browser suite ran.
+tokens used
+116,953
+Implemented canonical image projection before the existing core projector. The entire saved golden now passes; removed only its strict xfail. Added authored-field, pin/order, and read-row immutability coverage.
+
+- Focused tests: **304 passed**.
+- Explicit saved/control/six-candidate goldens with `--runxfail`: **8 passed**.
+- Ruff and `git diff --check`: **passed**.
+- Provider contract, capture method, and commit method unchanged.
+
+Exact commands, hashes, decisions, and results: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/notes/report.md). Both commit-message files are ready; successor HEAD awaits the harness.
+
+**M3/AG05 remain HELD.** Viewing confirmation is requested and pending. Next: compose the reviewed candidate-forward source, freeze the pair, then qualify actual Runtime admission. No full/socket/browser suite ran.

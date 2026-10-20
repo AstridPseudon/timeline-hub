@@ -1,0 +1,400 @@
++        assert transport.get_project_parent_composition_revision(
++            fixture.project_id, fixture.timeline_id, before_revision,
++        ) == before_parent
++        assert client.timelines.history(
++            fixture.project_id, fixture.timeline_id, limit=100,
++        ).data["items"][-1]["receipt"] == restored["receipt"]
++    finally:
++        daemon.stop()
+
+exec
+/bin/bash -lc "git diff --stat; git diff --check; git status --short; printf '\\n--- markers ---\\n'; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-real-catalog-gate/commit-msg; printf '\\n'; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-real-catalog-gate/BLOCKED" in /home/user/work/wt/agt-m2-recover-real-catalog-gate
+ succeeded in 860ms:
+ .../sdk/test_timeline_checkout_history_runtime.py  | 219 ++++++++++++++++++++-
+ 1 file changed, 215 insertions(+), 4 deletions(-)
+ M tests/sdk/test_timeline_checkout_history_runtime.py
+
+--- markers ---
+test(timeline): qualify catalog recover over real runtime
+
+Exercise catalog unarchive and explicit revision restore through real HTTP
+against the exact Runtime visibility candidate.
+
+Exact Runtime ca1f1b6d fails the required post-recovery accepted-history read: after catalog recover, normal WorkspaceClient history returns 409 conflict with reason history_unavailable because archive/recover timeline events are treated as untracked writes. The real HTTP qualification assertion is intentionally retained; do not merge until the Runtime counterpart preserves accepted history and TimelineSession restore after catalog visibility changes.
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-recover-real-catalog-gate-commit-integration-1020185107-11231/summary 2>/dev/null || true; printf '\\n--- exact pin ---\\n'; git -C /home/user/work/wt/rt-pin-ca1f1b6d rev-parse HEAD; printf '\\n--- test lines ---\\n'; nl -ba tests/sdk/test_timeline_checkout_history_runtime.py | sed -n '1,360p' | tail -260" in /home/user/work/wt/agt-m2-recover-real-catalog-gate
+ succeeded in 1ms:
+test agt-m2-recover-real-catalog-gate-commit-integration-1020185107-11231: fail exit=1 in 89s — commit-integration on agt-m2-recover-real-catalog-gate (agent tree 5afe534af180269ad69d568cb92261db0ab9d8a2)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
+counts: 1 failed, 12 passed in 70.98s (0:01:10) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-recover-real-catalog-gate-commit-integration-1020185107-11231/log.txt ---
+            } == {
+                key: value for key, value in preserved["timeline"].items() if key != "version"
+            }
+            for key in ("parent", "shots", "internal", "media"):
+                assert actual[key] == preserved[key]
+    
+        try:
+            # Create one ordinary accepted publication so both canonical head
+            # identities are populated, then retain its exact historical basis.
+            session = TimelineSession.open(
+                fixture.project_id, fixture.timeline_id,
+                client=client, outbox_path=tmp_path / "edit-outbox.json",
+            )
+            before_revision = client.timelines.history(
+                fixture.project_id, fixture.timeline_id, limit=1,
+            ).data["head"]["revision_id"]
+            before_parent = transport.get_project_parent_composition_revision(
+                fixture.project_id, fixture.timeline_id, before_revision,
+            )
+            accepted = session.move("parent/clip:music-bed", 1, idempotency_key="recover-basis")
+            assert accepted["data"]["accepted_revision_id"] != before_revision
+            preserved = snapshot()
+            accepted_history = client.timelines.history(
+                fixture.project_id, fixture.timeline_id, limit=100,
+            )
+            assert accepted_history.ok, accepted_history.as_dict()
+    
+            # The producer-facing no-version call resolves the current catalog
+            # version, while the explicit call sends that same version over HTTP.
+            archived = client.timelines.archive(
+                fixture.project_id, fixture.timeline_id, idempotency_key="catalog-archive-1",
+            )
+            assert archived.ok, archived.as_dict()
+            archived_data = archived.data
+            assert archived_data["archived"] is True
+            assert archived_data["head_revision_id"] == preserved["timeline"]["head_revision_id"]
+            assert archived_data["head_publication_id"] == preserved["timeline"]["head_publication_id"]
+    
+            recovered_absent = client.timelines.recover(
+                fixture.project_id, fixture.timeline_id, idempotency_key="catalog-recover-absent",
+            )
+            assert recovered_absent.ok, recovered_absent.as_dict()
+            assert recovered_absent.data["archived"] is False
+            assert_unchanged(snapshot())
+>           assert client.timelines.history(
+                fixture.project_id, fixture.timeline_id, limit=100,
+            ).data == accepted_history.data
+E           AssertionError: assert None == {'head': {'publication_id': 'txn-f2d37836487f425f9652883a031ea155', 'revision_id': 'authoring-parent-revision-42a8f490...89a1f8d99f952bab3', 'revision_id': 'm1-journey-baseline'}, 'provider_version': 'astrid-v1', ...}], 'next_cursor': None}
+E            +  where None = DomainResult(ok=False, data=None, error=ErrorObject(code='conflict', message='timeline has untracked writes', details=...flicts': [], 'current': None, 'reason': 'history_unavailable', 'status': 'refused'}), receipt=None, idempotency_key='').data
+E            +    where DomainResult(ok=False, data=None, error=ErrorObject(code='conflict', message='timeline has untracked writes', details=...flicts': [], 'current': None, 'reason': 'history_unavailable', 'status': 'refused'}), receipt=None, idempotency_key='') = history('7b6f2bae8ffe42bf925216c38249ed79', 'film', limit=100)
+E            +      where history = <astrid.sdk.remote.RemoteTimelines object at 0x7fe427481650>.history
+E            +        where <astrid.sdk.remote.RemoteTimelines object at 0x7fe427481650> = <astrid.sdk.client.AstridClient object at 0x7fe427483350>.timelines
+E            +      and   '7b6f2bae8ffe42bf925216c38249ed79' = FilmFixture(source_root=PosixPath('/tmp/pytest-of-root/pytest-3359/test_catalog_recover_uses_real0/precut-v31-copy-a')...d7d673dc883c363f95ea19d01d75b66c00ba849b09cb833966e39d392133d', text_binding_id='fa141364-9d4d-57ca-b7dc-9a23d259312e').project_id
+E            +      and   'film' = FilmFixture(source_root=PosixPath('/tmp/pytest-of-root/pytest-3359/test_catalog_recover_uses_real0/precut-v31-copy-a')...d7d673dc883c363f95ea19d01d75b66c00ba849b09cb833966e39d392133d', text_binding_id='fa141364-9d4d-57ca-b7dc-9a23d259312e').timeline_id
+E            +  and   {'head': {'publication_id': 'txn-f2d37836487f425f9652883a031ea155', 'revision_id': 'authoring-parent-revision-42a8f490...89a1f8d99f952bab3', 'revision_id': 'm1-journey-baseline'}, 'provider_version': 'astrid-v1', ...}], 'next_cursor': None} = DomainResult(ok=True, data={'head': {'publication_id': 'txn-f2d37836487f425f9652883a031ea155', 'revision_id': 'authori...2ea3e1bac63b790311', 'source': {'via': 'python'}}], 'next_cursor': None}, error=None, receipt=None, idempotency_key='').data
+
+tests/sdk/test_timeline_checkout_history_runtime.py:214: AssertionError
+=========================== short test summary info ============================
+FAILED tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore
+1 failed, 12 passed in 70.98s (0:01:10)
+
+--- exact pin ---
+ca1f1b6df9a4df9a7febd03c4d3b3f9cd2260b99
+
+--- test lines ---
+    54	
+    55	
+    56	def test_retained_restore_does_not_reopen_consumed_draft_steps(
+    57	    tmp_path, monkeypatch, film, renderer_off, real_runtime,
+    58	):
+    59	    from astrid.sdk.timeline import store
+    60	    from astrid.sdk.timeline._common import TimelineEditError
+    61	    from astrid.sdk.timeline.sync import TimelineSession
+    62	    from astrid.sdk.timeline_checkout import Checkout
+    63	
+    64	    fixture, _, _ = film
+    65	    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
+    66	    daemon = real_runtime(fixture.duplicate_root, support_root=tmp_path / 'support', authoring_profile='astrid')
+    67	    with open_client(daemon) as client:
+    68	        draft = Checkout.draft(fixture.project_id, fixture.timeline_id, client=client)
+    69	        original = copy.deepcopy(draft.bundle)
+    70	
+    71	        def local_move(on):
+    72	            with draft.step('move music'):
+    73	                draft.bundle['parent']['clips'][0]['at'] = on
+    74	                draft.bundle['parent']['config']['clips'] = copy.deepcopy(draft.bundle['parent']['clips'])
+    75	            draft.save(quiet=True)
+    76	
+    77	        local_move(1)
+    78	        local_move(2)
+    79	        assert len(list(store._history_dir(draft.path).glob('*.json'))) == 2
+    80	        session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client)
+    81	        accepted = session.move('parent/clip:music-bed', 2)
+    82	        draft._reset_base(client=client)
+    83	        assert draft.base_revision == accepted['data']['accepted_revision_id']
+    84	        restore_session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client)
+    85	        restored = restore_session.restore(
+    86	            original['base_parent']['revision_id'],
+    87	            original['base_parent']['content_digest'],
+    88	            idempotency_key='restore-retained-draft-base',
+    89	        )
+    90	        assert restored['data']['accepted_revision_id'] == original['base_parent']['revision_id']
+    91	        assert restored['receipt']['receipt_id'] != accepted['receipt']['receipt_id']
+    92	        draft._reset_base(client=client)
+    93	        draft = Checkout.load(draft.path)
+    94	        assert draft.document() == Checkout(original).document()
+    95	        for operation in (draft.undo, draft.redo):
+    96	            with pytest.raises(TimelineEditError, match='no unsent draft edit'):
+    97	                operation()
+    98	        base = draft.document()
+    99	        local_move(3)
+   100	        edited = draft.document()
+   101	        assert len(draft.undo(100)) == 1
+   102	        assert draft.document() == base
+   103	        draft.redo()
+   104	        assert draft.document() == edited
+   105	
+   106	
+   107	def test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore(
+   108	    tmp_path, monkeypatch, film, real_runtime,
+   109	):
+   110	    """Catalog visibility recovery leaves accepted film state untouched.
+   111	
+   112	    The direct recover operation is deliberately exercised through the normal
+   113	    WorkspaceClient transport.  Historical film recovery remains the one
+   114	    explicit TimelineSession restore path.
+   115	    """
+   116	    from astrid.sdk.timeline._common import TimelineEditError
+   117	    from astrid.sdk.timeline.sync import TimelineSession
+   118	    from astrid.sdk.workspace_client import WorkspaceClientError
+   119	
+   120	    fixture, _, _ = film
+   121	    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "client-data"))
+   122	    daemon = real_runtime(
+   123	        fixture.duplicate_root,
+   124	        support_root=tmp_path / "support",
+   125	        authoring_profile="astrid",
+   126	        commit=CATALOG_RUNTIME,
+   127	    )
+   128	    client = open_client(daemon)
+   129	    transport = client._remote._transport
+   130	
+   131	    def snapshot():
+   132	        timeline = transport.get_timeline(
+   133	            fixture.timeline_id, project_id=fixture.project_id,
+   134	        )
+   135	        revision = timeline["head_revision_id"]
+   136	        parent = transport.get_project_parent_composition_revision(
+   137	            fixture.project_id, fixture.timeline_id, revision,
+   138	        )
+   139	        manifest = parent.get("dependency_manifest", {})
+   140	        shots = {
+   141	            row["revision_id"]: transport.get_project_shot_revision(
+   142	                fixture.project_id, row["shot_id"], row["revision_id"],
+   143	            )
+   144	            for row in manifest.get("shots", [])
+   145	        }
+   146	        internal = {
+   147	            row["revision_id"]: transport.get_project_timeline_revision(
+   148	                fixture.project_id, fixture.timeline_id, row["revision_id"],
+   149	            )
+   150	            for row in manifest.get("internal_timelines", [])
+   151	        }
+   152	        media = {
+   153	            row["media_id"]: {
+   154	                key: transport.head_object(row["media_id"])["headers"].get(key)
+   155	                for key in ("ETag", "Content-Length", "Content-Type")
+   156	            }
+   157	            for row in manifest.get("media", [])
+   158	        }
+   159	        return {
+   160	            "timeline": timeline,
+   161	            "parent": parent,
+   162	            "shots": shots,
+   163	            "internal": internal,
+   164	            "media": media,
+   165	        }
+   166	
+   167	    def assert_unchanged(actual):
+   168	        assert {
+   169	            key: value for key, value in actual["timeline"].items() if key != "version"
+   170	        } == {
+   171	            key: value for key, value in preserved["timeline"].items() if key != "version"
+   172	        }
+   173	        for key in ("parent", "shots", "internal", "media"):
+   174	            assert actual[key] == preserved[key]
+   175	
+   176	    try:
+   177	        # Create one ordinary accepted publication so both canonical head
+   178	        # identities are populated, then retain its exact historical basis.
+   179	        session = TimelineSession.open(
+   180	            fixture.project_id, fixture.timeline_id,
+   181	            client=client, outbox_path=tmp_path / "edit-outbox.json",
+   182	        )
+   183	        before_revision = client.timelines.history(
+   184	            fixture.project_id, fixture.timeline_id, limit=1,
+   185	        ).data["head"]["revision_id"]
+   186	        before_parent = transport.get_project_parent_composition_revision(
+   187	            fixture.project_id, fixture.timeline_id, before_revision,
+   188	        )
+   189	        accepted = session.move("parent/clip:music-bed", 1, idempotency_key="recover-basis")
+   190	        assert accepted["data"]["accepted_revision_id"] != before_revision
+   191	        preserved = snapshot()
+   192	        accepted_history = client.timelines.history(
+   193	            fixture.project_id, fixture.timeline_id, limit=100,
+   194	        )
+   195	        assert accepted_history.ok, accepted_history.as_dict()
+   196	
+   197	        # The producer-facing no-version call resolves the current catalog
+   198	        # version, while the explicit call sends that same version over HTTP.
+   199	        archived = client.timelines.archive(
+   200	            fixture.project_id, fixture.timeline_id, idempotency_key="catalog-archive-1",
+   201	        )
+   202	        assert archived.ok, archived.as_dict()
+   203	        archived_data = archived.data
+   204	        assert archived_data["archived"] is True
+   205	        assert archived_data["head_revision_id"] == preserved["timeline"]["head_revision_id"]
+   206	        assert archived_data["head_publication_id"] == preserved["timeline"]["head_publication_id"]
+   207	
+   208	        recovered_absent = client.timelines.recover(
+   209	            fixture.project_id, fixture.timeline_id, idempotency_key="catalog-recover-absent",
+   210	        )
+   211	        assert recovered_absent.ok, recovered_absent.as_dict()
+   212	        assert recovered_absent.data["archived"] is False
+   213	        assert_unchanged(snapshot())
+   214	        assert client.timelines.history(
+   215	            fixture.project_id, fixture.timeline_id, limit=100,
+   216	        ).data == accepted_history.data
+   217	
+   218	        # Repeat the catalog lifecycle through the explicit current version;
+   219	        # the exact archive/recover receipts remain replayable.
+   220	        archived_again = client.timelines.archive(
+   221	            fixture.project_id, fixture.timeline_id,
+   222	            expected_version=recovered_absent.data["version"],
+   223	            idempotency_key="catalog-archive-2",
+   224	        )
+   225	        assert archived_again.ok, archived_again.as_dict()
+   226	        recovered_current = client.timelines.recover(
+   227	            fixture.project_id, fixture.timeline_id,
+   228	            expected_version=archived_again.data["version"],
+   229	            version=archived_again.data["version"],
+   230	            idempotency_key="catalog-recover-current",
+   231	        )
+   232	        assert recovered_current.ok, recovered_current.as_dict()
+   233	        assert_unchanged(snapshot())
+   234	        assert client.timelines.history(
+   235	            fixture.project_id, fixture.timeline_id, limit=100,
+   236	        ).data == accepted_history.data
+   237	        assert client.timelines.archive(
+   238	            fixture.project_id, fixture.timeline_id,
+   239	            expected_version=archived_again.data["version"],
+   240	            idempotency_key="catalog-archive-2",
+   241	        ).data == archived_again.data
+   242	        assert client.timelines.recover(
+   243	            fixture.project_id, fixture.timeline_id,
+   244	            expected_version=archived_again.data["version"],
+   245	            version=archived_again.data["version"],
+   246	            idempotency_key="catalog-recover-current",
+   247	        ).data == recovered_current.data
+   248	
+   249	        # A stale catalog CAS and a wrong project are both refused before any
+   250	        # write.  The historical flat-version route is an explicit 410.
+   251	        stale = client.timelines.archive(
+   252	            fixture.project_id, fixture.timeline_id,
+   253	            expected_version=archived_again.data["version"],
+   254	            idempotency_key="catalog-stale-archive",
+   255	        )
+   256	        assert not stale.ok and stale.error.code == "conflict"
+   257	        assert_unchanged(snapshot())
+   258	        wrong_scope = client.timelines.recover(
+   259	            "not-this-project", fixture.timeline_id, idempotency_key="wrong-scope",
+   260	        )
+   261	        assert not wrong_scope.ok and wrong_scope.error.code == "not_found"
+   262	        assert_unchanged(snapshot())
+   263	        assert recovered_current.data["version"] > 1
+   264	        with pytest.raises(WorkspaceClientError) as historical:
+   265	            transport.recover_timeline(
+   266	                fixture.timeline_id,
+   267	                expected_version=recovered_current.data["version"],
+   268	                version=1,
+   269	                idempotency_key="historical-flat-recover",
+   270	            )
+   271	        assert historical.value.status == 410
+   272	        assert "timeline.restore" in historical.value.message
+   273	        assert_unchanged(snapshot())
+   274	
+   275	        # The exact old revision is restored through the sole provider.  A
+   276	        # lost acknowledgement leaves the original flight/draft intact, and
+   277	        # a different restore cannot replace that pending intent.
+   278	        old_digest = before_parent["content_digest"]
+   279	        restore_session = TimelineSession.open(
+   280	            fixture.project_id, fixture.timeline_id,
+   281	            client=client, outbox_path=tmp_path / "restore-outbox.json",
+   282	        )
+   283	        generated = transport._generated
+   284	        request = generated._request
+   285	
+   286	        def lose_restore_ack(method, url, **kwargs):
+   287	            response = request(method, url, **kwargs)
+   288	            if method == "POST" and url.endswith("/commit") and kwargs["headers"].get("Idempotency-Key") == "timeline-restore-retry":
+   289	                raise ConnectionError("response lost after durable restore")
+   290	            return response
+   291	
+   292	        monkeypatch.setattr(generated, "_request", lose_restore_ack)
+   293	        with pytest.raises(ConnectionError, match="response lost"):
+   294	            restore_session.restore(
+   295	                before_revision, old_digest, idempotency_key="timeline-restore-retry",
+   296	            )
+   297	        with pytest.raises(TimelineEditError, match="pending intent"):
+   298	            restore_session.restore(
+   299	                accepted["data"]["accepted_revision_id"],
+   300	                accepted["data"]["canonical_document"]["parent_revision"]["content_digest"],
+   301	                idempotency_key="different-restore",
+   302	            )
+   303	        monkeypatch.setattr(generated, "_request", request)
+   304	        restored = restore_session.flush()
+   305	        assert restored["data"]["accepted_revision_id"] == before_revision
+   306	        assert transport.get_project_parent_composition_revision(
+   307	            fixture.project_id, fixture.timeline_id, before_revision,
+   308	        ) == before_parent
+   309	        assert client.timelines.history(
+   310	            fixture.project_id, fixture.timeline_id, limit=100,
+   311	        ).data["items"][-1]["receipt"] == restored["receipt"]
+   312	    finally:
+   313	        daemon.stop()
+
+codex
+## Report
+
+- Added a bounded real HTTP qualification test in [test_timeline_checkout_history_runtime.py](/home/user/work/wt/agt-m2-recover-real-catalog-gate/tests/sdk/test_timeline_checkout_history_runtime.py:107).
+- Pinned the test to Runtime `ca1f1b6df9a4df9a7febd03c4d3b3f9cd2260b99` via KEEP checkout `/home/user/work/wt/rt-pin-ca1f1b6d`.
+- Public producer/client and production code remain unchanged.
+
+Tests:
+
+- `python3 -m pytest -q tests/sdk/test_native_timeline_facades.py tests/v10/test_domain_cli_projects_timelines.py` — **124 passed, 1 skipped**.
+- Central real HTTP lane — **12 passed, 1 failed**.
+- Failure: after catalog recover, accepted-history read returns `409 conflict`, `reason=history_unavailable`, “timeline has untracked writes.” Archive/recover events are not accepted by Runtime’s history integrity guard.
+
+This blocks qualification of the exact Runtime candidate and likely prevents fresh `TimelineSession` restore after catalog visibility changes. The assertion is intentionally retained; no weakening or skipping.
+
+Created:
+
+- `commit-msg`
+- `BLOCKED`
+
+No `DONE` marker was created.
+tokens used
+278,350
+## Report
+
+- Added a bounded real HTTP qualification test in [test_timeline_checkout_history_runtime.py](/home/user/work/wt/agt-m2-recover-real-catalog-gate/tests/sdk/test_timeline_checkout_history_runtime.py:107).
+- Pinned the test to Runtime `ca1f1b6df9a4df9a7febd03c4d3b3f9cd2260b99` via KEEP checkout `/home/user/work/wt/rt-pin-ca1f1b6d`.
+- Public producer/client and production code remain unchanged.
+
+Tests:
+
+- `python3 -m pytest -q tests/sdk/test_native_timeline_facades.py tests/v10/test_domain_cli_projects_timelines.py` — **124 passed, 1 skipped**.
+- Central real HTTP lane — **12 passed, 1 failed**.
+- Failure: after catalog recover, accepted-history read returns `409 conflict`, `reason=history_unavailable`, “timeline has untracked writes.” Archive/recover events are not accepted by Runtime’s history integrity guard.
+
+This blocks qualification of the exact Runtime candidate and likely prevents fresh `TimelineSession` restore after catalog visibility changes. The assertion is intentionally retained; no weakening or skipping.
+
+Created:
+
+- `commit-msg`
+- `BLOCKED`
+
+No `DONE` marker was created.

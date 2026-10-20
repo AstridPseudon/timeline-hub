@@ -1,0 +1,9 @@
+name=agt-m3-pcm-source-phase
+repo=agent
+base=tl/integration
+base_sha=38491890
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-pcm-source-phase
+started=2026-10-20T06:13:18Z

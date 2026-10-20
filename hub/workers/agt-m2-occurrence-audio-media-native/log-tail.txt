@@ -1,0 +1,400 @@
++    elif kind == 'audio':
++        payload['tracks'][0]['kind'] = 'audio'
++        payload['clips'][0].update({'clipType': 'media', 'from': 0, 'to': 1, 'hold': 1})
+     for row in document['parent_revision']['payload']['occurrences']:
+         row.update(source_offset=0, speed=1)
+     document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
+@@ -57,7 +64,8 @@
+     new = {'asset': 'reserved-new', 'generation_id': 'generation-new', 'variant_id': 'variant-new',
+            'object_id': NEW, 'catalog_digest': 'sha256:' + 'b' * 64}
+     verified = [{'selection': copy.deepcopy(pin), 'media_type': kind + '/fixture', 'size': 123,
+-                 **({'duration_seconds': 6} if kind == 'video' else {})} for pin in (old, new)]
++                 **({'duration_seconds': 6} if kind in ('video', 'audio') else {})}
++                for pin in (old, new)]
+     return document, old, new, verified
+ 
+ 
+@@ -65,10 +73,12 @@
+     document, old, new, verified = inputs(kind)
+     bundle = bundle_from_document(document, capture_sources=capture_sources)
+     if operation == 'add':
+-        row = {'id': 'reserved-child', 'clipType': kind, 'asset': new['asset'], 'track': 'picture',
++        row = {'id': 'reserved-child', 'clipType': 'media' if kind == 'audio' else kind,
++               'asset': new['asset'], 'track': 'picture',
+                'at': .125, 'hold': 4 if kind == 'video' else 1.25,
+                'params': None, 'opaque': [None, False, {}],
+-               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else {})}
++               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else
++                  {'from': 0, 'to': 1.25} if kind == 'audio' else {})}
+         command = capture_occurrence_add_media(bundle, OWNER, row, new, verified_media=verified)
+     else:
+         command = capture_occurrence_swap_media(bundle, TARGET, old, new, verified_media=verified)
+@@ -76,7 +86,7 @@
+ 
+ 
+ @pytest.mark.parametrize('operation', ['add', 'swap'])
+-@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('kind', ['image', 'video', 'audio'])
+ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
+     document, bundle, command, verified = captured(operation, kind)
+     before = copy.deepcopy(bundle)
+@@ -97,6 +107,63 @@
+     assert row['at'] == (.125 if operation == 'add' else 1)
+     if kind == 'video':
+         assert (row['from'], row['to'], row['hold'], row['speed']) == (2, 6, 4, 2)
++    elif kind == 'audio':
++        expected = (0, 1.25, 1.25) if operation == 'add' else (0, 1, 1)
++        assert (row['from'], row['to'], row['hold']) == expected
++
++
++def _real_wav():
++    stream = io.BytesIO()
++    with wave.open(stream, 'wb') as output:
++        output.setnchannels(1)
++        output.setsampwidth(2)
++        output.setframerate(8000)
++        output.writeframes(b'\x01\x00' + b'\x00\x00' * 1999)
++    return stream.getvalue()
++
++
++def test_real_wav_audio_child_capture_record_and_inverse():
++    raw = _real_wav()
++    with wave.open(io.BytesIO(raw), 'rb') as source:
++        duration = source.getnframes() / source.getframerate()
++    pin = {'asset': 'voiceover', 'generation_id': 'generation-wav', 'variant_id': 'variant-wav',
++           'object_id': 'sha256:' + hashlib.sha256(raw).hexdigest(),
++           'catalog_digest': 'sha256:' + hashlib.sha256(b'catalog:' + raw).hexdigest()}
++    verified = [{'selection': copy.deepcopy(pin), 'media_type': 'audio/wav', 'size': len(raw),
++                 'duration_seconds': duration}]
++    document, _, _, _ = inputs('image')
++    bundle = bundle_from_document(document)
++    track = capture_track_create(bundle, OWNER, {'id': 'voiceover', 'kind': 'audio'})
++    with_track = execute(bundle, [track]).bundle
++    row = {'id': 'reserved-audio', 'clipType': 'media', 'asset': pin['asset'], 'track': 'voiceover',
++           'at': .125, 'hold': duration, 'from': 0, 'to': duration, 'speed': 1.5,
++           'params': None, 'opaque': [None, False, {}]}
++    command = capture_occurrence_add_media(with_track, OWNER, row, pin, verified_media=verified)
++    before = copy.deepcopy(with_track)
++    plan = execute(with_track, [command], verified_media=verified)
++    child = State(plan.bundle).entity(OWNER + '/clip:reserved-audio')
++    assert (child['track'], child['clipType'], child['from'], child['to'], child['hold'], child['speed']) == (
++        'voiceover', 'media', 0, duration, duration, 1.5)
++    assert any(dependency['pin'] == pin for dependency in plan.records[0]['dependencies'])
++    assert replay(plan, with_track, verified_media=verified).records == plan.records
++    assert inverse(plan.bundle, plan.records).bundle == before
++    assert document['parent_revision']['payload']['occurrences'][0]['occurrence_id'] == 'occ-a'
++
++
++def test_audio_media_refuses_malformed_duration_or_wrong_track_atomically():
++    _, bundle, command, verified = captured('add', 'audio')
++    for damage in ('duration', 'track'):
++        damaged_bundle = copy.deepcopy(bundle)
++        damaged_command = copy.deepcopy(command)
++        damaged_verified = copy.deepcopy(verified)
++        if damage == 'duration':
++            damaged_verified[1]['duration_seconds'] = 0
++        else:
++            State(damaged_bundle).config(OWNER)['tracks'][0]['kind'] = 'visual'
++        before = copy.deepcopy(damaged_bundle)
++        with pytest.raises(CommandError):
++            execute(damaged_bundle, [damaged_command], verified_media=damaged_verified)
++        assert damaged_bundle == before
+ 
+ 
+ @pytest.mark.parametrize(('operation', 'fixture_path'), [
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/_media_inputs.py astrid/sdk/timeline/native_occurrence_media_commands.py tests/editing_conformance/test_recipe_occurrence_media.py && git diff --check && git status --short && git diff --stat' in /home/user/work/wt/agt-m2-occurrence-audio-media-native
+ succeeded in 151ms:
+All checks passed!
+ M astrid/sdk/timeline/_media_inputs.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M tests/editing_conformance/test_recipe_occurrence_media.py
+ astrid/sdk/timeline/_media_inputs.py               |  6 +-
+ .../timeline/native_occurrence_media_commands.py   |  5 +-
+ .../test_recipe_occurrence_media.py                | 75 ++++++++++++++++++++--
+ 3 files changed, 77 insertions(+), 9 deletions(-)
+
+codex
+Final checks are clean: occurrence conformance 64 passed, Ruff passed, and `git diff --check` passed. The worktree contains only the three intended Agent/test files; no schema or generated artifacts changed. I’m marking the worker complete now.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-audio-media-native/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-audio-native-source.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-audio-native-source.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..e642c83767d0b4bc223e4b18f0f8ed5ea50d7b29
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-audio-native-source.md
+@@ -0,0 +1,57 @@
++# Agent occurrence audio native source slice
++
++2026-10-20. Bounded source candidate on Agent base `c0644cf1a7b63c9bcff7f70502b953a07879c9f`. This is a new source hash; frozen schema/source identities `39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d`, `613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3`, and `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d` were not modified.
++
++## Source and compatibility
++
++Changed product paths only:
++
++- `astrid/sdk/timeline/_media_inputs.py`: accepts verified `audio/*` alongside image/video; audio and video both require the existing finite-positive Runtime-carried `duration_seconds`.
++- `astrid/sdk/timeline/native_occurrence_media_commands.py`: maps audio media to an explicit raw child track with `kind: "audio"`; image/video continue to require `kind: "visual"`.
++
++The existing `occurrence.add-media` and `occurrence.swap-media` operation names, version 1, five-field `MediaSelection`, registry create-or-require policy, occurrence isolation, raw child identity, typed birth/materialization recording, source-window endpoint checks, source-unit hold, speed, and strict inverse are unchanged. No new operation, DTO, endpoint, lookup, raw adoption, caller duration, whole-child replacement, or audio-as-visual fallback was added.
++
++No schema change was needed. `MediaSelection` remains the closed five-field definition and `OccurrenceAddMediaArgs.row` remains the existing open literal row; the current schema has 58 definitions and 32 operation conditions, with the affected operation argument definitions unchanged. Raw schema SHA-256 remains `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
++
++Changed product-source manifest (UTF-8 lines of `sha256sum path`, final newline included) SHA-256: `1f6a291392a3f1cf753187185784497037d57a172bbffb0f1572add260856893`.
++
++```text
++9bb997e5b0a675969b2e4e5eff0d4329ba9ecce1d9b4529339663a2187fcc58e  astrid/sdk/timeline/_media_inputs.py
++09cde00d9aa6c658cfdd71da7413eb8a0480d8495f81e2de09c22f03268fb549  astrid/sdk/timeline/native_occurrence_media_commands.py
++```
++
++## Proof
++
++Changed test path: `tests/editing_conformance/test_recipe_occurrence_media.py`.
++It retains the existing image/video capture, replay, registry, selection, materialization, and inverse neighbors, adds focused audio add/swap cases, and adds:
++
++- one real PCM WAV source whose duration is read from its WAV header; the existing `capture_track_create` and occurrence media recorder capture an explicit raw `voiceover` audio track, `clipType: "media"`, `from=0`, `to=duration`, `hold=duration`, and `speed=1.5`; the recorded exact five-field selection replays and strictly inverts;
++- malformed non-positive intrinsic duration refusal;
++- wrong-track (`visual` instead of `audio`) refusal, with both negatives proving no bundle writes.
++
++The WAV case is source-only and uses the existing `verified_media` recorder seam. It does not claim Runtime managed-object admission, native HTTP, CAS custody, or a generated-client qualification.
++
++## Validation
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_media.py
++64 passed in 4.77s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_m2_shot_pool.py
++177 passed in 26.10s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py
++54 passed in 156.48s
++
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/_media_inputs.py astrid/sdk/timeline/native_occurrence_media_commands.py tests/editing_conformance/test_recipe_occurrence_media.py
++PASS
++
++git diff --check
++PASS
++```
++
++No full/full-* suite, release, pin, generation, Runtime HTTP/native occurrence acceptance, or independent peer review was run. The central test service was not requested because this slice has no live-socket requirement.
++
++## Remaining gaps and next step
++
++Audio occurrence birth still requires a separately captured existing raw audio track; this operation does not create a track. Automatic audio placement, shared/materialized occurrence media, ripple/parent retiming, outer voiceover proposal/requester settlement, and the producer's provenance carrier remain outside this slice and are not claimed qualified. The existing handoff's Runtime admission restriction also remains unchanged. An independent peer should review this source candidate before any freeze or adoption.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-audio-media-native/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-audio-media-native/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-audio-media-native/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-audio-media-native/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..6cbe3876c8fdc43fd8bcb52d3982ac3d8e05de07
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-audio-media-native/commit-msg
+@@ -0,0 +1,4 @@
++feat(timeline): admit audio occurrence media selections
++
++Extend the existing occurrence media add/swap recipes to verified audio on
++explicit raw audio child tracks, with focused WAV capture and inverse proof.
+diff --git a/astrid/sdk/timeline/_media_inputs.py b/astrid/sdk/timeline/_media_inputs.py
+index a094c607077d04c820d15dcd1c0c01759e39d850..2031d891bb588d6937ea39a14be08eea95723ed7
+--- a/astrid/sdk/timeline/_media_inputs.py
++++ b/astrid/sdk/timeline/_media_inputs.py
+@@ -12,9 +12,9 @@
+     value = matches[0]
+     media_type = value.get('media_type')
+     kind = media_type.split('/')[0] if isinstance(media_type, str) and '/' in media_type else None
+-    if kind not in ('image', 'video') or type(value.get('size')) is not int or value['size'] <= 0:
+-        raise CommandError('media edit requires verified image/video metadata', kind='unsupported_media')
+-    if kind == 'video':
++    if kind not in ('image', 'video', 'audio') or type(value.get('size')) is not int or value['size'] <= 0:
++        raise CommandError('media edit requires verified image/video/audio metadata', kind='unsupported_media')
++    if kind in ('video', 'audio'):
+         number(value.get('duration_seconds'), 'intrinsic duration', positive=True)
+     return value, kind
+ 
+diff --git a/astrid/sdk/timeline/native_occurrence_media_commands.py b/astrid/sdk/timeline/native_occurrence_media_commands.py
+index eb1e876f97e8201a7404c43eeeb951768b7e79f8..e71b5fa36997ac8ac473bc91bf786c47f6cd6a60
+--- a/astrid/sdk/timeline/native_occurrence_media_commands.py
++++ b/astrid/sdk/timeline/native_occurrence_media_commands.py
+@@ -145,9 +145,10 @@
+     track = owner + '/track:' + str(row.get('track'))
+     ctx.select('collection.tracks', owner)
+     value = ctx.read(track)
+-    if (not isinstance(value, dict) or value.get('kind') != 'visual'
++    track_kind = 'audio' if kind == 'audio' else 'visual'
++    if (not isinstance(value, dict) or value.get('kind') != track_kind
+             or value.get('role', 'output') != 'output' or not active(value)):
+-        raise CommandError('media edit requires an active raw visual child track')
++        raise CommandError(f'media edit requires an active raw {track_kind} child track')
+     ctx.bind('media.track', track)
+ 
+ 
+diff --git a/tests/editing_conformance/test_recipe_occurrence_media.py b/tests/editing_conformance/test_recipe_occurrence_media.py
+index 486f7802c9e294c28000824ae5e8bd43e3258423..86b5f3cb9ce663fb28117cd8de50316fc04f16d6
+--- a/tests/editing_conformance/test_recipe_occurrence_media.py
++++ b/tests/editing_conformance/test_recipe_occurrence_media.py
+@@ -2,11 +2,15 @@
+ from __future__ import annotations
+ 
+ import copy
++import hashlib
++import io
++import wave
+ from pathlib import Path
+ 
+ import pytest
+ 
+ from astrid.sdk.timeline._command_state import CommandError, State, overlaps
++from astrid.sdk.timeline.capture import capture_track_create
+ from astrid.sdk.timeline.commands import execute, validate_command
+ from astrid.sdk.timeline.commit import (
+     _digest,
+@@ -45,6 +49,9 @@
+     payload['registry']['assets']['picture']['type'] = kind
+     if kind == 'video':
+         payload['clips'][0].update({'from': 2, 'to': 6, 'hold': 4, 'speed': 2})
++    elif kind == 'audio':
++        payload['tracks'][0]['kind'] = 'audio'
++        payload['clips'][0].update({'clipType': 'media', 'from': 0, 'to': 1, 'hold': 1})
+     for row in document['parent_revision']['payload']['occurrences']:
+         row.update(source_offset=0, speed=1)
+     document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
+@@ -57,7 +64,8 @@
+     new = {'asset': 'reserved-new', 'generation_id': 'generation-new', 'variant_id': 'variant-new',
+            'object_id': NEW, 'catalog_digest': 'sha256:' + 'b' * 64}
+     verified = [{'selection': copy.deepcopy(pin), 'media_type': kind + '/fixture', 'size': 123,
+-                 **({'duration_seconds': 6} if kind == 'video' else {})} for pin in (old, new)]
++                 **({'duration_seconds': 6} if kind in ('video', 'audio') else {})}
++                for pin in (old, new)]
+     return document, old, new, verified
+ 
+ 
+@@ -65,10 +73,12 @@
+     document, old, new, verified = inputs(kind)
+     bundle = bundle_from_document(document, capture_sources=capture_sources)
+     if operation == 'add':
+-        row = {'id': 'reserved-child', 'clipType': kind, 'asset': new['asset'], 'track': 'picture',
++        row = {'id': 'reserved-child', 'clipType': 'media' if kind == 'audio' else kind,
++               'asset': new['asset'], 'track': 'picture',
+                'at': .125, 'hold': 4 if kind == 'video' else 1.25,
+                'params': None, 'opaque': [None, False, {}],
+-               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else {})}
++               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else
++                  {'from': 0, 'to': 1.25} if kind == 'audio' else {})}
+         command = capture_occurrence_add_media(bundle, OWNER, row, new, verified_media=verified)
+     else:
+         command = capture_occurrence_swap_media(bundle, TARGET, old, new, verified_media=verified)
+@@ -76,7 +86,7 @@
+ 
+ 
+ @pytest.mark.parametrize('operation', ['add', 'swap'])
+-@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('kind', ['image', 'video', 'audio'])
+ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
+     document, bundle, command, verified = captured(operation, kind)
+     before = copy.deepcopy(bundle)
+@@ -97,6 +107,63 @@
+     assert row['at'] == (.125 if operation == 'add' else 1)
+     if kind == 'video':
+         assert (row['from'], row['to'], row['hold'], row['speed']) == (2, 6, 4, 2)
++    elif kind == 'audio':
++        expected = (0, 1.25, 1.25) if operation == 'add' else (0, 1, 1)
++        assert (row['from'], row['to'], row['hold']) == expected
++
++
++def _real_wav():
++    stream = io.BytesIO()
++    with wave.open(stream, 'wb') as output:
++        output.setnchannels(1)
++        output.setsampwidth(2)
++        output.setframerate(8000)
++        output.writeframes(b'\x01\x00' + b'\x00\x00' * 1999)
++    return stream.getvalue()
++
++
++def test_real_wav_audio_child_capture_record_and_inverse():
++    raw = _real_wav()
++    with wave.open(io.BytesIO(raw), 'rb') as source:
++        duration = source.getnframes() / source.getframerate()
++    pin = {'asset': 'voiceover', 'generation_id': 'generation-wav', 'variant_id': 'variant-wav',
++           'object_id': 'sha256:' + hashlib.sha256(raw).hexdigest(),
++           'catalog_digest': 'sha256:' + hashlib.sha256(b'catalog:' + raw).hexdigest()}
++    verified = [{'selection': copy.deepcopy(pin), 'media_type': 'audio/wav', 'size': len(raw),
++                 'duration_seconds': duration}]
++    document, _, _, _ = inputs('image')
++    bundle = bundle_from_document(document)
++    track = capture_track_create(bundle, OWNER, {'id': 'voiceover', 'kind': 'audio'})
++    with_track = execute(bundle, [track]).bundle
++    row = {'id': 'reserved-audio', 'clipType': 'media', 'asset': pin['asset'], 'track': 'voiceover',
++           'at': .125, 'hold': duration, 'from': 0, 'to': duration, 'speed': 1.5,
++           'params': None, 'opaque': [None, False, {}]}
++    command = capture_occurrence_add_media(with_track, OWNER, row, pin, verified_media=verified)
++    before = copy.deepcopy(with_track)
++    plan = execute(with_track, [command], verified_media=verified)
++    child = State(plan.bundle).entity(OWNER + '/clip:reserved-audio')
++    assert (child['track'], child['clipType'], child['from'], child['to'], child['hold'], child['speed']) == (
++        'voiceover', 'media', 0, duration, duration, 1.5)
++    assert any(dependency['pin'] == pin for dependency in plan.records[0]['dependencies'])
++    assert replay(plan, with_track, verified_media=verified).records == plan.records
++    assert inverse(plan.bundle, plan.records).bundle == before
++    assert document['parent_revision']['payload']['occurrences'][0]['occurrence_id'] == 'occ-a'
++
++
++def test_audio_media_refuses_malformed_duration_or_wrong_track_atomically():
++    _, bundle, command, verified = captured('add', 'audio')
++    for damage in ('duration', 'track'):
++        damaged_bundle = copy.deepcopy(bundle)
++        damaged_command = copy.deepcopy(command)
++        damaged_verified = copy.deepcopy(verified)
++        if damage == 'duration':
++            damaged_verified[1]['duration_seconds'] = 0
++        else:
++            State(damaged_bundle).config(OWNER)['tracks'][0]['kind'] = 'visual'
++        before = copy.deepcopy(damaged_bundle)
++        with pytest.raises(CommandError):
++            execute(damaged_bundle, [damaged_command], verified_media=damaged_verified)
++        assert damaged_bundle == before
+ 
+ 
+ @pytest.mark.parametrize(('operation', 'fixture_path'), [
+
+codex
+Implemented the occurrence audio carrier slice.
+
+- Extended existing `occurrence.add-media` / `occurrence.swap-media` to accept verified audio and require explicit raw audio tracks.
+- Added real WAV capture/record/replay/inverse coverage plus malformed-duration and wrong-track atomic negatives.
+- Preserved all visual paths and existing registry/inverse semantics.
+- No schema, DTO, operation, pin, or generated-client changes.
+
+Tests:
+
+- Occurrence conformance: 64 passed
+- Parent/placement/shot-pool neighbors: 177 passed
+- Schema floors: 54 passed
+- Ruff and `git diff --check`: passed
+- No full suite or Runtime HTTP qualification run.
+
+Report: [agent-occurrence-audio-native-source.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-audio-native-source.md)
+
+Commit message and `DONE` marker written.
+tokens used
+224,822
+Implemented the occurrence audio carrier slice.
+
+- Extended existing `occurrence.add-media` / `occurrence.swap-media` to accept verified audio and require explicit raw audio tracks.
+- Added real WAV capture/record/replay/inverse coverage plus malformed-duration and wrong-track atomic negatives.
+- Preserved all visual paths and existing registry/inverse semantics.
+- No schema, DTO, operation, pin, or generated-client changes.
+
+Tests:
+
+- Occurrence conformance: 64 passed
+- Parent/placement/shot-pool neighbors: 177 passed
+- Schema floors: 54 passed
+- Ruff and `git diff --check`: passed
+- No full suite or Runtime HTTP qualification run.
+
+Report: [agent-occurrence-audio-native-source.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-audio-native-source.md)
+
+Commit message and `DONE` marker written.

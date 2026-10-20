@@ -1,0 +1,400 @@
+-                        "publication": {"timeline_id": "main", "expected_version": 1, "render": render_spec},
+-                    }
+-                },
+-                "idempotency_key": "host-chain-author",
+-            }
+-        )["task"]["id"]
+-        author_claim = service.claim_next(
+-            {
+-                "executor_id": "astrid-pack-host",
+-                "capability_ids": ["rendering.assemble_timeline"],
+-                "runtime_epoch": service.health()["runtime_epoch"],
+-            },
++        author_claim = host.client.claim_next(
++            executor_id="astrid-pack-host",
++            capability_ids=["rendering.assemble_timeline"],
+             idempotency_key="host-chain-claim-author",
+         )
+         host.run_task(
+@@ -336,8 +404,10 @@
+                     "spec": author_claim["spec"],
+                     "input_object_ids": author_claim["input_object_ids"],
+                     "project_id": author_claim["project_id"],
++                    "run_id": author_claim["run_id"],
+                     "attempt_id": author_claim["attempt_id"],
+                     "fence": author_claim["fence"],
++                    "runtime_epoch": author_claim["runtime_epoch"],
+                 }
+             },
+             lease_token=author_claim["lease_id"],
+@@ -346,14 +416,56 @@
+             keep_attempt=True,
+         )
+         author_result = service.task(author)["task"]["result"]
+-        publication = author_result["timeline_render_publication"]
+-        render_task_id = publication["render_task_id"]
+-        render_claim = service.claim_next(
+-            {
+-                "executor_id": "astrid-pack-host",
+-                "capability_ids": ["rendering.render"],
+-                "runtime_epoch": service.health()["runtime_epoch"],
+-            },
++        assert {item["name"] for item in author_result["outputs"]} >= {"authoring_proposal", "timeline", "assets"}
++        settled = read_assembly_proposal(session, author, attempt_id=author_claim["attempt_id"])
++        assert [command["op"] for command in settled["commands"][:3]] == [
++            "timeline.assembled-target", "track.create", "clip.add-media",
++        ]
++        assert [command["args"]["media"]["object_id"] for command in settled["commands"] if command["op"] == "clip.add-media"] == [
++            selector["object_id"] for selector in selectors
++        ]
++        assert settled["admitted_target"] == admitted_target
++        assert settled["commands"][0]["args"]["replace_clips"] == admitted_capture["replace_clips"]
++        session.queue_assembly(author, attempt_id=author_claim["attempt_id"])
++        pending = json.loads((tmp_path / "host-chain-outbox.json").read_text())
++        assert pending["pending"][0]["op"] == "producer.guard"
++        original_commit = client.timelines.commit
++
++        def lose_ack(*args, **kwargs):
++            original_commit(*args, **kwargs)
++            raise WorkspaceClientError(0, "transport_error", "lost commit acknowledgement")
++
++        client.timelines.commit = lose_ack
++        with pytest.raises(WorkspaceClientError, match="lost commit acknowledgement"):
++            session.flush(idempotency_key="host-chain-commit")
++        saved_flight = json.loads((tmp_path / "host-chain-outbox.json").read_text())["flight"]
++        assert saved_flight["key"] == "host-chain-commit"
++        client.timelines.commit = original_commit
++        restarted = TimelineSession.open(
++            project["id"], "main", client=client, outbox_path=tmp_path / "host-chain-outbox.json",
++        )
++        committed = restarted.flush(idempotency_key="host-chain-commit")
++        accepted_revision = committed["data"]["accepted_revision_id"]
++        accepted_publication = committed["data"]["accepted_publication_id"]
++        assert accepted_revision and accepted_publication
++        assert json.loads((tmp_path / "host-chain-outbox.json").read_text())["flight"] is None
++
++        scope = client.timelines.resolve_scope(project["id"], "main")
++        assert scope.ok and isinstance(scope.data.get("version"), int)
++        render_admission = client.invoke_result(
++            "rendering.render", kind="executor", project=project["id"],
++            inputs={"timeline_ref": "main", "expected_version": scope.data["version"], "output_name": "host-chain.mp4"},
++            wait=False,
++        )
++        assert render_admission.ok
++        render_task_id = render_admission.kernel_task_id
++        assert isinstance(render_task_id, str) and render_task_id
++        assert service.store.conn.execute(
++            "SELECT COUNT(*) FROM tasks WHERE capability=?", ("rendering.render",)
++        ).fetchone()[0] == 1
++        render_claim = host.client.claim_next(
++            executor_id="astrid-pack-host",
++            capability_ids=["rendering.render"],
+             idempotency_key="host-chain-claim-render",
+         )
+         host.run_task(
+@@ -364,8 +476,10 @@
+                     "spec": render_claim["spec"],
+                     "input_object_ids": render_claim["input_object_ids"],
+                     "project_id": render_claim["project_id"],
++                    "run_id": render_claim["run_id"],
+                     "attempt_id": render_claim["attempt_id"],
+                     "fence": render_claim["fence"],
++                    "runtime_epoch": render_claim["runtime_epoch"],
+                 }
+             },
+             lease_token=render_claim["lease_id"],
+@@ -385,6 +499,12 @@
+         )
+         assert probe.returncode == 0
+         assert float(probe.stdout.strip()) > 0
++        render_task = service.task(render_task_id)["task"]
++        render_inputs = render_task["spec"]["spec"]["inputs"]
++        assert render_inputs["timeline_authority"]["config_version"] == scope.data["version"]
++        assert render_inputs["timeline_authority"]["parent_revision_id"] == accepted_revision
++        undone = restarted.undo([accepted_publication], idempotency_key="host-chain-undo")
++        assert undone["data"]["accepted_revision_id"]
+     finally:
+         host.shutdown()
+         daemon.stop()
+diff --git a/tests/sdk/test_timeline_assembly.py b/tests/sdk/test_timeline_assembly.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..5fd286c2622c20cb7f671679c9fb238ce133b1ed
+--- /dev/null
++++ b/tests/sdk/test_timeline_assembly.py
+@@ -0,0 +1,127 @@
++"""Current requester seam for registered native assembly admissions."""
++from __future__ import annotations
++
++import copy
++import json
++from types import SimpleNamespace
++
++import pytest
++
++from astrid.sdk.contracts import DomainResult
++from astrid.sdk.timeline.sync import TimelineSession
++from astrid.sdk.workspace_client import WorkspaceClientError
++from tests.sdk.test_timeline_sync import Client, Generated
++
++DIGEST = "sha256:" + "a" * 64
++
++
++def _requester(tmp_path):
++    generated = Generated(tmp_path / "outbox.json")
++    client = Client(generated)
++    selectors, associations, media, verified = [], {}, {}, {}
++    for index in range(2):
++        object_id = "sha256:" + str(index + 1) * 64
++        selector = {"association_id": f"assoc-{index}", "object_id": object_id, "version": 1}
++        selectors.append(selector)
++        associations[selector["association_id"]] = {
++            **selector, "task_id": f"child-{index}", "project_id": "p", "durability": "durable",
++            "role": "primary", "lifecycle": {"state": "available", "version": 1},
++            "media_type": "video/mp4", "size": 12,
++        }
++        pin = {"asset": f"v-{index}", "generation_id": f"g-{index}",
++               "variant_id": f"v-{index}", "object_id": object_id, "catalog_digest": DIGEST}
++        media[selector["association_id"]] = pin
++        verified[pin["variant_id"]] = {"selection": pin, "media_type": "video/mp4",
++                                        "size": 12, "duration_seconds": index + 1.0}
++
++    def get_association(association_id):
++        return copy.deepcopy(associations[association_id])
++
++    def get_selection(_project, selector):
++        return copy.deepcopy(media[selector["association_id"]])
++
++    def get_verified(_project, selection):
++        return copy.deepcopy(verified[selection["variant_id"]])
++    generated.get_managed_output = get_association
++    generated.get_project_media_selection = get_selection
++    generated.get_project_verified_media = get_verified
++    transport = client._remote._transport
++    transport.get_managed_output = get_association
++    transport.get_project_media_selection = get_selection
++    transport.get_project_verified_media = get_verified
++    calls = []
++
++    def prepare(**body):
++        return DomainResult.success({
++            "capability_id": body["capability"], "capability_digest": body["capability_digest"],
++            "project_id": body["project_id"], "schema_version": "1",
++            "spec": body["spec"], "input_object_ids": body["input_manifest"],
++            "storage_estimate": body["storage_estimate"], "idempotency_key": body["idempotency_key"],
++        })
++
++    def dispatch(arguments):
++        flight = json.loads(generated.path.read_bytes())["flight"]
++        assert flight["kind"] == "assembly-admission"
++        assert flight["key"] == arguments["idempotency_key"]
++        calls.append(copy.deepcopy(arguments))
++        return DomainResult.success({"task_id": "assembler"})
++
++    client.tasks = SimpleNamespace(prepare_admission=prepare, dispatch_admission=dispatch)
++    session = TimelineSession.open("p", "t", client=client, outbox_path=generated.path)
++    return session, generated, selectors, associations, calls
++
++
++def _admit(session, selectors):
++    return session.admit_assembly(
++        selectors,
++        replace_clips=["parent/clip:a", "parent/clip:b"],
++        assembler_digest=DIGEST,
++        idempotency_key="assembly",
++    )
++
++
++def test_admission_freezes_original_target_and_ordered_associations(tmp_path):
++    session, generated, selectors, _associations, calls = _requester(tmp_path)
++    generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
++
++    assert _admit(session, selectors)["data"]["task_id"] == "assembler"
++    body, = calls
++    capture = body["spec"]["inputs"]["resolved_children"]
++    target = {"project_id": "p", "timeline_id": "t", "base_revision_id": "r0",
++              "base_publication_id": "pub0"}
++    assert capture["admitted_target"] == target
++    assert body["spec"]["runtime_dependencies"]["publication"]["admitted_target"] == target
++    assert [child["association"] for child in capture["children"]] == selectors
++    assert body["spec"]["runtime_dependencies"]["aggregation"]["order"] == [
++        selector["object_id"] for selector in selectors
++    ]
++    assert generated.path.read_bytes()
++
++
++def test_lost_admission_ack_reuses_durable_body_without_recapture(tmp_path, monkeypatch):
++    session, generated, selectors, _associations, calls = _requester(tmp_path)
++    dispatch = session.client.tasks.dispatch_admission
++
++    def lose_ack(arguments):
++        dispatch(arguments)
++        raise WorkspaceClientError(0, "transport_error", "lost admission acknowledgement")
++
++    session.client.tasks.dispatch_admission = lose_ack
++    with pytest.raises(WorkspaceClientError):
++        _admit(session, selectors)
++    saved = generated.path.read_bytes()
++    original = copy.deepcopy(calls[0])
++
++    def no_recapture(*_args, **_kwargs):
++        raise AssertionError("admission recovery reread mutable inputs")
++
++    monkeypatch.setattr(session.client.tasks, "prepare_admission", no_recapture)
++    monkeypatch.setattr(session.client._remote._transport, "get_managed_output", no_recapture)
++    monkeypatch.setattr(session.client._remote._transport, "get_project_media_selection", no_recapture)
++    monkeypatch.setattr(session.client._remote._transport, "get_project_verified_media", no_recapture)
++    restarted = TimelineSession.open("p", "t", client=session.client, outbox_path=generated.path)
++    restarted.client.tasks.dispatch_admission = dispatch
++    assert _admit(restarted, selectors)["data"]["task_id"] == "assembler"
++    assert calls == [original, original]
++    assert json.loads(saved)["flight"]["kind"] == "assembly-admission"
++
+diff --git a/tests/sdk/test_timeline_sync.py b/tests/sdk/test_timeline_sync.py
+index b94c031963b3cc7a3799467f178d84d164b6ceb9..0c9a6c7ad5f1df5f4bde29ae73a26909bf8ba95c
+--- a/tests/sdk/test_timeline_sync.py
++++ b/tests/sdk/test_timeline_sync.py
+@@ -277,6 +277,26 @@
+     assert len(generated.calls) == 1
+ 
+ 
++@pytest.mark.parametrize("kind", [None, False, 7, "assembly-admission-v2", "commit"])
++def test_present_unknown_flight_kind_refuses_reload_without_post_or_mutation(connected, kind):
++    session = open_session(connected)
++    _, generated, path = connected
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        session.move("parent/clip:a", 5, idempotency_key="original")
++    state = json.loads(path.read_bytes())
++    state["flight"]["kind"] = kind
++    path.write_bytes(request_bytes(state))
++    frozen = path.read_bytes()
++    calls = copy.deepcopy(generated.calls)
++
++    with pytest.raises(TimelineEditError, match="in-flight request kind"):
++        open_session(connected)
++
++    assert path.read_bytes() == frozen
++    assert generated.calls == calls
++
++
+ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(connected):
+     session = open_session(connected)
+     _, generated, path = connected
+
+exec
+/bin/bash -lc "find astrid tests -type f -name '*.pyc' -delete 2>/dev/null; find astrid tests -type d -name __pycache__ -empty -delete 2>/dev/null; printf '%s\\n' '--- worktree ---'; git status --short; printf '%s\\n' '--- stat ---'; git diff --stat; printf '%s\\n' '--- markers ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current13-final-consumer/{commit-msg,commit-msg.txt,DONE}; printf '%s\\n' '--- external suite cleanup ---'; "'! rg -n '"'d13-current13-registered7d-bounded' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf && echo clean" in /home/user/work/wt/agt-m2-d13-current13-final-consumer
+ succeeded in 955ms:
+--- worktree ---
+ M astrid/core/contracts/runtime_orchestration.py
+ M astrid/core/execution/generic_host.py
+ M astrid/core/rendering/remotion_runtime.py
+ M astrid/packs/rendering/actions/assemble_timeline/run.py
+ M astrid/packs/rendering/pack.yaml
+ M astrid/sdk/timeline/sync.py
+ M astrid/sdk/workspace_client.py
+ M remotion/package-lock.json
+ M remotion/package.json
+ M tests/core/timeline/test_clip_fields.py
+ M tests/journeys/test_journey_plumbing.py
+ M tests/packs/rendering/test_capture_scene_labels.py
+ M tests/packs/rendering/test_composition_package.py
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/assembly.py
+?? remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+?? remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256
+?? tests/sdk/test_timeline_assembly.py
+--- stat ---
+ astrid/core/contracts/runtime_orchestration.py     |  87 +++++
+ astrid/core/execution/generic_host.py              | 137 ++------
+ astrid/core/rendering/remotion_runtime.py          |   2 +-
+ .../rendering/actions/assemble_timeline/run.py     |  84 ++++-
+ astrid/packs/rendering/pack.yaml                   |   6 +-
+ astrid/sdk/timeline/sync.py                        |  87 ++++-
+ astrid/sdk/workspace_client.py                     |   9 +
+ remotion/package-lock.json                         |   8 +-
+ remotion/package.json                              |   2 +-
+ tests/core/timeline/test_clip_fields.py            |   2 +-
+ tests/journeys/test_journey_plumbing.py            |   2 +-
+ tests/packs/rendering/test_capture_scene_labels.py |   3 +-
+ tests/packs/rendering/test_composition_package.py  |  51 ++-
+ .../test_runtime_publication_chain.py              | 360 ++++++++++++++-------
+ tests/sdk/test_timeline_sync.py                    |  20 ++
+ 15 files changed, 605 insertions(+), 255 deletions(-)
+--- markers ---
+-rw-r--r-- 1 root root   0 Oct 20 19:15 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current13-final-consumer/DONE
+-rw-r--r-- 1 root root 279 Oct 20 19:07 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current13-final-consumer/commit-msg
+-rw-r--r-- 1 root root 279 Oct 20 19:07 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current13-final-consumer/commit-msg.txt
+--- external suite cleanup ---
+clean
+
+codex
+Final hygiene is clean: only the expected D13 consumer/parity plus C13 pin files are changed; custody files, `runtime.lock.json`, `artifacts.json`, init, group/project-data, and the temporary suite config are untouched. I’m recording one final C13 non-integration run after the lint-only test-string cleanup, then handing off.
+exec
+/bin/bash -lc "ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m 'not integration' tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_capture_scene_labels.py tests/core/timeline/test_clip_fields.py tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix" in /home/user/work/wt/agt-m2-d13-current13-final-consumer
+ succeeded in 21051ms:
+........................................................................ [ 55%]
+.........................................................                [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_public13_evaluation_admits_valid_source_and_rejects_four_forged_sources
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/agt-m2-d13-current13-final-consumer/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+129 passed, 1 deselected, 6 warnings in 20.15s
+
+exec
+/bin/bash -lc "find astrid tests -type f -name '*.pyc' -delete 2>/dev/null; find astrid tests -type d -name __pycache__ -empty -delete 2>/dev/null; git diff --check; git status --short | tail -30" in /home/user/work/wt/agt-m2-d13-current13-final-consumer
+ succeeded in 810ms:
+ M astrid/core/contracts/runtime_orchestration.py
+ M astrid/core/execution/generic_host.py
+ M astrid/core/rendering/remotion_runtime.py
+ M astrid/packs/rendering/actions/assemble_timeline/run.py
+ M astrid/packs/rendering/pack.yaml
+ M astrid/sdk/timeline/sync.py
+ M astrid/sdk/workspace_client.py
+ M remotion/package-lock.json
+ M remotion/package.json
+ M tests/core/timeline/test_clip_fields.py
+ M tests/journeys/test_journey_plumbing.py
+ M tests/packs/rendering/test_capture_scene_labels.py
+ M tests/packs/rendering/test_composition_package.py
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/assembly.py
+?? remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+?? remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256
+?? tests/sdk/test_timeline_assembly.py
+
+codex
+Implemented D13 consumer/parity delta and approved Composition 0.0.13 pin.
+
+Tests:
+
+- D13 bounded unit suite: `111 passed, 2 deselected`
+- C13 package/label suite: `129 passed, 1 deselected`
+- Ruff focused checks and `git diff --check`: passed
+- Exact central integration on Runtime `7d1cfa6b…` + Remotion `agent-remotion-0013`: **2 passed**, actual rendering, 228.19s. Harness tree: `4525666e…`
+
+Initial render refusal was correctly reported: `remotion_runtime.py:397`, installed `0.0.13` while source expected `0.0.12`; fixed by adopting the approved C13 pin, then reran.
+
+No custody changes, e6/b62 pruning, or public release claim. Commit message and `DONE` marker written. D13 remains pending integration and App/owner adoption.
+tokens used
+296,175
+Implemented D13 consumer/parity delta and approved Composition 0.0.13 pin.
+
+Tests:
+
+- D13 bounded unit suite: `111 passed, 2 deselected`
+- C13 package/label suite: `129 passed, 1 deselected`
+- Ruff focused checks and `git diff --check`: passed
+- Exact central integration on Runtime `7d1cfa6b…` + Remotion `agent-remotion-0013`: **2 passed**, actual rendering, 228.19s. Harness tree: `4525666e…`
+
+Initial render refusal was correctly reported: `remotion_runtime.py:397`, installed `0.0.13` while source expected `0.0.12`; fixed by adopting the approved C13 pin, then reran.
+
+No custody changes, e6/b62 pruning, or public release claim. Commit message and `DONE` marker written. D13 remains pending integration and App/owner adoption.

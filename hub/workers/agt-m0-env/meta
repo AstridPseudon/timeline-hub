@@ -1,0 +1,9 @@
+name=agt-m0-env
+repo=agent
+base=tl/integration
+base_sha=e51595c6
+model=gpt-5.6-luna
+effort=xhigh
+heavy=1
+worktree=/home/user/work/wt/agt-m0-env
+started=2026-10-19T17:53:52Z

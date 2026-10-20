@@ -1,0 +1,9 @@
+name=agt-m2-group-audit
+repo=agent
+base=tl/integration
+base_sha=a8eb28af
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-group-audit
+started=2026-10-19T21:14:27Z

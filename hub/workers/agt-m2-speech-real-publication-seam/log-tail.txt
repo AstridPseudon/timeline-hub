@@ -1,0 +1,400 @@
++    bound = Bound()
++    timelines = SimpleNamespace(
++        open_composition=lambda *args, **kwargs: {"summary": {"head_revision_id": "speech-head"}},
++        resolve_scope=lambda *args, **kwargs: {"project_id": project_id, "timeline_id": "timeline"},
++        script=lambda *args, **kwargs: scripts,
++    )
++    return candidate, scripts, bound, timelines
++
++
++def _run_real_speech_sync(tmp_path: Path, real_runtime, *, malformed: bool):
++    from astrid.packs.video_editing.shared import draft_voiceover
++
++    daemon = real_runtime(commit=SPEECH_RUNTIME_COMMIT)
++    worker = RuntimeProtocolClient(daemon.endpoint, daemon.worker_token)
++    host = GenericPackHost(
++        pack_roots=[_speech_fixture_pack(tmp_path, malformed=malformed)],
++        client=worker,
++        executor_id="speech-fixture-host",
++        attempt_root=tmp_path / "attempts",
++    )
++    transport = WorkspaceClient(daemon.endpoint, daemon.token)
++    transport.handshake(
++        "speech-publication-test",
++        "1",
++        ["projects:read", "projects:write", "objects:read", "objects:write", "tasks:read", "tasks:write"],
++    )
++    remote = RemoteAstridClient(transport)
++    project_result = remote.projects.create(slug="speech-wc5", name="Speech WC5", idempotency_key="speech-wc5-project")
++    assert project_result.ok, project_result.error
++    project_id = project_result.data.get("project_id") or project_result.data["id"]
++    _candidate, _scripts, bound, timelines = _speech_outer_fixture(project_id)
++    remote.timelines = timelines
++    remote.open_authoring_target = lambda target: bound
++    host.discover()
++    host.preflight("generation.generate_speech")
++    host.register()
++    try:
++        with ThreadPoolExecutor(max_workers=1) as pool:
++            future = pool.submit(host.run, once=False, poll_seconds=0.02, max_tasks=1)
++            if malformed:
++                with pytest.raises(draft_voiceover.VoiceoverSyncError, match="hash verification"):
++                    draft_voiceover.sync_draft_voiceover(
++                        remote, project_id, "timeline", timing_policy="preserve", occurrence_ids=["occ-1"]
++                    )
++                assert bound.published is None
++            else:
++                result = draft_voiceover.sync_draft_voiceover(
++                    remote, project_id, "timeline", timing_policy="preserve", occurrence_ids=["occ-1"]
++                )
++                assert result["published"] and bound.published is not None
++                generated = result["generated"][0]
++                context = generated["runtime_context"]
++                assert {"task", "task_id", "attempt_id", "association_id", "managed_output", "generation_publish_v1"} <= set(context)
++                assert context["task"]["task_id"] == context["task_id"]
++                assert context["task"]["attempt_id"] == context["attempt_id"]
++                assert context["managed_output"]["association_id"] == context["association_id"]
++                assert context["generation_publish_v1"]["effect_type"] == "generation.publish_v1"
++                output = context["managed_output"]
++                selection = transport._generated.get_project_media_selection(project_id, {
++                    "association_id": output["association_id"],
++                    "object_id": output["object_id"],
++                    "version": output["lifecycle"]["version"],
++                })
++                assert set(selection) == {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}
++                assert selection["object_id"] == output["object_id"]
++                verified = transport._generated.get_project_verified_media(project_id, selection)
++                assert verified["selection"] == selection
++                assert verified["media_type"] == "audio/wav"
++                assert verified["duration_seconds"] == 1.0
++                wav_bytes = remote.media.read_bytes(output["object_id"])
++                with wave.open(io.BytesIO(wav_bytes), "rb") as wav:
++                    assert wav.getframerate() == 8000 and wav.getnframes() == 8000
++            future.result(timeout=60)
++    finally:
++        host.shutdown()
++        daemon.stop()
++
++
++@pytest.mark.integration
++def test_real_speech_publication_seam_settles_wav_and_selection(tmp_path, real_runtime):
++    """Outer sync -> normal SDK speech admission -> managed WAV -> five-field selection."""
++    _run_real_speech_sync(tmp_path, real_runtime, malformed=False)
++
++
++@pytest.mark.integration
++def test_real_speech_publication_rejects_malformed_provenance(tmp_path, real_runtime):
++    """A settled WAV with null provenance metadata cannot reach outer publication."""
++    _run_real_speech_sync(tmp_path, real_runtime, malformed=True)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-real-publication-seam/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-real-publication-seam/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-real-publication-seam/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-real-publication-seam/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-real-publication-seam/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..7c6e6cc221a651e0781bedebc0ec993966155b22
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-real-publication-seam/commit-msg
+@@ -0,0 +1,4 @@
++test(agent): prove real speech publication seam
++
++Exercise normal speech admission through a deterministic managed-WAV fixture
++and verify Runtime's durable five-field media selection plus provenance.
+diff --git a/tests/packs/video_editing/test_runtime_publication_chain.py b/tests/packs/video_editing/test_runtime_publication_chain.py
+index 83abc85ecfb00efc4ef1563ee860f7a991c54d6f..ad3705d12a4f9ddef04ea475fa09ee5d5dc1df59
+--- a/tests/packs/video_editing/test_runtime_publication_chain.py
++++ b/tests/packs/video_editing/test_runtime_publication_chain.py
+@@ -2,10 +2,15 @@
+ 
+ import base64
+ import hashlib
++import io
+ import json
+ import shutil
+ import subprocess
++import sys
++import wave
++from concurrent.futures import ThreadPoolExecutor
+ from pathlib import Path
++from types import SimpleNamespace
+ 
+ import pytest
+ 
+@@ -13,8 +18,13 @@
+ from astrid.packs.rendering.actions.assemble_timeline.run import build_authoring_proposal
+ from astrid.packs.rendering.shared.runtime_stitch import publish_authoring_proposal
+ from astrid.sdk.client import AstridClient
++from astrid.sdk.remote import RemoteAstridClient
++from astrid.sdk.workspace_client import WorkspaceClient
+ 
+ 
++SPEECH_RUNTIME_COMMIT = "ad97e16effc53fa13f91c43f076f6edb3c38985f"
++
++
+ def _digest(value: str | bytes) -> str:
+     raw = value.encode() if isinstance(value, str) else value
+     return "sha256:" + hashlib.sha256(raw).hexdigest()
+@@ -388,3 +398,206 @@
+     finally:
+         host.shutdown()
+         daemon.stop()
++
++
++def _speech_fixture_pack(root: Path, *, malformed: bool) -> Path:
++    """Make a deterministic speech producer that still settles through the host."""
++    pack = root / "speech_fixture"
++    executor = pack / "executors" / "generate_speech"
++    executor.mkdir(parents=True)
++    (pack / "pack.yaml").write_text(
++        "schema_version: 2\n"
++        "id: speech_fixture\n"
++        "name: Speech fixture\n"
++        "version: 1.0.0\n"
++        "capabilities: [generate_speech]\n"
++        "content:\n  executors: executors\n",
++        encoding="utf-8",
++    )
++    script = """
++import hashlib
++import json
++import sys
++import wave
++from pathlib import Path
++
++out = Path(sys.argv[1])
++text = sys.argv[2]
++settings = {"provider": sys.argv[3], "voice": sys.argv[4], "rate": sys.argv[5],
++            "volume": sys.argv[6], "pitch": sys.argv[7]}
++malformed = sys.argv[8] == "1"
++wav_path = out / "speech.wav"
++with wave.open(str(wav_path), "wb") as wav:
++    wav.setnchannels(1)
++    wav.setsampwidth(2)
++    wav.setframerate(8000)
++    wav.writeframes(b"\\x00\\x00" * 8000)
++audio_digest = hashlib.sha256(wav_path.read_bytes()).hexdigest()
++provenance = {
++    "text": text,
++    "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
++    "settings": settings,
++    "audio_sha256": None if malformed else audio_digest,
++    "duration_seconds": 1.0,
++}
++(out / "speech-provenance.json").write_text(json.dumps(provenance, sort_keys=True), encoding="utf-8")
++"""
++    (executor / "executor.yaml").write_text(
++        json.dumps({
++            "schema_version": 1,
++            "id": "generation.generate_speech",
++            "name": "Speech fixture",
++            "kind": "external",
++            "version": "1.0",
++            "inputs": [
++                {"name": "task_spec_json", "type": "string", "required": True},
++                {"name": "text", "type": "string", "required": True},
++                {"name": "provider", "type": "string", "required": False, "default": "edge-tts"},
++                {"name": "voice", "type": "string", "required": False, "default": "en-US-ChristopherNeural"},
++                {"name": "rate", "type": "string", "required": False, "default": "+0%"},
++                {"name": "volume", "type": "string", "required": False, "default": "+0%"},
++                {"name": "pitch", "type": "string", "required": False, "default": "+0Hz"},
++                {"name": "malformed", "type": "string", "required": False, "default": "1" if malformed else "0"},
++            ],
++            "command": {"argv": [
++                "{python_exec}", "-c", script, "{out}", "{text}", "{provider}",
++                "{voice}", "{rate}", "{volume}", "{pitch}", "{malformed}",
++            ]},
++            "outputs": [
++                {"name": "speech", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
++                {"name": "speech_manifest", "type": "file", "path_template": "{out}/speech-provenance.json", "artifact_type": "application/json"},
++            ],
++            "isolation": {"mode": "subprocess", "network": False},
++            "metadata": {"resource_keys": [], "estimated_scratch_bytes": 1024, "estimated_output_bytes": 65536},
++        }),
++        encoding="utf-8",
++    )
++    return pack
++
++
++def _speech_outer_fixture(project_id: str):
++    candidate = {
++        "project_id": project_id,
++        "timeline_id": "timeline",
++        "base_parent": {"revision_id": "speech-head"},
++        "parent": {"clips": [{"id": "background", "at": 0, "hold": 2, "track": "picture"}], "config": {"duration": 2}},
++        "placements": [{"shot_id": "shot-1", "occurrence_id": "occ-1", "placement": {"start_ms": 0}, "duration_ms": 2000}],
++        "shots": {"shot-1": {"payload": {"metadata": {}}, "internal_timeline": {
++            "tracks": [{"id": "picture", "kind": "visual"}],
++            "clips": [{"id": "image", "asset": "image", "at": 0, "hold": 2, "track": "picture"}],
++            "registry": {"assets": {}},
++        }}},
++    }
++    scripts = {"revision_id": "speech-head", "occurrences": [
++        {"occurrence_id": "occ-1", "status": "present", "text": "Hello"},
++    ]}
++
++    class Bound:
++        def __init__(self):
++            self.published = None
++
++        def open(self):
++            return json.loads(json.dumps(candidate))
++
++        def validate(self, work):
++            assert work["shots"]["shot-1"]["payload"]["metadata"]["draft_voiceover"]["status"] == "draft"
++            return {}
++
++        def diff(self, work):
++            return {"changes": ["audio"]}
++
++        def preview(self, work):
++            return {"candidate_digest": _digest(json.dumps(work, sort_keys=True))}
++
++        def publish(self, work, **kwargs):
++            self.published = {"candidate": json.loads(json.dumps(work)), "kwargs": kwargs}
++            return {"publication": {"head": "speech-published"}}
++
++    bound = Bound()
++    timelines = SimpleNamespace(
++        open_composition=lambda *args, **kwargs: {"summary": {"head_revision_id": "speech-head"}},
++        resolve_scope=lambda *args, **kwargs: {"project_id": project_id, "timeline_id": "timeline"},
++        script=lambda *args, **kwargs: scripts,
++    )
++    return candidate, scripts, bound, timelines
++
++
++def _run_real_speech_sync(tmp_path: Path, real_runtime, *, malformed: bool):
++    from astrid.packs.video_editing.shared import draft_voiceover
++
++    daemon = real_runtime(commit=SPEECH_RUNTIME_COMMIT)
++    worker = RuntimeProtocolClient(daemon.endpoint, daemon.worker_token)
++    host = GenericPackHost(
++        pack_roots=[_speech_fixture_pack(tmp_path, malformed=malformed)],
++        client=worker,
++        executor_id="speech-fixture-host",
++        attempt_root=tmp_path / "attempts",
++    )
++    transport = WorkspaceClient(daemon.endpoint, daemon.token)
++    transport.handshake(
++        "speech-publication-test",
++        "1",
++        ["projects:read", "projects:write", "objects:read", "objects:write", "tasks:read", "tasks:write"],
++    )
++    remote = RemoteAstridClient(transport)
++    project_result = remote.projects.create(slug="speech-wc5", name="Speech WC5", idempotency_key="speech-wc5-project")
++    assert project_result.ok, project_result.error
++    project_id = project_result.data.get("project_id") or project_result.data["id"]
++    _candidate, _scripts, bound, timelines = _speech_outer_fixture(project_id)
++    remote.timelines = timelines
++    remote.open_authoring_target = lambda target: bound
++    host.discover()
++    host.preflight("generation.generate_speech")
++    host.register()
++    try:
++        with ThreadPoolExecutor(max_workers=1) as pool:
++            future = pool.submit(host.run, once=False, poll_seconds=0.02, max_tasks=1)
++            if malformed:
++                with pytest.raises(draft_voiceover.VoiceoverSyncError, match="hash verification"):
++                    draft_voiceover.sync_draft_voiceover(
++                        remote, project_id, "timeline", timing_policy="preserve", occurrence_ids=["occ-1"]
++                    )
++                assert bound.published is None
++            else:
++                result = draft_voiceover.sync_draft_voiceover(
++                    remote, project_id, "timeline", timing_policy="preserve", occurrence_ids=["occ-1"]
++                )
++                assert result["published"] and bound.published is not None
++                generated = result["generated"][0]
++                context = generated["runtime_context"]
++                assert {"task", "task_id", "attempt_id", "association_id", "managed_output", "generation_publish_v1"} <= set(context)
++                assert context["task"]["task_id"] == context["task_id"]
++                assert context["task"]["attempt_id"] == context["attempt_id"]
++                assert context["managed_output"]["association_id"] == context["association_id"]
++                assert context["generation_publish_v1"]["effect_type"] == "generation.publish_v1"
++                output = context["managed_output"]
++                selection = transport._generated.get_project_media_selection(project_id, {
++                    "association_id": output["association_id"],
++                    "object_id": output["object_id"],
++                    "version": output["lifecycle"]["version"],
++                })
++                assert set(selection) == {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}
++                assert selection["object_id"] == output["object_id"]
++                verified = transport._generated.get_project_verified_media(project_id, selection)
++                assert verified["selection"] == selection
++                assert verified["media_type"] == "audio/wav"
++                assert verified["duration_seconds"] == 1.0
++                wav_bytes = remote.media.read_bytes(output["object_id"])
++                with wave.open(io.BytesIO(wav_bytes), "rb") as wav:
++                    assert wav.getframerate() == 8000 and wav.getnframes() == 8000
++            future.result(timeout=60)
++    finally:
++        host.shutdown()
++        daemon.stop()
++
++
++@pytest.mark.integration
++def test_real_speech_publication_seam_settles_wav_and_selection(tmp_path, real_runtime):
++    """Outer sync -> normal SDK speech admission -> managed WAV -> five-field selection."""
++    _run_real_speech_sync(tmp_path, real_runtime, malformed=False)
++
++
++@pytest.mark.integration
++def test_real_speech_publication_rejects_malformed_provenance(tmp_path, real_runtime):
++    """A settled WAV with null provenance metadata cannot reach outer publication."""
++    _run_real_speech_sync(tmp_path, real_runtime, malformed=True)
+
+exec
+/bin/bash -lc "wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-real-publication-seam/DONE; sed -n '1,8p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-real-publication-seam/commit-msg" in /home/user/work/wt/agt-m2-speech-real-publication-seam
+ succeeded in 0ms:
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-speech-real-publication-seam/DONE
+test(agent): prove real speech publication seam
+
+Exercise normal speech admission through a deterministic managed-WAV fixture
+and verify Runtime's durable five-field media selection plus provenance.
+
+exec
+/bin/bash -lc 'git diff --check && git status --short && git diff --stat' in /home/user/work/wt/agt-m2-speech-real-publication-seam
+ succeeded in 764ms:
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+ .../test_runtime_publication_chain.py              | 213 +++++++++++++++++++++
+ 1 file changed, 213 insertions(+)
+
+codex
+Implemented WC5 real speech seam proof in `tests/packs/video_editing/test_runtime_publication_chain.py`.
+
+- Added deterministic managed-WAV fixture through normal SDK admission and `GenericPackHost` settlement.
+- Added positive five-field media-selection and verified-media assertions.
+- Added malformed provenance negative case.
+- No Runtime/API/client/generated changes.
+- Preserved existing speech/RIPPLE tests.
+
+Tests:
+
+- `pytest -q tests/packs/video_editing/test_draft_voiceover.py tests/sdk/test_projectless_admission.py` — 42 passed.
+- `py_compile`, `git diff --check` — passed.
+- Named integration suite — blocked by Runtime/SDK schema mismatch (`8de823…` expected, `ce3781…` served); 4 failures including two pre-existing tests.
+
+Remaining requester-authority qualification is honest: the outer authoring target remains a bounded test double.
+
+Commit message written and `DONE` created.
+tokens used
+424,886
+Implemented WC5 real speech seam proof in `tests/packs/video_editing/test_runtime_publication_chain.py`.
+
+- Added deterministic managed-WAV fixture through normal SDK admission and `GenericPackHost` settlement.
+- Added positive five-field media-selection and verified-media assertions.
+- Added malformed provenance negative case.
+- No Runtime/API/client/generated changes.
+- Preserved existing speech/RIPPLE tests.
+
+Tests:
+
+- `pytest -q tests/packs/video_editing/test_draft_voiceover.py tests/sdk/test_projectless_admission.py` — 42 passed.
+- `py_compile`, `git diff --check` — passed.
+- Named integration suite — blocked by Runtime/SDK schema mismatch (`8de823…` expected, `ce3781…` served); 4 failures including two pre-existing tests.
+
+Remaining requester-authority qualification is honest: the outer authoring target remains a bounded test double.
+
+Commit message written and `DONE` created.

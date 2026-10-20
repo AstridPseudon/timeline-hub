@@ -1,0 +1,9 @@
+name=agt-review-viewing-am-small-units
+repo=agent
+base=tl/integration
+base_sha=6a6d92d3
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-viewing-am-small-units
+started=2026-10-20T14:20:22Z

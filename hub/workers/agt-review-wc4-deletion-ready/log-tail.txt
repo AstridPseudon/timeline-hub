@@ -1,0 +1,400 @@
+Candidate parent: `4ef1391c2c104d5d11b3a27265035c51be296045`  
+Candidate tree: `cd13be81bf14c05e5acc7089a1e66d109000c61d`  
+Current review root: `8e3107853d17453758a933d1f47215cc1c002660`
+
+## Concrete deletion finding
+
+The old `timeline_elements.py` helper imported `validate_authoring_candidate` and `publish_authoring_candidate`, built a whole parent candidate, and called a local `Writer.publish_parent_composition` via `owner._typed`. In the candidate, `astrid/sdk/timeline_elements.py` contains none of those imports/calls/symbols. It emits only native `clip.set-element`, `clip.set`, and `clip.set-params` calls, stages through the existing `TimelineSession`, and calls `session.flush()`; there is no helper-local publisher fallback.
+
+The remaining repository-wide `publish_parent_composition` references are outside this helper (bootstrap/migration/legacy APIs and their tests). The complete public consumer route is `RemoteTimelines.update_parent_element` → `timeline_elements.update_parent_element` → existing outbox flush → `client.timelines.commit` (`/v1`). The CLI continues to call the public method with its prior argument shape. The helper’s returned result fields remain the prior public shape.
+
+## Behavior findings
+
+- Same-E PARAM/clear uses the one existing `_selected_param_authority` resolver and exact authenticated retained reads; it does not synthesize `clip.set-element` or refresh current admission.
+- Same-E HOLD uses only `clip.set`; the legacy digest-only case does not use selection resolution, portable snapshot/object reads, or re-admission.
+- A genuine E revision change uses explicit `clip.set-element` and the existing current authenticated admission flow.
+- Original P1 survives later P2/V2 admission, current-selection removal, source/cache deletion, restart, lost-ACK retry, and pagination. Unknown/unselected PARAM refuses before POST. Foreign admitted pack ownership refuses atomically.
+- Pending exact body/key, original base after rebased acceptance, bool-vs-number intent, raw aliases, opaque data, mirrors/order, and inverse/F1 staged guards are preserved.
+
+## Exact tests run
+
+All commands ran against a private archive of the exact candidate SHA with `PYTHONDONTWRITEBYTECODE=1`, `PYTHONPATH` set to that archive, `-p no:cacheprovider`, and shared dependencies read-only.
+
+- `tests/core/test_timeline_element_publication.py`: **38 passed**.
+- Runtime helper/lifecycle selection (`public_helper_restart_exact_retry_later_head_inverse_redo`, `legacy_same_selected_hold_reload_inverse_retry`, `param_only_helper_preserves_original_pin_without_reselection`, `helper_retains_max10_after_max20_restart_and_explicit_revision_reselection`, `helper_param_cannot_bootstrap_unselected_clip`, `acknowledged_rebased_lost_ack_restart_pagination_and_typed_intent`, `preexisting_element_hold_flight_retries_exact_body`): **19 passed, 40 deselected**.
+- Selected authority lineage positives/negatives: **17 passed, 10 deselected**.
+- F1 staged-inverse tests (`native_inverse_refuses_earlier_unchanged_selection_atomically`, disjoint staged inverse, inverse→selection→PARAM): **5 passed, 27 deselected**.
+- Foreign admitted-owner overwrite refusal: **1 passed, 58 deselected**.
+- Ruff on changed helper/authority/command/facade/test paths: **All checks passed**.
+- `git diff --check 4ef1391c2c104d5d11b3a27265035c51be296045 e36b505656f5b98c8bab3495c38f5d04fe8fbee5`: **passed**.
+
+## Limits
+
+No full suite, `make check`, App/current public browser gate, renderer/audio/pixel gate, or macOS qualification was run or claimed. No source, integration worktree, schema/public S2 artifact, generated client, pin, shared venv, or shared node dependency was modified. The review is specifically the Agent WC4 helper deletion gate.
+
+--- output dirs ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready:
+total 572
+drwxr-xr-x   3 root root   4096 Oct 20 13:57 .
+drwxr-xr-x 822 root root  36864 Oct 20 13:56 ..
+-rw-r--r--   1 root root   1925 Oct 20 13:56 brief.md
+-rw-r--r--   1 root root 526845 Oct 20 13:59 log.txt
+-rw-r--r--   1 root root    210 Oct 20 13:56 meta
+drwxr-xr-x   2 root root   4096 Oct 20 13:59 notes
+-rw-r--r--   1 root root      0 Oct 20 13:56 running
+
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes:
+total 16
+drwxr-xr-x 2 root root 4096 Oct 20 13:59 .
+drwxr-xr-x 3 root root 4096 Oct 20 13:57 ..
+-rw-r--r-- 1 root root 3963 Oct 20 13:59 report.md
+-rw-r--r-- 1 root root  671 Oct 20 13:59 review-targeted.log
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-deletion-ready.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-deletion-ready.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c0bd242311c19bc1fa1ce76690c39ffb3e8ef4c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-deletion-ready.md
+@@ -0,0 +1,68 @@
++# WC4 deletion gate: approved
++
++Reviewed candidate `e36b505656f5b98c8bab3495c38f5d04fe8fbee5` (`tl/agt-m2-wc4-original-pin-current-join`), parent `4ef1391c2c104d5d11b3a27265035c51be296045`, tree `cd13be81bf14c05e5acc7089a1e66d109000c61d`, against current root `8e3107853d17453758a933d1f47215cc1c002660`.
++
++## Verdict
++
++Approve merge and mark the WC4 helper deletion row `DELETED`, with the permanent tests retained. The old whole-parent publisher path is actually removed from the public helper, not bypassed:
++
++- The parent version imported `validate_authoring_candidate`/`publish_authoring_candidate`, built a whole candidate, and called `owner._typed('publish_parent_composition', ...)` through a local `Writer`. Candidate `astrid/sdk/timeline_elements.py:1-254` has none of those imports, symbols, or calls.
++- The candidate helper builds only `clip.set-element`, `clip.set`, and `clip.set-params` calls, stages them in the existing `TimelineSession`, and completes through `session.flush()` (`timeline_elements.py:240-243`). No publisher fallback remains in that route.
++- The only public consumer route is preserved: `RemoteTimelines.update_parent_element` forwards the existing arguments plus additive `session`/`clear_params` (`astrid/sdk/remote.py:1260-1262`); the CLI still calls that method with the old argument shape (`astrid/packs/timeline/cli.py:1287-1293`). `_result` retains the old `project_id`, `timeline_id`, `expected_head`, `new_head`, `clip_id`, `element`, `duration`, `params`, `before`, receipt, and idempotency-key result fields.
++- The resulting write route is the existing outbox `TimelineSession.flush` to `client.timelines.commit` (`astrid/sdk/timeline/sync.py:306-368`), i.e. the existing `/v1` timeline commit path. Remaining `publish_parent_composition` references are separate bootstrap/migration/legacy APIs and are not reachable from this helper.
++
++## Semantic checks
++
++- Same-element PARAM/clear emits no artificial `clip.set-element`; it resolves the accepted original P/E/O through `_selected_param_authority.resolve_selected_param_source` and the existing authenticated history/retained-document/object reads (`timeline_elements.py:204-220`). The max10 P1 → max20 P2/removal/restart case preserves P1; refusal cases produce no POST/head/database write. A real E revision change takes the explicit `clip.set-element` path and current authenticated admission (`timeline_elements.py:221-238`).
++- Same-element HOLD takes only guarded `clip.set` and does not invoke selection resolution, schema/object reads, local portable authority, or re-admission. The legacy digest-only positive remains successful; missing portable data still refuses the real revision-reselection path with the existing `pack snapshot unavailable; re-admit pack` error.
++- The shared authority helper is the single resolver; no second history algorithm, validator, endpoint, DTO, persistence cache, journal, schema, or generated-pin change was introduced. Source ownership is guarded by existing element identity/pack-owner checks (`timeline_elements.py:192-201`); an actually admitted foreign owner cannot overwrite the selected product.
++- Pending exact body/key and acknowledged recovery preserve the original request base, including rebased acceptance, lost acknowledgement, restart, pagination, and newer disjoint head. Bool/number intent remains distinct while numeric equivalence remains accepted. Opaque fields, raw aliases, mirrors/order, registry, transcript, shot/internal data, and old return compatibility remain covered.
++- Authentic old legacy-alias inverse positives and F1 staged-inverse atomic refusal/valid staged-selection cases pass. No passing behavior test was weakened, skipped, deleted, or changed to expect refusal.
++
++## Independent targeted evidence
++
++Tests ran from a private archive of the exact candidate SHA using the shared read-only Agent venv and Runtime locator; no source or dependency files were modified.
++
++```text
++tests/core/test_timeline_element_publication.py
++38 passed in 14.56s
++
++tests/core/test_timeline_element_publication_runtime.py -k
++  public_helper_restart_exact_retry_later_head_inverse_redo
++  legacy_same_selected_hold_reload_inverse_retry
++  param_only_helper_preserves_original_pin_without_reselection
++  helper_retains_max10_after_max20_restart_and_explicit_revision_reselection
++  helper_param_cannot_bootstrap_unselected_clip
++  acknowledged_rebased_lost_ack_restart_pagination_and_typed_intent
++  preexisting_element_hold_flight_retries_exact_body
++19 passed, 40 deselected in 29.70s
++
++tests/sdk/test_timeline_selected_param_authority.py -k
++  equal_json_opposite_pin_order_has_distinct_accepted_authority
++  unchanged_param_and_clear_record_exact_source
++  disjoint_peer_and_paginated_reload_preserve_direct_source
++  inverse_consumed_pin_is_not_restored_authority
++  param_after_inverse_uses_original_target_before_selection
++  legacy_unchanged_param_requires_selection_authority
++  param_cannot_bootstrap_selected_authority
++  inconsistent_or_incomplete_history_never_resurrects_older_pin
++17 passed, 10 deselected in 11.26s
++
++tests/sdk/test_timeline_selected_schema_runtime.py -k
++  native_inverse_refuses_earlier_unchanged_selection_atomically
++  native_disjoint_staged_label_and_inverse_preserve_opaque
++  native_inverse_then_selection_and_params_use_staged_pin
++5 passed, 27 deselected in 8.33s
++
++tests/core/test_timeline_element_publication_runtime.py -k
++  another_actually_admitted_owner_cannot_replace_selected_owner
++1 passed, 58 deselected in 2.44s
++
++ruff check --no-cache [changed helper/authority/command/facade/test paths]
++All checks passed!
++git diff --check 4ef1391c..e36b5056
++passed
++```
++
++No full suite, `make check`, App/current public browser, renderer/audio/pixel, or macOS gate was run or claimed. This is a source/helper WC4 deletion approval only; those other product gates remain with their owners.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c669a739cf220ff0f8c859c04364fd1b35371ac1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/commit-msg
+@@ -0,0 +1,4 @@
++docs(review): approve WC4 deletion gate
++
++Record the exact candidate/tree review, native helper deletion evidence,
++targeted test results, and qualification limits.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f55397cbb1dc875a498535b00e6ab2b78e8fda34
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/report.md
+@@ -0,0 +1,38 @@
++# WC4 deletion-ready review report
++
++Verdict: approve candidate `e36b505656f5b98c8bab3495c38f5d04fe8fbee5` for merge and recommend naming the WC4 deletion row `DELETED` with permanent tests retained.
++
++Candidate parent: `4ef1391c2c104d5d11b3a27265035c51be296045`  
++Candidate tree: `cd13be81bf14c05e5acc7089a1e66d109000c61d`  
++Current review root: `8e3107853d17453758a933d1f47215cc1c002660`
++
++## Concrete deletion finding
++
++The old `timeline_elements.py` helper imported `validate_authoring_candidate` and `publish_authoring_candidate`, built a whole parent candidate, and called a local `Writer.publish_parent_composition` via `owner._typed`. In the candidate, `astrid/sdk/timeline_elements.py` contains none of those imports/calls/symbols. It emits only native `clip.set-element`, `clip.set`, and `clip.set-params` calls, stages through the existing `TimelineSession`, and calls `session.flush()`; there is no helper-local publisher fallback.
++
++The remaining repository-wide `publish_parent_composition` references are outside this helper (bootstrap/migration/legacy APIs and their tests). The complete public consumer route is `RemoteTimelines.update_parent_element` → `timeline_elements.update_parent_element` → existing outbox flush → `client.timelines.commit` (`/v1`). The CLI continues to call the public method with its prior argument shape. The helper’s returned result fields remain the prior public shape.
++
++## Behavior findings
++
++- Same-E PARAM/clear uses the one existing `_selected_param_authority` resolver and exact authenticated retained reads; it does not synthesize `clip.set-element` or refresh current admission.
++- Same-E HOLD uses only `clip.set`; the legacy digest-only case does not use selection resolution, portable snapshot/object reads, or re-admission.
++- A genuine E revision change uses explicit `clip.set-element` and the existing current authenticated admission flow.
++- Original P1 survives later P2/V2 admission, current-selection removal, source/cache deletion, restart, lost-ACK retry, and pagination. Unknown/unselected PARAM refuses before POST. Foreign admitted pack ownership refuses atomically.
++- Pending exact body/key, original base after rebased acceptance, bool-vs-number intent, raw aliases, opaque data, mirrors/order, and inverse/F1 staged guards are preserved.
++
++## Exact tests run
++
++All commands ran against a private archive of the exact candidate SHA with `PYTHONDONTWRITEBYTECODE=1`, `PYTHONPATH` set to that archive, `-p no:cacheprovider`, and shared dependencies read-only.
++
++- `tests/core/test_timeline_element_publication.py`: **38 passed**.
++- Runtime helper/lifecycle selection (`public_helper_restart_exact_retry_later_head_inverse_redo`, `legacy_same_selected_hold_reload_inverse_retry`, `param_only_helper_preserves_original_pin_without_reselection`, `helper_retains_max10_after_max20_restart_and_explicit_revision_reselection`, `helper_param_cannot_bootstrap_unselected_clip`, `acknowledged_rebased_lost_ack_restart_pagination_and_typed_intent`, `preexisting_element_hold_flight_retries_exact_body`): **19 passed, 40 deselected**.
++- Selected authority lineage positives/negatives: **17 passed, 10 deselected**.
++- F1 staged-inverse tests (`native_inverse_refuses_earlier_unchanged_selection_atomically`, disjoint staged inverse, inverse→selection→PARAM): **5 passed, 27 deselected**.
++- Foreign admitted-owner overwrite refusal: **1 passed, 58 deselected**.
++- Ruff on changed helper/authority/command/facade/test paths: **All checks passed**.
++- `git diff --check 4ef1391c2c104d5d11b3a27265035c51be296045 e36b505656f5b98c8bab3495c38f5d04fe8fbee5`: **passed**.
++
++## Limits
++
++No full suite, `make check`, App/current public browser gate, renderer/audio/pixel gate, or macOS qualification was run or claimed. No source, integration worktree, schema/public S2 artifact, generated client, pin, shared venv, or shared node dependency was modified. The review is specifically the Agent WC4 helper deletion gate.
++
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-deletion-ready.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-deletion-ready.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c0bd242311c19bc1fa1ce76690c39ffb3e8ef4c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-deletion-ready.md
+@@ -0,0 +1,68 @@
++# WC4 deletion gate: approved
++
++Reviewed candidate `e36b505656f5b98c8bab3495c38f5d04fe8fbee5` (`tl/agt-m2-wc4-original-pin-current-join`), parent `4ef1391c2c104d5d11b3a27265035c51be296045`, tree `cd13be81bf14c05e5acc7089a1e66d109000c61d`, against current root `8e3107853d17453758a933d1f47215cc1c002660`.
++
++## Verdict
++
++Approve merge and mark the WC4 helper deletion row `DELETED`, with the permanent tests retained. The old whole-parent publisher path is actually removed from the public helper, not bypassed:
++
++- The parent version imported `validate_authoring_candidate`/`publish_authoring_candidate`, built a whole candidate, and called `owner._typed('publish_parent_composition', ...)` through a local `Writer`. Candidate `astrid/sdk/timeline_elements.py:1-254` has none of those imports, symbols, or calls.
++- The candidate helper builds only `clip.set-element`, `clip.set`, and `clip.set-params` calls, stages them in the existing `TimelineSession`, and completes through `session.flush()` (`timeline_elements.py:240-243`). No publisher fallback remains in that route.
++- The only public consumer route is preserved: `RemoteTimelines.update_parent_element` forwards the existing arguments plus additive `session`/`clear_params` (`astrid/sdk/remote.py:1260-1262`); the CLI still calls that method with the old argument shape (`astrid/packs/timeline/cli.py:1287-1293`). `_result` retains the old `project_id`, `timeline_id`, `expected_head`, `new_head`, `clip_id`, `element`, `duration`, `params`, `before`, receipt, and idempotency-key result fields.
++- The resulting write route is the existing outbox `TimelineSession.flush` to `client.timelines.commit` (`astrid/sdk/timeline/sync.py:306-368`), i.e. the existing `/v1` timeline commit path. Remaining `publish_parent_composition` references are separate bootstrap/migration/legacy APIs and are not reachable from this helper.
++
++## Semantic checks
++
++- Same-element PARAM/clear emits no artificial `clip.set-element`; it resolves the accepted original P/E/O through `_selected_param_authority.resolve_selected_param_source` and the existing authenticated history/retained-document/object reads (`timeline_elements.py:204-220`). The max10 P1 → max20 P2/removal/restart case preserves P1; refusal cases produce no POST/head/database write. A real E revision change takes the explicit `clip.set-element` path and current authenticated admission (`timeline_elements.py:221-238`).
++- Same-element HOLD takes only guarded `clip.set` and does not invoke selection resolution, schema/object reads, local portable authority, or re-admission. The legacy digest-only positive remains successful; missing portable data still refuses the real revision-reselection path with the existing `pack snapshot unavailable; re-admit pack` error.
++- The shared authority helper is the single resolver; no second history algorithm, validator, endpoint, DTO, persistence cache, journal, schema, or generated-pin change was introduced. Source ownership is guarded by existing element identity/pack-owner checks (`timeline_elements.py:192-201`); an actually admitted foreign owner cannot overwrite the selected product.
++- Pending exact body/key and acknowledged recovery preserve the original request base, including rebased acceptance, lost acknowledgement, restart, pagination, and newer disjoint head. Bool/number intent remains distinct while numeric equivalence remains accepted. Opaque fields, raw aliases, mirrors/order, registry, transcript, shot/internal data, and old return compatibility remain covered.
++- Authentic old legacy-alias inverse positives and F1 staged-inverse atomic refusal/valid staged-selection cases pass. No passing behavior test was weakened, skipped, deleted, or changed to expect refusal.
++
++## Independent targeted evidence
++
++Tests ran from a private archive of the exact candidate SHA using the shared read-only Agent venv and Runtime locator; no source or dependency files were modified.
++
++```text
++tests/core/test_timeline_element_publication.py
++38 passed in 14.56s
++
++tests/core/test_timeline_element_publication_runtime.py -k
++  public_helper_restart_exact_retry_later_head_inverse_redo
++  legacy_same_selected_hold_reload_inverse_retry
++  param_only_helper_preserves_original_pin_without_reselection
++  helper_retains_max10_after_max20_restart_and_explicit_revision_reselection
++  helper_param_cannot_bootstrap_unselected_clip
++  acknowledged_rebased_lost_ack_restart_pagination_and_typed_intent
++  preexisting_element_hold_flight_retries_exact_body
++19 passed, 40 deselected in 29.70s
++
++tests/sdk/test_timeline_selected_param_authority.py -k
++  equal_json_opposite_pin_order_has_distinct_accepted_authority
++  unchanged_param_and_clear_record_exact_source
++  disjoint_peer_and_paginated_reload_preserve_direct_source
++  inverse_consumed_pin_is_not_restored_authority
++  param_after_inverse_uses_original_target_before_selection
++  legacy_unchanged_param_requires_selection_authority
++  param_cannot_bootstrap_selected_authority
++  inconsistent_or_incomplete_history_never_resurrects_older_pin
++17 passed, 10 deselected in 11.26s
++
++tests/sdk/test_timeline_selected_schema_runtime.py -k
++  native_inverse_refuses_earlier_unchanged_selection_atomically
++  native_disjoint_staged_label_and_inverse_preserve_opaque
++  native_inverse_then_selection_and_params_use_staged_pin
++5 passed, 27 deselected in 8.33s
++
++tests/core/test_timeline_element_publication_runtime.py -k
++  another_actually_admitted_owner_cannot_replace_selected_owner
++1 passed, 58 deselected in 2.44s
++
++ruff check --no-cache [changed helper/authority/command/facade/test paths]
++All checks passed!
++git diff --check 4ef1391c..e36b5056
++passed
++```
++
++No full suite, `make check`, App/current public browser, renderer/audio/pixel, or macOS gate was run or claimed. This is a source/helper WC4 deletion approval only; those other product gates remain with their owners.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c669a739cf220ff0f8c859c04364fd1b35371ac1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/commit-msg
+@@ -0,0 +1,4 @@
++docs(review): approve WC4 deletion gate
++
++Record the exact candidate/tree review, native helper deletion evidence,
++targeted test results, and qualification limits.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..1110ed19186668ab653976f61541d4134d223da5
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/report.md
+@@ -0,0 +1,50 @@
++# WC4 deletion-ready review report
++
++Verdict: approve candidate `e36b505656f5b98c8bab3495c38f5d04fe8fbee5` for merge and recommend naming the WC4 deletion row `DELETED` with permanent tests retained.
++
++Candidate parent: `4ef1391c2c104d5d11b3a27265035c51be296045`  
++Candidate tree: `cd13be81bf14c05e5acc7089a1e66d109000c61d`  
++Current review root: `8e3107853d17453758a933d1f47215cc1c002660`
++
++## Concrete deletion finding
++
++The old `timeline_elements.py` helper imported `validate_authoring_candidate` and `publish_authoring_candidate`, built a whole parent candidate, and called a local `Writer.publish_parent_composition` via `owner._typed`. In the candidate, `astrid/sdk/timeline_elements.py` contains none of those imports/calls/symbols. It emits only native `clip.set-element`, `clip.set`, and `clip.set-params` calls, stages through the existing `TimelineSession`, and calls `session.flush()`; there is no helper-local publisher fallback.
++
++The remaining repository-wide `publish_parent_composition` references are outside this helper (bootstrap/migration/legacy APIs and their tests). The complete public consumer route is `RemoteTimelines.update_parent_element` → `timeline_elements.update_parent_element` → existing outbox flush → `client.timelines.commit` (`/v1`). The CLI continues to call the public method with its prior argument shape. The helper’s returned result fields remain the prior public shape.
++
++## Behavior findings
++
++- Same-E PARAM/clear uses the one existing `_selected_param_authority` resolver and exact authenticated retained reads; it does not synthesize `clip.set-element` or refresh current admission.
++- Same-E HOLD uses only `clip.set`; the legacy digest-only case does not use selection resolution, portable snapshot/object reads, or re-admission.
++- A genuine E revision change uses explicit `clip.set-element` and the existing current authenticated admission flow.
++- Original P1 survives later P2/V2 admission, current-selection removal, source/cache deletion, restart, lost-ACK retry, and pagination. Unknown/unselected PARAM refuses before POST. Foreign admitted pack ownership refuses atomically.
++- Pending exact body/key, original base after rebased acceptance, bool-vs-number intent, raw aliases, opaque data, mirrors/order, and inverse/F1 staged guards are preserved.
++
++## Exact tests run
++
++All commands ran against a private archive of the exact candidate SHA with `PYTHONDONTWRITEBYTECODE=1`, `PYTHONPATH` set to that archive, `-p no:cacheprovider`, and shared dependencies read-only.
++
++The archive was `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/candidate` and was removed after testing. Exact commands (with `SRC` set to that path and `PY=/home/user/work/venv-agent/bin/python`) were:
++
++```sh
++cd "$SRC" && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$SRC" "$PY" -m pytest -q -o addopts= -p no:cacheprovider tests/core/test_timeline_element_publication.py
++cd "$SRC" && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$SRC" ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime "$PY" -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/core/test_timeline_element_publication_runtime.py -k 'public_helper_restart_exact_retry_later_head_inverse_redo or legacy_same_selected_hold_reload_inverse_retry or param_only_helper_preserves_original_pin_without_reselection or helper_retains_max10_after_max20_restart_and_explicit_revision_reselection or helper_param_cannot_bootstrap_unselected_clip or acknowledged_rebased_lost_ack_restart_pagination_and_typed_intent or preexisting_element_hold_flight_retries_exact_body'
++cd "$SRC" && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$SRC" "$PY" -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_selected_param_authority.py -k 'equal_json_opposite_pin_order_has_distinct_accepted_authority or unchanged_param_and_clear_record_exact_source or disjoint_peer_and_paginated_reload_preserve_direct_source or inverse_consumed_pin_is_not_restored_authority or param_after_inverse_uses_original_target_before_selection or legacy_unchanged_param_requires_selection_authority or param_cannot_bootstrap_selected_authority or inconsistent_or_incomplete_history_never_resurrects_older_pin'
++cd "$SRC" && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$SRC" ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime "$PY" -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/sdk/test_timeline_selected_schema_runtime.py -k 'native_inverse_refuses_earlier_unchanged_selection_atomically or native_disjoint_staged_label_and_inverse_preserve_opaque or native_inverse_then_selection_and_params_use_staged_pin'
++cd "$SRC" && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$SRC" ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime "$PY" -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/core/test_timeline_element_publication_runtime.py -k 'another_actually_admitted_owner_cannot_replace_selected_owner'
++cd "$SRC" && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$SRC" "$PY" -m ruff check --no-cache astrid/sdk/timeline_elements.py astrid/sdk/timeline/_clip_scalar_commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/_selected_param_authority.py astrid/sdk/workspace_client.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_param_authority.py tests/sdk/test_timeline_selected_schema_runtime.py
++git diff --check 4ef1391c2c104d5d11b3a27265035c51be296045 e36b505656f5b98c8bab3495c38f5d04fe8fbee5
++```
++
++- `tests/core/test_timeline_element_publication.py`: **38 passed**.
++- Runtime helper/lifecycle selection (`public_helper_restart_exact_retry_later_head_inverse_redo`, `legacy_same_selected_hold_reload_inverse_retry`, `param_only_helper_preserves_original_pin_without_reselection`, `helper_retains_max10_after_max20_restart_and_explicit_revision_reselection`, `helper_param_cannot_bootstrap_unselected_clip`, `acknowledged_rebased_lost_ack_restart_pagination_and_typed_intent`, `preexisting_element_hold_flight_retries_exact_body`): **19 passed, 40 deselected**.
++- Selected authority lineage positives/negatives: **17 passed, 10 deselected**.
++- F1 staged-inverse tests (`native_inverse_refuses_earlier_unchanged_selection_atomically`, disjoint staged inverse, inverse→selection→PARAM): **5 passed, 27 deselected**.
++- Foreign admitted-owner overwrite refusal: **1 passed, 58 deselected**.
++- Ruff on changed helper/authority/command/facade/test paths: **All checks passed**.
++- `git diff --check 4ef1391c2c104d5d11b3a27265035c51be296045 e36b505656f5b98c8bab3495c38f5d04fe8fbee5`: **passed**.
++
++## Limits
++
++No full suite, `make check`, App/current public browser gate, renderer/audio/pixel gate, or macOS qualification was run or claimed. No source, integration worktree, schema/public S2 artifact, generated client, pin, shared venv, or shared node dependency was modified. The review is specifically the Agent WC4 helper deletion gate.
++
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- source worktree ---'; git status --short --branch; printf '%s\\n' '--- required outputs ---'; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-deletion-ready.md && echo design-report=present; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/report.md && echo worker-report=present; printf '%s\\n' '--- commit message ---'; sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/commit-msg; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/DONE && echo DONE=present; test "'! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/BLOCKED && echo BLOCKED=absent' in /home/user/work/wt/agt-review-wc4-deletion-ready
+ succeeded in 1063ms:
+--- source worktree ---
+## tl/agt-review-wc4-deletion-ready
+--- required outputs ---
+design-report=present
+worker-report=present
+--- commit message ---
+docs(review): approve WC4 deletion gate
+
+Record the exact candidate/tree review, native helper deletion evidence,
+targeted test results, and qualification limits.
+DONE=present
+BLOCKED=absent
+
+codex
+# WC4 deletion-ready review
+
+Approved candidate `e36b505656f5b98c8bab3495c38f5d04fe8fbee5` (tree `cd13be81bf14c05e5acc7089a1e66d109000c61d`) for merge. Recommend marking WC4 `DELETED` and retaining permanent tests.
+
+Findings:
+
+- Old whole-parent publisher imports, call, and fallback are deleted from `timeline_elements.py`.
+- Consumer route remains compatible: public helper → existing outbox → `/v1` commit.
+- Original P1 authority, legacy HOLD, retry/restart/pagination, F1 inverse guards, bool/number intent, opaque fields, and foreign-owner refusal are preserved.
+
+Evidence:
+
+- Direct helper: 38 passed.
+- Helper/lifecycle: 19 passed, 40 deselected.
+- Authority tests: 17 passed, 10 deselected.
+- F1 tests: 5 passed, 27 deselected.
+- Foreign-owner test: 1 passed, 58 deselected.
+- Ruff: passed.
+- `git diff --check`: passed.
+
+No full suite, App/browser, renderer/audio/pixel, or macOS qualification claimed.
+
+Reports: [design review](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-deletion-ready.md>) and [worker report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/report.md>). `DONE` and commit message were written; source worktree is clean.
+tokens used
+171,397
+# WC4 deletion-ready review
+
+Approved candidate `e36b505656f5b98c8bab3495c38f5d04fe8fbee5` (tree `cd13be81bf14c05e5acc7089a1e66d109000c61d`) for merge. Recommend marking WC4 `DELETED` and retaining permanent tests.
+
+Findings:
+
+- Old whole-parent publisher imports, call, and fallback are deleted from `timeline_elements.py`.
+- Consumer route remains compatible: public helper → existing outbox → `/v1` commit.
+- Original P1 authority, legacy HOLD, retry/restart/pagination, F1 inverse guards, bool/number intent, opaque fields, and foreign-owner refusal are preserved.
+
+Evidence:
+
+- Direct helper: 38 passed.
+- Helper/lifecycle: 19 passed, 40 deselected.
+- Authority tests: 17 passed, 10 deselected.
+- F1 tests: 5 passed, 27 deselected.
+- Foreign-owner test: 1 passed, 58 deselected.
+- Ruff: passed.
+- `git diff --check`: passed.
+
+No full suite, App/browser, renderer/audio/pixel, or macOS qualification claimed.
+
+Reports: [design review](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc4-deletion-ready.md>) and [worker report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-deletion-ready/notes/report.md>). `DONE` and commit message were written; source worktree is clean.

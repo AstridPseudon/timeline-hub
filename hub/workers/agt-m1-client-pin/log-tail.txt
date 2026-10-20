@@ -1,0 +1,400 @@
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-client-pin/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md
+index 40bb2d371814641db138bce5c947cc953063ce68..c60da9708debe66714b00f7349c191cdd7657f58
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-coordination.md
+@@ -12,3 +12,13 @@
+ 
+ ## rt-m1-realpath — real integration lane in progress
+ I own only `tests/test_timeline_commit_integration.py`; Agent imports will stay in fixtures, all nodes marked integration. Lane `runtime commit-integration` is present and uses venv-agent + Runtime snapshot first + `/home/user/work/agent`. Building actual factory/capture/RuntimeService/door cases, with main-neutral API film seed before selected-profile startup. Required source tuple still pending: my Runtime base `892fe62`, acceptance `0fdda39`, port `f7614b5`, door review `94e2887`, packaged validator owner; Agent core `cdf88d7e` plus core-integration-fix and provider (currently uncommitted). Please arrange an updated worker Runtime base once the source batch lands (preserving my sole uncommitted test file), or equivalent centrally runnable integrated snapshot; otherwise the registered lane snapshots my old product base. I will not mutate product/owner paths or weaken tests to compose it. Central socket evidence waits for integrated Runtime + Agent sources; private `/tmp` composition may establish earlier non-socket failures.
++
++## agt-m1-client-pin — vendored Runtime M1 client
++Agent consumed the committed Runtime `tl/integration` source tuple:
++
++- source commit: `c423544de3b7a1090649bf32e4c82514c4c7a641`
++- producer manifest: `contract/artifacts.json`, version `sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d`
++- generated contract/schema digest: `sha256:a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e`
++- generated client version: `0.2.0`
++
++`timeline_commit_types.py` is included because this Runtime manifest now requires it; the existing mirrored `timeline-config.schema.json` remains byte-identical. Agent's `runtime.lock.json` records all 15 consumed artifacts and the full source SHA.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-client-pin/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-client-pin/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..8f977fd3ea7f45fad85c7be58522587769204410
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-client-pin/commit-msg
+@@ -0,0 +1,4 @@
++chore(agent): vendor Runtime 0.2.0 timeline client
++
++Refresh the vendored Runtime Python client and lock it to the committed M1
++artifact manifest, including generated timeline commit DTOs.
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 58a677313ea9ed8c015e7660b40508853921a2c1..a20372beeb62110006d3c7d081f9988773d5b17c
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -16,6 +16,10 @@
+       "from": "packages/python/astrid_runtime_client/generated.py",
+       "sha256": "sha256:e1bb3018128ea51355324a230b83be921c550a01586959274baf2c0e2b5955a3"
+     },
++    "astrid_runtime_client/timeline_commit_types.py": {
++      "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
++      "sha256": "sha256:1b5f7d675f512b76dd0d28a0e444d115c68c32c9d3ac57584fb9dd0d81bf3266"
++    },
+     "tests/fixtures/visual-boundary-v1.json": {
+       "from": "conformance/fixtures/visual-boundary-v1.json",
+       "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+@@ -60,5 +64,5 @@
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+   "producer_version": "sha256:62e5c5def72da0ac28b954ee0df080ed3d28814862e1f7efcf3f6b8005a67dcc",
+-  "source_commit": "329c9c591d9c0f74026d599ee00c14c165cb3e53"
++  "source_commit": "c423544de3b7a1090649bf32e4c82514c4c7a641"
+ }
+diff --git a/tests/stage1/test_vendored_workspace_client_parity_luna.py b/tests/stage1/test_vendored_workspace_client_parity_luna.py
+index 1b641d4697e6cf0655c57e5f9c0f2915c01c3269..ea51b817ed0b3d7c69c2e95a13a31367e6dfbfe7
+--- a/tests/stage1/test_vendored_workspace_client_parity_luna.py
++++ b/tests/stage1/test_vendored_workspace_client_parity_luna.py
+@@ -16,13 +16,22 @@
+ from pathlib import Path
+ from types import SimpleNamespace
+ 
+-from astrid_runtime_client import ManagedOutput, ObjectLocation, WorkspaceClient, generated
++import pytest
++
++from astrid_runtime_client import ApiError, ManagedOutput, ObjectLocation, WorkspaceClient, generated
+ from astrid_runtime_client.contract_metadata import (
+     COMPONENT_MANIFEST_SHA256,
+     OPERATIONS,
+     PROTOCOL,
+     SCHEMA_DIGEST,
+ )
++from astrid_runtime_client.timeline_commit_types import (
++    CommitAcceptedMutation,
++    CommitPreviewResponse,
++    CommitRequest,
++    HistoryPage,
++    TimelineCommitPage,
++)
+ from astrid.sdk.workspace_client import WorkspaceClient as AstridWorkspaceClient
+ 
+ ROOT = Path(__file__).resolve().parents[2]
+@@ -41,7 +50,8 @@
+ def test_vendored_client_is_the_locked_runtime_artifact() -> None:
+     assert vendor_lock.check(LOCK) == []
+     assert {name for name in json.loads(LOCK.read_text())["files"] if name.startswith("astrid_runtime_client/")} == {
+-        f"astrid_runtime_client/{name}" for name in ("__init__.py", "generated.py", "contract_metadata.py")
++        f"astrid_runtime_client/{name}"
++        for name in ("__init__.py", "generated.py", "contract_metadata.py", "timeline_commit_types.py")
+     }
+ 
+ 
+@@ -66,6 +76,41 @@
+     assert methods == operation_methods | composed_helpers
+ 
+ 
++def test_timeline_commit_methods_and_dtos_are_generated() -> None:
++    commit = inspect.signature(WorkspaceClient.commit_timeline)
++    assert list(commit.parameters) == ["self", "project_id", "timeline_id", "request", "idempotency_key"]
++    assert commit.parameters["request"].annotation == "CommitRequest"
++    assert commit.parameters["idempotency_key"].kind is inspect.Parameter.KEYWORD_ONLY
++    assert commit.return_annotation == "CommitAcceptedMutation | CommitPreviewResponse"
++
++    history = inspect.signature(WorkspaceClient.list_timeline_commits)
++    assert list(history.parameters) == ["self", "project_id", "timeline_id", "cursor", "limit"]
++    assert history.return_annotation == "HistoryPage"
++    assert TimelineCommitPage is HistoryPage
++
++    # These are generated TypedDict DTOs, imported from the vendored companion
++    # module rather than recreated in Astrid.
++    assert CommitRequest.__name__ == "CommitRequest"
++    assert CommitAcceptedMutation.__name__ == "CommitAcceptedMutation"
++    assert CommitPreviewResponse.__name__ == "CommitPreviewResponse"
++
++
++def test_timeline_commit_response_union_requires_data_and_receipt_pair() -> None:
++    client = object.__new__(WorkspaceClient)
++    accepted = client._commit_response(
++        b'{"data":{"status":"accepted"},"receipt":{"receipt_id":"r1"}}', preview=False
++    )
++    assert accepted["data"]["status"] == "accepted" and accepted["receipt"]["receipt_id"] == "r1"
++
++    preview = client._commit_response(b'{"data":{"status":"preview"},"receipt":null}', preview=True)
++    assert preview == {"data": {"status": "preview"}, "receipt": None}
++
++    with pytest.raises(ApiError, match="preview requires"):
++        client._commit_response(b'{"data":{"status":"preview"},"receipt":{}}', preview=True)
++    with pytest.raises(ApiError, match="acceptance requires"):
++        client._commit_response(b'{"data":{"status":"accepted"},"receipt":null}', preview=False)
++
++
+ def test_astrid_event_wrapper_passes_latest_to_generated_client() -> None:
+     calls = []
+     client = object.__new__(AstridWorkspaceClient)
+diff --git a/tests/test_vendor_lock.py b/tests/test_vendor_lock.py
+index f18124eb4034f2d03b775c043697e2f02237f61a..0625ca400664dacf633c5edc77352e24c909c0a6
+--- a/tests/test_vendor_lock.py
++++ b/tests/test_vendor_lock.py
+@@ -64,6 +64,7 @@
+         "astrid_runtime_client/__init__.py",
+         "astrid_runtime_client/contract_metadata.py",
+         "astrid_runtime_client/generated.py",
++        "astrid_runtime_client/timeline_commit_types.py",
+         "astrid/core/timeline/schema/timeline-config.schema.json",
+         "tests/fixtures/visual-boundary-v1.json",
+         *[f"tests/fixtures/runtime-responses/{name}.json" for name in (
+@@ -73,7 +74,7 @@
+     }
+     bundle = json.loads(LOCK.read_text())
+     assert set(bundle["files"]) == expected
+-    assert len(bundle["files"]) == 14
++    assert len(bundle["files"]) == 15
+     assert re.fullmatch(r"[0-9a-f]{40}", bundle["source_commit"])
+     assert not any((ROOT / path).exists() for path in (
+         "astrid_runtime_client/vendor.lock.json", "astrid/core/timeline/schema/vendor.lock.json",
+
+codex
+Final lock verification passes against the exact Runtime `HEAD`, all consumed files are byte-identical to the producer, and the shared coordination record now contains the full source tuple/digest. I’ve also written the required conventional commit message; I’m doing a last diff/status review to ensure the worktree contains only the allowed client, lock, and direct tests.
+exec
+/bin/bash -lc "git status --short; git diff --stat; git diff --check; git diff -- tests/stage1/test_vendored_workspace_client_parity_luna.py tests/test_vendor_lock.py | sed -n '1,280p'; git diff -- runtime.lock.json | sed -n '1,240p'; wc -l astrid_runtime_client/timeline_commit_types.py" in /home/user/work/wt/agt-m1-client-pin
+exec
+/bin/bash -lc "python3 scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/runtime && PYTHONPATH=. python3 - <<'PY'
+from astrid_runtime_client import WorkspaceClient, generated
+from astrid_runtime_client.contract_metadata import CONTRACT_VERSION, SCHEMA_DIGEST
+from astrid_runtime_client.timeline_commit_types import CommitAcceptedMutation, CommitPreviewResponse, CommitRequest, HistoryPage, TimelineCommitPage
+assert CONTRACT_VERSION == '0.2.0'
+assert SCHEMA_DIGEST == generated.SCHEMA_DIGEST == 'sha256:a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e'
+assert hasattr(WorkspaceClient, 'commit_timeline') and hasattr(WorkspaceClient, 'list_timeline_commits')
+assert TimelineCommitPage is HistoryPage
+print('client metadata/signature/import smoke: ok')
+PY" in /home/user/work/wt/agt-m1-client-pin
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+from pathlib import Path
+root=Path('/home/user/work/runtime')
+print('runtime-head',subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip())
+print('runtime-status',subprocess.check_output(['git','-C',str(root),'status','--short'],text=True).strip() or 'clean')
+PY
+printf '\\n--- commit message ---\\n'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-client-pin/commit-msg" in /home/user/work/wt/agt-m1-client-pin
+ succeeded in 175ms:
+runtime-head c423544de3b7a1090649bf32e4c82514c4c7a641
+runtime-status clean
+
+--- commit message ---
+chore(agent): vendor Runtime 0.2.0 timeline client
+
+Refresh the vendored Runtime Python client and lock it to the committed M1
+artifact manifest, including generated timeline commit DTOs.
+
+ succeeded in 313ms:
+ok runtime.lock.json (matches producer manifest)
+client metadata/signature/import smoke: ok
+
+ succeeded in 1930ms:
+ M astrid_runtime_client/__init__.py
+ M astrid_runtime_client/contract_metadata.py
+ M astrid_runtime_client/generated.py
+ M runtime.lock.json
+ M tests/stage1/test_vendored_workspace_client_parity_luna.py
+ M tests/test_vendor_lock.py
+?? astrid_runtime_client/timeline_commit_types.py
+ astrid_runtime_client/__init__.py                  |  4 +-
+ astrid_runtime_client/contract_metadata.py         |  7 +-
+ astrid_runtime_client/generated.py                 | 74 +++++++++++++++++++---
+ runtime.lock.json                                  | 20 +++---
+ .../test_vendored_workspace_client_parity_luna.py  | 49 +++++++++++++-
+ tests/test_vendor_lock.py                          |  3 +-
+ 6 files changed, 132 insertions(+), 25 deletions(-)
+diff --git a/tests/stage1/test_vendored_workspace_client_parity_luna.py b/tests/stage1/test_vendored_workspace_client_parity_luna.py
+index 1b641d46..ea51b817 100644
+--- a/tests/stage1/test_vendored_workspace_client_parity_luna.py
++++ b/tests/stage1/test_vendored_workspace_client_parity_luna.py
+@@ -16,13 +16,22 @@ import re
+ from pathlib import Path
+ from types import SimpleNamespace
+ 
+-from astrid_runtime_client import ManagedOutput, ObjectLocation, WorkspaceClient, generated
++import pytest
++
++from astrid_runtime_client import ApiError, ManagedOutput, ObjectLocation, WorkspaceClient, generated
+ from astrid_runtime_client.contract_metadata import (
+     COMPONENT_MANIFEST_SHA256,
+     OPERATIONS,
+     PROTOCOL,
+     SCHEMA_DIGEST,
+ )
++from astrid_runtime_client.timeline_commit_types import (
++    CommitAcceptedMutation,
++    CommitPreviewResponse,
++    CommitRequest,
++    HistoryPage,
++    TimelineCommitPage,
++)
+ from astrid.sdk.workspace_client import WorkspaceClient as AstridWorkspaceClient
+ 
+ ROOT = Path(__file__).resolve().parents[2]
+@@ -41,7 +50,8 @@ def _camel_to_snake(value: str) -> str:
+ def test_vendored_client_is_the_locked_runtime_artifact() -> None:
+     assert vendor_lock.check(LOCK) == []
+     assert {name for name in json.loads(LOCK.read_text())["files"] if name.startswith("astrid_runtime_client/")} == {
+-        f"astrid_runtime_client/{name}" for name in ("__init__.py", "generated.py", "contract_metadata.py")
++        f"astrid_runtime_client/{name}"
++        for name in ("__init__.py", "generated.py", "contract_metadata.py", "timeline_commit_types.py")
+     }
+ 
+ 
+@@ -66,6 +76,41 @@ def test_vendored_client_operation_catalog_matches_typed_methods() -> None:
+     assert methods == operation_methods | composed_helpers
+ 
+ 
++def test_timeline_commit_methods_and_dtos_are_generated() -> None:
++    commit = inspect.signature(WorkspaceClient.commit_timeline)
++    assert list(commit.parameters) == ["self", "project_id", "timeline_id", "request", "idempotency_key"]
++    assert commit.parameters["request"].annotation == "CommitRequest"
++    assert commit.parameters["idempotency_key"].kind is inspect.Parameter.KEYWORD_ONLY
++    assert commit.return_annotation == "CommitAcceptedMutation | CommitPreviewResponse"
++
++    history = inspect.signature(WorkspaceClient.list_timeline_commits)
++    assert list(history.parameters) == ["self", "project_id", "timeline_id", "cursor", "limit"]
++    assert history.return_annotation == "HistoryPage"
++    assert TimelineCommitPage is HistoryPage
++
++    # These are generated TypedDict DTOs, imported from the vendored companion
++    # module rather than recreated in Astrid.
++    assert CommitRequest.__name__ == "CommitRequest"
++    assert CommitAcceptedMutation.__name__ == "CommitAcceptedMutation"
++    assert CommitPreviewResponse.__name__ == "CommitPreviewResponse"
++
++
++def test_timeline_commit_response_union_requires_data_and_receipt_pair() -> None:
++    client = object.__new__(WorkspaceClient)
++    accepted = client._commit_response(
++        b'{"data":{"status":"accepted"},"receipt":{"receipt_id":"r1"}}', preview=False
++    )
++    assert accepted["data"]["status"] == "accepted" and accepted["receipt"]["receipt_id"] == "r1"
++
++    preview = client._commit_response(b'{"data":{"status":"preview"},"receipt":null}', preview=True)
++    assert preview == {"data": {"status": "preview"}, "receipt": None}
++
++    with pytest.raises(ApiError, match="preview requires"):
++        client._commit_response(b'{"data":{"status":"preview"},"receipt":{}}', preview=True)
++    with pytest.raises(ApiError, match="acceptance requires"):
++        client._commit_response(b'{"data":{"status":"accepted"},"receipt":null}', preview=False)
++
++
+ def test_astrid_event_wrapper_passes_latest_to_generated_client() -> None:
+     calls = []
+     client = object.__new__(AstridWorkspaceClient)
+diff --git a/tests/test_vendor_lock.py b/tests/test_vendor_lock.py
+index f18124eb..0625ca40 100644
+--- a/tests/test_vendor_lock.py
++++ b/tests/test_vendor_lock.py
+@@ -64,6 +64,7 @@ def test_one_root_lock_covers_all_known_runtime_paths() -> None:
+         "astrid_runtime_client/__init__.py",
+         "astrid_runtime_client/contract_metadata.py",
+         "astrid_runtime_client/generated.py",
++        "astrid_runtime_client/timeline_commit_types.py",
+         "astrid/core/timeline/schema/timeline-config.schema.json",
+         "tests/fixtures/visual-boundary-v1.json",
+         *[f"tests/fixtures/runtime-responses/{name}.json" for name in (
+@@ -73,7 +74,7 @@ def test_one_root_lock_covers_all_known_runtime_paths() -> None:
+     }
+     bundle = json.loads(LOCK.read_text())
+     assert set(bundle["files"]) == expected
+-    assert len(bundle["files"]) == 14
++    assert len(bundle["files"]) == 15
+     assert re.fullmatch(r"[0-9a-f]{40}", bundle["source_commit"])
+     assert not any((ROOT / path).exists() for path in (
+         "astrid_runtime_client/vendor.lock.json", "astrid/core/timeline/schema/vendor.lock.json",
+diff --git a/runtime.lock.json b/runtime.lock.json
+index 58a67731..0e221e7b 100644
+--- a/runtime.lock.json
++++ b/runtime.lock.json
+@@ -6,19 +6,19 @@
+     },
+     "astrid_runtime_client/__init__.py": {
+       "from": "packages/python/astrid_runtime_client/__init__.py",
+-      "sha256": "sha256:97629bd1b977fb75797d26bcdafe3d3763a7fa12b6c2e738ebb49de1e2f4ffa1"
++      "sha256": "sha256:0ec98414f0410da5db816e2dcb3204207046902026902db5283251c168a19c6d"
+     },
+     "astrid_runtime_client/contract_metadata.py": {
+       "from": "packages/python/astrid_runtime_client/contract_metadata.py",
+-      "sha256": "sha256:3b141ab4bebd723a0721b3ae56fabd9cafed658c2245066f2c072ce4cae87663"
++      "sha256": "sha256:5c1e2592a915c94b8af7abba1c318648c044b28f4319f79c9820e0d4485a85b3"
+     },
+     "astrid_runtime_client/generated.py": {
+       "from": "packages/python/astrid_runtime_client/generated.py",
+-      "sha256": "sha256:e1bb3018128ea51355324a230b83be921c550a01586959274baf2c0e2b5955a3"
++      "sha256": "sha256:3810a2d3924a6713a2b5ad8bed7ce58a2731525f5cc7af4d78ae833cdad71cfd"
+     },
+-    "tests/fixtures/visual-boundary-v1.json": {
+-      "from": "conformance/fixtures/visual-boundary-v1.json",
+-      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
++    "astrid_runtime_client/timeline_commit_types.py": {
++      "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
++      "sha256": "sha256:1b5f7d675f512b76dd0d28a0e444d115c68c32c9d3ac57584fb9dd0d81bf3266"
+     },
+     "tests/fixtures/runtime-responses/events_page_1_200.json": {
+       "from": "conformance/responses/events_page_1_200.json",
+@@ -55,10 +55,14 @@
+     "tests/fixtures/runtime-responses/validation_error_422.json": {
+       "from": "conformance/responses/validation_error_422.json",
+       "sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"
++    },
++    "tests/fixtures/visual-boundary-v1.json": {
++      "from": "conformance/fixtures/visual-boundary-v1.json",
++      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+     }
+   },
+   "manifest": "contract/artifacts.json",
+   "producer": "astrid-runtime",
+-  "producer_version": "sha256:62e5c5def72da0ac28b954ee0df080ed3d28814862e1f7efcf3f6b8005a67dcc",
+-  "source_commit": "329c9c591d9c0f74026d599ee00c14c165cb3e53"
++  "producer_version": "sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d",
++  "source_commit": "c423544de3b7a1090649bf32e4c82514c4c7a641"
+ }
+79 astrid_runtime_client/timeline_commit_types.py
+
+codex
+## Completed
+
+- Vendored Runtime 0.2.0 client artifacts via `scripts/vendor_lock.py`.
+- Pinned Runtime source: `c423544de3b7a1090649bf32e4c82514c4c7a641`.
+- Added generated `timeline_commit_types.py`.
+- Updated [`runtime.lock.json`](/home/user/work/wt/agt-m1-client-pin/runtime.lock.json) and direct parity/lock tests.
+- Published source tuple and digest in shared coordination.
+- Wrote commit message.
+
+Schema digest: `sha256:a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e`.
+
+## Tests
+
+- Vendor/parity/lock/lane tests: **39 passed**
+- `vendor_lock.py check ... --producer /home/user/work/runtime`: **passed**
+- Client metadata/signature/DTO smoke test: **passed**
+- `test_runtime_client_cutover.py`: **21 passed, 18 blocked by sandbox socket permission** (`EPERM` binding localhost); no product failure established.
+- `git diff --check`: **passed**
+
+No full suite was run.
+tokens used
+147,249
+## Completed
+
+- Vendored Runtime 0.2.0 client artifacts via `scripts/vendor_lock.py`.
+- Pinned Runtime source: `c423544de3b7a1090649bf32e4c82514c4c7a641`.
+- Added generated `timeline_commit_types.py`.
+- Updated [`runtime.lock.json`](/home/user/work/wt/agt-m1-client-pin/runtime.lock.json) and direct parity/lock tests.
+- Published source tuple and digest in shared coordination.
+- Wrote commit message.
+
+Schema digest: `sha256:a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e`.
+
+## Tests
+
+- Vendor/parity/lock/lane tests: **39 passed**
+- `vendor_lock.py check ... --producer /home/user/work/runtime`: **passed**
+- Client metadata/signature/DTO smoke test: **passed**
+- `test_runtime_client_cutover.py`: **21 passed, 18 blocked by sandbox socket permission** (`EPERM` binding localhost); no product failure established.
+- `git diff --check`: **passed**
+
+No full suite was run.

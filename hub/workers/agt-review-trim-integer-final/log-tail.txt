@@ -1,0 +1,400 @@
++No full suite, shared-dependency write, Runtime, browser, socket or rendering
++test. Earlier broad neighbor counts were not rerun or claimed as this review's
++evidence.
++
++**App handoff finding:** the flat shared files are **still stale**, rather
++than refreshed as requested:
++
++- `design/agent-trim-interior-rounding.md` still gives the old formula and
++  old helper/model blobs.
++- `design/agent-trim-interior-rounding-vectors.json` contains **17** vectors,
++  versus **34** in this candidate.
++
++The source document and fixture are current; both shared copies differ
++byte-for-byte. The orchestrator should refresh those exact flat paths from
++this candidate before App mirrors or qualifies it. This is an App handoff
++prerequisite, not a remaining Agent code defect. This read-only reviewer did
++not overwrite the exports.
++
++**APP MIRROR source identity:** Agent commit
++`efce28976c2e608aa59f91764b1d4f3d438409cb`.
++
++| File | Git blob SHA |
++| --- | --- |
++| `astrid/sdk/timeline/units.py` | `11bb609c6116fe2d2a50f880fbd3f92c60ee1d43` |
++| `astrid/sdk/timeline/_trim_commands.py` | `c5dd666a676d09c2a232e3f81031b736feb50916` |
++| `astrid/sdk/timeline/model.py` | `f8115879a7cd666ea9b99bd5e1884ddbec8b7ab8` |
++
++Current doc SHA-256:
++`7a4f44759d229dd19655cca50efcfc1a803e597f53f3148c431af79bdcf39e53`.
++Current vectors SHA-256:
++`65f333748195d5d70af653e6c10abce6530c8035e0979cb4dd36bb31b0b27b99`.
++Original golden SHA-256 remains
++`4d71a9d184db1b85c220de10842b2dc68e5eb9b48afee180b6c29cf0d5b06152`.
++
++Full commands and findings:
++`workers/agt-review-trim-integer-final/notes/report.md`.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..55868cd0fafe7a3ec5ac7cf48c1ac0bc34e09ed6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/commit-msg
+@@ -0,0 +1,5 @@
++docs(timeline): report final integer trim boundary review
++
++Approve the raw integer bound repair after focused conformance and invalid
++input checks. Record the stale App handoff exports as a prerequisite before
++App mirroring; make no Runtime or browser qualification claim.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..9b93d78de9c3f1330998d3475e4a3c6b7ff9f20b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/notes/report.md
+@@ -0,0 +1,171 @@
++# Final integer-bound trim review
++
++## Verdict and scope
++
++Recommend merging Agent **efce28976c2e608aa59f91764b1d4f3d438409cb**.
++The predecessor's raw-integer bound violation and model overrange acceptance
++are repaired. **The flat App exports remain stale and must be refreshed
++before App mirroring/qualification.** No remaining code blocker was found
++within this review's integer/float source-trim scope. The review itself is
++complete; no implementation was changed.
++
++Read the orchestrator PLAN.md first, repository AGENTS.md, the predecessor
++`design/agent-review-trim-interior.md`, the repair worker report, both source
++commits (`e4bec724`, `efce2897`), native/helper/model implementation and relevant
++tests. No settled plan decision was changed or disputed. No subagents.
++
++Reviewed files relative to the assigned worktree:
++
++- `astrid/sdk/timeline/units.py:13–32`: shared interval rounding.
++- `astrid/sdk/timeline/model.py:424–455`: source lookup, raw inputs and trim.
++- `astrid/sdk/timeline/_trim_commands.py:64–83`: raw validation before writes.
++- `tests/editing_conformance/test_recipe_m2_clip_trim.py`, especially the
++  unchanged golden and portable vector tests at lines 286 and 312.
++- `tests/sdk/test_timeline_media_verbs.py`, especially lines 73–102.
++- `tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json`.
++- `docs/timeline-trim-precision.md` and corresponding flat App handoff copies.
++
++`git diff df2739f9..HEAD --stat` identifies only these seven files across the
++two source commits: 500 insertions and 15 deletions, mostly documentation and
++vectors/tests. The integer successor itself changes six files: 200 insertions
++and 16 deletions; native already preserved raw numbers and needed no successor
++edit. No product/schema/pin changes were made by this reviewer.
++
++## Findings
++
++Model lookup retains registry integer duration, including values beyond
++2**53. Explicit, retained and default integer endpoints also reach the raw
++range check without conversion. Float inputs keep their binary64 meaning.
++`math.isfinite` checks endpoint representability without assigning a converted
++value back over the original integer. Native similarly discards `number`'s
++float return and compares original values; schema/finite JSON validation
++rejects bad explicit argument types before command execution.
++
++The helper initially applies the existing nearest-six-decimal rule. When
++that out endpoint exceeds the original bound, it floors the exact rational
++bound at microsecond precision. It then compares the actual binary64 result
++against the original raw bound. If still outside, one binary64 predecessor
++suffices: the exact floor is inside and a predecessor of a nearest-rounded-up
++representation lies below that exact floor. Binary64 bounds cannot require
++this second correction because the bound is itself representable. Integer
++bounds that require correction are large enough that the predecessor is an
++integer, hence also on the six-decimal grid.
++
++The direct original-case probe uses native capture/execute and actual model
++registry lookup, without patching duration lookup. For raw integer
++`D=9007199254740995`, both author `to=hold=9007199254740994.0` from zero, and
++JSON round-trip remains <= the raw integer D. Raw integer and float requests
++for `9007199254740996` both refuse before any native write/model mutation.
++The positive near-bound interval from `9007199254740992` retains hold `2.0`;
++the interval from `9007199254740994` correctly collapses and refuses.
++
++Hold is `round(applied_out - applied_in, 6)` in source seconds; playback
++applies speed once. Ordinary exact-end trims and the unchanged original
++golden pass. Positive subprecision intervals refuse instead of stretching to
++a minimum. Registry duration stays unchanged. No epsilon, arbitrary maximum,
++new argument/alias, global `_r` change, schema/pin edit, stored-film rewrite or
++new authority path appears in the reviewed patch.
++
++Invalid-input APIs retain existing differences: native rejects bool and
++numeric strings; model historically converts those arguments and still does.
++Model explicit nonfinite and negative endpoints refuse before mutation;
++an endpoint integer `10**400` raises the pre-existing `OverflowError` before
++mutation rather than a uniform domain error. Native invalid/overflow bounds
++refuse with CommandError before writes. The pure helper assumes its inputs
++were validated by its caller. This review does not claim identical native/
++model invalid-input coercions or a broader metadata-validation audit.
++
++## Exact independent commands and results
++
++All commands ran from
++`/home/user/work/wt/agt-review-trim-integer-final`. Shared dependencies were
++read-only. Bytecode and pytest/Ruff caches were disabled.
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_media_verbs.py -k 'portable_boundary_vectors or portable_golden or bad_closed_bounds or preserves_raw_integer_bound or hold_is_source_time'
++```
++
++**Exit 0: 60 passed, 89 deselected in 8.36s.** Exactly 34 portable vectors,
++13 invalid-bound/schema cases, 8 explicit/retained/default integer model
++regressions, 4 speed/source-hold cases and the original golden/schema case.
++The portable cases additionally test actual model lookup, JSON bounds,
++publication mirrors, registry preservation, opaque data and child pins,
++capture retry/replay, exact inverse/redo, unchanged writes and forged reads.
++Refusal cases fail on any call to Recording.write and check model cache/data
++preservation. No behavior tests were changed, skipped, weakened or xfailed.
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/notes/review_probe.py
++```
++
++**Exit 0.** Direct original counterexample repair and int/float overrange
++atomicity; four extreme helper checks (`1e100`, `1e308`, maximum binary64 and
++`int(maximum binary64)-1`); 13 native bad-type/bool/nonfinite/overflow request
++or duration refusals with no write; five model nonfinite/negative/overflow
++endpoint refusals without mutation; bool/string compatibility observations.
++The same script asserts all original 17 vector objects are unchanged and all
++34 current IDs are unique, then compares shared App exports to the current
++canonical document/vectors. Both byte comparisons are false and shared
++vector count is 17. The script is retained outside the repo for reproduction.
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache --select E4,E7,E9,F astrid/sdk/timeline/units.py astrid/sdk/timeline/_trim_commands.py astrid/sdk/timeline/model.py
++git diff --check
++git status --porcelain
++git diff --exit-code df2739f9 HEAD -- tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
++git rev-parse HEAD
++git hash-object astrid/sdk/timeline/units.py astrid/sdk/timeline/_trim_commands.py astrid/sdk/timeline/model.py
++sha256sum tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
++```
++
++**All exit 0**. Ruff: All checks passed. Working tree clean, no golden diff.
++Candidate commit `efce28976c2e608aa59f91764b1d4f3d438409cb`.
++Source blob identities in command order:
++
++```text
++11bb609c6116fe2d2a50f880fbd3f92c60ee1d43
++c5dd666a676d09c2a232e3f81031b736feb50916
++f8115879a7cd666ea9b99bd5e1884ddbec8b7ab8
++```
++
++Original golden SHA-256:
++`4d71a9d184db1b85c220de10842b2dc68e5eb9b48afee180b6c29cf0d5b06152`.
++
++```bash
++sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-trim-interior-rounding.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-trim-interior-rounding-vectors.json docs/timeline-trim-precision.md tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json
++```
++
++**Exit 0**, outputs in the same order:
++
++```text
++faa2fc78437ab8bc6a7463bb82714c842032927d08279e6ea403a3c9a2cdbc0b
++5cf496137b9387ef05e8f3b9a5fc7762c529f30670db2c0114d689cba4959d97
++7a4f44759d229dd19655cca50efcfc1a803e597f53f3148c431af79bdcf39e53
++65f333748195d5d70af653e6c10abce6530c8035e0979cb4dd36bb31b0b27b99
++```
++
++## App handoff and remaining work
++
++APP MIRROR must use candidate commit
++`efce28976c2e608aa59f91764b1d4f3d438409cb` and the three source blobs above.
++The canonical repository document and 34-vector fixture are current. The flat
++shared files `design/agent-trim-interior-rounding.md` and
++`design/agent-trim-interior-rounding-vectors.json` are still the old e4bec724
++handoff and 17 cases. Refresh them from this candidate before App proceeds.
++App must retain lossless integer tokens for raw validation; ordinary
++JSON.parse into Number cannot represent the distinctions these vectors test.
++The updated document describes integer versus decimal/exponent tokens and
++the portable predecessor rule. No schema or new input argument is proposed.
++
++No full suite was requested/run, nor make check, Runtime acceptance/receipt,
++browser, localhost/socket or rendering qualification. Prior broad neighbor
++counts were read but not rerun, and are not independent review evidence.
++Native domain retry/replay passing does not establish Runtime retry behavior.
++
++Next steps: orchestrator integrates the approved Agent code, refreshes the two
++flat exports and has App mirror/qualify all 34 cases plus the original golden.
++No repository, integration, shared dependency, ledger, branch/ref or other
++worker changes. No git commit/merge/rebase/checkout/push. Only the assigned
++worker's report/probe, flat review verdict and completion metadata were
++written. Commit message is supplied for the harness; no repo commit is needed
++for this read-only review.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/notes/review_probe.py b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/notes/review_probe.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d9043ebe9fc95915bcfbcae01bfa0d1526805eb9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/notes/review_probe.py
+@@ -0,0 +1,121 @@
++"""Focused read-only final review probes against the assigned source tree."""
++import copy
++import json
++import math
++import subprocess
++import sys
++from pathlib import Path
++from types import SimpleNamespace
++from unittest.mock import patch
++
++from astrid.sdk.timeline._command_state import CommandError
++from astrid.sdk.timeline._common import TimelineEditError
++from astrid.sdk.timeline._recording import Recording
++from astrid.sdk.timeline._trim_commands import capture_clip_trim
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.units import trim_source_interval
++from astrid.sdk.timeline_checkout import Clip
++from tests.editing_conformance.test_recipe_m2_clip_trim import REF, bundle, clip
++
++
++def original_for(duration):
++    original = bundle()
++    original['parent']['registry']['assets']['picture']['duration'] = duration
++    return original
++
++
++def model_for(original):
++    row = copy.deepcopy(clip(original))
++    tl = SimpleNamespace(_is_audio=lambda *args: False, _mcache='unchanged',
++                         bundle={'project_id': 'p'},
++                         _registry=lambda *_: original['parent']['registry']['assets'])
++    return Clip(tl, None, row), tl, row
++
++
++D = 9007199254740995
++original = original_for(D)
++before = copy.deepcopy(original)
++model, tl, row = model_for(original)
++assert type(model._source_duration()) is int and model._source_duration() == D
++model.trim(0, D)
++plan = execute(original, [capture_clip_trim(original, REF, in_s=0, out_s=D)])
++assert row == clip(plan.bundle)
++assert row['to'] == row['hold'] == 9007199254740994.0
++assert json.loads(json.dumps(row, allow_nan=False))['to'] <= D
++assert original == before
++print('Original counterexample repaired: raw int D=9007199254740995 -> to=hold=9007199254740994.0; native/model/JSON agree')
++
++for requested in [D + 1, float(D + 1)]:
++    model, tl, row = model_for(original)
++    model_before = copy.deepcopy(row)
++    with patch.object(Recording, 'write', side_effect=AssertionError('unexpected write')):
++        try:
++            capture_clip_trim(original, REF, in_s=0, out_s=requested)
++        except CommandError:
++            pass
++        else:
++            raise AssertionError('native overrange accepted')
++    try:
++        model.trim(0, requested)
++    except TimelineEditError:
++        pass
++    else:
++        raise AssertionError('model overrange accepted')
++    assert row == model_before and tl._mcache == 'unchanged' and original == before
++print('Original counterexample: both raw int and float overrange refuse before native writes/model mutation')
++
++for duration in [1e100, 1e308, sys.float_info.max, int(sys.float_info.max) - 1]:
++    source_in, source_out, hold = trim_source_interval(0, duration, duration)
++    assert all(math.isfinite(v) for v in (source_in, source_out, hold))
++    assert 0 <= source_in < source_out <= duration
++    assert json.loads(json.dumps(source_out, allow_nan=False)) <= duration
++    assert hold == round(source_out - source_in, 6)
++print('4 extreme helper checks: finite outputs and JSON endpoint <= raw bound, including largest binary64 and adjacent integer')
++
++invalid_args = [True, '4', [], {}, float('inf'), float('nan'), -1, 10**400]
++invalid_durations = [True, '10', float('inf'), float('nan'), 10**400]
++for duration, args in [(10, {'out_s': value}) for value in invalid_args] + [
++        (duration, {'in_s': 0, 'out_s': 5}) for duration in invalid_durations]:
++    value = original_for(duration)
++    with patch.object(Recording, 'write', side_effect=AssertionError('unexpected write')):
++        try:
++            capture_clip_trim(value, REF, **args)
++        except CommandError:
++            pass
++        else:
++            raise AssertionError('invalid native number accepted')
++print('13 native bool/type/nonfinite/overflow requests or bounds refuse with CommandError before any write')
++
++for requested in [float('inf'), float('-inf'), float('nan'), -1, 10**400]:
++    model, tl, row = model_for(original_for(10))
++    model_before = copy.deepcopy(row)
++    try:
++        model.trim(0, requested)
++    except (TimelineEditError, OverflowError):
++        pass
++    else:
++        raise AssertionError('invalid model endpoint accepted')
++    assert row == model_before and tl._mcache == 'unchanged'
++print('5 model explicit nonfinite/negative/overflow endpoints refuse before mutation (overflow retains existing OverflowError shape)')
++
++# Preserve awareness of the model's pre-existing permissive coercions; these
++# are not assertions that native and model have identical invalid-input APIs.
++for requested in [True, '4']:
++    model, _, row = model_for(original_for(10))
++    model.trim(0, requested)
++    assert row['to'] == float(requested)
++print('Compatibility note: model still accepts explicit bool/numeric string; native rejects both')
++
++repo_vectors = json.loads(Path('tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json').read_text())
++old_vectors = json.loads(subprocess.check_output([
++    'git', 'show', 'e4bec724:tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json'], text=True))
++assert repo_vectors['cases'][:17] == old_vectors['cases']
++assert len(repo_vectors['cases']) == len({c['id'] for c in repo_vectors['cases']}) == 34
++print('Original 17 vector objects unchanged; current fixture has 34 unique vectors')
++
++design = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design')
++shared_vectors = design / 'agent-trim-interior-rounding-vectors.json'
++shared_doc = design / 'agent-trim-interior-rounding.md'
++print('APP HANDOFF current document:', shared_doc.read_bytes() == Path('docs/timeline-trim-precision.md').read_bytes())
++print('APP HANDOFF current vectors:', shared_vectors.read_bytes() == Path('tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json').read_bytes())
++print('APP HANDOFF shared vector count:', len(json.loads(shared_vectors.read_text())['cases']))
+
+exec
+/bin/bash -lc "git diff --check && git status --porcelain && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+import json
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = root / 'workers/agt-review-trim-integer-final'
+for path in [worker / 'notes/report.md', worker / 'commit-msg', root / 'design/agent-review-trim-integer-final.md']:
+    assert path.is_file() and path.stat().st_size > 0
+assert len(json.loads((root / 'design/agent-trim-interior-rounding-vectors.json').read_text())['cases']) == 17
+(worker / 'DONE').touch()
+print('Review artifacts verified; DONE created; repo clean; shared App export still has 17 vectors.')
+PY" in /home/user/work/wt/agt-review-trim-integer-final
+ succeeded in 426ms:
+Review artifacts verified; DONE created; repo clean; shared App export still has 17 vectors.
+
+codex
+Recommend merging Agent `efce2897`. The original integer-bound violation is repaired; native/model overrange requests refuse before writes. No product changes made.
+
+Validation: **60 passed, 89 deselected**:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_media_verbs.py -k 'portable_boundary_vectors or portable_golden or bad_closed_bounds or preserves_raw_integer_bound or hold_is_source_time'
+```
+
+Direct counterexample/extreme-value probes, targeted Ruff and diff checks also passed. No full, Runtime or browser qualification claimed.
+
+**App handoff needs refresh:** shared exports still contain 17 vectors; this candidate contains 34. Refresh both flat exports before App mirroring.
+
+[Verdict](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-trim-integer-final.md) · [Detailed report with exact commands/results and source SHAs](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/notes/report.md)
+
+Commit message and `DONE` written; repository remains clean.
+tokens used
+73,600
+Recommend merging Agent `efce2897`. The original integer-bound violation is repaired; native/model overrange requests refuse before writes. No product changes made.
+
+Validation: **60 passed, 89 deselected**:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_media_verbs.py -k 'portable_boundary_vectors or portable_golden or bad_closed_bounds or preserves_raw_integer_bound or hold_is_source_time'
+```
+
+Direct counterexample/extreme-value probes, targeted Ruff and diff checks also passed. No full, Runtime or browser qualification claimed.
+
+**App handoff needs refresh:** shared exports still contain 17 vectors; this candidate contains 34. Refresh both flat exports before App mirroring.
+
+[Verdict](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-trim-integer-final.md) · [Detailed report with exact commands/results and source SHAs](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/notes/report.md)
+
+Commit message and `DONE` written; repository remains clean.

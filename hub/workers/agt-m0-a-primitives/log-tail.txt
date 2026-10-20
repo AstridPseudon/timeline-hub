@@ -1,0 +1,400 @@
+ 
+ * Stable set identity: project + publishing namespace + logical set ID + source
+   lineage. Display names (`beats`, `downbeats`, `scene changes`) are labels.
+@@ -163,16 +181,17 @@
+   revision; it never reads a mutable producer head during compilation. A fixed
+   ref stores its resolved position plus provenance and does not follow updates.
+ 
+-The core only needs `marker(ref) -> time/dependencies` on the moment context and
+-one generic `marker` parse/format/resolve/dependency case. The exact text spelling
++The future M5 compiler integration needs `marker(ref) -> time/dependencies` on the
++moment context and one generic `marker` parse/format/resolve/dependency case. The exact text spelling
+ should serialize the typed ref without ambiguous names, as `source-word` does;
+ the JSON/schema is canonical. Beat/downbeat aliases remain readable, but a
+ command selecting a beat binds the exact marker rather than re-running an
+-ordinal or nearest-time search on replay. Old numeric beat arrays have no
+-stable IDs: retain legacy evaluation until explicitly converted, allocate IDs
+-once and record the conversion; do not claim identity continuity retroactively.
++ordinal or nearest-time search on replay. Old numeric beat arrays have no stable
++IDs: retain their legacy evaluation and all existing films' read/playback
++semantics; any later conversion must be explicit, allocate IDs once and record
++the conversion. Do not claim identity continuity retroactively.
+ 
+-Compilation receives validated, pinned marker tables; it does not load packs,
++The future M5 compilation path receives validated, pinned marker tables; it does not load packs,
+ perform analysis, query Documents, or read files. Timeline-domain markers are
+ constant inputs. Source-domain markers map through the **exact** occurrence and
+ explicit time map, retaining source identity even if trimmed out. Source trim,
+@@ -187,7 +206,7 @@
+ of that pinned closure or an agreed immutable artifact read; an unsupported
+ artifact cannot trigger an undeclared filesystem/network read from a handler.
+ 
+-**Stable republication is the producer's explicit job.** A second publication
++**Stable republication is a future M5 producer responsibility.** A second publication
+ retains IDs only for reconciled same events in the same source lineage. It
+ supplies an injective old-to-new identity correspondence where necessary, with
+ new IDs for inserted events and retained deletion/tombstone knowledge. Never
+@@ -197,30 +216,37 @@
+ core guarantee. Switching source lineage requires an explicit rebind proposal.
+ 
+ Accepting the new publication pointer and associated authored changes is one
+-atomic command batch. Following clips then recompile in the same accepted
++atomic M5 command batch. Following clips then recompile in the same accepted
+ revision. Undo restores the old selected publication and authored bindings and
+-recompiles; artifacts remain immutable. A missing referenced ID retains the
+-binding and last known materialization as an explicit unresolved/orphan state
+-with a finding, following the R4 orphan precedent; it never silently retargets.
+-Creating a new binding to a missing ID is invalid. Structural corruption,
+-cross-project references, or an introduced dependency cycle refuse the whole
+-batch. If foundation validators cannot represent retained unresolved references,
+-republication must refuse with affected refs until that representation exists;
+-it cannot fake a valid fixed anchor. This is a required schema/recipe integration
+-case, not an advisory-check exemption from core validity.
++recompiles; artifacts remain immutable. A missing referenced ID is a hard
++validation failure: refuse the whole republication atomically and leave the prior
++selected publication, bindings and authored/materialized state intact. It never
++silently retargets or substitutes a previous position. Creating a new binding to a
++missing ID is invalid. Structural corruption, cross-project references, or an
++introduced dependency cycle refuse the whole batch. This is core validity, not an
++advisory-check exemption.
+ 
+ R4 already preserves lost word spans (`_timing_evaluators.py:retime`, 472 onward)
+ and refuses cycles (`tests/sdk/test_timing_cycles.py`,
+ `test_beat_source_can_form_a_cycle_with_a_cut`,
+ `test_cycle_refusal_keeps_inputs_state_and_commands_immutable`). These support
+-the design direction; none tests the new marker kind. The M0 probe demonstrates
++the design direction; the existing source-word behavior is retained for legacy
++playback and does not define missing-marker handling. None tests the new marker
++kind. The M0 probe demonstrates
+ the actual ordinal hazard: `[1,2,3]` makes `beat 2 after c1` resolve to `2`;
+ re-detection `[0.5,1.05,2.05,3.05]` resolves it to `1.05`, not the surviving
+ second event at `2.05`. This is evidence that an adapter preserving only beat
+ times cannot meet PLAN's stable-ID requirement.
+ 
+-## Moments, signal series and reusable curves
++## Signal reference/resolver seam and future M5 binding proposal
+ 
++The signal publication, sampling and element-binding model below is a future M5
++proposal. Before M4, the only signal work is a bounded `SignalRef`/resolver seam
++over pinned immutable content plus core fixtures for pin validation, missing data,
++domain mapping and out-of-range behavior. Generalized signal binding, sampling
++orchestration and detector publication are M5/later; no pre-stop signal host is
++implied.
++
+ A marker denotes an event at a moment. A signal denotes a typed value over a
+ domain: source identity/lineage, immutable publication, coordinate domain,
+ units/value shape, sample/interpolation rules, valid interval, missing-data and
+@@ -230,7 +256,7 @@
+ can derive trigger markers from a signal. Do not turn every signal sample into
+ a marker or interpret every number as an animatable property.
+ 
+-Proposed element binding: stable parameter address + pinned signal ref + exact
++The future M5 element-binding proposal is: stable parameter address + pinned signal ref + exact
+ occurrence/time-map + explicit versioned transform/units + follow/fixed selection
+ policy. Source mapping is shared with markers; display values must not replace
+ source values. Missing samples are reported according to declared policy, not
+@@ -243,7 +269,8 @@
+ App `src/sdk/video/families/dataKind.ts` already distinguishes `point`,
+ `interval`, `series`, coordinate domains, `sourceItemId`, occurrence `id` and
+ `sourceArtifactRef` (36–65, 127–154, 302 onward). Its lanes can present marker
+-and signal projections; these are not yet compiler anchors or signal bindings.
++and signal projections; these are not yet compiler anchors or signal bindings, and
++they do not authorize pre-stop signal work.
+ `dev/scene-phase-markers/extension.ts:ScenePhaseMarker` stores `{id,time}`,
+ `buildAlignShotsPatch` emits absolute `clip.move`/`clip.update` (682–690), and
+ `moveExistingShotsToMarkers` uses marker index (797–804). Reuse the ruler/gesture UI,
+@@ -252,6 +279,10 @@
+ 
+ ## Editable views: projection plus parser, not replacement documents
+ 
++General editable-view hosting is a future M5 proposal. M2 still migrates the
++built-in sheet through the one command path; that narrow migration does not
++install a general editable-view framework.
++
+ Main `astrid/sdk/timeline_sheet.py` is concrete precedent:
+ 
+ | Existing path | What it establishes | Required foundation change |
+@@ -262,7 +293,7 @@
+ | `_apply_parsed` (742–849), `_update_layer` (948–1011) | Existing semantic operations cover cut/clip additions/removals, gaps, notes, looks and timing | Replace direct `clipType`, parameter pops, `intent.set_*`, music mutation and local resolve with registered command builders. Use recipe clears and stable IDs, not broad object replacement. |
+ | `astrid/packs/timeline/cli.py:_cmd_apply` (3565–3575) | Current CLI applies to Checkout then `tl.save` | M2 built-in sheet must use the same command commit as CLI/Python/App; preserve one atomic undo group. |
+ 
+-A proposed editable-view envelope contains accepted base revision (or explicit
++A future M5 editable-view envelope contains accepted base revision (or explicit
+ draft identity), view/grammar implementation version, options, query + resolved
+ ordered membership, row-to-scoped-reference map, and an **editable surface**.
+ The surface declares which fields and collections each row presents completely,
+@@ -332,28 +363,33 @@
+ 
+ ## Shared identity, data, proposals and policies
+ 
+-**Selection/query.** Extend the existing `astrid/sdk/timeline/selection.py`
+-(`parse_selector`, `Selection`, `FILTER_KEYS`) rather than adding a dialect per
+-extension. Its key=value grammar already has AND across keys and OR lists;
+-main `cli_find.py` currently has text/asset/line/cut/element/role filters, **no
+-shared `--where` yet**. One versioned normalized query should serve registry
+-commands, views, checks, source/marker/signal pickers and `find --where`.
+-Add typed namespaces/refs and bounded region/order predicates incrementally.
++**Selection/query.** The existing `astrid/sdk/timeline/selection.py`
++(`parse_selector`, `Selection`, `FILTER_KEYS`) remains the bounded core seam,
++rather than adding a dialect per extension. Its key=value grammar already has AND
++across keys and OR lists. Query-language growth is M5/later: main `cli_find.py`
++currently has text/asset/line/cut/element/role filters, **no shared `--where`
++yet**, and M0–M4 do not add one. A future M5 versioned normalized query may serve
++registry commands, views, checks, source/marker/signal pickers and `find --where`.
++Any typed namespaces/refs or bounded region/order predicate growth is a future
++M5 proposal; M0–M4 use only the existing bounded selector surface and explicit
++reference maps.
+ Reject unsupported predicates; never serialize Python callables as remote query
+ meaning. Record membership **and order** against the base when edits depend on
+ them. Read views may query a revision; rebase cannot re-run a live query and
+ silently enroll new objects. Source items, shot definitions, occurrences, clips,
+ cuts and projected marker instances remain distinct kinds.
+ 
+-**Namespaced data at every scope.** Use the existing Runtime-owned `app` carrier
++**Namespaced data at every scope.** Core M0–M4 work preserves opaque data using
++the existing Runtime-owned `app` carrier
+ where that scope supports it, with exact admitted namespace + payload schema
+ version + data. `astrid/core/timeline/astrid_ns.py` already preserves opaque app
+ siblings and moves Astrid's known intent to `app.astrid` (1–5, `clip_ns`,
+ `film_ns`, `_keep`). Do not repurpose its compatibility-flattened reader as an
+ extension write API. Ownership scopes are project, timeline, shared shot,
+ occurrence, track and clip; nested element/modifier instances also retain their
+-own unknown fields. For scopes without an admitted `app` slot, add a declared
+-owner map keyed by typed stable IDs in the timeline's existing app carrier,
++own unknown fields. For scopes without an admitted `app` slot, a future M5
++extension-data proposal may add a declared owner map keyed by typed stable IDs
++in the timeline's existing app carrier,
+ rather than inventing unsupported fields on Runtime rows. The Agent/Runtime
+ owners must settle the canonical storage projection during M2 schema work;
+ extension authors see one scoped data accessor regardless of physical layout.
+@@ -367,7 +403,15 @@
+ atomic transaction across several timelines or a settings document and timeline
+ commit. A project attachment does not grant a pack a separate timeline store.
+ 
+-Each namespace schema declares owner scope, reference-bearing typed fields,
++Accepted edits consume the exact transcript/config content they used through
++Runtime's narrow immutable content-addressed snapshots. Runtime owns the retention
++mechanism and DTO; Agent owns extension consumers. Consumers use the retained
++snapshot/pin and must not depend on a mutable Documents version lookup surviving
++retranscription. This is not general Documents history. Authorized source
++snapshots/pins remain renderer-free, and no new port or envelope is added without
++Agent/Runtime owner coordination.
++
++In the future M5 extension-data model, each namespace schema declares owner scope, reference-bearing typed fields,
+ field presence/clear semantics, collection semantics and migration version.
+ Unknown schemas/payload members are opaque and preserved exactly as JSON values
+ (not a promise of byte-identical whitespace). Generic ID remapping must rewrite
+@@ -383,6 +427,8 @@
+ (time/value/unit, transition endpoints) are one invariant group; opaque arrays
+ are atomic. Concurrent delete-vs-edit, reorder and parent replacement conflict
+ by default. Unknown fields have conservative atomic merge, not last writer wins.
++Extension-specific merge overrides are M5/later; foundation work uses the recipe's
++declared core policies and fixtures.
+ Namespace registration grants no authority to write other packs' data.
+ App `extensionContextFactory.ts:createExtensionTimelineOps` (125–233) already
+ guards attribution and project-data targets; Runtime/provider must enforce the
+@@ -399,7 +445,7 @@
+ not make those requests atomic. Undo must retain the entire group's observations,
+ including publication-pointer no-op writes, as the recipe requires.
+ 
+-**Proposals.** Proposed envelope is identity + project/timeline + base accepted
++**Proposals (future M5 proposal).** The proposed envelope is identity + project/timeline + base accepted
+ revision/publication pair + ordered commands (with captured IDs/bindings) + rationale + source
+ pack/run/artifact refs and implementation versions. Preview/diff/findings are
+ pinned derived outputs. Accept sends the original base and commands to Runtime
+@@ -410,7 +456,7 @@
+ but stores numeric `baseVersion` and patches (`ProposalPersistenceRecord`, 38–52);
+ its UI/persistence can be adapted, not treated as the accepted history authority.
+ 
+-**Automation/export policies.** Findings are advisory to human saves. Core
++**Automation/export policies (future M5 policy proposal).** Findings are advisory to human saves. Core
+ schema/reference/authority/timing validity remains mandatory. Project policies
+ may require named/versioned checks for a producer proposal's explicit
+ auto-approval or for export; missing/stale/failed/unavailable required results
+@@ -438,12 +484,11 @@
+ `extensionMigration.ts` handles existing package reconciliation but is not a
+ substitute for payload/command semantic migrations.
+ 
+-## Ten persona walks against real paths
++## Ten persona walks against real paths — M5/later examples
+ 
+-The names below are PLAN's sweet-spot ideas. Where a name alone leaves details
+-open, the described behavior is the minimum seam exercise, not an expanded
+-feature commitment. Existing examples establish reusable pieces, not readiness
+-of the complete persona workflow.
++The names below are PLAN's M5/later sweet-spot examples. They are not M0–M4
++implementation work or a pre-stop feature commitment. Existing examples establish
++reusable pieces, not readiness of the complete persona workflow.
+ 
+ | Persona / workflow | Available real path | Required work on the five types/primitives |
+ | --- | --- | --- |
+@@ -469,16 +514,17 @@
+ 
+ | Milestone | Who prepares/implements the foundation seam | Explicit boundary |
+ | --- | --- | --- |
+-| M1 | Agent/Runtime: recipe registry/provider boundary, pinned dependencies and accepted revision IDs; App: durable command outbox/preview identity; Viewing: revision-labelled visualize consumption | Clip move/retry/undo proof only. No detector, generic extension host, new UI package or signal binding. |
+-| M2 | Agent: complete registry/recording/query/reference and scoped opaque-data preservation, compiler and cut-sheet command adapter; Runtime: admitted storage/wire projections and exact dependencies; App: all writers including existing extension patches become command adapters or lose mutation access | If markers are approved at A, Agent owns the one generic core marker kind/table resolver/dependency graph and Runtime owns immutable closure pins, proved with core fixtures. Agree signal publication/ref schemas and proposal/base identity with Runtime/App. Five-type registration, detector publication/reconciliation UI and litmus examples stay M5. Preserve existing beat/word playback and built-in sheet behavior. |
+-| M3 | Viewing: one published Composition evaluator and typed element/capability/parameter contracts; App/Agent: consume it for preview/render/visualize, including unknowns | If signals are approved at A, Viewing owns the pure signal sampling/time-domain/declared-leaf binding seam and Agent/Runtime own its pinned references; use core fixtures, not a new analysis producer. Current components/modifiers/transitions/curves and parity are foundation work; third-party element registration and examples remain M5. No scene evaluator in commit. |
+-| M4 | Agent removes old extension engine after all consumers are inventoried/migrated or explicitly retired; all managers finish deletions, document schemas/APIs and verify unknown-data/renderer-independent behavior; Runtime/delivery owns ZIP | Do not require M5 framework to delete `core/extensions`. Inventory/remove old direct mutation dispatch and retain established built-in behaviors as commands/views. Foundation seams are concrete function/data boundaries and tests, not installed extensions. Hard stop remains. |
++| M1 | Agent/Runtime: recipe registry/provider boundary, pinned dependencies and accepted revision IDs; App: durable command outbox/preview identity; Viewing: revision-labelled visualize consumption | Clip move/retry/undo proof only. No marker/signal production, detector, generic extension host, new UI package or signal binding; only design fixtures may exist. |
++| M2 | Agent: complete registry/recording/reference and scoped opaque-data preservation, compiler and cut-sheet command adapter; bounded marker/signal reference-resolver seams consume pinned inputs and core fixtures; Runtime: admitted storage/wire projections and exact dependencies; App: all writers including existing extension patches become command adapters or lose mutation access | No detector publication, ID reconciliation, marker/signal registration, generalized signal binding, policy orchestration or general editable-view host. Built-in sheet migration remains M2. Preserve every existing film's beat/word read and playback semantics. |
++| M3 | Viewing: one published Composition evaluator and typed element/capability/parameter contracts; App/Agent: consume it for preview/render/visualize, including unknowns | No marker/signal behavior beyond the bounded resolver seams and fixtures. Current components/modifiers/transitions/curves and parity are foundation work; third-party element registration, generalized signal binding and examples remain M5. No scene evaluator in commit. |
++| M4 | Agent removes old extension engine after all consumers are inventoried/migrated or explicitly retired; all managers finish deletions, document schemas/APIs and verify unknown-data/renderer-independent behavior; Runtime/delivery owns ZIP | Do not require an M5 framework to delete `core/extensions`. Inventory/remove old direct mutation dispatch and retain established built-in behaviors as commands/views. Foundation seams are concrete function/data boundaries and tests, not installed extensions. Hard stop remains. |
+ 
+ M5 ownership after authorization: Agent implements the thin pack-to-five-types
+ projection and author-facing marker/query/proposal adapters; Runtime supplies existing
+ artifact/commit operations with agreed schema additions; Viewing implements
+ admitted element/signal evaluation; App adapts presentation/review. This is an
+-ownership statement, not an implementation backlog or permission to start it.
++ownership statement for future API/data-model proposals, not an implementation
++backlog or permission to start it.
+ 
+ ## Recipe integration and counterexamples needing its attention
+ 
+@@ -504,7 +550,8 @@
+ | Media add/swap | Producers pin immutable authorised media; source replacement cannot silently carry a marker/signal lineage to different content. |
+ 
+ Three extension counterexamples should be included in the recipe hard-case
+-fixtures/conformance when that worker reconciles its final evidence:
++fixtures/conformance after the relevant M5 seam is authorized; they are not a
++pre-stop implementation requirement:
+ 
+ 1. **Moving dependency without changed clip declaration.** Clip A follows marker
+    m2; re-detection inserts m0 and moves m2, then another client edits/reasserts
+@@ -512,9 +559,10 @@
+    Record the selected set publication, exact item identity, follow policy and
+    time-map dependencies; undo/rebase must inspect publication writes/ancestry.
+    Follow deliberately permits a newer position for the same surviving identity
+-   according to an explicit versioned policy, while changing/deleting identity
+-   conflicts or yields the agreed retained orphan state. Do not default all
+-   publication changes either to silent rebinding or unconditional conflict.
++   according to an explicit versioned policy. A missing or deleted identity fails
++   closed: republication is refused atomically and the prior selected publication,
++   bindings and state remain intact. Do not default publication changes to silent
++   rebinding.
+ 2. **Lossy projection plus concurrent membership.** A partial text view elides
+    unknown namespace data and exports c1's members; another author adds a member
+    and changes a hidden field. An edited text omits one old visible row. Only
+@@ -532,13 +580,14 @@
+    (`tests/sdk/test_timeline_rebase.py`) covers the opaque-string half only.
+ 
+ These are contract integration requirements, not permission to enlarge the M0
+-implementation. The first requires new marker fixtures after marker admission;
+-the second can already exercise sheet/projection semantics; the third tests the
++implementation. The first is an M5 marker-republication case; pre-stop work is
++limited to bounded marker fixtures. The second can already exercise
++sheet/projection semantics; the third tests the
+ recipe's general opaque data and structural dependency rule.
+ 
+ ## M5 acceptance criteria only — approval required before implementation
+ 
+-Common acceptance: each example is pack-admitted using existing source/resource
++Common M5 acceptance: each example is pack-admitted using existing source/resource
+ validation; exact code/schema versions are recorded; unload/reload preserves
+ unknown data; text/CLI/Python/App adapters agree on accepted revisions; all edits
+ use the recipe and real Runtime acceptance. No proposed example is implemented
+@@ -546,7 +595,7 @@
+ 
+ | Type | Observable acceptance criteria |
+ | --- | --- |
+-| Commands | Beat-snap selects stable clip and marker identities, declares follow/fixed and ripple/scope intent, previews without renderer, accepts atomically, retries after restart without duplicate IDs/revision, and undo/redo restores exact authored presence/data. Re-detecting beats with an inserted earlier event moves followed clips with the same surviving marker IDs, keeps fixed clips fixed, and never ordinal-rebinds deleted IDs. Rebase permits declared same-ID following and disjoint edits; conflicts name changed identity/membership or source mapping. Grouped no-op writes and A→B→A remain guarded. |
++| Commands | Beat-snap selects stable clip and marker identities, declares follow/fixed and ripple/scope intent, previews without renderer, accepts atomically, retries after restart without duplicate IDs/revision, and undo/redo restores exact authored presence/data. Re-detecting beats with an inserted earlier event moves followed clips with the same surviving marker IDs, keeps fixed clips fixed, and never ordinal-rebinds deleted IDs. A missing referenced marker fails closed: republication is refused atomically and the prior selected publication, bindings and state remain intact. Rebase permits declared same-ID following and disjoint edits; conflicts name changed identity/membership or source mapping. Grouped no-op writes and A→B→A remain guarded. |
+ | Views, including exporters and editable | Beat-grid text and visualize overlay show the same marker IDs/times at an explicit accepted revision. Script and shot-list projections agree on transcript, shots/occurrences and time windows with canonical show. A plain-text editable view exports/imports unchanged as no-op, emits commands for edits, supports scoped additions/removals/explicit clears and opaque elision, and gives one undo step. Stale base gets server rebase or an actionable conflict, never replacement; unavailable base/grammar fails without writes and retains text. Old/new revision view diff uses pinned options/version. One exporter (e.g. subtitles) pins revision and reports unsupported features; required export-policy failures prevent success without blocking save. |
+ | Elements (all sub-kinds and curves) | At least one admitted component, modifier, transition and reusable curve exercises its actual typed contract and explicit animatable leaves. Preview, visualize and export agree on frame/audio behavior under rational fps and boundary/time-map cases; a planted mismatch is caught. A signal-bound leaf follows the selected immutable series with declared interpolation/units, while authored-curve evaluation stays deterministic. Invalid host/params, conflicting animation modes and missing materialization report precise errors. Unknown bounds/support/pixels are UNKNOWN, preserved in save, and never converted into proven coverage or assumed export success; real rendering may still establish a valid export when the implementation is available. Renderer-off save remains green. |
+ | Checks | Off-beat check returns stable clip/marker references, check version and revision-pinned findings in text and visualize overlay; a beat-snap fix is a proposal of existing commands. Accepting the fix removes the finding at the resulting revision; stale fixes rebase or conflict. Check failure/crash/unavailability never blocks human save. An explicit project policy blocks auto-approval/export on missing/stale/failing required results and reruns on a changed candidate; check execution never writes the timeline directly. |
+@@ -556,7 +605,7 @@
+ snap → re-detect with retained IDs → followed placement → beat-grid/visualize →
+ off-beat finding → proposed fix → accepted fix. Script/shot-list and editable
+ text view are additional required journeys, not screenshots substituted for
+-round-trip behavior. Structural identity/merge/orphan counterexamples above and
++round-trip behavior. Structural identity/merge counterexamples above and
+ the recipe hard cases must be represented in main suites before acceptance.
+ 
+ ## Verification and limitations
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-a-primitives/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-a-primitives/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..fbaf201c9b7553052a3b861c0b3eea1039ab9ff2
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-a-primitives/commit-msg
+@@ -0,0 +1,5 @@
++docs(timeline): narrow M0 extension primitive scope
++
++Make pre-stop marker and signal work bounded to resolver seams and fixtures,
++fail closed on missing marker republication, and document Runtime-owned
++immutable transcript/config retention for extension consumers.
+
+exec
+/bin/bash -lc "DOC=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/extensions.md
+MSG=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-a-primitives/commit-msg
+set -e
+printf '%s\\n' '--- final contradiction checks ---'
+"'! rg -n -i '"'orphan|retains?["'^'"\\n]{0,40}last.?known|uses?["'^'"\\n]{0,40}last.?known|fallback["'^'"\\n]{0,50}(marker|publication|material)' \""'$DOC"
+! rg -n -i '"'if (markers|signals)|approved at A|if approved|conditional.*marker|conditional.*signal' \""'$DOC"
+printf '"'%s\\n' 'no orphan/fallback or conditional-scope matches'
+printf '%s\\n' '--- final whitespace check ---'
+"'! awk '"'/[[:blank:]]"'$/{print NR ":" $0; bad=1} END{exit bad}'"' \""'$DOC"
+printf '"'%s\\n' 'no trailing whitespace'
+printf '%s\\n' '--- worktree status ---'
+git status --short
+printf '%s\\n' '--- commit message ---'
+sed -n '1,20p' \""'$MSG"
+printf '"'%s\\n' '--- file stats ---'
+wc -l -w \""'$DOC" "$MSG"' in /home/user/work/wt/agt-m0-a-primitives
+ succeeded in 263ms:
+--- final contradiction checks ---
+no orphan/fallback or conditional-scope matches
+--- final whitespace check ---
+no trailing whitespace
+--- worktree status ---
+--- commit message ---
+docs(timeline): narrow M0 extension primitive scope
+
+Make pre-stop marker and signal work bounded to resolver seams and fixtures,
+fail closed on missing marker republication, and document Runtime-owned
+immutable transcript/config retention for extension consumers.
+--- file stats ---
+  671  7172 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/extensions.md
+    5    33 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-a-primitives/commit-msg
+  676  7205 total
+
+codex
+## Completed
+
+Updated [design/extensions.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/extensions.md) only:
+
+- Limited pre-M4 marker/signal work to bounded resolver seams and fixtures.
+- Made missing-marker republication fail closed and atomic.
+- Removed orphan/last-known fallback language.
+- Labeled registration, reconciliation, generalized signal binding, editable hosting, query growth, policies, personas, and merge overrides as M5/later.
+- Added Runtime-owned immutable transcript/config snapshot retention rules.
+- Preserved legacy film read/playback semantics and clarified source-word behavior.
+- Wrote [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-a-primitives/commit-msg).
+
+Checks:
+
+- Contradictory orphan/fallback scan: passed.
+- Conditional marker/signal scope scan: passed.
+- Trailing-whitespace scan: passed.
+- Agent worktree `git status --short`: clean.
+- No product tests or probe run; docs-only change, so behavioral integration remains unverified.
+tokens used
+155,532
+## Completed
+
+Updated [design/extensions.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/extensions.md) only:
+
+- Limited pre-M4 marker/signal work to bounded resolver seams and fixtures.
+- Made missing-marker republication fail closed and atomic.
+- Removed orphan/last-known fallback language.
+- Labeled registration, reconciliation, generalized signal binding, editable hosting, query growth, policies, personas, and merge overrides as M5/later.
+- Added Runtime-owned immutable transcript/config snapshot retention rules.
+- Preserved legacy film read/playback semantics and clarified source-word behavior.
+- Wrote [commit-msg](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-a-primitives/commit-msg).
+
+Checks:
+
+- Contradictory orphan/fallback scan: passed.
+- Conditional marker/signal scope scan: passed.
+- Trailing-whitespace scan: passed.
+- Agent worktree `git status --short`: clean.
+- No product tests or probe run; docs-only change, so behavioral integration remains unverified.

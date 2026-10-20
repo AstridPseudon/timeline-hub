@@ -1,0 +1,400 @@
+7. **Groups:** no group operations or 57/31 candidate were imported. Existing legacy/shared-group refusal handlers remain; no group authorization or representation changed. Existing builder fixtures explicitly use legacy capture mode where their public-v1 bytes require it; all original golden bytes and assertions are retained. Current-schema equality tests now compare the strictly verified ordinary projection, while complete-union compatibility and closed-args checks still run on the full schema. No new skip/xfail or weakened behavior expectation.
+
+The authored product Python delta is the reviewed carrier plus its integration into current source; the schema JSON is private canonical source, not a generated Runtime artifact. Changed current source outside the reviewed carrier application is only the inverse identity conflict resolution described above. No decision was relitigated.
+
+## Tests actually run
+
+All commands ran from the assigned worktree, shared dependencies read-only, with:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD:/home/user/work/runtime/packages/python /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider
+```
+
+Append the exact arguments below to that exact prefix. Counts overlap; they are not a summed unique-test census.
+
+1. Capture/version/public-floor positives and retirement mappings:
+
+```text
+tests/editing_conformance/test_materialization_version_boundary.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_occurrence_media.py
+```
+
+**148 passed in 15.50s, exit 0** (tool stdout).
+
+2. Carrier/source/typed creation/provider/outbox and detached lifecycle:
+
+```text
+tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_clip_scalar_provider.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+```
+
+**349 passed in 69.80s, exit 0**, `carrier-provider.log`.
+
+3. Changed builders and F1 neighbors, bounded selection:
+
+```text
+tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_m1_commands.py -k '"'golden or exact_capture_replay_inverse or staged or own_move or same_target_null or overlapping_read or provider_accepts or schema_registration or canonical_delete_schema or args_are_closed'
+"'```
+
+**57 passed, 379 deselected in 11.55s, exit 0**, `builders-stages.log`.
+
+4. Complete-schema superset/ordinary/private recovery and pristine init (mutation-loop tests deliberately not selected):
+
+```text
+tests/sdk/test_timeline_materialization_schema_union.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_current_union_schema.py -k '"'not every_dropped' tests/editing_conformance/test_pristine_initialize.py
+"'```
+
+**66 passed, 14 deselected in 10.25s, exit 0**, `schema-pristine-final.log`.
+
+5. Final added coupled v2-stage control plus all version-branch closed args:
+
+```text
+tests/editing_conformance/test_materialization_map.py::test_source_bound_batch_preserves_earlier_stages_and_strict_inverse_guards tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_materialization_schema_union.py
+```
+
+**22 passed in 3.27s, exit 0**, `coupled-final.log`.
+
+6. Current F1/P1/selected declarations/init/Scene/parent media/text/creation/word behavior:
+
+```text
+tests/editing_conformance/test_recipe_internal_stages.py tests/sdk/test_timeline_selected_param_authority.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_pristine_initialize_provider.py tests/editing_conformance/test_pristine_initialize.py tests/sdk/test_scene_save_core.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_native_word_anchor.py
+```
+
+**249 passed, 54 default-lane deselected in 44.79s, exit 0**, `ordinary-retained-final.log`.
+
+Diagnostics are retained honestly: the first schema-reconstruction assertion compared pretty-printed bytes to a historically partially compacted file (semantic equality already held); the final byte-preserving reconstruction fixes the test setup. An initial retained lane had **248 pass / 1 fail** because pristine-init'"'s schema-shape assertion expected only three reference branches; its exact ordinary-schema expectation is now retained through the verified projection and the final lane passes. No product behavior assertion was changed to refusal.
+
+Lint: changed Python files excluding remote.py pass "'`python -m ruff check <changed-python-paths-except-astrid/sdk/remote.py> --output-format concise`. Whole changed-path lint reports exactly 121 pre-existing remote.py findings (113 E701 / 6 I001 / 2 BLE001); a baseline probe of `git show HEAD:astrid/sdk/remote.py` through `ruff check --stdin-filename astrid/sdk/remote.py --output-format json -` produces the identical code/message multiset. The only remote.py change is capture_sources=True, so unrelated formatting was not rewritten. `git diff --check`: PASS.
+
+No make check/full/full*/mass matrix, live sockets/browser, normal private generation, Runtime overlay or native pair ran. Default integration exclusions are not represented as passes. The native pristine-init, selected-pack Runtime and opaque/native socket lanes remain unverified on this union.
+
+## Remaining ONE actual native pair — peer review first
+
+Read handoffs `runtime-carrier-current-peer-handoff.md`, `agent-review-runtime-carrier-catalog-fence.md`, `runtime-sealed-capture-version-review.md`, and latest `runtime-carrier-cd0-marker-carry.md`. The previously reviewed Runtime `7b8d6d9a`/tree `d20b745c` matched only old Agent 3730/f802 (48/22), not this 55/29 union. The latest cd0 test carry names Runtime base `0511ba84d846f451111db628c52d25cf203c615a`, tree `0a5bd960862875eac265deeedb543611675ca577`, expected test-only successor tree `22762a43df52c32d907e46a349a3f8e52d50cc65`; that handoff did not assert a final successor commit. Its exact positive parent-swap acceptance remains schema-held; no marker is changed here.
+
+1. Harness commits this exact Agent candidate; Runtime independently reviews that committed successor and full union, then agrees a committed current Runtime counterpart. Preserve existing selected-media exact CAS helper, current/inverse/historical catalog-head fence (19-line guard + 55-line regression), owner/item/global occupancy joins, canonical item_id and cd0 marker split; retain/review current catalog-text replay and all current source fixes actually present in that counterpart. Do not substitute old carrier port code over the current CAS path.
+2. Only after both exact-source reviews: normal PRIVATE generation from the complete 55/29 union through existing generators. The private syntax must retain obsolete-v1 carrier shapes so accepted retries reach the ledger before new-admission refusal. No public floor/pin/release, new DTO/argument/version field or handwritten overlay.
+3. Coordinate **one** centrally run native pair on those exact sources: accepted-v1 ledger-first exact retry after lost ACK/restart; accepted-private-v1 inverse/redo/history/restore; original complete public-v1 103/3 positive; each AG-MAT obsolete new-v1 refusal with unchanged durable draft plus equivalent v2 success; source/owner/item map and first/current own-slot, sibling/global-item/catalog-head occupancy controls; original dependent-capture/ACK preservation; ordinary parent/text/init/assembled-target compatibility and retained P1/F1 inputs. Detached evidence above does not substitute for these native assertions. Keep groups and integration/adoption/release held until that pair is green.
+
+Source preparation is complete; no blocking source finding remains. The actual counterpart/pair is the next authorized phase owned by the managers, not an execution claim of this worker.
+'"'''
+report=report.format(**i,definitions=', '.join('"'`'"'+v+'"'`'"' for v in i['definitions']),operations=', '.join('"'`'"'+v+'"'`'"' for v in i['operations']))
+(w/'report.md').write_text(report)
+message='''feat(timeline): unite ordinary commands with versioned materialization
+
+Preserve all 55 definitions and 29 ordinary operation clauses while adding
+the reviewed 13-operation source-bound carrier through EditCommand.version.
+Keep public v1 captures, accepted history, F1 staged inverse and P1 original
+pack authority intact; retain explicit obsolete-private-v1 refusal mappings.
+
+Add focused schema-floor, capture, inverse, typed-item and outbox controls.
+This is private source preparation only; Runtime peer review and the one
+matched native pair remain required before generation or adoption.
+'''
+(w/'commit-msg').write_text(message);(w/'commit-msg.txt').write_text(message)
+print('Wrote report.md, commit-msg, commit-msg.txt')
+PY" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ exited 1 in 0ms:
+Traceback (most recent call last):
+  File "<stdin>", line 117, in <module>
+TypeError: str.format() got multiple values for keyword argument 'definitions'
+
+exec
+/bin/bash -lc "rg -n 'Complete ordinary/carrier source union|multiple values for keyword' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/log.txt" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ succeeded in 0ms:
+7327:report='''# Complete ordinary/carrier source union — SOURCE ONLY
+7457:TypeError: str.format() got multiple values for keyword argument 'definitions'
+
+exec
+/bin/bash -lc "sed -n '7317,7330p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/log.txt; sed -n '7428,7451p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/log.txt" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ succeeded in 0ms:
+6	2	astrid/sdk/timeline/rebase.py
+107	5	astrid/sdk/timeline/sync.py
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import json, subprocess
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=orch/'workers/agt-m2-full-ordinary-carrier-source-union'
+i=json.loads((w/'inventory.json').read_text())
+report='''# Complete ordinary/carrier source union — SOURCE ONLY
+
+Completed the assigned preparatory Agent branch. No Runtime overlay, normal generation, artifact, public pin, version choice, release, integration edit, full/full* request, browser/socket run, or native qualification. Matching Runtime work and adoption remain HELD for peer review.
+
+## Remaining ONE actual native pair — peer review first
+
+Read handoffs `runtime-carrier-current-peer-handoff.md`, `agent-review-runtime-carrier-catalog-fence.md`, `runtime-sealed-capture-version-review.md`, and latest `runtime-carrier-cd0-marker-carry.md`. The previously reviewed Runtime `7b8d6d9a`/tree `d20b745c` matched only old Agent 3730/f802 (48/22), not this 55/29 union. The latest cd0 test carry names Runtime base `0511ba84d846f451111db628c52d25cf203c615a`, tree `0a5bd960862875eac265deeedb543611675ca577`, expected test-only successor tree `22762a43df52c32d907e46a349a3f8e52d50cc65`; that handoff did not assert a final successor commit. Its exact positive parent-swap acceptance remains schema-held; no marker is changed here.
+
+1. Harness commits this exact Agent candidate; Runtime independently reviews that committed successor and full union, then agrees a committed current Runtime counterpart. Preserve existing selected-media exact CAS helper, current/inverse/historical catalog-head fence (19-line guard + 55-line regression), owner/item/global occupancy joins, canonical item_id and cd0 marker split; retain/review current catalog-text replay and all current source fixes actually present in that counterpart. Do not substitute old carrier port code over the current CAS path.
+2. Only after both exact-source reviews: normal PRIVATE generation from the complete 55/29 union through existing generators. The private syntax must retain obsolete-v1 carrier shapes so accepted retries reach the ledger before new-admission refusal. No public floor/pin/release, new DTO/argument/version field or handwritten overlay.
+3. Coordinate **one** centrally run native pair on those exact sources: accepted-v1 ledger-first exact retry after lost ACK/restart; accepted-private-v1 inverse/redo/history/restore; original complete public-v1 103/3 positive; each AG-MAT obsolete new-v1 refusal with unchanged durable draft plus equivalent v2 success; source/owner/item map and first/current own-slot, sibling/global-item/catalog-head occupancy controls; original dependent-capture/ACK preservation; ordinary parent/text/init/assembled-target compatibility and retained P1/F1 inputs. Detached evidence above does not substitute for these native assertions. Keep groups and integration/adoption/release held until that pair is green.
+
+Source preparation is complete; no blocking source finding remains. The actual counterpart/pair is the next authorized phase owned by the managers, not an execution claim of this worker.
+'"'''
+report=report.format(**i,definitions=', '.join('"'`'"'+v+'"'`'"' for v in i['definitions']),operations=', '.join('"'`'"'+v+'"'`'"' for v in i['operations']))
+(w/'report.md').write_text(report)
+message='''feat(timeline): unite ordinary commands with versioned materialization
+
+Preserve all 55 definitions and 29 ordinary operation clauses while adding
+the reviewed 13-operation source-bound carrier through EditCommand.version.
+Keep public v1 captures, accepted history, F1 staged inverse and P1 original
+pack authority intact; retain explicit obsolete-private-v1 refusal mappings.
+
+Add focused schema-floor, capture, inverse, typed-item and outbox controls.
+This is private source preparation only; Runtime peer review and the one
+matched native pair remain required before generation or adoption.
+'''
+(w/'commit-msg').write_text(message);(w/'commit-msg.txt').write_text(message)
+
+exec
+/bin/bash -lc "sed -n '7448,7461p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/log.txt" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ succeeded in 0ms:
+This is private source preparation only; Runtime peer review and the one
+matched native pair remain required before generation or adoption.
+'''
+(w/'commit-msg').write_text(message);(w/'commit-msg.txt').write_text(message)
+print('Wrote report.md, commit-msg, commit-msg.txt')
+PY" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ exited 1 in 0ms:
+Traceback (most recent call last):
+  File "<stdin>", line 117, in <module>
+TypeError: str.format() got multiple values for keyword argument 'definitions'
+
+exec
+/bin/bash -lc "rg -n 'Complete ordinary/carrier source union|multiple values for keyword' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/log.txt" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ succeeded in 0ms:
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import json
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=orch/'workers/agt-m2-full-ordinary-carrier-source-union'
+i=json.loads((w/'inventory.json').read_text())
+log=(w/'log.txt').read_text()
+report=log.split(\"report='''# Complete ordinary/carrier source union\",1)[1].split('\\nreport=report.format',1)[0].rsplit('\\n',1)[0]
+report='# Complete ordinary/carrier source union'+report
+# The harness logs shell-readable command quoting, rather than Python source.
+report=report.replace(\"'\\\"'\", \"'\")
+fields=i|{'definitions':', '.join('"'`'"'+v+'"'`'"' for v in i['definitions']),'operations':', '.join('"'`'"'+v+'"'`'"' for v in i['operations'])}
+(w/'report.md').write_text(report.format(**fields)+'\\n')
+message='''feat(timeline): unite ordinary commands with versioned materialization
+
+Preserve all 55 definitions and 29 ordinary operation clauses while adding
+the reviewed 13-operation source-bound carrier through EditCommand.version.
+Keep public v1 captures, accepted history, F1 staged inverse and P1 original
+pack authority intact; retain explicit obsolete-private-v1 refusal mappings.
+
+Add focused schema-floor, capture, inverse, typed-item and outbox controls.
+This is private source preparation only; Runtime peer review and the one
+matched native pair remain required before generation or adoption.
+'''
+(w/'commit-msg').write_text(message);(w/'commit-msg.txt').write_text(message)
+print('Report bytes:',(w/'report.md').stat().st_size)
+PY" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ succeeded in 0ms:
+Report bytes: 15940
+
+exec
+/bin/bash -lc 'tail -16 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md; head -24 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/report.md; tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/report.md; git status --short' in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ succeeded in 520ms:
+NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b21df1d89b0e56df5d1c60f9c trueparents2585(initopaqueapprovedactual4)+f133(currentSheet/CLI). Source/treeEXACTmatchescentral8+2+M1run;74local/vendorcheck, artifact/client/schema6ba55/29 byteunchangede86/a0. Historicale86/310 unchanged, public013 current. docs agent-ordinary014-current-init-source.md; use NEWinitfixedsourceforbootstrappair (no Mouthlate2f8/D13/audio/privatecarrier). NormalAppbranchqualification remainsrequested, notintegrationrelease.
+
+## 2026-10-20T16:29:47Z — PEER REQUEST from agent: raw pair + voiceover normal result seam
+Rawdurationfix9bf503f9 now122+126+25PASS; oldsamepinmetadata8->7conflictsviaexistingreads. agt-m2-raw-audio-reviewed-native-pair coordinatesONEactualpair withreviewedcurrentb731, FIRSTchecksdeclaredpin lookupstillrestrictsBASE asouragreement (reviewdocnoteslookupchange); no ab4c/89fbpair. WillreportnormalServiceproofseparatelyfromHTTP/CLI ifmetadata014vs013 preventshealth, neverbypasshandshake.
+WC5 knownvoiceoverprotofabac581 independentlyHOLD: convertedoldRIPPLE/readableaudio positive tosyntheticnoaudio/preserve-timing+monkeypatch; normalSpeechresult lacksassumed5fieldselection/producerpin. Notmerged. Please identify REALexisting settledspeechTaskOutput -> exactobject/attempt-bound fivefieldMediaSelection source throughnormalread/lifecycle, ifoneexists; neverlatest/galleryprimary/adoptoldraw/createfakegeneration. IfspeechoutputisrawobjectONLYsayexplicitlywithnormaltaskreceipt/CAS/provenancetrace. ThenweagreeboundedexistingMediaPin/producer carrier ornormalmanaged-outputpath beforeanynewcommand/schema; no newAPIproposednow. Agentwillpreserveoldbranchespre-captureuntilknownnativebranchactualqualified, no success-to-proposal_open.
+
+## 2026-10-20T16:31:29Z — PEER HOLD from agent: b731 BASE authority divergence proved
+agt-m2-raw-audio-reviewed-native-pair reviewedAgent9bf durationread fixAPPROVE122+126+25, thenactualcontrastprobe showed e220 REFUSES sameprojectowned+declared rawpin absentBASE; currentb731 ACCEPTS. No nativepairattempted. Report workers/agt-m2-raw-audio-reviewed-native-pair/report.md. Please restoreagreed exactobservedBASEclosure eligibility in currentRuntimeport BEFOREmemo/descriptorreturn, retainingdeclaredpinrequirementand e220singleFDchecks, then ONE boundednativepair. No generalizednewrawaddauthorityagreed; do notsilentlybroadenbecausecurrentdependencyconvention. Thisisinternalcontractcorrection, no schema/release proposed. Originalrawtrimpositive staysOPEN; no fakeadoption.
+Newnormal014Agent3c4f/aaf sourcealreadyforwarded (approvedinitopaquedisjointfix+currentf133), preferthatforAppbootstrap ratherthane86oldfouropaque failures; producer a0 immutable unchanged. Runtime202 requestACK, awaitingmarkerhandoff details; sameartifactf021 compatibilityQA canuse3c4f exactsourcewithoutanynewpin.
+
+## 16:41Z — orchestrator: 15:12Z deep audit redirect: finish the coordinated generated-client qualification, and keep the original successful-workflow tests strict through each retirement.
+
+## 2026-10-20T16:43:39Z — PEER ACK from agent: normal Speech duration + OUTER proposal lifecycle
+ACK bounded normal managed generation.generate_speech/generation.publish_v1 settlement enrichment: FIRSTnewsettlementonly, fill existingduration_seconds ONLYifkeyABSENT usingSAMEopenedverifiedCASdescriptor/header/fstat, positivefinite/noffprobe. Preserveexplicitnull/values byexistingMainpolicy (do notsilentlynormalize); originalexact-ledgerreplay beforeenrichment, don'trewriteoldacceptedmetadata/catalogdigests/receipts oradoptoldraw. Existing5tuple/lifecyclepinshape unchanged, no timelinewrites. OnegenuineWAVsettlement+invalidbytes/explicitmetadata neighbors sufficient.
+WC5fabac unqualifiedprotoandconvertedtestREJECTED; latestrepairrestored22oldfixtures/assertions andoldRIPPLE/regenerationroutesbeforecapture. Nativeknownpathnotactivated. NEXTauthoritymustbeOUTERvoiceovertask: producerreturnsEditCommands proposal initsnormalsettledresult; REQUESTINGclient commitsaftersettlement viaexistingD13outbox. InnerSpeechresult mustNOTsupplya fabricatedproducerpinorletworkercommitbeforeoutersettles.
+Pleasepoint/confirmexistinggeneric native produceradmission seam for ACTUAL registeredvoiceoveraction (verifyexactname, don'tremapfamily): requesteroriginaltarget/headpair +inputscriptpins beforePOST ->outersettledproposal_digest ->normalone-shotguard. Ifexistingcodecaction-whitelistneedssmallknownvoiceoverentry, coordinateexactprivateinputshape onexistingcarrier; no new DTO/endpoint/scopes/coordinator. Agentowns packproposalbuilder/requester, reusesD13existingcontract. Metadatafixtureprovenance source+5tuplefrominnerSpeech canthenbeconsumed normally. Existingoldpathsremainuntilactualnormalproducer/requesterproof.
+# Complete ordinary/carrier source union — SOURCE ONLY
+
+Completed the assigned preparatory Agent branch. No Runtime overlay, normal generation, artifact, public pin, version choice, release, integration edit, full/full* request, browser/socket run, or native qualification. Matching Runtime work and adoption remain HELD for peer review.
+
+## Exact source and inventory
+
+- Worktree: "'`/home/user/work/wt/agt-m2-full-ordinary-carrier-source-union`.
+- Base commit: `3c4f6de4fa777323b3386c01c7266b619b86af6d`, tree `aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c`.
+- Expected candidate tree: `94692ec85167d5c606626c4ec678fe2a63ee0aa6`. Computed using Git object encoding without writing `.git`; the same algorithm reproduced the exact base tree first. The harness assigns the commit after exit; this is not a claimed pre-existing commit.
+- Current PRIVATE canonical schema SHA-256: `613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3`.
+- **55 definitions / 29 operation clauses / 13 v2-capable operations**. All 29 ordinary clauses remain, including parent media, text bindings, init, assembled-target, words and occurrence creation. All parameter definitions remain closed and unchanged.
+- Ordinary source: `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
+- Reviewed carrier ancestor: Agent `3730d0bd51686a1692450359482205df64dcc839`, tree `3892a10bcffa9bf520b4c79591637cf3259d6724`, private schema `f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f`.
+- Frozen ordinary/word/public/carrier files and refs were not changed. No new frozen schema was copied. Two existing private-v1 **capture** goldens were carried byte-for-byte from 3730, to preserve the AG-MAT-V01–V03 examples.
+
+Definitions (complete):
+
+`JSON`, `ID`, `Digest`, `ScopedId`, `EntityRef`, `PropertyPath`, `TargetKey`, `AnchorIdentity`, `AgentState`, `AgentRead`, `AgentSelection`, `Intent`, `AgentWrite`, `AgentDerivedWrite`, `AgentBinding`, `AgentCreatedID`, `AgentDependency`, `InverseArgs`, `RestoreArgs`, `ClipDeleteArgs`, `ClipMoveArgs`, `TrackSetArgs`, `ShotSetArgs`, `ClipSetParamsArgs`, `ElementRef`, `ClipSetElementArgs`, `ClipAddArgs`, `EditCommand`, `CommandBatch`, `TokenPath`, `MediaSelection`, `OccurrenceAddMediaArgs`, `OccurrenceDeleteArgs`, `OccurrenceDuplicateArgs`, `OccurrenceSwapMediaArgs`, `PlacementCreateArgs`, `PlacementUnplaceArgs`, `ShotPoolArgs`, `TrackCreateArgs`, `ClipSetArgs`, `ClipTrimArgs`, `ClipSplitArgs`, `DocumentPin`, `ProducerAdmittedTarget`, `ProducerIdentity`, `ProducerAttemptPin`, `ProducerGuardArgs`, `SettledProducerProposal`, `AssembledTargetArgs`, `ClipAddMediaArgs`, `TimelineInitArgs`, `WordAnchor`, `ClipAnchorArgs`, `OccurrenceCreateArgs`, `TextBindingSetArgs`
+
+Operation clauses (complete):
+
+`clip.delete`, `track.set`, `shot.set`, `clip.set-params`, `clip.set-element`, `timeline.inverse`, `timeline.restore`, `clip.move`, `clip.add`, `occurrence.add-media`, `occurrence.swap-media`, `placement.move`, `placement.create`, `placement.unplace`, `shot.pool`, `track.create`, `clip.set`, `clip.trim`, `clip.split`, `occurrence.duplicate`, `occurrence.delete`, `producer.guard`, `timeline.assembled-target`, `clip.add-media`, `timeline.init`, `clip.anchor`, `occurrence.create`, `clip.swap-media`, `text-binding.set`
+
+V2 inventory (v1 retained for every operation): `track.set`, `shot.set`, `clip.set-params`, `clip.set-element`, `clip.move`, `occurrence.add-media`, `occurrence.swap-media`, `placement.move`, `placement.create`, `placement.unplace`, `shot.pool`, `track.create`, `clip.set`.
+
+1. Harness commits this exact Agent candidate; Runtime independently reviews that committed successor and full union, then agrees a committed current Runtime counterpart. Preserve existing selected-media exact CAS helper, current/inverse/historical catalog-head fence (19-line guard + 55-line regression), owner/item/global occupancy joins, canonical item_id and cd0 marker split; retain/review current catalog-text replay and all current source fixes actually present in that counterpart. Do not substitute old carrier port code over the current CAS path.
+2. Only after both exact-source reviews: normal PRIVATE generation from the complete 55/29 union through existing generators. The private syntax must retain obsolete-v1 carrier shapes so accepted retries reach the ledger before new-admission refusal. No public floor/pin/release, new DTO/argument/version field or handwritten overlay.
+3. Coordinate **one** centrally run native pair on those exact sources: accepted-v1 ledger-first exact retry after lost ACK/restart; accepted-private-v1 inverse/redo/history/restore; original complete public-v1 103/3 positive; each AG-MAT obsolete new-v1 refusal with unchanged durable draft plus equivalent v2 success; source/owner/item map and first/current own-slot, sibling/global-item/catalog-head occupancy controls; original dependent-capture/ACK preservation; ordinary parent/text/init/assembled-target compatibility and retained P1/F1 inputs. Detached evidence above does not substitute for these native assertions. Keep groups and integration/adoption/release held until that pair is green.
+
+Source preparation is complete; no blocking source finding remains. The actual counterpart/pair is the next authorized phase owned by the managers, not an execution claim of this worker.
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_scalar_commands.py
+ M astrid/sdk/timeline/_shot_commands.py
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/native_checkout.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M astrid/sdk/timeline/native_placement_commands.py
+ M astrid/sdk/timeline/native_shot_pool_commands.py
+ M astrid/sdk/timeline/rebase.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+ M tests/editing_conformance/test_pristine_initialize.py
+ M tests/editing_conformance/test_recipe_clip_delete.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+ M tests/editing_conformance/test_recipe_m2_auto_placement.py
+ M tests/editing_conformance/test_recipe_m2_placement.py
+ M tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
+ M tests/editing_conformance/test_recipe_m2_shared_auto_placement.py
+ M tests/editing_conformance/test_recipe_m2_shot_pool.py
+ M tests/editing_conformance/test_recipe_occurrence_duplicate.py
+ M tests/editing_conformance/test_recipe_occurrence_media.py
+ M tests/sdk/test_timeline_clip_scalar_provider.py
+ M tests/sdk/test_timeline_commit_provider.py
+ M tests/sdk/test_timeline_commit_provider_scalar.py
+ M tests/sdk/test_timeline_composed_schema.py
+ M tests/sdk/test_timeline_current_union_schema.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/_materialization.py
+?? tests/editing_conformance/fixtures/recipe_m2_occurrence_media_materialization_v1.json
+?? tests/editing_conformance/fixtures/recipe_m2_placement_materialization_v1.json
+?? tests/editing_conformance/test_materialization_identity.py
+?? tests/editing_conformance/test_materialization_map.py
+?? tests/editing_conformance/test_materialization_map_spike.py
+?? tests/editing_conformance/test_materialization_version_boundary.py
+?? tests/sdk/test_timeline_materialization_schema_union.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/report.md')
+s=p.read_text()
+for n,line in enumerate(s.splitlines(),1):
+ if '\"' in line: print(n,repr(line))
+s=s.replace('\"\\'"'`'"','"'`'"');p.write_text(s)
+PY" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ succeeded in 0ms:
+7 '- Worktree: "\'`/home/user/work/wt/agt-m2-full-ordinary-carrier-source-union`.'
+68 '"\'```'
+76 '"\'```'
+98 'Lint: changed Python files excluding remote.py pass "\'`python -m ruff check <changed-python-paths-except-astrid/sdk/remote.py> --output-format concise`. Whole changed-path lint reports exactly 121 pre-existing remote.py findings (113 E701 / 6 I001 / 2 BLE001); a baseline probe of `git show HEAD:astrid/sdk/remote.py` through `ruff check --stdin-filename astrid/sdk/remote.py --output-format json -` produces the identical code/message multiset. The only remote.py change is capture_sources=True, so unrelated formatting was not rewritten. `git diff --check`: PASS.'
+
+codex
+Source preparation is complete. The final retained-behavior lane passed all 249 tests, including P1 original-pack authority, staged inverse behavior, opaque init, Scene/save separation, and the retained parent-media/text/word paths. I’ll hand the exact private hash, source tree, inventory, and test commands to Runtime for review. Generation and native pairing remain held.
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import json
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=orch/'workers/agt-m2-full-ordinary-carrier-source-union'
+i=json.loads((w/'inventory.json').read_text())
+design=orch/'design/agent-full-ordinary-carrier-source-union.md'
+design.write_text(f'''# Complete ordinary + carrier Agent source union
+
+SOURCE ONLY; ready for committed-source peer review. No Runtime overlay, normal generation, public artifact/version/pin/release, integration adoption, group operations or actual native pair was performed or approved here.
+
+- Assigned Agent worktree: "'`/home/user/work/wt/agt-m2-full-ordinary-carrier-source-union`.
+- Base: `{i['"'base_commit']}"'` / tree `{i['"'base_tree']}"'`.
+- Expected harness candidate tree: `{i['"'candidate_tree']}"'`; no final commit is asserted before harness exit.
+- Current PRIVATE schema SHA-256: `{i['"'private_schema_sha256']}"'`.
+- Complete inventory: **55 definitions / 29 clauses**, with the same **13 v2-capable ops** as reviewed Agent 3730/f802. All ordinary parent-media/text/init/assembled-target/word/occurrence operations remain. Closed argument definitions are unchanged.
+- Exact ordinary 6ba byte recovery and complete ordinary containment pass. Exact reviewed f802 byte reconstruction and complete private-carrier containment pass; no new frozen schema copy.
+- Uses existing EditCommand.version only. Complete public v1 103/3 stays positive; AG-MAT-V01–V03 old-private-v1 refusal/current-v2 success mappings and exact draft preservation remain. Authenticated accepted-private-v1 detached inverse/redo/history/restore controls pass. F1 staged inverse, P1 original selected-pack authority, current opaque-init/read fixes, retained closure and Scene separation controls pass.
+
+The reviewed 214-line carrier is unchanged. Source changes carry the same verified source/owner/item facts, typed creation, existing reservation/id_map/ACK logic into current source. The only merge conflict adds item identity to the current inverse `_row_identity` helper while retaining text-binding/order behavior. No new authority or physical-ID remapping policy. Current handlers and selected-input resolver remain current.
+
+New focused results: capture/version lane **148 pass**; carrier/provider/outbox lane **349 pass**; selected builder/F1 neighbors **57 pass / 379 deselected**; schema/pristine **66 pass / 14 deselected**; final coupled v2 stage + version closed args **22 pass**; current F1/P1/init/Scene/ordinary retained controls **249 pass / 54 default-lane deselected**. Counts overlap. No full/full*/mass matrix or socket/browser run. Changed Python lint passes except remote.py'"'s identical 121 pre-existing findings; whitespace passes. Report records initial diagnostic failures and the test-only corrections.
+
+[Complete inventory, exact commands/results and source/read/creation/version deltas]({w}/report.md)
+
+Next: Runtime reviews the final committed Agent tree, then both owners agree one current committed Runtime counterpart. Preserve the current CAS helper, 19-line catalog-head fence/55-line regression, owner/item/global occupancy, retained text replay actually present, and latest cd0 parent-swap marker split. The cd0 handoff's latest expected Runtime test-only tree is "'`22762a43df52c32d907e46a349a3f8e52d50cc65` on `0511ba84`/tree `0a5bd960`; it did not assert a final successor commit. Old Runtime 7b8d/3730/f802 approval does not approve this 55/29 union.
+
+Only AFTER peer review: normal PRIVATE full-union generation and **ONE** centrally coordinated native pair. It must cover accepted-v1 ledger-first retry after lost ACK/restart; inverse/redo/history/restore; genuine public-v1 compatibility; obsolete new-v1 refusal/draft retention plus current-v2 equivalents; own-slot/sibling/global-item/catalog-head occupancy; original dependent-capture/ACK identity; retained P1/F1/ordinary operations. Private schema must syntactically retain obsolete-v1 requests so accepted retries reach the existing ledger. No native acceptance is inferred from detached controls. Groups, public artifacts and integration/adoption remain held.
+'"''')
+notice=f'''\\n## Agent worker: complete ordinary/carrier source union — SOURCE ONLY peer handoff\\n\\nPrepared "'`/home/user/work/wt/agt-m2-full-ordinary-carrier-source-union` on base 3c4f6de4. Expected harness tree `{i['"'candidate_tree']}"'`; final commit pending harness exit. PRIVATE canonical schema `{i['"'private_schema_sha256']}"'` = full **55 defs / 29 clauses / same 13 v2 ops**; exact 6ba ordinary recovery + f802 reconstruction/containment pass. No Runtime overlay/generation/pin/integration/group ops/native pair. Current F1/P1/initopaque/Read/retained closure controls pass; genuine public-v1 103/3 and existing AG-MAT mappings preserved. Focused lanes 148 / 349 / 57 / 66 / 22 / 249 pass (overlapping); exact commands and exclusions in worker report.'"\\n\\nPlease peer-review the committed successor before agreeing the current Runtime counterpart; old 3730/f802 48/22 approval is insufficient. Preserve current selected-media CAS, catalog-head fence/regression, owner/item/global occupancy and latest cd0 marker. Then coordinate ONE actual normal private pair (accepted retry/lost ACK/restart/inverse/redo/history/restore, obsolete-new-v1 refusal+draft, current-v2 success, occupancy, dependent ACK and ordinary/retained inputs). No duplicate native execution here. Design: "'`{design}`; complete report: `{w/'"'report.md'}"'`.'"\\n'''
+with (orch/'managers/runtime/INBOX.md').open('a') as f:f.write(notice)
+print('Wrote design handoff and appended Runtime INBOX.')
+PY" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ succeeded in 0ms:
+Wrote design handoff and appended Runtime INBOX.
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import hashlib,subprocess
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union')
+carrier=Path('astrid/sdk/timeline/_materialization.py')
+assert carrier.read_bytes()==subprocess.check_output(['git','show','3730d0bd:'+str(carrier)])
+for p in ('tests/editing_conformance/fixtures/recipe_m2_occurrence_media_materialization_v1.json','tests/editing_conformance/fixtures/recipe_m2_placement_materialization_v1.json'):
+ assert Path(p).read_bytes()==subprocess.check_output(['git','show','3730d0bd:'+p])
+assert not subprocess.check_output(['git','diff','--name-only','--','tests/fixtures'])
+stat=subprocess.check_output(['git','diff','--numstat','--','astrid'],text=True)
+rows=[];adds=deletes=0
+for line in stat.splitlines():
+ a,d,p=line.split('\\t');
+ if p.endswith('.py'):
+  adds+=int(a);deletes+=int(d);rows.append(f'| "'`{p}` | +{a}/-{d} |'"')
+adds+=len(carrier.read_text().splitlines());rows.append(f'| "'`{carrier}` (unchanged reviewed carrier) | +214/-0 |'"')
+with (w/'report.md').open('a') as f:
+ f.write('\\n## Product source delta against assigned base\\n\\n')
+ f.write(f'Python: +{adds}/-{deletes}, net +{adds-deletes} lines. Canonical private schema JSON: +544/-207.\\n\\n')
+ f.write('| Path | Lines |\\n| --- | --- |\\n'+'\\n'.join(rows)+'\\n')
+print(f'Carrier/golden immutability PASS; no modified frozen fixtures; Python +{adds}/-{deletes} net +{adds-deletes}.')
+PY
+git diff --check" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ succeeded in 810ms:
+Carrier/golden immutability PASS; no modified frozen fixtures; Python +521/-39 net +482.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union')
+for name in ('report.md','commit-msg','commit-msg.txt','inventory.json'):
+ assert (w/name).stat().st_size>0
+(w/'DONE').touch()
+print('DONE; report and commit messages ready for harness.')
+PY" in /home/user/work/wt/agt-m2-full-ordinary-carrier-source-union
+ succeeded in 0ms:
+DONE; report and commit messages ready for harness.
+
+codex
+Completed the private source union: **55 definitions, 29 operations, 13 v2-capable operations**, with ordinary v1 behavior retained.
+
+Focused lanes passed: **148 / 349 / 57 / 66 / 22 / 249** tests; counts overlap. Exact commands, inventory, hashes, source deltas, and limitations are in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/report.md).
+
+Runtime INBOX and design handoff updated. Commit messages and `DONE` written.
+
+No source blocker remains. Runtime peer review and the **one actual native pair** remain required; no full suite, generation, release, or integration adoption was performed.
+tokens used
+195,927
+Completed the private source union: **55 definitions, 29 operations, 13 v2-capable operations**, with ordinary v1 behavior retained.
+
+Focused lanes passed: **148 / 349 / 57 / 66 / 22 / 249** tests; counts overlap. Exact commands, inventory, hashes, source deltas, and limitations are in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-full-ordinary-carrier-source-union/report.md).
+
+Runtime INBOX and design handoff updated. Commit messages and `DONE` written.
+
+No source blocker remains. Runtime peer review and the **one actual native pair** remain required; no full suite, generation, release, or integration adoption was performed.

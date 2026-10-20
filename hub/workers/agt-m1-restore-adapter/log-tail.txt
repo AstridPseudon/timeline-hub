@@ -1,0 +1,400 @@
+
+    def create_timeline_view(self, project, timeline_id, options=None):
+        """Persist deterministic declared-input views as project-owned objects."""
+            {"media_id": declared_extra, "content_digest": declared_extra},
+        ]}
+        first = service.publish_parent_composition(
+            project_id, "main", first_body, idempotency_key="history-publish-media"
+        )
+        later = _publication(
+            project_id, expected_head="parent-with-media", parent_revision_id="parent-after-media"
+        )
+        later["internal_timeline_revisions"] = []
+        later["shot_revisions"] = []
+        later["parent_composition"] = {"config": {"clips": []}, "registry": {}, "clips": [], "occurrences": []}
+        service.publish_parent_composition(
+            project_id, "main", later, idempotency_key="history-publish-after-media"
+        )
+
+        restored = service.restore_project_parent_composition_revision(
+            project_id, "main", "parent-with-media", {"expected_head": "parent-after-media"},
+            idempotency_key="history-restore-media",
+        )
+        restored_head = restored["data"]["new_head"]
+        assert restored["data"]["payload"] == first["data"]["payload"]
+        assert {
+            item["media_id"] for item in restored["data"]["dependency_manifest"]["media"]
+        } == {payload_media, declared_extra}
+        dependencies = service.store.conn.execute(
+            "SELECT dependency_kind, dependency_id, content_digest FROM composition_revision_dependencies "
+            "WHERE parent_revision_id=? ORDER BY ordinal",
+            (restored_head,),
+        ).fetchall()
+        assert {
+            (row["dependency_kind"], row["dependency_id"], row["content_digest"])
+            for row in dependencies
+        } == {("media", value, value) for value in (payload_media, declared_extra)}
+    finally:
+        service.close()
+
+
+name=agt-m1-restore-adapter
+repo=agent
+base=tl/integration
+base_sha=7a7acc0e
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m1-restore-adapter
+started=2026-10-19T21:33:31Z
+0
+external=runtime=4af7a208a2384b242b5891ca3614970beec8e842 app=dd376d5e03892276a6335a055b40fa16447d6f9b composition=7aa384a9f3c815f78ce88ff9b47de5adee7bf34a 
+..                                                                       [100%]
+2 passed in 14.84s
+target=integration:agent
+
+exec
+/bin/bash -lc "cat >> tests/sdk/test_timeline_commit_provider_runtime.py <<'PY'
+
+
+def test_restore_inverse_redo_and_exact_retry_survive_runtime_restart(tmp_path, monkeypatch):
+    use_runtime()
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_port import route_path
+
+    from astrid.sdk.timeline import commands, commit
+
+    root = tmp_path / \"restore-realm\"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    project = service.create_project({\"slug\": \"restore\", \"name\": \"Restore\"})[\"id\"]
+    service.create_timeline(project, \"film\", idempotency_key=\"create-film\")
+
+    def head():
+        resource = service.get_project_timeline(project, \"film\")
+        return {\"revision_id\": resource[\"head_revision_id\"],
+                \"publication_id\": resource[\"head_publication_id\"]}
+
+    def request(calls, *, dry_run=False):
+        current = head()
+        return {\"api_version\": 1, \"project_id\": project, \"timeline_id\": \"film\",
+                \"base_revision_id\": current[\"revision_id\"],
+                \"base_publication_id\": current[\"publication_id\"], \"commands\": calls,
+                \"dry_run\": dry_run}
+
+    def submit(body, key):
+        return service.commit_timeline(
+            project, \"film\", body, idempotency_key=key, publisher=\"author\",
+            invocation_path=route_path(project, \"film\"), authorize=lambda: None,
+        )
+
+    def inverse(publication):
+        return {\"schema_version\": 1, \"op\": \"timeline.inverse\", \"version\": \"1\",
+                \"select\": None, \"args\": {\"publications\": [publication]}}
+
+    try:
+        initial = head()
+        create = {\"schema_version\": 1, \"op\": \"track.create\", \"version\": \"1\", \"select\": \"parent\",
+                  \"args\": {\"row\": {\"id\": \"historical-track\", \"kind\": \"visual\",
+                                    \"unknown\": {\"literal\": \"historical-track\", \"value\": None}}}}
+        created = submit(request([create]), \"create-track\")
+        historical = created[\"data\"][\"canonical_document\"]
+        populated = head()
+        original_body = {\"expected_head\": populated[\"revision_id\"],
+                         \"expected_publication_id\": populated[\"publication_id\"]}
+        path = route_path(project, \"film\", \"composition-revisions/\" + initial[\"revision_id\"] + \"/restore\")
+        restored = service.restore_project_parent_composition_revision(
+            project, \"film\", initial[\"revision_id\"], original_body,
+            idempotency_key=\"restore-original\", publisher=\"author\", invocation_path=path,
+            authorize=lambda: None,
+        )
+        empty = restored[\"data\"][\"canonical_document\"]
+        assert restored[\"data\"][\"accepted_revision_id\"] == initial[\"revision_id\"]
+        assert restored[\"data\"][\"status\"] == \"accepted\" and restored[\"data\"][\"rebased_onto\"] is None
+        assert empty[\"parent_revision\"][\"payload\"][\"config\"][\"tracks\"] == []
+        history = service.list_timeline_commits(project, \"film\", authorize=lambda: None)
+        record = history[\"items\"][-1][\"records\"]
+        assert record[\"restored_from\"] == {key: empty[\"parent_revision\"][key]
+                                            for key in (\"revision_id\", \"content_digest\")}
+        assert record[\"commands\"][0][\"writes\"][0][\"ref\"] == \"timeline\"
+        assert record[\"commands\"][0][\"created\"] == []
+        assert restored[\"receipt\"][\"command_kind\"] == \"timeline.commit\"
+        assert restored[\"receipt\"][\"result\"] == restored[\"data\"]
+        service.close()
+        service = RuntimeService(root)
+        service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+        retired = head()
+
+        def forbidden(*args, **kwargs):
+            raise AssertionError(\"exact restore retry executed provider semantics\")
+
+        with monkeypatch.context() as retry:
+            retry.setattr(commands, \"execute\", forbidden)
+            assert service.restore_project_parent_composition_revision(
+                project, \"film\", initial[\"revision_id\"], original_body,
+                idempotency_key=\"restore-original\", publisher=\"author\", invocation_path=path,
+                authorize=lambda: None,
+            ) == restored
+        assert head() == retired
+        with pytest.raises(RuntimeErrorBase) as error:
+            submit(request([create]), \"retired-id\")
+        assert error.value.details[\"reason\"] == \"identity_collision\" and head() == retired
+        undone = submit(request([inverse(restored[\"receipt\"][\"receipt_id\"])]), \"undo-restore\")
+        assert undone[\"data\"][\"canonical_document\"] == historical
+        redone = submit(request([inverse(undone[\"receipt\"][\"receipt_id\"])]), \"redo-restore\")
+        assert redone[\"data\"][\"canonical_document\"] == empty
+        stale_body = {\"expected_head\": initial[\"revision_id\"],
+                      \"expected_publication_id\": initial[\"publication_id\"]}
+        with pytest.raises(RuntimeErrorBase) as error:
+            service.restore_project_parent_composition_revision(
+                project, \"film\", initial[\"revision_id\"], stale_body,
+                idempotency_key=\"stale-publication\", publisher=\"author\", invocation_path=path,
+                authorize=lambda: None,
+            )
+        assert error.value.details[\"reason\"] == \"stale_head\"
+        current = head()
+        call = {\"schema_version\": 1, \"op\": \"timeline.restore\", \"version\": \"1\", \"select\": None,
+                \"args\": {key: historical[\"parent_revision\"][key]
+                         for key in (\"revision_id\", \"content_digest\")}}
+        preview = submit(request([call], dry_run=True), \"restore-preview\")
+        assert preview[\"receipt\"] is None and head() == current
+        assert preview[\"data\"][\"canonical_document\"] == historical
+        reused = submit(request([call]), \"restore-historical-ids\")
+        assert reused[\"data\"][\"canonical_document\"] == historical
+    finally:
+        service.close()
+PY
+python3 - <<'PY'
+p='tests/sdk/test_timeline_commit_provider.py';s=open(p).read().replace('from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse, runtime_abi','from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse, restore, runtime_abi').replace(\"realm.call([inverse([first['receipt']['receipt_id']])])\\nassert len(realm.entries) == 3\", \"realm.call([inverse([first['receipt']['receipt_id']])])\\nrestored = realm.call([restore(realm.documents['parent-1'])])\\nundone = realm.call([inverse([restored['receipt']['receipt_id']])])\\nrealm.call([inverse([undone['receipt']['receipt_id']])])\\nassert len(realm.entries) == 6\")
+open(p,'w').write(s)
+PY
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py' in /home/user/work/wt/agt-m1-restore-adapter
+ succeeded in 9542ms:
+........................................................................ [ 51%]
+...................................................................      [100%]
+139 passed in 8.94s
+
+exec
+/bin/bash -lc 'git diff --check && /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_runtime.py' in /home/user/work/wt/agt-m1-restore-adapter
+ exited 1 in 77ms:
+astrid/sdk/timeline/commit.py:361:9: I001 [*] Import block is un-sorted or un-formatted
+    |
+360 |       def commit(self, context, port):
+361 | /         from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+362 | |
+363 | |         from astrid.sdk.timeline.commands import CommandError, execute
+364 | |         from astrid.sdk.timeline.rebase import replay
+365 | |         from astrid.sdk.timeline.inverse import coalesce
+    | |________________________________________________________^ I001
+366 |
+367 |           context = copy.deepcopy(context)
+    |
+    = help: Organize imports
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='astrid/sdk/timeline/commit.py';s=open(p).read().replace('from astrid.sdk.timeline.rebase import replay\\n        from astrid.sdk.timeline.inverse import coalesce','from astrid.sdk.timeline.inverse import coalesce\\n        from astrid.sdk.timeline.rebase import replay');open(p,'w').write(s)
+p='tests/sdk/test_timeline_commit_provider.py';s=open(p).read();s+='''\\n\\n@pytest.mark.parametrize(\"intent\", [\"bootstrap\", \"legacy_unknown\"])
+def test_restore_preserves_verified_legacy_history_boundary(intent):
+    realm = DetachedRealm()
+    realm.entries[0][\"intent\"] = intent
+    original = detached(realm.documents[\"parent-1\"])
+    realm.call([realm.move()])
+    restored = realm.call([restore(original)])
+    assert restored[\"data\"][\"canonical_document\"] == original
+    assert realm.entries[0][\"intent\"] == intent and realm.entries[0][\"records\"] is None
+    undone = realm.call([inverse([restored[\"receipt\"][\"receipt_id\"]])])
+    assert undone[\"data\"][\"canonical_document\"] "'!= original
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse(["bootstrap"])])
+    assert error.value.failure["details"]["reason"] == "history_unavailable"
+
+
+@pytest.mark.parametrize("damage", ["missing", "digest", "project", "pin"])
+def test_restore_refuses_unavailable_or_corrupt_retained_input(damage):
+    realm = DetachedRealm()
+    realm.call([realm.move()])
+    source = source_fixture("config")
+    historical = realm.documents["parent-1"]
+    historical["dependency_manifest"]["documents"] = [source["pin"]]
+    if damage != "missing":
+        capture = detached(source)
+        if damage == "digest":
+            capture["document"]["content"]["settings"] = "corrupt"
+        elif damage == "project":
+            capture["document"]["project_id"] = "foreign"
+        else:
+            capture["pin"]["version"] += 1
+        realm.retained_sources[_digest(source["pin"])] = capture
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([restore(historical)])
+    assert error.value.failure["details"]["reason"] == (
+        "dependency_unavailable" if damage == "missing" else "invalid_document")
+    assert realm.head == head and len(realm.accepted) == 1
+'"''';open(p,'w').write(s)
+PY
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_runtime.py' in /home/user/work/wt/agt-m1-restore-adapter
+codex
+The targeted suite passed all 139 cases, including restore undo/redo and conservative refusal after overlapping, same-value, or ABA writes. I’ve added real Runtime coverage for restart and exact retry through the existing restore route, plus a few final boundary tests. I’ll run the Runtime cases through the central service once local checks finish.
+
+ succeeded in 10481ms:
+........................................................................ [ 49%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+145 passed in 9.89s
+All checks passed!
+
+exec
+/bin/bash -lc 'git diff --check && git status --short && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-restore-adapter/notes.md' in /home/user/work/wt/agt-m1-restore-adapter
+ succeeded in 209ms:
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+ M tests/sdk/test_timeline_commit_provider.py
+ M tests/sdk/test_timeline_commit_provider_runtime.py
+Read PLAN, latest restore-regressions-m1 decision, edit recipe and frozen commit contract. Implementation in progress: add semantic `timeline` root read/write of an immutable {revision_id,content_digest} pin, resolved only from provider-verified scoped historical closures. This is not a CanonicalDocument stored as a parent field or a new journal. Frozen AgentRead/AgentWrite refs already accept strings; canonical command reads can carry this root guard; legacy TargetKey cannot spell it, so no invented expect/authorship key will be emitted. Whole-root overlap is conservatively global. Restore command remains sole/exact head pair and accept races refuse immediately. Final dependency hydration must capture only the resulting closure's pins (Runtime requires exact captures == manifest, so hydrating discarded current/source images is incorrect). Runtime tests can retain exact main restore revision identity/closure with no renderer. Integration test request follows final edits; no full worker suite.
+
+exec
+/bin/bash -lc "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m1-restore-adapter commit-integration --files 'tests/sdk/test_timeline_commit_provider_runtime.py'" in /home/user/work/wt/agt-m1-restore-adapter
+ succeeded in 0ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m1-restore-adapter-commit-integration-1019213749-17097
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-restore-adapter-commit-integration-1019213749-17097/
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-restore-adapter/notes.md <<'EOF'
+
+21:38Z implementation complete pending real Runtime evidence. Local required command: "'`PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py` => 145 passed in 9.89s. Changed-file ruff and git diff --check pass. Added actual Runtime restart/restore-route/exact-ledger-retry/direct-dry-run/undo/redo/historical-ID test in test_timeline_commit_provider_runtime.py. Central request submitted once: `request-test agt-m1-restore-adapter commit-integration --files '"'tests/sdk/test_timeline_commit_provider_runtime.py'"'`; result `tests/agt-m1-restore-adapter-commit-integration-1019213749-17097/`. Named suite explicitly uses -m integration and also runs existing M1 commit integration file. No full suite requested. Runtime seven test callers remain manager/Runtime-owned; no Runtime worktree edits.
+EOF
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m1-restore-adapter-commit-integration-1019213749-17097 1' in /home/user/work/wt/agt-m1-restore-adapter
+exec
+/bin/bash -lc 'git diff --numstat && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-restore-adapter-commit-integration-1019213749-17097/status && tail -20 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-restore-adapter-commit-integration-1019213749-17097/log.txt' in /home/user/work/wt/agt-m1-restore-adapter
+ succeeded in 59ms:
+23	2	astrid/sdk/timeline/_command_state.py
+6	2	astrid/sdk/timeline/_recording.py
+11	3	astrid/sdk/timeline/commands.py
+41	8	astrid/sdk/timeline/commit.py
+1	1	astrid/sdk/timeline/inverse.py
+2	2	astrid/sdk/timeline/rebase.py
+215	7	tests/sdk/test_timeline_commit_provider.py
+111	0	tests/sdk/test_timeline_commit_provider_runtime.py
+running
+.
+ succeeded in 29936ms:
+test agt-m1-restore-adapter-commit-integration-1019213749-17097: pass exit=0 in 15s — commit-integration on agt-m1-restore-adapter (agent tree 36d86ed3d834b3285bc9e1e66bb4fb54ed14b624)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py
+counts: 4 passed in 13.18s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-restore-adapter-commit-integration-1019213749-17097/log.txt ---
+....                                                                     [100%]
+4 passed in 13.18s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-restore-adapter-commit-integration-1019213749-17097/status && tail -65 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-restore-adapter-commit-integration-1019213749-17097/log.txt' in /home/user/work/wt/agt-m1-restore-adapter
+ succeeded in 0ms:
+pass
+....                                                                     [100%]
+4 passed in 13.18s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-restore-adapter-commit-integration-1019213749-17097/summary && git diff --check' in /home/user/work/wt/agt-m1-restore-adapter
+ succeeded in 61ms:
+test agt-m1-restore-adapter-commit-integration-1019213749-17097: pass exit=0 in 15s — commit-integration on agt-m1-restore-adapter (agent tree 36d86ed3d834b3285bc9e1e66bb4fb54ed14b624)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py
+counts: 4 passed in 13.18s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-restore-adapter-commit-integration-1019213749-17097/log.txt ---
+....                                                                     [100%]
+4 passed in 13.18s
+
+codex
+The central Runtime run passed all 4 tests, including restore-route acceptance, restart-safe exact retry, undo/redo, dry run, and historical ID reuse. Local targeted tests passed all 145 cases, and lint and whitespace checks passed. I’m recording the handoff; the manager still owns the seven Runtime caller adaptations and postmerge full suite.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import os
+import shutil
+from pathlib import Path
+root = Path.cwd()
+for directory, dirs, _ in os.walk(root):
+    for name in list(dirs):
+        if name in {'__pycache__', '.pytest_cache'}:
+            shutil.rmtree(Path(directory) / name)
+            dirs.remove(name)
+        elif name == '.git':
+            dirs.remove(name)
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-restore-adapter')
+message = '''fix(timeline): preserve guarded historical restore through commit
+
+Execute timeline.restore v1 through the existing recorder and compiler using
+verified immutable closure pins. Keep strict head-pair and accept-race refusal,
+retain exact source inputs and restored_from, and support trusted inverse/redo
+without snapshot records or new persistence paths. Treat whole-timeline writes
+as overlapping every authored address while preserving ordinary ID reservations.
+
+Cover full closure and opaque-field restoration, stale publications, tampering,
+dry run, dependency retention, ABA guards, and Runtime restart/exact retry.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+with (worker / 'notes.md').open('a') as file:
+    file.write('''
+
+FINAL HANDOFF — ready for manager review/merge; no blockers found.
+- Central named integration PASS: agt-m1-restore-adapter-commit-integration-1019213749-17097, Agent source tree 36d86ed3d834b3285bc9e1e66bb4fb54ed14b624; 4 passed in 13.18s (15s service wall), wait-test exit 0. Actual command: "'`env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py`.
+- Final required local targeted command above: 145 passed in 9.89s. Earlier test-first restore selection: 10 failed / 1 passed before implementation, then fixture fixes and additional coverage; all final expectations pass, no xfail/skip/deletions.
+- Lint exact command: `/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_runtime.py` => All checks passed. `git diff --check` => exit 0.
+- Small shared semantic primitive is a recorder read/write at (`timeline`, []), whose value is ONLY an immutable revision/content-digest pin, not authored parent data or a raw snapshot. State resolves writes exclusively from provider-verified scoped closures. Frozen AgentRead/AgentWrite and command.reads allow these references unchanged; expect/authorship remain authored-property spellings. No wire/schema/ABI changes. Whole-timeline scope overlaps all reads/writes; coalesce only folds property trees within the same entity.
+- Only resulting retained document inputs are hydrated, including inverse/redo, because the frozen Runtime port requires exact candidate pins == captures. Raw historical parent/shot/internal images, all media pins including extras, unknown values and child identities pass through the existing compile path. No renderer/journal/alternate writer added.
+- Historical reuse does not record fresh created IDs; previously reserved ordinary creates still refuse after restore retires them. Whole restore inverse conservatively refuses every later recorded write (including same-value and ABA), and ordinary inverse/rebase refuses crossing a restore.
+- Required next steps: manager review and integrate; Runtime owner completes/passes its seven main restore caller adaptations (not modified/run here); manager runs one postmerge full batch. No full suite or Runtime seven-case qualification claimed by this worker. No Git mutation/push performed. Commit messages written to both commit-msg and commit-msg.txt. Removed local Python/pytest caches; no build output retained.
+'"''')
+PY
+git status --short" in /home/user/work/wt/agt-m1-restore-adapter
+ succeeded in 158ms:
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+ M tests/sdk/test_timeline_commit_provider.py
+ M tests/sdk/test_timeline_commit_provider_runtime.py
+
+codex
+Implemented `timeline.restore` v1 through the existing commit executor/recorder, preserving exact closure pins, opaque fields, retained inputs, strict head-pair guards, and inverse/redo.
+
+Used a semantic `timeline` root containing only a verified revision/digest pin. No schema/ABI change, renderer, alternate writer, or journal.
+
+Validation:
+
+- `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py` — **145 passed**.
+- Central `request-test agt-m1-restore-adapter commit-integration --files 'tests/sdk/test_timeline_commit_provider_runtime.py'` — **4 passed**, including restart and exact retry.
+- Changed-file Ruff and `git diff --check` — passed.
+
+No blockers. Notes and both commit-message files written. No Git mutations performed.
+
+Next: manager review/integration, Runtime’s seven caller adaptations, then the manager-owned postmerge full suite. Those remaining checks are unverified here.
+tokens used
+126,682
+Implemented `timeline.restore` v1 through the existing commit executor/recorder, preserving exact closure pins, opaque fields, retained inputs, strict head-pair guards, and inverse/redo.
+
+Used a semantic `timeline` root containing only a verified revision/digest pin. No schema/ABI change, renderer, alternate writer, or journal.
+
+Validation:
+
+- `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py` — **145 passed**.
+- Central `request-test agt-m1-restore-adapter commit-integration --files 'tests/sdk/test_timeline_commit_provider_runtime.py'` — **4 passed**, including restart and exact retry.
+- Changed-file Ruff and `git diff --check` — passed.
+
+No blockers. Notes and both commit-message files written. No Git mutations performed.
+
+Next: manager review/integration, Runtime’s seven caller adaptations, then the manager-owned postmerge full suite. Those remaining checks are unverified here.

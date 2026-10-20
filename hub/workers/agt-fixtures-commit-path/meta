@@ -1,0 +1,9 @@
+name=agt-fixtures-commit-path
+repo=agent
+base=tl/integration
+base_sha=481e600b
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-fixtures-commit-path
+started=2026-10-20T07:20:50Z

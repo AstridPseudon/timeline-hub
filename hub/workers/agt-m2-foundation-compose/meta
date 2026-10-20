@@ -1,0 +1,9 @@
+name=agt-m2-foundation-compose
+repo=agent
+base=tl/agt-m2-bundle1-pin
+base_sha=3bf9e536
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-foundation-compose
+started=2026-10-20T00:39:21Z

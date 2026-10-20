@@ -1,0 +1,400 @@
++## Separate Runtime/native gates and next steps
++
++Runtime coordination still requests ACK of the final explicit version-only branch and narrowed 13-op inventory. Earlier 17-op/submode language was superseded; it is not an ACK. No Runtime ACK found at final readback of `design/runtime-coordination.md` and `workers/rt-m2-materialization-current-recovery/agent-coordination.md`.
++
++Static Runtime counterpart inspected at `3c917378a6dc2b48362fd1bc152cb13a5fd6b84a`, tree `853c122f2713fd6970164ff6c471550700257e8f`, parent `2cb9bb62c88d91fdab03df230ef0b2a3bd81f513`. `timeline_commit_port.py:437-454` retains the private captured closure join and exact submitted/prepared sealed-binding comparison for ordinary allocations; inverse facts remain authenticated-history based. `timeline_commit_store.py:848-863` retains authorize/ledger lookup before live context/head/destination checks. Agent's change edits none of those paths. This is a bounded static check, not approval of every Runtime carrier/occupancy change. Coordination also reports a separate secondary-ID over-refusal repair against 3c; the eventual exact Runtime successor needs its own review and proof.
++
++Still pending: Runtime semantic ACK, the Runtime/both-owner reviews, exact matched source selection, normal PRIVATE generated pair, actual admission and SDK ACK, own-slot/retired/global-item occupancy, native opaque/numeric preservation, accepted retry after restart, dependent/stale siblings, inverse/redo/restore on the actual Runtime. Detached accepted-v1 tests intentionally seed an authenticated-port history boundary; they establish Agent semantics only, not real ledger admission/authentication. Old v1 exact retry is supported statically by unchanged ledger-first ordering, not newly native-qualified here.
++
++Recommended action: accept this bounded Agent source review; keep generation/public artifact/pin/adoption held. Obtain Runtime ACK and both reviews on exact source, including any reviewed Runtime repair, before normal PRIVATE generation and central targeted native qualification. Compose later S3/text/ordinary source only in a separately reviewed complete union. The review itself is complete and unblocked; product adoption remains held.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-materialization-version.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-materialization-version.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-materialization-version.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..bfe59c665b30e5d62742a21faa2e90c5f5790f52
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-materialization-version.md
+@@ -0,0 +1,45 @@
++**APPROVEPRIVATE** — independent read-only Agent source review complete, with no blocking Agent finding. **Runtime semantic ACK, both-owner review, generation/source freeze, actual matched native qualification and public adoption remain separate pending gates.**
++
++Reviewed exact committed `tl/agt-m2-materialization-version-boundary` **`3730d0bd51686a1692450359482205df64dcc839`**, tree **`3892a10bcffa9bf520b4c79591637cf3259d6724`**, parent `9cab2ad36ff6c99c05b42d16d54dfa82e7e86d5e` / tree `216e67d6667ff34f1a192c7dc8326858243bf0f5`. Astrid/tests subtrees `2e79a7b63c78f483a371cfe34c8aea62f6cfb049` / `d3846e625aa0dceb9945ba38be5691658c2be083`; source schema SHA256 **`f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f`**. This matches the implementation's proposed tree; the candidate is no longer a pending harness commit. The review worktree's unrelated current HEAD was not tested as the candidate.
++
++Read PLAN first, owner version policy, design/worker report, original counterexamples, prior carrier review, all changed product/tests and Runtime proposal/refinements. The distinction is correct: the original public S2 v1 placement is complete at **103 reads / 3 selections**, while the obsolete private add has **25/3**, missing current owner/order safety facts. No blanket v1 rejection and no guessed legacy authority.
++
++| Version/source | Verified result |
++| --- | --- |
++| Complete public S2 v1 placement/add/swap | Exact original commands/records/output; empty map; default source-aware engine and detached provider accept; SDK identity ACK passes |
++| Ordinary public v1/nonmaterializing edits | Original M1/SDK retry goldens retained; additional original auto/shared/create/unplace/pool requests pass default source-aware execution |
++| New obsolete private v1 placement/swap/add | Visible capture refusal, original claims preserved, explicit re-author pointer; durable draft/flight/key survive restart; equivalent current v2 succeeds |
++| Current source-bound v2 | Same handlers/guards; exact original S/I, owner O, parent/source pin and D/J join; no new wire field/DTO/seed/framework or derived semantic births |
++| Accepted historical private v1 | Authenticated provider-history path preserved; detached JSON-reloaded inverse/redo/restore pass; actual Runtime lifecycle remains unverified |
++| Missing/malformed v2 proof or forged owner/source/map/history flag | Closed refusal; empty/identity-map SDK fallback rejected even with receipt echo |
++
++Schema audit independently proves all **48 definitions / 22 operation clauses** and the record/envelope floor remain. Exactly twelve `then` clauses retain the complete old v1 branch and add an exact copy changing only the version constant to `2`; existing unversioned `track.create` args remain unchanged and semantic validation admits only 1/2. V2 inventory: clip.move, placement.move, track.create, clip.set, clip.set-element, track.set, shot.set, clip.set-params, occurrence.add-media, occurrence.swap-media, placement.create, placement.unplace, shot.pool. Parent-only clip add/delete/trim/split and occurrence delete/duplicate, producer guard, inverse/restore stay semantic v1. Reversing only those additive version branches and four inherited item-reference unions recovers byte-exact ordinary S2 **`a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`**. Full current S2 containment passes normally. **S3/text/next ordinary union is excluded and needs explicit later composition/review.**
++
++All three retirement rows remain **HELD candidate**, with both exact test IDs rerun and PASSED:
++
++| Row | Original-v1 refusal | Current-v2 success |
++| --- | --- | --- |
++| AG-MAT-V01 | `test_recipe_m2_placement.py::test_private_carrier_placement_v1_refuses_without_refreshing_original_claims` | `test_recipe_m2_placement.py::test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo[fixture_path1]` |
++| AG-MAT-V02 | `test_recipe_occurrence_media.py::test_private_carrier_swap_v1_refuses_without_refreshing_original_claims` | `test_recipe_occurrence_media.py::test_portable_goldens[swap-fixture_path2]` |
++| AG-MAT-V03 | `test_recipe_occurrence_media.py::test_obsolete_carrier_add_v1_refuses_original_claims_with_draft_kept` | `test_recipe_occurrence_media.py::test_obsolete_carrier_add_equivalent_reauthored_v2_succeeds` |
++
++All paths above are under `tests/editing_conformance/`. Original fixture blobs stay unchanged. Public `test_legacy_sealed_new_submission_preserves_original_claims` remains a passing NEW-request success. No guard was weakened or original claims refreshed. Changed provider fixture setup completes canonical publication before capture; changed legacy golden setup is supplemented by independent default-ingress probes.
++
++Independent tests on an immutable candidate archive, shared deps read-only, private/no pytest cache:
++
++| Lane | Result |
++| --- | --- |
++| Original public/M1 goldens, carrier/version/map/identity, dependent B after lost ACK/reload, stale siblings, undo/replay, SDK forgery/durability | **447 passed**, 55.22s |
++| Complete schema containment/union/registry | **96 passed**, 185.86s |
++| Ordinary golden/provider setup neighbors | **22 passed**, 164 deliberately deselected, 11.99s |
++| Explicit six ledger-pair nodes + original public-v1 success | **7 passed**, 3.62s |
++| Independent source/schema/counterexample/default-provider/SDK ACK/default-engine/forgery probes | **24 named PASS lines**, exit 0 |
++| Candidate-parent whitespace and fixture diffs; worktree status | PASS; no fixture or worktree changes |
++
++Counts overlap. No full/full* suite, localhost/browser/live run, normal private generation or public artifact/pin mutation. Prior implementation 866/1237 counts were not claimed as independent reruns; its eight integration cases remain unqualified here.
++
++Runtime proposal documents still request the final 13-op version-only semantic ACK; no ACK found at final readback. Static peer inspected at **`3c917378a6dc2b48362fd1bc152cb13a5fd6b84a` / `853c122f2713fd6970164ff6c471550700257e8f`**: private captured closure/sealed-binding joins and ledger-first lookup are retained. This is not approval of the Runtime carrier; coordination separately identifies a secondary-ID over-refusal repair requiring its own reviewed successor. Detached accepted-history fixtures are Agent semantics evidence, not actual Runtime admission or authentication proof.
++
++Next: obtain Runtime ACK and both-owner reviews on the exact Agent/Runtime sources, then normal PRIVATE generation and central targeted native admission/ACK, own-slot/retired/global-item occupancy, opaque/numeric preservation, original dependent captures, accepted retry/restart and inverse/redo/restore. Public adoption remains held. No policy decision was changed during review.
++
++[Detailed report, exact commands, source identity and logs](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/notes/report.md).
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/notes/independent_probes.py b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/notes/independent_probes.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..87657e4fa916398ab38e9b7962d87f233ea62785
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/notes/independent_probes.py
+@@ -0,0 +1,164 @@
++"""Independent read-only review probes; run against the exact candidate archive."""
++import copy
++import hashlib
++import json
++import subprocess
++from pathlib import Path
++
++import pytest
++
++from astrid.sdk.timeline.commands import CommandError, execute, validate_command
++from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service, document_from_bundle
++from astrid.sdk.timeline.native_placement_commands import capture_placement
++from astrid.core.receipts.canonical import canonical_json
++from astrid.sdk.timeline.outbox import request_bytes
++from astrid.sdk.timeline.sync import _ack
++from tests.editing_conformance.fixture_loader import load_fixture
++from tests.editing_conformance.test_recipe_m2_placement import FIXTURE as PLACEMENT, MATERIALIZATION_FIXTURE as PRIVATE_PLACEMENT
++from tests.editing_conformance.test_recipe_occurrence_media import FIXTURE as MEDIA, MATERIALIZATION_FIXTURE as PRIVATE_MEDIA
++from tests.sdk.test_timeline_commit_provider import DetachedPort, DetachedRealm, runtime_abi
++from tests.sdk.test_timeline_sync import paired_ack
++
++REPO = '/home/user/work/wt/agt-review-materialization-version'
++ORCH = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
++CANDIDATE = '3730d0bd51686a1692450359482205df64dcc839'
++PARENT = '9cab2ad36ff6c99c05b42d16d54dfa82e7e86d5e'
++SCHEMA = 'astrid/core/timeline/schema/edit-command.schema.json'
++
++
++def git(*args):
++    return subprocess.check_output(['git', '-C', REPO, *args])
++
++
++old, new = [json.loads(git('show', f'{ref}:{SCHEMA}')) for ref in (PARENT, CANDIDATE)]
++assert set(old['$defs']) == set(new['$defs']) and len(new['$defs']) == 48
++old_clauses = old['$defs']['EditCommand']['allOf']
++new_clauses = new['$defs']['EditCommand']['allOf']
++assert len(old_clauses) == len(new_clauses) == 22
++versions = []
++for before, after in zip(old_clauses, new_clauses):
++    if before == after:
++        continue
++    assert before['if'] == after['if'] and set(before) == set(after)
++    v1, v2 = after['then']['anyOf']
++    assert v1 == before['then']
++    expected = copy.deepcopy(v1)
++    expected['properties']['version']['const'] = '2'
++    assert v2 == expected
++    versions.append(before['if']['properties']['op']['const'])
++assert len(versions) == 12
++old['$defs']['EditCommand']['allOf'] = new_clauses
++assert old == new
++assert hashlib.sha256(git('show', f'{CANDIDATE}:{SCHEMA}')).hexdigest() == 'f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f'
++assert not git('diff', '--name-only', PARENT, CANDIDATE, '--', 'tests/editing_conformance/fixtures', 'tests/fixtures', 'astrid_runtime')
++print('PASS schema: exact unchanged envelope/48 definitions/22 clauses; twelve additive version-only branches')
++
++examples_path = ORCH / 'workers/agt-m2-materialization-current-recovery/legacy-capture-counterexamples.json'
++assert hashlib.sha256(examples_path.read_bytes()).hexdigest() == 'f8a0227cd8dc90c9a042594b5db31f5fc9858a8417708d29771b9d65e2d4ef8e'
++examples = json.loads(examples_path.read_bytes())
++placement = next(c for c in load_fixture(PLACEMENT)['cases'] if c['command']['select'].startswith('occurrence:'))
++public_example = examples['old_sealed_placement']
++assert public_example['command'] == placement['command']
++assert public_example['input'] == placement['input']
++assert public_example['expected_records'] == placement['records']
++assert public_example['expected_output'] == placement['output']
++assert (len(placement['command']['reads']), len(placement['command']['selections'])) == (103, 3)
++add = load_fixture(PRIVATE_MEDIA)['add']
++assert examples['historical_carrier_add']['original_command'] == add['commands'][0]
++assert examples['historical_carrier_add']['input'] == add['input']
++assert examples['historical_carrier_add']['original_output'] == add['output']
++print('PASS immutable original counterexample/fixture equality; public placement 103/3; old private add 25/3')
++
++with pytest.MonkeyPatch.context() as mp:
++    runtime_abi.__wrapped__(mp)
++    for kind, case in [('placement', placement), ('add', load_fixture(MEDIA)['add']), ('swap', load_fixture(MEDIA)['swap'])]:
++        calls = [case['command']] if kind == 'placement' else case['commands']
++        verified = [] if kind == 'placement' else case['verified_media']
++        mp.setattr(DetachedPort, 'selected_media', lambda self, pin, rows=verified: copy.deepcopy(next(r for r in rows if r['selection'] == pin)))
++        realm = DetachedRealm(case['input'])
++        context = realm.context(calls)
++        body = context['request']
++        path = '/v1/projects/project-1/timelines/film/commit'
++        context['request_hash'] = hashlib.sha256(canonical_json({'operation': 'commitTimeline', 'path': path, 'publisher': 'actor-1', 'request': body}).encode()).hexdigest()
++        frozen = request_bytes(body)
++        result = create_runtime_commit_service().commit(context, DetachedPort(realm, context))
++        assert request_bytes(body) == frozen
++        assert result['data']['commands'] == calls and result['data']['id_map'] == {}
++        assert result['data']['canonical_document'] == case['output']
++        assert realm.entries[-1]['records']['commands'] == case['records']
++        # DetachedPort uses a one-element sequence; supply its equivalent
++        # receipt range before exercising the real SDK envelope validator.
++        result['receipt']['project_seq'] *= 2
++        assert _ack(result, body, {'path': path, 'key': context['idempotency_key']}, {'actor_id': 'actor-1', 'realm_id': 'realm-1'})[0] == result['data']
++        print(f'PASS public v1 {kind}: default detached provider; exact request/commands/records/output/empty map; old SDK identity ACK')
++
++bundle = bundle_from_document(placement['input'])
++current = capture_placement(bundle, 'occurrence:occ-a', 'clip-a', placement['command']['args']['on'], ownership='occurrence')
++assert current['version'] == '2'
++plan = execute(bundle, [current])
++assert document_from_bundle(plan.bundle) == placement['output']
++assert len([d for d in plan.records[0]['dependencies'] if d['key'].startswith('materialization.source:')]) == 1
++for key in [k for k in current['bindings'] if k.startswith(('materialization.owner:', 'shot:'))]:
++    damaged = copy.deepcopy(current)
++    damaged['bindings'].pop(key)
++    before = copy.deepcopy(damaged)
++    with pytest.raises(CommandError):
++        execute(bundle, [damaged])
++    assert damaged == before
++for flag in ('accepted_history', 'capture_version', 'legacy', 'history_mode'):
++    with pytest.raises(CommandError):
++        validate_command({**current, flag: True})
++for field in ('version', 'bindings'):
++    damaged = copy.deepcopy(current)
++    damaged[field] = '1' if field == 'version' else {}
++    with pytest.raises(CommandError):
++        execute(bundle, [damaged])
++print('PASS source-bound v2 exact join, each binding stripping/downgrade refusal, four caller-history flags rejected')
++
++for kind, case in [('placement', next(c for c in load_fixture(PRIVATE_PLACEMENT)['cases'] if c['command']['select'].startswith('occurrence:'))), ('add', add), ('swap', load_fixture(PRIVATE_MEDIA)['swap'])]:
++    calls = [case['command']] if kind == 'placement' else case['commands']
++    original = copy.deepcopy(calls)
++    with pytest.raises(CommandError, match='keep the draft and explicitly re-author'):
++        execute(bundle_from_document(case['input']), calls, verified_media=case.get('verified_media', []))
++    assert calls == original
++    print(f'PASS obsolete private {kind} v1: unchanged original refused with re-author pointer')
++
++for fallback in ('empty', 'identity'):
++    result, body, flight, identity, original = paired_ack()
++    assert body['commands'][0]['version'] == '2'
++    result['data']['id_map'] = {} if fallback == 'empty' else {k: k for k in result['data']['id_map']}
++    result['receipt']['result'] = copy.deepcopy(result['data'])
++    with pytest.raises(ValueError):
++        _ack(result, body, flight, identity, source_bundle=original)
++    print(f'PASS v2 ACK rejects {fallback} fallback despite forged receipt echo')
++
++# The changed golden-test setup uses the explicit legacy opener. Independently
++# send those unchanged public requests through the default source-aware engine.
++from astrid.sdk.timeline._command_state import State
++from tests.editing_conformance import test_recipe_m2_auto_placement as auto
++from tests.editing_conformance import test_recipe_m2_shared_auto_placement as shared
++from tests.editing_conformance import test_recipe_m2_placement_create_unplace as placement_ops
++from tests.editing_conformance import test_recipe_m2_shot_pool as pool
++
++for module in (auto, shared):
++    for name in module.CASES:
++        _, bundle, _, verified = module.case(name)
++        golden = load_fixture(module.FIXTURE)[name]
++        plan = execute(bundle, golden['commands'], verified_media=verified)
++        assert plan.commands == golden['commands'] and plan.id_map == {}
++        assert State(plan.bundle).entity(module.CHILD) == golden['child']
++        print(f'PASS unchanged public v1 {module.__name__.split(".")[-1]} {name}: default source-aware engine')
++for name in ('create', 'unplace'):
++    golden = load_fixture(placement_ops.FIXTURE)[name]
++    _, bundle, _, verified = placement_ops.case(name)
++    plan = execute(bundle, golden['commands'], verified_media=verified)
++    assert plan.commands == golden['commands'] and plan.records == golden['records'] and plan.id_map == {}
++    assert document_from_bundle(plan.bundle) == golden['output']
++    print(f'PASS unchanged public v1 placement.{name}: default source-aware engine, exact records/output')
++for name in pool.CASES:
++    golden = load_fixture(pool.FIXTURE)[name]
++    _, bundle, _, _, verified = pool.build(name)
++    plan = execute(bundle, golden['commands'], verified_media=verified)
++    assert plan.commands == golden['commands'] and plan.records == golden['records'] and plan.id_map == {}
++    assert pool.pool(plan.bundle) == golden['pool']
++    print(f'PASS unchanged public v1 shot.pool {name}: default source-aware engine, exact records/pool')
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..91887054bdd20136fd10130782b46c25c32f7289
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/notes/report.md
+@@ -0,0 +1,111 @@
++# Independent materialization version review
++
++**APPROVEPRIVATE** for the exact Agent source below. No blocking Agent source finding. This is not Runtime ACK, generation authorization, a source freeze, integration approval, or native/product qualification. Those gates remain pending independently of this completed review.
++
++Reviewed PLAN first, owner 13:05 version policy, `design/agent-materialization-version-boundary.md`, the implementation report, original `legacy-capture-counterexamples.json`, prior `design/agent-review-materialization-current.md`, three HELD ledger rows, and both Runtime coordination documents. No decisions changed and no source/Git/shared-dependency mutation.
++
++## Exact reviewed source
++
++| Identity | Value |
++| --- | --- |
++| Branch | `tl/agt-m2-materialization-version-boundary` |
++| Candidate commit | `3730d0bd51686a1692450359482205df64dcc839` |
++| Candidate tree | `3892a10bcffa9bf520b4c79591637cf3259d6724` |
++| Parent commit | `9cab2ad36ff6c99c05b42d16d54dfa82e7e86d5e` |
++| Parent tree | `216e67d6667ff34f1a192c7dc8326858243bf0f5` |
++| Astrid subtree | `2e79a7b63c78f483a371cfe34c8aea62f6cfb049` |
++| Tests subtree | `d3846e625aa0dceb9945ba38be5691658c2be083` |
++| Source schema SHA256 | `f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f` |
++| Counterexample file SHA256 | `f8a0227cd8dc90c9a042594b5db31f5fc9858a8417708d29771b9d65e2d4ef8e` |
++
++Read every changed product/test file relative to the private parent, and the surrounding executor/materialization/provider/replay/ACK paths. Product Python delta: 10 files, +62/-16, net +46. The complete 22-file delta also includes source schema and tests. No fixture blobs or published/generated artifacts changed. The review worktree HEAD `4ef1391c2c104d5d11b3a27265035c51be296045` is NOT the candidate; tests ran an immutable `git archive` of candidate `3730d0bd` under this worker's directory. The archive is removed after verification; logs and independent probe source remain.
++
++## Version and authority matrix
++
++| Input | Required behavior | Independent evidence |
++| --- | --- | --- |
++| Complete public S2 v1 occurrence placement, 103 reads / 3 selections | Accept original claims/records/output; empty map; no new source-binding requirement | Original counterexample equals fixture; default source-aware engine and detached provider pass; real SDK identity-ACK validation passes |
++| Complete public S2 v1 add/swap | Same public-v1 semantics | Original full records/output and empty maps pass default source-aware engine/provider and SDK identity ACK |
++| Other public v1/nonmaterializing/legacy edits | Keep v1 semantics and existing handlers/guards | Original M1 goldens, SDK retry lane, and additional default-source-aware original create/unplace/auto/shared/pool probes pass |
++| New private carrier v1 placement/swap | Permanent visible capture refusal with original claims preserved and re-author pointer | Both refusal tests and corresponding native v2 successes pass; ledger AG-MAT-V01/02 remain HELD |
++| Old private add v1, 25 reads / 3 selections | Refuse without refreshing claims or dropping owner/order checks | Original command preserved; v1 and version-flipped v2 refused; current v2 27/4 equivalent passes; AG-MAT-V03 HELD |
++| Current native materializing capture | Existing version `2`, exact original S/I, fixed owner O, parent/source pin and D/J join; flat map, no derived semantic birth | Original map/identity/recorder tests, dependent B, stale siblings, inverse/replay and independent binding/map forgery probes pass |
++| Sealed v2 missing proof/source closure, malformed version or forged map/owner/pin | Refuse closed | Seven field removals, invalid versions, legacy-bundle refusal, source/owner/map negatives and ACK forgery lanes pass |
++| Already accepted private v1 history | Authenticate through provider history and retained closures; preserve original records for inverse/redo/restore | Three JSON-reloaded detached-history positives pass; provider and Runtime lookup ordering inspected; actual Runtime lifecycle remains unverified |
++
++At candidate `commands.py:87,155`, validation admits only semantic v1 or v2 for the exact 13 affected operations. Native ingress helpers and `native_checkout.py:151` select the same version through `_materialization.capture_version`; original source-aware virtual slots select v2, ordinary/legacy slots v1. Execution uses the same handlers, claim verification and recorder. v1 ordinary recording omits only the new carrier; v2 and authenticated inverse recording retain it. No submitted-binding-presence switch changes recording semantics. Partial sealed v2 commands refuse; entirely unsealed authoring still uses the authoritative recorder, as designed. This does not claim Runtime acceptance of an unsealed nonidentity allocation.
++
++`_materialization.py:50,110,157,182` keeps one exact allocation join, original immutable source resolution, owner verification and source restoration. `rebase.py` consumes original records. `commit.py:834-898` obtains inverse/materialization facts from scoped accepted history and immutable closure reads; no command flag supplies accepted-history mode. `sync.py:61-163,389-446` reconstructs allocations through the same executor and verifies map/returned closure/history before releasing the outbox. Independent probes reject four invented command flags (`accepted_history`, `capture_version`, `legacy`, `history_mode`), stripped source/owner bindings, a v2-to-v1 relabel and empty/identity v2 maps even when the receipt echoes the forgery. Existing intervening-write, never-recycle and semantic-birth checks were not changed.
++
++The unsafe 25/3 add basis is distinct from the complete public 103/3 placement basis. Keeping the latter positive is necessary for full S2 compatibility; blanket refusal of all v1 would be wrong. No claims were refreshed. The durable-outbox test verifies unchanged pending draft, base, flight body/key and visible conflict after two restarts. Detached provider refusal occurs before prepare/accept.
++
++Schema audit independently compares the complete parent and candidate: exactly the same 48 definitions, envelope and 22 conditional operations; exactly twelve changed `then` clauses preserve the full old v1 clause and add a copy changing only `version.const` to `2`. `track.create` retains its already unversioned closed-args clause, with only versions 1/2 admitted semantically. Final v2 inventory: `clip.move`, `placement.move`, `track.create`, `clip.set`, `clip.set-element`, `track.set`, `shot.set`, `clip.set-params`, `occurrence.add-media`, `occurrence.swap-media`, `placement.create`, `placement.unplace`, `shot.pool`. Parent-only clip add/delete/trim/split, occurrence delete/duplicate, producer guard, inverse and restore stay semantic v1. No opcode alias, capture-version wire field, seed, DTO, table, endpoint or new framework. Reversing twelve additive version branches and four inherited typed-reference unions yields byte-exact ordinary S2 SHA256 `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`. Full ordinary-floor tests pass without bypassing their containment checker. S3/text/next ordinary union is absent and requires later explicit composition/review.
++
++## Retired-private ledger pairs: exact IDs and outcomes
++
++All six nodes were rerun explicitly with verbose output in `notes/ledger-pair-tests.log`; each PASSED. The seventh node is the unchanged public-v1 NEW-submission success. No row is declared merged/deleted.
++
++| HELD row | Original-v1 refusal PASSED | Current-v2 success PASSED |
++| --- | --- | --- |
++| AG-MAT-V01 | `tests/editing_conformance/test_recipe_m2_placement.py::test_private_carrier_placement_v1_refuses_without_refreshing_original_claims` | `tests/editing_conformance/test_recipe_m2_placement.py::test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo[fixture_path1]` |
++| AG-MAT-V02 | `tests/editing_conformance/test_recipe_occurrence_media.py::test_private_carrier_swap_v1_refuses_without_refreshing_original_claims` | `tests/editing_conformance/test_recipe_occurrence_media.py::test_portable_goldens[swap-fixture_path2]` |
++| AG-MAT-V03 | `tests/editing_conformance/test_recipe_occurrence_media.py::test_obsolete_carrier_add_v1_refuses_original_claims_with_draft_kept` | `tests/editing_conformance/test_recipe_occurrence_media.py::test_obsolete_carrier_add_equivalent_reauthored_v2_succeeds` |
++
++Reviewed changed test setup: ordinary golden captures explicitly open legacy mode while native neighbor tests retain the default source-aware mode. Independent probes additionally execute original public requests in default source-aware mode, so the legacy setup cannot hide an ingress regression. Two provider fixtures finish their canonical setup before authoring claims; they do not recapture at save. Existing capture/output assertions survive, with only explicit operation-version substitution in private equivalents. The obsolete add positive is paired under the owner-authorized retirement policy, not silently changed to missing functionality. Unknown-version negatives use 3 because 2 is now supported.
++
++## Exact independent commands and results
++
++Working directory for Python commands:
++`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/source`
++
++This directory was extracted from `git archive 3730d0bd51686a1692450359482205df64dcc839`; shared dependencies stayed read-only. Pytest cache disabled, bytecode disabled, no socket/browser/live suite. Counts overlap across commands and are not a unique-test total.
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --tb=short tests/editing_conformance/test_materialization_version_boundary.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py
++```
++
++**447 passed in 55.22s; exit 0.** Log `notes/carrier-protocol-tests.log`. Covers original public/M1 goldens, all version-boundary cases, materialization joins, dependent B after A lost ACK/reload/disjoint edit, sibling destinations, opaque codecs, inverse/redo/restore and SDK forgery/refusal/durability.
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --tb=short tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_materialization_schema_union.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_composed_schema.py
++```
++
++**96 passed in 185.86s; exit 0.** Log `notes/schema-tests.log`.
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --tb=short tests/editing_conformance/test_recipe_m2_placement_create_unplace.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py -k 'portable_goldens or provider_accepts or promotion_and_keep or args_are_closed'
++```
++
++**22 passed, 164 deselected in 11.99s; exit 0.** Intentional focused `-k` selection, not integration qualification. Log `notes/ordinary-golden-neighbors.log`.
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -vv -p no:cacheprovider --tb=short tests/editing_conformance/test_recipe_m2_placement.py::test_private_carrier_placement_v1_refuses_without_refreshing_original_claims 'tests/editing_conformance/test_recipe_m2_placement.py::test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo[fixture_path1]' tests/editing_conformance/test_recipe_occurrence_media.py::test_private_carrier_swap_v1_refuses_without_refreshing_original_claims 'tests/editing_conformance/test_recipe_occurrence_media.py::test_portable_goldens[swap-fixture_path2]' tests/editing_conformance/test_recipe_occurrence_media.py::test_obsolete_carrier_add_v1_refuses_original_claims_with_draft_kept tests/editing_conformance/test_recipe_occurrence_media.py::test_obsolete_carrier_add_equivalent_reauthored_v2_succeeds tests/editing_conformance/test_recipe_m2_placement.py::test_legacy_sealed_new_submission_preserves_original_claims
++```
++
++**7 passed in 3.62s; exit 0.** Log `notes/ledger-pair-tests.log`.
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python ../notes/independent_probes.py
++```
++
++**PASS; exit 0.** `notes/independent-probes.log` contains 24 named PASS lines. Probe source retained. Checks exact source/schema/counterexamples; three public-v1 detached provider/SDK ACK positives; default-source-aware ordinary golden requests; source/map/owner/history-mode negatives. Probe setup diagnostics were corrected before final run: canonical JSON import location and DetachedPort's one-element receipt sequence (expanded to its equivalent two-element range solely for SDK envelope validation, matching existing fixture practice). These were probe-fixture issues, not product failures. No production accepted Runtime history was fabricated or claimed.
++
++From assigned repository:
++
++```bash
++git diff --check 9cab2ad3 3730d0bd
++git diff --name-only 9cab2ad3 3730d0bd -- tests/editing_conformance/fixtures tests/fixtures
++git status --short
++```
++
++All exit 0; all outputs empty. No full/full* request or live suite. Implementation report's 866/1237 counts were read as prior evidence, not relabeled as this review's runs. Its eight default-deselected integration cases still require actual matched qualification.
++
++## Separate Runtime/native gates and next steps
++
++Runtime coordination still requests ACK of the final explicit version-only branch and narrowed 13-op inventory. Earlier 17-op/submode language was superseded; it is not an ACK. No Runtime ACK found at final readback of `design/runtime-coordination.md` and `workers/rt-m2-materialization-current-recovery/agent-coordination.md`.
++
++Static Runtime counterpart inspected at `3c917378a6dc2b48362fd1bc152cb13a5fd6b84a`, tree `853c122f2713fd6970164ff6c471550700257e8f`, parent `2cb9bb62c88d91fdab03df230ef0b2a3bd81f513`. `timeline_commit_port.py:437-454` retains the private captured closure join and exact submitted/prepared sealed-binding comparison for ordinary allocations; inverse facts remain authenticated-history based. `timeline_commit_store.py:848-863` retains authorize/ledger lookup before live context/head/destination checks. Agent's change edits none of those paths. This is a bounded static check, not approval of every Runtime carrier/occupancy change. Coordination also reports a separate secondary-ID over-refusal repair against 3c; the eventual exact Runtime successor needs its own review and proof.
++
++Still pending: Runtime semantic ACK, the Runtime/both-owner reviews, exact matched source selection, normal PRIVATE generated pair, actual admission and SDK ACK, own-slot/retired/global-item occupancy, native opaque/numeric preservation, accepted retry after restart, dependent/stale siblings, inverse/redo/restore on the actual Runtime. Detached accepted-v1 tests intentionally seed an authenticated-port history boundary; they establish Agent semantics only, not real ledger admission/authentication. Old v1 exact retry is supported statically by unchanged ledger-first ordering, not newly native-qualified here.
++
++Recommended action: accept this bounded Agent source review; keep generation/public artifact/pin/adoption held. Obtain Runtime ACK and both reviews on exact source, including any reviewed Runtime repair, before normal PRIVATE generation and central targeted native qualification. Compose later S3/text/ordinary source only in a separately reviewed complete union. The review itself is complete and unblocked; product adoption remains held.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version')
+(p/'commit-msg').write_text('docs(timeline): review materialization capture version boundary\\n\\nApprove the exact private Agent source after independent compatibility,\\nsource-binding, replay, outbox and schema checks. Keep Runtime semantic ACK,\\nboth-owner review and actual matched native qualification as separate gates.\\n')
+shutil.rmtree(p/'source')
+PY
+" in /home/user/work/wt/agt-review-materialization-version
+ succeeded in 10139ms:
+exec
+/bin/bash -lc "git status --short && python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version')
+assert not (p/'source').exists()
+assert (p/'notes/report.md').is_file()
+assert (p/'commit-msg').is_file()
+log=(p/'notes/independent-probes.log').read_text()
+assert sum(line.startswith('PASS') for line in log.splitlines()) == 24
+for f, count in [('carrier-protocol-tests.log','447 passed'),('schema-tests.log','96 passed'),('ordinary-golden-neighbors.log','22 passed, 164 deselected'),('ledger-pair-tests.log','7 passed')]:
+    assert count in (p/'notes'/f).read_text()
+(p/'DONE').touch()
+print('Review artifacts verified; archive removed; DONE written.')
+PY" in /home/user/work/wt/agt-review-materialization-version
+ succeeded in 196ms:
+Review artifacts verified; archive removed; DONE written.
+
+codex
+**APPROVEPRIVATE** for Agent `3730d0bd`. No blocking Agent source findings.
+
+Independent checks passed: 447 carrier/SDK tests, 96 schema tests, 22 focused neighbors, 7 explicit ledger-pair/public-v1 tests, and 24 probes. Counts overlap. Public v1 compatibility and obsolete-private refusal/current-v2 success pairs are preserved.
+
+Runtime ACK, both-owner review and actual matched native qualification remain pending. No source or Git changes; no full suites requested.
+
+[Review verdict](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-materialization-version.md) · [Exact commands, results and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/notes/report.md)
+
+Commit message and `DONE` written.
+tokens used
+153,726
+**APPROVEPRIVATE** for Agent `3730d0bd`. No blocking Agent source findings.
+
+Independent checks passed: 447 carrier/SDK tests, 96 schema tests, 22 focused neighbors, 7 explicit ledger-pair/public-v1 tests, and 24 probes. Counts overlap. Public v1 compatibility and obsolete-private refusal/current-v2 success pairs are preserved.
+
+Runtime ACK, both-owner review and actual matched native qualification remain pending. No source or Git changes; no full suites requested.
+
+[Review verdict](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-materialization-version.md) · [Exact commands, results and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-materialization-version/notes/report.md)
+
+Commit message and `DONE` written.

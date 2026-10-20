@@ -1,0 +1,9 @@
+name=agt-review-timing-main-map
+repo=agent
+base=tl/integration
+base_sha=cf7448ed
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-timing-main-map
+started=2026-10-20T12:02:41Z

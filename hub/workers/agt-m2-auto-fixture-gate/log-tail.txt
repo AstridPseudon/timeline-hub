@@ -1,0 +1,400 @@
+new = ast.parse((ROOT / product).read_text())
+for before, after in zip(old.body, new.body, strict=True):
+    if isinstance(before, ast.FunctionDef) and before.name == '_consume':
+        continue
+    assert ast.dump(before) == ast.dump(after), getattr(before, 'name', None)
+assert (ROOT / product).read_bytes() == show('db98206f', product)
+functions = 0
+for name in paths('540d37b0'):
+    if not name.startswith('tests/editing_conformance/test_recipe'):
+        continue
+    expected = ast.parse(show('540d37b0', name))
+    actual = ast.parse((ROOT / name).read_text())
+    expected = [n for n in expected.body if not isinstance(n, (ast.Import, ast.ImportFrom))]
+    actual = [n for n in actual.body if not isinstance(n, (ast.Import, ast.ImportFrom))]
+    assert [ast.dump(n) for n in expected] == [ast.dump(n) for n in actual], name
+    functions += sum(isinstance(n, ast.FunctionDef) for n in actual)
+# Explicitly audit the current positive equal-state and D07 timing proofs.
+for name, tests in {
+    'test_recipe_occurrence_delete.py': ['test_equal_state_and_aba_publication_history_accepts_replay'],
+    'test_recipe_m2_clip_trim.py': ['test_trim_hold_is_source_time_and_playback_duration_applies_speed',
+                                 'test_rational_fps_source_contact_and_half_open_intervals_are_not_requantized',
+                                 'test_native_group_replaces_track_ripple_and_compiles_parent_extension'],
+}.items():
+    name = 'tests/editing_conformance/' + name
+    before = {n.name: n for n in ast.parse(show('df2739f9', name)).body if isinstance(n, ast.FunctionDef)}
+    after = {n.name: n for n in ast.parse((ROOT / name).read_text()).body if isinstance(n, ast.FunctionDef)}
+    for test in tests:
+        assert ast.dump(before[test]) == ast.dump(after[test]), test
+schema = 'astrid/core/timeline/schema/edit-command.schema.json'
+assert (ROOT / schema).read_bytes() == show('df2739f9', schema)
+print(f'Allowed paths only; product diff is exactly approved _consume. {functions} existing consumer/helper functions match approved AST.')
+print('Current positive equal-state replay and three D07 timing proofs unchanged; EditCommand schema byte-unchanged.')
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-fixture-gate/check_scope.py" in /home/user/work/wt/agt-m2-auto-fixture-gate
+ succeeded in 807ms:
+Allowed paths only; product diff is exactly approved _consume. 182 existing consumer/helper functions match approved AST.
+Current positive equal-state replay and three D07 timing proofs unchanged; EditCommand schema byte-unchanged.
+
+codex
+The trim-consumer suite passed: **556 tests**—the original 555 plus one opaque-output case. Ruff, diff checks, reconstruction checks and the scope audit also pass. The twelve fixture files shrink by **160,274 bytes and 5,729 lines** from current integration while retaining all 23 golden cases. I’m finishing the report and handoff markers; Runtime/App activation holds remain unchanged.
+exec
+/bin/bash -lc 'find . -type d -name __pycache__ -print; git diff -- astrid/sdk/timeline/native_occurrence_media_commands.py tests/editing_conformance/test_recipe_occurrence_delete.py tests/editing_conformance/test_recipe_m2_clip_trim.py; git status --short' in /home/user/work/wt/agt-m2-auto-fixture-gate
+ succeeded in 397ms:
+./tests/__pycache__
+./tests/editing_conformance/__pycache__
+diff --git a/astrid/sdk/timeline/native_occurrence_media_commands.py b/astrid/sdk/timeline/native_occurrence_media_commands.py
+index 1889f677..bcc3708f 100644
+--- a/astrid/sdk/timeline/native_occurrence_media_commands.py
++++ b/astrid/sdk/timeline/native_occurrence_media_commands.py
+@@ -45,13 +45,16 @@ def _exclusive(ctx, owner):
+ 
+ 
+ def _consume(ctx, owner, ids):
+-    """Record the clip rows an automatic builder read, so a later change conflicts at replay."""
++    """Guard automatic placement's timing and lane inputs, including absent fields."""
+     members = ctx.select('collection.clips', owner)
+     for clip_id in ids:
+         ref = owner + '/clip:' + clip_id
+         if ref not in members:
+             raise CommandError('consumed clip is not in the occurrence', kind='identity_conflict', ref=ref)
+-        ctx.read(ref)
++        # _end_frame supplies at/at_ms to duration.py, which validates speed
++        # and uses numeric hold before from/to. Track selects/inherits the lane.
++        for field in ('at', 'at_ms', 'track', 'hold', 'from', 'to', 'speed'):
++            ctx.read(ref, [field])
+ 
+ 
+ def _binding(pin, kind):
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index da9ad99d..b6ace92c 100644
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -16,12 +16,13 @@ from astrid.core.timeline.duration import (
+     timeline_duration_seconds,
+ )
+ from astrid.sdk.timeline._command_state import ABSENT, CommandError, State
+-from astrid.sdk.timeline.capture import capture_move
+ from astrid.sdk.timeline._trim_commands import capture_clip_trim
+-from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
++from astrid.sdk.timeline.capture import capture_move
+ from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+ from astrid.sdk.timeline.rebase import replay
+ from astrid.sdk.timeline_checkout import Clip
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import inverse, later
+ from tests.sdk.test_timeline_commit_provider_document import document_fixture
+ 
+@@ -281,7 +282,7 @@ def test_unchanged_writes_and_original_capture_claims_are_authoritative():
+ 
+ 
+ def test_portable_golden_and_closed_schema():
+-    golden = json.loads(FIXTURE.read_text())
++    golden = load_fixture(FIXTURE)
+     original = bundle_from_document(golden['input'])
+     plan = execute(original, golden['commands'])
+     assert plan.records == golden['records']
+diff --git a/tests/editing_conformance/test_recipe_occurrence_delete.py b/tests/editing_conformance/test_recipe_occurrence_delete.py
+index 343dd7f0..a19fd40e 100644
+--- a/tests/editing_conformance/test_recipe_occurrence_delete.py
++++ b/tests/editing_conformance/test_recipe_occurrence_delete.py
+@@ -2,7 +2,6 @@
+ from __future__ import annotations
+ 
+ import copy
+-import json
+ from pathlib import Path
+ 
+ import pytest
+@@ -14,6 +13,7 @@ from astrid.sdk.timeline.commands import _SCHEMA, execute
+ from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+ from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.fixture_loader import load_fixture
+ from tests.editing_conformance.test_recipe_m1_commands import inverse, later
+ from tests.sdk.test_timeline_commit_provider_document import document_fixture
+ 
+@@ -187,7 +187,7 @@ def test_inverse_requires_authenticated_order_and_source_boundary():
+ 
+ 
+ def test_closed_schema_and_portable_native_capture_golden():
+-    fixture = json.loads(FIXTURE.read_text())
++    fixture = load_fixture(FIXTURE)
+     assert portable_golden() == fixture
+     validator = Draft202012Validator(_SCHEMA)
+     validator.validate(fixture['command'])
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M tests/editing_conformance/fixtures/recipe_m2_app_clip_scalar_fields.json
+ M tests/editing_conformance/fixtures/recipe_m2_auto_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_clip_add.json
+ M tests/editing_conformance/fixtures/recipe_m2_clip_split.json
+ M tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+ M tests/editing_conformance/fixtures/recipe_m2_occurrence_delete.json
+ M tests/editing_conformance/fixtures/recipe_m2_occurrence_duplicate.json
+ M tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+ M tests/editing_conformance/fixtures/recipe_m2_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_placement_create_unplace.json
+ M tests/editing_conformance/fixtures/recipe_m2_shared_auto_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_shot_pool.json
+ M tests/editing_conformance/test_recipe_clip_scalar_fields.py
+ M tests/editing_conformance/test_recipe_m2_clip_add.py
+ M tests/editing_conformance/test_recipe_m2_clip_split.py
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+ M tests/editing_conformance/test_recipe_m2_placement.py
+ M tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
+ M tests/editing_conformance/test_recipe_m2_shot_pool.py
+ M tests/editing_conformance/test_recipe_occurrence_delete.py
+ M tests/editing_conformance/test_recipe_occurrence_duplicate.py
+ M tests/editing_conformance/test_recipe_occurrence_media.py
+?? docs/design/agent-fixture-trim-current.md
+?? tests/editing_conformance/fixture_loader.py
+?? tests/editing_conformance/test_fixture_loader.py
+?? tests/editing_conformance/test_recipe_auto_placement_reads.py
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import subprocess
+from pathlib import Path
+names=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+names.update(subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines())
+old_bytes=old_lines=new_bytes=new_lines=0
+for name in sorted(names):
+ old=subprocess.run(['git','show','df2739f9:'+name],capture_output=True).stdout
+ new=Path(name).read_bytes()
+ old_bytes+=len(old); old_lines+=len(old.splitlines()); new_bytes+=len(new); new_lines+=len(new.splitlines())
+print(f'{len(names)} code/test/fixture/design files excluding requested report: {old_bytes}->{new_bytes} bytes ({new_bytes-old_bytes:+}), {old_lines}->{new_lines} lines ({new_lines-old_lines:+})')
+PY" in /home/user/work/wt/agt-m2-auto-fixture-gate
+ succeeded in 352ms:
+27 code/test/fixture/design files excluding requested report: 1181467->1043506 bytes (-137961), 39452->34142 lines (-5310)
+
+exec
+/bin/bash -lc "mkdir -p notes
+cat > notes/report.md <<'EOF'
+# Automatic placement reads + current fixture trim
+
+Completed on "'`tl/agt-m2-auto-fixture-gate`, base `df2739f9`. Product changes are
+exactly the approved `db98206f` `_consume` change: seven literal timing/lane
+field reads (`at`, `at_ms`, `track`, `hold`, `from`, `to`, `speed`), retaining
+membership, pool, legacy and ownership guards. The approved `540d37b0` known-path
+loader and ten fixture consumer adaptations are composed with those semantics.
+No schema, dependency pin, other product logic, integration or ledger changes.
+
+## Data and decisions
+
+The brief says four changed narrow fixtures. Read-only `git diff --name-only
+ df2739f9 db98206f` establishes four changed files, **two** of which are fixtures:
+`recipe_m2_auto_placement.json` and `recipe_m2_shared_auto_placement.json`.
+Neither overlaps the ten compact fixture files. Intended expanded data therefore
+uses `db98206f` for those two and `df2739f9` for the other ten; no old whole-clip
+reads replace the seven-field semantic reads. This follows the approved source,
+rather than inventing changes to two additional fixtures.
+
+Applied the approved factoring algorithm to that intended data: remove only
+record fields equal to the same command'"'s "'`created`/`reads`/`selections`, share
+identical inputs/media at named locations, and reuse create output as unplace
+input. Ten reconstructed fixtures exactly equal intended data; all 15 compact
+cases survive. The two auto goldens retain all eight cases and differ from base
+only by whole consumed-row reads becoming the seven field reads. All 23 cases
+across 12 changed fixtures remain. Ordinary expanded handoffs for all 12 are
+byte-identical to their intended source blobs at:
+
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agent-expanded-<stem>.json`
+
+App consumes those expanded JSON files, never the Python private encoding.
+The repo loader/tests have no Git metadata prerequisite. The one-off composition
+and scope audit scripts use only read-only Git operations to compare approved
+sources. Source provenance, individual source/handoff/compact SHA-256 hashes,
+unchanged schema hash and sizes/case counts are documented in
+`docs/design/agent-fixture-trim-current.md`.
+
+The loader never recursively interprets authored payload keys. Input/output
+opaque `records`, `command`, `reads`, nested created metadata, Unicode and newline
+values survive with equal UTF-8 JSON bytes. Kept the original input test and added
+an output parameter; no assertions were removed or weakened. AST audit confirms
+182 existing consumer/helper functions match the approved trim apart from
+imports, and explicitly confirms current positive equal-state delete replay and
+three D07 timing proof bodies are unchanged. Initial scoped Ruff found four
+import-format issues in the approved trim files; import sorting fixed them.
+
+## Size: current integration → after
+
+Counts include one logical line for an already-flat JSON file; there is no new
+minification, opaque compression or general fixture language.
+
+| Scope | Bytes before → after (net) | Lines before → after (net) |
+| --- | ---: | ---: |
+| Ten compact fixtures | 917,833 → 740,101 (-177,732) | 32,338 → 25,775 (-6,563) |
+| All twelve changed fixtures | 1,018,059 → 857,785 (-160,274) | 36,275 → 30,546 (-5,729) |
+| All 27 source/test/fixture/design paths, excluding this report | 1,181,467 → 1,043,506 (-137,961) | 39,452 → 34,142 (-5,310) |
+
+## Exact commands and results
+
+Working directory for all commands:
+`/home/user/work/wt/agt-m2-auto-fixture-gate`.
+Shared dependency environments remained read-only. No full suite was requested.
+
+Original narrow acceptance suite, unchanged set: **571 passed in 54.62s**, exit 0.
+Includes eight-mode image/video guard matrix, consumed-claim tampering, stale
+native moves, ownership/membership/order/timing refusals, pool/legacy guards,
+media/manifest inverses and positive unrelated params/volume/opaque rebases.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-fixture-gate/pytest-narrow tests/editing_conformance/test_recipe_auto_placement_reads.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
+```
+
+Original trim acceptance suite plus the new opaque-output case: **556 passed in
+41.78s**, exit 0 (original 555 nodes retained). This overlaps the narrow suite;
+these totals must not be added as distinct coverage. The only Python changes
+after the narrow run were import sorting; the subsequent trim suite exercises
+the final loader and consumer imports.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-fixture-gate/pytest-trim tests/editing_conformance/test_fixture_loader.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_recipe_occurrence_delete.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_occurrence_media.py
+```
+
+Reconstruction and source comparison: **10/10 exact**, **15/15 compact cases**;
+**2/2 narrow-only semantic fixtures**, **8/8 auto cases**; **12/12 byte-exact
+expanded exports**, exit 0.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-fixture-gate/compose_fixtures.py
+```
+
+Scope/AST/schema audit: **passed**, exit 0. Approved paths only; sole product
+change exactly `_consume`; existing positive delete and D07 proofs unchanged;
+EditCommand schema byte-unchanged.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-fixture-gate/check_scope.py
+```
+
+Scoped lint and whitespace: **passed**, exit 0.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_media_commands.py tests/editing_conformance/fixture_loader.py tests/editing_conformance/test_fixture_loader.py tests/editing_conformance/test_recipe_auto_placement_reads.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_recipe_occurrence_delete.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_occurrence_media.py
+git diff --check
+```
+
+## Holds, blockers and next steps
+
+No blocker to this bounded source/test unit. Actual Runtime/App qualification,
+live/socket/browser journeys, `make check`, and full suites were not run or
+claimed. Keep production activation held pending Runtime schema/provider
+regeneration and normal regeneration/attempt-fence qualification, and App'"'s
+original-approval/outbox journey using the expanded exports. Existing fixed
+occurrence-window bounds, parent-owned completion, video-unplace and legacy
+migration restrictions are unchanged; this unit does not resolve those holds.
+
+Recommended next step: orchestrator review and integrate this single composed
+unit, then coordinate Runtime/App consumers with these expanded vectors under
+their existing qualification gates. No commit/merge/rebase/checkout/push was
+performed. Commit message and DONE are supplied for the harness; test temp files
+and worktree bytecode were removed.
+EOF
+PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import shutil
+root=Path.cwd()
+for name in ('tests/__pycache__','tests/editing_conformance/__pycache__'):
+ path=root/name
+ if path.exists():
+  shutil.rmtree(path)
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-fixture-gate')
+for name in ('pytest-narrow','pytest-trim'):
+ path=worker/name
+ if path.exists():
+  shutil.rmtree(path)
+(worker/'commit-msg').write_text('''fix(timeline): compose automatic placement reads and fixture trim
+
+Guard consumed timing and lane fields while preserving membership, pool and
+legacy eligibility checks. Factor current conformance fixtures at explicit
+record locations without restoring old whole-clip reads.
+
+Preserve positive delete and timing proofs, verify exact reconstruction of
+all ten compact fixtures, and document expanded App handoffs and size changes.
+''')
+print('Report and commit message written; generated test temps/bytecode cleaned.')
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-fixture-gate/check_scope.py
+git diff --check" in /home/user/work/wt/agt-m2-auto-fixture-gate
+ succeeded in 1130ms:
+Report and commit message written; generated test temps/bytecode cleaned.
+Allowed paths only; product diff is exactly approved _consume. 182 existing consumer/helper functions match approved AST.
+Current positive equal-state replay and three D07 timing proofs unchanged; EditCommand schema byte-unchanged.
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import hashlib,json,subprocess
+from pathlib import Path
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-fixture-gate')
+orch=worker.parents[1]
+for entry in json.loads((worker/'fixture-stats.json').read_text()):
+ name=entry['name']
+ fixture=Path('tests/editing_conformance/fixtures')/name
+ export=orch/'design'/('handoff-agent-expanded-'+name)
+ assert hashlib.sha256(fixture.read_bytes()).hexdigest()==entry['compact_sha256']
+ assert hashlib.sha256(export.read_bytes()).hexdigest()==entry['source_sha256']
+assert Path('notes/report.md').is_file()
+assert (worker/'commit-msg').stat().st_size>0
+assert not (worker/'BLOCKED').exists()
+assert not list(Path('tests').rglob('__pycache__'))
+(worker/'DONE').touch()
+print('Final hashes verified for 12 fixtures and 12 expanded handoffs. Report/commit-msg present; DONE created empty.')
+print(subprocess.check_output(['git','diff','--stat'],text=True))
+PY" in /home/user/work/wt/agt-m2-auto-fixture-gate
+ succeeded in 152ms:
+Final hashes verified for 12 fixtures and 12 expanded handoffs. Report/commit-msg present; DONE created empty.
+ .../timeline/native_occurrence_media_commands.py   |    7 +-
+ .../fixtures/recipe_m2_app_clip_scalar_fields.json | 1453 +-----
+ .../fixtures/recipe_m2_auto_placement.json         |  462 +-
+ .../fixtures/recipe_m2_clip_add.json               |  136 -
+ .../fixtures/recipe_m2_clip_split.json             |  573 ---
+ .../fixtures/recipe_m2_clip_trim.json              |  688 ---
+ .../fixtures/recipe_m2_occurrence_delete.json      |  255 --
+ .../fixtures/recipe_m2_occurrence_duplicate.json   |  239 -
+ .../fixtures/recipe_m2_occurrence_media.json       | 2529 ++++-------
+ .../fixtures/recipe_m2_placement.json              |    2 +-
+ .../recipe_m2_placement_create_unplace.json        | 4609 ++++++--------------
+ .../fixtures/recipe_m2_shared_auto_placement.json  | 1062 +++--
+ .../fixtures/recipe_m2_shot_pool.json              |  373 --
+ .../test_recipe_clip_scalar_fields.py              |    3 +-
+ .../editing_conformance/test_recipe_m2_clip_add.py |    3 +-
+ .../test_recipe_m2_clip_split.py                   |    3 +-
+ .../test_recipe_m2_clip_trim.py                    |    7 +-
+ .../test_recipe_m2_placement.py                    |    3 +-
+ .../test_recipe_m2_placement_create_unplace.py     |    3 +-
+ .../test_recipe_m2_shot_pool.py                    |    3 +-
+ .../test_recipe_occurrence_delete.py               |    4 +-
+ .../test_recipe_occurrence_duplicate.py            |    9 +-
+ .../test_recipe_occurrence_media.py                |    4 +-
+ 23 files changed, 3357 insertions(+), 9073 deletions(-)
+
+
+codex
+Completed both approved units on `df2739f9`. Commit message and empty `DONE` marker written.
+
+- Narrow acceptance: **571 passed**.
+- Trim acceptance: **556 passed**—original 555 plus opaque-output coverage. Suites overlap; totals are not summed.
+- Reconstruction: **10/10 exact**, all **23 golden cases** preserved across twelve fixtures.
+- Twelve expanded handoffs updated; fixture reduction: **160,274 bytes / 5,729 lines**.
+- Ruff, scope/AST audit and `git diff --check` passed.
+- Brief correction: `db98206f` changes **two fixtures**, among four files.
+
+Exact targeted commands, results, hashes and decisions are recorded in [notes/report.md](/home/user/work/wt/agt-m2-auto-fixture-gate/notes/report.md).
+
+No blockers. No full suite or Runtime/App qualification claimed; activation holds remain. Ready for orchestrator review and integration.
+tokens used
+92,453
+Completed both approved units on `df2739f9`. Commit message and empty `DONE` marker written.
+
+- Narrow acceptance: **571 passed**.
+- Trim acceptance: **556 passed**—original 555 plus opaque-output coverage. Suites overlap; totals are not summed.
+- Reconstruction: **10/10 exact**, all **23 golden cases** preserved across twelve fixtures.
+- Twelve expanded handoffs updated; fixture reduction: **160,274 bytes / 5,729 lines**.
+- Ruff, scope/AST audit and `git diff --check` passed.
+- Brief correction: `db98206f` changes **two fixtures**, among four files.
+
+Exact targeted commands, results, hashes and decisions are recorded in [notes/report.md](/home/user/work/wt/agt-m2-auto-fixture-gate/notes/report.md).
+
+No blockers. No full suite or Runtime/App qualification claimed; activation holds remain. Ready for orchestrator review and integration.

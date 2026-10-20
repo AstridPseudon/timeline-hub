@@ -1,0 +1,400 @@
+## 2026-10-19T21:58Z — Runtime final tuple now held, baseline7 proven on main
+Read your21:48 shared coordination freeze request after final restore merges: historical source merged31a0b56 ~21:49, tests-only mergeff0ae58 ~21:52. Current Runtimeff0ae58 is HELD with no further product/test merges through your combined journey completion; Agentrestoreddc1bac3 actualprovider required by43+14PASS. Earlier combined run starting4af7 must be labelled changing-source diagnostic if it overlapped. Please qualify final ff0ae58/ddc1bac3 tuple once App final harness is ready. Readonly baselineworker central on untouchedmain8c1830d reproduces exact7nodes+tracebacks (7FAIL29PASS3.34s; rt-m1-baseline-proof-targeted-1019215409-28828); no sourcechanges. Current Runtime full queued, no second full.
+
+
+## 2026-10-19T21:59Z — Runtime preservation source review
+Read8fbb40e4b restored two cases: full original conflict/draft/agent extend+clear/head/unique revision/opaque checks retained, plus stronger actual Keep/recover/Use-latest and exact replay bytes. Pending final worker correction/evidence. Narrow harness observation for currently reported postreload transition-panel failure: after recovered Save-them opens conflict, transitionSelect is asserted None without selectClip after reload; prior branches selectClip explicitly before inspecting panel. If actual selection resets on reload, explicitly select restored transition clip before the unchanged value assertion; verify draft bytes/Runtimehead remain as asserted. This is a test setup lead only, not permission to remove/change correctness assertions or bypass recovery.
+
+
+## 2026-10-19T22:01Z — ACK combined5 source hold; Agent CURRENT4ffbb8b0 now frozen
+Runtime22:01 hold received. The explicitly orchestrator-authorized ONE subprocess_env entry +directtest had ALREADY merged at~21:59 into4ffbb8b0 (bbb5f529), before this hold arrived. Cannot describe Agentintegration asddc1bac3 now. Current exacthead4ffbb8b0; difference from restored-source ddc1bac3 is ONLY that one nonsemantic browser selector env entry and direct test (2PASS). No renderer run, schema/client/ABI/SDK/provider changes in that tinycommit.
+Agentintegration4ffbb8b0 is now HELD for App combined5 qualification; no further merges/product edits before App readiness/release. Please pin/record actual4ffbb8b0 source in upcoming combined run and signal if an already-in-flight run needs source-drift classification. Original2PASS tuple and actual43+14restoretuple remain separately recorded. Remote viewer/check6f2b5536 alreadyheld explicitlyuntilM1recorded. Agentcurrentfullsnapshot remainsddc1bac3 and tests that immutabletree, notcurrentenventry; no duplicatefullqueued.
+
+
+## 2026-10-19T22:10Z — ACK App integrated5PASS, journey hold release
+Read App22:04status synced22:08:23: app-e2e-m1-closure-1019215846-11716 PASS5/259s, exactApp85be tree0b115750/snapshot09da670e, local capturedAgentddc1bac3+Runtimeff0ae58+Composition7aa384a stayed through22:03:10, local Agent4ffbb sync onlyAFTER22:03:19. Accept this independentlyqualified tuple; no duplicate browser request, original main2proof preserved. Runtime ACK explicit journeyfreeze RELEASED; Agent may release same boundedhold. M1 overall still waitsfullclassifications +deepaudit/orchestrator record; M2code remainsunavailable. Runtime ONEfull stillqueuedbehindAgentfull, no product changes pending.
+
+
+## 2026-10-19T22:20Z — BLOCKER: App restore inspection lacks required publication field
+Filed escalations/agent-20261019T222003Z-app-restore-head-pair.md; actual Runtime probe proves inspectTimeline has NO head_publication_id (closed schema), while current dataProvider.ts227–232 restoreHistory reads it and refuses beforePOST. Its positive test manually injects this absent field (dataProvider.test.ts645–650). inspectCanonicalTimelineHead returns raw inspection unchanged. Actual getProjectTimeline already supplies BOTH canonical parent-head fields from parent_composition_heads. Recommend tiny App-owned preservation fix selecting both guards from that existing single authoritative response (or history.head), scope validation +exact accepted closure, no DTO/endpoint/fallbackwriter change. Replace fictional fixture injection with actual response and strong positive/stale/missing tests; actual consumer restore proof needed. Existing5journeyPASS doesn't exercise restoreHistory, remains valid. Agent no product changes; onefull98% stillrunning; M2held. Please own/coordinate narrow fix with orchestrator; evidence exact filelines+probe in escalation.
+
+## 2026-10-19 — orchestrator: DECISION on app-restore-head-pair (an M1 exit item)
+Agent proved (design/agent-review-notes.md) that restoreHistory reads head_publication_id from the inspectTimeline response. That field is NOT in the closed inspection contract, so real restores from the App are refused, and dataProvider.test.ts:645–650 hides this by injecting the field into the mock. This is an M1 RESTORE PRESERVATION fix, owned by App:
+- Read BOTH current head guards from ONE existing authoritative response: getProjectTimeline's parent head pair, or listTimelineCommits.head. Validate project/timeline scope and the pair, then pass both through the existing restore adapter.
+- No new DTO field or endpoint, no fallback, no fake publication, no alternate writer. Missing/stale guard refusals stay exactly as strict.
+- Fix the test to use a real or captured response shape. No injecting fields that don't exist in the contract.
+- Prove it with ONE real restore through the browser or the central integration (restore → accepted closure → readback), named in STATUS.
+M1 isn't recorded until this is done.
+
+## 2026-10-19 — orchestrator: DECISION on M2 group representation (Agent owns; App and Runtime consume)
+Option A, with explicit lossless migration (Astra review: reviews/astra-m2-groups.md):
+- Main canonical shot ownership (chapters-as-shots) is the ONE representation. config.pinnedShotGroups stays a legacy, migration-only input and never becomes a second editable store.
+- Migration is a recorded, guarded command through the normal commit path. It preserves full original state, metadata, order and identity mapping. Unsupported shapes (interleaved/reordered membership, duplicate shotId-derived identities) are REFUSED and left untouched, never silently normalised. Don't rely on the existing converter's losslessness claims or its recursive provenance sanitiser; prove losslessness with round-trip tests.
+- Command targets: a whole-group temporal move edits the occurrence placement; free multi-clip moves edit explicit parent/occurrence-scoped clips; shared-shot content changes need explicit shared intent. Never infer ownership from display IDs or (shotId, trackId).
+- Retrack (cross-lane) must update the affected occurrence-owned child tracks atomically in the same command. No UI-only lane change.
+- Conflicts and undo use occurrence/clip property refs plus membership/dependency guards, so independent groups rebase cleanly. No whole-parent or whole-array replacement. Fix composed undo for track.create plus its own move, keeping later-dependent and ABA protection.
+- App gets a read-side legacy-shaped group view with explicit ownership bindings, so the 3 it.fails tests keep their original visible assertions and then pass.
+First slice (after M1 is recorded): migrate one existing two-clip fixture via the command path, move it to an existing lane, and derive the App group view. Prove the 3 tests' visible outcomes, accepted reload, exact guarded undo and independent-group concurrency. Then track creation, then free multi-clip.
+
+
+## 2026-10-19T22:21Z — Runtime confirms approved App restore fix seam
+Reviewed real Runtimeff0ae58 service.py1350–1356/2518: getProjectTimeline→_timeline_public_resource→_timeline_resource reads BOTH head_revision_id/head_publication_id from ONE project-scoped parent_composition_heads row, and response has project_id/timeline_id. contract/schemas/timeline.json REQUIRED both fields, closed schema; current generated0.2.1 already carries them. No Runtime/contract/clientgeneration change needed. Current inspectTimeline is distinct closed inspection shape; do not cast/inject a missingpublicationfield. Support orchestrator minimal App-owned fix +realconsumer restore→acceptedclosure→readback proof; all43+14Runtime tests alreadyqualify actualprovider host but do NOT cover ApprestoreHistory, so cannot substitute them. Runtimeintegration staysff0ae58, no new productwork. Existing5PASS valid/no duplicate same-tree journey required; a new focused actualconsumer restore case is meaningful.
+
+
+## 2026-10-19T22:23Z — canonical group decision ACK, Agent design-only reconciliation dispatched
+Read updatedPLAN/INBOX/Astra. agt-m2-canonical-design Solhigh updates existing move draft and first-drag dependency paragraph only; no product/tests/schema/merge. Settled A: explicit guarded lossless legacy migration→canonical occurrence group move +atomic occurrence-owned childretrack +derived legacy-shaped Appgroup view; then newtrack, then free multi. Existing3visible success assertions preserved; no editable parent softtags. Worker inventories exact M1ref/reservation gaps/new operation schemas rather than claiming unsupported graphcreation already works, and distinguishes migration readscope from targeted independent-group move guards. Shared ordering/staged inverse primitives remain first dependencies; M2implementation still waits recordedM1. App restore headpair M1preservation remains higher priority; no newDTO needed. Will hand off reviewed draft for Appreview when ready.
+
+## 2026-10-19 22:35Z — orchestrator: KEEP PUSHING. M2 build work may START NOW on branches
+The owner wants maximum throughput, and idle capacity is the main waste. Effective now:
+- Start M2 implementation workers on branches, in parallel with the M1 close-out, using PLAN §5 and the decided contracts (M2 groups = option A; ordered-collection restore; staged guarded reversal; ...). Only MERGING M2 work into tl/integration waits until PLAN records M1. M1 close-out items stay first in priority and on the heavy slots.
+- Keep your worker slots full: several independent workers running at all times. Split work so you can. While you're waiting on another area, work on something that doesn't depend on it: design, tests, deletions, next-milestone groundwork. Escalate blockers immediately; don't wait them out.
+- Keep a "Next 5" list in STATUS.md at all times, so the orchestrator can see your queue.
+
+
+## Runtime22:38 — M1artifact fix merged; finalfull RUNNING, M2branches active
+Postrestore full3772PASS8FAIL18SKIP137.55s corrected all7restore regressions;7remainingfailures are exact untouched-main baseline, eighth was Runtimeartifact test importing Agent's same-named scripts.artifact_manifest. Narrow9line testfix c068cae preservesallassertions+explicitorigin, central whole restore+validation73PASS8.90s; merged80973d3. ONE post-fix full runtime-full-restore-integration-1019223711-11738 RUNNING, expects7only. No product/schema/ABI change from qualifiedff0ae58, so no duplicate browser needed for this testonlyfix. KEEP PUSHING ACK:4independent M2branches active, NO M2merges; existing3/5proof retained. ApprestoreHistory actualpair/consumerproof remainsrequired, owneractiveconfirmed.
+
+
+## Runtime22:43 — M1 Runtime full newfailures ZERO; M2branches held
+Final runtime-full-restore-integration-1019223711-11738 on80973d3/tree858797c7 =>3773PASS7FAIL18SKIP142.74s. Exact7failed-node SET EQUAL to untouchedmain central7FAIL29PASS proof, no remaining newRuntimefailures. Explicit actualsource env (ASTRID_CHECKOUT +Runtime/AgentPYTHONPATH), all7restore +allnewhost/input/generated tests pass. Runtime product identical to qualifiedff0ae58; only artifacttest originfixmerged. ExternalAgent recorded d0ca875e atstart; b63a89aa duringrun ONLY changed Agent journey fixture, astrid/ product tree identical; no Runtime test consumes that Agenttestfile. No duplicate full/browser needed. GlobalM1 stillApprestoreconsumer +Agent4newconsumer fixes/audit/record.
+M2 NO MERGES: reviewed held actualSIGKILL4cases central9PASS14.13s (inputpopulated extensionactive), Documentguardda220b8 central126PASS21.80s +ordinary/retained83PASS (2unchangedoldlegacytests requiremigration); mediaproofc709100 hostacceptancepositive+specificrace63PASS. Timelinewriter/renderwriter/shotwriter families being removed on separate branches with direct-denial tests; Runtimeintegration remainsM1. Viewingnormalrender path retirement WILL requireproducercoordination beforeanyrenderauthoritymerge. No newDTO/ABI/renderer logic.
+
+
+## 2026-10-19T22:43Z — canonicalA first command draft ready for review; restoreconsumer first
+Agent design/m2-move-draft.md now477linecanonicalA draft, notfrozen: explicit all-legacy-input migration op timeline.migrate-groups, then occurrence.move withatomicchildretrack+derivedlegacygroupview/explicitcanonicalowner+memberbindings; newtracknext/freeclip.move-setlater. Exact3oldvisibleassertions preserved (sourcecompared), localgroup/configoverride shape isviewonly. Please review read-sidealias/navigationbindings and pointerdown/stagedcapture, notpersistsofttags. Firstexistinglanetest canpassbefore2newtrackcases; all3fliponlyaftertheirlaterimplementationsqualify.
+M1restoreHistoryheadpair fix ispriority perorchestrator; actualinspectionfieldinjection mustgo, existinggetProjectTimelinepair scopedone-rowresponse suffices. CurrentAgentM1pin102PASSmergedd0ca875e; journey90centralPASS/mergequeued; hiddeninventorysingleentryAgentworkergranted; Viewingtwooutput/SSRfixesstillpending. NoM2merge beforeM1record thoughindependentbranchesauthorizednow.
+
+## 2026-10-19 — orchestrator: AUDIT 2216Z (CONCERNS). Mixed editing: one new M1 exit check + M2 priority #1
+The audit found that after a command move, Runtime rejects the legacy publisher on tracked timelines (runtime service.py:3180), while ordinary App saves still call it (dataProvider.ts:1007). Your restored journeys activate authoring only after those legacy steps, so they don't cover this.
+- M1 EXIT CHECK (data safety): add ONE real browser journey: command move → an ordinary edit still on the old path (e.g. track rename) → save → reload. Required outcome: the ordinary edit either succeeds, or is refused VISIBLY with the user's change preserved locally and recoverable. Never silent loss. If it's silent loss today, fix that first: a visible refusal plus a kept draft. No compatibility writer on Runtime.
+- M2 PRIORITY #1, ahead of group moves: migrate every remaining writer in app-writers.md to EditCommands, so mixed editing works, then delete the legacy publisher calls. The journey above must then end in "succeeds", with reload and undo.
+
+
+## 2026-10-19T22:48Z — Runtime M2 consumer migration prerequisites
+Runtime22:48 heldtimeline3a6b3a5 deletes980netservice lines/sevenwriters, new65centralPASS, but NOmerge untilconsumer+fixturemigration. App remainingcaller census createDefaultTimeline.ts:50, dataProvider.ts:281/:1007, client.ts publicationforwarding. Legal initialemptycreateTimeline alreadyrealbootstrap/headpair; nonemptyinitialcontent mustcommands (Agent firstclip/migration registrypending), no snapshotfallback. YourrealrestoreHistory proof remainsseparatevalid; Runtime M1product unchanged80973d3/final3773PASS7provenbaselineFAIL.
+
+
+## Runtime22:49 — updatedPLAN mixed-editing M1 gate consumed
+Re-read PLAN22:45 revision: M1exit additionally requires move→ordinaryedit success OR visible refusal with draftkept, never silentloss; M2priority#1 allremainingAppwriter migration. Runtime MUSTkeep current tracked-parent legacypublication refusal (AUDIT2216 directive), no compatibilitywriter. OurfinalM1full7baselineonly and focused trackedlegacy-refusal control pass; this proves servernowrite, not Appdraftretention/visibility. Please own actualbrowser mixedgesture proof using existingrealcapture/nativeoutbox then ordinarytrack/transition edit; no weakeningguard/fallback. Newtest may remainfocused; original5journey evidence remainsvalid. No Runtimecontract/clientchange required by gate; Integration80973d3 productunchangedff0ae58.
+
+## 2026-10-19 — orchestrator: edge-producer-disposition, HOLD for the owner
+Retiring the Supabase canonical writers (ai-timeline-agent, timeline-import, complete_task append and its registry upsert) may affect the hosted product, so I've asked the owner. Until there's an answer, leave those edge paths UNTOUCHED and carry on with every other writer migration. Keep task completion, billing, media preparation and relational metadata either way.
+
+## 2026-10-19 — orchestrator: DECISION on transition meaning (Viewing escalation 2254Z; Agent, Viewing and App)
+RATIFIED: canonical parent/internal clip.transition means INCOMING (the transition into that clip), for every producer. App and Runtime visual_seam already read it that way, and the owner's films come from the App.
+- One meaning per layer, with ONE explicit conversion: the canonical document is incoming, and the native compiled TimelineConfig keeps its explicit outgoing default. The canonical→compiled compiler does the conversion, deterministic and tested, including first clip, gaps, overlaps, oversized windows and aliases. Preview and export then both consume the compiled form, so the same document always yields the same film. Prefer this to a caller-selected TransitionInputPolicy; add a policy option only if the compiler can't carry it, and say why.
+- Agent: fix the validator (timeline.py 103–123 / 138–167) to validate the transition against the incoming clip's predecessor, with tests. Then QUANTIFY historical Agent-authored canonical publications that relied on the outgoing reading: search the realm fixtures and the synthetic film-like project, and report the count with evidence. If any exist, propose a recorded, guarded migration command. Never silently rewrite immutable authored data. If none exist, record that and move on.
+- Viewing: implement the conversion and planner support in unreleased 0.0.9, keeping half-open intervals and adding no inclusive frame. Tests cover [a, b(fade .4), c] through both entry points giving the SAME film.
+- App: no change beyond consuming the compiled form already planned.
+Record this in design/viewing-incoming-policy.md, and I'm adding it to the PLAN Decisions log.
+
+## 2026-10-19 — orchestrator: ordinary-edit handoff
+Agreed. Agent now has the track-label operation as its M2 priority #1, with clear policy: absent = no label, "" is distinct, explicit clear removes the field. Wire both label-only ingresses through the durable command session as soon as it lands, and delete their snapshot branches. Until each writer is converted, unsupported mixed patches stay atomic and refuse honestly.
+
+## 2026-10-19 — orchestrator: OWNER DECISION on edge-producer-disposition: PURGE THEM ALL
+The owner answered: retire every Supabase canonical timeline writer. As part of M2 writer removal:
+- Delete the canonical timeline writes in ai-timeline-agent, timeline-import and complete_task: the append, and complete_task's canonical registry mutation via upsert_asset_registry_entry. Also delete _shared/astridAppendService.ts and the config-replaced / create-with-config callers.
+- KEEP task completion, billing, media preparation and relational metadata (shot_generations.timeline_frame / end_frame).
+- Update or remove the stale docs that name these paths (task-worker-lifecycle etc.), so nothing documents a dead path.
+- Tests: delete tests of the removed write paths together with the code. Keep and fix the tests for what stays. The 5 edge suites failing to import (@astrid/editor-sdk resolution) must end up importing and passing for the retained functions; don't leave them broken.
+- Gate 6's "zero legacy writers" assertion covers these too: a direct call must no longer write a canonical timeline.
+
+## 2026-10-19 23:15Z — orchestrator: close M1 now
+Remaining App M1 items: (1) mixed-editing data-safety journey. It currently fails at the opaque-root-field assertion on the projected draft. Fix the cause, and check the draft preserves every opaque root field. Don't weaken the assertion. Then reach reload/recover and prove no silent loss. (2) Classify the post-restore full run app-full-1019224105, including the 5 new guard cases. Post both in STATUS as soon as they're done.
+
+## 2026-10-19T23:18Z — orchestrator: FYI data-loss guard (Runtime/Agent)
+Runtime is adding an atomic refusal when a move would overwrite an unrelated shot at the same ID. If the App shows commit refusals, show the conflict reason visibly and keep the draft. No App change should be needed beyond honest display.
+
+## 2026-10-19 23:30Z — orchestrator: MAX SPEED (owner)
+The owner wants every area at maximum throughput. Targets from now on:
+- Keep 5–7 workers running at all times. Workers mostly wait on the model, so CPU isn't the limit; the heavy-slot cap (2) still applies to heavy tests and builds only. Split work into small, independent workers so the slots stay full.
+- Order: M1 blockers first (data-loss guard and its test; App mixed-safety; final classifications), then M2 priority #1 (ordinary-writer EditCommands such as track label, clip delete and the rest of app-writers.md), then everything else on branches. Merges of M2 work wait only for the M1 record.
+- Never wait idle on another area: take the next independent item from your Next 5, or escalate the blocker immediately.
+- Keep STATUS.md current (every 30 minutes) with "Next 5", so I can redirect quickly.
+
+## Runtime 23:42Z — ordinaryparentlabel official artifacts staging, no wireguess
+ExactAgent86bfe parentlabel-onlyschema stagedprivateRuntimefe0dd04/client0.2.2;19packagedschema casesPASS. DTOgeneratoroneOf bugfoundbeforemerge(Pythonimportfailure/TSshape), Solhighfixactive. NochangeApppinsyet; finalvalidartifacts+exactSHA/versionhandofffollowsAgentfreeze+ownedpin. RuntimeM1guardqualified9f9b25c/full3790PASS7exactbaselineFAIL18SKIP0new; Agentpermanentcentral5PASSfc324; orchestratorACK. Yournativeopaque-draftfixremainsglobalM1item. AllM2mergesheld.
+
+## 2026-10-19 23:55Z — orchestrator: M2 WRITER BUNDLE #1, a coordinated candidate on branches (Agent + Runtime → App)
+Publish one composed, reviewed candidate tuple for the ordinary writers, so App can qualify against it on branches before M1 is recorded:
+- Agent: the registry with parent track label (86bfe186), plus any of clip delete/add/params/trim/split that are reviewed and ready. Don't wait for the rest; later ones go in bundle #2.
+- Runtime: the matching official command-schema/generated-artifact version bump, with TrackSetArgs and the rest. Generate it the normal way; no hand edits to generated files.
+- Both: put the exact source refs, capture/golden exports and artifact digests in design/m2-writer-bundle-1.md, and push the branches (hub-sync does it) so App can fetch them.
+- App: qualify against that candidate on branches (real browser success/reload/undo). Pins move as ONE coordinated change. Nothing merges into integration until PLAN records M1; then all three merge together.
+Target: the candidate published within ~1 hour.
+
+## Runtime 2026-10-19T23:49Z — BUNDLE1 label-only validartifact branch available
+Runtime tl/rt-m2-track-union-generator946bdff/tree3cb734dd, client0.2.2/schema89a396/artifacts9ab13c (exactdigests+source in design/m2-writer-bundle-1.md). GenericDTO bugFIXED,115focused+80centralPASS, TSchecksPASS. MatchedAgent86bfe label-only, awaitingAgent finalregistryfreeze+ownedofficialpin worker. Hub-syncpublishesbranch; usebranchqualificationtuple+ONEcoordinatedpinchange, noM2integrationmergesuntilPLAN M1record. NonemptyTypeScriptbatch/inverse tupletyping mayneedtruthfulnarrowing, wireunchanged. AdditionalreviewedAgentops stillAgentownerfreeze.
+
+## 2026-10-19T23:53Z — orchestrator: M1 safety proof accepted; final full is the last item
+Accepted: central e2e-m1-mixed PASS on 2bfde69ea, with the opaque-root assertion, visible refusal, reload and exact recovery; post-restore full 18291/6 old/0 new. I asked your lead to cancel the redundant old full 26792, so the final-product full 9530 runs now. Once it classifies at 0 new, I record M1 and M2 merges open. Keep 5–7 workers on bundle #1 qualification.
+
+## 2026-10-19T23:58Z — orchestrator: DELETION LEDGER (owner rule)
+design/deletion-ledger.md lists everything that contradicts the end state. Keep YOUR rows current (status + evidence: commit and proving test), and ADD any contradicting code you find as a new row. A milestone exits only when all its rows are DELETED. Deletions need their replacement test named; never delete tests to make room.
+
+## Runtime00:00Z — BUNDLE1 Runtime FINAL READY6be9706; confirmed86bfe label-only source
+Read yourSTATUS confirm86bfe label-onlyFIRST (runtime-coordination23:39); ACK. ValidRuntimecandidate tl/rt-m2-track-public-export6be970633cc82ab412428151e6bf42f3e7fc3081/tree3fc266c2, client0.2.2/schema89a396/artifacts3b805d. RootTrackSetArgsexportFIXED+realpackedconsumerPASS; generator115focused+80centralPASS, wheelisolatedimportsPASS. Exactdigests/refs/latestcurrentstate rewritten design/m2-writer-bundle-1.md; old946/fe0/artifacts9ab superseded. Hub-syncpublishesworkerbranch automatically.
+Agent: pleaseOWNEDpin+confirmedregistrycandidateNOW againstEXACT6be source, actualproviderlabel+reload/undo compatibility. App: canbuildsameTSpackage onbranch, waitpairedAgentpinthenqualifyrealordinarylabelsuccess/reload/undo. NoM2integrationmergeuntilPLAN M1record. Labelartifact hasNOroots/groupdraft orallwriter-cutcohort. Laterreadyops canbundle2; don'tdelayordinarylabel.
+
+## 2026-10-20 00:05Z — orchestrator: DECISION on popup-native-contract → M2 WRITER BUNDLE #2 (Agent → App)
+Bundle #1 (parent label + ready clip ops) is not delayed. Bundle #2 = popup media ownership. Agent publishes minimal, exact, occurrence-owned commands with capture plus goldens:
+- occurrence media ADD and SWAP: ownership plus the raw child track; the Runtime media tuple from App's proven immutable 5-field media-selection read; source window and relative child timing; reserved IDs; membership/guards; shared-occurrence isolation (only an explicit shared intent touches shared content); exact guarded inverse.
+- REGISTRY POLICY (decided: create-or-require). If the media's registry binding is absent, the command CREATES it as a recorded write with a deterministic ID; the inverse removes it only if nothing else references it. If it is present, the command REQUIRES it to match exactly, or refuses. There is no separate registry upsert path anywhere: this replaces the purged complete_task upsert.
+- PLACEMENT is its own explicit-owner command, separate from add/swap.
+- Relational timeline_frame/end_frame stay outside the canonical scope. Unsupported shapes refuse explicitly.
+App converts the popup add/swap/shared-placement writers when it lands. Branch-qualify now; merge after M1 is recorded. Add deletion-ledger rows for the popup writers (D01 sub-items).
+
+## 2026-10-20 — orchestrator: tsc-memory-pressure
+Mitigation APPROVED: project-wide tsc serialised with flock /home/user/work/.app-tsc.lock plus NODE_OPTIONS=--max-old-space-size=4096; one composed-source typecheck instead of redundant per-branch ones. Keep 5–7 workers, but stagger their heavy phases. Your lead is asked to check the final-product full 24066 (host processes/OOM). If it died, ONE bounded retry of the same final tree, with diagnostics kept.
+
+## Agent00:25 — FINAL Bundle1 published; App may qualify now
+Agent branch tl/agt-m2-bundle1-pin commit3bf9e5368a956ef562c77e1beb0a745addf23daf/treeb6e56b9f. Paired final Runtime tl/rt-m2-track-public-export6be970633cc82ab412428151e6bf42f3e7fc3081/client0.2.2/schema89a396/artifacts3b805d. Exact source/exports/golden/digests in design/m2-writer-bundle-1.md. Parentlabel+nativePythonCLI only; 306focused and48EXACTRuntime central PASS, no skips/xfails. Frozen tuple; no provisional946 artifacts. Hub-sync publishes, no managerpush. Please use SAME final Runtime for browserlabelsuccess/reload/undo qualification. CurrentmainAgentf6fbe741 is only normalcatalogmanifest metadata refresh after qualifiedfc324; it does NOT silently replace frozen3bf candidate. AllM2mergesheld forPLANM1.
+
+## 2026-10-20 00:35Z — orchestrator: DECISION on render-handoff-contract (D13; Runtime, Agent and App)
+1. Retry defect (lost ACK, restart, exact createTask returns 409): Runtime fixes it now (rt-m2-render-replay-fix). It's a bug fix, with no wire change, and d19fd01's 4 strict cases must pass.
+2. Historical render: APPROVED, additive. Add an explicit immutable selector to the EXISTING render admission spec: an accepted revision plus its receipt publication/digest, named separately from current-head expectations. Runtime resolves the retained verified closure and dependencies and produces the snapshot; callers never supply provenance inline. Regenerate the official artifacts the normal way, and coordinate the pin bump with Agent and App as one change (it can ride writer bundle #2 or #3).
+3. AUTHORITY, decided per PLAN ("Producers propose edits"): the renderer/assembler NEVER commits and gets no write scope. It returns its result as EditCommands, a proposal, in the task output. The REQUESTING client (the App command session or the CLI/SDK session that started the task, which already holds projects:write) commits them through its normal durable outbox under its own authority. Then:
+   - Fencing goes into that commit as guards: the task id, attempt and epoch, validated inside commit acceptance AFTER the exact receipt lookup. A cancelled or superseded attempt makes the commit refuse. An exact accepted replay still survives cancellation or lease expiry.
+   - The accepted-receipt → pending-render handoff reuses the existing authority dependency kind and publication checkpoint. No new journal and no new coordinator.
+   - Runtime adds only the additive port method needed to validate those guards. Agent designs the proposal shape inside the recipe (EditCommands + rationale), with goldens. App and CLI consume it and commit it.
+4. The old publishTimelineRender path stays until this replacement proves the existing behaviour (D13). Implementation follows the M1 record; design and tests can start now on branches.
+
+## 2026-10-20 00:55Z — orchestrator: DECISION on the final M1 full (24066)
+Not "0 new" yet. 24066 ran under heavy load (load 8–15, cgroup OOM kills), with 3 non-baseline failures and 1 unrun file (ProjectTimelineSelectors, fork startup timeout). That isn't clean evidence either way.
+- APPROVED: ONE bounded full retry on the SAME final tree with `npm test -- --maxWorkers=2`, and NO other heavy job on the App machine while it runs. Pause or serialise worker tsc and builds for those ~35 minutes, and your lead keeps the machine quiet.
+- M1 is recorded if it shows exactly the 6 baseline failures, with ProjectTimelineSelectors run and passing, and the classifier finds no causal App change for the 3.
+- If any of the 3 fail again at low load, they're real: root-cause them, don't loop full runs.
+- Bundle #1 real browser e2e PASS (Unicode label → reload → independent Agent work → guarded undo, 0 legacy): excellent. Keep it held; it merges right after the M1 record.
+
+## 2026-10-20T00:48Z — orchestrator: worker-queue-held
+Your lead held those 3 jobs on purpose, for the quiet window around the final M1 full (12729), as I asked. They are released as soon as 12729 finishes. Don't requeue or rename them. If 12729 shows only the 6 baseline failures, I record M1 and you go back to 5–7 workers immediately.
+
+## 2026-10-20T00:54Z — orchestrator: viewing-artifact-transfer
+Artifacts now travel through the hub: write-once *.tgz plus a .sha256 sidecar, into $ORCH/artifacts on every machine. Viewing's lead is asked to publish the exact reviewed 0.0.9 tarball (fa94f9c6…). Verify the sha256 before use. Install it only after the M1 record, in the root adoption batch as planned.
+
+## 2026-10-20 — orchestrator: DECISION on legacy-journey-native-gaps (Agent + App)
+Agent: these join M2 WRITER BUNDLE #2, with exact capture plus goldens:
+1. Occurrence-owned child asset replacement plus the child registry binding to an immutable task output. This uses the create-or-require registry policy decided at 00:05Z.
+2. Child and parent scalar set/clear: child hold (a timing change in source seconds, per the trim decision), and EXPLICIT removal of child asset and parent transition. Clear semantics follow the label decision: an explicit clear REMOVES the field, distinct from setting it empty. Match the actual raw schema. No whole-child or whole-parent replace, and no media-swap-as-clear fiction.
+App:
+- Compound "Keep my changes": re-author the user's explicitly chosen supported intentions as NEW captures with new identities. Keep the original commands until the user decides. Never refresh the original B or silently drop a suffix. One rejected intention can't hide others.
+- The concurrent-draft conflict journey: under server-side rebase, disjoint Agent changes correctly NO LONGER clash. Rework the case so it contains a REAL same-property clash (the same selected property edited on both sides), keeping every extent/clear/opaque assertion. This reflects the decided semantics, not a weakening; say so in the commit, naming old → new.
+- Don't delete any assertion. Cases waiting on bundle #2 stay staged until it lands.
+
+## 2026-10-20 — orchestrator: DECISION on initial-read-projection (Viewing finding; App owns it)
+APPROVED as Viewing recommends. On initial bootstrap, reuse the existing project(initialBasis, []) path, so that loadTimelineCommandBasis's VALIDATED pinned canonical document (scope, manifest, head) builds the exact closure config/registry and sets the existing editProjection `accepted` fact atomically. Then a freshly opened timeline with no commands previews through the canonical compiler, not the old host timing.
+- NEVER stamp the old loadReferencedTimeline raw config/head as accepted.
+- Guard the late async initial resolve: it must not overwrite local, recovery, newer-accepted or unmounted data. Keep original base B and the late-A-vs-C ordering.
+- Tests (from Viewing's candidate, made green): a real initial verified basis with no commands and no graph gives the exact config fact plus the public 0.0.9 vector; bad closure or head refuses; a delayed initial result preserves intervening data; native compiled omission; the existing 270 recovery/mailbox cases still pass. No new field or DTO.
+It's App-owned M3 groundwork. Branch it now, and merge with the root adoption batch after the M1 record.
+
+## Agent manager01:19Z — Bundle2 native source ready for composition
+Required preservedjourney scalar primitive reviewed tl/agt-m2-clip-scalar-fields7b54ca92: clip.set@1 values.holdSOURCEseconds +explicit clear hold/asset/transition; exactoriginalrawAppf2rows/golden in design/m2-clip-scalar-contract.md. 476focused+1actualRuntimePASS; transitionSET andassetSETunsupported (assetSET usesoccurrence.swap-media, neverclearfiction). Popup5528c45c add/swap+create-or-require+placemente433 exactcaptures/goldens in design/m2-popup-native-contract.md; detached470PASS, actual42PASS12strictxfail untilofficialassetrefgeneration (NOpopupacceptanceclaim). SelectedPARAM3565462c addsoptional schema_source DocumentPin, captureexactretainedschema and15actualPASS; packagingpending andextraunselectedobject I/Oreviewactive. Newagt-m2-bundle2-complete-source composesallreadyfixes/requiredops onto7b61; nextsourceSHA/schema freezebeforeRuntimeofficialregen, allpinsmoveONEtuple. Bundle1frozen3bf+6be unchanged/yourrealPASSack. Don'tguessnewwirefields fromdrafts ormergeintegrationyet.
+
+## 2026-10-20T01:20Z — orchestrator: the deletion ledger is now PER AREA
+Rows were being lost to whole-file last-writer-wins sync. From now on, edit ONLY design/deletion-ledger.app.md, which holds your rows. design/deletion-ledger.md is a GENERATED read-only combined view that main rebuilds on every sync. Your current rows were moved over as-is (16 rows in total, including Viewing's D08a). A row shared by two areas lives in the first owner's file; the second owner sends updates to it through design notes or STATUS.
+
+## Runtime manager01:48 — Bundle2 generated types available, product release HELD
+Official-generator review candidate Runtime d691dda/client0.2.3/schemaa435/artifact0f3d now recorded design/m2-writer-bundle-2.md with fulltuple. Exactly frozen Agent schema472622(root/scopedasset/closed12ordinary+PARAM/schema_source) +VerifiedDocumentObject/normalpublicPythonTSexports. Useful read-only type reference now; do NOT consume as final paired pin yet. Agent qualification descendant/M1opaque-item-remap blocker mustpass, then pairedtuplefreeze beforeAppnativebrowserqualification. Bundle1 0.2.2 refs unchanged. No core/D13/catalogcuts in thisRuntimecandidate.
+
+## 2026-10-20T01:48Z — orchestrator: App final M1 full ACCEPTED (12729)
+12729: 1458 files, exactly the 6 baseline failures, on tree dd1fe6a7 / 2bfde69ea. App's M1 items are all satisfied. 2755 is cancelled as redundant, the quiet window ends, and the 3 held workers are released, so go back to 5–7. M1 is NOT recorded yet: one Agent item is open (the opaque item-reference remap). M2 merges stay held until the record; branch work goes full speed.
+
+
+## Runtime manager01:57 — M1 audit; D13 custody/admission boundary
+M1 blocker acknowledged and STATUS reset BLOCKED. Agent owns finalpairedcentral; Runtime will not duplicate. Single read-only localopaque audit2000physicalattempted/1822analyzed/6unsupported/172unreadable,294receipts/6commits,0materialization edges/0additional candidates; knownprobeCONFIRMED, remote/owner/inaccessibleUNKNOWN, no repairs or secondpass.
+D13 Runtime authority94ce2e8 and historical29e6512 source ready; one-shot/custody correction active. Important REAL production prerequisite: immutable admitted spec must declare outputs.authoring_proposal={type:file,artifact_type:"timeline/authoring-proposal"}. Current runtime_stitch.build_stitch_admission emits no outputs, Runtime capability rows retaindigest/resources only. Please ensure Agent admitted target/proposal builder supplies frozen declaration; do not rely on local/dynamic pack schema. Existing continuation order/selected child custody still verified. No renderer write authority/oldendpointretirement.
+Bundle2d691/0.2.3 remains reviewtuple; exactfrozen472schema normalgeneration verified. Paramsdoor strengthened max10 refusal6f32bd17 central1PASS, same retainedV1/restart/inverse scenario.
+
+## 01:58Z — orchestrator DECISIONS
+1. app-m1-final-ready: ACCEPTED. The 2755 final full (18301 pass / 6 fail / 3 strict-expected; the 6 failures exactly match the post-restore baseline 27715) closes App's M1 test items.
+2. opaque-remap-parity: APPROVED as an M1 item. Agent will publish design/opaque-remap-contract.md (allowed known link/identity fields, byte-for-byte preservation of everything else, source SHA, fixtures) through the hub right after its a76c6537 merge. Port exactly that rule into authoringBundle.ts, and add permanent tests that use the same fixtures (unknown namespaced data survives a move unchanged). Until the doc lands, write the failing tests first (strict xfail).
+M1 is recorded when the Agent merge, the Runtime null-speed fix and your parity port have all landed. Keep 5-7 workers on M2 branches meanwhile; only merges wait.
+
+## Agent manager01:59 — M1 opaque parity contract PUBLISHED, Agentfixmerged
+Perorchestrator01:58: design/opaque-remap-contract.md ispublishedNOW withexactknownidentity/source-linklocations, metadata/fallback/equalmirror rules, everyotheropaquevaluepreserved, sourcecommit/path andpermanentfixtures. IntegratedAgent a610cd304ba22fe89d132e00bc9bbe2561032aae tree8f046de1844963feab3732cb4ffda7064c49f64e, workerend a76c6537. Centralactual23PASS/no xfails exacttree, includingopaque6/allcodecs/sharedexactundo→redo→second-undo/rematerialization/ABA/occupancy/retry/restart. AppauthoringBundle.ts broadrecursivehelper mustportthisexactknowncontextlogic+permanentparitytests; no schema/commandgolden refresh needed. Differentsecondaryidopaque, metadataobjectmeansNOrecordfallbackinspection, allnestednamespacesuntouched. Docfixturepaths arecurrentintegratedtestfiles, copy/extractsameinputsforparity. M1postmergefullrunningONErequest; Runtimeknown-nullspeedfix alsoM1bylatestdirective. AllM2integrationstillheld.
+
+## 02:01Z — orchestrator DECISION: native group delete gap (app-20261020T0200Z-native-group-delete-gap)
+AGREED with your recommendation. Do not merge app-m2-delete-compose as full deletion coverage. Do not add a snapshot fallback. Keep the original useClipEditing.test.ts:261 assertion exactly as it is.
+Parent-only native delete can proceed to real qualification on the official Bundle2, as its own slice. The group-delete slice stays held until Agent publishes the canonical group/occurrence delete op, its captures and its goldens. When that lands, port it, and :261 must then pass unchanged.
+
+## 02:07Z — orchestrator DECISIONS
+1. opaque-native-expectations: APPROVED. These five old assertions required unknown fields (selected_item_id, related_item_ids, bindings.nested.custom_item_id) to be remapped, so they encoded the data-loss bug. Changing them is correcting a bug, not weakening a test.
+Conditions: keep all 5 original inputs and test cases; each corrected assertion must prove the unknown data is preserved byte-for-byte; add a true known-link positive; and list every old/new expectation pair in the worker's report for manager review.
+Re-check parity against Agent's FINAL source, not just 875a9aff: a76c6537 plus the opaque-remap contract doc, and the numeric image-reuse preservation once it merges.
+2. label-initial-release-batch: APPROVED. Compose the Bundle1 release with the initial verified projection 70f in the same root batch as Viewing df6/public10. Do not release a Bundle1 that breaks cold-load rename.
+This all happens after M1: re-freeze against the post-M1 Agent/Runtime heads, then re-run the updated paired cases, including the new cold-load label test. Keep the capture guard strict. Preparing the source-only compose on branches now is fine.
+
+## 02:12Z — orchestrator DECISION: popup media read gap
+The read comes from Runtime: MediaReads.selected(project, exact 5-field selection), exposed through the normal public read and the generator. Do NOT build a hydrator or a client metadata authority.
+Stage the popup/session queue against that port shape only. Wire it up once Runtime publishes the reviewed read. Scalar/trim/params/outbox work continues.
+
+
+## Runtime02:16 — popup verified-media read assigned
+ACKorchestrator02:12decision, rt-m2-popup-verified-media-read activeordinaryd691base. Runtimewirechoice GET /v1/projects/{project_id}/media-selection/verified, operationgetProjectVerifiedMedia, requiredsame5queryfields asset/generation_id/variant_id/object_id/catalog_digest → EXACTexistingVerifiedMedia {selection,media_type,size,duration_seconds?,width?,height?}. OriginalgetProjectMediaSelection5fieldresponseUNCHANGED. RuntimeexistingMediaReads.selected singleauthority/mutex/auth/projectsread andacceptancerecheckunchanged. Candidate0.2.6normalgenerationplanned; noApppinreadinessuntilreview+exacttuple. Pleaseprepareownmedia-selection-integration extension realsettledimage/video+oldnewswap/catalog/object/scope/versionraces/zerocanonicalwrites, neverreadlatest/guessduration. Willpublishreviewedtuplethroughhub.
+
+
+## rt-m2-popup-verified-media-read — wire tuple in progress (0.2.6 ordinary candidate)
+Runtime-owned `GET /v1/projects/{project_id}/media-selection/verified`, operation `getProjectVerifiedMedia`, requires exactly one each of `asset`, `generation_id`, `variant_id`, `object_id`, `catalog_digest` as query strings. Response is the EXISTING `VerifiedMedia`: `{selection, media_type, size, duration_seconds?, width?, height?}`; selection is the exact five-field input, no envelope. Python `get_project_verified_media(project_id, selection: MediaSelection) -> VerifiedMedia`; TS `getProjectVerifiedMedia(projectId, selection: MediaSelection): Promise<VerifiedMedia>`; root DTO exports. Existing selection endpoint/schema unchanged. Same projects:read/origin/project/actor authorization and mutex; existing selected verifier, no pin refresh or write. Version0.2.6 reserved, canonical Agent472622 unchanged; no producer/item-ref union. App owns adapter and central media-selection-integration extension after reviewed exact artifact publication; do not adopt an unfinished tree.
+
+
+## rt-m2-popup-verified-media-read — final ordinary 0.2.6 UNFROZEN candidate
+Source branch `tl/rt-m2-popup-verified-media-read`, base `d691ddadb4ef3f5881a25fa893b4fb812211f102`; **harness commit pending**. EXACT final central/current source tree **d9b5af4279bcb69aaa68b6e4056fcfce588437c7**, all340blobs verified. Manager must obtain final harness SHA after exit; base HEAD is not the candidate source. No source edits after final central snapshot.
+
+Normal GET `/v1/projects/{project_id}/media-selection/verified`, operation `getProjectVerifiedMedia`, five REQUIRED query strings `{asset,generation_id,variant_id,object_id,catalog_digest}` → EXISTING `{selection,media_type,size,duration_seconds?,width?,height?}` VerifiedMedia, no envelope. Python `get_project_verified_media(project_id, selection: MediaSelection) -> VerifiedMedia`; TS `getProjectVerifiedMedia(projectId, selection: MediaSelection): Promise<VerifiedMedia>`; both root VerifiedMedia exports. Existing original selection operation/schema/response/verifier/acceptance/ABI/schema bundle unchanged. Same projects:read/actor/origin/credential/project+mutex checks, mutationFalse; no new client authority/hydrator/hash/DTO/table/provenance/fallback.
+
+Officialversion **0.2.6**; canonical ordinary schema rawSHA256 **472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9** unchanged; RuntimeSCHEMA **sha256:f6b8bfd4159037c3a33f43332cad588a8cc1d90db9e571e0dd93e9fa38a9fcc8**; aggregateartifact **sha256:2579b3d1d163d52641e8fdd36f3b1f0cb7e9a7a336275c1bef03a0e11cb0a125**; artifacts.json rawSHA256 **b0801b6fe74f260a72d98ca317e88f3abd547a9e03caf0d52cd2b49d79b1a869**. Py generatedSHA256 **56de15bd14b22744431252b54f2c4a39bd0db515b2d99e8d40167bb2e87373fa**; TS generatedSHA256 **411689d44fffb6f7fda1b6170ff1ad9f3e0d42b60235a8932d330f414dd5bc75**. Normal generators/conformance/manifests, offline wheel and packed TS consumer PASS. Producer0.2.4/item0.2.5 feature unions not included.
+
+Only announced committed M1 nullspeed files selectively consumed: d79758d8601c8ff40f4754c70b11312a93338aaf product/native tests +6db1d88c6c08fe8784ae323ce496573dc3bca4f5 genuine retained tests (announced219tree); no rejected65SQLfixture. Focused105PASS; central `rt-m2-popup-verified-media-read-targeted-1020022215-21879` **102PASS51.71s**, same d9b5aftree, actual settled ffmpeg PNG/old+new video, public generated read+door auth/origin/scope/query/object/digest/catalogmetadata/lifecycle/version refusals, ALL SQL/CAS unchanged; originaldoor/readlocks/retainednullneighborsPASS. Broaderneighbor/generator lane1466PASS/1FAIL/1deselected: inherited duplicate-add fixture select parent/clip:clip rejected by frozen clip.add parent rule, independently reproduced untouchedd691 (same1FAIL). Original expectation retained, no weaken/skip/xfail. Reports exactcommands+limits ONLY `workers/rt-m2-popup-verified-media-read/notes/report.md` and report.md.
+
+**UNFROZEN review candidate**: manager review+final sourceSHA publication → normal Agent0.2.6 pin/exact popup+PARAM qualification → App-owned adapter/media-selection-integration extension/QA required. No final App pair or full suite/M2 merge/oldwriterretirement claimed. Bounded proof complete; stopping for harness commit.
+
+
+## Runtime manager02:33 — public popup read REVIEWED 0.2.6 candidate
+Exact tl/rt-m2-popup-verified-media-read a9a81078e2aa30f071f84d3c64e1025e9ed62df1/tree d9b5af4279bcb69aaa68b6e4056fcfce588437c7, clients0.2.6, canonical472622 unchanged, RuntimeSCHEMAsha256:f6b8bfd4159037c3a33f43332cad588a8cc1d90db9e571e0dd93e9fa38a9fcc8, artifactsha256:2579b3d1d163d52641e8fdd36f3b1f0cb7e9a7a336275c1bef03a0e11cb0a125. Managerreviewednarrowservice/route/door/query/generator: existingMediaReads.selected+scope/mutex, SAME5fields, noauthoritycopylogic. M1nullfix+genuinetestsincluded; noD13/itempartialunion.
+GET /v1/projects/{project_id}/media-selection/verified/getProjectVerifiedMedia, queryrequired {asset,generation_id,variant_id,object_id,catalog_digest}; rawexistingVerifiedMediaresponse {selection,media_type,size,duration_seconds?,width?,height?}. Pyget_project_verified_media(project_id,selection:MediaSelection), TSgetProjectVerifiedMedia(projectId,selection:MediaSelection). OriginalgetProjectMediaSelectionresponseunchanged. Central102PASS(realsettledPNG/old+newffmpegvideo, exactaliases/catalog/object/scope/lifecycle/versionraces/origin/auth/allSQL+CASunchanged),105focused; normalgenerator/conformance/artifact/offlinewheel/packedTS PASS. Broader1466PASS/1inheritedbadclipaddfixture handledbyRuntimec82b56f6(testonly94PASS). No full/newactualApppairclaim.
+UNFROZENreviewcandidateforadapter+normalownedpinpreparation; finalsourcecohortmustcomposemandatorycompatgate550ff4ee andknownDoorcreateTimelinePOSTfix(currentallowlistGETonly; rt-m2-empty-timeline-door-route active). Theseareproduct/test/toolingonly, artifacts expectedunchangedunlesswirechangeproven. Oldordinary0.2.3 4c145proofstaysvalidonitsexacttuple; nevermutate/refreeze. CoordinateNEXT0.2.6normalAgent/Apppinsasonechange, then actualpopupADD/SWAPmedia-selection-integration+PARAM/ordinaryQA. Appmaybuildadapteragainstthisexactreviewedmethodnow; nofinalintegrationadoptionuntilreleasequalification/globalM1record.
+
+## Agent manager02:39 — Bundle2 FROZEN and ready for branch qualification
+Agent tl/agt-m2-bundle2-final-qualify027bd16d96010544331c953c0e1014e161786e71/tree1434f42b +Runtime tl/rt-m2-null-speed-clean-candidate4c145dc62192f0e942e3ee3922a11488aefe9b41/treef640ccf4, normal0.2.3/schemaa435/artifact0f3d. Exacthandoff design/m2-writer-bundle-2.md nowmanager-reviewed/FROZEN. Central207PASS262.40s zero skip/xfail coversallordinary/PARAM/scalar/trim/media/nativebatch/CLI/SDK/undo/restart. Testedsnapshot5fb59 vsfinal1434 differsONLYnowpassingnullablefirstclipmarker removal (managerverifiedtestbodies+product/pinidentical; --runxfail ranall207). IncludesM1opaque/exactundo/redo/numericfixes, fivepolicyclears/hold-after-move andexactretainedschema/CAS; all16capturegoldensunchanged.
+Fetch/qualifyonBRANCHES now (no M2integrationuntilPLANrecord). Useexactpairedproducer/clientpins together; don'tmutatefrozenBundle1oldrefs. Parentlabel,clipdelete/add/params/trim/split/scalars,occurrenceadd/swap andplacementhelper exportsinworkerfinalmanifest. Group/wholeoccurrencedelete/migration stillseparateactivecontracts, notpartthis12opunion. SameJSONgoldens/datamodel alreadyprovided; no handwrittennewguardtable.
+Popup intrinsicmetadataread0.2.6a9a isNEXTnormalclient/sourcecohort, NOTinthis0.2.3client. Youcanqualifycurrentordinary+params/scalar/trim/compoundexistingbindings now andpreparegetProjectVerifiedMediaadapter withRuntime, thennewcoordinated0.2.6pins whencompat/Doorfixreviewed. No bypass/untrustedprovenance needed. AgentSDKCLIinputadapteractive. Sourcefrozenforreadonlyqualification; pleaseretainrefsleaseswhenyourharnessusesworkerpaths.
+M1currentAgent4a75/29PASS, yourparityea346landedACK; RuntimeM1nullfixqueued/qualified. a610fullstillrunning(97%), notnewnumericfullclaim. No pixel/audio/ownerfilm/macOSclaim.
+
+## 02:49Z — orchestrator DECISION: leased full-suite sources recycled (app-20261020T024504Z)
+Agreed. Run 26543 is INVALID ENVIRONMENT: it is neither a source regression nor a qualification, so record it that way.
+Do not wait for it: once app-m1-full-collection-diagnose has captured the exact errors, cancel it to free the heavy slot.
+The lead restores the SAME two paths from the retained branches at their exact SHAs (agent a610cd304 / tree 8f046de, runtime 9f9b25c) and verifies the identity. Better still, base the Agent source on current Agent integration 4a75f68f (it includes the numeric fix that M1 needs) and the Runtime source on current Runtime integration (with the null-speed fix 4bb). Record the SHAs in the lease note.
+Recycler fixed: bin/recycle now refuses any worker with a workers/<w>/KEEP file, or one named in managers/*/notes/*.lease or *ACTIVE*. Lead: pull the kit, and touch KEEP in both lease workers.
+AUTHORIZED: one corrected-environment post-opaque App full on the parity tree, against those restored sources. It counts as App's M1 parity qualification. The prior 01:58 full stays valid historical evidence.
+
+## 02:54Z — orchestrator DECISION: remaining writer contracts (app-20261020T024655Z)
+Agreed, and routed to Agent's ordinary-writer queue in this order: transition SET first, then opacity/effects/position, placement unplace/create, occurrence/group delete/duplicate, and authored associations.
+Keep the existing snapshot writers until each native replacement has been qualified (actual reload, undo, retry, 0 legacy). Then cut the writer, each cut with a deletion-ledger row. Porting transition None (clear) now is correct.
+
+
+## Runtime02:59 — M1 final integration full classified, ZERO new
+Runtime4bb/tree219 finalonefull runtime-full-restore-integration-1020021911-13639 **3829PASS/7exactmainFAIL/18SKIP/170.49s**. FailureSETexactprior3790/7full; failuretests+runtime_boundary.py+platform.py BYTEUNCHANGED8cmain, all7alreadyprovedmain inruntime-baseline.md.39newnullpreservationtests passed.80focused+15HTTP+5provider+4actualCLI/restartproof retainedsame219. Agent4aconstant; Appchangedwhilequeue, no Appbrowser/parity/allproductfreezeclaim. RuntimeM1EXITCOMPLETE, globalPLANrecordstillowner. Fullreview notes/m1-null-speed-final-full.md. No secondfull. AllM2/M3integrationstillheld; sourcecertM3findingNOTM1hold perdecision.
+
+exec
+/bin/bash -lc "rg --files /home/user/work/app/src | rg 'ClipPanelBody|useClipPositioning'; git ls-tree -r 7cb6770 tests/sdk/command_schema_compatibility.py; git ls-files tests/editing_conformance/fixtures; git show 7cb6770:design/m2-position-contract.md; rg -n '542536' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md; sed -n '52,78p' astrid/sdk/timeline/commands.py" in /home/user/work/wt/agt-m2-property-review-compose
+ succeeded in 37ms:
+/home/user/work/app/src/tools/video-editor/hooks/clip-editing/useClipPositioning.ts
+/home/user/work/app/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.test.tsx
+/home/user/work/app/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx
+/home/user/work/app/src/tools/video-editor/components/PropertiesPanel/BulkClipPanelBody.tsx
+100644 blob b0606fa4370670e07f4eeff2d39e0599667c150e	tests/sdk/command_schema_compatibility.py
+tests/editing_conformance/fixtures/recipe_clip_delete.json
+tests/editing_conformance/fixtures/recipe_m1_move.json
+tests/editing_conformance/fixtures/recipe_m1_occurrence.json
+tests/editing_conformance/fixtures/recipe_m1_shared.json
+tests/editing_conformance/fixtures/recipe_m2_app_clip_scalar_fields.json
+tests/editing_conformance/fixtures/recipe_m2_app_track_label.json
+tests/editing_conformance/fixtures/recipe_m2_clip_add.json
+tests/editing_conformance/fixtures/recipe_m2_clip_split.json
+tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+tests/editing_conformance/fixtures/recipe_m2_placement.json
+tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json
+tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json
+tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json
+tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json
+tests/editing_conformance/fixtures/recipe_m2_scalar_track.json
+# Position leaf contract (M2 held)
+
+Published at `/home/user/work/wt/agt-m2-position-set/design/m2-position-contract.md`.
+
+## Actual App mapping
+
+App `src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx`
+passes `onChange({ x: value })`, likewise `y`, `width`, `height`.
+`hooks/clip-editing/useClipPositioning.ts` resets those four plus `cropTop`,
+`cropBottom`, `cropLeft`, `cropRight` by removing their presence.
+`lib/timeline-data.ts` copies these exact flat raw clip fields to/from ClipMeta.
+`hooks/useTimelineCommandsService.ts#updateClip` spreads `input.patch` onto
+the existing clip through `lib/editor-utils.ts#updateClipInConfig`, which updates
+only the matching clip ID. Its special rounding applies only to timing `at`.
+There is **no nested `position` object**. The raw Agent/main
+`astrid/core/timeline/schema/timeline-config.schema.json#/definitions/TimelineClip`
+declares all eight as numbers, without ranges. The panel's opacity slider is a
+separate ordinary property, outside this position/reset family.
+
+`x`, `y`, `width`, `height` are composition canvas pixels (top-left origin).
+Crop fields are fractions of the full box on the named edge: App
+`lib/render-bounds.ts#getVisibleBoundsFromCrop` multiplies them by width/height.
+Render/display normalization is not a save rule. Negative/offscreen coordinates,
+zero/negative sizes and crop fractions outside [0,1] remain finite raw numbers;
+this command adds no bounds, clamping, rounding, defaults or unit conversion.
+
+## Command and exports
+
+Extend existing version-1 `clip.set`, no new operation/DTO/endpoint:
+
+```json
+{"schema_version":1,"op":"clip.set","version":"1",
+ "select":"parent/clip:f2-app-clip",
+ "args":{"values":{"x":-120.5,"y":64,"width":1280,"height":720},"clear":[]}}
+```
+
+Explicit reset: `args={"values":{},"clear":["x","y","width","height",
+"cropTop","cropBottom","cropLeft","cropRight"]}`. Only named leaves are
+removed; null/empty are never reset encodings. New SET accepts finite JSON
+numbers only, no booleans/strings/null/expressions. Existing expressions, null,
+opaque values or absence are preserved verbatim unless that leaf is requested;
+undo restores their exact tagged old state.
+
+Existing exports: Python
+`astrid.sdk.timeline._clip_scalar_commands.capture_clip_set(bundle, select,
+values=..., clear=...)`; native `operations()['clip.set'].parameters` and
+`astrid/core/timeline/schema/edit-command.schema.json#/$defs/ClipSetArgs`.
+Values/clear remain closed and a strict superset of the published ordinary args.
+The Runtime-owned generated client is untouched; its next normal schema generation
+must consume the widened canonical schema.
+
+## Guards and portable goldens
+
+Stable parent/occurrence clip/owner and existing media/type basis are retained.
+Recorder writes/guards are flat leaf paths (`["x"]`, `["y"]`, etc.). Disjoint
+leaves/properties rebase independently; changed same-leaf captures refuse.
+Same-value writes still count for inverse history: later writes and A→B→A refuse
+old undo, while equal-state forward replay retains existing semantics.
+No timing dependencies, evaluator, renderer, sourceNode or client recapture.
+
+New portable fixture:
+`tests/editing_conformance/fixtures/recipe_m2_app_clip_position.json` contains the
+actual App seedThreeProducts parent/child rows, a panel-shaped box update,
+one crop update and reset, commands, records and resulting bundle. Existing
+hold/clear/golden fixtures remain byte-identical. Conformance additionally checks
+shared occurrence isolation, exact inverse/redo, opaque namespaces and rational fps.
+
+
+@dataclass
+class Plan:
+    bundle: dict
+    records: list[dict]
+    semantic_events: list[dict] = dataclass_field(default_factory=list)
+
+    @property
+    def commands(self):
+        return [copy.deepcopy(record['command']) for record in self.records]
+
+
+def validate_command(command):
+    try:
+        json.dumps(command, allow_nan=False)
+    except (ValueError, TypeError) as exc:
+        raise CommandError("command must be finite JSON") from exc
+    errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+    if errors:
+        raise CommandError(errors[0].message)
+    if command['version'] != '1':
+        raise CommandError("unsupported operation version", kind='unsupported_version')
+    if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
+        raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
+    operation = operations().get(command['op'])
+    if operation is not None:
+
+ERROR: You’ve hit your usage limit. Visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 24th, 2026 8:40 PM.
+ERROR: You’ve hit your usage limit. Visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 24th, 2026 8:40 PM.
+tokens used
+49,731

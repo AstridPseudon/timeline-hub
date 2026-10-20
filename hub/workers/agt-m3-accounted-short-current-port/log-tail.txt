@@ -1,0 +1,400 @@
+
+def request(values, **kwargs):
+    return RenderRequest(
+        schema_version=1,
+        timeline_path=values["timeline"],
+        assets_registry_path=values["assets_registry"],
+        output_name="result.mp4",
+        **kwargs,
+    )
+
+
+def test_render_request_keeps_verified_source_private_through_backend_projection(
+    tmp_path, monkeypatch,
+):
+    _, _, _, _, values = materialize(tmp_path, monkeypatch)
+    source = values.timeline_source
+    parsed = request(values)
+
+    assert parsed.verified_source == source
+    assert parsed.for_backend("rendering.remotion").verified_source == source
+    assert "verified_source" not in parsed.to_dict()
+
+
+def test_render_request_rejects_reserved_backend_source_config(tmp_path, monkeypatch):
+    _, _, _, _, values = materialize(tmp_path, monkeypatch)
+
+    with pytest.raises(ValueError, match="host-owned"):
+        request(values, backend_config={"rendering.remotion": {"verified_source": {}}})
+
+
+def test_render_service_refuses_lost_verified_source_authority(tmp_path, monkeypatch):
+    _, _, _, _, values = materialize(tmp_path, monkeypatch)
+    parsed = request(values)
+    monkeypatch.delenv(SOURCE_ENV)
+
+    with pytest.raises(RendererException, match="authority is unavailable"):
+        RenderService().render(parsed, out_path=tmp_path / "result.mp4")
+
+
+@pytest.mark.parametrize("key", ["verified_source", "timeline_source", SOURCE_ENV])
+@pytest.mark.parametrize("port", ["inputs", "params", "backend_config"])
+def test_host_rejects_reserved_source_ports(tmp_path, port, key):
+    host, spec, _, _ = admitted(tmp_path)
+    if port == "backend_config":
+        spec["spec"]["inputs"][port] = {"rendering.remotion": {key: {"canonical": True}}}
+    else:
+        spec["spec"].setdefault(port, {})[key] = True
+    with pytest.raises(HostError, match="host-owned"):
+        host._materialize_inputs(spec, tmp_path / "attempt")
+    assert not (tmp_path / "attempt").exists()
+
+
+@pytest.mark.parametrize("name", ["timeline", "assets_registry", "timeline_snapshot"])
+def test_host_refuses_caller_replacement_of_verified_source(tmp_path, name):
+    host, spec, _, _ = admitted(tmp_path)
+    spec["spec"]["inputs"][name] = {"config": {}} if name == "timeline_snapshot" else "caller.json"
+    with pytest.raises(HostError, match="caller replaced"):
+        host._materialize_inputs(spec, tmp_path / "attempt")
+
+
+@pytest.mark.parametrize("field,value", [("timeline_id", "foreign"), ("parent_revision_id", "newer"),
+                                         ("parent_content_digest", "sha256:" + "0" * 64)])
+def test_forged_authority_cannot_replace_admitted_ref(tmp_path, field, value):
+    host, spec, _, _ = admitted(tmp_path)
+    spec["spec"]["inputs"]["timeline_authority"][field] = value
+    with pytest.raises(HostError, match="differs"):
+        host._materialize_inputs(spec, tmp_path / "attempt")
+
+
+def test_missing_authority_fails_closed(tmp_path):
+    host, spec, _, _ = admitted(tmp_path)
+    del spec["spec"]["inputs"]["timeline_authority"]
+    with pytest.raises(HostError, match="requires admitted authority"):
+        host._materialize_inputs(spec, tmp_path / "attempt")
+
+
+@pytest.mark.parametrize("case,reason", [
+    ("reserved", "verified timeline source is host-owned"),
+    ("reference", "timeline snapshot reference differs from admitted context"),
+    ("capture", "capture snapshot differs from admitted context"),
+    ("authority", "verified source requires admitted authority and snapshot"),
+    ("timeline", "verified source prepared inputs cannot be caller replaced"),
+    ("assets_registry", "verified source prepared inputs cannot be caller replaced"),
+    ("snapshot", "verified source snapshot cannot be caller replaced"),
+    ("project_id", "verified source project_id differs from admitted authority"),
+    ("timeline_id", "verified source timeline_id differs from admitted authority"),
+    ("revision_id", "verified source revision_id differs from admitted authority"),
+    ("revision_digest", "verified source requires an admitted revision digest"),
+    ("content_digest", "verified source revision digest differs"),
+    ("snapshot_digest", "verified source snapshot digest differs from Runtime authority"),
+    ("working_copy", "verified source working copy differs"),
+])
+def test_host_preserves_literal_source_refusals(tmp_path, case, reason):
+    host, spec, snapshot, ref = admitted(tmp_path, capture=case in {"capture", "working_copy"},
+                                         working_copy=case == "working_copy")
+    inputs = spec["spec"]["inputs"]
+    if case == "reserved":
+        spec["spec"][SOURCE_ENV] = "caller"
+        # Reserved-key refusal precedes parameter validation and any fetch.
+        spec["spec"]["params"] = "invalid"
+        host.client.get_object = lambda key: pytest.fail("reserved source reached CAS")
+    elif case == "reference":
+        spec["spec"]["timeline_snapshot_ref"] = {**ref, "revision_id": "other"}
+    elif case == "capture":
+        inputs["timeline_snapshot"] = snapshot
+        inputs["filmstrip_authority"] = json.dumps({"capture_snapshot": {}})
+    elif case == "authority":
+        inputs.pop("timeline_authority")
+    elif case in {"timeline", "assets_registry"}:
+        inputs[case] = "caller.json"
+    elif case == "snapshot":
+        spec["spec"]["timeline_snapshot"] = snapshot
+    elif case in {"project_id", "timeline_id", "revision_id"}:
+        inputs["timeline_authority"][{"revision_id": "parent_revision_id"}.get(case, case)] = "other"
+    elif case == "revision_digest":
+        ref["revision_digest"] = "invalid"
+    elif case == "content_digest":
+        inputs["timeline_authority"]["parent_content_digest"] = "sha256:" + "0" * 64
+    elif case == "snapshot_digest":
+        inputs["timeline_authority"]["snapshot_digest"] = "sha256:" + "0" * 64
+    elif case == "working_copy":
+        ref["working_copy"] = {}
+        inputs["filmstrip_authority"] = json.dumps({"capture_snapshot_ref": ref})
+    original = deepcopy(spec)
+    with pytest.raises(HostError) as error:
+        host._materialize_inputs(spec, tmp_path / "attempt", task_param_ports=() if case == "reserved" else None)
+    assert str(error.value) == reason
+    assert spec == original
+    assert not (tmp_path / "attempt/inputs/verified-timeline-source.json").exists()
+
+
+@pytest.mark.parametrize("capture,working_copy", [(False, False), (True, False), (True, True)])
+def test_host_does_not_mutate_admitted_dictionaries(tmp_path, capture, working_copy):
+    host, spec, snapshot, ref = admitted(tmp_path, capture=capture, working_copy=working_copy, media=True)
+    original = deepcopy((spec, snapshot, ref))
+    host._materialize_inputs(spec, tmp_path / "attempt")
+    assert (spec, snapshot, ref) == original
+
+
+def test_non_timeline_inputs_remain_ordinary_task_data(tmp_path):
+    spec = {"spec": {"params": {"prompt": "hello", "options": {"nested": [1, True]}}}}
+    original = deepcopy(spec)
+    host = GenericPackHost(pack_roots=[tmp_path], client=SimpleNamespace())
+    values = host._materialize_inputs(spec, tmp_path / "attempt", task_param_ports=("prompt", "options"))
+    assert values == {"prompt": "hello", "options": {"nested": [1, True]}, "params": spec["spec"]["params"]}
+    assert values.timeline_source is None
+    assert spec == original
+    assert not any(path.is_file() for path in (tmp_path / "attempt").rglob("*"))
+
+
+def test_capture_keeps_existing_json_error_type(tmp_path):
+    host, spec, snapshot, _ = admitted(tmp_path, capture=True)
+    spec["spec"]["inputs"].update(timeline_snapshot=snapshot, filmstrip_authority="{")
+    with pytest.raises(json.JSONDecodeError):
+        host._materialize_inputs(spec, tmp_path / "attempt")
+
+
+@pytest.mark.parametrize("verified", [False, True])
+@pytest.mark.parametrize("ambient", [False, True])
+def test_source_handoff_changes_only_the_reserved_environment_key(tmp_path, verified, ambient):
+    host, spec, _, _ = admitted(tmp_path)
+    values = host._materialize_inputs(spec, tmp_path / "attempt")
+    inputs = values if verified else dict(values)
+    original = deepcopy(inputs)
+    env = {"PYTHONPATH": "pack-path", "PROVIDER_TOKEN": "provider-value"}
+    if ambient:
+        env[SOURCE_ENV] = "caller-forgery"
+    expected = {"PYTHONPATH": "pack-path", "PROVIDER_TOKEN": "provider-value"}
+    if verified:
+        expected[SOURCE_ENV] = values.timeline_source._anchor
+    PreparedTimelineInputs.handoff_source(inputs, env)
+    assert env == expected
+    assert inputs == original
+
+
+def test_source_handoff_clears_ambient_authority_before_refusing_changed_bytes(tmp_path):
+    host, spec, _, _ = admitted(tmp_path)
+    values = host._materialize_inputs(spec, tmp_path / "attempt")
+    Path(values["timeline"]).write_text("{}")
+    env = {SOURCE_ENV: "caller-forgery", "PYTHONPATH": "pack-path"}
+    with pytest.raises(ValueError, match="^verified source prepared timeline bytes differ$"):
+        PreparedTimelineInputs.handoff_source(values, env)
+    assert env == {"PYTHONPATH": "pack-path"}
+
+
+
+@pytest.mark.parametrize("capture,working_copy", [(False, False), (True, False), (True, True)])
+def test_exact_admitted_source_and_materialized_pair(tmp_path, monkeypatch, capture, working_copy):
+    _, _, snapshot, ref, values = materialize(
+        tmp_path, monkeypatch, capture=capture, working_copy=working_copy, media=True)
+    source = inherited_source(values["timeline"], values["assets_registry"])
+    assert source == values.timeline_source
+    binding = source.read()
+    assert binding["ref"] == ref
+    assert binding["snapshot"] == snapshot
+    assert binding["authority"]["expansion"]["shots"]
+    assert binding["authority"]["expansion"]["children"]
+    assert not {"verified_source", "timeline_source", SOURCE_ENV}.intersection(values)
+    registry = json.loads(Path(values["assets_registry"]).read_text())
+    assert registry != snapshot["registry"]
+    assert Path(registry["assets"]["image"]["file"]).read_bytes() == b"source media bytes"
+    source.validate_snapshot(snapshot)
+
+
+@pytest.mark.parametrize("path_key", ["timeline", "assets_registry"])
+def test_prepared_source_refuses_equal_json_at_another_path(tmp_path, monkeypatch, path_key):
+
+codex
+The new test file covers the short attempt prefix, owner-root proof, symlink/foreign-root refusal, socket-length budget, and live scratch accounting. I’m selecting the requested existing authority checks: private backend projection, reserved-key rejection, ambient-source refusal/cleanup, and lost-authority failure.
+exec
+/bin/bash -lc 'ls -l /home/user/work/venv-agent/bin/python 2>/dev/null || true; PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_remotion_attempt_temp.py tests/packs/rendering/test_remotion_scratch_guards.py tests/packs/rendering/test_verified_source.py::test_render_request_keeps_verified_source_private_through_backend_projection tests/packs/rendering/test_verified_source.py::test_host_rejects_reserved_source_ports tests/packs/rendering/test_verified_source.py::test_source_handoff_clears_ambient_authority_before_refusing_changed_bytes tests/packs/rendering/test_verified_source.py::test_render_service_refuses_lost_verified_source_authority' in /home/user/work/wt/agt-m3-accounted-short-current-port
+ succeeded in 5437ms:
+lrwxrwxrwx 1 root root 7 Oct 19 17:54 /home/user/work/venv-agent/bin/python -> python3
+...................                                                      [100%]
+19 passed in 4.34s
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- WORKTREE DIFF STAT ---'; git diff --stat; printf '%s\\n' '--- WORKTREE DIFF CHECK ---'; git diff --check; printf '%s\\n' '--- WORKTREE PATHS ---'; git status --short; printf '%s\\n' '--- CURRENT VS 4F29 ---'; git diff --name-status 4f29c39a..HEAD --; printf '%s\\n' '--- 4F29 COMMIT PATHS ---'; git show --format= --name-status 4f29c39a; printf '%s\\n' '--- CURRENT SOURCE AUTHORITY PATH CONTENT IDS ---'; for p in astrid/core/rendering/contracts.py astrid/core/rendering/service.py astrid/sdk/remote.py tests/packs/rendering/test_verified_source.py tests/sdk/test_capture_source_runtime.py tests/sdk/test_timeline_checkout_history_runtime.py; do printf '%s ' \""'$p"; git hash-object -- "$p"; git rev-parse "4f29c39a:$p" 2>/dev/null || printf '"'%s' MISSING; printf '\\n'; done; printf '%s\\n' '--- TARGET TREE IDS AFTER PORT ---'; for p in astrid/core/execution/generic_host.py astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py tests/packs/rendering/test_remotion_attempt_temp.py; do printf '%s ' \""'$p"; git hash-object -- "$p"; git rev-parse "973c082e451844aeca399ac4d8a04f3039216cc0:$p" 2>/dev/null || printf '"'%s' MISSING; printf '\\n'; done" in /home/user/work/wt/agt-m3-accounted-short-current-port
+ succeeded in 1083ms:
+--- WORKTREE DIFF STAT ---
+ astrid/core/execution/generic_host.py              | 10 +++-
+ .../renderers/remotion/root_preparation.py         | 58 +++++++++++++++++++++-
+ 2 files changed, 65 insertions(+), 3 deletions(-)
+--- WORKTREE DIFF CHECK ---
+--- WORKTREE PATHS ---
+ M astrid/core/execution/generic_host.py
+ M astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+?? tests/packs/rendering/test_remotion_attempt_temp.py
+--- CURRENT VS 4F29 ---
+M	astrid/sdk/remote.py
+M	tests/sdk/test_timeline_checkout_history_runtime.py
+--- 4F29 COMMIT PATHS ---
+M	astrid/core/rendering/contracts.py
+M	astrid/core/rendering/service.py
+M	tests/packs/rendering/test_verified_source.py
+M	tests/sdk/test_capture_source_runtime.py
+--- CURRENT SOURCE AUTHORITY PATH CONTENT IDS ---
+astrid/core/rendering/contracts.py 6e41c34e3337153525d6891069394d5caabe04aa
+6e41c34e3337153525d6891069394d5caabe04aa
+
+astrid/core/rendering/service.py c5f9bb42e167bcd47648d3ef0b8a3c7946946845
+c5f9bb42e167bcd47648d3ef0b8a3c7946946845
+
+astrid/sdk/remote.py 949499663eb717dc80f86b302bc5ee84eaef18f0
+3710e8994e51802aeb3622fb56d4ef51ef9a43c1
+
+tests/packs/rendering/test_verified_source.py cc89c7c42c6f917c1cd68ab9a662e8e4a293ee8d
+cc89c7c42c6f917c1cd68ab9a662e8e4a293ee8d
+
+tests/sdk/test_capture_source_runtime.py d9ff9a65f62e67b1b2815b9e24fecbd363d45e25
+d9ff9a65f62e67b1b2815b9e24fecbd363d45e25
+
+tests/sdk/test_timeline_checkout_history_runtime.py 53d749303ddf6f04006b5816d4401eedbc8295e7
+e0c3a24797a1602f47e4555a446b50f0259f9cbe
+
+--- TARGET TREE IDS AFTER PORT ---
+astrid/core/execution/generic_host.py 3fdb84fe881d14573498313e4d7bf069f09a4999
+3fdb84fe881d14573498313e4d7bf069f09a4999
+
+astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py 017227e930f3ae5017f96f2ff69c1aca6f18f5be
+017227e930f3ae5017f96f2ff69c1aca6f18f5be
+
+tests/packs/rendering/test_remotion_attempt_temp.py aba0c31dbd1309dfc1770a3eca9ef217f7c49814
+aba0c31dbd1309dfc1770a3eca9ef217f7c49814
+
+
+codex
+The targeted isolation and authority checks pass: 19 tests passed. The port also matches commit 973 exactly for all three target paths; the four paths changed by 4f29 retain byte-identical blobs in the current tree. I’m doing the final scope check and writing the harness commit message/ completion marker now.
+exec
+/bin/bash -lc 'set -e
+paths=(astrid/core/rendering/contracts.py astrid/core/rendering/service.py tests/packs/rendering/test_verified_source.py tests/sdk/test_capture_source_runtime.py)
+if git diff --quiet 4f29c39a..HEAD -- "${paths[@]}"; then
+  echo '"'4F29_PATHS_BYTE_IDENTICAL=YES'
+else
+  echo '4F29_PATHS_BYTE_IDENTICAL=NO'
+  git diff --stat 4f29c39a..HEAD -- \""'${paths[@]}"
+  exit 1
+fi
+expected='"'astrid/core/execution/generic_host.py
+astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py'
+actual="'$(git diff --name-only)
+if [ "$actual" = "$expected" ]; then echo '"'TRACKED_SCOPE=YES'; else printf 'TRACKED_SCOPE=NO\\n%s\\n' \""'$actual"; exit 1; fi
+untracked=$(git ls-files --others --exclude-standard)
+if [ "$untracked" = '"'tests/packs/rendering/test_remotion_attempt_temp.py' ]; then echo 'UNTRACKED_SCOPE=YES'; else printf 'UNTRACKED_SCOPE=NO\\n%s\\n' \""'$untracked"; exit 1; fi
+for p in astrid/core/execution/generic_host.py astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py tests/packs/rendering/test_remotion_attempt_temp.py; do
+  test "$(git hash-object -- "$p")" = "$(git rev-parse "973c082e451844aeca399ac4d8a04f3039216cc0:$p")"
+done
+echo '"'TARGET_BLOBS_MATCH_973=YES'
+git diff --check
+" in /home/user/work/wt/agt-m3-accounted-short-current-port
+ succeeded in 893ms:
+4F29_PATHS_BYTE_IDENTICAL=YES
+TRACKED_SCOPE=YES
+UNTRACKED_SCOPE=YES
+TARGET_BLOBS_MATCH_973=YES
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..a5e251d292ae462e347ac03506916249b151154b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/commit-msg
+@@ -0,0 +1,4 @@
++fix(rendering): account short Remotion attempt scratch
++
++Port the managed short-attempt root proof and live scratch accounting,
++including focused isolation regression tests.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..a5e251d292ae462e347ac03506916249b151154b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/commit-msg
+@@ -0,0 +1,4 @@
++fix(rendering): account short Remotion attempt scratch
++
++Port the managed short-attempt root proof and live scratch accounting,
++including focused isolation regression tests.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- FINAL STATUS ---'; git status --short; printf '%s\\n' '--- COMMIT MESSAGE ---'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/commit-msg; printf '%s\\n' '--- MARKER ---'; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-accounted-short-current-port/DONE && echo DONE_PRESENT; printf '%s\\n' '--- DIFF STAT INCLUDING UNTRACKED CONTENT ---'; git diff --stat; wc -l tests/packs/rendering/test_remotion_attempt_temp.py" in /home/user/work/wt/agt-m3-accounted-short-current-port
+ succeeded in 651ms:
+--- FINAL STATUS ---
+ M astrid/core/execution/generic_host.py
+ M astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+?? tests/packs/rendering/test_remotion_attempt_temp.py
+--- COMMIT MESSAGE ---
+fix(rendering): account short Remotion attempt scratch
+
+Port the managed short-attempt root proof and live scratch accounting,
+including focused isolation regression tests.
+--- MARKER ---
+DONE_PRESENT
+--- DIFF STAT INCLUDING UNTRACKED CONTENT ---
+ astrid/core/execution/generic_host.py              | 10 +++-
+ .../renderers/remotion/root_preparation.py         | 58 +++++++++++++++++++++-
+ 2 files changed, 65 insertions(+), 3 deletions(-)
+106 tests/packs/rendering/test_remotion_attempt_temp.py
+
+codex
+## Report
+
+- Ported exact `a760ecca..973c082e` delta onto `f82da322` across only:
+  - `generic_host.py`
+  - `root_preparation.py`
+  - `test_remotion_attempt_temp.py`
+- Verified all three blobs match source commit `973c082e`.
+- Verified 4f29 source-authority paths remain byte-identical.
+- Added commit message and `DONE` marker.
+
+Test command:
+
+```bash
+PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
+  tests/packs/rendering/test_remotion_attempt_temp.py \
+  tests/packs/rendering/test_remotion_scratch_guards.py \
+  tests/packs/rendering/test_verified_source.py::test_render_request_keeps_verified_source_private_through_backend_projection \
+  tests/packs/rendering/test_verified_source.py::test_host_rejects_reserved_source_ports \
+  tests/packs/rendering/test_verified_source.py::test_source_handoff_clears_ambient_authority_before_refusing_changed_bytes \
+  tests/packs/rendering/test_verified_source.py::test_render_service_refuses_lost_verified_source_authority
+```
+
+Result: **19 passed**.
+
+No full suite, browser/MP4, or test service run, as instructed.
+tokens used
+44,984
+## Report
+
+- Ported exact `a760ecca..973c082e` delta onto `f82da322` across only:
+  - `generic_host.py`
+  - `root_preparation.py`
+  - `test_remotion_attempt_temp.py`
+- Verified all three blobs match source commit `973c082e`.
+- Verified 4f29 source-authority paths remain byte-identical.
+- Added commit message and `DONE` marker.
+
+Test command:
+
+```bash
+PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
+  tests/packs/rendering/test_remotion_attempt_temp.py \
+  tests/packs/rendering/test_remotion_scratch_guards.py \
+  tests/packs/rendering/test_verified_source.py::test_render_request_keeps_verified_source_private_through_backend_projection \
+  tests/packs/rendering/test_verified_source.py::test_host_rejects_reserved_source_ports \
+  tests/packs/rendering/test_verified_source.py::test_source_handoff_clears_ambient_authority_before_refusing_changed_bytes \
+  tests/packs/rendering/test_verified_source.py::test_render_service_refuses_lost_verified_source_authority
+```
+
+Result: **19 passed**.
+
+No full suite, browser/MP4, or test service run, as instructed.

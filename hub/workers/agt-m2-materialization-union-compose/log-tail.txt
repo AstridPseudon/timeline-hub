@@ -1,0 +1,400 @@
+38aa664976e61ca50d2358c102c78c9a48e0f7ea
+8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce  astrid/core/timeline/schema/edit-command.schema.json
+1089e87335d83f42c3bfa37668b9d332c4960e5d7cb0971643d7292353a99ce9  astrid/sdk/timeline/_materialization.py
+112279 tests/editing_conformance/fixtures/recipe_m2_occurrence_media_materialization_v1.json
+ 81731 tests/editing_conformance/fixtures/recipe_m2_placement_materialization_v1.json
+194010 total
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-materialization-union-compose/tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+/home/user/work/wt/agt-m2-materialization-union-compose/tests/editing_conformance/test_recipe_m2_placement.py
+diff --git a/tests/editing_conformance/test_materialization_map.py b/tests/editing_conformance/test_materialization_map.py
+index 21e996f5e2ca4a17a4d0f894e011a6b28013d82b..5a0d589ff8d3a65c065db1563b68817ceee8ee31
+--- a/tests/editing_conformance/test_materialization_map.py
++++ b/tests/editing_conformance/test_materialization_map.py
+@@ -45,6 +45,42 @@
+     assert recovered.records == plan.records
+ 
+ 
++@pytest.mark.parametrize('before,after', [(2, 2.0), (1, True), (True, 1)])
++@pytest.mark.parametrize('scope', ['shot', 'internal'])
++def test_exact_encoded_child_change_captures_its_physical_allocation(monkeypatch, scope, before, after):
++    document = source()
++    image = document['shot_revisions' if scope == 'shot' else 'internal_timeline_revisions'][0]
++    image['payload']['unknown'] = {'x': before}
++    image['content_digest'] = _digest(image['payload'])
++    document['dependency_manifest'] = _manifest(
++        document['shot_revisions'], document['internal_timeline_revisions'],
++        document['dependency_manifest']['media'], [])
++    original = bundle_from_document(document)
++    owner = 'shot:' + original['placements'][0]['shot_id']
++    ref, path = (owner, ['payload', 'unknown', 'x']) if scope == 'shot' else (
++        'occurrence:occ-a/source', ['unknown', 'x'])
++
++    def write(ctx, command):
++        if scope == 'shot':
++            shot = ctx.read(ref)
++            shot['payload']['unknown']['x'] = after
++            ctx.write(ref, [], shot)
++        else:
++            ctx.read(ref, path)
++            ctx.write(ref, path, after)
++
++    registered = commands.operations()
++    monkeypatch.setattr(commands, 'operations', lambda: {
++        **registered, 'test.encoded-child': commands.Operation({'type': 'object'}, write, {})})
++    plan = commands.execute(original, [{'schema_version': 1, 'op': 'test.encoded-child',
++                                      'version': '1', 'select': ref, 'args': {}}])
++    output = document_from_bundle(plan.bundle)
++    assert plan.id_map == allocation(original, output)[0]
++    assert plan.id_map[owner] == owner[5:]
++    assert commands.execute(original, plan.commands).records == plan.records
++    assert document_from_bundle(inverse(plan.bundle, plan.records).bundle) == document
++
++
+ @pytest.mark.parametrize('damage', ['missing', 'extra', 'wrong', 'unbound', 'source', 'owner', 'pin', 'scope'])
+ def test_product_rejects_unverified_allocation_without_mutating_inputs(damage):
+     original = bundle_from_document(source())
+diff --git a/tests/editing_conformance/test_occurrence_media_manifest_inverse.py b/tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+index 65a5c9aa1e22fe93eb303b2c3c8c76c9ead41373..c448c3964170c4c8373cb6d76b408d225071c623
+--- a/tests/editing_conformance/test_occurrence_media_manifest_inverse.py
++++ b/tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+@@ -256,7 +256,8 @@
+ def test_retained_document_scope_is_required_before_removing_media(popup_edit, source):
+     _, original, _ = popup_edit
+     realm, created, records = accepted_popup(popup_edit)
+-    undone = inverse(bundle_from_document(created['data']['canonical_document']), records, closures={original['base_parent']['revision_id']: original})
++    undone = inverse(bundle_from_document(created['data']['canonical_document']), records,
++                     closures={original['base_parent']['revision_id']: original})
+     content = {'media_id': NEW if source == 'dependent' else 'sha256:' + '8' * 64}
+     pin = {'document_id': 'example.config', 'version': 1, 'content_digest': _digest(content)}
+     if source != 'missing':
+diff --git a/tests/editing_conformance/test_recipe_m2_placement.py b/tests/editing_conformance/test_recipe_m2_placement.py
+index b3458477c7c0303eecf79df08ff2577372dbaec0..bd086a818f1fb252ffbf7779e85b931d8f24daea
+--- a/tests/editing_conformance/test_recipe_m2_placement.py
++++ b/tests/editing_conformance/test_recipe_m2_placement.py
+@@ -61,8 +61,8 @@
+         reloaded = bundle_from_document(case['output'])
+         undone = inverse(reloaded, plan.records, closures={original['base_parent']['revision_id']: original})
+         assert document_from_bundle(undone.bundle, source_bundles=[original]) == case['input']
+-        # Reload retains the compiler's occurrence materialization and revision
+-        # identities without a historical closure. Authored values still restore.
++        # The original verified closure recovers allocation provenance while
++        # authored collections and sibling values still restore exactly.
+         for owner in ('parent', 'occurrence:occ-a', 'occurrence:occ-b'):
+             assert State(undone.bundle).config(owner) == State(original).config(owner)
+             assert State(undone.bundle).collection(owner, 'clip') == State(original).collection(owner, 'clip')
+
+exec
+/bin/bash -lc 'python3 /tmp/agt-m2-union-tree.py && git diff --check && PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement.py --output-format concise' in /home/user/work/wt/agt-m2-materialization-union-compose
+ succeeded in 524ms:
+. 42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5
+astrid 63bd90527c191264c2ff7e8f6863f746ed3ce8dc
+tests a66746f9872547ebf3189718e06d1ef7c425c77b
+All checks passed!
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-m2-materialization-union-compose'
+(worker/'notes').mkdir(exist_ok=True)
+report='''# Complete ordinary schema + reviewed materialization carrier
+
+Composed only "'`1b52391e..b3c0dbd7c69a369dee303640c2bd608f1d3b71c9` materialization deltas (c65 implementation plus b3 review corrections) onto assigned `a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83`. No old SDK whole-file overlay, registry change, ABI/DTO/table/seed change, normalization, pin mutation, Runtime edits, dependency installs, full suites, sockets, browsers, merges or pushes. M2 integration remains HELD.
+
+- Worktree: `/home/user/work/wt/agt-m2-materialization-union-compose`; branch `tl/agt-m2-materialization-union-compose`.
+- Observed HEAD remains base `a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83` / base tree `38aa664976e61ca50d2358c102c78c9a48e0f7ea`. Commit creation belongs to the harness; a successor commit SHA cannot honestly be supplied before exit. Manager must publish that actual SHA afterwards.
+- Final source tree including untracked deliverables: `42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5`; product `astrid` subtree `63bd90527c191264c2ff7e8f6863f746ed3ce8dc`; tests subtree `a66746f9872547ebf3189718e06d1ef7c425c77b`. Computed with Git'"'s blob/tree object encoding without modifying .git; independently reconstructed base tree matches "'`git rev-parse HEAD''^{tree}`.
+- NEW canonical schema SHA256: **`8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce`** at `astrid/core/timeline/schema/edit-command.schema.json`. This complete union is the normal Runtime item-ref generation input; old b3/schema10c is provenance only and remains withdrawn.
+- `_materialization.py` SHA256: `1089e87335d83f42c3bfa37668b9d332c4960e5d7cb0971643d7292353a99ce9`.
+
+Schema proof: all 35 ordinary definitions and all 14 EditCommand conditionals (12 native operations plus inverse/restore) survive. Reversing ONLY the four reviewed shot-item pattern additions recovers frozen ordinary schema472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9 byte-for-byte. Existing scoped asset alternatives remain. EditCommand, ClipSetParamsArgs/schema_source, DocumentPin, MediaSelection and all native closed args are unchanged. The composed-schema test now checks the complete registry/conditional union and item refs alongside root/asset refs. No old EditCommand or ClipSetParamsArgs was copied.
+
+Product provenance and decisions:
+
+- Retained the reviewed single checked allocation join; original D/J and parent/source pins; read-only immutable S/I resolution; typed item addressing/births/reservations separate from physical facts; source ingress; provider before/after/original contexts; SDK ACK execution and AcceptedRecords reconstruction. Kept the current native verified-media/selected-object resolver arguments when joining execution/replay call sites. Source hydration for materialization is separate from the current retained compiler document hydration.
+- The shared raw-item remapper is the current a31/875 behavior, renamed to the reviewed shared helper for replay. The current M1 a610 identity alias predicate and `equal` are unchanged. Current selected-schema `_hydrate`/`_schema_resolver`, `_inverse_media_removals`, operation registry and all clip/scalar/trim/split handler files are unchanged (AST/body or complete byte checks). Runtime lock is byte-identical.
+- Applied manager-approved numeric3eae377 exact image comparisons only: core canonical JSON for materialization, provider JSON/existing parent digest/full manifest for immutable reuse. Added the same exact comparison to the reviewed allocation detector: otherwise 2→2.0 materializes a new physical output without its allocation map. Six direct regression cases cover numeric encoding and bool distinction in shot/internal images. Replacing ONLY allocations() with reviewed b3 in a throwaway process gives the expected **2 failed/4 passed**; final gives **6 passed**. Guard equality, encoding and hashes remain unchanged. Numeric converter'"'s nine pure tests are ported from 3eae377; actual numeric Runtime tests were not imported or claimed qualified.
+- Product delta including new helper: **+438/-43, net +395 lines**. Helper is 178 lines. No second interpreter, regeneration framework or allocation seed change. The old reviewed source net+387 is not a meaningful literal target after composition onto the already-correct current remapper and the approved numeric correction.
+- All existing editing-conformance golden files, including M1 and label captures, remain byte-identical. New materialization captures are separate "'`recipe_m2_occurrence_media_materialization_v1.json` and `recipe_m2_placement_materialization_v1.json`. No old sealed claims were silently refreshed.
+- Updated only pure reload/inverse media test setup to supply its original immutable closure, matching provider/source contract; all existing authored-state, media retention, corrupt-boundary and exact-document assertions stay positive and pass. The shared test inverse helper accepts optional closures. No fabricated fixture rows, snapshots or SQL authority.
+
+Qualification and unresolved requirements:
+
+**Schema union and Agent pure/provider preparation are qualified by the focused runs below. Complete ordinary compatibility and actual Runtime new-map admission are NOT qualified.** Five preserved positive requirements are strict xfails, never changed into refusal expectations:
+
+1. `test_timeline_commit_provider_scalar.py::test_dependent_original_capture_handoff_after_move_ack_and_same_child_revision_change`.
+2. Separate occurrence parameter of `test_timeline_clip_scalar_provider.py::test_move_then_hold_accepts_original_capture_and_generic_inverse_stages` (all other parameters positive).
+3–5. Legacy media add/swap and placement golden comparisons, with original files/assertions preserved; separately versioned new-capture cases pass.
+
+The two dependent-B failures are a real union gap: B is sealed over local A before A ACK, carrying original materialization S/I bindings; after A acceptance and another disjoint child edit, provider reopening physical D no longer reconstructs these bindings and returns capture_mismatch. This is missing authenticated historical allocation/source hydration at native ingress, not equal-state ABA. No 2590/native-batch frontend work was imported because the task assigns that ingress to the active final Bundle2 composer. That owner must restore the two positive requirements with verified accepted original allocation contexts; never strip or refresh B'"'s claims. Legacy sealed M2 capture compatibility likewise remains a visible requirement. This evidence means the reviewed carrier alone does NOT preserve every current ordinary behavior; do not call the composed product fully compatible or releasable.
+
+The existing official Runtime artifact does not admit the new item refs/map. No overrides or actual pair tests were attempted. Runtime must normally generate from NEW complete schema, compose its join/own-slot implementation, and provide an exact official matched source/artifact. Then qualify mutable unrelated/retired/global item occupancy, authenticated old/new own-slot authority, stale sibling replay, inverse/redo/restore and exact retry, including six positive opaque real-service requirements. Refresh consumer pins and App ACK under their owners. Source/schema freeze is not that proof; M2 stays held.
+
+Final test commands (cwd is the assigned worktree):
+
+"'```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recording_clear.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_commit_runtime_opaque_items.py
+```
+
+**631 passed, 7 deselected in 87.63s.** This is reviewed615 + one existing current provider case + nine numeric converter cases + six allocation encoding cases. Existing integration marker excludes six actual opaque requirements and one prior integration case. No skip added.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_clip_trim_provider.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_split_last.py tests/sdk/test_timeline_commit_provider_parent_track_label.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/timeline/test_authoring_media.py
+```
+
+**721 passed, 1 deselected, 5 strict xfailed in 95.08s.** Existing integration marker excludes one prior case. Initial unadapted ordinary run was **31 failed/691 passed/1 deselected**: 26 were missing original-source test setup, two are dependent ingress requirements, three are legacy capture comparisons. Corrected setup restores all 26 positive boundary tests. Final product is unchanged since these runs; only one call wrap and a now-accurate test comment changed afterwards.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement.py --output-format concise
+
+git diff --check
+```
+
+Both **PASS**. Final two cosmetic test files also passed scoped Ruff afterwards. An expanded Ruff command adding `astrid/sdk/remote.py` reports 122 pre-existing diagnostics. Comparing exact HEAD/current JSON diagnostic tuples (code/message/location, accounting for the one added source-capture line) proves every diagnostic unchanged; they were not fixed in this bounded port.
+
+Numeric allocation RED probe (no filesystem mutation):
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import ast, subprocess, pytest
+from astrid.sdk.timeline import _materialization
+source = ast.parse(subprocess.check_output(['git', 'show', 'b3c0dbd7:astrid/sdk/timeline/_materialization.py'], text=True))
+node = next(node for node in source.body if isinstance(node, ast.FunctionDef) and node.name == 'allocations')
+exec(compile(ast.Module(body=[node], type_ignores=[]), '<reviewed-allocations>', 'exec'), _materialization.__dict__)
+raise SystemExit(pytest.main(['-q', '--tb=short', 'tests/editing_conformance/test_materialization_map.py', '-k', 'exact_encoded']))
+PY
+"'```
+
+Expected exit1, **2 failed/4 passed/34 deselected in 1.23s**, exposing missing numeric-only maps. Final normal command `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_map.py -k exact_encoded`: **6 passed/34 deselected in 0.77s**.
+
+Additional verification: exact schema reverse-pattern comparison PASS; all preexisting goldens byte comparison PASS; ordinary handler/Runtime lock byte checks PASS; current selected-schema/media-helper/registry AST comparison PASS. No full or central service suite was requested, per this task'"'s explicit prohibition. No build output or temporary files remain in the worktree.
+
+Recommended next steps: harness commit; manager publish actual successor SHA/tree; Runtime normal complete-schema generation and owned join/own-slot qualification; Bundle2 ingress owner restore the two original dependent-B expectations and legacy capture compatibility; only then consider coupled acceptance and eventual M2 integration.
+'''
+(worker/'notes/report.md').write_text(report)
+message='''feat(timeline): compose materialization with the complete ordinary schema
+
+Port the reviewed source-bound allocation carrier onto the current ordinary
+core, retaining all native command definitions, selected pack inputs and media
+inverse provenance. Extend only the four canonical item-reference patterns.
+
+Use exact encoded images for immutable reuse and allocation detection. Preserve
+frozen captures, add versioned materialization captures, and retain dependent
+source-hydration and legacy capture requirements as strict expected failures.
+
+Focused materialization checks pass 631 tests; ordinary checks pass 721 with
+five documented strict expected failures. Runtime admission remains unqualified
+and M2 integration remains held.
+'''
+(worker/'commit-msg').write_text(message)
+(worker/'commit-msg.txt').write_text(message)
+print(worker/'notes/report.md')
+PY" in /home/user/work/wt/agt-m2-materialization-union-compose
+ exited 1 in 3ms:
+  File "<stdin>", line 5
+    report='''# Complete ordinary schema + reviewed materialization carrier
+           ^
+SyntaxError: unterminated triple-quoted string literal (detected at line 69)
+/bin/bash: -c: line 74: unexpected EOF while looking for matching ``'
+
+exec
+/bin/bash -lc "python3 - <<'REPORT_MATERIALIZATION_20261020'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-m2-materialization-union-compose'
+(worker/'notes').mkdir(exist_ok=True)
+report='''# Complete ordinary schema + reviewed materialization carrier
+
+Composed only "'`1b52391e..b3c0dbd7c69a369dee303640c2bd608f1d3b71c9` materialization deltas (c65 implementation plus b3 corrections) onto assigned `a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83`. No old SDK whole-file overlay, registry/ABI/DTO/table/seed change, normalization, pin mutation, Runtime edits, installs, full suites, sockets, browsers, merges or pushes. M2 integration remains HELD.
+
+- Worktree `/home/user/work/wt/agt-m2-materialization-union-compose`, branch `tl/agt-m2-materialization-union-compose`.
+- Observed HEAD remains base `a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83` / base tree `38aa664976e61ca50d2358c102c78c9a48e0f7ea`. Harness creates the successor commit after exit; manager must publish that actual SHA afterwards.
+- Final source tree including untracked deliverables: `42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5`; `astrid` subtree `63bd90527c191264c2ff7e8f6863f746ed3ce8dc`; tests subtree `a66746f9872547ebf3189718e06d1ef7c425c77b`. Computed with Git blob/tree encoding without modifying .git; independently reconstructed base tree matches `git rev-parse HEAD''^{tree}`.
+- NEW canonical schema SHA256: **`8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce`** at `astrid/core/timeline/schema/edit-command.schema.json`. Complete union is ready as normal Runtime item-ref generation input; old b3/schema10c remains withdrawn, provenance only.
+- `_materialization.py` SHA256: `1089e87335d83f42c3bfa37668b9d332c4960e5d7cb0971643d7292353a99ce9`.
+
+Schema proof: all 35 ordinary definitions and 14 EditCommand conditionals (12 native operations plus inverse/restore) survive. Reversing ONLY the four reviewed shot-item pattern additions recovers frozen ordinary schema472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9 byte-for-byte. Existing scoped asset alternatives remain. EditCommand, ClipSetParamsArgs/schema_source, DocumentPin, MediaSelection and all native closed args are unchanged. Composed-schema tests now check complete registry/conditional equality and item refs alongside root/asset refs. No old EditCommand or ClipSetParamsArgs was copied.
+
+Product provenance and decisions:
+
+- Retained reviewed single checked allocation join, original D/J and parent/source pins, read-only immutable S/I resolution, typed items/births/reservations separate from physical facts, source ingress, provider original/before/after contexts, SDK ACK execution and AcceptedRecords reconstruction. Retained current verified-media/selected-object resolver arguments in joined execute/replay calls. Materialization source contexts stay separate from current retained compiler-document hydration.
+- Shared raw-item remapper is current a31/875 behavior, renamed to reviewed shared helper for replay. Current M1 a610 alias predicate and `equal` remain unchanged. Current selected-schema `_hydrate`/`_schema_resolver`, `_inverse_media_removals`, registry and all clip/scalar/trim/split handlers are unchanged by AST/body or full-byte checks. Runtime lock is byte-identical.
+- Applied approved numeric3eae377 exact image comparisons: core canonical JSON, provider JSON/existing parent digest/full encoded manifest. Added the same exact comparison to allocation detection: otherwise 2→2.0 materializes output without its map. Six direct cases cover number encoding/bool distinction in shot/internal images. Replacing ONLY allocations() with reviewed b3 in a throwaway process produces **2 failed/4 passed**; final gives **6 passed**. Guard equality, encoding and hashes unchanged. Nine pure converter tests ported from3eae377; no actual numeric Runtime tests imported or claimed qualified.
+- Product delta including new helper: **+438/-43, net +395 lines**. Helper178 lines. No second interpreter, regeneration framework or new seeds. Net+387 from old reviewed base differs because current remapper was already correct and bounded numeric correction is now composed.
+- ALL pre-existing editing-conformance golden files, including M1 and label captures, are byte-identical. New captures are separate `recipe_m2_occurrence_media_materialization_v1.json` and `recipe_m2_placement_materialization_v1.json`. Old claims were not silently refreshed.
+- Pure reload/inverse media test setup now supplies its verified original closure, matching production provider/source contract. All authored-state, media retention, corrupt-boundary and exact-document assertions remain positive. Shared inverse test helper accepts optional closures. No fabricated rows, source reseeding or SQL authority.
+
+**Qualified:** complete schema union and Agent focused preparation/replay/source/ACK behaviors. **Pending:** complete ordinary compatibility and actual Runtime new-map admission. Five preserved positive requirements are strict xfails, never rewritten to expect refusal:
+
+1. `test_timeline_commit_provider_scalar.py::test_dependent_original_capture_handoff_after_move_ack_and_same_child_revision_change`.
+2. Separate occurrence parameter of `test_timeline_clip_scalar_provider.py::test_move_then_hold_accepts_original_capture_and_generic_inverse_stages`; all other parameters positive.
+3–5. Legacy media add/swap and placement golden comparisons, original files/assertions preserved; separate new-capture cases pass.
+
+The two dependent-B failures are a real union gap. B sealed over local A before A ACK carries original materialization S/I bindings. After A acceptance and another disjoint child edit, provider opening physical D no longer reconstructs them, returning capture_mismatch. Missing authenticated historical allocation/source hydration at native ingress is distinct from equal-state ABA. No2590/native-batch frontend work was imported: the task assigns ingress to active final Bundle2 composer. That owner must restore both positive requirements with verified accepted original contexts, never strip or refresh B'"'s claims. Legacy sealed M2 capture compatibility remains visible too. Evidence therefore shows the reviewed carrier alone does NOT preserve every current ordinary behavior; this product is not fully compatible/releasable.
+
+No official matched new-ref Runtime artifact/port/own-slot implementation was available. No override or actual pair run attempted. Runtime must generate normally from NEW complete schema, compose join/own-slot implementation and provide an exact official matched source/artifact. Then qualify mutable unrelated/retired/global item occupancy, authenticated old/new own-slot authority, stale sibling replay, inverse/redo/restore/retry and six positive opaque real-service requirements. Consumers' pins/App ACK remain owner work. Schema generation freeze is not acceptance proof. M2 stays held.
+
+Exact final test commands (cwd is assigned worktree):
+
+"'```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recording_clear.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_commit_runtime_opaque_items.py
+```
+
+**631 passed, 7 deselected in 87.63s.** Reviewed615 + one current provider case + nine numeric converter cases + six allocation encoding cases. Existing marker excludes six actual opaque requirements and one prior integration case. No skips added.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_clip_trim_provider.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_split_last.py tests/sdk/test_timeline_commit_provider_parent_track_label.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/timeline/test_authoring_media.py
+```
+
+**721 passed, 1 deselected, 5 strict xfailed in 95.08s.** Existing marker excludes one prior integration case. Initial ordinary run: **31 failed/691 passed/1 deselected**; 26 were missing original-source test setup, two dependent ingress requirements, three legacy comparisons. Corrected setup restores all26 positive boundary tests. Product unchanged after final runs; only one test call wrap and a now-accurate comment changed afterwards.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement.py --output-format concise
+
+git diff --check
+```
+
+Both **PASS**. Final two cosmetic test files passed scoped Ruff afterwards. Expanded Ruff adding `astrid/sdk/remote.py` finds122 pre-existing diagnostics. Exact HEAD/current JSON diagnostic tuple comparison (code/message/location, accounting for one added source-capture line) proves all122 unchanged. Not fixed in this bounded port.
+
+Numeric allocation RED probe (no filesystem mutation):
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import ast, subprocess, pytest
+from astrid.sdk.timeline import _materialization
+source = ast.parse(subprocess.check_output(['git', 'show', 'b3c0dbd7:astrid/sdk/timeline/_materialization.py'], text=True))
+node = next(node for node in source.body if isinstance(node, ast.FunctionDef) and node.name == 'allocations')
+exec(compile(ast.Module(body=[node], type_ignores=[]), '<reviewed-allocations>', 'exec'), _materialization.__dict__)
+raise SystemExit(pytest.main(['-q', '--tb=short', 'tests/editing_conformance/test_materialization_map.py', '-k', 'exact_encoded']))
+PY
+"'```
+
+Expected exit1: **2 failed/4 passed/34 deselected in1.23s**, missing numeric-only maps. Final `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_map.py -k exact_encoded`: **6 passed/34 deselected in0.77s**.
+
+Additional checks: schema reverse-pattern comparison PASS; all pre-existing golden byte comparison PASS; native-handler/Runtime-lock byte checks PASS; current selected-schema/media-helper/registry AST checks PASS. No full/central suite requested per explicit task prohibition. No build output or temp files remain in worktree.
+
+Next: harness commit and manager publication of actual successor SHA/tree; normal Runtime generation and owned join/own-slot proof; Bundle2 ingress owner restore original dependent-B and legacy capture requirements; then coupled acceptance and eventual M2 consideration.
+'"'''
+(worker/'notes/report.md').write_text(report)
+message='''feat(timeline): compose materialization with the complete ordinary schema
+
+Port the reviewed source-bound allocation carrier onto the current ordinary
+core, retaining all native definitions, selected pack inputs and media inverse
+provenance. Extend only the four canonical item-reference patterns.
+
+Use exact encoded images for immutable reuse and allocation detection. Preserve
+frozen captures, add versioned materialization captures, and retain dependent
+source-hydration and legacy capture requirements as strict expected failures.
+
+Focused materialization checks pass 631 tests; ordinary checks pass 721 with
+five documented strict expected failures. Runtime admission remains unqualified
+and M2 integration remains held.
+'''
+(worker/'commit-msg').write_text(message)
+(worker/'commit-msg.txt').write_text(message)
+print(worker/'notes/report.md')
+REPORT_MATERIALIZATION_20261020" in /home/user/work/wt/agt-m2-materialization-union-compose
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-union-compose/notes/report.md
+
+exec
+/bin/bash -lc "python3 - <<'FREEZE_MATERIALIZATION_20261020'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+freeze='''
+
+## agt-m2-materialization-union-compose — COMPLETE ordinary/item-ref generation freeze
+
+This supersedes b3/schema10c as normal item-ref generation input. Old b3 remains feature provenance ONLY, withdrawn for generation. Exact reviewed deltas were composed onto current ordinary a31, without copying its old EditCommand/ClipSetParamsArgs. M2 integration remains HELD.
+
+- Worktree "'`/home/user/work/wt/agt-m2-materialization-union-compose`, branch `tl/agt-m2-materialization-union-compose`.
+- Observed HEAD/base `a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83`, base tree `38aa664976e61ca50d2358c102c78c9a48e0f7ea`. Successor commit SHA is pending harness exit, so manager must publish actual SHA afterwards; no invented commit identity.
+- **Final source tree `42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5`**, product subtree `63bd90527c191264c2ff7e8f6863f746ed3ce8dc`, tests subtree `a66746f9872547ebf3189718e06d1ef7c425c77b` (computed from Git object encoding without writing .git).
+- **NEW canonical schema SHA256 `8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce`**, source `astrid/core/timeline/schema/edit-command.schema.json`. Normal Runtime item-ref generation must use this COMPLETE union, never raw overrides or withdrawn10c.
+- All35 ordinary definitions/14 conditionals (12native +inverse/restore) retained. Reversing ONLY EntityRef/ScopedId/AnchorIdentity/TargetKey item-ref pattern additions recovers frozen472622 source byte-for-byte, including asset refs, schema_source/DocumentPin/MediaSelection and every native closed args. Registry unchanged.
+- Carrier remains exact flat allocation-ref→raw-ID, original parent/S/I/owner binding/dependency join, original D/J replay, physical facts separate from typed semantic births. One checked allocation join; shared current875 remapper; unchanged a610 alias/value guards. Current selected-object resolver, media provenance and native clip/scalar/trim/split/popup handlers retained. Approved3eae exact immutable-image comparisons composed; matching exact allocation detector avoids numeric-only materialization without a map. Product net+395, helper178lines.
+
+Final focused evidence: reviewed lane **631PASS/7integration deselected (87.63s)**; current ordinary/provider/params/scalar/media/trim/split/golden lane **721PASS/1integration deselected/5strictXFAIL (95.08s)**. Scoped Ruff and diffcheckPASS; remote.py'"'s122 lint diagnostics verified unchanged. ALL existing golden files byte-identical, new materialization v1 captures separate. Pure media reload/inverse fixtures now supply original verified source contexts, retaining all positive assertions.
+
+**Generation/schema readiness is not complete product qualification.** Two ORIGINAL dependent-B positives fail capture_mismatch after A materializes and provider reloads D: original S/I allocation bindings are not reconstructed at native ingress. Kept strict xfails with original acceptance/unchanged-command assertions. Final Bundle2 ingress owner must hydrate authenticated original accepted allocation/source context (distinct from2590equal-stateABA); no frontend work imported. Three legacy M2 media/placement golden comparisons remain strict xfail for old sealed capture compatibility, with separate new captures positive. This evidence means a direct reviewed carrier port is NOT fully ordinary-compatible; do not silently remove/refresh those expectations or claim a releasable source.
+
+**Actual Runtime admission remains PENDING.** Runtime owner must generate the official matched artifact normally from this schema, compose its source/private join +authenticated own-slot implementation, and qualify occupancy/retired/globalitem authority, stale sibling replay, inverse/redo/restore/retry and six positive opaque real-service requirements. No actual matched-pair run/override/pin mutation or acceptance qualification occurred here. App ACK/pins remain owned work. M2held.
+
+Exact commands, provenance, five outstanding requirements and next steps: "'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-union-compose/notes/report.md`. Both commit-msg files ready; harness owns commit creation.
+'"'''
+for name in ('m2-materialization-map.md','runtime-coordination.md'):
+ with (root/'design'/name).open('a') as stream:
+  stream.write(freeze)
+print('Complete schema/source freeze appended to both absolute coordination documents.')
+FREEZE_MATERIALIZATION_20261020
+python3 /tmp/agt-m2-union-tree.py
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-materialization-union-compose
+ succeeded in 303ms:
+Complete schema/source freeze appended to both absolute coordination documents.
+. 42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5
+astrid 63bd90527c191264c2ff7e8f6863f746ed3ce8dc
+tests a66746f9872547ebf3189718e06d1ef7c425c77b
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+ M tests/editing_conformance/test_recipe_m2_placement.py
+ M tests/editing_conformance/test_recipe_occurrence_media.py
+ M tests/sdk/test_timeline_clip_scalar_provider.py
+ M tests/sdk/test_timeline_commit_provider.py
+ M tests/sdk/test_timeline_commit_provider_document.py
+ M tests/sdk/test_timeline_commit_provider_scalar.py
+ M tests/sdk/test_timeline_composed_schema.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/_materialization.py
+?? tests/editing_conformance/fixtures/recipe_m2_occurrence_media_materialization_v1.json
+?? tests/editing_conformance/fixtures/recipe_m2_placement_materialization_v1.json
+?? tests/editing_conformance/test_materialization_identity.py
+?? tests/editing_conformance/test_materialization_map.py
+?? tests/editing_conformance/test_materialization_map_spike.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+for name in ('/tmp/agt-m2-materialization-union.patch', '/tmp/agt-m2-numeric-union.patch', '/tmp/agt-m2-union-tree.py'):
+ Path(name).unlink(missing_ok=True)
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-union-compose')
+for name in ('notes/report.md','commit-msg','commit-msg.txt'):
+ path=root/name
+ assert path.is_file() and path.stat().st_size
+print('Report and both commit-message files verified; temporary patch/tree helpers removed.')
+PY" in /home/user/work/wt/agt-m2-materialization-union-compose
+ succeeded in 66ms:
+Report and both commit-message files verified; temporary patch/tree helpers removed.
+
+codex
+Composed the reviewed carrier onto a31, preserving all 35 schema definitions and 14 conditionals. Published the complete schema/source freeze and wrote both commit-message files.
+
+- Materialization checks: **631 passed**, 7 deselected.
+- Ordinary checks: **721 passed**, 1 deselected, **5 strict xfails**.
+- Remaining requirements: two dependent-edit source-hydration regressions and three legacy capture comparisons.
+- Actual Runtime admission remains unqualified; **M2 stays held**.
+
+Exact commands, hashes, provenance and next steps are in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-union-compose/notes/report.md). Successor commit SHA awaits the harness.
+tokens used
+222,852
+Composed the reviewed carrier onto a31, preserving all 35 schema definitions and 14 conditionals. Published the complete schema/source freeze and wrote both commit-message files.
+
+- Materialization checks: **631 passed**, 7 deselected.
+- Ordinary checks: **721 passed**, 1 deselected, **5 strict xfails**.
+- Remaining requirements: two dependent-edit source-hydration regressions and three legacy capture comparisons.
+- Actual Runtime admission remains unqualified; **M2 stays held**.
+
+Exact commands, hashes, provenance and next steps are in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-union-compose/notes/report.md). Successor commit SHA awaits the harness.

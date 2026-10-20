@@ -1,0 +1,9 @@
+name=agt-m2-d10-current-deletion-port
+repo=agent
+base=tl/integration
+base_sha=d0a5072b
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-d10-current-deletion-port
+started=2026-10-20T20:03:54Z

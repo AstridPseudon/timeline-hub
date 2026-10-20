@@ -1,0 +1,400 @@
+-  function select(target){
+-    const legacy=data.cards.find(c=>c.id===target);if(legacy)target=cardTarget(legacy);
+-    if(!nav.targets?.[target]){state.message='This target is not part of the pinned render.';return false;}
+-    state.target=target;state.message='';
+-    if(!selectedCard()&&!['track','phrase','gap','waveform'].includes(record().kind))state.message='No captured frame matches this selection and current filters. Use its exact focus command to sample it.';
+-    return true;
+-  }
+-  function update(values){Object.assign(state,values);if(state.target){const r=record();if(r?.kind==='frame'&&!selectedCard()){state.target=null;state.message='Selection cleared because the frame is outside the current filters or density.';}else if(!selectedCard()&&!['track','phrase','gap','waveform'].includes(r?.kind))state.message='No captured frame matches this selection and current filters. Use its exact focus command to sample it.';else state.message='';}}
+-  function step(direction){
+-    const current=record();
+-    if(current&&['phrase','gap','waveform'].includes(current.kind)){const items=audioItems(current.kind),i=items.findIndex(x=>x.target===state.target),next=Math.max(0,Math.min(items.length-1,i<0?0:i+direction));if(items.length)select(items[next].target);return;}
+-    const cards=visibleCards();if(!cards.length)return;const selected=selectedCard(),i=selected?cards.findIndex(c=>c.id===selected.id):-1;const next=Math.max(0,Math.min(cards.length-1,i<0?0:i+direction));select(cardTarget(cards[next]));
+-  }
+-  function clipVisible(clip){
+-    if(state.track&&String(clip.track_id)!==state.track)return false;
+-    if(state.start!==null&&clip.end_frame<=state.start*fps)return false;
+-    if(state.end!==null&&clip.start_frame>=state.end*fps)return false;
+-    if(state.shot&&clip.shot_id!==state.shot&&!data.cards.some(c=>inScope(c)&&c.clips.some(x=>x.id===clip.id)))return false;
+-    return !state.search||data.cards.some(c=>inScope(c)&&c.clips.some(x=>x.id===clip.id));
+-  }
+-  function selectionInterval(){const r=record();return r&&r.start_seconds!==undefined?[r.start_seconds,r.end_seconds]:selectedCard()?[selectedCard().time_seconds,selectedCard().time_seconds+1/fps]:null;}
+-  function setPlaybackTime(seconds){state.playbackTime=Math.max(0,Math.min(data.provenance.duration_frames/fps,Number(seconds)||0));return state.playbackTime;}
+-  function setLoopForSelection(){const range=selectionInterval();if(range)state.loop={start:range[0],end:range[1]};return state.loop;}
+-  function clearLoop(){state.loop=null;return null;}
+-  function decodeHash(hash){try{return decodeURIComponent(hash.replace(/^#/,''));}catch{return '';}}
+-  function keyboard(event){return !event.altKey&&!event.ctrlKey&&!event.metaKey&&!['INPUT','TEXTAREA','SELECT'].includes(event.target?.tagName)&&!event.target?.isContentEditable&&['ArrowLeft','ArrowRight'].includes(event.key);}
+-  return {state,nav,fps,components,record,cardTarget,frameCard,inScope,visibleCards,selectedCard,select,update,step,clipVisible,decodeHash,keyboard,audioItems,audioVisible,cardAudioCues,renderAudioStatus,selectionInterval,setPlaybackTime,setLoopForSelection,clearLoop};
+-}
+-if(typeof module!=='undefined')module.exports={createInspector};
+-if(typeof document!=='undefined'){
+-  const data=JSON.parse(document.getElementById('inspector-data').textContent),app=createInspector(data),$=id=>document.getElementById(id);
+-  const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+-  const names=clips=>[...new Set((clips||[]).map(c=>c.shot_name||c.shot_id).filter(Boolean))].join(' · ');
+-  const shotName=c=>names(c.clips)||((c.shot_ids||[]).map(id=>app.nav.shots.find(shot=>String(shot.shot_id)===String(id))?.label||id).filter(Boolean).join(' · '))||'Unlabelled shot';
+-  const cardCaptionText=c=>{const source=Array.isArray(c.captions)&&c.captions.length?c.captions:Array.isArray(c.display_scripts)?c.display_scripts:(Array.isArray(c.captions)?c.captions:(Array.isArray(c.scripts)?c.scripts:[]));return source.map(s=>s.canonical_text||s.text||'').join('\n').trim();};
+-  const stepFrames=(data.sampling.step_frames_rational?.[0]||1)/(data.sampling.step_frames_rational?.[1]||1);
+-  const inputOnly=Boolean(data.input_projection&&!data.provenance.video_digest);const eyebrow=$('eyebrow');if(eyebrow)eyebrow.textContent=inputOnly?'Timeline inspector · canonical inputs':'Timeline inspector · rendered composition';$('title').textContent=data.provenance.timeline_name||data.provenance.timeline_id;$('provenance').textContent=inputOnly?`${data.provenance.project_slug} / input-only frozen snapshot`:`${data.provenance.project_slug} / render ${data.provenance.render_run_id}`;$('frozen').textContent=inputOnly?'Frozen canonical input snapshot':'Frozen render snapshot · '+(data.provenance.metadata?.config_version?'version '+data.provenance.metadata.config_version:'exact render provenance');const captureBase=inputOnly?'input placements':data.sampling.options.every_frames?`every ${stepFrames} frames`:`every ${(stepFrames/app.fps).toFixed(3)} seconds`;const captureSuffix=inputOnly?' · no render requested':data.sampling.include_cuts?' plus explicitly included cut neighbors':data.sampling.explicit_interval?' (strict periodic samples)':' (bounded overview)';$('capture').textContent=inputOnly?`Input lanes show ${data.input_projection.tracks.length} track(s) in the shared half-open window${captureSuffix}.`:`Captured ${captureBase}${captureSuffix} · ${data.cards.length} frames. Density can only reduce these captured samples.`;
+-  const warning=data.provenance.metadata?.warnings||[];$('warnings').textContent=(Array.isArray(warning)?warning:[warning]).map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' · ');
+-  for(const factor of [1,2,4,8]){const o=node('option',factor===1?'All captured frames':(data.sampling.options.every_frames?`${stepFrames*factor} frame intervals`:`${(stepFrames*factor/app.fps).toFixed(2)} s intervals`));o.value=String(factor);$('density').append(o);}
+-  const allowed=data.sampling.mode==='shots'?['all','shots']:data.sampling.mode==='cuts'?['all','cuts']:data.sampling.mode==='clips'?['all','clips','cuts','shots']:['all','interval','clips','cuts','shots'];const labels={all:'All captured frames',interval:'Regular intervals',clips:'Picture clips',cuts:'Cut boundaries',shots:'Story beats'};for(const value of allowed){const o=node('option',labels[value]);o.value=value;$('mode').append(o);}if(data.sampling.mode!=='interval')app.state.mode=data.sampling.mode;$('mode').value=app.state.mode;
+-  const shotNames=new Map();for(const c of data.cards)for(const clip of c.clips)if(clip.shot_id)shotNames.set(String(clip.shot_id),clip.shot_name||clip.shot_id);for(const shot of app.nav.shots)shotNames.set(String(shot.shot_id),shot.label||shot.shot_id);for(const [id,label] of shotNames){const o=node('option',label);o.value=id;$('shot').append(o);}for(const track of app.nav.tracks){const o=node('option',track.label||track.id);o.value=String(track.id);$('track').append(o);}
+-  const showText=app.components.has('text'),showAudio=app.components.has('audio'),showInputs=app.components.has('inputs'),inspector=$('inspector');if(inspector&&inspector.classList)inspector.classList.toggle('detail-mode',Boolean(data.sampling.options.detail));const searchLabel=$('search')&&typeof $('search').closest==='function'?$('search').closest('label'):null;if(searchLabel)searchLabel.hidden=!showText;$('audio-section').hidden=!showAudio;$('track-section').open=inputOnly||showInputs;if(app.state.start!==null)$('start').value=String(app.state.start);if(app.state.end!==null)$('end').value=String(app.state.end);const capturedCuts=data.cards.some(c=>((c.sample_reasons||[]).some(r=>r.includes('cut'))));$('retain-cuts').checked=Boolean(data.sampling.include_cuts);$('retain-cuts').disabled=!capturedCuts;$('retain-cuts').title=capturedCuts?'Hide/show cut-neighbor cards already captured in this artifact.':'This artifact contains no cut-neighbor cards; regenerate with --include-cuts to capture them.';
+-  if(app.state.shot)$('shot').value=app.state.shot;
+-  function choose(target){if(app.select(target)){history.replaceState(null,'','#'+encodeURIComponent(app.state.target));render();seekToSelection(true);}}
+-  function focusFirstVisibleCard(force=false){const cards=app.visibleCards();if(!cards.length||(!force&&app.selectedCard()))return false;const target=app.cardTarget(cards[0]);if(!target)return false;return app.select(target);}
+-  function syncPlayhead(){const duration=data.provenance.duration_frames/app.fps;for(const marker of document.querySelectorAll('.timeline-playhead'))marker.style.left=(app.state.playbackTime/duration*100)+'%';}
+-  function seekToSelection(autoplay=false){const r=app.record();if(!r||!media)return;const seek=r.actions?.seek;const start=seek?seek.start[0]/seek.start[1]:r.start_seconds!==undefined?r.start_seconds:r.start_frame!==undefined?r.start_frame/app.fps:undefined;if(Number.isFinite(start)){media.currentTime=Math.max(0,start);if(autoplay)media.play().catch(()=>{});}}
+-  function renderGrid(){const cards=app.visibleCards(),selected=app.selectedCard();$('grid').replaceChildren();for(const c of cards){const el=node('button',undefined,'frame-card'+(selected?.id===c.id?' selected':''));el.type='button';el.setAttribute('aria-pressed',String(selected?.id===c.id));el.onclick=()=>choose(app.cardTarget(c));const header=node('div',undefined,'card-header');header.append(node('span',shotName(c),'shot-name'),node('span',c.time_label,'time'));el.append(header);if(app.components.has('output')){const img=node('img');img.src=c.image;img.alt=`Composited frame ${c.frame} at ${c.time_label}`;img.loading='lazy';el.append(img);}if(app.components.has('text')){const spoken=cardCaptionText(c);const emptyLabel=Array.isArray(c.captions)?(c.caption_status==='same shot; no new timed text'?'':(c.caption_status||'No timed text available')):'No spoken text';const scriptBlock=node('div',undefined,'script-block');scriptBlock.append(node('span',spoken?`“${spoken}”`:emptyLabel,'caption'));el.append(scriptBlock);}if(app.components.has('audio')){const cues=app.cardAudioCues(c);const audioBlock=node('div',undefined,'audio-cues');for(const label of cues.length?cues:['No audio metadata'])audioBlock.append(node('span',label,'audio-cue'+(cues.length?'':' no-data')));audioBlock.append(node('span',app.renderAudioStatus().label,'audio-cue render-status'));el.append(audioBlock);}$('grid').append(el);}$('count').textContent=`${cards.length} of ${data.cards.length} captured frames · final composition`;const query=app.state.search.trim();const empty=Boolean(query&&!cards.length);$('search-status').textContent=empty?`No spoken text or annotated speech phrase matches “${query}”. Timing-only dialogue is available in Speech and audio.`:'';$('open-audio').hidden=!empty;}
+-  function renderTracks(){
+-    $('lanes').replaceChildren();const duration=(showInputs&&data.input_projection?.window?.end_frame)||data.provenance.duration_frames,lo=app.state.start===null?0:Math.max(0,app.state.start*app.fps),hi=app.state.end===null?duration:Math.min(duration,app.state.end*app.fps),span=Math.max(1,hi-lo),selected=app.selectedCard();const ruler=node('div',undefined,'ruler');ruler.append(node('span','Track'));for(let i=0;i<=4;i++)ruler.append(node('span',((lo+span*i/4)/app.fps).toFixed(1)+'s'));$('lanes').append(ruler);
+-    for(const track of app.nav.tracks){if(!app.components.has('audio')&&track.track_kind==='audio')continue;const row=node('div',undefined,'track-row'),label=node('button',`${track.track_kind==='audio'?'♫ Audio':'▣ Visual'} · ${track.label||track.id}`,'track-label');label.onclick=()=>{app.update({track:String(track.id)});$('track').value=String(track.id);choose(track.target);};row.append(label);const lane=node('div',undefined,'lane');const clips=app.nav.clips.filter(c=>String(c.track_id)===String(track.id));if(!clips.length)lane.append(node('span','Empty track','empty-lane'));const rowEnds=[];for(const clip of [...clips].sort((a,b)=>a.start_frame-b.start_frame||a.end_frame-b.end_frame)){if(clip.end_frame<=lo||clip.start_frame>=hi)continue;const active=selected&&selected.frame>=clip.start_frame&&selected.frame<clip.end_frame,b=node('button',(clip.shot_name||clip.label||clip.clip_kind||'Clip'),`clip ${track.track_kind==='audio'?'audio':'visual'}${active?' active':''}${app.state.target===clip.target?' selected':''}${app.clipVisible(clip)?'':' filtered'}`);let slot=rowEnds.findIndex(end=>end<=clip.start_frame);if(slot<0)slot=rowEnds.length;rowEnds[slot]=clip.end_frame;b.style.top=(9+slot*36)+'px';b.style.left=(Math.max(lo,clip.start_frame)-lo)/span*100+'%';b.style.width=Math.max(.25,(Math.min(hi,clip.end_frame)-Math.max(lo,clip.start_frame))/span*100)+'%';b.title=`${clip.shot_name||clip.id} · ${clip.start_frame}–${clip.end_frame} frames`;b.setAttribute('aria-label',b.title);b.setAttribute('aria-pressed',String(app.state.target===clip.target));b.onclick=()=>choose(clip.target);lane.append(b);}lane.style.minHeight=Math.max(48,rowEnds.length*36+12)+'px';if(selected&&selected.frame>=lo&&selected.frame<hi){const playhead=node('div',undefined,'playhead');playhead.style.left=(selected.frame-lo)/span*100+'%';lane.append(playhead);}const playback=node('div',undefined,'timeline-playhead');playback.style.left=(app.state.playbackTime/(data.provenance.duration_frames/app.fps)*100)+'%';lane.append(playback);row.append(lane);$('lanes').append(row);}
+-  }
+-  function renderAudio(){
+-    if(!app.components.has('audio')){ $('audio-rows').replaceChildren(); return; }
+-    const audio=app.nav.audio||{},status=audio.status||'not_analyzed',speech=audio.speech||{},unavailable=(speech.unavailable||[]).length,renderStatus=app.renderAudioStatus();const baseStatus=renderStatus.kind==='unavailable'?(status==='analysis_error'?`${renderStatus.label}: ${audio.error||'decoder error'}`:`${renderStatus.label}.`):renderStatus.kind==='unknown'?`${renderStatus.label}.`:speech.status==='no_transcript'?'No speech annotation; waveform remains available.':`${renderStatus.label}; speech annotations are frozen to this render.`;$('audio-status').textContent=unavailable?`${baseStatus} ${unavailable} speech annotation${unavailable===1?' is':'s are'} unavailable because timing or coverage is incomplete.`:baseStatus;$('audio-rows').replaceChildren();const ruler=node('div',undefined,'audio-ruler ruler');ruler.append(node('span','Audio'));for(let i=0;i<=4;i++)ruler.append(node('span',((data.provenance.duration_frames/app.fps*i/4)).toFixed(1)+'s'));$('audio-rows').append(ruler);
+-    const addRow=(kind,label,items)=>{const row=node('div',undefined,'audio-row');row.append(node('span',label,'audio-row-label'));const lane=node('div',undefined,'audio-lane');for(const item of items.filter(app.audioVisible)){const text=kind==='gap'?`Quiet gap · ${item.duration_seconds.toFixed(3)}s`:kind==='phrase'?(item.canonical_text||item.text||'Unavailable phrase'):`${item.level_id||'Waveform'} · ${item.start_seconds.toFixed(3)}–${item.end_seconds.toFixed(3)}s`;const b=node('button',text,`audio-item ${kind}`);b.type='button';b.setAttribute('aria-label',`${text}; starts ${item.start_seconds.toFixed(3)} seconds, ends ${item.end_seconds.toFixed(3)} seconds, duration ${item.duration_seconds.toFixed(3)} seconds`);b.title=b.getAttribute('aria-label');b.style.left=(item.start_seconds/(data.provenance.duration_frames/app.fps)*100)+'%';b.style.width=Math.max(.3,(item.duration_seconds/(data.provenance.duration_frames/app.fps)*100))+'%';b.onclick=()=>choose(item.target);lane.append(b);}const playback=node('div',undefined,'timeline-playhead');playback.style.left=(app.state.playbackTime/(data.provenance.duration_frames/app.fps)*100)+'%';lane.append(playback);row.append(lane);$('audio-rows').append(row);};addRow('waveform','Waveform bins',app.audioItems('waveform'));addRow('phrase','Speech phrases',app.audioItems('phrase'));addRow('gap','Quiet gaps',app.audioItems('gap'));const disclosure=$('audio-section');if(disclosure)disclosure.open=app.state.audioOpen;
+-  }
+-  function renderDetail(){const card=app.selectedCard(),record=app.record();$('selection-message').textContent=app.state.message;$('detail-content').replaceChildren();$('detail-empty').hidden=!!record;$('detail-actions').hidden=!record;if(!record)return;$('detail-content').append(node('div',record.kind==='frame'?'Rendered frame':record.kind==='clip'?'Clip placement':record.kind==='track'?'Track':record.kind==='phrase'?'Speech phrase':record.kind==='gap'?'Quiet gap':record.kind==='waveform'?'Waveform bin':'Story placement','eyebrow'));if(card&&card.input&&record.kind==='clip'){const preview=record.source_preview;const assetLabel=record.asset_key||record.asset_id||'unkeyed source';$('detail-content').append(node('h2',record.clip_id||record.id||'Input placement'),node('p',`${card.time_label} · frames ${record.start_frame}–${record.end_frame} · asset ${assetLabel} · source ${record.source_time?JSON.stringify(record.source_time):'not recorded'}`,'full-script'));if(app.components.has('inputs')&&preview?.preview){const img=node('img');img.src=preview.preview;img.alt=`Digest-verified source preview for ${assetLabel}`;$('detail-content').append(img);}$('detail-content').append(node('p',preview?.status==='verified'?'Digest-verified managed original.':'Source preview unavailable; this is a truthful placement placeholder.','muted'));}else if(card){if(app.components.has('output')){const img=node('img');img.src=card.image;img.alt=`Selected composited frame ${card.frame}`;$('detail-content').append(img);}const heading=node('div',undefined,'detail-heading');heading.append(node('h2',shotName(card),'detail-shot-name'),node('p',`${card.time_label} · frame ${card.frame}`,'detail-time'));$('detail-content').append(heading);if(app.components.has('text')){const spoken=cardCaptionText(card);const emptyLabel=Array.isArray(card.captions)?(card.caption_status==='same shot; no new timed text'?'':(card.caption_status||'No timed text available')):'No spoken text';const script=node('div',undefined,'detail-script');script.append(node('p',spoken?`“${spoken}”`:emptyLabel,'full-script'));$('detail-content').append(script);}}else if(['phrase','gap','waveform'].includes(record.kind)){$('detail-content').append(node('h2',record.label),node('p',record.kind==='gap'?`Measured low-amplitude interval; threshold ${record.threshold??'recorded in sidecar'}.`:record.kind==='phrase'?[record.canonical_text||record.label,record.recognized_text&&`Recognized: ${record.recognized_text}`,record.uncertainty!=null&&`Uncertainty: ${record.uncertainty}`].filter(Boolean).join('\n'):'Waveform sample bounds are recorded in the sidecar.','full-script'));}else $('detail-content').append(node('h2',record.label||record.clip_id||record.id||record.kind),node('p',record.kind==='track'?'Track selected. Its placements remain part of the full composition.':'No captured image in this selection. The focus command requests this exact placement.','muted'));const technical=node('details');technical.append(node('summary','Source and selection details'));technical.append(node('pre',JSON.stringify({target:app.state.target,selection:record,active_clips:card?.clips||[],scripts:card?.scripts||[],captions:card?.captions||[],video_digest:data.provenance.video_digest},null,2)));$('detail-content').append(technical);$('previous').disabled=!app.visibleCards().length;$('next').disabled=!app.visibleCards().length;}
+-  function render(){renderGrid();renderTracks();renderAudio();renderDetail();}
+-  for(const id of ['start','end','search','shot','track','density','mode','retain-cuts'])$(id).addEventListener('input',()=>{const previousShot=app.state.shot;const values={start:$('start').value===''?null:Number($('start').value),end:$('end').value===''?null:Number($('end').value),search:$('search').value,shot:$('shot').value,track:$('track').value,density:Number($('density').value),mode:$('mode').value,retainCuts:$('retain-cuts').checked};app.update(values);const shotChanged=previousShot!==app.state.shot;if(shotChanged&&app.state.shot){focusFirstVisibleCard(true);if(app.state.target)history.replaceState(null,'','#'+encodeURIComponent(app.state.target));}if(!app.state.target)history.replaceState(null,'',location.pathname+location.search);render();if(shotChanged&&app.state.shot)seekToSelection(false);});$('reset').onclick=()=>{for(const id of ['start','end','search','shot','track'])$(id).value='';app.update({start:null,end:null,search:'',shot:'',track:''});render();};
+-  function move(direction){app.step(direction);if(app.state.target)history.replaceState(null,'','#'+encodeURIComponent(app.state.target));render();seekToSelection(false);}$('previous').onclick=()=>move(-1);$('next').onclick=()=>move(1);document.addEventListener('keydown',e=>{if(app.keyboard(e)){e.preventDefault();move(e.key==='ArrowRight'?1:-1);}});
+-  async function copy(value){try{await navigator.clipboard.writeText(value);$('copy-status').textContent='Copied.';}catch{$('copy-status').textContent=value;}}$('copy-target').onclick=()=>copy(app.state.target||'');$('copy-command').onclick=()=>copy(app.record()?.actions?.focus_command||'');$('copy-time').onclick=()=>copy(String(app.selectedCard()?.time_seconds??app.record()?.start_seconds??''));
+-  const audioSection=$('audio-section');if(audioSection){try{app.state.audioOpen=localStorage.getItem('astrid.inspector.audioOpen')==='true';}catch{}audioSection.addEventListener('toggle',()=>{app.state.audioOpen=audioSection.open;try{localStorage.setItem('astrid.inspector.audioOpen',String(audioSection.open));}catch{};});}const media=$('rendered-media');if(media&&data.media?.path){media.src=data.media.path;media.hidden=false;media.setAttribute('aria-label','Verified rendered video for this pinned render');const tick=()=>{app.setPlaybackTime(media.currentTime);syncPlayhead();if(app.state.loop&&media.currentTime>=app.state.loop.end){media.currentTime=app.state.loop.start;if(app.state.playing)media.play().catch(()=>{});}};if(typeof media.requestVideoFrameCallback==='function'){const frameTick=()=>{tick();media.requestVideoFrameCallback(frameTick);};media.requestVideoFrameCallback(frameTick);}else media.addEventListener('timeupdate',tick);media.addEventListener('play',()=>app.state.playing=true);media.addEventListener('pause',()=>app.state.playing=false);media.addEventListener('loadedmetadata',()=>seekToSelection(false));if(app.state.shot)focusFirstVisibleCard();}
+-  $('open-audio').onclick=()=>{$('search').value='';app.update({search:'',target:null,audioOpen:true});$('track-section').open=true;$('audio-section').open=true;render();};$('loop-selection').onclick=()=>{app.setLoopForSelection();render();};$('clear-loop').onclick=()=>{app.clearLoop();render();};$('context-selection').onclick=()=>{const r=app.record();if(r?.actions?.seek&&media){const start=Math.max(0,r.actions.seek.start[0]/r.actions.seek.start[1]-.5);media.currentTime=start;media.play().catch(()=>{});}};window.addEventListener('hashchange',()=>{app.select(app.decodeHash(location.hash));render();seekToSelection(false);});if(location.hash)app.select(app.decodeHash(location.hash));if(!app.state.target&&app.state.shot)focusFirstVisibleCard();if(!app.state.target&&data.sampling.options.detail){if(inputOnly){const firstInput=app.nav.clips.find(c=>app.clipVisible(c));if(firstInput)app.select(firstInput.target);}else focusFirstVisibleCard(true);}render();seekToSelection(false);syncPlayhead();
+-}
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/inspector_viewer.py b/astrid/packs/rendering/actions/timeline_visualize/inspector_viewer.py
+deleted file mode 100644
+index 3c17ad17c9b1200d48a1a44143676b09bcacb3ba..0000000000000000000000000000000000000000
+--- a/astrid/packs/rendering/actions/timeline_visualize/inspector_viewer.py
++++ /dev/null
+@@ -1,25 +0,0 @@
+-"""Legacy HTML inspector renderer.
+-
+-The timeline visualization executor does not emit this surface.  It remains
+-isolated as a library seam while the replacement inspection tool is developed.
+-"""
+-from pathlib import Path
+-import json
+-
+-_ASSETS = Path(__file__).with_name('inspector_assets')
+-
+-
+-def render_inspector(index: dict, *, columns: int = 5) -> str:
+-    """Images in index must already be embedded data URLs."""
+-    payload = json.dumps(index, ensure_ascii=False).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
+-    style = (_ASSETS / 'inspector.css').read_text()
+-    style += '#inspector .timeline-playhead{position:absolute;top:0;bottom:0;width:2px;background:#f7b267;pointer-events:none;z-index:3}#inspector .audio-ruler{margin-top:8px}#inspector.detail-mode #grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));width:100%}#inspector.detail-mode .frame-card img{aspect-ratio:16/10}'
+-    return _DOCUMENT.replace('__STYLE__', style).replace('__SCRIPT__', (_ASSETS / 'inspector.js').read_text()).replace('__COLUMNS__', str(max(1, min(12, columns)))).replace('__DATA__', payload)
+-
+-
+-_DOCUMENT = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Timeline inspector</title><style>__STYLE__</style></head><body style="margin:0"><div id="inspector" style="--columns:__COLUMNS__">
+-<header><div class="topline"><div><div class="eyebrow" id="eyebrow">Timeline inspector · rendered composition</div><h1 id="title"></h1><p id="provenance" class="muted"></p></div><span id="frozen"></span></div><p id="warnings" role="status"></p><video id="rendered-media" controls hidden preload="metadata"></video>
+-<div class="filters"><label>Spoken text<input id="search" type="search" placeholder="Find spoken text" aria-describedby="search-hint"></label><label>Shot<select id="shot"><option value="">All shots</option></select></label><label>Track<select id="track"><option value="">All tracks</option></select></label><label>From (s)<input id="start" type="number" step="any"></label><label>To (s)<input id="end" type="number" step="any"></label><label>Samples<select id="mode"></select></label><label>Density<select id="density"></select></label><label class="check"><input id="retain-cuts" type="checkbox">Show captured cut neighbors</label><button id="reset">Reset filters</button></div><p id="search-hint" class="track-note">Search matches spoken text and annotated speech phrases. Timing-only dialogue is available in Speech and audio.</p><p id="search-status" class="track-note" role="status"></p><button id="open-audio" type="button" hidden>Clear search and open Speech and audio</button><p id="capture" class="muted"></p></header>
+-<details id="track-section"><summary>Show tracks</summary><p class="track-note">Placements in the frozen render. Audio lanes show clip timing, not waveforms. Selecting a track or clip inspects the full composited image; it does not isolate a layer. Dimmed clips are outside the shared filters.</p><div id="lanes"></div></details><details id="audio-section"><summary>Speech and audio</summary><p id="audio-status" class="track-note"></p><div id="audio-rows"></div><div class="actions"><button id="context-selection" type="button">Audition selection</button><button id="loop-selection" type="button">Loop selection</button><button id="clear-loop" type="button">Clear loop</button></div></details>
+-<div class="workspace"><main class="collection"><div id="count" aria-live="polite"></div><div id="grid"></div></main><aside id="detail" aria-label="Selection details"><div class="detail-nav"><button id="previous" aria-label="Previous captured frame">← Previous</button><button id="next" aria-label="Next captured frame">Next →</button></div><p id="selection-message" role="status"></p><div id="detail-empty"><h2>Inspect a moment</h2><p class="muted">Select a frame or clip. Use left and right arrow keys to move through the captured frames.</p></div><div id="detail-content"></div><div id="detail-actions" hidden><div class="actions"><button id="copy-time">Copy time</button><button id="copy-target">Copy exact target</button><button id="copy-command">Copy focus command</button></div><div id="copy-status" role="status"></div></div></aside></div>
+-<p class="footer-note">Spoken text is segment-level, not word-aligned transcription. “No spoken text” does not establish acoustic silence. Exact targets belong to this pinned inspector and are distinct from structural --from-view references.</p></div><script id="inspector-data" type="application/json">__DATA__</script><script>__SCRIPT__</script></body></html>'''
+diff --git a/astrid/packs/rendering/pack.yaml b/astrid/packs/rendering/pack.yaml
+index 0271832976c3d9bed3f1dec757263c7ef75deb75..71f5437587ca868ec7ef1c8ca899b32335ad9152
+--- a/astrid/packs/rendering/pack.yaml
++++ b/astrid/packs/rendering/pack.yaml
+@@ -594,14 +594,8 @@
+       path: actions/timeline_visualize/ids.py
+     - kind: implementation
+       path: actions/timeline_visualize/inspection_contract.py
+-    - kind: asset
+-      path: actions/timeline_visualize/inspector_assets/inspector.css
+-    - kind: asset
+-      path: actions/timeline_visualize/inspector_assets/inspector.js
+     - kind: implementation
+       path: actions/timeline_visualize/inspector_navigation.py
+-    - kind: implementation
+-      path: actions/timeline_visualize/inspector_viewer.py
+     - kind: implementation
+       path: actions/timeline_visualize/layers/__init__.py
+     - kind: implementation
+diff --git a/tests/packs/rendering/test_timeline_inspector_viewer.py b/tests/packs/rendering/test_timeline_inspector_viewer.py
+deleted file mode 100644
+index 98add3e3c6fa88a892bcd807a2d2e7241a8ec410..0000000000000000000000000000000000000000
+--- a/tests/packs/rendering/test_timeline_inspector_viewer.py
++++ /dev/null
+@@ -1,172 +0,0 @@
+-from __future__ import annotations
+-
+-import json
+-import shutil
+-import subprocess
+-from pathlib import Path
+-
+-import pytest
+-
+-from astrid.packs.rendering.actions.timeline_visualize.inspector_viewer import render_inspector
+-
+-
+-def _viewer_data():
+-    return {
+-        "provenance": {"fps_rational": [24, 1], "duration_frames": 48, "video_digest": "sha256:" + "a" * 64},
+-        "sampling": {"options": {}, "mode": "interval", "step_frames_rational": [12, 1]},
+-        "cards": [{"id": "frame-0", "frame": 0, "time_seconds": 0, "time_label": "0.000s", "sample_reasons": [], "clips": [], "scripts": [], "image": "frames/frame-0.jpg", "shot_ids": []}],
+-        "navigation": {"frames": [], "targets": {}, "tracks": [], "clips": [], "shots": [], "audio": {"speech": {"phrases": []}}, "waveforms": [], "gaps": [], "phrases": []},
+-    }
+-
+-
+-@pytest.mark.skipif(shutil.which("node") is None, reason="node required")
+-def test_viewer_state_keeps_audio_selection_playback_loop_and_text_input_safe(tmp_path):
+-    script = tmp_path / "viewer-test.js"
+-    source = """
+-const fs=require('fs'),vm=require('vm');
+-const sandbox={module:{exports:{}},exports:{},document:undefined};
+-vm.runInNewContext(fs.readFileSync(process.argv[2],'utf8'),sandbox);
+-const {createInspector}=sandbox.module.exports;
+-const data=JSON.parse(process.argv[3]);
+-data.navigation.frames=[{card_id:'frame-0',target:'frame-target'}];
+-data.navigation.targets={
+-  'phrase-target':{kind:'phrase',start_seconds:1,end_seconds:2},
+-  'gap-target':{kind:'gap',start_seconds:3,end_seconds:4},
+-  'frame-target':{kind:'frame',frame:0,start_frame:0,end_frame:1}
+-};
+-data.navigation.phrases=[{target:'phrase-target',start_seconds:1,end_seconds:2,canonical_text:'Blue pill'}];
+-data.navigation.gaps=[{target:'gap-target',start_seconds:3,end_seconds:4}];
+-const app=createInspector(data);
+-if(!app.select('phrase-target')||app.selectionInterval()[0]!==1)throw Error('phrase selection');
+-app.setPlaybackTime(1.5);if(app.state.playbackTime!==1.5)throw Error('media clock');
+-if(!app.setLoopForSelection()||app.state.loop.start!==1||app.state.loop.end!==2)throw Error('loop');
+-app.update({start:1.25});if(app.audioVisible(data.navigation.phrases[0])!==true)throw Error('range filter');
+-app.update({search:'missing'});if(app.audioVisible(data.navigation.phrases[0])!==false)throw Error('search filter');
+-if(app.keyboard({key:'ArrowLeft',target:{tagName:'INPUT'}})!==false)throw Error('text input');
+-console.log('ok');
+-"""
+-    script.write_text(source)
+-    module_path = str(Path(__file__).parents[3] / "astrid/packs/rendering/actions/timeline_visualize/inspector_assets/inspector.js")
+-    completed = subprocess.run(["node", str(script), module_path, json.dumps(_viewer_data())], capture_output=True, text=True, check=False)
+-    assert completed.returncode == 0, completed.stderr
+-    assert completed.stdout.strip() == "ok"
+-
+-
+-def test_rendered_viewer_contains_audio_controls_and_media_clock_fallback():
+-    page = render_inspector(_viewer_data())
+-    for marker in (
+-        "Speech and audio",
+-        "Quiet gaps",
+-        "Audition selection",
+-        "requestVideoFrameCallback",
+-        "timeupdate",
+-        "audio-ruler",
+-        "Verified rendered video",
+-        "Spoken text",
+-        "Find spoken text",
+-        "Search matches spoken text and annotated speech phrases",
+-        "Clear search and open Speech and audio",
+-    ):
+-        assert marker in page
+-
+-
+-@pytest.mark.skipif(shutil.which("node") is None, reason="node required")
+-def test_card_helpers_surface_only_declared_audio_and_frozen_speech_metadata(tmp_path):
+-    script = tmp_path / "card-audio-test.js"
+-    source = """
+-const fs=require('fs'),vm=require('vm');
+-const sandbox={module:{exports:{}},exports:{},document:undefined};
+-vm.runInNewContext(fs.readFileSync(process.argv[2],'utf8'),sandbox);
+-const {createInspector}=sandbox.module.exports;
+-const data=JSON.parse(process.argv[3]);
+-data.cards=[
+-  {id:'frame-0',frame:0,time_seconds:0,time_label:'0.000s',sample_reasons:[],shot_ids:[],scripts:[],clips:[
+-    {id:'music',kind:'music',track:'music-track',shot_name:'A name'},
+-    {id:'voice',kind:'voiceover',track:'voice-track',shot_name:'A name'},
+-    {id:'pretend',kind:'video',track:'video-track',label:'audio filename'}
+-  ]},
+-  {id:'frame-24',frame:24,time_seconds:1,time_label:'1.000s',sample_reasons:[],shot_ids:[],scripts:[],clips:[]}
+-];
+-data.navigation.frames=[{card_id:'frame-0',target:'frame-0-target'},{card_id:'frame-24',target:'frame-24-target'}];
+-data.navigation.tracks=[{id:'music-track',kind:'audio',label:'Music'},{id:'voice-track',kind:'audio',label:'VO'},{id:'video-track',kind:'visual',label:'Picture'}];
+-data.navigation.phrases=[{target:'phrase-target',start_seconds:0,end_seconds:0.25,canonical_text:'Declared phrase'}];
+-data.navigation.targets={'frame-0-target':{kind:'frame',frame:0,start_frame:0,end_frame:1},'frame-24-target':{kind:'frame',frame:24,start_frame:24,end_frame:25}};
+-data.audio={status:'analysis_complete',speech:{status:'complete',phrases:data.navigation.phrases}};
+-const app=createInspector(data);
+-const cues=app.cardAudioCues(data.cards[0]);
+-if(JSON.stringify(cues)!=='["Music clip","Audio clip","Speech annotation"]')throw Error(JSON.stringify(cues));
+-if(app.cardAudioCues(data.cards[1]).length!==0)throw Error('unexpected audio inference');
+-if(app.renderAudioStatus().label!=='Render audio: available')throw Error('render status');
+-console.log('ok');
+-"""
+-    script.write_text(source)
+-    module_path = str(Path(__file__).parents[3] / "astrid/packs/rendering/actions/timeline_visualize/inspector_assets/inspector.js")
+-    completed = subprocess.run(["node", str(script), module_path, json.dumps(_viewer_data())], capture_output=True, text=True, check=False)
+-    assert completed.returncode == 0, completed.stderr
+-    assert completed.stdout.strip() == "ok"
+-
+-
+-def test_rendered_viewer_contains_filmstrip_hierarchy_and_truthful_card_cues():
+-    page = render_inspector(_viewer_data())
+-    for marker in (
+-        "card-header",
+-        "No spoken text",
+-        "No audio metadata",
+-        "Speech annotation",
+-        "Render audio: available",
+-        "min(100%,240px)",
+-        "@media(max-width:600px)",
+-    ):
+-        assert marker in page
+-    assert page.index("header.append") < page.index("img.src")
+-
+-
+-@pytest.mark.skipif(shutil.which("node") is None, reason="node required")
+-def test_browser_viewer_seeks_frame_target_from_frame_number_and_shot_filter(tmp_path):
+-    script = tmp_path / "viewer-dom-seek-test.js"
+-    source = """
+-const fs=require('fs'),vm=require('vm');
+-class Element {
+-  constructor(id=''){this.id=id;this.textContent='';this.value='';this.checked=true;this.hidden=false;this.open=false;this.style={};this.children=[];this.listeners={};}
+-  append(...items){this.children.push(...items);}
+-  replaceChildren(...items){this.children=items;}
+-  addEventListener(name,fn){this.listeners[name]=fn;}
+-  setAttribute(name,value){this[name]=value;}
+-  play(){this.played=true;return Promise.resolve();}
+-}
+-const ids=['inspector-data','title','provenance','frozen','capture','warnings','density','mode','shot','track','start','end','search','retain-cuts','reset','grid','count','search-status','open-audio','track-section','lanes','audio-section','audio-status','audio-rows','selection-message','detail-content','detail-empty','detail-actions','previous','next','copy-status','copy-time','copy-target','copy-command','rendered-media','context-selection','loop-selection','clear-loop'];
+-const elements=Object.fromEntries(ids.map(id=>[id,new Element(id)]));
+-const media=elements['rendered-media'];media.readyState=4;media.duration=4;media.currentTime=0;media.play=()=>{media.played=true;return Promise.resolve();};
+-const data={provenance:{fps_rational:[24,1],duration_frames:96,metadata:{}},sampling:{options:{shot:'shot-1'},mode:'interval',step_frames_rational:[24,1]},cards:[
+-  {id:'frame-12',frame:12,time_seconds:.5,time_label:'0.500s',sample_reasons:['interval'],shot_ids:['shot-0'],scripts:[],clips:[],image:'frame-12.jpg'},
+-  {id:'frame-24',frame:24,time_seconds:1,time_label:'1.000s',sample_reasons:['interval'],shot_ids:['shot-1'],scripts:[],clips:[],image:'frame-24.jpg'},
+-  {id:'frame-48',frame:48,time_seconds:2,time_label:'2.000s',sample_reasons:['interval'],shot_ids:['shot-1'],scripts:[],clips:[],image:'frame-48.jpg'}
+-],navigation:{frames:[{card_id:'frame-12',target:'frame-target-12'},{card_id:'frame-24',target:'frame-target-24'},{card_id:'frame-48',target:'frame-target-48'}],targets:{
+-  'frame-target-12':{kind:'frame',frame:12,start_frame:12,end_frame:13},
+-  'frame-target-24':{kind:'frame',frame:24,start_frame:24,end_frame:25},
+-  'frame-target-48':{kind:'frame',frame:48,start_frame:48,end_frame:49}
+-},tracks:[],clips:[],shots:[{shot_id:'shot-0',label:'Shot 0',start_frame:12,end_frame:24},{shot_id:'shot-1',label:'Shot 1',start_frame:24,end_frame:72}],phrases:[],gaps:[],waveforms:[],audio:{status:'not_analyzed',speech:{status:'no_transcript'}}},media:{path:'rendered.mp4'}};
+-elements['inspector-data'].textContent=JSON.stringify(data);
+-const documentListeners={};
+-const sandbox={document:{getElementById:id=>elements[id],createElement:tag=>new Element(tag),querySelectorAll:()=>[],addEventListener:(name,fn)=>{documentListeners[name]=fn;}},window:{addEventListener:()=>{}},history:{replaceState:(_,__,url)=>{sandbox.location.hash=url.includes('#')?url.slice(url.indexOf('#')):'';}},location:{hash:'',pathname:'/',search:''},localStorage:{getItem:()=>null,setItem:()=>{}},navigator:{clipboard:{writeText:()=>Promise.resolve()}},console};
+-vm.runInNewContext(fs.readFileSync(process.argv[2],'utf8'),sandbox);
+-if(media.currentTime!==1)throw Error(`shot-filter seek was ${media.currentTime}`);
+-if(elements.grid.children.length!==2)throw Error(`expected two shot cards, got ${elements.grid.children.length}`);
+-elements.grid.children[1].onclick();
+-if(media.currentTime!==2||!sandbox.location.hash.includes('frame-target-48'))throw Error(`card seek/hash ${media.currentTime} ${sandbox.location.hash}`);
+-elements['previous'].onclick();
+-if(media.currentTime!==1||!sandbox.location.hash.includes('frame-target-24'))throw Error(`previous seek/hash ${media.currentTime} ${sandbox.location.hash}`);
+-elements['next'].onclick();
+-if(media.currentTime!==2||!sandbox.location.hash.includes('frame-target-48'))throw Error(`next seek/hash ${media.currentTime} ${sandbox.location.hash}`);
+-documentListeners.keydown({key:'ArrowLeft',target:{tagName:'BODY'},preventDefault:()=>{}});
+-if(media.currentTime!==1||!sandbox.location.hash.includes('frame-target-24'))throw Error(`arrow seek/hash ${media.currentTime} ${sandbox.location.hash}`);
+-elements['shot'].value='shot-0';elements['shot'].listeners.input({target:elements['shot']});
+-if(media.currentTime!==.5||!sandbox.location.hash.includes('frame-target-12'))throw Error(`shot-change seek/hash ${media.currentTime} ${sandbox.location.hash}`);
+-if(elements['detail-content'].children.length===0)throw Error('selected card detail missing');
+-console.log('ok');
+-"""
+-    script.write_text(source)
+-    module_path = str(Path(__file__).parents[3] / "astrid/packs/rendering/actions/timeline_visualize/inspector_assets/inspector.js")
+-    completed = subprocess.run(["node", str(script), module_path], capture_output=True, text=True, check=False)
+-    assert completed.returncode == 0, completed.stderr
+-    assert completed.stdout.strip() == "ok"
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- handoff files ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-dead-inspector-current-cut/{commit-msg,commit-msg.txt,DONE}; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-dead-inspector-current-cut/commit-msg; printf '%s\\n' '--- final worktree ---'; git status --short; git diff --check; git diff --stat; printf '%s\\n' '--- no retired implementation references in code/tests ---'; rg -n -i 'inspector_viewer|inspector_assets|render_inspector' astrid tests --glob '"'!docs/**'"' || true; printf '%s\\n' '--- status/ledger evidence tails ---'; tail -35 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md; tail -15 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md" in /home/user/work/wt/agt-m3-dead-inspector-current-cut
+ succeeded in 685ms:
+--- handoff files ---
+-rw-r--r-- 1 root root   0 Oct 20 18:49 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-dead-inspector-current-cut/DONE
+-rw-r--r-- 1 root root 284 Oct 20 18:49 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-dead-inspector-current-cut/commit-msg
+-rw-r--r-- 1 root root 284 Oct 20 18:49 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-dead-inspector-current-cut/commit-msg.txt
+chore(rendering): remove dead inspector viewer
+
+Port the reviewed dead-inspector deletion onto current Agent tree 490c10ac.
+Remove the unreachable HTML viewer, its assets, pack declarations, and private
+viewer tests while retaining public inspector navigation and filmstrip coverage.
+--- final worktree ---
+ D astrid/packs/rendering/actions/timeline_visualize/inspector_assets/inspector.css
+ D astrid/packs/rendering/actions/timeline_visualize/inspector_assets/inspector.js
+ D astrid/packs/rendering/actions/timeline_visualize/inspector_viewer.py
+ M astrid/packs/rendering/pack.yaml
+ D tests/packs/rendering/test_timeline_inspector_viewer.py
+ .../inspector_assets/inspector.css                 |   4 -
+ .../inspector_assets/inspector.js                  | 146 -----------------
+ .../actions/timeline_visualize/inspector_viewer.py |  25 ---
+ astrid/packs/rendering/pack.yaml                   |   6 -
+ .../rendering/test_timeline_inspector_viewer.py    | 172 ---------------------
+ 5 files changed, 353 deletions(-)
+--- no retired implementation references in code/tests ---
+--- status/ledger evidence tails ---
+| AG-RECOVER | Agent CLI/SDK legacy flat old-version recover forwarding | one accepted film writer | visible legacy refusal naming timeline.restore; explicit revision uses existing guarded restore | agent+runtime | M2 | DELETED (qualified; pending merge) | Owner18:11 lifecycle/version decision. OLD test: `tests/v10/test_domain_cli_projects_timelines.py::test_timelines_list_and_recover_are_one_sdk_call`; refusal/retirement tests: `tests/v10/test_domain_cli_projects_timelines.py::test_timelines_list_and_recover_are_one_sdk_call`, `tests/sdk/test_native_timeline_facades.py::test_legacy_timeline_recover_refuses_without_reading_or_forwarding`; equivalent restore positives: `tests/sdk/test_timeline_sync.py::test_restore_sends_exact_revision_and_digest_through_native_commit`, `tests/sdk/test_timeline_sync.py::test_restore_lost_ack_retries_exact_request_after_reload`, `tests/sdk/test_timeline_checkout_history_runtime.py::test_retained_restore_does_not_reopen_consumed_draft_steps`, `tests/sdk/test_timeline_commit_provider_runtime.py::test_restore_inverse_redo_and_exact_retry_survive_runtime_restart`. Physical Agent forwarding/compat mapping removed; project catalog archive/unarchive untouched. Local targeted: 187 passed, 1 skipped. Central `commit-integration` (public Runtime HTTP): 12 passed. |
+
+## Viewing-owned dead inspector handoff
+
+`VW-DEAD-INSPECTOR` is a Viewing-owned row; this Agent entry records only the
+Agent-side qualification on current `490c10ac`. The reviewed `3c5eefb6c` unit
+was ported exactly: five files, 353 deletions, no generated changes beyond the
+rendering pack resource manifest. A repository-wide caller check found no
+remaining `inspector_viewer`, `render_inspector`, or `inspector_assets` caller;
+the live surface remains `inspector_navigation` plus filmstrip cards/execution.
+
+Removed-test mapping reviewed before deletion:
+
+- `test_viewer_state_keeps_audio_selection_playback_loop_and_text_input_safe`
+  -> public frame/audio target and exact-focus coverage in
+  `tests/packs/rendering/test_inspector_navigation.py` and
+  `tests/packs/rendering/test_timeline_filmstrip_cards.py`.
+- `test_rendered_viewer_contains_audio_controls_and_media_clock_fallback`
+  -> `test_pack_keeps_audio_navigation_in_rich_result_index` and
+  `test_execution_delivers_audio_sidecar_optional_media_and_reuses_cache`.
+- `test_card_helpers_surface_only_declared_audio_and_frozen_speech_metadata`
+  -> `test_frame_captions_use_only_explicit_timed_speech` and the rich audio
+  navigation test in `test_timeline_filmstrip_cards.py`.
+- `test_rendered_viewer_contains_filmstrip_hierarchy_and_truthful_card_cues`
+  -> `test_pack_uses_rendered_frames_without_html_artifact` and
+  `test_paired_surface_omits_empty_lanes_but_preserves_canonical_track_metadata`.
+- `test_browser_viewer_seeks_frame_target_from_frame_number_and_shot_filter`
+  -> `test_frame_focus_command_preserves_exact_integer_frame`,
+  `test_managed_coverage_keeps_exact_frame_in_frozen_range`, and
+  `test_input_navigation_keeps_track_occurrences_distinct_and_copyable`.
+
+Bounded qualification on the current tree: public navigation/filmstrip/pack
+files `125 passed`; pack layout, visualize-pack, and inspection-contract files
+`58 passed`. No pixel, active geometry, private crop/statistics, or
+`_timing_evaluators.py` behavior was changed.
+Security: reject e6/b62 pruning successor. Independent fresh live-child denial counterexamples plus2 original strict failures prove it can lose ownership; UNMERGED. Original19e4 remains. HARD worker has several original-source render positives but still tracing the initial reused-identity witness; no unsafe pruning, no scope widening.
+Private952: Agent counterpart ACK147+71+216 and75 byte identities; normal PRIVATE pin worker now uses frozen357/613 and exact952/b397. Public013 and ordinary014a0 remain unchanged. Pair is not run yet.
+Sweeper dispatched WC6 current native file cut (251 units+1 exact7d HTTP), WC3 current body cut24 exact7d HTTP, recover correction, speech proper014/ad97 pair, Scene managed proof and current cache unit. WC3/WC6 integration waits normal014 App/owner adoption; full parent rows remain open. D10 source wrappers routed to Viewing, its rendering-pack owner, for consumer-first normal provenance refresh.
+Resources/process: six workers requested/running, including recover/WC5 and D13 ledger work. Explicit-file service scopes only; stop-test tool used for wrong default scopes. Owner asked to provision a NEW exact0b2 installed child for ONE post-merge full with the already-built immutable13 runtime. No duplicate full or completed-run relabel.
+Inbox: ACK through18:33 cache unit,18:32 raw result/fixture-scope ownership and18:22 private952 handoff, plus18:21 Main merge and18:18 D10 source request. Main refresh is now merged.
+
+Latest outcome (dead inspector deletion sweeper): current tree `490c10ac`
+received the reviewed Viewing unit `3c5eefb6c` exactly: five files and 353
+deletions, with public `inspector_navigation` and filmstrip execution intact.
+No remaining code caller references `inspector_viewer`, `render_inspector`, or
+`inspector_assets`; the historical plan references are documentation only.
+Agent-side bounded qualification passed 125 public navigation/filmstrip/pack
+tests and 58 pack-layout/visualize-pack/inspection-contract tests. Viewing owns
+the `VW-DEAD-INSPECTOR` ledger row and will mark it deleted after the harness
+merge SHA; this worker made no change to that row.
+
+codex
+Implemented the reviewed dead-inspector deletion on `490c10ac`.
+
+- Removed 5 files / 353 lines, including HTML viewer, assets, pack declarations, and private tests.
+- Verified no remaining code callers; public `inspector_navigation` and filmstrip paths remain.
+- Updated Agent ledger/STATUS evidence only.
+- Created `commit-msg`, `commit-msg.txt`, and `DONE`.
+
+Tests:
+
+- `pytest ...test_inspector_navigation.py ...test_timeline_filmstrip_cards.py ...test_timeline_filmstrip_execution.py ...test_pack_yaml_schema.py ...test_pack_rendering_extensions.py ...test_pack_discovery.py` — **125 passed**
+- `pytest ...test_pack_layout_contract.py ...test_timeline_visualize_pack.py ...test_timeline_inspection_contract.py` — **58 passed**
+
+No full, pixel, geometry, crop/statistics, or timing-evaluator tests were run. Viewing can mark `VW-DEAD-INSPECTOR` deleted after the harness provides the merge SHA.
+tokens used
+230,535
+Implemented the reviewed dead-inspector deletion on `490c10ac`.
+
+- Removed 5 files / 353 lines, including HTML viewer, assets, pack declarations, and private tests.
+- Verified no remaining code callers; public `inspector_navigation` and filmstrip paths remain.
+- Updated Agent ledger/STATUS evidence only.
+- Created `commit-msg`, `commit-msg.txt`, and `DONE`.
+
+Tests:
+
+- `pytest ...test_inspector_navigation.py ...test_timeline_filmstrip_cards.py ...test_timeline_filmstrip_execution.py ...test_pack_yaml_schema.py ...test_pack_rendering_extensions.py ...test_pack_discovery.py` — **125 passed**
+- `pytest ...test_pack_layout_contract.py ...test_timeline_visualize_pack.py ...test_timeline_inspection_contract.py` — **58 passed**
+
+No full, pixel, geometry, crop/statistics, or timing-evaluator tests were run. Viewing can mark `VW-DEAD-INSPECTOR` deleted after the harness provides the merge SHA.

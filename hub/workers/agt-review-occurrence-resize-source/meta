@@ -1,0 +1,9 @@
+name=agt-review-occurrence-resize-source
+repo=agent
+base=tl/agt-m2-occurrence-duration-carrier
+base_sha=61abe2c5
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-occurrence-resize-source
+started=2026-10-20T21:14:43Z

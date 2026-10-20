@@ -1,0 +1,400 @@
+    metadata, path = record.split(b'\\t', 1)
+    mode, _, stage = metadata.split()
+    assert stage == b'0'
+    tracked[path.decode()] = mode
+new = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard', '-z']).decode().split('\\0')
+paths = sorted(set(tracked) | set(filter(None, new)))
+
+def oid(kind, data):
+    return hashlib.sha1(kind + b' ' + str(len(data)).encode() + b'\\0' + data).digest()
+
+def tree(entries):
+    groups = {}
+    result = []
+    for path, mode, data in entries:
+        name, sep, rest = path.partition('/')
+        if sep:
+            groups.setdefault(name, []).append((rest, mode, data))
+        else:
+            result.append((name, mode, oid(b'blob', data)))
+    for name, children in groups.items():
+        result.append((name, b'40000', tree(children)))
+    result.sort(key=lambda row: row[0] + ('/' if row[1] == b'40000' else ''))
+    raw = b''.join(mode + b' ' + name.encode() + b'\\0' + digest for name, mode, digest in result)
+    return oid(b'tree', raw)
+
+baseline = []
+current = []
+for path in paths:
+    p = root / path
+    mode = tracked.get(path, b'100755' if p.stat().st_mode & 0o111 else b'100644')
+    data = p.readlink().as_posix().encode() if mode == b'120000' else p.read_bytes()
+    current.append((path, mode, data))
+    if path in tracked:
+        baseline.append((path, mode, subprocess.check_output(['git', 'show', 'HEAD:' + path])))
+assert tree(baseline).hex() == subprocess.check_output(['git', 'rev-parse', 'HEAD"'^{tree}'"'], text=True).strip()
+product = [(p.removeprefix('astrid/'), m, d) for p,m,d in current if p.startswith('astrid/')]
+tests = [(p.removeprefix('tests/'), m, d) for p,m,d in current if p.startswith('tests/')]
+fixtures = [p for p in tracked if p.startswith('tests/editing_conformance/fixtures/')]
+for path in fixtures:
+    assert (root / path).read_bytes() == subprocess.check_output(['git', 'show', 'HEAD:' + path])
+print(json.dumps({
+    'observed_HEAD': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+    'base_tree': tree(baseline).hex(), 'candidate_tree': tree(current).hex(),
+    'product_subtree': tree(product).hex(), 'tests_subtree': tree(tests).hex(),
+    'schema_sha256': hashlib.sha256((root / 'astrid/core/timeline/schema/edit-command.schema.json').read_bytes()).hexdigest(),
+    'unchanged_golden_files': len(fixtures),
+    'new_files': len([p for p in new if p]),
+}, indent=2))
+PY" in /home/user/work/wt/agt-m2-materialization-superset-compose
+ succeeded in 10867ms:
+{
+  "observed_HEAD": "2ea37958c8e70ab56209f1c104976f8a198a6a85",
+  "base_tree": "42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5",
+  "candidate_tree": "2a5f9267e6c5e6b924c77d88e8712f77d1ec446f",
+  "product_subtree": "8e28d41e67aa0b54fd3d2fcf82fa5c111b8321ca",
+  "tests_subtree": "17a9ea9f9d8a34db10fb3bf60fb5aef7985c1617",
+  "schema_sha256": "62a7a2ed1c7af34b90e6c38cda1f8fb725742077a3ac66051ca29dcf389750a6",
+  "unchanged_golden_files": 18,
+  "new_files": 7
+}
+
+exec
+/bin/bash -lc "git diff --check; /home/user/work/venv-agent/bin/ruff check --no-force-exclude tests/sdk/command_schema_compatibility.py tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_materialization_schema_union.py; python3 - <<'PY'
+import subprocess
+paths = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], text=True).splitlines()
+for path in paths:
+    result = subprocess.run(['git', 'diff', '--no-index', '--check', '/dev/null', path], text=True, capture_output=True)
+    assert result.returncode in (0, 1) and not result.stdout and not result.stderr, (path, result)
+print(f'New-file whitespace check PASS ({len(paths)} files)')
+PY" in /home/user/work/wt/agt-m2-materialization-superset-compose
+ succeeded in 105ms:
+All checks passed!
+New-file whitespace check PASS (7 files)
+
+exec
+/bin/bash -lc "sed -n '1,90p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-union-compose/notes/report.md; sed -n '1,25p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-materialization-map.md" in /home/user/work/wt/agt-m2-materialization-superset-compose
+ succeeded in 0ms:
+# Complete ordinary schema + reviewed materialization carrier
+
+Composed only `1b52391e..b3c0dbd7c69a369dee303640c2bd608f1d3b71c9` materialization deltas (c65 implementation plus b3 corrections) onto assigned `a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83`. No old SDK whole-file overlay, registry/ABI/DTO/table/seed change, normalization, pin mutation, Runtime edits, installs, full suites, sockets, browsers, merges or pushes. M2 integration remains HELD.
+
+- Worktree `/home/user/work/wt/agt-m2-materialization-union-compose`, branch `tl/agt-m2-materialization-union-compose`.
+- Observed HEAD remains base `a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83` / base tree `38aa664976e61ca50d2358c102c78c9a48e0f7ea`. Harness creates the successor commit after exit; manager must publish that actual SHA afterwards.
+- Final source tree including untracked deliverables: `42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5`; `astrid` subtree `63bd90527c191264c2ff7e8f6863f746ed3ce8dc`; tests subtree `a66746f9872547ebf3189718e06d1ef7c425c77b`. Computed with Git blob/tree encoding without modifying .git; independently reconstructed base tree matches `git rev-parse HEAD^{tree}`.
+- NEW canonical schema SHA256: **`8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce`** at `astrid/core/timeline/schema/edit-command.schema.json`. Complete union is ready as normal Runtime item-ref generation input; old b3/schema10c remains withdrawn, provenance only.
+- `_materialization.py` SHA256: `1089e87335d83f42c3bfa37668b9d332c4960e5d7cb0971643d7292353a99ce9`.
+
+Schema proof: all 35 ordinary definitions and 14 EditCommand conditionals (12 native operations plus inverse/restore) survive. Reversing ONLY the four reviewed shot-item pattern additions recovers frozen ordinary schema472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9 byte-for-byte. Existing scoped asset alternatives remain. EditCommand, ClipSetParamsArgs/schema_source, DocumentPin, MediaSelection and all native closed args are unchanged. Composed-schema tests now check complete registry/conditional equality and item refs alongside root/asset refs. No old EditCommand or ClipSetParamsArgs was copied.
+
+Product provenance and decisions:
+
+- Retained reviewed single checked allocation join, original D/J and parent/source pins, read-only immutable S/I resolution, typed items/births/reservations separate from physical facts, source ingress, provider original/before/after contexts, SDK ACK execution and AcceptedRecords reconstruction. Retained current verified-media/selected-object resolver arguments in joined execute/replay calls. Materialization source contexts stay separate from current retained compiler-document hydration.
+- Shared raw-item remapper is current a31/875 behavior, renamed to reviewed shared helper for replay. Current M1 a610 alias predicate and `equal` remain unchanged. Current selected-schema `_hydrate`/`_schema_resolver`, `_inverse_media_removals`, registry and all clip/scalar/trim/split handlers are unchanged by AST/body or full-byte checks. Runtime lock is byte-identical.
+- Applied approved numeric3eae377 exact image comparisons: core canonical JSON, provider JSON/existing parent digest/full encoded manifest. Added the same exact comparison to allocation detection: otherwise 2→2.0 materializes output without its map. Six direct cases cover number encoding/bool distinction in shot/internal images. Replacing ONLY allocations() with reviewed b3 in a throwaway process produces **2 failed/4 passed**; final gives **6 passed**. Guard equality, encoding and hashes unchanged. Nine pure converter tests ported from3eae377; no actual numeric Runtime tests imported or claimed qualified.
+- Product delta including new helper: **+438/-43, net +395 lines**. Helper178 lines. No second interpreter, regeneration framework or new seeds. Net+387 from old reviewed base differs because current remapper was already correct and bounded numeric correction is now composed.
+- ALL pre-existing editing-conformance golden files, including M1 and label captures, are byte-identical. New captures are separate `recipe_m2_occurrence_media_materialization_v1.json` and `recipe_m2_placement_materialization_v1.json`. Old claims were not silently refreshed.
+- Pure reload/inverse media test setup now supplies its verified original closure, matching production provider/source contract. All authored-state, media retention, corrupt-boundary and exact-document assertions remain positive. Shared inverse test helper accepts optional closures. No fabricated rows, source reseeding or SQL authority.
+
+**Qualified:** complete schema union and Agent focused preparation/replay/source/ACK behaviors. **Pending:** complete ordinary compatibility and actual Runtime new-map admission. Five preserved positive requirements are strict xfails, never rewritten to expect refusal:
+
+1. `test_timeline_commit_provider_scalar.py::test_dependent_original_capture_handoff_after_move_ack_and_same_child_revision_change`.
+2. Separate occurrence parameter of `test_timeline_clip_scalar_provider.py::test_move_then_hold_accepts_original_capture_and_generic_inverse_stages`; all other parameters positive.
+3–5. Legacy media add/swap and placement golden comparisons, original files/assertions preserved; separate new-capture cases pass.
+
+The two dependent-B failures are a real union gap. B sealed over local A before A ACK carries original materialization S/I bindings. After A acceptance and another disjoint child edit, provider opening physical D no longer reconstructs them, returning capture_mismatch. Missing authenticated historical allocation/source hydration at native ingress is distinct from equal-state ABA. No2590/native-batch frontend work was imported: the task assigns ingress to active final Bundle2 composer. That owner must restore both positive requirements with verified accepted original contexts, never strip or refresh B's claims. Legacy sealed M2 capture compatibility remains visible too. Evidence therefore shows the reviewed carrier alone does NOT preserve every current ordinary behavior; this product is not fully compatible/releasable.
+
+No official matched new-ref Runtime artifact/port/own-slot implementation was available. No override or actual pair run attempted. Runtime must generate normally from NEW complete schema, compose join/own-slot implementation and provide an exact official matched source/artifact. Then qualify mutable unrelated/retired/global item occupancy, authenticated old/new own-slot authority, stale sibling replay, inverse/redo/restore/retry and six positive opaque real-service requirements. Consumers' pins/App ACK remain owner work. Schema generation freeze is not acceptance proof. M2 stays held.
+
+Exact final test commands (cwd is assigned worktree):
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recording_clear.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py tests/timeline/test_authoring_bundle.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_commit_runtime_opaque_items.py
+```
+
+**631 passed, 7 deselected in 87.63s.** Reviewed615 + one current provider case + nine numeric converter cases + six allocation encoding cases. Existing marker excludes six actual opaque requirements and one prior integration case. No skips added.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_clip_trim_provider.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_split_last.py tests/sdk/test_timeline_commit_provider_parent_track_label.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/timeline/test_authoring_media.py
+```
+
+**721 passed, 1 deselected, 5 strict xfailed in 95.08s.** Existing marker excludes one prior integration case. Initial ordinary run: **31 failed/691 passed/1 deselected**; 26 were missing original-source test setup, two dependent ingress requirements, three legacy comparisons. Corrected setup restores all26 positive boundary tests. Product unchanged after final runs; only one test call wrap and a now-accurate comment changed afterwards.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_materialization.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_materialization_identity.py tests/editing_conformance/test_materialization_map_spike.py tests/editing_conformance/test_materialization_map.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_scalar_provider.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_recipe_m2_placement.py --output-format concise
+
+git diff --check
+```
+
+Both **PASS**. Final two cosmetic test files passed scoped Ruff afterwards. Expanded Ruff adding `astrid/sdk/remote.py` finds122 pre-existing diagnostics. Exact HEAD/current JSON diagnostic tuple comparison (code/message/location, accounting for one added source-capture line) proves all122 unchanged. Not fixed in this bounded port.
+
+Numeric allocation RED probe (no filesystem mutation):
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'PY'
+import ast, subprocess, pytest
+from astrid.sdk.timeline import _materialization
+source = ast.parse(subprocess.check_output(['git', 'show', 'b3c0dbd7:astrid/sdk/timeline/_materialization.py'], text=True))
+node = next(node for node in source.body if isinstance(node, ast.FunctionDef) and node.name == 'allocations')
+exec(compile(ast.Module(body=[node], type_ignores=[]), '<reviewed-allocations>', 'exec'), _materialization.__dict__)
+raise SystemExit(pytest.main(['-q', '--tb=short', 'tests/editing_conformance/test_materialization_map.py', '-k', 'exact_encoded']))
+PY
+```
+
+Expected exit1: **2 failed/4 passed/34 deselected in1.23s**, missing numeric-only maps. Final `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_map.py -k exact_encoded`: **6 passed/34 deselected in0.77s**.
+
+Additional checks: schema reverse-pattern comparison PASS; all pre-existing golden byte comparison PASS; native-handler/Runtime-lock byte checks PASS; current selected-schema/media-helper/registry AST checks PASS. No full/central suite requested per explicit task prohibition. No build output or temp files remain in worktree.
+
+Next: harness commit and manager publication of actual successor SHA/tree; normal Runtime generation and owned join/own-slot proof; Bundle2 ingress owner restore original dependent-B and legacy capture requirements; then coupled acceptance and eventual M2 consideration.
+# Exact source-bound materialization map — Agent candidate
+
+Worker: agt-m2-materialization-map-impl, base 1b52391e. Runtime peer: rt-m2-materialization-own-slot. Both exact manager ACKs are in commit-contract.md (Runtime 01:18, Agent 01:22). This coordination page was published before product wiring. No Runtime files, generated artifact, SDK/App dependency pin, seed, ABI or default timing activation changed.
+
+## Source and schema exports
+
+- Canonical schema: `astrid/core/timeline/schema/edit-command.schema.json`. The four existing patterns ScopedId, EntityRef, TargetKey and AnchorIdentity now admit closed `shot:D/item:J` addresses. Generate from this source normally; this worker generated no release artifact.
+- `astrid.sdk.timeline._command_state.item_identity(ref)` returns `(shot_ref, raw_item_id)` only for a canonical shot-owned item. `State.entity/get/set` use actual `item_id` with `id` fallback; logical aliases connect item rows to their authored shot aggregate. No writable fallback resolves immutable source shots or items.
+- `open_authoring_bundle(..., capture_sources=True)` retains deep-copied verified parent/shot/internal inputs in private `source_mapping._source_closure`. The default stays false for frozen M1 bundles/goldens. One necessary Agent SDK read-boundary line in `RemoteTimelines.open_bundle` enables it. Without this line, the real SDK would seal legacy commands while the provider reconstructed new bindings; the parity test proves the corrected SDK and provider captures agree. `bundle_from_document` already retains the verified complete `_runtime_document`.
+- `_copy_shot_for_placement` keeps its exact seeds and remaps `item_id`, raw `id` fallback and equal identity mirrors; distinct secondary ids and opaque children survive.
+
+## Exact capture exports
+
+`Plan.id_map: dict[str, str]` is copied to provider PreparedCommit.id_map and therefore Runtime result/receipt by the existing port. For each destination D, source S, owner O and original source item map `{I: J}`:
+
+```json
+{"shot:D":"D","shot:D/item:J":"J"}
+```
+
+Authoritative records retain:
+
+```json
+{
+  "bindings": [
+    {"key":"shot:D","ref":"shot:S","policy":"fixed","dependencies":["materialization.source:shot:D"]},
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = orch / 'workers/agt-m2-materialization-superset-compose'
+commands = '''"'```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_materialization_schema_union.py tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_runtime_response_conformance.py tests/stage1/test_vendored_workspace_client_parity_luna.py
+```
+
+**111 passed in 13.20s**, exit 0. The original five-file guard handoff command (omit only the new materialization-union test file above) also passed unchanged: **77 passed in 7.36s**, exit 0; the extra case versus the prior worker'"'s 76 is the item-reference case already present on this materialization base. All original guard assertions remain.
+
+"'```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_parent_track_label.py
+```
+
+**185 passed in 11.10s**, exit 0. No xfails/skips/deselections in these two final lanes.
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-force-exclude tests/sdk/command_schema_compatibility.py tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_materialization_schema_union.py
+git diff --check
+```
+
+Both PASS, exit 0. Each of the seven new files also passed `git diff --no-index --check /dev/null <file>` (exit 0/1 with empty diagnostics, as appropriate for new files).
+'"'''
+identity = '''- Assigned source worktree: "'`/home/user/work/wt/agt-m2-materialization-superset-compose`, branch `tl/agt-m2-materialization-superset-compose`.
+- Observed source HEAD / successor parent: `2ea37958c8e70ab56209f1c104976f8a198a6a85`; parent tree `42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5`.
+- **Exact NEW source tree including all seven new test files: `2a5f9267e6c5e6b924c77d88e8712f77d1ec446f`.** Product subtree `8e28d41e67aa0b54fd3d2fcf82fa5c111b8321ca`; tests subtree `17a9ea9f9d8a34db10fb3bf60fb5aef7985c1617`.
+- **NEW canonical schema SHA256: `62a7a2ed1c7af34b90e6c38cda1f8fb725742077a3ac66051ca29dcf389750a6`**, source `astrid/core/timeline/schema/edit-command.schema.json`.
+- Final successor source HEAD does not exist until the harness commits after worker exit. Manager must publish that actual commit SHA and verify its tree equals the NEW tree above before freezing a generation input. The observed parent HEAD is NOT the successor. No commit identity has been invented.
+'"'''
+floors = '''| Fixture | Published source | Raw SHA256 |
+| --- | --- | --- |
+| "'`runtime-0.2.2.json` | Runtime `6be970633cc82ab412428151e6bf42f3e7fc3081`, `contract/schemas/edit-command.json`, version 0.2.2 | `460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388` |
+| `runtime-0.2.3.json` | Runtime `d691ddadb4ef3f5881a25fa893b4fb812211f102`, same path, version 0.2.3 | `472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9` |
+| `withdrawn-10c.json` | Agent `b3c0dbd7c69a369dee303640c2bd608f1d3b71c9`, canonical schema, withdrawn negative only | `10c1610b61ad151259149c97061493d9e36ae0a9220ba4983b45f22e8ac7e3b1` |
+'"'''
+section = '''
+
+## agt-m2-materialization-superset-compose — guard PASS; successor freeze requires harness HEAD
+
+This section supersedes the preceding 8e schema generation recommendation. Complete candidate "'`8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce` was NOT a release: its four regex rewrites fail the conservative public-floor guard. Withdrawn10c remains WITHDRAWN and is an exact negative fixture only.
+
+Only the four canonical patterns changed in product: each keeps the complete anchored ordinary regex as an independent first alternative and adds a typed shot-item alternative. TargetKey retains the unchanged property-path suffix. Reversing ONLY these four pattern edits recovers the exact ordinary472622 bytes; all 35 ordinary definitions, 14 conditionals, schema_source, closed args and registry are retained. No State/recording/provider/SDK/client/Runtime or pin changes.
+
+Imported the exact six-file tests-only delta from `ffa5325c69c575a883af25123f4d1c20a3706e4b`. Original fixture bytes, provenance and guard tests remain exact. One minimal helper correction distinguishes an absent keyword from an unknown keyword set to null: both adding and removing it now require review. New tests prove the four actual unions under an arbitrary definition name, reject old-branch changes/sibling restrictions/unknown changes, preserve arbitrary old IDs, accept typed new refs and reject malformed item refs. No sample-based containment or name allowlist; no general solver.
+
+'"''' + identity + '\\n' + floors + '''
+Commands run from the assigned source worktree AFTER the schema/helper changes:
+
+''' + commands + '''
+**Manager handoff after actual guard PASS:** harness commit -> publish exact successor HEAD/tree -> normal Runtime generation from schema62a7 -> apply the same published-floor guard to generated canonical bytes and retain exact Agent/artifact checks. No release/pin/adoption is authorized by this schema result. Historical 0.2.2->0.2.3 regex rewrites remain outside this conservative proof.
+
+M2 integration remains HELD. Five preserved capture behavior requirements (two dependent-B captures and three legacy media/placement goldens) are owned by another worker and were not rerun or claimed resolved here. Runtime admission, own-slot/occupancy, opaque real-service requirements and coupled acceptance remain pending. No App-readiness claim. Full report and RED probes: "'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-superset-compose/notes/report.md`.
+'"'''
+for name in ('m2-materialization-map.md', 'runtime-coordination.md'):
+    path = orch / 'design' / name
+    with path.open('a') as stream:
+        stream.write(section)
+report = '''# Materialization schema with permanent public superset guard
+
+Read PLAN first. Scope completed: schema plus tests only; M2 integration remains HELD. No settled decision changed.
+
+''' + identity + '''
+Tree hashes were calculated using Git blob/tree encoding without writing .git. Independently reconstructing the unchanged base yielded exactly "'`git rev-parse HEAD''^{tree}`. All 18 existing editing-conformance fixture files are byte-identical to HEAD. No existing test/fixture was changed, weakened, skipped, or removed. The only tracked product diff is four regex lines.
+
+Imported six files exactly from the latest guard commit `ffa5325c69c575a883af25123f4d1c20a3706e4b`: three frozen schemas, provenance, conservative helper and permanent current-schema/mutation guard. The guard test and four fixtures are still byte-identical to that commit. Added one materialization-union test file and tightened the helper'"'s key-presence equality by one condition. No other source files changed.
+
+The original 8e full schema is not provably widening with this helper: initial "'`PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_schema_superset.py` yielded **1 failed, 31 passed in 7.41s**, exit 1; the current-schema test reported exactly the four pattern paths. Chose the required explicit OLD-full-regex UNION typed-shot-item form instead of allowlisting names or inferring compatibility from samples. New tests demonstrate the proof also works under an arbitrary definition name. The typed branch requires nonempty slash-free shot/item IDs without ambiguous ::; TargetKey reuses the unchanged PropertyPath language. Complete old alternatives preserve EVERY old accepted reference, including arbitrary IDs which the ordinary schema allows.
+
+The imported helper also had an absent-vs-null equality gap for unknown keywords. Added regressions for unknown keyword addition/removal/change with null, false and an object, and tightened only the equality fast path. An isolated in-memory run against the exact original helper reproduces **1 failed, 2 passed, 31 deselected in 1.24s**; the null-valued unknown addition incorrectly passed. No filesystem mutation in that RED probe. A first probe patched the namespace-imported test module rather than the pytest-loaded module and therefore tested the current helper (3 passed); corrected by replacing the shared helper export before pytest imported the test.
+
+All 35 ordinary definitions and 14 operation conditionals are retained, including inverse/restore. Reversing only these four patterns recovers raw frozen ordinary472622 byte-for-byte. Unknown changed validation keywords continue to require review; arbitrary regex rewrites/oneOf/conditional rewrites remain deliberately unsupported. Historical 0.2.2->0.2.3 containment is not claimed.
+
+Exact floors (copied raw, verified on every fixture load):
+
+'"''' + floors + '''
+Withdrawn10c remains an exact negative: the permanent tests retain assertions for all eight missing definitions and seven missing operations, the lost schema_source property and narrowed patterns. It is never a release floor.
+
+Exact final verification commands, cwd "'`/home/user/work/wt/agt-m2-materialization-superset-compose`:
+
+'"''' + commands + '''
+RED helper probe (expected exit 1, output above):
+
+"'```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'RED'
+import subprocess
+import pytest
+import tests.sdk.command_schema_compatibility as helper
+namespace = {}
+exec(compile(subprocess.check_output([
+    'git', 'show', 'ffa5325c69c575a883af25123f4d1c20a3706e4b:tests/sdk/command_schema_compatibility.py'
+], text=True), '<original-guard-helper>', 'exec'), namespace)
+helper.compatibility_errors = namespace['compatibility_errors']
+raise SystemExit(pytest.main(['-q', '--tb=short',
+    'tests/sdk/test_timeline_materialization_schema_union.py', '-k', 'unknown_keyword']))
+RED
+"'```
+
+No full suite, install, socket/browser/live-service lane, generated release, SDK/App/Runtime pin change, branch mutation, commit/merge/rebase/checkout/push, or other-worker changes. Generated test caches are cleaned before exit.
+
+After actual PASS, appended the exact tree/schema/floor identities and commands to BOTH absolute coordination paths:
+
+- `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-materialization-map.md`
+- `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md`
+
+The 8e schema was a complete candidate, NOT a release pending guard qualification; it is now superseded for generation by schema62a7. Normal Runtime generation is required because exact schema bytes changed. The manager must publish the actual harness-created successor HEAD with the tree above before the final source freeze. It cannot be known before worker exit under the no-commit rule; no substitute/fabricated HEAD is provided.
+
+Five positive capture requirements are untouched and remain pending with the active behavior worker: two original dependent-B capture cases, plus three legacy media add/swap and placement capture comparisons. They were NOT rerun in this schema-only task. Runtime new-map/own-slot/occupancy admission, opaque real-service cases and coupled qualification remain unverified. No App-ready or release-ready statement.
+
+Next: harness commit; manager checks/publishes actual HEAD/tree; Runtime owner generates normally from exact schema62a7 and guards the generated bytes; behavior owner restores all five original positives; owners perform coupled acceptance. M2 stays HELD.
+'"'''
+(worker / 'notes').mkdir(exist_ok=True)
+(worker / 'notes/report.md').write_text(report)
+message = '''fix(timeline): preserve published schema in materialization unions
+
+Retain each full ordinary reference regex as an explicit alternative to
+new typed shot-item references, preserving the complete published schema.
+
+Add frozen publication floors and permanent compatibility mutations, plus
+union proof and arbitrary-ID coverage. Require review for unknown keyword
+changes even when their value is null. Leave M2 integration held pending
+capture behavior and Runtime qualification.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+print('Wrote notes/report.md, both commit messages, and both authorized coordination appendices')
+PY" in /home/user/work/wt/agt-m2-materialization-superset-compose
+ succeeded in 24ms:
+Wrote notes/report.md, both commit messages, and both authorized coordination appendices
+
+codex
+The schema SHA256 is `62a7a2ed1c7af34b90e6c38cda1f8fb725742077a3ac66051ca29dcf389750a6`. I’ve published the candidate tree, floor hashes and passing commands in both coordination documents.
+
+The final source HEAD must come from the harness after I exit. The manager can then verify the tree and freeze the generation input. Normal Runtime generation and the five pending capture behaviors remain required; M2 stays held.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib, json, os, shutil, subprocess
+root = Path.cwd()
+ref = 'ffa5325c69c575a883af25123f4d1c20a3706e4b'
+original = subprocess.check_output(['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', ref], text=True).splitlines()
+for name in original:
+    if name "'!= '"'tests/sdk/command_schema_compatibility.py':
+        assert (root / name).read_bytes() == subprocess.check_output(['git', 'show', f'{ref}:{name}']), name
+print('Original guard and all four fixture files remain exact')
+assert subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines() == ['astrid/core/timeline/schema/edit-command.schema.json']
+removed = 0
+for current, dirs, _ in os.walk(root):
+    for name in list(dirs):
+        if name in {'.git', 'node_modules'}:
+            dirs.remove(name)
+        elif name in {'__pycache__', '.pytest_cache'}:
+            path = Path(current) / name
+            assert not path.is_symlink(), path
+            shutil.rmtree(path)
+            dirs.remove(name)
+            removed += 1
+print(f'Removed {removed} generated test cache directories')
+# Reconstruct the final source tree without touching the index/object store.
+def digest(kind, data):
+    return hashlib.sha1(kind + b' ' + str(len(data)).encode() + b'\\0' + data).digest()
+def tree(nodes):
+    entries, children = [], {}
+    for name, mode, oid in nodes:
+        head, sep, tail = name.partition('/')
+        if sep:
+            children.setdefault(head, []).append((tail, mode, oid))
+        else:
+            entries.append((head, mode, oid))
+    entries += [(name, b'40000', tree(child)) for name, child in children.items()]
+    entries.sort(key=lambda row: row[0] + ('/' if row[1] == b'40000' else ''))
+    raw = b''.join(mode + b' ' + name.encode() + b'\\0' + oid for name, mode, oid in entries)
+    return digest(b'tree', raw)
+modes = {}
+for record in filter(None, subprocess.check_output(['git', 'ls-files', '--stage', '-z']).split(b'\\0')):
+    metadata, name = record.split(b'\\t', 1)
+    modes[name.decode()] = metadata.split()[0]
+new = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard', '-z']).decode().split('\\0')
+nodes = []
+for name in sorted(set(modes) | set(filter(None, new))):
+    path = root / name
+    mode = modes.get(name, b'100755' if path.stat().st_mode & 0o111 else b'100644')
+    raw = os.readlink(path).encode() if mode == b'120000' else path.read_bytes()
+    nodes.append((name, mode, digest(b'blob', raw)))
+actual = tree(nodes).hex()
+assert actual == '2a5f9267e6c5e6b924c77d88e8712f77d1ec446f', actual
+schema = (root / 'astrid/core/timeline/schema/edit-command.schema.json').read_bytes()
+assert hashlib.sha256(schema).hexdigest() == '62a7a2ed1c7af34b90e6c38cda1f8fb725742077a3ac66051ca29dcf389750a6'
+print('Final tree and schema hashes match both coordination handoffs')
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-materialization-superset-compose
+ succeeded in 471ms:
+Original guard and all four fixture files remain exact
+Removed 6 generated test cache directories
+Final tree and schema hashes match both coordination handoffs
+ M astrid/core/timeline/schema/edit-command.schema.json
+?? tests/fixtures/published-command-schemas/
+?? tests/sdk/command_schema_compatibility.py
+?? tests/sdk/test_timeline_materialization_schema_union.py
+?? tests/sdk/test_timeline_schema_superset.py
+
+codex
+Implemented explicit old-regex unions and the permanent public-schema guard. Reversing only four patterns restores ordinary 0.2.3 byte for byte.
+
+- Guard/schema/client lane: **111 passed**.
+- Materialization/M1/label lane: **185 passed**.
+- Ruff and whitespace checks passed.
+- Fixed the guard’s unknown-keyword/null gap.
+
+Exact commands, results and hashes: [report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-superset-compose/notes/report.md>). Both coordination documents and commit-message files are ready.
+
+Next: harness commit, manager publishes the actual successor HEAD, then normal Runtime generation. Five capture behaviors remain pending; **M2 integration stays HELD**.
+tokens used
+76,272
+Implemented explicit old-regex unions and the permanent public-schema guard. Reversing only four patterns restores ordinary 0.2.3 byte for byte.
+
+- Guard/schema/client lane: **111 passed**.
+- Materialization/M1/label lane: **185 passed**.
+- Ruff and whitespace checks passed.
+- Fixed the guard’s unknown-keyword/null gap.
+
+Exact commands, results and hashes: [report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-superset-compose/notes/report.md>). Both coordination documents and commit-message files are ready.
+
+Next: harness commit, manager publishes the actual successor HEAD, then normal Runtime generation. Five capture behaviors remain pending; **M2 integration stays HELD**.

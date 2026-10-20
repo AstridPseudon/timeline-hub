@@ -1,0 +1,9 @@
+name=agt-baseline-109-cutlist
+repo=agent
+base=tl/integration
+base_sha=ef6eec55
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-baseline-109-cutlist
+started=2026-10-20T06:29:37Z

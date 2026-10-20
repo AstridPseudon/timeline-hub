@@ -1,0 +1,400 @@
+   270	                    if folder.exists():
+   271	                        shutil.rmtree(folder)
+   272	        self._journal = []
+   273	        self.__dict__.pop("_exported", None)
+   274	
+   275	    def _restore_draft(self, steps: int, *, redo: bool) -> list[str]:
+   276	        if not self.path:
+   277	            raise TimelineEditError("only a saved working copy can undo or redo draft edits; "
+   278	                                    "use publications for accepted edits")
+   279	        target = Path(self.path)
+   280	        source, destination = ((_store._redo_dir, _store._history_dir) if redo else
+   281	                               (_store._history_dir, _store._redo_dir))
+   282	        kind = "redo" if redo else "undo"
+   283	        with _store._file_lock(target):
+   284	            start = current = target.read_text(encoding="utf-8")
+   285	            base = json.loads(start).get("base_parent")
+   286	            selected = []
+   287	            for step in reversed(sorted(source(target).glob("*.json"))):
+   288	                label, state = _store._read_step(step)
+   289	                # A publish/reset changes the base. Older snapshots are no longer
+   290	                # unsent intent and must never rewind that accepted boundary.
+   291	                if json.loads(state).get("base_parent") != base:
+   292	                    break
+   293	                selected.append((step, label, state))
+   294	                if len(selected) >= max(1, int(steps)):
+   295	                    break
+   296	            if not selected:
+   297	                raise TimelineEditError(f"nothing to {kind}: no unsent draft edit at this base; "
+   298	                                        "use publications for accepted edits")
+   299	            labels = []
+   300	            staged = []
+   301	            temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+   302	            try:
+   303	                for step, label, state in selected:
+   304	                    staged.append(_store._stage_step(destination(target), label, current))
+   305	                    current = state
+   306	                    labels.append(label)
+   307	                temporary.write_text(current, encoding="utf-8")
+   308	                os.replace(temporary, target)
+   309	            except BaseException:
+   310	                temporary.unlink(missing_ok=True)
+   311	                for step_tmp, _step in staged:
+   312	                    step_tmp.unlink(missing_ok=True)
+   313	                raise
+   314	            # Keep every source until the draft and all reverse states are in
+   315	            # place. Failed writes/replaces leave the original undo chain intact.
+   316	            for step_tmp, step in staged:
+   317	                os.replace(step_tmp, step)
+   318	            for step, _label, _state in selected:
+   319	                step.unlink()
+   320	            self._reload()
+   321	        _journal.record_or_note(self, target, kind=kind, outcome="changed", label="; ".join(labels)[:160],
+   322	                                before=_journal.digest(start), after=_journal.digest(current))
+   323	        return labels
+   324	
+   325	    def _reload(self) -> None:
+   326	        fresh = Checkout.load(self.path)
+   327	        self.bundle, self._mcache, self._journal, self._disk = fresh.bundle, None, [], fresh._disk
+   328	
+    47	
+    48	
+    49	def _stage_step(folder: Path, label: str, state: str) -> tuple[Path, Path]:
+    50	    folder.mkdir(parents=True, exist_ok=True)
+    51	    name = f"{time.time_ns():020d}-{uuid.uuid4().hex[:4]}.json"
+    52	    temporary = folder / f".{name}.tmp"
+    53	    temporary.write_text(json.dumps({"label": str(label), "state": state}), encoding="utf-8")
+    54	    return temporary, folder / name
+    55	
+    56	
+    57	def _write_step(folder: Path, label: str, state: str) -> None:
+    58	    temporary, final = _stage_step(folder, label, state)
+    59	    os.replace(temporary, final)
+    60	
+    61	
+    62	def _read_step(path: Path) -> tuple[str, str]:
+    63	    text = Path(path).read_text(encoding="utf-8")
+    64	    try:
+    65	        value = json.loads(text)
+    66	        if isinstance(value, dict) and "state" in value:
+    67	            return str(value.get("label") or "an edit"), str(value["state"])
+    68	    except ValueError:
+    69	        pass
+    70	    return "an edit", text
+    71	
+    72	
+    73	def _discard_half_written(folder: Path) -> None:
+    74	    for temporary in Path(folder).glob(".*.tmp"):
+    75	        temporary.unlink(missing_ok=True)
+    76	
+    77	
+    78	@contextlib.contextmanager
+    79	def _file_lock(target: Path):
+   101	    assert checkout.document() == stale
+   102	    checkout.redo()
+   103	    assert checkout.clip("c1.rocket").get("x") == 120
+   104	
+   105	
+   106	@pytest.mark.parametrize("operation", ["undo", "redo"])
+   107	@pytest.mark.parametrize("failure", ["write", "replace"])
+   108	def test_failed_draft_write_preserves_restore_sources(draft, monkeypatch, operation, failure):
+   109	    edit(draft, 40)
+   110	    edit(draft, 99)
+   111	    if operation == "redo":
+   112	        draft.undo(2)
+   113	    folder = store._redo_dir if operation == "redo" else store._history_dir
+   114	    history = {p: p.read_bytes() for p in folder(draft.path).glob("*.json")}
+   115	    original = draft.path.read_bytes()
+   116	    write = Path.write_text
+   117	    replace = os.replace
+   118	
+   119	    def fail_write(path, *args, **kwargs):
+   120	        if path.parent == draft.path.parent and path.name.endswith(".tmp"):
+   121	            write(path, "partial", encoding="utf-8")
+   122	            raise OSError("injected draft write failure")
+   123	        return write(path, *args, **kwargs)
+   124	
+   125	    def fail_target(source, target):
+   126	        if target == draft.path:
+   127	            raise OSError("injected draft write failure")
+   128	        return replace(source, target)
+   129	    with monkeypatch.context() as fault:
+   130	        if failure == "write":
+   131	            fault.setattr(Path, "write_text", fail_write)
+   132	        else:
+   133	            fault.setattr(os, "replace", fail_target)
+   134	        with pytest.raises(OSError, match="injected"):
+   135	            getattr(draft, operation)(2)
+   136	    assert draft.path.read_bytes() == original
+   137	    assert {p: p.read_bytes() for p in folder(draft.path).glob("*.json")} == history
+   138	    reverse = store._history_dir if operation == "redo" else store._redo_dir
+   139	    assert list(reverse(draft.path).glob("*")) == []
+   140	    assert not list(draft.path.parent.glob(".*.tmp"))
+   141	    reloaded = Checkout.load(draft.path)
+   142	    assert len(getattr(reloaded, operation)(2)) == 2
+   143	    inverse = "undo" if operation == "redo" else "redo"
+   144	    assert len(getattr(reloaded, inverse)(2)) == 2
+   145	    assert reloaded.path.read_bytes() == original
+
+codex
+The verdict is request changes for that remaining P2 recovery gap, reproduced for both undo and redo. The publication boundary fixes and native inverse path pass review. The combined patch also applies cleanly to current Agent integration without conflicts with D07, public12, pool, or delete work; the successor alone needs its `88dd38f1` predecessor.
+exec
+/bin/bash -lc "ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-local-history && git -C /home/user/work/agent rev-parse HEAD && git status --short && git diff --unified=0 c456b328 3f1ac982 -- docs/timeline-editing-guide.md && sed -n '300,370p' tests/editing_conformance/test_commit_runtime_m1.py" in /home/user/work/wt/agt-review-history-boundary-final
+ succeeded in 185ms:
+DONE
+brief.md
+commit-msg
+ended
+exit
+log.txt
+meta
+recycled
+report.md
+test_review_boundaries.py
+test_review_publication_retry.py
+test_review_service.py
+e2ad59584addc892f1a6dd9fd644c75f80a2e28f
+diff --git a/docs/timeline-editing-guide.md b/docs/timeline-editing-guide.md
+index 1a399d02..397ed20d 100644
+--- a/docs/timeline-editing-guide.md
++++ b/docs/timeline-editing-guide.md
+@@ -15,0 +16,36 @@ unpublished. A render after saving cannot satisfy a preview-before-save request.
++## Accepted undo and unsent draft edits
++
++Accepted history lives in Runtime. Keep the publication ID returned by a native
++command commit. Python and CLI undo send a guarded inverse through the same
++crash-safe outbox; redo reverses the **undo publication**, using its new ID:
++
++```python
++from astrid.sdk.timeline_checkout import Checkout
++
++checkout = Checkout.open(project_id, timeline_ref, client=client)
++undone = checkout.undo(publications=[publication_id], client=client)
++redone = checkout.redo(publications=[undone["receipt"]["receipt_id"]], client=client)
++```
++
++```sh
++astrid timelines undo TL --project PROJECT --publication PUBLICATION
++astrid timelines redo TL --project PROJECT --publication UNDO_PUBLICATION
++```
++
++Both commands accept `--dry-run`, `--idempotency-key`, and `--json`. Repeat
++`--publication` oldest first to reverse a group. Runtime checks intervening
++writes and retains the original revisions. Reopen the timeline to read the new
++head; publication undo leaves detached working copies untouched.
++
++`checkout.undo()` / `redo()` without publication IDs, and the CLI equivalents
++without `--publication`, operate on unsent draft edits. Their snapshots stop at
++the draft's published base, so a publish/reset cannot be undone by restoring an
++old file. New unsent edits on that base remain locally undoable.
++
++The legacy cut sheet still edits a detached draft. `apply_sheet(checkout, text,
++client=client)` can recover an older sheet's basis from retained Runtime
++revisions; local snapshots and exported copies are used only within the current
++base. It does not publish or restore an accepted revision. Its existing
++three-way draft merge and whole-candidate publish remain pending migration to
++native commands.
++
+        with pytest.raises(CommitConflict) as error:
+            session.flush()
+        assert error.value.failure["details"]["status"] == "conflict"
+        refused = json.loads(outbox.read_bytes())
+        assert refused["pending"] == [b]
+        assert refused["conflict"] == error.value.failure
+        assert refused["flight"]["key"] != flight_a["key"]
+        body_b = json.loads(refused["flight"]["body"])
+        assert body_b["commands"] == [b]
+        assert (body_b["base_revision_id"], body_b["base_publication_id"]) == (
+            accepted_pair["revision_id"], accepted_pair["publication_id"])
+        assert history(client, fixture) == before_restart
+        return
+
+    accepted_b = session.flush()
+    body_b = json.loads(observed[-1]["body"])
+    assert observed[-1]["key"] != flight_a["key"]
+    assert (body_b["base_revision_id"], body_b["base_publication_id"]) == (
+        accepted_pair["revision_id"], accepted_pair["publication_id"])
+    assert body_b["commands"] == [b]
+    assert json.dumps(body_b["commands"][0], sort_keys=True) == guard_b
+    assert accepted_b["data"]["status"] == "rebased"
+    assert_move(parent_of(disjoint), parent_of(accepted_b), "music-bed", 3)
+    assert json.loads(outbox.read_bytes())["pending"] == []
+    assert_readback(client, fixture, accepted_b)
+    after_b = history(client, fixture)["items"]
+    assert len(after_b) == 6
+    assert after_b[:-1] == before_restart["items"]
+
+    undone = cli(client, fixture, capsys, "undo", fixture.timeline_id,
+                 "--publication", accepted_b["receipt"]["receipt_id"])
+    assert json.loads(observed[-1]["body"])["commands"] == [{
+        "schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
+        "args": {"publications": [accepted_b["receipt"]["receipt_id"]]},
+    }]
+    assert parent_of(undone) == parent_of(disjoint)
+    assert_readback(client, fixture, undone)
+    revision = undone["data"]["accepted_revision_id"]
+    shown = cli(client, fixture, capsys, "show", fixture.timeline_id,
+                "--published", "--revision-id", revision)
+    assert shown["data"]["revision_id"] == revision
+    assert shown["data"]["working_copy"] is None
+    layers = cli(client, fixture, capsys, "show", fixture.timeline_id,
+                 "--published", "--revision-id", revision, "--layers", "--clip", "music-bed")
+    inspection = layers["data"]["native_inspection"]
+    assert inspection["revision_id"] == revision
+    clip = inspection["selected_parent_clips"][0]
+    assert clip["clip_id"] == "music-bed"
+    assert clip["start"] == [2, 1]
+    visualized = cli(client, fixture, capsys, "visualize", fixture.timeline_id,
+                     "--published", "--revision-id", revision, "--mode", "inputs", "--format", "md")
+    assert visualized["data"]["outputs"]["inspection"]["revision_id"] == revision
+    after_undo = history(client, fixture)["items"]
+    assert len(after_undo) == 7
+    assert after_undo[:-1] == after_b
+    assert after_undo[-1]["records"]["undo_of"] == [accepted_b["receipt"]["receipt_id"]]
+    # After undo, the former accepted revision is still the exact immutable film.
+    assert_readback(client, fixture, accepted_b)
+
+
+def _wrong_scope(daemon, fixture, outbox):
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    _, credential = daemon.credentials.provision("second-editor", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    other = open_client(daemon, actor="second-editor", credential=credential)
+    return TimelineSession.open(fixture.project_id, fixture.timeline_id,
+                                client=other, outbox_path=outbox)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = orch / 'workers/agt-review-history-boundary-final'
+report = r'''# Agent history boundary final review
+
+**REQUEST CHANGES: one concrete P2 remains in the local restore crash window.** The acknowledged-publication boundary fixes and native publication undo/redo pass review. This finding concerns the requested restore recovery guarantee, not the separately unmigrated AG01/AG03/WC7–8 writers.
+
+Reviewed "'`tl/agt-m2-history-boundary-finish` at `3f1ac9828a75d8c4507ac5b2ad17eb9970c25b1e` (tree `932e2b9591a4a13830e23236d15afb6b2a7097b7`), its exact successor diff from `88dd38f1`, the predecessor diff from `c456b328`, prior review `design/agent-review-local-history-current.md`, PLAN, source tests, worker log and central result metadata. Current integration port target was `e2ad59584addc892f1a6dd9fd644c75f80a2e28f`; its worktree was clean when checked.
+
+**P2: draft replacement commits before reverse-stack recovery becomes visible.** In `astrid/sdk/timeline/checkout.py:308`, the target is replaced; reverse steps are promoted only at line 317, outside the exception handler. Injecting `OSError` at the first reverse promotion leaves the target changed, original source files byte-for-byte intact, and both reverse states present only as hidden `.*.tmp` files. A process death at the same point leaves the same on-disk state. `Checkout.load` does not reconcile these files, and `_restore_draft` reads only `*.json`. Reopening and applying the opposite operation therefore raises “no unsent draft edit” instead of restoring the pre-operation draft. This reproduces for both undo and redo.
+
+For undo, save x=40 then x=99; call `undo(2)` with `os.replace` failing only when its destination is inside the redo folder. The target has moved to the original state. After `Checkout.load`, `redo(2)` is unavailable. For redo, first complete `undo(2)`, then interrupt `redo(2)` at promotion into history; reopening exposes no undo. The probe asserts the original source bytes and two staged reverse files still exist before checking public recovery, so it does not mistake a target-write failure for this later window.
+
+The reverse state is initially recoverable by manual inspection of hidden files; it has not already vanished. However, the existing helper is not a recovery protocol: `store._discard_half_written` simply deletes temporary history files, and the next changed save deletes the redo folder. No public operation reconciles an interrupted restore first. The candidate'"'s four write/replace fault cases stop at temporary-target writing or replacement ("'`test_timeline_checkout_history_boundaries.py:119–127`); they never reach this post-replacement promotion. Early write failures are fixed, but the requested crash-window handling is incomplete.
+
+Recommended correction: finish or safely reconcile the local staged stack transition using the existing local store/locking helpers before exposing the stacks or discarding their temporary files, and add normal post-replacement interruption regressions for both directions. Keep this bounded to local draft storage; no accepted-history journal, coordinator, new contract, or renderer dependency is needed. I made no source change.
+
+**What is verified.** `_retire_draft_history` removes both consumed stacks and the in-memory journal/export cache. It runs immediately after publication returns successfully, before narration/transcript/head-refresh work, and at the start of `_reset_base`. Consequently the consumed steps cannot reopen when Runtime returns to retained revision A with a different publication generation. Failed head reads and failed reset saves leave consumed steps fenced across reload. `_reset_base` no longer reinstates the old edit journal on a failed write. A newly saved unsent edit still round-trips after these paths. The nine boundary cases and two independent lost-ACK probes pass in this review.
+
+Native `undo(publications=...)` and `redo(publications=...)` still dispatch to `TimelineSession.undo`, constructing `timeline.inverse` and using the durable outbox. No snapshot determines an accepted result. The lost-ACK probes compare the retry body and key with the persisted flight, reload the checkout handle, check accepted state, leave detached bytes unchanged, and assert pending/flight clear after acknowledgement. The strict inverse/provider/ancestry code and command contracts are unchanged by both commits. Existing real-service M1 cases retain the disjoint-edit undo, touched-basis conflict, restart and exact-retry assertions.
+
+Sheet retained-basis lookup still uses Runtime history revision IDs and `Checkout.open(revision_id=...)`, hence `open_bundle`'"'s complete pinned closure. Its service assertion compares the entire recovered document with the original, including provenance and pins; it never selects today's shot/internal heads. This is read-side basis recovery, not accepted snapshot rewind. There is no separately added media-head-rollover fixture, so I do not claim one.
+
+Across the combined test diff, no pre-existing test lines or positive assertions were removed or changed; additions only. No skip/xfail or contract loosening was introduced. The initial failed service attempt changed only the new restore test's invocation to the existing generated restore endpoint with expected revision/publication guards, preserving its positive assertions.
+
+**Exact validation performed by this review.** Cwd for direct tests was "'`/home/user/work/wt/agt-review-history-boundary-final`; `ORCH` below denotes the scratchpad/orch path containing this report. Review-only probe source is `workers/agt-review-history-boundary-final/test_review_restore_interruption.py` and its final stdout is `workers/agt-review-history-boundary-final/notes/restore-interruption.log`.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_publication_retry.py $ORCH/workers/agt-review-history-boundary-final/test_review_restore_interruption.py
+```
+
+First probe revision (undo only): **1 failed, 11 passed in 2.79s**, exit 1. Final parameterized probe (undo and redo): **2 failed, 11 passed in 3.44s**, exit 1. Both failures are the post-replacement inverse-recovery check described above. All nine shipped boundary/fault cases and both lost-ACK cases pass. The second run added the symmetric redo case; no product or original test was edited.
+
+```sh
+git diff --check c456b328 3f1ac982
+git diff --check 88dd38f1 3f1ac982
+```
+
+Both **exit 0**. Read-only inspection used `git show`, `git diff`, `rg`, and the central result files; no checkout or branch mutation.
+
+**Existing evidence inspected, not rerun.** Worker log contains the actual command and pytest summary (not only its final report):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_verbs_working_copy.py tests/sdk/test_undo_a1_legacy_open.py tests/packs/timeline/test_cli_parity.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timeline_checkout_publication_retry.py
+```
+
+**386 passed, 17 deselected, 4 warnings in 43.29s.** This preserves the original 375 positives and adds nine boundary/fault cases plus two lost-ACK cases. The existing lane deselections are not passing integration evidence. The broad run preceded the final correction to the new integration-only restore invocation; product code and its selected direct tests did not change afterward.
+
+Central provider evidence:
+
+```sh
+$ORCH/bin/request-test agt-m2-history-boundary-finish commit-integration --files tests/sdk/test_timeline_checkout_history_runtime.py
+$ORCH/bin/wait-test agt-m2-history-boundary-finish-commit-integration-1020095840-26533 1
+```
+
+Its recorded child command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
+```
+
+**4 passed in 30.16s, exit 0** (service elapsed 37s). `request`, `summary`, `snap`, `ext`, `exit`, and test stdout were inspected. The snapshot tree is **exactly** the reviewed commit tree `932e2b9591a4a13830e23236d15afb6b2a7097b7`. Includes actual retained A→B→A restore with a different receipt, refusal of consumed local undo/redo after reload, new unsent round-trip, retained sheet closure, native inverse/redo, and M1 restart/lost ACK. Renderer imports/evaluation are blocked by the existing tripwire; no machine-wide renderer shutdown is claimed.
+
+The earlier service result `agt-m2-history-boundary-finish-commit-integration-1020095654-5221` was **1 failed, 3 passed in 42.46s**, tree `cbbacf3930efc9fca61192690ddb4796fe403f5a`: the new test tried unregistered `timeline.restore` via native command ingress. Its correction uses the existing generated restore operation; no producer contract was relaxed. The final service metadata records external Runtime `c0dcd387...`, App `18becfb...`, Composition `e80c46ba...`, but the test'"'s "'`use_runtime(vendored_runtime_commit())` archives Runtime **`94114269d1ce23ab3224d7eca5a85138ce2b5fed`** from `runtime.lock.json`. Therefore this qualifies that locked pair, not current drifting Runtime/client integration.
+
+No full suite, socket/browser suite, make check, lint, or typecheck was run or requested by this review. The worker'"'s prior Ruff exact-count baseline and mypy gates remain unqualified (Ruff count 2212 vs baseline 2220; missing YAML stubs/NumPy target-syntax problem). Shared dependencies were not touched.
+
+**Safe port paths and conflicts against current root.** In a private temporary directory, populated only with the ten affected files from current integration "'`e2ad5958`, I ran `git apply --check --verbose -` with the binary diff `git diff --binary c456b328 3f1ac982 -- <the ten paths below>` as stdin: **exit 0, no conflicts or offset warnings**. The temporary copy was removed. Exact metadata/output is `workers/agt-review-history-boundary-final/notes/port-check.json`.
+
+- `astrid/packs/timeline/cli.py`
+- `astrid/sdk/timeline/checkout.py`
+- `astrid/sdk/timeline/publish.py`
+- `astrid/sdk/timeline_sheet.py`
+- `docs/timeline-editing-guide.md`
+- `tests/packs/timeline/test_cli_commit_move.py`
+- `tests/sdk/test_timeline_checkout_history.py`
+- `tests/sdk/test_timeline_checkout_history_boundaries.py`
+- `tests/sdk/test_timeline_checkout_history_runtime.py`
+- `tests/sdk/test_timeline_checkout_publication_retry.py`
+
+The root lacks `88dd38f1`. A successor-only `88dd38f1..3f1ac982` apply check **exits 1**: checkout context depends on the predecessor and the Runtime history test file does not yet exist. Preserve both units'"' path-scoped changes, or use their combined diff after fixing the remaining recovery issue. Only "'`docs/timeline-editing-guide.md` overlaps root'"'s changes since "'`c456b328`; its new accepted-history section applies cleanly alongside D07'"'s later retime-helper removals. Preserve the root's native commands/schema, pool eligibility guards, equal-state delete positives, public Composition 0.0.12 artifacts/package locks, and viewing/audio work. None is in these ten paths except the nonconflicting guide. Do not replace whole root files or port the older branch tree wholesale. Clean patch application is not a post-port test qualification.
+
+**Remaining scope and next step.** AG01/AG03/WC7/WC8 stay open: whole-candidate "'`publish_bundle`/client merge/CAS/narration publication, local publication-labelled log records, detached sheet merge/apply, CLI apply not forwarding the client, and `_merge_writer`/`three_way` are unchanged migration work. They are not reasons for this verdict. Retain the approved publication entrypoints and acknowledged-boundary correction; finish the single local restore transition issue with permanent positive recovery assertions, then narrow-port and run the applicable targeted/provider lanes. No task blocker: this read-only review is complete. No source, ledger, integration, dependency, Git metadata or refs were modified, and nothing was pushed.
+'"'''
+(orch / 'design/agent-review-history-boundary-final.md').write_text(report)
+(worker / 'notes/report.md').write_text(report)
+(worker / 'report.md').write_text('REQUEST CHANGES: one P2 remains after draft replacement and before reverse-step promotion; undo and redo both fail recovery after reload. Shipped boundary/lost-ACK cases: 11 passed. Review fault probes: 2 failed. Existing 386-pass targeted log and exact-tree 4-pass central provider metadata verified. Combined ten-path port applies cleanly to e2ad5958; successor alone requires 88dd38f1. See notes/report.md and design/agent-review-history-boundary-final.md. No source edits or full suite. Review complete.\\n')
+(worker / 'commit-msg').write_text('docs(timeline): review history boundary and restore recovery\\n\\nVerify acknowledged publication fencing and exact-tree provider evidence.\\nRecord the remaining post-replacement undo/redo recovery reproduction\\nand the safe ten-path port against current integration.\\n')
+(worker / 'DONE').touch()
+print('Wrote design review, notes/report.md, report.md, commit-msg and DONE.')
+PY
+git status --short" in /home/user/work/wt/agt-review-history-boundary-final
+ succeeded in 235ms:
+Wrote design review, notes/report.md, report.md, commit-msg and DONE.
+
+codex
+**REQUEST CHANGES — one P2 remains.** If reverse-step promotion fails after draft replacement, reopening exposes no inverse operation. Both undo and redo reproduce this gap; recovery states remain hidden in temporary files.
+
+Publication boundary fencing and lost-ACK retry pass review. Existing evidence verified: **386 targeted passes** and **4 renderer-blocked provider passes** on the exact reviewed tree.
+
+Fresh command, from the assigned worktree:
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_publication_retry.py "$ORCH/workers/agt-review-history-boundary-final/test_review_restore_interruption.py"
+```
+
+Result: **11 passed, 2 failed**; both failures demonstrate the recovery gap.
+
+The combined ten-path patch applies cleanly to current integration `e2ad5958`. The successor alone requires `88dd38f1`. No source edits or full suite.
+
+[Review, reproduction, safe port paths, and exact validation](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-history-boundary-final.md>). `notes/report.md`, commit message, and `DONE` written.
+tokens used
+113,616
+**REQUEST CHANGES — one P2 remains.** If reverse-step promotion fails after draft replacement, reopening exposes no inverse operation. Both undo and redo reproduce this gap; recovery states remain hidden in temporary files.
+
+Publication boundary fencing and lost-ACK retry pass review. Existing evidence verified: **386 targeted passes** and **4 renderer-blocked provider passes** on the exact reviewed tree.
+
+Fresh command, from the assigned worktree:
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_publication_retry.py "$ORCH/workers/agt-review-history-boundary-final/test_review_restore_interruption.py"
+```
+
+Result: **11 passed, 2 failed**; both failures demonstrate the recovery gap.
+
+The combined ten-path patch applies cleanly to current integration `e2ad5958`. The successor alone requires `88dd38f1`. No source edits or full suite.
+
+[Review, reproduction, safe port paths, and exact validation](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-history-boundary-final.md>). `notes/report.md`, commit message, and `DONE` written.

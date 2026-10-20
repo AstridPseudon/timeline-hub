@@ -1,0 +1,400 @@
+
+
+def test_successful_startup_keeps_returned_child_running(startup):
+    h, processes, state, ready, _register = startup
+    result = h.ensure()
+    assert result["host_status"] == "ready"
+    assert result["host_pid"] == processes[0].pid
+    assert processes[0].poll() is None
+    assert state.exists() and ready.exists()
+
+ succeeded in 15409ms:
+........................................................................ [ 40%]
+........................................................................ [ 81%]
+.................................                                        [100%]
+177 passed, 5 deselected in 14.86s
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-host-launch-ownership targeted --files "tests/sdk/test_host_launch_ownership.py tests/sdk/test_host_bootstrap_source_identity.py tests/sdk/test_host_recovery.py tests/sdk/test_child_host_union.py tests/sdk/test_host_ready_empty_inventory.py tests/stage1/test_host_bootstrap_manifest_luna.py tests/core/execution/test_process_group.py tests/test_process_group_cleanup.py"' in /home/user/work/wt/agt-m2-host-launch-ownership
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-launch-ownership-targeted-1020005959-24715/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-launch-ownership-targeted-1020005959-24715
+
+exec
+/bin/bash -lc "sed -n '1,240p' scripts/reshape/compare_ruff_baseline.py && git diff --check && git diff -- tests/sdk/test_host_bootstrap_source_identity.py && rg --files --hidden -g m2-pack-host-helper.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch /home/user/work/wt/agt-m2-host-launch-ownership" in /home/user/work/wt/agt-m2-host-launch-ownership
+ exited 1 in 231ms:
+from __future__ import annotations
+
+import collections
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+from scripts.reshape import count_baseline
+
+BASELINE_PATH = Path("scripts/reshape/baselines/ruff_astrid.json")
+COMMAND = [
+    sys.executable,
+    "-m",
+    "ruff",
+    "check",
+    ".",
+    "--output-format",
+    "json",
+]
+
+
+def _run() -> dict[str, Any]:
+    try:
+        proc = subprocess.run(COMMAND, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        raise RuntimeError(f"ruff failed to execute: {exc}") from exc
+    if proc.returncode not in (0, 1):
+        detail = (proc.stderr or proc.stdout).strip() or "no diagnostic output"
+        raise RuntimeError(f"ruff failed to execute (exit {proc.returncode}): {detail}")
+    try:
+        findings = json.loads(proc.stdout or "[]")
+    except json.JSONDecodeError as exc:
+        detail = (proc.stderr or proc.stdout).strip() or "invalid JSON output"
+        raise RuntimeError(f"ruff failed to execute: {detail}") from exc
+    if not isinstance(findings, list):
+        raise RuntimeError("ruff failed to execute: expected a JSON findings list")
+    if proc.returncode == 1 and not findings:
+        detail = (proc.stderr or proc.stdout).strip() or "no diagnostic output"
+        raise RuntimeError(f"ruff failed to execute (exit 1): {detail}")
+    return {
+        "tool": "ruff",
+        "scope": ["pyproject.toml [tool.ruff].include"],
+        "command": COMMAND,
+        "finding_count": len(findings),
+        "code_counts": dict(collections.Counter(item["code"] for item in findings)),
+    }
+
+
+def main() -> int:
+    return count_baseline.main("Ruff", BASELINE_PATH, _run)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+diff --git a/tests/sdk/test_host_bootstrap_source_identity.py b/tests/sdk/test_host_bootstrap_source_identity.py
+index fffe05f5..3df5ed51 100644
+--- a/tests/sdk/test_host_bootstrap_source_identity.py
++++ b/tests/sdk/test_host_bootstrap_source_identity.py
+@@ -301,7 +301,7 @@ def test_bootstrap_stops_on_correlated_terminal_registration_failure(
+     monkeypatch.setattr(generic_host, "RuntimeProtocolClient", FakeRuntimeClient)
+     ready: dict[str, object] = {}
+     launches: list[list[str]] = []
+-    terminated: list[dict[str, object]] = []
++    terminated: list[object] = []
+ 
+     class FakeProcess:
+         pid = 4242
+@@ -338,8 +338,8 @@ def test_bootstrap_stops_on_correlated_terminal_registration_failure(
+     )
+     monkeypatch.setattr(
+         host_bootstrap,
+-        "_terminate_old_host",
+-        lambda current: terminated.append(dict(current)),
++        "terminate_group",
++        lambda process: terminated.append(process),
+     )
+ 
+     with pytest.raises(host_bootstrap.PackHostBootstrapError) as caught:
+@@ -623,8 +623,8 @@ def test_startup_budget_polling_preserves_identity_and_original_cleanup(
+     monkeypatch.setattr(host_bootstrap, "_RETAINED_HOSTS", {})
+     monkeypatch.setattr(host_bootstrap, "_read_object", read)
+     monkeypatch.setattr(host_bootstrap, "_host_birth_identity", lambda _pid: "birth")
+-    # A host that fails to register is retired by its registration.
+-    monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda state: cleanup.append("retired"))
++    # A failed launch is cleaned through its original owned process handle.
++    monkeypatch.setattr(host_bootstrap, "terminate_group", lambda owned: cleanup.append("retired") if owned is process else pytest.fail("different child"))
+     _mock_host_launch(monkeypatch, launch)
+     # Injected progress source: advances while the host is "making progress".
+     monkeypatch.setattr(host_bootstrap, "_host_progress_token",
+
+codex
+The local targeted suites passed: 177 tests, with 5 excluded by the repository’s lane rules. A central run now covers the additional host and parked-host neighbors. Ruff found three fewer findings than its baseline, but the comparison exits nonzero when the baseline needs updating; I’ll report that result and leave the baseline outside this task unchanged.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-launch-ownership-targeted-1020005959-24715 0' in /home/user/work/wt/agt-m2-host-launch-ownership
+ exited 124 in 26ms:
+still running after 0 min ; rerun wait-test
+
+exec
+/bin/bash -lc "ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-launch-ownership-targeted-1020005959-24715 && rg --files --hidden -g '*.pyc' -g '.pytest_cache/**' -g '.ruff_cache/**' -g m2-pack-host-helper.md . && git status --short --untracked-files=all" in /home/user/work/wt/agt-m2-host-launch-ownership
+ exited 1 in 112ms:
+total 48
+drwxr-xr-x   2 root root  4096 Oct 20 01:00 .
+drwxr-xr-x 204 root root 20480 Oct 20 00:59 ..
+-rw-r--r--   1 root root     7 Oct 20 01:00 log.txt
+-rw-r--r--   1 root root   446 Oct 20 00:59 request
+-rw-r--r--   1 root root     0 Oct 20 01:00 runner.log
+-rw-r--r--   1 root root     6 Oct 20 01:00 running
+-rw-r--r--   1 root root   140 Oct 20 01:00 snap
+-rw-r--r--   1 root root     8 Oct 20 01:00 status
+
+exec
+/bin/bash -lc "git status --short --untracked-files=all && rg --files --hidden --no-ignore -g '*.pyc' -g '.pytest_cache/**' -g '.ruff_cache/**' -g '"'!remotion/node_modules/**'"' -g '"'!node_modules/**'"' . | head -40 && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-launch-ownership-targeted-1020005959-24715/log.txt" in /home/user/work/wt/agt-m2-host-launch-ownership
+ succeeded in 449ms:
+ M astrid/sdk/host_bootstrap.py
+ M tests/sdk/test_host_bootstrap_source_identity.py
+?? tests/sdk/test_host_launch_ownership.py
+./.ruff_cache/0.12.0/16706747985613358955
+./.ruff_cache/0.12.0/17368913103690386370
+./.ruff_cache/0.12.0/12314221589304835065
+./.ruff_cache/0.12.0/12952257998636917994
+./.ruff_cache/0.12.0/15189488883325690476
+./.ruff_cache/0.12.0/4590021399503496468
+./.ruff_cache/0.12.0/11560512794381283276
+./.ruff_cache/0.12.0/13272745236524536880
+./.ruff_cache/0.12.0/2697383109535122829
+./.ruff_cache/0.12.0/1543903900870172816
+./.ruff_cache/0.12.0/12295257343425583336
+./.ruff_cache/0.12.0/14748198856178263281
+./.ruff_cache/0.12.0/14185756020701036885
+./.ruff_cache/0.12.0/14085832083095115881
+./.ruff_cache/0.12.0/9924783599677400244
+./.ruff_cache/0.12.0/3538803961527232156
+./.ruff_cache/0.12.0/2747788671730649212
+./.ruff_cache/0.12.0/4348728822605082024
+./.ruff_cache/0.12.0/14583632177002791576
+./.ruff_cache/0.12.0/12081365576044789374
+./.ruff_cache/0.12.0/1037028836318023223
+./.ruff_cache/0.12.0/12930653443138253147
+./.ruff_cache/0.12.0/6652770165910137431
+./.ruff_cache/0.12.0/15151591095232751781
+./.ruff_cache/0.12.0/6913855481555038508
+./.ruff_cache/0.12.0/12862962219691080582
+./.ruff_cache/0.12.0/14434756812292342589
+./.ruff_cache/0.12.0/17290009450332596088
+./.ruff_cache/0.12.0/5153855381853468832
+./.ruff_cache/0.12.0/12225488088690094218
+./.ruff_cache/0.12.0/10060189542566674107
+./.ruff_cache/0.12.0/10323430320554322330
+./.ruff_cache/0.12.0/6423293561330582043
+./.ruff_cache/0.12.0/6146703569993906482
+./.ruff_cache/0.12.0/6676675587721126131
+./.ruff_cache/0.12.0/16713722976126030544
+./.ruff_cache/0.12.0/6810888204200010879
+./.ruff_cache/0.12.0/12417964527142061257
+./.ruff_cache/0.12.0/7856967296742726908
+./.ruff_cache/0.12.0/7070555203962677296
+................
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/sdk/test_host_launch_ownership.py && python3 - <<'PY'
+import shutil
+from pathlib import Path
+cache = Path('.ruff_cache')
+if cache.exists():
+    shutil.rmtree(cache)
+PY" in /home/user/work/wt/agt-m2-host-launch-ownership
+ succeeded in 0ms:
+All checks passed!
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-launch-ownership-targeted-1020005959-24715 1' in /home/user/work/wt/agt-m2-host-launch-ownership
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-launch-ownership-targeted-1020005959-24715/log.txt && git diff --check && git status --short' in /home/user/work/wt/agt-m2-host-launch-ownership
+ succeeded in 29915ms:
+test agt-m2-host-launch-ownership-targeted-1020005959-24715: pass exit=0 in 46s — targeted on agt-m2-host-launch-ownership (agent tree e6f5a09dfa65bcbd5721352e247d90980d93951b)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_host_launch_ownership.py tests/sdk/test_host_bootstrap_source_identity.py tests/sdk/test_host_recovery.py tests/sdk/test_child_host_union.py tests/sdk/test_host_ready_empty_inventory.py tests/stage1/test_host_bootstrap_manifest_luna.py tests/core/execution/test_process_group.py tests/test_process_group_cleanup.py
+counts: 197 passed, 5 deselected in 44.48s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-launch-ownership-targeted-1020005959-24715/log.txt ---
+........................................................................ [ 36%]
+........................................................................ [ 73%]
+.....................................................                    [100%]
+197 passed, 5 deselected in 44.48s
+
+ succeeded in 450ms:
+........................................................................ [ 36%]
+........................................................................ [ 73%]
+.....................................................                    [100%]
+197 passed, 5 deselected in 44.48s
+ M astrid/sdk/host_bootstrap.py
+ M tests/sdk/test_host_bootstrap_source_identity.py
+?? tests/sdk/test_host_launch_ownership.py
+
+codex
+The central test log reports 197 passed and 5 deselected. The real-child tests confirmed reaping before fixture cleanup, and all replacement-record and foreign-process checks passed. I’m recording those guarantees and the scope limit: interruption inside `popen_owned_group` before it returns a handle remains unchanged and unverified by this fix.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-launch-ownership-targeted-1020005959-24715 0' in /home/user/work/wt/agt-m2-host-launch-ownership
+ succeeded in 0ms:
+test agt-m2-host-launch-ownership-targeted-1020005959-24715: pass exit=0 in 46s — targeted on agt-m2-host-launch-ownership (agent tree e6f5a09dfa65bcbd5721352e247d90980d93951b)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_host_launch_ownership.py tests/sdk/test_host_bootstrap_source_identity.py tests/sdk/test_host_recovery.py tests/sdk/test_child_host_union.py tests/sdk/test_host_ready_empty_inventory.py tests/stage1/test_host_bootstrap_manifest_luna.py tests/core/execution/test_process_group.py tests/test_process_group_cleanup.py
+counts: 197 passed, 5 deselected in 44.48s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-launch-ownership-targeted-1020005959-24715/log.txt ---
+........................................................................ [ 36%]
+........................................................................ [ 73%]
+.....................................................                    [100%]
+197 passed, 5 deselected in 44.48s
+
+exec
+/bin/bash -lc "git diff --stat && nl -ba astrid/sdk/host_bootstrap.py | sed -n '1688,1729p' && nl -ba tests/sdk/test_host_launch_ownership.py | tail -10 && rg --files --hidden --no-ignore -g '*.pyc' -g '.pytest_cache/**' -g '.ruff_cache/**' -g '"'!node_modules/**'"' -g '"'!remotion/node_modules/**'"' ." in /home/user/work/wt/agt-m2-host-launch-ownership
+ exited 1 in 169ms:
+ astrid/sdk/host_bootstrap.py                     | 92 +++++++++++++-----------
+ tests/sdk/test_host_bootstrap_source_identity.py | 10 +--
+ 2 files changed, 56 insertions(+), 46 deletions(-)
+  1688	            "host_runtime_instance_id": str(runtime_instance_id),
+  1689	            "host_runtime_epoch": runtime_epoch,
+  1690	            "host_source_checkout_digest": source_digest,
+  1691	            "host_source_closure_digest": source_closure_digest,
+  1692	            "host_source_inventory_identity": inventory_identity,
+  1693	            "host_boot_manifest_path": str(boot_manifest_path),
+  1694	            "host_boot_manifest_hash": boot_manifest_hash,
+  1695	        }
+  1696	    except BaseException:
+  1697	        if process is not None:
+  1698	            # The returned child already has incarnation-bound custody, even
+  1699	            # when birth capture or registration failed. Never recover cleanup
+  1700	            # authority from a possibly replaced registration.
+  1701	            try:
+  1702	                terminate_group(process)
+  1703	            finally:
+  1704	                process.poll()
+  1705	            identity = {
+  1706	                **expected,
+  1707	                "pid": process.pid,
+  1708	                "process_birth_id": getattr(process, "_astrid_process_birth", None),
+  1709	            }
+  1710	            if identity["process_birth_id"]:
+  1711	                for marker in (ready_path, state_path):
+  1712	                    registered = _read_object(marker)
+  1713	                    if registered and all(
+  1714	                        registered.get(key) == item for key, item in identity.items()
+  1715	                    ):
+  1716	                        marker.unlink(missing_ok=True)
+  1717	        raise
+  1718	    finally:
+  1719	        try:
+  1720	            import fcntl
+  1721	            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
+  1722	        except (ImportError, OSError):
+  1723	            pass
+  1724	        lock_handle.close()
+  1725	
+  1726	
+  1727	__all__ = ["PACK_HOST_ACTOR", "PACK_HOST_SCOPES", "PackHostBootstrapError", "ensure_pack_host"]
+   188	        assert not target.exists()
+   189	
+   190	
+   191	def test_successful_startup_keeps_returned_child_running(startup):
+   192	    h, processes, state, ready, _register = startup
+   193	    result = h.ensure()
+   194	    assert result["host_status"] == "ready"
+   195	    assert result["host_pid"] == processes[0].pid
+   196	    assert processes[0].poll() is None
+   197	    assert state.exists() and ready.exists()
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-host-launch-ownership')
+(root / 'notes').mkdir(exist_ok=True)
+report = '''# Returned pack-host startup ownership
+
+Implemented on Agent base "'`f6fbe741`; only `ensure_pack_host` and direct tests changed.
+
+## Change and guarantees
+
+- Extended the existing lifecycle `BaseException` handler to cover the child handle assignment, log closing, birth capture, registration writing, polling and final ready validation. Cleanup uses `terminate_group` on the actual returned `Popen`, with its retained incarnation-bound custody, and polls the original child.
+- Startup failure does not recover signal authority from registration files or use the registration-based retire/killpg path. Old registered-host replacement and all existing source, render-validation, readiness, credential and process-ownership checks remain intact.
+- After successful custody cleanup, a state or ready marker is removed only when every expected launch binding, PID and retained birth matches. Changed source/command/birth or foreign-process markers remain byte-for-byte intact. Malformed partial records remain because they cannot prove ownership.
+- Real child tests inject RuntimeError and actual SIGINT immediately after the handle has returned (log close), during birth capture, before/partway through/after registration writing, and while reading ready state. Additional tests cover missing birth, invalid ready identity, replaced state/ready/both, a live unrelated child, and successful startup retaining the live host. Reaping and group absence are checked before test teardown. Registration retirement functions are forbidden in these tests.
+- The two existing mocked cleanup tests now observe original-handle cleanup; their failure, timing, terminal diagnostic and cleanup expectations are preserved. No tests were skipped, weakened or converted to xfail.
+
+## Exact validation
+
+Initial focused run (before removing two duplicate parameter combinations):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_host_launch_ownership.py tests/sdk/test_host_bootstrap_source_identity.py
+```
+
+Result: **98 passed in 6.41s**.
+
+Final local targeted run:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_host_launch_ownership.py tests/sdk/test_host_bootstrap_source_identity.py tests/sdk/test_host_recovery.py tests/core/execution/test_process_group.py tests/test_process_group_cleanup.py
+```
+
+Result: **177 passed, 5 deselected in 14.86s**. Deselection is the repository'"'s existing default lane configuration.
+
+Central targeted run, including the additional host/parked-host neighbors:
+
+"'```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-host-launch-ownership targeted --files "tests/sdk/test_host_launch_ownership.py tests/sdk/test_host_bootstrap_source_identity.py tests/sdk/test_host_recovery.py tests/sdk/test_child_host_union.py tests/sdk/test_host_ready_empty_inventory.py tests/stage1/test_host_bootstrap_manifest_luna.py tests/core/execution/test_process_group.py tests/test_process_group_cleanup.py"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-launch-ownership-targeted-1020005959-24715 0
+```
+
+Result: **197 passed, 5 deselected in 44.48s; service exit 0**. Snapshot tree `e6f5a09dfa65bcbd5721352e247d90980d93951b`.
+Log: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-launch-ownership-targeted-1020005959-24715/log.txt`.
+An earlier wait returned 124 while running; the same request was resumed, never resubmitted.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/sdk/test_host_launch_ownership.py
+```
+
+Result: **All checks passed**.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_ruff_baseline
+```
+
+Result: **exit 1: current=2217, baseline=2220; tool requires recording the improvement of 3 findings**. No baseline was changed because the authorization is limited to startup ownership and direct tests. This gate is not claimed green.
+
+`git diff --check`: **passed**. Generated Ruff cache removed; no build output or test caches left in the worktree.
+
+## Decisions, limits and next steps
+
+- Used the existing outer lifecycle handler to avoid a new helper framework; the polling-loop diff is primarily dedentation. Cleanup authority comes from the returned child even when birth capture or registration fails. Marker deletion remains independently fenced by source/launch identity and retained birth.
+- The guarantee begins once `popen_owned_group` returns and its handle is stored in `process`. No claim is made for interruption inside Popen/custody launch before handle return, repeated signals during cleanup, SIGKILL or interpreter death. No pre-return counterexample was exercised; the underlying spawn implementation and parked-host preparer were neither changed nor certified by this fix.
+- Tests run on Linux with existing preflight/runtime-health doubles and real custody-owned child processes. No real Runtime, rendering, browser, installation, full suite, macOS-native suite or `make check` was run.
+- No `design/m2-pack-host-helper.md` was found in the assigned worktree or the named orchestrator tree; guarantees are recorded here only. No other worktree, integration ref, snapshot pin or bundle1 was modified.
+- No implementation blocker. Recommend manager review of this bounded robustness fix and handling the existing Ruff-baseline count discrepancy in an authorized baseline task. Integration remains HELD pending PLAN M1; no merge is requested here.
+'"'''
+(root / 'notes' / 'report.md').write_text(report)
+message = '''fix(host): retain ownership across startup registration failures
+
+Clean up the actual custody-owned pack-host child when startup fails after
+launch returns, including birth capture, state writing and ready polling.
+Remove markers only when launch bindings and retained process birth match.
+
+Add real-child interruption and replacement-registration tests while
+preserving the existing startup timing and terminal failure coverage.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (root / name).write_text(message)
+PY
+
+git diff --check && git status --short" in /home/user/work/wt/agt-m2-host-launch-ownership
+ succeeded in 532ms:
+ M astrid/sdk/host_bootstrap.py
+ M tests/sdk/test_host_bootstrap_source_identity.py
+?? tests/sdk/test_host_launch_ownership.py
+
+codex
+Implemented cleanup from the returned child handle through birth capture, registration and readiness polling. Replacement registrations remain untouched.
+
+- Local targeted tests: **177 passed, 5 deselected**.
+- Central targeted tests: **197 passed, 5 deselected**.
+- New-test Ruff check and `git diff --check`: passed.
+- Ruff baseline comparison exits 1 because findings decreased by three; baseline left unchanged.
+
+Pre-return interruption remains unverified. No implementation blocker; integration remains held pending M1.
+
+[Report with exact commands, guarantees and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-host-launch-ownership/notes/report.md). Both commit-message files are written for the harness.
+tokens used
+93,885
+Implemented cleanup from the returned child handle through birth capture, registration and readiness polling. Replacement registrations remain untouched.
+
+- Local targeted tests: **177 passed, 5 deselected**.
+- Central targeted tests: **197 passed, 5 deselected**.
+- New-test Ruff check and `git diff --check`: passed.
+- Ruff baseline comparison exits 1 because findings decreased by three; baseline left unchanged.
+
+Pre-return interruption remains unverified. No implementation blocker; integration remains held pending M1.
+
+[Report with exact commands, guarantees and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-host-launch-ownership/notes/report.md). Both commit-message files are written for the harness.

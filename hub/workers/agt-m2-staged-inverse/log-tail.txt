@@ -1,0 +1,400 @@
++        if entity is not None and not write['path'] and write['before'] == ABSENT:
++            owner, kind, _ = entity
++            if kind == 'track':
++                selections.append(selection(state, 'track.create', owner))
++        state.set(write['ref'], write['path'], write['after'])
++    return reads, selections
++
++
++def _validate_inputs(state, record, records):
++    legacy = None
++    for read in record['reads']:
++        if state.matches(read['ref'], read['path'], read['state']):
++            continue
++        if legacy is None:
++            legacy = _legacy_inverse_sites(records, record)
++        if read not in legacy[0]:
++            raise CommandError('original inverse read changed', kind='inverse_dependency_changed',
++                               ref=read['ref'], path=read['path'])
++    for selected in record['selections']:
++        actual = selection(state, selected['key'], selected['owner'], selected['members'])
++        if equal(actual, selected):
++            continue
++        if legacy is None:
++            legacy = _legacy_inverse_sites(records, record)
++        if selected not in legacy[1]:
++            raise CommandError('inverse selection changed', kind='selection_changed', ref=selected['owner'])
++    created = {item['ref'] for item in record['created']}
++    for binding in record.get('bindings', []):
++        ref = binding['ref']
++        if ref not in created and state.entity(ref, optional=True) is None:
++            raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
++
++
+ def apply_inverse(ctx, records, intervening_records):
+     if not records:
+         raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
+@@ -160,25 +222,32 @@
+                                kind='selection_changed', ref=owner)
+     for write in changes:
+         guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+-    # Selection and identity guards remain relevant; value reads changed by the
+-    # target itself are verified by the coalesced final authored-state guard.
++    scratch = State(copy.deepcopy(ctx.state.bundle), closures=ctx.state.closures)
++    for record in reversed(records):
++        staged = Recording(scratch.bundle, record['command'], record['ordinal'], closures=scratch.closures)
++        scratch = staged.state
++        staged_orders = restoration_orders(records, only=record)
++        for write in reversed(record['writes']):
++            guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
++            if not write['path'] and write['before'] == ABSENT:
++                entity = member(write['ref'])
++                if entity is not None and entity[1] == 'track' and _dependents(scratch, write['ref']):
++                    raise CommandError('created track has surviving dependents', kind='surviving_dependents',
++                                       ref=write['ref'])
++            scratch.set(write['ref'], write['path'], write['before'])
++        for (owner, kind), (original, _) in staged_orders.items():
++            arrange(scratch, owner, kind, original)
++        staged.compile_mirrors()
++        _validate_inputs(scratch, record, records)
++
++    # Historical checks above are internal. Public claims describe H even when
++    # the same address is read after another reversal during installation.
++    ctx.capture_input()
+     for record in records:
+         for read in record['reads']:
+-            addr = read['ref'], tuple(read['path'])
+-            if not any(overlaps(addr, (w['ref'], tuple(w['path']))) for w in changes):
+-                guard(ctx.state, read['ref'], read['path'], read['state'], kind='inverse_dependency_changed')
+-                ctx.read(read['ref'], read['path'])
++            ctx.read(read['ref'], read['path'])
+         for selected in record['selections']:
+-            if (selected['owner'], KINDS.get(selected['key'])) in orders:
+-                continue
+-            actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
+-            if actual != selected:
+-                raise CommandError("inverse selection changed", kind='selection_changed', ref=selected['owner'])
+             ctx.select(selected['key'], selected['owner'], selected['members'])
+-        for created in record['created']:
+-            if created['kind'] == 'track' and _dependents(ctx.state, created['ref']):
+-                raise CommandError("created track has surviving dependents", kind='surviving_dependents',
+-                                   ref=created['ref'])
+     for write in reversed(changes):
+         ctx.read(write['ref'], write['path'])
+         if not write['path'] and write['after'] == ABSENT:
+diff --git a/tests/editing_conformance/staging_recipes.py b/tests/editing_conformance/staging_recipes.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..28998e70e8467969268a1d953aa8fd8828ab9ef9
+--- /dev/null
++++ b/tests/editing_conformance/staging_recipes.py
+@@ -0,0 +1,40 @@
++"""Registered test recipes for staged inverse tests, independent of rendering."""
++from __future__ import annotations
++
++
++def install_staging_operations(monkeypatch):
++    from astrid.sdk.timeline import commands
++
++    def move(ctx, command):
++        ref, args = command['select'], command['args']
++        owner = ref.rsplit('/', 1)[0]
++        ctx.select('move.target', owner, [ref])
++        track = args.get('track', ctx.read(ref, ['track']))
++        ctx.read(ref, ['at'])
++        target = owner + '/track:' + track
++        ctx.read(target, ['id'])
++        ctx.read(target, ['kind'])
++        ctx.select('collection.tracks', owner)
++        ctx.bind('move.track', target)
++        ctx.write(ref, ['track'], track)
++        ctx.write(ref, ['at'], args['on'])
++
++    def create(ctx, command):
++        ctx.create(command['select'], 'clip', command['args']['row'])
++
++    def properties(ctx, command):
++        for change in command['args']['changes']:
++            ctx.read(command['select'], change['path'])
++        for change in command['args']['changes']:
++            ctx.assign(command['select'], change['path'], change['state'])
++
++    registered = commands.operations()
++    for name, handler in [('fixture.move', move), ('fixture.clip-create', create),
++                          ('fixture.properties', properties)]:
++        registered[name] = commands.Operation({'type': 'object'}, handler, {}, name != 'fixture.clip-create')
++    monkeypatch.setattr(commands, 'operations', lambda: registered)
++
++
++def staged_move(ref, track, on=4):
++    return {'schema_version': 1, 'op': 'fixture.move', 'version': '1', 'select': ref,
++            'args': {'track': track, 'on': on}}
+diff --git a/tests/editing_conformance/test_recipe_m1_commands.py b/tests/editing_conformance/test_recipe_m1_commands.py
+index 637393900edbad8c117d30bb78cefab298ef91a0..1dcfc8f1e58c9bd17720915b1ba678cb3b70e045
+--- a/tests/editing_conformance/test_recipe_m1_commands.py
++++ b/tests/editing_conformance/test_recipe_m1_commands.py
+@@ -24,6 +24,7 @@
+ from astrid.sdk.timeline.capture import capture_move, capture_track_create
+ from astrid.sdk.timeline.commands import execute
+ from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.staging_recipes import install_staging_operations, staged_move
+ from tests.timeline.test_authoring_bundle import _closure, _digest
+ 
+ FIXTURES = Path(__file__).parent / 'fixtures'
+@@ -796,3 +797,112 @@
+     command = inverse(removed, records).commands[0]
+     schema = json.loads((Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json').read_text())
+     Draft202012Validator(schema).validate(command)
++
++
++@pytest.fixture
++def native_staging_operations(monkeypatch):
++    """Small registered recipes exercise staging without installing M2 move-set."""
++    install_staging_operations(monkeypatch)
++
++
++@pytest.mark.parametrize('owner', ['parent', 'occurrence:occ-1'])
++@pytest.mark.parametrize('second', [False, True])
++def test_create_and_own_consumers_inverse_is_staged_and_claims_replay(native_staging_operations, owner, second):
++    original = bundle()
++    ref = owner + '/clip:' + ('direct' if owner == 'parent' else 'picture-1')
++    calls = [capture_track_create(original, owner, {'id': 'c', 'kind': 'visual'}), staged_move(ref, 'c')]
++    if second:
++        calls += [{'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': owner,
++                   'args': {'row': {'id': 'd', 'kind': 'visual'}}}, staged_move(ref, 'd', 5)]
++    plan = execute(original, calls)
++    immutable = copy.deepcopy(plan.records)
++    undone = inverse(plan.bundle, plan.records)
++    assert json.dumps(undone.bundle) == json.dumps(original)
++    assert plan.records == immutable
++    for read in undone.commands[0]['reads']:
++        assert State(plan.bundle).matches(read['ref'], read['path'], read['state'])
++    assert replay(undone, plan.bundle, inverse_records=plan.records).records == undone.records
++    redone = inverse(undone.bundle, undone.records)
++    assert json.dumps(redone.bundle) == json.dumps(plan.bundle)
++    assert [item['ref'] for item in redone.records[0]['created']] == [
++        owner + '/track:c', *([owner + '/track:d'] if second else [])]
++
++
++def test_ordinary_clip_create_with_own_move_uses_same_reverse_stages(native_staging_operations):
++    original = bundle()
++    plan = execute(original, [
++        capture_track_create(original, 'parent', {'id': 'c', 'kind': 'visual'}),
++        {'schema_version': 1, 'op': 'fixture.clip-create', 'version': '1', 'select': 'parent',
++         'args': {'row': {'id': 'owned', 'track': 'c', 'at': 1, 'hold': 1, 'unknown': [None, 0]}}},
++        staged_move('parent/clip:owned', 'c')])
++    undone = inverse(plan.bundle, plan.records)
++    assert undone.bundle == original
++    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
++
++
++@pytest.mark.parametrize('dependent', ['clip', 'occurrence', 'audio', 'effects', 'binding',
++                                       'external', 'unsupported'])
++def test_staged_removal_refuses_surviving_reference_without_partial_changes(native_staging_operations, dependent):
++    original = bundle()
++    plan = execute(original, [capture_track_create(original, 'parent', {'id': 'c', 'kind': 'visual'}),
++                              staged_move('parent/clip:direct', 'c')])
++    head = copy.deepcopy(plan.bundle)
++    if dependent == 'clip':
++        head['parent']['clips'].append({'id': 'newer', 'track': 'c', 'at': 8, 'hold': 1})
++        head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
++    elif dependent == 'occurrence':
++        head['placements'][0]['placement']['track'] = 'c'
++    elif dependent in ('audio', 'effects'):
++        head['parent']['config'][dependent] = [{'track': 'c'}]
++    elif dependent == 'binding':
++        next(iter(head['shots'].values()))['payload']['audio_bindings'].append({'track_ref': 'parent/track:c'})
++    else:
++        clip(head, 'occurrence:occ-2/clip:picture-1')['owner_ref'] = (
++            'parent/track:c' if dependent == 'external' else {'resolver': 'unsupported', 'id': 'c'})
++    before = copy.deepcopy(head)
++    with pytest.raises(CommandError) as error:
++        inverse(head, plan.records)
++    assert error.value.kind == 'surviving_dependents'
++    assert head == before
++
++
++def test_staged_inverse_keeps_opaque_strings_and_refuses_all_unchanged_overlap(native_staging_operations):
++    original = bundle()
++    plan = execute(original, [capture_track_create(original, 'parent', {'id': 'c', 'kind': 'visual'}),
++                              staged_move('parent/clip:direct', 'c')])
++    head = copy.deepcopy(plan.bundle)
++    clip(head)['opaque'] = {'note': 'parent/track:c'}
++    head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
++    undone = inverse(head, plan.records, [later('parent/clip:direct', ['opaque'], clip(head)['opaque'])])
++    assert clip(undone.bundle)['opaque'] == {'note': 'parent/track:c'}
++    for path, value in [(['track'], 'c'), (['at'], 4)]:
++        with pytest.raises(CommandError) as error:
++            inverse(head, plan.records, [later('parent/clip:direct', path, value)])
++        assert error.value.kind == 'intervening_write'
++
++
++def test_same_target_null_absent_clears_and_unchanged_writes_retain_each_stage(native_staging_operations):
++    original = bundle()
++    clip(original)['nullable'] = None
++    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
++    def call(state):
++        return {'schema_version': 1, 'op': 'fixture.properties', 'version': '1',
++                'select': 'parent/clip:direct', 'args': {'changes': [
++                    {'path': ['nullable'], 'state': state}, {'path': ['missing'], 'state': ABSENT}]}}
++    plan = execute(original, [call(ABSENT), call(present(None)), call(present(None)), call(ABSENT)])
++    assert len(plan.records) == 4 and all(len(record['writes']) == 2 for record in plan.records)
++    undone = inverse(plan.bundle, plan.records)
++    assert undone.bundle == original
++    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
++
++
++def test_overlapping_read_is_verified_at_input_and_bad_late_stage_is_atomic(native_staging_operations):
++    original = bundle()
++    plan = execute(original, [capture_track_create(original, 'parent', {'id': 'c', 'kind': 'visual'}),
++                              staged_move('parent/clip:direct', 'c')])
++    broken = copy.deepcopy(plan.records)
++    next(read for read in broken[-1]['reads'] if read['path'] == ['track'])['state'] = present('wrong-stage')
++    head = copy.deepcopy(plan.bundle)
++    with pytest.raises(CommandError):
++        inverse(head, broken)
++    assert head == plan.bundle
+diff --git a/tests/sdk/test_timeline_commit_provider.py b/tests/sdk/test_timeline_commit_provider.py
+index 7d67de51c6177dd0e67036caeaf9c34f66eefe60..461332f6603c3f4f852f9f683dea124f3f302347
+--- a/tests/sdk/test_timeline_commit_provider.py
++++ b/tests/sdk/test_timeline_commit_provider.py
+@@ -12,6 +12,7 @@
+     bundle_from_document,
+     create_runtime_commit_service,
+ )
++from tests.editing_conformance.staging_recipes import install_staging_operations, staged_move
+ from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
+ 
+ 
+@@ -41,6 +42,11 @@
+         monkeypatch.setitem(sys.modules, module.__name__, module)
+ 
+ 
++@pytest.fixture
++def native_staging_operations(monkeypatch):
++    install_staging_operations(monkeypatch)
++
++
+ def detached(value):
+     return json.loads(json.dumps(value, allow_nan=False))
+ 
+@@ -1142,3 +1148,86 @@
+     assert [row['id'] for row in rows] == ['clip-a', 'clip-b']
+     assert rows[1]['opaque'] == {'newer': [None, False, 0]}
+     assert rows[0] == document_fixture()['parent_revision']['payload']['clips'][0]
++
++
++def test_composed_create_move_accepts_one_inverse_and_replays_original_claims(native_staging_operations):
++    realm = DetachedRealm()
++    initial = detached(realm.documents['parent-1'])
++    result = realm.call([track_create('c'), staged_move('parent/clip:clip-a', 'c'),
++                         track_create('d'), staged_move('parent/clip:clip-a', 'd', 5)])
++    accepted = detached(realm.entries[-1])
++    command = inverse([result['receipt']['receipt_id']])
++    preview = realm.call([command], dry_run=True)
++    undo = realm.call(preview['data']['commands'])
++    restored = undo['data']['canonical_document']
++    assert restored['parent_revision']['payload'] == initial['parent_revision']['payload']
++    for path in [('clips',), ('config', 'tracks')]:
++        before, after = initial['parent_revision']['payload'], restored['parent_revision']['payload']
++        for token in path:
++            before, after = before[token], after[token]
++        assert json.dumps(after) == json.dumps(before)
++    assert restored['shot_revisions'] == initial['shot_revisions']
++    assert restored['internal_timeline_revisions'] == initial['internal_timeline_revisions']
++    assert realm.entries[-2] == accepted
++    assert realm.entries[-1]['records']['undo_of'] == [result['receipt']['receipt_id']]
++    redo = realm.call([inverse([undo['receipt']['receipt_id']])])
++    assert redo['data']['canonical_document'] == result['data']['canonical_document']
++    assert len(realm.accepted) == 3
++    with pytest.raises(CommitRejected) as error:
++        realm.call([track_create('c')])
++    assert error.value.failure['details']['reason'] == 'identity_collision'
++
++
++def test_noncontiguous_inverse_treats_earlier_gap_as_later_target_input(native_staging_operations):
++    realm = DetachedRealm()
++    realm.page_size = 1
++    initial = detached(realm.documents['parent-1']['parent_revision']['payload'])
++    first = realm.call([track_create('c')])
++    gap = realm.call([realm.move('parent/clip:clip-b', on=7)])
++    second = realm.call([staged_move('parent/clip:clip-b', 'c', 8)])
++    undone = realm.call([inverse([first['receipt']['receipt_id'], second['receipt']['receipt_id']])])
++    expected = detached(gap['data']['canonical_document']['parent_revision']['payload'])
++    expected['config']['tracks'] = initial['config']['tracks']
++    assert undone['data']['canonical_document']['parent_revision']['payload'] == expected
++
++
++@pytest.mark.parametrize('aba', [False, True])
++def test_noncontiguous_overlap_cannot_be_masked_by_reversing_later_target(native_staging_operations, aba):
++    realm = DetachedRealm()
++    first = realm.call([staged_move('parent/clip:clip-a', 'picture')])
++    realm.call([staged_move('parent/clip:clip-a', 'picture', 5 if aba else 4)])
++    if aba:
++        realm.call([staged_move('parent/clip:clip-a', 'picture')])
++    second = realm.call([staged_move('parent/clip:clip-a', 'picture', 6)])
++    head, count = detached(realm.head), len(realm.accepted)
++    with pytest.raises(CommitRejected) as error:
++        realm.call([inverse([first['receipt']['receipt_id'], second['receipt']['receipt_id']])])
++    assert error.value.failure['details']['reason'] == 'intervening_write'
++    assert realm.head == head and len(realm.accepted) == count
++
++
++def test_composed_inverse_later_reference_refuses_at_provider_boundary(native_staging_operations):
++    realm = DetachedRealm()
++    first = realm.call([track_create('c'), staged_move('parent/clip:clip-a', 'c')])
++    realm.call([staged_move('parent/clip:clip-b', 'c', 8)])
++    head, count = detached(realm.head), len(realm.accepted)
++    with pytest.raises(CommitRejected) as error:
++        realm.call([inverse([first['receipt']['receipt_id']])])
++    assert error.value.failure['details']['reason'] == 'surviving_dependents'
++    assert realm.head == head and len(realm.accepted) == count
++
++
++def test_multiple_targeted_restores_load_each_authenticated_reverse_stage():
++    realm = DetachedRealm()
++    original = detached(realm.documents['parent-1'])
++    changed = realm.call([realm.move()])['data']['canonical_document']
++    first = realm.call([restore(original)])
++    second = realm.call([restore(changed)])
++    undone = realm.call([inverse([first['receipt']['receipt_id'], second['receipt']['receipt_id']])])
++    assert undone['data']['canonical_document'] == changed
++    realm.call([realm.move()])
++    head, count = detached(realm.head), len(realm.accepted)
++    with pytest.raises(CommitRejected) as error:
++        realm.call([inverse([undone['receipt']['receipt_id']])])
++    assert error.value.failure['details']['reason'] == 'intervening_write'
++    assert realm.head == head and len(realm.accepted) == count
+
+codex
+Implemented guarded staged reversal: own consumers reverse before created-track removal; exact order, immutable input claims, M1 compatibility, and later-dependent/ABA refusals remain guarded.
+
+8 files changed: **+375/−39 lines**. No schema or State/root-helper changes.
+
+Verification:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py
+```
+
+**291 passed in 15.75s.** Product/test Ruff checks and `git diff --check` passed.
+
+Decisions: check noncontiguous history relative to each target; recover legacy inverse stages through verified boundaries; exercise composition with registered test recipes without implementing move-set.
+
+Both `commit-msg` and `commit-msg.txt` written. No blockers. Full/socket suites remain unrun; next is manager review and central testing. Integration remains held pending recorded M1.
+tokens used
+171,228
+Implemented guarded staged reversal: own consumers reverse before created-track removal; exact order, immutable input claims, M1 compatibility, and later-dependent/ABA refusals remain guarded.
+
+8 files changed: **+375/−39 lines**. No schema or State/root-helper changes.
+
+Verification:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py
+```
+
+**291 passed in 15.75s.** Product/test Ruff checks and `git diff --check` passed.
+
+Decisions: check noncontiguous history relative to each target; recover legacy inverse stages through verified boundaries; exercise composition with registered test recipes without implementing move-set.
+
+Both `commit-msg` and `commit-msg.txt` written. No blockers. Full/socket suites remain unrun; next is manager review and central testing. Integration remains held pending recorded M1.

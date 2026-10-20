@@ -1,0 +1,400 @@
+import sys
+import tarfile
+import tempfile
+from pathlib import Path
+from typing import Any
+
+from tests.lanes import unavailable
+
+ENV = "ASTRID_RUNTIME_CHECKOUT"
+ASTRID = Path(__file__).resolve().parents[2]
+_ARCHIVES: dict[str, Path] = {}
+_exposed: Path | None = None
+
+
+def vendored_runtime_commit() -> str:
+    """The Runtime commit the vendored workspace client was produced from."""
+    lock = ASTRID / "runtime.lock.json"
+    return json.loads(lock.read_text(encoding="utf-8"))["source_commit"]
+
+
+def _candidates() -> list[Path]:
+    override = os.environ.get(ENV)
+    if override:
+        return [Path(override).expanduser()]
+    roots = [ASTRID.parent]
+    try:  # a linked worktree lives elsewhere; its main checkout's siblings are searched too
+        common = subprocess.run(
+            ["git", "-C", str(ASTRID), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            check=False, capture_output=True, text=True,
+        )
+    except OSError:
+        common = None
+    if common is not None and common.returncode == 0 and common.stdout.strip():
+        roots.append(Path(common.stdout.strip()).parent.parent)
+    return [root / "astrid-runtime" for root in dict.fromkeys(roots)]
+
+
+def locate_runtime() -> Path | None:
+    """The Runtime source tree, or None when there is none."""
+    for candidate in _candidates():
+        if (candidate / "runtime_protocol").is_dir():
+            return candidate.resolve()
+    return None
+
+
+def runtime_checkout(commit: str | None = None) -> Path:
+    """The Runtime source tree (as of ``commit`` when given); the one locator tests use."""
+    root = locate_runtime()
+    if root is None:
+        unavailable(f"no Runtime checkout: set {ENV} to one (looked at {[str(c) for c in _candidates()]})")
+    if commit is None:
+        return root
+    if commit not in _ARCHIVES:
+        pinned = subprocess.run(["git", "-C", str(root), "cat-file", "-e", f"{commit}^{{commit}}"],
+                                check=False, capture_output=True)
+        archive = subprocess.run(["git", "-C", str(root), "archive", "--format=tar", commit],
+                                 check=False, capture_output=True) if pinned.returncode == 0 else pinned
+        if archive.returncode != 0:
+            unavailable(f"the Runtime checkout {root} has no commit {commit}")
+        target = Path(tempfile.mkdtemp(prefix="astrid-runtime-archive-"))
+        atexit.register(shutil.rmtree, target, ignore_errors=True)
+        with tarfile.open(fileobj=io.BytesIO(archive.stdout), mode="r:") as tar:
+            tar.extractall(target, **({"filter": "data"} if hasattr(tarfile, "data_filter") else {}))
+        _ARCHIVES[commit] = target
+    return _ARCHIVES[commit]
+
+
+def use_runtime(commit: str | None = None) -> Path:
+    """Locate the Runtime and make ``runtime_protocol`` importable from it.
+
+    Without ``commit`` an already exposed tree is reused, so a pinned module and the fixtures it uses agree.
+    """
+    global _exposed
+    if commit is None and _exposed is not None:
+        return _exposed
+    root = runtime_checkout(commit)
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+    _exposed = _exposed or root
+    return root
+
+exec
+/bin/bash -lc "rg -n 'recipe_m2_(auto_placement|shared_auto_placement|occurrence_media|placement_create_unplace|shot_pool)' --glob '"'!*.json'"' . | head -65; rg -c 'DID NOT RAISE' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/baseline-negative.log; PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/pytest-targeted tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/targeted.log 2>&1' in /home/user/work/wt/agt-m2-auto-pool-guard
+codex
+All five auto/media/pool recipe files pass: 242 tests. Against the two original modules from `5c6467da`, all 36 new conflict cases fail with `DID NOT RAISE`, confirming they expose the preexisting gaps. The final targeted run adds neighboring placement and manifest/inverse coverage. The five portable goldens were regenerated through normal capture and execution; the command schema is unchanged.
+exec
+/bin/bash -lc 'git diff -- tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json | head -110; git diff --numstat; git diff --check; PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_media_commands.py astrid/sdk/timeline/native_shot_pool_commands.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_m2_shot_pool.py; tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/targeted.log' in /home/user/work/wt/agt-m2-auto-pool-guard
+ succeeded in 782ms:
+diff --git a/tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json b/tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+index 0cb674f3..f83f7210 100644
+--- a/tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
++++ b/tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+@@ -540,6 +540,27 @@
+               "state": "absent"
+             }
+           },
++          {
++            "ref": "occurrence:occ-a/source",
++            "path": [
++              "app",
++              "astrid",
++              "pool"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "config",
++              "pinnedShotGroups"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
+           {
+             "ref": "occurrence:occ-a/collection:clip",
+             "path": [],
+@@ -928,6 +949,27 @@
+                 "state": "absent"
+               }
+             },
++            {
++              "ref": "occurrence:occ-a/source",
++              "path": [
++                "app",
++                "astrid",
++                "pool"
++              ],
++              "state": {
++                "state": "absent"
++              }
++            },
++            {
++              "ref": "parent",
++              "path": [
++                "config",
++                "pinnedShotGroups"
++              ],
++              "state": {
++                "state": "absent"
++              }
++            },
+             {
+               "ref": "occurrence:occ-a/collection:clip",
+               "path": [],
+@@ -1320,6 +1362,27 @@
+               "state": "absent"
+             }
+           },
++          {
++            "ref": "occurrence:occ-a/source",
++            "path": [
++              "app",
++              "astrid",
++              "pool"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "config",
++              "pinnedShotGroups"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
+           {
+             "ref": "occurrence:occ-a/collection:clip",
+             "path": [],
+4	0	astrid/sdk/timeline/native_occurrence_media_commands.py
+1	0	astrid/sdk/timeline/native_shot_pool_commands.py
+11	1	docs/design/m2-auto-placement.md
+84	0	tests/editing_conformance/fixtures/recipe_m2_auto_placement.json
+63	0	tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+63	0	tests/editing_conformance/fixtures/recipe_m2_placement_create_unplace.json
+84	0	tests/editing_conformance/fixtures/recipe_m2_shared_auto_placement.json
+90	0	tests/editing_conformance/fixtures/recipe_m2_shot_pool.json
+103	0	tests/editing_conformance/test_recipe_m2_shared_auto_placement.py
+17	7	tests/editing_conformance/test_recipe_m2_shot_pool.py
+All checks passed!
+........................................................................ [ 20%]
+........................
+exec
+/bin/bash -lc 'tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/targeted.log; git rev-parse HEAD; git branch --show-current; git status --short --untracked-files=all' in /home/user/work/wt/agt-m2-auto-pool-guard
+ succeeded in 380ms:
+........................................................................ [ 20%]
+........................................................................ [ 41%]
+........................................................................ [ 62%]
+........................................................................ [ 82%]
+................5c6467da34f53ce8d5111c0162eca5ff614380ed
+tl/agt-m2-auto-pool-guard
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M astrid/sdk/timeline/native_shot_pool_commands.py
+ M docs/design/m2-auto-placement.md
+ M tests/editing_conformance/fixtures/recipe_m2_auto_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+ M tests/editing_conformance/fixtures/recipe_m2_placement_create_unplace.json
+ M tests/editing_conformance/fixtures/recipe_m2_shared_auto_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_shot_pool.json
+ M tests/editing_conformance/test_recipe_m2_shared_auto_placement.py
+ M tests/editing_conformance/test_recipe_m2_shot_pool.py
+
+ succeeded in 43957ms:
+./docs/design/m2-auto-placement.md:79:`tests/editing_conformance/test_recipe_m2_auto_placement.py`, golden
+./docs/design/m2-auto-placement.md:80:`fixtures/recipe_m2_auto_placement.json` (keys `image-anchor`, `image-absent`,
+./docs/design/m2-auto-placement.md:91:the goldens `recipe_m2_occurrence_media.json` (add) and `recipe_m2_placement_create_unplace.json`
+./docs/design/m2-auto-placement.md:140:Evidence: `test_recipe_m2_shared_auto_placement.py`, golden `recipe_m2_shared_auto_placement.json`.
+./docs/design/m2-auto-placement.md:179:Evidence: `test_recipe_m2_shot_pool.py`, golden `recipe_m2_shot_pool.json`; the two former strict
+./docs/design/m2-auto-placement.md:180:xfails in `test_recipe_m2_shared_auto_placement.py` now pass. Runtime artifact regeneration for
+./docs/design/visual-compile-contract.md:9:The closure is the output of App's native `occurrence.add-media` on occurrence A, not a reconstruction. Source: App commit `309cb7a463833126e3af730fb3c6ff536d9e457c`, `src/tools/video-editor/commands/fixtures/recipe_m2_occurrence_media.json` (blob `22be20593b2b53dd35d1b0b71031f3cf128bf32e`), key `add.output`. The fixture stores that object verbatim as `native_add_output`.
+./tests/editing_conformance/test_recipe_m2_shot_pool.py:28:FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_shot_pool.json'
+./tests/editing_conformance/test_recipe_occurrence_media.py:37:FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_occurrence_media.json'
+./tests/editing_conformance/test_recipe_m2_placement_create_unplace.py:32:FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_placement_create_unplace.json'
+./tests/editing_conformance/test_recipe_m2_shared_auto_placement.py:27:FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_shared_auto_placement.json'
+./tests/editing_conformance/test_recipe_m2_auto_placement.py:26:FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_auto_placement.json'
+36
+
+exec
+/bin/bash -lc "tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/targeted.log; nl -ba astrid/sdk/timeline/native_occurrence_media_commands.py | sed -n '126,147p'; nl -ba astrid/sdk/timeline/native_shot_pool_commands.py | sed -n '33,48p'; nl -ba tests/editing_conformance/test_recipe_m2_shared_auto_placement.py | sed -n '336,359p'" in /home/user/work/wt/agt-m2-auto-pool-guard
+ succeeded in 155ms:
+........................................................................ [ 62%]
+........................................................................ [ 82%]
+............................................................             [100%]
+348 passed in 41.71s
+   126	    ctx.bind('media.track', track)
+   127	
+   128	
+   129	def add_media(ctx, command):
+   130	    owner, limit = _owner(ctx, command['select'])
+   131	    _exclusive(ctx, owner)
+   132	    # Automatic births also depend on promotion and legacy-group eligibility.
+   133	    # Keep absent fields guarded even when no pool removal follows the birth.
+   134	    ctx.read(owner + '/source', ['app', 'astrid', 'pool'])
+   135	    ctx.read('parent', ['config', 'pinnedShotGroups'])
+   136	    row, pin = command['args']['row'], command['args']['media']
+   137	    _consume(ctx, owner, command['args'].get('consumed', ()))
+   138	    value, kind = _verified(ctx, pin)
+   139	    if row.get('asset') != pin['asset']:
+   140	        raise CommandError('child asset must equal the reserved selection alias')
+   141	    _clip(ctx, owner, row, limit, kind, [value])
+   142	    _registry(ctx, owner, pin, kind, create=True)
+   143	    ctx.create(owner, 'clip', row)
+   144	
+   145	
+   146	def swap_media(ctx, command):
+   147	    ref = command['select']
+    33	
+    34	def shot_pool(ctx, command):
+    35	    owner = command['select']
+    36	    ctx.read(owner, ['occurrence_id'])
+    37	    ctx.read(owner + '/shot', ['shot_id'])
+    38	    ctx.state.occurrence(owner)
+    39	    ctx.bind('pool.owner', owner)
+    40	    _exclusive(ctx, owner)
+    41	    ctx.read('parent', ['config', 'pinnedShotGroups'])
+    42	    action, pin = command['args']['action'], command['args']['media']
+    43	    alias = pin['asset']
+    44	    _, kind = _verified(ctx, pin)
+    45	    source = owner + '/source'
+    46	    ctx.read(source, POOL)
+    47	    members = _members(ctx.state.get(source, POOL))
+    48	    if action == 'add':
+   336	@pytest.mark.parametrize('pool_state', ['absent', 'empty'])
+   337	def test_original_birth_refuses_a_native_pool_add_even_when_the_exact_alias_was_already_bound(
+   338	        kind, mode, pool_state):
+   339	    bundle, result, verified = bound_case(kind, pool_state, **mode)
+   340	    original = copy.deepcopy(result)
+   341	    plan = execute(bundle, result['commands'], verified_media=verified)
+   342	    assert len(plan.commands) == 1
+   343	    assert replay(plan, bundle, verified_media=verified).records == plan.records
+   344	    assert inverse(plan.bundle, plan.records).bundle == bundle
+   345	    pin = verified[1]['selection']
+   346	    added = execute(bundle, [capture_shot_pool(bundle, OWNER, 'add', pin, ownership='occurrence',
+   347	                                              verified_media=verified)], verified_media=verified)
+   348	    # Isolate pool membership: adding this already-bound alias creates no registry binding.
+   349	    assert [write['path'] for write in added.records[0]['writes']][-1] == POOL
+   350	    assert not added.records[0]['created']
+   351	    head = copy.deepcopy(added.bundle)
+   352	    with pytest.raises(CommandError) as error:
+   353	        replay(plan, head, intervening_records=added.records, verified_media=verified)
+   354	    assert error.value.kind == 'dependency_changed'
+   355	    assert head == added.bundle
+   356	    assert result == original
+   357	    assert State(head).get(OWNER + '/source', POOL)['value'] == [pin['asset']]
+   358	    assert CHILD not in {OWNER + '/clip:' + clip['id'] for clip in State(head).collection(OWNER, 'clip')}
+   359	    # This is a separate new capture, never a replacement for the original request.
+
+codex
+The final targeted run passed all 348 tests, including completion behavior and neighboring placement/inverse cases. Ruff and `git diff --check` also pass. I’m writing the handoff report and commit message now; Runtime and App qualification remain unverified.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard')
+report = '''# Automatic placement pool and eligibility guards
+
+Completed in "'`/home/user/work/wt/agt-m2-auto-pool-guard`, branch `tl/agt-m2-auto-pool-guard`, based on `5c6467da34f53ce8d5111c0162eca5ff614380ed` (`tl/agt-m2-auto-placement-guards`). No merge metadata or git ref changes.
+
+## Change
+
+`native_occurrence_media_commands.add_media` now records two original field states through the existing handler recorder:
+
+- ref `occurrence:<explicit owner ID>/source`, path `['"'app', 'astrid', 'pool']"'`;
+- ref `parent`, path `['"'config', 'pinnedShotGroups']"'`.
+
+This covers every actual birth path used by shared automatic placement: home-lane image `placement.create` delegates to add-media, while nonhome images and videos use `occurrence.add-media` directly. Absence, null and present field states retain the recorder'"'s normal tagged semantics. No extra expected guards are synthesized by a builder. Capturing a plain command regenerates the same reads and claims.
+
+"'`native_shot_pool_commands.shot_pool` also records the parent eligibility field, covering shared placement'"'s pool-only branch. It already recorded its source pool field.
+
+Conservative scope: the existing birth handler is shared with native add-media and completion, so all of those births record these two fields. All native pool actions record eligibility. A change to the same pool list (including another alias) or eligibility field may therefore refuse those requests, even if a particular explicit placement would not consult them. Stable-head behavior and outputs are unchanged; unrelated source/parent fields and other owners' pools still rebase. No new native migration validation or automatic pool removal was added.
+
+The original shared birth now refuses a concurrent native pool add even if its exact alias binding already existed. Original requests and changed heads remain untouched. A separately built fresh capture still produces the ordinary birth + pool removal promotion batch. Eligibility changes refuse the original request; a separate fresh builder refuses "'`migration_needed`. The registry has no native operation introducing legacy groups, so that negative uses an explicit changed-head fixture, not a claimed accepted Runtime edit.
+
+Schema, public args, op versions and ownership selection are unchanged. No parent-media birth, `commit.py`, Runtime pin, `producer.guard`, integration worktree, shared dependency, ledger or git ref was edited. Existing saved-policy, timing and owner regression tests remain intact. Five portable fixture files were regenerated by their existing case/capture helpers and ordinary `execute`; fixture diffs only add recorder reads.
+
+## Evidence
+
+All commands below ran from the assigned worktree. Shared dependencies were read-only. No full suite, localhost/browser/live-socket suite, or central full request was run.
+
+Final targeted run:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/pytest-targeted tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+```
+
+**348 passed in 41.71 s, exit 0** (`targeted.log`). Covers original no-change replay/retry, JSON roundtrip, exact inverse/redo, native intervening pool records, absent/empty pool states, absent/null/empty eligibility, pool-only eligibility, ordered image/video promotion, completion defaults/saved policy, timing/owner isolation and another owner'"'s native pool add rebasing successfully. Provider tests use the existing detached ABI fixture; they are not actual Runtime acceptance evidence.
+
+Regression proof: temporarily materialized only the two original product modules from "'`git show 5c6467da:<path>` in this assigned worktree, ran the following, then restored the final files byte-for-byte in a `finally` block:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --tb=short tests/editing_conformance/test_recipe_m2_shared_auto_placement.py -k '"'original_birth or original_shared_request'
+"'```
+
+**36 failed, 44 deselected in 7.08 s, exit 1**, all 36 `DID NOT RAISE` (`baseline-negative.log`). These are the new permanent positive conflict requirements failing on the unchanged predecessor, not expected-failure markers or weakened behavior requirements. The final targeted run above used the restored final implementation.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_media_commands.py astrid/sdk/timeline/native_shot_pool_commands.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_m2_shot_pool.py
+git diff --check
+```
+
+**Both exit 0; Ruff: All checks passed.** No tests were skipped, disabled, xfailed or removed. Test temporary output was cleaned; logs remain under this worker directory.
+
+## Handoff
+
+No blockers or disputed plan decisions. Review and integrate this successor separately from the old approved delta. App capture producers/portable fixture counterparts should adopt the new handler-generated reads and be qualified with the normal pinned Runtime/App continuation and original-request conflict journey. Runtime acceptance, task fences, actual idempotency/restart, browser behavior and pixels remain unverified here. The schema is unchanged; no new contract surface is proposed.
+'"'''
+(worker / 'report.md').write_text(report)
+(worker / 'commit-msg').write_text('''fix(timeline): guard automatic placement pool and eligibility reads
+
+Record original pool membership and legacy-group eligibility inside occurrence
+media births, including absent fields, so stale automatic requests conflict.
+Guard eligibility for shared pool-only requests through the native pool handler.
+
+Keep the schema unchanged and retain original requests on conflict. Add native
+pool-add, legacy eligibility, disjoint-owner and ordered promotion regressions;
+regenerate portable goldens through normal capture. Targeted tests: 348 passed.
+''')
+shutil.rmtree(worker / 'pytest-targeted', ignore_errors=True)
+(worker / 'DONE').touch()
+PY
+git diff --check
+git status --short --untracked-files=all" in /home/user/work/wt/agt-m2-auto-pool-guard
+ succeeded in 300ms:
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M astrid/sdk/timeline/native_shot_pool_commands.py
+ M docs/design/m2-auto-placement.md
+ M tests/editing_conformance/fixtures/recipe_m2_auto_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json
+ M tests/editing_conformance/fixtures/recipe_m2_placement_create_unplace.json
+ M tests/editing_conformance/fixtures/recipe_m2_shared_auto_placement.json
+ M tests/editing_conformance/fixtures/recipe_m2_shot_pool.json
+ M tests/editing_conformance/test_recipe_m2_shared_auto_placement.py
+ M tests/editing_conformance/test_recipe_m2_shot_pool.py
+
+codex
+Closed both gaps with handler-recorded pool and legacy-eligibility reads. Schema unchanged; original requests remain intact on conflict.
+
+- Targeted tests: **348 passed**.
+- Predecessor comparison: all **36 new conflict regressions fail as expected**.
+- Ruff and `git diff --check`: passed.
+- No blockers. Runtime/App qualification remains unverified.
+
+[Report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/report.md). Commit message and `DONE` written.
+tokens used
+96,572
+Closed both gaps with handler-recorded pool and legacy-eligibility reads. Schema unchanged; original requests remain intact on conflict.
+
+- Targeted tests: **348 passed**.
+- Predecessor comparison: all **36 new conflict regressions fail as expected**.
+- Ruff and `git diff --check`: passed.
+- No blockers. Runtime/App qualification remains unverified.
+
+[Report with exact commands and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/report.md). Commit message and `DONE` written.

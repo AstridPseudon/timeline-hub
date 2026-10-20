@@ -1,0 +1,400 @@
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/status && ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234' in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 0ms:
+running
+ext
+log.txt
+request
+runner.log
+running
+snap
+status
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt && ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/ext' in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/ext
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/runner.log && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/snap && git -C /home/user/work/wt/agt-m2-pack-startup-bound status --short && git status --short --untracked-files=all' in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 147ms:
+tree=423a42daa1032ab60ecca7b727c14fffe73b07f7
+key=9c5fa7ccfe0e7a1b71678611108b5f9f
+worktree=/home/user/work/wt/agt-m2-host-bound-recover
+ M tests/packs/rendering/real_pack_host.py
+ M tests/packs/rendering/test_real_pack_host.py
+ M tests/packs/rendering/real_pack_host.py
+ M tests/packs/rendering/test_real_pack_host.py
+
+codex
+The parent helper reproduced the cancellation failure for both SIGALRM and SIGTERM: startup continued from the signal at logical time 10 to the test’s escape at 400. The recovered helper passes lint and remains 248 lines; targeted tests and the single central batch are running.
+
+The remaining limitation is precise: cancellation interrupts progressing startup, but cleanup can extend exit beyond 180 seconds. A signal before production writes the host registration can also leave an unregistered child that this helper cannot safely recover. I’ll report that as a handoff constraint.
+
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/ext && sed -n '1,100p' tests/conftest.py && rg -n 'bytecode|cache|real_runtime|runtime_checkout' tests/conftest.py | head -30" in /home/user/work/wt/agt-m2-host-bound-recover
+ exited 124 in 62298ms:
+still running after 1 min ; rerun wait-test
+
+ succeeded in 1007ms:
+external=runtime=9f9b25c000485e919f30f1411831fe2d5a3c1316 app=2bfde69eac32335eae0bc5fa2820940c0b3c694b composition=2ac77f40d45d593e68ef281df50d2408d5a0f5a3 
+from __future__ import annotations
+
+import atexit
+import os
+import shutil
+import sys
+import tempfile
+from collections.abc import Iterator
+from pathlib import Path
+
+import pytest
+
+os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
+sys.dont_write_bytecode = True
+if sys.pycache_prefix is None:
+    _pycache_prefix = Path(tempfile.mkdtemp(prefix="astrid-pycache-"))
+    sys.pycache_prefix = str(_pycache_prefix)
+    os.environ.setdefault("PYTHONPYCACHEPREFIX", str(_pycache_prefix))
+    atexit.register(lambda: shutil.rmtree(_pycache_prefix, ignore_errors=True))
+
+from astrid.core.foundation import project_paths as paths
+from astrid.core.pack import source_setup
+from astrid.core.subprocess_env import (
+    TASK_ITEM_ID_ENV,
+    TASK_ITERATION_ENV,
+    TASK_PROJECT_ENV,
+    TASK_RUN_ID_ENV,
+    TASK_STEP_ID_ENV,
+)
+from tests.lanes import pytest_collection_modifyitems, pytest_configure  # noqa: F401  (lanes, import and fd guards)
+from tests.process_groups import ProcessGroups
+
+
+@pytest.fixture
+def owned_process_groups():
+    """Own process groups explicitly launched by this test until teardown."""
+    owner = ProcessGroups()
+    try:
+        yield owner
+    finally:
+        owner.terminate_all()
+
+
+@pytest.fixture
+def real_runtime(tmp_path, owned_process_groups):
+    """Start a real Runtime daemon on a temp realm; the one way a test gets one (testing plan AT-1).
+
+    ``real_runtime()`` starts the daemon at ``tmp_path/realm`` with its support root at ``tmp_path/support``.
+    ``real_runtime(realm, support_root=..., **daemon_options)`` starts one at a given realm (a restart reuses
+    it); ``commit=`` runs the Runtime as of that commit. The Runtime comes from ``tests.helpers.runtime``'s
+    locator (``ASTRID_RUNTIME_CHECKOUT``). Every daemon is stopped at teardown.
+    """
+    from tests.helpers.runtime import new_runtime_daemon
+
+    def start(realm=None, *, support_root=None, commit=None, **daemon_options):
+        if realm is None:
+            realm, support_root = tmp_path / "realm", support_root or tmp_path / "support"
+        if support_root is not None:
+            daemon_options["support_root"] = support_root
+        daemon = new_runtime_daemon(realm, commit=commit, **daemon_options).start()
+        owned_process_groups.add_cleanup(daemon.stop)
+        return daemon
+
+    return start
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Fail after killing runtime daemons/hosts rooted in pytest basetemp."""
+    _ = exitstatus
+    import signal
+    import subprocess
+    import time
+
+    try:
+        basetemp = Path(session.config._tmp_path_factory.getbasetemp()).resolve()
+        listing = subprocess.run(["ps", "-axo", "pid=,pgid=,command="], capture_output=True, text=True, check=True).stdout
+    except (AttributeError, OSError, subprocess.CalledProcessError) as exc:
+        reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+        if reporter is not None:
+            reporter.write_line(f"WARNING: daemon/host session guard could not inspect processes: {exc}")
+        return
+    leaked = []
+    for line in listing.splitlines():
+        fields = line.strip().split(None, 2)
+        if len(fields) != 3:
+            continue
+        try:
+            pid, pgid = int(fields[0]), int(fields[1])
+        except ValueError:
+            continue
+        command = fields[2]
+        is_runtime = "runtime_protocol" in command and "start" in command and "--root" in command
+        is_host = "generic_host" in command and "--support-root" in command
+        if not (is_runtime or is_host):
+            continue
+        tokens = command.split()
+        roots = []
+        for option in ("--root", "--support-root"):
+            if option in tokens and tokens.index(option) + 1 < len(tokens):
+                roots.append(tokens[tokens.index(option) + 1].strip("'\""))
+14:sys.dont_write_bytecode = True
+15:if sys.pycache_prefix is None:
+16:    _pycache_prefix = Path(tempfile.mkdtemp(prefix="astrid-pycache-"))
+17:    sys.pycache_prefix = str(_pycache_prefix)
+18:    os.environ.setdefault("PYTHONPYCACHEPREFIX", str(_pycache_prefix))
+19:    atexit.register(lambda: shutil.rmtree(_pycache_prefix, ignore_errors=True))
+45:def real_runtime(tmp_path, owned_process_groups):
+48:    ``real_runtime()`` starts the daemon at ``tmp_path/realm`` with its support root at ``tmp_path/support``.
+49:    ``real_runtime(realm, support_root=..., **daemon_options)`` starts one at a given realm (a restart reuses
+202:    # not redirect pack-sources.json or the managed pack cache. Ignore ambient
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234 1' in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 93870ms:
+........................................................................ [ 67%]
+..................................                                       [100%]
+106 passed, 6 deselected in 93.01s (0:01:33)
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-host-bound-recover')
+message = '''fix(testing): interrupt progressing pack-host startup safely
+
+Recover the interrupted startup helper and tests without changing product code.
+Unwind startup on termination, recover only a verified registered own child,
+and deliver original handlers after cleanup. Preserve signal race and foreign
+process refusal checks, and cover startup and ready-state lifetime handshakes.
+
+Document that cancellation is bounded during progressing startup, while cleanup
+can extend exit and unregistered launch ownership remains a production gap.
+'''
+(root / 'commit-msg').write_text(message)
+(root / 'commit-msg.txt').write_text(message)
+report = '''# Pack-host startup recovery
+
+Recovered the exact interrupted diff from "'`/home/user/work/wt/agt-m2-pack-startup-bound` into the assigned worktree, based on `0a867322394a38b5e305f5f97c866395c26c3178`. Inspected old `git status --short`, `git diff --binary HEAD` and untracked files read-only: two modified files, no untracked files. Preserved original binary patch in `notes/recovered.patch`, applied with `git apply --check` / `git apply`, verified both files with `cmp` and verified the entire resulting diff matches the saved patch. No further source changes were necessary. The old worktree remains unchanged.
+
+Only `tests/packs/rendering/real_pack_host.py` and `test_real_pack_host.py` changed. Helper stays **248 lines**. Production, credentials, environment selection and Runtime are unchanged.
+
+- Termination during progressing production startup raises a private BaseException; production'"'s polling-loop cleanup runs with repeated signals blocked. The original signal handler is replayed after cleanup.
+- Registered-child recovery covers return/adoption cancellation gaps under the existing lifecycle lock. It verifies receipt PID when available, kernel birth, live own-child status, source/Runtime/support bindings and the production source-command identity. It never constructs a cleanup handle for foreign/replaced/nonchild/wrong-birth/wrong-source/wrong-command state.
+- Preserves prior ownership/signal-race/cleanup-failure assertions. Adds guard-entry races and actual startup signal injection, plus early stop/EOF and after-ready stop/EOF/SIGTERM cases; no existing behavior was weakened or marked skipped/xfail.
+
+## Verification
+
+Parent counterexample re-confirmed in isolated Python subprocesses: load "'`git show HEAD:tests/packs/rendering/real_pack_host.py` into the helper module, then call `_exercise_progress_startup` separately for SIGALRM and SIGTERM. Both parent runs continued to logical 400 after cancellation at 10, failing with `startup kept progressing after cancellation`. The final helper is exercised by the same regression function in the targeted command below. This uses production ensure'"'s progress loop, real OS signals and a deterministic clock; offline launch/transport doubles do not qualify real production startup.
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m '"'not integration' tests/packs/rendering/test_real_pack_host.py tests/sdk/test_host_bootstrap_source_identity.py
+"'```
+
+**106 passed, 6 deselected in 93.01s.**
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F,I,BLE tests/packs/rendering/real_pack_host.py tests/packs/rendering/test_real_pack_host.py
+git diff --check
+```
+
+**Both passed.**
+
+The old central request `agt-m2-pack-startup-bound-real-pack-host-integration-1020003938-3397` has status **interrupted**, not passed. Requested exactly one replacement after final source was ready:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-host-bound-recover real-pack-host-integration
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234 1
+```
+
+Central result: **PENDING**. Reused the same ID after wait-test exit 124; never resubmitted. Snapshot tree `423a42daa1032ab60ecca7b727c14fffe73b07f7`; Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316`. Source is unchanged after submission. Full log is in `orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt`.
+
+## Guarantee and remaining handoff constraint
+
+The CLI'"'s 180-second alarm requests cancellation during progressing startup. INT/TERM/ALRM interrupt that progress loop and registered owned cleanup precedes original-handler delivery. **This is not a 180-second total-exit deadline:** production retirement, process-group census and reaping can extend exit; lifecycle lock contention, uncertain identity, replaced registration and cleanup errors refuse automatic cleanup. SIGKILL and uninterruptible native calls are outside this Linux/main-thread guarantee.
+
+Early explicit stop/EOF are queued handshake input: they are consumed after readiness, not cancellation of startup. The central startup SIGTERM is synchronized after the real child and marker exist and before production consumes readiness; no fake host, catalog or retirement is used.
+
+**Evidence contradicts the premise that production BaseException cleanup covers all startup:** in "'`astrid/sdk/host_bootstrap.py`, `popen_owned_group` precedes process-state construction/registration, and the BaseException cleanup starts only around the polling loop. A signal between child creation and registration can leave an unregistered child. The helper cannot safely identify it without production ownership support. No broad process scan, unsafe kill, tracing, alternate launcher or forbidden core change was introduced. This gap remains unqualified and must be reviewed before Viewing handoff; closing it needs a separately authorized production launch-ownership fix. Registered return/adoption races are covered.
+
+Read PLAN, latest Agent INBOX and custody/runtime-coordination design, including manager'"'s exact snapshot_object/portable JSON/document_object ACK and completed-cancel/numeric-forwarding decisions. No port/schema/pin/foundation work belongs to this helper task; no alternate seam was added. Frozen Bundle1 refs are untouched. **M2 integration remains HELD until PLAN records M1.**
+
+No full suite, make check, browser, render, install, merge, commit or push was run. App wrapper/parity and macOS remain unverified. Both conventional commit-message files are written for the harness; no build output or temp files were created in the worktree.
+
+Next: manager review of this exact source and the pre-registration ownership constraint; use the completed central result below to decide Viewing readiness. Harness owns commit; no integration merge by this worker.
+'''
+(root / 'notes/report.md').write_text(report)
+PY" in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/status && tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt' in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 0ms:
+running
+.
+exec
+/bin/bash -lc 'git diff --numstat HEAD && git diff --binary HEAD | sha256sum && cmp tests/packs/rendering/real_pack_host.py /home/user/work/wt/agt-m2-pack-startup-bound/tests/packs/rendering/real_pack_host.py && cmp tests/packs/rendering/test_real_pack_host.py /home/user/work/wt/agt-m2-pack-startup-bound/tests/packs/rendering/test_real_pack_host.py && git ls-files --others --exclude-standard && cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-host-bound-recover/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-host-bound-recover/commit-msg.txt' in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 745ms:
+56	26	tests/packs/rendering/real_pack_host.py
+185	12	tests/packs/rendering/test_real_pack_host.py
+0b811ffb2ceafe1193dc132327c5e2ad3ad5601b7933042f21bf1e64406c9563  -
+
+codex
+The targeted checks passed: 106 tests, with 6 integration cases left for the central service. Lint and diff checks passed too. The central batch is still running on the recovered source, which has not changed since submission.
+
+The report and both commit-message files are prepared. I’ll fill in the central result once it completes; the report already calls out the pre-registration ownership gap for manager review.
+
+
+ exited 124 in 59986ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc "tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt && stat -c '%y %s' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt" in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 0ms:
+.2026-10-20 00:51:14.845067468 +0000 1
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+path = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-host-bound-recover/notes/report.md')
+text = path.read_text()
+repro = \"\"\"Parent reproduction command (the two failures are required evidence of the defect, so the driver asserts their failure and exits zero):
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY_REPRO'
+import signal
+import subprocess
+import sys
+import tempfile
+
+code = '''
+import subprocess, sys
+from tests.packs.rendering import real_pack_host
+from tests.packs.rendering.test_real_pack_host import _exercise_progress_startup
+parent = subprocess.check_output(['git', 'show', 'HEAD:tests/packs/rendering/real_pack_host.py'], text=True)
+exec(compile(parent, 'parent-real-pack-host.py', 'exec'), real_pack_host.__dict__)
+_exercise_progress_startup(sys.argv[1], int(sys.argv[2]))
+'''
+for sig in (signal.SIGALRM, signal.SIGTERM):
+    with tempfile.TemporaryDirectory(prefix='host-parent-counterexample-') as root:
+        result = subprocess.run([sys.executable, '-c', code, root, str(int(sig))],
+                                capture_output=True, text=True, timeout=25)
+    assert result.returncode "'!= 0, result.stdout + result.stderr
+    assert '"'startup kept progressing after cancellation' in result.stderr, result.stderr
+    print(f'{sig.name}: parent counterexample confirmed (progress reached logical 400 after signal at 10)')
+PY_REPRO
+"'```
+
+**Both parent counterexamples confirmed; driver exited 0.**
+
+"""
+text = text.replace('"'"'```sh'"\\nPYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest'"', repro + '"'```sh'"\\nPYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest'"', 1)
+path.write_text(text)
+PY" in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 65ms:
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234 1' in /home/user/work/wt/agt-m2-host-bound-recover
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/status && tail -10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt && stat -c '%y %s' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt" in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 53ms:
+running
+...2026-10-20 00:53:00.458106700 +0000 3
+
+codex
+The three central startup-handshake cases have passed. The service is now running the after-ready cleanup cases on the same snapshot. The only outstanding result is that central batch; no further source changes are planned.
+
+
+ exited 124 in 60080ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/status && tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt' in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 17ms:
+running
+...
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234 1' in /home/user/work/wt/agt-m2-host-bound-recover
+ exited 124 in 60174ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc "tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt && stat -c '%y %s' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt" in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 0ms:
+....2026-10-20 00:54:11.889077992 +0000 4
+
+codex
+Four of six central cases have passed, including the first after-ready cleanup case. The log is advancing without a reported failure. I’m waiting on the existing request; M2 remains held and the frozen refs are untouched.
+
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234 1' in /home/user/work/wt/agt-m2-host-bound-recover
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/status && tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt' in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 0ms:
+pass
+......                                                                   [100%]
+6 passed, 37 deselected in 374.34s (0:06:14)
+
+ succeeded in 59958ms:
+test agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234: pass exit=0 in 377s — real-pack-host-integration on agt-m2-host-bound-recover (agent tree 423a42daa1032ab60ecca7b727c14fffe73b07f7)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/packs/rendering/test_real_pack_host.py
+counts: 6 passed, 37 deselected in 374.34s (0:06:14) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt ---
+......                                                                   [100%]
+6 passed, 37 deselected in 374.34s (0:06:14)
+
+codex
+The central batch passed: all 6 real-host cases completed in 374.34 seconds. I’ll record that result in the report and finish the handoff. Manager review of the pre-registration ownership gap remains necessary before claiming complete startup cleanup.
+
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234 1' in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 0ms:
+test agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234: pass exit=0 in 377s — real-pack-host-integration on agt-m2-host-bound-recover (agent tree 423a42daa1032ab60ecca7b727c14fffe73b07f7)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/packs/rendering/test_real_pack_host.py
+counts: 6 passed, 37 deselected in 374.34s (0:06:14) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-bound-recover-real-pack-host-integration-1020004939-29234/log.txt ---
+......                                                                   [100%]
+6 passed, 37 deselected in 374.34s (0:06:14)
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-host-bound-recover')
+path = root / 'notes/report.md'
+report = path.read_text().replace('Central result: **PENDING**.', 'Central result: **PASS — 6 passed, 37 deselected in 374.34s (6m14s), exit 0.** This covers early explicit stop/EOF, registered startup SIGTERM, after-ready explicit stop/EOF/SIGTERM, and the existing competing-CLI refusal assertions.')
+report = report.replace('Next: manager review of this exact source and the pre-registration ownership constraint; use the completed central result below to decide Viewing readiness.', 'Next: manager review of this exact source and the pre-registration ownership constraint before Viewing handoff. Central registered-startup and after-ready behavior is qualified; universal cleanup of an unregistered launched child remains blocked on a separately authorized product fix.')
+path.write_text(report)
+assert (root / 'commit-msg').read_bytes() == (root / 'commit-msg.txt').read_bytes()
+assert 'PENDING' not in report
+PY
+
+git diff --check && git status --short --untracked-files=all && git diff --binary HEAD | sha256sum" in /home/user/work/wt/agt-m2-host-bound-recover
+ succeeded in 0ms:
+ M tests/packs/rendering/real_pack_host.py
+ M tests/packs/rendering/test_real_pack_host.py
+0b811ffb2ceafe1193dc132327c5e2ad3ad5601b7933042f21bf1e64406c9563  -
+
+codex
+Recovered both files byte-for-byte; the old worktree remains untouched.
+
+- Targeted tests: **106 passed**, 6 deselected.
+- Central `real-pack-host-integration`: **6 passed**, 37 deselected, 374.34s.
+- Ruff and `git diff --check`: passed.
+- Parent SIGALRM/SIGTERM counterexamples reproduced.
+
+Cancellation now interrupts progressing startup. The remaining constraint is the production gap between child creation and registration: safe cleanup there requires a separately authorized fix. The 180-second alarm is not a total-exit deadline. Manager review is needed before Viewing handoff.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-host-bound-recover/notes/report.md). Both commit-message files are written. No full suite, install, commit, merge or push; frozen refs untouched and M2 held.
+tokens used
+89,981
+Recovered both files byte-for-byte; the old worktree remains untouched.
+
+- Targeted tests: **106 passed**, 6 deselected.
+- Central `real-pack-host-integration`: **6 passed**, 37 deselected, 374.34s.
+- Ruff and `git diff --check`: passed.
+- Parent SIGALRM/SIGTERM counterexamples reproduced.
+
+Cancellation now interrupts progressing startup. The remaining constraint is the production gap between child creation and registration: safe cleanup there requires a separately authorized fix. The 180-second alarm is not a total-exit deadline. Manager review is needed before Viewing handoff.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-host-bound-recover/notes/report.md). Both commit-message files are written. No full suite, install, commit, merge or push; frozen refs untouched and M2 held.

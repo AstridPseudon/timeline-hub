@@ -1,0 +1,400 @@
+    assert api.Checkout is tc.Checkout
+    assert api.TimelineEditError is tc.TimelineEditError
+    assert api.describe_changes is tc.describe_changes
+
+
+def test_all_is_unchanged():
+    assert "Checkout" in tc.__all__ and "TimelineEditError" in tc.__all__
+    assert set(tc.__all__) == {"Checkout", "Clip", "Cut", "Word", "Voice", "TimelineEditError", "EDITABLE_NOTE",
+                               "draft_path", "drafts_root", "find_draft", "resolve_ids"}
+
+
+def test_checkout_keeps_its_members_and_mixins():
+    missing = [n for n in PRE_SPLIT_CHECKOUT_MEMBERS if not hasattr(Checkout, n)]
+    assert missing == []
+    mro_names = [c.__name__ for c in Checkout.__mro__]
+    for mixin in MIXINS:
+"""Edit a timeline in one obvious step.
+
+    from astrid.sdk.timeline_checkout import Checkout
+
+    tl = Checkout.open("almost-ready", "01M4GGKMHZ3J8V402C8CWSCE95")   # or Checkout.load("film.json")
+    tl.clip("ROCKET").enter_at("viral")          # a clip by asset, id, element or text; a word by text or id
+    tl.close_gap(before="Live.")                 # ripple: everything after moves, VO/music/SFX stay in sync
+    print(tl.check())                            # validate + what moved (timeline seconds) + lint on the changed cuts
+    tl.publish("rocket on 'viral'")
+
+Units, once: every time this API takes or returns is TIMELINE SECONDS (the numbers
+``timelines show``, ``visualize --at`` and ``lint`` print), unless the argument is
+called ``frames``. The document stores shot-relative seconds (clip ``at``) and
+milliseconds (placements); the API converts, so you never do.
+
+Intent: moving a clip *to a word* stores an anchor ``{word, text, offset_s}`` on
+the clip. ``retime()`` (or a VO take swap) moves every anchored clip back onto its
+word, so a re-recorded line never strands its overlays. Moving a clip to a plain
+time drops its anchor; ``nudge`` keeps it and changes its offset.
+
+Addresses are the ones the CLI prints: cut numbers (``tl.cut(17)``, the same
+numbering as show, lint and visualize), clip ids or their prefix (``c22-02``),
+asset keys (``ROCKET``), element ids (``am-tweet``), on-screen text, and words
+(``"viral"``, ``"n20b:20"``, ``tl.word("tool", n=2)``).
+
+The code lives in astrid/sdk/timeline/; this module is the stable import path.
+"""
+from __future__ import annotations
+
+import contextlib  # noqa: F401
+import copy  # noqa: F401
+import dataclasses  # noqa: F401
+import difflib  # noqa: F401
+import json  # noqa: F401
+import math  # noqa: F401
+import os  # noqa: F401
+import re  # noqa: F401
+import uuid  # noqa: F401
+from dataclasses import dataclass  # noqa: F401
+from pathlib import Path  # noqa: F401
+from typing import Any, Iterable, Mapping, Sequence  # noqa: F401
+
+from astrid.core.timeline import moments as mo  # noqa: F401
+from astrid.sdk import timeline_intent as intent  # noqa: F401
+from astrid.core.timeline.cuts import (
+    bundle_fps,  # noqa: F401
+    clip_duration,  # noqa: F401
+    occurrences_from_bundle,  # noqa: F401
+    picture_cuts,  # noqa: F401
+)
+
+__all__ = [
+    "Checkout", "Clip", "Cut", "Word", "Voice", "TimelineEditError", "EDITABLE_NOTE",
+    "draft_path", "drafts_root", "find_draft", "resolve_ids",
+]
+
+from astrid.sdk.timeline._common import BASE_KEYS  # noqa: F401
+from astrid.sdk.timeline._common import SHOT_BASE_PREFIX  # noqa: F401
+from astrid.sdk.timeline._common import DERIVED_PREFIX  # noqa: F401
+from astrid.sdk.timeline._common import EDITABLE_NOTE  # noqa: F401
+from astrid.sdk.timeline._common import ELEMENT_TRACK  # noqa: F401
+from astrid.sdk.timeline._common import AUDIO_KINDS  # noqa: F401
+from astrid.sdk.timeline._common import TIME_RE  # noqa: F401
+from astrid.sdk.timeline._common import WORD_ID_RE  # noqa: F401
+from astrid.sdk.timeline._common import CANVAS  # noqa: F401
+from astrid.sdk.timeline._common import SAFE_MARGIN  # noqa: F401
+from astrid.sdk.timeline._common import LOGICAL_PX  # noqa: F401
+from astrid.sdk.timeline._common import POSITION_KEYS  # noqa: F401
+from astrid.sdk.timeline.units import element_units  # noqa: F401
+from astrid.sdk.timeline.units import _unit_path  # noqa: F401
+from astrid.sdk.timeline.units import is_logical  # noqa: F401
+from astrid.sdk.timeline.units import param_unit  # noqa: F401
+from astrid.sdk.timeline.units import _number  # noqa: F401
+from astrid.sdk.timeline.units import to_canvas  # noqa: F401
+from astrid.sdk.timeline.units import from_canvas  # noqa: F401
+from astrid.sdk.timeline.units import _FORMULA_VALUE  # noqa: F401
+from astrid.sdk.timeline.units import parse_moment_value  # noqa: F401
+from astrid.sdk.timeline.units import parse_formula_value  # noqa: F401
+from astrid.sdk.timeline.units import formula_from_spec  # noqa: F401
+from astrid.sdk.timeline.units import mark_offset_canvas  # noqa: F401
+from astrid.sdk.timeline.units import formula_short  # noqa: F401
+from astrid.sdk.timeline._common import TimelineEditError  # noqa: F401
+from astrid.sdk.timeline._common import _length_seconds  # noqa: F401
+from astrid.sdk.timeline._common import _Suggest  # noqa: F401
+from astrid.sdk.timeline._common import _norm  # noqa: F401
+from astrid.sdk.timeline._common import _num  # noqa: F401
+from astrid.sdk.timeline._common import _r  # noqa: F401
+from astrid.sdk.timeline.model import Word  # noqa: F401
+from astrid.sdk.timeline.model import _LazyParams  # noqa: F401
+from astrid.sdk.timeline.model import Clip  # noqa: F401
+from astrid.sdk.timeline.model import Cut  # noqa: F401
+from astrid.sdk.timeline.model import StepSequence  # noqa: F401
+from astrid.sdk.timeline.model import Voice  # noqa: F401
+from astrid.sdk.timeline.model import _MomentContext  # noqa: F401
+from astrid.sdk.timeline.model import tl_cache  # noqa: F401
+from astrid.sdk.timeline.checkout import Checkout  # noqa: F401
+from astrid.sdk.timeline.check import CheckReport  # noqa: F401
+from astrid.sdk.timeline.check import _end_rule  # noqa: F401
+from astrid.sdk.timeline.check import _text_where_number  # noqa: F401
+from astrid.sdk.timeline.check import text_fit_safe_width  # noqa: F401
+6a59522421a8a5c0e93fca080aa2d1fd478952f1
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check --no-cache --output-format concise astrid/sdk/timeline/checkout.py astrid/sdk/timeline/store.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-current-gate/notes/baseline-ruff.log 2>&1' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-current-gate/baseline
+ exited 1 in 0ms:
+exec
+/bin/bash -lc 'git diff --stat HEAD 6a59522421a8a5c0e93fca080aa2d1fd478952f1 -- astrid/packs/timeline/cli.py astrid/sdk/timeline/checkout.py astrid/sdk/timeline/publish.py astrid/sdk/timeline/store.py astrid/sdk/timeline_sheet.py docs/timeline-editing-guide.md tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_history_runtime.py tests/sdk/test_timeline_checkout_publication_retry.py tests/sdk/test_timeline_checkout_restore_recovery.py && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-current-gate/notes/baseline-ruff.log' in /home/user/work/wt/agt-m2-history-current-gate
+ succeeded in 0ms:
+astrid/sdk/timeline/checkout.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+astrid/sdk/timeline/store.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+astrid/sdk/timeline/store.py:178:5: E731 Do not assign a `lambda` expression, use a `def`
+Found 3 errors.
+[*] 2 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-current-gate-commit-integration-1020110249-7885/status' in /home/user/work/wt/agt-m2-history-current-gate
+ succeeded in 0ms:
+running
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-current-gate-commit-integration-1020110249-7885/log.txt && rg '"'^def test_'"' tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py && git diff --check" in /home/user/work/wt/agt-m2-history-current-gate
+ succeeded in 364ms:
+....                                                                     [100%]
+4 passed in 20.30s
+tests/sdk/test_timeline_checkout_history_runtime.py:def test_checkout_reload_undo_cli_redo_uses_retained_history(
+tests/sdk/test_timeline_checkout_history_runtime.py:def test_retained_restore_does_not_reopen_consumed_draft_steps(
+tests/editing_conformance/test_commit_runtime_m1.py:def test_cli_python_outbox_restart_and_guarded_inverse(
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import json
+import subprocess
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-current-gate')
+source='7e502fe267abe357ad7c10cf12f867cc5987d7f4'
+paths=json.loads((w/'notes/port.json').read_text())['paths']
+snap_tree='73fd67c0944fad20a922fb0a1137f69eb2401b6b'
+for p in paths:
+    assert subprocess.check_output(['git','show',f'{snap_tree}:{p}']) == Path(p).read_bytes(),p
+added=[]
+removed=[]
+for p in paths:
+    try:
+        before=subprocess.check_output(['git','show',f'HEAD:{p}'],stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        before=b''
+    if not before:
+        added.append(p)
+    if p.startswith('tests/') and before:
+        after=iter(Path(p).read_bytes().splitlines(keepends=True))
+        for line in before.splitlines(keepends=True):
+            assert any(candidate == line for candidate in after),p
+print('Central snapshot matches all twelve port paths; existing test lines retained.')
+PY" in /home/user/work/wt/agt-m2-history-current-gate
+ succeeded in 29ms:
+Central snapshot matches all twelve port paths; existing test lines retained.
+
+codex
+The four central Runtime tests passed on Agent tree `73fd67c0`, using locked Runtime `94114269`. The facade failure also reproduces on unmodified integration base `86405964`, and Ruff reports the same three inherited diagnostics. I’ll record those limits in the report; the history port has no identified blocker.
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-current-gate-commit-integration-1020110249-7885/summary && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-current-gate-commit-integration-1020110249-7885/snap && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-current-gate-commit-integration-1020110249-7885/exit && sed -n '20,50p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run" in /home/user/work/wt/agt-m2-history-current-gate
+ succeeded in 0ms:
+test agt-m2-history-current-gate-commit-integration-1020110249-7885: pass exit=0 in 22s — commit-integration on agt-m2-history-current-gate (agent tree 73fd67c0944fad20a922fb0a1137f69eb2401b6b)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
+counts: 4 passed in 20.30s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-current-gate-commit-integration-1020110249-7885/log.txt ---
+....                                                                     [100%]
+4 passed in 20.30s
+tree=73fd67c0944fad20a922fb0a1137f69eb2401b6b
+key=11747eeb64aa019b4e7f8d12bb048847
+worktree=/home/user/work/wt/agt-m2-history-current-gate
+0
+  TREE=$(GIT_INDEX_FILE=$IDX git -C $W write-tree); rm -f $IDX; [ -n "$TREE" ] || bad "could not compute tree of $W"
+  # cross-product suites (e2e, journeys, commit-integration, or a command naming another repo) also depend on the
+  # other repos' integration code: add their tl/integration heads to the key so a stale pass is never reused
+  EXT=""; case "$suite $CMD" in *e2e*|*integration*|*three-products*|*journey*) EXT=x;; esac
+  for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
+  [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
+  KEY=$(echo "$repo $TREE $suite $files $CMD $EXT" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
+  if [ $nocache = 0 ] && [ -f $C/$KEY ] && SRC=$O/tests/$(cat $C/$KEY) && [ -f $SRC/summary ]; then
+    cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
+    basename $SRC > $D/cached_from; cp $SRC/status $D/status; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
+  [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
+  [ $HV = heavy ] && [ $(alive heavy) -ge 1 ] && { echo "a full suite is already running" | tee $D/why; exit 3; }
+  [ $HV = light ] && [ $(alive light) -ge 2 ] && { echo "2 targeted/named runs already running" | tee $D/why; exit 3; }
+  FLOOR=5; [ $HV = heavy ] && FLOOR=8; [ $(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9) -lt $FLOOR ] && { echo "low disk (<${FLOOR}G free; heavy runs need 8G so Runtime storage preflight does not cause false reds)" | tee $D/why; exit 3; }
+  [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
+  setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+fi
+echo $$ > $D/running; SNAP=/home/user/work/wt/.test-$ID; T0=$(date +%s)
+COMMIT=$(git -C $W commit-tree $tree -p HEAD -m "test snapshot $ID") && git -C $W worktree add -q --detach $SNAP $COMMIT || { echo 1 > $D/exit; echo error > $D/status; echo "snapshot failed" > $D/summary; rm -f $D/running $C/$key.running; exit 1; }
+NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules; case $repo in app|composition) [ -e $SNAP/node_modules ] || ln -s "$(readlink -f $NM)" $SNAP/node_modules;; esac
+# agent: link the worktree's installed Remotion runtime (remotion/node_modules), else the integration checkout's, read-only by convention
+if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
+  [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
+( cd $SNAP && PYTHONPATH=$SNAP timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
+git -C $W worktree remove --force $SNAP 2>/dev/null || { rm -rf $SNAP; git -C $W worktree prune; }
+ST=fail; [ $RC = 0 ] && ST=pass; [ $RC = 124 -o $RC = 137 ] && ST=timeout
+{ echo "test $ID: $ST exit=$RC in $(( $(date +%s) - T0 ))s — $suite on $target ($repo tree $tree)"; echo "cmd: $CMD"
+  echo "counts: $(grep -aE '[0-9]+ (passed|failed)|Tests +[0-9]|^# (pass|fail) ' $D/log.txt | tail -3 | tr '\n' ' ')"; echo "--- last 60 lines of $D/log.txt ---"; tail -60 $D/log.txt; } > $D/summary
+echo $RC > $D/exit; echo $ST > $D/status; [ $RC = 0 -o $RC = 1 ] && echo $ID > $C/$key; rm -f $D/running $C/$key.running
+
+ succeeded in 59987ms:
+test agt-m2-history-current-gate-commit-integration-1020110249-7885: pass exit=0 in 22s — commit-integration on agt-m2-history-current-gate (agent tree 73fd67c0944fad20a922fb0a1137f69eb2401b6b)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
+counts: 4 passed in 20.30s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-history-current-gate-commit-integration-1020110249-7885/log.txt ---
+....                                                                     [100%]
+4 passed in 20.30s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+w = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-current-gate')
+report = '''# Agent local history current integration gate
+
+Completed the approved minimal cumulative port. No history-port blocker found. The focused lane has one independently reproduced integration-baseline failure; this is not a wholly green 428-test claim.
+
+## Authority and exact pair
+
+Read PLAN.md, supplied AGENTS.md, repository AGENTS.md, and the final "'`design/agent-review-history-reconcile-current.md` before porting. Its verdict is **APPROVE** for the minimal source port. No settled decision was changed.
+
+- Assigned integration base: **86405964ecb713ad42a375f9de7960b3f9dc259b** (clean at start).
+- Approved cumulative source: **7e502fe267abe357ad7c10cf12f867cc5987d7f4**, source tree **66c41e41d8fafb816913b6cca7ab41bc45dc7c19**; diff ancestor **c456b328**.
+- Tested current-base Agent tree: **73fd67c0944fad20a922fb0a1137f69eb2401b6b** (central snapshot includes all uncommitted additions).
+- Actual Runtime used: **94114269d1ce23ab3224d7eca5a85138ce2b5fed**, selected by `use_runtime(vendored_runtime_commit())` from unchanged `runtime.lock.json` during history module collection. The M1 fixtures reuse that exposed tree. The named service command'"'s Runtime locator is "'`/home/user/work/runtime`; the helper archives the locked commit instead of using that moving checkout'"'s code. This qualifies exactly Agent tree 73fd67c0 + Runtime 94114269, not the current drifting Runtime integration.
+- Integration was later observed at **6a59522421a8a5c0e93fca080aa2d1fd478952f1**. A read-only diff from the assigned base to that observation reports **no differences in the twelve port paths**. Other later integration work is not qualified by this gate.
+
+## Changes and preservation
+
+Generated the binary diff "'`c456b328..7e502fe2`, restricted to its twelve changed paths, checked it with `git apply --check --verbose -`, then applied it to working files with `git apply -` (no index update). Both exit 0, without offsets/conflicts. `git diff --check` exits 0. No commit/merge/rebase/checkout/push or direct integration edit was performed.
+
+The twelve paths are:
+
+- astrid/packs/timeline/cli.py
+- astrid/sdk/timeline/checkout.py
+- astrid/sdk/timeline/publish.py
+- astrid/sdk/timeline/store.py
+- astrid/sdk/timeline_sheet.py
+- docs/timeline-editing-guide.md
+- tests/packs/timeline/test_cli_commit_move.py
+- tests/sdk/test_timeline_checkout_history.py
+- tests/sdk/test_timeline_checkout_history_boundaries.py
+- tests/sdk/test_timeline_checkout_history_runtime.py
+- tests/sdk/test_timeline_checkout_publication_retry.py
+- tests/sdk/test_timeline_checkout_restore_recovery.py
+
+All eleven non-guide paths are byte-identical to the approved source. The guide received only its reviewed insertion, preserving current integration'"'s other guide changes. Exactly these twelve paths are changed/untracked. Current D07 documentation, fixture trim, capture projector, timing kernel, schemas and dependency pins are preserved. Tracked changes are +256/-58; five new test files add 707 lines: cumulative +963/-58.
+
+The port supplies native publication undo/redo through TimelineSession's existing guarded inverse/outbox, CLI publication redo, accepted-publication retirement of consumed local stacks and exported/in-memory basis, same-base sheet source fencing with retained Runtime reads, and bounded restart reconciliation of a local restore transition. It does not add another accepted journal or coordinator. The pending marker contains only local transition filenames, direction and target device/inode, and disappears on cancellation/completion. All accepted history remains Runtime-owned.
+
+Reviewed target replacement ordering and the original two post-replacement probes. The permanent original probe function is AST-identical to the review probe. Every original line of previously existing touched tests remains in order. No test was skipped, weakened, deleted, changed to a refusal expectation, or marked xfail. The 42 permanent recovery cases include first/second reverse promotion, source retention, preparation/target write failure, equal-value/ABA classification, child exit, normal public reload and inverse. Independent probes add interruptions immediately after successful first/second promotion, repeat recovery failure, marker cleanup retry and real flock exclusion.
+
+No process/review document was imported into the repository: the only changed documentation is the ordinary product guide. All patch metadata, probes, logs and this report are under this absolute ORCH worker directory. No unrelated existing process documentation was removed.
+
+## Exact targeted validation
+
+Commands below ran in "'`/home/user/work/wt/agt-m2-history-current-gate`, except the explicitly named baseline cwd. `W` denotes this absolute report'"'s parent worker directory:
+
+"'```sh
+W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-current-gate
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_restore_recovery.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_verbs_working_copy.py tests/sdk/test_undo_a1_legacy_open.py tests/packs/timeline/test_cli_parity.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timeline_checkout_publication_retry.py
+```
+
+**427 passed, 1 failed, 17 deselected, 4 warnings in 29.38s; exit 1.** Log: `notes/focused.log`. All 42 permanent restore recovery cases are included and passed. The four warnings are existing Pillow Image.getdata deprecations in the real-ffmpeg frame test. The 17 default-lane deselections are not claimed as integration evidence.
+
+The only failure is unchanged `tests/sdk/test_timeline_checkout_facade.py::test_facade_names_are_the_same_objects_as_their_new_homes`: `_timing_evaluators.py` defines `_number`, while the existing public facade exposes the distinct units `_number`. This involves current integration'"'s timing kernel; it is unrelated to this port. A complete read-only "'`git archive HEAD` snapshot in `$W/baseline` was used to prove the exact failure on **86405964** before our changes. Cwd `$W/baseline`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_facade.py::test_facade_names_are_the_same_objects_as_their_new_homes
+```
+
+**1 failed in 0.32s; exit 1**, same `_timing_evaluators.py`/`_number` identity assertion. Log: `notes/baseline-facade.log`. No test or timing implementation was changed to conceal the inherited failure.
+
+Copied the two unchanged review probe files into this worker directory, then ran:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider $W/test_review_restore_interruption.py $W/test_review_reconcile_guards.py
+```
+
+**20 passed in 1.13s; exit 0.** Log: `notes/review-probes.log`. These are the original two post-target-replace cases and all 18 independent lock/repeated-failure/after-promotion probes. They verify original source bytes remain intact until reverse promotion completes, recovery through public reload works, and the inverse restores exact original bytes.
+
+Central request (no localhost tests ran directly):
+
+```sh
+$ORCH/bin/request-test agt-m2-history-current-gate commit-integration --files tests/sdk/test_timeline_checkout_history_runtime.py
+$ORCH/bin/wait-test agt-m2-history-current-gate-commit-integration-1020110249-7885
+```
+
+Service command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
+```
+
+**4 passed in 20.30s; service exit 0, 22s elapsed.** Result directory: `$ORCH/tests/agt-m2-history-current-gate-commit-integration-1020110249-7885/`. Agent tree **73fd67c0944fad20a922fb0a1137f69eb2401b6b**; actual Runtime pin **94114269d1ce23ab3224d7eca5a85138ce2b5fed**. Snapshot contents of all twelve port paths were compared byte-for-byte with this worktree after the run.
+
+Coverage includes actual renderer import/evaluation tripwires, CLI/Python commit and durable exact lost-ACK retry across restart, public reload/readback and guarded inverse, native CLI redo, preserved disjoint edit, exact retained sheet basis including source pins/provenance, retained revision A→B→A with a distinct publication identity, refusal to reopen consumed local stacks, and subsequent new unsent undo/redo. This is not a claim of machine-wide renderer shutdown.
+
+One preliminary service request used `targeted --files '"'-m integration ...'"'`; service **rejected it before execution** with `bad file arg -m (relative path/glob/node-id, no ..)`, result `agt-m2-history-current-gate-targeted-1020110219-25290`. No tests ran in that request. The correct named service request above supplied marker/environment settings and passed; it was requested only once.
+
+Static validation:
+
+```sh
+git diff --check
+/home/user/work/venv-agent/bin/ruff check --no-cache --output-format concise astrid/sdk/timeline/checkout.py astrid/sdk/timeline/store.py tests/sdk/test_timeline_checkout_restore_recovery.py
+```
+
+Diff check **exit 0**. Ruff **exit 1**, exactly three inherited diagnostics: checkout I001, store I001, store E731. No diagnostic in the new recovery test. Same Ruff command on the baseline cwd, omitting the absent new recovery test, reproduces the same three diagnostics (store E731 line 178 versus port line 230). Logs: `notes/ruff.log`, `notes/baseline-ruff.log`.
+
+## Decisions, limits and next steps
+
+No scope decisions changed. Preserved the approved source exactly and classified the demonstrated timing facade failure as inherited instead of expanding into another worker'"'s timing work. No history-port blocker remains; the orchestrator should retain the baseline classification when judging this gate and route the "'`_number` facade collision to the timing owner before an overall green gate.
+
+AG01/AG03/WC7/WC8 remain open. Whole-candidate publication/client merge/CAS/narration, local publication-labelled log records, detached sheet merge/apply, CLI apply client forwarding, and local `_merge_writer`/`three_way` remain separate migrations. This is not an AG01 or WC7/WC8 completion claim.
+
+No full/full* suite, make check, whole-repository lint/typecheck, browser run, or independent media-head rollover fixture was requested/run. Power-loss/fsync durability, macOS, filesystem transplantation, external target replacement outside the lock, pre-marker artifacts left by older binaries, and process death/I/O failure inside the acceptance-retirement fence itself remain unverified. Downstream accepted-publication reset read/write failure is covered. Shared dependencies/caches were read-only. The baseline archive was removed after its evidence was captured; no build output or temporary files remain in the repository.
+
+Recommended next step: integrate the narrow twelve-path port through the orchestrator'"'s normal gate, preserving subsequent integration work, carry the precise Agent/Runtime pair above, and continue the unrelated writer migrations. No new accepted-history machinery is warranted.
+'''
+(w/'notes/report.md').write_text(report)
+(w/'commit-msg').write_text('fix(timeline): fence accepted history and recover local restore transitions\\n\\nPort the reviewed local undo/redo, publication redo and retained sheet basis\\nboundaries onto current integration. Reconcile interrupted local restores under\\nthe existing checkout lock while preserving source and inverse states.\\n\\nValidate 427 focused passes with one reproduced timing-facade baseline failure,\\n20 independent review probes, and four renderer-blocked Runtime tests on 94114269.\\n')
+shutil.rmtree(w/'baseline')
+print(w/'notes/report.md')
+PY" in /home/user/work/wt/agt-m2-history-current-gate
+ succeeded in 538ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-current-gate/notes/report.md
+
+exec
+/bin/bash -lc "git diff --check && git status --short && python3 - <<'PY'
+from pathlib import Path
+import json
+import subprocess
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-current-gate')
+paths=json.loads((w/'notes/port.json').read_text())['paths']
+changed=subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()+subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines()
+assert sorted(changed)==sorted(paths)
+for p in paths:
+    assert Path(p).read_bytes()==subprocess.check_output(['git','show',f'73fd67c0944fad20a922fb0a1137f69eb2401b6b:{p}'])
+assert (w/'notes/report.md').is_file() and (w/'commit-msg').is_file()
+(w/'DONE').touch()
+print('Final snapshot unchanged; report, commit message and DONE written.')
+PY" in /home/user/work/wt/agt-m2-history-current-gate
+ succeeded in 1117ms:
+ M astrid/packs/timeline/cli.py
+ M astrid/sdk/timeline/checkout.py
+ M astrid/sdk/timeline/publish.py
+ M astrid/sdk/timeline/store.py
+ M astrid/sdk/timeline_sheet.py
+ M docs/timeline-editing-guide.md
+ M tests/packs/timeline/test_cli_commit_move.py
+?? tests/sdk/test_timeline_checkout_history.py
+?? tests/sdk/test_timeline_checkout_history_boundaries.py
+?? tests/sdk/test_timeline_checkout_history_runtime.py
+?? tests/sdk/test_timeline_checkout_publication_retry.py
+?? tests/sdk/test_timeline_checkout_restore_recovery.py
+Final snapshot unchanged; report, commit message and DONE written.
+
+codex
+Ported exactly the twelve approved paths, preserving current integration work.
+
+- Focused lane: **427 passed, 1 inherited facade failure**, reproduced on the unmodified base.
+- Original/independent recovery probes: **20 passed**.
+- Central renderer-blocked Runtime lane: **4 passed** on Agent tree `73fd67c0` + Runtime `94114269`.
+- Diff check passed; Ruff reproduced three inherited diagnostics.
+
+No history-port blocker. Separate writer migrations remain open; route the facade failure to the timing owner.
+
+[Detailed report and exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-current-gate/notes/report.md). Commit message and `DONE` written.
+tokens used
+93,598
+Ported exactly the twelve approved paths, preserving current integration work.
+
+- Focused lane: **427 passed, 1 inherited facade failure**, reproduced on the unmodified base.
+- Original/independent recovery probes: **20 passed**.
+- Central renderer-blocked Runtime lane: **4 passed** on Agent tree `73fd67c0` + Runtime `94114269`.
+- Diff check passed; Ruff reproduced three inherited diagnostics.
+
+No history-port blocker. Separate writer migrations remain open; route the facade failure to the timing owner.
+
+[Detailed report and exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-current-gate/notes/report.md). Commit message and `DONE` written.

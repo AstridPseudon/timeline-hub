@@ -1,0 +1,400 @@
+Central result: PENDING. `wait-test` returning 124 is only a running/queue timeout; the same request is being awaited, never resubmitted.
+
+No full suite, browser/socket suite, or `make check` was requested or run. Actual Runtime acceptance with a regenerated `clip.add-media` schema is not qualified here. Equal-z coverage proves authored-to-composition draw-input order, not a pixel rendering.
+
+## Schema publication / Runtime follow-up
+
+`astrid/core/timeline/schema/edit-command.schema.json` is unchanged from the birth base.
+
+- Exact file SHA-256: `4e1a509c3456faa4d040bb5e97c9d79059541c8b1d2b6402d7b2291dbe669739`.
+- Canonical JSON SHA-256 (`commit._digest`): `sha256:69f2b48fabd5bc940025612a80b1e20aa4dc0418d60c5d8322e2c744edb36e27`.
+- Complete EditCommand op list (all v1): `clip.add`, `clip.add-media`, `clip.delete`, `clip.move`, `clip.set`, `clip.set-element`, `clip.set-params`, `clip.split`, `clip.trim`, `occurrence.add-media`, `occurrence.delete`, `occurrence.duplicate`, `occurrence.swap-media`, `placement.create`, `placement.move`, `placement.unplace`, `shot.pool`, `shot.set`, `timeline.inverse`, `timeline.restore`, `track.create`, `track.set`.
+- Runtime must import the additive `ClipAddMediaArgs` definition and `clip.add-media` EditCommand branch into `contract/schemas/edit-command.json` and regenerate its contract/clients through its normal generator. No new schema delta in this worker; generation is still required for the inherited birth addition.
+
+## Parent-builder delta for port after guards
+
+`native_auto_placement.py` is untouched relative to this worker'"'s base. "'`parent-builder.patch` contains exactly the birth branch delta (`git diff 931d7ec5 9afda12f -- astrid/sdk/timeline/native_auto_placement.py`), separately for the guard owner'"'s review.
+
+Port only its parent capability after "'`agt-m2-auto-placement-guards`: import `capture_clip_add_media`; add `_parent_completion`; accept `track=None`; dispatch `owner='"'parent', ownership='parent'"'` with a required named track; resolve the anchor end or named-track end from frame 0; emit image/video `clip.add-media` with the 5-second completion convention and video `0..length` source window; include track in capture. It does not emit replacement.
+
+Do not overwrite the guard owner'"'s occurrence branch with the large context hunk. Preserve their replay/ownership/timing policy. The inherited video occurrence path's capture-only exclusive-owner check is still their issue; this worker did not alter that policy.
+
+## Required next steps / shared row updates
+
+1. Authorize/apply the narrow provider prerequisite and rerun its actual source tests; do not land this tree as fully qualified while its provider regression is red.
+2. Harness records merge ancestry and commits the worktree using "'`commit-msg`; no worker commit/merge/push was performed.
+3. Agent M2 parent-media row: original-slot SDK implementation is complete; provider undo remains blocked, so no complete/green claim. Record the central result below when available. Keep inherited occurrence-delete reds on their own row.
+4. Runtime schema generation row remains pending for the exact schema/op list above.
+5. Auto-placement parent-builder port remains pending after guards; use the separate delta without restoring old occurrence policy. No shared ledger was edited.
+'"''')
+PY" in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 5ms:
+exec
+/bin/bash -lc "rg '"'^agent '"' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf && tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/snap" in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 0ms:
+agent       full              /home/user/work/venv-agent/bin/python -m pytest -q -n 3
+agent       targeted          /home/user/work/venv-agent/bin/python -m pytest -q
+agent       conformance       /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance
+agent       commit-integration env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py
+agent       client-cutover-integration env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/stage1/test_runtime_client_cutover.py
+agent consumer-regressions-integration env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q tests/core/test_editor_element_catalog.py tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup
+agent parent-label-proof env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration --runxfail -rx tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move
+agent projection-occupancy-integration env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py
+agent real-pack-host-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/packs/rendering/test_real_pack_host.py
+agent bundle1-runtime6be9706-integration test "$(git -C /home/user/work/wt/rt-m2-track-public-export rev-parse HEAD)" = 6be970633cc82ab412428151e6bf42f3e7fc3081 && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/stage1/test_runtime_client_cutover.py
+agent opaque-preservation-integration env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py
+agent full-remotion-integration env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 3
+agent bundle2-runtime-integration test "$(git -C /home/user/work/wt/rt-m2-null-speed-clean-candidate rev-parse HEAD)" = 4c145dc62192f0e942e3ee3922a11488aefe9b41 && test -z "$(git -C /home/user/work/wt/rt-m2-null-speed-clean-candidate status --porcelain)" && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-null-speed-clean-candidate PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration --runxfail tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py tests/sdk/test_timeline_numeric_revision_runtime.py tests/editing_conformance/test_native_batch_ingress.py tests/stage1/test_runtime_client_cutover.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_scalar.py tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+agent remotion-env-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2
+agent remotion-0010-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0010 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2
+agent remotion-0012-nodes env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2
+agent pin94114269-integration test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/stage1/test_runtime_client_cutover.py
+agent composition12-owner-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_series_inspection.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_composition_package.py tests/test_artifact_manifest.py
+agent full-remotion12-integration env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 3
+agent identity-pin94114269-integration test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py
+................................x....................................... [ 36%]
+........................................................................ [ 38%]
+........................................................................ [ 40%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+.................................tree=ae3458169c11c03ac021d7e7bf885cb68e3ecd6b
+key=5983f971f26ac0305f56a8b032afbf3b
+worktree=/home/user/work/wt/agt-m2-parent-media-order
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+exec
+/bin/bash -lc 'tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt && git status --short && git diff --check' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 970ms:
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 45%]
+........................................................................................................................................................................................... [ 50%]
+............ M astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+ M astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
+ M astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/native_parent_media_commands.py
+ M astrid/sdk/timeline_filmstrip.py
+ M astrid_runtime_client/__init__.py
+ M astrid_runtime_client/contract_metadata.py
+ M astrid_runtime_client/generated.py
+ M runtime.lock.json
+ M tests/editing_conformance/test_recipe_m2_parent_media.py
+ M tests/sdk/test_host_bootstrap_source_identity.py
+ M tests/test_generic_host.py
+?? tests/packs/rendering/test_scene_source_carry.py
+
+codex
+The central run is still progressing, with no changes to the tested tree. The schema hashes, complete op list, proposed provider patch, and separate parent-builder patch are ready in the worker report directory.
+
+This tree remains blocked for landing: provider undo needs the out-of-scope `commit.py` fix, and the harness needs to record merge ancestry.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+ exited 124 in 60117ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 0ms:
+........................................................................ [ 43%]
+........................................................................ [ 45%]
+........................................................................................................................................................................................... [ 50%]
+............xx...
+ exited 124 in 60142ms:
+still running after 1 min ; rerun wait-test
+
+codex
+The central suite is around halfway through, and its log is still growing. I’m waiting on the original request. The completed local checks and provider probe leave the scope decision and merge ancestry as the known blockers.
+exec
+/bin/bash -lc "tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt && stat -c '%y %s bytes' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt" in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 0ms:
+........................................................................ [ 40%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 45%]
+........................................................................................................................................................................................... [ 50%]
+............xx....x....xxx2026-10-20 09:36:27.130940652 +0000 2221 bytes
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+ exited 124 in 60013ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 0ms:
+........................................................................ [ 63%]
+........................................................................ [ 65%]
+..............................................
+codex
+The central run has passed roughly two-thirds of the suite. The report separates the final repository results from the proposed-provider-fix probe. I’m waiting for the summary before writing the final blocked handoff.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+exec
+/bin/bash -lc 'tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 29ms:
+........................................................................ [ 63%]
+........................................................................ [ 65%]
+...............................................
+exec
+/bin/bash -lc 'tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 0ms:
+........................................................................ [ 63%]
+........................................................................ [ 65%]
+.................................................
+ exited 124 in 60244ms:
+still running after 1 min ; rerun wait-test
+
+codex
+The schema is unchanged from the birth branch: file SHA-256 is `4e1a509c3456faa4d040bb5e97c9d79059541c8b1d2b6402d7b2291dbe669739`. Runtime still needs the additive `clip.add-media` schema import and regeneration.
+
+The central log is growing through slower tests; the tested tree remains unchanged.
+exec
+/bin/bash -lc "tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt && stat -c '%y %s bytes' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt" in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 65ms:
+........................................................................ [ 63%]
+........................................................................ [ 65%]
+...................................................2026-10-20 09:39:57.058953130 +0000 2886 bytes
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+exec
+/bin/bash -lc 'tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 3ms:
+........................................................................ [ 63%]
+........................................................................ [ 65%]
+.....................................................
+ exited 124 in 60211ms:
+still running after 1 min ; rerun wait-test
+
+codex
+The handoff artifacts are ready: `report.md`, `commit-msg`, the proposed provider-order patch, and the inherited parent-builder delta. I’m waiting for the central summary before writing `BLOCKED`; the remaining slow tests are continuing to produce output.
+exec
+/bin/bash -lc 'tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 0ms:
+........................................................................ [ 63%]
+........................................................................ [ 65%]
+......................................................
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+ exited 124 in 60292ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 0ms:
+........................................................................ [ 65%]
+........................................................................ [ 67%]
+...........
+codex
+The central suite has reached 67%. The repository tree is still fixed at the tested snapshot. The report keeps the inherited occurrence-delete failures separate from the new provider replacement regression.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+ exited 124 in 60246ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 43ms:
+........................................................................ [ 79%]
+........................................................................ [ 81%]
+.................................................
+codex
+The central suite is past 80% and progressing faster now. No further edits are planned; I’m waiting for the final counts to complete the report.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+exec
+/bin/bash -lc 'tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 24ms:
+........................................FF.............................. [ 90%]
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 96%]
+................
+ exited 124 in 60191ms:
+still running after 1 min ; rerun wait-test
+
+codex
+The central suite is past 96%, including the two occurrence-delete failures reported by the earlier worker. I’m waiting for the final summary to confirm the complete failure list.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+exec
+/bin/bash -lc 'tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 0ms:
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 96%]
+........................................................................ [ 98%]
+..........................................
+ exited 124 in 60088ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 83ms:
+........................................................................ [ 87%]
+........................................................................ [ 89%]
+........................................FF.............................. [ 90%]
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 96%]
+........................................................................ [ 98%]
+..................................................
+codex
+The central run is on its last few tests. The source and handoff artifacts are unchanged; I’ll add the final counts to the report and write the blocked marker when the run finishes.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/status' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 57ms:
+........................................FF.............................. [ 90%]
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 96%]
+........................................................................ [ 98%]
+......................................................running
+
+ exited 124 in 60201ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 183ms:
+........................................FF.............................. [ 90%]
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 96%]
+........................................................................ [ 98%]
+......................................................
+codex
+The final tests are still running. I’m continuing to wait on the same request so the handoff includes its completed result.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-parent-media-order-targeted-1020093052-25458 1' in /home/user/work/wt/agt-m2-parent-media-order
+ exited 1 in 30188ms:
+test agt-m2-parent-media-order-targeted-1020093052-25458: fail exit=1 in 976s — targeted on agt-m2-parent-media-order (agent tree ae3458169c11c03ac021d7e7bf885cb68e3ecd6b)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance tests/timeline tests/sdk
+counts: 3 failed, 3908 passed, 6 skipped, 220 deselected, 15 xfailed, 4 warnings, 173 subtests passed in 963.01s (0:16:03) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt ---
+            ref = command['select']
+            for value in command['args']['values']:
+                ctx.write(ref, ['hold'], value)
+    
+        monkeypatch.setattr(commands, 'operations', lambda: {
+            **original(), 'test.child-hold': commands.Operation({'type': 'object'}, write, {}, True)})
+        realm = DetachedRealm(delete_document())
+        base = copy.deepcopy(realm.head)
+        command = capture(realm, 'occurrence:occ-1')
+        realm.call([{'schema_version': 1, 'op': 'test.child-hold', 'version': '1',
+                     'select': 'occurrence:occ-1/clip:clip-a', 'args': {'values': [3, 2] if aba else [2]}}])
+        before, accepted = copy.deepcopy(realm.head), copy.deepcopy(realm.accepted)
+>       with pytest.raises(CommitRejected) as error:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'tests.sdk.test_timeline_commit_provider.CommitRejected'>
+
+tests/sdk/test_timeline_occurrence_delete_provider.py:136: Failed
+_ test_provider_equal_state_and_aba_child_publications_refuse_stale_delete[True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9cddbb8440>
+aba = True
+
+    @pytest.mark.parametrize('aba', [False, True])
+    def test_provider_equal_state_and_aba_child_publications_refuse_stale_delete(monkeypatch, aba):
+        from astrid.sdk.timeline import commands
+    
+        original = commands.operations
+    
+        def write(ctx, command):
+            ref = command['select']
+            for value in command['args']['values']:
+                ctx.write(ref, ['hold'], value)
+    
+        monkeypatch.setattr(commands, 'operations', lambda: {
+            **original(), 'test.child-hold': commands.Operation({'type': 'object'}, write, {}, True)})
+        realm = DetachedRealm(delete_document())
+        base = copy.deepcopy(realm.head)
+        command = capture(realm, 'occurrence:occ-1')
+        realm.call([{'schema_version': 1, 'op': 'test.child-hold', 'version': '1',
+                     'select': 'occurrence:occ-1/clip:clip-a', 'args': {'values': [3, 2] if aba else [2]}}])
+        before, accepted = copy.deepcopy(realm.head), copy.deepcopy(realm.accepted)
+>       with pytest.raises(CommitRejected) as error:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'tests.sdk.test_timeline_commit_provider.CommitRejected'>
+
+tests/sdk/test_timeline_occurrence_delete_provider.py:136: Failed
+=============================== warnings summary ===============================
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+tests/sdk/test_timeline_checkout.py::test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers
+  /home/user/work/wt/.test-agt-m2-parent-media-order-targeted-1020093052-25458/tests/sdk/test_timeline_checkout.py:1573: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    assert set(image.convert("RGB").getdata()) == {colors[n]}
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_recipe_m2_parent_media.py::test_provider_exact_reload_inverse_redo_and_retired_ids[True]
+FAILED tests/sdk/test_timeline_occurrence_delete_provider.py::test_provider_equal_state_and_aba_child_publications_refuse_stale_delete[False]
+FAILED tests/sdk/test_timeline_occurrence_delete_provider.py::test_provider_equal_state_and_aba_child_publications_refuse_stale_delete[True]
+3 failed, 3908 passed, 6 skipped, 220 deselected, 15 xfailed, 4 warnings, 173 subtests passed in 963.01s (0:16:03)
+
+exec
+/bin/bash -lc 'tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt' in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 91ms:
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_recipe_m2_parent_media.py::test_provider_exact_reload_inverse_redo_and_retired_ids[True]
+FAILED tests/sdk/test_timeline_occurrence_delete_provider.py::test_provider_equal_state_and_aba_child_publications_refuse_stale_delete[False]
+FAILED tests/sdk/test_timeline_occurrence_delete_provider.py::test_provider_equal_state_and_aba_child_publications_refuse_stale_delete[True]
+3 failed, 3908 passed, 6 skipped, 220 deselected, 15 xfailed, 4 warnings, 173 subtests passed in 963.01s (0:16:03)
+
+codex
+The central run finished: **3908 passed, 3 failed, 6 skipped, 15 xfailed**. The failures are exactly the two inherited occurrence-delete cases and the new provider undo regression.
+
+I’m finalizing `report.md` and `BLOCKED`. Original-slot replacement and SDK round-trips are implemented, but landing still needs the out-of-scope provider fix and merge ancestry recorded by the harness.
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-order')
+p=w/'report.md'
+s=p.read_text().replace('Central result: PENDING. "'`wait-test` returning 124 is only a running/queue timeout; the same request is being awaited, never resubmitted.'"', '''Central result: **3908 passed, 3 failed, 6 skipped, 220 deselected, 15 xfailed, 173 subtests passed, 4 warnings in 963.01s**; service wall time 976s, exit 1. Source tree: "'`ae3458169c11c03ac021d7e7bf885cb68e3ecd6b`. Failures are exactly the new parent provider undo case and the two inherited occurrence-delete cases listed above; no other failures. `wait-test` was repeated only after 124 timeouts on the same request, never resubmitted. Full log: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-parent-media-order-targeted-1020093052-25458/log.txt`.'"''')
+s=s.replace('No full suite, browser/socket suite, or "'`make check` was requested or run.'"', 'No full suite, separate browser/socket suite, or "'`make check` was requested or run.'"')
+s=s.replace('Record the central result below when available.', 'Record the central result above: 3908 pass / 3 fail, with all failures classified.')
+p.write_text(s)
+w.joinpath('BLOCKED').write_text('Ordered replacement and SDK inverse/redo/replay are implemented and tested, but landing is blocked: the new provider undo regression fails in astrid/sdk/timeline/commit.py::_inverse_media_removals, outside the explicit allowed files. Its raw write replay appends structural creates and disagrees with the ordered parent clip mirror. Authorization for a narrow fix was requested but not received. provider-order.patch is reviewable here and passed 103 tests in a private in-memory probe; it is not applied. Central targeted request agt-m2-parent-media-order-targeted-1020093052-25458 finished with 3908 passed / 3 failed: this new regression plus the two independently inherited occurrence-delete reds. Also, merge-forward could not write ORIG_HEAD.lock in read-only .git: the integration file delta was materialized for review, but the harness/manager must record merge ancestry. See report.md and commit-msg. No DONE marker.\\n')
+assert not w.joinpath('DONE').exists()
+print('Wrote report.md, commit-msg, BLOCKED; no DONE.')
+PY
+git diff --check
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_parent_media_commands.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/inverse.py tests/editing_conformance/test_recipe_m2_parent_media.py" in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 1419ms:
+Wrote report.md, commit-msg, BLOCKED; no DONE.
+All checks passed!
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-order/report.md')
+s=p.read_text().replace('"'`wait-test` was repeated only after 124 timeouts on the same request, never resubmitted.'"', '"'`wait-test` awaited the same request through 124 timeouts; the test request was never resubmitted.'"')
+p.write_text(s)
+PY" in /home/user/work/wt/agt-m2-parent-media-order
+ succeeded in 117ms:
+codex
+Implemented original-slot replacement with guarded SDK undo/redo/replay and equal-z-order coverage.
+
+- Central targeted: **3908 passed, 3 failed**—two inherited occurrence-delete reds and one new provider undo blocker.
+- The required `commit.py` fix is outside allowed scope. Its proposed patch passed **103 tests** in a private probe and remains unapplied.
+- Integration’s file delta is present; merge ancestry still needs the harness.
+- Runtime schema regeneration remains required.
+
+Wrote `commit-msg`, `BLOCKED`, and the [report with exact commands, schema hashes, op list, and separate parent-builder delta](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-order/report.md). No `DONE`.
+tokens used
+228,760
+Implemented original-slot replacement with guarded SDK undo/redo/replay and equal-z-order coverage.
+
+- Central targeted: **3908 passed, 3 failed**—two inherited occurrence-delete reds and one new provider undo blocker.
+- The required `commit.py` fix is outside allowed scope. Its proposed patch passed **103 tests** in a private probe and remains unapplied.
+- Integration’s file delta is present; merge ancestry still needs the harness.
+- Runtime schema regeneration remains required.
+
+Wrote `commit-msg`, `BLOCKED`, and the [report with exact commands, schema hashes, op list, and separate parent-builder delta](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-order/report.md). No `DONE`.

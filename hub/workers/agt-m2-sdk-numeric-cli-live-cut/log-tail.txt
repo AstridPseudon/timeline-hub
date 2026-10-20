@@ -1,0 +1,400 @@
+         assert State(undone_bundle).entity('parent/track:picture')['label'] == 'Peer'
++
++
++def test_cli_move_exact_retry_restart_and_undo_over_real_http(film, capsys):
++    world = film
++    session = TimelineSession.open(world.project, 'trim-film', client=world.client())
++    original = session._bundle(session.outbox.read())
++    expected = capture_move(original, REF, 3)
++    args = ('edit', 'trim-film', '--clip', 'lit', '--on', '3', '--idempotency-key', 'cli-move-A')
++
++    world.lost.add('cli-move-A')
++    code, failure = run(world, capsys, *args)
++    assert code == 1 and not failure['ok']
++    first = copy.deepcopy(world.calls[-1])
++    flight = json.loads(session.outbox.path.read_bytes())['flight']
++    assert (flight['body'].encode(), flight['key']) == first[:2]
++    assert json.loads(first[0])['commands'] == [expected]
++    accepted = first[3]
++    history_after_accept = copy.deepcopy(world.history())
++
++    world.restart()
++    code, retry = run(world, capsys, *args)
++    assert code == 0 and retry['receipt'] == accepted['receipt']
++    assert world.calls[-1][:2] == first[:2]
++    assert world.calls[-1][3] == accepted
++    assert world.history() == history_after_accept
++
++    code, undone = run(world, capsys, 'undo', 'trim-film',
++                       '--publication', accepted['receipt']['receipt_id'])
++    assert code == 0
++    restored = bundle_from_document(undone['data']['canonical_document'])
++    assert State(restored).entity(REF) == State(original).entity(REF)
+diff --git a/tests/packs/timeline/test_cli_commit_move.py b/tests/packs/timeline/test_cli_commit_move.py
+index 74e3bde79a8c2539506dfb9d3c0cd4af85e1899c..e21ca372250774874ad8a8ccfece347b08834bb9
+--- a/tests/packs/timeline/test_cli_commit_move.py
++++ b/tests/packs/timeline/test_cli_commit_move.py
+@@ -76,6 +76,52 @@
+     assert generated.calls == []
+ 
+ 
++def test_ordinary_edit_occurrence_move_keeps_legacy_owner_resolution(command, monkeypatch):
++    run, generated = command
++    from tests.editing_conformance.test_recipe_m2_clip_trim import bundle as trim_bundle
++
++    generated.bundles['r0'] = trim_bundle()
++
++    def legacy(*args, **kwargs):
++        raise RuntimeError("legacy occurrence resolution")
++
++    monkeypatch.setattr(cli, "_edit_checkout", legacy)
++    with pytest.raises(RuntimeError, match="legacy occurrence resolution"):
++        run("edit", "t", "--clip", "occurrence:occ-b/clip:clip-a", "--on", "5")
++    assert generated.calls == []
++
++
++def test_ordinary_edit_move_with_draft_keeps_legacy_draft(command, monkeypatch):
++    from astrid.sdk.timeline import store
++    from astrid.sdk.timeline.sync import TimelineSession
++
++    run, generated = command
++    monkeypatch.setattr(store, "find_draft", lambda *args, **kwargs: generated.path)
++    monkeypatch.setattr(TimelineSession, "open",
++                        lambda *args, **kwargs: pytest.fail("draft opened through native session"))
++
++    def legacy(*args, **kwargs):
++        raise RuntimeError("legacy draft resolution")
++
++    monkeypatch.setattr(cli, "_edit_checkout", legacy)
++    with pytest.raises(RuntimeError, match="legacy draft resolution"):
++        run("edit", "t", "--clip", "a", "--on", "5")
++    assert generated.calls == []
++
++
++@pytest.mark.parametrize("extra", [("--trim-out", "4"), ("--set", "x=2"), ("--verify",)])
++def test_ordinary_edit_move_with_unsupported_flags_keeps_legacy(command, monkeypatch, extra):
++    run, generated = command
++
++    def legacy(*args, **kwargs):
++        raise RuntimeError("legacy mixed move")
++
++    monkeypatch.setattr(cli, "_edit_checkout", legacy)
++    with pytest.raises(RuntimeError, match="legacy mixed move"):
++        run("edit", "t", "--clip", "a", "--on", "5", *extra)
++    assert generated.calls == []
++
++
+ def test_move_preview_uses_current_project_and_does_not_claim_publication(command, capsys):
+     run, generated = command
+     assert run("edit", "move", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run") == 0
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- hygiene ---'; PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check tests/packs/timeline/test_cli_commit_move.py tests/editing_conformance/test_cli_trim_runtime.py; git diff --check; printf '%s\\n' '--- source ---'; git rev-parse HEAD; git status --short; printf '%s\\n' '--- markers ---'; ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut" in /home/user/work/wt/agt-m2-sdk-numeric-cli-live-cut
+ succeeded in 2691ms:
+--- hygiene ---
+All checks passed!
+--- source ---
+7f6a1dd4a4ce3e5c9fb9e2e47c0e381dec172fcb
+ M tests/editing_conformance/test_cli_trim_runtime.py
+ M tests/packs/timeline/test_cli_commit_move.py
+--- markers ---
+total 2436
+drwxr-xr-x    2 root root    4096 Oct 20 17:59 .
+drwxr-xr-x 1082 root root   69632 Oct 20 18:02 ..
+-rw-r--r--    1 root root    1135 Oct 20 17:59 brief.md
+-rw-r--r--    1 root root 2406365 Oct 20 18:02 log.txt
+-rw-r--r--    1 root root     240 Oct 20 17:59 meta
+-rw-r--r--    1 root root       0 Oct 20 17:59 running
+
+codex
+Final hygiene is clean: Ruff and `git diff --check` pass, and the worktree contains only the two intended test-file edits on source `7f6a1dd4`. I’m recording AG02 as partial (qualification/replacing proof only); no legacy branch is marked deleted because the fallback remains required for the explicitly unqualified variants.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b150a179f6b836cd36e42b1e82c304c3d7751b6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): qualify CLI move over real Runtime HTTP
++
++Add AG02 proof for literal numeric parent CLI moves across lost-ACK retry,
++restart, and guarded undo, while preserving legacy fallback coverage.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b150a179f6b836cd36e42b1e82c304c3d7751b6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(timeline): qualify CLI move over real Runtime HTTP
++
++Add AG02 proof for literal numeric parent CLI moves across lost-ACK retry,
++restart, and guarded undo, while preserving legacy fallback coverage.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..317e9518763688855deeea36d30420ac8119404d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/report.md
+@@ -0,0 +1,40 @@
++# AG02 partial — literal numeric CLI move
++
++## Source
++
++- Repository: Agent (`/home/user/work/wt/agt-m2-sdk-numeric-cli-live-cut`)
++- Base/source: `7f6a1dd4a4ce3e5c9fb9e2e47c0e381dec172fcb`
++- Worktree changes: `tests/editing_conformance/test_cli_trim_runtime.py`,
++  `tests/packs/timeline/test_cli_commit_move.py`
++- No merge, checkout, or integration-worktree mutation performed.
++
++## What changed
++
++- Added one real normal CLI `/v1` HTTP qualification for literal parent `--on`:
++  accepted move, lost acknowledgement, restart, exact persisted body/key retry,
++  and guarded publication undo.
++- Added direct fallback regressions proving symbolic, valid occurrence, existing
++  draft, and mixed/unsupported move flags stay on the legacy path before native
++  capture/commit.
++- The donor's native adapter remains bounded to literal numeric parent moves.
++  WC7/WC8 global helpers remain held for remaining Checkout, narration, and
++  whole-document consumers.
++- AG02 is recorded as partial/replacing proof only. No legacy branch is marked
++  `DELETED` until this worker is integrated and the remaining consumers migrate.
++
++## Tests
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_commit_trim.py`
++  — **29 passed**.
++- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_cli_trim_runtime.py`
++  — **3 passed**. This uses the existing in-memory HTTP transport and real Runtime handlers; no socket/browser suite was run.
++- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check tests/packs/timeline/test_cli_commit_move.py tests/editing_conformance/test_cli_trim_runtime.py`
++  — **All checks passed**.
++- `git diff --check` — **passed**.
++
++## Not run / remaining limits
++
++- No full suite, `make check`, or browser/live-socket suite was requested or run.
++- The legacy fallback remains intentionally present for symbolic moments,
++  occurrence-scoped moves, drafts, and unsupported/mixed flags. Further deletion
++  requires their remaining consumers to migrate and an integrated AG02 review.
+diff --git a/tests/editing_conformance/test_cli_trim_runtime.py b/tests/editing_conformance/test_cli_trim_runtime.py
+index 1546ac1108e6730f7b2cfa1f55a9ea72c2e1a284..2886276db29c0cc37da5607e6cf039d5983af2d8
+--- a/tests/editing_conformance/test_cli_trim_runtime.py
++++ b/tests/editing_conformance/test_cli_trim_runtime.py
+@@ -1,4 +1,4 @@
+-"""Ordinary CLI trim through the pinned Runtime's real HTTP handlers and disk.
++"""Ordinary CLI literal edits through the pinned Runtime's real HTTP handlers and disk.
+ 
+ Uses the existing in-memory HTTP transport: no sockets or daemon substitute.
+ """
+@@ -13,6 +13,7 @@
+ from astrid.packs.timeline.cli import build_parser
+ from astrid.sdk.timeline._command_state import State
+ from astrid.sdk.timeline._trim_commands import capture_clip_trim
++from astrid.sdk.timeline.capture import capture_move
+ from astrid.sdk.timeline.commands import execute
+ from astrid.sdk.timeline.commit import bundle_from_document
+ from astrid.sdk.timeline.sync import TimelineSession
+@@ -130,3 +131,34 @@
+         undone_bundle = bundle_from_document(undone['data']['canonical_document'])
+         assert State(undone_bundle).entity(REF) == actual_a
+         assert State(undone_bundle).entity('parent/track:picture')['label'] == 'Peer'
++
++
++def test_cli_move_exact_retry_restart_and_undo_over_real_http(film, capsys):
++    world = film
++    session = TimelineSession.open(world.project, 'trim-film', client=world.client())
++    original = session._bundle(session.outbox.read())
++    expected = capture_move(original, REF, 3)
++    args = ('edit', 'trim-film', '--clip', 'lit', '--on', '3', '--idempotency-key', 'cli-move-A')
++
++    world.lost.add('cli-move-A')
++    code, failure = run(world, capsys, *args)
++    assert code == 1 and not failure['ok']
++    first = copy.deepcopy(world.calls[-1])
++    flight = json.loads(session.outbox.path.read_bytes())['flight']
++    assert (flight['body'].encode(), flight['key']) == first[:2]
++    assert json.loads(first[0])['commands'] == [expected]
++    accepted = first[3]
++    history_after_accept = copy.deepcopy(world.history())
++
++    world.restart()
++    code, retry = run(world, capsys, *args)
++    assert code == 0 and retry['receipt'] == accepted['receipt']
++    assert world.calls[-1][:2] == first[:2]
++    assert world.calls[-1][3] == accepted
++    assert world.history() == history_after_accept
++
++    code, undone = run(world, capsys, 'undo', 'trim-film',
++                       '--publication', accepted['receipt']['receipt_id'])
++    assert code == 0
++    restored = bundle_from_document(undone['data']['canonical_document'])
++    assert State(restored).entity(REF) == State(original).entity(REF)
+diff --git a/tests/packs/timeline/test_cli_commit_move.py b/tests/packs/timeline/test_cli_commit_move.py
+index 74e3bde79a8c2539506dfb9d3c0cd4af85e1899c..e21ca372250774874ad8a8ccfece347b08834bb9
+--- a/tests/packs/timeline/test_cli_commit_move.py
++++ b/tests/packs/timeline/test_cli_commit_move.py
+@@ -76,6 +76,52 @@
+     assert generated.calls == []
+ 
+ 
++def test_ordinary_edit_occurrence_move_keeps_legacy_owner_resolution(command, monkeypatch):
++    run, generated = command
++    from tests.editing_conformance.test_recipe_m2_clip_trim import bundle as trim_bundle
++
++    generated.bundles['r0'] = trim_bundle()
++
++    def legacy(*args, **kwargs):
++        raise RuntimeError("legacy occurrence resolution")
++
++    monkeypatch.setattr(cli, "_edit_checkout", legacy)
++    with pytest.raises(RuntimeError, match="legacy occurrence resolution"):
++        run("edit", "t", "--clip", "occurrence:occ-b/clip:clip-a", "--on", "5")
++    assert generated.calls == []
++
++
++def test_ordinary_edit_move_with_draft_keeps_legacy_draft(command, monkeypatch):
++    from astrid.sdk.timeline import store
++    from astrid.sdk.timeline.sync import TimelineSession
++
++    run, generated = command
++    monkeypatch.setattr(store, "find_draft", lambda *args, **kwargs: generated.path)
++    monkeypatch.setattr(TimelineSession, "open",
++                        lambda *args, **kwargs: pytest.fail("draft opened through native session"))
++
++    def legacy(*args, **kwargs):
++        raise RuntimeError("legacy draft resolution")
++
++    monkeypatch.setattr(cli, "_edit_checkout", legacy)
++    with pytest.raises(RuntimeError, match="legacy draft resolution"):
++        run("edit", "t", "--clip", "a", "--on", "5")
++    assert generated.calls == []
++
++
++@pytest.mark.parametrize("extra", [("--trim-out", "4"), ("--set", "x=2"), ("--verify",)])
++def test_ordinary_edit_move_with_unsupported_flags_keeps_legacy(command, monkeypatch, extra):
++    run, generated = command
++
++    def legacy(*args, **kwargs):
++        raise RuntimeError("legacy mixed move")
++
++    monkeypatch.setattr(cli, "_edit_checkout", legacy)
++    with pytest.raises(RuntimeError, match="legacy mixed move"):
++        run("edit", "t", "--clip", "a", "--on", "5", *extra)
++    assert generated.calls == []
++
++
+ def test_move_preview_uses_current_project_and_does_not_claim_publication(command, capsys):
+     run, generated = command
+     assert run("edit", "move", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run") == 0
+
+exec
+/bin/bash -lc "git status --short; find . -type d -name '__pycache__' -prune -print | head -20; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/DONE && echo DONE; sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sdk-numeric-cli-live-cut/report.md" in /home/user/work/wt/agt-m2-sdk-numeric-cli-live-cut
+ succeeded in 2059ms:
+ M tests/editing_conformance/test_cli_trim_runtime.py
+ M tests/packs/timeline/test_cli_commit_move.py
+./tests/timeline/__pycache__
+./tests/__pycache__
+./tests/editing_conformance/__pycache__
+./tests/sdk/__pycache__
+./astrid/packs/rendering/actions/render/__pycache__
+./astrid/packs/__pycache__
+./astrid/__pycache__
+./astrid/core/audit/__pycache__
+./astrid/core/timeline/validators/__pycache__
+./astrid/core/timeline/__pycache__
+./astrid/core/receipts/__pycache__
+./astrid/core/foundation/__pycache__
+./astrid/core/__pycache__
+./astrid/core/contracts/__pycache__
+./astrid/core/_shared/__pycache__
+./astrid/core/pack/__pycache__
+./astrid/sdk/timeline/__pycache__
+./astrid/sdk/__pycache__
+DONE
+# AG02 partial — literal numeric CLI move
+
+## Source
+
+- Repository: Agent (`/home/user/work/wt/agt-m2-sdk-numeric-cli-live-cut`)
+- Base/source: `7f6a1dd4a4ce3e5c9fb9e2e47c0e381dec172fcb`
+- Worktree changes: `tests/editing_conformance/test_cli_trim_runtime.py`,
+  `tests/packs/timeline/test_cli_commit_move.py`
+- No merge, checkout, or integration-worktree mutation performed.
+
+## What changed
+
+- Added one real normal CLI `/v1` HTTP qualification for literal parent `--on`:
+  accepted move, lost acknowledgement, restart, exact persisted body/key retry,
+  and guarded publication undo.
+- Added direct fallback regressions proving symbolic, valid occurrence, existing
+  draft, and mixed/unsupported move flags stay on the legacy path before native
+  capture/commit.
+- The donor's native adapter remains bounded to literal numeric parent moves.
+  WC7/WC8 global helpers remain held for remaining Checkout, narration, and
+  whole-document consumers.
+- AG02 is recorded as partial/replacing proof only. No legacy branch is marked
+  `DELETED` until this worker is integrated and the remaining consumers migrate.
+
+## Tests
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_commit_trim.py`
+  — **29 passed**.
+- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_cli_trim_runtime.py`
+  — **3 passed**. This uses the existing in-memory HTTP transport and real Runtime handlers; no socket/browser suite was run.
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check tests/packs/timeline/test_cli_commit_move.py tests/editing_conformance/test_cli_trim_runtime.py`
+  — **All checks passed**.
+- `git diff --check` — **passed**.
+
+## Not run / remaining limits
+
+- No full suite, `make check`, or browser/live-socket suite was requested or run.
+- The legacy fallback remains intentionally present for symbolic moments,
+  occurrence-scoped moves, drafts, and unsupported/mixed flags. Further deletion
+  requires their remaining consumers to migrate and an integrated AG02 review.
+
+codex
+The required report, conventional commit message, and DONE marker are in place. I found only Python `__pycache__` directories generated during local probing; I’m removing those test/build artifacts from this worktree before handing off.
+exec
+/bin/bash -lc "find . -type d -name '__pycache__' -prune -exec rm -rf {} + && find . -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -delete && git status --short && find . -type d -name '__pycache__' -prune -print | head -20" in /home/user/work/wt/agt-m2-sdk-numeric-cli-live-cut
+ succeeded in 1986ms:
+ M tests/editing_conformance/test_cli_trim_runtime.py
+ M tests/packs/timeline/test_cli_commit_move.py
+
+codex
+## Done
+
+- Added real HTTP CLI move qualification: lost ACK → restart → exact retry → undo.
+- Added fallback coverage for symbolic, occurrence, draft, and unsupported/mixed flags.
+- Preserved WC7/WC8 helpers; AG02 remains partial with no deletion marking.
+
+Tests:
+
+- 29 targeted unit tests passed.
+- 3 real Runtime HTTP integration tests passed.
+- Ruff passed.
+- `git diff --check` passed.
+
+No full suite, `make check`, or browser tests run. Report and commit message are recorded; DONE marker created.
+tokens used
+176,686
+## Done
+
+- Added real HTTP CLI move qualification: lost ACK → restart → exact retry → undo.
+- Added fallback coverage for symbolic, occurrence, draft, and unsupported/mixed flags.
+- Preserved WC7/WC8 helpers; AG02 remains partial with no deletion marking.
+
+Tests:
+
+- 29 targeted unit tests passed.
+- 3 real Runtime HTTP integration tests passed.
+- Ruff passed.
+- `git diff --check` passed.
+
+No full suite, `make check`, or browser tests run. Report and commit message are recorded; DONE marker created.

@@ -1,0 +1,400 @@
+446 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md
+
+codex
+The rewritten draft now separates migration from ordinary moves and maps all three fixtures to canonical state, accepted readback and inverse behavior. I also found a cross-timeline gap: Agent’s reservation scan reads one timeline’s history, while Runtime currently upserts same-project shot rows. I’ve marked a bounded acceptance check as required before claiming safe new-shot creation.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+p=base/'design/port-manifest.md'
+s=p.read_text()
+old='''**First M2 item, owned separately:** approve/publish the minimal multi/group move
+and retrack capture contract in "'`m2-move-draft.md`, then App restores the three
+original success cases in `useClipDrag.test.tsx` from `it.fails` to passing.
+This section neither edits that draft nor chooses canonical-shot versus parent
+soft-tag group ownership. Ordered restoration and staged guarded reversal are
+already approved groundwork, landing only after M1 is recorded. Subsequent
+slices below depend on the first drag contract; a row is one reviewable source
+boundary, with regression cases added alongside it, not one registry-wide PR.
+'"'''
+new='''**First M2 dependency (DECIDED A; design only until M1 is recorded):** follow
+"'`m2-move-draft.md`: approved order/staged-inverse groundwork, then explicit
+recorded lossless legacy-group→canonical-shot migration + whole-occurrence move
+to an existing lane + explicitly owner-bound derived App group view. Retrack
+updates occurrence-owned child tracks atomically; `pinnedShotGroups` is consumed
+migration input, never an editable store. Next compose track.create+move, then
+separately add free multi-clip move-set. Preserve all three original App success
+assertions; local patch/group-array shapes are compatibility output only. Refresh
+new command/ref schemas and reservation semantics through the existing artifact
+handoff, without new Runtime DTO/ABI. This supersedes pending group-choice language
+below, not historical M0 observations. Later rows are bounded source/test slices,
+not one registry-wide PR; M1 restore preservation and closure remain prerequisites.
+'"'''
+assert s.count(old)==1
+p.write_text(s.replace(old,new))
+p=base/'design/m2-move-draft.md'
+s=p.read_text()
+s=s.replace('New "'`occurrence.move.blockers` v1 selects active applicable destination-lane parent clips/occurrences, excluding O, with complete membership/order and lane/activity exclusion predicates. Read only selected geometry/source inputs needed for collision/extent; disjoint groups'"\\' starts are not global reads. Query identity comes from command target lane; re-evaluate it under replay without refreshing original claims.', 'New "'`occurrence.move.blockers` v1 selects active applicable destination-lane parent clips/occurrences, excluding O, with complete lane-local membership/order. Lane/activity exclusion predicates are part of this query, not raw value reads of every excluded row. Read selected geometry/source inputs needed for collision/extent; other lanes'"\\' starts are not global reads. Query inputs are the recorded command target/args (including omitted-track original binding); replay/inverse use that authenticated context, not new claims.')
+s=s.replace('The one-time migration\\'s broad legacy-array/order guards do not contaminate a\\nlater move.', 'The shared query/rebase layer must compare relevant predicate membership/order\\nat intervening boundaries, including membership ABA; a change on an unrelated\\nlane that leaves the exclusion predicate false is not a global row-value guard.\\nThis query-aware footprint is required work, not present M1 selection support.\\nThe one-time migration\\'s broad legacy-array/order guards do not contaminate a\\nlater move.')
+p.write_text(s)
+PY
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/notes/check_assertions.py <<'PY'
+\"\"\"Compare the three original visible assertion blocks; no App edits or tests.\"\"\"
+from pathlib import Path
+import subprocess
+path='src/tools/video-editor/hooks/useClipDrag.test.tsx'
+app=Path('/home/user/work/app')
+original=subprocess.check_output(['git','-C',str(app),'show','60aa26b95:'+path],text=True)
+current=(app/path).read_text()
+names=[
+'commits a config edit when a free multi-clip drag drops onto a new bottom track',
+'updates pinnedShotGroupsOverride when a pinned group is dragged across tracks',
+'updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track',
+]
+def assertions(source,name):
+    start=source.index(\"'\"+name+\"'\")
+    start=source.index('      expect(',start)
+    end=source.index('    } finally {',start)
+    return source[start:end].rstrip()
+for name in names:
+    assert assertions(original,name)==assertions(current,name),name
+    assert \"it.fails('\"+name+\"'\" in current,name
+    print('UNCHANGED original assertions; still it.fails:',name)
+print('Source comparison only; hooks not executed.')
+PY
+PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/notes/check_assertions.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/notes/source-check.log
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/notes/source-check.log
+wc -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md" in /home/user/work/wt/agt-m2-canonical-design
+ succeeded in 0ms:
+UNCHANGED original assertions; still it.fails: commits a config edit when a free multi-clip drag drops onto a new bottom track
+UNCHANGED original assertions; still it.fails: updates pinnedShotGroupsOverride when a pinned group is dragged across tracks
+UNCHANGED original assertions; still it.fails: updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track
+Source comparison only; hooks not executed.
+450 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md')
+s=p.read_text()
+s=s.replace('source lane definitions/output fps/registry keys and any shot metadata actually consumed.', 'every copied full track row plus track order, full copied output context/fps, consumed registry keys and any shot metadata actually consumed.')
+s=s.replace('Main\\'s deterministic\\noccurrence isolation/item remapping must remain exactly validated, not replaced\\nwith provider id_map rewrites;', 'Main\\'s deterministic\\noccurrence isolation/item remapping must remain exactly validated, not replaced\\nwith provider id_map rewrites; reserve any genuinely new materialized entity\\nidentity exposed by a command through the same typed-kind rules, rather than\\nsilently treating a derived prefix as allocation proof;')
+s=s.replace('Those are observations of missing support, not implemented M2 tests. No pytest,', 'The separate stdlib "'`notes/check_assertions.py` source comparison exited0: all'"\\nthree assertion blocks equal App main "'`60aa26b95` exactly (ignoring terminal blank'"\\nspace), still it.fails; see source-check.log. Hooks were not executed.\\nThose are observations of missing support, not implemented M2 tests. No pytest,')
+s=s.replace('No product/test/schema/generated files changed; no merge or commit requested.', 'No product/test/schema/generated files changed; no git merge/commit was run.')
+p.write_text(s)
+PY
+python3 - <<'PY'
+from pathlib import Path
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+for relative in ('design/m2-move-draft.md','design/port-manifest.md'):
+    p=base/relative
+    s=p.read_text()
+    assert s.endswith('\\n')
+    assert not any(line.rstrip()"'!=line for line in s.splitlines()),relative
+    print(relative, len(s.splitlines()), '"'lines; no trailing whitespace')
+s=(base/'design/m2-move-draft.md').read_text()
+assert len(s.splitlines())<=500
+for phrase in ('timeline.migrate-groups','occurrence.move','clip.move-set','M1 records remain valid','timeline.restore','_check_reservations','AnchorIdentity','identity\\npairs only','still it.fails'):
+    assert phrase in s,phrase
+print('Design scope/content checks: PASS')
+PY
+git status --porcelain=v1
+git diff --check" in /home/user/work/wt/agt-m2-canonical-design
+ succeeded in 216ms:
+design/m2-move-draft.md 455 lines; no trailing whitespace
+design/port-manifest.md 443 lines; no trailing whitespace
+Design scope/content checks: PASS
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md')
+s=p.read_text()
+old='''pairs only (empty is valid), never legacy→canonical remapping. The explicit
+migration provenance/bindings carry that different mapping. Main's deterministic
+occurrence isolation/item remapping must remain exactly validated, not replaced
+with provider id_map rewrites; reserve any genuinely new materialized entity
+identity exposed by a command through the same typed-kind rules, rather than
+silently treating a derived prefix as allocation proof; new-shot/reload proof is required before dispatch.
+'''
+new='''pairs only (empty is valid), never legacy→canonical remapping. The explicit
+migration provenance/bindings carry that different mapping.
+
+Repeated-shot retrack needs an additional explicit creation case: main's
+"'`_authoring_shot_id` / `_copy_shot_for_placement` already compute exact independent
+shot/item identities while opening the bundle. These working slots are not proof
+that the IDs were accepted/reserved. Before sealing capture, record those exact
+identities if they become persistent creations: shot:S via kind shot above and
+`shot:S/item:I` via kind item, owner shot:S. Add this item spelling to ScopedId,
+EntityRef/TargetKey/AnchorIdentity and its State resolver/shot-root overlap; existing
+item IDs otherwise remain unchanged. No arbitrary new allocation or provider
+id_map rewrite. This is required semantic/schema work, not current M1 support.
+
+Creation occupancy must compare the authenticated input CanonicalDocument plus
+staged accepted-kind creates, distinct from virtual authoring-slot existence.
+Record full newly materialized shot aggregate absent→present before its owned
+child writes; item creation facts are contained effects of that aggregate with
+exact IDs, not a second items-array writer. Bind the original source and exact
+main mapping. Extend common alias/overlap/staged inverse accordingly. Preserve
+older M1 records through their verified closure/mapping compatibility path, not
+retroactively invented created claims. Repeated-shot accepted reload/reservation
+proof blocks that case until this distinction is implemented; singleton migrated
+groups do not require these isolation/item creates.
+'"'''
+assert old in s
+s=s.replace(old,new)
+s=s.replace('shots project-wide, occurrences timeline-wide, tracks owner-wide.', 'shots project-wide, occurrences timeline-wide, tracks owner-wide; validate\\nmaterialized item identity occupancy against Runtime\\'s existing item-ID scope too.')
+s=s.replace('Runtime currently rejects\\nforeign-project shot scope but upserts a same-project project_shots row.', 'Runtime currently rejects\\nforeign-project shot scope but upserts a same-project project_shots row; shot_items\\nalso has persisted identity constraints, not an assumed owner-local namespace.')
+p.write_text(s)
+PY
+wc -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md" in /home/user/work/wt/agt-m2-canonical-design
+ succeeded in 0ms:
+474 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md
+
+exec
+/bin/bash -lc "tail -20 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md && tail -24 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md && sed -n '273,341p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md" in /home/user/work/wt/agt-m2-canonical-design
+ succeeded in 0ms:
+- **Commit** — sending edits to the Runtime, which checks them against the revision they were made on and records them atomically.
+- **Rebase** — re-applying an edit on top of someone else's newer change.
+- **Outbox** — a client's crash-safe list of edits not yet confirmed by the Runtime.
+- **Evaluator** — the one piece of code that answers "what is on screen at this frame".
+- **Stop point** — a pause where the owner reviews before work continues.
+
+---
+
+## Decisions log (orchestrator)
+- 2026-10-19: Commit contract: Runtime's reconciliation approved; provider ABI v2 only if main's ABI can't carry it. Agent owns the command schema and inverse/restore args; Runtime owns request/port DTOs.
+- 2026-10-19: App manager also owns the popup shotTimelineDataProvider, the shared placementService and the Supabase timeline producers (astridAppendService + callers). All become EditCommand producers on the one commit path; relational placement metadata is out of M2 scope.
+- 2026-10-19: Viewing (M3) moves the App's 13 static default components (text-card, animations, transitions, 2rp theme effects) into canonical Composition source, registered via the normal element seam. App deletes its copies and owns its package/lock edits. Tarball 0.0.8, Remotion 4.0.509.
+- 2026-10-19: Dependent edits. The client keeps B (authored over unacked A) unsent until A is acked, then submits it at base HA with its ORIGINAL value+identity guards; the server verifies them or reports a conflict. Equal-state ABA is not a conflict. No new DTO field unless an executable user-visible counterexample appears.
+- 2026-10-19: Checkpoint A design review (Astra): direction approved with 5 required changes plus cheap wins. See reviews/checkpoint-a-changes.md. Markers/signals before the hard stop = reference/resolver interfaces + fixtures only; missing marker fails closed. Gate 6 includes direct legacy-endpoint rejection.
+- 2026-10-19: M2 groups = option A. Canonical shot ownership is the single representation. pinnedShotGroups is migration-only, through a recorded, guarded, lossless migration command (unsupported shapes refused). Retrack updates occurrence-owned child tracks atomically. App gets a read-side legacy group view. (reviews/astra-m2-groups.md)
+- 2026-10-19: M1 exit = central e2e-m1-gesture pass + restored App journeys + restore preservation (Runtime/Agent, and App restoreHistory head pair) + all new full-suite failures classified + deep audit without blocking findings.
+
+## Gate record (orchestrator updates this)
+- Checkpoint A (designs approved): **APPROVED 2026-10-19 ~19:05Z** by the orchestrator, after a fresh Astra review (APPROVE WITH CHANGES; all 5 required changes folded into the design docs; see reviews/checkpoint-a-changes.md). Runtime, App and Viewing M0 complete; Agent designs complete, with its main-baseline count still being recorded (non-blocking). **M1 is open.**
+- Hard stop (foundation complete, M0–M4 done): **NOT YET**
+- Main canonical shot ownership (chapters-as-shots) is the ONE representation. config.pinnedShotGroups stays a legacy, migration-only input and never becomes a second editable store.
+- Migration is a recorded, guarded command through the normal commit path. It preserves full original state, metadata, order and identity mapping. Unsupported shapes (interleaved/reordered membership, duplicate shotId-derived identities) are REFUSED and left untouched, never silently normalised. Don't rely on the existing converter's losslessness claims or its recursive provenance sanitiser; prove losslessness with round-trip tests.
+- Command targets: a whole-group temporal move edits the occurrence placement; free multi-clip moves edit explicit parent/occurrence-scoped clips; shared-shot content changes need explicit shared intent. Never infer ownership from display IDs or (shotId, trackId).
+- Retrack (cross-lane) must update the affected occurrence-owned child tracks atomically in the same command. No UI-only lane change.
+- Conflicts and undo use occurrence/clip property refs plus membership/dependency guards, so independent groups rebase cleanly. No whole-parent or whole-array replacement. Fix composed undo for track.create plus its own move, keeping later-dependent and ABA protection.
+- App gets a read-side legacy-shaped group view with explicit ownership bindings, so the 3 it.fails tests keep their original visible assertions and then pass.
+First slice (after M1 is recorded): migrate one existing two-clip fixture via the command path, move it to an existing lane, and derive the App group view. Prove the 3 tests' visible outcomes, accepted reload, exact guarded undo and independent-group concurrency. Then track creation, then free multi-clip.
+
+
+## 2026-10-19T22:30Z — Runtime exact Agent postrestore full node diff
+Agent full agent-full-1019214054-26553 DONE11746PASS52FAIL15ERROR456SKIP2844.65s. Manager parsed exact FAILED/ERROR headings against untouched preport agent-full-1019191532-6465: ALL63old remain, exactly4additional nodes:
+- tests/core/test_editor_element_catalog.py::test_checked_in_typescript_projection_is_current
+- tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition
+- tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix
+- tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup
+No baseline node stopped failing; cannot labelthese4oldbyname. All68previousM1addednodes gone. Agent owns review/triage, Viewing owns rendering conclusions/grants; coordinate narrow fixes/no muted assertions or duplicatefull untilmeaningfulbatch. RuntimefullfinallyRUNNING22:29 onff0ae58 tree14a69fd7 +actualAgent4ffbb8b0, expects7only. ApprestoreHistory preservation directive remains active; no Runtime wirechange needed.
+
+## 2026-10-19 22:35Z — orchestrator: KEEP PUSHING. M2 build work may START NOW on branches
+The owner wants maximum throughput, and idle capacity is the main waste. Effective now:
+- Start M2 implementation workers on branches, in parallel with the M1 close-out, using PLAN §5 and the decided contracts (M2 groups = option A; ordered-collection restore; staged guarded reversal; ...). Only MERGING M2 work into tl/integration waits until PLAN records M1. M1 close-out items stay first in priority and on the heavy slots.
+- Keep your worker slots full: several independent workers running at all times. Split work so you can. While you're waiting on another area, work on something that doesn't depend on it: design, tests, deletions, next-milestone groundwork. Escalate blockers immediately; don't wait them out.
+- Keep a "Next 5" list in STATUS.md at all times, so the orchestrator can see your queue.
+
+Runtime22:31 trace triage addendum (read-only; owner review still needed): catalog projection generator--check says elements/catalog.ts stale; clip_fields default test explicitly hardcodes0.0.6 though integratedpackage0.0.8 now renders am-type opacity; journey install fixture writes{} manifests then expectsstrict actualpackagegate succeeds (unexpected nameNone); TextCardVisibleMarkupTest reads thin re-export source and expects literalcontent/JSX that nowlivesincanonicalpackage. Do not weaken packagegate/visible-markup proof; migrate stalefixtures/assertions to actualpublicartifact behavior, regenerate catalog viaownedsources ifconsistent. Exacttracebacks in currentfulllog; no Runtime changes.
+operation at this base, not an ordering/migration tool. Preserve its global guard,
+verified historical closure, semantic inverse and later-write refusal. No root
+restore/snapshot shortcut may implement migration undo or ordinary move undo.
+
+## Schema, semantic kinds, reservations and retry
+
+| Addition | Exact schema/artifact impact versus unchanged carriers |
+| --- | --- |
+| New shot aggregate `shot:S` | Add this spelling to ScopedId, EntityRef, TargetKey and AnchorIdentity (for command bindings). Define State root value as complete authored `{payload,internal_timeline}`; base/source_mapping bookkeeping is compiler provenance, not caller-editable fields. Root replace is migration/inverse only, no shared ordinary group edit. |
+| Occurrence roots and scoped child tracks/clips | `occurrence:O`, `occurrence:O/shot`, `occurrence:O/clip:c`, `occurrence:O/track:t` already fit ScopedId/EntityRef/TargetKey/AnchorIdentity. Add semantic absence/create/remove/resolution, not another spelling. Existing `shot:S/clip:c` syntax is not license for shared edits; remain unsupported outside registered operations. |
+| Closed operations | Add MigrateGroupsArgs and OccurrenceMoveArgs, v1 select/intent conditions and admission/registration. Later ClipMoveSetArgs is a separate schema change. TrackCreateParameters is currently closed only in commands.py; publish the existing v1 closed row envelope in the shared artifact without changing its meaning. |
+| Semantic created kinds | New `{ref:"shot:S",kind:"shot",owner:null}` and `{ref:"occurrence:O",kind:"occurrence",owner:"parent"}`; child lane creation remains `{ref:"occurrence:O/track:t",kind:"track",owner:"occurrence:O"}`. AgentCreatedID already has open kind/ref and nullable owner: no envelope expansion. Register validators/resolvers/reservation scopes explicitly. |
+| Queries/records | New keys named above in open AgentSelection.key/owner/members; new fixed binding keys in open AgentBinding; existing read/write ref strings and TokenPath/AgentState already carry them. No new query/record DTO, stage index, order ref, dependency kind, semantic event or history field. No per-group soft-tag ref. |
+
+Agent owns `astrid/core/timeline/schema/edit-command.schema.json` and native
+meaning. Runtime owner refreshes its byte-identical packaged command artifact,
+`runtime_protocol/schemas/timeline-commit-bundle.json` projections, generated
+Python/TS exports, digest/manifest; Agent refreshes official runtime-client pins;
+App refreshes parity types/fixtures. This is an expected command-schema addition,
+not a new Runtime endpoint, port DTO/ABI shape, table or compiled-config schema.
+Keep schema_version1 and old operation/query semantics; new versions are explicit.
+
+IDs are allocated/captured once before outbox sealing; migration destinations and
+new bottom lane ID are in original args/created claims. Extend reservation checks
+to typed scopes: shots project-wide, occurrences timeline-wide, tracks owner-wide; validate
+materialized item identity occupancy against Runtime's existing item-ID scope too.
+Check current occupancy AND all trusted accepted creations across inverse/redo
+lineage; no slash-prefix assumption or treating bootstrap as allocation proof.
+Undo never frees reservations. Ordinary reuse of retired ID refuses; only trusted
+inverse/redo restores the same identity. Preserve original command.created/record
+created consistency, duplicate-in-batch refusal and unavailable-history failure.
+No random replay IDs, prefix guessing or broadening id_map: it remains identity
+pairs only (empty is valid), never legacy→canonical remapping. The explicit
+migration provenance/bindings carry that different mapping.
+
+Repeated-shot retrack needs an additional explicit creation case: main's
+`_authoring_shot_id` / `_copy_shot_for_placement` already compute exact independent
+shot/item identities while opening the bundle. These working slots are not proof
+that the IDs were accepted/reserved. Before sealing capture, record those exact
+identities if they become persistent creations: shot:S via kind shot above and
+`shot:S/item:I` via kind item, owner shot:S. Add this item spelling to ScopedId,
+EntityRef/TargetKey/AnchorIdentity and its State resolver/shot-root overlap; existing
+item IDs otherwise remain unchanged. No arbitrary new allocation or provider
+id_map rewrite. This is required semantic/schema work, not current M1 support.
+
+Creation occupancy must compare the authenticated input CanonicalDocument plus
+staged accepted-kind creates, distinct from virtual authoring-slot existence.
+Record full newly materialized shot aggregate absent→present before its owned
+child writes; item creation facts are contained effects of that aggregate with
+exact IDs, not a second items-array writer. Bind the original source and exact
+main mapping. Extend common alias/overlap/staged inverse accordingly. Preserve
+older M1 records through their verified closure/mapping compatibility path, not
+retroactively invented created claims. Repeated-shot accepted reload/reservation
+proof blocks that case until this distinction is implemented; singleton migrated
+groups do not require these isolation/item creates.
+
+Exact retry after lost ACK/restart returns the same accepted publication/result;
+changed same-key payload refuses. Dependent unsent B waits for A ACK, then submits
+at HA with original value/identity claims. Equal-state suffix ABA remains allowed
+per PLAN. Accepted undo and stale replay retain intervening same-value/A→B→A
+protection on overlapping semantic addresses. No predecessor pin is added here.
+
+## Derived App group view and the three unchanged successes
+
+App derives groups from accepted canonical occurrence/child state plus immutable
+migration provenance; the view is pinned to actual accepted revision identity.
+Each view row carries explicit ownerRef=`occurrence:O`, occurrenceRef and ordered
+member clipRefs, with exact source/shot pins. Sidecar maps bind every legacy
+clip/display alias to those refs. Display/group IDs and original shotId are
+
+codex
+All three App assertion blocks still match the original main snapshot, and the draft is under 500 lines. A new 22:35 inbox directive permits separate M2 implementation branches before M1 closes, with merges still gated. I’ll reflect that distinction in the handoff; this assigned task remains design-only.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+p=base/'design/m2-move-draft.md'
+s=p.read_text().replace('**Design only while M1 remains open.** PLAN\\'s decisions log and latest Agent','**This task is design only; M1 remains open.** PLAN\\'s decisions log and Agent')
+s=s.replace('merge or M1 closure is authorized here. "'`clip.move` v1 remains unchanged.'"', 'merge or M1 closure is authorized by this task. The newer 22:35 INBOX permits\\nseparate M2 implementation branches; merging still waits for recorded M1 closure.\\n"'`clip.move` v1 remains unchanged.'"')
+s=s.replace('an explicit migration input; clearing it consumes that input, never edits a\\nsecond group store. No load-time conversion. Sequence after M1 is recorded:', 'an explicit migration input; clearing it consumes that input, never edits a\\nsecond group store. No load-time conversion. Implementation dependency sequence\\n(branch work per 22:35 INBOX; integration only after M1 is recorded):')
+s=s.replace('| Order / owner | Files and exit boundary after M1 is recorded |', '| Order / owner | Files and exit boundary (branch work allowed; merges wait M1) |')
+s=s.replace('Concrete blockers: M1 remains open; root shot/occurrence recorder support,', 'Concrete blockers: M1 remains open for integration; root shot/occurrence recorder support,')
+p.write_text(s)
+p=base/'design/port-manifest.md'
+s=p.read_text().replace('**First M2 dependency (DECIDED A; design only until M1 is recorded):** follow', '**First M2 dependency (DECIDED A; merging waits for recorded M1):** follow')
+s=s.replace('below, not historical M0 observations. Later rows are bounded source/test slices,\\nnot one registry-wide PR; M1 restore preservation and closure remain prerequisites.', 'below, not historical M0 observations. The 22:35 INBOX allows branch implementation;\\nthis task stays design only. Later rows are bounded source/test slices, not one\\nregistry-wide PR; M1 restore preservation and closure remain merge prerequisites.')
+p.write_text(s)
+PY
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/notes/check_design.py <<'PY'
+\"\"\"Design formatting/scope checks only; no product behavior evidence.\"\"\"
+from pathlib import Path
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+for relative in ('design/m2-move-draft.md','design/port-manifest.md'):
+    text=(base/relative).read_text()
+    assert text.endswith('\\n')
+    assert all(line.rstrip()==line for line in text.splitlines()),relative
+    print(relative, len(text.splitlines()), 'lines; no trailing whitespace')
+text=(base/'design/m2-move-draft.md').read_text()
+assert len(text.splitlines())<=500
+for phrase in ('timeline.migrate-groups','occurrence.move','clip.move-set',
+               'M1 records remain valid','timeline.restore','_check_reservations',
+               'AnchorIdentity','identity\\npairs only','still it.fails','22:35'):
+    assert phrase in text,phrase
+manifest=(base/'design/port-manifest.md').read_text()
+assert manifest.count('**First M2 dependency (DECIDED A; merging waits for recorded M1):**')==1
+print('Design formatting/scope checks PASS; no M2 behavior tested')
+PY
+PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/notes/check_design.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/notes/design-check.log
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/notes/design-check.log" in /home/user/work/wt/agt-m2-canonical-design
+ succeeded in 0ms:
+design/m2-move-draft.md 477 lines; no trailing whitespace
+design/port-manifest.md 444 lines; no trailing whitespace
+Design formatting/scope checks PASS; no M2 behavior tested
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/report.md <<'MD'
+# agt-m2-canonical-design — design reconciliation
+
+Completed on Agent base "'`4ffbb8b081a57eb5f6d8962c30d02b30660491ae`.
+
+- Replaced `design/m2-move-draft.md` with the settled canonical-A contract (477 lines): explicit recorded lossless all-group migration, occurrence placement move plus atomic occurrence-owned child retrack, owner-bound derived App view, then new-track composition, then separate free multi.
+- Specified closed proposed v1 args/intents, reads/selections/bindings/writes/created identities, lossless migration inverse/redo, original-order/staged-inverse groundwork, M1 accepted-record compatibility and global root-restore guards. Listed exact schema/ref/kind/artifact changes versus existing open carriers; no new endpoint/DTO/ABI/history fields.
+- Replaced only the first-drag dependency paragraph of `design/port-manifest.md`; historical M0 and other sections retained.
+- Kept all three App visible success assertions intact. Read-only source comparison confirms the three current assertion blocks equal main `60aa26b95` (terminal whitespace ignored), still `it.fails`. No App files changed.
+
+## Checks and exact commands
+
+Cwd `/home/user/work/wt/agt-m2-canonical-design`. Define:
+
+```bash
+W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design
+```
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-canonical-design /home/user/work/venv-agent/bin/python "$W/notes/probe.py"
+```
+
+Exit **0**, output `notes/probe.log`: observed current schema/State disagreement on creation/ref support, sanitizer removal of unknown nested keys, rejected interleaved/reordered membership, missing collection/member overlap and existing global timeline-root overlap. These are offline observations of current limits, not tests of implemented M2 commands.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 "$W/notes/check_assertions.py"
+PYTHONDONTWRITEBYTECODE=1 python3 "$W/notes/check_design.py"
+git diff --check
+git status --porcelain=v1
+```
+
+All exit **0**. Assertion-source comparison: all three unchanged; formatting/scope: PASS, draft under 500 lines; git checks: no output, product worktree clean. Source/format logs: `notes/source-check.log`, `notes/design-check.log`.
+
+**Repository tests not run:** no pytest, make check, vitest, browser/socket/full suite, service, network or install, as required for this design-only task. No accepted publication/reload or M2 behavior is claimed proven.
+
+## Design choices and concrete blockers
+
+No settled ownership decision was changed. Chose one explicit all-groups migration with broad one-time guards, then precise ordinary move guards; absolute-only occurrence.move v1 keeps the first operation small. Unsupported shapes stay untouched. Migration consumes the legacy field and retains complete original group provenance, never an editable soft-tag store.
+
+Required implementation gaps are named with sources: State root absence/create/remove; recorder creation kinds; scope-aware legacy validation replacing recursive sanitizer assumptions; honest new-shot materialization instead of fabricated source pins; atomic raw-child retrack; canonical App group projection/alias binding; query-aware lane-local rebase; typed reservations and M1-compatible staged inverse.
+
+Additional concrete collision gap: Agent `_check_reservations` sees one timeline'"'s history, whereas Runtime "'`_persist_closure` upserts same-project `project_shots` rows and persists globally constrained shot-item identities. Timeline-local scans cannot prove a new shot is unused/retired elsewhere. Runtime needs a bounded atomic admission check using existing rows/history; no new endpoint/DTO/ABI proposed. Main'"'s precomputed repeated-shot working identities also need explicit accepted-creation/occupancy distinction before that case is advertised; singleton migration can land first.
+
+The new 22:35 Agent INBOX permits separate M2 implementation branches; integration merges remain gated on recorded M1 closure. This assignment remained design-only. Recommended next steps: dispatch the ordered path-owned implementation splits in the draft; coordinate Runtime private collision admission and artifact refresh; prove real legacy→canonical→accepted reload→inverse before enabling the first group drag, then new-track, then free multi. Preserve strict expected failures until their original success behavior passes.
+
+Wrote both "'`commit-msg` and `commit-msg.txt`. No git commit/merge/checkout, product/test/schema/generated edits or worktree build output.
+MD
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/commit-msg <<'"'MSG'
+docs(timeline): reconcile M2 moves with canonical group ownership
+
+Specify explicit lossless legacy-group migration before occurrence placement
+moves with atomic child retracking and an owner-bound App compatibility view.
+Preserve order, staged inverse and M1 history contracts, document schema and
+reservation gaps, and sequence new-track composition before free multi moves.
+MSG
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/commit-msg.txt
+PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/notes/check_design.py
+git diff --check
+git status --porcelain=v1" in /home/user/work/wt/agt-m2-canonical-design
+ succeeded in 111ms:
+design/m2-move-draft.md 477 lines; no trailing whitespace
+design/port-manifest.md 444 lines; no trailing whitespace
+Design formatting/scope checks PASS; no M2 behavior tested
+
+codex
+Reconciled the [M2 draft](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md) and first-drag dependency paragraph. The draft is 477 lines and follows canonical A: explicit lossless migration, occurrence move with atomic child retrack, then new-track composition, then free multi.
+
+- Offline probes, assertion comparison and formatting checks exited **0**. All three original App assertion blocks remain unchanged.
+- No repository suites ran; no M2 behavior is claimed proven.
+- Documented implementation blockers, including root creation, lossless projection and cross-timeline shot reservations.
+- Product worktree is clean. Both commit-message files are written.
+
+[Report with exact commands, results and implementation splits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/report.md). This task remained design-only; M2 merges still await M1 closure.
+tokens used
+159,007
+Reconciled the [M2 draft](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md) and first-drag dependency paragraph. The draft is 477 lines and follows canonical A: explicit lossless migration, occurrence move with atomic child retrack, then new-track composition, then free multi.
+
+- Offline probes, assertion comparison and formatting checks exited **0**. All three original App assertion blocks remain unchanged.
+- No repository suites ran; no M2 behavior is claimed proven.
+- Documented implementation blockers, including root creation, lossless projection and cross-timeline shot reservations.
+- Product worktree is clean. Both commit-message files are written.
+
+[Report with exact commands, results and implementation splits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-canonical-design/report.md). This task remained design-only; M2 merges still await M1 closure.

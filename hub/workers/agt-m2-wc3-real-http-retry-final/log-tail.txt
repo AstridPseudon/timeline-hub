@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-mouth-compat-agent-proposal-report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-core-size-census-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-layer-extent-fix-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-popup-main-playable-analog-prep-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-scene-carry-public12-proof-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-release12-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-pcm13-actual-final-gate-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-current-size-qualified-cuts-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-d09-am-sprite-public-positive-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-sdk-retained-scene-proposal-final-gate-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-pcm-public-clock-ORCHREPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-restore-main-makefile-report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-http-independent-review-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-public-scene-role-own-keys-ORCHREPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-mouth-selected-query-evidence-gate-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-frame12-current-ready-ORCHREPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-player-tab-guards-postfix-gate-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-clean-install-source-compose-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter-final-review-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-mouth697-terminal-result-gate-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-audio-compile-vector-reconcile-ORCHREPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-release13-final-gate-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-current-viewer-cut-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-stored-cap-preview-consumer-proposal-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-stereo-terminal-capability-audit-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-short-owned-tmp-fix-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-labels-d93-owner-port-handoff-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-gapless-mp3-source-origin-ORCHREPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-app-m2-placement-contract-review-report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-landable-review-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-root-cap-independent-gate-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-package-additions-audit-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-fresh-mouth-clean-f816-requalify-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-mouth697-controller-final-gate-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-current-landing-batch-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-scanner-v103-independent-review-ORCHREPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-root-smoke-central-ready-ORCHREPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-independent-gate-REPORT.json
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-frame-codec-residual-audit-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-bootstrap-fresh-capture-parity-report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-root-smoke-schema-ORCHREPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-mouth-approved-four-still-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-layer-tail-positive-regression-report
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-frame-native-retained-fixture-port-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-agent-public-default-theme-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-stereo-owned-state-guard-fix-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-fresh-mouth-context-carry-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-cap3a-readonly-scope-resume-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-pcm13-preserve-audible-cases-REPORT.md
+find: ‘standard output’: Broken pipe
+find: write error
+
+exec
+/bin/bash -lc "printf 'HEAD '; git rev-parse HEAD; printf 'status\\n'; git status --short; printf 'changed lines '; git diff --numstat" in /home/user/work/wt/agt-m2-wc3-real-http-retry-final
+ succeeded in 423ms:
+HEAD 3dae5bd4ed9e68295725272a9c34823401a8dd22
+status
+ M tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+changed lines 220	0	tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+
+exec
+/bin/bash -lc 'for d in /tmp/wc3inspect /tmp/wc3inspect2; do if [ -d "$d" ]; then find "$d" -depth -type f -delete; find "$d" -depth -type d -empty -delete; fi; done; for d in /tmp/wc3inspect /tmp/wc3inspect2; do test ! -e "$d" || echo "left: $d"; done; git diff --check' in /home/user/work/wt/agt-m2-wc3-real-http-retry-final
+ succeeded in 274ms:
+codex
+Final checks are clean and only the intended test file is modified. I’m publishing the shared handoff with the pinned Agent/runtime sources, test tuple, request-ID capture semantics, exact service command/result, and the two known unrelated a0 failures; then I’ll write the conventional commit message and DONE marker.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-m2-wc3-real-http-retry-final-REPORT.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-real-http-retry-final/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-real-http-retry-final/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-m2-wc3-real-http-retry-final-REPORT.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-m2-wc3-real-http-retry-final-REPORT.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..95549142c11413cbfb5543f4533e67e1f7266baa
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-m2-wc3-real-http-retry-final-REPORT.md
+@@ -0,0 +1,28 @@
++# WC3 real HTTP parent-media retry handoff
++
++## Source tuple
++
++- Agent source snapshot used by the final named service: `c87504fdece3b1113dccef9ebda6f7e690863247`.
++- Agent checkout HEAD before harness commit: `3dae5bd4ed9e68295725272a9c34823401a8dd22`.
++- Runtime source: `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`, via `ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169`.
++- Adapter tuple: public `AstridClient.timelines.replace_parent_media` / generated `WorkspaceClient` transport -> real `RuntimeHandler` HTTP `/v1/projects/{project}/timelines/film/commit`, image and video.
++
++The test captures the exact per-request `RuntimeHandler._request_id()` and asserts it is non-empty, together with exact path, idempotency key, serialized body, and receipt. Request IDs are runtime-generated and are not stable across service snapshots; the central result log does not emit the captured value.
++
++## Change
++
++Added one bounded real HTTP proof in `tests/editing_conformance/test_commit_runtime_parent_media_swap.py`. It creates a fresh parent-owned clip with genuine five-field CAS media, injects a lost ACK after durable acceptance, restarts the daemon, and verifies exact retry body/key/receipt, canonical order/opaque/config mirror, reload, guarded undo/redo, and later-head keyed replay. Unrelated and wrong-typed pending intents are refused with byte-for-byte outbox preservation. No product code changed.
++
++## Evidence
++
++Exact named service command:
++
++```text
++env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py tests/editing_conformance/test_commit_runtime_parent_media_swap.py
++```
++
++Final service request: `agt-m2-wc3-real-http-retry-final-registered014-render-integration-1020164021-12618`.
++
++Result: `2 failed, 24 passed, 1 deselected`. Both parametrized WC3 real HTTP cases passed. The two failures are pre-existing `tests/packs/video_editing/test_runtime_publication_chain.py` cases: pinned a0 lacks the retired-route compatibility expected by one and rejects `production_worker_credentials` passed by the other.
++
++Static evidence: `git diff --check` passed; AST parse passed; only the intended test file is modified.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-real-http-retry-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-real-http-retry-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-real-http-retry-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-real-http-retry-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..0a4290343a6112a79d88f48befbf78d761a28f7a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-real-http-retry-final/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): qualify parent media retry over real HTTP
++
++Add a bounded RuntimeHandler and WorkspaceClient proof for parent media
++replacement, restart-safe lost acknowledgements, and guarded retries.
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_media_swap.py b/tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+index 9f0a128f683268e204c7a9f8da2d7cead3e6150d..28015e590cd7184968a604e4ba97e11ff9808a36
+--- a/tests/editing_conformance/test_commit_runtime_parent_media_swap.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+@@ -256,6 +256,226 @@
+     assert State(bundle_from_document(result.data['canonical_document'])).entity(TARGET)['asset'] == editing.old['asset']
+ 
+ 
++def test_public_parent_swap_real_http_lost_ack_restart_exact_retry_and_guards(
++        editing, real_runtime, tmp_path, monkeypatch,
++):
++    """Qualify the public adapter against the real generated client and door."""
++    import json
++
++    from astrid.sdk.timeline._command_state import State
++    from astrid.sdk.timeline.commit import bundle_from_document
++    from astrid.sdk.timeline.sync import TimelineSession
++    from tests.editing_conformance import test_commit_runtime_m1 as m1
++
++    from runtime_protocol.server import RuntimeHandler
++
++    initial = editing.service._timeline_commits()[0].revision_closure(
++        editing.project, 'film', editing.service.get_project_timeline(
++            editing.project, 'film')['head_revision_id']
++    )
++    source_target = State(bundle_from_document(initial)).entity('parent/clip:clip-a')
++    TARGET = 'parent/clip:wc3-http'
++    old = editing.service.get_project_media_selection(
++        editing.project,
++        {
++            'asset': 'wc3-old',
++            'generation_id': editing.old['generation_id'],
++            'variant_id': editing.old['variant_id'],
++        },
++        authorize=editing.authorize,
++    )
++    new = editing.new
++    media_fields = {'asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'}
++    assert set(old) == set(new) == media_fields
++
++    # Add one fresh parent row through the existing native command builder so
++    # the HTTP proof starts from a real immutable five-field old selection;
++    # the captured historical row itself predates that binding.
++    from astrid.sdk.timeline.capture import capture_track_create
++    from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
++
++    bundle = bundle_from_document(initial)
++    parent_track = {'id': 'wc3-http-track', 'kind': 'visual', 'role': 'output'}
++    commit(
++        editing,
++        body(editing, [capture_track_create(bundle, 'parent', parent_track)]),
++        'wc3-fixture-track',
++    )
++    initial = editing.service._timeline_commits()[0].revision_closure(
++        editing.project, 'film', editing.service.get_project_timeline(
++            editing.project, 'film')['head_revision_id']
++    )
++    bundle = bundle_from_document(initial)
++    row = copy.deepcopy(source_target)
++    row['id'], row['asset'] = 'wc3-http', old['asset']
++    row['track'] = parent_track['id']
++    row['opaque'] = {'values': [None, False, {}, []], 'literal': TARGET}
++    verified_old = editing.service.get_project_verified_media(
++        editing.project, old, authorize=editing.authorize,
++    )
++    add = capture_clip_add_media(
++        bundle, row, old, verified_media=[verified_old],
++    )
++    commit(editing, body(editing, [add]), 'wc3-fixture-add')
++    baseline = editing.service._timeline_commits()[0].revision_closure(
++        editing.project, 'film', editing.service.get_project_timeline(
++            editing.project, 'film')['head_revision_id']
++    )
++    head = editing.service.get_project_timeline(editing.project, 'film')
++    baseline_target = copy.deepcopy(State(bundle_from_document(baseline)).entity(TARGET))
++    assert baseline_target['asset'] == old['asset']
++    expected_base = (head['head_revision_id'], head['head_publication_id'])
++
++    # The fixture service holds the same realm that the HTTP daemon opens.
++    # Close that read connection before handing the realm to RuntimeDaemon.
++    editing.service.close()
++    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
++    support = tmp_path / 'support'
++    daemon = real_runtime(editing.root, support_root=support, authoring_profile='astrid')
++    client = m1.open_client(daemon)
++    original_send = RuntimeHandler._send
++    commits = []
++    lost = False
++
++    def observe_send(handler, status, payload=None, **kwargs):
++        nonlocal lost
++        if handler.command == 'POST' and handler.path.endswith('/commit'):
++            commits.append({
++                'body': bytes(handler._prefetched_body),
++                'key': handler.headers['Idempotency-Key'],
++                'path': handler.path,
++                'request_id': handler._request_id(),
++                'response': copy.deepcopy(payload),
++            })
++            if not lost and status == 200:
++                lost = True
++                raise ConnectionError('parent media acknowledgement lost after durable acceptance')
++        return original_send(handler, status, payload, **kwargs)
++
++    monkeypatch.setattr(RuntimeHandler, '_send', observe_send)
++    first_key = 'parent-media-real-http'
++    first = client.timelines.replace_parent_media(
++        editing.project, 'film', occurrence_id=None, clip_id='wc3-http',
++        source_object_id=new['object_id'], expected_head=expected_base[0],
++        expected_publication=expected_base[1], old_media=old, media=new,
++        idempotency_key=first_key,
++    )
++    assert not first.ok
++    assert len(commits) == 1, first.as_dict()
++    first_wire = copy.deepcopy(commits[0])
++    first_body = json.loads(first_wire['body'])
++    assert first_wire['path'] == f'/v1/projects/{editing.project}/timelines/film/commit'
++    assert first_wire['key'] == first_key
++    assert first_wire['request_id']
++    assert (first_body['base_revision_id'], first_body['base_publication_id']) == expected_base
++    command = first_body['commands'][0]
++    assert command['select'] == TARGET
++    assert command['args'] == {'old_media': old, 'media': new}
++    assert set(command['args']['old_media']) == set(command['args']['media']) == media_fields
++    accepted = first_wire['response']
++    assert accepted['receipt']['idempotency_key'] == first_key
++    outbox = TimelineSession.open(editing.project, 'film', client=client).outbox.path
++    lost_state = json.loads(outbox.read_bytes())
++    assert lost_state['flight']['key'] == first_key
++    assert lost_state['flight']['body'].encode() == first_wire['body']
++    assert lost_state['pending'] == [command]
++
++    port = daemon.httpd.server_port
++    daemon.stop()
++    daemon = real_runtime(editing.root, support_root=support, port=port, authoring_profile='astrid')
++    client = m1.open_client(daemon)
++    retried = client.timelines.replace_parent_media(
++        editing.project, 'film', occurrence_id=None, clip_id='wc3-http',
++        source_object_id=new['object_id'], expected_head=expected_base[0],
++        expected_publication=expected_base[1], old_media=old, media=new,
++    )
++    assert retried.ok, retried.as_dict()
++    assert {key: value for key, value in retried.data.items()
++            if key not in {'accepted_publication_id', 'show_command'}} == accepted['data']
++    assert retried.data['accepted_publication_id'] == accepted['receipt']['receipt_id']
++    assert retried.receipt.as_dict() == accepted['receipt']
++    retry_count = len(commits) - 1
++    assert retry_count >= 1
++    assert all({key: entry[key] for key in ('path', 'key', 'body')} == {
++        key: first_wire[key] for key in ('path', 'key', 'body')
++    } for entry in commits[1:])
++    assert json.loads(outbox.read_bytes())['flight'] is None
++    assert json.loads(outbox.read_bytes())['pending'] == []
++    replaced = State(bundle_from_document(accepted['data']['canonical_document'])).entity(TARGET)
++    assert replaced == {**baseline_target, 'asset': new['asset']}
++    parent = accepted['data']['canonical_document']['parent_revision']['payload']
++    assert [clip['id'] for clip in parent['clips']] == [clip['id'] for clip in baseline['parent_revision']['payload']['clips']]
++    assert parent['config']['clips'] == parent['clips']
++    assert replaced['opaque'] == baseline_target['opaque']
++
++    # Advance the real head through a separate outbox, then replay the already
++    # acknowledged request at its original base and key. Runtime must return
++    # the original receipt without accepting a new revision.
++    later = TimelineSession.open(
++        editing.project, 'film', client=client, outbox_path=tmp_path / 'later.json',
++    )
++    later_result = later.move('parent/clip:clip-b', 1, idempotency_key='parent-media-later')
++    later_head = later_result['data']['accepted_revision_id']
++    assert later_head != accepted['data']['accepted_revision_id']
++    before_replay = len(commits)
++    replayed = client.timelines.replace_parent_media(
++        editing.project, 'film', occurrence_id=None, clip_id='wc3-http',
++        source_object_id=new['object_id'], expected_head=expected_base[0],
++        expected_publication=expected_base[1], old_media=old, media=new,
++        idempotency_key=first_key,
++    )
++    assert replayed.ok
++    assert {key: value for key, value in replayed.data.items()
++            if key not in {'accepted_publication_id', 'show_command'}} == accepted['data']
++    assert replayed.data['accepted_publication_id'] == accepted['receipt']['receipt_id']
++    assert replayed.receipt.as_dict() == accepted['receipt']
++    assert len(commits) > before_replay  # keyed replay A
++    assert all({key: entry[key] for key in ('path', 'key', 'body')} == {
++        key: first_wire[key] for key in ('path', 'key', 'body')
++    } for entry in commits[before_replay:])
++    assert client.timelines.history(editing.project, 'film').data['head']['revision_id'] == later_head
++
++    reloaded = client.timelines.open_bundle(editing.project, 'film', revision_id=accepted['data']['accepted_revision_id'])
++    assert reloaded.ok, reloaded.as_dict()
++    reloaded_bundle = reloaded.data['bundle']
++    reloaded_target = State(reloaded_bundle).entity(TARGET)
++    assert reloaded_target == replaced
++    assert State(reloaded_bundle).collection('parent', 'clip') == State(bundle_from_document(accepted['data']['canonical_document'])).collection('parent', 'clip')
++    assert reloaded_bundle['parent']['clips'] == reloaded_bundle['parent']['config']['clips']
++
++    guarded = TimelineSession.open(
++        editing.project, 'film', client=client, outbox_path=tmp_path / 'guarded.json',
++    )
++    undone = guarded.undo([accepted['receipt']['receipt_id']], idempotency_key='parent-media-undo')
++    undone_target = State(bundle_from_document(undone['data']['canonical_document'])).entity(TARGET)
++    assert undone_target == baseline_target
++    assert State(bundle_from_document(undone['data']['canonical_document'])).entity('parent/clip:clip-b')['at'] == 1
++    redone = guarded.undo([undone['receipt']['receipt_id']], idempotency_key='parent-media-redo')
++    assert State(bundle_from_document(redone['data']['canonical_document'])).entity(TARGET) == replaced
++    assert State(bundle_from_document(redone['data']['canonical_document'])).entity('parent/clip:clip-b')['at'] == 1
++
++    # A malformed or unrelated persisted intent must fail before a POST and
++    # preserve the exact durable outbox bytes.
++    for pending, kwargs in (
++        ({**command, 'select': 'parent/clip:clip-b'}, {'old_media': old, 'media': new}),
++        (command, {'old_media': True, 'media': False}),
++    ):
++        invalid_state = copy.deepcopy(lost_state)
++        invalid_state['pending'] = [pending]
++        outbox.write_bytes(json.dumps(invalid_state, sort_keys=True).encode())
++        before = outbox.read_bytes()
++        sent = len(commits)
++        refused = client.timelines.replace_parent_media(
++            editing.project, 'film', occurrence_id=None, clip_id='wc3-http',
++            source_object_id=new['object_id'], expected_head=expected_base[0],
++            expected_publication=expected_base[1], idempotency_key=first_key,
++            **kwargs,
++        )
++        assert not refused.ok
++        assert len(commits) == sent
++        assert outbox.read_bytes() == before
++
++
+ @pytest.mark.parametrize('side', ['old_media', 'media'])
+ @pytest.mark.parametrize('damage', ['stale', 'foreign', 'fingerprint'])
+ def test_invalid_selected_media_refuses_without_writes(editing, side, damage):
+
+exec
+/bin/bash -lc "test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-real-http-retry-final/DONE && echo DONE=present; echo 'commit message:'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-real-http-retry-final/commit-msg; echo 'worktree:'; git status --short; git diff --check" in /home/user/work/wt/agt-m2-wc3-real-http-retry-final
+ succeeded in 358ms:
+DONE=present
+commit message:
+test(timeline): qualify parent media retry over real HTTP
+
+Add a bounded RuntimeHandler and WorkspaceClient proof for parent media
+replacement, restart-safe lost acknowledgements, and guarded retries.
+worktree:
+ M tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+
+codex
+## Completed
+
+- Added real HTTP `WorkspaceClient`/`RuntimeHandler` proof for image and video parent-media replacement.
+- Covered lost ACK, restart retry, exact body/key/receipt, later-head replay, reload, opaque/order/mirror preservation, guarded undo/redo, and strict invalid-outbox guards.
+- No product code changed.
+
+Tests:
+
+- Named a0 service: `24 passed, 1 deselected`; both new parametrized cases passed.
+- Two unrelated pre-existing publication-chain tests failed against pinned a0 API differences.
+- `git diff --check` and AST parse passed.
+
+Artifacts written:
+
+- Commit message: `/tmp/.../workers/agt-m2-wc3-real-http-retry-final/commit-msg`
+- Shared report: [handoff report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-m2-wc3-real-http-retry-final-REPORT.md)
+- `DONE` marker created.
+tokens used
+422,036
+## Completed
+
+- Added real HTTP `WorkspaceClient`/`RuntimeHandler` proof for image and video parent-media replacement.
+- Covered lost ACK, restart retry, exact body/key/receipt, later-head replay, reload, opaque/order/mirror preservation, guarded undo/redo, and strict invalid-outbox guards.
+- No product code changed.
+
+Tests:
+
+- Named a0 service: `24 passed, 1 deselected`; both new parametrized cases passed.
+- Two unrelated pre-existing publication-chain tests failed against pinned a0 API differences.
+- `git diff --check` and AST parse passed.
+
+Artifacts written:
+
+- Commit message: `/tmp/.../workers/agt-m2-wc3-real-http-retry-final/commit-msg`
+- Shared report: [handoff report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-m2-wc3-real-http-retry-final-REPORT.md)
+- `DONE` marker created.

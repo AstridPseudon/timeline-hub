@@ -1,0 +1,400 @@
+tests/sdk/test_timeline_clip_scalar_provider.py:64:def test_provider_unchanged_publication_and_aba_refuse_old_inverse(ref, field, aba):
+tests/sdk/test_timeline_clip_scalar_provider.py:130:def test_hold_after_move_records_unchanged_for_and_refuses_publication_aba(aba):
+tests/sdk/test_timeline_clip_scalar_provider.py:149:def test_hold_captured_after_move_refuses_changed_basis_without_recapture(ref, on):
+tests/sdk/test_timeline_commit_provider_add_delete_runtime.py:125:        def refuse_reuse(identity, key):
+tests/sdk/test_timeline_commit_provider_add_delete_runtime.py:135:            refuse_reuse('first-clip', 'reserved-new-' + str(index))
+tests/sdk/test_timeline_commit_provider_add_delete_runtime.py:137:                refuse_reuse('existing-1', 'reserved-old-' + str(index))
+tests/sdk/test_timeline_commit_provider_add_delete_runtime.py:164:        refuse_reuse('first-clip', 'reserved-after-restart')
+tests/sdk/test_timeline_checkout.py:160:def test_replace_asset_refuses_cross_kind_media_without_changing_anything(monkeypatch):
+tests/sdk/test_timeline_checkout.py:285:def test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones():
+tests/sdk/test_timeline_checkout.py:829:    # the same clip changed by both: refused, with what to do
+tests/sdk/test_timeline_checkout.py:836:    assert Checkout.load(path).clip("a-rocket").start == pytest.approx(1.6)  # c's edit is there, d's was refused
+tests/sdk/test_timeline_checkout.py:877:def test_python_setters_are_discoverable_and_refuse_what_is_not_a_param():
+tests/sdk/test_timeline_checkout.py:878:    """Acceptance fixes 1 and 3: .until("for 0.6s"), .for_("0.6s"), did-you-mean, and set() refusing junk keys."""
+tests/sdk/test_timeline_checkout.py:899:def test_media_set_refuses_unknown_params_and_accepts_declared_fades():
+tests/sdk/test_timeline_checkout.py:1102:    """A refused duplicate leaves no empty timeline: an invalid head is refused before creating, a failure
+tests/sdk/test_timeline_checkout.py:1362:            values, cursor = super().list_project_objects(project, **kwargs)
+tests/sdk/test_timeline_checkout.py:1364:                    {"object_id": base_digest, "digest": base_digest, "size": len(base_data)}], cursor
+tests/sdk/test_timeline_param_values.py:25:def test_enum_refuses_a_value_outside_the_schema_and_names_the_allowed_ones():
+tests/sdk/test_timeline_param_values.py:41:def test_integer_range_refuses_above_the_maximum_and_below_the_minimum():
+tests/sdk/test_timeline_param_values.py:51:def test_type_refuses_a_string_for_a_number_and_a_bool_for_a_number():
+tests/sdk/test_timeline_param_values.py:116:def test_the_sheet_refuses_a_bad_value_and_writes_nothing():
+tests/sdk/test_timeline_param_values.py:126:def test_the_sheet_refuses_a_bad_range_on_the_rocket():
+tests/sdk/test_timeline_param_values.py:134:def test_tl_add_refuses_an_out_of_enum_value_before_the_clip_exists():
+tests/sdk/test_timeline_revision_diff_admission.py:7:def test_revision_diff_pins_two_explicit_closures_and_refuses_foreign_side(monkeypatch):
+tests/sdk/test_timeline_revision_diff_admission.py:61:def test_element_resource_producer_refuses_foreign_owner_and_path_escape(tmp_path):
+tests/sdk/test_timeline_selected_schema.py:104:def test_new_invalid_selected_param_refuses_without_acceptance(selected_effect, stage):
+tests/sdk/test_timeline_selected_schema.py:205:def test_selected_pack_refuses_a_port_without_document_object(selected_effect, monkeypatch):
+tests/sdk/test_timeline_selected_schema.py:310:def test_element_only_refuses_before_provider_acceptance(selected_effect, damage):
+tests/sdk/test_timeline_sheet.py:215:    assert len(tl.clips()) == before  # a refused apply changes nothing
+tests/sdk/test_timeline_sheet.py:285:def test_a_sound_row_can_add_an_until_anchored_clip_and_refuses_visual_tracks():
+tests/sdk/test_timeline_sheet.py:362:def test_trim_syntax_on_a_visual_layer_is_refused_atomically():
+tests/sdk/test_timeline_media_verbs.py:144:def test_for_past_the_end_of_the_source_is_refused_clearly():
+tests/sdk/test_timeline_media_verbs.py:180:def test_for_on_windowless_footage_stays_windowless_and_unrefused():
+tests/sdk/test_timeline_clip_add_provider.py:126:    # original group correctly refuses ABA even though the authored values match.
+tests/sdk/test_timeline_commit_provider.py:58:def refusal(reason):
+tests/sdk/test_timeline_commit_provider.py:60:                           "details": {"status": "refused", "reason": reason,
+tests/sdk/test_timeline_commit_provider.py:121:            raise refusal("history_unavailable")
+tests/sdk/test_timeline_commit_provider.py:129:        raise refusal("history_unavailable")
+tests/sdk/test_timeline_commit_provider.py:131:    def history(self, through, after_publication_id=None, cursor=None, limit=100):
+tests/sdk/test_timeline_commit_provider.py:141:            raise refusal("history_unavailable") from None
+tests/sdk/test_timeline_commit_provider.py:143:            raise refusal("history_unavailable")
+tests/sdk/test_timeline_commit_provider.py:144:        offset = int(cursor or start)
+tests/sdk/test_timeline_commit_provider.py:147:                "next_cursor": str(next_offset) if next_offset < end else None}
+tests/sdk/test_timeline_commit_provider.py:154:            raise refusal("dependency_unavailable")
+tests/sdk/test_timeline_commit_provider.py:170:            raise refusal('dependency_unavailable')
+tests/sdk/test_timeline_commit_provider.py:289:def test_retired_identity_refuses_new_create_but_guarded_redo_restores_exact_state():
+tests/sdk/test_timeline_commit_provider.py:442:def test_reversed_inverse_target_order_is_refused_without_partial_acceptance():
+tests/sdk/test_timeline_commit_provider.py:488:def test_runtime_refusal_and_exception_propagate_for_ledger_reconciliation(monkeypatch):
+tests/sdk/test_timeline_commit_provider.py:493:    for error in (refusal("authority_revoked"), OSError("ambiguous post-commit hook")):
+tests/sdk/test_timeline_commit_provider.py:577:def test_missing_or_malformed_transcript_source_is_refused(damage):
+tests/sdk/test_timeline_commit_provider.py:784:    assert error.value.failure["details"]["reason"] == "history_unavailable"
+tests/sdk/test_timeline_commit_provider.py:788:def test_known_legacy_prefix_is_a_boundary_but_unknown_intent_after_recording_refuses():
+tests/sdk/test_timeline_commit_provider.py:797:    assert error.value.failure["details"]["reason"] == "history_unavailable"
+tests/sdk/test_timeline_commit_provider.py:808:def test_legacy_history_undo_and_restore_use_revisions_or_refuse_visibly():
+tests/sdk/test_timeline_commit_provider.py:830:    assert error.value.failure["details"]["reason"] == "history_unavailable"
+tests/sdk/test_timeline_commit_provider.py:932:def test_restore_inverse_refuses_all_intervening_writes(later):
+tests/sdk/test_timeline_commit_provider.py:1051:    assert error.value.failure["details"]["reason"] == "history_unavailable"
+tests/sdk/test_timeline_commit_provider.py:1055:def test_restore_refuses_unavailable_or_corrupt_retained_input(damage):
+tests/sdk/test_timeline_commit_provider.py:1165:def test_legacy_structural_inverse_without_boundary_or_linkage_refuses(damage):
+tests/sdk/test_timeline_commit_provider.py:1184:    assert error.value.failure['details']['reason'] == 'history_unavailable'
+tests/sdk/test_timeline_commit_provider.py:1293:def test_composed_inverse_later_reference_refuses_at_provider_boundary(native_staging_operations):
+tests/sdk/test_timeline_commit_provider.py:1384:def test_native_delete_provider_refuses_structural_or_dependency_publications_atomically(change):
+tests/sdk/test_timeline_capture_projection.py:101:def test_inconsistent_saved_closure_refuses(damage):
+tests/sdk/test_timeline_capture_projection.py:128:def test_inconsistent_candidate_refuses_even_with_recomputed_preview(damage):
+tests/sdk/test_timeline_selected_param_authority.py:317:def test_param_after_ambiguous_restore_refuses_until_explicit_reselection(two_pins):
+tests/sdk/test_timeline_semantic_reservations.py:191:    assert error.value.failure['details']['reason'] == 'history_unavailable'
+tests/sdk/test_timeline_sync_native.py:99:def test_native_lost_ack_refuses_changed_json_type_before_send(connected, value, changed, nested):
+tests/sdk/test_timeline_sync_native.py:123:def test_native_lost_ack_refuses_changed_boolean_capture_claim(connected, field):
+tests/sdk/test_timeline_sync_native.py:228:def test_stale_captured_claims_are_refused_without_refresh_or_persistence(connected):
+tests/sdk/test_timeline_sheet_native.py:119:def test_unsupported_or_unbound_edits_are_refused_before_queueing(connected, change):  # noqa: F811
+tests/sdk/test_timeline_sheet_native.py:189:def test_omitted_native_clip_row_refuses_membership_change_without_accepting(connected):  # noqa: F811
+tests/sdk/test_timeline_producer_guard_runtime.py:144:def test_settled_artifact_mutation_refuses_without_history_or_head_changes(settled, mutation):
+tests/sdk/test_timeline_restructure.py:84:def test_repeated_nonconsecutive_chapter_refused_by_restructure_and_publish_split():
+tests/sdk/test_timeline_restructure.py:268:    assert any("bed" in line for line in conflicts)  # the same film-level clip changed on both sides refuses
+tests/sdk/test_timeline_restructure.py:271:def test_restructure_refuses_what_would_change_the_render():
+tests/sdk/test_timeline_restructure.py:277:    with pytest.raises(TimelineEditError, match="refused"):
+tests/sdk/test_timeline_native_frontends.py:75:def test_checkout_first_sheet_refusal_keeps_draft_and_exact_pending_intent(connected):
+tests/sdk/test_timeline_filmstrip.py:300:            # A next cursor must not cause an unbounded history walk.
+tests/sdk/test_timeline_filmstrip.py:638:    (lambda value: value['inputs'].__setitem__('timeline_authority', 'malformed'), 'malformed'),
+tests/sdk/test_timeline_filmstrip.py:641:def test_direct_render_refuses_malformed_or_mismatched_authority(mutation, message):
+tests/sdk/test_timeline_filmstrip.py:731:def test_default_refuses_stale_timeline_or_script(field):
+tests/sdk/test_timeline_filmstrip.py:737:def test_latest_render_refuses_canonical_head_change_before_projection():
+tests/sdk/test_timeline_filmstrip.py:753:def test_refuses_changed_script_bytes():
+
+--- source diff/stat ---
+ astrid/sdk/timeline/revisions.py            | 25 +++++++++++--
+ astrid/sdk/timeline_sheet.py                |  4 +-
+ tests/sdk/test_timeline_checkout_history.py | 57 +++++++++++++++++++++++++++++
+ 3 files changed, 80 insertions(+), 6 deletions(-)
+
+--- references to local accepted journal ---
+tests/sdk/test_timeline_journal.py:160:def test_publish_does_not_duplicate_accepted_history_in_the_local_journal(draft, monkeypatch):
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_journal.py tests/sdk/test_timeline_checkout_history_boundaries.py' in /home/user/work/wt/agt-m2-ag01-retained-sheet-pagination
+ succeeded in 4053ms:
+.........................................................                [100%]
+57 passed in 3.06s
+
+exec
+/bin/bash -lc 'git status --short && git diff --check && git diff --stat && git diff --numstat && git ls-files --others --exclude-standard | head -50' in /home/user/work/wt/agt-m2-ag01-retained-sheet-pagination
+ succeeded in 297ms:
+ M astrid/sdk/timeline/revisions.py
+ M astrid/sdk/timeline_sheet.py
+ M tests/sdk/test_timeline_checkout_history.py
+ astrid/sdk/timeline/revisions.py            | 25 +++++++++++--
+ astrid/sdk/timeline_sheet.py                |  4 +-
+ tests/sdk/test_timeline_checkout_history.py | 57 +++++++++++++++++++++++++++++
+ 3 files changed, 80 insertions(+), 6 deletions(-)
+21	4	astrid/sdk/timeline/revisions.py
+2	2	astrid/sdk/timeline_sheet.py
+57	0	tests/sdk/test_timeline_checkout_history.py
+
+exec
+/bin/bash -lc "sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/brief.md && printf '\\n--- peer report sample ---\\n' && sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-crash-reconcile/report.md && printf '\\n--- commit sample ---\\n' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-crash-reconcile/commit-msg" in /home/user/work/wt/agt-m2-ag01-retained-sheet-pagination
+ succeeded in 0ms:
+AG01 deletion-first finish bounded Runtime-owned sheet-history migration. Source165f4616 (tl/agt-m2-ag01-runtime-history-preservation) independent47+71+12actual approved, but manager diff finds regression: find_version calls RuntimeRevisions.list(limit=100) ONCE; old accepted-history loop followed all cursors. Sheet basis older than100 accepted edges must still resolve from authenticated retained Runtime revision. Fix pagination using EXISTING verified history reader/cursor semantics, no newAPI or local accepted journal, no huge-list sentinel/unbounded guessedlimit. Preserve same-revision/different-publication ancestry semantics and scope/errors; no refreshedguards or fabricatedhistory. One clear bounded two-page fixture where requestedbasis is page2 (page size can smallmock realisticreader) plus ordinary actualRuntime history/sheet neighbors. Keep draftlocaljournal/outbox separate and original malformedpage/refusedauth assertions. Remove only migrated acceptedpublishjournalconsumer, AG01 partial until all consumers/integrated, no new wholeDocumentwriter. Minimalcohesivehelper ifreusing RuntimeRevisions; do not extend publicAPI needlessly. Existing userdirection gates actualintegrationcut onhistoricalaudio/D13preservation; prepare now, manager merges aftercleared. Never request suite full*; only targeted/named suites. ShareddepsREADONLY/privatecache; no newskip/xfail/assertionloss. Exactsource/tests/report/commit-msg.txt/DONE. Luna high.
+--- peer report sample ---
+Fixed the P2 recovery window in `checkout.py` and local store helpers. A bounded transition marker enables locked recovery before load, save, or undo/redo. File identity preserves unchanged-value/ABA cases; the approved publication fences remain intact.
+
+Added 42 permanent recovery cases, including both original probes. Exact final focused command:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_restore_recovery.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_verbs_working_copy.py tests/sdk/test_undo_a1_legacy_open.py tests/packs/timeline/test_cli_parity.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timeline_checkout_publication_retry.py
+```
+
+**428 passed, 17 deselected, 4 warnings.**
+
+The central service ran:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_checkout_history_runtime.py
+```
+
+**4 passed**, retaining renderer tripwires. This qualifies the locked Runtime history pair, not current drifting integration.
+
+`git diff --check` and new-test Ruff pass. Product Ruff retains three verified baseline diagnostics. No full suite ran.
+
+No blockers. AG01/AG03/WC7/WC8 remain open. Recommend reviewing and narrow-porting the three changed paths.
+
+[Detailed report and exact evidence](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-crash-reconcile/notes/report.md). `commit-msg` and `DONE` are written.
+--- commit sample ---
+fix(timeline): reconcile interrupted local draft restores
+
+Stage a bounded local stack transition before replacing the draft and
+reconcile it under the checkout lock on load, save, and undo/redo. Use
+replacement file identity so equal-value and ABA states remain reversible.
+Cancel pending transitions when acknowledged publication retires history.
+
+Preserve the original review probes and add promotion, preparation,
+target-write, process-exit, and public recovery regressions.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..204dd4b3da58abdec461a886a433f9d9961d17dc
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/commit-msg
+@@ -0,0 +1,6 @@
++fix(timeline): follow retained history cursors for sheets
++
++Keep revision-reference history bounded while allowing authenticated sheet
++basis lookup to follow the verified Runtime cursor chain to its terminal page.
++Add a two-page regression fixture without introducing a new Runtime API or
++local accepted-history journal.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..75a7d5c1c6e51465e953193e5f468413104a5f9c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/report.md
+@@ -0,0 +1,28 @@
++Implemented the AG01 retained sheet-history pagination repair.
++
++Changes:
++
++- Added a private `RuntimeRevisions._list_all()` path for retained projections. It reuses the existing verified Runtime history reader, follows returned cursors to the terminal page, and retains the bounded public `list()` contract used by revision refs.
++- Updated `find_version()` to use that path instead of truncating accepted history at `limit=100`.
++- Added a bounded two-page fixture whose requested sheet basis is on page 2. The fixture asserts the exact scoped calls and cursor continuation.
++- Preserved duplicate publication/content-revision handling, malformed-page/cursor validation, refused-history propagation, and the separate local draft journal/outbox behavior. No accepted-history journal or new Runtime API was added.
++
++Tests:
++
++```sh
++PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_revisions.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_history_runtime.py
++```
++
++`32 passed, 2 deselected` (the deselected tests are integration-marked).
++
++```sh
++PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_journal.py tests/sdk/test_timeline_checkout_history_boundaries.py
++```
++
++`57 passed`.
++
++Also verified `git diff --check`. No full suite or central integration suite was requested, per the task instruction. The actual Runtime integration neighbor remains unverified in this sandbox.
++
++Decision: the sheet lookup uses a private adapter helper rather than changing the generated/public Runtime client or using a numeric sentinel. Clients without the immutable cursor history route retain the existing bounded legacy adapter behavior.
++
++No blockers. Recommended next step: manager review and merge after the existing historical-audio/D13 integration gate is cleared.
+diff --git a/astrid/sdk/timeline/revisions.py b/astrid/sdk/timeline/revisions.py
+index dbe3713f7a357225e219200bd333aac173d87aa1..c27c283831263935126606bf6ffc89fc375ab7f0
+--- a/astrid/sdk/timeline/revisions.py
++++ b/astrid/sdk/timeline/revisions.py
+@@ -143,6 +143,22 @@
+             out.append(current)
+         return out
+ 
++    def _list_all(self, project: str, timeline: str) -> list[Revision] | None:
++        """Read the complete verified Runtime ancestry for retained projections.
++
++        This is deliberately private: history-ref callers keep their bounded
++        ``list`` contract, while a retained sheet basis must follow the
++        Runtime's authenticated cursor chain until its terminal page.  The
++        cursor reader below still supplies the finite boundary; no guessed
++        numeric limit is used.
++        """
++        commits = self._commit_reader(project, timeline)
++        if commits is not None:
++            return self._list_commits(project, timeline, limit=None, reader=commits)
++        # A client without the immutable history route has no cursor chain to
++        # exhaust; retain the bounded legacy adapter (and its override seam).
++        return self.list(project, timeline, limit=100)
++
+     def _commit_reader(self, project: str, timeline: str) -> Any | None:
+         """Find the public immutable history method, if this client has it.
+ 
+@@ -251,21 +267,22 @@
+         )
+ 
+     @classmethod
+-    def _list_commits(cls, project: str, timeline: str, *, limit: int, reader: Any) -> list[Revision] | None:
++    def _list_commits(cls, project: str, timeline: str, *, limit: int | None, reader: Any) -> list[Revision] | None:
+         """Read all pages to reconstruct newest-first publication ancestry.
+ 
+         The frozen history route is bounded by a fixed head and returns items
+         in acceptance order. Fetching its cursor chain before reversing avoids
+         treating a reused content revision as a duplicate or as a new parent.
+         """
+-        if limit <= 0:
++        if limit is not None and limit <= 0:
+             return []
+         rows: list[Mapping[str, Any]] = []
+         head_pair: tuple[str, str] | None = None
+         cursor: str | None = None
+         seen_cursors: set[str | None] = {None}
++        page_limit = 50 if limit is None else min(200, max(50, limit))
+         while True:
+-            page = cls._result_data(reader(project, timeline, cursor=cursor, limit=min(200, max(50, limit))),
++            page = cls._result_data(reader(project, timeline, cursor=cursor, limit=page_limit),
+                                      timeline=timeline, operation="list")
+             if page is None:
+                 raise TimelineEditError(f"Runtime revision history returned no page for {timeline!r}")
+@@ -321,7 +338,7 @@
+         if len(seen_publications) != len(by_publication):
+             raise TimelineEditError(f"Runtime revision history contains a disconnected or incomplete chain for {timeline!r}")
+         revisions = [cls._history_revision(row) for row in ordered_rows]
+-        return revisions[:limit]
++        return revisions if limit is None else revisions[:limit]
+ 
+ 
+ def split_ref(text: str) -> tuple[str, str | None]:
+diff --git a/astrid/sdk/timeline_sheet.py b/astrid/sdk/timeline_sheet.py
+index 0f619f5109aea5b57a17b5cabf545171fc727161..698dc759e4de4c65d8485f548d775139b2538127
+--- a/astrid/sdk/timeline_sheet.py
++++ b/astrid/sdk/timeline_sheet.py
+@@ -896,8 +896,8 @@
+         from astrid.sdk.timeline.revisions import RuntimeRevisions
+ 
+         try:
+-            revisions = RuntimeRevisions(client.timelines).list(
+-                tl.bundle["project_id"], tl.bundle["timeline_id"], limit=100,
++            revisions = RuntimeRevisions(client.timelines)._list_all(
++                tl.bundle["project_id"], tl.bundle["timeline_id"]
+             )
+         except TimelineEditError as exc:
+             raise SheetError(f"could not read retained sheet basis: {exc}") from exc
+diff --git a/tests/sdk/test_timeline_checkout_history.py b/tests/sdk/test_timeline_checkout_history.py
+index 90b4fe171bc291a4b2cd395409edb69be24746f3..849b793af9c8bea1c5ced9bc335349d18e7bf09b
+--- a/tests/sdk/test_timeline_checkout_history.py
++++ b/tests/sdk/test_timeline_checkout_history.py
+@@ -110,3 +110,60 @@
+     client = SimpleNamespace(timelines=object())
+     assert find_version(draft, version, client=client) is retained
+     assert opened == [('p', 't', 'retained-revision', client)]
++
++
++def test_sheet_basis_follows_runtime_history_cursor_to_page_two(draft, monkeypatch):
++    draft.clip('c1.rocket').set(x=40)
++    draft.save(quiet=True)
++    historical = copy.deepcopy(draft.bundle)
++    version = sheet_version(draft)
++    draft.clip('c1.rocket').set(x=99)
++    draft.save(quiet=True)
++    retained = Checkout(copy.deepcopy(historical))
++
++    def history_item(publication_id, revision_id, previous=None):
++        return {
++            'publication_id': publication_id,
++            'revision_id': revision_id,
++            'previous': previous,
++            'receipt': {'created_at': f'{publication_id}-time'},
++            'intent': 'recorded',
++            'records': {},
++            'provider_version': 'astrid-v1',
++            'compiler_version': 'compiler-v1',
++            'publisher': 'actor-1',
++        }
++
++    pages = {
++        None: {
++            'items': [history_item('pub-1', 'old-revision')],
++            'next_cursor': 'page-2',
++            'head': {'revision_id': 'retained-revision', 'publication_id': 'pub-2'},
++        },
++        'page-2': {
++            'items': [history_item(
++                'pub-2', 'retained-revision',
++                {'publication_id': 'pub-1', 'revision_id': 'old-revision'},
++            )],
++            'next_cursor': None,
++            'head': {'revision_id': 'retained-revision', 'publication_id': 'pub-2'},
++        },
++    }
++    calls = []
++
++    class Timelines:
++        def list_timeline_commits(self, project, timeline, *, cursor=None, limit=50):
++            calls.append((project, timeline, cursor, limit))
++            return pages[cursor]
++
++    opened = []
++
++    def open_retained(cls, project, timeline, *, revision_id=None, client=None):
++        opened.append((project, timeline, revision_id, client))
++        return retained
++
++    monkeypatch.setattr(Checkout, 'open', classmethod(open_retained))
++    client = SimpleNamespace(timelines=Timelines())
++    assert find_version(draft, version, client=client) is retained
++    assert calls == [('p', 't', None, 50), ('p', 't', 'page-2', 50)]
++    assert opened == [('p', 't', 'retained-revision', client)]
+
+codex
+The focused neighboring lanes also pass: 57 passed across sheet behavior, journal separation, and checkout-history boundaries. No full or integration suite was requested; the actual Runtime integration neighbor remains explicitly unverified here. I’ve written the report, conventional commit message, and completion marker for the harness.
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/DONE && printf '"'DONE marker: ok\\n' && printf '%s\\n' '--- commit message ---' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-retained-sheet-pagination/commit-msg && printf '%s\\n' '--- worktree ---' && git status --short && git diff --check" in /home/user/work/wt/agt-m2-ag01-retained-sheet-pagination
+ succeeded in 316ms:
+DONE marker: ok
+--- commit message ---
+fix(timeline): follow retained history cursors for sheets
+
+Keep revision-reference history bounded while allowing authenticated sheet
+basis lookup to follow the verified Runtime cursor chain to its terminal page.
+Add a two-page regression fixture without introducing a new Runtime API or
+local accepted-history journal.
+--- worktree ---
+ M astrid/sdk/timeline/revisions.py
+ M astrid/sdk/timeline_sheet.py
+ M tests/sdk/test_timeline_checkout_history.py
+
+codex
+Implemented AG01 retained sheet-history pagination.
+
+Changes:
+- Added private verified cursor-chain traversal in `RuntimeRevisions`.
+- Updated `find_version()` to resolve bases beyond 100 accepted edges.
+- Added two-page page-2 regression coverage.
+- Preserved bounded revision refs, publication ancestry, refusal/malformed handling, and local journal/outbox separation.
+
+Tests:
+
+- `32 passed, 2 deselected`
+- `57 passed`
+- `git diff --check` passed
+
+No full/integration suite was run. Runtime integration remains unverified. Report, commit message, and `DONE` marker written.
+tokens used
+106,360
+Implemented AG01 retained sheet-history pagination.
+
+Changes:
+- Added private verified cursor-chain traversal in `RuntimeRevisions`.
+- Updated `find_version()` to resolve bases beyond 100 accepted edges.
+- Added two-page page-2 regression coverage.
+- Preserved bounded revision refs, publication ancestry, refusal/malformed handling, and local journal/outbox separation.
+
+Tests:
+
+- `32 passed, 2 deselected`
+- `57 passed`
+- `git diff --check` passed
+
+No full/integration suite was run. Runtime integration remains unverified. Report, commit message, and `DONE` marker written.

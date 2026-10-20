@@ -1,0 +1,9 @@
+name=agt-m2-selected-schema-proof
+repo=agent
+base=tl/agt-m2-param-basis-audit
+base_sha=e929efef
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-selected-schema-proof
+started=2026-10-20T00:25:28Z

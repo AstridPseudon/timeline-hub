@@ -1,0 +1,9 @@
+name=agt-m1-summary-fixture
+repo=agent
+base=tl/agt-m1-consumer-metadata
+base_sha=bcd851c2
+model=gpt-5.6-luna
+effort=xhigh
+heavy=0
+worktree=/home/user/work/wt/agt-m1-summary-fixture
+started=2026-10-19T21:16:28Z

@@ -1,0 +1,400 @@
++
++def test_shared_slot_move_inverse_redo_and_rematerialization(shared_editing):
++    from test_timeline_commit_integration import inverse
++
++    edit, index = shared_editing
++    original = edit.document()
++    baseline_history = copy.deepcopy(edit.history())
++    baseline_closures = [edit.document(entry["revision_id"]) for entry in baseline_history]
++    transcript = edit.service.get_document(edit.project, edit.film.fixture.transcript_document_id)
++    binding = edit.service.get_project_shot_text_binding(edit.project, edit.film.fixture.text_binding_id)
++    owner = f"occurrence:occurrence-{index}/clip:clip-{index}"
++    move = edit.agent.move(edit.agent.bundle(original), owner, 3.5)
++    first = edit.commit(edit.body([move]), "shared-first-move")
++    edit.assert_readback(first)
++    undone = edit.commit(edit.body([inverse(first["receipt"]["receipt_id"])]), "shared-undo")
++    assert undone["data"]["canonical_document"] == original
++    redone = edit.commit(edit.body([inverse(undone["receipt"]["receipt_id"])]), "shared-redo")
++    assert redone["data"]["canonical_document"] == first["data"]["canonical_document"]
++    undone_again = edit.commit(edit.body([inverse(redone["receipt"]["receipt_id"])]), "shared-undo-again")
++    assert undone_again["data"]["canonical_document"] == original
++    move = edit.agent.move(edit.agent.bundle(edit.document()), owner, 3.6)
++    rematerialized = edit.commit(edit.body([move]), "shared-rematerialize")
++    assert {s["shot_id"] for s in rematerialized["data"]["canonical_document"]["shot_revisions"]} == {
++        s["shot_id"] for s in first["data"]["canonical_document"]["shot_revisions"]}
++    for accepted in (first, undone, redone, undone_again, rematerialized):
++        edit.assert_readback(accepted)
++        for sibling in [*(f"occurrence-{n}" for n in range(1, 4) if n != index), "repeated-third"]:
++            assert occurrence_image(accepted["data"]["canonical_document"], sibling) == occurrence_image(original, sibling)
++    history = edit.history()
++    assert history[:len(baseline_history)] == baseline_history
++    assert [edit.document(entry["revision_id"]) for entry in baseline_history] == baseline_closures
++    accepted_results = (first, undone, redone, undone_again, rematerialized)
++    assert len(history) == len(baseline_history) + len(accepted_results)
++    for entry, accepted in zip(history[len(baseline_history):], accepted_results):
++        assert entry["receipt"] == accepted["receipt"]
++        assert entry["revision_id"] == accepted["data"]["accepted_revision_id"]
++        assert edit.document(entry["revision_id"]) == accepted["data"]["canonical_document"]
++    assert edit.service.get_document(edit.project, edit.film.fixture.transcript_document_id) == transcript
++    assert edit.service.get_project_shot_text_binding(edit.project, edit.film.fixture.text_binding_id) == binding
++
++
++def test_shared_inverse_preserves_newer_disjoint_parent_edit(shared_editing):
++    from test_timeline_commit_integration import inverse
++
++    edit, index = shared_editing
++    original = edit.document()
++    owner = f"occurrence:occurrence-{index}/clip:clip-{index}"
++    moved = edit.commit(edit.body([edit.agent.move(edit.agent.bundle(original), owner, 3.5)]), "shared-move")
++    parent_move = edit.agent.move(edit.agent.bundle(edit.document()), "parent/clip:music-bed", 1)
++    disjoint = edit.commit(edit.body([parent_move]), "disjoint-parent-move")
++    before = copy.deepcopy(edit.history())
++    undone = edit.commit(edit.body([inverse(moved["receipt"]["receipt_id"])]), "shared-disjoint-undo")
++    document = undone["data"]["canonical_document"]
++    expected_parent = copy.deepcopy(disjoint["data"]["canonical_document"]["parent_revision"]["payload"])
++    expected_parent["occurrences"] = original["parent_revision"]["payload"]["occurrences"]
++    assert document["parent_revision"]["payload"] == expected_parent
++    for key in ("shot_revisions", "internal_timeline_revisions", "dependency_manifest"):
++        assert document[key] == original[key]
++    assert edit.history()[:-1] == before
++    for accepted in (moved, disjoint, undone):
++        edit.assert_readback(accepted)
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-shared-image-inverse-bundle1-runtime6be9706-integration-1020011127-6469/status && git status --short && git diff --check' in /home/user/work/wt/agt-m2-shared-image-inverse
+ succeeded in 0ms:
+running
+?? tests/editing_conformance/test_commit_runtime_shared_inverse.py
+
+ succeeded in 60065ms:
+test agt-m2-shared-image-inverse-bundle1-runtime6be9706-integration-1020011127-6469: pass exit=0 in 76s — bundle1-runtime6be9706-integration on agt-m2-shared-image-inverse (agent tree 0f63cef131e016981a92c28c244c26787e91f283)
+cmd: test "$(git -C /home/user/work/wt/rt-m2-track-public-export rev-parse HEAD)" = 6be970633cc82ab412428151e6bf42f3e7fc3081 && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/stage1/test_runtime_client_cutover.py tests/editing_conformance/test_commit_runtime_shared_inverse.py
+counts: 52 passed in 70.29s (0:01:10) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-shared-image-inverse-bundle1-runtime6be9706-integration-1020011127-6469/log.txt ---
+....................................................                     [100%]
+52 passed in 70.29s (0:01:10)
+
+exec
+/bin/bash -lc 'tail -10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-shared-image-inverse-bundle1-runtime6be9706-integration-1020011127-6469/log.txt && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-shared-image-inverse-bundle1-runtime6be9706-integration-1020011127-6469/snap' in /home/user/work/wt/agt-m2-shared-image-inverse
+ succeeded in 0ms:
+....................................................                     [100%]
+52 passed in 70.29s (0:01:10)
+tree=0f63cef131e016981a92c28c244c26787e91f283
+key=762c751f30b0b29717c596040322bab4
+worktree=/home/user/work/wt/agt-m2-shared-image-inverse
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-shared-image-inverse-bundle1-runtime6be9706-integration-1020011127-6469 1' in /home/user/work/wt/agt-m2-shared-image-inverse
+ succeeded in 0ms:
+test agt-m2-shared-image-inverse-bundle1-runtime6be9706-integration-1020011127-6469: pass exit=0 in 76s — bundle1-runtime6be9706-integration on agt-m2-shared-image-inverse (agent tree 0f63cef131e016981a92c28c244c26787e91f283)
+cmd: test "$(git -C /home/user/work/wt/rt-m2-track-public-export rev-parse HEAD)" = 6be970633cc82ab412428151e6bf42f3e7fc3081 && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_track_label.py tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/stage1/test_runtime_client_cutover.py tests/editing_conformance/test_commit_runtime_shared_inverse.py
+counts: 52 passed in 70.29s (0:01:10) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-shared-image-inverse-bundle1-runtime6be9706-integration-1020011127-6469/log.txt ---
+....................................................                     [100%]
+52 passed in 70.29s (0:01:10)
+
+codex
+The central paired run passed: **52 tests**, covering M1, client cutover, parent labels, occupancy/retry/restore, provider behavior, and the new shared-source cases. I’m recording the results and commit messages for the harness.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..7f7d0f5e9dfeb52622cb07bade8133c5c53b9cfd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/commit-msg
+@@ -0,0 +1,9 @@
++test(timeline): prove exact shared-source inverse roundtrips
++
++Exercise real Runtime acceptance for shared-source move, inverse, redo,
++second undo and rematerialization. Assert complete immutable closure and
++history parity, opaque/text/media preservation, stable private slots and
++survival of newer disjoint parent edits.
++
++The existing historical image reuse already fixes the M1 regression;
++retain the current product behavior and occupancy guards unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..7f7d0f5e9dfeb52622cb07bade8133c5c53b9cfd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/commit-msg.txt
+@@ -0,0 +1,9 @@
++test(timeline): prove exact shared-source inverse roundtrips
++
++Exercise real Runtime acceptance for shared-source move, inverse, redo,
++second undo and rematerialization. Assert complete immutable closure and
++history parity, opaque/text/media preservation, stable private slots and
++survival of newer disjoint parent edits.
++
++The existing historical image reuse already fixes the M1 regression;
++retain the current product behavior and occupancy guards unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..073e0acba5614664eefd8c351b3ee5880618a37b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/notes/report.md
+@@ -0,0 +1,87 @@
++# Exact shared-source inverse regression
++
++## Result
++
++Test-only closure on Agent base `1b52391e`; no product fix needed. The historical immutable-image reuse already composed in `84db8bde` handles the reported regression. No Runtime-owned file, schema, client pin, golden, integration checkout, or git ref was changed.
++
++Added `tests/editing_conformance/test_commit_runtime_shared_inverse.py`: four permanent actual-provider cases, using Runtime's API-built film fixture and real `clip.move`/`timeline.inverse` acceptance. The original case repeats `occurrence-3`'s existing source. A second fixture repeats the text-bound first occurrence and includes opaque parent/shot/clip JSON, copied item identities, media, and a child source window.
++
++Both fixtures prove full canonical-document equality on undo, exact first-publication equality on redo, another exact undo, stable private slot IDs on rematerialization, and untouched siblings. Every accepted result is read back from immutable history, including child images, receipt/result parity, unchanged baseline history and closures, and unchanged transcript document/text binding. Separate cases prove a newer disjoint parent move survives undo. Scene evaluation is disabled after legacy fixture setup.
++
++## Classification
++
++Before adding rich fixture coverage, ran the original one-case regression on this candidate against Runtime `6be9706` and `9f9b25c`: **1 passed** on each. Exported qualified M1 `fc324e83` with `git archive` to a temporary directory, copied in that same test, and ran it against Runtime `9f9b25c`: **1 failed** at the full canonical-document undo equality assertion. The diff includes shot revisions, child revisions, parent revision, and the canonical dependency manifest. This is a real immutable-source roundtrip failure on M1, not merely an unreferenced mutable/cache row; canonical verification forbids orphan images. The current candidate fixes that behavior without further product changes.
++
++Exact M1 reproduction command (executed while the added test contained only the original one-case fixture; the temporary export was automatically removed):
++
++```sh
++env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
++import io
++import os
++from pathlib import Path
++import subprocess
++import tarfile
++import tempfile
++root = Path.cwd()
++with tempfile.TemporaryDirectory(prefix='m1-shared-inverse-', dir='/tmp') as directory:
++    base = Path(directory)
++    archive = subprocess.run(['git', 'archive', 'fc324e83'], check=True, capture_output=True)
++    with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as source:
++        source.extractall(base, filter='data')
++    test = Path('tests/editing_conformance/test_commit_runtime_shared_inverse.py')
++    (base / test).write_bytes((root / test).read_bytes())
++    result = subprocess.run(['/home/user/work/venv-agent/bin/python', '-m', 'pytest', '-q', '-m', 'integration', str(test), '--tb=short'], cwd=base,
++                            env={**os.environ, 'PYTHONPATH': str(base), 'ASTRID_RUNTIME_CHECKOUT': '/home/user/work/runtime'})
++    raise SystemExit(result.returncode)
++PY
++```
++
++**1 failed in 1.21s**, exit 1, as expected for the qualified M1 base. The current candidate's corresponding initial one-case commands used `env ASTRID_RUNTIME_CHECKOUT=<Runtime path> PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_shared_inverse.py --tb=short`: **1 passed in 3.44s** with `/home/user/work/wt/rt-m2-track-public-export`, **1 passed in 2.00s** with `/home/user/work/runtime`.
++
++## Commands and results
++
++Executed from `/home/user/work/wt/agt-m2-shared-image-inverse`, unless stated otherwise:
++
++```sh
++env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-track-public-export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py --tb=short
++```
++
++**9 passed in 7.17s** against frozen Runtime `6be970633cc82ab412428151e6bf42f3e7fc3081`. Includes occupied destinations in both projects, restart/exact retry, subsequent own move, verified historical restore and rematerialization, provider reservation/restore inverse regressions, and the four new cases.
++
++```sh
++env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_identity.py --tb=short
++```
++
++**7 passed in 6.49s** against Runtime `9f9b25c`, preserving its normal M1 occupancy guard.
++
++```sh
++env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_commit_provider_scalar.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_internal_stages.py tests/editing_conformance/test_recipe_m1_commands.py --tb=short
++```
++
++**356 passed in 22.71s**. Includes document conversion, root stages, source-bound aliases, same-value/ABA and later-dependent refusal, disjoint edits, and opaque sibling preservation.
++
++```sh
++/home/user/work/venv-agent/bin/python -m ruff check tests/editing_conformance/test_commit_runtime_shared_inverse.py
++git diff --check
++```
++
++Both passed.
++
++Central paired M1 request (only named/targeted suites; no full suite requested):
++
++```sh
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-shared-image-inverse bundle1-runtime6be9706-integration --files tests/editing_conformance/test_commit_runtime_shared_inverse.py
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-shared-image-inverse-bundle1-runtime6be9706-integration-1020011127-6469 1
++```
++
++**52 passed in 70.29s**, service exit 0, source tree `0f63cef131e016981a92c28c244c26787e91f283`. The named suite ran M1, parent-label, identity, provider Runtime and client-cutover tests plus the new regression file. Full service summary/log: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-shared-image-inverse-bundle1-runtime6be9706-integration-1020011127-6469/`.
++
++## Decisions, limits, and next steps
++
++Kept the change test-only because the exact executable failure is already fixed by the candidate. Selected the existing frozen Runtime `6be9706` pair for the socket/client lane to match the vendored 0.2.2 contract; also verified direct acceptance with normal M1 Runtime `9f9b25c`. No new physical-birth facts, reference schema, source-pin stripping, parent replacement, or pruning was introduced.
++
++The legacy film's canonical document-pin list is empty; the new real-provider cases compare that list exactly and separately read back the actual transcript document/binding. Existing document-converter tests cover retained nonempty document pins. No claim is made about additional nonempty document-pin admission in this regression fixture. Full suites, `make check`, browser lanes, installs, and networking were not run by this worker.
++
++No remaining blocker for this test-only change. Both `commit-msg` and `commit-msg.txt` were written in the worker root for the harness; no commit was made by the worker.
++
++After review, the orchestrator can integrate this proof with the already-reviewed foundation and ask the Runtime owner to reclassify/remove its strict expected failure on the matching Agent candidate. That Runtime-owned test was deliberately left untouched. Physical-birth carrier work remains separate.
+diff --git a/tests/editing_conformance/test_commit_runtime_shared_inverse.py b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..9fe2f3951cad4118ec8d930ce9927be365f69d33
+--- /dev/null
++++ b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
+@@ -0,0 +1,136 @@
++"""Exact shared-source inverses through the real Runtime commit provider."""
++from __future__ import annotations
++
++import copy
++from types import SimpleNamespace
++
++import pytest
++
++from tests.editing_conformance.test_commit_runtime_identity import occurrence_image
++from tests.helpers.runtime import use_runtime
++
++pytestmark = pytest.mark.integration
++
++
++@pytest.fixture(params=[3, 1], ids=["original-third", "authored-first"])
++def shared_editing(request, tmp_path, monkeypatch):
++    runtime = use_runtime()
++    monkeypatch.syspath_prepend(str(runtime / "tests"))
++    from runtime_protocol.service import RuntimeService
++    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
++    from test_timeline_commit_integration import Editing
++    from timeline_commit_film_fixture import build_film_fixture
++
++    from astrid.sdk.timeline.capture import capture_move
++    from astrid.sdk.timeline.commit import bundle_from_document
++
++    fixture = build_film_fixture(tmp_path)
++    service = RuntimeService(fixture.duplicate_root)
++    edit = Editing(service, SimpleNamespace(fixture=fixture),
++                   SimpleNamespace(move=capture_move, bundle=bundle_from_document))
++    try:
++        original = edit.document()
++        parent = copy.deepcopy(original["parent_revision"]["payload"])
++        index = request.param
++        children = {}
++        if index == 1:
++            _, shot, internal = copy.deepcopy(occurrence_image(original, "occurrence-1"))
++            shot.update(revision_id="authored-shot", internal_timeline_revision_id="authored-internal")
++            shot["payload"].update(unknown={"literal": [None, False, 0, {}, []]}, items=[{
++                "item_id": "shared-source-item", "media_id": fixture.media_ids[0],
++                "metadata": {"literal": "shared-source-item", "keep": [None, False]},
++            }])
++            internal["revision_id"] = "authored-internal"
++            internal["payload"].update(source_window={"start": 4, "end": 9},
++                                       unknown={"literal": [None, False, 0, {}, []]})
++            internal["payload"]["clips"][0]["extension"] = {"literal": "shared-source-item", "clear": None}
++            for image in (shot, internal):
++                image.pop("content_digest")
++            parent["occurrences"][0]["shot_revision_id"] = shot["revision_id"]
++            for ordinal, occurrence in enumerate(parent["occurrences"][1:]):
++                occurrence["placement"]["start_ms"] = 8000 + ordinal * 2000
++            parent["unknown"] = {"literal": [None, False, 0, {}, []]}
++            children = {"shot_revisions": [shot], "internal_timeline_revisions": [internal]}
++        repeated = copy.deepcopy(parent["occurrences"][index - 1])
++        repeated.update(occurrence_id="repeated-third",
++                        placement={"start_ms": 13000 if index == 1 else 6000, "track": "picture"})
++        parent["occurrences"].append(repeated)
++        service.publish_parent_composition(edit.project, edit.timeline, {
++            "project_id": edit.project, "timeline_id": edit.timeline,
++            "expected_head": fixture.parent_revision_id,
++            "parent_revision_id": "shared-inverse-baseline", "parent_composition": parent, **children,
++        }, idempotency_key="shared-inverse-baseline")
++
++        def unavailable(*args, **kwargs):
++            raise AssertionError("save evaluated a scene")
++
++        import runtime_protocol.service as service_module
++        import runtime_protocol.visual_seam as visual_seam
++        monkeypatch.setattr(service_module, "evaluate_closure", unavailable)
++        monkeypatch.setattr(visual_seam, "evaluate_closure", unavailable)
++        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
++        yield edit, index
++    finally:
++        edit.service.close()
++
++
++def test_shared_slot_move_inverse_redo_and_rematerialization(shared_editing):
++    from test_timeline_commit_integration import inverse
++
++    edit, index = shared_editing
++    original = edit.document()
++    baseline_history = copy.deepcopy(edit.history())
++    baseline_closures = [edit.document(entry["revision_id"]) for entry in baseline_history]
++    transcript = edit.service.get_document(edit.project, edit.film.fixture.transcript_document_id)
++    binding = edit.service.get_project_shot_text_binding(edit.project, edit.film.fixture.text_binding_id)
++    owner = f"occurrence:occurrence-{index}/clip:clip-{index}"
++    move = edit.agent.move(edit.agent.bundle(original), owner, 3.5)
++    first = edit.commit(edit.body([move]), "shared-first-move")
++    edit.assert_readback(first)
++    undone = edit.commit(edit.body([inverse(first["receipt"]["receipt_id"])]), "shared-undo")
++    assert undone["data"]["canonical_document"] == original
++    redone = edit.commit(edit.body([inverse(undone["receipt"]["receipt_id"])]), "shared-redo")
++    assert redone["data"]["canonical_document"] == first["data"]["canonical_document"]
++    undone_again = edit.commit(edit.body([inverse(redone["receipt"]["receipt_id"])]), "shared-undo-again")
++    assert undone_again["data"]["canonical_document"] == original
++    move = edit.agent.move(edit.agent.bundle(edit.document()), owner, 3.6)
++    rematerialized = edit.commit(edit.body([move]), "shared-rematerialize")
++    assert {s["shot_id"] for s in rematerialized["data"]["canonical_document"]["shot_revisions"]} == {
++        s["shot_id"] for s in first["data"]["canonical_document"]["shot_revisions"]}
++    for accepted in (first, undone, redone, undone_again, rematerialized):
++        edit.assert_readback(accepted)
++        for sibling in [*(f"occurrence-{n}" for n in range(1, 4) if n != index), "repeated-third"]:
++            assert occurrence_image(accepted["data"]["canonical_document"], sibling) == occurrence_image(original, sibling)
++    history = edit.history()
++    assert history[:len(baseline_history)] == baseline_history
++    assert [edit.document(entry["revision_id"]) for entry in baseline_history] == baseline_closures
++    accepted_results = (first, undone, redone, undone_again, rematerialized)
++    assert len(history) == len(baseline_history) + len(accepted_results)
++    for entry, accepted in zip(history[len(baseline_history):], accepted_results):
++        assert entry["receipt"] == accepted["receipt"]
++        assert entry["revision_id"] == accepted["data"]["accepted_revision_id"]
++        assert edit.document(entry["revision_id"]) == accepted["data"]["canonical_document"]
++    assert edit.service.get_document(edit.project, edit.film.fixture.transcript_document_id) == transcript
++    assert edit.service.get_project_shot_text_binding(edit.project, edit.film.fixture.text_binding_id) == binding
++
++
++def test_shared_inverse_preserves_newer_disjoint_parent_edit(shared_editing):
++    from test_timeline_commit_integration import inverse
++
++    edit, index = shared_editing
++    original = edit.document()
++    owner = f"occurrence:occurrence-{index}/clip:clip-{index}"
++    moved = edit.commit(edit.body([edit.agent.move(edit.agent.bundle(original), owner, 3.5)]), "shared-move")
++    parent_move = edit.agent.move(edit.agent.bundle(edit.document()), "parent/clip:music-bed", 1)
++    disjoint = edit.commit(edit.body([parent_move]), "disjoint-parent-move")
++    before = copy.deepcopy(edit.history())
++    undone = edit.commit(edit.body([inverse(moved["receipt"]["receipt_id"])]), "shared-disjoint-undo")
++    document = undone["data"]["canonical_document"]
++    expected_parent = copy.deepcopy(disjoint["data"]["canonical_document"]["parent_revision"]["payload"])
++    expected_parent["occurrences"] = original["parent_revision"]["payload"]["occurrences"]
++    assert document["parent_revision"]["payload"] == expected_parent
++    for key in ("shot_revisions", "internal_timeline_revisions", "dependency_manifest"):
++        assert document[key] == original[key]
++    assert edit.history()[:-1] == before
++    for accepted in (moved, disjoint, undone):
++        edit.assert_readback(accepted)
+
+exec
+/bin/bash -lc "rg -n 'cache_dir|addopts' pyproject.toml && ls -d .pytest_cache 2>/dev/null && cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/commit-msg.txt" in /home/user/work/wt/agt-m2-shared-image-inverse
+ succeeded in 0ms:
+264:addopts = "-m 'not integration and not darwin_native and not live and not opt_in'"
+.pytest_cache
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+for name in ('.pytest_cache', '.ruff_cache'):
+    path = Path(name)
+    if path.is_dir():
+        shutil.rmtree(path)
+PY
+ git diff --check
+ git status --short" in /home/user/work/wt/agt-m2-shared-image-inverse
+ succeeded in 0ms:
+?? tests/editing_conformance/test_commit_runtime_shared_inverse.py
+
+codex
+Added four permanent real-provider regression cases. The existing candidate fix already restores exact shared-source closures; qualified M1 reproduces the failure. No product changes needed.
+
+Validation: **356 targeted tests**, **9 Runtime 6be tests**, **7 Runtime 9f tests**, and **52 central paired M1 tests** passed. Ruff and diff checks passed; no full suite run.
+
+Exact commands, limitations, and next steps are in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/notes/report.md). Both commit-message files are written. No blockers. Recommend Runtime-owner review of its existing strict xfail against this candidate.
+tokens used
+135,333
+Added four permanent real-provider regression cases. The existing candidate fix already restores exact shared-source closures; qualified M1 reproduces the failure. No product changes needed.
+
+Validation: **356 targeted tests**, **9 Runtime 6be tests**, **7 Runtime 9f tests**, and **52 central paired M1 tests** passed. Ruff and diff checks passed; no full suite run.
+
+Exact commands, limitations, and next steps are in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-shared-image-inverse/notes/report.md). Both commit-message files are written. No blockers. Recommend Runtime-owner review of its existing strict xfail against this candidate.

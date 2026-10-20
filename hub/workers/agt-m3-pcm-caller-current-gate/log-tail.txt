@@ -1,0 +1,400 @@
+printf '"'%s\\n' \""'$R"
+$ORCH/bin/wait-test "$R"' in /home/user/work/wt/agt-m3-pcm-caller-current-gate
+codex
+The approved lint scope passes. A broader lint invocation also surfaced unrelated pre-existing `run.py` findings (unused imports, existing `__all__` issue, and import ordering); I’m not changing those because the task requires the exact reviewed patch. The central live-HTTP run is queued now; I’m waiting for its result.
+ exited 1 in 30056ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-pcm-caller-current-gate-targeted-1020111835-17751
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-pcm-caller-current-gate-targeted-1020111835-17751/
+test agt-m3-pcm-caller-current-gate-targeted-1020111835-17751: fail exit=1 in 22s — targeted on agt-m3-pcm-caller-current-gate (agent tree 77a336f97e27acc2f4962bed518695cb69d1707d)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_normal_audio_http.py
+counts: 19 failed, 3 passed in 18.24s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-pcm-caller-current-gate-targeted-1020111835-17751/log.txt ---
+            )
+            if result.returncode:
+>               raise RuntimeError(result.stderr.strip() or "audio PCM preparation unavailable")
+E               RuntimeError: node:internal/modules/package_json_reader:314
+E                 throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+E                       ^
+E               
+E               Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@banodoco/timeline-composition' imported from /home/user/work/wt/.test-agt-m3-pcm-caller-current-gate-targeted-1020111835-17751/remotion/normal-audio-sources.mjs
+E                   at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)
+E                   at packageResolve (node:internal/modules/esm/resolve:767:81)
+E                   at moduleResolve (node:internal/modules/esm/resolve:853:18)
+E                   at defaultResolve (node:internal/modules/esm/resolve:983:11)
+E                   at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)
+E                   at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)
+E                   at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)
+E                   at ModuleJob._link (node:internal/modules/esm/module_job:182:49) {
+E                 code: 'ERR_MODULE_NOT_FOUND'
+E               }
+E               
+E               Node.js v22.22.0
+
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:109: RuntimeError
+
+During handling of the above exception, another exception occurred:
+
+normal_run = namespace(events=['server-enter', 'server-exit'], props_runs=[], consumed_urls=[], prepared_paths=[], servers=[<astrid...ytest-2062/test_actual_normal_http_native2/managed'), execute=<function _build_run.<locals>.execute at 0x7fa9c65ca980>)
+
+    def test_actual_normal_http_native_error_never_consumes_or_leaks(normal_run):
+        raw = json.loads(normal_run.timeline_path.read_text())
+        raw["clips"][0]["params"]["fadeInCurve"] = "unknown-curve"
+        try:
+            normal_run.timeline_path.write_text(json.dumps(raw))
+>           with pytest.raises(RuntimeError, match="ENVELOPE_UNRENDERED|unknown"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'ENVELOPE_UNRENDERED|unknown'
+E             Actual message: "node:internal/modules/package_json_reader:314\n  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);\n        ^\n\nError [ERR_MODULE_NOT_FOUND]: Cannot find package '@banodoco/timeline-composition' imported from /home/user/work/wt/.test-agt-m3-pcm-caller-current-gate-targeted-1020111835-17751/remotion/normal-audio-sources.mjs\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)\n    at packageResolve (node:internal/modules/esm/resolve:767:81)\n    at moduleResolve (node:internal/modules/esm/resolve:853:18)\n    at defaultResolve (node:internal/modules/esm/resolve:983:11)\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)\n    at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)\n    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)\n    at ModuleJob._link (node:internal/modules/esm/module_job:182:49) {\n  code: 'ERR_MODULE_NOT_FOUND'\n}\n\nNode.js v22.22.0"
+
+tests/packs/rendering/test_normal_audio_http.py:454: AssertionError
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_wav_is_consumed_with_live_server[full]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_wav_is_consumed_with_live_server[window]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_wav_is_consumed_with_live_server[layer]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_cleanup_after_encoder_failure[full-error]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_cleanup_after_encoder_failure[full-cancel]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_cleanup_after_encoder_failure[full-timeout]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_cleanup_after_encoder_failure[window-error]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_cleanup_after_encoder_failure[window-cancel]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_cleanup_after_encoder_failure[window-timeout]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_cleanup_after_encoder_failure[layer-error]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_cleanup_after_encoder_failure[layer-cancel]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_cleanup_after_encoder_failure[layer-timeout]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_retry_reopens_server_and_cleans_each_attempt[full]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_retry_reopens_server_and_cleans_each_attempt[window]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_retry_reopens_server_and_cleans_each_attempt[layer]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_reused_materialized_root_survives_cleanup
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_native_error_never_consumes_or_leaks[full]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_native_error_never_consumes_or_leaks[window]
+FAILED tests/packs/rendering/test_normal_audio_http.py::test_actual_normal_http_native_error_never_consumes_or_leaks[layer]
+19 failed, 3 passed in 18.24s
+
+codex
+The central run failed before exercising the caller because its snapshot has no `remotion/node_modules`; Node used the service’s default v22 and could not resolve the pinned Composition package. The approved evidence used a private wrapper for exactly this constraint, so I’m adding a temporary wrapper that recreates that private helper graph and will remove it after the corrected central run.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m3-pcm-caller-current-gate/tests/packs/rendering/test_normal_audio_http_central_wrapper.py
+diff --git a/tests/packs/rendering/test_normal_audio_http_central_wrapper.py b/tests/packs/rendering/test_normal_audio_http_central_wrapper.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e221469846378b46a7400ed7c2eff22ec7169425
+--- /dev/null
++++ b/tests/packs/rendering/test_normal_audio_http_central_wrapper.py
+@@ -0,0 +1,87 @@
++"""Run the normal-audio HTTP lane with a private Remotion helper graph."""
++
++from __future__ import annotations
++
++import os
++import shutil
++import subprocess
++import sys
++import tempfile
++from pathlib import Path
++
++import pytest
++
++
++def test_normal_audio_http_with_private_remotion_graph() -> None:
++    source = Path(__file__).resolve().parents[3]
++    private = Path(tempfile.mkdtemp(prefix="normal-audio-http-central-"))
++    try:
++        project = private / "remotion"
++        project.mkdir()
++        for name in (
++            "normal-audio-sources.mjs",
++            "attempt-envelope-pcm.mjs",
++            "compiled-audio-source-clock.mjs",
++        ):
++            shutil.copy2(source / "remotion" / name, project / name)
++        (project / "node_modules").symlink_to(
++            "/home/user/work/runtimes/agent-remotion-0012/node_modules",
++            target_is_directory=True,
++        )
++        environment = os.environ.copy()
++        for name in (
++            "NODE_OPTIONS",
++            "NODE_PATH",
++            "PYTHONPYCACHEPREFIX",
++            "PYTHONUSERBASE",
++            "PYTHONNOUSERSITE",
++            "PYTHONSAFEPATH",
++            "PYTHONPLATLIBDIR",
++            "PYTHONCASEOK",
++            "PYTHONUTF8",
++            "PYTHONCOERCECLOCALE",
++            "PYTHONSTARTUP",
++            "PYTHONEXECUTABLE",
++            "__PYVENV_LAUNCHER__",
++            "PYTHONHOME",
++            "NODE_ICU_DATA",
++            "OPENSSL_CONF",
++        ):
++            environment.pop(name, None)
++        node = "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin"
++        environment.update(
++            {
++                "ASTRID_NODE_EXECUTABLE": f"{node}/node",
++                "ASTRID_REMOTION_PROJECT_DIR": str(project),
++                "ASTRID_TEST_NODE_MODULES": str(project / "node_modules"),
++                "ASTRID_COMPOSITION_TEST_NODE_MODULES": str(project / "node_modules"),
++                "PATH": f"{node}{os.pathsep}{environment['PATH']}",
++                "PYTHONDONTWRITEBYTECODE": "1",
++                "PYTHONPATH": str(source),
++            }
++        )
++        result = subprocess.run(
++            [
++                sys.executable,
++                "-B",
++                "-m",
++                "pytest",
++                "-q",
++                "-o",
++                "addopts=",
++                "-p",
++                "no:cacheprovider",
++                "--tb=short",
++                f"--basetemp={private / 'pytest-temp'}",
++                "tests/packs/rendering/test_normal_audio_http.py",
++            ],
++            cwd=source,
++            env=environment,
++            capture_output=True,
++            text=True,
++            check=False,
++        )
++        if result.returncode:
++            pytest.fail((result.stdout + result.stderr)[-12000:])
++    finally:
++        shutil.rmtree(private, ignore_errors=True)
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check --no-cache tests/packs/rendering/test_normal_audio_http_central_wrapper.py
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+R=$($ORCH/bin/request-test agt-m3-pcm-caller-current-gate targeted --files "tests/packs/rendering/test_normal_audio_http_central_wrapper.py")
+printf '"'%s\\n' \""'$R"
+$ORCH/bin/wait-test "$R"' in /home/user/work/wt/agt-m3-pcm-caller-current-gate
+ succeeded in 60196ms:
+All checks passed!
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-pcm-caller-current-gate-targeted-1020111926-16237
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-pcm-caller-current-gate-targeted-1020111926-16237/
+test agt-m3-pcm-caller-current-gate-targeted-1020111926-16237: pass exit=0 in 37s — targeted on agt-m3-pcm-caller-current-gate (agent tree 21ce6c98540c5d7574ba2147e7ab6efe7d5a69d0)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_normal_audio_http_central_wrapper.py
+counts: 1 passed in 34.50s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-pcm-caller-current-gate-targeted-1020111926-16237/log.txt ---
+.                                                                        [100%]
+1 passed in 34.50s
+
+codex
+The corrected central wrapper run passed: 1 wrapper test, which executes the full 22-case `test_normal_audio_http.py` lane, in 34.50s. I’m removing that temporary wrapper now, checking the final four-file diff/status, and then writing the required report, commit message, and `DONE` marker.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m3-pcm-caller-current-gate/tests/packs/rendering/test_normal_audio_http_central_wrapper.py
+exec
+/bin/bash -lc "set -eu
+printf '%s\\n' '--- status ---'
+git status --short
+printf '%s\\n' '--- tracked diff names ---'
+git diff --name-only
+printf '%s\\n' '--- untracked test files ---'
+git status --short | awk '"'$1 == "??" {print $2}'"'
+printf '%s\\n' '--- diff check ---'
+git diff --check
+printf '%s\\n' '--- source byte matches ---'
+for path in \\
+  astrid/packs/rendering/rendering/renderers/remotion/run.py \\
+  astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py \\
+  tests/packs/rendering/test_normal_audio_run.py \\
+  tests/packs/rendering/test_normal_audio_http.py; do
+  git -C /home/user/peteromallet/astrid-agent show b6ec4922abebe0672cb7115f073c1ab555870fa1:\""'$path" | cmp -s - "$path"
+  printf '"'MATCH %s\\n' \""'$path"
+done
+printf '"'%s\\n' '--- patch hash ---'
+sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-caller-only.patch
+printf '%s\\n' '--- temp graph leftovers ---'
+find /tmp -maxdepth 1 -type d -name 'agt-m3-pcm-caller-current-gate.*' -print" in /home/user/work/wt/agt-m3-pcm-caller-current-gate
+ succeeded in 219ms:
+--- status ---
+ M astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+ M astrid/packs/rendering/rendering/renderers/remotion/run.py
+?? tests/packs/rendering/test_normal_audio_http.py
+?? tests/packs/rendering/test_normal_audio_run.py
+--- tracked diff names ---
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+astrid/packs/rendering/rendering/renderers/remotion/run.py
+--- untracked test files ---
+tests/packs/rendering/test_normal_audio_http.py
+tests/packs/rendering/test_normal_audio_run.py
+--- diff check ---
+--- source byte matches ---
+MATCH astrid/packs/rendering/rendering/renderers/remotion/run.py
+MATCH astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+MATCH tests/packs/rendering/test_normal_audio_run.py
+MATCH tests/packs/rendering/test_normal_audio_http.py
+--- patch hash ---
+ebe571848275f7a7181a7e005cd3595ee8b6d254fcb114741e4f7f4710cf5397  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-caller-only.patch
+--- temp graph leftovers ---
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..bec57e43e9f15482775dcbaa7dccd71b470914e5
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/commit-msg
+@@ -0,0 +1,5 @@
++feat(rendering): activate normal PCM caller
++
++Prepare normal audio sources for the standard TimelineComposition caller using
++serialized native clocks and canonical rational frame rates, with focused caller
++and live HTTP coverage.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..fcea1a8d688bae2780f69335e0b13e38ce0bb80c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/notes/report.md
+@@ -0,0 +1,70 @@
++# Report: current normal PCM caller landing
++
++## Change
++
++Applied only `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-caller-only.patch` after reading the owner approval. Verified SHA-256:
++
++```text
++ebe571848275f7a7181a7e005cd3595ee8b6d254fcb114741e4f7f4710cf5397
++```
++
++The four resulting files are byte-for-byte equal to commit `b6ec4922abebe0672cb7115f073c1ab555870fa1` in the frozen Agent repository:
++
++- `astrid/packs/rendering/rendering/renderers/remotion/run.py`
++- `astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py`
++- `tests/packs/rendering/test_normal_audio_run.py`
++- `tests/packs/rendering/test_normal_audio_http.py`
++
++The caller activates preparation only for non-frame-mode `TimelineComposition`, passes the canonical rational-fps value, retains the serialized native clocks, and keeps preparation inside the existing asset lifetime. No serializer, project/compiler, default-theme, source-certificate, capture, kernel, trim, or history changes were made.
++
++This records normal caller activation at the Agent/Remotion component boundary only. It makes no Runtime admission, encoder, MP4, Three.js PCM, Player/export parity, or owner-film claim.
++
++## Tests and checks
++
++All commands were run against this worktree with the shared venv read-only and a disposable private Remotion helper graph (copied helper files plus a symlink to the read-only 0.0.12 peer package tree). The private graph and pytest basetemp were removed.
++
++```sh
++env -u NODE_OPTIONS -u NODE_PATH -u PYTHONPYCACHEPREFIX \
++  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m3-pcm-caller-current-gate \
++  ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node \
++  ASTRID_REMOTION_PROJECT_DIR=<private-remotion-graph> \
++  ASTRID_TEST_NODE_MODULES=<private-remotion-graph>/node_modules \
++  ASTRID_COMPOSITION_TEST_NODE_MODULES=<private-remotion-graph>/node_modules \
++  PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:$PATH \
++  /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short \
++  --basetemp=<private>/pytest-temp-rerun \
++  tests/packs/rendering/test_normal_audio_run.py \
++  tests/packs/rendering/test_normal_audio_sources.py \
++  tests/packs/rendering/test_normal_audio_source_phase.py \
++  tests/packs/rendering/test_native_layer_extent.py \
++  tests/packs/rendering/test_remotion_native_window.py \
++  tests/packs/rendering/test_scene_source_carry.py
++```
++
++Result: `210 passed in 83.21s`.
++
++```sh
++/home/user/work/venv-agent/bin/ruff check --no-cache \
++  astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py \
++  tests/packs/rendering/test_normal_audio_run.py \
++  tests/packs/rendering/test_normal_audio_http.py
++```
++
++Result: `All checks passed!`
++
++The broader diagnostic including `run.py` reports existing unrelated findings in that file (unused imports, import ordering, and an existing undefined `render` export). I left them unchanged to preserve the exact approved flat patch.
++
++Central live-HTTP evidence:
++
++- First direct central request: setup failure, `19 failed, 3 passed`, because the snapshot has no `remotion/node_modules`; Node v22 could not resolve `@banodoco/timeline-composition`. This was an environment/setup failure before valid PCM assertions.
++- Corrected central request using a temporary wrapper/private helper graph: `1 passed in 34.50s`; the wrapper executed the complete `tests/packs/rendering/test_normal_audio_http.py` lane, covering its 22 parametrized HTTP cases. The wrapper was removed afterward.
++
++No full suite was requested or run. No shared dependency, runtime, venv, node_modules, branch, or ref was modified.
++
++## Deployment helper needs
++
++Normal audio preparation requires the managed `InvocationAssetServer`/asset materializer and the Remotion project helper files `normal-audio-sources.mjs`, `attempt-envelope-pcm.mjs`, and `compiled-audio-source-clock.mjs`. The helper imports `@banodoco/timeline-composition/evaluation`; deployment therefore needs the matching public 0.0.12 package graph and pinned Node 20.19.4. An audio-containing normal render with no managed asset server is intentionally refused.
++
++## Limitations / next step
++
++The worktree is ready for harness commit. Keep Runtime admission, actual encoder/MP4, and Player/export parity as separate gates. The final status contains only the two tracked source edits and the two approved added tests.
+
+exec
+/bin/bash -lc "set -eu
+REPORT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/notes/report.md
+MSG=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/commit-msg
+DONE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/DONE
+printf '%s\\n' '--- final worktree ---'
+git status --short
+printf '%s\\n' '--- commit message ---'
+sed -n '1,20p' \""'$MSG"
+printf '"'%s\\n' '--- report exists/lines ---'
+test -s \""'$REPORT" && wc -l "$REPORT"
+printf '"'%s\\n' '--- DONE bytes ---'
+wc -c \""'$DONE"
+printf '"'%s\\n' '--- no wrapper ---'
+test "'! -e tests/packs/rendering/test_normal_audio_http_central_wrapper.py' in /home/user/work/wt/agt-m3-pcm-caller-current-gate
+ succeeded in 55ms:
+--- final worktree ---
+ M astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+ M astrid/packs/rendering/rendering/renderers/remotion/run.py
+?? tests/packs/rendering/test_normal_audio_http.py
+?? tests/packs/rendering/test_normal_audio_run.py
+--- commit message ---
+feat(rendering): activate normal PCM caller
+
+Prepare normal audio sources for the standard TimelineComposition caller using
+serialized native clocks and canonical rational frame rates, with focused caller
+and live HTTP coverage.
+--- report exists/lines ---
+70 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/notes/report.md
+--- DONE bytes ---
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/DONE
+--- no wrapper ---
+
+codex
+Implemented the exact approved four-file caller patch (`ebe571…5397`) and verified all four files byte-match `b6ec4922a`.
+
+Tests:
+
+- Focused caller/neighbor suite: `210 passed`
+- Ruff approved scope: passed
+- Central HTTP lane: 22 cases passed via private helper wrapper
+- Broader `run.py` lint reports pre-existing unrelated findings; unchanged
+- No full suite run
+
+Deployment needs are documented: managed asset server, Remotion helper modules, public Composition 0.0.12 package graph, and Node 20.19.4.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/notes/report.md)
+
+Commit message and `DONE` marker written.
+tokens used
+107,004
+Implemented the exact approved four-file caller patch (`ebe571…5397`) and verified all four files byte-match `b6ec4922a`.
+
+Tests:
+
+- Focused caller/neighbor suite: `210 passed`
+- Ruff approved scope: passed
+- Central HTTP lane: 22 cases passed via private helper wrapper
+- Broader `run.py` lint reports pre-existing unrelated findings; unchanged
+- No full suite run
+
+Deployment needs are documented: managed asset server, Remotion helper modules, public Composition 0.0.12 package graph, and Node 20.19.4.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/notes/report.md)
+
+Commit message and `DONE` marker written.

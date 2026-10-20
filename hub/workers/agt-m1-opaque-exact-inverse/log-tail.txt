@@ -1,0 +1,400 @@
+            payload.pop("internal_timeline_revision_id", None)
+            old_payload.pop("internal_timeline_revision_id", None)
+            if not equal(payload, old_payload) or not equal(shot["internal_timeline"], old["internal_timeline"]):
+                continue
+            origin = historical["source_mapping"]["shots"][identity]
+            occurrence["shot_id"] = origin["shot_id"]
+            occurrence["shot_revision_id"] = origin["revision_id"]
+            break
+    shot_ids = {row["shot_revision_id"] for row in parent["occurrences"]}
+    shots = sorted((shot_index[key] for key in shot_ids),
+                   key=lambda row: (row["shot_id"], row["revision_id"]))
+    internal_ids = {row["internal_timeline_revision_id"] for row in shots}
+    internals = sorted((internal_index[key] for key in internal_ids),
+                       key=lambda row: (row["timeline_id"], row["revision_id"]))
+    documents = (source["dependency_manifest"]["documents"]
+                 if document_pins is None else document_pins)
+    # Retained inputs may include media consumed through a transcript or other
+    # immutable binding rather than a selected clip. Keep those existing pins.
+    media = {row["media_id"]: row for row in source["dependency_manifest"]["media"]}
+    media.update({row["media_id"]: row for row in publication["dependency_manifest"]["media"]})
+    manifest = _manifest(shots, internals, list(media.values()), documents)
+    digest = _digest(parent)
+    if (parent == source["parent_revision"]["payload"]
+            and manifest == source["dependency_manifest"]):
+        revision = source["parent_revision"]["revision_id"]
+    else:
+        revision = "authoring-parent-revision-" + _digest({
+            "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
+            "parent": parent, "manifest": manifest,
+        }).removeprefix("sha256:")
+    for historical in source_bundles:
+        prior = historical["source_mapping"]["_runtime_document"]
+        if equal(parent, prior["parent_revision"]["payload"]) and equal(manifest, prior["dependency_manifest"]):
+            revision = prior["parent_revision"]["revision_id"]
+            break
+    document = {
+        "schema_version": 1, "project_id": bundle["project_id"],
+        "timeline_id": bundle["timeline_id"],
+        "parent_revision": {"revision_id": revision, "content_digest": digest, "payload": parent},
+        "shot_revisions": shots, "internal_timeline_revisions": internals,
+        "dependency_manifest": manifest,
+    }
+    _verify_document(document)
+    return copy.deepcopy(document)
+
+
+def _failure(reason, message, base, current=None, *, conflicts=None):
+    return {
+        "http_status": 409, "code": "conflict", "message": message,
+        "details": {"status": "conflict" if conflicts else "refused", "reason": reason,
+                    "base": copy.deepcopy(base), "current": copy.deepcopy(current),
+                    "conflicts": conflicts or []},
+    }
+                                              base, current))
+            for call in calls:
+                if call["op"] == "timeline.inverse":
+                    for publication in call["args"]["publications"]:
+                        if publication not in undo_of:
+                            undo_of.append(publication)
+            inverse_records, inverse_intervening, inverse_sources = [], [], []
+            if undo_of:
+                targets = [port.history_entry(publication) for publication in undo_of]
+                segments = []
+                for target in targets:
+                    pin = {"revision_id": target["revision_id"],
+                           "publication_id": target["publication_id"]}
+                    # Loading the exact target also verifies source scope; no
+                    # client-provided inverse writes enter the core engine.
+                    _load(port, context, target["revision_id"])
+                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
+                    segments.append(segment)
+                # The longest segment begins at the earliest targeted edge.
+                ordered = max(segments, key=len)
+                if undo_of != [entry["publication_id"] for entry in ordered
+                               if entry["publication_id"] in undo_of]:
+                    raise CommitRejected(_failure("invalid_inverse_order",
+                                                  "inverse publications must be oldest to newest",
+                                                  base, current))
+                inverse_records = _records([entry for entry in ordered
+                                            if entry["publication_id"] in undo_of],
+                                           CommitRejected, base, current)
+                inverse_intervening = _records([entry for entry in ordered
+                                                if entry["publication_id"] not in undo_of],
+                                               CommitRejected, base, current)
+                for entry in ordered:
+                    if entry["publication_id"] not in undo_of:
+                        continue
+                    previous = entry.get("previous")
+                    _require(previous, "inverse input boundary is unavailable")
+                    prior = port.history_entry(previous["publication_id"])
+                    _require(prior["revision_id"] == previous["revision_id"],
+                             "inverse input boundary mismatch")
+                    pin = {key: entry[key] for key in ("revision_id", "publication_id")}
+                    _history(port, pin, previous, CommitRejected, base)
+                    inverse_sources.extend((_load(port, context, previous["revision_id"]),
+                                            _load(port, context, entry["revision_id"])))
+            closures, restored_from = {}, None
+            if restore:
+                from astrid.sdk.timeline.commands import validate_command
+                validate_command(calls[0])
+                restored_from = copy.deepcopy(calls[0]['args'])
+                source = _load(port, context, restored_from['revision_id'])
+                image = source['source_mapping']['_runtime_document']['parent_revision']
+                _require(image['content_digest'] == restored_from['content_digest'],
+                         "restore source digest mismatch")
+                closures[restored_from['revision_id']] = source
+            else:
+                # Only authenticated accepted writes can authorize an inverse
+                # closure replacement. Never accept a caller-supplied image.
+                for write in coalesce(inverse_records):
+135 tests/editing_conformance/test_commit_runtime_shared_inverse.py
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007/status; tail -15 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007/log.txt' in /home/user/work/wt/agt-m1-opaque-exact-inverse
+ succeeded in 25ms:
+running
+
+ succeeded in 36988ms:
+........................................................................ [ 38%]
+........................................................................ [ 77%]
+...........................................                              [100%]
+187 passed, 1 deselected in 35.99s
+
+exec
+/bin/bash -lc "rg -n '"'^@pytest.mark.parametrize|''^def test_'"' tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider_runtime.py; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007/snap; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007/runner.log; git diff -- tests/editing_conformance/test_commit_runtime_opaque_items.py tests/sdk/test_timeline_commit_provider.py; git diff --name-only" in /home/user/work/wt/agt-m1-opaque-exact-inverse
+ succeeded in 1004ms:
+tests/sdk/test_timeline_commit_provider_runtime.py:13:def test_structural_reservations_and_receipt_retry_survive_runtime_restart(tmp_path, monkeypatch):
+tests/sdk/test_timeline_commit_provider_runtime.py:93:def test_restore_inverse_redo_and_exact_retry_survive_runtime_restart(tmp_path, monkeypatch):
+tests/editing_conformance/test_commit_runtime_m1.py:198:@pytest.mark.parametrize("touched_basis", [False, True], ids=["disjoint-rebase-undo", "touched-basis-conflict"])
+tests/editing_conformance/test_commit_runtime_m1.py:199:def test_cli_python_outbox_restart_and_guarded_inverse(
+tree=2812273e0044c1aa5286b6c8740d77fffa3038a6
+key=3aa51261d316fa6190149d4aaabc8742
+worktree=/home/user/work/wt/agt-m1-opaque-exact-inverse
+diff --git a/tests/editing_conformance/test_commit_runtime_opaque_items.py b/tests/editing_conformance/test_commit_runtime_opaque_items.py
+index 4b03bfd7..cfd5a4c5 100644
+--- a/tests/editing_conformance/test_commit_runtime_opaque_items.py
++++ b/tests/editing_conformance/test_commit_runtime_opaque_items.py
+@@ -145,6 +145,8 @@ def test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse(
+         assert_readback(edit, image)
+         for sibling in ("occurrence-2", "occurrence-3"):
+             assert occurrence_image(image, sibling) == occurrence_image(original, sibling)
++    assert undone["data"]["canonical_document"] == original
++    assert edit.document() == original
+     assert_readback(edit, original)
+     assert edit.history()[:-1] == history
+ 
+@@ -171,7 +173,6 @@ def assert_preserved(document, *, materialized):
+         assert_opaque(row)
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="M1 historical-image reuse must restore the exact original closure")
+ def test_occurrence_inverse_restores_exact_original_closure(opaque_film):
+     edit, _ = opaque_film
+     original = edit.document()
+diff --git a/tests/sdk/test_timeline_commit_provider.py b/tests/sdk/test_timeline_commit_provider.py
+index 85dd7fa9..6c857235 100644
+--- a/tests/sdk/test_timeline_commit_provider.py
++++ b/tests/sdk/test_timeline_commit_provider.py
+@@ -983,3 +983,26 @@ def test_restore_refuses_unavailable_or_corrupt_retained_input(damage):
+     assert error.value.failure["details"]["reason"] == (
+         "dependency_unavailable" if damage == "missing" else "invalid_document")
+     assert realm.head == head and len(realm.accepted) == 1
++
++
++@pytest.mark.parametrize("damage", ["missing", "revision", "gap", "scope", "digest"])
++def test_inverse_historical_source_requires_authenticated_boundaries(damage):
++    realm = DetachedRealm()
++    original = detached(realm.head)
++    realm.call([realm.move()])
++    target = realm.call([realm.move("parent/clip:clip-b", 8.008)])
++    previous = realm.entries[-1]["previous"]
++    if damage == "missing":
++        realm.entries[-1]["previous"] = None
++    elif damage == "revision":
++        previous["revision_id"] = "wrong-revision"
++    elif damage == "gap":
++        realm.entries[-1]["previous"] = original
++    elif damage == "scope":
++        realm.documents[previous["revision_id"]]["project_id"] = "foreign-project"
++    else:
++        realm.documents[previous["revision_id"]]["shot_revisions"][0]["payload"]["unknown"] = "tampered"
++    head, accepted = detached(realm.head), detached(realm.accepted)
++    with pytest.raises(CommitRejected):
++        realm.call([inverse([target["receipt"]["receipt_id"]])])
++    assert realm.head == head and realm.accepted == accepted
+astrid/sdk/timeline/commit.py
+tests/editing_conformance/test_commit_runtime_opaque_items.py
+tests/sdk/test_timeline_commit_provider.py
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007/status; tail -25 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007/log.txt' in /home/user/work/wt/agt-m1-opaque-exact-inverse
+ succeeded in 0ms:
+running
+...............
+codex
+The final focused checks passed: 187 tests passed, with one integration test deselected by the ordinary lane. That includes existing inverse, restore, retained-input, identity, and retry controls, plus five new historical-boundary rejection cases. Ruff and `git diff --check` also pass. The central Runtime run is still active.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-opaque-exact-inverse')
+(root / 'notes').mkdir(exist_ok=True)
+message = '''fix(timeline): reuse exact historical images for occurrence undo
+
+Authenticate accepted inverse before/after boundaries and reuse immutable
+images only for the same occurrence and matching authored content. Preserve
+M1 coalescing, identity guards, newer sibling edits and retained input pins.
+
+Restore exact opaque-item closure tests without xfails, add historical source
+rejection controls, and cover shared sibling preservation and touching ABA.
+'''
+(root / 'commit-msg').write_text(message)
+(root / 'commit-msg.txt').write_text(message)
+PY" in /home/user/work/wt/agt-m1-opaque-exact-inverse
+ succeeded in 0ms:
+ succeeded in 60098ms:
+test agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007: pass exit=0 in 59s — commit-integration on agt-m1-opaque-exact-inverse (agent tree 2812273e0044c1aa5286b6c8740d77fffa3038a6)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_shared_inverse.py
+counts: 19 passed in 54.97s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007/log.txt ---
+...................                                                      [100%]
+19 passed in 54.97s
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007 1' in /home/user/work/wt/agt-m1-opaque-exact-inverse
+ succeeded in 50ms:
+test agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007: pass exit=0 in 59s — commit-integration on agt-m1-opaque-exact-inverse (agent tree 2812273e0044c1aa5286b6c8740d77fffa3038a6)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_shared_inverse.py
+counts: 19 passed in 54.97s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007/log.txt ---
+...................                                                      [100%]
+19 passed in 54.97s
+
+exec
+/bin/bash -lc 'git status --short --ignored | head -30; git diff --check; git diff --numstat; wc -l tests/editing_conformance/test_commit_runtime_shared_inverse.py' in /home/user/work/wt/agt-m1-opaque-exact-inverse
+ succeeded in 0ms:
+ M astrid/sdk/timeline/commit.py
+ M tests/editing_conformance/test_commit_runtime_opaque_items.py
+ M tests/sdk/test_timeline_commit_provider.py
+?? tests/editing_conformance/test_commit_runtime_shared_inverse.py
+!! .pytest_cache/
+!! .ruff_cache/
+48	4	astrid/sdk/timeline/commit.py
+2	1	tests/editing_conformance/test_commit_runtime_opaque_items.py
+23	0	tests/sdk/test_timeline_commit_provider.py
+135 tests/editing_conformance/test_commit_runtime_shared_inverse.py
+
+codex
+The central Runtime9f run passed all 19 tests, including CLI/outbox restart, occupancy defense, restore/retry, all six opaque-item cases, and the shared sibling/ABA controls. The opaque tests have no xfails. I’m writing the handoff report and commit messages, including the separate M2 redo limitation.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = root / 'workers/agt-m1-opaque-exact-inverse'
+report = '''# M1 exact opaque occurrence inverse — integration candidate
+
+## Result
+
+Base is exactly "'`875a9aff4e658def3fa912cacd13f28a911fe89a` (`tl/agt-m1-opaque-item-remap-probe`); work is confined to the assigned successor worktree/branch. Actual unchanged Runtime is `9f9b25c000485e919f30f1411831fe2d5a3c1316`. All six permanent opaque-item tests now PASS, without xfail markers. The three move → accept → persisted exact retry after restart → undo journeys now additionally assert the complete canonical document equals the original. The three separate exact-original-closure cases retain their original expectations and have their strict xfail decorator removed only after a `--runxfail` proof passed.
+
+Final focused tests: **187 passed, 1 integration deselected**. Final central actual Runtime lane: **19 passed**, no xfails/skips. The central lane includes the two CLI/Python/outbox M1 journeys, six opaque cases, three projection identity/occupancy cases, two provider reservation/restore cases, and six shared-image parent/sibling/ABA cases.
+
+## Product provenance and minimality
+
+Only product file changed: `astrid/sdk/timeline/commit.py`, **48 added / 4 removed = 44 net extra lines**, under the 75-line target. Isolated the historical source reuse from reviewed `d4743e2984cef0908fa0b6bef166aa801f2bde8f`:
+
+- Provider loads only targeted accepted before/after boundaries. It verifies the prior publication/revision pair, the bounded ancestry edge, and exact revision scope/digests through existing `_load` / `_history` / `_verify_document`.
+- Converter indexes those immutable images and matches both occurrence ID and authoring shot identity. Reuse requires matching authored shot payload (excluding its immutable internal revision link) AND complete internal authored content, using existing JSON equality with bool/number distinction.
+- Parent is still compiled from the guarded inverse result. An earlier parent revision ID is reused only if the resulting complete parent and dependency manifest already equal that historical image; no whole-parent replacement is introduced.
+- Existing current-image reuse stays first, preserving newer sibling pins. Media/document retention, `coalesce`, inverse guards, occupancy defense, reservation checks, and the retry loop are unchanged. The approved remapper remains byte-for-byte as in the base.
+
+No M2 registry/root/ordered-restoration/media-provenance/params/schema/capture changes; no Runtime/generated files; no other product-file dependency or widening.
+
+Tests add five malformed accepted-boundary refusals (missing, mismatched revision, ancestry gap, foreign scope, corrupt payload), with no acceptance/head change. Shared fixture and the two parameterized disjoint-parent cases are ported from `2ad748393f0a7322f7c683660b9d1a1ad15525a2`. Four additional real cases verify newer sibling preservation and touching ABA atomic refusal, across both shared fixtures. Existing recipe tests also retain semantic owner/identity ABA refusal coverage.
+
+## Exact final commands
+
+Commands below ran in `/home/user/work/wt/agt-m1-opaque-exact-inverse`, except the centrally executed snapshot command, which uses the same final source tree.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py --tb=short
+```
+
+**187 passed, 1 deselected in 35.99s**, exit 0. Includes existing disjoint inverse/rebase, restore/input capture, identity/source ABA, reservation and retry controls. The ordinary lane deselects the existing integration test; it is not skipped or weakened.
+
+No localhost listener was started by this worker. Used the existing central `commit-integration` suite (which supplies the Runtime environment and M1 file), adding the other requested files and new controls:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m1-opaque-exact-inverse commit-integration --files "tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_shared_inverse.py"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007 1
+```
+
+Actual central command (the service sets `PYTHONPATH` to its snapshot; its existing named suite does not add `PYTHONDONTWRITEBYTECODE`):
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_shared_inverse.py
+```
+
+**19 passed in 54.97s**, exit 0, service elapsed 59s. Exact final tree: `2812273e0044c1aa5286b6c8740d77fffa3038a6`. Result/log: `ORCH/tests/agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007/{summary,log.txt}`. All four requested files ran, plus the new shared inverse file. The named suite runs the M1 file first; this is the only command-order/environment adaptation to route its socket tests through the required service.
+
+```sh
+/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/commit.py tests/sdk/test_timeline_commit_provider.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_shared_inverse.py
+git diff --check
+```
+
+Both PASS, exit 0.
+
+## Intermediate evidence and explicit compatibility limit
+
+Initial product-only port, before xfail removal/new boundary tests:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/timeline/test_authoring_bundle.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py --tb=short
+```
+
+**178 passed, 1 deselected in 17.03s**, exit 0.
+
+Initial full attempted M2 shared-inverse test port, with the opaque xfails forced to execute:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration --runxfail tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_shared_inverse.py --tb=short
+```
+
+**8 passed, 2 failed in 9.78s**. All six opaque requirements and both M2 disjoint-parent controls passed. The two parameterized M2 move/undo/redo/second-undo/rematerialization journeys passed exact first undo but failed at redo: `inverse_dependency_changed`, `inverse.py:120` original authored guard. Those two M2 journeys are **not compatible with the mandated unchanged M1 inverse guards** and were not imported into the final candidate. No original M1 test was deleted, weakened, skipped, or marked xfail; no expectation was changed to accept refusal/loss. Full M2 shared redo is not claimed by this M1 fix. Recommend handling that separately in the reviewed M2 inverse work, not importing its engine changes here.
+
+An intermediate added sibling-control run had **10 passed, 2 failed in 9.64s** because the new test moved the repeated occurrence before its start. Corrected only that new test'"'s requested global time from 4s to 14s. Then:
+
+"'```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_shared_inverse.py --tb=short
+```
+
+**6 passed in 7.30s**, exit 0. The final central run also reran all opaque cases with the strengthened restart/undo exact-equality assertions.
+
+## Handoff
+
+M1 requested exact-undo blocker is resolved in this bounded candidate; no in-scope work is blocked. Manager should review/integrate the harness commit and keep the separately observed M2 shared redo limitation visible. Both `commit-msg` and `commit-msg.txt` are ready in this worker'"'s ORCH directory. Coordination appended to the absolute "'`ORCH/design/runtime-coordination.md`.
+
+No full suite, make check, dependency installation, renderer build, browser/live lane, manual listener, commit/merge/rebase/checkout/push, pin/schema edit, or integration-worktree mutation. No existing-film repair or full M2 compatibility is claimed. Worker-created pytest/Ruff caches removed from the assigned worktree; no build output or temporary source exports remain.
+'"'''
+(worker / 'notes/report.md').write_text(report)
+coordination = '''\\n\\n## agt-m1-opaque-exact-inverse — M1 integration candidate ready\\n\\nBase exactly875a9aff; only product commit.py48added/4removed (44net, under75). Isolated historical-image reuse from reviewedd474: accepted targeted before/after boundaries authenticated via existing history/pair/scope/digest checks; reuse requires same occurrence+authoring identity and exact authored shot/internal content. Compiled parent stays authoritative; historical parent ID only reused after complete parent+manifest equality. No M2 registry/root/ordered/media/params/schema/capture import; existing coalescing/guards/occupancy/retry and approved remapper unchanged. All6opaque cases nowPASS withoutxfails, including strengthened actual move→accept→persistedexactretry/restart→undo complete original closure equality. Final focused187PASS/1ordinarylane integrationdeselected35.99s; central unchanged Runtime9f19PASS54.97s, final tree2812273e0044c1aa5286b6c8740d77fffa3038a6, run agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007 (all4requested files + newsharedcontrols). Five malformed historical boundary refusals and real newer sibling/parent preservation + touchingABA controls pass. Ruff touched files/diffcheckPASS. Two of four M2sharedinverse cases ported unchanged (parameterized disjoint-parent); two full shared redo journeys were incompatible: first exactundoPASS, redo refuses inverse_dependency_changed at unchanged M1inverse.py:120. Not imported/claimed, no original M1 test weakened/deleted, no guard widening; keep fullM2redo separate. No full suite/manualsocket/Runtimechange/integrationmutation/merge/push. Exact commands/provenance/limits: workers/agt-m1-opaque-exact-inverse/notes/report.md. Bothcommitmessagefilesready; harnesscommitpending.\\n'''
+with (root / 'design/runtime-coordination.md').open('a') as output:
+    output.write(coordination)
+for name in ('.pytest_cache', '.ruff_cache'):
+    shutil.rmtree(Path.cwd() / name, ignore_errors=True)
+PY
+git diff --check && git status --short" in /home/user/work/wt/agt-m1-opaque-exact-inverse
+ succeeded in 202ms:
+ M astrid/sdk/timeline/commit.py
+ M tests/editing_conformance/test_commit_runtime_opaque_items.py
+ M tests/sdk/test_timeline_commit_provider.py
+?? tests/editing_conformance/test_commit_runtime_shared_inverse.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md')
+marker = '\\n\\n## agt-m1-opaque-exact-inverse — M1 integration candidate ready\\n'
+with p.open('r+') as f:
+    text = f.read()
+    start = text.index(marker)
+    end = text.find('\\n## ', start + len(marker))
+    if end == -1:
+        end = len(text)
+    replacement = '''\\n\\n## agt-m1-opaque-exact-inverse — M1 integration candidate ready
+
+Base exactly "'`875a9aff`; only product change is `commit.py`, 48 added / 4 removed (44 net, under 75). Isolated historical-image reuse from reviewed `d474`: accepted targeted before/after boundaries authenticated through existing history, pair, scope and digest checks; reuse requires the same occurrence and authoring identity plus matching authored shot/internal content. The parent is compiled normally; a historical parent ID is reused only after complete parent and manifest equality. No M2 registry/root/ordered/media/params/schema/capture import. Existing coalescing, guards, occupancy, retry and approved remapper are unchanged.
+
+All six opaque cases now PASS without xfails, including actual move → accept → persisted exact retry after restart → undo with complete original closure equality. Final focused tests: 187 PASS / 1 ordinary-lane integration deselected, 35.99s. Central unchanged Runtime9f: 19 PASS, 54.97s, final tree `2812273e0044c1aa5286b6c8740d77fffa3038a6`, run `agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007` (all four requested files plus new shared controls). Five malformed historical-boundary refusals, newer sibling/parent preservation and touching ABA controls pass. Touched-file Ruff and diff check PASS.
+
+Two of four M2 shared-inverse cases ported unchanged (parameterized disjoint-parent controls). The two full shared redo journeys are incompatible: first exact undo PASS, then redo refuses with `inverse_dependency_changed` at unchanged `inverse.py:120`. Those journeys were not imported or claimed; no original M1 test was weakened/deleted and no guard changed. Keep full M2 shared redo separate.
+
+No full suite, manual socket, Runtime change, integration mutation, merge or push. Exact commands, provenance and limits: `workers/agt-m1-opaque-exact-inverse/notes/report.md`. Both commit-message files are ready; harness commit pending.
+'"'''
+    f.seek(0)
+    f.write(text[:start] + replacement + text[end:])
+    f.truncate()
+PY" in /home/user/work/wt/agt-m1-opaque-exact-inverse
+ succeeded in 88ms:
+codex
+Implemented authenticated historical-image reuse in `commit.py`: **44 net product lines**. All six opaque-item tests pass with exact closure restoration and no xfails.
+
+- Focused tests: **187 passed, 1 deselected**.
+- Central Runtime9f tests: **19 passed**.
+- Ruff and `git diff --check`: passed.
+
+Kept M1 guards unchanged. Two M2 shared redo journeys remain incompatible and were not ported; handle those separately.
+
+[Report with exact commands, provenance, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-opaque-exact-inverse/notes/report.md). Coordination updated; both commit-message files are ready for the harness. No in-scope blockers.
+tokens used
+108,041
+Implemented authenticated historical-image reuse in `commit.py`: **44 net product lines**. All six opaque-item tests pass with exact closure restoration and no xfails.
+
+- Focused tests: **187 passed, 1 deselected**.
+- Central Runtime9f tests: **19 passed**.
+- Ruff and `git diff --check`: passed.
+
+Kept M1 guards unchanged. Two M2 shared redo journeys remain incompatible and were not ported; handle those separately.
+
+[Report with exact commands, provenance, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-opaque-exact-inverse/notes/report.md). Coordination updated; both commit-message files are ready for the harness. No in-scope blockers.

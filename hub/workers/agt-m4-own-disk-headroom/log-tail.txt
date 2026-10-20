@@ -1,0 +1,400 @@
+ M astrid/packs/timeline/cli_show.py
+ M astrid/sdk/timeline_sheet.py
+?? tests/editing_conformance/test_sheet_cli_runtime.py
+?? tests/packs/timeline/test_cli_native_sheet.py
+head: 1a52cfcf
+
+--- agt-m2-occurrence-retrack ---
+INTERRUPTED 2026-10-20 00:45:39.3730475270 54 bytes
+brief.md 2026-10-20 00:39:22.9164907090 2200 bytes
+exit 2026-10-20 00:45:39.3730475270 4 bytes
+log.txt 2026-10-20 00:43:25.2802411630 387647 bytes
+meta 2026-10-20 00:39:22.9212465970 213 bytes
+worktree status:  M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+head: e4338c48
+
+--- agt-m2-pack-startup-bound ---
+INTERRUPTED 2026-10-20 00:46:04.3690490120 54 bytes
+brief.md 2026-10-20 00:34:20.7563819500 1479 bytes
+commit-msg 2026-10-20 00:40:52.2262977660 469 bytes
+commit-msg.txt 2026-10-20 00:40:52.2282830540 469 bytes
+exit 2026-10-20 00:46:04.3690490120 4 bytes
+log.txt 2026-10-20 00:43:26.3962412290 406351 bytes
+meta 2026-10-20 00:34:20.7605967240 218 bytes
+worktree status:  M tests/packs/rendering/real_pack_host.py
+ M tests/packs/rendering/test_real_pack_host.py
+head: 0a867322
+
+--- agt-m0-env-logs ---
+no record
+worktree status: head: 
+--- direct exact name references in all manager status/notes, tests, queues ---
+agt-m2-effects-set: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0316Z.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-effects-set-b.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-property-review-compose-b.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0316Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0920Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-effects-set-b /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-effects-set 
+agt-m2-transition-set: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-transition-set-c-targeted-1020035212-3361/snap /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-transition-set-c-targeted-1020035212-3361/summary /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-transition-set-c-targeted-1020035212-3361/request /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-transition-set /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-transition-set-b /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-transition-set-b-targeted-1020031846-26504 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-transition-set-c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-transition-set-c-targeted-1020035212-3361 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-transition-set-b-targeted-1020031801-22425 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-transition-set-b.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-property-review-compose-b.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-transition-current-native-contract.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-transition-set-c.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0316Z.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0316Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0920Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0349Z.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0349Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-transition-set-b-targeted-1020031801-22425/snap /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-transition-set-b-targeted-1020031801-22425/summary /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-transition-set-b-targeted-1020031801-22425/request /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/cache/7ab6dba4b4853b0b0f821c0f171b54cf /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/cache/95fe7fe86062e563cdbe11b9d3197037 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/cache/209f46e8aab001a8162d1a08db0699e5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-transition-set-b-targeted-1020031846-26504/snap /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-transition-set-b-targeted-1020031846-26504/summary /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-transition-set-b-targeted-1020031846-26504/request /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-transition-set-b-targeted-1020031846-26504/log.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0924Z.log 
+agt-m3-capture-source-proof: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/INBOX.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m3-capture-source-proof /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m3-capture-source-recover.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0920Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0924Z.log 
+agt-m2-foundation-compose: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-foundation-recover /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-foundation-compose.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-foundation-recover.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-foundation-compose-bundle1-runtime6be9706-integration-1020004206-27235 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-foundation-compose /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-foundation-compose-commit-integration-1020004113-10415 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261019T2129Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0920Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-compose-commit-integration-1020004113-10415/snap /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-compose-commit-integration-1020004113-10415/summary /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-compose-commit-integration-1020004113-10415/request /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/cache/b21689670fb5228a40bd385ffc39687a /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/cache/2b4e358147896ac0982cb06980355891.running /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-compose-bundle1-runtime6be9706-integration-1020004206-27235/snap /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-foundation-compose-bundle1-runtime6be9706-integration-1020004206-27235/request /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0924Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T1950Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md 
+agt-m2-native-sheet-cli: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-sheet-cli-recover.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-native-sheet-cli.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-sheet-cli-recover /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261019T2129Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0920Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-native-sheet-cli /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0924Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T1950Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md 
+agt-m2-occurrence-retrack: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-occurrence-retrack.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-retrack-recover.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261019T2129Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0920Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-occurrence-retrack /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-retrack-recover /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0924Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T1950Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md 
+agt-m2-pack-startup-bound: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-pack-startup-bound /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-pack-startup-bound-real-pack-host-integration-1020003938-3397 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m2-host-bound-recover /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-host-bound-recover.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-pack-startup-bound.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261019T2129Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T0920Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0047Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T0924Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T1950Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261020T1952Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-startup-bound-real-pack-host-integration-1020003938-3397/snap /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-startup-bound-real-pack-host-integration-1020003938-3397/request 
+agt-m0-env-logs: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/rounds/20261019T1742Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261019T1742Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/rounds/20261019T1742Z.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261019T1742Z.log 
+
+--- lease matches for existing agt worktrees ---
+
+codex
+The existing Agent worktrees are not safe recycle targets: the only finished ones still present are dirty, and the protected current work includes transition/source/recover/current scene paths. Immutable `agt-pin-*` checkouts are KEEP-marked. I’m checking the separate worker-record scratch area now; this is the only remaining supported cleanup path that can reclaim space without deleting logs, reports, branches, or snapshots.
+exec
+/bin/bash -lc 'ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+cut=$(date -d '"'-1 hour' +%s)
+REF="'$(cat "$ORCH/tests/suites.conf" "$ORCH/tests"/*.env "$ORCH/managers"/*/STATUS.md 2>/dev/null)
+printf '"'%s\\n' '--- eligible large scratch dirs according to compact-scratch predicates ---'
+found=0
+for d in \""'$ORCH"/workers/*/; do w=${d%/}; w=${w##*/};
+  [ -f "$d/running" ] || [ -f "$d/KEEP" ] && continue
+  [ -f "$d/ended" ] && [ "$(stat -c %Y "$d/ended")" -lt "$cut" ] || continue
+  grep -lqsw -- "$w" "$ORCH"/managers/*/notes/*.lease "$ORCH"/managers/*/notes/*ACTIVE* 2>/dev/null && continue
+  grep -qw -- "$w" <<< "$REF" && continue
+  while IFS= read -r -d '"'' s; do
+    [ -d \""'$s" ] || continue
+    mb=$(du -sm "$s" 2>/dev/null | cut -f1)
+    [ "${mb:-0}" -gt 50 ] || continue
+    printf '"'%s\\t%s MB\\tended=%s\\n' \""'$s" "$mb" "$(date -d @$(stat -c %Y "$d/ended") -u +%FT%TZ)"
+    found=$((found+1))
+  done < <(find "$d" -mindepth 1 -maxdepth 2 -type d -print0 2>/dev/null)
+done
+printf '"'count=%s\\n' \""'$found"
+printf '"'%s\\n' '--- worker records over 50 MB with eligibility reason ---'
+for d in \""'$ORCH"/workers/*/; do w=${d%/}; w=${w##*/}; sz=$(du -sm "$d" 2>/dev/null | cut -f1); [ "${sz:-0}" -gt 50 ] || continue; printf '"'%s\\t%s MB\\t' \""'$w" "$sz"; [ -f "$d/running" ] && printf '"'RUNNING ' || true; [ -f \""'$d/KEEP" ] && printf '"'KEEP ' || true; [ -f \""'$d/ended" ] && printf '"'ENDED_"'$(date -d @$(stat -c %Y "$d/ended") -u +%FT%TZ) '"' || true; grep -lqsw -- \""'$w" "$ORCH"/managers/*/notes/*.lease "$ORCH"/managers/*/notes/*ACTIVE* 2>/dev/null && printf '"'LEASE ' || true; grep -qw -- \""'$w" <<< "$REF" && printf '"'REF ' || true; printf '\\n'; done | sort -k2nr | head -100" in /home/user/work/wt/agt-m4-own-disk-headroom
+exec
+/bin/bash -lc "ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+printf '%s\\n' '--- large second-level Agent worker record dirs ---'
+du -sm -x \""'$ORCH"/workers/agt-*/* 2>/dev/null | awk '"'"'$1 > 50'"' | sort -nr | head -100
+printf '%s\\n' '--- large top-level Agent records ---'
+du -sm -x \""'$ORCH"/workers/agt-* 2>/dev/null | awk '"'"'$1 > 50'"' | sort -nr | head -60" in /home/user/work/wt/agt-m4-own-disk-headroom
+ succeeded in 492ms:
+--- large second-level Agent worker record dirs ---
+216	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-compose/notes
+124	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair/notes.tgz
+62	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes.tgz
+61	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-current-owner/export.tgz
+61	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-current-owner/candidate.tar.gz
+61	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-agent12-cohort/export.tgz
+61	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-agent12-cohort/ce251003.tar.gz
+--- large top-level Agent records ---
+217	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-compose
+125	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-duplicate-reload-repair
+122	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-current-owner
+122	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-agent12-cohort
+63	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice
+
+exec
+/bin/bash -lc "ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+printf '%s\\n' '--- KEEP records/worktrees ---'; for d in \""'$ORCH"/workers/agt-*/KEEP; do [ -f "$d" ] || continue; w=${d%/KEEP}; w=${w##*/}; meta="$ORCH/workers/$w/meta"; printf '"'%s\\t' \""'$w"; sed -n '"'s/"'^worktree=//p;s/''^repo=//p'"' \""'$meta" 2>/dev/null | tr '"'\\n' ' '; printf '\\n'; done
+printf '%s\\n' '--- finished existing Agent worktrees (recycle candidates) ---'; for wt in /home/user/work/wt/agt-*; do [ -d \""'$wt" ] || continue; w=${wt##*/}; d="$ORCH/workers/$w"; [ -f "$d/ended" ] || continue; [ -f "$d/recycled" ] && continue; printf '"'%s\\t' \""'$w"; [ -f "$d/KEEP" ] && printf KEEP || printf noKEEP; printf '"'\\t'; git -C \""'$wt" status --porcelain 2>/dev/null | head -1; done
+printf '"'%s\\n' '--- task record files ---'; find \""'$ORCH/workers/agt-m4-own-disk-headroom" -maxdepth 1 -type f -printf '"'%f %s bytes\\n' | sort
+printf '%s\\n' '--- full exact current Agent STATUS ---'; sed -n '1,100p' \""'$ORCH/managers/agent/STATUS.md"' in /home/user/work/wt/agt-m4-own-disk-headroom
+ succeeded in 737ms:
+--- KEEP records/worktrees ---
+agt-pin-27e823a5	agent /home/user/work/wt/agt-pin-27e823a5 
+agt-pin-2f8b9cc5	agent /home/user/work/wt/agt-pin-2f8b9cc5 
+agt-pin-3c4f6de4	agent /home/user/work/wt/agt-pin-3c4f6de4 
+agt-pin-9bf503f9	agent /home/user/work/wt/agt-pin-9bf503f9 
+agt-pin-afcb326c	agent /home/user/work/wt/agt-pin-afcb326c 
+agt-pin-d93b4ff6	agent /home/user/work/wt/agt-pin-d93b4ff6 
+agt-pin-f97b2b87	agent /home/user/work/wt/agt-pin-f97b2b87 
+--- finished existing Agent worktrees (recycle candidates) ---
+agt-m2-effects-set	noKEEP	 M astrid/core/timeline/schema/edit-command.schema.json
+agt-m2-transition-set	noKEEP	 M astrid/core/timeline/schema/edit-command.schema.json
+agt-m3-capture-source-proof	noKEEP	?? tests/sdk/test_capture_source_runtime.py
+--- task record files ---
+brief.md 1342 bytes
+log.txt 375536 bytes
+meta 200 bytes
+running 0 bytes
+tmpdir 18 bytes
+--- full exact current Agent STATUS ---
+# agent — 2026-10-20 20:07:35 UTC
+Milestone: M1 recorded. M2 active; gates 1, 6 and 7 open. No foundation or delivery completion.
+Integrated: Agent d0a5072b. Accounted short-attempt three-file port21e84b7d merged after independent custody APPROVE, 71+6 targeted tests and original collision guard. Prior f82 canonical source-image port, 78ff verified_source restoration, kernel19e4/Maina9, cache490 default OFF and dead inspector a760 (-353) retained. Runtime public producer2c4ac180/client0.2.13; Composition0.0.13/all77/archive9412/lockc4d unchanged.
+Full: ONE32631 remains running at92%, exact490c10ac/treebf423cf5aeee9ca9081d22c4727e8f34a905ee45, immutable installed child0b2/Remotion0013. Later merges excluded. No duplicate full. Cancelled30947/orphan Scene tests and superseded D1312814 are not results.
+In flight (6, target5–7; at least two deletion lanes):
+- agt-m2-d10-current-deletion-port: nine removals plus corrected generator on current source, exact final handoff for owner gate.
+- agt-m2-wc7-owned-http-gate: three explicit attached-outbox SDK HTTP cases;199 units passed.
+- agt-m2-recover-current-server-final-gate: ONLY original failed facade/history/newSession.restore node on merged Runtime3b900c3.
+- agt-m2-speech-claim-fixture-repair: genuine claim/WAV gate, existing23085.
+- agt-m2-transition-peer-findings-reconcile: reproduce/fix incoming fit and forward P1 findings, no generation.
+- agt-m3-scene-managed-query-only: saved/candidate managed proof and diagnosis before dispatch packet/activation.
+Next 5: D10 exact current owner gate then merge/deletion ledger; recover gate then current reviewed consumer cut; finish WC7/speech consumer migration; Scene SDK packet/ordinary activation after real proof; App014 current cohort and Runtime cd0 transition, then coordinated D13/WC3/WC6 cuts.
+Deletion frontier: D10 last App consumers are gone (e245); custom-owner bug fixed20PASS, current source port active. AG-RECOVER Runtime history blocker cleared3b900c3, original node retry active. WC3 has24 realHTTP positives/226-line replacement; WC6 has251unit+1realHTTP; D13/WC3/WC6 await coordinated ordinary014 adoption. AG01 retains rationale until WC7 fully native. D05/D06/D07/WC4/WC9 deleted; broad AG02/AG03 and WC1/2/5/7/8/10 open.
+D13 exact proof: final7b3e1205/tree7d807bc preserves current source authority/custody/CLI/Mouth/cache/tests plus ordinary014. Central7012 PASS2/300.96s, both original registered assemble_timeline proposal and real MP4/ffprobe/undo/lostACK/restart cases. Read-source image portfa1 is separate. Stale e2 and unsafe e6/b62 never merge. Manager mistakenly dispatched12814 from stale60eec report; request cancelled and worker stopped as superseded, never qualification credit. No renderer repeat needed. Handoff agent-d13-current13-native-qualification.md.
+Private952: exact central28209 PASS44/55.07s, Agent tree3775e2e00c9e45999f6c0277f4dbc323079749b0, normal Runtime952 healthddf/artifactb397/rawbundle4a077. Covers HTTP lifecycle plus ACK/restart/retry/ABA and40 ingress controls; analysis published agent-private952-http-result.md. No rerun or public adoption. Frozen357/schema61355/29/12v2 unchanged.
+Contracts: new e010/schema392 full56/30/12 independently approved/frozen for ONE private counterpart, App2 ACK69 controls. Opacity706/schema110 bounded Runtime ACK; no generation/current392 mutation. Transitioneb115/schemaa70f held for concrete peer findings; old transition-only vs explicit paired clear retained. Ordinary014 a0/f021/6ba55/29 immutable; no integration pin/release yet.
+Raw audio: original literal and historical positives now both PASS on exact Agent27/tree7f438 +Runtime7d/a0. Historical test-only745f preserves38/38 assertions and checks raw object_id against manifest; literal not repeated. Malformed19-byte CLI refusal stays strict. Public013 activation not claimed.
+Scene: current proof remains active; new19:48 four-patch SDK/internal invocation/entrypoints.scene packet acknowledged, consume after diagnosis without duplicate live proof. Final3070 executor/helper port stays bounded. Save pure core, no Node. Private crop/statistics and physical parity remain; cache is not D09 completion.
+Inbox: ACK through20:04 historical audio PASS,20:02 App D10-last-consumer and014 blockers, App2 transition findings/opacity Runtime ACK,19:59 history merge. Viewing informed short-attempt merge and D10 correction/current port.
+Decided locally: normal content-addressed pack revisions truthfully reflect changed source; preserve descriptor identity/schema/revision fields and immutable old admissions, never fake hashes. Port only bounded temp delta with strict source custody unchanged. Reuse exact passing tuples; cancel superseded tests.
+Blocked/needs: no area-wide blocker. App owns014 root/browser adoption; Runtime owns compatible cd0 marker/current test carry/new392 artifacts; Viewing owns finalScene owner proof. Short-path MP4 qualification remains Viewing's existing lane.
+Resources: last7.1GiB free, one full progressing; shared dependencies/profiles READ-ONLY. No macOS, owner-film, all-product physical parity or ZIP claim.
+
+exec
+/bin/bash -lc "ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a
+printf '%s\\n' '--- supported recycle attempt (finished Agent candidates only) ---'
+\""'$ORCH/scratchpad/orch/bin/recycle" agt-m2-effects-set agt-m2-transition-set agt-m3-capture-source-proof
+printf '"'%s\\n' '--- supported compact-scratch dry inspection result ---'
+# The tool has no dry-run flag. The preceding eligibility inventory found no eligible >50 MB Agent scratch directory;
+# do not run global compact-scratch because it would cross manager ownership boundaries.
+printf '%s\\n' 'not run: no eligible Agent scratch directory; global tool would scan other managers'
+printf '%s\\n' '--- disk after housekeeping attempt ---'
+df -h /home/user; df -B1 --output=avail /home/user | tail -1" in /home/user/work/wt/agt-m4-own-disk-headroom
+ succeeded in 300ms:
+--- supported recycle attempt (finished Agent candidates only) ---
+agt-m2-effects-set: DIRTY, refused
+agt-m2-transition-set: DIRTY, refused
+agt-m3-capture-source-proof: DIRTY, refused
+--- supported compact-scratch dry inspection result ---
+not run: no eligible Agent scratch directory; global tool would scan other managers
+--- disk after housekeeping attempt ---
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda        252G   32G  7.7G  81% /
+8177688576
+
+codex
+No safe cleanup was available. The supported recycle attempt refused all three finished Agent candidates because each worktree is dirty; the only KEEP-marked Agent worktrees are immutable pin checkouts. No eligible Agent scratch directory exceeded the compaction threshold, so I did not invoke the global compactor across other managers. The filesystem free space rose externally from 7,560,114,176 to 8,177,688,576 bytes during inspection. I’m recording the exact evidence and completion markers now.
+ succeeded in 54804ms:
+--- eligible large scratch dirs according to compact-scratch predicates ---
+count=0
+--- worker records over 50 MB with eligibility reason ---
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+/bin/bash: line 21: printf: `Y': invalid format character
+agt-m2-foundation-compose	217 MB	
+agt-review-duplicate-reload-repair	125 MB	ENDED_$(date -d @$(stat -c 
+rt-m2-init-current-private-qualification	125 MB	ENDED_$(date -d @$(stat -c 
+agt-review-agent12-cohort	122 MB	ENDED_$(date -d @$(stat -c 
+agt-review-scene-current-owner	122 MB	ENDED_$(date -d @$(stat -c 
+rt-m2-text-clear-native-private-pair	119 MB	ENDED_$(date -d @$(stat -c REF 
+rt-m2-registered-render-canonical-target	112 MB	ENDED_$(date -d @$(stat -c REF 
+rt-m2-release-s2-final-compose	112 MB	ENDED_$(date -d @$(stat -c REF 
+rt-m3-candidate-source-basis-fix	112 MB	ENDED_$(date -d @$(stat -c REF 
+rt-m3-capture-actual-agent-current-pair	112 MB	ENDED_$(date -d @$(stat -c REF 
+rt-m2-producer-record-normalization	111 MB	ENDED_$(date -d @$(stat -c REF 
+rt-m2-next-ordinary-official-prep	101 MB	ENDED_$(date -d @$(stat -c LEASE 
+rt-m2-current-s3-birth-reservation-proof	67 MB	ENDED_$(date -d @$(stat -c 
+rt-m2-carrier-catalog-fence-compose	64 MB	ENDED_$(date -d @$(stat -c 
+agt-m2-group-migration-current-first-slice	63 MB	ENDED_$(date -d @$(stat -c 
+rt-m2-param-authority-port-review	63 MB	ENDED_$(date -d @$(stat -c 
+rt-m2-registered-current-runtime-pair	63 MB	ENDED_$(date -d @$(stat -c 
+rt-m2-cross-timeline-id-audit	62 MB	ENDED_$(date -d @$(stat -c 
+rt-m2-global-id-fixture-finish	62 MB	ENDED_$(date -d @$(stat -c 
+rt-m2-sealed-capture-version-review	58 MB	ENDED_$(date -d @$(stat -c 
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..24b07327f834fb3559e0cb26daaf87bd1754b87b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg
+@@ -0,0 +1,3 @@
++chore: audit Agent disk housekeeping
++
++Inspect supported recycle and scratch-compaction eligibility without removing protected or dirty state.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..24b07327f834fb3559e0cb26daaf87bd1754b87b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg.txt
+@@ -0,0 +1,3 @@
++chore: audit Agent disk housekeeping
++
++Inspect supported recycle and scratch-compaction eligibility without removing protected or dirty state.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..d54ce2fec64e4abf2f14ad30a42da87cbd72d266
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md
+@@ -0,0 +1,47 @@
++# Disk housekeeping report
++
++Date: 2026-10-20 UTC
++
++## Result
++
++No files, worktrees, leases, branches, reports, test artifacts, snapshots, shared dependencies, runtimes, or venvs were removed. No product code changed.
++
++Free space on `/home/user`:
++
++- Before: `7,560,114,176` bytes (`7.1G` from `df -h`)
++- After: `8,177,688,576` bytes (`7.7G` from `df -h`)
++- Difference: `+617,574,400` bytes; this changed during inspection and was not caused by a successful cleanup.
++
++## Supported-tool checks
++
++Read `PLAN.md` and `MANAGER-COMMON.md`, including the 2026-10-20 recycle-on-finish guidance. Inspected the implementations of `bin/recycle`, `bin/compact-scratch`, and `bin/rm-own` before acting.
++
++Command run:
++
++```text
++bin/recycle agt-m2-effects-set agt-m2-transition-set agt-m3-capture-source-proof
++```
++
++Results:
++
++```text
++agt-m2-effects-set: DIRTY, refused
++agt-m2-transition-set: DIRTY, refused
++agt-m3-capture-source-proof: DIRTY, refused
++```
++
++These were the only finished, non-recycled Agent worktrees still present. Their uncommitted changes were preserved.
++
++The Agent KEEP worktrees are `agt-pin-27e823a5`, `agt-pin-2f8b9cc5`, `agt-pin-3c4f6de4`, `agt-pin-9bf503f9`, `agt-pin-afcb326c`, `agt-pin-d93b4ff6`, and `agt-pin-f97b2b87`; all are immutable pin checkouts and were preserved.
++
++The compactor inventory found no eligible Agent scratch directory over 50 MB. `bin/compact-scratch` was not run because it has no dry-run mode and is global across managers; running it here could alter another manager's records. The largest non-eligible Agent record was `agt-m2-foundation-compose/notes` (216 MB), which has no `ended` marker and was left untouched. Existing `.tgz` records were already packed and left untouched.
++
++No test suite was run; this task is housekeeping only.
++
++## Candidate list for a later safe pass
++
++- `agt-m2-effects-set` — finished but dirty; recycle after its work is explicitly preserved/abandoned.
++- `agt-m2-transition-set` — finished but dirty and transition-related; protected by the task brief.
++- `agt-m3-capture-source-proof` — finished but dirty and source-related; protected by the task brief.
++- `agt-m2-foundation-compose` — interrupted/no `ended` marker, dirty, and has a 216 MB record scratch directory; not eligible for supported cleanup.
++- `agt-m0-env-logs` — orphan-looking worktree without worker metadata; no supported safe operation identified, so untouched.
+
+exec
+/bin/bash -lc 'ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+ls -l "$ORCH/workers/agt-m4-own-disk-headroom/report.md" "$ORCH/workers/agt-m4-own-disk-headroom/commit-msg" "$ORCH/workers/agt-m4-own-disk-headroom/commit-msg.txt" "$ORCH/workers/agt-m4-own-disk-headroom/DONE"
+printf '"'%s\\n' '--- worktree status ---'; git status --short
+printf '%s\\n' '--- final free ---'; df -B1 --output=avail /home/user | tail -1" in /home/user/work/wt/agt-m4-own-disk-headroom
+ succeeded in 667ms:
+-rw-r--r-- 1 root root    0 Oct 20 20:10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/DONE
+-rw-r--r-- 1 root root  142 Oct 20 20:10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg
+-rw-r--r-- 1 root root  142 Oct 20 20:10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg.txt
+-rw-r--r-- 1 root root 2396 Oct 20 20:10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md
+--- worktree status ---
+--- final free ---
+8193359872
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..24b07327f834fb3559e0cb26daaf87bd1754b87b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg
+@@ -0,0 +1,3 @@
++chore: audit Agent disk housekeeping
++
++Inspect supported recycle and scratch-compaction eligibility without removing protected or dirty state.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..24b07327f834fb3559e0cb26daaf87bd1754b87b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/commit-msg.txt
+@@ -0,0 +1,3 @@
++chore: audit Agent disk housekeeping
++
++Inspect supported recycle and scratch-compaction eligibility without removing protected or dirty state.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5759a26b60800211b3ec05729bf0847d1901e766
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md
+@@ -0,0 +1,48 @@
++# Disk housekeeping report
++
++Date: 2026-10-20 UTC
++
++## Result
++
++No files, worktrees, leases, branches, reports, test artifacts, snapshots, shared dependencies, runtimes, or venvs were removed. No product code changed.
++
++Free space on `/home/user`:
++
++- Before: `7,560,114,176` bytes (`7.1G` from `df -h`)
++- After housekeeping attempt: `8,177,688,576` bytes (`7.7G` from `df -h`)
++- Final verification: `8,193,359,872` bytes
++- Difference from before to final: `+633,245,696` bytes; this changed during inspection and was not caused by a successful cleanup.
++
++## Supported-tool checks
++
++Read `PLAN.md` and `MANAGER-COMMON.md`, including the 2026-10-20 recycle-on-finish guidance. Inspected the implementations of `bin/recycle`, `bin/compact-scratch`, and `bin/rm-own` before acting.
++
++Command run:
++
++```text
++bin/recycle agt-m2-effects-set agt-m2-transition-set agt-m3-capture-source-proof
++```
++
++Results:
++
++```text
++agt-m2-effects-set: DIRTY, refused
++agt-m2-transition-set: DIRTY, refused
++agt-m3-capture-source-proof: DIRTY, refused
++```
++
++These were the only finished, non-recycled Agent worktrees still present. Their uncommitted changes were preserved.
++
++The Agent KEEP worktrees are `agt-pin-27e823a5`, `agt-pin-2f8b9cc5`, `agt-pin-3c4f6de4`, `agt-pin-9bf503f9`, `agt-pin-afcb326c`, `agt-pin-d93b4ff6`, and `agt-pin-f97b2b87`; all are immutable pin checkouts and were preserved.
++
++The compactor inventory found no eligible Agent scratch directory over 50 MB. `bin/compact-scratch` was not run because it has no dry-run mode and is global across managers; running it here could alter another manager's records. The largest non-eligible Agent record was `agt-m2-foundation-compose/notes` (216 MB), which has no `ended` marker and was left untouched. Existing `.tgz` records were already packed and left untouched.
++
++No test suite was run; this task is housekeeping only.
++
++## Candidate list for a later safe pass
++
++- `agt-m2-effects-set` — finished but dirty; recycle after its work is explicitly preserved/abandoned.
++- `agt-m2-transition-set` — finished but dirty and transition-related; protected by the task brief.
++- `agt-m3-capture-source-proof` — finished but dirty and source-related; protected by the task brief.
++- `agt-m2-foundation-compose` — interrupted/no `ended` marker, dirty, and has a 216 MB record scratch directory; not eligible for supported cleanup.
++- `agt-m0-env-logs` — orphan-looking worktree without worker metadata; no supported safe operation identified, so untouched.
+
+codex
+Completed bounded housekeeping audit.
+
+- No files or worktrees were removed; all recycle candidates were dirty and refused.
+- Free space: `7,560,114,176` → `8,193,359,872` bytes.
+- No tests run (housekeeping only).
+- Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md)
+- Created `commit-msg`, `commit-msg.txt`, and `DONE`.
+tokens used
+74,522
+Completed bounded housekeeping audit.
+
+- No files or worktrees were removed; all recycle candidates were dirty and refused.
+- Free space: `7,560,114,176` → `8,193,359,872` bytes.
+- No tests run (housekeeping only).
+- Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-own-disk-headroom/report.md)
+- Created `commit-msg`, `commit-msg.txt`, and `DONE`.

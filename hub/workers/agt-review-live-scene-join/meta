@@ -1,0 +1,9 @@
+name=agt-review-live-scene-join
+repo=agent
+base=tl/integration
+base_sha=56409ab2
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-live-scene-join
+started=2026-10-20T08:00:23Z

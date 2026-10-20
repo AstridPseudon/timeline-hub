@@ -1,0 +1,9 @@
+name=agt-m2-producer-guard
+repo=agent
+base=tl/agt-m2-bundle2-complete-source
+base_sha=d4743e29
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-producer-guard
+started=2026-10-20T01:37:52Z

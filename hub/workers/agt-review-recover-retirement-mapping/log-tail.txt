@@ -1,0 +1,400 @@
+    from astrid.sdk.timeline.commands import operations
+
+    parser.description = ('Commit a JSON array of registered EditCommands atomically on an explicit '
+                          'original revision/publication. Supplied capture claims are verified, never '
+                          'refreshed. Missing capture inputs refuse the batch; the file is kept.')
+    parser.formatter_class = argparse.RawDescriptionHelpFormatter
+    parser.epilog = 'Installed operations:\n  ' + '\n  '.join(operations())
+    _add_project_arg(parser, required=False)
+    parser.add_argument('ref', help='Timeline id or slug.')
+    parser.add_argument('commands_file', metavar='FILE', help='JSON array of existing EditCommands.')
+    parser.add_argument('--base-revision-id', required=True, help='Original immutable revision id.')
+    parser.add_argument('--base-publication-id', required=True, help='Original publication id.')
+    parser.add_argument('--dry-run', action='store_true', help='Validate without accepting a publication.')
+    _add_idempotency_key(parser)
+    _add_json_flag(parser, default=False)
+    parser.set_defaults(command='commands-file', handler=_cmd_commit_edit)
+    subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.add_argument("-m", "--message", dest="message", required=True, help="What changed (the revision message).")
+    _add_idempotency_key(subparser)
+    subparser.add_argument("--force", action="store_true", help="Resolve overlapping edits in favor of this draft.")
+    _add_json_flag(subparser, default=False)
+    subparser.set_defaults(handler=_as_timeline_verb(_cmd_publish))
+
+
+def _configure_edit(subparser: argparse.ArgumentParser) -> None:
+    subparser.description = ("Use edit move TL --clip SCOPED_ID --on SECONDS or edit track-label TL "
+                             "--track parent/track:ID --set LABEL (or --clear) for native commits. "
+                             "Use edit commands-file TL FILE --base-revision-id REV "
+                             "--base-publication-id PUB for a native batch. "
+                             "Ordinary --trim-in/--trim-out on literal parent media also commit directly "
+                             "when no detached working copy exists. Other flags edit a legacy detached working copy.")
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("ref", nargs="?", default=None,
+                           help="Timeline id or slug with a saved working copy (or use --file).")
+    subparser.add_argument("--file", default=None, help="Edit a local checkout file instead of the working copy.")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.add_argument("--clip", help="Clip by address (c30.cover), layer name, asset key, id or prefix, element, or on-screen text.")
+    subparser.add_argument("--near", default=None, help="With --clip: the match nearest this word or time.")
+    subparser.add_argument("--add-media", dest="add_media", default=None, metavar="FILE|HANDLE|KEY",
+                           help="Add an audio media clip; audio tracks stay independent of picture cuts "
+                                "(needs --track and --on; --for/--until/--trim-in/--trim-out/--gain-db/--id optional).")
+    subparser.add_argument("--add-layer", dest="add_layer", default=None, metavar="ELEMENT",
+                           help="Add a layer (type, sprite, snap-plate ...) to the cut on screen at --on MOMENT "
+                                "(--layer NAME, --layer-asset ASSET, --for/--until, --set k=v, --track optional).")
+    subparser.add_argument("--layer", default=None, metavar="NAME", help="Layer name for --add-layer (default: its asset or element name).")
+    subparser.add_argument("--layer-asset", dest="layer_asset", default=None, metavar="ASSET",
+                           help="Asset (key, file or media handle) for --add-layer.")
+    subparser.add_argument("--track", default=None, metavar="TRACK", help="Track for --add-layer, or the audio track for --add-media (music, vo, sfx ...).")
+    subparser.add_argument("--id", dest="clip_id", default=None, metavar="ID", help="Clip id for --add-media or --add-layer.")
+    subparser.add_argument("--trim-in", dest="trim_in", type=float, default=None, metavar="SECONDS",
+                           help="Set a media clip's source in point; its film start stays and its length follows.")
+    subparser.add_argument("--trim-out", dest="trim_out", type=float, default=None, metavar="SECONDS",
+                           help="Set a media clip's source out point; its film start stays and its length follows.")
+    subparser.add_argument("--slip", type=float, default=None, metavar="SECONDS",
+                           help="Move a media clip's source window while its film position and length stay fixed.")
+    subparser.add_argument("--set", dest="set_values", action="append", default=[])
+    subparser.add_argument("--swap-asset", metavar="KEY|FILE|HANDLE|KEY=HANDLE",
+                           help="Point the clip at an asset: a registry key, a local file, or project media "
+                                "(run:RUN/PORT#n, task:TASK/PORT#n, ref:NAME, sha256:DIGEST). Name new media yourself "
+                                "with KEY=HANDLE (BROOM=run:RUN/sprites#0).")
+    subparser.add_argument("--replace-asset", dest="replace_asset", default=None, metavar="KEY=HANDLE",
+                           help="Repoint every clip using KEY to new project media, keeping the key "
+                                "(run:..., task:..., ref:..., sha256:...).")
+    from astrid.packs.timeline.cli_look import add_look_flags
+    add_look_flags(subparser)
+    subparser.add_argument("--on", help='Start on a moment: "viral", after "Astrid", beat 2 after "Astrid", c22, +0.8s.')
+    subparser.add_argument("--until", help='End on a moment (its start stays): "Astrid", after "viral", c26.')
+    subparser.add_argument("--for", "--duration", dest="for_seconds", type=float, metavar="SECONDS",
+                           help="A literal length in seconds (prefer --until when the end means something).")
+    subparser.add_argument("--extend", type=float)
+    subparser.add_argument("--nudge", type=float)
+    subparser.add_argument("--nudge-frames", type=int)
+    subparser.add_argument("--close-gap-before")
+    subparser.add_argument("--at", dest="at", help="Start the clip at this time (seconds or m:ss).")
+    subparser.add_argument("--at-word", dest="at_word", default=None, help="Start the clip at this word.")
+    subparser.add_argument("--n", type=int, default=None, help="Which occurrence of --at-word (1-based).")
+
+exec
+/bin/bash -lc "rg -n -C 5 \"def commit_many|def commit\\(\" astrid/sdk/timeline/sync.py | sed -n '1,220p'; rg -n \"timeline.restore\" astrid/packs/timeline/cli_native.py tests/v10 tests/sdk -g '*.py' | sed -n '1,220p'" in /home/user/work/wt/agt-review-recover-retirement-mapping
+ succeeded in 0ms:
+221-        from astrid.sdk.timeline.commands import execute
+222-
+223-        commands = [_native_command(command) for command in commands]
+224-        return self._stage(lambda state: execute(self._bundle(state), commands).commands)
+225-
+226:    def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
+227-        """Capture and flush one native command, or retry its original flight."""
+228-        return self.commit_many([command], idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+229-
+230:    def commit_many(self, commands, *, idempotency_key=None, dry_run=False, via="python", base=None):
+231-        """Capture and flush a batch, or retry its exact flight before a suffix."""
+232-        from astrid.sdk.timeline._command_state import equal
+233-        from astrid.sdk.timeline.commands import execute
+234-
+235-        commands = [_native_command(command) for command in commands]
+tests/v10/test_domain_cli_projects_timelines.py:242:                "legacy timeline version recovery is retired; restore an exact revision with timeline.restore",
+tests/v10/test_domain_cli_projects_timelines.py:246:                    "replacement": "timeline.restore",
+tests/v10/test_domain_cli_projects_timelines.py:1771:    assert "timeline.restore" in envelope["error"]["message"]
+tests/sdk/test_timeline_commit_provider_runtime.py:192:        call = {"schema_version": 1, "op": "timeline.restore", "version": "1", "select": None,
+tests/sdk/test_timeline_selected_schema_runtime.py:548:    restore = {'schema_version': 1, 'op': 'timeline.restore', 'version': '1', 'select': None,
+tests/sdk/test_timeline_selected_schema_runtime.py:771:    restored = case.submit(case.request([{'schema_version': 1, 'op': 'timeline.restore',
+tests/sdk/test_timeline_commit_provider.py:504:    restore = {"schema_version": 1, "op": "timeline.restore", "version": "1", "select": None,
+tests/sdk/test_timeline_commit_provider.py:879:    return {"schema_version": 1, "op": "timeline.restore", "version": "1", "select": None,
+tests/sdk/test_native_timeline_facades.py:114:        "replacement": "timeline.restore",
+tests/sdk/test_native_timeline_facades.py:118:    assert "timeline.restore" in result.error.message
+tests/sdk/test_timeline_sync.py:73:            if body["commands"][0]["op"] == "timeline.restore":
+tests/sdk/test_timeline_sync.py:211:        "op": "timeline.restore",
+tests/sdk/test_timeline_sync.py:489:    (("receipt", "command_kind"), "timeline.restore"),
+tests/sdk/test_timeline_sync_native.py:247:                         'restore': 'timeline.restore'}[damage]
+
+codex
+Focused tests pass, but they currently pass because the changed CLI test asserts refusal for `recover` with no version—the exact case the settled catalog contract says must remain unarchive. A direct SDK probe confirms no-version `RemoteTimelines.recover()` returns `retired_route` without forwarding. I’m doing the final diff/remaining-symbol audit and recording a precise HOLD; no product edit is warranted in a review-only task.
+exec
+/bin/bash -lc "printf '%s\\n' '--- exact candidate tree ---'; git rev-parse HEAD"'^{tree}; printf '"'%s\\n' '--- parent/candidate status ---'; git status --short --branch; printf '%s\\n' '--- forwarding audit ---'; rg -n \"recover_timeline|def recover\\(self, project, ref|def archive\\(self, project, ref|def restore\\(self, revision_id|TimelineSession\\.open|timeline\\.restore\" astrid/sdk/remote.py astrid/sdk/workspace_client.py astrid/sdk/timeline/sync.py astrid/packs/timeline/cli.py astrid/packs/timeline/cli_native.py | sed -n '1,220p'; printf '%s\\n' '--- exact diff check ---'; git diff --check HEAD"'^ HEAD; printf '"'%s\\n' '--- changed names ---'; git diff --name-only HEAD"'^ HEAD' in /home/user/work/wt/agt-review-recover-retirement-mapping
+ succeeded in 109ms:
+--- exact candidate tree ---
+4507ab16813085eaae848a3f9c278c8754cdf8b1
+--- parent/candidate status ---
+## tl/agt-review-recover-retirement-mapping
+--- forwarding audit ---
+astrid/sdk/timeline/sync.py:306:    def restore(self, revision_id, content_digest, *, idempotency_key=None, dry_run=False, via="python"):
+astrid/sdk/timeline/sync.py:319:            "op": "timeline.restore",
+astrid/packs/timeline/cli.py:38:  ``TimelineSession.restore`` and the native ``timeline.restore`` command;
+astrid/packs/timeline/cli.py:3936:        session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client, **base)
+astrid/sdk/remote.py:1602:    def archive(self, project, ref, *, expected_version=None, idempotency_key=None):
+astrid/sdk/remote.py:1609:    def recover(self, project, ref, *, expected_version=None, version=None, idempotency_key=None):
+astrid/sdk/remote.py:1614:                "legacy timeline version recovery is retired; restore an exact revision with timeline.restore",
+astrid/sdk/remote.py:1617:                    "operation": "recover_timeline",
+astrid/sdk/remote.py:1618:                    "replacement": "timeline.restore",
+astrid/sdk/remote.py:2271:    def archive(self, project, ref, *, expected_version=None, idempotency_key=None):
+astrid/sdk/remote.py:2280:    def recover(self, project, ref, *, expected_version=None, idempotency_key=None):
+--- exact diff check ---
+--- changed names ---
+astrid/packs/timeline/cli.py
+astrid/sdk/remote.py
+astrid/sdk/timeline/sync.py
+astrid/sdk/workspace_client.py
+docs/contracts/cli-contract.md
+docs/guides/cli-journeys.md
+tests/sdk/test_native_timeline_facades.py
+tests/sdk/test_timeline_checkout_history_runtime.py
+tests/sdk/test_timeline_sync.py
+tests/v10/test_domain_cli_projects_timelines.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..0b410a5798e28b7fb0a34ae6f00ae70262d27384
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg
+@@ -0,0 +1,4 @@
++review(timeline): hold legacy recover retirement
++
++Hold the Agent recover retirement review because no-version recover now refuses
++instead of preserving the settled catalog unarchive behavior.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..0b410a5798e28b7fb0a34ae6f00ae70262d27384
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg.txt
+@@ -0,0 +1,4 @@
++review(timeline): hold legacy recover retirement
++
++Hold the Agent recover retirement review because no-version recover now refuses
++instead of preserving the settled catalog unarchive behavior.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..0b410a5798e28b7fb0a34ae6f00ae70262d27384
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg
+@@ -0,0 +1,4 @@
++review(timeline): hold legacy recover retirement
++
++Hold the Agent recover retirement review because no-version recover now refuses
++instead of preserving the settled catalog unarchive behavior.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..0b410a5798e28b7fb0a34ae6f00ae70262d27384
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg.txt
+@@ -0,0 +1,4 @@
++review(timeline): hold legacy recover retirement
++
++Hold the Agent recover retirement review because no-version recover now refuses
++instead of preserving the settled catalog unarchive behavior.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- candidate refusal ---'; nl -ba astrid/sdk/remote.py | sed -n '1598,1630p'; printf '%s\\n' '--- changed CLI expectation ---'; nl -ba tests/v10/test_domain_cli_projects_timelines.py | sed -n '1748,1778p'; printf '%s\\n' '--- settled visibility contract ---'; nl -ba /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-timeline-visibility-restoration.md | sed -n '5,20p'; printf '%s\\n' '--- restore path ---'; nl -ba astrid/sdk/timeline/sync.py | sed -n '300,344p'; nl -ba astrid/packs/timeline/cli.py | sed -n '3928,3948p'; printf '%s\\n' '--- markers ---'; test "'! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/DONE && echo DONE-empty; sed -n '"'1,8p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-retirement-mapping/commit-msg.txt" in /home/user/work/wt/agt-review-recover-retirement-mapping
+ succeeded in 133ms:
+--- candidate refusal ---
+  1598	        try:
+  1599	            return int(value)
+  1600	        except (TypeError, ValueError) as exc:
+  1601	            raise WorkspaceClientError(502, "protocol_error", "Runtime timeline listing has no valid version", {}) from exc
+  1602	    def archive(self, project, ref, *, expected_version=None, idempotency_key=None):
+  1603	        key = idempotency_key or uuid.uuid4().hex
+  1604	        try:
+  1605	            version = self._version(project, ref, expected_version)
+  1606	        except WorkspaceClientError as exc:
+  1607	            return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
+  1608	        return self._typed("archive_timeline", ref, key=key, expected_version=version, idempotency_key=key)
+  1609	    def recover(self, project, ref, *, expected_version=None, version=None, idempotency_key=None):
+  1610	        key = idempotency_key or uuid.uuid4().hex
+  1611	        return DomainResult.failure(
+  1612	            ErrorObject(
+  1613	                "retired_route",
+  1614	                "legacy timeline version recovery is retired; restore an exact revision with timeline.restore",
+  1615	                {
+  1616	                    "status": 410,
+  1617	                    "operation": "recover_timeline",
+  1618	                    "replacement": "timeline.restore",
+  1619	                    "next_action": "Use TimelineSession.restore(revision_id, content_digest) with the exact historical revision.",
+  1620	                    "version_is_not_revision": True,
+  1621	                },
+  1622	            ),
+  1623	            idempotency_key=key,
+  1624	        )
+  1625	
+  1626	
+  1627	class RemoteMedia(_RemoteFamily):
+  1628	    def open(
+  1629	        self,
+  1630	        project: str,
+--- changed CLI expectation ---
+  1748	        ["list", "--project", "demo", "--json"],
+  1749	        client=client,
+  1750	    )
+  1751	    assert rc == 0
+  1752	    assert client.calls == [("timelines.list", {"project": "demo"})]
+  1753	    capsys.readouterr()
+  1754	
+  1755	    client.calls.clear()
+  1756	    rc = _run(
+  1757	        "timelines",
+  1758	        ["recover", "--project", "demo", "main", "--json"],
+  1759	        client=client,
+  1760	    )
+  1761	    assert rc != 0
+  1762	    assert client.calls == [
+  1763	        (
+  1764	            "timelines.recover",
+  1765	            {"project": "demo", "ref": "main", "idempotency_key": None},
+  1766	        )
+  1767	    ]
+  1768	    envelope = json.loads(capsys.readouterr().out)
+  1769	    assert envelope["ok"] is False
+  1770	    assert envelope["error"]["code"] == "retired_route"
+  1771	    assert "timeline.restore" in envelope["error"]["message"]
+  1772	
+  1773	
+  1774	def test_timelines_history_is_one_sdk_call(capsys) -> None:
+  1775	    # History shows the head revision from the Runtime projection. It never reads the legacy
+  1776	    # table (timelines.history), and says the earlier revisions cannot be listed (exit 0).
+  1777	    client = _FakeClient()
+  1778	
+--- settled visibility contract ---
+     5	Runtime keeps the existing timeline archive and recover operations as
+     6	project-scoped catalog mutations. Archive increments the timeline catalog
+     7	version and sets `archived_at`; recover clears `archived_at` and increments the
+     8	catalog version. Both preserve shots, references, canonical head/publication,
+     9	accepted closure/document bytes, CAS, and film recorder/history rows. They use
+    10	the existing timeline event and command receipt/idempotency paths, including
+    11	expected-version conflicts and exact retries.
+    12	
+    13	`recover_timeline` is unarchive only when `version` is absent or names the
+    14	current catalog version. A requested non-current version is a visible 410
+    15	refusal before any write, with `timeline.restore` named as the replacement. An
+    16	exact receipt produced by the new visibility-only recover remains replayable;
+    17	legacy historical recover receipts are not replayed. Canonical historical film
+    18	restoration continues through the existing actual-Agent-provider
+    19	`timeline.restore` path.
+    20	
+--- restore path ---
+   300	            if state["pending"] and state["pending"] != [command]:
+   301	                raise TimelineEditError("flush pending intent before undo")
+   302	            state["pending"] = [command]
+   303	            self.outbox.write(state)
+   304	        return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+   305	
+   306	    def restore(self, revision_id, content_digest, *, idempotency_key=None, dry_run=False, via="python"):
+   307	        """Restore one exact retained revision through the native commit path.
+   308	
+   309	        The revision and digest are caller-supplied historical identity pins;
+   310	        neither is inferred from a legacy numeric version.  Staging and flush
+   311	        retain the normal outbox draft and exact-retry guarantees.
+   312	        """
+   313	        if not isinstance(revision_id, str) or not revision_id:
+   314	            raise TimelineEditError("restore requires an exact nonempty revision_id")
+   315	        if not isinstance(content_digest, str) or not content_digest:
+   316	            raise TimelineEditError("restore requires the exact nonempty content_digest")
+   317	        command = {
+   318	            "schema_version": 1,
+   319	            "op": "timeline.restore",
+   320	            "version": "1",
+   321	            "select": None,
+   322	            "args": {"revision_id": revision_id, "content_digest": content_digest},
+   323	        }
+   324	        with self.outbox.locked():
+   325	            state = self._state()
+   326	            if state["pending"] and state["pending"] != [command]:
+   327	                raise TimelineEditError("flush pending intent before restore")
+   328	            state["pending"] = [command]
+   329	            self.outbox.write(state)
+   330	        return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+   331	
+   332	    def flush(self, *, idempotency_key=None, dry_run=False, via="python"):
+   333	        """Send/retry exactly one prefix; leave newer local commands untouched."""
+   334	        with self.outbox.locked():
+   335	            state = self._state()
+   336	            flight = state["flight"]
+   337	            if flight is None:
+   338	                if not state["pending"]:
+   339	                    raise TimelineEditError("no pending timeline commands")
+   340	                body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
+   341	                        "base_revision_id": state["base"]["revision_id"],
+   342	                        "base_publication_id": state["base"]["publication_id"],
+   343	                        "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
+   344	                if 'rationale' in state:
+  3928	            raise TimelineEditError("--native cannot be combined with a local draft")
+  3929	        batch = None
+  3930	        base = {}
+  3931	        if getattr(parsed, "commands_file", None) is not None:
+  3932	            batch = json.loads(Path(parsed.commands_file).read_text(encoding="utf-8"))
+  3933	            if not isinstance(batch, list) or not batch:
+  3934	                raise TimelineEditError("commands file must contain a nonempty JSON array of EditCommands")
+  3935	            base = {"base_revision_id": parsed.base_revision_id, "base_publication_id": parsed.base_publication_id}
+  3936	        session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client, **base)
+  3937	        options = {"idempotency_key": parsed.idempotency_key, "dry_run": parsed.dry_run, "via": "cli"}
+  3938	        if edit is not None:
+  3939	            result = edit(session, parsed, options)
+  3940	            if result is NotImplemented:
+  3941	                return NotImplemented
+  3942	        elif sheet:
+  3943	            from astrid.sdk.timeline_sheet import NativeSheet
+  3944	
+  3945	            result = NativeSheet.load(session).apply(
+  3946	                Path(parsed.sheet_file).read_text(encoding="utf-8"), session=session,
+  3947	                dry_run=parsed.dry_run, idempotency_key=parsed.idempotency_key)
+  3948	            if parsed.dry_run or not isinstance(result, dict):
+--- markers ---
+DONE-empty
+review(timeline): hold legacy recover retirement
+
+Hold the Agent recover retirement review because no-version recover now refuses
+instead of preserving the settled catalog unarchive behavior.
+
+codex
+HOLD — candidate `689e55de` against parent `e2c7bdcb`.
+
+Finding: `RemoteTimelines.recover()` now refuses every call (`astrid/sdk/remote.py:1609-1624`). The settled contract requires no-version/current-version recover to remain catalog unarchive; only non-current historical recovery should refuse (`runtime-timeline-visibility-restoration.md:5-19`). The changed CLI test now incorrectly asserts refusal for the no-version case (`tests/v10/test_domain_cli_projects_timelines.py:1755-1771`).
+
+Positive revision restore is correctly routed through `TimelineSession.restore()` and `timeline.restore` with exact revision/digest, outbox, retry, and CLI commands-file paths. Legacy Agent forwarding wrappers are physically removed; only the generated vendor symbol remains, with no Agent callers.
+
+Tests:
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sync.py tests/sdk/test_native_timeline_facades.py tests/v10/test_domain_cli_projects_timelines.py tests/sdk/test_timeline_checkout_history_runtime.py` — **187 passed, 2 skipped**
+- `git diff --check` — passed
+- Existing worker HTTP evidence: `commit-integration` — **12 passed**; not rerun.
+- Direct probe confirmed no-version recover returns `retired_route` without forwarding.
+
+Recommended fix: preserve existing catalog recover behavior for absent/current version, add its positive visibility/idempotency/head-preservation assertion, and retain refusal only for non-current historical versions.
+
+Markers written:
+
+- `.../workers/agt-review-recover-retirement-mapping/commit-msg`
+- `.../workers/agt-review-recover-retirement-mapping/commit-msg.txt`
+- `.../workers/agt-review-recover-retirement-mapping/DONE`
+tokens used
+207,241
+HOLD — candidate `689e55de` against parent `e2c7bdcb`.
+
+Finding: `RemoteTimelines.recover()` now refuses every call (`astrid/sdk/remote.py:1609-1624`). The settled contract requires no-version/current-version recover to remain catalog unarchive; only non-current historical recovery should refuse (`runtime-timeline-visibility-restoration.md:5-19`). The changed CLI test now incorrectly asserts refusal for the no-version case (`tests/v10/test_domain_cli_projects_timelines.py:1755-1771`).
+
+Positive revision restore is correctly routed through `TimelineSession.restore()` and `timeline.restore` with exact revision/digest, outbox, retry, and CLI commands-file paths. Legacy Agent forwarding wrappers are physically removed; only the generated vendor symbol remains, with no Agent callers.
+
+Tests:
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sync.py tests/sdk/test_native_timeline_facades.py tests/v10/test_domain_cli_projects_timelines.py tests/sdk/test_timeline_checkout_history_runtime.py` — **187 passed, 2 skipped**
+- `git diff --check` — passed
+- Existing worker HTTP evidence: `commit-integration` — **12 passed**; not rerun.
+- Direct probe confirmed no-version recover returns `retired_route` without forwarding.
+
+Recommended fix: preserve existing catalog recover behavior for absent/current version, add its positive visibility/idempotency/head-preservation assertion, and retain refusal only for non-current historical versions.
+
+Markers written:
+
+- `.../workers/agt-review-recover-retirement-mapping/commit-msg`
+- `.../workers/agt-review-recover-retirement-mapping/commit-msg.txt`
+- `.../workers/agt-review-recover-retirement-mapping/DONE`

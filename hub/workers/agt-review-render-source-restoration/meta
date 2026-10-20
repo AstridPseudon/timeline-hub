@@ -1,0 +1,9 @@
+name=agt-review-render-source-restoration
+repo=agent
+base=tl/agt-m3-render-request-source-carrier
+base_sha=4f29c39a
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-render-source-restoration
+started=2026-10-20T19:26:57Z

@@ -1,0 +1,400 @@
+    def get_project_timeline_revision(self, _project, _timeline, revision):
+/home/user/work/runtimes/agent-remotion-0012/node_modules/react/package.json
+/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+ M astrid/core/execution/generic_host.py
+ M astrid/core/rendering/verified_source.py
+ M tests/packs/rendering/test_verified_source.py
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_source_carry.py -k native' in /home/user/work/wt/agt-m3-verified-source-host-extract
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale' in /home/user/work/wt/agt-m3-verified-source-host-extract
+ exited 1 in 1435ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________ test_giant_file_inventory_matches_rationale __________________
+
+    def test_giant_file_inventory_matches_rationale() -> None:
+        """M4 gate: every ``astrid/**/*.py`` file over 1,200 physical lines
+        must appear in ``docs/giant-file-rationale.md``, and every entry in
+        the rationale must correspond to an existing file that genuinely
+        exceeds the threshold.  Files at or below 1,200 lines are watch-only
+        and do not require rationale entries.
+        """
+        import re
+    
+        from astrid.core.foundation.paths import REPO_ROOT
+    
+        GIANT_THRESHOLD = 1200
+    
+        # ── 1. Scan every astrid/**/*.py file and count physical lines ─────
+        astrid_root = REPO_ROOT / "astrid"
+        py_files: dict[str, int] = {}
+        for py_path in sorted(astrid_root.rglob("*.py")):
+            # Skip __pycache__ and other dotted directories.
+            parts = py_path.relative_to(astrid_root).parts
+            if any(part.startswith(".") for part in parts):
+                continue
+            rel = py_path.relative_to(REPO_ROOT).as_posix()
+            lines = py_path.read_text(encoding="utf-8").count("\n")
+            py_files[rel] = lines
+    
+        # ── 2. Parse the rationale doc ──────────────────────────────────────
+        rationale_path = REPO_ROOT / "docs" / "giant-file-rationale.md"
+        if not rationale_path.is_file():
+            pytest.skip("retired M4 giant-file rationale inventory is not shipped")
+        rationale_text = rationale_path.read_text(encoding="utf-8")
+    
+        # Extract table entries of the form: | N | `path` | NNNN | ...
+        # Pattern: | number | `astrid/...` | digits | ...
+        entry_pattern = re.compile(
+            r"\|\s*\d+\s*\|\s*`([^`]+)`\s*\|\s*([\d,]+)\s*\|"
+        )
+        rationale_entries: dict[str, int] = {}
+        for match in entry_pattern.finditer(rationale_text):
+            file_path = match.group(1)
+            lines_str = match.group(2).replace(",", "")
+            rationale_entries[file_path] = int(lines_str)
+    
+        m4_complete = "M4-complete" in rationale_text
+        if not m4_complete:
+            assert rationale_entries, (
+                "giant-file-rationale.md must contain at least one table entry "
+                "(or include an M4-complete marker when all files are below threshold)"
+            )
+    
+        # ── 3. Every file over threshold must be in rationale ───────────────
+        over_threshold = {
+            rel: lines
+            for rel, lines in py_files.items()
+            if lines > GIANT_THRESHOLD
+        }
+        missing_from_rationale = over_threshold.keys() - rationale_entries.keys()
+>       assert not missing_from_rationale, (
+            f"Files over {GIANT_THRESHOLD} lines missing from "
+            f"giant-file-rationale.md: {sorted(missing_from_rationale)}"
+        )
+E       AssertionError: Files over 1200 lines missing from giant-file-rationale.md: ['astrid/sdk/timeline_sheet.py']
+E       assert not {'astrid/sdk/timeline_sheet.py'}
+
+tests/test_structure_contracts.py:1012: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+1 failed in 0.42s
+
+codex
+The wider targeted run found the known missing `timeline_sheet.py` rationale entry and 19 setup errors caused by missing Remotion peers in this worktree. I’m rerunning those 19 cases with the shared dependencies selected read-only. The changed host’s Mypy diagnostics are also identical before and after: 140 existing findings.
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python - <<'"'PY'
+import re
+from pathlib import Path
+
+path = 'astrid/core/execution/generic_host.py'
+text = Path('docs/giant-file-rationale.md').read_text()
+recorded = int(re.search(r'"'`'"' + re.escape(path) + r'"'`'"\\s*\\|\\s*([\\d,]+)', text).group(1).replace(',', ''))
+actual = Path(path).read_text().count('\\n')
+assert recorded == 13798
+assert abs(actual - recorded) <= 50
+print(f'Host rationale: recorded={recorded}, actual={actual}, delta={actual - recorded}, unchanged tolerance=50: PASS')
+PY
+ git diff --check" in /home/user/work/wt/agt-m3-verified-source-host-extract
+ succeeded in 514ms:
+Host rationale: recorded=13798, actual=13816, delta=18, unchanged tolerance=50: PASS
+
+ succeeded in 38281ms:
+...................                                                      [100%]
+19 passed, 40 deselected in 36.93s
+
+exec
+/bin/bash -lc 'git diff -- astrid/core/rendering/verified_source.py; git diff --stat' in /home/user/work/wt/agt-m3-verified-source-host-extract
+ succeeded in 343ms:
+diff --git a/astrid/core/rendering/verified_source.py b/astrid/core/rendering/verified_source.py
+index 6dbb3db9..3af7fb3a 100644
+--- a/astrid/core/rendering/verified_source.py
++++ b/astrid/core/rendering/verified_source.py
+@@ -12,7 +12,7 @@ import json
+ import os
+ from dataclasses import dataclass
+ from pathlib import Path
+-from typing import Any, Mapping
++from typing import Any, Callable, Mapping
+ 
+ SOURCE_ENV = "ASTRID_VERIFIED_TIMELINE_SOURCE"
+ RESERVED_SOURCE_KEYS = frozenset({"verified_source", "timeline_source", SOURCE_ENV})
+@@ -76,6 +76,72 @@ class PreparedTimelineInputs(dict[str, Any]):
+ 
+     timeline_source: VerifiedTimelineSource | None = None
+ 
++    @classmethod
++    def prepare(cls, input_spec: Mapping[str, Any], values: Mapping[str, Any]) -> PreparedTimelineInputs:
++        reject_source_keys(input_spec)
++        if isinstance(input_spec.get("params"), Mapping):
++            reject_source_keys(input_spec["params"])
++        reject_source_keys(values)
++        for config in (values["backend_config"].values() if isinstance(values.get("backend_config"), Mapping) else ()):
++            if isinstance(config, Mapping):
++                reject_source_keys(config)
++        return cls(values)
++
++    def prepare_snapshot(
++        self, input_spec: Mapping[str, Any], spec: Mapping[str, Any], snapshot: Any,
++        hydrate_snapshot: Callable[[Mapping[str, Any], str], Mapping[str, Any]],
++    ) -> Any:
++        # Only Runtime-admitted immutable refs can mint the internal source.
++        # Inline snapshots and caller provenance remain ordinary native inputs.
++        self._source_ref: Any = input_spec.get("timeline_snapshot_ref") or self.get("timeline_snapshot_ref")
++        self._source_authority: Any = self.get("timeline_authority")
++        if (isinstance(input_spec.get("timeline_snapshot_ref"), Mapping)
++                and isinstance(self.get("timeline_snapshot_ref"), Mapping)
++                and input_spec["timeline_snapshot_ref"] != self["timeline_snapshot_ref"]):
++            raise ValueError("timeline snapshot reference differs from admitted context")
++        self._source_snapshot = snapshot
++        context = spec.get("authority_context") or input_spec.get("authority_context")
++        if (isinstance(context, Mapping) and isinstance(context.get("capture_snapshot_ref"), Mapping)
++                and context["capture_snapshot_ref"].get("source_kind") in {"revision", "working_copy"}):
++            self._source_ref = context["capture_snapshot_ref"]
++            self._source_snapshot = hydrate_snapshot(self._source_ref, "capture_snapshot")
++            self._source_authority = self._source_snapshot.get("metadata", {}).get("capture_authority")
++            snapshot = self._source_snapshot
++            filmstrip = self.get("filmstrip_authority")
++            if isinstance(filmstrip, str):
++                if json.loads(filmstrip).get("capture_snapshot") != self._source_snapshot:
++                    raise ValueError("capture snapshot differs from admitted context")
++        self._canonical_ref = isinstance(self._source_ref, Mapping) and self._source_ref.get("source_kind") in {"revision", "working_copy"}
++        if self._canonical_ref:
++            if not isinstance(self._source_authority, Mapping) or not isinstance(self._source_snapshot, Mapping):
++                raise ValueError("verified source requires admitted authority and snapshot")
++            if any(name in self for name in ("timeline", "assets_registry")):
++                raise ValueError("verified source prepared inputs cannot be caller replaced")
++            if "timeline_snapshot" in self or "timeline_snapshot" in input_spec:
++                raise ValueError("verified source snapshot cannot be caller replaced")
++        return snapshot
++
++    def mint_source(self, attempt: Path) -> PreparedTimelineInputs:
++        if self._canonical_ref:
++            try:
++                self.timeline_source = mint_prepared_source(
++                    ref=self._source_ref, authority=self._source_authority, snapshot=self._source_snapshot,
++                    timeline_path=self["timeline"], assets_path=self["assets_registry"], attempt=attempt,
++                )
++            except KeyError as exc:
++                raise ValueError(str(exc)) from exc
++        return self
++
++    @staticmethod
++    def handoff_source(inputs: Mapping[str, Any], env: dict[str, str]) -> None:
++        # This value is an attribute of host-owned prepared inputs, never a
++        # manifest input or binding.env override. Clear any ambient handoff.
++        env.pop(SOURCE_ENV, None)
++        source = getattr(inputs, "timeline_source", None)
++        if source is not None:
++            source.validate(inputs["timeline"], inputs["assets_registry"])
++            env[SOURCE_ENV] = source._anchor
++
+ 
+ def mint_prepared_source(
+     *, ref: Mapping[str, Any], authority: Mapping[str, Any], snapshot: Mapping[str, Any],
+ astrid/core/execution/generic_host.py         |  74 ++++-------------
+ astrid/core/rendering/verified_source.py      |  68 +++++++++++++++-
+ tests/packs/rendering/test_verified_source.py | 110 ++++++++++++++++++++++++++
+ 3 files changed, 192 insertions(+), 60 deletions(-)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-host-extract')
+report = r'''# Verified-source host extraction
+
+Completed on Agent base "'`140e84cc`, with only `astrid/core/execution/generic_host.py`, existing `astrid/core/rendering/verified_source.py`, and existing `tests/packs/rendering/test_verified_source.py` changed. No integration checkout, git metadata, shared dependencies, or repository process documents were changed. No full suite was requested or run.
+
+## Change and decisions
+
+The existing `PreparedTimelineInputs` is the one cohesive admission helper. Its `prepare`, `prepare_snapshot`, `mint_source`, and `handoff_source` methods contain the moved statements. Using lifecycle methods on this existing container preserves the original three checkpoints without a new DTO, phase-dispatch API, source factory, or callback around the host'"'s large materializer:
+
+1. Reserved keys are checked before parameter validation, Runtime fetches, or attempt writes.
+2. After the existing snapshot hydration, select the admitted capture ref/snapshot and refuse caller replacement before derived files are produced. The host passes its existing authorized, hash-checking hydrator; the helper has no Runtime client or new source resolver.
+3. After the existing materialization completes, call the unchanged "'`mint_prepared_source` with the retained ref/authority/snapshot and final file paths under the same attempt.
+4. At the same child-environment checkpoint, clear the ambient source key, validate the exact prepared pair, and transfer the same anchor.
+
+Admission refusals raise `ValueError` and the short host call sites map the identical text to `HostError`. Missing prepared keys are converted from `KeyError` to `ValueError` with identical text before that mapping. A narrow `JSONDecodeError` passthrough preserves the existing malformed filmstrip JSON exception type, rather than accidentally normalizing it to `HostError`.
+
+The mint implementation, project_capture projector, reserved-key set, authority/ref/content checks, attempt confinement, and source binding format are unchanged. No renderer/save evaluation was added. AST comparison proves every host statement outside `_materialize_inputs` and `_run_command_definition` is identical to base. This includes worker capability/output settlement; the separate resourceManagedOutput normalization is not present or modified.
+
+## Size and baseline
+
+- `origin/main` and unchanged giant-file rationale: **13,798** host lines.
+- Base `140e84cc`: **13,860**, +62 (the supplied Timeline excess).
+- Result: **13,816**, +18; **44 lines removed** from the host. The existing 50-line tolerance passes without changing the entry, threshold, or tolerance.
+- `git diff --numstat origin/main -- astrid/core/execution/generic_host.py`: **19 added / 1 removed**. The three-dot frozen-base comparison initially showed 63/1; the net is the same 62-line excess.
+- Final worker diff: host +15/-59, verified_source +67/-1, tests +110/-0.
+
+## Literal refusal proof
+
+The new parameterized test was run before production edits, then again after extraction. These are literal `str(HostError)` expectations, identical before and after:
+
+| Negative | Before = after |
+| --- | --- |
+| Reserved source key | `verified timeline source is host-owned` |
+| Conflicting snapshot refs | `timeline snapshot reference differs from admitted context` |
+| Conflicting capture snapshot | `capture snapshot differs from admitted context` |
+| Missing admitted authority | `verified source requires admitted authority and snapshot` |
+| Caller timeline / assets_registry (two cases) | `verified source prepared inputs cannot be caller replaced` |
+| Caller inline snapshot | `verified source snapshot cannot be caller replaced` |
+| Project scope | `verified source project_id differs from admitted authority` |
+| Timeline scope | `verified source timeline_id differs from admitted authority` |
+| Revision identity | `verified source revision_id differs from admitted authority` |
+| Malformed revision digest | `verified source requires an admitted revision digest` |
+| Revision content mismatch | `verified source revision digest differs` |
+| Runtime snapshot digest mismatch | `verified source snapshot digest differs from Runtime authority` |
+| Working-copy bindings mismatch | `verified source working copy differs` |
+
+All 14 refuse without publishing a verified binding and without mutating the supplied spec. The reserved-key case also proves refusal precedes invalid typed parameters and CAS access. Three successful saved/capture/candidate cases prove the admitted dictionaries remain unchanged, including with materialized media. An ordinary non-Timeline task retains its exact input/params dictionary, creates no source, and writes no files.
+
+Four environment combinations (verified/plain dictionary × ambient key present/absent) prove the only changed key is `ASTRID_VERIFIED_TIMELINE_SOURCE`; unrelated environment values and input dictionaries are preserved. A modified prepared timeline proves validation fails closed after ambient authority is cleared. Existing tests additionally cover path substitution, modified timeline/registry/binding bytes, numeric JSON identity, snapshots, and the real child-process source handoff.
+
+## Exact test commands and results
+
+All commands ran in `/home/user/work/wt/agt-m3-verified-source-host-extract`. These targeted tests use in-process Runtime or Python/Node subprocesses; the native scene fixture explicitly uses no renderer or sockets. No central full or localhost/browser suite was run.
+
+Before production edits:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_verified_source.py -k '"'literal_source_refusals or does_not_mutate or non_timeline'
+"'```
+
+**18 passed, 33 deselected.** During test authoring the first run had 16 passed / 2 failed: the new working-copy fixture also needed its serialized duplicate ref updated, and main already creates an empty attempt directory for an ordinary task. Both test fixtures were corrected while production was still untouched; no passing behavior expectation was removed or weakened.
+
+After extraction:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_verified_source.py -k '"'not host_command'
+"'```
+
+**56 passed, 1 deselected** (5.01s), including all 14 literal refusals and new environment/error-type regressions.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_verified_source.py::test_host_command_receives_only_its_prepared_source
+```
+
+**1 passed** (8.74s).
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_verified_source.py -k '"'not host_command' tests/sdk/test_capture_closure_source.py tests/test_snapshot_reference_handoff.py
+"'```
+
+**81 passed, 1 deselected, 2 xfailed** (355.51s). The two existing strict xfails require Runtime-validated capture publication; the admission double has no publisher. This run preceded the six additional environment/JSON-type tests; those are included in the 56-pass final file run above.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_capture_source_runtime.py
+```
+
+**23 passed, 4 xfailed** (33.61s). Real Runtime admission/claim and the current saved/candidate host materialization pass. Four unchanged strict xfails still require verified-source propagation through `RenderRequest`; that downstream behavior is not claimed as restored here.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_verified_source.py -k '"'not host_command' tests/sdk/test_capture_closure_source.py tests/test_snapshot_reference_handoff.py tests/packs/rendering/test_scene_source_carry.py tests/sdk/test_timeline_capture_projection.py tests/test_structure_contracts.py
+"'```
+
+**193 passed, 10 deselected, 2 xfailed, 1 failed, 19 setup errors** (337.10s). The sole assertion failure is the known missing `astrid/sdk/timeline_sheet.py` giant-file rationale entry, owned separately. All 19 setup errors were missing Remotion peers because this worker has no local node_modules. Re-ran exactly that native parameter selection with explicit read-only provisioned dependencies:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_source_carry.py -k native
+```
+
+**19 passed, 40 deselected** (36.93s). The fixture creates its links and package copy only in its private pytest temporary directory; the shared node_modules is read-only.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+```
+
+**1 failed**, solely the same missing timeline_sheet rationale entry. No documentation/test gate change was made. An independent read of the real host rationale row and source line count asserts `recorded == 13798` and `abs(actual - recorded) <= 50`: **PASS (actual 13816, delta 18)**.
+
+## Static checks and import evidence
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_structure_baseline
+```
+
+**PASS: current=14, new=0, fixed=0.** This structure-baseline gate is distinct from the giant-file inventory test above.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/core/rendering/verified_source.py
+```
+
+**PASS.** Ruff JSON on stdin for both base and current versions of each changed production file proves identical findings: host **102 → 102**, verified_source **0 → 0**.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m scripts.reshape.compare_ruff_baseline
+```
+
+**Exit 1: current=2207, baseline=2220; 13 existing improvements require a baseline refresh.** No new findings in either changed file; no baseline changed here.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m mypy --follow-imports skip --cache-dir /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-host-extract/mypy-cache astrid/core/rendering/verified_source.py
+```
+
+**PASS: no issues in 1 source file.** Initial checking caught two inferred optional-state argument errors, fixed with explicit `Any` annotations matching the original untyped admission state, with no runtime change.
+
+The same Mypy command against `astrid/core/execution/generic_host.py` reports **140 errors**, identical to a `--shadow-file astrid/core/execution/generic_host.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-host-extract/notes/host-before.py` run on base source. Sorted full diagnostic messages were compared ignoring source positions and are equal. Both logs are retained beside this report.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m scripts.reshape.import_cycles --baseline scripts/reshape/baselines/import_cycles.json
+```
+
+The checked-in baseline gate **exits 1** for the existing `rendering ↔ timeline` cycle. Before/after `--json` snapshots are **byte-identical**, both with **7 pairs and the same SCC**; `cmp notes/cycles-before.json notes/cycles-after.json` passes. No cycle was introduced. The before/after snapshots are retained in this report directory.
+
+A subprocess executed base/current generic_host source with the real module name and compared loaded `astrid.core.rendering*` modules: **before=[]; after=[]**. AST checks confirm the verified_source imports remain nested/lazy; the helper only adds a standard-library `Callable` import and never imports generic_host. A separate host AST comparison excluding the two authorized method bodies is identical. `git diff --check` **passes**.
+
+## Limits and next steps
+
+The extraction and its targeted source/admission tests are complete. Merge with the separately owned timeline_sheet rationale repair to make the inventory gate green; do not raise the host row or tolerance. The old import-cycle baseline drift and Ruff baseline improvements remain outside this task. Existing RenderRequest propagation xfails remain unverified downstream work. No full suite or full `make check` was run, as directed.
+'"'''
+(worker / 'notes/report.md').write_text(report)
+(worker / 'commit-msg').write_text('refactor(rendering): move verified source admission out of generic host\\n\\nReuse PreparedTimelineInputs for staged source admission and child handoff while\\npreserving validation order, literal refusals, and admitted source bindings.\\nKeep generic_host within its existing giant-file tolerance and cover reserved\\nkeys, unchanged task dictionaries, and exact environment transfer.\\n')
+shutil.rmtree(worker / 'mypy-cache', ignore_errors=True)
+PY" in /home/user/work/wt/agt-m3-verified-source-host-extract
+ succeeded in 769ms:
+codex
+The 19 native source-forwarding cases pass with the shared dependencies selected read-only. The host is now 13,816 lines, within the unchanged tolerance; the inventory test still fails only on the separately owned `timeline_sheet.py` entry. I’ve written the report and commit message and am marking the worker complete.
+exec
+/bin/bash -lc "git diff --check; git status --short; python3 - <<'PY'
+from pathlib import Path
+
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-host-extract')
+assert (worker / 'notes/report.md').is_file()
+assert (worker / 'commit-msg').read_text().startswith('refactor(rendering):')
+assert Path('astrid/core/execution/generic_host.py').read_text().count('\\n') == 13816
+assert not (worker / 'mypy-cache').exists()
+(worker / 'DONE').touch()
+print('Report, commit message, and DONE are ready.')
+PY" in /home/user/work/wt/agt-m3-verified-source-host-extract
+ succeeded in 836ms:
+ M astrid/core/execution/generic_host.py
+ M astrid/core/rendering/verified_source.py
+ M tests/packs/rendering/test_verified_source.py
+Report, commit message, and DONE are ready.
+
+codex
+Implemented using the existing `PreparedTimelineInputs` helper. Host reduced to **13,816 lines**, within the unchanged tolerance.
+
+- Verified-source tests: **57 passed**.
+- Runtime admission: **23 passed, 4 existing xfails**.
+- Native source forwarding: **19 passed**.
+- Refusal messages and import-cycle baseline unchanged.
+
+The structure inventory still fails on the separately owned `timeline_sheet.py` rationale repair. Commit message and `DONE` written.
+
+[Report with exact commands, results, and remaining limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-host-extract/notes/report.md)
+tokens used
+168,070
+Implemented using the existing `PreparedTimelineInputs` helper. Host reduced to **13,816 lines**, within the unchanged tolerance.
+
+- Verified-source tests: **57 passed**.
+- Runtime admission: **23 passed, 4 existing xfails**.
+- Native source forwarding: **19 passed**.
+- Refusal messages and import-cycle baseline unchanged.
+
+The structure inventory still fails on the separately owned `timeline_sheet.py` rationale repair. Commit message and `DONE` written.
+
+[Report with exact commands, results, and remaining limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-host-extract/notes/report.md)

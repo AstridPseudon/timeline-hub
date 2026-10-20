@@ -1,0 +1,9 @@
+name=agt-m2-full-carrier-projectdata-source
+repo=agent
+base=tl/agt-m2-private952-normal-agent-pin
+base_sha=a53703ce
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-full-carrier-projectdata-source
+started=2026-10-20T18:58:05Z

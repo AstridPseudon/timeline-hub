@@ -1,0 +1,400 @@
+--- a/tests/editing_conformance/test_commit_runtime_m1.py
++++ b/tests/editing_conformance/test_commit_runtime_m1.py
+@@ -272,6 +272,8 @@
+     assert pending["base"] == accepted_pair
+     assert pending["pending"] == [b] and pending["flight"] is None
+     assert json.dumps(pending["pending"][0], sort_keys=True) == guard_b
++    with pytest.raises(TimelineEditError, match="different realm, actor, project or timeline"):
++        _wrong_scope(daemon, fixture, outbox)
+ 
+     if touched_basis:
+         with pytest.raises(CommitConflict) as error:
+@@ -281,7 +283,10 @@
+         assert refused["pending"] == [b]
+         assert refused["conflict"] == error.value.failure
+         assert refused["flight"]["key"] != flight_a["key"]
+-        assert json.loads(refused["flight"]["body"])["commands"] == [b]
++        body_b = json.loads(refused["flight"]["body"])
++        assert body_b["commands"] == [b]
++        assert (body_b["base_revision_id"], body_b["base_publication_id"]) == (
++            accepted_pair["revision_id"], accepted_pair["publication_id"])
+         assert history(client, fixture) == before_restart
+         return
+ 
+@@ -311,13 +316,19 @@
+                 "--published", "--revision-id", revision)
+     assert shown["data"]["revision_id"] == revision
+     assert shown["data"]["working_copy"] is None
++    layers = cli(client, fixture, capsys, "show", fixture.timeline_id,
++                 "--published", "--revision-id", revision, "--layers", "--clip", "music-bed")
++    inspection = layers["data"]["native_inspection"]
++    assert inspection["revision_id"] == revision
++    clip = inspection["selected_parent_clips"][0]
++    assert clip["clip_id"] == "music-bed"
++    assert clip["start"] == [2, 1]
++    visualized = cli(client, fixture, capsys, "visualize", fixture.timeline_id,
++                     "--published", "--revision-id", revision, "--mode", "inputs", "--format", "md")
++    assert visualized["data"]["outputs"]["inspection"]["revision_id"] == revision
+     assert len(history(client, fixture)["items"]) == 7
+     # After undo, the former accepted revision is still the exact immutable film.
+     assert_readback(client, fixture, accepted_b)
+-    with pytest.raises(TimelineEditError, match="different realm, actor, project or timeline"):
+-        TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client,
+-                             outbox_path=tmp_path / "wrong-scope.json") if False else _wrong_scope(
+-                                 daemon, fixture, outbox)
+ 
+ 
+ def _wrong_scope(daemon, fixture, outbox):
+
+exec
+/bin/bash -lc "rg -n 'def verify_baseline|canonical_document|facts' /home/user/work/runtime/runtime_protocol/timeline_commit_baseline.py | tail -22 && rg -n 'def .*document|def .*plan|canonical_document' /home/user/work/wt/agt-m1-provider/astrid/sdk/timeline/commit.py | head -25 && rg -n '"'^class Plan|def execute|compile_authoring'"' /home/user/work/wt/agt-m1-core-integration-fix/astrid/sdk/timeline/commands.py" in /home/user/work/wt/agt-m1-cli-runtime-journey
+ succeeded in 0ms:
+1:"""Verify main publication facts without replay, rendering, or history writes.
+5:these facts. A content revision alone is never a publication identity.
+354:            "canonical_document": current_document, "document_digest": _digest(current_document), "entries": entries,
+359:def verify_baseline(connection, project_id, timeline_id, *, read_object):
+360:    """Return detached, scoped main ledger facts, or refuse without any writes.
+372:        _refuse("missing_or_corrupt_publication_facts:" + type(exc).__name__)
+375:def baseline_install_plan(connection, facts, *, read_object, existing_head=None):
+376:    """Recheck facts under caller's write transaction; caller inserts the plan.
+383:    document = facts["canonical_document"]
+385:    _require(canonical_json(fresh) == canonical_json(facts), "baseline_compare_failed")
+407:    facts = verify_baseline(connection, project_id, timeline_id, read_object=read_object)
+408:    expected = empty_bootstrap_document(project_id, timeline_id, facts["head"]["revision_id"])
+409:    _require(facts["canonical_document"] == expected and len(facts["entries"]) == 1, "bootstrap_requires_empty_initial_publication")
+410:    event = _row(connection, "SELECT payload_json FROM timeline_events WHERE id=?", (facts["entries"][0]["receipt"]["event_ids"][0],))
+412:    entry = facts["entries"][0]
+414:    return {"head": facts["head"], "entries": [entry], "install": True}
+47:def _document_pin(pin):
+56:def _manifest(shots, internals, media, documents):
+71:def _verify_document(document):
+146:def bundle_from_document(document):
+161:def document_from_bundle(bundle, *, document_pins=None):
+405:                    "expected_head": copy.deepcopy(current), "canonical_document": document,
+42:class Plan:
+111:def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None):
+
+exec
+/bin/bash -lc "mkdir -p /tmp/agt-m1-cli-runtime-overlay
+cat > /tmp/agt-m1-cli-runtime-overlay/sitecustomize.py <<'EOF'
+import astrid.sdk.timeline
+astrid.sdk.timeline.__path__.insert(0, '/home/user/work/wt/agt-m1-core-integration-fix/astrid/sdk/timeline')
+astrid.sdk.timeline.__path__.append('/home/user/work/wt/agt-m1-provider/astrid/sdk/timeline')
+EOF
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=/tmp/agt-m1-cli-runtime-overlay:"'$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import shutil
+import tempfile
+from pathlib import Path
+from pytest import MonkeyPatch
+from tests.editing_conformance.test_commit_runtime_m1 import film, assert_move
+from tests.helpers.runtime import use_runtime
+use_runtime()
+from runtime_protocol.service import RuntimeService
+from runtime_protocol.timeline_commit_baseline import verify_baseline
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.commands import execute
+root = Path(tempfile.mkdtemp(prefix='agt-m1-cli-runtime-offline-'))
+try:
+    with MonkeyPatch.context() as patch:
+        fixture, parent, publication = film.__wrapped__(root, patch)
+        service = RuntimeService(fixture.duplicate_root)
+        try:
+            from timeline_commit_film_fixture import read_object_from_realm
+            facts = verify_baseline(service.store.conn, fixture.project_id, fixture.timeline_id,
+                                    read_object=lambda digest: read_object_from_realm(fixture.duplicate_root, digest))
+            bundle = bundle_from_document(facts['canonical_document'])
+            command = capture_move(bundle, 'parent/clip:music-bed', 1)
+            plan = execute(bundle, [command])
+            candidate = document_from_bundle(plan.bundle)
+            assert_move(parent, candidate['parent_revision']['payload'], 'music-bed', 1)
+            print('real API fixture, baseline, capture and exact move assertion: PASS (offline, no transport)')
+        finally:
+            service.close()
+finally:
+    shutil.rmtree(root)
+PY" in /home/user/work/wt/agt-m1-cli-runtime-journey
+ succeeded in 789ms:
+real API fixture, baseline, capture and exact move assertion: PASS (offline, no transport)
+
+exec
+/bin/bash -lc 'tail -22 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md && tail -25 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-m1-handoff.md && git -C /home/user/work/agent log -1 --oneline && git -C /home/user/work/runtime log -1 --oneline' in /home/user/work/wt/agt-m1-cli-runtime-journey
+ succeeded in 138ms:
+
+Manager executed prefix counterexample against corrected source19:30: main tests.timeline.test_authoring_bundle._closure(shared=True), replace parent occurrence shot_id + shot image shot_id with literal shot-placement-custom, set translation map source_offset0/speed1 and output fps30, recompute image digests, then open_authoring_bundle and capture_move(actual occurrence clip,2). Reproduces CommandError occurrence authoring owner changed. This is a real valid main closure, not manually inconsistent authoring IDs. Required correction before core merge; pattern narrower than startswith alone still cannot reserve valid arbitrary user IDs without evidence.
+
+## agt-m1-cli-runtime-journey dependency request
+Implementing required `tests/editing_conformance/test_commit_runtime_m1.py` using normal imports, public AstridClient.open + TimelineSession + CLI parser, existing real_runtime fixture, and Runtime's existing `tests/timeline_commit_film_fixture.py` (read-only reuse via use_runtime locator; no new DB/bootstrap model). Will retain strict assertions for durable lost ACK/restart, queued dependent suffix original guards/fresh key, disjoint preservation and touched-basis conflict, published exact readback and actual inverse. No product edits. Required central `agent commit-integration` lane already registered; manager please request it after test and dependencies are ready.
+Source dependencies: current worker base fa0542ad lacks client-pin/core/provider/frontend/readback corrections. Please arrange real integration-source update preserving my sole new test (no git mutations by worker). Runtime root c423544 lacks real acceptance/port/door corrections and known internal immutable payload schema mismatch reported by rt-m1-realpath. Need corrected real merged Runtime + new client pin before required lane can pass; will not bypass validation. rt-m1-realpath: reusing your film seed helper, plus narrow pre-provider main publication adding independent audio clips/follow clear values as needed; no copy of bootstrap/DB fixture.
+
+## Real Agent CLI/Python journey assigned / central lanes ready
+agt-m1-cli-runtime-journey owns tests/editing_conformance/test_commit_runtime_m1.py only (existing real Runtime helper conventions, no copied DB/DTO/Agent absolute paths). Must prove actual SDK+CLI durable outbox lost ACK/restart/exact replay/inverse/readback with renderer forbidden; coordinate rt-m1-realpath fixture. Orchestrator added agent commit-integration + client-cutover-integration suites; lane request RESOLVED. Use these central lanes, never sandbox local listener runs. Agent generated pin682e2ba3 now merged10d1853d; Runtime sourcec423544de3b7a1090649bf32e4c82514c4c7a641/digest unchanged; real service acceptance/port merges forthcoming. Manager29vendor/parity tests passed3.92s. Readback ba08fd9b now portable normal imports/170neighbors+1skip reported; merge requested. Core prefix counterexample still under review; frontend ff57cb46 reviewed/held until core dependency integrated.
+
+Owner refinement (supersedes earlier generated-prefix normalization): `/shot::shot_id` captures actual source_mapping source identity; guards accept same source or EXACT main deterministic isolated materialization for the same occurrence, validating physical placement owner. This handles repeated use of already-materialized sources without any ID-prefix heuristic. All other reads remain strict typed JSON equality; claim addresses/order/completeness remain exact, and original command guards are preserved. Physical owner writes still trip ancestry ABA guard.55 recipe tests passed before adding explicit arbitrary generated-source-ID regression; final neighbor/provider runs follow. Provider must continue copying final core records unchanged.
+
+## Manager journey source composition decision
+agt-m1-cli-runtime-journey: do not wait for a git refresh/perform git mutations in your stale worker base. Finish the one strict required integration test file with normal imports/existing helper locator; premerge offline syntax/lint and explicit source-blocked report are enough for manager review of this test-only change. Harness commits; I review/merge test onto latest integration, then run central agent commit-integration against actual integrated products once dependencies land. No skip, schema bypass or fake acceptance to pass stale source. Failures then get bounded follow-up from current integration. Coordinate Runtime seed helper without importing another repo's ambiguous tests package globally.
+
+### agt-m1-core-integration-fix FINAL handoff
+Final source ownership guard uses exact source identity + deterministic main materialization equivalence (NO prefix heuristic); arbitrary shot-placement-* source regression passes. Physical owner/source ABA, actual owner/source changes, same-child disjoint edits, original claims and strict capture completeness retained. Core owns all mirror and compiler-retained DocumentPin record production; provider copies Plan.records unchanged. M1 semantic_events=[]; parent ownership omitted. No registry/schema expansion. Three compact goldens ready, shared with original/reopened/rebased bundles; recipe/App notes explicitly explain absent unconsumed move.extent and refused snaps.
+Final focused+existing neighbors command: `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_structure.py tests/sdk/test_timeline_restructure.py --basetemp=/tmp/agt-m1-core-integration-final-checked-neighbors` =>120 passed,1 default-lane deselected/24.48s. Exact external provider source command above, basetemp=/tmp/agt-m1-core-integration-provider-verified =>50 passed/9.70s (final provider, no shim/recorder extension). Product/test ruff pass, scoped mypy5 files pass, git diff --check pass, packaged schema cmp frozen design AND integration Runtime byte-identical. Python product +92/-55, net+37; core total948 lines, frozen schema unchanged. Final detailed report/exact commands/overlay reconstruction at orch/workers/agt-m1-core-integration-fix/report.md. Commit-msg and compatibility commit-message.txt written. No remaining focused blocker. Full/make check/socket/browser/live accepted-store restart journey unrun here; manager should request central integration after merge batch. No end-to-end M1 acceptance claim.
+
+### agt-m1-cli-runtime-journey test candidate ready for source integration
+New file now exists in owned worktree: `tests/editing_conformance/test_commit_runtime_m1.py` (two parametrized schedules). Reuses Runtime film seed via use_runtime + Runtime tests directory; real_runtime starts selected astrid profile twice on SAME duplicate realm/support root. CLI native parser uses actual public AstridClient.open; no fake acceptance/provider/generated transport. Fault injection is RuntimeHandler._send AFTER real commit return, closing connection before response; captures actual raw body/path/key/accepted envelope. Exact original outbox flight + queued B retained across restart; wrong realm/actor handshake and cross-actor outbox protection stay enabled. Positive disjoint rebase + inverse + show and native renderer-free inputs visualize; negative touched basis retains B/conflict/flight. Counts asserted (2 original baselines, 1 CLI, 1 A, 1 disjoint; optional touched; retry zero new edges; B+undo two edges). No product/helper changes.
+Offline lint passes. Default lane invocation `/home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_commit_runtime_m1.py -p no:cacheprovider` =>2 deselected (exit5; expected integration exclusion, NOT a required lane pass). Required central agent commit-integration still pending missing merged core/provider/frontend/Runtime source batch; manager please source-update this worker preserving new file and request named lane once ready. I will inspect real failures and keep acceptance strict. No localhost run attempted.
+
+- Agent edit-command schema byte pin: `sha256:2a4058f883c59457052e4b42f74cc2fa411cf004f98f1c7ef953ecbe894ff427`.
+- Runtime generated schema digest: `sha256:a32cc6e58f1fbd6df324f48e8b826ee11a9e1b5292d42f30179242a118eddb0e`.
+- Artifact manifest aggregate (`contract/artifacts.json` version): `sha256:1ad6d895a8aa2d4a017b2c5d371b061ee7fcb8c2df14890049de3643892b299d`.
+- Packaged validator bundle: `sha256:5059d9b55286a62f9b2a802501aca135ef3cece61045ad6d978730ee90696109`.
+
+Evidence: `generators/generate.py --check`, `scripts/artifact_manifest.py --check`, exact Agent schema `cmp`, and the required Runtime lane all pass; `pytest -q tests/test_timeline_commit_contract.py tests/test_timeline_commit_validation.py tests/test_timeline_commit_inputs.py tests/test_timeline_commit_baseline.py tests/test_timeline_commit_film_fixture.py` => **132 passed**. No full/socket/browser suite was run here.
+
+## Manager executable finding — fresh create receipt chronology
+
+rt-m1-port HELD/superseded by rt-m1-create-review. Actual main APIs + composed helper probe: create editable timeline succeeds, but its own verify_baseline refuses integrity_reason:receipt_stream_mismatch. Rows: parent_composition.publish stream2/project_seq2/event_ids[2], then timeline.create stream2/project_seq3/event_ids[1]. Creation's stream position and project sequence bookkeeping must precede bootstrap's receipt while final exact create response includes bootstrap head; all inside original outer transaction. Follow-up fixes API creation, not verifier exceptions. Root product never had this branch merged. Probe sources /tmp/rt-bootstrap-review; no original realm accessed. Baseline schema/opaque fixes are already merged. realpath worker use corrected service branch when ready.
+
+Orchestrator cross-source-tests decision ACK: runtime commit-integration lane added; test-run cache now includes external integration source tuple and records ext. No --no-cache workaround needed. Viewing19:25 correction ACK: inputs visualize CLI actual revision=data.outputs.inspection.revision_id, SDK data.inspection.revision_id; snapshot_label only composed/managed outputs.
+
+## Manager executable finding — authoritative recorder corruption
+
+Original rt-m1-acceptance is HELD/superseded by rt-m1-record-integrity. Probe: valid JSON modification writes[0].before.value=99 after real acceptance; history returns99, integrity_errors[], exact retry succeeds. Follow-up binds full Recorder to existing hash-chained acceptance event (one digest, no new DTO/receipt framework) and checks all durable reads. No root commit writer merged yet and no original realm affected. realpath/create-review should consume corrected source once available; other schema/DTO/port shapes unchanged. Escalated data-integrity finding as required, fixing locally without waiting.
+
+## Manager first-edit read recipe / narrow owner task
+
+rt-m1-read-basis branches from held port, owns ONLY service.get_project_parent_composition_revision + list_timeline_commits and new read-basis tests. No create overlap. Return existing ImmutableRevision.dependency_manifest from VERIFIED commit_manifest_json (schema already supports it), no new DTO/endpoint/digest; normalize HTTP limit via _page_args(None,limit), preserve commit cursor own format. App uses history fixed head H → parentGET(H.revision) → exact shot/internal GETs from manifest (internal timeline IDs from manifest, no guesses), strips storage headers and preserves raw payload into CanonicalDocument. Unverified manifest not fabricated. Works when original baseline receipt result is compacted; no scene replay. Final service merge must combine create-review + read-basis disjoint hunks.
+
+## Approved schema correction owner — rt-m1-raw-schema
+
+Orchestrator approved/refined raw vs compiled correction (Runtime INBOX). rt-m1-raw-schema owns one official schema/types/digest/artifact refresh + dated commit-contract note, leaves pinned timeline-config bytes unchanged. Raw immutable payload containers match main codec/preserve authored and opaque siblings; no compiled Player completeness requirement; closed command/envelope validation stays. Actual realpath four tests remain UNMODIFIED and must rerun with real provider. Agent/App notified final pin will change once; no new DTO fields/endpoint/ABI/writer/scene dependency.
+9112c8dc Merge tl/agt-m1-visualize-read
+c423544 Merge tl/rt-m1-artifacts
+
+exec
+/bin/bash -lc "sed -n '1,85p' /home/user/work/wt/agt-m1-core-integration-fix/tests/editing_conformance/fixtures/recipe_m1_move.json && rg -n 'expect|read.*path' /home/user/work/wt/agt-m1-core-integration-fix/astrid/sdk/timeline/commands.py | head -30 && sed -n '55,94p' /home/user/work/wt/agt-m1-core-integration-fix/astrid/sdk/timeline/commands.py && git -C /home/user/work/wt/agt-m1-core-integration-fix log -1 --oneline && git -C /home/user/work/wt/agt-m1-provider log -1 --oneline" in /home/user/work/wt/agt-m1-cli-runtime-journey
+ succeeded in 165ms:
+{"after_bundle":{"base_parent":{"content_digest":"sha256:0a2016a4f4e329e64d38d101770811f8ef811725fbe0c1ab2ee5661222c0323e","revision_id":"pr"},"base_parent_payload":{"clips":[{"app":{"astrid":{"cut":"old-cut","on":"old-anchor","until":"end"},"on":null,"opaque":{"keep":true}},"at":0.5,"from":2,"id":"c","speed":2,"to":6,"track":"picture"}],"config":{"output":{"fps":{"denominator":1001,"numerator":30000}},"tracks":[{"id":"picture","kind":"visual"}]}},"base_placements":{},"parent":{"clips":[{"app":{"astrid":{"cut":"old-cut","fixed_start":true,"for":2.0},"opaque":{"keep":true}},"at":4.004,"from":2,"id":"c","speed":2,"to":6,"track":"picture"}],"config":{"output":{"fps":{"denominator":1001,"numerator":30000}},"tracks":[{"id":"picture","kind":"visual"}]}},"placements":[],"project_id":"p","schema_version":1,"shots":{},"source_mapping":{"placements":{},"shots":{}},"timeline_id":"main"},"bundle":{"base_parent":{"content_digest":"sha256:0a2016a4f4e329e64d38d101770811f8ef811725fbe0c1ab2ee5661222c0323e","revision_id":"pr"},"base_parent_payload":{"clips":[{"app":{"astrid":{"cut":"old-cut","on":"old-anchor","until":"end"},"on":null,"opaque":{"keep":true}},"at":0.5,"from":2,"id":"c","speed":2,"to":6,"track":"picture"}],"config":{"output":{"fps":{"denominator":1001,"numerator":30000}},"tracks":[{"id":"picture","kind":"visual"}]}},"base_placements":{},"parent":{"clips":[{"app":{"astrid":{"cut":"old-cut","on":"old-anchor","until":"end"},"on":null,"opaque":{"keep":true}},"at":0.5,"from":2,"id":"c","speed":2,"to":6,"track":"picture"}],"config":{"output":{"fps":{"denominator":1001,"numerator":30000}},"tracks":[{"id":"picture","kind":"visual"}]}},"placements":[],"project_id":"p","schema_version":1,"shots":{},"source_mapping":{"placements":{},"shots":{}},"timeline_id":"main"},"command":{"args":{"on":4},"authorship":{"parent/clip:c::app.astrid.fixed_start":"direct","parent/clip:c::app.astrid.for":"direct","parent/clip:c::app.astrid.on":"direct","parent/clip:c::app.astrid.until":"direct","parent/clip:c::app.astrid.until_film_end":"direct","parent/clip:c::app.on":"direct","parent/clip:c::app.until":"direct","parent/clip:c::app.until_film_end":"direct","parent/clip:c::at":"direct"},"bindings":{"move.target":"parent/clip:c","move.track":"parent/track:picture"},"created":[],"expect":{"parent/clip:c::app.astrid.fixed_start":{"state":"absent"},"parent/clip:c::app.astrid.for":{"state":"absent"},"parent/clip:c::app.astrid.on":{"state":"present","value":"old-anchor"},"parent/clip:c::app.astrid.until":{"state":"present","value":"end"},"parent/clip:c::app.astrid.until_film_end":{"state":"absent"},"parent/clip:c::app.on":{"state":"present","value":null},"parent/clip:c::app.until":{"state":"absent"},"parent/clip:c::app.until_film_end":{"state":"absent"},"parent/clip:c::at":{"state":"present","value":0.5}},"intent":{"anchor":"fixed","position":"absolute","ripple":"none"},"op":"clip.move","reads":[{"path":["id"],"ref":"parent/clip:c","state":{"state":"present","value":"c"}},{"path":["at"],"ref":"parent/clip:c","state":{"state":"present","value":0.5}},{"path":["at_ms"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["track"],"ref":"parent/clip:c","state":{"state":"present","value":"picture"}},{"path":["asset"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["asset_id"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["media_id"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["object_id"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["clipType"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["clip_type"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["enabled"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["active"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["disabled"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["hidden"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["deleted"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["from"],"ref":"parent/clip:c","state":{"state":"present","value":2}},{"path":["to"],"ref":"parent/clip:c","state":{"state":"present","value":6}},{"path":["from_ms"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["to_ms"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["hold"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["duration"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["duration_ms"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["speed"],"ref":"parent/clip:c","state":{"state":"present","value":2}},{"path":["time_map"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["timeMap"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["clips"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["children"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","on"],"ref":"parent/clip:c","state":{"state":"present","value":null}},{"path":["app","fixed_start"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","until"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","until_film_end"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","for"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","cut"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","sequence"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","sequence_index"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","sequence_fit"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","orphan"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","formulas"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","astrid","on"],"ref":"parent/clip:c","state":{"state":"present","value":"old-anchor"}},{"path":["app","astrid","fixed_start"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","astrid","until"],"ref":"parent/clip:c","state":{"state":"present","value":"end"}},{"path":["app","astrid","until_film_end"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","astrid","for"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","astrid","cut"],"ref":"parent/clip:c","state":{"state":"present","value":"old-cut"}},{"path":["app","astrid","sequence"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","astrid","sequence_index"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","astrid","sequence_fit"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","astrid","orphan"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["app","astrid","formulas"],"ref":"parent/clip:c","state":{"state":"absent"}},{"path":["id"],"ref":"parent/track:picture","state":{"state":"present","value":"picture"}},{"path":["kind"],"ref":"parent/track:picture","state":{"state":"present","value":"visual"}},{"path":["role"],"ref":"parent/track:picture","state":{"state":"absent"}},{"path":["enabled"],"ref":"parent/track:picture","state":{"state":"absent"}},{"path":["active"],"ref":"parent/track:picture","state":{"state":"absent"}},{"path":["disabled"],"ref":"parent/track:picture","state":{"state":"absent"}},{"path":["hidden"],"ref":"parent/track:picture","state":{"state":"absent"}},{"path":["deleted"],"ref":"parent/track:picture","state":{"state":"absent"}},{"path":["config","output","fps"],"ref":"parent","state":{"state":"present","value":{"denominator":1001,"numerator":30000}}}],"resolved":["parent/clip:c"],"schema_version":1,"select":"parent/clip:c","selections":[{"boundaries":["parent/clip:c"],"key":"move.target","members":["parent/clip:c"],"order":["parent/clip:c"],"owner":"parent","policy":"guard-membership","query_version":1}],"version":"1"},"on":4,"select":"parent/clip:c"}
+82:    for field in ('expect', 'authorship'):
+100:    for key, expected in command.get('expect', {}).items():
+102:        guard(ctx.state, ref, path, expected)
+104:        guard(ctx.state, read['ref'], read['path'], read['state'])
+147:        for field in ('resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'):
+154:                    claimed['ref'] == read['ref'] and claimed['path'] == read['path']
+157:                             and ctx.state.matches(read['ref'], read['path'], claimed['state'])))
+    except (ValueError, TypeError) as exc:
+        raise CommandError("command must be finite JSON") from exc
+    errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+    if errors:
+        raise CommandError(errors[0].message)
+    if command['version'] != '1':
+        raise CommandError("unsupported operation version", kind='unsupported_version')
+    if command['op'] not in ('clip.move', 'track.create', 'timeline.inverse'):
+        raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
+    operation = operations().get(command['op'])
+    if operation is not None:
+        errors = list(Draft202012Validator(operation.parameters).iter_errors(command['args']))
+        if errors:
+            raise CommandError(errors[0].message)
+    if command['op'] == 'track.create':
+        if command['select'] != 'parent' and not (
+                isinstance(command['select'], str) and command['select'].startswith('occurrence:')
+                and '/' not in command['select']):
+            raise CommandError("track.create requires parent or occurrence owner")
+        if command.get('intent', {}) != {}:
+            raise CommandError("track.create has no intention overrides")
+
+
+def _normalize(command):
+    command = copy.deepcopy(command)
+    validate_command(command)
+    resolved = command.get('resolved', [command['select']] if command['op'] == 'clip.move' else [])
+    for field in ('expect', 'authorship'):
+        if field not in command:
+            continue
+        normalized = {}
+        for key, value in command[field].items():
+            ref, path = address(key, resolved)
+            canonical = ref + '::' + spelling(path)
+            if canonical in normalized and not equal(normalized[canonical], value):
+                raise CommandError("inconsistent equivalent property guards", ref=ref, path=path)
+            normalized[canonical] = value
+        command[field] = normalized
+    return command
+
+1755715f fix(timeline): close M1 capture and replay integration gaps
+dcfd7299 feat(timeline): add renderer-independent Runtime commit provider
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m1-cli-runtime-journey/tests/editing_conformance/test_commit_runtime_m1.py
+diff --git a/tests/editing_conformance/test_commit_runtime_m1.py b/tests/editing_conformance/test_commit_runtime_m1.py
+index af6bcd1ead5b351ba55cb150fe0ad2f18e1319be..6d96889326fcbbed6426a013cebe31d381284798
+--- a/tests/editing_conformance/test_commit_runtime_m1.py
++++ b/tests/editing_conformance/test_commit_runtime_m1.py
+@@ -230,6 +230,7 @@
+     # B is authored while A is still unacknowledged, against local A, then
+     # retained verbatim. Another author's disjoint edit advances the real head.
+     b = session.queue_move("parent/clip:music-bed", 3)
++    assert b["expect"]["parent/clip:music-bed::at"] == {"state": "present", "value": 2}
+     guard_b = json.dumps(b, sort_keys=True)
+     assert json.loads(outbox.read_bytes())["pending"] == [a, b]
+     other = TimelineSession.open(fixture.project_id, fixture.timeline_id,
+@@ -272,6 +273,8 @@
+     assert pending["base"] == accepted_pair
+     assert pending["pending"] == [b] and pending["flight"] is None
+     assert json.dumps(pending["pending"][0], sort_keys=True) == guard_b
++    with pytest.raises(TimelineEditError, match="different realm, actor, project or timeline"):
++        _wrong_scope(daemon, fixture, outbox)
+ 
+     if touched_basis:
+         with pytest.raises(CommitConflict) as error:
+@@ -281,7 +284,10 @@
+         assert refused["pending"] == [b]
+         assert refused["conflict"] == error.value.failure
+         assert refused["flight"]["key"] != flight_a["key"]
+-        assert json.loads(refused["flight"]["body"])["commands"] == [b]
++        body_b = json.loads(refused["flight"]["body"])
++        assert body_b["commands"] == [b]
++        assert (body_b["base_revision_id"], body_b["base_publication_id"]) == (
++            accepted_pair["revision_id"], accepted_pair["publication_id"])
+         assert history(client, fixture) == before_restart
+         return
+ 
+@@ -296,7 +302,9 @@
+     assert_move(parent_of(disjoint), parent_of(accepted_b), "music-bed", 3)
+     assert json.loads(outbox.read_bytes())["pending"] == []
+     assert_readback(client, fixture, accepted_b)
+-    assert len(history(client, fixture)["items"]) == 6
++    after_b = history(client, fixture)["items"]
++    assert len(after_b) == 6
++    assert after_b[:-1] == before_restart["items"]
+ 
+     undone = cli(client, fixture, capsys, "undo", fixture.timeline_id,
+                  "--publication", accepted_b["receipt"]["receipt_id"])
+@@ -311,13 +319,22 @@
+                 "--published", "--revision-id", revision)
+     assert shown["data"]["revision_id"] == revision
+     assert shown["data"]["working_copy"] is None
+-    assert len(history(client, fixture)["items"]) == 7
++    layers = cli(client, fixture, capsys, "show", fixture.timeline_id,
++                 "--published", "--revision-id", revision, "--layers", "--clip", "music-bed")
++    inspection = layers["data"]["native_inspection"]
++    assert inspection["revision_id"] == revision
++    clip = inspection["selected_parent_clips"][0]
++    assert clip["clip_id"] == "music-bed"
++    assert clip["start"] == [2, 1]
++    visualized = cli(client, fixture, capsys, "visualize", fixture.timeline_id,
++                     "--published", "--revision-id", revision, "--mode", "inputs", "--format", "md")
++    assert visualized["data"]["outputs"]["inspection"]["revision_id"] == revision
++    after_undo = history(client, fixture)["items"]
++    assert len(after_undo) == 7
++    assert after_undo[:-1] == after_b
++    assert after_undo[-1]["records"]["undo_of"] == [accepted_b["receipt"]["receipt_id"]]
+     # After undo, the former accepted revision is still the exact immutable film.
+     assert_readback(client, fixture, accepted_b)
+-    with pytest.raises(TimelineEditError, match="different realm, actor, project or timeline"):
+-        TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client,
+-                             outbox_path=tmp_path / "wrong-scope.json") if False else _wrong_scope(
+-                                 daemon, fixture, outbox)
+ 
+ 
+ def _wrong_scope(daemon, fixture, outbox):
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check --isolated --select E4,E7,E9,F,I,BLE tests/editing_conformance/test_commit_runtime_m1.py && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_runner_selftest.py -p no:cacheprovider' in /home/user/work/wt/agt-m1-cli-runtime-journey
+ succeeded in 9480ms:
+All checks passed!
+............................                                             [100%]
+28 passed, 2 deselected in 8.10s
+
+exec
+/bin/bash -lc 'git rev-parse HEAD && git -C /home/user/work/runtime rev-parse HEAD && git -C /home/user/work/wt/agt-m1-core-integration-fix rev-parse HEAD && git -C /home/user/work/wt/agt-m1-provider rev-parse HEAD && git -C /home/user/work/wt/agt-m1-core-integration-fix status --short && git -C /home/user/work/wt/agt-m1-provider status --short && git status --short && wc -l tests/editing_conformance/test_commit_runtime_m1.py' in /home/user/work/wt/agt-m1-cli-runtime-journey
+ succeeded in 531ms:
+fa0542ad7ed640481ed6a6ff5307f480b0ab7c85
+c423544de3b7a1090649bf32e4c82514c4c7a641
+1755715fdebe2ca73e7ffe1584038ddcd786ba04
+dcfd7299387b9fcc010d074612d7b6b6f2b8b726
+?? tests/editing_conformance/test_commit_runtime_m1.py
+349 tests/editing_conformance/test_commit_runtime_m1.py
+
+codex
+The offline smoke passed using the real film fixture, baseline verifier, capture, and compiler, including the exact authored-value and follow-clear assertion. The conformance runner’s 28 nearby tests also pass; both new integration cases remain deselected. Per the manager’s instruction, I’ll hand off the test for merge and the central named-lane run, with M1 still unverified.
+2026-10-19T19:34:50.247797Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc \\\"cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-cli-runtime-journey/commit-msg <<'EOF'\\ntest(timeline): cover real CLI and SDK commit restart journey\\n\\nAdd the required integration lane for renderer-free CLI moves and Python\\nTimelineSession outbox recovery against the real Runtime and generated client.\\nReuse…7198 chars truncated…ider/frontends/pin batch. No new concrete Agent bug or end-to-end claim from offline evidence. Temporary overlay removed at handoff; worktree contains sole new test file.\\nEOF\\nrm -rf /tmp/agt-m1-cli-runtime-overlay\\n/home/user/work/venv-agent/bin/ruff check --isolated --select E4,E7,E9,F,I,BLE tests/editing_conformance/test_commit_runtime_m1.py\\ngit status --short'` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-cli-runtime-journey/commit-msg <<'EOF'
+test(timeline): cover real CLI and SDK commit restart journey
+
+Add the required integration lane for renderer-free CLI moves and Python
+TimelineSession outbox recovery against the real Runtime and generated client.
+Reuse Runtime's API-built duplicate film realm and existing daemon fixture.
+
+Cover durable lost acknowledgements, exact flight retry after restart,
+dependent suffix guards, disjoint rebase, retained conflicts, guarded inverse,
+and exact published show and input visualization readback.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-cli-runtime-journey/report.md <<'EOF'
+# CLI/Python Runtime M1 journey
+
+Added only tests/editing_conformance/test_commit_runtime_m1.py (349 lines, two parametrized integration nodes); no helper/product changes. Uses normal imports, use_runtime, existing real_runtime, and Runtime's timeline_commit_film_fixture via its located tests directory, without importing another repo's tests package. Seed uses main API publications in a duplicated synthetic realm/CAS before selected-profile startup.
+
+Strict candidate exercises public AstridClient.open handshake, actual CLI parser/dispatch, TimelineSession, SDK/generated HTTP transport, startup provider/acceptance, and same-realm/support-root daemon restart. RuntimeHandler._send fault injection observes the real accepted result then closes before ACK bytes. Asserts exact durable flight body/path/key; B captures against unacknowledged local A and survives restart, then uses A's accepted pair and fresh key. Disjoint changes survive; touched basis retains original B, conflict and flight. Positive schedule uses timeline.inverse, exact immutable bundle/history readback, CLI show --published --revision-id including actual music clip start, and native inputs-mode Markdown visualization. Scene import/evaluation tripwires span commits/restart/readback/inverse. Realm/actor handshake and cross-actor outbox protections remain enabled.
+
+Expected history counts: 2 original verified baselines; CLI +1; A +1; independent disjoint edit +1. Negative touched edit yields6, B conflict adds none. Restart/exact retry adds none. Positive B yields6, inverse yields7, prior full history unchanged. These assertions await required lane execution; they are NOT accepted-history evidence yet.
+
+## Commands/results
+
+- /home/user/work/venv-agent/bin/ruff check --isolated --select E4,E7,E9,F,I,BLE tests/editing_conformance/test_commit_runtime_m1.py — passed.
+- PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -c 'import ast; from pathlib import Path; ast.parse(Path(\"tests/editing_conformance/test_commit_runtime_m1.py\").read_text()); print(\"syntax OK\")' — syntax OK.
+- PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_commit_runtime_m1.py -p no:cacheprovider — 2 deselected in0.17s, exit5 (default integration exclusion, NOT required-lane pass).
+- /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_runner_selftest.py -p no:cacheprovider — 28 passed,2 deselected in8.10s.
+- git diff --no-index --check /dev/null tests/editing_conformance/test_commit_runtime_m1.py — no whitespace diagnostics (exit1 is normal no-index difference status).
+- Offline/no-socket smoke: PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=/tmp/agt-m1-cli-runtime-overlay:"'$PWD /home/user/work/venv-agent/bin/python - — passed real API fixture→verify_baseline→bundle_from_document→capture_move→execute→document_from_bundle→exact assert_move including opaque/null/follow clears. Temporary external sitecustomize extended only astrid.sdk.timeline.__path__ with corrected-core and provider source paths. No copied modules/stubs or committed absolute paths. Temp realms/services cleaned in finally. This is fixture/capture/compiler smoke, not transport/restart acceptance proof.
+
+Offline source tuple: Agent worker base fa0542ad7ed640481ed6a6ff5307f480b0ab7c85; Runtime c423544de3b7a1090649bf32e4c82514c4c7a641; core overlay1755715fdebe2ca73e7ffe1584038ddcd786ba04; provider overlaydcfd7299387b9fcc010d074612d7b6b6f2b8b726. Core/provider clean at final verification.
+
+## Decisions, blockers, next step
+
+Followed manager'"'s shared-doc instruction: finish this test-only change on stale worker base, harness commits, manager reviews/merges then requests central agent commit-integration after real product dependencies land. No git mutations, local listeners, full suite requests, fake acceptance, skipped required nodes or schema bypasses.
+
+Worker lacks merged core/provider/frontend/newer generated pin. Runtime above lacks final acceptance/port/door and has the internal immutable-payload schema blocker independently reported by rt-m1-realpath; raw schema correction has an approved owner. Required named lane NOT RUN; no M1/gate3 pass, no accepted-store/restart/undo/visualize execution claim, no owner-film claim. No concrete new Agent bug established by executed evidence.
+
+Manager next command after real merges and official client pin:
+R="'$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test integration:agent commit-integration) && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"
+Record central exact integrated source tuple/counts; dispatch bounded follow-up for failures and keep assertions strict.
+EOF
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md <<'"'EOF'
+
+### agt-m1-cli-runtime-journey final handoff / manager composition decision ACK
+ACK finish test-only on stale base, no refresh/git mutations or local sockets. Required file complete; harness commit-msg + report at workers/agt-m1-cli-runtime-journey/. Final focused "'`python -m pytest -q tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_runner_selftest.py -p no:cacheprovider` =>28passed,2deselected/8.10s; integration exclusion is NOT gate pass. Isolated lint/syntax/whitespace clean. Actual API film seed→verify_baseline→capture→execute→document conversion offline smoke passed exact opaque/null/follow-clear equality with external path-only overlay: Runtimec423544, core1755715f, providerdcfd7299, Agentfa0542ad. Required central named lane unrun per manager instruction; merge strict candidate then run integration:agent commit-integration after real Runtime acceptance/raw-schema/port/door + Agent core/provider/frontends/pin. No new Agent bug or end-to-end claim from offline evidence. Temporary overlay removed at handoff; worktree has sole new test.
+EOF
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'"'PY'
+from pathlib import Path
+root = Path('/tmp/agt-m1-cli-runtime-overlay')
+(root / 'sitecustomize.py').unlink()
+root.rmdir()
+PY
+/home/user/work/venv-agent/bin/ruff check --isolated --select E4,E7,E9,F,I,BLE tests/editing_conformance/test_commit_runtime_m1.py
+git status --short" in /home/user/work/wt/agt-m1-cli-runtime-journey
+ succeeded in 411ms:
+All checks passed!
+?? tests/editing_conformance/test_commit_runtime_m1.py
+
+codex
+Added [the integration test](tests/editing_conformance/test_commit_runtime_m1.py) covering real CLI/SDK commits, lost ACK, restart, exact retry, dependent edits, conflict retention, undo, and published readback.
+
+- Focused lint and syntax: passed.
+- `python -m pytest -q tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_runner_selftest.py -p no:cacheprovider`: **28 passed, 2 deselected**.
+- Real fixture/capture/compiler offline smoke: passed.
+- Required `agent commit-integration` lane: **not run**, pending product merges and the corrected Runtime schema/client pin. M1 remains unverified.
+
+Commit message written for the harness. Exact commands, source tuple, blockers, and manager next steps are in [the report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-cli-runtime-journey/report.md).
+tokens used
+179,014
+Added [the integration test](tests/editing_conformance/test_commit_runtime_m1.py) covering real CLI/SDK commits, lost ACK, restart, exact retry, dependent edits, conflict retention, undo, and published readback.
+
+- Focused lint and syntax: passed.
+- `python -m pytest -q tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_runner_selftest.py -p no:cacheprovider`: **28 passed, 2 deselected**.
+- Real fixture/capture/compiler offline smoke: passed.
+- Required `agent commit-integration` lane: **not run**, pending product merges and the corrected Runtime schema/client pin. M1 remains unverified.
+
+Commit message written for the harness. Exact commands, source tuple, blockers, and manager next steps are in [the report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-cli-runtime-journey/report.md).

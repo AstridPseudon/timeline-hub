@@ -1,0 +1,400 @@
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-raw-audio-private-adapter/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-raw-audio-private-adapter/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..b2cdbac7e4af08ccf7777e21f8166932eeae536a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-raw-audio-private-adapter/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(review): hold raw audio adapter qualification
++
++Record the Agent raw-audio adapter review and its capture/replay duration-read
++blocker. No product files were changed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-raw-audio-private-adapter/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-raw-audio-private-adapter/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..28061ad49d9838bdc9cf68601670c6a5dede49f6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-raw-audio-private-adapter/report.md
+@@ -0,0 +1,25 @@
++# Review report
++
++**HOLD** — Agent commit `8f15518ed346c9d6785a7664c327163057efafe2`, tree
++`721d3f14a462841599743fef24fa17969b628823`.
++
++Blocking issue: `clip_trim()` records the registry `trim.source` dependency but
++does not record the original request-scoped `duration_seconds` read/state.
++`verified_media` is transient, so pure replay with the same exact pin and a
++different positive duration succeeds and changes the trim (`8s` → `7s`). This
++fails the agreed capture/replay same-bytes contract. Add the exact duration
++read/dependency claim and verify it on replay while retaining Runtime
++recomputation and visible unknown/absent refusal.
++
++Tests/evidence:
++
++- `... pytest --collect-only -q tests/editing_conformance/test_recipe_m2_clip_trim.py` — 121 collected.
++- `... pytest -q tests/editing_conformance/test_recipe_m2_clip_trim.py` — 121 passed.
++- `... pytest -q tests/editing_conformance/test_recipe_parent_media.py` — 25 passed.
++- `git diff --check 8f15518e^ 8f15518e` and changed-module `py_compile` — passed.
++- No full suite, Runtime pairing, or E2E claim.
++
++Do not pair with rejected Runtime `ab4cc...`; wait for corrected committed
++counterpart `e220670e40e196fb8f37dd8ce5d558fe0f6adf1c` / source fix
++`89fb7dcd113023d7e1e044d537202caca509830a`, then re-review the Agent successor
++and run the bounded pair.
+
+exec
+/bin/bash -lc 'git status --short --branch && git rev-parse HEAD && git diff --stat' in /home/user/work/wt/agt-review-raw-audio-private-adapter
+exec
+/bin/bash -lc "sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-raw-audio-private-adapter.md && printf '\\n--- worker artifacts ---\\n' && sed -n '1,180p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-raw-audio-private-adapter/report.md && printf '\\n--- commit msg ---\\n' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-raw-audio-private-adapter/commit-msg.txt && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-raw-audio-private-adapter/DONE && echo DONE=present" in /home/user/work/wt/agt-review-raw-audio-private-adapter
+ succeeded in 19ms:
+# Agent raw-audio private adapter review
+
+## Decision
+
+**HOLD** for Agent commit `8f15518ed346c9d6785a7664c327163057efafe2` (tree
+`721d3f14a462841599743fef24fa17969b628823`). Scope reviewed: that commit's
+changes to `_trim_commands.py`, `commit.py`, `sync.py`, its focused test
+changes, and `docs/agent-raw-audio-trim-private-adapter.md`.
+
+This is a source/pure-Agent review only. It is not an end-to-end qualification
+and does not pair with rejected Runtime candidate `ab4cc...`. Pair only after
+the corrected Runtime counterpart is committed and reviewed; the active
+corrected branch currently resolves to `e220670e40e196fb8f37dd8ce5d558fe0f6adf1c`
+(source fix `89fb7dcd113023d7e1e044d537202caca509830a`).
+
+## Blocking finding
+
+The Agent record does not capture the original request-scoped duration read.
+`clip_trim()` reads the authored registry fields and records
+`trim.source` as an entity dependency, but `_verified_source_duration()` only
+consults transient `ctx.verified_media`; it never records a
+`duration_seconds` read/state tied to the exact base `MediaPin`. The command
+therefore has no recorded original duration claim for the proposal's
+capture/replay contract.
+
+Concrete pure probe on this tree:
+
+```text
+record_reads_duration_seconds = []
+record_dependencies = trim.source -> {asset: voice, source: {media_id: pin, duration: null, ...}}
+original_trim = {from: 0.0, to: 8.0, hold: 8.0}
+changed_replay = {from: 0.0, to: 7.0, hold: 7.0}
+```
+
+The probe captured with a positive `duration_seconds: 8`, then replayed the
+same command with positive `duration_seconds: 7`; replay succeeded and changed
+the trim. This violates the agreed requirement that capture declare the
+original duration read/dependency so replay/acceptance is based on the same
+bytes and request-scoped result. The Runtime authority's later recomputation
+does not repair the missing Agent record; it only protects the Runtime path.
+
+Required correction: record the exact existing media-pin dependency plus the
+`duration_seconds` read/state during capture, and make replay verify that
+original claim while retaining the Runtime recomputation. Preserve absent
+metadata as a visible refusal, not a guessed duration or a weakened guard.
+
+## What passed / what was inspected
+
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest --collect-only -q tests/editing_conformance/test_recipe_m2_clip_trim.py` — 121 collected.
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_clip_trim.py` — 121 passed in 8.88s.
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest --collect-only -q tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_parent_media.py` — 146 collected.
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_parent_media.py` — 25 passed in 3.72s.
+- `git diff --check 8f15518e^ 8f15518e` — passed.
+- `py_compile` of the four changed Python/test modules — passed.
+
+The reviewed diff adds no public command field, schema/DTO, selection,
+registry-duration write, table, decoder, ffprobe save path, or generation
+adoption. Exact base-pin discovery, Runtime `media_info` consumption, WAV-only
+authoring preflight, source-time hold/speed, boundary handling, opaque data,
+and inverse guards are otherwise scoped as intended. The local preflight is
+nonauthoritative and failures remain visible through the missing verified
+metadata refusal.
+
+## Counterpart conditions
+
+1. Do not pair this Agent source with Runtime `ab4cc...`; that counterpart was
+   rejected for verify-then-path-reopen read TOCTOU.
+2. Pair only with the corrected committed Runtime counterpart after its
+   descriptor-stable single-FD fix is present and its focused tests pass.
+3. Before any native/raw-music qualification, land an Agent successor that
+   records and verifies the original `duration_seconds` read/dependency, then
+   rerun the 121-test trim lane and the nearest pure/provider lanes. Only then
+   run a bounded paired acceptance proof. No full suite was run here.
+
+
+--- worker artifacts ---
+# Review report
+
+**HOLD** — Agent commit `8f15518ed346c9d6785a7664c327163057efafe2`, tree
+`721d3f14a462841599743fef24fa17969b628823`.
+
+Blocking issue: `clip_trim()` records the registry `trim.source` dependency but
+does not record the original request-scoped `duration_seconds` read/state.
+`verified_media` is transient, so pure replay with the same exact pin and a
+different positive duration succeeds and changes the trim (`8s` → `7s`). This
+fails the agreed capture/replay same-bytes contract. Add the exact duration
+read/dependency claim and verify it on replay while retaining Runtime
+recomputation and visible unknown/absent refusal.
+
+Tests/evidence:
+
+- `... pytest --collect-only -q tests/editing_conformance/test_recipe_m2_clip_trim.py` — 121 collected.
+- `... pytest -q tests/editing_conformance/test_recipe_m2_clip_trim.py` — 121 passed.
+- `... pytest -q tests/editing_conformance/test_recipe_parent_media.py` — 25 passed.
+- `git diff --check 8f15518e^ 8f15518e` and changed-module `py_compile` — passed.
+- No full suite, Runtime pairing, or E2E claim.
+
+Do not pair with rejected Runtime `ab4cc...`; wait for corrected committed
+counterpart `e220670e40e196fb8f37dd8ce5d558fe0f6adf1c` / source fix
+`89fb7dcd113023d7e1e044d537202caca509830a`, then re-review the Agent successor
+and run the bounded pair.
+
+--- commit msg ---
+docs(review): hold raw audio adapter qualification
+
+Record the Agent raw-audio adapter review and its capture/replay duration-read
+blocker. No product files were changed.
+DONE=present
+
+ succeeded in 1965ms:
+## tl/agt-review-raw-audio-private-adapter
+8f15518ed346c9d6785a7664c327163057efafe2
+
+exec
+/bin/bash -lc 'for f in tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_cli.py tests/sdk/test_timeline_commit.py tests/test_timeline_clip_replacement.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py; do if test -f "$f"; then echo "--- $f"; PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest --collect-only -q "$f" 2>/dev/null | tail -n 1; fi; done; rg --files tests | rg -i '"'cli|commit.*provider|provider.*commit' | sed -n '1,120p'" in /home/user/work/wt/agt-review-raw-audio-private-adapter
+ succeeded in 6416ms:
+--- tests/sdk/test_timeline_commit_provider.py
+111 tests collected in 0.66s
+--- tests/test_timeline_clip_replacement.py
+6 tests collected in 0.87s
+--- tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+no tests collected (2 deselected) in 0.15s
+tests/journeys/test_cross_client.py
+tests/helpers/cli_runner.py
+tests/test_timeline_clip_replacement.py
+tests/fixtures/dataset_build/captions/fixture_clip_001.caption.json
+tests/fixtures/v6_pushed_clips.json
+tests/test_cli_choices.py
+tests/sdk/test_workspace_client_timeline_commit.py
+tests/sdk/test_timeline_commit_provider_runtime.py
+tests/sdk/test_timeline_commit_provider_parent_track_label.py
+tests/sdk/test_timeline_commit_provider.py
+tests/sdk/test_timeline_clip_trim_provider.py
+tests/sdk/test_timeline_commit_provider_scalar.py
+tests/sdk/test_timeline_clip_scalar_provider.py
+tests/sdk/test_timeline_clip_add_provider.py
+tests/sdk/test_timeline_commit_provider_document.py
+tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+tests/sdk/test_authoring_diff_cli.py
+tests/core/timeline/test_clip_fields.py
+tests/core/rendering/test_timeline_visualize_cli_grammar.py
+tests/core/rendering/test_cli_contract.py
+tests/core/rendering/test_cli.py
+tests/core/test_elements_cli.py
+tests/stage1/test_runtime_client_cutover.py
+tests/stage1/test_vendored_workspace_client_parity_luna.py
+tests/stage1/test_generated_client_cutover_regressions.py
+tests/stage1/test_client_handshake_boundary_luna.py
+tests/v10/test_domain_cli_media_references.py
+tests/v10/test_docs_cli_alignment.py
+tests/v10/test_domain_cli_surface.py
+tests/v10/test_domain_cli_projects_timelines.py
+tests/v10/test_domain_cli_tasks_runs.py
+tests/test_cli_registration_conformance.py
+tests/editing_conformance/test_cli_trim_runtime.py
+tests/editing_conformance/test_recipe_m2_clip_add.py
+tests/editing_conformance/test_commit_runtime_first_clip.py
+tests/editing_conformance/test_grouped_clip_cache_inverse.py
+tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+tests/editing_conformance/test_recipe_clip_delete.py
+tests/editing_conformance/fixtures/recipe_m2_clip_set_element.json
+tests/editing_conformance/fixtures/recipe_m2_app_clip_scalar_fields.json
+tests/editing_conformance/fixtures/recipe_clip_delete.json
+tests/editing_conformance/fixtures/recipe_m2_clip_add.json
+tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json
+tests/editing_conformance/fixtures/recipe_m2_clip_split.json
+tests/editing_conformance/test_recipe_clip_set_element.py
+tests/editing_conformance/test_recipe_m2_clip_split.py
+tests/editing_conformance/test_recipe_clip_scalar_fields.py
+tests/editing_conformance/test_recipe_m2_clip_trim.py
+tests/test_cli_surface_conformance.py
+tests/fixtures/timeline_visualize/desert_slice/clips_tracks.json
+tests/fixtures/timeline_visualize/compositor_parity/F10_transition-last-clip-ignored.json
+tests/packs/capture/test_web_page_client_disconnect.py
+tests/packs/timeline/test_cli_media.py
+tests/packs/timeline/test_cli_look.py
+tests/packs/timeline/test_cli_voice_bindings.py
+tests/packs/timeline/test_cli_find.py
+tests/packs/timeline/test_cli_edit_flags.py
+tests/packs/timeline/test_cli_v3_sweep_log.py
+tests/packs/timeline/test_cli_history.py
+tests/packs/timeline/test_show_clip_working_copy.py
+tests/packs/timeline/test_cli_commit_trim.py
+tests/packs/timeline/test_cli_parity.py
+tests/packs/timeline/test_cli_add_layer.py
+tests/packs/timeline/test_cli_verify.py
+tests/packs/timeline/test_cli_native_sheet.py
+tests/packs/timeline/test_cli_log.py
+tests/packs/timeline/test_cli_assets.py
+tests/packs/timeline/test_cli_commit_move.py
+tests/packs/timeline/test_cli_status_publish.py
+tests/packs/timeline/test_cli_native.py
+tests/packs/editorial/test_validate_clip_duration.py
+tests/packs/test_pack_run_cli_choices.py
+tests/packs/media/test_media_clip_extract.py
+
+exec
+/bin/bash -lc 'for f in tests/editing_conformance/test_cli_trim_runtime.py tests/sdk/test_timeline_clip_trim_provider.py tests/sdk/test_timeline_commit_provider_runtime.py tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_timeline_commit_provider.py; do echo "--- $f"; PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest --collect-only -q "$f" 2>/dev/null | tail -n 1; done' in /home/user/work/wt/agt-review-raw-audio-private-adapter
+ succeeded in 12321ms:
+--- tests/editing_conformance/test_cli_trim_runtime.py
+no tests collected (2 deselected) in 0.85s
+--- tests/sdk/test_timeline_clip_trim_provider.py
+14 tests collected in 2.08s
+--- tests/sdk/test_timeline_commit_provider_runtime.py
+no tests collected (2 deselected) in 0.14s
+--- tests/sdk/test_workspace_client_timeline_commit.py
+9 tests collected in 0.34s
+--- tests/sdk/test_timeline_commit_provider.py
+111 tests collected in 0.96s
+
+exec
+/bin/bash -lc 'rg -n -C 4 "126|cli.*provider|trim.*provider|m2.*trim" /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-audio-trim-private-adapter/log.txt | tail -n 100' in /home/user/work/wt/agt-review-raw-audio-private-adapter
+ succeeded in 254ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-451-headers = {'Content-Type': 'application/json', 'Idempotency-Key': 'shot'}
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-452-expected = (200, 201), response_reader = None
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-453-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-517-                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-518-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-519-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-520-self = <astrid_runtime_client.generated.WorkspaceClient object at 0x7f5fc7b0d040>
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt:521:method = 'POST', path = '/v1/projects/c10be0126113452dbe0b4e9ce82095af/shots'
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-522-body = b'{"shot_id":"opening","name":"Opening"}'
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-523-headers = {'Content-Type': 'application/json', 'Idempotency-Key': 'shot'}
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-524-expected = (200, 201), response_reader = None
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-full-triage-shots-restore-integration-1020053040-2323/log.txt-525-
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-final-targeted-1020001531-9378/log.txt-2-=================================== FAILURES ===================================
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-final-targeted-1020001531-9378/log.txt-3-_ test_verified_legacy_baseline_exposes_manifest_without_replaying_compacted_result _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-final-targeted-1020001531-9378/log.txt-4-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-final-targeted-1020001531-9378/log.txt-5-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-479/test_verified_legacy_baseline_0')
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-final-targeted-1020001531-9378/log.txt:6:monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6966126c40>
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-final-targeted-1020001531-9378/log.txt-7-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-final-targeted-1020001531-9378/log.txt-8-    def test_verified_legacy_baseline_exposes_manifest_without_replaying_compacted_result(tmp_path, monkeypatch):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-final-targeted-1020001531-9378/log.txt-9->       service, project_id, _ = legacy_service(tmp_path)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-final-targeted-1020001531-9378/log.txt-10-                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-consumer-regressions-integration-1019231326-21265/summary:1:test agent-consumer-regressions-integration-1019231326-21265: pass exit=0 in 10s — consumer-regressions-integration on integration:agent (agent tree d48cdcb3d028097a4cdb0c8e814380d09a038f4c)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-consumer-regressions-integration-1019231326-21265/summary-2-cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q tests/core/test_editor_element_catalog.py tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-consumer-regressions-integration-1019231326-21265/summary-3-counts: 6 passed in 8.73s 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-consumer-regressions-integration-1019231326-21265/summary:4:--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-consumer-regressions-integration-1019231326-21265/log.txt ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-consumer-regressions-integration-1019231326-21265/summary-5-......                                                                   [100%]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-consumer-regressions-integration-1019231326-21265/summary-6-6 passed in 8.73s
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/summary-9-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/summary-10-http_runtime = (<runtime_protocol.daemon.RuntimeDaemon object at 0x7f678b3bd310>, <astrid_runtime_client.generated.WorkspaceClient ob...678b3968b0>, 'd684fc3ad422438d9e0b70b7ad203b0c', <test_timeline_commit_port.PreparedProvider object at 0x7f678b3be350>)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/summary-11-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/summary-12-    def test_http_revision_reads_keep_manifest_pinned_children_after_new_head(http_runtime):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/summary:13:        daemon, client, project_id, provider = http_runtime
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/summary-14-        provider.action = lambda context, port: _child_candidate(context, port, context["idempotency_key"])
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/summary-15->       old = client.commit_timeline(
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/summary-16-            project_id, "main", _commit_body(client, project_id, "main", "old"), idempotency_key="old"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/summary-17-        )
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/log.txt-62-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/log.txt-63-http_runtime = (<runtime_protocol.daemon.RuntimeDaemon object at 0x7f678b3bd310>, <astrid_runtime_client.generated.WorkspaceClient ob...678b3968b0>, 'd684fc3ad422438d9e0b70b7ad203b0c', <test_timeline_commit_port.PreparedProvider object at 0x7f678b3be350>)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/log.txt-64-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/log.txt-65-    def test_http_revision_reads_keep_manifest_pinned_children_after_new_head(http_runtime):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/log.txt:66:        daemon, client, project_id, provider = http_runtime
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/log.txt-67-        provider.action = lambda context, port: _child_candidate(context, port, context["idempotency_key"])
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/log.txt-68->       old = client.commit_timeline(
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/log.txt-69-            project_id, "main", _commit_body(client, project_id, "main", "old"), idempotency_key="old"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019232331-22785/log.txt-70-        )
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-62-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-63-http_runtime = (<runtime_protocol.daemon.RuntimeDaemon object at 0x7f8eaca10830>, <astrid_runtime_client.generated.WorkspaceClient ob...8eaca12270>, '80d6e4f62e424d1da0cec82541cb482f', <test_timeline_commit_port.PreparedProvider object at 0x7f8eaca11d30>)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-64-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-65-    def test_http_history_keeps_fixed_head_and_distinct_same_revision_edges(http_runtime):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt:66:        daemon, client, project_id, provider = http_runtime
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-67-        provider.action = lambda context, port: port.accept(prepared(context, port, same=True))
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-68-        accepted = []
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-69-        for index in range(4):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-70->           result = client.commit_timeline(
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-282-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-283-http_runtime = (<runtime_protocol.daemon.RuntimeDaemon object at 0x7f8eacaab890>, <astrid_runtime_client.generated.WorkspaceClient ob...8eac20a490>, 'af4d40b1ee9f4f47a8f88bccf86ab0a1', <test_timeline_commit_port.PreparedProvider object at 0x7f8eac20a5d0>)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-284-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-285-    def test_http_revision_reads_keep_manifest_pinned_children_after_new_head(http_runtime):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt:286:        daemon, client, project_id, provider = http_runtime
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-287-        provider.action = lambda context, port: _child_candidate(context, port, context["idempotency_key"])
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-288->       old = client.commit_timeline(
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-289-            project_id, "main", _commit_body(client, project_id, "main", "old"), idempotency_key="old"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/log.txt-290-        )
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:1:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:2:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:3:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:4:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:5:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:6:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:7:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:8:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:9:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:10:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:11:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:12:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:13:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:14:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:15:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:16:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:17:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext:18:external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=75df44e99bed22db39430e420d82764126c9a316 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0012-nodes-1020085219-15793/ext-19-external=runtime=6023cfb10307b4c0004642b5fa1995d72ba4f6d1 app=76316e78c43da695abe65037ea449f3352eb6d12 composition=024f69501cfceb7f80d1c0c3fd26e6dd52568784 
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/summary-7-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/summary-8-http_runtime = (<runtime_protocol.daemon.RuntimeDaemon object at 0x7f8eacaab890>, <astrid_runtime_client.generated.WorkspaceClient ob...8eac20a490>, 'af4d40b1ee9f4f47a8f88bccf86ab0a1', <test_timeline_commit_port.PreparedProvider object at 0x7f8eac20a5d0>)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/summary-9-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/summary-10-    def test_http_revision_reads_keep_manifest_pinned_children_after_new_head(http_runtime):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/summary:11:        daemon, client, project_id, provider = http_runtime
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/summary-12-        provider.action = lambda context, port: _child_candidate(context, port, context["idempotency_key"])
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/summary-13->       old = client.commit_timeline(
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/summary-14-            project_id, "main", _commit_body(client, project_id, "main", "old"), idempotency_key="old"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-history-boundaries-targeted-1019231706-13777/summary-15-        )
+
+codex
+## Review report
+
+**HOLD** — Agent commit `8f15518ed346c9d6785a7664c327163057efafe2`  
+Tree: `721d3f14a462841599743fef24fa17969b628823`
+
+Blocking issue: capture records `trim.source` but not the original request-scoped `duration_seconds` read. Pure replay with the same pin and a changed positive duration succeeds and changes the trim from 8s to 7s. Add and verify that recorded duration claim before pairing.
+
+Tests:
+
+- `test_recipe_m2_clip_trim.py`: 121 passed
+- `test_recipe_parent_media.py`: 25 passed
+- `git diff --check`: passed
+- Changed-module `py_compile`: passed
+
+No product files changed. No Runtime pairing, E2E, or full suite claimed. Do not pair rejected `ab4c`; wait for corrected committed Runtime counterpart `e220670e40e196fb8f37dd8ce5d558fe0f6adf1c` / `89fb7dcd113023d7e1e044d537202caca509830a`.
+
+Reports, commit message, and `DONE` marker were written.
+tokens used
+186,602
+## Review report
+
+**HOLD** — Agent commit `8f15518ed346c9d6785a7664c327163057efafe2`  
+Tree: `721d3f14a462841599743fef24fa17969b628823`
+
+Blocking issue: capture records `trim.source` but not the original request-scoped `duration_seconds` read. Pure replay with the same pin and a changed positive duration succeeds and changes the trim from 8s to 7s. Add and verify that recorded duration claim before pairing.
+
+Tests:
+
+- `test_recipe_m2_clip_trim.py`: 121 passed
+- `test_recipe_parent_media.py`: 25 passed
+- `git diff --check`: passed
+- Changed-module `py_compile`: passed
+
+No product files changed. No Runtime pairing, E2E, or full suite claimed. Do not pair rejected `ab4c`; wait for corrected committed Runtime counterpart `e220670e40e196fb8f37dd8ce5d558fe0f6adf1c` / `89fb7dcd113023d7e1e044d537202caca509830a`.
+
+Reports, commit message, and `DONE` marker were written.

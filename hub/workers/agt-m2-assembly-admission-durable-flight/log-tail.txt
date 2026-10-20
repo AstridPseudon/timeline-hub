@@ -1,0 +1,400 @@
++    def dispatch(arguments):
++        body = {'capability': arguments['capability_id'], 'input_manifest': arguments['input_object_ids'],
++                **{key: arguments[key] for key in ('project_id', 'capability_digest', 'spec',
++                                                  'storage_estimate', 'idempotency_key')}}
++        flight = json.loads(generated.path.read_bytes())['flight']
++        assert flight['kind'] == 'assembly-admission' and flight['key'] == body['idempotency_key']
+         calls.append(copy.deepcopy(body))
+         return DomainResult.success({'task_id': 'assembler'})
+ 
+-    client.tasks = SimpleNamespace(create=create)
++    client.tasks = SimpleNamespace(prepare_admission=prepare, dispatch_admission=dispatch)
+     session = TimelineSession.open('p', 't', client=client, outbox_path=generated.path)
+     return session, generated, outputs, associations, calls
+ 
+@@ -236,20 +248,17 @@
+         host.shutdown()
+ 
+ 
+-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
+-    'registered assembler admission ACK recovery requires the original create body/key '
+-    'durably retained in the existing outbox before send'))
+-def test_registered_admission_lost_ack_restart_retries_original_body_without_recapture(tmp_path):
++def test_registered_admission_lost_ack_restart_retries_original_body_without_recapture(tmp_path, monkeypatch):
+     session, generated, outputs, _, calls = requester(tmp_path)
+-    create = session.client.tasks.create
++    dispatch = session.client.tasks.dispatch_admission
+ 
+-    def lose_ack(**body):
+-        result = create(**body)
++    def lose_ack(arguments):
++        result = dispatch(arguments)
+         if len(calls) == 1:
+             raise WorkspaceClientError(0, 'transport_error', 'lost admission acknowledgement')
+         return result
+ 
+-    session.client.tasks.create = lose_ack
++    session.client.tasks.dispatch_admission = lose_ack
+     with pytest.raises(WorkspaceClientError, match='lost admission'):
+         admit(session, outputs)
+     original = copy.deepcopy(calls[0])
+@@ -257,7 +266,111 @@
+     generated.bundles['peer']['base_parent']['revision_id'] = 'peer'
+     generated.bundles['peer']['parent']['clips'][0]['params']['text'] = 'Peer edit'
+     generated.head = {'revision_id': 'peer', 'publication_id': 'peer-publication'}
++
++    def no_recapture(*args, **kwargs):
++        raise AssertionError('admission recovery reread the head or child media')
++
++    monkeypatch.setattr(session.client.timelines, 'open_composition', no_recapture)
++    monkeypatch.setattr(session.client.timelines, 'history', no_recapture)
++    monkeypatch.setattr(session.client.tasks, 'prepare_admission', no_recapture)
++    for name in ('get_managed_output', 'get_project_media_selection', 'get_project_verified_media'):
++        monkeypatch.setattr(generated, name, no_recapture)
+     restarted = TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
+     assert admit(restarted, outputs)['data']['task_id'] == 'assembler'
+     assert calls == [original, original]
+     assert session.client.reads == ['r0']
++
++
++@pytest.mark.parametrize('change', ['key', 'digest', 'children', 'version_type', 'order', 'replacement', 'rationale'])
++def test_admission_retry_refuses_changed_intent_without_losing_flight(tmp_path, change):
++    session, generated, outputs, _, calls = requester(tmp_path)
++    dispatch = session.client.tasks.dispatch_admission
++
++    def lose_ack(arguments):
++        dispatch(arguments)
++        raise WorkspaceClientError(0, 'transport_error', 'lost admission acknowledgement')
++
++    session.client.tasks.dispatch_admission = lose_ack
++    with pytest.raises(WorkspaceClientError):
++        admit(session, outputs)
++    saved = generated.path.read_bytes()
++    args = {'replace_clips': ['parent/clip:a', 'parent/clip:b'],
++            'assembler_digest': DIGEST, 'idempotency_key': 'assembly'}
++    if change == 'key':
++        args['idempotency_key'] = 'other'
++    elif change == 'digest':
++        args['assembler_digest'] = 'sha256:' + 'b' * 64
++    elif change == 'children':
++        outputs[0]['version'] = 2
++    elif change == 'version_type':
++        outputs[0]['version'] = 1.0
++    elif change == 'order':
++        outputs.reverse()
++    elif change == 'replacement':
++        args['replace_clips'].reverse()
++    else:
++        args['rationale'] = 'Other intent'
++    restarted = TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
++    with pytest.raises(TimelineEditError, match='immutable'):
++        restarted.admit_assembly(outputs, **args)
++    assert generated.path.read_bytes() == saved and len(calls) == 1
++    assert session.client.reads == ['r0']
++
++
++def test_admission_fsync_failure_prevents_post(tmp_path, monkeypatch):
++    from astrid.sdk.timeline import outbox
++
++    session, generated, outputs, _, calls = requester(tmp_path)
++    before = generated.path.read_bytes()
++
++    def fail(descriptor):
++        raise OSError('fsync failed')
++
++    monkeypatch.setattr(outbox.os, 'fsync', fail)
++    with pytest.raises(OSError, match='fsync failed'):
++        admit(session, outputs)
++    assert not calls and generated.path.read_bytes() == before
++    assert not list(generated.path.parent.glob('.outbox-*'))
++
++
++def test_admission_ack_cleanup_failure_retains_original_flight_and_base(tmp_path, monkeypatch):
++    session, generated, outputs, _, calls = requester(tmp_path)
++    before = session.outbox.read()
++    write = session.outbox.write
++
++    def fail_cleanup(state):
++        if state['flight'] is None:
++            raise OSError('crash before cleanup')
++        write(state)
++
++    monkeypatch.setattr(session.outbox, 'write', fail_cleanup)
++    with pytest.raises(OSError, match='crash before cleanup'):
++        admit(session, outputs)
++    flight = session.outbox.read()['flight']
++    saved = generated.path.read_bytes()
++    for operation in (lambda: session.undo(['pub0']), lambda: session.flush()):
++        with pytest.raises(TimelineEditError, match='original assembly admission'):
++            operation()
++        assert generated.path.read_bytes() == saved
++    pending = session.queue_move('parent/clip:a', 5)
++    assert session.outbox.read()['flight'] == flight
++    assert session.outbox.read()['base'] == before['base']
++    # Neither changed credentials for the same actor nor an instance restart is
++    # local authority; only the authenticated realm/actor scope owns this file.
++    transport = session.client._remote._transport
++    handshake = transport._last_handshake
++    transport._last_handshake = {**handshake, 'actor_id': 'other'}
++    with pytest.raises(TimelineEditError):
++        TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
++    transport._last_handshake = handshake
++    restarted = TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
++
++    def no_recapture(*args, **kwargs):
++        raise AssertionError('retry rebuilt admission')
++
++    monkeypatch.setattr(restarted.client.tasks, 'prepare_admission', no_recapture)
++    monkeypatch.setattr(restarted, '_bundle', no_recapture)
++    assert admit(restarted, outputs)['data']['task_id'] == 'assembler'
++    assert calls[0] == calls[1]
++    assert restarted.outbox.read() == {**before, 'pending': [pending]}
++    assert flight['key'] == 'assembly'
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/rendering/test_runtime_stitch.py tests/packs/rendering/test_assemble_timeline.py' in /home/user/work/wt/agt-m2-assembly-admission-durable-flight
+ succeeded in 27227ms:
+........................................................................ [ 54%]
+.............................................................            [100%]
+133 passed in 25.53s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib
+import os
+import subprocess
+from pathlib import Path
+entries = {}
+for row in subprocess.check_output(['git', 'ls-files', '--stage', '-z']).split(b'\\0'):
+    if row:
+        meta, path = row.split(b'\\t', 1)
+        mode, oid, stage = meta.split()
+        assert stage == b'0'
+        entries[path] = (mode, oid)
+for path in subprocess.check_output(['git', 'diff', '--name-only', '-z']).split(b'\\0'):
+    if not path:
+        continue
+    target = Path(os.fsdecode(path))
+    if not target.exists() and not target.is_symlink():
+        entries.pop(path, None)
+        continue
+    data = os.fsencode(os.readlink(target)) if target.is_symlink() else target.read_bytes()
+    entries[path] = (entries[path][0], hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\\0' + data).hexdigest().encode())
+root = {}
+for path, item in entries.items():
+    parts, directory = path.split(b'/'), root
+    for name in parts[:-1]:
+        directory = directory.setdefault(name, {})
+    directory[parts[-1]] = item
+
+def tree(directory):
+    data = b''
+    for name, value in sorted(directory.items(), key=lambda pair: pair[0] + (b'/' if isinstance(pair[1], dict) else b'')):
+        mode, oid = (b'40000', tree(value)) if isinstance(value, dict) else value
+        data += mode + b' ' + name + b'\\0' + bytes.fromhex(oid.decode())
+    return hashlib.sha1(b'tree ' + str(len(data)).encode() + b'\\0' + data).hexdigest().encode()
+print('tracked_source_tree=' + tree(root).decode())
+for name in ['astrid/sdk/timeline/assembly.py', 'astrid/sdk/timeline/sync.py', 'astrid/sdk/timeline/outbox.py', 'tests/helpers/registered_native_pair.py', 'tests/packs/rendering/test_registered_assembler_admission.py', 'tests/packs/rendering/test_registered_native_pair.py', 'tests/sdk/test_timeline_assembly.py']:
+    print(name, hashlib.sha256(Path(name).read_bytes()).hexdigest())
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/assembly.py astrid/sdk/timeline/sync.py tests/sdk/test_timeline_assembly.py tests/packs/rendering/test_registered_assembler_admission.py tests/packs/rendering/test_registered_native_pair.py
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-assembly-admission-durable-flight
+ succeeded in 480ms:
+tracked_source_tree=a0650c21b268f879969a9420bdb2921e4008289b
+astrid/sdk/timeline/assembly.py e5faf15b139c4da8463da3b01dedd6c746f9d8ef41ba8927eddec30cef7ef346
+astrid/sdk/timeline/sync.py 6c82655db96e8ff6d15fb08eacb2263683af2f55664acef79992db3f79e79781
+astrid/sdk/timeline/outbox.py dfb1e46123be49539cf053a9e49060d9c8ad1ec73f15393a3a1d3427dac95a99
+tests/helpers/registered_native_pair.py 9424f61a680c6108918bbad29e16e3548c7fbc33149aea7e92520326ed0c008e
+tests/packs/rendering/test_registered_assembler_admission.py fe893392efc876e04daf0b46875da5135378547723f6aeb867fbc29ed1838efe
+tests/packs/rendering/test_registered_native_pair.py c277592dac02f24d02f15e8d70807b8c5ce4e31bd721600974c0161a8ff2fe32
+tests/sdk/test_timeline_assembly.py 2bb32902dedf396acbc48ecbc1ee60c95b73f1feb1b3c6e5de2bd16f41494c4b
+All checks passed!
+ M astrid/sdk/timeline/assembly.py
+ M astrid/sdk/timeline/sync.py
+ M tests/packs/rendering/test_registered_assembler_admission.py
+ M tests/packs/rendering/test_registered_native_pair.py
+ M tests/sdk/test_timeline_assembly.py
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-assembly-admission-durable-flight/notes/report.md <<'EOF'
+
+## Final qualification — COMPLETE
+
+Central request "'`agt-m2-assembly-admission-durable-flight-identity-pin94114269-integration-1020131041-30429`: **exit 0**, service 235s;
+inner **15 passed, 2 xfailed in 196.34s**; outer **4 passed in 221.89s**.
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+$ORCH/bin/request-test agt-m2-assembly-admission-durable-flight identity-pin94114269-integration --files tests/packs/rendering/test_registered_native_pair.py
+$ORCH/bin/wait-test agt-m2-assembly-admission-durable-flight-identity-pin94114269-integration-1020131041-30429 1
+```
+
+The inner private pair runs the following exact files under its own Agent and
+Runtime PYTHONPATH/ASTRID_RUNTIME_CHECKOUT, with normal startup providers:
+
+```sh
+/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/packs/rendering/test_registered_native_assembler.py tests/packs/rendering/test_registered_proposal_requester.py tests/packs/rendering/test_registered_assembler_admission.py tests/packs/rendering/test_registered_assembler_producer.py tests/editing_conformance/test_commit_runtime_parent_track_label.py
+```
+
+The 15 positives include the original nine native cases, four new admission
+recovery cases (lost HTTP ACK / crash after ACK before cleanup, each with distinct
+and duplicate CAS), and two regular command HTTP/restart/undo journeys. Recovery
+checks a fresh same-owner credential; a fully authenticated foreign actor is
+refused by the unchanged outbox scope guard. Head C and child lifecycle V2 exist
+before restart/replay. Tripwires forbid head inspection/history on reopen and
+capture/preparation/media reads on retry. Exact request bytes/key, original task
+ID/receipt, unchanged task/spec, one assembler task, no phantom timeline history,
+changed-intent refusal with unchanged flight, and pending suffix survival pass.
+The two held legacy completion strict xfails remain unchanged. The outer three
+identity controls use pinned Runtime `94114269d1ce23ab3224d7eca5a85138ce2b5fed`;
+they are distinct from the inner native candidate qualification.
+
+Only after this real HTTP pass, removed the original admission requirement'"'s
+strict xfail marker. Its exact original retry expectation remains and has stronger
+no-head/no-media tripwires. Final local command (working directory is this worker):
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/rendering/test_runtime_stitch.py tests/packs/rendering/test_assemble_timeline.py
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/assembly.py astrid/sdk/timeline/sync.py tests/sdk/test_timeline_assembly.py tests/packs/rendering/test_registered_assembler_admission.py tests/packs/rendering/test_registered_native_pair.py
+git diff --check
+```
+
+Results: **133 passed in 25.53s**, exit 0; Ruff and whitespace checks pass.
+No full/full* suite, browser, render, decode or macOS claim. No shared dependency,
+cache, integration checkout or git state was mutated. No build/temp output remains
+in the worktree. Product diff is only assembly.py and sync.py: **+78/-16** lines;
+outbox.py is unchanged. No schema, host/action, public DTO, command or family remap.
+
+Exact source/tuple:
+
+- Worktree `/home/user/work/wt/agt-m2-assembly-admission-durable-flight`, branch `tl/agt-m2-assembly-admission-durable-flight`.
+- Base commit `32d6de6a8a50f05032a9b1f110ff1ac5a8975f4f` (registered requester), base tree `4c000d64c9048910889266f00fd4036a47ffebd3`.
+- Central qualified tree **`4ffb60245f1dd3e723073da3e0a957ee6e09b3d9`**.
+- Final tracked source tree **`a0650c21b268f879969a9420bdb2921e4008289b`**. The only post-central difference is deleting the three-line local strict-xfail decorator; product and HTTP tests are byte-identical to central. This tree was calculated read-only from tracked modes/blob bytes; the same calculation matched the central snapshot before marker removal. These are tree identities, not invented commits or release locks.
+- Private native Agent parent `b5cfce5096f91f39bfb86d39823f97f0f59ce8a2`, with the existing complete overlays in `tests/helpers/registered_native_pair.py` (helper SHA256 `9424f61a680c6108918bbad29e16e3548c7fbc33149aea7e92520326ed0c008e`). All unchanged parent overlays retain the hashes in the registered requester handoff.
+- Private Runtime `2c4ac180c2220bdad966bc01e95ad230e99ce26a`; private contract version `0.2.14`; complete 53-definition schema/full S2 floor SHA256 `fafb1985a326e6121aa8c9fb34bbda196edc3dfaf462352070372e631bea1f52`.
+- Same normally generated cohort artifact manifest `sha256:48c7b6533e2774a70e36517948a18fd5cee07f4d30e8f339776be9b3ec74ed4e`. Python/TypeScript generators, all check modes and all 75 artifact hash checks passed in each private preparation. Public releases/locks/generated files were not mutated.
+- Final SHA256: assembly.py `e5faf15b139c4da8463da3b01dedd6c746f9d8ef41ba8927eddec30cef7ef346`; sync.py `6c82655db96e8ff6d15fb08eacb2263683af2f55664acef79992db3f79e79781`; unchanged outbox.py `dfb1e46123be49539cf053a9e49060d9c8ad1ec73f15393a3a1d3427dac95a99`.
+
+No blocker for this admission durability task. This remains private native-cohort
+qualification; compose the narrow hunks into the current root while retaining its
+newer stage/sheet-basis/producer guards, then qualify the resulting release tuple.
+Fix the separately observed archived M1 visualize idempotency call in its owning
+workstream and rerun that whole journey; it is not green here. Native public release
+activation, render admission/ACK recovery, D13/legacy completion, historical render,
+film decoding, pixel/audio parity and macOS remain held. Small child fixtures are
+labelled video and are not decoded-film evidence. No settled PLAN decision changed.
+
+Handoff: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-assembly-admission-durable-handoff.md`.
+Commit message is written for the harness; no commit was run. Completion: `DONE`.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-assembly-admission-durable-handoff.md <<'"'EOF'
+# Registered assembler admission durability handoff
+
+2026-10-20. Worker "'`agt-m2-assembly-admission-durable-flight`. **Qualified for the
+exact task-create admission crash window**, ready for review/composition. No
+render restoration or family remapping is claimed.
+
+The existing TimelineSession outbox retains the original completed createTask
+wire body and key before POST, using only the local `flight.kind =
+assembly-admission` variant in that same JSON file. The existing atomic write
+fsyncs file and directory. Untagged commit flights retain their existing format.
+Normal prepare_admission runs once; normal dispatch_admission replays the exact
+saved body under current transport credentials, without rebuilding capture or
+reading child/media/head inputs. Session reopening resolves scope without opening
+a current composition. Changed intent/key/scope refuses and keeps the original
+flight. An ACK clears only the matching admission flight, preserving the session
+base and newer pending timeline edits; it never creates accepted timeline history.
+No second journal, table, accepted-history cache, fake EditCommand, public DTO,
+wire field, schema change or HTTP framework was introduced.
+
+Exact source tuple:
+
+- Worker `/home/user/work/wt/agt-m2-assembly-admission-durable-flight`, branch `tl/agt-m2-assembly-admission-durable-flight`.
+- Base registered requester commit `32d6de6a8a50f05032a9b1f110ff1ac5a8975f4f`, tree `4c000d64c9048910889266f00fd4036a47ffebd3`.
+- Central qualified source tree **`4ffb60245f1dd3e723073da3e0a957ee6e09b3d9`**.
+- Final tracked source tree **`a0650c21b268f879969a9420bdb2921e4008289b`**. Only the original local strict-xfail decorator was removed after the central pass; product/HTTP source bytes are unchanged. Final local tests pass. Tree hashes were computed read-only, with the pre-removal calculation matching the central snapshot; no commit/release identity is fabricated.
+- Product SHA256: `astrid/sdk/timeline/assembly.py` = `e5faf15b139c4da8463da3b01dedd6c746f9d8ef41ba8927eddec30cef7ef346`; `sync.py` = `6c82655db96e8ff6d15fb08eacb2263683af2f55664acef79992db3f79e79781`.
+- Existing outbox implementation is unchanged, SHA256 `dfb1e46123be49539cf053a9e49060d9c8ad1ec73f15393a3a1d3427dac95a99`. Product diff: **+78/-16**, only assembly.py/sync.py.
+- Private native Agent parent `b5cfce5096f91f39bfb86d39823f97f0f59ce8a2` plus the complete existing `tests/helpers/registered_native_pair.py` overlays; Runtime `2c4ac180c2220bdad966bc01e95ad230e99ce26a`.
+- Private normal generator contract version `0.2.14`; whole 53-definition schema/full S2 floor SHA256 `fafb1985a326e6121aa8c9fb34bbda196edc3dfaf462352070372e631bea1f52`; unchanged normal artifact manifest `sha256:48c7b6533e2774a70e36517948a18fd5cee07f4d30e8f339776be9b3ec74ed4e`. Normal Python/TypeScript generation/checks and all 75 artifact hashes pass; no public contract/lock mutation.
+
+Final central command:
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+$ORCH/bin/request-test agt-m2-assembly-admission-durable-flight identity-pin94114269-integration --files tests/packs/rendering/test_registered_native_pair.py
+$ORCH/bin/wait-test agt-m2-assembly-admission-durable-flight-identity-pin94114269-integration-1020131041-30429 1
+```
+
+**Exit 0; inner 15 passed, 2 held legacy xfailed; outer 4 passed.** The outer
+three unchanged identity controls use Runtime `94114269d1ce23ab3224d7eca5a85138ce2b5fed`;
+the inner native qualification uses the private tuple above. The original nine
+native action/proposal/requester positives pass, plus four new real HTTP recovery
+cases and two existing regular command ACK-loss/restart/suffix/inverse journeys.
+The new cases cover distinct/duplicate CAS, task acceptance followed by dropped
+HTTP ACK, crash after ACK before outbox cleanup, actual Runtime/requester restart,
+head C and child association V2 after original acceptance, fresh same-actor
+credential, authenticated foreign-actor refusal, changed intent/key refusal with
+unchanged flight, byte-exact original request/key replay, original task/receipt,
+one durable task, unchanged stored spec/history and pending suffix preservation.
+Tripwires forbid head inspection/history during reopen and preparation/media reads
+on retry. No runner task is deleted.
+
+After that pass, the original strict admission xfail became a real positive with
+its retry expectation retained and stronger no-recapture tripwires. Local command:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/rendering/test_runtime_stitch.py tests/packs/rendering/test_assemble_timeline.py
+```
+
+**133 passed in 25.53s**, including the original 123. Scoped Ruff and
+`git diff --check` pass. No full/full* run, shared dependency/cache mutation,
+integration edit or git mutation. Report contains exact lint/development commands.
+
+Remaining limits: one exploratory whole M1 journey passed commit recovery and undo
+then failed its archived cohort'"'s "'`visualize` call because `create_timeline_view`
+lacks an idempotency key. That code/test is unchanged and that whole journey is
+not green here. No render/decoded-film/pixel/audio/macOS evidence, public native
+release activation, historical render, render admission recovery or D13/legacy
+completion qualification. The two held legacy strict xfails stay intact. Child
+bytes are small fixtures labelled video. This is a private normally generated
+cohort qualification, not a public release identity.
+
+Next: compose these narrow hunks with the reviewed native requester cohort,
+preserving the current root'"'s newer stage/sheet-basis/producer-pending guards;
+do not replace current sync.py wholesale from this older branch. Qualify that
+composed release normally. The source owner should separately fix/requalify the
+M1 visualize call. No PLAN decision was changed and this bounded task has no blocker.
+
+[Full worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-assembly-admission-durable-flight/notes/report.md).
+[Final central log](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-assembly-admission-durable-flight-identity-pin94114269-integration-1020131041-30429/log.txt).
+EOF
+touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-assembly-admission-durable-flight/DONE" in /home/user/work/wt/agt-m2-assembly-admission-durable-flight
+ succeeded in 0ms:
+codex
+Implemented durable admission recovery in the existing outbox. Original body/key replay exactly; changed intent refuses; ACK cleanup preserves pending edits. The original strict xfail now passes.
+
+- Local: **133 passed**.
+- Central: **15 passed, 2 held legacy xfails**; outer **4 passed**.
+- Ruff and whitespace checks passed.
+
+No task blocker. The unrelated archived M1 visualization failure remains reported; rendering/decode/macOS remain unqualified.
+
+[Report with exact commands and source tuple](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-assembly-admission-durable-flight/notes/report.md) · [Handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-assembly-admission-durable-handoff.md)
+
+Commit message and `DONE` written. Next: review and compose the narrow changes while preserving current stage guards.
+tokens used
+223,110
+Implemented durable admission recovery in the existing outbox. Original body/key replay exactly; changed intent refuses; ACK cleanup preserves pending edits. The original strict xfail now passes.
+
+- Local: **133 passed**.
+- Central: **15 passed, 2 held legacy xfails**; outer **4 passed**.
+- Ruff and whitespace checks passed.
+
+No task blocker. The unrelated archived M1 visualization failure remains reported; rendering/decode/macOS remain unqualified.
+
+[Report with exact commands and source tuple](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-assembly-admission-durable-flight/notes/report.md) · [Handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-assembly-admission-durable-handoff.md)
+
+Commit message and `DONE` written. Next: review and compose the narrow changes while preserving current stage guards.

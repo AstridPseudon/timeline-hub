@@ -1,0 +1,400 @@
+249-  return canonicalizeTimelineData({
+250-    ...base,
+251-    config: {
+252-      ...base.config,
+253-      clips: [
+254-        ...base.config.clips,
+255-        { id: 'clip-3', at: 0, track: 'V2', clipType: 'hold', hold: 2 },
+256-      ],
+257-    },
+258-    resolvedConfig: {
+259-      ...base.resolvedConfig,
+260-      clips: [
+261-        ...base.resolvedConfig.clips,
+262-        { id: 'clip-3', at: 0, track: 'V2', clipType: 'hold', hold: 2 },
+263-      ],
+264-    },
+265-    rows: [
+266-      base.rows[0],
+267-      {
+268-        id: 'V2',
+269-        actions: [{ id: 'clip-3', start: 0, end: 2, effectId: 'effect-clip-3' }],
+270-      },
+271-    ],
+272-    meta: {
+273-      ...base.meta,
+274-      'clip-3': { track: 'V2', clipType: 'hold', hold: 2 },
+275-    },
+276-    effects: {
+277-      ...base.effects,
+278-      'effect-clip-3': { id: 'effect-clip-3' },
+279-    },
+280-    clipOrder: { V1: ['clip-1', 'clip-2'], V2: ['clip-3'] },
+281-  });
+282-}
+283-
+284-/**
+285- * useClipDrag reads everything from the timeline store, so a scenario is store
+286- * state — there is no prop channel to pass these through.
+287- */
+288-type ClipDragScenario =
+289-  Pick<
+290-    TimelineEditorDataContextValue,
+291-    | 'timelineWrapperRef'
+292-    | 'dataRef'
+293-    | 'selectedClipIdsRef'
+294-    | 'additiveSelectionRef'
+295-    | 'deviceClass'
+296-    | 'interactionMode'
+297-    | 'gestureOwner'
+298-    | 'coordinator'
+299-    | 'scale'
+300-    | 'scaleWidth'
+301-  >
+302-  & Partial<Pick<TimelineEditorDataContextValue, 'interactionStateRef'>>
+303-  & Pick<TimelineEditorOpsContextValue, 'clipMove'>
+304-  & Pick<
+305-    TimelineEditorOpsContextValue,
+306-    | 'setGestureOwner'
+307-    | 'setInputModalityFromPointerType'
+308-    | 'moveClipToRow'
+309-    | 'createTrackAndMoveClip'
+310-    | 'selectClip'
+311-    | 'selectClips'
+312-    | 'applyEdit'
+313-  >;
+314-
+315-function renderClipDrag(scenario: ClipDragScenario) {
+316-  const store = createTimelineStore();
+
+def selection_overlap(selected, write):
+    if selected['key'] == 'lane.members':
+        ref, path = write['ref'], write['path']
+        if ref == 'parent':
+            return path in ([], ['clips'], ['config'], ['config', 'clips'], ['occurrences'])
+        if not (ref.startswith('occurrence:') and '/' not in ref or ref.startswith('parent/clip:')):
+            return False
+        if path and path[0] not in ('track', 'placement'):
+            return False
+        target = selected['owner'].removeprefix('parent/track:')
+        for state in (write['before'], write['after']):
+            value = state.get('value')
+            if isinstance(value, dict):
+                value = (value.get('placement') or {}).get('track', value.get('track'))
+            if value == target:
+                return True
+        return False
+    if selected['key'] == 'placement.owners':
+        if (write['ref'].startswith('occurrence:') and '/' not in write['ref']
+                and write['path'] in ([], ['shot_id'])):
+            if any(key not in write for key in ('before', 'after')):
+                raise CommandError('owner membership requires complete write history',
+                                   kind='history_unavailable')
+            for state in (write['before'], write['after']):
+                value = state.get('value')
+                shot = value.get('shot_id') if not write['path'] and isinstance(value, dict) else value
+                if isinstance(shot, str) and 'shot:' + shot in selected['boundaries']:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/group_view.py
+?? astrid/sdk/timeline/occurrence_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_group_move.json
+?? tests/editing_conformance/test_recipe_m2_group_move.py
+?? tests/sdk/test_timeline_group_move_provider.py
+?? tests/sdk/test_timeline_group_move_runtime.py
+
+exec
+/bin/bash -lc "cat >> tests/editing_conformance/test_recipe_m2_group_move.py <<'EOF'
+
+
+def test_original_app_pinned_fixture_exact_existing_lane_visible_values():
+    # Authored portion of makePinnedGroupData in App useClipDrag.test.tsx:191.
+    document = legacy_document()
+    parent = document['parent_revision']['payload']
+    parent['config']['tracks'] = [{'id': identity, 'kind': 'visual'} for identity in ('V1', 'V2')]
+    parent['config']['output']['fps'] = 30
+    parent['clips'] = [{'id': 'clip-1', 'at': 0, 'track': 'V1', 'clipType': 'hold', 'hold': 2},
+                       {'id': 'clip-2', 'at': 2, 'track': 'V1', 'clipType': 'hold', 'hold': 2}]
+    parent['config']['clips'] = copy.deepcopy(parent['clips'])
+    parent['config']['pinnedShotGroups'] = [{
+        'shotId': 'shot-1', 'trackId': 'V1', 'clipIds': ['clip-1', 'clip-2'], 'mode': 'images'}]
+    rehash(document)
+    groups = [dict(GROUPS[0], legacy_shot_id='shot-1')]
+    migration_command = capture_migrate_groups(document, groups)
+    migration = execute(bundle_from_document(document, migration_command=migration_command), [migration_command])
+    bundle = bundle_from_document(document_from_bundle(migration.bundle))
+    move = execute(bundle, capture(bundle))
+    view = project_group_view(bundle_from_document(document_from_bundle(move.bundle)))
+    assert [c for c in view['clips'] if c['track'] == 'V1'] == []
+    assert [(c['id'], c['at'], c['at'] + c['hold'], c['track']) for c in view['clips']] == [
+        ('clip-1', 1, 3, 'V2'), ('clip-2', 3, 5, 'V2')]
+    assert view['pinnedShotGroups'] == [{
+        'shotId': 'shot-1', 'trackId': 'V2', 'clipIds': ['clip-1', 'clip-2'], 'mode': 'images'}]
+    assert inverse(move.bundle, move.records).bundle == bundle
+EOF
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider tests/editing_conformance/test_recipe_m2_group_move.py tests/sdk/test_timeline_group_move_provider.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_composed_schema.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_semantic_reservations.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/timeline/test_authoring_bundle.py' in /home/user/work/wt/agt-m2-group-existing-lane-view
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/occurrence_commands.py astrid/sdk/timeline/group_view.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py tests/editing_conformance/test_recipe_m2_group_move.py tests/sdk/test_timeline_group_move_provider.py tests/sdk/test_timeline_group_move_runtime.py; PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --python-version 3.13 --follow-imports=silent --cache-dir=/tmp/agt-m2-group-existing-lane-view-mypy astrid/sdk/timeline/occurrence_commands.py astrid/sdk/timeline/group_view.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py' in /home/user/work/wt/agt-m2-group-existing-lane-view
+ succeeded in 595ms:
+All checks passed!
+Success: no issues found in 5 source files
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+schema = Path('astrid/core/timeline/schema/edit-command.schema.json')
+value = json.loads(schema.read_text())
+value['"'$defs'"']['EditCommand']['allOf'].pop()
+del value['"'$defs'"']['OccurrenceMoveArgs']
+assert (json.dumps(value, indent=2)+'\\n').encode() == subprocess.check_output(['git','show','HEAD:'+str(schema)])
+old = subprocess.check_output(['git','ls-files','tests/editing_conformance/fixtures/*.json'],text=True).splitlines()
+for path in old:
+    assert Path(path).read_bytes() == subprocess.check_output(['git','show','HEAD:'+path])
+print('Base schema recovered exactly; unchanged existing conformance fixtures:', len(old))
+for path in (schema, Path('tests/editing_conformance/fixtures/recipe_m2_group_move.json')):
+    print(str(path), hashlib.sha256(path.read_bytes()).hexdigest())
+print('Product Python new module lines:', sum(len(Path(p).read_text().splitlines()) for p in ('astrid/sdk/timeline/occurrence_commands.py','astrid/sdk/timeline/group_view.py')))
+print('Registry/query net delta:', subprocess.check_output(['git','diff','--numstat','--','astrid/sdk/timeline/_collections.py','astrid/sdk/timeline/_recording.py','astrid/sdk/timeline/commands.py'],text=True))
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-existing-lane-view/notes')
+root.mkdir(parents=True,exist_ok=True)
+(root/'edit-command.group-existing-lane-candidate.schema.json').write_bytes(schema.read_bytes())
+print('Standalone review schema:',root/'edit-command.group-existing-lane-candidate.schema.json')
+PY
+git diff --check" in /home/user/work/wt/agt-m2-group-existing-lane-view
+ succeeded in 660ms:
+Base schema recovered exactly; unchanged existing conformance fixtures: 17
+astrid/core/timeline/schema/edit-command.schema.json 2c864090806d7dacfe89ff751b0c100f389186e2f7292f4eb2db53cff2ae94d4
+tests/editing_conformance/fixtures/recipe_m2_group_move.json 488b7f475d0a760a7ba0e268b6b6121c81bf623d60c07958153ba18ca33d5d98
+Product Python new module lines: 178
+Registry/query net delta: 16	0	astrid/sdk/timeline/_collections.py
+7	0	astrid/sdk/timeline/_recording.py
+3	1	astrid/sdk/timeline/commands.py
+
+Standalone review schema: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-existing-lane-view/notes/edit-command.group-existing-lane-candidate.schema.json
+
+exec
+/bin/bash -lc 'git status --short; wc -l astrid/sdk/timeline/{occurrence_commands.py,group_view.py}; git branch --contains 154a70a9; git rev-parse HEAD' in /home/user/work/wt/agt-m2-group-existing-lane-view
+ succeeded in 715ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/group_view.py
+?? astrid/sdk/timeline/occurrence_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_group_move.json
+?? tests/editing_conformance/test_recipe_m2_group_move.py
+?? tests/sdk/test_timeline_group_move_provider.py
+?? tests/sdk/test_timeline_group_move_runtime.py
+ 125 astrid/sdk/timeline/occurrence_commands.py
+  53 astrid/sdk/timeline/group_view.py
+ 178 total
++ tl/agt-m2-retrack-recover
+746440c4c4a6bf7dd8a89500c2bef21a3721efef
+
+ succeeded in 53916ms:
+.........................x.............................................. [ 10%]
+........................................................................ [ 20%]
+........................................................................ [ 30%]
+........................................................................ [ 40%]
+........................................................................ [ 51%]
+........................................................................ [ 61%]
+........................................................................ [ 71%]
+........................................................................ [ 81%]
+........................................................................ [ 91%]
+.........................................................                [100%]
+704 passed, 1 deselected, 1 xfailed in 52.15s
+
+codex
+I refined the lane guard to include inactive destination members, so their activity changes stay guarded while activity edits on unrelated lanes can rebase. The tests also cover the original App fixture’s authored values: V1 empty, both clips on V2 at 1 and 3, hold 2, and the same group ID, order, and mode.
+
+This is SDK and detached-provider evidence. The App assertions are untouched, and no browser journey has run.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-bundle2-runtime-artifacts; git diff --check' in /home/user/work/wt/agt-m2-group-existing-lane-view
+ succeeded in 347ms:
+ok runtime.lock.json (matches producer manifest)
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-existing-lane-view/notes/report.md <<'EOF'
+# agt-m2-group-existing-lane-view — M2 HELD
+
+Implemented the bounded existing-parent-lane group move and a pure legacy-shaped read view on base "'`746440c4c4a6bf7dd8a89500c2bef21a3721efef`. Canonical occurrence/child ownership remains authoritative. No Runtime/App changes, materialization carrier changes, schema override, install, full suite, socket/browser run, commit, merge, checkout, push or ref movement.
+
+## Changes and decisions
+
+- Registered closed `occurrence.move` v1 args `{on, track, child_track}`. Selection is an exact occurrence root; parent and raw child lane refs are explicit. Global start is quantized with the existing half-toward-positive-infinity/rational-fps rules. The handler writes occurrence placement and every canonical child clip lane atomically, retaining child local starts, source windows/hold/speed, raw track definitions/role/activity and all opaque data. Parent config and whole arrays are never authored by this operation.
+- `capture_occurrence_move(bundle, select, on, *, track, child_track, new_child_track=None)` returns a captured command batch. The caller supplies every ID. A genuinely missing authored child lane is an ordinary preceding `track.create` in this same batch/undo; no copied implicit lane birth, implicit parent lane, fake semantic shot creation or physical-materialization workaround. Reusing a raw child lane whose ID differs from its parent is covered, including a second gesture.
+- Complete child order, source registry, lane definitions, ownership, maps and selected destination content are recorded through current native primitives. Added the small `lane.members` query, scoped by exact parent-track owner, and lane-membership ABA detection to existing collection guard dispatch. Query membership includes inactive target rows, whose activity is read before skipping their collision geometry; unrelated-lane activity remains independent. No generic inverse/provider rewrite or recorder signature change.
+- `project_group_view(bundle)` returns `{clips, pinnedShotGroups, bindings, output}` without changing the input. Each clip has a parallel explicit `{occurrence, clip, raw_child_track, parent_track}` binding. Current canonical child membership/order/local geometry and occurrence placement determine the view. Legacy `shotId`, mode and opaque/null metadata remain display/history fields; stale provenance `clipIds`, snapshots and member maps never select editable members. Source hold/speed/from/to survive; intervals are half-open and rational fps is retained. Other canonical children and ungrouped parent rows survive.
+- Unsupported shared ownership, multi-lane/inactive member shapes, non-output/incompatible lanes, nontranslation maps, follow timing, boundary violations, missing/foreign refs and extra args refuse. Shared-occurrence isolation remains a positive `xfail(strict=True)` requiring the separately owned materialization carrier. No passing test was rewritten, deleted, skipped or weakened. No occurrence-delete or new-parent/free-move expansion.
+- Inspected held `154a70a9a2591a86f3c3f2d4b1d3f393c4a5c172`, `git branch --contains` → `tl/agt-m2-retrack-recover`, its source diff and shared worker `notes/report.md`. Reused its necessary validation/capture concepts only. Its optional parent-lane expansion, copied child birth, old provider/schema/inverse and physical-birth behavior were not imported.
+- Size target exceeded: **203 net Python product lines** (125-line move/capture module, 53-line pure projection, 25 net registry/query/guard lines), plus 52 schema lines. The extra scope is the requested projection and explicit child-track capture/birth plus destination-membership safety; these had no existing helper/query. This stays substantially smaller than importing the held retrack implementation and its infrastructure.
+
+## Exact final validation
+
+All commands ran from `/home/user/work/wt/agt-m2-group-existing-lane-view` with the shared environment. These are targeted files and neighbors, never a full suite.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider tests/editing_conformance/test_recipe_m2_group_move.py tests/sdk/test_timeline_group_move_provider.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_composed_schema.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_semantic_reservations.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/timeline/test_authoring_bundle.py
+```
+
+**704 passed, 1 deselected, 1 xfailed in 52.15s**, exit 0. Deselection is the existing integration lane case. The only xfail is the new executable positive shared-isolation requirement. Includes legacy fixture → recorded migration → canonical reload → existing-lane move → derived App view → exact move undo/redo → exact raw legacy migration undo/same-ID redo; independent group retrack/rebase/undo; source hold/speed; child lane birth; member/lane/source/activity ABA; original App `makePinnedGroupData` authored values with clip-1/clip-2, V1 empty, V2 `[1,3)`/`[3,5)`, hold2, shot-1/images/order; all 14 registry operations have closed args and valid goldens. Detached-provider positives prove acceptance/capture/reload/inverse/redo and unrelated edit preservation, not actual Runtime storage.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-bundle2-runtime-artifacts /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider -m integration tests/sdk/test_timeline_group_move_runtime.py
+```
+
+**1 passed in 0.99s**, exit 0. Normal unmodified Runtime d691ddadb4ef3f5881a25fa893b4fb812211f102 admits this source capture and compiled canonical document. This is generic envelope admission, not generated public group exports or a group release. Only after this admission did the existing actual migration probe run:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-bundle2-runtime-artifacts /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -p no:cacheprovider -m integration tests/sdk/test_timeline_group_migration_runtime.py
+```
+
+**7 passed, 2 failed in 9.36s**, exit 1. The unchanged real positive tests `test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids[golden-parent]` and `[opaque-parent]` still fail at the first migration submit: `_check_reservations` (`commit.py:579/621/624`) sees bootstrap record `created:[]` versus missing `command.created`, yielding `history_unavailable` / `semantic identity history is unavailable`. Unchanged Runtime-owned helper is imported from 7c6e4eabf88d914d9c98c0097b06ea298ba11866. No SQL/record repair, guard weakening, helper edit or schema override. No accepted real group migration/move/retry/restart/inverse/readback is claimed; the move is downstream of this still-blocked admission. Direct RuntimeService tests use no sockets.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/occurrence_commands.py astrid/sdk/timeline/group_view.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py tests/editing_conformance/test_recipe_m2_group_move.py tests/sdk/test_timeline_group_move_provider.py tests/sdk/test_timeline_group_move_runtime.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --python-version 3.13 --follow-imports=silent --cache-dir=/tmp/agt-m2-group-existing-lane-view-mypy astrid/sdk/timeline/occurrence_commands.py astrid/sdk/timeline/group_view.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-bundle2-runtime-artifacts
+git diff --check
+```
+
+**All exit 0**; Ruff clean, mypy five files clean, lock matches producer manifest. No make check/full typecheck/build coverage is claimed. Inline byte audit: deleting only the new occurrence condition/args recovers exact base schema bytes; all **17 existing conformance fixtures remain byte-identical**. All six ordinary pin files are untouched.
+
+Earlier diagnostics, not additional coverage: initial new tests had 23 passed/1 failed/1 xfailed because the test called an existing accepted-boundary helper with the wrong signature; corrected the test to use normal migration records and authenticated inverse boundaries only for redo. Subsequent new+provider+schema run: 32 passed/1 xfailed. Intermediate five-file checks: 84 passed/1 xfailed. An initial neighbor run had 702 passed/1 deselected/1 xfailed in 85.65s; after refining disjoint-lane activity and adding exact original App authored assertions, the final 704 result above is the source evidence. Counts are not summed.
+
+## Artifacts and next steps
+
+Contract/exports/captures: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-group-contract.md`.
+
+New portable golden: `/home/user/work/wt/agt-m2-group-existing-lane-view/tests/editing_conformance/fixtures/recipe_m2_group_move.json`, SHA256 `488b7f475d0a760a7ba0e268b6b6121c81bf623d60c07958153ba18ca33d5d98`.
+
+Source candidate schema: `/home/user/work/wt/agt-m2-group-existing-lane-view/astrid/core/timeline/schema/edit-command.schema.json`, SHA256 `2c864090806d7dacfe89ff751b0c100f389186e2f7292f4eb2db53cff2ae94d4`. Explicit review copy: this report directory'"'s "'`edit-command.group-existing-lane-candidate.schema.json`. This is a new candidate, not the frozen ordinary public artifact.
+
+Recommended next steps: review/freeze this bounded source; Runtime owner fixes the trusted bootstrap command capture through normal storage acceptance; rerun unchanged actual migration positives and extend actual move acceptance/readback on the reviewed source pair. A normal reviewed group schema/client artifact is required before public release. App then consumes the explicit bindings and pure view through its current capture/preview/commit/readback flow, preserves effect IDs/selection/transaction semantics, and runs the original browser assertions. All three original App `it.fails` assertions remain untouched; no App/browser/cold-UI pass is claimed. Shared isolation, new parent-track and free multi-move remain separate. **All M2 integration remains HELD.**
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-existing-lane-view/commit-msg <<'"'EOF'
+feat(timeline): move canonical groups onto existing lanes
+
+Capture whole-occurrence moves with explicit parent and raw child lane refs.
+Record atomic placement and child retracks, composing caller-owned child track
+creation in the same batch with guarded undo and redo.
+
+Derive a pure legacy-shaped group view from current canonical membership and
+geometry with explicit ownership bindings. Cover migration, exact App fixture
+values, disjoint group rebase, source timing, ABA and the pending shared carrier.
+EOF" in /home/user/work/wt/agt-m2-group-existing-lane-view
+ succeeded in 29ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+p = root / 'design/m2-group-contract.md'
+s = p.read_text()
+s = s.replace('# M2 canonical group migration candidate — HELD', '# M2 canonical group migration and existing-lane view candidate — HELD', 1)
+s = s.replace('This is a distinct successor to reviewed Agent "'`a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83`, branch `tl/agt-m2-group-official-root-proof`. Harness commit is pending worker exit; the base commit is not the final source identity.'"', 'Current successor: branch "'`tl/agt-m2-group-existing-lane-view`, based on reviewed migration `746440c4c4a6bf7dd8a89500c2bef21a3721efef`. Harness commit is pending worker exit; the base is not the final source identity. The migration proof below is retained; current move/view exports and evidence are specified in the successor section.'"')
+s = s.replace('Candidate canonical schema: "'`/home/user/work/wt/agt-m2-group-official-root-proof'"', 'Migration predecessor canonical schema: "'`/home/user/work/wt/agt-m2-group-official-root-proof'"', 1)
+s = s.replace('## Next bounded delta and exact App outcomes', '## Existing-lane successor: exact exports, captures and read view')
+old = \"Neither a canonical group placement/retrack command nor a derived App legacy group view was already ported on a31. They remain the explicit next delta, after this migration candidate and provider setup boundary are reviewed. The first step is movement on existing lanes plus a read-only view derived from canonical occurrence ownership and child ordering. Retrack must change occurrence placement and its occurrence-owned child tracks atomically. It must preserve relative starts, source windows, mode/opaque provenance, stable refs and guards; no editable parent soft tags, persisted duplicate order map or display-ID parsing. Broader free moves/new-track creation stay separate.\"
+new = '''The successor adds "'`occurrence.move` v1, a singleton exact occurrence-root selection with closed args:
+
+```json
+{"on":1,"track":"parent/track:V2","child_track":"occurrence:new-occ/track:V2"}
+```
+
+`on` is nonnegative GLOBAL seconds, rounded using existing parent fps and half-toward-positive-infinity behavior. The fixed intent is `{ripple:"none",anchor:"fixed",position:"absolute",ownership:"occurrence"}`. Parent and raw child refs must exist, have compatible output kind/activity, and the raw child ref must belong to the selected occurrence. No IDs are derived from legacy display IDs or `(shot,track)` pairs.
+
+SDK exports, owned by `/home/user/work/wt/agt-m2-group-existing-lane-view/astrid/sdk/timeline/`:
+
+- `occurrence_commands.capture_occurrence_move(bundle, select, on, *, track, child_track, new_child_track=None) -> list[EditCommand]` captures once on the original bundle before local preview. It returns the fully recorded authoritative batch, ready for unchanged preview/commit/retry. If needed, the caller supplies a complete `new_child_track` row with its already allocated ID; the helper composes ordinary typed `track.create` for this occurrence BEFORE `occurrence.move` in the same batch/undo. It never creates a parent track. Existing raw IDs may differ from parent IDs and remain explicitly bound on later gestures.
+- `group_view.project_group_view(bundle) -> {clips,pinnedShotGroups,bindings,output}` is pure and detached from Runtime/UI. `bindings[i]` belongs to `clips[i]` and has `{occurrence,clip,raw_child_track,parent_track}`. Example: `{occurrence:"occurrence:new-occ",clip:"occurrence:new-occ/clip:c1",raw_child_track:"occurrence:new-occ/track:V2",parent_track:"parent/track:V2"}`. Parent clips use `occurrence:null`, `raw_child_track:null` and an explicit `parent/clip:<id>` ref. Adapters retain these refs; display `id`/legacy `shotId` is never an edit selector.
+
+The command writes only placement start/lane (and existing at_ms alias) and each current canonical child clip'"'s track. Complete canonical child order/membership, ownership, source registry, raw lane definitions, timing and destination lane contents are recorded through existing primitives. "'`lane.members` is scoped by an exact parent track ref, includes inactive destination members, and records membership/order. Activity reads protect inactive blockers; unrelated-lane activity edits do not conflict. Half-open collision checking ignores inactive rows. Existing inverse/rebase/provider machinery remains unchanged. Authored child track birth is typed; physical materialization is not claimed as semantic creation.
+
+The view derives ordered `clipIds` from CURRENT canonical children, converts local authored starts through current occurrence placement, maps display lanes to the parent track and preserves authored source hold/speed/from/to and rational fps. Legacy `shotId`, mode, snapshots and opaque/null fields remain display/history metadata. Stale legacy member maps/clipIds never determine membership. Ungrouped parent clips and other canonical children remain present; unrelated migrated groups retain metadata and order. The helper does not persist a second editable group collection.
+
+Bounded support: fixed, translation-only occurrences; complete active single-output-lane child groups for move; literal child timing supported by the migration geometry helper. Shared owners, nontranslation/follow timing, unsupported aliases/maps, incompatible or missing lane refs, multi-lane/inactive move members and out-of-extent children refuse explicitly. A positive `xfail(strict=True)` for shared-occurrence isolation retains the required successful behavior, pending the separately owned materialization carrier. No fake shot birth or carrier-WIP edit. New parent-lane and free multi-move slices remain separate.
+
+Portable capture/record/output/read-view golden:
+`/home/user/work/wt/agt-m2-group-existing-lane-view/tests/editing_conformance/fixtures/recipe_m2_group_move.json`, SHA256 `488b7f475d0a760a7ba0e268b6b6121c81bf623d60c07958153ba18ca33d5d98`. The existing migration golden remains unchanged at `tests/editing_conformance/fixtures/recipe_m2_group_migration.json`. The new test module additionally reproduces the original App `makePinnedGroupData` authored values (`clip-1`, `clip-2`, `shot-1`, images, 30fps) and asserts V1 empty / V2 `[1,3)` and `[3,5)` / hold2 / order/mode after canonical reload. The rational 30000/1001 case independently asserts 1.001/3.001 quantization; it is not silently normalized to 30fps.
+
+Current source schema:
+`/home/user/work/wt/agt-m2-group-existing-lane-view/astrid/core/timeline/schema/edit-command.schema.json`, SHA256 `2c864090806d7dacfe89ff751b0c100f389186e2f7292f4eb2db53cff2ae94d4`.
+Explicit candidate copy:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-existing-lane-view/notes/edit-command.group-existing-lane-candidate.schema.json`.
+Removing only the new occurrence condition/args definition reproduces exact 746440c4 base schema bytes. All 17 pre-existing fixture files and all six ordinary pin files remain untouched. A newly reviewed normal group schema/client generation is still REQUIRED before public release; the normal ordinary d691 artifact'"'s permissive generic admission is only a source probe, not generated group exports.
+
+Final targeted neighboring suites: **704 passed, 1 existing integration deselected, 1 new strict shared-isolation xfailed**, 52.15s. Ruff and targeted five-file mypy pass. The unmodified normal d691 source pair admits the new move command/canonical output (**1 passed**). The unchanged actual migration probe still has **7 passed, 2 failed** at the trusted bootstrap "'`command.created` omission described above. Actual accepted migration→move/retry/reopen/readback remains blocked before the first migration acceptance. No SQL, validator override, helper repair, full suite or browser was run. Exact commands and limitations:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-existing-lane-view/notes/report.md`.
+
+The successor is 203 net Python product lines plus schema/tests, exceeding the <120 target because the task includes a separate pure projection, explicit same-batch typed child birth/capture and lane-membership safety. No old provider/schema/physical-birth framework was imported. Reviewed held reference is `154a70a9a2591a86f3c3f2d4b1d3f393c4a5c172` on `tl/agt-m2-retrack-recover`; its shared `notes/report.md` and source were inspected read-only.
+
+## App outcomes and remaining boundaries
+
+The existing-lane SDK values are now proven; App row/effect-ID/selection/one-transaction adapters, outbox accepted readback and real browser qualification still belong to App. All M2 integration remains HELD.'"'''
+assert old in s
+s=s.replace(old,new)
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import shutil
+from pathlib import Path
+root=Path('/tmp/agt-m2-group-existing-lane-view-mypy')
+if root.exists():
+    shutil.rmtree(root)
+PY
+git diff --check" in /home/user/work/wt/agt-m2-group-existing-lane-view
+ succeeded in 580ms:
+codex
+The final targeted run passed: 704 passed, 1 existing integration deselection, and 1 strict shared-isolation expected failure. Ruff, targeted mypy, and the normal Runtime lock check also passed.
+
+I’ve written the report, candidate schema copy, contract update, and commit message. M2 remains HELD; the report identifies the real Runtime bootstrap blocker and the remaining App/browser work.
+exec
+/bin/bash -lc "git diff --check; git status --short; PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-m2-group-existing-lane-view'
+assert (worker/'commit-msg').read_text().startswith('feat(timeline):')
+assert (worker/'notes/report.md').is_file()
+assert (worker/'notes/edit-command.group-existing-lane-candidate.schema.json').read_bytes() == Path('astrid/core/timeline/schema/edit-command.schema.json').read_bytes()
+assert '704 passed' in (root/'design/m2-group-contract.md').read_text()
+print('Report, contract, candidate copy and harness commit message verified.')
+PY" in /home/user/work/wt/agt-m2-group-existing-lane-view
+ succeeded in 517ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/group_view.py
+?? astrid/sdk/timeline/occurrence_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_group_move.json
+?? tests/editing_conformance/test_recipe_m2_group_move.py
+?? tests/sdk/test_timeline_group_move_provider.py
+?? tests/sdk/test_timeline_group_move_runtime.py
+Report, contract, candidate copy and harness commit message verified.
+
+codex
+Implemented atomic existing-lane group moves, explicit ownership bindings, typed child-lane creation, and a pure derived group view.
+
+- Targeted tests: **704 passed, 1 deselected, 1 strict xfail** for pending shared isolation.
+- Ruff, targeted mypy, and Runtime lock check passed.
+- Normal Runtime admission: **1 passed**.
+- Real migration probe: **7 passed, 2 failed**, still blocked by bootstrap `command.created` omission.
+- No full suite or browser run. **M2 remains HELD.**
+
+[Report with exact commands, decisions, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-existing-lane-view/notes/report.md). Contract, candidate schema, and harness commit message written.
+tokens used
+275,309
+Implemented atomic existing-lane group moves, explicit ownership bindings, typed child-lane creation, and a pure derived group view.
+
+- Targeted tests: **704 passed, 1 deselected, 1 strict xfail** for pending shared isolation.
+- Ruff, targeted mypy, and Runtime lock check passed.
+- Normal Runtime admission: **1 passed**.
+- Real migration probe: **7 passed, 2 failed**, still blocked by bootstrap `command.created` omission.
+- No full suite or browser run. **M2 remains HELD.**
+
+[Report with exact commands, decisions, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-existing-lane-view/notes/report.md). Contract, candidate schema, and harness commit message written.

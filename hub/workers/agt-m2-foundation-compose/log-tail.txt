@@ -1,0 +1,400 @@
+    history. Incoming recorder fields are checked claims; generated records are
+    the authority. No persistence, mutable reads or renderer lives here.
+            if supplied_intent != intent:
+                raise CommandError("unsupported operation intention policy")
+            ctx.record['command']['intent'] = dict(intent)
+            operation.handler(ctx, command)
+            ctx.record['command']['resolved'] = [command['select']] if operation.singleton else []
+        elif command['op'] == 'timeline.restore':
+            ctx.read('timeline')
+            ctx.write('timeline', [], command['args'])
+            ctx.record['command']['intent'] = {}
+            ctx.record['command']['resolved'] = []
+        else:
+            apply_inverse(ctx, inverse_records, intervening_records)
+            ctx.record['command']['intent'] = {}
+            ctx.record['command']['resolved'] = []
+        if ordinal == len(commands) - 1:
+            ctx.compile_inputs()
+        ctx.compile_mirrors()
+        record = ctx.finish(capture=True)
+        for field in ('resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'):
+            if field not in command:
+                continue
+            matches = equal(command[field], record['command'][field])
+            if field == 'reads':
+                actual = record['command']['reads']
+                matches = len(command[field]) == len(actual) and all(
+                    claimed['ref'] == read['ref'] and claimed['path'] == read['path']
+                    and (equal(claimed['state'], read['state'])
+                         or (read['ref'].endswith('/shot')
+                             and ctx.state.matches(read['ref'], read['path'], claimed['state'])))
+                    for claimed, read in zip(command[field], actual))
+            if not matches:
+                raise CommandError(f"submitted {field} does not match authoritative capture", kind='capture_mismatch')
+        # Keep original claims and metadata after they have been verified.
+        record['command'].update({k: v for k, v in command.items() if k != 'intent'})
+        records.append(record)
+    return Plan(candidate, records)
+    records = []
+    for entry in entries:
+        recorder = entry.get("records")
+        if (entry.get("intent") != "recorded" or not isinstance(recorder, Mapping)
+                or recorder.get("schema_version") != 1
+                or not isinstance(recorder.get("commands"), list) or not recorder["commands"]
+                or any(not isinstance(record, Mapping) or record.get("ordinal") != ordinal
+                       or set(record) != {"ordinal", "command", "writes", "reads", "selections",
+                                          "bindings", "created", "dependencies", "derived_writes"}
+                       for ordinal, record in enumerate(recorder["commands"]))):
+            raise rejected(_failure("history_unavailable", "intervening write intent is unavailable",
+                                    base, current))
+        records.extend(copy.deepcopy(recorder["commands"]))
+    return records
+
+
+def _reservation_refs(state):
+    """Known authored identities only; opaque payloads never allocate IDs."""
+    bundle = state.bundle
+    refs = {'shot:' + bundle['source_mapping']['shots'].get(identity, {}).get('shot_id', identity)
+            for identity in bundle['shots']}
+    owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
+    refs.update(owners[1:])
+    for owner in owners:
+        for kind in ('clip', 'track'):
+            collection = state.collection(owner, kind)
+            if collection is None:
+                continue
+            _require(isinstance(collection, list), 'invalid semantic identity collection')
+            for row in collection:
+                _require(isinstance(row, Mapping) and _id(row.get('id')),
+                         'missing semantic identity')
+                refs.add(owner + '/' + kind + ':' + row['id'])
+    return refs
+
+
+def _check_reservations(port, plan, current, rejected, base):
+    from astrid.sdk.timeline.commands import CommandError
+
+    from ._command_state import State, root_identity
+
+    def valid(item):
+        if (not isinstance(item, Mapping) or set(item) != {'ref', 'kind', 'owner'}
+                or not _id(item['ref']) or not _id(item['kind'])):
+            return False
+        root = root_identity(item['ref'])
+        if root is not None:
+            return (item['kind'] == root[0]
+                    and item['owner'] == (None if root[0] == 'shot' else 'parent'))
+        owner = item['owner']
+        if not _id(owner) or not (owner == 'parent' or (
+                root_identity(owner) is not None and root_identity(owner)[0] == 'occurrence')):
+            return False
+        return (item['kind'] in ('track', 'clip')
+                and re.fullmatch(re.escape(owner + '/' + item['kind'] + ':') + r'(?!.*::)[^/]+',
+                                 item['ref']) is not None)
+
+    for record in plan.records:
+        if (any(not valid(item) for item in record['created'])
+                or record['command'].get('created') != [item['ref'] for item in record['created']]):
+            raise CommandError('invalid created identity scope', kind='identity_collision')
+
+    # This scan is timeline-local. Runtime atomic admission must additionally
+    # check project-wide shot occupancy/reservations before persisting a closure.
+    # Inverse creates restore authenticated accepted writes. Ordinary creates
+    # must never claim an identity retired by an earlier accepted publication.
+    created = [item["ref"] for record in plan.records
+               if record["command"]["op"] != "timeline.inverse" for item in record["created"]]
+    if not created:
+        return
+    reserved, recorded = set(), False
+    context = {'request': {key: plan.bundle[key] for key in ('project_id', 'timeline_id')}}
+
+    def boundary(revision):
+        return _load(port, context, revision)
+
+    def scan(records, bundle, *, ordinary=False):
+        state = State(bundle)
+        reserved.update(_reservation_refs(state))
+        for record in records:
+            items = record['created']
+            if (not isinstance(items, list) or any(not valid(item) for item in items)
+                    or not isinstance(record['command'], Mapping)
+                    or record['command'].get('created') != [item['ref'] for item in items]):
+                raise CommandError('created identity history is unavailable', kind='history_unavailable')
+            check = ordinary and record['command']['op'] != 'timeline.inverse'
+            claimed = set()
+            for item in items:
+                ref = item['ref']
+                if check and (ref in reserved or ref in claimed):
+                    raise CommandError('created identity was already reserved', kind='identity_collision', ref=ref)
+                claimed.add(ref)
+            for write in record['writes']:
+                if write['ref'] == 'timeline':
+                    for pin in (write['before']['value'], write['after']['value']):
+                        source = boundary(pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 'historical closure pin mismatch')
+                        state.closures[pin['revision_id']] = source
+                if not state.matches(write['ref'], write['path'], write['before']):
+                    raise CommandError('semantic identity boundary differs from writes', kind='history_unavailable')
+                before = _reservation_refs(state)
+                state.set(write['ref'], write['path'], write['after'])
+                if write['ref'] == 'timeline':
+                    state = State(state.bundle, closures=state.closures)
+                after = _reservation_refs(state)
+                collisions = (after - before) & reserved if check else set()
+                if collisions:
+                    raise CommandError('created identity was already reserved', kind='identity_collision',
+                                       ref=sorted(collisions)[0])
+                reserved.update(after)
+            reserved.update(claimed)
+            for write in record['derived_writes']:
+                state.set(write['ref'], write['path'], write['after'])
+
+    try:
+        for entry in _history(port, current, None, rejected, base):
+            if (not recorded and entry.get('intent') in {'bootstrap', 'legacy_unknown'}
+                    and entry.get('records') is None):
+                # Unknown legacy intent is not allocation proof. The first
+                # recorded edge supplies its authenticated original boundary.
+                continue
+            recorded = True
+            records = _records([entry], rejected, base, current)
+            _require(entry.get('previous') is not None, 'missing original identity boundary')
+            scan(records, boundary(entry['previous']['revision_id']))
+            reserved.update(_reservation_refs(State(boundary(entry['revision_id']))))
+    except (AuthoringBundleError, CommandError, KeyError, TypeError, ValueError) as exc:
+        raise rejected(_failure('history_unavailable', 'semantic identity history is unavailable',
+                                base, current)) from exc
+    scan(plan.records, boundary(current['revision_id']), ordinary=True)
+
+
+class RuntimeCommitService:
+    provider_id = "astrid-v1"
+    interface_version = 1
+
+    def __init__(self, contract_digest):
+        self.contract_digest = contract_digest
+
+"""One deterministic recipe may observe its own intermediate authored state."""
+from __future__ import annotations
+
+import copy
+import json
+
+import pytest
+
+from astrid.sdk.timeline import commands
+from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
+from astrid.sdk.timeline._recording import selection
+from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.test_recipe_m1_commands import bundle, inverse
+
+
+@pytest.fixture
+def recipe(monkeypatch):
+    def apply(ctx, command):
+        ref = command['select']
+        owner = ref.rsplit('/', 1)[0]
+        ctx.read(ref, ['opaque'])
+        ctx.bind('consumer', ref)
+        for value in (True, 1, None):
+            ctx.write(ref, ['probe'], value)
+            ctx.read(ref, ['probe'])
+        ctx.clear(ref, ['probe'])
+        ctx.read(ref, ['probe'])
+        for identity in command['args']['tracks']:
+            created = ctx.create(owner, 'track', {'id': identity, 'kind': 'visual'})
+            ctx.read(created, ['kind'])
+            ctx.bind(identity, created)
+            ctx.select('collection.tracks', owner)
+            ctx.write(ref, ['track'], identity)
+            ctx.read(ref, ['track'])
+
+    registered = commands.operations()
+    registered['fixture.internal-stages'] = commands.Operation({'type': 'object'}, apply, {}, True)
+    monkeypatch.setattr(commands, 'operations', lambda: registered)
+    return lambda ref, tracks: {'schema_version': 1, 'op': 'fixture.internal-stages',
+                               'version': '1', 'select': ref, 'args': {'tracks': tracks}}
+
+
+@pytest.mark.parametrize('ref', ['parent/clip:direct', 'occurrence:occ-1/clip:picture-1'])
+@pytest.mark.parametrize('tracks', [[], ['c', 'd']])
+def test_internal_stages_whole_authored_roundtrip_redo_and_current_head_claims(recipe, ref, tracks):
+    original = bundle()
+    plan = commands.execute(original, [recipe(ref, tracks)])
+    records = copy.deepcopy(plan.records)
+    assert len(records) == 1
+    assert [r['state'] for r in records[0]['reads'] if r['path'] == ['probe']] == [
+        present(True), present(1), present(None), ABSENT]
+    undone = inverse(plan.bundle, plan.records)
+    assert json.dumps(undone.bundle) == json.dumps(original)
+    assert plan.records == records
+    for read in undone.commands[0]['reads']:
+        assert State(plan.bundle).matches(read['ref'], read['path'], read['state'])
+    for selected in undone.commands[0]['selections']:
+        assert selection(State(plan.bundle), selected['key'], selected['owner'],
+                         selected['members']) == selected
+    assert replay(undone, plan.bundle, inverse_records=plan.records).records == undone.records
+    assert json.dumps(inverse(undone.bundle, undone.records).bundle) == json.dumps(plan.bundle)
+
+
+@pytest.mark.parametrize('ref', ['parent/clip:direct', 'occurrence:occ-1/clip:picture-1'])
+def test_internal_recipe_captured_intent_replays(recipe, ref):
+    original = bundle()
+    plan = commands.execute(original, [recipe(ref, ['c', 'd'])])
+    for read in plan.commands[0]['reads']:
+        assert State(original).matches(read['ref'], read['path'], read['state'])
+    assert replay(plan, original).records == plan.records
+
+
+def test_internal_stages_preserve_source_disjoint_c_and_reject_aba_dependents(recipe):
+    ref = 'occurrence:occ-1/clip:picture-1'
+    original = bundle()
+    plan = commands.execute(original, [recipe(ref, ['c', 'd'])])
+
+    def edit_c(state):
+        command = capture_clip_set_params(state, ref, values={'future': [None, False, 1]})
+        return commands.execute(state, [command])
+
+    concurrent = edit_c(plan.bundle)
+    head, history = concurrent.bundle, concurrent.records
+    assert replay(plan, edit_c(original).bundle, intervening_records=history).bundle == head
+    undone = inverse(head, plan.records, history)
+    assert undone.bundle == edit_c(original).bundle
+    assert inverse(undone.bundle, undone.records).bundle == head
+    aba = commands.execute(head, [recipe(ref, [])])
+    assert aba.bundle == head
+queued
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_parent_track_label.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-compose/notes/base-label.log 2>&1' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-compose/notes/base
+ succeeded in 900ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+import io, subprocess, tarfile
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-compose/notes/reservations-base')
+root.mkdir()
+with tarfile.open(fileobj=io.BytesIO(subprocess.check_output(['git','archive','5b51b936']))) as archive:
+ archive.extractall(root,filter='data')
+PY" in /home/user/work/wt/agt-m2-foundation-compose
+ succeeded in 872ms:
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_semantic_reservations.py::test_implicit_children_cannot_be_reallocated_within_one_batch > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-compose/notes/reservations-base.log 2>&1' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-foundation-compose/notes/reservations-base
+ succeeded in 859ms:
+codex
+Two nonnetwork checks need reconciliation. A bundle 1 refusal test covers occurrence track labels, which the reviewed M2 handler now supports. The other exposed a composition defect: input-claim capture dereferences an occurrence created inside the recipe, so it fails before reaching the retirement guard. The same retirement tests pass on `5b51b936`. I’ll add a small generic absent-owner guard and a positive replay/undo regression.
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-foundation-compose/astrid/sdk/timeline/_command_state.py
+/home/user/work/wt/agt-m2-foundation-compose/astrid/sdk/timeline/_recording.py
+/home/user/work/wt/agt-m2-foundation-compose/tests/editing_conformance/test_parent_track_label.py
+diff --git a/astrid/sdk/timeline/_command_state.py b/astrid/sdk/timeline/_command_state.py
+index 2ca419ab29a315a44fccb0499d358e28e20865d8..4f81ad7c745c08dbe179ab72ce1e1d19c0dd363d
+--- a/astrid/sdk/timeline/_command_state.py
++++ b/astrid/sdk/timeline/_command_state.py
+@@ -246,6 +246,8 @@
+             owner, kind = ref.rsplit('/collection:', 1)
+             if path:
+                 raise CommandError('collection shape requires the whole guard', ref=ref)
++            if owner != 'parent' and self.entity(owner, optional=True) is None:
++                return copy.deepcopy(ABSENT)
+             return present(shape(self, owner, kind))
+         if ref == "timeline":
+             if path:
+diff --git a/astrid/sdk/timeline/_recording.py b/astrid/sdk/timeline/_recording.py
+index 7323e0bf22f29a13bbaee69987d09123436f86a8..b1e96e738bbbc928f229f367d1b1313a1639ff57
+--- a/astrid/sdk/timeline/_recording.py
++++ b/astrid/sdk/timeline/_recording.py
+@@ -17,7 +17,8 @@
+     if key == "move.target":
+         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
+     elif key in KINDS:
+-        result = order(state, owner, KINDS[key])
++        result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
++                  else order(state, owner, KINDS[key]))
+     elif key == "move.blockers":
+         origin = state.occurrence(owner)
+         lane = (origin.get('placement') or {}).get('track', origin.get('track'))
+diff --git a/tests/editing_conformance/test_parent_track_label.py b/tests/editing_conformance/test_parent_track_label.py
+index a76e5293122a504630d3efb730282171da889b6d..e6b8bbe3b90aca20fe3b3a355e74dff2930b52c4
+--- a/tests/editing_conformance/test_parent_track_label.py
++++ b/tests/editing_conformance/test_parent_track_label.py
+@@ -177,8 +177,19 @@
+     call(values={'label': 'Picture'}, clear=['label']),
+     call(values={'label': 'Picture'}, clear=['label', 'label']),
+     call(values={'other': 'Picture'}),
+-    call(select='occurrence:occ-1/track:picture', values={'label': 'Picture'}),
++    call(select='shot:chapter-shot/track:picture', values={'label': 'Picture'}),
+ ])
+ def test_parent_track_label_closed_args_and_select_refuse_invalid_commands(command):
+     with pytest.raises(CommandError):
+         execute(bundle(), [command])
++
++
++def test_published_capture_supports_reviewed_occurrence_labels_and_exact_inverse():
++    original = bundle()
++    ref = 'occurrence:occ-1/track:picture'
++    command = capture_track_set(original, ref, values={'label': 'Picture'})
++    plan = execute(original, [command])
++    assert State(plan.bundle).get(ref, ['label']) == present('Picture')
++    assert State(plan.bundle).get(REF, ['label']) == State(original).get(REF, ['label'])
++    assert inverse(plan.bundle, plan.records).bundle == original
++    assert replay(plan, original).records == plan.records
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+from pathlib import Path
+p='astrid/core/timeline/schema/edit-command.schema.json'
+Path(p).write_bytes(subprocess.check_output(['git','show',f'8fe7a42f:{p}']))
+PY
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_semantic_reservations.py tests/editing_conformance/test_parent_track_label.py tests/editing_conformance/test_recipe_internal_stages.py' in /home/user/work/wt/agt-m2-foundation-compose
+ exited 1 in 2412ms:
+......F..............................................                    [100%]
+=================================== FAILURES ===================================
+_____ test_implicit_children_cannot_be_reallocated_within_one_batch[True] ______
+
+same_record = True
+
+    @pytest.mark.parametrize('same_record', [False, True])
+    def test_implicit_children_cannot_be_reallocated_within_one_batch(same_record):
+        realm = DetachedRealm()
+        calls = ([{'schema_version': 1, 'op': 'fixture.root-churn', 'version': '1',
+                   'select': 'parent', 'args': {}}] if same_record else
+                 [create_command(), deletion('occurrence:new-occ/clip:title'),
+                  creation('occurrence:new-occ', 'title')])
+>       assert_collision(realm, calls)
+
+tests/sdk/test_timeline_semantic_reservations.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+realm = <tests.sdk.test_timeline_commit_provider.DetachedRealm object at 0x7fb1bfdedd00>
+calls = [{'args': {}, 'op': 'fixture.root-churn', 'schema_version': 1, 'select': 'parent', ...}]
+
+    def assert_collision(realm, calls):
+        head, entries, documents = detached(realm.head), detached(realm.entries), detached(realm.documents)
+        prepared = len(realm.prepared)
+        with pytest.raises(CommitRejected) as error:
+            realm.call(calls)
+>       assert error.value.failure['details']['reason'] == 'identity_collision'
+E       AssertionError: assert 'identity_conflict' == 'identity_collision'
+E         
+E         - identity_collision
+E         + identity_conflict
+
+tests/sdk/test_timeline_semantic_reservations.py:64: AssertionError
+=========================== short test summary info ============================
+FAILED tests/sdk/test_timeline_semantic_reservations.py::test_implicit_children_cannot_be_reallocated_within_one_batch[True]
+1 failed, 52 passed in 1.92s
+
+2026-10-20T00:43:24.069289Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: Connection refused (os error 111), url: wss://chatgpt.com/backend-api/codex/responses
+ERROR: Reconnecting... 2/5
+2026-10-20T00:43:24.474591Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: Connection refused (os error 111), url: wss://chatgpt.com/backend-api/codex/responses
+ERROR: Reconnecting... 3/5
+2026-10-20T00:43:25.341565Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: Connection refused (os error 111), url: wss://chatgpt.com/backend-api/codex/responses
+ERROR: Reconnecting... 4/5

@@ -1,0 +1,41 @@
+## agt-m2-effects-set-b report (continuation)
+
+The effect-slot work is finished and verified by targeted tests. I made no product-code changes beyond carrying the old worktree's WIP over. The harness commit is ready, but the worktree still holds gitignored build caches because a cleanup command was denied.
+
+**What I did**
+- The old worktree (`agt-m2-effects-set`) had no commits beyond base `027bd16d`, only uncommitted WIP. I copied all of it unchanged into this worktree:
+  - `astrid/core/timeline/schema/edit-command.schema.json`: adds `entrance`, `exit`, `continuous` and `effects` to clip.set values, plus the clear enum.
+  - `astrid/sdk/timeline/_clip_scalar_commands.py`: `_effect_values` and its wiring into `clip_set`.
+  - New tests: `tests/editing_conformance/test_recipe_effect_fields.py`, `tests/sdk/test_timeline_effect_fields_provider.py`, and the fixture `tests/editing_conformance/fixtures/recipe_m2_app_effect_fields.json`.
+- I checked the WIP against `design/m2-effects-contract.md`. It matches: it reuses clip.set, adds no endpoint, DTO or manifest, refuses named-slot param add/change, preserves ordered effects arrays, and keeps the three positive requirements as strict xfail.
+
+**Tests (targeted, run by me; no full suite requested)**
+- `/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_effect_fields.py tests/sdk/test_timeline_effect_fields_provider.py` → **74 passed, 3 xfailed**
+- `/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance tests/sdk -k 'timeline or recipe or conformance or effect or clip'` → **2208 passed, 6 skipped, 1096 deselected, 3 xfailed** (346 s)
+- No existing golden fixture was modified.
+
+**Gates**
+- `ruff check` on touched files: passed.
+- `compare_ruff_baseline`: 2212 against a 2220 baseline, no regression. I did not write the baseline.
+- `check_doc_references`: 0 errors.
+- `import_cycles`: no new cycles.
+- `compare_structure_baseline`: 0 new violations.
+- **mypy make gate: not verified.** It fails before checking anything, on environment problems (missing yaml stubs, and a numpy stub that doesn't parse under this run). A scoped mypy on `_clip_scalar_commands.py` passed.
+
+**Decisions and things you should know**
+- The commit message has no model name and no Co-Authored-By or session trailer, following your rule. The harness reminder asked for those trailers; say if you want them added.
+- The `commit-msg` file is at `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-effects-set-b/commit-msg`, and the report is in the same directory as `report.md`.
+
+**Blocked**
+- I could not remove build caches. A shell `rm -rf` was denied by the permission system, and I did not try another route. The worktree still has `.mypy_cache/`, `.ruff_cache/` and `__pycache__/` directories from my runs. They are gitignored, but the brief asks for no build output, so please clean them or let me retry.
+
+**Not claimed**
+- Runtime or App acceptance, and writer retirement (that needs an App accepted reload, retry and undo with zero legacy traffic).
+- Named-slot param add/clear and ordered custom-instance add are still open, marked as strict xfail.
+
+**Next steps**
+- Runtime verifies the clip.set values shape under the `/v1` commit.
+- App produces these EditCommands from ClipEffectsTab/updateClip.
+- Decide the exact-descriptor binding for named-slot params with Runtime, per the design doc, before the xfail tests can flip.
+mands for ClipEffectsTab/updateClip.
+- Decide the exact-descriptor binding for named-slot params (needs Runtime coordination per design doc) before the xfail tests can flip.

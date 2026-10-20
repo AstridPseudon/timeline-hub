@@ -1,0 +1,400 @@
+            if entry["previous"] != previous or entry["publication_id"] in {
+                    row["publication_id"] for row in entries}:
+                raise rejected(_failure("history_unavailable", "incomplete publication ancestry",
+                                        base, through))
+            entries.append(copy.deepcopy(entry))
+            previous = {"revision_id": entry["revision_id"],
+                        "publication_id": entry["publication_id"]}
+        cursor = page["next_cursor"]
+        if cursor is None:
+            if previous != through:
+                raise rejected(_failure("history_unavailable", "missing publication ancestry",
+                                        base, through))
+            break
+        if cursor in cursors or previous == through:
+            raise rejected(_failure("history_unavailable", "invalid history cursor", base, through))
+        cursors.add(cursor)
+    return entries
+
+
+def _records(entries, rejected, base, current):
+    records = []
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/check_sources.py <<'PY'
+\"\"\"Read-only design/fixture checks; no repository test execution.\"\"\"
+from pathlib import Path
+import subprocess
+
+app = Path('/home/user/work/app')
+path = 'src/tools/video-editor/hooks/useClipDrag.test.tsx'
+current = (app / path).read_text()
+original = subprocess.run(['git', '-C', str(app), 'show', '60aa26b95:' + path], check=True, capture_output=True, text=True).stdout
+names = [
+    'commits a config edit when a free multi-clip drag drops onto a new bottom track',
+    'updates pinnedShotGroupsOverride when a pinned group is dragged across tracks',
+    'updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track',
+]
+for name in names:
+    assert \"it.fails('\" + name + \"'\" in current
+    def assertions(source):
+        start = source.index(name)
+        end = source.index('\\n  });', start)
+        block = source[start:end]
+        return block[block.index('      expect(applyEdit)'):block.index('    } finally')]
+    assert assertions(current) == assertions(original), name
+    print('PASS exact original success assertions: ' + name)
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+draft = (root / 'design/m2-move-draft.md').read_text()
+assert 'memberSelectors' not in draft and 'ownerOccurrenceId' not in draft
+assert '0dfb389' not in draft and 'M1 is complete' not in draft
+assert not any(line.rstrip() "'!= line for line in draft.splitlines())
+print('"'PASS removed stale draft assumptions and trailing whitespace')
+status = subprocess.run(['git', 'status', '--porcelain'], check=True, capture_output=True, text=True).stdout
+assert not status, status
+print('PASS Agent worktree clean')
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/check_sources.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/source-check.log" in /home/user/work/wt/agt-m2-primitives-design
+ exited 1 in 0ms:
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/check_sources.py", line 21, in <module>
+    assert assertions(current) == assertions(original), name
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: commits a config edit when a free multi-clip drag drops onto a new bottom track
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess,difflib
+p='src/tools/video-editor/hooks/useClipDrag.test.tsx'
+a=Path('/home/user/work/app',p).read_text()
+b=subprocess.check_output(['git','-C','/home/user/work/app','show','60aa26b95:'+p],text=True)
+for name in ('commits a config edit when a free multi-clip drag drops onto a new bottom track','updates pinnedShotGroupsOverride when a pinned group is dragged across tracks','updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track'):
+ def block(s):
+  start=s.index(name); end=s.index('\\n  });',start);t=s[start:end];return t[t.index('      expect(applyEdit)'):t.index('    } finally')]
+ print(name)
+ print(''.join(difflib.unified_diff(block(b).splitlines(True),block(a).splitlines(True),fromfile='main original',tofile='current App')))
+PY" in /home/user/work/wt/agt-m2-primitives-design
+ succeeded in 0ms:
+commits a config edit when a free multi-clip drag drops onto a new bottom track
+--- main original
++++ current App
+@@ -10,4 +10,3 @@
+       expect(edit.pinnedShotGroupsOverride).toBeUndefined();
+       expect(selectionMocks.userSelectTimelineClips).toHaveBeenCalledWith(['clip-2', 'clip-1'], { additive: false });
+       expect(coordinator.showSecondaryGhosts).toHaveBeenCalled();
+-
+
+updates pinnedShotGroupsOverride when a pinned group is dragged across tracks
+
+updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+r=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+p=r/'workers/agt-m2-primitives-design/check_sources.py'
+s=p.read_text().replace(\"return block[block.index('      expect(applyEdit)'):block.index('    } finally')]\", \"return block[block.index('      expect(applyEdit)'):block.index('    } finally')].rstrip()\")
+p.write_text(s)
+p=r/'design/m2-move-draft.md'
+s=p.read_text()
+s=s.replace('App review and orchestrator approval of group ownership remain required. This is preparation\\nunder PLAN', 'App review and orchestrator approval of group ownership remain required.\\nThis is preparation under PLAN')
+s=s.replace('permission to implement/merge before the orchestrator records M1 complete**. M1 takes priority.', 'permission to implement/merge before the orchestrator records M1 complete**.\\nM1 takes priority.')
+s=s.replace('''   sites at the matching scratch stage. Do not reinterpret every old flat read''','''   sites at the matching scratch stage. Do not reinterpret every old flat read''')
+s=s.replace('''   still present. Validate R1's original input reads/selections on the resulting
+   S1 stage''','''   still present. Restore that record's verified original collection order
+   after its membership changes, then validate R1's original input reads/selections
+   on the resulting S1 stage''')
+s=s.replace('''   only once all of its own consumers have reversed. Validate R0's original
+   input reads/selections at S0''','''   only once all of its own consumers have reversed. Restore R0's verified
+   input collection order, then validate R0's original input reads/selections at S0''')
+s=s.replace('''approval. It is unnecessary for the proposed read-first move-set and known M1
+operations. Add compatibility fixtures''','''approval. It is unnecessary for the proposed read-first move-set and known M1
+operations. Use the known v1 capture rules for old records, not equality against
+newly enriched recorder output; select that compatibility path from their trusted
+operation/query vocabulary and boundary facts, never a caller override. Add compatibility fixtures''')
+s=s.replace('''singleton retrack, free multi-selection, or complete soft-tag group. These are
+builders of the same operation, not three gesture handlers.''','''singleton retrack or free multi-selection, and conditionally a complete group
+only if approved ownership maps it to such a clip set. These are builders of
+the same operation, not three gesture handlers.''')
+s=s.replace('''Required for retrack ordering; also query destination nonmembers for collision checks.''','''Guard lane membership/order used by the plan and query destination nonmembers for collision checks.''')
+s=s.replace('''frozen bundle. Target-dependent queries read **that bundle**, never current head
+or a preview where earlier members have already moved.''','''frozen bundle. Target-dependent queries read **that bundle** (plus only the
+explicit captured create for a new lane), never current head or a preview
+where earlier members have already moved.''')
+s=s.replace('''start as a zero hard duration; test that case explicitly (see review points).''','''start as a zero hard duration; test that case explicitly before freeze.''')
+s=s.replace('''that notification must not reinstate "'`applyEdit` as publication authority. Flip exactly those `it.fails` to `it` only once capture, preview,'"''','''that notification must not reinstate "'`applyEdit` as publication authority.
+Flip exactly those `it.fails` to `it` only once capture, preview,'"''')
+s=s.replace('''tagged state of any container they create/clear. Duplicate member IDs refuse.''','''tagged state of any container they create/clear. Duplicate member IDs refuse.
+   Existing structural create requires an authored list; absent/null/scalar
+   collection containers stay unsupported unless a separately recorded container
+   creation explicitly supplies one. Never normalize absent/null to empty.''')
+s=s.replace('''The new inverse
+command's own "'`reads`, `selections` and `expect` must describe its immutable
+**input head**.'"''','''The new inverse
+command's own "'`reads`, `selections` and `expect` must describe its immutable
+**input head**. Capture each touched collection'"'s original head order before
+any scratch writes, so the accepted inverse supplies its own guarded basis.''')
+s=s.replace('''No App files were edited or suites run.''','''No App files were edited or suites run. A read-only source check compared all
+three positive assertion blocks to App main snapshot "'`60aa26b95`: identical
+assertion text (ignoring a terminal blank line); all three remain `it.fails`.
+The check is `workers/agt-m2-primitives-design/check_sources.py`, exit 0, output
+`source-check.log`. This is source comparison, not hook execution.'"''')
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/check_sources.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/source-check.log" in /home/user/work/wt/agt-m2-primitives-design
+ succeeded in 95ms:
+codex
+The revised draft now covers exact order restoration, cross-address overlap, staged guard checks, and compatibility with accepted M1 records. An offline source comparison confirmed that all three App success assertion blocks match main; one differs only by a trailing blank line. The primitive probe corroborates the current gaps—it does not prove the proposed fixes.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+r=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+p=r/'design/m2-move-draft.md'
+s=p.read_text().replace('''   it is never detached, moved or deleted on the inverse's behalf. A dependent
+   restored by an earlier reverse step also counts. Unknown reference semantics
+   cannot prove safe deletion.''','''   it is never detached, moved or deleted on the inverse's behalf. A dependent
+   restored by an earlier reverse step also counts. Use declared reference
+   edges, not string matching inside opaque data. A declared reference kind
+   whose resolver is unavailable cannot prove safe deletion.''')
+s=s.replace('''Three preserved App behaviours and the acceptance handoff''','''Three preserved App behaviours and the acceptance handoff''')
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/check_sources.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/source-check.log" in /home/user/work/wt/agt-m2-primitives-design
+ succeeded in 87ms:
+exec
+/bin/bash -lc "sed -n '174,244p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/source-check.log; git diff --stat; git status --porcelain" in /home/user/work/wt/agt-m2-primitives-design
+ succeeded in 144ms:
+   common normalization. Maintain the actual write trace for execution, rather
+   than executing a flat coalesced diff. Reverse R1 on scratch S2 first; C is
+   still present. Restore that record's verified original collection order
+   after its membership changes, then validate R1's original input reads/selections
+   on the resulting S1 stage, including its lane order **with C**. Reverse R0 next, removing C
+   only once all of its own consumers have reversed. Restore R0's verified
+   input collection order, then validate R0's original input reads/selections at S0, including C's absence and order **without C**.
+4. Immediately before removing a created entity, scan the staged current model
+   for surviving declared dependents across all owners: clips, occurrence
+   placements, audio/effects, shot bindings, and registered reference edges.
+   A later clip/reference is retained on scratch and still blocks deletion;
+   it is never detached, moved or deleted on the inverse's behalf. A dependent
+   restored by an earlier reverse step also counts. Use declared reference
+   edges, not string matching inside opaque data. A declared reference kind
+   whose resolver is unavailable cannot prove safe deletion. Complete candidate reference validation is the
+   final backstop, not a substitute for those guarded scans.
+5. Install the verified candidate through the same recorder/executor, compile
+   mirrors/timing once at the normal boundary, validate and atomically accept.
+   The accepted reversing writes include A→A, clears and full restored rows.
+   No second journal, undo stack, store, snapshot writer or alternate path.
+
+**Stage assignment is part of the design.** New ordinary M2 commands gather
+all semantic reads/selections/bindings on an immutable pre-command view before
+writes. Create+move has two such views, not one batch-wide read basis. During
+capture the set's original basis is advanced by only the explicit captured
+create; replay advances by that same command and reserved ID. Check create's
+absence/order claims on S0 and move's original claims on S1 on the base, and
+on the corresponding staged states over a rebased head. Never verify both
+against H/S0, substitute new head values, refresh a predicate or drop a guard
+because it overlaps a target write.
+
+Within the inverse, historical target read/selection checks are **internal
+stage checks**, retained in their original trusted records. The new inverse
+command's own `reads`, `selections` and `expect` must describe its immutable
+**input head**. Capture each touched collection's original head order before
+any scratch writes, so the accepted inverse supplies its own guarded basis. Do not copy historical S1/S0 facts into that flat head-read list.
+Keep the pre-command input view in Recording: public `expect` is the input
+state of each written address; `AgentWrite.before` is the actual state at that
+write event. They can differ after an earlier write in the same command.
+Stage checks derive from authenticated targets, while new head guards describe
+the external basis. `finish` must not accidentally emit transient values as
+head expectations. Deterministic recapture verifies supplied claims exactly;
+it never refreshes the original authoring claims to make them pass.
+
+M1 compatibility needs an explicit v1 adapter, since today's recorder can read
+while creating intent containers and while executing an inverse. Reconstruct
+those known read sites against the original v1 write/target trace and exact
+historical boundary, compare the stored values unchanged, then check the same
+sites at the matching scratch stage. Do not reinterpret every old flat read
+as a pre-command read, or discard all reads overlapping writes. If an unknown
+operation needs arbitrary intra-command read stages which cannot be recovered,
+refuse rather than guess; a future event-index contract would need explicit
+approval. It is unnecessary for the proposed read-first move-set and known M1
+operations. Use the known v1 capture rules for old records, not equality against
+newly enriched recorder output; select that compatibility path from their trusted
+operation/query vocabulary and boundary facts, never a caller override. Add compatibility fixtures for existing accepted inverse records,
+including multiple creates, before claiming this adapter works.
+
+## Wire, reservation and retry decision
+
+No new wire field, schema version, provider ABI, endpoint or persistence table
+is required for the approved two primitives. Exact existing carriers are
+`CommandRecord.ordinal`, ordered `writes`, tagged `AgentState`, the selection
+fields above, `reads`, `bindings`, `dependencies`, `created`, and inverse
+`args.publications` / accepted `undo_of` linkage plus immutable history pins.
+The new collection query keys are a deliberate versioned **semantic** addition
+in the existing open `AgentSelection.key` field; register/validate them in
+Agent and mirror capture parity in App. They are not already implemented.
+No synthetic path such as `tracks.$order`, new ref kind or hidden index field.
+If implementation cannot reconstruct exact stage/order from these authenticated
+inputs, stop and report the counterexample; do not silently add record fields.
+PASS exact original success assertions: commits a config edit when a free multi-clip drag drops onto a new bottom track
+PASS exact original success assertions: updates pinnedShotGroupsOverride when a pinned group is dragged across tracks
+PASS exact original success assertions: updates pinnedShotGroupsOverride when a pinned group is dragged onto a new track
+PASS removed stale draft assumptions and trailing whitespace
+PASS Agent worktree clean
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+r=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+p=r/'design/m2-move-draft.md'
+s=p.read_text()
+s=s.replace('''   after its membership changes, then validate R1's original input reads/selections
+   on the resulting S1 stage, including its lane order **with C**. Reverse R0 next, removing C
+   only once all of its own consumers have reversed. Restore R0's verified
+   input collection order, then validate R0's original input reads/selections at S0, including C's absence and order **without C**.''','''   after its membership changes, then validate R1's original input
+   reads/selections on S1, including its lane order **with C**. Reverse R0 next,
+   removing C only once all of its own consumers have reversed. Restore R0's
+   verified input collection order, then validate R0's original input
+   reads/selections at S0, including C's absence and order **without C**.''')
+s=s.replace('''   whose resolver is unavailable cannot prove safe deletion. Complete candidate reference validation is the
+   final backstop, not a substitute for those guarded scans.''','''   whose resolver is unavailable cannot prove safe deletion. Complete candidate
+   reference validation is the final backstop, not a substitute for those scans.''')
+s=s.replace('''any scratch writes, so the accepted inverse supplies its own guarded basis. Do not copy historical S1/S0 facts into that flat head-read list.''','''any scratch writes, so the accepted inverse supplies its own guarded basis.
+Do not copy historical S1/S0 facts into that flat head-read list.''')
+s=s.replace('''operation/query vocabulary and boundary facts, never a caller override. Add compatibility fixtures for existing accepted inverse records,
+including multiple creates, before claiming this adapter works.''','''operation/query vocabulary and boundary facts, never a caller override.
+Add compatibility fixtures for existing accepted inverse records, including
+multiple creates, before claiming this adapter works.''')
+p.write_text(s)
+(r/'workers/agt-m2-primitives-design/revise.py').unlink()
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/check_sources.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/source-check.log" in /home/user/work/wt/agt-m2-primitives-design
+ succeeded in 90ms:
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/report.md <<'MD'
+# agt-m2-primitives-design report
+
+Updated only ORCH "'`design/m2-move-draft.md` in place. Agent base:
+`7a7acc0eea47b372e15bb7921563b281ada00fb4`. No product, tests, schema, generated
+files or other designs changed. Agent worktree remains clean. No merge/full-test
+request, network use or git mutation.
+
+The draft now specifies exact original ordered-row restoration, common
+collection/member/mirror overlap, and preflight plus staged reverse execution
+of composed create+move. It separates immutable head guards from original
+intermediate-stage checks; covers accepted M1 records, same-value/ABA writes,
+later references, complete raw objects/presence, monotonic reservations and
+retry/redo. Eleven precise proposed recipe acceptance nodes, a Runtime-facing
+integration node, existing YAML/CLI/Python/sheet adaptations and an implementation
+split are identified. All proposed tests are UNRUN.
+
+Group ownership remains explicitly pending orchestrator/Astra. The draft
+removes speculative member provenance and invented group entity support,
+records the actual parent fixture shape, and identifies the missing accepted
+canonical projection seam. The three App success assertion blocks remain
+unchanged and `it.fails`; read-only comparison to main confirmed their assertion
+text (one terminal blank line differs). No App files changed.
+
+## Sources
+
+- ORCH `PLAN.md`, `managers/agent/INBOX.md` latest M1 closure HOLD, orchestrator
+  M1-not-complete directive and interim `m2-group-contract` approval.
+- ORCH `design/edit-recipe.md`, original `design/m2-move-draft.md`,
+  `design/m2-group-ownership.md`; audit `workers/agt-m2-group-audit/probe.py`
+  and `probe-python.log` inspected, not rerun.
+- Agent `astrid/sdk/timeline/{_command_state,_recording,commands,capture,inverse,rebase,commit}.py`,
+  `astrid/core/timeline/schema/edit-command.schema.json`,
+  `tests/editing_conformance/{test_recipe_m1_commands,test_commit_runtime_m1,runner}.py`;
+  existing conformance/scenario paths inventoried.
+- App read-only `dd376d5e03892276a6335a055b40fa16447d6f9b`,
+  `src/tools/video-editor/hooks/useClipDrag.test.tsx`: fixture at 191, exact
+  success cases at 827/1173/1283. Main reference `60aa26b95` read with git show.
+  Group graph/projection source findings are attributed to the prior audit.
+
+## Commands and results
+
+Reproducible command spelling (W is this worker'"'s permitted external directory):
+
+"'```bash
+W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-primitives-design /home/user/work/venv-agent/bin/python "$W/probe.py"
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python "$W/check_sources.py"
+git status --porcelain
+```
+
+- `probe.py`: exit **0**, `probe.log`. Current middle deletion/restoration gives
+  A,C,B, preserving B'"'s complete opaque row. Current raw-array/member overlap
+  is false. Original create selection excludes C; next-stage selection includes
+  C. Current composed inverse refuses its own created-track dependent. Existing
+  selection/write leaves validate against the packaged schema. No proposed
+  algorithm executed; these are offline existing-primitive observations, not
+  repository conformance.
+- "'`check_sources.py`: final exit **0**, `source-check.log`; all three original
+  App assertion blocks match main, stale assumptions removed, draft has no
+  trailing whitespace, Agent worktree clean. Initial byte comparison differed
+  only by a terminal blank line; comparison now trims that terminal whitespace.
+  No assertion expression or repository test was changed.
+- `git status --porcelain`: exit **0**, empty; `git diff --stat` also empty.
+- Repository pytest/vitest/make, full suites, browser/socket/live acceptance,
+  restart and actual M2 undo/redo: **UNRUN by design**, no service request.
+
+## Decisions, tradeoff and blockers
+
+Use existing full-row writes, ordered selection facts and authenticated
+historical boundary/target links for restoration. No new wire field, schema
+version, virtual order reference, store, journal or undo path. New collection
+query keys are an explicit semantic addition in existing fields. Move-set still
+needs its own registered closed argument schema and normal generated pin refresh.
+The broader incoming-clip append/reorder promise was removed: the three actual
+fixtures need only unchanged authored clip order.
+
+This is smaller than a general order/event framework but needs historical
+boundary reads for legacy inverse stage/order reconstruction. Missing proof
+fails closed. The precise M1 compatibility adapter and proposed algorithms
+remain unimplemented/unverified; implementation must report a counterexample
+before adding a stage field. No product LOC estimate is claimed.
+
+M1 closure blocks implementation/landing. Group ownership, lossless canonical
+projection and conditional semantic row concurrency block group dispatch.
+Equal-start occurrence fixtures and frontend batch ingress must be settled
+before move-set freezes. No settled orchestrator decision was contradicted by
+the observations.
+
+After M1 is recorded: dispatch shared structural/address primitives first,
+then staged inverse with compatibility/later-reference/ID acceptance, then
+move-set/capture and bounded frontend adapters. Group/projection integration
+waits for orchestrator/Astra. No concurrent ownership of shared primitive files.
+MD
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/commit-msg <<'"'MSG'
+docs(timeline): reconcile M2 order restoration and staged inverse design
+
+Specify existing recorder and history seams for exact ordered restoration,
+stage-aware guarded reversal, M1 compatibility and future acceptance nodes.
+Keep group ownership and canonical projection pending orchestrator review.
+
+Design artifacts live under ORCH only; the Agent worktree is unchanged.
+MSG
+" in /home/user/work/wt/agt-m2-primitives-design
+ succeeded in 0ms:
+codex
+Updated [m2-move-draft.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md) with ordered restoration, staged guarded inverse, M1 compatibility, overlap handling, and precise future acceptance nodes.
+
+- Group ownership/projection remains pending; speculative fields and group-ref support removed.
+- Proposed primitives reuse existing fields/history; no new store or undo path.
+- Offline `probe.py` and `check_sources.py`: **exit 0**. All three App success assertion blocks preserved.
+- Repository tests **UNRUN by design**. Agent worktree clean; no merge/full-test request.
+- After M1 is recorded: implement shared primitives, then staged inverse, then move-set/capture. Group work waits for the ownership decision.
+
+[Full report with exact commands, sources, tradeoffs, and blockers](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/report.md).
+tokens used
+133,316
+Updated [m2-move-draft.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-move-draft.md) with ordered restoration, staged guarded inverse, M1 compatibility, overlap handling, and precise future acceptance nodes.
+
+- Group ownership/projection remains pending; speculative fields and group-ref support removed.
+- Proposed primitives reuse existing fields/history; no new store or undo path.
+- Offline `probe.py` and `check_sources.py`: **exit 0**. All three App success assertion blocks preserved.
+- Repository tests **UNRUN by design**. Agent worktree clean; no merge/full-test request.
+- After M1 is recorded: implement shared primitives, then staged inverse, then move-set/capture. Group work waits for the ownership decision.
+
+[Full report with exact commands, sources, tradeoffs, and blockers](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-primitives-design/report.md).

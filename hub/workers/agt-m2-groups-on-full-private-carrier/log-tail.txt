@@ -1,0 +1,400 @@
++    assert golden == {'input': before, 'commands': plan.commands, 'records': plan.records,
++                      'output': document_from_bundle(plan.bundle), 'view': view}
++
++
++def test_child_track_birth_is_typed_and_in_the_same_batch_and_undo():
++    _, _, bundle = migrated(child_target=False)
++    row = {'id': 'raw-picture-2', 'kind': 'visual', 'role': 'output', 'active': True, 'opaque': [None]}
++    commands = capture(bundle, raw=row['id'], new=row)
++    assert [c['op'] for c in commands] == ['track.create', 'occurrence.move']
++    assert commands[0]['created'] == [OWNER + '/track:' + row['id']]
++    plan = execute(bundle, commands)
++    assert [r['created'] for r in plan.records] == [[{'ref': OWNER + '/track:' + row['id'], 'kind': 'track', 'owner': OWNER}], []]
++    assert all(b['raw_child_track'] == OWNER + '/track:' + row['id']
++               for b in project_group_view(plan.bundle)['bindings'] if b['occurrence'])
++    assert inverse(plan.bundle, plan.records).bundle == bundle
++    assert inverse(inverse(plan.bundle, plan.records).bundle, inverse(plan.bundle, plan.records).records).bundle == plan.bundle
++    # A later temporal gesture uses explicit raw ownership even when IDs differ.
++    repeated = execute(plan.bundle, capture(plan.bundle, 2, raw=row['id']))
++    assert [r['at'] for r in project_group_view(repeated.bundle)['clips'][-2:]] == [2, 4]
++
++
++def test_view_uses_current_membership_order_and_source_geometry_not_provenance():
++    _, _, bundle = migrated()
++    child = bundle['shots']['new-shot']['internal_timeline']
++    child['clips'].reverse()
++    child['clips'][0].update(hold=4, speed=2, **{'from': 7, 'to': 11})
++    row = bundle['placements'][0]
++    row['provenance']['group_migration']['legacy_group']['clipIds'] = ['stale', 'missing']
++    row['provenance']['group_migration']['members'] = []
++    before = copy.deepcopy(bundle)
++    view = project_group_view(bundle)
++    assert view['pinnedShotGroups'][0]['clipIds'] == ['c2', 'c1']
++    assert [(c['id'], c['at'], c['hold']) for c in view['clips'][-2:]] == [('c2', 2, 4), ('c1', 0, 2)]
++    assert {k: view['clips'][-2][k] for k in ('from', 'to', 'hold', 'speed')} == {'from': 7, 'to': 11, 'hold': 4, 'speed': 2}
++    assert bundle == before
++
++
++def test_rational_fps_quantization_and_half_open_adjacent_boundary():
++    _, _, bundle = migrated(fps={'numerator': 30000, 'denominator': 1001})
++    plan = execute(bundle, capture(bundle))
++    view = project_group_view(plan.bundle)
++    assert [r['at'] for r in view['clips'][-2:]] == [1.001, 3.001]
++    assert view['output']['fps'] == {'numerator': 30000, 'denominator': 1001}
++    # Half-open adjacency on the target lane is legal.
++    _, _, adjacent = migrated()
++    adjacent['parent']['clips'].append({'id': 'edge', 'track': 'V2', 'at': 5, 'hold': 1})
++    adjacent['parent']['config']['clips'] = copy.deepcopy(adjacent['parent']['clips'])
++    execute(adjacent, capture(adjacent))
++    with pytest.raises(CommandError, match='overlaps'):
++        capture(adjacent, 2)
++
++
++def test_independent_groups_rebase_and_undo_preserve_other_group_and_opaque_state():
++    _, _, bundle = migrated(second=True)
++    first = execute(bundle, capture(bundle))
++    other = execute(bundle, capture(bundle, 21, owner='occurrence:other-occ', track='V4'))
++    rebased = replay(first, other.bundle, intervening_records=other.records)
++    undone = inverse(rebased.bundle, first.records, other.records)
++    assert undone.bundle == other.bundle
++    assert inverse(undone.bundle, undone.records).bundle == rebased.bundle
++    assert project_group_view(rebased.bundle)['pinnedShotGroups'][1] == project_group_view(other.bundle)['pinnedShotGroups'][1]
++    assert State(rebased.bundle).config('occurrence:other-occ') == State(other.bundle).config('occurrence:other-occ')
++
++
++@pytest.mark.parametrize('ref,path,value', [(OWNER, ['placement', 'start_ms'], 1000),
++    (OWNER + '/clip:c1', ['track'], 'V2'), (OWNER + '/clip:c1', ['hold'], 2),
++    ('parent/track:V2', ['active'], True), (OWNER + '/track:V1', ['role'], 'output')])
++def test_equal_value_intervening_writes_are_guarded(ref, path, value):
++    _, _, bundle = migrated()
++    plan = execute(bundle, capture(bundle))
++    with pytest.raises(CommandError, match='intervening'):
++        inverse(plan.bundle, plan.records, [later(ref, path, value)])
++
++
++def test_membership_aba_and_destination_lane_aba_replay_by_final_state():
++    _, _, bundle = migrated(second=True)
++    plan = execute(bundle, capture(bundle))
++    for records in ([later(OWNER + '/clip:extra', [], {})], [
++        {'writes': [{'ref': 'occurrence:other-occ', 'path': ['track'],
++                     'before': {'state': 'present', 'value': 'V3'}, 'after': {'state': 'present', 'value': 'V2'}}]},
++        {'writes': [{'ref': 'occurrence:other-occ', 'path': ['track'],
++                     'before': {'state': 'present', 'value': 'V2'}, 'after': {'state': 'present', 'value': 'V3'}}]}]):
++        assert replay(plan, bundle, intervening_records=records).bundle == plan.bundle
++
++
++@pytest.mark.parametrize('damage', ['missing-parent', 'wrong-owner', 'inactive-child', 'role', 'kind',
++    'map', 'source-offset', 'relation', 'malformed-app', 'multi-lane', 'outside', 'shared', 'new-child-mismatch', 'extra-arg'])
++def test_unsupported_shapes_refuse_atomically(damage):
++    _, _, bundle = migrated()
++    kwargs = {}
++    child = State(bundle).config(OWNER)
++    if damage == 'missing-parent':
++        kwargs['track'] = 'absent'
++    elif damage == 'wrong-owner':
++        with pytest.raises(CommandError):
++            capture_occurrence_move(bundle, OWNER, 1, track='parent/track:V2', child_track='occurrence:other/track:V2')
++        return
++    elif damage == 'inactive-child':
++        child['clips'][0]['active'] = False
++    elif damage == 'role':
++        child['tracks'][2]['role'] = 'source'
++    elif damage == 'kind':
++        child['tracks'][2]['kind'] = 'audio'
++    elif damage == 'map':
++        bundle['placements'][0]['time_map'] = {}
++    elif damage == 'source-offset':
++        bundle['placements'][0]['source_offset'] = 1
++    elif damage == 'relation':
++        bundle['placements'][0]['app'] = {'astrid': {'on': 'next'}}
++    elif damage == 'malformed-app':
++        bundle['placements'][0]['app'] = True
++    elif damage == 'multi-lane':
++        child['clips'][1]['track'] = 'A1'
++    elif damage == 'outside':
++        child['clips'][1]['hold'] = 3
++    elif damage == 'shared':
++        bundle['placements'].append(dict(bundle['placements'][0], occurrence_id='shared'))
++    elif damage == 'new-child-mismatch':
++        kwargs['new'] = {'id': 'wrong', 'kind': 'visual'}
++    elif damage == 'extra-arg':
++        command = capture(bundle)[0]
++        command['args']['unexpected'] = True
++        with pytest.raises(CommandError, match='Additional properties'):
++            validate_command(command)
++        return
++    before = copy.deepcopy(bundle)
++    with pytest.raises(CommandError):
++        capture(bundle, **kwargs)
++    assert bundle == before
++
++
++
++def test_source_hold_speed_survive_move_and_group_view_preserves_unrelated_canonical_children():
++    _, _, bundle = migrated(second=True)
++    child = State(bundle).config(OWNER)['clips'][0]
++    child.update(hold=4, speed=2, **{'from': 5, 'to': 9})
++    other = copy.deepcopy(bundle['shots']['other-shot'])
++    plan = execute(bundle, capture(bundle))
++    view = project_group_view(plan.bundle)
++    assert {k: next(c for c in view['clips'] if c['id'] == 'c1')[k]
++            for k in ('at', 'hold', 'speed', 'from', 'to')} == {
++                'at': 1, 'hold': 4, 'speed': 2, 'from': 5, 'to': 9}
++    assert plan.bundle['shots']['other-shot'] == other
++    assert view['pinnedShotGroups'][1] == project_group_view(bundle)['pinnedShotGroups'][1]
++    assert inverse(plan.bundle, plan.records).bundle == bundle
++    # A canonical occurrence without legacy provenance still contributes its children.
++    del plan.bundle['placements'][1]['provenance']
++    assert [c['id'] for c in project_group_view(plan.bundle)['clips'][-2:]] == ['d1', 'd2']
++
++
++def test_failed_child_lane_birth_batch_leaves_original_untouched():
++    _, _, bundle = migrated()
++    before = copy.deepcopy(bundle)
++    with pytest.raises(CommandError, match='incompatible'):
++        capture(bundle, raw='caller-audio', new={'id': 'caller-audio', 'kind': 'audio'})
++    assert bundle == before
++
++
++def test_unrelated_lane_activity_rebases_and_inactive_destination_members_use_final_state():
++    _, _, bundle = migrated(second=True)
++    plan = execute(bundle, capture(bundle))
++    head = copy.deepcopy(bundle)
++    head['placements'][1]['active'] = False
++    records = [later('occurrence:other-occ', ['active'], False)]
++    assert replay(plan, head, intervening_records=records).bundle['placements'][1]['active'] is False
++    bundle['parent']['clips'].append({'id': 'inactive', 'track': 'V2', 'at': 1, 'hold': 2, 'active': False})
++    bundle['parent']['config']['clips'] = copy.deepcopy(bundle['parent']['clips'])
++    plan = execute(bundle, capture(bundle))
++    assert replay(plan, bundle,
++                  intervening_records=[later('parent/clip:inactive', ['active'], False)]).bundle == plan.bundle
++
++
++def test_original_app_pinned_fixture_exact_existing_lane_visible_values():
++    # Authored portion of makePinnedGroupData in App useClipDrag.test.tsx:191.
++    document = legacy_document()
++    parent = document['parent_revision']['payload']
++    parent['config']['tracks'] = [{'id': identity, 'kind': 'visual'} for identity in ('V1', 'V2')]
++    parent['config']['output']['fps'] = 30
++    parent['clips'] = [{'id': 'clip-1', 'at': 0, 'track': 'V1', 'clipType': 'hold', 'hold': 2},
++                       {'id': 'clip-2', 'at': 2, 'track': 'V1', 'clipType': 'hold', 'hold': 2}]
++    parent['config']['clips'] = copy.deepcopy(parent['clips'])
++    parent['config']['pinnedShotGroups'] = [{
++        'shotId': 'shot-1', 'trackId': 'V1', 'clipIds': ['clip-1', 'clip-2'], 'mode': 'images'}]
++    rehash(document)
++    groups = [dict(GROUPS[0], legacy_shot_id='shot-1')]
++    migration_command = capture_migrate_groups(document, groups)
++    migration = execute(bundle_from_document(document, migration_command=migration_command), [migration_command])
++    bundle = bundle_from_document(document_from_bundle(migration.bundle))
++    move = execute(bundle, capture(bundle))
++    view = project_group_view(bundle_from_document(document_from_bundle(move.bundle)))
++    assert [c for c in view['clips'] if c['track'] == 'V1'] == []
++    assert [(c['id'], c['at'], c['at'] + c['hold'], c['track']) for c in view['clips']] == [
++        ('clip-1', 1, 3, 'V2'), ('clip-2', 3, 5, 'V2')]
++    assert view['pinnedShotGroups'] == [{
++        'shotId': 'shot-1', 'trackId': 'V2', 'clipIds': ['clip-1', 'clip-2'], 'mode': 'images'}]
++    assert inverse(move.bundle, move.records).bundle == bundle
+diff --git a/tests/sdk/test_timeline_composed_schema.py b/tests/sdk/test_timeline_composed_schema.py
+index a0894596db4019c458bf5a94ada35d364a6f9ca1..64a36e00d0f0fb7933fe520675319fcaf0fa161b
+--- a/tests/sdk/test_timeline_composed_schema.py
++++ b/tests/sdk/test_timeline_composed_schema.py
+@@ -28,6 +28,19 @@
+     fixtures = Path(__file__).parents[1] / 'editing_conformance' / 'fixtures'
+     commands = {command['op']: command for path in sorted(fixtures.glob('*.json'))
+                 for command in fixture_commands(json.loads(path.read_text()))}
++    commands.update({
++        'timeline.migrate-groups': {
++            'schema_version': 1, 'op': 'timeline.migrate-groups', 'version': '1',
++            'select': 'parent', 'args': {'groups': [
++                {'legacy_shot_id': 'legacy', 'shot_id': 'shot', 'occurrence_id': 'occ'}]},
++        },
++        'occurrence.move': {
++            'schema_version': 1, 'op': 'occurrence.move', 'version': '1',
++            'select': 'occurrence:occ', 'args': {
++                'on': 1, 'track': 'parent/track:V1',
++                'child_track': 'occurrence:occ/track:V1'},
++        },
++    })
+     conditions = {condition['if']['properties']['op']['const']: condition['then']
+                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
+     for op, operation in operations().items():
+diff --git a/tests/sdk/test_timeline_current_union_schema.py b/tests/sdk/test_timeline_current_union_schema.py
+index dc5cc786d8105b33384336e6b21b383596badb94..6af48fd1f0baf4bd2d3d5e15400d27f43cb8550f
+--- a/tests/sdk/test_timeline_current_union_schema.py
++++ b/tests/sdk/test_timeline_current_union_schema.py
+@@ -130,8 +130,8 @@
+ 
+ def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
+     assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
+-    assert len(_SCHEMA['$defs']) == 55
+-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 29
++    assert len(ordinary_schema()['$defs']) == 55
++    assert len(ordinary_schema()['$defs']['EditCommand']['allOf']) == 29
+ 
+ 
+ def test_each_added_definition_and_operation_matches_its_approved_source():
+@@ -185,8 +185,9 @@
+                 'occurrence.swap-media', 'placement.create', 'placement.move',
+                 'placement.unplace', 'producer.guard', 'shot.pool', 'shot.set',
+                 'timeline.assembled-target', 'timeline.init', 'timeline.inverse',
+-                'timeline.restore', 'track.create', 'track.set'}
++                'timeline.restore', 'timeline.migrate-groups', 'occurrence.move',
++                'track.create', 'track.set'}
+     actual = [item['if']['properties']['op']['const']
+               for item in _SCHEMA['$defs']['EditCommand']['allOf']]
+-    assert len(actual) == len(set(actual)) == 29
++    assert len(actual) == len(set(actual)) == 31
+     assert set(actual) == expected == set(operations()) | {'timeline.inverse', 'timeline.restore'}
+diff --git a/tests/sdk/test_timeline_materialization_schema_union.py b/tests/sdk/test_timeline_materialization_schema_union.py
+index fbadb0330bca39bed5f79b47961228ebcd84b47e..5af5f6ba85b3a065d5c1db5308308516c7ba530b
+--- a/tests/sdk/test_timeline_materialization_schema_union.py
++++ b/tests/sdk/test_timeline_materialization_schema_union.py
+@@ -15,11 +15,18 @@
+ REFERENCES = ('ScopedId', 'EntityRef', 'TargetKey')
+ ORDINARY_SHA256 = '6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d'
+ PRIVATE_S2_SHA256 = 'f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f'
++PRIVATE_GROUP_SHA256 = '428a396acba00dd872b3480a9d7dbdc9ef268d72e2e7be8607941f8b90f54e65'
+ 
+ 
+ def ordinary_schema():
+     """Remove only the reviewed carrier additions, checking each complete branch."""
+     candidate = copy.deepcopy(_SCHEMA)
++    for name in ('MigrateGroupsArgs', 'OccurrenceMoveArgs'):
++        del candidate['$defs'][name]
++    candidate['$defs']['EditCommand']['allOf'] = [
++        clause for clause in candidate['$defs']['EditCommand']['allOf']
++        if clause['if']['properties']['op']['const'] not in
++        ('timeline.migrate-groups', 'occurrence.move')]
+     for name in REFERENCES:
+         branches = candidate['$defs'][name]['anyOf']
+         assert len(branches) == 4
+@@ -51,11 +58,24 @@
+     ordinary = ordinary_schema()
+     raw = (json.dumps(ordinary, indent=2) + '\n').encode()
+     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
+-    assert len(ordinary['$defs']) == len(_SCHEMA['$defs']) == 55
++    assert len(ordinary['$defs']) == 55
++    assert len(_SCHEMA['$defs']) == 57
+     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
++    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 31
+     assert compatibility_errors(ordinary, _SCHEMA) == []
+ 
+ 
++def test_private_group_proposal_is_exactly_two_closed_additions_on_current_floor():
++    assert hashlib.sha256((json.dumps(_SCHEMA, indent=2) + '\n').encode()).hexdigest() == PRIVATE_GROUP_SHA256
++    assert len(_SCHEMA['$defs']) == 57
++    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 31
++    assert {
++        clause['if']['properties']['op']['const']
++        for clause in _SCHEMA['$defs']['EditCommand']['allOf']
++        if clause['if']['properties']['op']['const'] in ('timeline.migrate-groups', 'occurrence.move')
++    } == {'timeline.migrate-groups', 'occurrence.move'}
++
++
+ def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
+     from tests.sdk.test_timeline_current_union_schema import FIXTURES, baseline
+ 
+
+exec
+/bin/bash -lc "git status --short --untracked-files=all && printf '%s\\n' '--- required handoff files ---' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-groups-on-full-private-carrier/{report.md,commit-msg,commit-msg.txt,DONE} && printf '%s\\n' '--- counts/hash ---' && python3 - <<'PY'
+import hashlib, json
+p='astrid/core/timeline/schema/edit-command.schema.json'
+s=json.load(open(p)); print(len(s['"'$defs'"']), len(s['"'$defs'"']['EditCommand']['allOf']), hashlib.sha256(open(p,'rb').read()).hexdigest())
+PY
+printf '%s\\n' '--- no generated dirs ---' && find . -type d \\( -name __pycache__ -o -name .pytest_cache \\) -prune -print | head -20" in /home/user/work/wt/agt-m2-groups-on-full-private-carrier
+ succeeded in 449ms:
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/core/timeline/shot_composition.py
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_pristine_initialize.py
+ M tests/sdk/test_timeline_composed_schema.py
+ M tests/sdk/test_timeline_current_union_schema.py
+ M tests/sdk/test_timeline_materialization_schema_union.py
+?? astrid/sdk/timeline/group_view.py
+?? astrid/sdk/timeline/new_group_commands.py
+?? astrid/sdk/timeline/occurrence_commands.py
+?? tests/editing_conformance/test_current_group_slice.py
+?? tests/editing_conformance/test_group_read_view.py
+?? tests/editing_conformance/test_recipe_m2_group_migration.py
+?? tests/editing_conformance/test_recipe_m2_group_move.py
+--- required handoff files ---
+-rw-r--r-- 1 root root    0 Oct 20 17:26 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-groups-on-full-private-carrier/DONE
+-rw-r--r-- 1 root root  276 Oct 20 17:26 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-groups-on-full-private-carrier/commit-msg
+-rw-r--r-- 1 root root  276 Oct 20 17:26 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-groups-on-full-private-carrier/commit-msg.txt
+-rw-r--r-- 1 root root 3040 Oct 20 17:26 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-groups-on-full-private-carrier/report.md
+--- counts/hash ---
+57 31 428a396acba00dd872b3480a9d7dbdc9ef268d72e2e7be8607941f8b90f54e65
+--- no generated dirs ---
+
+codex
+## Done
+
+Implemented the private group first slice onto full357:
+
+- `timeline.migrate-groups`
+- Existing-lane `occurrence.move`
+- Pure `project_group_view` with explicit bindings
+- Private schema: 57 definitions / 31 clauses
+- Ordinary schema floor preserved: 55 / 29
+- Current materialization and source-authority behavior preserved
+
+Hashes:
+
+- Full357 schema: `613123b2…aaad3`
+- Private proposal schema: `428a396a…4e65`
+
+Tests:
+
+- Group conformance: **85 passed**
+- Existing Agent neighbors: **401 passed**
+- Schema checks: **5 passed**
+- Ruff, JSON validation, and `git diff --check`: passed
+- No full, Runtime live, App, browser, renderer, or macOS suites run.
+
+Handoff files written:
+
+- `report.md`
+- `commit-msg`
+- `commit-msg.txt`
+- `DONE`
+
+Public generation/freeze remains intentionally pending peer carrier agreement.
+tokens used
+253,601
+## Done
+
+Implemented the private group first slice onto full357:
+
+- `timeline.migrate-groups`
+- Existing-lane `occurrence.move`
+- Pure `project_group_view` with explicit bindings
+- Private schema: 57 definitions / 31 clauses
+- Ordinary schema floor preserved: 55 / 29
+- Current materialization and source-authority behavior preserved
+
+Hashes:
+
+- Full357 schema: `613123b2…aaad3`
+- Private proposal schema: `428a396a…4e65`
+
+Tests:
+
+- Group conformance: **85 passed**
+- Existing Agent neighbors: **401 passed**
+- Schema checks: **5 passed**
+- Ruff, JSON validation, and `git diff --check`: passed
+- No full, Runtime live, App, browser, renderer, or macOS suites run.
+
+Handoff files written:
+
+- `report.md`
+- `commit-msg`
+- `commit-msg.txt`
+- `DONE`
+
+Public generation/freeze remains intentionally pending peer carrier agreement.

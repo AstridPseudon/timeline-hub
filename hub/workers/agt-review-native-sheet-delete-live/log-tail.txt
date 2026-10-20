@@ -1,0 +1,400 @@
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/test_timeline_element_publication.py tests/sdk/test_timeline_sync.py tests/editing_conformance/test_recipe_clip_set_element.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_commit_provider_scalar.py
+```
+
+**355 passed in 80.00s, exit 0**, combining the prior 89 helper/session and 266 neighboring recipe/provider cases.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_current_union_schema.py
+```
+
+**24 passed in 98.50s, exit 0.** No schema or generated pin change by this candidate/review.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -c pyproject.toml -o addopts= -p no:cacheprovider /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc4-helper-native/notes/test_review_wc4.py
+```
+
+**3 passed / 1 failed / 2 unknown-integration-marker warnings in 4.59s, exit 1.** Passes: combined rebased/lost-ACK/restart/pagination/typed-intent probe, explicit-pin pending+acknowledged refusal, original helper digest-only success. Failure is the unchanged candidate success expectation described above. These are supplementary probes, not newly landed main-suite evidence. The external test's imported modules emit marker warnings because its collection does not load repository `tests/conftest.py` registration. An initial probe version had duplicate aliases of the same configured fixture (2 setup failures, 2 passes); this was corrected only in private probe code. An attempted `-c pytest.ini` invocation failed because this repository uses pyproject.toml. Neither was classified as a product failure. The penultimate corrected probe also gave 3 pass / 1 same product failure; the final run added the acknowledged explicit-pin check.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline_elements.py astrid/sdk/timeline/_clip_scalar_commands.py astrid/sdk/timeline/_recording.py
+```
+
+**All checks passed, exit 0.** From the review Git worktree, `git diff --check 905a4f0f a6098b5d` passed and `git status --porcelain` was empty.
+
+No full/full* request, make check, HTTP/authentication/local-door journey, App/browser, renderer/pixel/audio, macOS or composed integration-tree qualification was performed. No passing behavior test was weakened, disabled, skipped or rewritten to assert refusal. No shared dependency/runtime/fixture was changed. The unresolved public-helper compatibility finding and separately frozen PARAM-source rule prevent an unconditional writer-deletion approval; they do not block completion of this review. Recommended next action: orchestrator sends the bounded compatibility counterexample to the implementation owner, retains WC4's existing held ledger state, then requests review of the corrected migration together with the settled original-pin boundary.
+[/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md]
+**APPROVE — bounded to the committed Agent source and unpublished private S2+text pair.** No blocking finding. Public release, integration adoption, consumer repinning and App writer retirement remain held.
+
+Reviewed Agent `tl/agt-m2-text-retained-current-pair` at `09ca873c37b8e4702b1b13c431ddc1ee9e2011e5`, tree `aebdbb00b1b0faaace5346379731b49da3f76e0a`, parent `9cb1090458428fb09067e359be92cdbb6608a206`. Read PLAN.md, the current handoff and worker report; compared the reviewed native source `cb1e907c6846341997e50d7f51aed65a84b6c335`, original strict positives `9bf654387c8c1aaa2bc3ef74210fa4a6825956ad`, current parent and final commit. No repository source or Git state was changed.
+
+| Identity | Independently verified value |
+| --- | --- |
+| Runtime committed base | `129493b2aff614560d9b7ac2577957e799cf30ec` |
+| Runtime base tree | `330ea3969cb9cce77271404f31793c21abd5993f` |
+| Private regenerated content tree | `fbca3c2fc63a2244370aacb9c7ec2c17eaa01406` |
+| Authored command-schema SHA256 | `b2dcbec7e212c1bccc7ea662367b98b973e6308c9b7a2f9aead42c6a9d807a78` |
+| Normal generated schema digest | `sha256:7cc26d125d3e16bebb3694bf724c7e1e3fd7ada0398ef1fc3020dde245e494bf` |
+| Artifact manifest version | `sha256:b8b5e14cb2b53b27ff07745b264c5d59e703fa7bc52dfb3e63c5bb6d58361d8c` — 75 entries |
+| Complete reported Agent patch SHA256 | `e7c092dda52fe60de5b98fda30dedd14559cc72820094dff7a4107e0dd841410` |
+
+The private Runtime tree is a content identity, not a commit or a public pinnable producer. I independently archived committed Runtime `129493b2`, copied only the candidate authored schema, and ran the normal complete Python/TypeScript/conformance/artifact generation and checks. The result is byte/mode equal to the handed-off private candidate. Exactly 13 Runtime paths differ from the committed base: authored schema plus 12 normal generated outputs; no product/test source changes. `a51267ec3dd94ea465a3161e3b4d8fbcd061009e` is an ancestor of `129493b2`, retaining the already reviewed `e41f3d1e` correction.
+
+Removing exactly `TextBindingSetArgs`, the `text-binding.set` clause and the three additive reference unions restores the entire parent S2 schema structurally. Thus all 48 definitions/22 operations remain within 49/23; no replacement with the older incomplete schema. Agent and private Runtime authored schema bytes are identical. Current public Agent lock/client/artifact files have zero diff. Public lock remains producer `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, artifact `sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56`. Private input/generated metadata still says `0.2.13`; changed bytes cannot be published at that existing version.
+
+The native implementation matches the originally reviewed product changes while retaining current producer-aware recording/capture. Closed new-input schema requires an explicit occurrence, valid kind/slot, a four-field immutable source pin and exactly one of text/clear. First authoring produces exactly the six descriptor fields. Shared source ownership refuses, including materialized authoring aliases. Source object/digest/size/project, canonical MIME, UTF-8 and acceptance-time CAS hash are verified; EMPTY remains a present object and clear produces ABSENT.
+
+Keyed whole-row updates retain unrelated rows, authored order and opaque children; accepted inverse restores original descriptor, cached legacy text and original position. Recorded reads/selections, root aliases and accepted boundaries retain grouped reversal, redo, same-value/ABA inverse refusal and disjoint-key rebasing. The native service lane uses the captured main-API film backup, actual provider/RequestCommitPort, managed CAS and accepted history. It proves exact document/bytes/MIME after replacement or clear, restart, retry, inverse and redo, plus live GET/list projection and historical pins/events. Supplemental Runtime negatives cover wrong scope/kind/hash/size/MIME, referenced-only custody, corrupt CAS/event chain, absent-only custody, and unbound first use. Positive native fixtures contain no SQL/history rewrite or replacement provider. Caller input has no legacy-context switch; new selection remains canonical and accepted retained history supplies legacy custody.
+
+Both original strict positives were run unchanged with `--runxfail` in the handoff log before marker removal (2 passed). I independently extracted the exact `9bf65438` file, verified its two strict markers, and reran those original tests with `--runxfail`: both pass. The original file SHA256 is `8cc8761d338f251aadd083e440a49876190dac5353ada57baf07b31ed25768ac`. Final tests preserve exact positive document expectations and add bytes/MIME/retry/redo checks; none was converted into a refusal or skipped. Final native file has no xfail/skip markers.
+
+Independent targeted results (all commands exit 0):
+
+- Native real-service file: **21 passed in 26.55s**.
+- Unchanged original strict legacy positives, `--runxfail`: **2 passed in 3.47s**, with two unknown-integration-marker warnings because the extracted original test file is outside the project configuration root.
+- Shared affected Agent subset plus current union-schema checks: **474 passed, 1 deselected in 302.94s**. The sole deselection is the existing integration-only spike port-presence check; the actual port is exercised in the native lane.
+- Regenerated current Runtime text/clear/legacy/schema/artifact neighbors: **202 passed in 144.80s** (199 behavior/schema + 3 artifact checks).
+- Complete normal generation, all three generated/conformance/artifact `--check` commands, independent tree/schema comparison, Ruff and `git diff --check`: **passed**.
+
+Counts overlap between lanes and are not a unique-test total. Tests are targeted and in-process; no central full/full* request was made.
+
+Commands, working directories and complete logs are recorded in [the worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-text-current-pair/notes/report.md). Machine identities and strict provenance are in [/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-text-current-pair/notes/identities.json](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-text-current-pair/notes/identities.json) and [strict-provenance.json](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-text-current-pair/notes/strict-provenance.json).
+
+Destructive GC remains unverified: append-only CAS reachability/non-orphan status plus retained bytes is the actual evidence, without a collector cycle. No public read/writer deletion follows from that result. No full/full* suite, browser/socket test, public package build/install, public TypeScript compile, App journey or public-tuple qualification was run or claimed.
+
+Decision: approve this private preparation without changing the settled plan. Nothing is blocked. Next, the Runtime owner can carry the complete 49/23 schema through an authorized fresh public version and normal client generation; qualify the coordinated consumer tuple and actual App journeys before cutover. Keep destructive-GC qualification with a future real collector owner.
+
+exec
+/bin/bash -lc "for p in /home/user/work/runtimes/agent-remotion-current /home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent; do printf '%s -> ' \""'$p"; readlink -f "$p"; done
+if git -C /home/user/work/runtimes/agent-remotion-current rev-parse HEAD HEAD''^{tree} 2>/dev/null; then :; else sha256sum /home/user/work/runtimes/agent-remotion-current/package-lock.json 2>/dev/null | cut -d'"' ' -f1; fi
+sha256sum /home/user/work/venv-agent/pyvenv.cfg | cut -d' ' -f1" in /home/user/work/wt/agt-review-native-sheet-delete-live
+ succeeded in 75ms:
+/home/user/work/runtimes/agent-remotion-current -> /home/user/work/runtimes/agent-remotion-current
+/home/user/work/runtimes/agent-remotion-current/node_modules -> /home/user/work/runtimes/agent-remotion-current/node_modules
+/home/user/work/venv-agent -> /home/user/work/venv-agent
+cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597
+ea01f0b1613544cd8e4862ee5631900a7049a2fdfebde67b6841252f82b6b299
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..cedf0b0b4f491516b97f8a24f0c07340e64cbea3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md
+@@ -0,0 +1,47 @@
++# Native sheet omission review
++
++**APPROVE — bounded to the committed parent-clip omission slice.** This is an independent read-only review; no Agent source, integration worktree, branch, dependency, or fixture was changed. The existing detached legacy omission consumer remains in place, so this report does not claim AG03 or the legacy writer deleted.
++
++## Exact identities
++
++| Item | Identity |
++|---|---|
++| Candidate Agent commit | `b24144d9759641980c0d072ddaa80373733d7308` |
++| Candidate Agent tree | `0aa7cb3288564f70e1689266b9c9289c23cab4c1` |
++| Actual current Runtime | commit `c45cbc6ba3772ac2cebb5a5c94f91be24231e2d5`, tree `c431abc5025bcadae5355da8229289af797187ec` |
++| Central profile | `/home/user/work/venv-agent/bin/python`, Python `3.13.16`, pytest `9.0.2`, Node `v20.19.4`; `ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current`; `ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages` |
++
++## Decision and source review
++
++`NativeSheet.preview` compares the retained export's bound `# ref` keys. It permits omission only for an original `clips` row whose binding is `parent/clip:<id>`; it does not infer by display name or row order. Additions, track/occurrence omissions, and section rebinding are refused before `commit_many`. The omitted row is captured with the existing `capture_clip_delete`, executed against the working bundle, and sent through the normal `TimelineSession.commit_many` outbox. No three-way merge, second writer, new operation, schema, DTO, route, or legacy writer bypass was added.
++
++The focused tests preserve an unrelated sibling's opaque fields, authored collection order and track state; verify the original pinned basis; exercise lost acknowledgement, restart, changed-key refusal, exact retry body and no recapture; prove disjoint-row rebase; and prove touched-membership conflict leaves the accepted document unchanged. The CLI test uses the actual native export/apply entrypoint and checks delete plus inverse. Existing positive ordinary sheet tests remain intact. The detached `apply_sheet`/`_apply_parsed` omission path is still present and was not represented as deleted.
++
++## Evidence
++
++Local focused candidate tests:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider [four omission tests in tests/sdk/test_timeline_sheet_native.py] [the omission test in tests/packs/timeline/test_cli_native_sheet.py]
++5 passed in 3.87s
++```
++
++Central actual-current HTTP qualification, source tree `0aa7cb3288564f70e1689266b9c9289c23cab4c1`:
++
++- `agt-review-native-sheet-delete-live-commit-integration-1020145324-29338`: **19 passed, 38 deselected**, exit 0. This used the marked `commit-integration` command with `tests/editing_conformance/test_native_sheet_current_runtime.py`, `test_native_sheet_ordinary_runtime.py`, and the original `test_native_sheet_current.py` neighbor. All 9 native-sheet HTTP nodes (5 current, 4 ordinary) ran; the extra 10 passed nodes are the suite's existing M1 integration file.
++- `agt-review-native-sheet-delete-live-native-script-current-integration-1020145219-8390`: **43 passed**, exit 0. This used the new no-`-m` current-profile lane and ran the current HTTP file plus the original current neighbor, including unmarked tests.
++
++The earlier incomplete request `agt-review-native-sheet-delete-live-commit-integration-1020145217-22186` also passed 15/15 but omitted the ordinary runtime file; it is superseded by the corrected request above and is not the gate result.
++
++Additional read-only checks:
++
++```text
++git diff --check HEAD^ HEAD                         # passed
++git status --short --branch                         # clean
++```
++
++## Gaps and scope
++
++The current HTTP files qualify the real export/commit/reload/undo/redo/retry transport path for ordinary native-sheet edits, but they do not contain an omission-specific Runtime HTTP case. The omission-specific exact-delete, disjoint-rebase, membership-conflict/no-accepted-write, and retry assertions are therefore source-level/fake-client evidence, not a claim that a live HTTP omission test ran. No new test or matrix was added under the review brief. A future small test may close that transport-specific gap if the orchestrator requires deletion itself to be exercised through the HTTP fixture.
++
++No full or `full*` suite was requested. No App/browser, renderer, macOS, or legacy-writer deletion qualification was performed or claimed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e752d9c3d6c39d9825096f1f4041d37eeed48a00
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg
+@@ -0,0 +1,3 @@
++chore(agent): review native sheet deletion gate
++
++Record the bounded parent-clip omission review and current HTTP qualification.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..8f5de48a0ce311af5ba28bf82cf2b15ec1362b71
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md
+@@ -0,0 +1,52 @@
++# Native sheet omission review
++
++**APPROVE — bounded to the committed parent-clip omission slice.** This is an independent read-only review; no Agent source, integration worktree, branch, dependency, or fixture was changed. The existing detached legacy omission consumer remains in place, so this report does not claim AG03 or the legacy writer deleted.
++
++## Exact identities
++
++| Item | Identity |
++|---|---|
++| Candidate Agent commit | `b24144d9759641980c0d072ddaa80373733d7308` |
++| Candidate Agent tree | `0aa7cb3288564f70e1689266b9c9289c23cab4c1` |
++| Actual current Runtime | commit `c45cbc6ba3772ac2cebb5a5c94f91be24231e2d5`, tree `c431abc5025bcadae5355da8229289af797187ec` |
++| Central profile | `/home/user/work/venv-agent/bin/python`, Python `3.13.16`, pytest `9.0.2`, Node `v20.19.4`; `ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current`; `ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages` |
++
++## Decision and source review
++
++`NativeSheet.preview` compares the retained export's bound `# ref` keys. It permits omission only for an original `clips` row whose binding is `parent/clip:<id>`; it does not infer by display name or row order. Additions, track/occurrence omissions, and section rebinding are refused before `commit_many`. The omitted row is captured with the existing `capture_clip_delete`, executed against the working bundle, and sent through the normal `TimelineSession.commit_many` outbox. No three-way merge, second writer, new operation, schema, DTO, route, or legacy writer bypass was added.
++
++The focused tests preserve an unrelated sibling's opaque fields, authored collection order and track state; verify the original pinned basis; exercise lost acknowledgement, restart, changed-key refusal, exact retry body and no recapture; prove disjoint-row rebase; and prove touched-membership conflict leaves the accepted document unchanged. The CLI test uses the actual native export/apply entrypoint and checks delete plus inverse. Existing positive ordinary sheet tests remain intact. The detached `apply_sheet`/`_apply_parsed` omission path is still present and was not represented as deleted.
++
++## Evidence
++
++Local focused candidate tests:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/sdk/test_timeline_sheet_native.py::test_omitting_native_clip_row_deletes_exact_bound_clip_and_preserves_sibling_state \
++  tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases \
++  tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_rebases_over_unrelated_row_edit \
++  tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_refuses_membership_change_without_accepting \
++  tests/packs/timeline/test_cli_native_sheet.py::test_clip_row_omission_is_native_delete_and_keeps_other_rows
++5 passed in 3.87s
++```
++
++Central actual-current HTTP qualification, source tree `0aa7cb3288564f70e1689266b9c9289c23cab4c1`:
++
++- `agt-review-native-sheet-delete-live-commit-integration-1020145324-29338`: **19 passed, 38 deselected**, exit 0. This used the marked `commit-integration` command with `tests/editing_conformance/test_native_sheet_current_runtime.py`, `test_native_sheet_ordinary_runtime.py`, and the original `test_native_sheet_current.py` neighbor. All 9 native-sheet HTTP nodes (5 current, 4 ordinary) ran; the extra 10 passed nodes are the suite's existing M1 integration file.
++- `agt-review-native-sheet-delete-live-native-script-current-integration-1020145219-8390`: **43 passed**, exit 0. This used the new no-`-m` current-profile lane and ran the current HTTP file plus the original current neighbor, including unmarked tests.
++
++The earlier incomplete request `agt-review-native-sheet-delete-live-commit-integration-1020145217-22186` also passed 15/15 but omitted the ordinary runtime file; it is superseded by the corrected request above and is not the gate result.
++
++Additional read-only checks:
++
++```text
++git diff --check HEAD^ HEAD                         # passed
++git status --short --branch                         # clean
++```
++
++## Gaps and scope
++
++The current HTTP files qualify the real export/commit/reload/undo/redo/retry transport path for ordinary native-sheet edits, but they do not contain an omission-specific Runtime HTTP case. The omission-specific exact-delete, disjoint-rebase, membership-conflict/no-accepted-write, and retry assertions are therefore source-level/fake-client evidence, not a claim that a live HTTP omission test ran. No new test or matrix was added under the review brief. A future small test may close that transport-specific gap if the orchestrator requires deletion itself to be exercised through the HTTP fixture.
++
++No full or `full*` suite was requested. No App/browser, renderer, macOS, or legacy-writer deletion qualification was performed or claimed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e752d9c3d6c39d9825096f1f4041d37eeed48a00
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg
+@@ -0,0 +1,3 @@
++chore(agent): review native sheet deletion gate
++
++Record the bounded parent-clip omission review and current HTTP qualification.
+
+exec
+/bin/bash -lc "git status --short --branch && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/DONE && echo markers=present && sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md" in /home/user/work/wt/agt-review-native-sheet-delete-live
+ succeeded in 483ms:
+## tl/agt-review-native-sheet-delete-live
+markers=present
+# Native sheet omission review
+
+**APPROVE — bounded to the committed parent-clip omission slice.** This is an independent read-only review; no Agent source, integration worktree, branch, dependency, or fixture was changed. The existing detached legacy omission consumer remains in place, so this report does not claim AG03 or the legacy writer deleted.
+
+## Exact identities
+
+| Item | Identity |
+|---|---|
+| Candidate Agent commit | `b24144d9759641980c0d072ddaa80373733d7308` |
+| Candidate Agent tree | `0aa7cb3288564f70e1689266b9c9289c23cab4c1` |
+| Actual current Runtime | commit `c45cbc6ba3772ac2cebb5a5c94f91be24231e2d5`, tree `c431abc5025bcadae5355da8229289af797187ec` |
+| Central profile | `/home/user/work/venv-agent/bin/python`, Python `3.13.16`, pytest `9.0.2`, Node `v20.19.4`; `ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current`; `ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages` |
+
+## Decision and source review
+
+`NativeSheet.preview` compares the retained export's bound `# ref` keys. It permits omission only for an original `clips` row whose binding is `parent/clip:<id>`; it does not infer by display name or row order. Additions, track/occurrence omissions, and section rebinding are refused before `commit_many`. The omitted row is captured with the existing `capture_clip_delete`, executed against the working bundle, and sent through the normal `TimelineSession.commit_many` outbox. No three-way merge, second writer, new operation, schema, DTO, route, or legacy writer bypass was added.
+
+The focused tests preserve an unrelated sibling's opaque fields, authored collection order and track state; verify the original pinned basis; exercise lost acknowledgement, restart, changed-key refusal, exact retry body and no recapture; prove disjoint-row rebase; and prove touched-membership conflict leaves the accepted document unchanged. The CLI test uses the actual native export/apply entrypoint and checks delete plus inverse. Existing positive ordinary sheet tests remain intact. The detached `apply_sheet`/`_apply_parsed` omission path is still present and was not represented as deleted.
+
+## Evidence
+
+Local focused candidate tests:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
+  tests/sdk/test_timeline_sheet_native.py::test_omitting_native_clip_row_deletes_exact_bound_clip_and_preserves_sibling_state \
+  tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases \
+  tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_rebases_over_unrelated_row_edit \
+  tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_refuses_membership_change_without_accepting \
+  tests/packs/timeline/test_cli_native_sheet.py::test_clip_row_omission_is_native_delete_and_keeps_other_rows
+5 passed in 3.87s
+```
+
+Central actual-current HTTP qualification, source tree `0aa7cb3288564f70e1689266b9c9289c23cab4c1`:
+
+- `agt-review-native-sheet-delete-live-commit-integration-1020145324-29338`: **19 passed, 38 deselected**, exit 0. This used the marked `commit-integration` command with `tests/editing_conformance/test_native_sheet_current_runtime.py`, `test_native_sheet_ordinary_runtime.py`, and the original `test_native_sheet_current.py` neighbor. All 9 native-sheet HTTP nodes (5 current, 4 ordinary) ran; the extra 10 passed nodes are the suite's existing M1 integration file.
+- `agt-review-native-sheet-delete-live-native-script-current-integration-1020145219-8390`: **43 passed**, exit 0. This used the new no-`-m` current-profile lane and ran the current HTTP file plus the original current neighbor, including unmarked tests.
+
+The earlier incomplete request `agt-review-native-sheet-delete-live-commit-integration-1020145217-22186` also passed 15/15 but omitted the ordinary runtime file; it is superseded by the corrected request above and is not the gate result.
+
+Additional read-only checks:
+
+```text
+git diff --check HEAD^ HEAD                         # passed
+git status --short --branch                         # clean
+```
+
+## Gaps and scope
+
+The current HTTP files qualify the real export/commit/reload/undo/redo/retry transport path for ordinary native-sheet edits, but they do not contain an omission-specific Runtime HTTP case. The omission-specific exact-delete, disjoint-rebase, membership-conflict/no-accepted-write, and retry assertions are therefore source-level/fake-client evidence, not a claim that a live HTTP omission test ran. No new test or matrix was added under the review brief. A future small test may close that transport-specific gap if the orchestrator requires deletion itself to be exercised through the HTTP fixture.
+
+No full or `full*` suite was requested. No App/browser, renderer, macOS, or legacy-writer deletion qualification was performed or claimed.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..09b07d2a5f3e9f0edd405674234414e61d724465
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md
+@@ -0,0 +1,64 @@
++# Native sheet omission review
++
++**APPROVE — bounded to the committed parent-clip omission slice.** This is an independent read-only review; no Agent source, integration worktree, branch, dependency, or fixture was changed. The existing detached legacy omission consumer remains in place, so this report does not claim AG03 or the legacy writer deleted.
++
++## Exact identities
++
++| Item | Identity |
++|---|---|
++| Candidate Agent commit | `b24144d9759641980c0d072ddaa80373733d7308` |
++| Candidate Agent tree | `0aa7cb3288564f70e1689266b9c9289c23cab4c1` |
++| Actual current Runtime | commit `c45cbc6ba3772ac2cebb5a5c94f91be24231e2d5`, tree `c431abc5025bcadae5355da8229289af797187ec` |
++| Central profile | `/home/user/work/venv-agent/bin/python`, Python `3.13.16`, pytest `9.0.2`, Node `v20.19.4`; `ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current`; `ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages` |
++
++## Decision and source review
++
++`NativeSheet.preview` compares the retained export's bound `# ref` keys. It permits omission only for an original `clips` row whose binding is `parent/clip:<id>`; it does not infer by display name or row order. Additions, track/occurrence omissions, and section rebinding are refused before `commit_many`. The omitted row is captured with the existing `capture_clip_delete`, executed against the working bundle, and sent through the normal `TimelineSession.commit_many` outbox. No three-way merge, second writer, new operation, schema, DTO, route, or legacy writer bypass was added.
++
++The focused tests preserve an unrelated sibling's opaque fields, authored collection order and track state; verify the original pinned basis; exercise lost acknowledgement, restart, changed-key refusal, exact retry body and no recapture; prove disjoint-row rebase; and prove touched-membership conflict leaves the accepted document unchanged. The CLI test uses the actual native export/apply entrypoint and checks delete plus inverse. Existing positive ordinary sheet tests remain intact. The detached `apply_sheet`/`_apply_parsed` omission path is still present and was not represented as deleted.
++
++## Evidence
++
++Local focused candidate tests:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/sdk/test_timeline_sheet_native.py::test_omitting_native_clip_row_deletes_exact_bound_clip_and_preserves_sibling_state \
++  tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases \
++  tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_rebases_over_unrelated_row_edit \
++  tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_refuses_membership_change_without_accepting \
++  tests/packs/timeline/test_cli_native_sheet.py::test_clip_row_omission_is_native_delete_and_keeps_other_rows
++5 passed in 3.87s
++```
++
++Central actual-current HTTP qualification, source tree `0aa7cb3288564f70e1689266b9c9289c23cab4c1`:
++
++- Exact marked command executed by request `agt-review-native-sheet-delete-live-commit-integration-1020145324-29338`:
++
++  ```text
++  env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py tests/editing_conformance/test_native_sheet_current.py
++  ```
++
++- `agt-review-native-sheet-delete-live-commit-integration-1020145324-29338`: **19 passed, 38 deselected**, exit 0. This used the marked `commit-integration` command with `tests/editing_conformance/test_native_sheet_current_runtime.py`, `test_native_sheet_ordinary_runtime.py`, and the original `test_native_sheet_current.py` neighbor. All 9 native-sheet HTTP nodes (5 current, 4 ordinary) ran; the extra 10 passed nodes are the suite's existing M1 integration file.
++- Exact no-filter command executed by request `agt-review-native-sheet-delete-live-native-script-current-integration-1020145219-8390`:
++
++  ```text
++  env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_native_sheet_current_runtime.py tests/editing_conformance/test_native_sheet_current.py
++  ```
++
++- `agt-review-native-sheet-delete-live-native-script-current-integration-1020145219-8390`: **43 passed**, exit 0. This used the new no-`-m` current-profile lane and ran the current HTTP file plus the original current neighbor, including unmarked tests.
++
++The earlier incomplete request `agt-review-native-sheet-delete-live-commit-integration-1020145217-22186` also passed 15/15 but omitted the ordinary runtime file; it is superseded by the corrected request above and is not the gate result.
++
++Additional read-only checks:
++
++```text
++git diff --check HEAD^ HEAD                         # passed
++git status --short --branch                         # clean
++```
++
++## Gaps and scope
++
++The current HTTP files qualify the real export/commit/reload/undo/redo/retry transport path for ordinary native-sheet edits, but they do not contain an omission-specific Runtime HTTP case. The omission-specific exact-delete, disjoint-rebase, membership-conflict/no-accepted-write, and retry assertions are therefore source-level/fake-client evidence, not a claim that a live HTTP omission test ran. No new test or matrix was added under the review brief. A future small test may close that transport-specific gap if the orchestrator requires deletion itself to be exercised through the HTTP fixture.
++
++No full or `full*` suite was requested. No App/browser, renderer, macOS, or legacy-writer deletion qualification was performed or claimed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e752d9c3d6c39d9825096f1f4041d37eeed48a00
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-native-sheet-delete-live/commit-msg
+@@ -0,0 +1,3 @@
++chore(agent): review native sheet deletion gate
++
++Record the bounded parent-clip omission review and current HTTP qualification.
+
+codex
+## Result: APPROVE
+
+Reviewed candidate `b24144d9759641980c0d072ddaa80373733d7308` / tree `0aa7cb3288564f70e1689266b9c9289c23cab4c1`.
+
+- Focused omission tests: **5 passed**.
+- Central marked HTTP lane: **19 passed, 38 deselected**.
+- Current no-filter lane: **43 passed**.
+- Runtime: `c45cbc6ba3772ac2cebb5a5c94f91be24231e2d5`, tree `c431abc5025bcadae5355da8229289af797187ec`.
+
+The implementation correctly uses bound `parent/clip:<id>` references and existing `capture_clip_delete`; unsupported omissions remain refused, sibling/order/opaque data is preserved, and retry/rebase/membership guards remain intact. The legacy detached omission consumer remains present and is not claimed deleted.
+
+Gap: no omission-specific live HTTP test exists; HTTP qualification covered the existing native-sheet transport path and neighboring runtime cases.
+
+Report: [agent-review-native-sheet-delete-live.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md)
+
+Worktree is clean. `commit-msg` and `DONE` were written.
+tokens used
+176,233
+## Result: APPROVE
+
+Reviewed candidate `b24144d9759641980c0d072ddaa80373733d7308` / tree `0aa7cb3288564f70e1689266b9c9289c23cab4c1`.
+
+- Focused omission tests: **5 passed**.
+- Central marked HTTP lane: **19 passed, 38 deselected**.
+- Current no-filter lane: **43 passed**.
+- Runtime: `c45cbc6ba3772ac2cebb5a5c94f91be24231e2d5`, tree `c431abc5025bcadae5355da8229289af797187ec`.
+
+The implementation correctly uses bound `parent/clip:<id>` references and existing `capture_clip_delete`; unsupported omissions remain refused, sibling/order/opaque data is preserved, and retry/rebase/membership guards remain intact. The legacy detached omission consumer remains present and is not claimed deleted.
+
+Gap: no omission-specific live HTTP test exists; HTTP qualification covered the existing native-sheet transport path and neighboring runtime cases.
+
+Report: [agent-review-native-sheet-delete-live.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-native-sheet-delete-live.md)
+
+Worktree is clean. `commit-msg` and `DONE` were written.

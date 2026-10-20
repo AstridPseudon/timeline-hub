@@ -1,0 +1,9 @@
+name=agt-m2-native-frontends-current-gate
+repo=agent
+base=tl/integration
+base_sha=7970544b
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-native-frontends-current-gate
+started=2026-10-20T11:20:28Z

@@ -1,0 +1,9 @@
+name=agt-review-public13-current-adoption
+repo=agent
+base=tl/agt-m3-public13-current-adoption
+base_sha=30da0a5e
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-public13-current-adoption
+started=2026-10-20T17:44:14Z

@@ -1,0 +1,400 @@
+                                     for x in (a if isinstance(a, list) else [a]))):
+                continue
+            elif key in {'minimum', 'exclusiveMinimum', 'minItems', 'minLength', 'minProperties'} and (
+                    b is None or (a is not None and b <= a)):
+                continue
+            elif key in {'maximum', 'exclusiveMaximum', 'maxItems', 'maxLength', 'maxProperties'} and (
+                    b is None or (a is not None and b >= a)):
+                continue
+            elif key == 'uniqueItems' and not b:
+                continue
+            elif key == 'pattern' and (b is None or (
+                    a is not None and a.startswith('^') and a.endswith('$')
+                    and b.startswith(f'(?:{a})|(?:^') and b.endswith('$)'))):
+                continue
+            elif key == 'anyOf' and a is not None and b is not None and all(
+                    any(not compare(x, y, at, seen) for y in b) for x in a):
+                continue
+            elif key == 'allOf' and path == '$/$defs/EditCommand':
+                def operations(conditions):
+                    result = {}
+                    for condition in conditions or []:
+                        op = condition['if']['properties']['op']['const']
+                        expected = {'if': {'properties': {'op': {'const': op}}, 'required': ['op']},
+                                    'then': condition['then']}
+                        if not same(condition, expected) or op in result:
+                            raise ValueError('unsupported operation conditional')
+                        result[op] = condition['then']
+                    return result
+                try:
+                    before, after = operations(a), operations(b)
+                    for op, value in before.items():
+                        errors += (compare(value, after[op], at + '/' + op, seen) if op in after
+                                   else [at + '/' + op + ': missing supported operation'])
+                except (KeyError, TypeError, ValueError) as error:
+                    errors.append(f'{at}: review {error}')
+            else:
+                errors.append(at + ': narrowing or unsupported change; review required')
+        return sorted(errors)
+
+    return compare(previous, current, '$')
+88K	tests/fixtures/published-command-schemas
+?? tests/fixtures/published-command-schemas/
+?? tests/sdk/command_schema_compatibility.py
+?? tests/sdk/test_timeline_schema_superset.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/sdk/test_timeline_schema_superset.py')
+s=p.read_text().replace(\"@pytest.mark.parametrize('drop', ['definition', 'operation', 'property'])\", \"@pytest.mark.parametrize('drop', ['definition', 'clip.delete', 'timeline.inverse',\\n                                'timeline.restore', 'property'])\")
+s=s.replace(\"    elif drop == 'operation':\\n        current['"'$defs'"']['EditCommand']['allOf'].pop(0)\\n\", \"    elif drop "'!= '"'property':\\n        current['"'$defs'"']['EditCommand']['allOf'] = [\\n            c for c in current['"'$defs'"']['EditCommand']['allOf']\\n            if c['if']['properties']['op']['const'] "'!= drop]'"\\n\")
+p.write_text(s)
+PY
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_runtime_response_conformance.py tests/stage1/test_vendored_workspace_client_parity_luna.py' in /home/user/work/wt/agt-m2-schema-superset-guard
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/ruff check --no-force-exclude tests/sdk/command_schema_compatibility.py tests/sdk/test_timeline_schema_superset.py && python3 - <<'PY'
+import subprocess
+paths=subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines()
+for path in paths:
+ result=subprocess.run(['git','diff','--no-index','--check','/dev/null',path],capture_output=True,text=True)
+ print(path, 'PASS' if result.returncode == 0 else result.stdout+result.stderr)
+ assert result.returncode == 0
+subprocess.run(['git','diff','--check'],check=True)
+subprocess.run(['git','diff','--exit-code','HEAD','--','.'],check=True)
+PY" in /home/user/work/wt/agt-m2-schema-superset-guard
+ exited 1 in 18ms:
+All checks passed!
+tests/fixtures/published-command-schemas/runtime-0.2.2.json 
+Traceback (most recent call last):
+  File "<stdin>", line 6, in <module>
+AssertionError
+
+ succeeded in 7349ms:
+........................................................................ [ 98%]
+.                                                                        [100%]
+73 passed in 6.68s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+paths=subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines()
+for path in paths:
+ result=subprocess.run(['git','diff','--no-index','--check','/dev/null',path],capture_output=True,text=True)
+ assert result.returncode in (0,1) and not result.stdout and not result.stderr, (path,result)
+ print(path+': whitespace PASS')
+subprocess.run(['git','diff','--check'],check=True)
+subprocess.run(['git','diff','--exit-code','HEAD','--','.'],check=True)
+print('Tracked HEAD files unchanged: PASS')
+PY" in /home/user/work/wt/agt-m2-schema-superset-guard
+ succeeded in 550ms:
+tests/fixtures/published-command-schemas/runtime-0.2.2.json: whitespace PASS
+tests/fixtures/published-command-schemas/runtime-0.2.3.json: whitespace PASS
+tests/fixtures/published-command-schemas/sources.json: whitespace PASS
+tests/fixtures/published-command-schemas/withdrawn-10c.json: whitespace PASS
+tests/sdk/command_schema_compatibility.py: whitespace PASS
+tests/sdk/test_timeline_schema_superset.py: whitespace PASS
+Tracked HEAD files unchanged: PASS
+
+codex
+The final focused run passed all 73 tests. Ruff and whitespace checks passed, and all existing tracked files remain unchanged.
+
+I’ll now write the handoff report with the exact fixture hashes, the five historical regex review paths, and Runtime reuse instructions. No full suite, sockets, generation, or integration work was run.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib,json,subprocess
+work=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-schema-superset-guard')
+(work/'notes').mkdir(exist_ok=True)
+sources=json.loads(Path('tests/fixtures/published-command-schemas/sources.json').read_text())
+rows='\\n'.join(f\"| "'`{name}` | {v['"'version']} | "'`{v['"'commit']}"'` | `{v['"'sha256']}"'` |" for name,v in sources.items())
+report='"'''# Published command-schema superset guard
+
+Base: "'`a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83`; worker `agt-m2-schema-superset-guard`. Read PLAN first; no settled decision changed. Integration remains HELD until PLAN M1.
+
+## Changes
+
+Tests only: `tests/sdk/command_schema_compatibility.py` (107 lines), `tests/sdk/test_timeline_schema_superset.py`, and four files under `tests/fixtures/published-command-schemas/` (three exact raw schemas and compact provenance metadata). All preexisting tracked files remain byte-identical to HEAD, including product, canonical schema, generated clients, Runtime pin and refs. No existing passing test was changed, skipped or weakened.
+
+The permanent test reads the current canonical schema via commands._SCHEMA and compares it against the independently frozen ordinary 0.2.3 floor. It requires every old definition and registered conditional operation, including inverse/restore. It compares argument/property shapes, local equivalent refs, required/enum/type/ranges/additionalProperties and patterns conservatively. New definitions/operations are permitted. Unknown added/removed/changed validation keywords require review; oneOf/other conditional rewrites are deliberately unsupported. No sample-value containment or definition-name exception is used.
+
+The exact withdrawn 10c schema yields 20 diagnostics: all EIGHT missing definitions (ClipSetArgs, ClipSplitArgs, ClipTrimArgs, DocumentPin, MediaSelection, OccurrenceAddMediaArgs, OccurrenceSwapMediaArgs, TrackCreateArgs), all SEVEN missing ops (clip.set, clip.split, clip.trim, occurrence.add-media, occurrence.swap-media, placement.move, track.create), the removed schema_source property, and four pattern rewrites. The generic unknown-op envelope cannot hide a lost registration. Mutations additionally cover dropped inverse/restore, required/enum/property/type/ranges/additionalProperties/pattern narrowing, unknown keywords, unproductive ref cycles, duplicate conditionals and union sibling restrictions. Positive union tests use all four ACTUAL withdrawn materialization patterns with the complete ordinary pattern retained, and exact old-argument branches behind new refs.
+
+## Exact fixture provenance
+
+| Fixture | Version | Source commit | Raw SHA256 |
+| --- | --- | --- | --- |
+'"'''+rows+'''
+
+The Runtime source path for both published floors is "'`contract/schemas/edit-command.json`. The withdrawn Agent source path is `astrid/core/timeline/schema/edit-command.schema.json`. Bytes were copied using git show, never parsed/reformatted before writing. Runtime generators/release.json independently confirms 0.2.2 and 0.2.3. Fixture loads verify raw SHA256 against sources.json. The current canonical raw SHA256 is `472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9`.
+
+## Final validation
+
+Run from `/home/user/work/wt/agt-m2-schema-superset-guard`:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_runtime_response_conformance.py tests/stage1/test_vendored_workspace_client_parity_luna.py
+```
+
+**73 passed in 6.68s**, exit 0. Earlier focused passes: 58 passed in 8.28s, then 58 passed in 6.61s after tightening branch retention; separate generated-client parity 13 passed in 0.22s. Initial mutation development had one fixture-address KeyError (`ClipMoveArgs.at` instead of `on`), corrected before these final passes.
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-force-exclude tests/sdk/command_schema_compatibility.py tests/sdk/test_timeline_schema_superset.py
+git diff --check
+git diff --exit-code HEAD -- .
+```
+
+All PASS, exit 0. Existing tracked files unchanged. Since the six added files are untracked until harness commit, also ran `git diff --no-index --check /dev/null <file>` on EACH path from `git ls-files --others --exclude-standard`: all six produced no whitespace diagnostics (new-file diff exit 1 accepted). The first wrapper incorrectly expected exit 0 for a new-file diff; corrected wrapper accepts 0/1 only with empty stdout/stderr. No whitespace changes were necessary.
+
+No full suite, network/install, localhost/socket/browser tests, generated output, product edits, other-worker edits, commit/merge/checkout/push or integration changes.
+
+## Decisions, limitations and Runtime reuse
+
+* Recognize supported ops ONLY from existing canonical EditCommand allOf conditions with exact op const/required-op guards. Adding unrelated/ambiguous conditions fails review rather than inventing a public registry. This includes the two existing inverse/restore conditions.
+* Accept pattern widening as `(?:OLD_PATTERN)|(?:NEW_PATTERN)`, preserving the FULL old anchored pattern byte-for-byte as the first alternative. The new alternative must be anchored too; other sibling constraints still compare. A new anyOf wrapper is accepted only if a complete old node (or equivalent local ref) is explicitly retained. This exact form was announced in the absolute shared design/runtime-coordination.md for the active materialization composer.
+* This is structural containment, not a general JSON Schema/regex solver. Local refs are supported; changed external/cyclic aliases, oneOf, arbitrary regex/conditional rewrites and unknown changed validation keywords fail explicitly. The already-published 0.2.2 -> 0.2.3 transition returns FIVE unsupported-pattern review paths: the four reference definitions plus EditCommand/track.set/select. This guard does NOT claim to have proved those historical rewrites or silently exempt them. 0.2.2 exact bytes are retained as the older versioned floor; the requested current-schema release guard uses latest ordinary 0.2.3. Both unchanged frozen artifacts pass. No product/schema change was made to retrofit that historical transition.
+* Runtime official release tests can copy the standalone helper and exact fixtures/provenance into Runtime'"'s test tree (owner action), import "'`compatibility_errors`, and assert `compatibility_errors(json.loads(previous_raw_bytes), json.loads(newly_generated_contract_schema_bytes)) == []`. Helper imports only json and jsonschema, with no Agent/runtime product dependency. Preserve separate byte-identity tests between frozen Agent input and generated canonical Runtime artifact. Do not derive the baseline from the candidate or overwrite old floors. Add an authorized new published floor only after comparing its candidate against the prior latest floor; keep previous bytes/version/hash.
+* Apply this separate tests-only delta to final ordinary, materialization-union and producer candidates and run their focused schema/client tests. Actual final materialization/producer generation, Runtime custody/acceptance, sockets and cross-product qualification remain unverified here. No release/pin/integration authorization is inferred.
+
+No blocker in this tests-only task. Recommended next steps: manager review; composer preserve explicit old regex alternatives; Runtime owner reuse the helper in official generation/release tests; keep all M2 integration held under PLAN M1.
+'"'''
+(work/'notes'/'report.md').write_text(report)
+message='''test(timeline): guard published command schema compatibility
+
+Preserve exact Runtime 0.2.2 and ordinary 0.2.3 command schemas as test
+floors. Require the current canonical schema to retain every ordinary
+definition and registered operation without narrowing existing args.
+
+Exercise the exact withdrawn partial schema, structural mutations and
+provable regex/ref unions with a conservative test-only helper.
+'''
+(work/'commit-msg').write_text(message)
+(work/'commit-msg.txt').write_text(message)
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md')
+with p.open('a') as f:
+ f.write('''\\n\\n## agt-m2-schema-superset-guard — final tests-only handoff\\nBase a31d712d unchanged outside new tests. Helper "'`/home/user/work/wt/agt-m2-schema-superset-guard/tests/sdk/command_schema_compatibility.py` is 107 lines, imports only json/jsonschema, exposes `compatibility_errors(previous_complete_schema, current_complete_schema) -> list[str]`. Runtime official generation/release tests should copy this helper plus `tests/fixtures/published-command-schemas/` into their own test tree, assert errors==[] against NEWLY GENERATED canonical contract bytes, and retain their separate exact-Agent-input/artifact byte checks. Never derive floors from a candidate or overwrite prior published bytes. Apply separately to final ordinary/materialization/producer sources; no product registry/release framework or pin change here.'"\\nExact floors: Runtime6be970633cc82ab412428151e6bf42f3e7fc3081/0.2.2, "'`contract/schemas/edit-command.json`, SHA256460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388; ordinary Runtime d691ddadb4ef3f5881a25fa893b4fb812211f102/0.2.3 same path SHA256472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9. Withdrawn Agentb3c0dbd7c69a369dee303640c2bd608f1d3b71c9 canonical schema SHA25610c1610b61ad151259149c97061493d9e36ae0a9220ba4983b45f22e8ac7e3b1 is EXACT negative fixture, never a release floor; guard reports all8missingdefs+all7missingops, removedschema_source and fourpatterns (20 diagnostics). Current canonical compared against ordinary0.2.3. Allrawbytes/provenance preserved.'"\\nMaterialization acceptable form remains EXACT "'`(?:OLD_FULL_ANCHORED_PATTERN)|(?:NEW_FULL_ANCHORED_PATTERN)` for ScopedId, EntityRef, TargetKey, AnchorIdentity; actual withdrawn newpatterns combined with oldordinary alternatives PASS. Newrefs/anyOf require complete oldbranch retained, with sibling restrictions still checked. Unknown changed keywords/oneOf/conditionals/arbitraryregex rewrites fail review. Historical0.2.2->0.2.3 has FIVE unsupported regex rewrites (fourrefs+track.set/select); this helper does NOT certify those historical changes or exempt them by name. No general containment solver/sampling claim.'"\\nFinal focused guard/composed-schema/commit-client/response-conformance/generated-client-parity:73PASS6.68s; scopedRuffPASS; tracked/newfile whitespacePASS. No full/network/install/sockets/browser/Runtime release or other-worker edits. Exact commands, hashes, limits and next steps: "'`workers/agt-m2-schema-superset-guard/notes/report.md`; both commit-msg files ready. Final materialization/producer paired qualification remains for owners. Integration remains HELD until PLAN M1.'"\\n''')
+print('Report and both commit messages written; coordination appended.')
+PY" in /home/user/work/wt/agt-m2-schema-superset-guard
+ succeeded in 59ms:
+Report and both commit messages written; coordination appended.
+
+codex
+A final review found one structural gap: an unconstrained `EditCommand` schema could pass the widening check while losing its registered-operation conditionals. I’m making definition and operation presence checks unconditional, with regressions for that case.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/sdk/command_schema_compatibility.py');s=p.read_text()
+start=s.index(\"                def operations(conditions):\")
+end=s.index(\"                try:\\n                    before, after\",start)
+func=s[start:end]
+# Lift the existing exact conditional recognizer out of compare.
+s=s[:start]+s[end:]
+lift='\\n'.join(line[12:] for line in func.rstrip().splitlines())+'\\n\\n'
+pos=s.index('    def resolve(');s=s[:pos]+lift+s[pos:]
+start=s.index(\"                try:\\n                    before, after = operations(a), operations(b)\")
+end=s.index(\"            else:\\n                errors.append(at\",start)
+s=s[:start]+\"                continue  # Required operation inventory/args are checked unconditionally below.\\n\"+s[end:]
+s=s.replace(\"    return compare(previous, current, '"'$'"')\\n\", \"\"\"    errors = compare(previous, current, '"'$'"')
+    definitions = current.get('"'$defs'"', {}) if isinstance(current, dict) else {}
+    errors += ['"'$/$defs/'"' + name + ': missing definition'
+               for name in previous['"'$defs'"'] if name not in definitions]
+    command = definitions.get('EditCommand', {})
+    try:
+        before = operations(previous['"'$defs'"']['EditCommand']['allOf'])
+        after = operations(command.get('allOf', []) if isinstance(command, dict) else [])
+        for op, value in before.items():
+            path = '"'$/$defs/EditCommand/allOf/'"' + op
+            errors += (compare(value, after[op], path) if op in after
+                       else [path + ': missing supported operation'])
+    except (KeyError, TypeError, ValueError) as error:
+        errors.append(f'"'$/$defs/EditCommand/allOf: review {error}'"')
+    return sorted(set(errors))
+\"\"\")
+p.write_text(s)
+p=Path('tests/sdk/test_timeline_schema_superset.py');s=p.read_text()
+s += '''\\n\\n@pytest.mark.parametrize('replacement', [True, {'type': 'object'}])
+def test_widening_the_envelope_does_not_preserve_supported_operations(replacement):
+    current = baseline()
+    current['"'$defs'"']['EditCommand'] = replacement
+    errors = compatibility_errors(baseline(), current)
+    assert sum(': missing supported operation' in e for e in errors) == 14
+
+
+def test_an_unconstrained_root_does_not_preserve_published_definitions():
+    errors = compatibility_errors(baseline(), True)
+    assert sum(': missing definition' in e for e in errors) == 35
+'''
+p.write_text(s)
+PY
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_runtime_response_conformance.py tests/stage1/test_vendored_workspace_client_parity_luna.py' in /home/user/work/wt/agt-m2-schema-superset-guard
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/ruff check --no-force-exclude tests/sdk/command_schema_compatibility.py tests/sdk/test_timeline_schema_superset.py && wc -l tests/sdk/command_schema_compatibility.py && sed -n '1,55p' tests/sdk/command_schema_compatibility.py && tail -30 tests/sdk/command_schema_compatibility.py" in /home/user/work/wt/agt-m2-schema-superset-guard
+ succeeded in 0ms:
+All checks passed!
+116 tests/sdk/command_schema_compatibility.py
+"""Conservative test-only containment; unsupported changes require explicit review."""
+from __future__ import annotations
+
+import json
+
+from jsonschema import Draft202012Validator
+
+
+def compatibility_errors(previous, current):
+    """Return every incompatible path. Both arguments are complete canonical schemas."""
+    for schema in (previous, current):
+        Draft202012Validator.check_schema(schema)
+
+    def same(a, b):
+        return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+    def operations(conditions):
+        result = {}
+        for condition in conditions or []:
+            op = condition['if']['properties']['op']['const']
+            expected = {'if': {'properties': {'op': {'const': op}}, 'required': ['op']},
+                        'then': condition['then']}
+            if not same(condition, expected) or op in result:
+                raise ValueError('unsupported operation conditional')
+            result[op] = condition['then']
+        return result
+
+    def resolve(node, root):
+        seen = set()
+        while isinstance(node, dict) and set(node) == {'$ref'}:
+            ref = node['$ref']
+            if not ref.startswith('#/$defs/') or ref in seen:
+                raise ValueError('unsupported or cyclic reference: ' + ref)
+            seen.add(ref)
+            node = root['$defs'][ref.removeprefix('#/$defs/')]
+        return node
+
+    def compare(old, new, path, seen=frozenset()):
+        if same(old, new) or new is True or old is False:
+            return []
+        pair = (id(old), id(new))
+        if pair in seen:
+            return []
+        seen = seen | {pair}
+        try:
+            old, new = resolve(old, previous), resolve(new, current)
+            if isinstance(new, dict) and set(new) == {'anyOf'} and any(
+                    same(old, resolve(branch, current)) for branch in new['anyOf']):
+                return []  # A complete old branch survives, including all its constraints.
+        except (KeyError, ValueError) as error:
+            return [f'{path}: review {error}']
+        if same(old, new):
+            return []
+        if not isinstance(old, dict) or not isinstance(new, dict):
+            return [f'{path}: narrowed boolean schema']
+            elif key == 'uniqueItems' and not b:
+                continue
+            elif key == 'pattern' and (b is None or (
+                    a is not None and a.startswith('^') and a.endswith('$')
+                    and b.startswith(f'(?:{a})|(?:^') and b.endswith('$)'))):
+                continue
+            elif key == 'anyOf' and a is not None and b is not None and all(
+                    any(not compare(x, y, at, seen) for y in b) for x in a):
+                continue
+            elif key == 'allOf' and path == '$/$defs/EditCommand':
+                continue  # Required operation inventory/args are checked unconditionally below.
+            else:
+                errors.append(at + ': narrowing or unsupported change; review required')
+        return sorted(errors)
+
+    errors = compare(previous, current, '$')
+    definitions = current.get('$defs', {}) if isinstance(current, dict) else {}
+    errors += ['$/$defs/' + name + ': missing definition'
+               for name in previous['$defs'] if name not in definitions]
+    command = definitions.get('EditCommand', {})
+    try:
+        before = operations(previous['$defs']['EditCommand']['allOf'])
+        after = operations(command.get('allOf', []) if isinstance(command, dict) else [])
+        for op, value in before.items():
+            path = '$/$defs/EditCommand/allOf/' + op
+            errors += (compare(value, after[op], path) if op in after
+                       else [path + ': missing supported operation'])
+    except (KeyError, TypeError, ValueError) as error:
+        errors.append(f'$/$defs/EditCommand/allOf: review {error}')
+    return sorted(set(errors))
+
+ succeeded in 12471ms:
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 11.56s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+paths=subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines()
+for path in paths:
+ result=subprocess.run(['git','diff','--no-index','--check','/dev/null',path],capture_output=True,text=True)
+ assert result.returncode in (0,1) and not result.stdout and not result.stderr, (path,result)
+ print(path+': whitespace PASS')
+subprocess.run(['git','diff','--check'],check=True)
+subprocess.run(['git','diff','--exit-code','HEAD','--','.'],check=True)
+print('Tracked HEAD files unchanged: PASS')
+PY" in /home/user/work/wt/agt-m2-schema-superset-guard
+ succeeded in 127ms:
+tests/fixtures/published-command-schemas/runtime-0.2.2.json: whitespace PASS
+tests/fixtures/published-command-schemas/runtime-0.2.3.json: whitespace PASS
+tests/fixtures/published-command-schemas/sources.json: whitespace PASS
+tests/fixtures/published-command-schemas/withdrawn-10c.json: whitespace PASS
+tests/sdk/command_schema_compatibility.py: whitespace PASS
+tests/sdk/test_timeline_schema_superset.py: whitespace PASS
+Tracked HEAD files unchanged: PASS
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+work=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-schema-superset-guard')
+p=work/'notes/report.md';s=p.read_text().replace('(107 lines)', '(116 lines)')
+s=s.replace('**73 passed in 6.68s**, exit 0. Earlier focused passes:', '**76 passed in 11.56s**, exit 0, after final inventory audit. Earlier focused passes: 73 passed in 6.68s;')
+s=s.replace('duplicate conditionals and union sibling restrictions.', 'duplicate conditionals, union sibling restrictions and unconstrained root/envelope substitutions. Definition and supported-operation inventories run unconditionally, even when validation constraints otherwise widen.')
+s=s.replace('No blocker in this tests-only task.', 'Final source audit found and fixed one guard gap before handoff: boolean/open-object envelope widening must not bypass definition/operation presence checks. Three added regressions cover that requirement. No blocker in this tests-only task.')
+p.write_text(s)
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md')
+with p.open('a') as f:
+ f.write('''\\nagt-m2-schema-superset-guard FINAL AUDIT ADDENDUM (supersedes preceding helper-size/final-test count only): helper116lines now checks definition and supported-op inventories UNCONDITIONALLY, including when a candidate replaces the root/EditCommand with true or an open object. Three permanent regressions close that structural-inventory gap. Final SAME focused five-file command:76PASS11.56s, exit0; Ruff and tracked/newfile diff checks PASS again. Report updated at workers/agt-m2-schema-superset-guard/notes/report.md; fixture hashes/regex form/limits/holds unchanged. Final handoff complete, both commit-msg files ready.\\n''')
+# Remove only bytecode for the two new files, leaving no task-created helper cache.
+cache=Path('tests/sdk/__pycache__')
+for name in ('command_schema_compatibility.*.pyc','test_timeline_schema_superset.*.pyc'):
+ for path in cache.glob(name):path.unlink()
+print('Final report updated, shared audit addendum appended, new test bytecode removed.')
+PY
+git status --short" in /home/user/work/wt/agt-m2-schema-superset-guard
+ succeeded in 13ms:
+Final report updated, shared audit addendum appended, new test bytecode removed.
+?? tests/fixtures/published-command-schemas/
+?? tests/sdk/command_schema_compatibility.py
+?? tests/sdk/test_timeline_schema_superset.py
+
+codex
+Added the tests-only guard and exact published fixtures. The withdrawn schema reports all **8 missing definitions and 7 missing operations**. No product, generated-client, schema, or pin changes.
+
+Final validation: **76 passed**:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_runtime_response_conformance.py tests/stage1/test_vendored_workspace_client_parity_luna.py
+```
+
+Ruff and tracked/new-file whitespace checks passed. No full suite or sockets run.
+
+Exact hashes, Runtime reuse instructions, and limitations are in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-schema-superset-guard/notes/report.md) and the shared coordination document. Historical 0.2.2→0.2.3 regex rewrites remain explicitly uncertified.
+
+Both commit-message files are ready. No task blocker; recommend applying this delta to final candidates. M2 integration remains held until PLAN M1.
+tokens used
+127,482
+Added the tests-only guard and exact published fixtures. The withdrawn schema reports all **8 missing definitions and 7 missing operations**. No product, generated-client, schema, or pin changes.
+
+Final validation: **76 passed**:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_runtime_response_conformance.py tests/stage1/test_vendored_workspace_client_parity_luna.py
+```
+
+Ruff and tracked/new-file whitespace checks passed. No full suite or sockets run.
+
+Exact hashes, Runtime reuse instructions, and limitations are in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-schema-superset-guard/notes/report.md) and the shared coordination document. Historical 0.2.2→0.2.3 regex rewrites remain explicitly uncertified.
+
+Both commit-message files are ready. No task blocker; recommend applying this delta to final candidates. M2 integration remains held until PLAN M1.

@@ -1,0 +1,400 @@
++performed. Native remains unqualified pending a separately generated and
++agreed counterpart. No new cross-area semantic decision was needed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..a3e60754f3f3f90ec700baa15f8a28e932901502
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/commit-msg
+@@ -0,0 +1,5 @@
++feat(timeline): add canonical group source operations
++
++Port the reviewed migration and occurrence-move source slice onto the full
++carrier and project-data schema floor, preserving legacy guards and bounded
++group conformance controls.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..a3e60754f3f3f90ec700baa15f8a28e932901502
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/commit-msg.txt
+@@ -0,0 +1,5 @@
++feat(timeline): add canonical group source operations
++
++Port the reviewed migration and occurrence-move source slice onto the full
++carrier and project-data schema floor, preserving legacy guards and bounded
++group conformance controls.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..328c6bda7a557d4f7ea4820c5e047e70b1f520df
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/report.md
+@@ -0,0 +1,32 @@
++# Report
++
++Implemented the private M2 canonical-group source prerequisite on exact base
++`e010e6a3868e963471244491bb6672c3e4a5135e`, porting only reviewed group source
++`80ddba79fa458e7e74e5bdb046424c4e2d979917`. Preserved the full carrier,
++project-data operation, ordinary schema floors, source-bound guards and
++materialization behavior. Added the migration-only legacy admission and the
++canonical occurrence move/read projection plus bounded schema, migration,
++move, inverse, ordering, concurrency and refusal controls.
++
++Candidate schema: 58 definitions / 32 operations; schema SHA-256
++`27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
++Working-tree content digest:
++`1964d2fca33c65cb66f829bda824916e4b0b67b29d32d0f6e09ead1212615f3e`.
++Harness commit/tree SHA is pending because workers cannot commit.
++
++Test command:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_current_group_slice.py tests/editing_conformance/test_group_read_view.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/editing_conformance/test_recipe_m2_group_move.py
++```
++
++Result: **170 passed in 178.07s**. `git diff --check` passed.
++
++Decisions: composed the group additions over `e010` rather than replacing its
++56/30 project-data floor; updated only schema inventory tests needed to prove
++ordinary 55/29, carrier 613, project-data 392, and composed 58/32. No new
++cross-area decision was required.
++
++Not run: full suites, HTTP/native pair, regeneration, artifact/release/pin,
++public activation, and frozen-branch mutation. Native group qualification is
++still unverified by design.
+diff --git a/tests/editing_conformance/test_pristine_initialize.py b/tests/editing_conformance/test_pristine_initialize.py
+index edeecab1742c414a37f5a355b987e550e6a592fa..ac8864cb5c5b5d2c0cbad79c8c943a7bf69fb267
+--- a/tests/editing_conformance/test_pristine_initialize.py
++++ b/tests/editing_conformance/test_pristine_initialize.py
+@@ -169,7 +169,7 @@
+     from tests.sdk.test_timeline_current_union_schema import without_text
+     from tests.sdk.test_timeline_materialization_schema_union import ordinary_schema
+ 
+-    assert len(schema['$defs']) == 57
++    assert len(schema['$defs']) == 58
+     assert len(ordinary_schema()['$defs']) == 55
+     schema = without_text(ordinary_schema())
+     for name in ('AssembledTargetArgs', 'ClipAddMediaArgs', 'WordAnchor', 'ClipAnchorArgs',
+diff --git a/tests/sdk/test_timeline_composed_schema.py b/tests/sdk/test_timeline_composed_schema.py
+index 64a36e00d0f0fb7933fe520675319fcaf0fa161b..ce91260aa84b10485f9bb6f8bd68edc84e40dfc6
+--- a/tests/sdk/test_timeline_composed_schema.py
++++ b/tests/sdk/test_timeline_composed_schema.py
+@@ -40,6 +40,11 @@
+                 'on': 1, 'track': 'parent/track:V1',
+                 'child_track': 'occurrence:occ/track:V1'},
+         },
++        'project-data.write': {
++            'schema_version': 1, 'op': 'project-data.write', 'version': '1',
++            'select': 'parent', 'args': {
++                'target': 'example', 'key': 'value', 'value': None, 'mode': 'replace'},
++        },
+     })
+     conditions = {condition['if']['properties']['op']['const']: condition['then']
+                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
+diff --git a/tests/sdk/test_timeline_current_union_schema.py b/tests/sdk/test_timeline_current_union_schema.py
+index cd5ec909c055ba26deeb3ee99b247786e100e9f6..6eaa72167bb08f965b72653675853dd4cc07ffbd
+--- a/tests/sdk/test_timeline_current_union_schema.py
++++ b/tests/sdk/test_timeline_current_union_schema.py
+@@ -130,8 +130,10 @@
+ 
+ def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
+     assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
+-    assert len(_SCHEMA['$defs']) == 56
+-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 30
++    assert len(ordinary_schema()['$defs']) == 55
++    assert len(ordinary_schema()['$defs']['EditCommand']['allOf']) == 29
++    assert len(_SCHEMA['$defs']) == 58
++    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
+ 
+ 
+ def test_each_added_definition_and_operation_matches_its_approved_source():
+@@ -185,8 +187,9 @@
+                 'occurrence.swap-media', 'placement.create', 'placement.move',
+                 'placement.unplace', 'producer.guard', 'shot.pool', 'shot.set',
+                 'timeline.assembled-target', 'timeline.init', 'timeline.inverse',
+-                'timeline.restore', 'track.create', 'track.set'}
++                'timeline.restore', 'timeline.migrate-groups', 'occurrence.move',
++                'track.create', 'track.set'}
+     actual = [item['if']['properties']['op']['const']
+               for item in _SCHEMA['$defs']['EditCommand']['allOf']]
+-    assert len(actual) == len(set(actual)) == 30
++    assert len(actual) == len(set(actual)) == 32
+     assert set(actual) == expected == set(operations()) | {'timeline.inverse', 'timeline.restore'}
+diff --git a/tests/sdk/test_timeline_current_union_schema.py.rej b/tests/sdk/test_timeline_current_union_schema.py.rej
+deleted file mode 100644
+index 06bb2ab84abb7462f4a639748666015f4f3459b6..0000000000000000000000000000000000000000
+--- a/tests/sdk/test_timeline_current_union_schema.py.rej
++++ /dev/null
+@@ -1,24 +0,0 @@
+-diff a/tests/sdk/test_timeline_current_union_schema.py b/tests/sdk/test_timeline_current_union_schema.py	(rejected hunks)
+-@@ -130,8 +130,8 @@ def s2_slice():
+- 
+- def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
+-     assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
+--    assert len(_SCHEMA['$defs']) == 55
+--    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 29
+-+    assert len(ordinary_schema()['$defs']) == 55
+-+    assert len(ordinary_schema()['$defs']['EditCommand']['allOf']) == 29
+- 
+- 
+- def test_each_added_definition_and_operation_matches_its_approved_source():
+-@@ -185,8 +185,9 @@ def test_closed_union_operation_inventory_is_exactly_the_supported_cohort():
+-                 'occurrence.swap-media', 'placement.create', 'placement.move',
+-                 'placement.unplace', 'producer.guard', 'shot.pool', 'shot.set',
+-                 'timeline.assembled-target', 'timeline.init', 'timeline.inverse',
+--                'timeline.restore', 'track.create', 'track.set'}
+-+                'timeline.restore', 'timeline.migrate-groups', 'occurrence.move',
+-+                'track.create', 'track.set'}
+-     actual = [item['if']['properties']['op']['const']
+-               for item in _SCHEMA['$defs']['EditCommand']['allOf']]
+--    assert len(actual) == len(set(actual)) == 29
+-+    assert len(actual) == len(set(actual)) == 31
+-     assert set(actual) == expected == set(operations()) | {'timeline.inverse', 'timeline.restore'}
+diff --git a/tests/sdk/test_timeline_materialization_schema_union.py b/tests/sdk/test_timeline_materialization_schema_union.py
+index 1b8bbe4a5e772ebffa1b0f6b6b5b9330d24f9b2f..995be7fea0a86e10a78d12737588f92da446d357
+--- a/tests/sdk/test_timeline_materialization_schema_union.py
++++ b/tests/sdk/test_timeline_materialization_schema_union.py
+@@ -17,11 +17,22 @@
+ PRIVATE_S2_SHA256 = 'f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f'
+ PRIVATE_CARRIER_SHA256 = '613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3'
+ PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
++PRIVATE_GROUP_SHA256 = '27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb'
++
++
++def without_groups(schema):
++    for name in ('MigrateGroupsArgs', 'OccurrenceMoveArgs'):
++        del schema['$defs'][name]
++    schema['$defs']['EditCommand']['allOf'] = [
++        clause for clause in schema['$defs']['EditCommand']['allOf']
++        if clause['if']['properties']['op']['const'] not in
++        ('timeline.migrate-groups', 'occurrence.move')]
++    return schema
+ 
+ 
+ def ordinary_schema():
+     """Remove only the reviewed carrier additions, checking each complete branch."""
+-    candidate = copy.deepcopy(_SCHEMA)
++    candidate = without_groups(copy.deepcopy(_SCHEMA))
+     del candidate['$defs']['ProjectDataWriteArgs']
+     candidate['$defs']['EditCommand']['allOf'] = [
+         clause for clause in candidate['$defs']['EditCommand']['allOf']
+@@ -60,13 +71,21 @@
+     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
+     assert len(ordinary['$defs']) == 55
+     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
+-    assert len(_SCHEMA['$defs']) == 56
+-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 30
++    assert len(_SCHEMA['$defs']) == 58
++    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
+     assert compatibility_errors(ordinary, _SCHEMA) == []
+ 
+ 
+-def test_removing_only_project_data_addition_reconstructs_private_carrier_bytes():
+-    candidate = copy.deepcopy(_SCHEMA)
++def test_removing_only_group_additions_reconstructs_project_data_bytes():
++    candidate = without_groups(copy.deepcopy(_SCHEMA))
++    raw = (json.dumps(candidate, indent=2) + '\n').encode()
++    assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
++    assert len(candidate['$defs']) == 56
++    assert len(candidate['$defs']['EditCommand']['allOf']) == 30
++
++
++def test_removing_group_and_project_data_additions_reconstructs_private_carrier_bytes():
++    candidate = without_groups(copy.deepcopy(_SCHEMA))
+     del candidate['$defs']['ProjectDataWriteArgs']
+     candidate['$defs']['EditCommand']['allOf'] = [
+         clause for clause in candidate['$defs']['EditCommand']['allOf']
+@@ -79,10 +98,17 @@
+ 
+ 
+ def test_project_data_proposal_has_a_new_closed_schema_hash():
+-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
++    raw = (json.dumps(without_groups(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
+     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
+ 
+ 
++def test_private_group_proposal_is_exactly_two_additions_on_project_data_floor():
++    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
++    assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
++    assert len(_SCHEMA['$defs']) == 58
++    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
++
++
+ def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
+     from tests.sdk.test_timeline_current_union_schema import FIXTURES, baseline
+ 
+diff --git a/tests/sdk/test_timeline_materialization_schema_union.py.rej b/tests/sdk/test_timeline_materialization_schema_union.py.rej
+deleted file mode 100644
+index 8e182e04370b8488f333f698f66c85848f527614..0000000000000000000000000000000000000000
+--- a/tests/sdk/test_timeline_materialization_schema_union.py.rej
++++ /dev/null
+@@ -1,46 +0,0 @@
+-diff a/tests/sdk/test_timeline_materialization_schema_union.py b/tests/sdk/test_timeline_materialization_schema_union.py	(rejected hunks)
+-@@ -15,11 +15,18 @@ from tests.sdk.command_schema_compatibility import compatibility_errors
+- REFERENCES = ('ScopedId', 'EntityRef', 'TargetKey')
+- ORDINARY_SHA256 = '6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d'
+- PRIVATE_S2_SHA256 = 'f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f'
+-+PRIVATE_GROUP_SHA256 = '428a396acba00dd872b3480a9d7dbdc9ef268d72e2e7be8607941f8b90f54e65'
+- 
+- 
+- def ordinary_schema():
+-     """Remove only the reviewed carrier additions, checking each complete branch."""
+-     candidate = copy.deepcopy(_SCHEMA)
+-+    for name in ('MigrateGroupsArgs', 'OccurrenceMoveArgs'):
+-+        del candidate['$defs'][name]
+-+    candidate['$defs']['EditCommand']['allOf'] = [
+-+        clause for clause in candidate['$defs']['EditCommand']['allOf']
+-+        if clause['if']['properties']['op']['const'] not in
+-+        ('timeline.migrate-groups', 'occurrence.move')]
+-     for name in REFERENCES:
+-         branches = candidate['$defs'][name]['anyOf']
+-         assert len(branches) == 4
+-@@ -51,11 +58,24 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
+-     ordinary = ordinary_schema()
+-     raw = (json.dumps(ordinary, indent=2) + '\n').encode()
+-     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
+--    assert len(ordinary['$defs']) == len(_SCHEMA['$defs']) == 55
+-+    assert len(ordinary['$defs']) == 55
+-+    assert len(_SCHEMA['$defs']) == 57
+-     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
+-+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 31
+-     assert compatibility_errors(ordinary, _SCHEMA) == []
+- 
+- 
+-+def test_private_group_proposal_is_exactly_two_closed_additions_on_current_floor():
+-+    assert hashlib.sha256((json.dumps(_SCHEMA, indent=2) + '\n').encode()).hexdigest() == PRIVATE_GROUP_SHA256
+-+    assert len(_SCHEMA['$defs']) == 57
+-+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 31
+-+    assert {
+-+        clause['if']['properties']['op']['const']
+-+        for clause in _SCHEMA['$defs']['EditCommand']['allOf']
+-+        if clause['if']['properties']['op']['const'] in ('timeline.migrate-groups', 'occurrence.move')
+-+    } == {'timeline.migrate-groups', 'occurrence.move'}
+-+
+-+
+- def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
+-     from tests.sdk.test_timeline_current_union_schema import FIXTURES, baseline
+- 
+
+exec
+/bin/bash -lc "git rev-parse HEAD; git diff --check; git status --short --untracked-files=all; find . -type f \\( -name '*.rej' -o -name '*.orig' \\) -print" in /home/user/work/wt/agt-m2-group-full-carrier-source-compose
+exec
+/bin/bash -lc "test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-carrier-source-candidate.md && echo handoff=present; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-full-carrier-source-compose/DONE && echo done=present; sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-carrier-source-candidate.md" in /home/user/work/wt/agt-m2-group-full-carrier-source-compose
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib, json
+from pathlib import Path
+p=Path('astrid/core/timeline/schema/edit-command.schema.json')
+x=json.loads(p.read_text())
+ops=[i['if']['properties']['op']['const'] for i in x['"'$defs'"']['EditCommand']['allOf']]
+print(hashlib.sha256(p.read_bytes()).hexdigest(), len(x['"'$defs'"']), len(ops), [op for op in ops if op in ('timeline.migrate-groups','occurrence.move')])
+PY" in /home/user/work/wt/agt-m2-group-full-carrier-source-compose
+ succeeded in 22ms:
+handoff=present
+done=present
+# Agent M2 canonical-group full-carrier source candidate
+
+Status: private source candidate only. No public freeze, generated artifact,
+pin, activation, Runtime source change, native qualification, or App adoption.
+
+## Exact basis and composition
+
+- Base: `e010e6a3868e963471244491bb6672c3e4a5135e`.
+- Reviewed group source: `80ddba79fa458e7e74e5bdb046424c4e2d979917`, applied as
+  the exact reviewed semantic/schema/capture delta.
+- Runtime shape ACK: `scratchpad/orch/design/runtime-group80-contract-delta.md`.
+- Candidate schema SHA-256: `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
+- Candidate schema inventory: 58 definitions, 32 operation clauses.
+  The two added operation clauses are exactly `timeline.migrate-groups` and
+  `occurrence.move`; `project-data.write` remains present.
+- Working-tree content digest (sorted tracked and non-ignored candidate files,
+  path and bytes):
+  `1964d2fca33c65cb66f829bda824916e4b0b67b29d32d0f6e09ead1212615f3e`.
+  A commit/tree SHA is pending the harness commit because this worker cannot
+  write the repository index or create commits.
+
+Schema-floor checks reconstruct the prior floors by removing only the intended
+additions:
+
+- ordinary: 55 definitions / 29 operations, SHA-256
+  `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`;
+- full carrier: 55 / 29, SHA-256
+  `613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3`;
+- full carrier plus project-data: 56 / 30, SHA-256
+  `39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d`;
+- composed candidate: 58 / 32, with only the two group clauses added to the
+  56 / 30 source.
+
+## Source behavior
+
+The candidate registers the reviewed migration and occurrence-move commands,
+records canonical ownership/capture data, uses chapters-as-shots, preserves
+source-bound allocations and authoring guards, and keeps the read-side
+`pinnedShotGroups` projection migration-only. Legacy groups require the sole
+recorded migration command; unsupported timing/maps, interleaving, duplicate
+IDs, shared sources, occupied lanes, and malformed shapes refuse without
+mutating the draft. Existing inverse, order, concurrency, materialization,
+and version behavior remains in place.
+
+## Evidence
+
+Command run:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_current_group_slice.py tests/editing_conformance/test_group_read_view.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/editing_conformance/test_recipe_m2_group_move.py
+```
+
+Result: **170 passed in 178.07s**. `git diff --check` is clean.
+
+No full suite, localhost/browser/live-socket suite, HTTP/native-pair test,
+schema regeneration, artifact write, release, or frozen branch mutation was
+performed. Native remains unqualified pending a separately generated and
+agreed counterpart. No new cross-area semantic decision was needed.
+
+ succeeded in 106ms:
+27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb 58 32 ['timeline.migrate-groups', 'occurrence.move']
+
+ succeeded in 986ms:
+e010e6a3868e963471244491bb6672c3e4a5135e
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/core/timeline/shot_composition.py
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_pristine_initialize.py
+ M tests/sdk/test_timeline_composed_schema.py
+ M tests/sdk/test_timeline_current_union_schema.py
+ M tests/sdk/test_timeline_materialization_schema_union.py
+?? astrid/sdk/timeline/group_view.py
+?? astrid/sdk/timeline/new_group_commands.py
+?? astrid/sdk/timeline/occurrence_commands.py
+?? tests/editing_conformance/test_current_group_slice.py
+?? tests/editing_conformance/test_group_read_view.py
+?? tests/editing_conformance/test_recipe_m2_group_migration.py
+?? tests/editing_conformance/test_recipe_m2_group_move.py
+
+codex
+Implemented the private canonical-group source candidate on base `e010e6a3`, preserving carrier/project-data floors and adding only the reviewed group delta from `80ddba79`.
+
+- Schema: 58 definitions / 32 operations; SHA-256 `27f2e3ed...9329cfb`.
+- Tests: 170 passed.
+- `git diff --check`: passed.
+- No full, HTTP/native, regeneration, release, pin, or activation run.
+- Native qualification remains pending separately generated counterpart.
+- Handoff: [agent-group-full-carrier-source-candidate.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-carrier-source-candidate.md)
+- `DONE`, report, and commit message written. Harness commit/tree SHA remains pending.
+tokens used
+176,038
+Implemented the private canonical-group source candidate on base `e010e6a3`, preserving carrier/project-data floors and adding only the reviewed group delta from `80ddba79`.
+
+- Schema: 58 definitions / 32 operations; SHA-256 `27f2e3ed...9329cfb`.
+- Tests: 170 passed.
+- `git diff --check`: passed.
+- No full, HTTP/native, regeneration, release, pin, or activation run.
+- Native qualification remains pending separately generated counterpart.
+- Handoff: [agent-group-full-carrier-source-candidate.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-carrier-source-candidate.md)
+- `DONE`, report, and commit message written. Harness commit/tree SHA remains pending.

@@ -1,0 +1,400 @@
++        {"x": c * (width + gap), "y": r * (height + gap), "width": width, "height": height}
++        for r in range(rows) for c in range(columns)
++    ]
++
+ # The frozen donor declared these units in each element's metadata. The current
+ # V3 element declarations do not carry that metadata yet, so the SDK preserves
+ # the admitted editing units here until the declarations are joined by their owner.
+@@ -34,8 +153,6 @@
+     """``(canvas px per stored unit, the params stored in those units)`` as the element DECLARES it in its
+     element.yaml (``metadata.units: {scale: 6, logical: [x, y, keyframes[].x, keyframes[].y]}``). An element
+     that declares nothing stores canvas px. Every surface (show, the sheet, --set, formulas) reads this."""
+-    from astrid.sdk.timeline_address import element_schema
+-
+     units = _declared_units(element)
+     paths = frozenset(str(p) for p in units.get("logical") or [])
+     scale = float(units.get("scale") or LOGICAL_PX) if paths else 1.0
+@@ -54,8 +171,6 @@
+ def param_unit(element: str, path: str) -> str | None:
+     """What a param's number means, as the element declares it: ``canvas px`` (stored on a grid or not),
+     ``clip frames``, ``clip seconds``; None when the element says nothing about it."""
+-    from astrid.sdk.timeline_address import element_schema
+-
+     units = _declared_units(element)
+     key = _unit_path(path)
+     for name, label in (("frames", "clip frames"), ("seconds", "clip seconds")):
+diff --git a/astrid/sdk/timeline_editing.py b/astrid/sdk/timeline_editing.py
+index b1c1843f7744e5bd3e31e7304266927b45c4ede7..9afd3c9aa38e817d5e570970bc807163ee00874c
+--- a/astrid/sdk/timeline_editing.py
++++ b/astrid/sdk/timeline_editing.py
+@@ -15,7 +15,6 @@
+ import re
+ import uuid
+ from collections.abc import Mapping, MutableMapping, Sequence
+-from fractions import Fraction
+ from typing import Any
+ 
+ from astrid.sdk.timeline._common import TimelineEditError
+@@ -345,199 +344,7 @@
+     _set_clip_interval(clip, new_start, new_end)
+     clip["track"] = target_track.get("id")
+     _clips(timeline).append(clip)
+-    return clip
+-
+-
+-def retime(clip: MutableMapping[str, Any], *, start: int | float | None = None, end: int | float | None = None, ripple: str = "none") -> MutableMapping[str, Any]:
+-    """Change one interval; neighbours never move unless ripple is explicit."""
+-
+-    if ripple != "none":
+-        raise TimelineEditError("only ripple='none' is supported by the primitive; use an explicit sequence for ripple")
+-    current_start = clip.get("at", 0)
+-    current_end = current_start + _clip_duration(clip)
+-    new_start, new_end = current_start if start is None else start, current_end if end is None else end
+-    if start is not None and end is None:
+-        new_end = new_start + _clip_duration(clip)
+-    if new_end <= new_start:
+-        raise TimelineEditError("retimed interval must be non-empty")
+-    _set_clip_interval(clip, new_start, new_end)
+-    return clip
+-
+-
+-def retime_with_ripple(
+-    container: MutableMapping[str, Any],
+-    clip_id: str,
+-    *,
+-    start: int | float | None = None,
+-    end: int | float | None = None,
+-    scope: str = "track",
+-    parent_duration: str = "preserve",
+-) -> MutableMapping[str, Any]:
+-    """Retime one visual clip and shift only later clips on its own track.
+-
+-    Ripple is deliberately opt-in and narrowly scoped. ``scope='track'`` is
+-    the only supported scope: audio/voice/music tracks are rejected, and no
+-    other track is ever moved. ``parent_duration`` makes overflow behavior
+-    explicit (``preserve`` rejects overflow, ``extend`` grows the container,
+-    and ``trim`` sets it to the latest resulting clip end).
+-    """
+-
+-    if scope != "track":
+-        raise TimelineEditError("only scope='track' is supported by retime_with_ripple")
+-    if parent_duration not in {"preserve", "extend", "trim"}:
+-        raise TimelineEditError("parent_duration must be 'preserve', 'extend', or 'trim'")
+-    timeline = _timeline(container)
+-    track, clips, clip = _find_clip(container, clip_id)
+-    kind = str(track.get("kind", "")).lower()
+-    if kind in {"audio", "voice", "vo", "music", "sound"}:
+-        raise TimelineEditError("ripple is not allowed on audio/voice/music tracks")
+-    old_start = clip.get("at", 0)
+-    old_end = old_start + _clip_duration(clip)
+-    if old_end is None or old_end <= old_start:
+-        raise TimelineEditError("existing interval must be non-empty")
+-    new_start = old_start if start is None else start
+-    new_end = new_start + _clip_duration(clip) if end is None else end
+-    if new_end <= new_start:
+-        raise TimelineEditError("retimed interval must be non-empty")
+-
+-    delta = new_end - old_end
+-    shifted: list[tuple[MutableMapping[str, Any], Any, Any]] = []
+-    for sibling in clips:
+-        if sibling is clip or sibling.get("track") != track.get("id"):
+-            continue
+-        sibling_start = sibling.get("at", 0)
+-        sibling_end = sibling_start + _clip_duration(sibling)
+-        if sibling_start >= old_end and delta:
+-            shifted.append((sibling, sibling_start + delta, sibling_end + delta))
+-
+-    resulting_end = max([new_end, *(end_value for _, _, end_value in shifted)] or [new_end])
+-    existing_duration = timeline.get("duration")
+-    if (
+-        parent_duration == "preserve"
+-        and existing_duration is not None
+-        and resulting_end > existing_duration
+-    ):
+-        raise TimelineEditError(
+-            "ripple exceeds parent duration; choose parent_duration='extend' or 'trim'"
+-        )
+-
+-    _set_clip_interval(clip, new_start, new_end)
+-    for sibling, sibling_start, sibling_end in shifted:
+-        _set_clip_interval(sibling, sibling_start, sibling_end)
+-    if parent_duration == "extend":
+-        timeline["duration"] = max(existing_duration or 0, resulting_end)
+-    elif parent_duration == "trim":
+-        timeline["duration"] = max(
+-            [item.get("at", 0) + _clip_duration(item) for item in clips] or [0]
+-        )
+     return clip
+-
+-
+-def frame_time(frame: int, fps: int | float) -> Fraction:
+-    if isinstance(frame, bool) or isinstance(fps, bool) or frame < 0 or fps <= 0:
+-        raise TimelineEditError("frame and fps must be non-negative/positive")
+-    return Fraction(frame) / Fraction(str(fps))
+-
+-
+-def _time_fraction(value: int | float | Fraction, label: str) -> Fraction:
+-    if isinstance(value, bool) or not isinstance(value, (int, float, Fraction)):
+-        raise TimelineEditError(f"{label} must be a number")
+-    return value if isinstance(value, Fraction) else Fraction(str(value))
+-
+-
+-def _playback_rate(speed: int | float | Fraction) -> Fraction:
+-    rate = _time_fraction(speed, "speed")
+-    if rate <= 0:
+-        raise TimelineEditError("speed must be positive")
+-    return rate
+-
+-
+-def source_to_timeline_time(
+-    source_time: int | float | Fraction,
+-    *,
+-    source_start: int | float | Fraction = 0,
+-    timeline_start: int | float | Fraction = 0,
+-    speed: int | float | Fraction = 1,
+-) -> Fraction:
+-    """Map a source timestamp into its local timeline timestamp.
+-
+-    The half-open interval mapping is ``timeline_start + (source_time -
+-    source_start) / speed``.  Fractions keep 30fps/0.1s boundaries exact;
+-    callers can apply :func:`quantize_time` at the renderer boundary.
+-    """
+-
+-    rate = _playback_rate(speed)
+-    return _time_fraction(timeline_start, "timeline_start") + (
+-        _time_fraction(source_time, "source_time") - _time_fraction(source_start, "source_start")
+-    ) / rate
+-
+-
+-def timeline_to_source_time(
+-    timeline_time: int | float | Fraction,
+-    *,
+-    source_start: int | float | Fraction = 0,
+-    timeline_start: int | float | Fraction = 0,
+-    speed: int | float | Fraction = 1,
+-) -> Fraction:
+-    """Map a local timeline timestamp back into source time."""
+-
+-    rate = _playback_rate(speed)
+-    return _time_fraction(source_start, "source_start") + (
+-        _time_fraction(timeline_time, "timeline_time") - _time_fraction(timeline_start, "timeline_start")
+-    ) * rate
+-
+-
+-def quantize_time(seconds: int | float | Fraction, fps: int | float, *, policy: str = "nearest") -> int:
+-    if isinstance(fps, bool) or isinstance(seconds, bool) or fps <= 0 or policy not in {"floor", "ceil", "nearest"}:
+-        raise TimelineEditError("invalid fps or quantization policy")
+-    frames = _time_fraction(seconds, "seconds") * Fraction(str(fps))
+-    if policy == "floor":
+-        return math.floor(frames)
+-    if policy == "ceil":
+-        return math.ceil(frames)
+-    return math.floor(frames + Fraction(1, 2))
+-
+-
+-def quantize_interval(
+-    start: int | float | Fraction,
+-    end: int | float | Fraction,
+-    fps: int | float,
+-    *,
+-    policy: str = "nearest",
+-) -> dict[str, Any]:
+-    """Quantize a half-open interval and report requested/applied boundaries.
+-
+-    The returned frame numbers are renderer-facing values; the Fraction
+-    values are the exact seconds represented by those frames. A collapsed
+-    interval is rejected instead of becoming a zero-frame clip.
+-    """
+-
+-    start_value = _time_fraction(start, "start")
+-    end_value = _time_fraction(end, "end")
+-    if end_value <= start_value:
+-        raise TimelineEditError("interval must be non-empty")
+-    if isinstance(fps, bool) or fps <= 0:
+-        raise TimelineEditError("fps must be positive")
+-    fps_value = Fraction(str(fps))
+-    start_frame = quantize_time(start_value, fps_value, policy=policy)
+-    end_frame = quantize_time(end_value, fps_value, policy=policy)
+-    if end_frame <= start_frame:
+-        raise TimelineEditError(
+-            "quantization collapsed the interval; choose a wider interval or a different policy"
+-        )
+-    applied_start = Fraction(start_frame, 1) / fps_value
+-    applied_end = Fraction(end_frame, 1) / fps_value
+-    return {
+-        "policy": policy,
+-        "fps": fps_value,
+-        "requested_start": start_value,
+-        "requested_end": end_value,
+-        "start_frame": start_frame,
+-        "end_frame": end_frame,
+-        "applied_start": applied_start,
+-        "applied_end": applied_end,
+-        "rounded": applied_start != start_value or applied_end != end_value,
+-    }
+ 
+ 
+ def sequence(clips: Sequence[MutableMapping[str, Any]], *, start: int | float = 0, durations: Sequence[int | float] | None = None, gap: int | float = 0) -> Sequence[MutableMapping[str, Any]]:
+@@ -569,16 +376,6 @@
+         else:
+             _set_clip_interval(clip, anchor - duration / 2, anchor + duration / 2)
+     return clips
+-
+-
+-def grid(rows: int, columns: int, *, gap: float = 0.0) -> list[dict[str, float]]:
+-    if rows <= 0 or columns <= 0 or gap < 0 or gap >= 1:
+-        raise TimelineEditError("invalid grid dimensions or gap")
+-    width, height = (1 - gap * (columns - 1)) / columns, (1 - gap * (rows - 1)) / rows
+-    return [
+-        {"x": c * (width + gap), "y": r * (height + gap), "width": width, "height": height}
+-        for r in range(rows) for c in range(columns)
+-    ]
+ 
+ 
+ def fit_duration(container: MutableMapping[str, Any], *, mode: str = "extend") -> int | float:
+@@ -875,9 +672,8 @@
+ 
+ __all__ = [
+     "TimelineEditError", "clone_candidate", "add_track", "add_shot", "place_media",
+-    "replace_media", "duplicate", "remove", "move", "retime", "frame_time",
+-    "source_to_timeline_time", "timeline_to_source_time", "quantize_time", "quantize_interval",
+-    "sequence", "align", "grid", "fit_duration", "reorder_layers", "retime_with_ripple",
++    "replace_media", "duplicate", "remove", "move",
++    "sequence", "align", "fit_duration", "reorder_layers",
+     "add_authoring_shot", "duplicate_authoring_shot", "remove_authoring_shot",
+     "move_occurrence_group",
+ ]
+diff --git a/tests/test_timeline_editing_helpers.py b/tests/test_timeline_editing_helpers.py
+index 6a483b5aa36d53d853d882cd3782c8517db4d476..392651602e0c91fa4d8b33f5caa94d6746609659
+--- a/tests/test_timeline_editing_helpers.py
++++ b/tests/test_timeline_editing_helpers.py
+@@ -11,18 +11,18 @@
+     align,
+     duplicate,
+     fit_duration,
+-    frame_time,
+-    grid,
+-    place_media,
+     move,
+-    retime,
+-    quantize_interval,
+-    quantize_time,
++    place_media,
+     remove,
+     reorder_layers,
+     replace_media,
+-    retime_with_ripple,
+     sequence,
++)
++from astrid.sdk.timeline.units import (
++    frame_time,
++    grid,
++    quantize_interval,
++    quantize_time,
+     source_to_timeline_time,
+     timeline_to_source_time,
+ )
+@@ -90,28 +90,7 @@
+         quantize_interval(0.01, 0.02, 24)
+ 
+ 
+-def test_ripple_is_track_scoped_and_never_moves_audio():
+-    candidate = _candidate()
+-    picture = add_track(candidate, kind="visual", track_id="picture")
+-    audio = add_track(candidate, kind="audio", track_id="music")
+-    first = place_media(candidate, "a", track=picture, start=0, end=1, clip_id="first")
+-    second = place_media(candidate, "b", track=picture, start=1, end=2, clip_id="second")
+-    music = place_media(candidate, "m", track=audio, start=0, end=2, clip_id="music")
+-    candidate["timeline"]["duration"] = 2
+-
+-    retime_with_ripple(candidate, first["id"], end=1.5, parent_duration="extend")
+-    assert (first["at"], first["from"], first["to"]) == (0, 0, 1.5)
+-    assert (second["at"], second["from"], second["to"]) == (1.5, 0, 1)
+-    assert (music["at"], music["from"], music["to"]) == (0, 0, 2)
+-    assert candidate["timeline"]["duration"] == 2.5
+-
+-    with pytest.raises(TimelineEditError, match="audio/voice/music"):
+-        retime_with_ripple(candidate, music["id"], end=3, parent_duration="extend")
+-    with pytest.raises(TimelineEditError, match="parent duration"):
+-        retime_with_ripple(candidate, first["id"], end=3, parent_duration="preserve")
+-
+-
+-def test_canonical_source_trim_speed_move_and_retime_intervals():
++def test_canonical_source_trim_speed_and_move_intervals():
+     candidate = _candidate()
+     track = add_track(candidate, kind="visual")
+     clip = place_media(candidate, "trimmed", track=track, start=4, end=5,
+@@ -125,9 +104,7 @@
+                     source_start=2, source_end=4, speed=2)
+     moved = move(candidate, clip["id"], track=track, start=10)
+     assert (moved["at"], moved["from"], moved["to"], moved["speed"]) == (10, 2, 4, 2)
+-    retime(moved, start=20)
+-    assert (moved["at"], moved["from"], moved["to"], moved["speed"]) == (20, 2, 4, 2)
+-    retime(moved, end=21.5)
++    move(candidate, moved["id"], track=track, start=20, end=21.5)
+     assert (moved["at"], moved["from"], moved["to"], moved["speed"]) == (20, 2, 5, 2)
+ 
+ 
+@@ -140,19 +117,6 @@
+         place_media(candidate, "asset", track=track, start=0, end=1, to=5)
+     clip = place_media(candidate, "asset", track=track, start=0, end=1, speed=2, hold=2)
+     assert clip["hold"] == 2
+-
+-
+-def test_ripple_shifts_canonical_intervals_without_touching_audio():
+-    candidate = _candidate()
+-    picture = add_track(candidate, kind="visual", track_id="picture")
+-    audio = add_track(candidate, kind="audio", track_id="music")
+-    first = place_media(candidate, "a", track=picture, start=0, end=1, source_start=3, source_end=4)
+-    second = place_media(candidate, "b", track=picture, start=1, end=2, source_start=8, source_end=9)
+-    music = place_media(candidate, "m", track=audio, start=0, end=2)
+-    before_audio = dict(music)
+-    retime_with_ripple(candidate, first["id"], end=1.5, parent_duration="extend")
+-    assert (second["at"], second["from"], second["to"]) == (1.5, 8, 9)
+-    assert music == before_audio
+ 
+ 
+ def test_track_ownership_and_removal_cannot_leave_dangling_clips():
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d07-retime-cut/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d07-retime-cut/BLOCKED && git diff --check && git status --short && printf '"'\\n--- worker artifacts ---\\n' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d07-retime-cut/{commit-msg,report.md,DONE}" in /home/user/work/wt/agt-m2-d07-retime-cut
+ succeeded in 354ms:
+ M astrid/sdk/__init__.py
+ M astrid/sdk/timeline/units.py
+ M astrid/sdk/timeline_editing.py
+ M tests/test_timeline_editing_helpers.py
+
+--- worker artifacts ---
+-rw-r--r-- 1 root root    0 Oct 20 09:26 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d07-retime-cut/DONE
+-rw-r--r-- 1 root root  236 Oct 20 09:26 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d07-retime-cut/commit-msg
+-rw-r--r-- 1 root root 3449 Oct 20 09:26 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d07-retime-cut/report.md
+
+codex
+## Completed
+
+- Removed deprecated `retime`/`retime_with_ripple` helpers: 206 lines deleted.
+- Relocated rational time, source-window, quantization, and grid utilities to `astrid/sdk/timeline/units.py`.
+- Updated SDK exports and tests; native Checkout/compiler trim, move, and ripple coverage remains.
+- Wrote [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d07-retime-cut/report.md), commit message, and `DONE`.
+
+Tests:
+
+- Targeted editing/native suite: **434 passed, 17 deselected**
+- Importer/authoring neighbors: **99 passed, 10 deselected**
+- Ruff: **passed**
+- Full/live suites: not run, per instruction.
+tokens used
+195,776
+## Completed
+
+- Removed deprecated `retime`/`retime_with_ripple` helpers: 206 lines deleted.
+- Relocated rational time, source-window, quantization, and grid utilities to `astrid/sdk/timeline/units.py`.
+- Updated SDK exports and tests; native Checkout/compiler trim, move, and ripple coverage remains.
+- Wrote [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d07-retime-cut/report.md), commit message, and `DONE`.
+
+Tests:
+
+- Targeted editing/native suite: **434 passed, 17 deselected**
+- Importer/authoring neighbors: **99 passed, 10 deselected**
+- Ruff: **passed**
+- Full/live suites: not run, per instruction.

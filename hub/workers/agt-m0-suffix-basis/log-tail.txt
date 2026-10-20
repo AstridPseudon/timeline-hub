@@ -1,0 +1,400 @@
++import subprocess
++import unittest
++from dataclasses import dataclass, replace
++from pathlib import Path
++from typing import Any, Mapping
++
++
++def frozen_command_type():
++    source = subprocess.check_output(
++        ["git", "show", "origin/codex/handover-timeline-r4-20261019-candidate-sdk:"
++         "astrid/sdk/timeline/commands.py"],
++        cwd=Path(__file__).resolve().parents[2], text=True,
++    )
++    node = next(n for n in ast.parse(source).body
++                if isinstance(n, ast.ClassDef) and n.name == "EditCommand")
++    namespace = {"__name__": __name__, "dataclass": dataclass, "copy": copy,
++                 "Mapping": Mapping, "Any": Any}
++    exec(compile(ast.Module(body=[node], type_ignores=[]), "frozen-r4:EditCommand", "exec"),
++         namespace)
++    return namespace["EditCommand"]
++
++
++EditCommand = frozen_command_type()
++CLIP = "parent/clip:c"
++NEW = "parent/clip:new"
++ANCHOR = "cut:a:end"
++
++
++def key(sid, path):
++    return f"{sid}::{path}"
++
++
++def tagged(state, path):
++    return ({"state": "present", "value": copy.deepcopy(state[path])}
++            if path in state else {"state": "absent"})
++
++
++class Refused(ValueError):
++    pass
++
++
++def execute(state, call, *, record=False):
++    """A four-operation semantic model; these are NOT full R4 op schemas."""
++    result = copy.deepcopy(state)
++    target = call.select
++    reads, writes, bindings = set(), {}, {}
++    if call.op == "timeline.add":
++        target, = call.created
++        reads.add(key(target, "identity"))
++        if key(target, "identity") in state:
++            raise Refused("created identity collision")
++        writes = {key(target, "identity"): target,
++                  key(target, "intent.on"): {"fixed": call.args["at"]}}
++    else:
++        reads.add(key(target, "identity"))
++        if key(target, "identity") not in state:
++            raise Refused("deleted target")
++        if call.op == "clip.set-param":
++            path = key(target, call.args["path"])
++            reads.add(path)
++            writes[path] = call.args["value"]
++        elif call.op in {"clip.on", "clip.nudge"}:
++            path = key(target, "intent.on")
++            reads.add(path)
++            expression = copy.deepcopy(state[path])
++            if call.op == "clip.on":
++                moment = call.args["moment"]
++                expression = ({"anchor": ANCHOR, "offset": 0}
++                              if moment == ANCHOR else {"fixed": moment})
++            else:
++                part = "offset" if "anchor" in expression else "fixed"
++                expression[part] += call.args["seconds"]
++            if "anchor" in expression:
++                reads.add(key(expression["anchor"], "identity"))
++                bindings[ANCHOR] = expression["anchor"]
++            writes[path] = expression
++        else:
++            raise Refused("unsupported model operation")
++    expected = {path: tagged(state, path) for path in sorted(reads)}
++    if not record and (call.expect != expected or dict(call.bindings or {}) != bindings):
++        raise Refused("original guards/bindings do not match reconstructed basis")
++    result.update(copy.deepcopy(writes))
++    recorded = replace(call, expect=expected, bindings=bindings, created=call.created or (),
++                       authorship={path: "direct" for path in writes})
++    return result, recorded, reads, set(writes)
++
++
++def command(state, op, args, *, target=CLIP, created=()):
++    call = EditCommand(op, target, args, version="model-v1", resolved=(target,) if target else (),
++                       created=created)
++    return execute(state, call, record=True)[1]
++
++
++def replay(state, calls):
++    reads, writes = set(), set()
++    for wire in calls:
++        # Real frozen dataclass/to_json; no production schema validator is called.
++        call = EditCommand(**wire)
++        state, _, consumed, emitted = execute(state, call)
++        reads.update(consumed)
++        writes.update(emitted)
++    return state, reads, writes
++
++
++def start(state, target=CLIP):
++    """Model compiler: a surviving cut-end binding follows upstream duration."""
++    expression = state[key(target, "intent.on")]
++    return (state["parent::duration"] + expression["offset"]
++            if "anchor" in expression else expression["fixed"])
++
++
++def request(server, base, calls, *, original=False):
++    body = {"base_publication_id": base, "base_revision_id": server.entries[base]["revision"],
++            "commands": [call.to_json() for call in calls]}
++    if original:
++        body["base_view"] = "original-result"
++    return body
++
++
++class Server:
++    """In-memory protocol specification. JSON round-trip models restart only."""
++
++    def __init__(self):
++        state = {key(CLIP, "identity"): CLIP, key(CLIP, "intent.on"): {"fixed": 0},
++                 key(CLIP, "label"): "A", key(CLIP, "opacity"): 1,
++                 key(ANCHOR, "identity"): ANCHOR, "parent::duration": 10}
++        self.entries = {"b": {"document": state, "revision": self.revision(state),
++                              "previous": None, "writes": [], "request": None}}
++        self.head, self.keys = "b", {}
++
++    @staticmethod
++    def revision(state):
++        # Content identity, intentionally independent of publication identity.
++        return json.dumps(state, sort_keys=True, separators=(",", ":"))
++
++    def basis(self, body):
++        base = body["base_publication_id"]
++        entry = self.entries[base]
++        if entry["revision"] != body["base_revision_id"]:
++            raise Refused("base pair mismatch")
++        view = body.get("base_view", "accepted")
++        if view == "accepted":
++            return copy.deepcopy(entry["document"]), base, set()
++        if view != "original-result" or entry["request"] is None:
++            raise Refused("original request/basis unavailable")
++        before, root, represented = self.basis(entry["request"])
++        after, _, _ = replay(before, entry["request"]["commands"])
++        return after, root, represented | {base}
++
++    def intervening(self, root, represented):
++        cursor, writes = self.head, set()
++        while cursor != root:
++            if cursor is None:
++                raise Refused("basis is not an ancestor")
++            entry = self.entries[cursor]
++            if cursor not in represented:
++                writes.update(entry["writes"])
++            cursor = entry["previous"]
++        return writes
++
++    def commit(self, retry_key, body):
++        encoded = json.dumps(body, sort_keys=True, separators=(",", ":"))
++        if retry_key in self.keys:
++            previous, response = self.keys[retry_key]
++            if previous != encoded:
++                raise Refused("idempotency mismatch")
++            return copy.deepcopy(response)
++        original, root, represented = self.basis(body)
++        _, reads, writes = replay(original, body["commands"])
++        if self.intervening(root, represented) & (reads | writes):
++            raise Refused("dependency written since original basis (including ABA/no-op)")
++        # Guards are checked unchanged again on the accepted head. Follow timing
++        # is derived, so a different compiled number does not replace the guard.
++        accepted, _, _ = replay(self.entries[self.head]["document"], body["commands"])
++        return self.publish(accepted, writes, body, retry_key, encoded)
++
++    def publish(self, state, writes, body=None, retry_key=None, encoded=None):
++        publication = f"p{len(self.entries)}"
++        revision = self.revision(state)
++        self.entries[publication] = {"document": copy.deepcopy(state), "revision": revision,
++                                     "previous": self.head, "writes": sorted(writes),
++                                     "request": copy.deepcopy(body)}
++        self.head = publication
++        response = {"receipt": {"receipt_id": publication},
++                    "data": {"accepted_revision_id": revision,
++                             "canonical_document": copy.deepcopy(state)}}
++        if retry_key is not None:
++            self.keys[retry_key] = [encoded, copy.deepcopy(response)]
++        return response
++
++    def agent(self, changes):
++        state = {**self.entries[self.head]["document"], **copy.deepcopy(changes)}
++        return self.publish(state, set(changes))
++
++    def read_revision(self, revision):
++        return copy.deepcopy(next(entry["document"] for entry in self.entries.values()
++                                  if entry["revision"] == revision))
++
++    def restart(self):
++        other = Server()
++        other.entries, other.head, other.keys = json.loads(json.dumps(
++            [self.entries, self.head, self.keys]))
++        return other
++
++
++class SuffixBasisExperiment(unittest.TestCase):
++    def setUp(self):
++        self.server = Server()
++        self.base = self.server.entries["b"]["document"]
++        self.prefix = command(self.base, "clip.set-param", {"path": "opacity", "value": 0.5})
++        self.prefix_body = request(self.server, "b", [self.prefix])
++        self.optimistic, _, _ = replay(self.base, self.prefix_body["commands"])
++
++    def accept_prefix(self):
++        return self.server.commit("prefix", self.prefix_body)["receipt"]["receipt_id"]
++
++    def suffix(self, state=None, **kwargs):
++        return command(state or self.optimistic, "clip.set-param",
++                       {"path": "label", "value": "suffix"}, **kwargs)
++
++    def test_real_edit_command_roundtrip(self):
++        wire = self.prefix.to_json()
++        self.assertEqual(EditCommand(**json.loads(json.dumps(wire))).to_json(), wire)
++        self.assertEqual(wire["created"], [])
++        self.assertIn("expect", wire)
++
++    def test_lost_ack_disjoint_intervention_suffix_and_restart(self):
++        suffix = self.suffix()
++        self.server.agent({"parent::duration": 20})
++        accepted = self.server.commit("prefix", self.prefix_body)  # response lost
++        self.server.agent({"parent::colour": "blue"})
++        persisted = json.loads(json.dumps({"inflight": self.prefix_body,
++                                          "suffix": suffix.to_json()}))
++        self.server = self.server.restart()
++        count = len(self.server.entries)
++        self.assertEqual(self.server.commit("prefix", persisted["inflight"]), accepted)
++        self.assertEqual(len(self.server.entries), count)
++        p = accepted["receipt"]["receipt_id"]
++        body = request(self.server, p, [EditCommand(**persisted["suffix"])], original=True)
++        result = self.server.commit("suffix", body)["data"]["canonical_document"]
++        self.assertEqual(result[key(CLIP, "label")], "suffix")
++        self.assertEqual(result["parent::duration"], 20)
++        self.assertEqual(result["parent::colour"], "blue")
++
++    def test_changed_dependency_before_prefix_acceptance_conflicts(self):
++        self.server.agent({key(CLIP, "label"): "changed"})
++        p = self.accept_prefix()  # P does not consume the label
++        with self.assertRaisesRegex(Refused, "dependency written"):
++            self.server.commit("suffix", request(self.server, p, [self.suffix()], original=True))
++
++    def test_changed_dependency_after_prefix_acceptance_conflicts(self):
++        p = self.accept_prefix()
++        self.server.agent({key(CLIP, "label"): "changed"})
++        with self.assertRaisesRegex(Refused, "dependency written"):
++            self.server.commit("suffix", request(self.server, p, [self.suffix()], original=True))
++
++    def test_aba_is_executable_counterexample_to_relabelled_base(self):
++        self.server.agent({key(CLIP, "label"): "B"})
++        self.server.agent({key(CLIP, "label"): "A"})
++        p = self.accept_prefix()
++        naive = self.server.restart()
++        # Every guard, binding, created ID and intention is identical. Merely
++        # changing the base pair hides the ABA that happened before P.
++        naive.commit("suffix", request(naive, p, [self.suffix()]))
++        with self.assertRaisesRegex(Refused, "dependency written"):
++            self.server.commit("suffix", request(self.server, p, [self.suffix()], original=True))
++
++    def test_same_value_publication_also_conflicts(self):
++        old_revision = self.server.entries[self.server.head]["revision"]
++        self.server.agent({key(CLIP, "label"): "A"})
++        self.assertEqual(self.server.entries[self.server.head]["revision"], old_revision)
++        p = self.accept_prefix()
++        with self.assertRaisesRegex(Refused, "dependency written"):
++            self.server.commit("suffix", request(self.server, p, [self.suffix()], original=True))
++
++    def test_follow_relative_intent_survives_changed_compiler_timing(self):
++        prefix = command(self.base, "clip.on", {"moment": ANCHOR})
++        body = request(self.server, "b", [prefix])
++        optimistic, _, _ = replay(self.base, body["commands"])
++        suffix = command(optimistic, "clip.nudge", {"seconds": 2})
++        self.server.agent({"parent::duration": 20})
++        p = self.server.commit("prefix", body)["receipt"]["receipt_id"]
++        result = self.server.commit("suffix", request(self.server, p, [suffix], original=True))
++        self.assertEqual(start(optimistic), 10)
++        self.assertEqual(start(result["data"]["canonical_document"]), 22)
++        self.assertEqual(suffix.args, {"seconds": 2})
++        self.assertEqual(suffix.bindings, {ANCHOR: ANCHOR})
++
++    def test_fixed_time_stays_fixed_when_compiler_timing_changes(self):
++        prefix = command(self.base, "clip.on", {"moment": 12})
++        body = request(self.server, "b", [prefix])
++        optimistic, _, _ = replay(self.base, body["commands"])
++        suffix = command(optimistic, "clip.nudge", {"seconds": 2})
++        self.server.agent({"parent::duration": 20})
++        p = self.server.commit("prefix", body)["receipt"]["receipt_id"]
++        result = self.server.commit("suffix", request(self.server, p, [suffix], original=True))
++        self.assertEqual(start(result["data"]["canonical_document"]), 14)
++
++    def test_changed_anchor_identity_is_a_dependency_conflict(self):
++        prefix = command(self.base, "clip.on", {"moment": ANCHOR})
++        body = request(self.server, "b", [prefix])
++        optimistic, _, _ = replay(self.base, body["commands"])
++        suffix = command(optimistic, "clip.nudge", {"seconds": 2})
++        p = self.server.commit("prefix", body)["receipt"]["receipt_id"]
++        self.server.agent({key(ANCHOR, "identity"): "replacement-anchor"})
++        with self.assertRaisesRegex(Refused, "dependency written"):
++            self.server.commit("suffix", request(self.server, p, [suffix], original=True))
++
++    def test_prefix_created_object_consumed_by_suffix(self):
++        prefix = command(self.base, "timeline.add", {"element": "shape", "at": 2,
++                         "clip_id": "new"}, target=None, created=(NEW,))
++        body = request(self.server, "b", [prefix])
++        optimistic, _, _ = replay(self.base, body["commands"])
++        suffix = self.suffix(optimistic, target=NEW)
++        self.server.agent({"parent::duration": 20})
++        p = self.server.commit("prefix", body)["receipt"]["receipt_id"]
++        result = self.server.commit("suffix", request(self.server, p, [suffix], original=True))
++        self.assertEqual(result["data"]["canonical_document"][key(NEW, "label")], "suffix")
++        self.assertEqual(prefix.created, (NEW,))
++
++    def test_guards_cannot_be_refreshed_or_omitted(self):
++        self.server.agent({key(CLIP, "label"): "changed"})
++        p = self.accept_prefix()
++        refreshed = self.suffix(self.server.entries[p]["document"])
++        for forged in (refreshed, replace(self.suffix(), expect={})):
++            with self.assertRaisesRegex(Refused, "original guards"):
++                self.server.commit("forged", request(self.server, p, [forged], original=True))
++
++    def test_exact_retry_ignores_later_head_and_missing_reconstruction_data(self):
++        accepted = self.server.commit("prefix", self.prefix_body)
++        p = accepted["receipt"]["receipt_id"]
++        self.server.agent({"parent::duration": 30})
++        self.server.entries[p]["request"] = None
++        self.server = self.server.restart()
++        self.assertEqual(self.server.commit("prefix", self.prefix_body), accepted)
++        self.assertEqual(self.server.read_revision(accepted["data"]["accepted_revision_id"]),
++                         accepted["data"]["canonical_document"])
++        self.assertNotEqual(accepted["data"]["canonical_document"],
++                            self.server.entries[self.server.head]["document"])
++        with self.assertRaisesRegex(Refused, "unavailable"):
++            self.server.commit("suffix", request(self.server, p, [self.suffix()], original=True))
++
++    def test_changed_retry_payload_is_refused(self):
++        p = self.accept_prefix()
++        body = request(self.server, p, [self.suffix()], original=True)
++        self.server.commit("suffix", body)
++        body.pop("base_view")
++        with self.assertRaisesRegex(Refused, "idempotency mismatch"):
++            self.server.commit("suffix", body)
++
++    def test_a_later_optimistic_generation_uses_the_same_rule(self):
++        p = self.accept_prefix()
++        first_body = request(self.server, p, [self.suffix()], original=True)
++        first_original, _, _ = replay(self.optimistic, first_body["commands"])
++        second = command(first_original, "clip.nudge", {"seconds": 1})
++        self.server.agent({"parent::duration": 20})
++        q = self.server.commit("suffix", first_body)["receipt"]["receipt_id"]
++        result = self.server.restart().commit("second", request(self.server, q, [second], original=True))
++        self.assertEqual(start(result["data"]["canonical_document"]), 1)
++
++
++if __name__ == "__main__":
++    unittest.main()
+
+exec
+/bin/bash -lc "python3 -B -c 'from pathlib import Path; import shutil; p = Path(\".ruff_cache\"); shutil.rmtree(p) if p.exists() else None'; git diff --check; git status --short --untracked-files=all; test "'! -e .ruff_cache && test ! -e tests/m0_suffix/__pycache__' in /home/user/work/wt/agt-m0-suffix-basis
+ succeeded in 681ms:
+?? tests/m0_suffix/test_suffix_basis.py
+
+codex
+Wrote [suffix-basis.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/suffix-basis.md) and [isolated specification tests](/home/user/work/wt/agt-m0-suffix-basis/tests/m0_suffix/test_suffix_basis.py).
+
+Proposed `base_view: "original-result"` plus retained original-request context. The executable ABA counterexample shows why unchanged guards and a relabeled accepted base are insufficient.
+
+Validation:
+
+- `python3 -B -m unittest discover -s tests/m0_suffix -v` — **14 passed**.
+- `PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/m0_suffix` — **14 passed**.
+- `/home/user/work/venv-agent/bin/ruff check --isolated tests/m0_suffix` — passed.
+- `git diff --check` — passed.
+
+These are specification experiments using the real R4 `EditCommand` structure, not production proof. Full product gates were not run. No blockers or product-code changes; temporary output was removed and the commit message written.
+
+Next: managers reconcile the field and retention requirements, then prove the cases through the real recorder, Runtime persistence and App restart journey.
+tokens used
+95,476
+Wrote [suffix-basis.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/suffix-basis.md) and [isolated specification tests](/home/user/work/wt/agt-m0-suffix-basis/tests/m0_suffix/test_suffix_basis.py).
+
+Proposed `base_view: "original-result"` plus retained original-request context. The executable ABA counterexample shows why unchanged guards and a relabeled accepted base are insufficient.
+
+Validation:
+
+- `python3 -B -m unittest discover -s tests/m0_suffix -v` — **14 passed**.
+- `PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/m0_suffix` — **14 passed**.
+- `/home/user/work/venv-agent/bin/ruff check --isolated tests/m0_suffix` — passed.
+- `git diff --check` — passed.
+
+These are specification experiments using the real R4 `EditCommand` structure, not production proof. Full product gates were not run. No blockers or product-code changes; temporary output was removed and the commit message written.
+
+Next: managers reconcile the field and retention requirements, then prove the cases through the real recorder, Runtime persistence and App restart journey.

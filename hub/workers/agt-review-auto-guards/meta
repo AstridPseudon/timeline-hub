@@ -1,0 +1,9 @@
+name=agt-review-auto-guards
+repo=agent
+base=tl/agt-m2-auto-placement-guards
+base_sha=5c6467da
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-auto-guards
+started=2026-10-20T09:25:12Z

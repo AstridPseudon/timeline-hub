@@ -1,0 +1,400 @@
+            if registry is not None:
+                registry['assets']['picture']['media_id'] = 'sha256:' + 'f' * 64
+        document = document_from_bundle(replacement)
+        realm.documents[document['parent_revision']['revision_id']] = document
+        realm.call([restore(document)])
+        before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+>       with pytest.raises(CommitRejected) as error:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'tests.sdk.test_timeline_commit_provider.CommitRejected'>
+
+tests/sdk/test_timeline_commit_provider_scalar.py:109: Failed
+_________ test_parent_param_binding_uses_main_effective_registry[both] _________
+
+registry_location = 'both'
+
+    @pytest.mark.parametrize('registry_location', ['direct', 'config', 'both'])
+    def test_parent_param_binding_uses_main_effective_registry(registry_location):
+        from tests.sdk.test_timeline_commit_provider_document import document_fixture
+        document = document_fixture()
+        payload = document['parent_revision']['payload']
+        for rows in (payload['clips'], payload['config']['clips']):
+            rows[0]['clipType'] = 'am-sprite'
+        if registry_location in ('config', 'both'):
+            payload['config']['registry'] = copy.deepcopy(payload['registry'])
+        if registry_location == 'config':
+            del payload['registry']
+        document['parent_revision']['content_digest'] = _digest(payload)
+        realm = DetachedRealm(document)
+        original = current(realm)
+        frames = {'frameWidth': 16, 'frameHeight': 16, 'count': 4, 'fps': 8}
+        command = capture_clip_set_params(original, 'parent/clip:clip-a', values={'frames': frames})
+        replacement = copy.deepcopy(original)
+        payload = replacement['parent']
+        for registry in (payload.get('registry'), payload['config'].get('registry')):
+            if registry is not None:
+                registry['assets']['picture']['media_id'] = 'sha256:' + 'f' * 64
+        document = document_from_bundle(replacement)
+        realm.documents[document['parent_revision']['revision_id']] = document
+        realm.call([restore(document)])
+        before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+>       with pytest.raises(CommitRejected) as error:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'tests.sdk.test_timeline_commit_provider.CommitRejected'>
+
+tests/sdk/test_timeline_commit_provider_scalar.py:109: Failed
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_recipe_scalar_commands.py::test_original_param_basis_refuses_new_admitted_schema[revision-elementRef]
+FAILED tests/editing_conformance/test_recipe_scalar_commands.py::test_original_param_basis_refuses_new_admitted_schema[revision-element_ref]
+FAILED tests/editing_conformance/test_recipe_scalar_commands.py::test_original_param_basis_refuses_new_admitted_schema[attach-elementRef]
+FAILED tests/editing_conformance/test_recipe_scalar_commands.py::test_original_param_basis_refuses_new_admitted_schema[attach-element_ref]
+FAILED tests/editing_conformance/test_recipe_scalar_commands.py::test_original_param_basis_refuses_new_admitted_schema[remove-elementRef]
+FAILED tests/editing_conformance/test_recipe_scalar_commands.py::test_original_param_basis_refuses_new_admitted_schema[remove-element_ref]
+FAILED tests/editing_conformance/test_recipe_scalar_commands.py::test_registered_sprite_strip_binding_refuses_selected_registry_retarget
+FAILED tests/sdk/test_timeline_commit_provider_scalar.py::test_provider_refuses_old_param_basis_after_admitted_element_update
+FAILED tests/sdk/test_timeline_commit_provider_scalar.py::test_parent_param_binding_uses_main_effective_registry[direct]
+FAILED tests/sdk/test_timeline_commit_provider_scalar.py::test_parent_param_binding_uses_main_effective_registry[config]
+FAILED tests/sdk/test_timeline_commit_provider_scalar.py::test_parent_param_binding_uses_main_effective_registry[both]
+11 failed, 69 deselected, 4 xfailed in 9.58s
+
+codex
+The targeted check passed: 373 passed and four strict expected failures for the clear-only bug. Lint and diff checks also passed. The four portable fixtures changed only to add tagged absent reads for `elementRef` and `element_ref`; their outputs and existing guards are unchanged.
+
+I’m finishing a replay of the completed probes against the original helper so the report clearly separates reproduced failures from the remaining limitation.
+
+exec
+/bin/bash -lc "git diff --check && git status --short; sed -n '25,150p' tests/editing_conformance/test_recipe_scalar_commands.py; nl -ba astrid/sdk/timeline/_scalar_commands.py | sed -n '45,95p'" in /home/user/work/wt/agt-m2-param-basis-audit
+ succeeded in 678ms:
+ M astrid/sdk/timeline/_scalar_commands.py
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+ M tests/sdk/test_timeline_commit_provider_scalar.py
+REF = 'occurrence:occ-1/clip:picture-1'
+configured_project_pack = pytest.fixture(test_project_packs.configured.__wrapped__)
+
+
+def call(op, ref, values=None, clear=()):
+    return {'schema_version': 1, 'op': op, 'version': '1', 'select': ref,
+            'args': {'values': {} if values is None else values, 'clear': list(clear)}}
+
+
+@pytest.fixture
+def admitted_param_revisions(configured_project_pack):
+    # Main's real admission/registry path, including its immutable source snapshots.
+    _, directory, _ = test_project_packs.seed('project-1')
+    old = project_packs.admit_project_pack('realm', 'project-1')['elements'][0]['descriptor']
+    path = directory / 'element.yaml'
+    definition = yaml.safe_load(path.read_text())
+    definition['schema']['properties']['seed']['maximum'] = 10
+    path.write_text(yaml.safe_dump(definition))
+    new = project_packs.admit_project_pack('realm', 'project-1')['elements'][0]['descriptor']
+    assert old['id'] == new['id'] and old['packId'] == new['packId']
+    assert old['revision'] != new['revision']
+    refs = [{k: descriptor[k] for k in ('packId', 'id', 'kind', 'revision')}
+            for descriptor in (old, new)]
+    for ref, descriptor in zip(refs, (old, new)):
+        assert project_packs.resolve_admitted_element('realm', 'project-1', ref)['descriptor'] == descriptor
+    assert not list(Draft202012Validator(old['schema']).iter_errors({'seed': 16}))
+    assert list(Draft202012Validator(new['schema']).iter_errors({'seed': 16}))
+    return refs
+
+
+@pytest.mark.parametrize('field', ['elementRef', 'element_ref'])
+@pytest.mark.parametrize('change', ['revision', 'attach', 'remove'])
+def test_original_param_basis_refuses_new_admitted_schema(admitted_param_revisions, field, change):
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+
+    original = bundle()
+    ref = 'parent/clip:direct'
+    old, new = admitted_param_revisions
+    target = clip(original, ref)
+    target.pop('asset')
+    target['clipType'] = 'reveal'
+    if change != 'attach':
+        target[field] = old
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+    compile_authoring_candidate(original)
+    plan = execute(original, [capture_clip_set_params(original, ref, values={'seed': 16})])
+    head = copy.deepcopy(original)
+    if change == 'remove':
+        del clip(head, ref)[field]
+    else:
+        clip(head, ref)[field] = new
+    head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
+    compile_authoring_candidate(head)
+    snapshot = copy.deepcopy(head)
+    with pytest.raises(CommandError):
+        replay(plan, head)
+    assert head == snapshot
+    if change == 'revision':
+        for history in ([later(ref, [field], old)],
+                        [later(ref, [field], new), later(ref, [field], old)]):
+            with pytest.raises(CommandError, match='intervening'):
+                replay(plan, original, intervening_records=history)
+
+
+@pytest.mark.parametrize('container', [ABSENT, present(None)])
+# Requirement: clear-only writes must preserve absent/null params without
+# widening to the container. The shared State.set clear primitive still needs it.
+@pytest.mark.xfail(strict=True, reason='clear-only params silently creates an object container')
+def test_clear_only_params_preserves_nonobject_presence_and_leaf_intent(container):
+    original = bundle()
+    if container != ABSENT:
+        clip(original, REF)['params'] = copy.deepcopy(container['value'])
+    command = capture_clip_set_params(original, REF, clear=['missing'])
+    plan = execute(original, [command])
+    assert plan.bundle == original
+    assert command['expect'] == {REF + '::params.missing': ABSENT}
+    assert plan.records[0]['writes'] == [
+        {'ref': REF, 'path': ['params', 'missing'], 'before': ABSENT, 'after': ABSENT}]
+    assert inverse(plan.bundle, plan.records).bundle == original
+    assert replay(plan, original).records == plan.records
+    with pytest.raises(CommandError, match='intervening'):
+        replay(plan, original, intervening_records=[later(REF, ['params', 'missing'], None)])
+
+
+def test_registered_sprite_strip_binding_refuses_selected_registry_retarget():
+    from astrid.core.element import load_default_registry
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+
+    definition = load_default_registry().get('effect', 'am-sprite', pack_id='astrid_motion')
+    frames = {'frameWidth': 16, 'frameHeight': 16, 'count': 4, 'fps': 8}
+    Draft202012Validator(definition.schema).validate({'frames': frames})
+    original = bundle()
+    clip(original, REF)['clipType'] = definition.id
+    plan = execute(original, [capture_clip_set_params(original, REF, values={'frames': frames})])
+    head = copy.deepcopy(original)
+    registry_ref = 'occurrence:occ-1/registry'
+    State(head).entity(registry_ref)['assets']['old-picture']['media_id'] = 'sha256:' + 'f' * 64
+    # Main accepts this closure; this is not an unsupported registry shape.
+    compiled = compile_authoring_candidate(head).publication
+    assert any(row['payload']['registry']['assets']['old-picture']['media_id'] == 'sha256:' + 'f' * 64
+               for row in compiled['internal_timeline_revisions'])
+    # The same clip.asset now selects different strip bytes; frame rectangles
+    # authored for the original strip must not silently target that replacement.
+    with pytest.raises(CommandError):
+        replay(plan, head)
+    unrelated = copy.deepcopy(original)
+    State(unrelated).entity(registry_ref)['assets']['voice']['media_id'] = 'sha256:' + 'e' * 64
+    assert replay(plan, unrelated).commands == plan.commands
+    path = ['assets', 'old-picture', 'media_id']
+    with pytest.raises(CommandError, match='intervening'):
+        replay(plan, original, intervening_records=[later(registry_ref, path, None)])
+
+
+def test_registry_and_label_after_move_preserves_move_inverse_redo():
+    assert {'track.set', 'clip.set-params'} <= operations().keys()
+    original = bundle()
+    moved = execute(original, [capture_move(original, 'parent/clip:direct', 4)])
+    # A scalar edit consumes no timing, lane membership or containing revision.
+    command = capture_track_set(moved.bundle, 'parent/track:picture', values={'label': 'Picture'})
+    assert command['reads'] == [{'ref': 'parent/track:picture', 'path': ['id'],
+                                 'state': present('picture')}]
+    result = execute(moved.bundle, [command])
+    assert State(result.bundle).entity('parent/track:picture')['label'] == 'Picture'
+    undone = inverse(result.bundle, result.records)
+    assert undone.bundle == moved.bundle
+    assert inverse(undone.bundle, undone.records).bundle == result.bundle
+    45	        ctx.write(ref, [key], values[key])
+    46	    for key in sorted(clear):
+    47	        ctx.clear(ref, [key])
+    48	
+    49	
+    50	def clip_set_params(ctx, command):
+    51	    from astrid.sdk.timeline_address import element_schema
+    52	
+    53	    ref = _target(ctx, command, 'clip')
+    54	    values, clear = _changes(command)
+    55	    identity = {key: ctx.read(ref, [key]) for key in (
+    56	        'clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id',
+    57	        'elementRef', 'element_ref')}
+    58	    # A type/asset label can stay fixed while its exact element or media changes.
+    59	    # Match main's selector precedence; retain literal tagged reads, not a digest
+    60	    # of the entire registry (unrelated assets can still change independently).
+    61	    selector = next((key for key in ('asset', 'asset_id', 'media_id', 'object_id')
+    62	                     if key in ctx.state.entity(ref)), None)
+    63	    if selector in ('asset', 'asset_id') and isinstance(identity[selector], str):
+    64	        registry_ref = ref.rsplit('/', 1)[0] + '/registry'
+    65	        for key in ('media_id', 'object_id', 'digest', 'content_digest'):
+    66	            ctx.read(registry_ref, ['assets', identity[selector], key])
+    67	    element = identity['clipType'] or identity['clip_type'] or 'media'
+    68	    if not isinstance(element, str):
+    69	        raise CommandError('clip type must be a string', ref=ref)
+    70	    # These are stored JSON values, not human expressions or canvas-unit input.
+    71	    # Reuse the element's declared value schemas without parsing or coercion.
+    72	    properties = element_schema(element).get('properties', {})
+    73	    for key, value in values.items():
+    74	        if key in properties:
+    75	            errors = list(Draft202012Validator(properties[key]).iter_errors(value))
+    76	            if errors:
+    77	                raise CommandError(errors[0].message, ref=ref, path=['params', key])
+    78	    ctx.object(ref, ['params'])
+    79	    for key in sorted(values):
+    80	        ctx.write(ref, ['params', key], values[key])
+    81	    for key in sorted(clear):
+    82	        ctx.clear(ref, ['params', key])
+    83	
+    84	
+    85	def capture_track_set(bundle, select, *, values=None, clear=()):
+    86	    return _capture(bundle, 'track.set', select, values, clear)
+    87	
+    88	
+    89	def capture_clip_set_params(bundle, select, *, values=None, clear=()):
+    90	    return _capture(bundle, 'clip.set-params', select, values, clear)
+    91	
+    92	
+    93	def _capture(bundle, op, select, values, clear):
+    94	    from .commands import execute
+    95	
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-param-basis-audit')
+notes = worker / 'notes'
+notes.mkdir(exist_ok=True)
+report = '''# agt-m2-param-basis-audit — guard gaps fixed; clear-only gap remains
+
+The bounded audit is complete. Parameter semantic-basis completeness is **not proved**: the identity gaps below are fixed, but clear-only absent/null normalization remains an executable defect. All M2 merges remain HELD; Candidate 1's track-label-only scope is unaffected.
+
+## Changes
+
+- Only product change: "'`astrid/sdk/timeline/_scalar_commands.py`, 11 added lines and one replaced line. Record tagged reads of `elementRef` and legacy `element_ref`, including absence; record the selected registry entry'"'s four canonical media identity alternatives ("'`media_id`, `object_id`, `digest`, `content_digest`). Use main'"'s selector precedence, without string coercion or a whole-registry guard.
+- Add conformance/provider probes for reference revision/addition/removal, stable-reference ABA, source retargeting, parent direct/config/identical-dual registries, unrelated asset changes, and exact clear-only absence/null behavior.
+- Four scalar portable fixtures only gain absent "'`elementRef`/`element_ref` reads. A JSON comparison against HEAD verified every other command field and every authored output unchanged.
+- Existing tests remain intact. Four newly added clear-only cases retain the desired positive assertions under `xfail(strict=True)`, each with a requirement comment. No existing passing expectation was weakened.
+
+## Supported source and counterexamples
+
+### Exact element revision
+
+Main'"'s existing "'`tests/core/test_project_packs.py::seed` generates an ordinary V3 project pack with `effects/reveal`. The new fixture uses the actual `admit_project_pack` and `resolve_admitted_element` paths for `project-1`, including registered definitions and immutable snapshots. Old and new descriptors have the same pack/id/kind; the second schema changes `seed` from unrestricted number to number with `maximum: 10` and obtains a different content-derived revision. Both exact descriptors remain resolvable after the second admission. `seed: 16` passes the old schema and fails the new schema.
+
+A generated hold effect retains its clip ID and `clipType: reveal` while C changes only `elementRef.revision`. B captured under the old reference silently succeeds with the original helper. Both before/after authoring candidates compile through main; there are no invented clip fields or media selectors on this generated effect. The same probe covers the SDK'"'s existing legacy "'`element_ref` spelling, and reference addition/removal.
+
+The actual native provider probe accepts a supported immutable replacement document using its existing restore operation, then submits B at the acknowledged current head with B'"'s original guards. The original helper accepts B; the fixed helper returns "'`dependency_changed` and leaves head/history/documents unchanged. This specifically tests preserved guards across a dependent handoff, without relying on a stale-base whole-timeline conflict.
+
+Source authority: `astrid/sdk/timeline_elements.py::update_parent_element` permits preserving effect id/type while replacing the exact element reference; `astrid/core/element/project_packs.py::resolve_admitted_element` selects the exact admitted owner/revision/schema. `timeline_address.element_schema` independently scans sealed manifests by type; it never reads that exact reference.
+
+### Selected registry source
+
+Use the existing registered `astrid_motion/effect/am-sprite` and main authoring/provider fixtures. The declared `frames` schema accepts `{frameWidth:16, frameHeight:16, count:4, fps:8}`. C replaces only the media identity under the same selected asset key. Main compiles/materializes the resulting closure. B'"'s sprite-strip edit formerly accepted against the replacement source; the added source identity reads now refuse it. Changing another asset still replays.
+
+This is a source-binding counterexample, not a rendered-pixel claim: "'`astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx` passes the selected asset to `elementSource` and applies frame rectangles to that image; `_shared/am.tsx::elementSource` selects the asset'"'s file/URL. No renderer was invoked. Parent effective registry behavior is exercised for direct, legacy config, and identical dual declarations using main's own "'`effective_parent_registry` through `State`.
+
+### Clear-only absent/null containers — unresolved within assigned scope
+
+For `clear=['"'missing']"'`, the current helper unconditionally calls `ctx.object(ref, ['"'params'])"'`. Both absent and literal null become `{}`. Captured expectations include the entire `params` container plus `params.missing`; recorded writes include container creation plus the absent-to-absent leaf. This changes undeclared container presence and widens the edit beyond the named leaf. Inverse happens to restore the original container, but that does not make the forward normalization correct.
+
+Removing `ctx.object` alone cannot fix this: `Recording.clear -> assign -> State.set` rejects a leaf clear through absent/null intermediate containers. Dropping the leaf write would lose declared unchanged intent and its publication/ABA footprint; temporarily altering state would bypass the recorder. I did neither. A complete fix needs the shared native clear/state primitive, outside the explicit scalar-helper-plus-adjacent-tests product boundary. Four strict xfails preserve the intended positive conformance/provider behavior for that follow-up.
+
+## Verification
+
+Final targeted run (exit 0):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider.py
+```
+
+**373 passed, 4 xfailed in 25.33s.** This includes known/opaque schemas, literal values/null/clear/same-value writes, source pins, disjoint parameter edits, ABA, exact inverse/redo, creation, reload, and renderer-independent import coverage.
+
+Completed probes against the original helper (isolated process; read HEAD source with `git show`, no checkout or worktree mutation):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PYBASE'
+import subprocess
+import pytest
+from astrid.sdk.timeline import _scalar_commands
+source = subprocess.check_output(['git', 'show', 'HEAD:astrid/sdk/timeline/_scalar_commands.py'], text=True)
+exec(compile(source, 'HEAD:_scalar_commands.py', 'exec'), _scalar_commands.__dict__)
+raise SystemExit(pytest.main(['-q', 'tests/editing_conformance/test_recipe_scalar_commands.py', 'tests/sdk/test_timeline_commit_provider_scalar.py', '-k', 'admitted or nonobject_presence or strip_binding or clear_only or effective_registry']))
+PYBASE
+"'```
+
+**11 failed, 69 deselected, 4 xfailed in 9.58s (expected exit 1).** All eleven failures reached their expected-refusal assertions and showed `DID NOT RAISE`; fixture admission/compilation/provider replacement succeeded. The four xfails are solely the reported clear-only defect. Initial draft fixture-wiring errors were corrected before this clean original-helper reproduction; those were not counted as product evidence.
+
+Checks (exit 0):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-force-exclude astrid/sdk/timeline/_scalar_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_scalar.py
+git diff --check
+```
+
+Ruff: **All checks passed.** Earlier six-file targeted run: **284 passed, 4 xfailed in 15.49s**, before the final fixture refinement and addition of the existing provider neighbor lane.
+
+Not run: full suite, make check, central test service, localhost/browser/live-socket tests, renderer or pixel parity, installations, or network. No Runtime/App/Composition changes, commits, branch operations, pushes, or new framework/DTO/history fields.
+
+## Decisions and next steps
+
+1. Keep literal JSON validation and the existing known/opaque-schema contract. This fix guards basis identity; it does not add network admission or exact project-snapshot schema resolution to save. A newly captured edit against an admitted-only schema still follows the existing type-based/opaque validation policy; broader selected-schema validation needs an orchestrator contract decision.
+2. No claim that default-registry selection or an admitted exact snapshot can change meaning while its exact reference stays fixed: main retains immutable revisions, and the fixture proves old admission remains selected by its old ref after new admission. Static provider/schema rollout compatibility is not proved by these document-concurrency tests.
+3. Request a narrowly scoped follow-up for native no-op leaf clears through absent/null containers, preserving tagged presence, explicit leaf writes, replay and exact inverse/redo. Keep the four positive strict-xfail cases until fixed; do not normalize or suppress their intent.
+4. Manager review the 11-line guard addition and adjacent tests; retain the M2 integration hold and Candidate 1 label-only classification. No scope/plan decision was changed.
+'"'''
+(notes / 'report.md').write_text(report)
+message = '''fix(timeline): guard parameter element and selected media identities
+
+Capture exact element references and canonical selected registry media identities
+without widening guards to unrelated assets or coercing authored JSON.
+
+Add supported main admission, conformance and provider regression probes. Preserve
+clear-only absent/null expectations as strict xfails pending a native clear fix.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+print(notes / 'report.md')
+print(worker / 'commit-msg')
+print(worker / 'commit-msg.txt')
+PY" in /home/user/work/wt/agt-m2-param-basis-audit
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-param-basis-audit/notes/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-param-basis-audit/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-param-basis-audit/commit-msg.txt
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+for name in ('.pytest_cache', '.ruff_cache'):
+    path = Path(name)
+    if path.is_dir():
+        shutil.rmtree(path)
+        print('Removed generated cache:', name)
+PY
+ git diff --check
+ git status --short" in /home/user/work/wt/agt-m2-param-basis-audit
+ succeeded in 575ms:
+Removed generated cache: .pytest_cache
+Removed generated cache: .ruff_cache
+ M astrid/sdk/timeline/_scalar_commands.py
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json
+ M tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+ M tests/sdk/test_timeline_commit_provider_scalar.py
+
+codex
+Fixed element-reference and selected-media guard gaps with 11 added product lines. Completed probes reproduce 11 failures against the original helper.
+
+Validation: **373 passed, 4 strict xfailed**; lint and `git diff --check` passed. No full suite, renderer, installation, or network run.
+
+Clear-only absent/null normalization remains unresolved: preserving explicit leaf intent requires the shared state primitive, outside this assignment’s scope. Positive expectations remain as strict xfails. Recommend a bounded follow-up.
+
+[Report with exact commands, results, and counterexamples](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-param-basis-audit/notes/report.md). Both commit-message files are written.
+
+**M2 merges remain HELD. Candidate 1 label-only is unaffected.**
+tokens used
+162,018
+Fixed element-reference and selected-media guard gaps with 11 added product lines. Completed probes reproduce 11 failures against the original helper.
+
+Validation: **373 passed, 4 strict xfailed**; lint and `git diff --check` passed. No full suite, renderer, installation, or network run.
+
+Clear-only absent/null normalization remains unresolved: preserving explicit leaf intent requires the shared state primitive, outside this assignment’s scope. Positive expectations remain as strict xfails. Recommend a bounded follow-up.
+
+[Report with exact commands, results, and counterexamples](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-param-basis-audit/notes/report.md). Both commit-message files are written.
+
+**M2 merges remain HELD. Candidate 1 label-only is unaffected.**

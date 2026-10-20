@@ -1,0 +1,9 @@
+name=agt-full-compare
+repo=agent
+base=tl/integration
+base_sha=481e600b
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-full-compare
+started=2026-10-20T07:26:06Z

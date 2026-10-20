@@ -1,0 +1,9 @@
+name=agt-m2-d13-current014-consumer-compose
+repo=agent
+base=tl/agt-m2-ordinary014-normal-pin-qualify
+base_sha=e86f44d0
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-d13-current014-consumer-compose
+started=2026-10-20T15:47:47Z

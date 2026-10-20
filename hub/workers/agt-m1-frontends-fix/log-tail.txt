@@ -1,0 +1,400 @@
++        return response
++
++    monkeypatch.setattr(generated, "commit_timeline", blocked)
++    session.queue_move("parent/clip:a", 5)
++    with ThreadPoolExecutor(max_workers=2) as pool:
++        first = pool.submit(session.flush, idempotency_key="a")
++        try:
++            assert entered_a.wait(10)
++            open_session(connected).flush(idempotency_key="a")
++            assert generated.calls[0] == generated.calls[1]
++            session.queue_move("parent/clip:a", 7)
++            second = pool.submit(session.flush, idempotency_key="b")
++            assert entered_b.wait(10)
++            newer = path.read_bytes()
++            release_a.set()
++            if late == "ack":
++                first.result(timeout=10)
++            else:
++                with pytest.raises(CommitConflict if late == "conflict" else WorkspaceClientError):
++                    first.result(timeout=10)
++            assert path.read_bytes() == newer
++            assert json.loads(newer)["flight"]["key"] == "b"
++        finally:
++            release_a.set()
++            release_b.set()
++        second.result(timeout=10)
++    assert len(generated.accepted) == 2
++    assert json.loads(path.read_bytes())["pending"] == []
++
++
++@pytest.mark.parametrize(("field", "value"), [
++    (("data", "status"), "preview"),
++    (("receipt",), None),
++    (("receipt", "receipt_id"), ""),
++    (("receipt", "receipt_id"), "pub0"),
++    (("receipt", "command_kind"), "timeline.restore"),
++    (("receipt", "project_id"), "other"),
++    (("receipt", "idempotency_key"), "other"),
++    (("receipt", "request_hash"), "wrong"),
++    (("receipt", "result"), {}),
++    (("receipt", "project_seq"), [True, 1]),
++    (("data", "base_revision_id"), "other"),
++    (("data", "base_publication_id"), "other"),
++    (("data", "publisher"), "other"),
++    (("data", "accepted_revision_id"), "other"),
++    (("data", "previous_publication_id"), "other"),
++    (("data", "rebased_onto"), {"revision_id": "peer", "publication_id": "peer"}),
++    (("data", "canonical_document", "project_id"), "other"),
++    (("data", "canonical_document", "timeline_id"), "other"),
++    (("data", "canonical_document", "schema_version"), True),
++    (("data", "canonical_document", "parent_revision", "revision_id"), "other"),
++    (("data", "canonical_document", "parent_revision", "payload"), []),
++    (("data", "canonical_document", "shot_revisions"), None),
++    (("data", "canonical_document", "dependency_manifest"), {}),
++    (("data", "commands"), []),
++    (("data", "commands"), [{}]),
++    (("data", "id_map"), None),
++    (("data", "id_map"), {"": ""}),
++    (("data", "provider_version"), 1),
++    (("data", "compiler_version"), ""),
++    (("data", "document_digest"), "bad"),
++])
++def test_invalid_ack_retains_exact_flight_and_suffix(connected, monkeypatch, field, value):
++    session = open_session(connected)
++    _, generated, path = connected
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        session.move("parent/clip:a", 5, idempotency_key="original")
++    session.queue_move("parent/clip:a", 7)
++    before = path.read_bytes()
++    send = generated.commit_timeline
++
++    def invalid(*args, **kwargs):
++        result = send(*args, **kwargs)
++        target = result
++        for key in field[:-1]:
++            target = target[key]
++        target[field[-1]] = value
++        # Isolate semantic validation from the independent result equality check.
++        if field[0] == "data":
++            result["receipt"]["result"] = copy.deepcopy(result["data"])
++        return result
++
++    with monkeypatch.context() as patch:
++        patch.setattr(generated, "commit_timeline", invalid)
++        with pytest.raises((TimelineEditError, ValueError)):
++            open_session(connected).flush()
++    assert path.read_bytes() == before
++    open_session(connected).flush()
++    assert generated.calls[-1] == generated.calls[0]
++    assert len(json.loads(path.read_bytes())["pending"]) == 1
++
++
++@pytest.mark.parametrize(("field", "value"), [
++    (("data", "status"), "accepted"),
++    (("receipt",), {}),
++    (("data", "evaluated_head"), {"revision_id": "r0"}),
++    (("data", "accepted_revision_id"), "r1"),
++    (("data", "base_publication_id"), "wrong"),
++    (("data", "canonical_document", "timeline_id"), "wrong"),
++])
++def test_invalid_preview_never_releases_original_request(connected, monkeypatch, field, value):
++    session = open_session(connected)
++    _, generated, path = connected
++    send = generated.commit_timeline
++    before = []
++
++    def invalid(*args, **kwargs):
++        before.append(path.read_bytes())
++        result = send(*args, **kwargs)
++        target = result
++        for key in field[:-1]:
++            target = target[key]
++        target[field[-1]] = value
++        return result
++
++    monkeypatch.setattr(generated, "commit_timeline", invalid)
++    with pytest.raises((TimelineEditError, ValueError)):
++        session.move("parent/clip:a", 5, dry_run=True, idempotency_key="preview")
++    assert path.read_bytes() == before[0]
++    assert not generated.accepted
++
++
++@pytest.mark.parametrize("optional", [{}, {"dry_run": False, "source": {"via": "cli", "detail": "café"},
++                                          "label": "", "rationale": "keep this", "group_id": "gesture"}])
++def test_restart_preserves_parsed_body_source_and_optional_presence(connected, optional):
++    session = open_session(connected)
++    client, generated, path = connected
++    command = session.queue_move("parent/clip:a", 5)
++    with session.outbox.locked():
++        state = session._state()
++        body = {"api_version": 1, "project_id": "p", "timeline_id": "t", "base_revision_id": "r0",
++                "base_publication_id": "pub0", "commands": [command], **optional}
++        state["flight"] = {"path": session.path, "key": "original", "count": 1,
++                           "body": request_bytes(body).decode()}
++        session.outbox.write(state)
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        session.flush(via="app")
++    frozen = json.loads(path.read_bytes())["flight"]
++    # Explicit reconnect may change discovery/credential, never authenticated scope.
++    client._remote._transport.endpoint = "http://new-runtime-door"
++    client._remote._transport.token = "rotated"
++    open_session(connected).flush(via="python")
++    assert generated.calls == [(frozen["body"].encode(), "original")] * 2
++    assert json.loads(generated.calls[-1][0]) == body
++
++
++@pytest.mark.parametrize("change", ["read", "identity"])
++def test_dependent_suffix_conflict_preserves_original_guards_and_identity(connected, change):
++    session = open_session(connected)
++    _, generated, path = connected
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        session.move("parent/clip:a", 5)
++    suffix = session.queue_move("parent/clip:a", 7)
++    original = copy.deepcopy(suffix)
++    session.flush()
++    peer = copy.deepcopy(generated.bundles["r1"])
++    peer["parent"]["clips"][0]["hold" if change == "read" else "id"] = 2 if change == "read" else "replacement"
++    generated.bundles["peer"] = peer
++    generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
++    with pytest.raises(CommitConflict):
++        open_session(connected).flush(idempotency_key="b")
++    state = json.loads(path.read_bytes())
++    assert state["pending"] == [original]
++    assert state["conflict"] and state["flight"]["key"] == "b"
++    body = json.loads(state["flight"]["body"])
++    assert body["commands"] == [original] and body["base_revision_id"] == "r1"
++    before = path.read_bytes()
++    with pytest.raises(TimelineEditError, match="immutable"):
++        session.flush(idempotency_key="replacement")
++    assert path.read_bytes() == before
++
++
++@pytest.mark.parametrize("field", ["realm_id", "actor_id"])
++def test_scope_change_while_response_is_outstanding_keeps_original_flight(connected, monkeypatch, field):
++    session = open_session(connected)
++    client, generated, path = connected
++    entered, release = Event(), Event()
++    send = generated.commit_timeline
++
++    def blocked(*args, **kwargs):
++        result = send(*args, **kwargs)
++        entered.set()
++        assert release.wait(10)
++        return result
++
++    monkeypatch.setattr(generated, "commit_timeline", blocked)
++    session.queue_move("parent/clip:a", 5)
++    with ThreadPoolExecutor(max_workers=1) as pool:
++        sending = pool.submit(session.flush)
++        try:
++            assert entered.wait(10)
++            before = path.read_bytes()
++            handshake = client._remote._transport._last_handshake
++            original = handshake[field]
++            handshake[field] = "other"
++        finally:
++            release.set()
++        with pytest.raises(TimelineEditError, match="identity changed"):
++            sending.result(timeout=10)
++    assert path.read_bytes() == before
++    handshake[field] = original
++    open_session(connected).flush()
++    assert generated.calls[0] == generated.calls[1]
++    assert len(generated.accepted) == 1
++
++
++@pytest.mark.parametrize("field", ["realm_id", "actor_id"])
++def test_missing_authenticated_scope_never_defaults_identity(connected, field):
++    client, generated, path = connected
++    del client._remote._transport._last_handshake[field]
++    with pytest.raises(TimelineEditError, match="authenticated"):
++        open_session(connected)
++    assert not path.exists() and not generated.calls
++
++
++@pytest.mark.parametrize("reading", ["history", "bundle"])
++def test_blocked_read_does_not_hold_outbox_lock_or_overwrite_concurrent_work(connected, monkeypatch, reading):
++    session = open_session(connected)
++    client, generated, path = connected
++    entered, release = Event(), Event()
++    if reading == "bundle":
++        session.queue_move("parent/clip:a", 5)
++    read = client.timelines.history if reading == "history" else client.timelines.open_bundle
++
++    def blocked(*args, **kwargs):
++        result = read(*args, **kwargs)
++        entered.set()
++        assert release.wait(10)
++        return result
++
++    monkeypatch.setattr(client.timelines, "history" if reading == "history" else "open_bundle", blocked)
++    with ThreadPoolExecutor(max_workers=2) as pool:
++        first = pool.submit(open_session, connected) if reading == "history" else pool.submit(session.queue_move, "parent/clip:b", 7)
++        try:
++            assert entered.wait(10)
++            if reading == "history":
++                # Capture can read through a separate session while history is blocked.
++                queued = pool.submit(session.queue_move, "parent/clip:a", 5).result(timeout=10)
++                before = path.read_bytes()
++            else:
++                pool.submit(session.flush).result(timeout=10)
++                assert json.loads(path.read_bytes())["base"]["revision_id"] == "r1"
++        finally:
++            release.set()
++        result = first.result(timeout=10)
++    state = json.loads(path.read_bytes())
++    if reading == "history":
++        assert path.read_bytes() == before and state["pending"] == [queued]
++        assert result.project_id == "p"
++    else:
++        assert state["base"]["revision_id"] == "r1" and state["pending"] == [result]
++        assert client.reads == ["r0", "r0", "r1"]
+
+exec
+/bin/bash -lc "cat >> tests/packs/timeline/test_cli_commit_move.py <<'PY'
+
+
+def test_preview_json_preserves_actual_bridge_request_key(command, capsys):
+    run, generated = command
+    assert run(\"edit\", \"move\", \"t\", \"--clip\", \"parent/clip:a\", \"--on\", \"5\", \"--dry-run\", \"--json\") == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output[\"idempotency_key\"] == generated.calls[0][1]
+    assert output[\"idempotency_key\"] and output[\"receipt\"] is None
+PY
+PYTHONPATH="'$PWD:/tmp/agt-m1-frontends-fix-overlay /home/user/work/venv-agent/bin/python -m pytest -q -p core_overlay tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_publish_connection.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_history.py tests/packs/timeline/test_cli_status_publish.py tests/packs/timeline/test_cli_parity.py tests/packs/timeline/test_edit_verbs.py --basetemp=/tmp/agt-m1-frontends-fix-pytest-final' in /home/user/work/wt/agt-m1-frontends-fix
+ succeeded in 16945ms:
+........................................................................ [ 37%]
+........................................................................ [ 75%]
+..............................................                           [100%]
+190 passed in 15.96s
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/sync.py astrid/sdk/timeline/outbox.py tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/mypy --cache-dir=/tmp/agt-m1-frontends-fix-mypy astrid/sdk/timeline/sync.py astrid/sdk/timeline/outbox.py && git diff --check' in /home/user/work/wt/agt-m1-frontends-fix
+exec
+/bin/bash -lc "python3 - <<'PY'
+import collections
+import json
+import subprocess
+from pathlib import Path
+path = 'astrid/packs/timeline/cli.py'
+base = subprocess.check_output(['git', 'show', 'HEAD:' + path], text=True)
+for name, source in [('HEAD', base), ('worktree', Path(path).read_text())]:
+    result = subprocess.run(['/home/user/work/venv-agent/bin/ruff', 'check', '--no-cache', '--output-format=json', '--stdin-filename', path, '-'], input=source, text=True, capture_output=True)
+    findings = json.loads(result.stdout)
+    print(name, len(findings), dict(collections.Counter(finding['code'] for finding in findings)))
+PY" in /home/user/work/wt/agt-m1-frontends-fix
+ succeeded in 118ms:
+HEAD 15 {'I001': 7, 'E731': 1, 'E701': 1, 'BLE001': 1, 'F841': 1, 'E702': 4}
+worktree 15 {'I001': 7, 'E731': 1, 'E701': 1, 'BLE001': 1, 'F841': 1, 'E702': 4}
+
+ succeeded in 1890ms:
+All checks passed!
+Success: no issues found in 2 source files
+
+codex
+All 190 focused and neighbor tests pass with the real core and public bridge loaded from their owner worktrees. Ruff and mypy pass for the sync/outbox modules; the CLI’s 15 existing Ruff findings are unchanged. I’m writing the handoff now. Real Runtime restart/socket and browser journeys remain unverified, and the branch needs core and bridge integration before a useful full-suite run.
+exec
+/bin/bash -lc "git diff --numstat && git status --short && rg -n '_generated|list_timeline_commits|commit_timeline|timelines.history|timelines.commit' astrid/sdk/timeline/sync.py" in /home/user/work/wt/agt-m1-frontends-fix
+ succeeded in 14ms:
+1	1	astrid/packs/timeline/cli.py
+182	77	astrid/sdk/timeline/sync.py
+8	0	tests/packs/timeline/test_cli_commit_move.py
+355	13	tests/sdk/test_timeline_sync.py
+ M astrid/packs/timeline/cli.py
+ M astrid/sdk/timeline/sync.py
+ M tests/packs/timeline/test_cli_commit_move.py
+ M tests/sdk/test_timeline_sync.py
+141:            head = _pin(_response(client.timelines.history(project_id, timeline_id, limit=1))["data"]["head"])
+241:            result = _response(self.client.timelines.commit(
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root = Path.cwd()
+cache_names = {'__pycache__', '.pytest_cache', '.ruff_cache', '.mypy_cache'}
+paths = [path for path in root.rglob('*') if path.is_dir() and path.name in cache_names]
+for path in sorted(paths, key=lambda item: len(item.parts), reverse=True):
+    if path.exists():
+        shutil.rmtree(path)
+print('Removed worktree Python/test/lint caches:', len(paths))
+for path in Path('/tmp').glob('agt-m1-frontends-fix-*'):
+    if path.is_dir():
+        shutil.rmtree(path)
+print('Removed private overlay, pytest basetemps and mypy cache.')
+PY
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-frontends-fix/commit-msg <<'EOF'
+fix(timeline): fence outbox sends and validate acceptance identity
+
+Use the public timeline commit/history bridge and keep RPC and bundle reads
+outside the outbox file lock. Persist a flight fence and reconcile only its
+immutable prefix, preserving concurrently queued intent and newer flights.
+
+Validate frozen response identities, main receipts, invocation hashes,
+authenticated publishers and canonical revision scope before acknowledging.
+Keep exact request bodies, optional fields and original guards across retries;
+preserve preview request keys in CLI output.
+
+Cover blocked transports and reads, duplicate flushes, late completions,
+malformed ACKs, failed persistence, scope changes and dependent conflicts.
+Validated 190 focused frontend and journal/publish/edit neighbor tests with
+real core and bridge source through a temporary read-only import overlay.
+EOF
+git diff --check && git status --short" in /home/user/work/wt/agt-m1-frontends-fix
+ succeeded in 1164ms:
+Removed worktree Python/test/lint caches: 10
+Removed private overlay, pytest basetemps and mypy cache.
+ M astrid/packs/timeline/cli.py
+ M astrid/sdk/timeline/sync.py
+ M tests/packs/timeline/test_cli_commit_move.py
+ M tests/sdk/test_timeline_sync.py
+
+codex
+Implemented public-client commit/history calls, unlocked network reads/sends, durable flight fencing, and strict ACK identity checks. Concurrent suffixes, original guards, exact bodies/keys, and preview intent remain preserved. Commit message written.
+
+Validation: **190 passed**, using real core and bridge source through a temporary import overlay; generated transport was faked.
+
+```bash
+PYTHONPATH=$PWD:/tmp/agt-m1-frontends-fix-overlay /home/user/work/venv-agent/bin/python -m pytest -q -p core_overlay tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_publish_connection.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_history.py tests/packs/timeline/test_cli_status_publish.py tests/packs/timeline/test_cli_parity.py tests/packs/timeline/test_edit_verbs.py --basetemp=/tmp/agt-m1-frontends-fix-pytest-final
+```
+
+Checks passed:
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/sync.py astrid/sdk/timeline/outbox.py tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py
+/home/user/work/venv-agent/bin/mypy --cache-dir=/tmp/agt-m1-frontends-fix-mypy astrid/sdk/timeline/sync.py astrid/sdk/timeline/outbox.py
+git diff --check
+```
+
+CLI Ruff findings remain unchanged at 15. Temporary overlay and caches were removed.
+
+Used existing receipt/command validators plus narrow acceptance-identity checks because Agent lacks the packaged Runtime response schema. No contract decisions changed.
+
+Full, real-Runtime restart/socket, and browser journeys remain unverified. Next: integrate core and bridge dependencies, then run those checks centrally.
+tokens used
+144,712
+Implemented public-client commit/history calls, unlocked network reads/sends, durable flight fencing, and strict ACK identity checks. Concurrent suffixes, original guards, exact bodies/keys, and preview intent remain preserved. Commit message written.
+
+Validation: **190 passed**, using real core and bridge source through a temporary import overlay; generated transport was faked.
+
+```bash
+PYTHONPATH=$PWD:/tmp/agt-m1-frontends-fix-overlay /home/user/work/venv-agent/bin/python -m pytest -q -p core_overlay tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_publish_connection.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_history.py tests/packs/timeline/test_cli_status_publish.py tests/packs/timeline/test_cli_parity.py tests/packs/timeline/test_edit_verbs.py --basetemp=/tmp/agt-m1-frontends-fix-pytest-final
+```
+
+Checks passed:
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/sync.py astrid/sdk/timeline/outbox.py tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py
+/home/user/work/venv-agent/bin/mypy --cache-dir=/tmp/agt-m1-frontends-fix-mypy astrid/sdk/timeline/sync.py astrid/sdk/timeline/outbox.py
+git diff --check
+```
+
+CLI Ruff findings remain unchanged at 15. Temporary overlay and caches were removed.
+
+Used existing receipt/command validators plus narrow acceptance-identity checks because Agent lacks the packaged Runtime response schema. No contract decisions changed.
+
+Full, real-Runtime restart/socket, and browser journeys remain unverified. Next: integrate core and bridge dependencies, then run those checks centrally.

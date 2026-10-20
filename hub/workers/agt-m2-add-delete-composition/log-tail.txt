@@ -1,0 +1,400 @@
+
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+                             'select': select, 'args': {'values': copy.deepcopy({} if values is None else values),
+                                                       'clear': list(clear)}}]).commands[0]
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_recorded_graph_roots.py
+ M tests/sdk/test_timeline_commit_provider.py
+?? astrid/sdk/timeline/_delete_commands.py
+?? tests/editing_conformance/fixtures/recipe_clip_delete.json
+?? tests/editing_conformance/test_recipe_add_delete_composition.py
+?? tests/editing_conformance/test_recipe_clip_delete.py
+?? tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+!! .ruff_cache/
+180:[tool.ruff]
+182:line-length = 100
+191:[tool.ruff.lint]
+
+ succeeded in 29039ms:
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 48%]
+........................................................................ [ 64%]
+........................................................................ [ 80%]
+........................................................................ [ 96%]
+.................                                                        [100%]
+449 passed in 28.28s
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-add-delete-composition/tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+diff --git a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py
+index afe6c6efd4caf74f9cb7a7fa1d9e112525d921d9..5ca88c146619ba9ac545f2ab2f4c18c9d7311436
+--- a/astrid/sdk/timeline/commands.py
++++ b/astrid/sdk/timeline/commands.py
+@@ -32,11 +32,14 @@
+ 
+ 
+ def operations():
+-    """M1 native recipe entries; the full extensible registry belongs to M2."""
++    """Native recipe entries; the full extensible registry belongs to M2."""
+     from ._clip_commands import clip_add
++    from ._delete_commands import PARAMETERS as DELETE_PARAMETERS
++    from ._delete_commands import delete
+     from ._scalar_commands import clip_set_params, track_set
+     from .capture import MOVE_INTENT, move, track_create
+     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
++            'clip.delete': Operation(DELETE_PARAMETERS, delete, {}, True),
+             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
+             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
+diff --git a/astrid/sdk/timeline/inverse.py b/astrid/sdk/timeline/inverse.py
+index fdcfe37491b92a2adcface370115bbdd865670fa..01fcaa3ead7a0c2cb7b01959cf6b4d56ca31e497
+--- a/astrid/sdk/timeline/inverse.py
++++ b/astrid/sdk/timeline/inverse.py
+@@ -244,7 +244,8 @@
+                     raise CommandError('created track has surviving dependents', kind='surviving_dependents',
+                                        ref=write['ref'])
+             root = root_identity(write['ref'])
+-            if root is not None and not write['path'] and write['after'] == ABSENT:
++            if (root is not None and not write['path'] and write['after'] == ABSENT
++                    and write['before']['state'] == 'present'):
+                 staged.create_entity(write['ref'], kind=root[0],
+                                      owner=None if root[0] == 'shot' else 'parent',
+                                      value=write['before']['value'], restoring=True)
+@@ -265,7 +266,9 @@
+             ctx.select(selected['key'], selected['owner'], selected['members'])
+     for write in reversed(changes):
+         ctx.read(write['ref'], write['path'])
+-        if not write['path'] and write['after'] == ABSENT:
++        # An absent-to-absent edge still records authored intent, but restores
++        # no entity and must not allocate an identity or dereference a value.
++        if not write['path'] and write['after'] == ABSENT and write['before']['state'] == 'present':
+             root = root_identity(write['ref'])
+             if root is not None:
+                 ctx.create_entity(write['ref'], kind=root[0],
+diff --git a/tests/editing_conformance/test_recipe_add_delete_composition.py b/tests/editing_conformance/test_recipe_add_delete_composition.py
+index 43d0a5782ad91c8be9dac65c2225adc4c0ac5484..9a59c8953bcd1241bebaef541f9885c047500c97
+--- a/tests/editing_conformance/test_recipe_add_delete_composition.py
++++ b/tests/editing_conformance/test_recipe_add_delete_composition.py
+@@ -24,6 +24,13 @@
+     return execute(bundle, [add, delete])
+ 
+ 
++def authored(bundle):
++    document = document_from_bundle(bundle)
++    # Synthetic fixture revision names need not be regenerated after reload.
++    document['parent_revision'].pop('revision_id')
++    return document
++
++
+ @pytest.mark.parametrize('populated', [False, True])
+ def test_native_add_delete_net_zero_inverse_redo_retains_unchanged_write(populated):
+     original = bundle_from_document(delete_document()) if populated else with_track()
+@@ -38,12 +45,12 @@
+     assert plan.records[1]['writes'] == [dict(unchanged, before=present(row))]
+     assert replay(plan, original).records == plan.records
+     undone = inverse(reload(plan.bundle), plan.records)
+-    assert document_from_bundle(undone.bundle) == document_from_bundle(original)
++    assert authored(undone.bundle) == authored(original)
+     assert undone.records[0]['writes'] == [unchanged]
+     assert undone.records[0]['created'] == []
+     accepted = accepted_boundaries(undone.records, plan.bundle, undone.bundle)
+     redone = inverse(reload(undone.bundle), accepted)
+-    assert document_from_bundle(redone.bundle) == document_from_bundle(original)
++    assert authored(redone.bundle) == authored(original)
+     assert redone.records[0]['writes'] == [unchanged]
+     assert redone.records[0]['created'] == []
+     assert plan.records == immutable
+@@ -65,11 +72,11 @@
+     plan = execute(original, calls)
+     assert State(plan.bundle).collection('parent', 'clip') == [
+         clip for clip in original['parent']['clips'] if clip['id'] != deleted] + [row]
+-    expected = document_from_bundle(plan.bundle)
++    expected = authored(plan.bundle)
+     undone = inverse(reload(plan.bundle), plan.records)
+-    assert document_from_bundle(undone.bundle) == document_from_bundle(original)
++    assert authored(undone.bundle) == authored(original)
+     accepted = accepted_boundaries(undone.records, plan.bundle, undone.bundle)
+-    assert document_from_bundle(inverse(reload(undone.bundle), accepted).bundle) == expected
++    assert authored(inverse(reload(undone.bundle), accepted).bundle) == expected
+     for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
+         assert expected[key] == document_from_bundle(original)[key]
+ 
+diff --git a/tests/sdk/test_timeline_commit_provider_add_delete_runtime.py b/tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+index 1167c0310009f3bd218edcbe33afb0c63cf103d8..ef167882b4a069b0a96ef4630fdd0f973a5acb28
+--- a/tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
++++ b/tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+@@ -116,6 +116,11 @@
+             assert after['parent_revision']['payload']['config']['clips'] == expected
+         assert submit(body, 'add-delete-batch') == accepted
+         assert history()['items'] == entries
++        if net_zero:
++            with pytest.raises(RuntimeErrorBase) as error:
++                submit(request(calls), 'reallocate-net-zero-batch')
++            assert error.value.details['reason'] == 'identity_collision'
++            assert history()['items'] == entries
+ 
+         def refuse_reuse(identity, key):
+             previous = copy.deepcopy(history())
+@@ -143,6 +148,14 @@
+                 assert inverse_record['writes'] == [{'ref': ref, 'path': [], 'before': ABSENT, 'after': ABSENT}]
+                 assert inverse_record['created'] == []
+         assert next(entry for entry in history()['items'] if entry['publication_id'] == accepted['receipt']['receipt_id'])['records']['commands'] == records
++        if net_zero:
++            # The authored state never moved, but the accepted absent-to-absent
++            # inverse edges must still block reversal across intervening writes.
++            previous = copy.deepcopy(history())
++            with pytest.raises(RuntimeErrorBase) as error:
++                inverse(accepted['receipt']['receipt_id'], 'inverse-across-unchanged-writes')
++            assert error.value.details['reason'] == 'intervening_write'
++            assert history() == previous
+         durable = copy.deepcopy(history())
+         service.close()
+         service = RuntimeService(root)
+
+exec
+/bin/bash -lc "cat >> tests/editing_conformance/test_recipe_add_delete_composition.py <<'PY'
+
+
+@pytest.mark.parametrize('net_zero', [False, True])
+def test_native_explicit_clear_between_add_and_delete_restores_original_presence(net_zero):
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    original = with_track()
+    row = literal_row(params={'text': 'First', 'nullable': None, 'opaque': {'keep': False}})
+    add = capture_clip_add(original, 'parent', row)
+    added = execute(original, [add]).bundle
+    ref = 'parent/clip:first-clip'
+    clear = capture_clip_set_params(added, ref, clear=['nullable', 'missing'])
+    cleared = execute(added, [clear]).bundle
+    assert State(cleared).entity(ref)['params'] == {'text': 'First', 'opaque': {'keep': False}}
+    delete = capture_clip_delete(cleared, ref)
+    before, calls = (original, [add, clear, delete]) if net_zero else (added, [clear, delete])
+    plan = execute(before, calls)
+    cleared_writes = plan.records[-2]['writes']
+    assert cleared_writes == [
+        {'ref': ref, 'path': ['params', 'missing'], 'before': ABSENT, 'after': ABSENT},
+        {'ref': ref, 'path': ['params', 'nullable'], 'before': present(None), 'after': ABSENT}]
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == before
+    accepted = accepted_boundaries(undone.records, plan.bundle, undone.bundle)
+    assert inverse(undone.bundle, accepted).bundle == plan.bundle
+PY
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recorded_graph_roots.py' in /home/user/work/wt/agt-m2-add-delete-composition
+ succeeded in 5549ms:
+.........................................                                [100%]
+41 passed in 4.92s
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py' in /home/user/work/wt/agt-m2-add-delete-composition
+ succeeded in 5795ms:
+....                                                                     [100%]
+4 passed in 5.27s
+
+codex
+The broader targeted run passed 449 tests, including root inverses, native add, scalar edits, and provider preservation. The added clear-composition tests also pass: both present-null clears and already-absent clears survive round trips. I’m finishing the Runtime checks for reservation refusal and conflicts across accepted unchanged-write edges, then writing the report.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py' in /home/user/work/wt/agt-m2-add-delete-composition
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/_delete_commands.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/inverse.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py && git diff --check' in /home/user/work/wt/agt-m2-add-delete-composition
+ succeeded in 124ms:
+All checks passed!
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+cache = Path('.ruff_cache')
+if cache.exists():
+    shutil.rmtree(cache)
+PY
+ git diff --quiet -- astrid/sdk/timeline/commit.py runtime.lock.json artifacts.json && git diff --check && git status --short --ignored" in /home/user/work/wt/agt-m2-add-delete-composition
+ succeeded in 315ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_recorded_graph_roots.py
+ M tests/sdk/test_timeline_commit_provider.py
+?? astrid/sdk/timeline/_delete_commands.py
+?? tests/editing_conformance/fixtures/recipe_clip_delete.json
+?? tests/editing_conformance/test_recipe_add_delete_composition.py
+?? tests/editing_conformance/test_recipe_clip_delete.py
+?? tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+
+exec
+/bin/bash -lc 'git diff -- tests/sdk/test_timeline_commit_provider.py | head -35 && wc -l astrid/sdk/timeline/_delete_commands.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py && git -C /home/user/work/runtime status --short' in /home/user/work/wt/agt-m2-add-delete-composition
+ succeeded in 0ms:
+diff --git a/tests/sdk/test_timeline_commit_provider.py b/tests/sdk/test_timeline_commit_provider.py
+index 183197ef..ffe8c8ac 100644
+--- a/tests/sdk/test_timeline_commit_provider.py
++++ b/tests/sdk/test_timeline_commit_provider.py
+@@ -1234,3 +1234,158 @@ def test_multiple_targeted_restores_load_each_authenticated_reverse_stage():
+         realm.call([inverse([undone['receipt']['receipt_id']])])
+     assert error.value.failure['details']['reason'] == 'intervening_write'
+     assert realm.head == head and len(realm.accepted) == count
++
++
++@pytest.mark.parametrize('identity', ['clip-a', 'clip-b', 'clip-c'])
++@pytest.mark.parametrize('source_kind', ['transcript', 'config'])
++def test_native_clip_delete_reload_inverse_redo_preserves_rows_order_and_retained_pins(identity, source_kind):
++    from astrid.sdk.timeline.capture import capture_clip_delete
++    from tests.editing_conformance.test_recipe_clip_delete import delete_document
++
++    document = delete_document()
++    source = source_fixture(source_kind)
++    document['dependency_manifest']['documents'] = [source['pin']]
++    realm = DetachedRealm(document)
++    key = _digest(source['pin'])
++    realm.live_sources[key] = detached(source)
++    call = capture_clip_delete(bundle_from_document(document), 'parent/clip:' + identity)
++    deleted = realm.call([call])
++    removed_document = detached(deleted['data']['canonical_document'])
++    assert deleted['data']['commands'] == [call] and deleted['data']['id_map'] == {}
++    assert removed_document['shot_revisions'] == document['shot_revisions']
++    assert removed_document['internal_timeline_revisions'] == document['internal_timeline_revisions']
++    assert removed_document['dependency_manifest'] == document['dependency_manifest']
++    assert removed_document['parent_revision']['payload']['registry'] == document['parent_revision']['payload']['registry']
++    assert realm.retained_sources[key] == source
++    # Every call constructs a fresh provider and reloads detached accepted JSON.
++    realm.live_sources.clear()
++    undo = realm.call([inverse([deleted['receipt']['receipt_id']])])
++    restored = undo['data']['canonical_document']['parent_revision']['payload']
+   47 astrid/sdk/timeline/_delete_commands.py
+  144 tests/editing_conformance/test_recipe_add_delete_composition.py
+  171 tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+  362 total
+
+ succeeded in 28887ms:
+........................................................................ [ 15%]
+........................................................................ [ 31%]
+........................................................................ [ 47%]
+........................................................................ [ 63%]
+........................................................................ [ 79%]
+........................................................................ [ 95%]
+...................                                                      [100%]
+451 passed in 28.28s
+
+codex
+Final checks passed: 451 targeted Agent tests, 4 direct Runtime integration tests, changed-file Ruff, and `git diff --check`. The Runtime checks confirm that a new add→delete batch cannot reuse the reserved ID, and that an accepted absent→absent inverse edge blocks a later undo across it. I’m writing the required report and commit-message files now; M2 integration remains held pending M1.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-add-delete-composition')
+(worker / 'notes').mkdir(exist_ok=True)
+report = '''# Bundle 2 add/delete composition — candidate 2
+
+Implemented on Agent base "'`5b51b936` in the assigned worktree. No commits, merges, pushes, Runtime/App edits, pin changes, or artifact-manifest changes were made.
+
+## Changes
+
+- Overlaid only the reviewed `bbb60b5c` parent-clip delete handler, capture helper, registry entry, portable golden, and conformance/provider tests. Kept the base'"'s singleton normalization and newer semantic reservation implementation intact; "'`commit.py` is unchanged.
+- Added canonical `ClipDeleteArgs` schema glue for empty args, v1, and empty intent. The bounded handler remains responsible for singleton parent ownership and declared-dependency refusal. Its parameter schema now comes from the canonical schema.
+- Reproduced the net-zero inverse failure: native add→delete coalesces to an absent→absent root write, then the inverse dereferences missing `before.value`. Fixed it generically in both staged root reversal and inverse installation: restore an entity only when its prior state is present; otherwise record the ordinary assignment. Unchanged edges remain in history, and no new record fields, per-operation inverses, or parent snapshots were added. Beyond the reviewed overlay: 18 schema lines and 5 added inverse lines (replacing 2 existing lines).
+- Added exact native batch coverage for net-zero creation/deletion; mixed existing first/middle/last deletion plus new addition in either order; opaque/null/absent fields; explicit present-null and already-absent clears; retained pins; disjoint changes; membership/order changes; ABA/unchanged-write conflicts; declared dependents; and generic shot/occurrence root net-zero inverse/redo.
+- Added real Runtime service tests using the normal validated commit envelope and captured native commands. Both cases accept precisely one publication, preserve exact canonical authored data across inverse/redo, retain original created facts, reject retired-ID reuse, and survive restart/exact retry. Net-zero inverse/redo record absent→absent writes and allocate no IDs. Native reallocation through another net-zero batch is refused atomically. A later inverse across accepted unchanged edges is refused as an intervening write.
+
+## Validation
+
+Commands ran from `/home/user/work/wt/agt-m2-add-delete-composition`.
+
+Final targeted Agent tests — **451 passed in 28.28s**, exit 0:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py
+```
+
+Final direct Runtime tests — **4 passed in 5.27s**, exit 0:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py
+```
+
+Runtime HEAD observed: `9f9b25c000485e919f30f1411831fe2d5a3c1316`. Tests use real `RuntimeService`, `RealmStore`, provider registration, request validation, admission, durable history, exact revision reads, and restart. No sockets, fake acceptance SQL, legacy timeline publication, or renderer are used. The renderer and legacy parent publisher are tripwired. Captured client claims are submitted unchanged and verified by the authoritative executor. This proves the direct official service boundary; HTTP transport/browser behavior is unverified here.
+
+Changed-file lint — **All checks passed**, exit 0:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/_delete_commands.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/inverse.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+```
+
+```sh
+git diff --check
+git diff --quiet -- astrid/sdk/timeline/commit.py runtime.lock.json artifacts.json
+```
+
+Both exited 0. Removed the Ruff cache created by the earlier lint run; no build output or temporary files remain in the worktree.
+
+Earlier runs: initial new composition tests produced **9 failed, 3 passed**: three failures exposed the missing-value inverse bug; six exposed test comparisons against synthetic fixture revision names after reload. The latter assertions now compare all canonical authored content and digest while excluding only the generated revision name; real Runtime tests compare complete canonical documents. Subsequent targeted runs passed **169**, **449**, and **41** tests; the first two-case real Runtime run passed **2** tests. Final commands above cover the finished tree. No passing behavior expectations were weakened, skipped, or marked xfail.
+
+## Decisions, limits, next steps
+
+- Used the authorized generic correction only after reproducing the failure. Preserved all newer reservation logic; kept unsupported ownership/semantic shapes bounded as reviewed.
+- No product scope expansion beyond delete/schema glue and the generic net-zero fix. Existing scalar operations are used only as tests of explicit clears. No new group/media-swap/trim/split/CLI behavior.
+- No blockers or evidence requiring a PLAN decision change. Full suites, `make check`, mypy, HTTP/localhost/browser journeys, installs, and external network work were not run, as required by this targeted-only task.
+- Recommend review of **candidate 2**, then integration only when the orchestrator opens M2 under PLAN'"'s M1 exit rule. M2 merges remain held. The harness may commit these worktree changes using the accompanying commit message.
+'''
+(worker / 'notes' / 'report.md').write_text(report)
+message = '''feat(timeline): compose native clip additions and deletions
+
+Overlay bounded parent clip deletion onto the newer semantic reservation base
+and expose its empty parameter schema through the native registry.
+
+Handle absent-to-absent structural inverses without creating a missing entity,
+retaining unchanged write edges and original creation facts for guarded undo
+and permanent identity reservations.
+
+Cover native net-zero and mixed batches, exact authored inverse/redo, clears,
+opaque data, order, disjoint edits, ABA and dependency refusal. Verify durable
+acceptance, retry and reservations through the validated Runtime service.
+
+Validation: 451 targeted Agent tests, 4 direct Runtime tests, changed-file Ruff,
+and git diff --check pass. M2 integration remains held pending PLAN M1 exit.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+PY
+ git diff --check && git status --short --ignored && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-add-delete-composition/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-add-delete-composition/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-add-delete-composition/commit-msg.txt" in /home/user/work/wt/agt-m2-add-delete-composition
+ succeeded in 309ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_recorded_graph_roots.py
+ M tests/sdk/test_timeline_commit_provider.py
+?? astrid/sdk/timeline/_delete_commands.py
+?? tests/editing_conformance/fixtures/recipe_clip_delete.json
+?? tests/editing_conformance/test_recipe_add_delete_composition.py
+?? tests/editing_conformance/test_recipe_clip_delete.py
+?? tests/sdk/test_timeline_commit_provider_add_delete_runtime.py
+-rw-r--r-- 1 root root  791 Oct 20 00:19 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-add-delete-composition/commit-msg
+-rw-r--r-- 1 root root  791 Oct 20 00:19 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-add-delete-composition/commit-msg.txt
+-rw-r--r-- 1 root root 6152 Oct 20 00:19 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-add-delete-composition/notes/report.md
+
+codex
+Implemented candidate 2: bounded native clip deletion plus the reproduced generic absent→absent inverse fix. Newer reservation logic remains unchanged.
+
+- 451 targeted Agent tests passed.
+- 4 real Runtime service tests passed.
+- Changed-file Ruff and `git diff --check` passed.
+- No blockers. Full suites and HTTP/browser journeys were not run.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-add-delete-composition/notes/report.md). Both commit-message files are written.
+
+Recommend review; M2 integration remains held pending PLAN M1 exit.
+tokens used
+121,027
+Implemented candidate 2: bounded native clip deletion plus the reproduced generic absent→absent inverse fix. Newer reservation logic remains unchanged.
+
+- 451 targeted Agent tests passed.
+- 4 real Runtime service tests passed.
+- Changed-file Ruff and `git diff --check` passed.
+- No blockers. Full suites and HTTP/browser journeys were not run.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-add-delete-composition/notes/report.md). Both commit-message files are written.
+
+Recommend review; M2 integration remains held pending PLAN M1 exit.

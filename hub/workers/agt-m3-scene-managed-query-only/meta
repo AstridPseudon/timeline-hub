@@ -1,0 +1,9 @@
+name=agt-m3-scene-managed-query-only
+repo=agent
+base=7bc4bfd7903a41606661b5450b60b43eb3136e94
+base_sha=7bc4bfd7
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-scene-managed-query-only
+started=2026-10-20T19:35:43Z

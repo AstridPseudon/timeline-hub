@@ -1,0 +1,9 @@
+name=agt-m2-trim-raw-integer-bound
+repo=agent
+base=tl/agt-m2-trim-interior-rounding
+base_sha=e4bec724
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-trim-raw-integer-bound
+started=2026-10-20T10:32:55Z

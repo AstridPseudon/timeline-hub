@@ -1,0 +1,9 @@
+name=agt-m1-baseline-triage
+repo=agent
+base=tl/integration
+base_sha=a8eb28af
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m1-baseline-triage
+started=2026-10-19T20:14:13Z

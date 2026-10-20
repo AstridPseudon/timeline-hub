@@ -1,0 +1,400 @@
+   230	               and write['ref'].startswith('parent/clip:') and write['before'] == ABSENT
+   231	               and (pending or State(bundle).get(write['ref'], []) == ABSENT)}
+   232	    if not removed:
+   233	        return []
+   234	    parent = copy.deepcopy(bundle['parent'])
+   235	    for container in (parent, parent.get('config', {})):
+   236	        if isinstance(container.get('clips'), list):
+   237	            container['clips'] = [row for row in container['clips']
+   238	                                  if 'parent/clip:' + row['id'] not in removed]
+   239	
+   240	    def contains(value, pin):
+   241	        if isinstance(value, dict):
+   242	            return equal(value, pin) or any(contains(child, pin) for child in value.values())
+   243	        return isinstance(value, list) and any(contains(child, pin) for child in value)
+   244	
+   245	    result = []
+   246	    for entry in records.entries:
+   247	        choices = [write['after'].get('value') for record in entry['records']['commands']
+   248	                   for write in record['writes'] if write['ref'] in removed
+   249	                   and write['path'][:3] == ['app', 'astrid', 'word_anchors']]
+   250	        before, after = records.load_boundary(entry)
+   251	        prior, accepted = (source['source_mapping']['_runtime_document']['dependency_manifest']['documents']
+   252	                           for source in (before, after))
+   253	        for pin in accepted:
+   254	            if (pin not in prior and pin['document_id'].startswith('transcript:')
+   255	                    and any(isinstance(choice, dict) and choice.get('document') == pin for choice in choices)
+   256	                    and not contains([parent, bundle['shots']], pin)):
+   257	                result.append(pin)
+   258	    return result
+   259	
+   260	
+   261	def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
+   262	    """Compile exact inputs; inverse pin removal requires provider-verified records.
+Traceback (most recent call last):
+  File "<stdin>", line 5, in <module>
+KeyError: 'allOf'
+
+ exited 1 in 14769ms:
+ exited 1 in 234688ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import json,hashlib
+for name in ['candidate','baseline']:
+ p=Path(name)/'astrid/core/timeline/schema/edit-command.schema.json'; s=json.loads(p.read_bytes())
+ print(name,hashlib.sha256(p.read_bytes()).hexdigest(),len(s['"'$defs'"']),s.keys())
+ for k,v in s.items():
+  if k "'!= '"'"'$defs'"' and isinstance(v,(list,dict)):print(k,len(v))
+PY
+rg -n 'if|then|allOf' candidate/astrid/core/timeline/schema/edit-command.schema.json | tail -8" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes
+ succeeded in 17ms:
+candidate fafb1985a326e6121aa8c9fb34bbda196edc3dfaf462352070372e631bea1f52 53 dict_keys(['$schema', '$id', 'title', 'description', '$ref', '$defs'])
+baseline fafb1985a326e6121aa8c9fb34bbda196edc3dfaf462352070372e631bea1f52 53 dict_keys(['$schema', '$id', 'title', 'description', '$ref', '$defs'])
+1679:          "then": {
+1698:          "if": {
+1708:          "then": {
+1740:      "allOf": [
+1742:          "if": {
+1755:          "then": {
+1880:          "description": "Absolute timeline seconds; quantized once with pinned rational fps, then made occurrence-local."
+2252:      "description": "App empty-timeline defaults only. Requires authenticated original bootstrap publication; never a root replacement or repair.",
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_root_inverse.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_next_command_cohort_runtime.py tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_timing_retained_inputs.py' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes/candidate
+ succeeded in 35ms:
+All checks passed!
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes/test_review_controls.py <<'PY'
+
+
+def test_exact_original_media_group_redo(retained, monkeypatch):
+    import json
+    from tests.editing_conformance import test_next_command_cohort_runtime as joint
+    case = retained
+    original_submit = case.submit
+    captured = {}
+    def observe(body, key, *args, **kwargs):
+        if key == 'joint-undo-all':
+            captured['before'] = copy.deepcopy(case.documents[case.head()['revision_id']])
+            captured['request'] = copy.deepcopy(body)
+        result = original_submit(body, key, *args, **kwargs)
+        if key == 'joint-undo-all':
+            captured['undo'] = result
+        return result
+    case.submit = observe
+    joint.test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_and_retry(case, monkeypatch, True)
+    redone = word.undo(case, captured['undo'], 'review-redo-whole-group')
+    assert json.dumps(redone['data']['canonical_document'], sort_keys=True) == json.dumps(captured['before'], sort_keys=True)
+    case.restart()
+    assert case.submit(captured['request'], 'joint-undo-all') == captured['undo']
+PY
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes/runtime-s2 ASTRID_WORD_ANCHOR_SEED_RUNTIME=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes/historical-runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts= -p no:cacheprovider -q ../test_review_controls.py::test_exact_original_media_group_redo > ../group-redo.log 2>&1' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes/candidate
+exec
+/bin/bash -lc "tail -3 portable-other.log && python3 - <<'PY'
+import json
+s=json.load(open('candidate/astrid/core/timeline/schema/edit-command.schema.json'))
+for k,v in s['"'$defs'"'].items():
+ if 'allOf' in v:print(k,len(v['allOf']))
+PY" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes
+ succeeded in 52ms:
+........................................................................ [ 55%]
+...............................................................xxxx..... [ 83%]
+...............EditCommand 26
+CommandBatch 1
+
+ succeeded in 7194ms:
+codex
+The pin-location check confirms the defect: the parent reference retains the pin; the occurrence reference loses it. The main targeted Runtime run finished with 116 passes and the two old fixture-import failures, which I also reproduced on untouched `b5cfce50`. A final check is running for exact redo of the original grouped media case.
+
+exec
+/bin/bash -lc "tail -15 group-redo.log && tail -4 portable-other.log && rg -n 'pending|cache|pin' candidate/tests/editing_conformance/test_timing_retained_inputs.py | head -16 && du -sh candidate baseline runtime-s2 historical-runtime" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes
+ succeeded in 65ms:
+=============================== warnings summary ===============================
+tests/editing_conformance/test_commit_runtime_parent_media.py:24
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes/candidate/tests/editing_conformance/test_commit_runtime_parent_media.py:24: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+tests/editing_conformance/test_native_word_anchor.py:21
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes/candidate/tests/editing_conformance/test_native_word_anchor.py:21: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+test_review_controls.py::test_exact_original_media_group_redo
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes/candidate/tests/editing_conformance/test_next_command_cohort_runtime.py:23: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 3 warnings in 5.77s
+........................................................................ [ 27%]
+........................................................................ [ 55%]
+...............................................................xxxx..... [ 83%]
+.................46:    captures = bundle["source_mapping"]["pinned_documents"]
+49:    pin, document = capture["pin"], capture["document"]
+75:    return WordBinding(TARGET, "on", declaration, chosen[0].owner, pin["document_id"],
+76:                       pin["version"], pin["content_digest"], tuple(word.id for word in chosen))
+109:    pin = {"document_id": document_id, "version": 1, "content_digest": _digest(content)}
+135:    case = SimpleNamespace(service=service, root=root, project=project, pin=pin, source=source,
+164:            assert port.transcript_source(pin) == {"pin": pin, "document": source}
+175:                    [{"media_id": media, "content_digest": media}], [pin]))
+179:                    "pin": pin, "policy": "exact"}]}
+189:        "select": None, "args": {"pin": pin, "media": selection}, "created": []}]), "retain")
+220:def test_exact_retained_v1_compiles_after_cas_v2_restart_and_cache_corruption(retained):
+226:    inputs = TimingInputs(bundle, sources=bundle["source_mapping"]["pinned_documents"], bindings=[binding])
+236:    current = case.service.update_document(case.project, case.pin["document_id"],
+273:    sources = bundle["source_mapping"]["pinned_documents"]
+283:        "sources": [{"pin": case.pin, "document": case.source}], "start": "7007/2000"}
+287:    assert bundle["source_mapping"]["pinned_documents"] == [{"pin": case.pin, "document": case.source}]
+112M	candidate
+112M	baseline
+8.5M	runtime-s2
+6.9M	historical-runtime
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes/prepare_sources.py <<'PY'
+\"\"\"Recreate this review's private immutable source archives and ordinary candidate.\"\"\"
+import io
+import os
+import subprocess
+import tarfile
+from pathlib import Path
+
+NOTES = Path(__file__).resolve().parent
+for name, repository, revision in [
+    ('candidate', '/home/user/work/wt/agt-review-grouped-root-inverse', '9ccf10ec23d292fc7b25b4c4cc5fe91ef36c08b5'),
+    ('baseline', '/home/user/work/wt/agt-review-grouped-root-inverse', 'b5cfce50'),
+    ('runtime-s2', '/home/user/work/runtime', 'f7081c14efd9a5b834987e7a1e2abf597b66313b'),
+    ('historical-runtime', '/home/user/work/runtime', '80973d34ae10e498d7213c30287012c9876f4b1a'),
+]:
+    destination = NOTES / name
+    destination.mkdir(exist_ok=True)
+    archive = subprocess.check_output(['git', '-C', repository, 'archive', revision])
+    with tarfile.open(fileobj=io.BytesIO(archive)) as stream:
+        stream.extractall(destination, filter='data')
+(NOTES / 'runtime-s2/contract/schemas/edit-command.json').write_bytes(
+    (NOTES / 'candidate/astrid/core/timeline/schema/edit-command.schema.json').read_bytes())
+for arguments in ([], ['--check']):
+    subprocess.run(['/home/user/work/venv-runtime/bin/python',
+                    str(NOTES / 'runtime-s2/generators/generate.py'), *arguments],
+                   check=True, env={**os.environ, 'PYTHONDONTWRITEBYTECODE': '1'})
+PY" in /home/user/work/wt/agt-review-grouped-root-inverse
+ succeeded in 0ms:
+exec
+/bin/bash -lc "tail -4 portable-other.log && rg -n '("'^={3}|ERROR|FAILED|passed)'"' runtime-neighbors.log | tail -6" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes
+ succeeded in 0ms:
+........................................................................ [ 27%]
+........................................................................ [ 55%]
+...............................................................xxxx..... [ 83%]
+...................3:=================================== FAILURES ===================================
+42:=========================== short test summary info ============================
+43:FAILED tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[add]
+44:FAILED tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[swap]
+45:2 failed, 116 passed in 225.97s (0:03:45)
+
+ succeeded in 150554ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+n=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes')
+report='''# Review: changes requested
+
+Reviewed repair "'`9ccf10ec23d292fc7b25b4c4cc5fe91ef36c08b5` (tree `dd5a7e5431639ae88668521e5711f0ce266c32fe`) against cohort `b5cfce50` (tree `c34a2f943fb882657e3bbd16039fb1a1661dd5ef`). Read PLAN.md and repository AGENTS.md. No source fixes, git mutations, integration changes, public pin/freeze, shared dependency writes, or full-suite requests.
+
+## Finding: P2 — surviving occurrence references lose their retained transcript pin
+
+`astrid/sdk/timeline/commit.py:256`, `_inverse_clip_transcripts`, tests for surviving pin references using only `[parent, bundle['"'shots']]"'`. The authoring bundle removes `parent.occurrences` when opening a document and stores those authored objects in `bundle['"'placements']"'` (`authoring_bundle.py:351–353`). Consequently, an exact transcript pin inside surviving occurrence extension/opaque data is invisible to both the pending hydration scan and the final output scan.
+
+Real reproduction, with ordinary generated S2 + candidate and the original public historical seed API:
+
+1. Preserve an opaque exact transcript pin on the historical occurrence; the private probe adds just that opaque field to the existing seed'"'s public "'`publish_parent_composition` payload.
+2. Use actual native accepted commands to create a parent clip and anchor it to that transcript. Its immutable document manifest contains the pin.
+3. Submit normal `timeline.inverse` targeting both accepted publications.
+4. The occurrence and its exact opaque pin survive, but `dependency_manifest.documents` becomes `[]`.
+
+The identical pin on the parent survives with `[pin]`. This is the same conservative opaque-reference policy already asserted by the repair'"'s "'`retention='"'opaque'"'` test, differing only in authored scope. No histories, recorder fields, prepared provider, schema override, SQL seeds, or accepted receipts were invented. The probe uses the original public historical seed followed by the current normal semantic provider, store and immutable revision acceptance.
+
+Retained-input removal must examine surviving occurrence authored data as well as parent and shot data. Add a main-suite regression for the occurrence location before approving this pin-removal addition. The probe and full failure output are retained in `test_review_controls.py` and `review-controls-final.log` beside this report. This finding concerns removal of the immutable input pin; the opaque dictionary itself remains byte-preserved.
+
+## Bounded repair assessment
+
+All eight changed files were inspected, including the complete 61-line `commit.py` diff and its callers. The root/cache repair itself passed the requested checks:
+
+- `clip_cache_stages` accepts staged `parent/clip:*` `at`/`hold` writes only with accepted-record provenance, an unchanged flattened command trace, word ownership, exact before guards, and a replayed complete-root match to every accepted after boundary. Runtime provider boundary loading verifies project/timeline, revision and publication ancestry. These are temporary guard/scratch stages; installation still reverses the original authored writes.
+- `check_intervening` remains before staging; created identity, read/binding, structural membership/order and dependent checks remain. There is no broad root ignore list, new numeric normalization, or whole-document restoration. Existing JSON numeric-equivalence guards were unchanged; immutable content/revision reuse still uses exact encoded content.
+- The exact original birth → A → B → inverse(B) → grouped undo fails with the original root guard on untouched baseline and passes on the candidate. All eight joint/pin tests pass. Both immutable A/B payload assertions and exact sorted-JSON baseline restoration pass.
+- An additional real-service probe redoes that complete original media group, verifies the entire canonical document against the pre-undo image with sorted JSON, restarts, and verifies the exact original undo retry. It passes.
+- All 10 new portable cache controls pass, including raw at/hold changes, opaque values, track/source identity, same-value authored writes, ABA, tampered/unauthenticated history and a single-batch reversal.
+- Two additional real-service controls submit accepted batches that explicitly author `at` or `hold` and then let the timing compiler write that SAME path. Accepted history is inspected to prove both kinds of write occurred. Undo of the earlier birth+anchor still refuses `intervening_write`, with unchanged head/payload. Both pass.
+- Redo pin reopening is restricted to exact authored word pins from accepted restored parent clip roots and passes normal scoped source verification. The recorder change captures reopened inverse inputs through existing dependency recording. Preexisting/surviving parent anchors and parent opaque pin references pass. The occurrence omission above prevents approval of the retained-pin handling as a whole.
+- The two hydration observers only forward keyword arguments; no old behaviour expectation was weakened. The strict xfail removal is supported by a real success here. Existing unrelated parent-media xfails remain live.
+
+The source schema is byte-identical between baseline and repair: SHA256 `fafb1985a326e6121aa8c9fb34bbda196edc3dfaf462352070372e631bea1f52`, 53 definitions, 26 EditCommand operation conditions. Source and generated-contract publication/pins are unchanged by this review. No first-occurrence birth claim is made.
+
+## Reproduction environment and commands
+
+All source trees used for tests were private `git archive` extractions under this report directory, never another worker'"'s mutable checkout. "'`prepare_sources.py` recreates them. Runtime S2 is `f7081c14efd9a5b834987e7a1e2abf597b66313b`; historical public seed Runtime is `80973d34ae10e498d7213c30287012c9876f4b1a`. Copied the complete candidate schema to the private Runtime'"'s ordinary "'`contract/schemas/edit-command.json`, then ran its normal generator; no inline/private schema replacement. Heavy dependencies were read from the shared venvs; bytecode and pytest caches were disabled. No socket/browser/daemon lane was run.
+
+```sh
+N=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes
+P=/home/user/work/venv-agent/bin/python
+export PYTHONDONTWRITEBYTECODE=1
+export ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2"
+export ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-runtime"
+cd "$N/candidate"
+export PYTHONPATH="$PWD"
+```
+
+Normal generation, both exit 0; standard 13 outputs generated:
+
+```sh
+/home/user/work/venv-runtime/bin/python "$N/runtime-s2/generators/generate.py"
+/home/user/work/venv-runtime/bin/python "$N/runtime-s2/generators/generate.py" --check
+```
+
+Portable controls and inverse/structural/binding floors: **249 passed in 19.35s**, exit 0, `portable.log`:
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_native_word_anchor_vectors.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+```
+
+Additional recipe/source/word/crop/rational/schema floors: RESULT_PENDING, `portable-other.log`:
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_composed_schema.py
+```
+
+Real-service joint + parent-media/word/manifest/shared/retained-input neighbours: **116 passed / 2 failed in 225.97s**, exit 1, `runtime-neighbors.log`. The 8 original joint/pin cases all pass; the two failures are classified below:
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration tests/editing_conformance/test_next_command_cohort_runtime.py tests/editing_conformance/test_commit_runtime_parent_media.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_timing_retained_inputs.py
+```
+
+Independent same-path controls and pin-location contrast: **3 passed / 1 failed in 10.35s**, exit 1, `review-controls-final.log`; the failure is the occurrence omission above:
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q -s ../test_review_controls.py
+```
+
+That command ran before the final grouped-redo probe was added. Run its exact final node separately: **1 passed in 5.77s**, exit 0, `group-redo.log`:
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q ../test_review_controls.py::test_exact_original_media_group_redo
+```
+
+Private probes collected outside the repository emitted unknown-integration-mark warnings; these are collection configuration warnings, not skipped tests. All candidate production/main-suite tests used the archived repository'"'s normal pytest configuration.
+
+Untouched baseline: **3 failed in 6.05s**, exit 1, "'`baseline.log`: one expected reproduction of the actual original root guard refusal with xfail disabled, plus the identical two old manifest-fixture import failures:
+
+```sh
+cd "$N/baseline"
+export PYTHONPATH="$PWD"
+"$P" -m pytest -o addopts= -p no:cacheprovider -q --runxfail -m integration '"'tests/editing_conformance/test_next_command_cohort_runtime.py::test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_and_retry[True]' tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+"'```
+
+Both manifest cases (`[add]`, `[swap]`) fail immediately at line 26 importing retired `_binding_descriptor` from the current Runtime fixture. They do not reach Agent implementation or acceptance. The test file is unchanged between base and repair. Classification as existing fixture migration debt is confirmed; the original requirements remain live, with no deletion/skip/xfail/expectation change. This is not qualification of those two scenarios.
+
+Lint: **All checks passed**, exit 0:
+
+```sh
+cd "$N/candidate"
+"$P" -m ruff check --no-cache astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_root_inverse.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_next_command_cohort_runtime.py tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_timing_retained_inputs.py
+```
+
+`git diff b5cfce50 9ccf10ec --check` in the assigned worktree: exit 0. Assigned worktree remains source-clean.
+
+Initial diagnostics are kept honestly: `joint.log` contains 2 passes / 6 setup errors from supplying a relative historical Runtime path (the fixture subprocess changes cwd). All authoritative runs above use absolute paths. The first occurrence-only probe reproduced the same failure; an initial separate same-path run passed both cases. Counts overlap; do not sum them as unique tests.
+
+## Limits and next action
+
+Review complete, no execution blocker. Withhold approval until the retained-pin scan covers surviving occurrence authored data and a main-suite regression passes. Keep the two old manifest tests as outstanding fixture migration work. No full suite, browser/App journey, publication/freeze, first occurrence creation, renderer parity, owner film, or macOS qualification is claimed. Private source archives/build outputs are removed after testing; reproducible scripts, logs and this report remain outside the repository.
+'"'''
+(n/'report.md').write_text(report)
+PY" in /home/user/work/wt/agt-review-grouped-root-inverse
+ succeeded in 0ms:
+exec
+/bin/bash -lc "tail -5 portable-other.log && ls -l portable-other.log && rg -n '\\[parent|opaque|retained documents' review-controls-final.log | head -5" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes
+ succeeded in 0ms:
+........................................................................ [ 27%]
+........................................................................ [ 55%]
+...............................................................xxxx..... [ 83%]
+...........................................                              [100%]
+255 passed, 4 xfailed in 148.47s (0:02:28)
+-rw-r--r-- 1 root root 363 Oct 20 12:20 portable-other.log
+1:..surviving occurrence pin: {'document_id': 'transcript:c0ef8d9bc1b058a2aed7c824f2edd34f37d8ae46c3f4842e61fbcbc5a0d3e554', 'version': 1, 'content_digest': 'sha256:a459897d3aedd340963a5c2320d5df0f1ea0382fffcbf69ca93b539fbc0aa68b'} retained documents: [{'content_digest': 'sha256:a459897d3aedd340963a5c2320d5df0f1ea0382fffcbf69ca93b539fbc0aa68b', 'document_id': 'transcript:c0ef8d9bc1b058a2aed7c824f2edd34f37d8ae46c3f4842e61fbcbc5a0d3e554', 'version': 1}]
+2:.surviving occurrence pin: {'document_id': 'transcript:56b88929397000a8055d1571feca130a19f94b1afdd1796c24bb36cce7104ff4', 'version': 1, 'content_digest': 'sha256:a459897d3aedd340963a5c2320d5df0f1ea0382fffcbf69ca93b539fbc0aa68b'} retained documents: []
+5:______________ test_occurrence_opaque_pin_is_retained[occurrence] ______________
+7:tmp_path = PosixPath('/tmp/pytest-of-root/pytest-2301/test_occurrence_opaque_pin_is_1')
+11:    def test_occurrence_opaque_pin_is_retained(tmp_path, location):
+
+codex
+Exact redo of the original grouped media case passed, including the full document comparison and restart retry. The remaining portable checks passed too: 255 passed, 4 existing xfails. I’m finishing the review with one P2 defect in occurrence pin retention; no source was changed.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=root/'workers/agt-review-grouped-root-inverse'; n=w/'notes'
+p=n/'report.md'; s=p.read_text().replace('RESULT_PENDING', '**255 passed / 4 existing strict xfailed in 148.47s**, exit 0')
+s=s.replace('Source and generated-contract publication/pins are unchanged by this review.', 'Public source/schema publication and dependency pins are unchanged by this review; only private generated candidate outputs were created.')
+p.write_text(s)
+flat='''# CHANGES REQUESTED — grouped clip-root inverse review
+
+One P2 defect in "'`9ccf10ec` versus `b5cfce50`: `astrid/sdk/timeline/commit.py:256` drops an introduced transcript pin when a surviving opaque reference to it is on an occurrence. `_inverse_clip_transcripts` searches parent and shot data, but authored occurrences live separately in `bundle['"'placements']"'`. A real normally generated S2 + candidate run accepts birth + anchor + grouped inverse, preserves the occurrence'"'s exact pin dictionary, and incorrectly returns "'`dependency_manifest.documents=[]`. The same pin on the parent is retained. Include surviving occurrence authored data in the scan and add a main-suite regression before approval.
+
+The root-cache staging itself passed review and reproduction: accepted before/after provenance, no broad root ignore or new numeric normalization, and no whole-document restore. Original grouped failure reproduced on untouched base; repaired joint cases and exact full-group redo/restart retry pass. Genuine accepted authored `at` and `hold` writes still refuse undo even when the compiler also writes the same path. All eight changed files inspected.
+
+Fresh targeted evidence (overlapping counts):
+
+- Portable lanes: **249 passed**, then **255 passed / 4 existing xfailed**; all 10 new cache controls included.
+- Real Runtime neighbours: **116 passed / 2 preexisting fixture-import failures**. Both old `_binding_descriptor` failures reproduced unchanged on baseline; requirements remain live.
+- Independent compiler-masked authored-write and pin-location controls: **3 passed / 1 failed** (the occurrence omission above).
+- Exact original media grouped undo → redo → restart/retry: **1 passed**.
+- Baseline original counterexample + old fixture controls: **3 expected reproductions of failure**.
+- Normal private Runtime generation and `--check`, changed-file Ruff, and diff whitespace checks passed. Schema unchanged: **53 definitions / 26 operations**.
+
+No source fixes, git mutation, integration, public freeze/pin, first-occurrence claim, or full-suite request. Review complete; no execution blocker. Next step: repair the occurrence pin scan and rerun these targeted controls; separately migrate the two old manifest fixtures without weakening their requirements.
+
+[Detailed report, exact commands and limits](../workers/agt-review-grouped-root-inverse/notes/report.md). Reproduction scripts and logs are retained beside it; private source archives were removed.
+'"'''
+(root/'design/agent-review-grouped-root-inverse.md').write_text(flat)
+(w/'commit-msg').write_text('chore(timeline): review grouped root inverse repair\\n\\nInspect accepted cache staging and retained input handling in 9ccf10ec.\\nReproduce targeted positive and adversarial cases and report the surviving\\noccurrence transcript-pin retention defect outside the repository.\\n')
+for name in ('candidate','baseline','runtime-s2','historical-runtime'):
+    shutil.rmtree(n/name)
+for name in ('__pycache__','.pytest_cache'):
+    if (n/name).exists():shutil.rmtree(n/name)
+(w/'DONE').touch()
+print('Wrote flat review, detailed report, reproduction scripts, commit-msg and DONE; removed private source archives.')
+PY
+git status --short" in /home/user/work/wt/agt-review-grouped-root-inverse
+ succeeded in 6345ms:
+Wrote flat review, detailed report, reproduction scripts, commit-msg and DONE; removed private source archives.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-grouped-root-inverse.md')
+s=p.read_text().replace('(../workers/agt-review-grouped-root-inverse/notes/report.md)', '(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-grouped-root-inverse/notes/report.md)')
+p.write_text(s)
+print('Review links verified.')
+PY" in /home/user/work/wt/agt-review-grouped-root-inverse
+ succeeded in 0ms:
+Review links verified.
+
+codex
+Review complete: **one P2 defect**—surviving opaque occurrence references can lose their retained transcript pin.
+
+The root-cache repair and exact grouped undo/redo passed. Targeted checks recorded 504 portable passes and 116 Runtime passes; both old fixture failures reproduced on baseline.
+
+[Review and detailed commands/results]( /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-grouped-root-inverse.md)
+
+No source changes or full suites. `commit-msg` and `DONE` written.
+tokens used
+137,334
+Review complete: **one P2 defect**—surviving opaque occurrence references can lose their retained transcript pin.
+
+The root-cache repair and exact grouped undo/redo passed. Targeted checks recorded 504 portable passes and 116 Runtime passes; both old fixture failures reproduced on baseline.
+
+[Review and detailed commands/results]( /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-grouped-root-inverse.md)
+
+No source changes or full suites. `commit-msg` and `DONE` written.

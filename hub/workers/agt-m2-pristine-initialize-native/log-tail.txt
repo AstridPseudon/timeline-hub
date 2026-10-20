@@ -1,0 +1,400 @@
++    return calls
++
++
++def inverse(bundle, records, intervening=()):
++    call = {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
++            'args': {'publications': ['accepted-init']}}
++    return execute(bundle, [call], inverse_records=records, intervening_records=intervening)
++
++
++def test_app_golden_exact_capture_replay_inverse_and_redo():
++    original = bundle_from_document(empty_document())
++    before = copy.deepcopy(original)
++    calls = batch(original)
++    assert calls == GOLDEN['commands']
++    for call in calls:
++        validate_command(call)
++    plan = execute(original, calls)
++    assert original == before
++    assert plan.records == GOLDEN['records']
++    assert document_from_bundle(plan.bundle)['parent_revision']['payload'] == GOLDEN['app_parent']
++    assert replay(plan, original).records == plan.records
++    undone = inverse(plan.bundle, plan.records)
++    assert undone.bundle == original
++    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
++    assert all(write['ref'] == 'parent' and write['path'] for write in plan.records[0]['writes'])
++    assert plan.records[0]['writes'][-1]['path'] == ['registry', 'assets']
++    assert 'registry' not in plan.bundle['parent']['config']
++    assert all(key not in plan.bundle['parent']['config']
++               for key in ('theme', 'theme_overrides', 'generation_defaults'))
++
++
++@pytest.mark.parametrize('path,value', [
++    (['config', 'output'], None), (['name'], None), (['slug'], ''),
++    (['registry', 'assets'], {}), (['registry', 'opaque'], [None, False]),
++    (['config', 'opaque'], {'enabled': False}), (['opaque'], {'literal': 'V1'}),
++    (['config', 'tracks'], [{'id': 'later', 'kind': 'visual'}]),
++    (['config', 'clips'], [{'id': 'later'}]), (['clips'], [{'id': 'later'}]),
++])
++def test_nonpristine_and_opaque_content_is_untouched(path, value):
++    original = bundle_from_document(empty_document())
++    node = original['parent']
++    for token in path[:-1]:
++        node = node[token]
++    node[path[-1]] = value
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        execute(original, [GOLDEN['commands'][0]])
++    assert original == before
++
++
++@pytest.mark.parametrize('mutation', ['absent-null', 'extra-output', 'extra-arg', 'version',
++                                     'select', 'intent', 'fps-bool', 'resolution'])
++def test_closed_typed_versioned_arguments(mutation):
++    command = copy.deepcopy(GOLDEN['commands'][0])
++    if mutation == 'absent-null':
++        del command['args']['output']['background']
++    elif mutation == 'extra-output':
++        command['args']['output']['opaque'] = None
++    elif mutation == 'extra-arg':
++        command['args']['pristine'] = True
++    elif mutation in ('version', 'select'):
++        command[mutation] = 'other'
++    elif mutation == 'intent':
++        command['intent'] = {'overwrite': True}
++    elif mutation == 'fps-bool':
++        command['args']['output']['fps'] = True
++    else:
++        command['args']['output']['resolution'] = '1920x1080'
++    with pytest.raises(CommandError):
++        validate_command(command)
++
++
++def test_exact_order_claims_and_intervening_write_guard():
++    original = bundle_from_document(empty_document())
++    plan = execute(original, batch(original))
++    changed = copy.deepcopy(plan.bundle)
++    changed['parent']['config']['tracks'].reverse()
++    with pytest.raises(CommandError):
++        inverse(changed, plan.records)
++    write = copy.deepcopy(plan.records[0]['writes'][0])
++    write['before'] = write['after']
++    with pytest.raises(CommandError) as error:
++        inverse(plan.bundle, plan.records, [{'writes': [write]}])
++    assert error.value.kind == 'intervening_write'
++    forged = copy.deepcopy(plan.commands)
++    forged[0]['reads'][0]['state']['value']['opaque'] = None
++    with pytest.raises(CommandError):
++        execute(original, forged)
++    # A different raw parent cannot be treated as an equivalent empty basis.
++    changed = copy.deepcopy(original)
++    changed['parent']['registry']['opaque'] = [None]
++    with pytest.raises(CommandError):
++        replay(plan, changed)
++
++
++def test_additional_timeline_names_and_app_empty_name_are_preserved():
++    original = bundle_from_document(empty_document())
++    for name, slug in (('Second Cut', 'second-cut'), ('', 'timeline')):
++        call = capture_initialize(original, name=name, slug=slug,
++                                  output=GOLDEN['app_parent']['config']['output'])
++        plan = execute(original, [call])
++        assert plan.bundle['parent']['name'] == name
++        assert plan.bundle['parent']['slug'] == slug
++        assert inverse(plan.bundle, plan.records).bundle == original
++
++
++def test_complete_s2_schema_is_retained_additively():
++    schema = json.loads((Path(__file__).parents[2] /
++                         'astrid/core/timeline/schema/edit-command.schema.json').read_text())
++    assert len(schema['$defs']) == 49
++    del schema['$defs']['TimelineInitArgs']
++    conditions = schema['$defs']['EditCommand']['allOf']
++    assert conditions.pop(0)['if']['properties']['op']['const'] == 'timeline.init'
++    assert len(conditions) == 22
++    canonical = json.dumps(schema, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
++    assert hashlib.sha256(canonical).hexdigest() == GOLDEN['s2_semantic_sha256']
+diff --git a/tests/sdk/test_timeline_pristine_initialize_provider.py b/tests/sdk/test_timeline_pristine_initialize_provider.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..acad3f0d88a3dc70b173832501874dfc0162f55c
+--- /dev/null
++++ b/tests/sdk/test_timeline_pristine_initialize_provider.py
+@@ -0,0 +1,66 @@
++"""History authority for init uses the existing scoped read/accept port."""
++from __future__ import annotations
++
++import copy
++
++import pytest
++
++from astrid.sdk.timeline.commit import bundle_from_document
++from tests.editing_conformance.test_pristine_initialize import GOLDEN, batch, empty_document
++from tests.sdk import test_timeline_commit_provider as provider
++
++runtime_abi = provider.runtime_abi
++
++
++def inverse(publication):
++    return {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
++            'args': {'publications': [publication]}}
++
++
++def test_init_undo_redo_and_reinitialization_requires_bootstrap_history():
++    realm = provider.DetachedRealm(empty_document())
++    calls = batch(bundle_from_document(empty_document()))
++    original = copy.deepcopy(realm.head)
++    accepted = realm.call(calls)
++    assert accepted['data']['canonical_document']['parent_revision']['payload'] == GOLDEN['app_parent']
++    undone = realm.call([inverse(accepted['receipt']['receipt_id'])])
++    assert undone['data']['canonical_document'] == empty_document()
++    assert realm.head['revision_id'] == original['revision_id']
++    assert realm.head['publication_id'] != original['publication_id']
++    for base in (None, original):
++        before = copy.deepcopy(realm.head)
++        with pytest.raises(provider.CommitRejected) as error:
++            realm.call(calls, base=base)
++        assert error.value.failure['details']['reason'] == 'not_pristine'
++        assert realm.head == before
++    redone = realm.call([inverse(undone['receipt']['receipt_id'])])
++    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
++
++
++@pytest.mark.parametrize('intent,previous', [('legacy_unknown', None),
++                                          ('recorded', None), ('bootstrap', {'publication_id': 'prior'})])
++def test_equal_bytes_without_pristine_history_cannot_initialize(intent, previous):
++    realm = provider.DetachedRealm(empty_document())
++    realm.entries[0].update(intent=intent, previous=previous)
++    before = copy.deepcopy(realm.head)
++    with pytest.raises(provider.CommitRejected) as error:
++        realm.call(batch(bundle_from_document(empty_document())))
++    assert error.value.failure['details']['reason'] == 'not_pristine'
++    assert realm.head == before and realm.accepted == []
++
++
++def test_cas_retry_cannot_initialize_over_edit_then_undo_equal_bytes():
++    realm = provider.DetachedRealm(empty_document())
++    calls = batch(bundle_from_document(empty_document()))
++
++    def edit_and_undo():
++        created = realm.call([{'schema_version': 1, 'op': 'track.create', 'version': '1',
++                              'select': 'parent', 'args': {'row': {'id': 'later', 'kind': 'visual'}}}])
++        realm.call([inverse(created['receipt']['receipt_id'])])
++
++    realm.before_accept = edit_and_undo
++    with pytest.raises(provider.CommitRejected) as error:
++        realm.call(calls)
++    assert error.value.failure['details']['reason'] == 'not_pristine'
++    assert realm.documents[realm.head['revision_id']] == empty_document()
++    assert len(realm.accepted) == 2
+diff --git a/tests/sdk/test_timeline_pristine_initialize_runtime.py b/tests/sdk/test_timeline_pristine_initialize_runtime.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d080e63ffbf428a0bd184adbd6e110e63ada33a6
+--- /dev/null
++++ b/tests/sdk/test_timeline_pristine_initialize_runtime.py
+@@ -0,0 +1,109 @@
++"""Real in-process Runtime create → init → restart/reload → undo → exact retry."""
++from __future__ import annotations
++
++import copy
++
++import pytest
++
++from tests.editing_conformance.test_pristine_initialize import GOLDEN
++from tests.helpers.runtime import use_runtime, vendored_runtime_commit
++
++pytestmark = pytest.mark.integration
++
++
++def test_pristine_init_crash_resume_reload_undo_retry_and_redo(tmp_path, monkeypatch):
++    use_runtime(commit=vendored_runtime_commit())
++    from runtime_protocol.errors import RuntimeErrorBase
++    from runtime_protocol.service import RuntimeService
++    from runtime_protocol.store import RealmStore
++    from runtime_protocol.timeline_commit_port import route_path
++
++    from astrid.sdk.timeline import commands, commit
++    from astrid.sdk.timeline.outbox import Outbox
++
++    root = tmp_path / 'realm'
++    RealmStore.initialize(root).close()
++    service = RuntimeService(root)
++    service.register_timeline_commit_provider(commit.create_runtime_commit_service())
++    project = service.create_project({'slug': 'initialize', 'name': 'Initialize'})['id']
++
++    def head():
++        row = service.get_project_timeline(project, 'film')
++        return {'revision_id': row['head_revision_id'], 'publication_id': row['head_publication_id']}
++
++    def request(calls):
++        current = head()
++        return {'api_version': 1, 'project_id': project, 'timeline_id': 'film',
++                'base_revision_id': current['revision_id'],
++                'base_publication_id': current['publication_id'], 'commands': calls, 'dry_run': False}
++
++    def submit(body, key):
++        return service.commit_timeline(project, 'film', body, idempotency_key=key, publisher='author',
++                                       invocation_path=route_path(project, 'film'), authorize=lambda: None)
++
++    def inverse(result):
++        return {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
++                'args': {'publications': [result['receipt']['receipt_id']]}}
++
++    def reopen():
++        service.close()
++        reopened = RuntimeService(root)
++        reopened.register_timeline_commit_provider(commit.create_runtime_commit_service())
++        return reopened
++
++    try:
++        # This models a client persisting its original create/init intent before
++        # either call. App must wire its own recovery store to the same sequence.
++        outbox = Outbox(tmp_path / 'initialize-outbox.json')
++        with outbox.locked():
++            outbox.write({'create_key': 'create-film', 'init_key': 'init-film',
++                          'commands': copy.deepcopy(GOLDEN['commands'])})
++        created = service.create_timeline(project, 'film', idempotency_key='create-film', name='Main')
++        initial = head()
++        # Persisted caller intent already includes the name/slug/defaults; a
++        # restart between legal create and init must retain the empty basis.
++        service = reopen()
++        recovered = Outbox(outbox.path).read()
++        intent = recovered['commands']
++        assert head() == initial
++        assert service.create_timeline(project, 'film', idempotency_key='create-film', name='Main') == created
++        original = request(intent)
++        with outbox.locked():
++            outbox.write({**recovered, 'in_flight': original})
++        initialized = submit(original, 'init-film')
++        document = initialized['data']['canonical_document']
++        assert document['parent_revision']['payload'] == GOLDEN['app_parent']
++        # Independent immutable read, then process restart after a lost ACK.
++        revision = head()['revision_id']
++        assert service.get_project_parent_composition_revision(project, 'film', revision)['payload'] == GOLDEN['app_parent']
++        service = reopen()
++        assert submit(Outbox(outbox.path).read()['in_flight'], recovered['init_key']) == initialized
++        undone = submit(request([inverse(initialized)]), 'undo-init')
++        assert undone['data']['canonical_document']['parent_revision']['payload'] == {
++            'config': {'clips': [], 'tracks': []}, 'registry': {}, 'clips': [], 'occurrences': []}
++        retired = head()
++        assert retired['revision_id'] == initial['revision_id'] and retired != initial
++        service = reopen()
++
++        def forbidden(*args, **kwargs):
++            raise AssertionError('exact accepted retry reapplied initializer or checked new semantics')
++
++        with monkeypatch.context() as retry:
++            retry.setattr(commands, 'execute', forbidden)
++            retry.setattr(commit.RuntimeCommitService, 'commit', forbidden)
++            assert submit(original, 'init-film') == initialized
++        assert head() == retired
++        for body in (request(intent), original):
++            with pytest.raises(RuntimeErrorBase) as error:
++                submit(body, 'new-init-' + body['base_publication_id'])
++            assert error.value.details['reason'] == 'not_pristine' and head() == retired
++        changed_payload = copy.deepcopy(original)
++        changed_payload['commands'][0]['args']['name'] = 'Changed'
++        with pytest.raises(RuntimeErrorBase):
++            submit(changed_payload, 'init-film')
++        assert head() == retired
++        redone = submit(request([inverse(undone)]), 'redo-init')
++        assert redone['data']['canonical_document'] == document
++        assert len(service.list_timeline_commits(project, 'film', authorize=lambda: None)['items']) == 4
++    finally:
++        service.close()
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+cache=Path('.ruff_cache')
+if cache.exists() and not cache.is_symlink():
+    shutil.rmtree(cache)
+Path('/tmp/initialize-s2-schema.json').unlink(missing_ok=True)
+PY
+git diff --check
+ git status --short" in /home/user/work/wt/agt-m2-pristine-initialize-native
+ succeeded in 494ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+?? astrid/sdk/timeline/native_initialize.py
+?? docs/design/pristine-initialize.md
+?? tests/editing_conformance/fixtures/pristine_initialize.json
+?? tests/editing_conformance/test_pristine_initialize.py
+?? tests/sdk/test_timeline_pristine_initialize_provider.py
+?? tests/sdk/test_timeline_pristine_initialize_runtime.py
+
+exec
+/bin/bash -lc "rg -n 'idempotency.*(reuse|conflict|different)|request_hash.*conflict' /home/user/work/runtime/runtime_protocol/timeline_commit_store.py tests/sdk/test_timeline_commit_provider* | head -20 && sed -n '90,105p' /home/user/work/runtime/runtime_protocol/timeline_commit_store.py" in /home/user/work/wt/agt-m2-pristine-initialize-native
+ succeeded in 0ms:
+    def _membership(self, project_id, timeline_id):
+        row = self.conn.execute("SELECT p.realm_id FROM timelines t JOIN projects p ON p.id=t.project_id "
+                                "WHERE t.id=? AND t.project_id=? AND t.archived_at IS NULL",
+                                (timeline_id, project_id)).fetchone()
+        if row is None:
+            reject("history_unavailable")
+        return row["realm_id"]
+
+    def lookup(self, context, *, authorize):
+        with self.store._mutex:
+            authorize()
+            request = context["request"]
+            if self._membership(request["project_id"], request["timeline_id"]) != context["realm_id"]:
+                reject("authority_changed")
+            return self._lookup(context)
+
+
+codex
+The Agent slice is complete. Final focused tests passed 32/32; the real Runtime regression passed 1/1; Ruff and diff checks passed. I’ve written the detailed report, shared capture/schema handoff, and commit message, and removed temporary files. No full suite was requested.
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pristine-initialize-native')
+assert (worker/'notes/report.md').is_file()
+assert (worker/'commit-msg').is_file()
+(worker/'DONE').touch()
+PY" in /home/user/work/wt/agt-m2-pristine-initialize-native
+ succeeded in 0ms:
+codex
+Implemented guarded `timeline.init`, exact App-default captures/golden, and the complete additive S2 schema. Existing publication history prevents reinitialization after edits or undo. No pins, HTTP, ABI, or storage machinery changed.
+
+Final tests, using `/home/user/work/venv-agent/bin/python` with `PYTHONPATH=$PWD PYTHONDONTWRITEBYTECODE=1`:
+
+```sh
+python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_pristine_initialize.py tests/sdk/test_timeline_pristine_initialize_provider.py tests/sdk/test_timeline_composed_schema.py
+```
+
+**32 passed.**
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_pristine_initialize_runtime.py
+```
+
+**1 passed:** actual Runtime create/restart/init/reload/undo/exact retry/redo. Neighbor selections passed **156** and **305** tests. Ruff and `git diff --check` passed. No full suite ran.
+
+No Agent blocker remains. Next: freeze/generate the successor pair, then qualify App recovery and Runtime-owned headless repair through the Door. Those flows remain unverified here.
+
+[Detailed report and all exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pristine-initialize-native/notes/report.md). Commit message and `DONE` written; no commit or push performed.
+tokens used
+164,094
+Implemented guarded `timeline.init`, exact App-default captures/golden, and the complete additive S2 schema. Existing publication history prevents reinitialization after edits or undo. No pins, HTTP, ABI, or storage machinery changed.
+
+Final tests, using `/home/user/work/venv-agent/bin/python` with `PYTHONPATH=$PWD PYTHONDONTWRITEBYTECODE=1`:
+
+```sh
+python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_pristine_initialize.py tests/sdk/test_timeline_pristine_initialize_provider.py tests/sdk/test_timeline_composed_schema.py
+```
+
+**32 passed.**
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_pristine_initialize_runtime.py
+```
+
+**1 passed:** actual Runtime create/restart/init/reload/undo/exact retry/redo. Neighbor selections passed **156** and **305** tests. Ruff and `git diff --check` passed. No full suite ran.
+
+No Agent blocker remains. Next: freeze/generate the successor pair, then qualify App recovery and Runtime-owned headless repair through the Door. Those flows remain unverified here.
+
+[Detailed report and all exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pristine-initialize-native/notes/report.md). Commit message and `DONE` written; no commit or push performed.

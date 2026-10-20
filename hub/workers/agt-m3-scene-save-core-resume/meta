@@ -1,0 +1,9 @@
+name=agt-m3-scene-save-core-resume
+repo=agent
+base=tl/integration
+base_sha=4ef1391c
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-scene-save-core-resume
+started=2026-10-20T13:29:35Z

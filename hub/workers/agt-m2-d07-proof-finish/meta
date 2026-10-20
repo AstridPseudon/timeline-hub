@@ -1,0 +1,9 @@
+name=agt-m2-d07-proof-finish
+repo=agent
+base=tl/agt-m2-d07-retime-cut
+base_sha=225ae22f
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-d07-proof-finish
+started=2026-10-20T09:32:45Z

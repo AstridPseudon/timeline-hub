@@ -1,0 +1,400 @@
+
+import copy
+import hashlib
+import json
+import tarfile
+
+import pytest
+
+from precut_realm_fixture import (
+    ARCHIVE,
+    VARIANT_ARCHIVES,
+    load_precut_realm_fixture,
+    readonly_tree_digest,
+)
+from runtime_protocol.errors import RetiredRouteError
+from runtime_protocol.service import RuntimeService
+from runtime_protocol.timeline_commit_baseline import verify_baseline
+from runtime_protocol.timeline_commit_validation import validate_commit_value
+from runtime_protocol.util import canonical_json
+from test_timeline_commit_validation import prepared
+
+
+VARIANTS = [
+    ("music-documents", "film-move-baseline", "film-two-clip-publication"),
+    ("anchor", "input-anchor-baseline", "input-anchor-baseline"),
+    ("raw", "raw-parent", "raw-publication"),
+]
+
+
+def _baseline(root, pins):
+    service = RuntimeService(root)
+    try:
+        changes = service.store.conn.total_changes
+        result = verify_baseline(
+            service.store.conn, pins["project_id"], pins["timeline_id"],
+            read_object=service.cas.read,
+        )
+        assert service.store.conn.total_changes == changes
+        return result
+    finally:
+        service.close()
+
+
+def _expected_payloads(original, variant):
+    parent = copy.deepcopy(original["parent_revision"]["payload"])
+    internals = copy.deepcopy(original["internal_timeline_revisions"])
+    shots = copy.deepcopy(original["shot_revisions"])
+    if variant == "music-documents":
+        parent["config"]["tracks"].append({"id": "music-2", "kind": "audio"})
+        parent["clips"].append({
+            "id": "music-other", "clipType": "audio", "asset": "music-bed",
+            "track": "music-2", "at": 0, "hold": 5.5,
+            "extension": {"opaque": [None, {"keep": True}]},
+        })
+        parent["config"]["clips"] = copy.deepcopy(parent["clips"])
+    elif variant == "anchor":
+        parent["clips"][0]["at"] = 0.25
+        parent["clips"][0]["app"] = {
+            "on": "word:word-1", "astrid": {"on": "word:word-1", "fixed_start": False, "for": 5.5},
+        }
+        parent["config"]["clips"] = copy.deepcopy(parent["clips"])
+    else:
+        parent["config"]["output"] = {
+            "fps": 24, "background": None, "future_output": {"clear": None},
+        }
+        parent["config"]["future_config"] = None
+        parent["future_parent"] = {"opaque": [None, False]}
+        internal = internals[0]
+        shot = next(image for image in shots
+                    if image["internal_timeline_revision_id"] == internal["revision_id"])
+        raw = internal["payload"]
+        raw["output"] = copy.deepcopy(parent["config"]["output"])
+        raw["output"]["fps"] = {"numerator": 30000, "denominator": 1001}
+        raw["playback"] = {"future_playback": None}
+        raw["future_internal"] = {"opaque": [None, False]}
+        raw["tracks"][0]["future_track"] = None
+        raw["clips"][0].update(volume=None, future_clip={"clear": None})
+        old_shot_revision = shot["revision_id"]
+        internal["revision_id"] = "raw-internal"
+        shot["revision_id"] = "raw-shot"
+        shot["internal_timeline_revision_id"] = "raw-internal"
+        shot["payload"]["internal_timeline_revision_id"] = "raw-internal"
+        for occurrence in parent["occurrences"]:
+            if occurrence["shot_revision_id"] == old_shot_revision:
+                occurrence["shot_revision_id"] = "raw-shot"
+        for image in (internal, shot):
+            image["content_digest"] = RuntimeService._revision_digest(image["payload"])
+    return parent, internals, shots
+
+
+@pytest.mark.parametrize("variant, revision, key", VARIANTS)
+def test_variants_restore_exact_historical_images_and_publication_identity(tmp_path, variant, revision, key):
+    original = load_precut_realm_fixture(tmp_path)
+    original_baseline = _baseline(original.copy_roots[0], original.pins)
+    captured = load_precut_realm_fixture(tmp_path, variant=variant)
+    archive = VARIANT_ARCHIVES[variant]
+    assert archive.stat().st_size < 40_000
+    with tarfile.open(archive) as contents:
+        assert all(member.name == "backup" or member.name.startswith("backup/")
+                   for member in contents.getmembers())
+        assert {member.name for member in contents.getmembers() if member.isfile()} == {
+            "backup/manifest.json", "backup/cas-manifest.json", "backup/realm.sqlite3",
+            *("backup/" + path.relative_to(captured.backup_root).as_posix()
+              for path in (captured.backup_root / "cas").rglob("*") if path.is_file()),
+        }
+    assert captured.manifest["schema"]["version"] == 31
+    assert captured.manifest["realm"] == original.manifest["realm"]
+    assert captured.pins["parent_revision_id"] == revision
+    assert captured.pins["publication_id"] is None
+    for name, value in original.pins.items():
+        if name not in {"parent_revision_id", "publication_event_id", "publication_event_ids",
+                        "publication_receipt_id", "publication_payload"}:
+            assert captured.pins[name] == value
+
+    before = readonly_tree_digest(captured.backup_root)
+    assert all(readonly_tree_digest(root) == before for root in captured.copy_roots)
+    expected_parent, expected_internals, expected_shots = _expected_payloads(
+        original_baseline["canonical_document"], variant,
+    )
+    baselines = [_baseline(root, captured.pins) for root in captured.copy_roots]
+    assert baselines[0] == baselines[1]
+    for baseline in baselines:
+        assert len(baseline["entries"]) == 2
+        assert baseline["entries"][0] == original_baseline["entries"][0]
+        receipt = baseline["entries"][-1]["receipt"]
+        assert receipt["idempotency_key"] == key
+        assert receipt["receipt_id"] == captured.pins["publication_receipt_id"]
+        assert receipt["event_ids"] == list(captured.pins["publication_event_ids"])
+        assert receipt["result"]["new_head"] == revision
+        assert baseline["head"] == {
+            "revision_id": revision, "publication_id": receipt["receipt_id"],
+        }
+        assert captured.pins["publication_payload"]["new_head"] == revision
+        document = baseline["canonical_document"]
+        assert document["parent_revision"]["payload"] == expected_parent
+        for kind, expected in (("internal_timeline_revisions", expected_internals),
+                               ("shot_revisions", expected_shots)):
+            assert {image["revision_id"]: image for image in document[kind]} == {
+                image["revision_id"]: image for image in expected
+            }
+        value = prepared()
+        value["canonical_document"] = document
+        value["document_digest"] = baseline["document_digest"]
+        before_validation = canonical_json(value)
+        validate_commit_value(value, "PreparedCommit")
+        assert canonical_json(value) == before_validation
+        for image in [document["parent_revision"], *document["internal_timeline_revisions"],
+                      *document["shot_revisions"]]:
+            assert image["content_digest"] == RuntimeService._revision_digest(image["payload"])
+    for root in captured.copy_roots:
+        handoff = json.loads((root / "activation-handoff.json").read_text())
+        assert handoff["candidate_database_sha256"] == captured.manifest["database_sha256"]
+    assert readonly_tree_digest(captured.backup_root) == before
+    assert hashlib.sha256(ARCHIVE.read_bytes()).hexdigest() == (
+        "e304773208ff96cea0dca545c69cfa3fcb7ef605c01c306017ed8bcfc654a6b5"
+    )
+
+
+def test_canonical_documents_have_genuine_create_receipts_and_refuse_bypass(tmp_path):
+    captured = load_precut_realm_fixture(tmp_path, variant="music-documents")
+    service = RuntimeService(captured.copy_roots[0])
+    project = captured.pins["project_id"]
+    try:
+        parent = service.get_project_parent_composition_revision(project, "film", "film-parent-v1")["payload"]
+        internal = service.get_project_timeline_revision(project, "film", "film-internal-1")["payload"]
+        for document_id, content in (("timeline:film", parent), ("legacy-projection", parent),
+                                     ("timeline:shot:shot-1", internal)):
+            document = service.get_document(project, document_id)
+            assert document["kind"] == "timeline.composition"
+            assert document["version"] == 1
+            assert document["content"] == content
+            request = {"project_id": project, "document_id": document_id,
+                       "kind": document["kind"], "content": content}
+            row = service.store.conn.execute(
+                "SELECT * FROM command_idempotency WHERE command_kind='document.create' AND aggregate_id=?",
+                (document_id,),
+            ).fetchone()
+            assert row is not None and row["txn_id"]
+            assert row["request_hash"] == hashlib.sha256(canonical_json(request).encode()).hexdigest()
+tests/editing_conformance/test_recipe_m2_shot_pool.py:35:    others = [{'asset': 'pool-' + name, 'generation_id': 'generation-' + name, 'variant_id': 'variant-' + name,
+tests/editing_conformance/test_recipe_m2_shot_pool.py:95:    assert (binding['generationId'], binding['variantId']) == ('generation-b', 'variant-b')
+tests/editing_conformance/test_recipe_occurrence_media.py:54:    old = {'asset': 'picture', 'generation_id': 'generation-old', 'variant_id': 'variant-old',
+tests/editing_conformance/test_recipe_occurrence_media.py:56:    new = {'asset': 'reserved-new', 'generation_id': 'generation-new', 'variant_id': 'variant-new',
+tests/editing_conformance/test_recipe_occurrence_media.py:116:                             'generationId': 'generation-new', 'variantId': 'variant-new'}
+tests/editing_conformance/test_commit_runtime_video_unplace.py:46:            {'selector': 'new', 'ordinal': 0, 'variant_key': 'new', 'output_port': kind}]}])
+tests/editing_conformance/test_commit_runtime_video_unplace.py:61:        output = _output(b'new', output_port=kind, group_key='main', variant_key='new', ordinal=0,
+tests/editing_conformance/test_commit_runtime_video_unplace.py:87:            'generationId': state.new['generation_id'], 'variantId': state.new['variant_id'],
+tests/editing_conformance/test_commit_runtime_m1.py:514:        {"selector": "completed", "ordinal": 0, "variant_key": "completed", "output_port": kind}]}])
+tests/editing_conformance/test_commit_runtime_m1.py:524:        variant_key="completed", ordinal=0, filename="completed." + ("png" if kind == "image" else "mp4"),
+tests/editing_conformance/test_recipe_m2_placement.py:237:@pytest.mark.parametrize('field', ['generationId', 'variantId', 'catalog_digest', 'object_id', 'opaque'])
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:34:            {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': 'image'}
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:51:            'variantId': pin['variant_id'], 'opaque': [None, False, {}]})
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:101:        outputs = [_output(name.encode(), output_port='image', group_key='main', variant_key=name,
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:105:        selections = {row['variant_key']: service.get_project_media_selection(project, {
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:177:            'asset', 'generation_id', 'variant_id')}, authorize=authorize) == new
+tests/editing_conformance/test_recipe_m2_shared_auto_placement.py:148:def test_the_exact_completed_variant_is_bound_and_the_other_occurrence_is_untouched(kind):
+tests/editing_conformance/test_recipe_m2_shared_auto_placement.py:152:    assert (binding['generationId'], binding['variantId']) == ('generation-new', 'variant-new')
+tests/editing_conformance/test_recipe_m2_shared_auto_placement.py:326:        'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:36:            {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': kind}
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:48:        if isinstance(value, dict) and {'generation', 'variant', 'entry'} <= value.keys():
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:63:            _output(name.encode(), output_port=kind, group_key='main', variant_key=name,
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:77:        by_name = {row['variant_key']: pin for row, pin in zip(associations, pins)}
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:209:    outputs = [_output(b'foreign-' + row['variant_key'].encode(), **{
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:210:        key: row[key] for key in ('output_port', 'group_key', 'variant_key', 'ordinal', 'filename', 'media_type')
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:306:                key: foreign[key] for key in ('asset', 'generation_id', 'variant_id')
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:310:        # correct project, alias, generation, variant and immutable object.
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:318:        assert error.value.message == 'selected media is not a managed project generation/variant/object'
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:329:                               if source['variant_id'] == pin['variant_id'])
+tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py:51:            'selected_variants': {}, 'provenance': {}, 'generation_inputs': {},
+tests/editing_conformance/test_timing_retained_inputs.py:90:            {"selector": "take", "ordinal": 0, "variant_key": "take", "output_port": "audio"}]}])
+tests/editing_conformance/test_timing_retained_inputs.py:97:        variant_key="take", ordinal=0, filename="voice.wav", media_type="audio/wav")], effect=admitted)
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:38:        generationId='generation-old', variantId='variant-old', opaque=[None, False])
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py:62:                   'variantId': 'variant-new', 'opaque': [None, False, {}]})
+tests/editing_conformance/test_recipe_m2_video_unplace.py:114:    ('generationId', 'changed'), ('variantId', 'changed'), ('opaque', {'changed': True})])
+tests/editing_conformance/test_recipe_m2_video_unplace.py:171:@pytest.mark.parametrize('damage', ['still-placed', 'wrong-object', 'wrong-generation', 'wrong-variant',
+tests/editing_conformance/test_recipe_m2_video_unplace.py:182:               'wrong-variant': 'variant_id', 'wrong-fingerprint': 'catalog_digest'}[damage]
+tests/editing_conformance/test_recipe_m2_video_unplace.py:202:            state.entity(OWNER + '/registry')['assets']['reserved-new']['variantId'] = 'changed'
+tests/editing_conformance/test_recipe_m2_auto_placement.py:123:def test_the_exact_completed_variant_is_bound_and_siblings_are_untouched(kind):
+tests/editing_conformance/test_recipe_m2_auto_placement.py:127:    assert (binding['generationId'], binding['variantId']) == ('generation-new', 'variant-new')
+tests/sdk/test_generation_publication_adapter.py:81:                    {"selector": "main-0", "ordinal": 0, "variant_key": "original"},
+tests/sdk/test_generation_publication_adapter.py:82:                    {"selector": "main-1", "ordinal": 1, "variant_key": "variant-1"},
+tests/sdk/test_generation_publication_adapter.py:83:                    {"selector": "main-2", "ordinal": 2, "variant_key": "variant-2"},
+tests/sdk/test_generation_publication_adapter.py:95:            "variant_key": "original",
+tests/sdk/test_generation_publication_adapter.py:101:            "variant_key": "variant-1",
+tests/sdk/test_generation_publication_adapter.py:107:            "variant_key": "variant-2",
+tests/sdk/test_generation_publication_consumer.py:47:            {"group_key": "second", "selectors": [{"selector": "b", "ordinal": 7, "variant_key": "v7"}]},
+tests/sdk/test_generation_publication_consumer.py:48:            {"group_key": "first", "selectors": [{"selector": "a", "ordinal": 2, "variant_key": "v2"}]},
+tests/sdk/test_generation_publication_consumer.py:62:                {"group_key": "second", "selectors": [{"selector": "b", "ordinal": 7, "variant_key": "v7", "output_port": "generated_videos"}]},
+tests/sdk/test_generation_publication_consumer.py:63:                {"group_key": "first", "selectors": [{"selector": "a", "ordinal": 2, "variant_key": "v2", "output_port": "generated_videos"}]},
+tests/sdk/test_generation_publication_consumer.py:75:            {"group_key": "main", "selectors": [{"selector": "s", "ordinal": 0, "variant_key": "v"}]}
+tests/sdk/test_generation_publication_consumer.py:108:            {"group_key": "main", "selectors": [{"selector": "s", "ordinal": 0, "variant_key": "v"}]}
+tests/sdk/test_generation_publication_consumer.py:127:        "groups": [{"group_key": "g", "selectors": [{"selector": "s", "ordinal": 0, "variant_key": "v"}]}],
+tests/sdk/test_generation_publication_consumer.py:148:        "selector": {"group_key": "g", "variant_key": "v"},
+tests/sdk/test_generation_publication_consumer.py:183:            "groups": [{"group_key": "g", "selectors": [{"selector": "s", "ordinal": 0, "variant_key": "v"}]}],
+tests/sdk/test_generation_publication_consumer.py:210:                "groups": [{"group_key": "main", "selectors": [{"selector": "main-0", "ordinal": 0, "variant_key": "original"}]}],
+tests/sdk/test_generation_publication_consumer.py:228:                "variant_key": "original",
+tests/sdk/test_generation_publication_consumer.py:262:                    "variant_key": "original",
+tests/sdk/test_generation_publication_consumer.py:335:            {"group_key": "left", "selectors": [{"selector": "left-0", "ordinal": 0, "variant_key": "left-v"}]},
+tests/sdk/test_generation_publication_consumer.py:336:            {"group_key": "right", "selectors": [{"selector": "right-1", "ordinal": 1 if not collision else 0, "variant_key": "right-v"}]},
+tests/sdk/test_generation_publication_consumer.py:347:            _descriptor(tmp_path, "generated_videos", b"right", 1, selector={"group_key": "right", "variant_key": "right-v"}, producer={"source": "p"}),
+tests/sdk/test_generation_publication_consumer.py:348:            _descriptor(tmp_path, "generated_videos", b"left", 0, selector={"group_key": "left", "variant_key": "left-v"}, provenance={"trace": "t"}),
+tests/sdk/test_generation_publication_consumer.py:355:    assert [(item["group_key"], item["variant_key"], item["selector"], item["ordinal"]) for item in outputs[:2]] == [
+tests/sdk/test_generation_publication_consumer.py:356:        ("right", "right-v", {"group_key": "right", "variant_key": "right-v"}, 1),
+tests/sdk/test_generation_publication_consumer.py:357:        ("left", "left-v", {"group_key": "left", "variant_key": "left-v"}, 0),
+tests/sdk/test_generation_publication_consumer.py:367:    one = _descriptor(tmp_path, "generated_videos", b"one", 0, selector={"group_key": "left", "variant_key": "left-v"})
+tests/sdk/test_generation_publication_consumer.py:378:    mismatch = _descriptor(tmp_path, "generated_videos", b"mismatch", 0, selector={"group_key": "right", "variant_key": "right-v"})
+tests/sdk/test_generation_publication_consumer.py:393:        selector={"group_key": "left", "variant_key": "left-v"},
+tests/sdk/test_generation_publication_consumer.py:452:        variant_key="left-v",
+tests/sdk/test_generation_publication_consumer.py:453:        selector={"group_key": "left", "variant_key": "left-v"},
+tests/sdk/test_generation_publication_consumer.py:458:    assert uploaded[0]["selector"] == {"group_key": "left", "variant_key": "left-v"}
+tests/sdk/test_domain_contracts.py:62:def test_envelope_success_and_failure_invariants() -> None:
+tests/sdk/test_timeline_script.py:170:                        "selected_variants": {}, "provenance": {}, "generation_inputs": {},
+tests/sdk/test_rrp_managed_output_consumer.py:31:        "variant_key": "original",
+tests/sdk/test_rrp_managed_output_consumer.py:32:        "selector": {"group_key": "main", "variant_key": "original"},
+tests/sdk/test_host_bootstrap_source_identity.py:699:@pytest.mark.parametrize("variant", ["source", "installed", "parked"])
+tests/sdk/test_host_bootstrap_source_identity.py:700:def test_darwin_host_reuse_matches_full_known_launch_without_ps(native_host_command_fixture, variant):
+tests/sdk/test_host_bootstrap_source_identity.py:702:    if variant == "source": f.argv.remove("-I")
+tests/sdk/test_host_bootstrap_source_identity.py:703:    elif variant == "parked": f.argv.extend(["--activation-fd", "7", "--activation-operation-id", "operation",
+tests/sdk/test_host_bootstrap_source_identity.py:764:def test_darwin_framework_variant_requires_verified_executable_and_exact_private_tail(native_host_command_fixture, monkeypatch):
+tests/sdk/test_runtime_response_conformance.py:243:    return THUMBNAIL.FakeRuntime(generations=[], variants={}, source_bytes=b"")
+tests/sdk/test_generation_variant_publication.py:13:    _resolve_generation_variant,
+tests/sdk/test_generation_variant_publication.py:29:    def __init__(self, *, project_id="project-1", version=4, variants=None):
+tests/sdk/test_generation_variant_publication.py:32:        self._variants = variants if variants is not None else [
+tests/sdk/test_generation_variant_publication.py:34:                "variant_id": "variant-source",
+tests/sdk/test_generation_variant_publication.py:51:    def variants(self, project, generation_id):
+tests/sdk/test_generation_variant_publication.py:52:        self.calls.append(("variants", project, generation_id))
+tests/sdk/test_generation_variant_publication.py:53:        return _Result([self._variants, None])
+tests/sdk/test_generation_variant_publication.py:86:def test_variant_publication_is_shared_across_generation_modalities(modality, primary):
+tests/sdk/test_generation_variant_publication.py:87:    context = _resolve_generation_variant(
+tests/sdk/test_generation_variant_publication.py:90:        variant_of={"generation_id": "generation-1", "variant_id": "variant-source"},
+tests/sdk/test_generation_variant_publication.py:105:                    "variant_key": "original",
+tests/sdk/test_generation_variant_publication.py:109:        variant_context=context,
+tests/sdk/test_generation_variant_publication.py:111:    assert effect["effect_type"] == "generation.variant.append"
+tests/sdk/test_generation_variant_publication.py:115:        "source_variant_id": "variant-source",
+tests/sdk/test_generation_variant_publication.py:117:        "variant_type": "edit",
+tests/sdk/test_generation_variant_publication.py:128:def test_variant_source_is_admitted_and_publication_controls_stay_out_of_executor_inputs():
+tests/sdk/test_generation_variant_publication.py:139:    context = _resolve_generation_variant(
+tests/sdk/test_generation_variant_publication.py:142:        variant_of={"generation_id": "generation-1", "variant_id": "variant-source"},
+tests/sdk/test_generation_variant_publication.py:160:                    "variant_key": "original",
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python - <<'"'PY'
+from tests.sdk.test_timeline_sync import initial_bundle
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+from astrid.sdk.timeline.commands import execute
+b=initial_bundle()
+ref='parent/clip:a'
+cmd=capture_clip_set(b,ref,values={'app': {'cut':'c2','layer':'card','for':1}})
+print(cmd['args'])
+print(execute(b,[cmd]).bundle['parent']['clips'][0]['app'])
+PY" in /home/user/work/wt/agt-m2-sheet-cut-hold-http-gate
+ exited 1 in 692ms:
+Traceback (most recent call last):
+  File "<stdin>", line 6, in <module>
+  File "/home/user/work/wt/agt-m2-sheet-cut-hold-http-gate/astrid/sdk/timeline/_clip_scalar_commands.py", line 115, in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+  File "/home/user/work/wt/agt-m2-sheet-cut-hold-http-gate/astrid/sdk/timeline/_scalar_commands.py", line 162, in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             'select': select, 'args': args}], schema_inputs=schema_inputs,
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                   realm_id=realm_id).commands[0]
+                   ^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/wt/agt-m2-sheet-cut-hold-http-gate/astrid/sdk/timeline/commands.py", line 172, in execute
+    command = _normalize(supplied)
+  File "/home/user/work/wt/agt-m2-sheet-cut-hold-http-gate/astrid/sdk/timeline/commands.py", line 119, in _normalize
+    validate_command(command)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/home/user/work/wt/agt-m2-sheet-cut-hold-http-gate/astrid/sdk/timeline/commands.py", line 93, in validate_command
+    raise CommandError(errors[0].message)
+astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('app' was unexpected)
+
+codex
+The central run exposed the actual boundary rather than a product regression: on the public013-compatible pair, the normal `clip.add` command rejects both timing relations (`app.cut`/`app.for`) as unsupported, and a fresh Runtime realm has no retained cut-owned row to consume. The only local route I found to seed such a row is the legacy whole-composition publication path, which the task explicitly forbids. I’m removing the failing probe, preserving all original positives, and recording this exact dependency as blocked rather than repinning or weakening the test.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-sheet-cut-hold-http-gate/tests/editing_conformance/test_native_sheet_current_runtime.py
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_native_sheet_ordinary.py tests/editing_conformance/test_native_sheet_current.py tests/sdk/test_timeline_sheet_native.py && git diff --check && git status --short --branch' in /home/user/work/wt/agt-m2-sheet-cut-hold-http-gate
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_native_sheet_ordinary.py tests/editing_conformance/test_native_sheet_current.py tests/sdk/test_timeline_sheet_native.py; code=$?; printf '"'\\nEXIT=%s\\n' \""'$code"; git diff --check; git status --short --branch' in /home/user/work/wt/agt-m2-sheet-cut-hold-http-gate
+ succeeded in 12790ms:
+........................................................................ [ 70%]
+..............................                                           [100%]
+102 passed in 10.99s
+## tl/agt-m2-sheet-cut-hold-http-gate
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_native_sheet_ordinary.py tests/editing_conformance/test_native_sheet_current.py tests/sdk/test_timeline_sheet_native.py; echo "EXIT:$?"' in /home/user/work/wt/agt-m2-sheet-cut-hold-http-gate
+ succeeded in 13614ms:
+........................................................................ [ 70%]
+..............................                                           [100%]
+102 passed in 12.09s
+
+EXIT=0
+## tl/agt-m2-sheet-cut-hold-http-gate
+
+ succeeded in 12791ms:
+........................................................................ [ 70%]
+..............................                                           [100%]
+102 passed in 11.91s
+EXIT:0
+
+codex
+The original native-sheet neighbours are green again: 102 passed. The worktree is clean after removing the blocked probe; no product or test change is being left behind, and no existing positive or unsupported-grammar test was altered. I’m recording the blocker with the exact central source/runtime tuple and failure point, then I’ll hand back the boundary and recommended next step.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-hold-http-gate/BLOCKED
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-hold-http-gate/BLOCKED b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-hold-http-gate/BLOCKED
+new file mode 100644
+index 0000000000000000000000000000000000000000..e827cd12369dd4e96e018ed2152260d687651946
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-hold-http-gate/BLOCKED
+@@ -0,0 +1,22 @@
++AG03 is blocked on a genuine public013-compatible connected source row.
++
++Central run:
++  suite: native-script-current-integration
++  node: tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_native_sheet_cut_owned_hold_reloads_undoes_and_preserves_disjoint_label
++  agent snapshot tree: ab4e521e3020359dd407225f9ca2a322e76f832f
++  external tuple: runtime a020a1c77a07aa657efb60b0442450209e55e470, app ad1b0961a315b1ba4357768f0fe72d427ecdea49, composition 4f325f1e14f03a3418f04bd81b3635c810a40cf
++  result: 1 failed
++
++The failure occurred while creating the required fresh Runtime row through the
++normal provider: `clip.add v1` rejects `app.for` (and the same validator rejects
++`app.cut`) as unsupported timing relations in
++`astrid/sdk/timeline/_clip_commands.py`. A fresh public013-compatible Runtime
++realm therefore has no normal command path to create the cut-owned HOLD row.
++The only available local seed is the legacy whole-composition publication path,
++which this task explicitly forbids; no schema override, SQL, fake source, owner
++inference, or silent ordinary014 repin was used.
++
++Existing native-sheet tests remain green: 102 passed in 11.91s. No task change
++is left in the worktree. Unblock by providing an already-normal-owned matching
++public013 row/retained fixture, or by an explicit schema/provider decision that
++adds the required normal creation path.
+
+exec
+/bin/bash -lc 'git status --short --branch && git rev-parse HEAD && git rev-parse HEAD''^{tree} && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-hold-http-gate/BLOCKED && echo BLOCKED_WRITTEN' in /home/user/work/wt/agt-m2-sheet-cut-hold-http-gate
+ succeeded in 368ms:
+## tl/agt-m2-sheet-cut-hold-http-gate
+31df120dc6b0a447f7d315fd6eabdd2636133e70
+ca3494c37bde6de28e5876ea90117c300a70d830
+BLOCKED_WRITTEN
+
+codex
+Blocked; no changes left in worktree.
+
+- Public013 normal `clip.add v1` rejects `app.cut`/`app.for`; no valid fresh connected row exists without forbidden legacy publication, SQL, or schema bypass.
+- Central test: 1 failed at row setup; tuple recorded in [BLOCKED](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-hold-http-gate/BLOCKED).
+- Existing native-sheet tests: `102 passed in 11.91s`.
+- Recommended next step: provide an already-normal-owned matching public013 fixture or approve the required creation-schema change.
+tokens used
+280,264
+Blocked; no changes left in worktree.
+
+- Public013 normal `clip.add v1` rejects `app.cut`/`app.for`; no valid fresh connected row exists without forbidden legacy publication, SQL, or schema bypass.
+- Central test: 1 failed at row setup; tuple recorded in [BLOCKED](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-hold-http-gate/BLOCKED).
+- Existing native-sheet tests: `102 passed in 11.91s`.
+- Recommended next step: provide an already-normal-owned matching public013 fixture or approve the required creation-schema change.

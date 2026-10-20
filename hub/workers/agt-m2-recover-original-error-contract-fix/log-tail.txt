@@ -1,0 +1,400 @@
++from tests.helpers.runtime import use_runtime
+ from tests.editing_conformance.test_commit_runtime_m1 import (
+     assert_readback, cli, film, open_client, parent_of, renderer_off,
+ )
+ 
+ pytestmark = pytest.mark.integration
+-# Like the client cutover suite, read the existing lock; never change or bypass
+-# either side of the public handshake to test a different Runtime contract.
+-RUNTIME = use_runtime(vendored_runtime_commit())
++# Keep this bounded real-HTTP qualification on the exact catalog-visibility
++# candidate; do not switch either side of the public handshake to a fake route.
++CATALOG_RUNTIME = "3b900c377e7126e14eeb92dc2ce73114cbda5a0e"
++RUNTIME = use_runtime(CATALOG_RUNTIME)
++import runtime_protocol  # noqa: F401  # lock the daemon fixture to CATALOG_RUNTIME
+ 
+ 
+ def test_checkout_reload_undo_cli_redo_uses_retained_history(
+@@ -161,10 +163,10 @@
+         accepted = session.move('parent/clip:music-bed', 2)
+         draft._reset_base(client=client)
+         assert draft.base_revision == accepted['data']['accepted_revision_id']
+-        restored = client._remote._transport._generated.restore_project_parent_composition_revision(
+-            fixture.project_id, fixture.timeline_id, original['base_parent']['revision_id'],
+-            expected_head=accepted['data']['accepted_revision_id'],
+-            expected_publication_id=accepted['receipt']['receipt_id'],
++        restore_session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client)
++        restored = restore_session.restore(
++            original['base_parent']['revision_id'],
++            original['base_parent']['content_digest'],
+             idempotency_key='restore-retained-draft-base',
+         )
+         assert restored['data']['accepted_revision_id'] == original['base_parent']['revision_id']
+@@ -182,3 +184,213 @@
+         assert draft.document() == base
+         draft.redo()
+         assert draft.document() == edited
++
++
++def test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore(
++    tmp_path, monkeypatch, film, real_runtime,
++):
++    """Catalog visibility recovery leaves accepted film state untouched.
++
++    The direct recover operation is deliberately exercised through the normal
++    WorkspaceClient transport.  Historical film recovery remains the one
++    explicit TimelineSession restore path.
++    """
++    from astrid.sdk.timeline._common import TimelineEditError
++    from astrid.sdk.timeline.sync import TimelineSession
++    from astrid.sdk.workspace_client import WorkspaceClientError
++
++    fixture, _, _ = film
++    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "client-data"))
++    daemon = real_runtime(
++        fixture.duplicate_root,
++        support_root=tmp_path / "support",
++        authoring_profile="astrid",
++        commit=CATALOG_RUNTIME,
++    )
++    client = open_client(daemon)
++    transport = client._remote._transport
++
++    def snapshot():
++        timeline = transport.get_timeline(
++            fixture.timeline_id, project_id=fixture.project_id,
++        )
++        revision = timeline["head_revision_id"]
++        parent = transport.get_project_parent_composition_revision(
++            fixture.project_id, fixture.timeline_id, revision,
++        )
++        manifest = parent.get("dependency_manifest", {})
++        shots = {
++            row["revision_id"]: transport.get_project_shot_revision(
++                fixture.project_id, row["shot_id"], row["revision_id"],
++            )
++            for row in manifest.get("shots", [])
++        }
++        internal = {
++            row["revision_id"]: transport.get_project_timeline_revision(
++                fixture.project_id, fixture.timeline_id, row["revision_id"],
++            )
++            for row in manifest.get("internal_timelines", [])
++        }
++        media = {
++            row["media_id"]: {
++                key: transport.head_object(row["media_id"])["headers"].get(key)
++                for key in ("ETag", "Content-Length", "Content-Type")
++            }
++            for row in manifest.get("media", [])
++        }
++        return {
++            "timeline": timeline,
++            "parent": parent,
++            "shots": shots,
++            "internal": internal,
++            "media": media,
++        }
++
++    def assert_unchanged(actual):
++        assert {
++            key: value for key, value in actual["timeline"].items() if key != "version"
++        } == {
++            key: value for key, value in preserved["timeline"].items() if key != "version"
++        }
++        for key in ("parent", "shots", "internal", "media"):
++            assert actual[key] == preserved[key]
++
++    try:
++        # Create one ordinary accepted publication so both canonical head
++        # identities are populated, then retain its exact historical basis.
++        session = TimelineSession.open(
++            fixture.project_id, fixture.timeline_id,
++            client=client, outbox_path=tmp_path / "edit-outbox.json",
++        )
++        before_revision = client.timelines.history(
++            fixture.project_id, fixture.timeline_id, limit=1,
++        ).data["head"]["revision_id"]
++        before_parent = transport.get_project_parent_composition_revision(
++            fixture.project_id, fixture.timeline_id, before_revision,
++        )
++        accepted = session.move("parent/clip:music-bed", 1, idempotency_key="recover-basis")
++        assert accepted["data"]["accepted_revision_id"] != before_revision
++        preserved = snapshot()
++        accepted_history = client.timelines.history(
++            fixture.project_id, fixture.timeline_id, limit=100,
++        )
++        assert accepted_history.ok, accepted_history.as_dict()
++
++        # The producer-facing no-version call resolves the current catalog
++        # version, while the explicit call sends that same version over HTTP.
++        archived = client.timelines.archive(
++            fixture.project_id, fixture.timeline_id, idempotency_key="catalog-archive-1",
++        )
++        assert archived.ok, archived.as_dict()
++        archived_data = archived.data
++        assert archived_data["archived"] is True
++        assert archived_data["head_revision_id"] == preserved["timeline"]["head_revision_id"]
++        assert archived_data["head_publication_id"] == preserved["timeline"]["head_publication_id"]
++
++        recovered_absent = client.timelines.recover(
++            fixture.project_id, fixture.timeline_id, idempotency_key="catalog-recover-absent",
++        )
++        assert recovered_absent.ok, recovered_absent.as_dict()
++        assert recovered_absent.data["archived"] is False
++        assert_unchanged(snapshot())
++        assert client.timelines.history(
++            fixture.project_id, fixture.timeline_id, limit=100,
++        ).data == accepted_history.data
++
++        # Repeat the catalog lifecycle through the explicit current version;
++        # the exact archive/recover receipts remain replayable.
++        archive_again_version = recovered_absent.data["version"]
++        archived_again = client.timelines.archive(
++            fixture.project_id, fixture.timeline_id,
++            expected_version=archive_again_version,
++            idempotency_key="catalog-archive-2",
++        )
++        assert archived_again.ok, archived_again.as_dict()
++        recovered_current = client.timelines.recover(
++            fixture.project_id, fixture.timeline_id,
++            expected_version=archived_again.data["version"],
++            version=archived_again.data["version"],
++            idempotency_key="catalog-recover-current",
++        )
++        assert recovered_current.ok, recovered_current.as_dict()
++        assert_unchanged(snapshot())
++        assert client.timelines.history(
++            fixture.project_id, fixture.timeline_id, limit=100,
++        ).data == accepted_history.data
++        assert client.timelines.archive(
++            fixture.project_id, fixture.timeline_id,
++            expected_version=archive_again_version,
++            idempotency_key="catalog-archive-2",
++        ).data == archived_again.data
++        assert client.timelines.recover(
++            fixture.project_id, fixture.timeline_id,
++            expected_version=archived_again.data["version"],
++            version=archived_again.data["version"],
++            idempotency_key="catalog-recover-current",
++        ).data == recovered_current.data
++
++        # A stale catalog CAS and a wrong project are both refused before any
++        # write.  The historical flat-version route is an explicit 410.
++        stale = client.timelines.archive(
++            fixture.project_id, fixture.timeline_id,
++            expected_version=archived_again.data["version"],
++            idempotency_key="catalog-stale-archive",
++        )
++        assert not stale.ok and stale.error.code == "conflict"
++        assert_unchanged(snapshot())
++        wrong_scope = client.timelines.recover(
++            "not-this-project", fixture.timeline_id, idempotency_key="wrong-scope",
++        )
++        assert not wrong_scope.ok and wrong_scope.error.code == "not_found"
++        assert_unchanged(snapshot())
++        assert recovered_current.data["version"] > 1
++        with pytest.raises(WorkspaceClientError) as historical:
++            transport.recover_timeline(
++                fixture.timeline_id,
++                expected_version=recovered_current.data["version"],
++                version=1,
++                idempotency_key="historical-flat-recover",
++            )
++        assert historical.value.status == 410
++        assert "timeline.restore" in historical.value.message
++        assert_unchanged(snapshot())
++
++        # The exact old revision is restored through the sole provider.  A
++        # lost acknowledgement leaves the original flight/draft intact, and
++        # a different restore cannot replace that pending intent.
++        old_digest = before_parent["content_digest"]
++        restore_session = TimelineSession.open(
++            fixture.project_id, fixture.timeline_id,
++            client=client, outbox_path=tmp_path / "restore-outbox.json",
++        )
++        generated = transport._generated
++        request = generated._request
++
++        def lose_restore_ack(method, url, **kwargs):
++            response = request(method, url, **kwargs)
++            if method == "POST" and url.endswith("/commit") and kwargs["headers"].get("Idempotency-Key") == "timeline-restore-retry":
++                raise ConnectionError("response lost after durable restore")
++            return response
++
++        monkeypatch.setattr(generated, "_request", lose_restore_ack)
++        with pytest.raises(WorkspaceClientError, match="response lost"):
++            restore_session.restore(
++                before_revision, old_digest, idempotency_key="timeline-restore-retry",
++            )
++        with pytest.raises(TimelineEditError, match="pending intent"):
++            restore_session.restore(
++                accepted["data"]["accepted_revision_id"],
++                accepted["data"]["canonical_document"]["parent_revision"]["content_digest"],
++                idempotency_key="different-restore",
++            )
++        monkeypatch.setattr(generated, "_request", request)
++        restored = restore_session.flush()
++        assert restored["data"]["accepted_revision_id"] == before_revision
++        assert transport.get_project_parent_composition_revision(
++            fixture.project_id, fixture.timeline_id, before_revision,
++        ) == before_parent
++        assert client.timelines.history(
++            fixture.project_id, fixture.timeline_id, limit=100,
++        ).data["items"][-1]["receipt"] == restored["receipt"]
++    finally:
++        daemon.stop()
+diff --git a/tests/sdk/test_timeline_sync.py b/tests/sdk/test_timeline_sync.py
+index b94c031963b3cc7a3799467f178d84d164b6ceb9..be20c4931c9beadc561e809c3df16aeb6d521489
+--- a/tests/sdk/test_timeline_sync.py
++++ b/tests/sdk/test_timeline_sync.py
+@@ -70,9 +70,17 @@
+             for publication in body["commands"][0]["args"]["publications"]:
+                 inverse_records.extend(self.records[publication])
+         try:
+-            plan = execute(self.bundles[body["base_revision_id"]], body["commands"], inverse_records=inverse_records)
+-            if self.head["revision_id"] != body["base_revision_id"]:
+-                plan = replay(plan, self.bundles[self.head["revision_id"]])
++            if body["commands"][0]["op"] == "timeline.restore":
++                target = body["commands"][0]["args"]["revision_id"]
++                plan = SimpleNamespace(
++                    bundle=copy.deepcopy(self.bundles[target]),
++                    commands=copy.deepcopy(body["commands"]),
++                    records=[],
++                )
++            else:
++                plan = execute(self.bundles[body["base_revision_id"]], body["commands"], inverse_records=inverse_records)
++                if self.head["revision_id"] != body["base_revision_id"]:
++                    plan = replay(plan, self.bundles[self.head["revision_id"]])
+         except TimelineEditError as exc:
+             raise ApiError(409, "conflict", str(exc), details={"status": "conflict", "reason": "guard_changed"}) from exc
+         ordinal = len(self.accepted) + 1
+@@ -192,6 +200,38 @@
+     assert client.reads == ["r0"]
+ 
+ 
++def test_restore_sends_exact_revision_and_digest_through_native_commit(connected):
++    session = open_session(connected)
++    _, generated, path = connected
++    digest = initial_bundle()["base_parent"]["content_digest"]
++    result = session.restore("r0", digest, idempotency_key="restore-r0")
++    body = json.loads(generated.calls[0][0])
++    assert body["commands"] == [{
++        "schema_version": 1,
++        "op": "timeline.restore",
++        "version": "1",
++        "select": None,
++        "args": {"revision_id": "r0", "content_digest": digest},
++    }]
++    assert result["data"]["status"] == "accepted"
++    assert json.loads(path.read_bytes())["pending"] == []
++    assert generated.head["revision_id"] == "r1"
++
++
++def test_restore_lost_ack_retries_exact_request_after_reload(connected):
++    session = open_session(connected)
++    _, generated, path = connected
++    digest = initial_bundle()["base_parent"]["content_digest"]
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        session.restore("r0", digest, idempotency_key="restore-r0")
++    flight = json.loads(path.read_bytes())["flight"]
++    open_session(connected).flush()
++    assert generated.calls[0] == generated.calls[1]
++    assert generated.calls[1] == (flight["body"].encode(), "restore-r0")
++    assert json.loads(path.read_bytes())["pending"] == []
++
++
+ @pytest.mark.parametrize("target", ["parent/clip:a", "parent/clip:b"])
+ def test_lost_ack_reload_retries_exact_request_before_sending_suffix(connected, target):
+     session = open_session(connected)
+diff --git a/tests/v10/test_domain_cli_projects_timelines.py b/tests/v10/test_domain_cli_projects_timelines.py
+index 24c35af30477295268060341238245633db2b68d..212e104b313c74b4a3033668176cce60bb050204
+--- a/tests/v10/test_domain_cli_projects_timelines.py
++++ b/tests/v10/test_domain_cli_projects_timelines.py
+@@ -238,7 +238,13 @@
+         )
+         key = idempotency_key or "generated-key"
+         return DomainResult.success(
+-            {"timeline_id": "T-1", "status": "active", "changed": True},
++            {
++                "slug": ref,
++                "timeline_id": "T-1",
++                "archived": False,
++                "head_revision_id": "head-1",
++                "document_digest": "sha256:document",
++            },
+             receipt=_receipt("timeline.recover", key),
+             idempotency_key=key,
+         )
+@@ -1758,7 +1764,11 @@
+             {"project": "demo", "ref": "main", "idempotency_key": None},
+         )
+     ]
+-    assert json.loads(capsys.readouterr().out)["data"]["status"] == "active"
++    envelope = json.loads(capsys.readouterr().out)
++    assert envelope["ok"] is True
++    assert envelope["data"]["archived"] is False
++    assert envelope["data"]["head_revision_id"] == "head-1"
++    assert envelope["data"]["document_digest"] == "sha256:document"
+ 
+ 
+ def test_timelines_history_is_one_sdk_call(capsys) -> None:
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sync.py::test_restore_lost_ack_retries_exact_request_after_reload tests/sdk/test_native_timeline_facades.py::test_legacy_timeline_recover_refuses_non_current_from_runtime_without_writes && git diff --check && printf '"'\\nHEAD=%s\\nPATCH_SHA256=' \""'$(git rev-parse HEAD)" && git diff --binary | sha256sum | cut -d'"' ' -f1 && printf 'DONE_BYTES=' && wc -c < /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-original-error-contract-fix/DONE && git status --short" in /home/user/work/wt/agt-m2-recover-original-error-contract-fix
+ succeeded in 2506ms:
+..                                                                       [100%]
+2 passed in 0.68s
+
+HEAD=53af5383802e995f78b3693a22d54b3e86062eff
+PATCH_SHA256=586ce7f80e1e7dc31e98562faa68a32980b02af2c0e80dca0a3df2cfe5a6455f
+DONE_BYTES=0
+ M astrid/sdk/remote.py
+ M astrid/sdk/timeline/sync.py
+ M tests/sdk/test_native_timeline_facades.py
+ M tests/sdk/test_timeline_checkout_history_runtime.py
+ M tests/sdk/test_timeline_sync.py
+ M tests/v10/test_domain_cli_projects_timelines.py
+
+codex
+## Report
+
+Implemented AG-RECOVER repair on base `53af5383802e995f78b3693a22d54b3e86062eff`.
+
+- Ported catalog recovery and native `TimelineSession.restore`.
+- Removed restore-only `WorkspaceClientError` → `ConnectionError` wrapping.
+- Preserved WC7 `_flush(..., prepare=...)` and `_explicit_outbox`.
+- Added/updated recovery, retry, CLI, and native facade tests.
+- `DONE` and commit messages written.
+
+Tests:
+
+- Focused SDK/facade/CLI: **190 passed, 1 skipped**
+- Exact retry + refusal neighbors: **2 passed**
+- `git diff --check`: passed
+- Ruff: existing baseline failures; no new targeted validation claimed.
+- Live HTTP case: attempted centrally but remained unverified due test-service marker/allow-list limitations. No full suite run.
+
+Patch digest: `586ce7f80e1e7dc31e98562faa68a32980b02af2c0e80dca0a3df2cfe5a6455f`.
+tokens used
+119,643
+## Report
+
+Implemented AG-RECOVER repair on base `53af5383802e995f78b3693a22d54b3e86062eff`.
+
+- Ported catalog recovery and native `TimelineSession.restore`.
+- Removed restore-only `WorkspaceClientError` → `ConnectionError` wrapping.
+- Preserved WC7 `_flush(..., prepare=...)` and `_explicit_outbox`.
+- Added/updated recovery, retry, CLI, and native facade tests.
+- `DONE` and commit messages written.
+
+Tests:
+
+- Focused SDK/facade/CLI: **190 passed, 1 skipped**
+- Exact retry + refusal neighbors: **2 passed**
+- `git diff --check`: passed
+- Ruff: existing baseline failures; no new targeted validation claimed.
+- Live HTTP case: attempted centrally but remained unverified due test-service marker/allow-list limitations. No full suite run.
+
+Patch digest: `586ce7f80e1e7dc31e98562faa68a32980b02af2c0e80dca0a3df2cfe5a6455f`.

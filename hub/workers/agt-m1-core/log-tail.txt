@@ -1,0 +1,400 @@
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
+
+from ._command_state import CommandError, address, equal, spelling
+from ._recording import Recording, guard, selection
+
+_SCHEMA = json.loads((Path(__file__).parents[2] / 'core/timeline/schema/edit-command.schema.json').read_text())
+_VALIDATOR = Draft202012Validator(_SCHEMA)
+TRACK_CREATE_PARAMETERS = {
+    'type': 'object', 'required': ['row'], 'additionalProperties': False,
+    'properties': {'row': {'type': 'object', 'required': ['id', 'kind'],
+                           'properties': {'id': {'type': 'string', 'pattern': '^(?!.*::)[^/]+$'},
+                                          'kind': {'type': 'string', 'minLength': 1}}}},
+}
+
+
+@dataclass(frozen=True)
+class Operation:
+    parameters: dict
+    handler: object
+    intent: dict
+    singleton: bool = False
+
+
+def operations():
+    """M1 native recipe entries; the full extensible registry belongs to M2."""
+    from .capture import MOVE_INTENT, move, track_create
+    return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+            'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {})}
+
+
+
+@dataclass
+class Plan:
+    bundle: dict
+    records: list[dict]
+    semantic_events: list[dict] = dataclass_field(default_factory=list)
+
+    @property
+    def commands(self):
+        return [copy.deepcopy(record['command']) for record in self.records]
+
+
+def validate_command(command):
+    try:
+        json.dumps(command, allow_nan=False)
+    except (ValueError, TypeError) as exc:
+        raise CommandError("command must be finite JSON") from exc
+    errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+    if errors:
+        raise CommandError(errors[0].message)
+    if command['version'] != '1':
+        raise CommandError("unsupported operation version", kind='unsupported_version')
+    if command['op'] not in ('clip.move', 'track.create', 'timeline.inverse'):
+        raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
+    operation = operations().get(command['op'])
+    if operation is not None:
+        errors = list(Draft202012Validator(operation.parameters).iter_errors(command['args']))
+        if errors:
+            raise CommandError(errors[0].message)
+    if command['op'] == 'track.create':
+        if command['select'] != 'parent' and not (
+                isinstance(command['select'], str) and command['select'].startswith('occurrence:')
+                and '/' not in command['select']):
+            raise CommandError("track.create requires parent or occurrence owner")
+        if command.get('intent', {}) != {}:
+            raise CommandError("track.create has no intention overrides")
+
+
+def _normalize(command):
+    command = copy.deepcopy(command)
+    validate_command(command)
+    resolved = command.get('resolved', [command['select']] if command['op'] == 'clip.move' else [])
+    for field in ('expect', 'authorship'):
+        if field not in command:
+            continue
+        normalized = {}
+        for key, value in command[field].items():
+            ref, path = address(key, resolved)
+            canonical = ref + '::' + spelling(path)
+            if canonical in normalized and not equal(normalized[canonical], value):
+                raise CommandError("inconsistent equivalent property guards", ref=ref, path=path)
+            normalized[canonical] = value
+        command[field] = normalized
+    return command
+
+
+def _verify_claims(ctx, command):
+    for ref in command.get('created', []):
+        if ctx.state.entity(ref, optional=True) is not None:
+            raise CommandError('created identity is occupied', kind='identity_collision', ref=ref)
+    for key, expected in command.get('expect', {}).items():
+        ref, path = address(key, command.get('resolved', []))
+        guard(ctx.state, ref, path, expected)
+    for read in command.get('reads', []):
+        guard(ctx.state, read['ref'], read['path'], read['state'])
+    for selected in command.get('selections', []):
+        actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
+        if not equal(actual, selected):
+            raise CommandError("original selection membership/order changed", kind='selection_changed', ref=selected['owner'])
+
+
+def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None):
+    """Execute atomically. History inputs must already be authenticated by provider.
+
+    Empty intervening_records means proven empty ancestry, never unavailable
+    history. Incoming recorder fields are checked claims; generated records are
+    the authority. No persistence, mutable reads or renderer lives here.
+    """
+    from .inverse import apply_inverse
+
+    if not commands:
+        raise CommandError("command batch must not be empty")
+    if id_map and any(key != value for key, value in id_map.items()):
+        raise CommandError("id_map must contain identity pairs only", kind='identity_collision')
+    candidate, records, events = copy.deepcopy(bundle), [], []
+    for ordinal, supplied in enumerate(commands):
+        command = _normalize(supplied)
+        ctx = Recording(candidate, command, ordinal)
+        _verify_claims(ctx, command)
+        operation = operations().get(command['op'])
+        if operation is not None:
+    return a[0] == b[0] and a[1][:len(b[1])] == b[1][:len(a[1])]
+
+
+def one(rows, key, identity, *, optional=False):
+    if not isinstance(rows, list):
+        raise CommandError("entity collection must be an array")
+    matches = [row for row in rows if isinstance(row, dict) and row.get(key) == identity]
+    if len(matches) != 1:
+        if optional and not matches:
+            return None
+        raise CommandError(f"missing or ambiguous identity {identity!r}", kind="identity_conflict")
+    return matches[0]
+
+
+class State:
+    def __init__(self, bundle):
+        self.bundle = bundle
+
+    def occurrence(self, owner):
+        return one(self.bundle["placements"], "occurrence_id", owner.removeprefix("occurrence:"))
+
+    def config(self, owner):
+        if owner == "parent":
+            return self.bundle["parent"].get("config", {})
+        row = self.occurrence(owner)
+        return self.bundle["shots"][row["shot_id"]]["internal_timeline"]
+
+    def collection(self, owner, kind):
+        config = self.config(owner)
+        if owner == "parent" and kind == "clip" and "clips" in self.bundle["parent"]:
+            return self.bundle["parent"]["clips"]
+        return config.get(kind + "s", [])
+
+    def entity(self, ref, *, optional=False):
+        if '/clip:' in ref or '/track:' in ref:
+            owner, entity = ref.rsplit('/', 1)
+            kind, identity = entity.split(':', 1)
+            return one(self.collection(owner, kind), "id", identity, optional=optional)
+        if ref == "parent":
+            return self.bundle["parent"]
+        if ref.endswith('/registry'):
+            owner = ref.removesuffix('/registry')
+            if owner == "parent":
+                from astrid.core.timeline.parent_registry import effective_parent_registry
+                return effective_parent_registry(self.bundle["parent"])
+            return self.config(owner).get("registry", {})
+        if ref.endswith('/source'):
+            return self.config(ref.removesuffix('/source'))
+        if ref.endswith('/shot'):
+            return {"shot_id": self.occurrence(ref.removesuffix('/shot'))["shot_id"]}
+        if ref.startswith("occurrence:") and '/' not in ref:
+            return self.occurrence(ref)
+        raise CommandError(f"unsupported entity reference {ref!r}")
+
+    def get(self, ref, path):
+        value = self.entity(ref, optional=True)
+        if value is None:
+            return copy.deepcopy(ABSENT)
+        for key in path:
+            if isinstance(value, dict) and key in value:
+                value = value[key]
+            elif isinstance(value, list) and key.isdecimal() and int(key) < len(value):
+                value = value[int(key)]
+            else:
+                return copy.deepcopy(ABSENT)
+        return present(value)
+
+    def set(self, ref, path, state):
+        if not path:
+            owner, entity = ref.rsplit('/', 1)
+            kind, identity = entity.split(':', 1)
+            rows = self.collection(owner, kind)
+            existing = self.entity(ref, optional=True)
+            if existing is not None:
+                index = rows.index(existing)
+                if state["state"] == "absent":
+                    rows.pop(index)
+                else:
+                    rows[index] = copy.deepcopy(state["value"])
+            elif state["state"] == "present":
+                rows.append(copy.deepcopy(state["value"]))
+            return
+        value = self.entity(ref)
+        for key in path[:-1]:
+            if not isinstance(value, dict) or key not in value or not isinstance(value[key], dict):
+                raise CommandError("write requires recorded container creation", ref=ref, path=path)
+            value = value[key]
+        if not isinstance(value, dict):
+            raise CommandError("property parent must be an object", ref=ref, path=path)
+        if state["state"] == "absent":
+            value.pop(path[-1], None)
+        else:
+            value[path[-1]] = copy.deepcopy(state["value"])
+
+
+exec
+/bin/bash -lc "rg -n 'jsonschema' pyproject.toml astrid/sdk/timeline/*.py | head -10 && python3 - <<'PY'
+p='astrid/sdk/timeline/commands.py'
+s=open(p).read().replace('import json\\n','import json\\nfrom collections.abc import Callable\\n').replace('    handler: object','    handler: Callable[[Recording, dict], None]').replace('\\n\\n\\n@dataclass\\nclass Plan','\\n\\n@dataclass\\nclass Plan')
+open(p,'w').write(s)
+p='astrid/sdk/timeline/_command_state.py'
+s=open(p).read().rstrip()+'\\n'
+open(p,'w').write(s)
+PY
+/home/user/work/venv-agent/bin/python -m ruff check --fix astrid/sdk/timeline/{commands,capture,inverse,rebase,_recording,_command_state}.py
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1*.py --basetemp=/tmp/agt-m1-core-final-focused' in /home/user/work/wt/agt-m1-core
+ succeeded in 4125ms:
+astrid/sdk/timeline/commands.py:10:from jsonschema import Draft202012Validator
+pyproject.toml:17:    "jsonschema>=4.0",
+All checks passed!
+.............................................                            [100%]
+45 passed in 3.29s
+
+exec
+/bin/bash -lc "cmp astrid/core/timeline/schema/edit-command.schema.json /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-command.schema.json
+python3 - <<'PY'
+from pathlib import Path
+import subprocess
+paths=[*(Path('astrid/sdk/timeline')/name for name in ('_command_state.py','_recording.py','capture.py','commands.py','inverse.py','rebase.py')),Path('astrid/core/timeline/schema/edit-command.schema.json'),*Path('tests/editing_conformance').glob('test_recipe_m1*.py'),*Path('tests/editing_conformance/fixtures').glob('recipe_m1*.json')]
+for path in paths:
+ result=subprocess.run(['git','diff','--no-index','--check','/dev/null',str(path)],text=True,capture_output=True)
+ if result.returncode not in (0,1) or result.stdout or result.stderr:
+  raise SystemExit(f'{path}: {result.stdout}{result.stderr}')
+print('Whitespace checks passed for all added files')
+print('Python product lines:',sum(len(p.read_text().splitlines()) for p in paths if str(p).startswith('astrid/') and p.suffix=='.py'))
+print('Schema lines:',len(Path('astrid/core/timeline/schema/edit-command.schema.json').read_text().splitlines()))
+PY
+/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/{commands,capture,inverse,rebase,_recording,_command_state}.py
+/home/user/work/venv-agent/bin/python -m ruff check --isolated --select E4,E7,E9,F,I,BLE tests/editing_conformance/test_recipe_m1*.py
+git diff --check" in /home/user/work/wt/agt-m1-core
+ succeeded in 341ms:
+Whitespace checks passed for all added files
+Python product lines: 911
+Schema lines: 656
+All checks passed!
+All checks passed!
+
+exec
+/bin/bash -lc "rg -n 'mark\\.(opt_in|integration|live|darwin_native)|pytestmark' tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_structure.py tests/sdk/test_timeline_restructure.py && cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md <<'EOF'
+
+### agt-m1-core final handoff
+Executable API/fixtures are ready in the core worktree. "'`capture_move` calls the SAME `execute` runner (not a second capture implementation); two native Operation entries carry parameter schema, handler and supported intent. `replay` additionally accepts `inverse_records=()` when replaying an inverse, so provider must pass the original trusted target records there as well. Provider must authenticate requested inverse publication IDs, chronological target records, timeline ancestry and complete intervening records before calling; an empty sequence is proof of no later edges, not missing history. Core refuses missing record summaries/None history. Runtime retains monotonic ID reservations outside authored content.
+
+Final leaves use `writes`, `created`, `reads`, `selections`, `bindings`, `dependencies`, `derived_writes`; `.commands` remains only a detached projection. Main `clip_start_frame` quantizes once with the pinned rational fps and main `clip_timeline_duration` evaluates source windows/positive speed. Immutable image dependencies carry provenance; semantic owner/source/map/read guards alone decide replay conflicts. `/source` reads consumed child config output.fps; normalized owner guards now use the actual occurrence `shot_id`/`occurrence_id` paths. `move.blockers` captures same-lane output membership/order, role/activity and the absence of any next blocker. Direct singleton moves impose no all-tracks/all-clips query. Core does not consume App'"'s content-extent/clamped projection cache; it freezes the authored window and checks the complete interval against the next output occurrence. Unsupported nontranslation maps, formula/sequence/group/negative-clipped starts and source-ms window codecs refuse explicitly in v1.
+
+Parent payload.clips is authoritative when present; config.clips remains untouched. Track-create/inverse uses generic structural primitives, records original membership/order and owner, restores complete opaque rows, and checks clips, occurrences, audio/effect edges, shot audio bindings and explicit cross-owner track refs before deletion. Semantic facts use validated existing main payload types. Provider owns compile_authoring_candidate, closure publication and ancestry verification; no renderer, Runtime import, ports or network exist in this engine.
+
+Validation: focused recipe command "'`PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1*.py --basetemp=/tmp/agt-m1-core-final-focused` => 45 passed in 3.29s. Combined with existing `tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_structure.py tests/sdk/test_timeline_restructure.py` under private `/tmp/agt-m1-core-final-neighbors` => 109 passed, 1 deselected in 26.89s (default repo lane). Product ruff and isolated test ruff E4/E7/E9/F/I/BLE pass; schema cmp byte-identical and whitespace checks over every added file pass. 911 Python product lines + 656 frozen schema lines = 1,567 product lines. Full/socket/browser/integrated provider suites were not run, per assignment. Next: integrate this worker with provider/frontends and port App capture against BOTH JSON parity fixtures before the end-to-end Runtime journey.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-core/commit-msg <<'"'EOF'
+feat(timeline): add guarded M1 move command engine
+
+Execute fixed absolute clip moves through native authored-state recording
+primitives and the frozen EditCommand schema. Preserve original guards for
+server replay, coalesce trusted accepted writes for inverse and redo, and
+reject dependency changes, intervening writes and occupied identities.
+
+Prove structural recording with track creation and guarded inverse. Add
+parent and occurrence capture fixtures plus focused conformance coverage
+for clears, opaque data, same-value writes and shared-child materialization.
+EOF" in /home/user/work/wt/agt-m1-core
+ succeeded in 0ms:
+tests/timeline/test_authoring_bundle.py:977:@pytest.mark.integration  # a real Runtime from a second checkout
+
+codex
+Final checks passed: 45 focused tests, plus 109 tests in the combined authoring/structure run. The repository’s default lane deselected one real-Runtime integration test. The schema is byte-identical to M0, Ruff and whitespace checks pass, and the change adds 1,567 product lines including the schema. I’ve written the commit message and handoff notes.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+for name in ('agt-m1-core-pytest','agt-m1-core-pytest-2','agt-m1-core-pytest-3','agt-m1-core-pytest-4','agt-m1-core-pytest-5','agt-m1-core-pytest-6','agt-m1-core-pytest-7','agt-m1-core-neighbors','agt-m1-core-final-neighbors','agt-m1-core-final-focused'):
+ p=Path('/tmp')/name
+ if p.exists():
+  shutil.rmtree(p)
+for directory, names in ((Path('astrid/sdk/timeline/__pycache__'), ('commands','capture','inverse','rebase','_recording','_command_state')), (Path('tests/editing_conformance/__pycache__'), ('test_recipe_m1_commands',))):
+ if directory.exists():
+  for name in names:
+   for path in directory.glob(name+'.*.pyc'):
+    path.unlink()
+PY
+git status --short
+git diff --check" in /home/user/work/wt/agt-m1-core
+ succeeded in 268ms:
+?? astrid/core/timeline/schema/edit-command.schema.json
+?? astrid/sdk/timeline/_command_state.py
+?? astrid/sdk/timeline/_recording.py
+?? astrid/sdk/timeline/capture.py
+?? astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/inverse.py
+?? astrid/sdk/timeline/rebase.py
+?? tests/editing_conformance/fixtures/
+?? tests/editing_conformance/test_recipe_m1_commands.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='astrid/sdk/timeline/capture.py'
+s=open(p).read().replace(\"ctx.dependency('move.images', 'source', pin)\", \"ctx.dependency('move.images', 'entity', pin)\")
+open(p,'w').write(s)
+PY
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1*.py --basetemp=/tmp/agt-m1-core-final-focused
+/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/{commands,capture,inverse,rebase,_recording,_command_state}.py' in /home/user/work/wt/agt-m1-core
+ succeeded in 9525ms:
+.............................................                            [100%]
+45 passed in 8.77s
+All checks passed!
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md <<'EOF'
+
+Final dependency classification: "'`move.images` uses `AgentDependency.kind=entity` for parent/shot/internal immutable image provenance. It does not claim a Runtime-retained external config DocumentPin (`kind=source` is reserved for that use). `move.source` is also an entity edge to the selected registry entry. No external media/transcript/config capture is requested by fixed v1 because old anchor text is guarded and cleared, never evaluated. This final leaf classification was followed by another focused test run; all 45 passed.
+EOF
+python3 - <<'"'PY'
+from pathlib import Path
+import shutil
+p=Path('/tmp/agt-m1-core-final-focused')
+if p.exists():
+ shutil.rmtree(p)
+for directory, names in ((Path('astrid/sdk/timeline/__pycache__'), ('commands','capture','inverse','rebase','_recording','_command_state')), (Path('tests/editing_conformance/__pycache__'), ('test_recipe_m1_commands',))):
+ if directory.exists():
+  for name in names:
+   for path in directory.glob(name+'.*.pyc'):
+    path.unlink()
+PY
+git diff --check" in /home/user/work/wt/agt-m1-core
+ succeeded in 45ms:
+codex
+Implemented native move capture/execution, guarded replay/inverse/redo, track-create proof, canonical schema, and two parity fixtures. Published the API seam early in `m1-agent-coordination.md`. Commit message written; no git mutations performed.
+
+Tests:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1*.py --basetemp=/tmp/agt-m1-core-final-focused
+```
+
+**45 passed** on final code.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1*.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_structure.py tests/sdk/test_timeline_restructure.py --basetemp=/tmp/agt-m1-core-final-neighbors
+```
+
+**109 passed, 1 integration test deselected** by the repository’s default lane.
+
+Product Ruff, isolated test Ruff, schema byte comparison, and added-file whitespace checks passed.
+
+Decision: parent `payload.clips` changes preserve legacy `config.clips`, avoiding unrecorded writes. Image provenance uses entity dependencies; provider remains responsible for authenticated ancestry and publication.
+
+**Size:** 911 Python product lines + 656 frozen schema lines = **1,567 lines**.
+
+No blockers. Full, browser, socket, and integrated-provider suites were not run. Next: integrate provider/frontends and verify App capture against both fixtures.
+tokens used
+200,103
+Implemented native move capture/execution, guarded replay/inverse/redo, track-create proof, canonical schema, and two parity fixtures. Published the API seam early in `m1-agent-coordination.md`. Commit message written; no git mutations performed.
+
+Tests:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1*.py --basetemp=/tmp/agt-m1-core-final-focused
+```
+
+**45 passed** on final code.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1*.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_structure.py tests/sdk/test_timeline_restructure.py --basetemp=/tmp/agt-m1-core-final-neighbors
+```
+
+**109 passed, 1 integration test deselected** by the repository’s default lane.
+
+Product Ruff, isolated test Ruff, schema byte comparison, and added-file whitespace checks passed.
+
+Decision: parent `payload.clips` changes preserve legacy `config.clips`, avoiding unrecorded writes. Image provenance uses entity dependencies; provider remains responsible for authenticated ancestry and publication.
+
+**Size:** 911 Python product lines + 656 frozen schema lines = **1,567 lines**.
+
+No blockers. Full, browser, socket, and integrated-provider suites were not run. Next: integrate provider/frontends and verify App capture against both fixtures.

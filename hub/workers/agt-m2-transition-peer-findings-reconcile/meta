@@ -1,0 +1,9 @@
+name=agt-m2-transition-peer-findings-reconcile
+repo=agent
+base=eb115db81ac2c24b182fe6873fbd883da851571e
+base_sha=eb115db8
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-transition-peer-findings-reconcile
+started=2026-10-20T19:58:00Z

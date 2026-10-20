@@ -1,0 +1,400 @@
++            index = {(row["shot_id"], row["revision_id"]): row for row in shots}
++            shots = list({(row["shot_id"], row["shot_revision_id"]):
++                          index[(row["shot_id"], row["shot_revision_id"])]
++                          for row in parent["payload"]["occurrences"]}.values())
++            index = {row["revision_id"]: row for row in internals}
++            internals = list({row["internal_timeline_revision_id"]:
++                              index[row["internal_timeline_revision_id"]] for row in shots}.values())
++        projected = project_runtime_parent_composition(
++            parent, shot_revisions=shots, internal_timeline_revisions=internals)
++        shot_rows = []
++        for row in shots:
++            payload = row["payload"]
++            metadata = payload.get("metadata")
++            metadata = metadata if isinstance(metadata, Mapping) else {}
++            shot_rows.append({"shot_id": row["shot_id"], "revision_id": row["revision_id"],
++                "content_digest": row["content_digest"],
++                "name": str(metadata.get("name") or metadata.get("title") or payload.get("name") or row["shot_id"]),
++                "text_bindings": payload["text_bindings"] if isinstance(payload.get("text_bindings"), list) else []})
++        expansion = {
++            "canonical": True, "parent_revision_id": parent["revision_id"],
++            "parent_content_digest": parent["content_digest"],
++            "children": [{"timeline_id": row["timeline_id"], "revision_id": row["revision_id"],
++                          "config_version": 1, "config_hash": row["content_digest"]} for row in internals],
++            "shots": shot_rows, "occurrences": list(projected.occurrences),
++        }
++        if marker is None:
++            expansion.update(outputs=list(projected.outputs), graph=projected.graph)
++        else:
++            expansion["working_copy"] = marker
++        result = {"config": projected.config, "registry": projected.registry, "expansion": expansion}
++        _json(result)
++        return copy.deepcopy(result)
++
+     def commit(self, context, port):
+         from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+ 
+diff --git a/tests/sdk/test_timeline_capture_projection.py b/tests/sdk/test_timeline_capture_projection.py
+index 497dbfb0e0aa49c504ed5839904a7dd9beb311a1..f154c2c903a05949c975c439571d536f71b5e33a
+--- a/tests/sdk/test_timeline_capture_projection.py
++++ b/tests/sdk/test_timeline_capture_projection.py
+@@ -10,7 +10,7 @@
+ import pytest
+ 
+ from astrid.core.timeline.authoring_bundle import AuthoringBundleError, preview_authoring_candidate
+-from astrid.sdk.timeline.commit import RuntimeCommitService, _digest, bundle_from_document
++from astrid.sdk.timeline.commit import RuntimeCommitService, bundle_from_document
+ from tests.sdk.test_timeline_commit_provider_document import document_fixture
+ 
+ 
+@@ -184,8 +184,6 @@
+ @pytest.fixture
+ def saved_closure(saved_runtime):
+     """Public publication with reference order different from canonical sort order."""
+-    from runtime_protocol.timeline_commit_store import TimelineCommitStore
+-
+     runtime = saved_runtime
+     project_id = runtime.project_id
+     parent = runtime.get_project_parent_composition_revision(project_id, "main", "parent-1")
+@@ -202,22 +200,25 @@
+         image.pop("created_at")
+         image.pop("content_digest")
+         image["payload"]["internal_timeline_revision_id"] = child["revision_id"]
++        for item in image["payload"]["items"]:
++            item["item_id"] += "-" + name
+         occurrence = copy.deepcopy(parent["payload"]["occurrences"][0])
+         occurrence.update(occurrence_id=f"occ-{name}", shot_id=image["shot_id"],
+-                          shot_revision_id=image["revision_id"], ordinal=len(occurrences))
++                          shot_revision_id=image["revision_id"], ordinal=len(occurrences), source_offset=0)
+         occurrence["placement"]["start_ms"] = len(occurrences) * 1000
+         shots.append(image)
+         internals.append(child)
+         occurrences.append(occurrence)
+     payload = copy.deepcopy(parent["payload"])
+     payload["occurrences"] = occurrences
+-    payload["config"]["output"] = {"fps": {"numerator": 30000, "denominator": 1001}}
++    payload["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": [30000, 1001]}}}
+     runtime.service.publish_parent_composition(project_id, "main", {
+         "project_id": project_id, "timeline_id": "main", "expected_head": "parent-1",
+         "parent_revision_id": "parent-golden", "parent_composition": payload,
+         "shot_revisions": shots, "internal_timeline_revisions": internals,
+     }, idempotency_key="golden")
+-    document = TimelineCommitStore(runtime.service.store).revision_closure(project_id, "main", "parent-golden")
++    commits, _ = runtime.service._timeline_commits()
++    document = commits.revision_closure(project_id, "main", "parent-golden")
+     return runtime, document
+ 
+ 
+@@ -255,23 +256,38 @@
+ 
+ 
+ @pytest.mark.integration
+-@pytest.mark.parametrize("change", ["parent", "child", "new_shot", "duplicate"])
++@pytest.mark.parametrize("change", ["parent", "child", "new_shot", "duplicate", "remove", "sdk_bundle"])
+ def test_real_candidate_matches_sdk_opener_exactly(saved_closure, change):
+-    from astrid.sdk.timeline_editing import add_authoring_shot, duplicate_authoring_shot
++    from astrid.core.timeline.authoring_bundle import open_authoring_bundle
++    from astrid.sdk.timeline_editing import (
++        add_authoring_shot,
++        duplicate_authoring_shot,
++        remove_authoring_shot,
++    )
+     from astrid.sdk.timeline_filmstrip import _open_candidate_input_closure
+ 
+     runtime, document = saved_closure
+     bundle = bundle_from_document(document)
+-    if change == "parent":
++    if change == "sdk_bundle":
++        bundle = open_authoring_bundle(
++            runtime.get_project_parent_composition_revision(runtime.project_id, "main", "parent-golden"),
++            shot_revisions=[runtime.get_project_shot_revision(runtime.project_id, row["shot_id"], row["revision_id"])
++                            for row in document["shot_revisions"]],
++            internal_timeline_revisions=[runtime.get_project_timeline_revision(runtime.project_id, "main", row["revision_id"])
++                                         for row in document["internal_timeline_revisions"]])
++        bundle["parent"]["config"]["opaque_draft"] = {"sdk": True}
++    elif change == "parent":
+         bundle["parent"]["config"]["opaque_draft"] = {"keep": [False, None, 0]}
+     elif change == "child":
+         next(iter(bundle["shots"].values()))["internal_timeline"]["clips"][0]["hold"] = 0.5
+     elif change == "new_shot":
+         add_authoring_shot(bundle, shot_id="new-shot", occurrence_id="new-occ", start_ms=2000)
++    elif change == "duplicate":
++        duplicate_authoring_shot(bundle, "shot-a", new_shot_id="duplicate-shot", occurrence_id="duplicate-occ", start_ms=2000)
+     else:
+-        duplicate_authoring_shot(bundle, "shot-a", shot_id="duplicate-shot", occurrence_id="duplicate-occ", start_ms=2000)
++        remove_authoring_shot(bundle, "shot-a")
+     preview = preview_authoring_candidate(bundle)
+     config, registry, expansion = _open_candidate_input_closure(
+         runtime, project_id=runtime.project_id, timeline_id="main", preview=preview)
+     assert project(document, preview) == {"config": config, "registry": registry, "expansion": expansion}
+-    assert runtime.get_project_timeline(runtime.project_id, "main")["head_revision_id"] == "parent-golden"
++    assert runtime.service.get_project_timeline(runtime.project_id, "main")["head_revision_id"] == "parent-golden"
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts='"'' -q --tb=short tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly" in /home/user/work/wt/agt-m3-capture-projector
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check --no-force-exclude astrid/sdk/timeline/commit.py tests/sdk/test_timeline_capture_projection.py; git diff --check' in /home/user/work/wt/agt-m3-capture-projector
+ succeeded in 37ms:
+All checks passed!
+
+ succeeded in 3121ms:
+......                                                                   [100%]
+6 passed in 2.44s
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts='"'' -q --runxfail --tb=short tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden" in /home/user/work/wt/agt-m3-capture-projector
+ exited 1 in 3629ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________________ test_real_saved_entire_expansion_golden ____________________
+tests/sdk/test_timeline_capture_projection.py:255: in test_real_saved_entire_expansion_golden
+    assert project(document)["expansion"] == {**expansion, "parent_content_digest": parent["content_digest"]}
+E   AssertionError: assert {'canonical':...0, ...}], ...} == {'canonical':...0, ...}], ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'graph': {'internal_timeline_revisions': [{'content_digest': 'sha256:33c0b543fe99b3aeaa56c1baf8a2f8d65836364629d838b7...ne_revision_id': 'internal-a', 'items': [{...}, {...}], ...}, 'project_id': 'd1d4520f5c2e49a68014d3fdbf52d699', ...}]}} != {'graph': {'internal_timeline_revisions': [{'content_digest': 'sha256:33c0b543fe99b3aeaa56c1baf8a2f8d65836364629d838b7...ation_inputs': {'visual': {...}}, 'internal_timeline_revision_id': 'internal-a', 'items': [{...}, {...}], ...}, ...}]}}
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden
+1 failed in 2.27s
+
+codex
+The focused lane passed: 184 passed and one strict expected failure for the full saved graph golden. All six real candidate golden variants also passed, including a preview built through the SDK bundle opener. Provider and save import fences passed. I’m now recording source hashes and byte-preservation evidence; paired Runtime forgery certification remains unverified.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib, json, subprocess
+root = Path.cwd()
+notes = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projector/notes')
+notes.mkdir(exist_ok=True)
+base = '435357aec6ad84648107c38f0d5469f052faa84b'
+paths = ['astrid/core/timeline/authoring_bundle.py', 'astrid/sdk/timeline/_command_state.py', 'astrid/sdk/timeline/commit.py', 'tests/editing_conformance/test_commit_runtime_numeric_move.py', 'tests/editing_conformance/test_commit_runtime_opaque_items.py', 'tests/editing_conformance/test_commit_runtime_shared_inverse.py', 'tests/editing_conformance/test_commit_runtime_identity.py', 'tests/editing_conformance/test_commit_runtime_m1.py', 'tests/sdk/test_timeline_commit_provider_runtime.py']
+proof = {}
+for name in paths:
+    before = subprocess.check_output(['git', 'show', f'{base}:{name}'])
+    after = (root/name).read_bytes()
+    normalized = after
+    if name.endswith('/commit.py'):
+        text = after.decode().replace('    preview_authoring_candidate,\\n', '', 1)
+        start, end = text.index('    def project_capture('), text.index('    def commit(self, context, port):')
+        normalized = (text[:start] + text[end:]).encode()
+    assert before == normalized, name
+    proof[name] = {'base_sha256': hashlib.sha256(before).hexdigest(), 'final_sha256': hashlib.sha256(after).hexdigest(), 'unchanged_except_additive_method_and_import': before == normalized}
+(notes/'m1-byte-proof.json').write_text(json.dumps(proof, indent=2)+'\\n')
+hashes = {name: hashlib.sha256((root/name).read_bytes()).hexdigest() for name in ['astrid/sdk/timeline/commit.py', 'tests/sdk/test_timeline_capture_projection.py']}
+(notes/'source-hashes.json').write_text(json.dumps({'base': base, 'files': hashes}, indent=2)+'\\n')
+print(json.dumps({'source_hashes': hashes, 'm1_files_verified': len(proof)}, indent=2))
+PY" in /home/user/work/wt/agt-m3-capture-projector
+ succeeded in 168ms:
+{
+  "source_hashes": {
+    "astrid/sdk/timeline/commit.py": "5af074cb05c222ce459d5883107ff17a5eb9471096e1e4ff48285bdb90e4a67a",
+    "tests/sdk/test_timeline_capture_projection.py": "916c026db296181304bad63565baaa00413e1a5f321d5018e3ae32f028380c34"
+  },
+  "m1_files_verified": 9
+}
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+message = '''
+
+## agt-m3-capture-projector — bounded source ready / graph golden still blocked
+Final product candidate at "'`/home/user/work/wt/agt-m3-capture-projector/astrid/sdk/timeline/commit.py`, SHA256 `5af074cb05c222ce459d5883107ff17a5eb9471096e1e4ff48285bdb90e4a67a`, base `435357aec6ad84648107c38f0d5469f052faa84b`, harness commit PENDING. Test source `tests/sdk/test_timeline_capture_projection.py` SHA256 `916c026db296181304bad63565baaa00413e1a5f321d5018e3ae32f028380c34`. Frozen exact contract remains `project_capture(document, *, authoring_preview=None) -> {config, registry, expansion}` above. Runtime ACK consumed. Candidate forwarding remains whole `spec.inputs.authoring_preview`, never provenance. Scope/retained media/documents authority is Runtime'"'s job; method validates canonical images, candidate frozen publication/digests/head/base payload/retained child bases, delegates exactly ONCE to the ONE core projector, emits detached raw JSON config/registry/expansion. No IO/renderer/Runtime client/ABI/schema change; save method bytes unchanged.
+
+Direct focused projector/provider/save fences + in-process M1 numeric/opaque/shared regressions: **184 PASS, 1 strict XFAIL (30.25s)** against archived real Runtime "'`4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136`. Added sixth candidate variant afterwards: all six REAL candidate goldens **6 PASS (2.44s)** (parent/child/new/duplicate/remove + plain SDK opener). Saved config/registry and every expansion shot digest/internal config_hash/occurrence/output/order compare exactly against managed opener on real public saved closure. REQUIRED entire saved expansion golden remains strict XFAIL: `--runxfail` is **1 FAIL (2.27s)**, seven identical top-level expansion items, only graph differs due read metadata absent from CanonicalDocument. No graph filtering, metadata invention, or weakening old expectations. Manager decision required; Runtime ACK keeps genuine saved certification blocked. M3 remains HELD; no 12-forgery or actual Runtime pair claim.
+
+121 additive product lines (vs target~80): majority is validation binding the untrusted draft'"'s base images/source maps and frozen publication to the verified document; remainder closes reused/compiled child images and emits existing saved/candidate expansion shapes/order. No helper/projector copy added. "'`notes/m1-byte-proof.json` verifies authoring_bundle/_command_state unchanged, commit unchanged after removing ONLY method+import, all SIX files of the existing29 regression lane byte-identical. Focused Ruff and whitespace pass. No full/socket/browser/install/pin/merge/push run. Full report exactcommands/source IDs in `workers/agt-m3-capture-projector/notes/report.md` (being finalized). Obtain harness commit and manager review before consuming product source.
+'"'''
+for name in ('runtime-coordination.md', 'viewing-coordination.md'):
+    with (root/'design'/name).open('a') as f: f.write(message)
+PY" in /home/user/work/wt/agt-m3-capture-projector
+ succeeded in 105ms:
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python - <<'"'PY'
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from tests.sdk.test_timeline_capture_projection import saved_runtime, saved_closure, project
+from astrid.packs.rendering.actions.render.managed_timeline import _project_exact_parent_head
+with TemporaryDirectory(prefix='agt-capture-graph-') as temporary:
+    fixture = saved_runtime.__wrapped__(Path(temporary))
+    runtime = next(fixture)
+    try:
+        runtime, document = saved_closure.__wrapped__(runtime)
+        _, _, expected = _project_exact_parent_head(client=runtime, project_id=runtime.project_id,
+            timeline_id='main', parent_revision_id='parent-golden')
+        actual = project(document)['expansion']['graph']
+        differences = []
+        def compare(left, right, path):
+            if isinstance(left, dict) and isinstance(right, dict):
+                for key in sorted(set(left) | set(right)):
+                    if key not in left or key not in right:
+                        differences.append(path + '/' + key)
+                    else:
+                        compare(left[key], right[key], path + '/' + key)
+            elif isinstance(left, list) and isinstance(right, list) and len(left) == len(right):
+                for index, (a, b) in enumerate(zip(left, right)):
+                    compare(a, b, path + '/' + str(index))
+            elif left "'!= right:
+                differences.append(path)
+        compare(actual, expected['"'graph'], 'graph')
+        print('\\n'.join(differences))
+    finally:
+        fixture.close()
+PY" in /home/user/work/wt/agt-m3-capture-projector
+ succeeded in 2526ms:
+graph/internal_timeline_revisions/0/created_at
+graph/internal_timeline_revisions/1/created_at
+graph/parent_revision/created_at
+graph/shot_revisions/0/created_at
+graph/shot_revisions/1/created_at
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projector/notes/report.md <<'MD'
+# Capture provider projection — bounded candidate; M3 held
+
+Only assigned Agent product file "'`astrid/sdk/timeline/commit.py` and new direct test file `tests/sdk/test_timeline_capture_projection.py` changed. No commit/merge/checkout/push/install/pin/full suite/socket/browser run. Harness commit pending.
+
+## Source and contract
+
+Base HEAD: `435357aec6ad84648107c38f0d5469f052faa84b` (branch `tl/agt-m3-capture-projector`).
+
+| File | SHA256 |
+| --- | --- |
+| `astrid/sdk/timeline/commit.py` | `5af074cb05c222ce459d5883107ff17a5eb9471096e1e4ff48285bdb90e4a67a` |
+| `tests/sdk/test_timeline_capture_projection.py` | `916c026db296181304bad63565baaa00413e1a5f321d5018e3ae32f028380c34` |
+
+Exact optional method: `RuntimeCommitService.project_capture(document, *, authoring_preview=None) -> {"config": dict, "registry": dict, "expansion": dict}`. Existing startup provider, `interface_version = 1`, no DTO/endpoint/ABI change. Frozen in ABSOLUTE `orch/design/runtime-coordination.md` and `viewing-coordination.md` BEFORE implementation; Runtime worker explicitly ACKed the call/keys and candidate path.
+
+Input is the existing Runtime-verified/scoped CanonicalDocument for the exact saved parent, or the exact BASE parent for a candidate. Optional preview is the WHOLE existing `authoring-candidate-preview` artifact from `spec.inputs.authoring_preview`, including candidate/head/publication/candidate_digest/publication_digest. It is authored task data, never provenance. Runtime owns external project/timeline/revision authority and retained media/DocumentPin checks, and must refuse requested certification before writes if the method is missing, data is unavailable/inconsistent, or comparison fails. Native unclaimed CAS stays native. These Runtime behaviors are not implemented or qualified here.
+
+Config and registry are raw outputs of exactly ONE call to core `shot_composition_projection.project_runtime_parent_composition`. The method uses existing `bundle_from_document`, `_verify_document`, and `preview_authoring_candidate`/compiler; it adds draft/base/source-map binding and frozen-preview consistency checks, closes retained/compiled child images, then delegates. It never loads a client, Runtime, scene evaluator or renderer, nor reads/writes storage. Inputs/results are detached and finite JSON; no authored normalization/rewrite.
+
+`expansion` matches existing SDK closure authority shapes:
+
+- Saved: managed `_project_exact_parent_head` expansion plus `parent_content_digest`; first-reference shot/internal order, full shot content_digest and child config_hash, occurrences/outputs, canonical, parent_revision_id, graph.
+- Candidate: EXACT `_open_candidate_input_closure` third return value; canonical/parent_revision_id/parent_content_digest/children/shots/occurrences and exact `working_copy` marker. Marker = `{label: "Unpublished working copy", base_parent, candidate_digest, publication_digest, candidate_parent_revision_id}`. Existing candidate expansion has no graph/outputs. No added duplicate candidate carrier.
+
+121 additive product lines versus target ~80: most additional code verifies the untrusted candidate'"'s base payloads/placements/child images/source maps and frozen publication against the supplied verified document. Remaining code closes reused/changed children and preserves the TWO existing expansion shapes/orders. No helper/projector copy or Runtime visual_seam reuse was introduced.
+
+## Tests and exact commands
+
+All commands ran from "'`/home/user/work/wt/agt-m3-capture-projector`. Real golden fixtures use public Runtime ingest/publication and Runtime'"'s existing verified "'`revision_closure`, with no SQL seeding/rewriting, admission doubles or renderer. Runtime is archived by `tests.helpers.runtime.use_runtime(commit=...)` at exact commit `4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136`; ambient integration changes cannot change these goldens.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts='"'' -q --tb=short tests/sdk/test_timeline_capture_projection.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/timeline/test_shot_composition_projection.py tests/core/timeline/test_shot_composition_projection_volume.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_shared_inverse.py
+"'```
+
+**184 passed, 1 strict xfailed in 30.25s; exit 0.** Includes real saved config/registry + ALL expansion pins/hash/order/output golden, five real candidate goldens, repeat/deepcopy deterministic tests with files/network/subprocess access patched to fail, single-projector delegation count, renderer/Runtime import fence for the new method, existing save/import fences, provider/document/projector neighbors, and existing numeric/opaque/shared-inverse in-process regressions. Candidate negatives cover frozen mutation, head/base/scope/digests/publication/source mapping/embedded document/reused pin/child base inconsistency; saved negatives cover payload digests, missing/orphan/duplicate images, scope/link/manifest inconsistencies and JSON-distinct bool/int/float bases.
+
+One additional candidate variant was added after that run: a preview opened directly through the actual SDK `open_authoring_bundle` from public immutable read results (without `_runtime_document`). Final test file qualified by:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts='"'' -q --tb=short tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly
+"'```
+
+**6 passed in 2.44s; exit 0.** Parent, child, new shot, duplicate, removed shot and plain SDK opener preview all match the existing candidate opener'"'s ENTIRE "'`{config, registry, expansion}` on the SAME real saved base. Head remains `parent-golden`, candidate stays unpublished.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -o addopts='"'' -q --runxfail --tb=short tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden
+"'```
+
+**1 FAILED in 2.27s; exit 1**, intentionally exposing the unsatisfied full golden. Seven top-level expansion items match; graph differs. See blocker below. No existing passing behavior assertion was changed, skipped, removed or relabeled.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-force-exclude astrid/sdk/timeline/commit.py tests/sdk/test_timeline_capture_projection.py
+git diff --check
+```
+
+Both PASS, exit 0 on final source.
+
+Initial test-authoring attempts had 32 passes and fixture setup errors: the legacy public publisher refuses structured output.fps, then copied shot fixtures reused global item IDs. Corrected ONLY the new synthetic fixture to publish rational canvas fps plus globally distinct item IDs. A subsequent draft fixture copied inherited source_offset into a newly duplicated occurrence, which the existing compiler refuses; the synthetic base now uses source_offset=0. Candidate base-map validation was corrected to allow legitimate added/removed shots; all final goldens above pass except the explicit graph requirement. These preliminary failures are not feature qualifications.
+
+## Unresolved exact golden conflict (evidence against input sufficiency)
+
+The REQUIRED entire saved expansion golden cannot pass with the approved pure CanonicalDocument-only input: real Runtime immutable read APIs add `created_at`, and may add parent dependency_manifest; CanonicalDocument intentionally excludes read metadata. The existing core projector copies full source read rows into expansion.graph. A deterministic function of CanonicalDocument cannot reconstruct the missing timestamps. This is concrete conflicting evidence, reported to both coordination docs. Runtime ACK explicitly keeps genuine saved certification BLOCKED rather than filtering the graph.
+
+The exact full golden is retained with `@pytest.mark.xfail(strict=True)` and an explicit restoring requirement. Independent passing tests require exact config/registry and ALL expansion shot digests/internal hashes/order/occurrences/outputs. No timestamp synthesis, graph filtering, alternative projector, fixture-only opener or Runtime comparison relaxation is claimed as a solution. Orchestrator must settle graph read-metadata semantics/input sufficiency before M3 clearance.
+
+`notes/m1-byte-proof.json` verifies all THREE M1 product files: authoring_bundle and _command_state byte-identical; commit byte-identical after removing ONLY the additive method and its pure-core import. All SIX files in the existing29 regression lane are byte-identical. The full29 lane includes sockets/daemon restart and was NOT rerun under this task'"'s no-socket boundary; in-process numeric/opaque/shared tests and the existing save import fences ran as listed. No full/make check claim.
+
+## Handoff
+
+Obtain harness commit and review this bounded source. Resolve saved graph metadata with the orchestrator; Runtime then consumes the reviewed optional provider and existing candidate task input, proves refusal before any writes, and qualifies all original saved/candidate/native positive controls and twelve forgeries. Candidate-forward sibling owns actual forwarding/atomic submission and host labels. Missing-provider behavior, actual paired admission, twelve Runtime forgeries, browser/pixel/audio parity and full suites remain UNVERIFIED HERE. M3 stays HELD.
+MD
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projector/commit-msg <<'MSG'
+feat(timeline): add pure optional capture projection to commit provider
+
+Validate saved closures and frozen candidate base bindings before delegating
+capture projection to the existing core projector. Preserve raw config,
+registry, child pins, draft markers and existing expansion ordering.
+
+Add pure IO/import fences and real Runtime saved/candidate golden tests.
+Keep the exact saved graph golden strict xfail because CanonicalDocument
+omits immutable read timestamps required by the managed expansion graph.
+Commit and save behavior remains unchanged; M3 certification stays held.
+MSG
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projector/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projector/commit-msg.txt
+
+git status --short" in /home/user/work/wt/agt-m3-capture-projector
+ succeeded in 0ms:
+ M astrid/sdk/timeline/commit.py
+?? tests/sdk/test_timeline_capture_projection.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib, json, shutil
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+notes = root/'workers/agt-m3-capture-projector/notes'
+hashes = json.loads((notes/'source-hashes.json').read_text())
+for name, expected in hashes['files'].items():
+    assert hashlib.sha256(Path(name).read_bytes()).hexdigest() == expected, name
+for name in ('.pytest_cache', '.ruff_cache'):
+    path = Path(name)
+    if path.is_dir():
+        shutil.rmtree(path)
+message = '''
+
+agt-m3-capture-projector FINAL handoff: source hashes above unchanged; report finalized at "'`workers/agt-m3-capture-projector/notes/report.md`, commit-msg AND commit-msg.txt ready (harness pending). Final read-only diagnostic on SAME real closure confirms the ONLY graph differences are five missing `created_at` keys: parent_revision, shots[0/1], internal_timeline_revisions[0/1]. No authored value or pin/order differs. Entire golden remains strict XFAIL and explicit --runxfail RED; no metadata stripped/synthesized. 184PASS/1XFAIL focused lane +6/6 full candidate variants, lint/whitespace PASS. Exact9-file M1 byte proof in notes. Existing29/socket lane and Runtime12-forgery pair not rerun/claimed. Resolve graph metadata/input sufficiency with orchestrator, then manager-reviewed harness source -> Runtime pair. M3 held; stopping bounded work.
+'"'''
+for name in ('runtime-coordination.md', 'viewing-coordination.md'):
+    with (root/'design'/name).open('a') as f: f.write(message)
+with (notes/'report.md').open('a') as f:
+    f.write('\\nFinal read-only recursive diagnostic on the same real saved closure found only five differing graph paths: parent_revision/created_at, shot_revisions/0/created_at, shot_revisions/1/created_at, internal_timeline_revisions/0/created_at and internal_timeline_revisions/1/created_at. All are absent from CanonicalDocument; no authored value/pin/order differs. Final source hashes rechecked unchanged; generated pytest/Ruff caches removed from the assigned worktree.\\n')
+print('Final source hashes verified; reports and commit messages ready.')
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m3-capture-projector
+ succeeded in 0ms:
+Final source hashes verified; reports and commit messages ready.
+ M astrid/sdk/timeline/commit.py
+?? tests/sdk/test_timeline_capture_projection.py
+
+codex
+Added `project_capture(document, *, authoring_preview=None) → {config, registry, expansion}` using the existing core projector. Save behavior remains unchanged.
+
+- Focused tests: **184 passed, 1 strict xfailed**.
+- Real candidate goldens: **6 passed**.
+- Ruff and whitespace checks passed.
+
+Blocked: exact saved expansion parity needs `created_at` metadata absent from `CanonicalDocument`. The full golden remains strict xfail; Runtime acknowledged the blocker.
+
+[Report with exact commands, hashes, and decisions](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projector/notes/report.md). Both commit-message files are ready.
+
+Next: orchestrator resolves graph metadata semantics, then Runtime qualifies paired admission and all twelve forgeries. **M3 remains held.**
+tokens used
+148,807
+Added `project_capture(document, *, authoring_preview=None) → {config, registry, expansion}` using the existing core projector. Save behavior remains unchanged.
+
+- Focused tests: **184 passed, 1 strict xfailed**.
+- Real candidate goldens: **6 passed**.
+- Ruff and whitespace checks passed.
+
+Blocked: exact saved expansion parity needs `created_at` metadata absent from `CanonicalDocument`. The full golden remains strict xfail; Runtime acknowledged the blocker.
+
+[Report with exact commands, hashes, and decisions](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projector/notes/report.md). Both commit-message files are ready.
+
+Next: orchestrator resolves graph metadata semantics, then Runtime qualifies paired admission and all twelve forgeries. **M3 remains held.**

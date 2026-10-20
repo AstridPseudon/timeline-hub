@@ -1,0 +1,400 @@
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:338:45:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:339:48:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:340:47:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:341:46:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:342:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:346:57:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:347:58:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:348:53:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:349:49:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:350:52:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:351:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:352:44:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:353:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:356:50:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:357:54:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:358:47:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:359:48:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:362:57:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:363:52:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:364:47:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:365:48:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:366:46:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:367:47:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:368:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:369:44:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:370:54:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:371:49:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:372:58:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:373:62:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:374:72:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:377:62:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:378:51:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:379:40:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:380:41:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:381:49:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:382:53:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:383:45:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:384:44:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:387:54:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:388:48:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:389:44:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:390:49:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:391:53:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:392:53:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:393:56:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:394:50:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:395:51:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:396:64:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:397:51:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:398:53:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:399:46:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:400:48:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:403:54:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:404:47:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:405:46:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:406:64:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:407:52:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:408:56:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:409:59:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:410:63:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:411:58:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:412:53:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:413:49:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:414:52:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:415:50:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:416:49:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:417:51:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:418:62:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:419:68:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:420:65:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:421:42:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:422:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:423:47:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:424:54:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:425:47:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:426:47:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:427:57:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:428:52:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:429:17:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:1593:40:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:1665:12:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:1666:23:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:1667:27:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:1723:29:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:1778:25:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2250:40:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2255:31:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2258:12:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2259:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2264:31:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2267:12:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2268:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2273:31:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2276:12:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2277:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2285:31:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2305:31:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2306:12:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2307:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2337:40:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2343:12:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2344:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2350:12:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2351:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2357:12:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2358:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2371:12:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2372:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2409:12:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2410:43:Multiple statements on one line (colon)
+E701:/home/user/work/wt/agt-m1-sdk-dispatch-style/astrid/sdk/remote.py:2449:28:Multiple statements on one line (colon)
+ruff_exit=1
+head_scoped_E701_json_count=116
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:335:46:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:336:51:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:337:48:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:338:45:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:339:48:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:340:47:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:341:46:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:342:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:346:57:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:347:58:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:348:53:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:349:49:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:350:52:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:351:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:352:44:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:353:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:354:48:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:355:50:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:356:54:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:357:47:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:358:48:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:361:57:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:362:52:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:363:47:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:364:48:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:365:46:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:366:47:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:367:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:368:44:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:369:54:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:370:49:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:371:58:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:372:62:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:373:72:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:376:62:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:377:51:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:378:40:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:379:41:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:380:49:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:381:53:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:382:45:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:383:44:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:386:54:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:387:48:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:388:44:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:389:49:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:390:53:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:391:53:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:392:56:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:393:50:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:394:51:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:395:64:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:396:51:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:397:53:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:398:46:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:399:48:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:400:54:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:401:54:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:402:47:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:403:46:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:404:64:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:405:52:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:406:56:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:407:59:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:408:63:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:409:58:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:410:53:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:411:49:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:412:52:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:413:50:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:414:49:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:415:51:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:416:62:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:417:68:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:418:65:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:419:42:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:420:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:421:47:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:422:54:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:423:47:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:424:47:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:425:57:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:426:52:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:427:17:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:1591:40:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:1663:12:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:1664:23:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:1665:27:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:1721:29:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:1776:25:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2248:40:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2253:31:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2256:12:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2257:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2262:31:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2265:12:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2266:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2271:31:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2274:12:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2275:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2283:31:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2303:31:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2304:12:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2305:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2335:40:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2341:12:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2342:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2348:12:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2349:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2355:12:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2356:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2369:12:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2370:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2407:12:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2408:43:Multiple statements on one line (colon)
+E701:/tmp/agt-m1-sdk-dispatch-style-remote-head.py:2447:28:Multiple statements on one line (colon)
+head_ruff_exit=1
+
+--- diff ---
+diff --git a/astrid/sdk/remote.py b/astrid/sdk/remote.py
+index e74fc14f..9009c10e 100644
+--- a/astrid/sdk/remote.py
++++ b/astrid/sdk/remote.py
+@@ -351,7 +351,8 @@ class _RemoteFamily:
+             elif operation == "cancel_run": value = self._client.cancel_run(*args, **kwargs)
+             elif operation == "cancel_task": value = self._client.cancel_task(*args, **kwargs)
+             elif operation == "claim_task": value = self._client.claim_task(*args, **kwargs)
+-            elif operation == "commit_timeline": value = self._client.commit_timeline(*args, **kwargs)
++            elif operation == "commit_timeline":
++                value = self._client.commit_timeline(*args, **kwargs)
+             elif operation == "create_generation": value = self._client.create_generation(*args, **kwargs)
+             elif operation == "create_media_relation": value = self._client.create_media_relation(*args, **kwargs)
+             elif operation == "create_project": value = self._client.create_project(*args, **kwargs)
+@@ -397,7 +398,8 @@ class _RemoteFamily:
+             elif operation == "list_managed_outputs": value = self._client.list_managed_outputs(*args, **kwargs)
+             elif operation == "list_projects": value = self._client.list_projects(*args, **kwargs)
+             elif operation == "list_run_events": value = self._client.list_run_events(*args, **kwargs)
+-            elif operation == "list_timeline_commits": value = self._client.list_timeline_commits(*args, **kwargs)
++            elif operation == "list_timeline_commits":
++                value = self._client.list_timeline_commits(*args, **kwargs)
+             elif operation == "list_timeline_history": value = self._client.list_timeline_history(*args, **kwargs)
+             elif operation == "list_timelines": value = self._client.list_timelines(*args, **kwargs)
+             elif operation == "list_variants": value = self._client.list_variants(*args, **kwargs)
+
+--- status ---
+ M astrid/sdk/remote.py
+
+exec
+/bin/bash -lc 'set +e
+/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/remote.py --output-format json > /tmp/agt-m1-sdk-dispatch-style-ruff-current.json
+current_status=$?
+/home/user/work/venv-agent/bin/python -m ruff check /tmp/agt-m1-sdk-dispatch-style-remote-head.py --output-format json > /tmp/agt-m1-sdk-dispatch-style-ruff-head.json
+head_status=$?
+set -e
+/home/user/work/venv-agent/bin/python - <<'"'PY'
+import json
+from pathlib import Path
+for label in ('head', 'current'):
+    findings = json.loads(Path(f'/tmp/agt-m1-sdk-dispatch-style-ruff-{label}.json').read_text())
+    by_code = {}
+    for item in findings:
+        by_code[item['code']] = by_code.get(item['code'], 0) + 1
+    print(f'{label}_ruff_json_count={len(findings)} by_code={by_code}')
+PY
+printf 'current_ruff_exit=%s head_ruff_exit=%s\\n' \""'$current_status" "$head_status"
+printf '"'\\n--- commit message path ---\\n'
+if test -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-sdk-dispatch-style/commit-msg; then sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-sdk-dispatch-style/commit-msg; else echo '(absent)'; fi" in /home/user/work/wt/agt-m1-sdk-dispatch-style
+ succeeded in 170ms:
+head_ruff_json_count=124 by_code={'I001': 6, 'E701': 116, 'BLE001': 2}
+current_ruff_json_count=122 by_code={'I001': 6, 'E701': 114, 'BLE001': 2}
+current_ruff_exit=1 head_ruff_exit=1
+
+--- commit message path ---
+(absent)
+
+codex
+The comparison is clean for the requested scope: file-scoped Ruff JSON drops from 124 to 122 findings, specifically E701 116→114, while I001 (6) and BLE001 (2) are unchanged. The diff contains only the two branch expansions; I’m recording the required conventional commit message now and doing the final status/diff check.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-sdk-dispatch-style/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-sdk-dispatch-style/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-sdk-dispatch-style/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..cfc58affc60a4a456d5004b0d861ecd36101a62b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-sdk-dispatch-style/commit-msg
+@@ -0,0 +1,4 @@
++style(sdk): expand timeline dispatch branches
++
++Remove the two introduced E701 one-line dispatch bodies without changing
++timeline client behavior or API surface.
+diff --git a/astrid/sdk/remote.py b/astrid/sdk/remote.py
+index e74fc14fa7ca392ec81337599bec67265e63f30d..9009c10e2ebddfef8f6f8722872a589c1612f4d3
+--- a/astrid/sdk/remote.py
++++ b/astrid/sdk/remote.py
+@@ -351,7 +351,8 @@
+             elif operation == "cancel_run": value = self._client.cancel_run(*args, **kwargs)
+             elif operation == "cancel_task": value = self._client.cancel_task(*args, **kwargs)
+             elif operation == "claim_task": value = self._client.claim_task(*args, **kwargs)
+-            elif operation == "commit_timeline": value = self._client.commit_timeline(*args, **kwargs)
++            elif operation == "commit_timeline":
++                value = self._client.commit_timeline(*args, **kwargs)
+             elif operation == "create_generation": value = self._client.create_generation(*args, **kwargs)
+             elif operation == "create_media_relation": value = self._client.create_media_relation(*args, **kwargs)
+             elif operation == "create_project": value = self._client.create_project(*args, **kwargs)
+@@ -397,7 +398,8 @@
+             elif operation == "list_managed_outputs": value = self._client.list_managed_outputs(*args, **kwargs)
+             elif operation == "list_projects": value = self._client.list_projects(*args, **kwargs)
+             elif operation == "list_run_events": value = self._client.list_run_events(*args, **kwargs)
+-            elif operation == "list_timeline_commits": value = self._client.list_timeline_commits(*args, **kwargs)
++            elif operation == "list_timeline_commits":
++                value = self._client.list_timeline_commits(*args, **kwargs)
+             elif operation == "list_timeline_history": value = self._client.list_timeline_history(*args, **kwargs)
+             elif operation == "list_timelines": value = self._client.list_timelines(*args, **kwargs)
+             elif operation == "list_variants": value = self._client.list_variants(*args, **kwargs)
+
+exec
+/bin/bash -lc 'git diff --check && test "$(git diff --name-only | wc -l)" -eq 1 && test "$(git diff --name-only)" = "astrid/sdk/remote.py" && git status --short && printf '"'\\n--- final diff stat ---\\n' && git diff --stat && printf '\\n--- final diff ---\\n' && git diff -- astrid/sdk/remote.py && printf '\\n--- commit-msg ---\\n' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-sdk-dispatch-style/commit-msg" in /home/user/work/wt/agt-m1-sdk-dispatch-style
+ succeeded in 2790ms:
+ M astrid/sdk/remote.py
+
+--- final diff stat ---
+ astrid/sdk/remote.py | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+--- final diff ---
+diff --git a/astrid/sdk/remote.py b/astrid/sdk/remote.py
+index e74fc14f..9009c10e 100644
+--- a/astrid/sdk/remote.py
++++ b/astrid/sdk/remote.py
+@@ -351,7 +351,8 @@ class _RemoteFamily:
+             elif operation == "cancel_run": value = self._client.cancel_run(*args, **kwargs)
+             elif operation == "cancel_task": value = self._client.cancel_task(*args, **kwargs)
+             elif operation == "claim_task": value = self._client.claim_task(*args, **kwargs)
+-            elif operation == "commit_timeline": value = self._client.commit_timeline(*args, **kwargs)
++            elif operation == "commit_timeline":
++                value = self._client.commit_timeline(*args, **kwargs)
+             elif operation == "create_generation": value = self._client.create_generation(*args, **kwargs)
+             elif operation == "create_media_relation": value = self._client.create_media_relation(*args, **kwargs)
+             elif operation == "create_project": value = self._client.create_project(*args, **kwargs)
+@@ -397,7 +398,8 @@ class _RemoteFamily:
+             elif operation == "list_managed_outputs": value = self._client.list_managed_outputs(*args, **kwargs)
+             elif operation == "list_projects": value = self._client.list_projects(*args, **kwargs)
+             elif operation == "list_run_events": value = self._client.list_run_events(*args, **kwargs)
+-            elif operation == "list_timeline_commits": value = self._client.list_timeline_commits(*args, **kwargs)
++            elif operation == "list_timeline_commits":
++                value = self._client.list_timeline_commits(*args, **kwargs)
+             elif operation == "list_timeline_history": value = self._client.list_timeline_history(*args, **kwargs)
+             elif operation == "list_timelines": value = self._client.list_timelines(*args, **kwargs)
+             elif operation == "list_variants": value = self._client.list_variants(*args, **kwargs)
+
+--- commit-msg ---
+style(sdk): expand timeline dispatch branches
+
+Remove the two introduced E701 one-line dispatch bodies without changing
+timeline client behavior or API surface.
+
+codex
+## Done
+
+- Expanded only the two requested dispatch branches in `astrid/sdk/remote.py`.
+- Preserved behavior/API/imports; no tests added.
+- Wrote commit message to the requested path.
+
+## Verification
+
+- `pytest -q tests/sdk/test_workspace_client_timeline_commit.py` — **8 passed**
+- `git diff --check` — **passed**
+- Scoped Ruff JSON: **E701 reduced 116 → 114**; total findings **124 → 122**. Unrelated findings unchanged.
+- Final diff touches only `astrid/sdk/remote.py`.
+
+No full, socket, install, or git mutation commands run.
+tokens used
+40,694
+## Done
+
+- Expanded only the two requested dispatch branches in `astrid/sdk/remote.py`.
+- Preserved behavior/API/imports; no tests added.
+- Wrote commit message to the requested path.
+
+## Verification
+
+- `pytest -q tests/sdk/test_workspace_client_timeline_commit.py` — **8 passed**
+- `git diff --check` — **passed**
+- Scoped Ruff JSON: **E701 reduced 116 → 114**; total findings **124 → 122**. Unrelated findings unchanged.
+- Final diff touches only `astrid/sdk/remote.py`.
+
+No full, socket, install, or git mutation commands run.

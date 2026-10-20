@@ -1,0 +1,9 @@
+name=agt-m3-plate-current-artifact-gate
+repo=agent
+base=tl/agt-m3-sprite-current-artifact-gate
+base_sha=ded9b0c9
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-plate-current-artifact-gate
+started=2026-10-20T14:39:15Z

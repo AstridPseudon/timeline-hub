@@ -1,0 +1,9 @@
+name=agt-m1-inputs-cli-default
+repo=agent
+base=tl/integration
+base_sha=8c4bd850
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m1-inputs-cli-default
+started=2026-10-19T19:51:28Z

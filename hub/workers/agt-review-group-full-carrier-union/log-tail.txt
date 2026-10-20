@@ -1,0 +1,400 @@
++and pinned-group drag onto a new track/retrack. They must be restored and
++qualified by App against accepted readback before adoption or writer
++retirement.
++
++No full suite, HTTP/live socket, native qualification, artifact generation,
++sealed-capture refresh, or App browser run was performed or inferred.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..6cd8f1103bae92b8971afe86a017e3c5dadda8ff
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/commit-msg.txt
+@@ -0,0 +1,5 @@
++docs(review): approve group full-carrier source union
++
++Record the exact candidate identity, schema-floor reconstruction, targeted
++proof, and bounded Runtime/App2 source ACK handoff. Keep native qualification,
++artifact generation, and App adoption explicitly held.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..34ffc4a8992bf280dea13b747c7891e34c146e02
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md
+@@ -0,0 +1,32 @@
++## Result
++
++**APPROVE the private Agent source candidate only; hold public freeze,
++generation/artifact/pin, native qualification, App adoption, and integration.**
++
++Verified exact candidate:
++
++- commit `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`
++- tree `0699f877a4c809005536a80f5956b8051a814ef7`
++- parent `e010e6a3868e963471244491bb6672c3e4a5135e`
++- schema `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`
++- 58 definitions / 32 operation clauses; only the two group operations are added
++
++The group source/test paths are byte-identical to reviewed `80ddba79`. Removing
++only the group delta reconstructs exact schema `39211e63…` (56/30), then the
++reviewed floors `613123b2…` and `6ba7b51e…`. Existing v2/source-bound mappings
++and version refusals remain covered. No generated artifact, DTO, framework,
++public pin, or sealed-capture refresh was added.
++
++Targeted command:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_current_group_slice.py tests/editing_conformance/test_group_read_view.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/editing_conformance/test_recipe_m2_group_move.py
++```
++
++Result: **170 passed in 151.88s**, exit 0. `git diff --check` passed.
++
++The handoff requests Runtime and App2 bounded source/consumer ACKs in:
++`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-union-review.md`.
++The original three App group/multi/retrack visible assertions remain an App
++consumer gate; pure Agent tests do not claim them. No full*/HTTP/live-socket,
++native, browser, artifact, or generation test was run.
+
+exec
+/bin/bash -lc "git status --short --branch; printf '\\n--- completion files ---\\n'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/commit-msg.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/DONE; printf '\\n--- published handoff head ---\\n'; sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-union-review.md; printf '\\n--- report ---\\n'; sed -n '1,180p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md" in /home/user/work/wt/agt-review-group-full-carrier-union
+ succeeded in 105ms:
+## tl/agt-review-group-full-carrier-union
+
+--- completion files ---
+-rw-r--r-- 1 root root    0 Oct 20 20:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/DONE
+-rw-r--r-- 1 root root  264 Oct 20 20:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/commit-msg.txt
+-rw-r--r-- 1 root root 1914 Oct 20 20:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md
+
+--- published handoff head ---
+# Agent group full-carrier union review
+
+Date: 2026-10-20 UTC
+
+## Verdict
+
+**APPROVE the private Agent source candidate only.** Public freeze, normal
+generation, artifact/pin, Runtime native qualification, App adoption, and
+integration remain held.
+
+## Exact candidate identity
+
+- Branch: `tl/agt-m2-group-full-carrier-source-compose`
+- Commit: `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`
+- Tree: `0699f877a4c809005536a80f5956b8051a814ef7`
+- Exact parent: `e010e6a3868e963471244491bb6672c3e4a5135e`
+- Candidate schema SHA-256: `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`
+- Candidate schema inventory: 58 definitions / 32 operation clauses
+- Added operations: `timeline.migrate-groups` and `occurrence.move` only
+
+The candidate's group implementation and tests are byte-identical to reviewed
+`80ddba79fa458e7e74e5bdb046424c4e2d979917`. The only source difference from
+that reviewed group composition is the separately reviewed full-carrier
+project-data member already present in exact parent `e010`; this is not a
+re-review or replacement of the group source.
+
+## Independent checks
+
+Removing only the two group definitions and their two operation clauses from
+the candidate reconstructs the exact project-data floor:
+
+| Source | Definitions / clauses | SHA-256 |
+| --- | ---: | --- |
+| Candidate | 58 / 32 | `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb` |
+| Remove group delta only | 56 / 30 | `39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d` |
+| Then remove project-data member | 55 / 29 | `613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3` |
+| Then remove carrier-only additions | 55 / 29 | `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d` |
+
+Existing definitions, operation clauses, the 12 explicit source-bound v2
+branches, and version refusals remain covered by the union/floor tests. No
+copied frozen schema, new framework/DTO/source field, generation, freeze, or
+public pin was added. `git diff --check` is clean.
+
+The exact targeted command was:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_current_group_slice.py tests/editing_conformance/test_group_read_view.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/editing_conformance/test_recipe_m2_group_move.py
+```
+
+Result: **170 passed in 151.88s**, exit 0.
+
+## Semantic boundary
+
+The reviewed migration remains the sole explicit admission for legacy
+`pinnedShotGroups`; ordinary edits still refuse an unmigrated legacy group.
+Migration records canonical shot/occurrence ownership, complete legacy
+provenance, source/dependency bindings, and lossless inverse data. It refuses
+unsupported maps, interleaving, duplicate/shared members, occupied or
+ambiguous shapes, and item-bearing births without an explicit mapping. It does
+not silently refresh a sealed capture or manufacture physical item births.
+
+`occurrence.move` remains the bounded fixed, translation-only,
+single-output-lane operation. It uses explicit parent and raw child lane
+bindings, preserves authored child geometry and opaque state, refuses shared
+or derived ownership, and allows an optional caller-allocated child track only
+as an ordinary typed `track.create` in the same batch. The pure group view
+derives current canonical membership/order and source geometry; legacy
+provenance supplies display metadata only.
+
+These behaviors are unchanged from reviewed `80dd`; the candidate adds them
+to the complete `e010`/392 floor rather than changing chapters-as-shots,
+lossless migration, or existing v2/source-bound semantics.
+
+## Cross-area handoff requests
+
+**Runtime:** please provide a bounded source ACK for this exact
+`c0644cf1`/tree/schema composition, confirming that the existing group80
+operation shape and full 392 carrier remain the accepted source boundary.
+This requests no Runtime source change, generated DTO, artifact, generation,
+freeze, pin, or native acceptance. The existing Runtime group80 contract
+remains the limit: no group-specific materialization carrier or authority is
+introduced.
+
+**App2:** please provide a bounded consumer/source ACK against the exact
+candidate identity. The read-side bindings and derived `pinnedShotGroups`
+view are available for adapter review, but App adoption is not implied. The
+three original App visible assertions remain a consumer gate, not a result of
+these pure Agent tests: free multi-clip drag, pinned-group cross-track drag,
+and pinned-group drag onto a new track/retrack. They must be restored and
+qualified by App against accepted readback before adoption or writer
+retirement.
+
+No full suite, HTTP/live socket, native qualification, artifact generation,
+sealed-capture refresh, or App browser run was performed or inferred.
+
+--- report ---
+## Result
+
+**APPROVE the private Agent source candidate only; hold public freeze,
+generation/artifact/pin, native qualification, App adoption, and integration.**
+
+Verified exact candidate:
+
+- commit `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`
+- tree `0699f877a4c809005536a80f5956b8051a814ef7`
+- parent `e010e6a3868e963471244491bb6672c3e4a5135e`
+- schema `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`
+- 58 definitions / 32 operation clauses; only the two group operations are added
+
+The group source/test paths are byte-identical to reviewed `80ddba79`. Removing
+only the group delta reconstructs exact schema `39211e63…` (56/30), then the
+reviewed floors `613123b2…` and `6ba7b51e…`. Existing v2/source-bound mappings
+and version refusals remain covered. No generated artifact, DTO, framework,
+public pin, or sealed-capture refresh was added.
+
+Targeted command:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_current_group_slice.py tests/editing_conformance/test_group_read_view.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/editing_conformance/test_recipe_m2_group_move.py
+```
+
+Result: **170 passed in 151.88s**, exit 0. `git diff --check` passed.
+
+The handoff requests Runtime and App2 bounded source/consumer ACKs in:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-union-review.md`.
+The original three App group/multi/retrack visible assertions remain an App
+consumer gate; pure Agent tests do not claim them. No full*/HTTP/live-socket,
+native, browser, artifact, or generation test was run.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-union-review.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-union-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-union-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..13c495b85e3ec20e1962911667aac44bbfeca0ec
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-union-review.md
+@@ -0,0 +1,95 @@
++# Agent group full-carrier union review
++
++Date: 2026-10-20 UTC
++
++## Verdict
++
++**APPROVE the private Agent source candidate only.** Public freeze, normal
++generation, artifact/pin, Runtime native qualification, App adoption, and
++integration remain held.
++
++## Exact candidate identity
++
++- Branch: `tl/agt-m2-group-full-carrier-source-compose`
++- Commit: `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`
++- Tree: `0699f877a4c809005536a80f5956b8051a814ef7`
++- Exact parent: `e010e6a3868e963471244491bb6672c3e4a5135e`
++- Candidate schema SHA-256: `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`
++- Candidate schema inventory: 58 definitions / 32 operation clauses
++- Added operations: `timeline.migrate-groups` and `occurrence.move` only
++
++The group-specific implementation and conformance files are unchanged from
++reviewed `80ddba79fa458e7e74e5bdb046424c4e2d979917`. The shared registry,
++schema, and union-test files also carry the separately reviewed full-carrier
++project-data member already present in exact parent `e010`. The complete
++`80ddba79 → c0644cf1` delta is that project-data composition; this is not a
++re-review or replacement of the group source.
++
++## Independent checks
++
++Removing only the two group definitions and their two operation clauses from
++the candidate reconstructs the exact project-data floor:
++
++| Source | Definitions / clauses | SHA-256 |
++| --- | ---: | --- |
++| Candidate | 58 / 32 | `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb` |
++| Remove group delta only | 56 / 30 | `39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d` |
++| Then remove project-data member | 55 / 29 | `613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3` |
++| Then remove carrier-only additions | 55 / 29 | `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d` |
++
++Existing definitions, operation clauses, the 12 explicit source-bound v2
++branches, and version refusals remain covered by the union/floor tests. No
++copied frozen schema, new framework/DTO/source field, generation, freeze, or
++public pin was added. `git diff --check` is clean.
++
++The exact targeted command was:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_current_group_slice.py tests/editing_conformance/test_group_read_view.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/editing_conformance/test_recipe_m2_group_move.py
++```
++
++Result: **170 passed in 151.88s**, exit 0.
++
++## Semantic boundary
++
++The reviewed migration remains the sole explicit admission for legacy
++`pinnedShotGroups`; ordinary edits still refuse an unmigrated legacy group.
++Migration records canonical shot/occurrence ownership, complete legacy
++provenance, source/dependency bindings, and lossless inverse data. It refuses
++unsupported maps, interleaving, duplicate/shared members, occupied or
++ambiguous shapes, and item-bearing births without an explicit mapping. It does
++not silently refresh a sealed capture or manufacture physical item births.
++
++`occurrence.move` remains the bounded fixed, translation-only,
++single-output-lane operation. It uses explicit parent and raw child lane
++bindings, preserves authored child geometry and opaque state, refuses shared
++or derived ownership, and allows an optional caller-allocated child track only
++as an ordinary typed `track.create` in the same batch. The pure group view
++derives current canonical membership/order and source geometry; legacy
++provenance supplies display metadata only.
++
++These behaviors are unchanged from reviewed `80dd`; the candidate adds them
++to the complete `e010`/392 floor rather than changing chapters-as-shots,
++lossless migration, or existing v2/source-bound semantics.
++
++## Cross-area handoff requests
++
++**Runtime:** please provide a bounded source ACK for this exact
++`c0644cf1`/tree/schema composition, confirming that the existing group80
++operation shape and full 392 carrier remain the accepted source boundary.
++This requests no Runtime source change, generated DTO, artifact, generation,
++freeze, pin, or native acceptance. The existing Runtime group80 contract
++remains the limit: no group-specific materialization carrier or authority is
++introduced.
++
++**App2:** please provide a bounded consumer/source ACK against the exact
++candidate identity. The read-side bindings and derived `pinnedShotGroups`
++view are available for adapter review, but App adoption is not implied. The
++three original App visible assertions remain a consumer gate, not a result of
++these pure Agent tests: free multi-clip drag, pinned-group cross-track drag,
++and pinned-group drag onto a new track/retrack. They must be restored and
++qualified by App against accepted readback before adoption or writer
++retirement.
++
++No full suite, HTTP/live socket, native qualification, artifact generation,
++sealed-capture refresh, or App browser run was performed or inferred.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..6cd8f1103bae92b8971afe86a017e3c5dadda8ff
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/commit-msg.txt
+@@ -0,0 +1,5 @@
++docs(review): approve group full-carrier source union
++
++Record the exact candidate identity, schema-floor reconstruction, targeted
++proof, and bounded Runtime/App2 source ACK handoff. Keep native qualification,
++artifact generation, and App adoption explicitly held.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5c9a8fbd7a908643ea80c4ce696791a5194dbd63
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md
+@@ -0,0 +1,34 @@
++## Result
++
++**APPROVE the private Agent source candidate only; hold public freeze,
++generation/artifact/pin, native qualification, App adoption, and integration.**
++
++Verified exact candidate:
++
++- commit `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`
++- tree `0699f877a4c809005536a80f5956b8051a814ef7`
++- parent `e010e6a3868e963471244491bb6672c3e4a5135e`
++- schema `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`
++- 58 definitions / 32 operation clauses; only the two group operations are added
++
++The group-specific source/test paths are unchanged from reviewed `80ddba79`;
++the shared registry/schema/union-test files additionally carry the already
++reviewed project-data member. Removing only the group delta reconstructs exact
++schema `39211e63…` (56/30), then the reviewed floors `613123b2…` and
++`6ba7b51e…`. Existing v2/source-bound mappings and version refusals remain
++covered. No generated artifact, DTO, framework, public pin, or sealed-capture
++refresh was added.
++
++Targeted command:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_current_group_slice.py tests/editing_conformance/test_group_read_view.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/editing_conformance/test_recipe_m2_group_move.py
++```
++
++Result: **170 passed in 151.88s**, exit 0. `git diff --check` passed.
++
++The handoff requests Runtime and App2 bounded source/consumer ACKs in:
++`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-union-review.md`.
++The original three App group/multi/retrack visible assertions remain an App
++consumer gate; pure Agent tests do not claim them. No full*/HTTP/live-socket,
++native, browser, artifact, or generation test was run.
+
+codex
+## Result
+
+**APPROVE private Agent source candidate only.**
+
+Verified:
+
+- Commit: `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`
+- Tree: `0699f877a4c809005536a80f5956b8051a814ef7`
+- Parent: `e010e6a3868e963471244491bb6672c3e4a5135e`
+- Schema: 58 definitions / 32 operations / `27f2e3ed…`
+- Exact reconstruction: `392…`, `613…`, `6ba…`
+- Targeted suite: **170 passed**
+- `git diff --check`: passed
+
+Published the bounded Runtime/App2 ACK handoff: [agent-group-full-union-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-union-review.md)
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md)
+
+Native qualification, artifact generation, public freeze, and App adoption remain held. `DONE` and [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/commit-msg.txt) were written.
+tokens used
+138,247
+## Result
+
+**APPROVE private Agent source candidate only.**
+
+Verified:
+
+- Commit: `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`
+- Tree: `0699f877a4c809005536a80f5956b8051a814ef7`
+- Parent: `e010e6a3868e963471244491bb6672c3e4a5135e`
+- Schema: 58 definitions / 32 operations / `27f2e3ed…`
+- Exact reconstruction: `392…`, `613…`, `6ba…`
+- Targeted suite: **170 passed**
+- `git diff --check`: passed
+
+Published the bounded Runtime/App2 ACK handoff: [agent-group-full-union-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-full-union-review.md)
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/report.md)
+
+Native qualification, artifact generation, public freeze, and App adoption remain held. `DONE` and [commit-msg.txt](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-group-full-carrier-union/commit-msg.txt) were written.

@@ -1,0 +1,400 @@
++def test_new_overlap_between_members_refuses_before_any_writes():
++    original = basis()
++    change(original, 'parent/clip:clip-2', ['at'], 1)
++    members = [dict(member, track='parent/track:V3') for member in MEMBERS]
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError, match='member overlap'):
++        capture(original, members)
++    assert original == before
++
++
++@pytest.mark.parametrize('edit', ['at', 'opaque', 'new-member'])
++def test_disjoint_lane_changes_rebase_and_survive_inverse(edit):
++    original = basis()
++    row = {'id': 'other', 'at': 10, 'hold': 1, 'track': 'V1', 'clipType': 'hold'}
++    if edit != 'new-member':
++        change(original, 'parent/clip:other', [], row)
++    plan = execute(original, [capture(original)])
++    head = copy.deepcopy(original)
++    path, value = ([], row) if edit == 'new-member' else ([edit], 20 if edit == 'at' else {'new': None})
++    intervening = [change(head, 'parent/clip:other', path, value)]
++    rebased = replay(plan, head, intervening_records=intervening)
++    assert State(rebased.bundle).entity('parent/clip:other') == State(head).entity('parent/clip:other')
++    undone = inverse(rebased.bundle, plan.records, intervening)
++    assert undone.bundle['parent'] == head['parent']
++
++
++@pytest.mark.parametrize('kind', ['lane-entry-aba', 'lane-root-aba', 'source', 'member', 'order', 'read-aba'])
++def test_membership_predicates_sources_and_aba_refuse_atomically(kind):
++    original = basis()
++    row = {'id': 'other', 'at': 10, 'hold': 1, 'track': 'V1', 'clipType': 'hold'}
++    change(original, 'parent/clip:other', [], row)
++    plan = execute(original, [capture(original)])
++    head = copy.deepcopy(original)
++    intervening = []
++    if kind == 'lane-entry-aba':
++        intervening = [change(head, 'parent/clip:other', ['track'], 'V3'),
++                       change(head, 'parent/clip:other', ['track'], 'V1')]
++    elif kind == 'lane-root-aba':
++        intervening = [change(head, 'parent/clip:other', [], dict(row, track='V3')),
++                       change(head, 'parent/clip:other', [], row)]
++    elif kind == 'source':
++        change(head, 'parent/clip:clip-1', ['speed'], 2)
++    elif kind == 'member':
++        State(head).set('parent/clip:clip-1', [], ABSENT)
++        head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
++    elif kind == 'order':
++        head['parent']['clips'].reverse()
++        head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
++    else:
++        intervening = [later('parent/clip:clip-1', ['hold'], 2)]
++    before = copy.deepcopy(head)
++    with pytest.raises(CommandError):
++        replay(plan, head, intervening_records=intervening)
++    assert head == before
++    if intervening:
++        with pytest.raises(CommandError) as error:
++            inverse(plan.bundle, plan.records, intervening)
++        assert error.value.kind == 'intervening_write'
++
++
++@pytest.mark.parametrize('field', ['expect', 'reads', 'selections', 'bindings', 'resolved', 'created'])
++def test_capture_is_portable_and_claims_cannot_be_replaced(field):
++    original = basis()
++    command = json.loads(json.dumps(capture(original)))
++    command[field] = {} if field in ('expect', 'bindings') else []
++    if field == 'created':
++        command[field] = ['parent/track:invented']
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        execute(original, [command])
++    assert original == before
++
++
++@pytest.mark.parametrize('mutation', [
++    {'on': -1}, {'on': True}, {'on': None}, {'on': float('nan')}, {'on': float('inf')},
++    {'extra': True}, {'members': []}, {'members': [MEMBERS[0], MEMBERS[0]]},
++    {'anchor': 'parent/clip:missing'},
++    {'members': [dict(MEMBERS[0], clip='occurrence:o/clip:clip-2'), MEMBERS[1]]},
++    {'members': [dict(MEMBERS[0], track='occurrence:o/track:V3'), MEMBERS[1]]},
++    {'members': [dict(MEMBERS[0], extra=None), MEMBERS[1]]},
++])
++def test_closed_args_refuse_without_mutation(mutation):
++    original = basis()
++    command = {'schema_version': 1, 'op': 'clip.move-set', 'version': '1', 'select': 'parent',
++               'args': {'members': MEMBERS, 'anchor': 'parent/clip:clip-2', 'on': 3, **mutation}}
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        execute(original, [command])
++    assert original == before
++
++
++@pytest.mark.parametrize('changes', [
++    {'time_map': {}}, {'timeMap': []}, {'children': []}, {'from_ms': 0},
++    {'on': 'word:x:0'}, {'anchor': 'cut:x'}, {'clipType': 'shot'}, {'active': False},
++    {'app': {'astrid': {'on': 'word:x:0'}}}, {'app': {'until': 'end'}},
++    {'app': {'astrid': {'sequence': {}}}}, {'app': {'astrid': {'formulas': {}}}},
++    {'app': {'astrid': {'for': 'word:x:0'}}}, {'app': {'astrid': {'fixed_start': False}}},
++])
++def test_unsupported_clips_refuse_unchanged(changes):
++    original = basis()
++    row = State(original).entity('parent/clip:clip-1')
++    change(original, 'parent/clip:clip-1', [], dict(row, **changes))
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        capture(original)
++    assert original == before
++
++
++@pytest.mark.parametrize('changes', [{'role': 'source'}, {'role': None}, {'kind': 'audio'},
++                                     {'active': False}, {'id': 'other'}])
++def test_lane_identity_role_kind_activity_are_bound(changes):
++    original = basis()
++    plan = execute(original, [capture(original)])
++    head = copy.deepcopy(original)
++    State(head).entity('parent/track:V3').update(changes)
++    before = copy.deepcopy(head)
++    with pytest.raises(CommandError):
++        replay(plan, head)
++    with pytest.raises(CommandError):
++        capture(head)
++    assert head == before
++
++
++def test_groups_intents_and_occupied_created_ids_refuse_whole_batch():
++    original, plan = staged_drag()
++    for shape in ([{'shotId': 'legacy', 'clipIds': ['clip-1', 'clip-2']}], {}, False):
++        head = copy.deepcopy(original)
++        head['parent']['config']['pinnedShotGroups'] = shape
++        with pytest.raises(CommandError):
++            execute(head, plan.commands)
++    for intent in ({'ownership': 'shared'}, {'ripple': 'insert'}, {'anchor': 'follow'}):
++        calls = copy.deepcopy(plan.commands)
++        calls[1]['intent'] = intent
++        with pytest.raises(CommandError):
++            execute(original, calls)
++    for occupied in (basis(), plan.bundle):
++        before = copy.deepcopy(occupied)
++        with pytest.raises(CommandError) as error:
++            execute(occupied, plan.commands)
++        assert error.value.kind == 'identity_collision'
++        assert occupied == before
++    assert [row['id'] for row in original['parent']['config']['tracks']] == ['V1', 'V2']
++
++
++def test_created_track_surviving_dependent_refuses_after_own_moves_are_reversed():
++    original, plan = staged_drag()
++    head = copy.deepcopy(plan.bundle)
++    # A later declared audio reference survives scratch reversal of our own clips.
++    head['parent']['config']['audio'] = [{'id': 'later', 'track': 'V3'}]
++    before = copy.deepcopy(head)
++    with pytest.raises(CommandError) as error:
++        inverse(head, plan.records)
++    assert error.value.kind == 'surviving_dependents'
++    assert head == before
++    with pytest.raises(CommandError) as error:
++        inverse(plan.bundle, plan.records, [later('parent/track:V3', ['id'], 'V3')])
++    assert error.value.kind == 'intervening_write'
++
++
++def test_create_and_two_own_move_stages_have_exact_inverse_and_redo():
++    original, first = staged_drag()
++    second = capture(first.bundle, on=4)
++    plan = execute(original, [*first.commands, second])
++    undone = inverse(reload(plan.bundle), plan.records)
++    assert authored(undone.bundle) == authored(original)
++    redone = inverse(reload(undone.bundle), accepted_boundaries(undone.records, plan.bundle, undone.bundle))
++    assert authored(redone.bundle) == authored(plan.bundle)
++
++
++def test_source_registry_reads_and_same_value_assignments_remain_guarded():
++    original = basis()
++    change(original, 'parent/clip:clip-1', ['asset'], 'picture')
++    original['parent']['registry']['assets']['picture'] = {
++        'media_id': 'media-1', 'object_id': 'object-1', 'digest': 'sha256:' + '1' * 64,
++        'opaque': {'keep': None}}
++    plan = execute(original, [capture(original)])
++    dependencies = plan.records[0]['dependencies']
++    assert next(d for d in dependencies if d['key'] == 'move.member:1.source')['pin']['source']['media_id'] == 'media-1'
++    head = copy.deepcopy(original)
++    head['parent']['registry']['assets']['picture']['media_id'] = 'media-2'
++    before = copy.deepcopy(head)
++    with pytest.raises(CommandError):
++        replay(plan, head)
++    assert head == before
++    # An authored unchanged lane assignment is still an ABA conflict site.
++    members = [dict(member, track='parent/track:V2') if member['clip'].endswith('clip-2')
++               else dict(member, track='parent/track:V1') for member in MEMBERS]
++    same = execute(original, [capture(original, members, on=2)])
++    ref = 'parent/clip:clip-1'
++    assert {'ref': ref, 'path': ['track'], 'before': present('V1'),
++            'after': present('V1')} in same.records[0]['writes']
++    with pytest.raises(CommandError) as error:
++        inverse(same.bundle, same.records, [later(ref, ['track'], 'V1')])
++    assert error.value.kind == 'intervening_write'
++
++
++def test_inactive_lane_members_do_not_block_but_their_activity_is_guarded():
++    original = basis()
++    row = {'id': 'inactive', 'at': 3, 'hold': 2, 'track': 'V3', 'clipType': 'hold', 'active': False}
++    change(original, 'parent/clip:inactive', [], row)
++    plan = execute(original, [capture(original)])
++    head = copy.deepcopy(original)
++    intervening = [change(head, 'parent/clip:inactive', ['active'], True),
++                   change(head, 'parent/clip:inactive', ['active'], False)]
++    with pytest.raises(CommandError) as error:
++        replay(plan, head, intervening_records=intervening)
++    assert error.value.kind == 'intervening_write'
++
++
++@pytest.mark.parametrize('changes', [{'hold': -1}, {'hold': 'unknown'}, {'speed': 0},
++                                     {'at_ms': 123}, {'from': 4, 'to': 2, 'hold': None}])
++def test_invalid_source_timing_is_a_command_refusal(changes):
++    original = basis()
++    row = State(original).entity('parent/clip:clip-1')
++    change(original, 'parent/clip:clip-1', [], dict(row, **changes))
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        capture(original)
++    assert original == before
++
++
++def test_schema_closes_args_select_intent_and_member_refs():
++    schema = json.loads((Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json').read_text())
++    validator = Draft202012Validator(schema)
++    command = capture(basis())
++    validator.validate(command)
++    for key, value in [('select', 'occurrence:o'), ('intent', {'ownership': 'shared'}),
++                       ('args', dict(command['args'], extra=None))]:
++        assert list(validator.iter_errors(dict(command, **{key: value})))
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_free_move_set.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_semantic_reservations.py' in /home/user/work/wt/agt-m2-free-move-set
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_move_set.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py tests/editing_conformance/test_recipe_free_move_set.py
+ git diff --check' in /home/user/work/wt/agt-m2-free-move-set
+ succeeded in 483ms:
+All checks passed!
+
+ succeeded in 23134ms:
+........................................................................ [ 17%]
+........................................................................ [ 34%]
+........................................................................ [ 51%]
+........................................................................ [ 69%]
+........................................................................ [ 86%]
+........................................................                 [100%]
+416 passed in 22.57s
+
+exec
+/bin/bash -lc 'git diff --numstat; wc -l astrid/sdk/timeline/_move_set.py; ls -ld .venv remotion/node_modules .pytest_cache 2>/dev/null' in /home/user/work/wt/agt-m2-free-move-set
+ exited 2 in 274ms:
+26	0	astrid/core/timeline/schema/edit-command.schema.json
+34	0	astrid/sdk/timeline/_collections.py
+9	1	astrid/sdk/timeline/_recording.py
+53	36	astrid/sdk/timeline/capture.py
+4	1	astrid/sdk/timeline/commands.py
+104 astrid/sdk/timeline/_move_set.py
+drwxr-xr-x 3 root root 4096 Oct 20 00:33 .pytest_cache
+
+codex
+Final targeted verification passed: 416 tests, including 67 new move-set cases. Ruff and `git diff --check` are clean. The App contract and portable golden are published for review. The implementation adds 192 net product lines, including the schema, and uses the existing staged inverse.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+contract = root / 'design/m2-free-move-contract.md'
+s = contract.read_text().replace('both app scopes are read to refuse follows. Source registry dependencies retain', 'both app scopes are read to refuse follows. Present "'`for` must be a positive'"\\n  finite number; present "'`fixed_start` must be true. Source registry dependencies retain'"')
+contract.write_text(s)
+worker = root / 'workers/agt-m2-free-move-set'
+(worker / 'notes').mkdir(exist_ok=True)
+(worker / 'notes/report.md').write_text('''# agt-m2-free-move-set
+
+Implemented on assigned Agent worktree, base "'`8fe7a42f`; no commit/merge/push.
+
+- Added closed native `clip.move-set` v1 for ordered explicit parent free clips,
+  a member anchor, absolute seconds and per-member parent track refs. `resolved`
+  preserves original selection order. One shared rational-fps quantized delta
+  preserves source windows, source-unit hold/speed, offsets and opaque JSON.
+- Complete candidate geometry is checked before writes. Moving old locations do
+  not block one another; half-open contact passes; real blockers and newly
+  introduced member overlap refuse. Unsupported groups/follows/maps/owners refuse.
+- Reused M1 capture, source and duration/quantization/write primitives without
+  changing its golden records. Added two bounded shared queries (`selection.clips`,
+  `lane.members`) and their intervening-write overlap rules, including lane-entry
+  ABA. Disjoint-lane timing/opaque/member additions rebase and survive inverse.
+- Existing `track.create` stages V3 in the same batch with sealed absence/order/ID
+  claims. Existing staged inverse reverses own moves before removing V3, refuses
+  surviving dependents and ABA, and redoes the same ID. No per-op undo or foreign
+  writer. Product diff: +230/-38 = **192 net lines**, including 26 schema lines;
+  new handler/capture module is 104 lines.
+- Added portable golden and 67 conformance cases. Exact first App geometry:
+  tracks V1,V2,V3; clip-1 V2@1 hold2; clip-2 V3@3 hold2; selection clip-2,clip-1;
+  no pinned group. All three App it.fails files/assertions remain untouched.
+
+Contract for App review (candidate, NOT officially frozen):
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md`
+
+Portable exact input/commands/records/output:
+`/home/user/work/wt/agt-m2-free-move-set/tests/editing_conformance/fixtures/recipe_m2_free_move_set.json`
+
+Final verification from `/home/user/work/wt/agt-m2-free-move-set`:
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_free_move_set.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_semantic_reservations.py
+```
+
+**416 passed in 22.57s**, no skips/xfails/failures. Includes unchanged M1 goldens,
+structural staging and semantic reservation neighbors. Earlier 191-neighbor,
+248-case and 414-case runs also passed before the final follow-admission cases.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_move_set.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/_collections.py tests/editing_conformance/test_recipe_free_move_set.py
+```
+
+**All checks passed.** `git diff --check` exited 0, no output.
+
+Decisions within scope: preserve argument selection order separately from authored
+array order; query all destination-lane rows including inactive ones so activity
+is guarded explicitly; reject any destination-lane occurrence as unsupported in
+this bounded free-clip slice. Whole collection replacements conservatively
+conflict. No new context/history carrier, implicit allocation, trim/follow/ripple,
+legacy-group editing or occurrence placement support.
+
+Nothing blocked for this bounded implementation. Not run: full suites, make check,
+localhost/browser/live Runtime proof, official generated-artifact compatibility or
+App integration. The dependency-only shared venv was used without installation.
+No Runtime/App/pin/generated artifact changes; no claim that any preserved App
+it.fails now passes. Normal engine/unit tests are not live acceptance evidence.
+
+Next: Agent manager review the command and shared query footprint, then App review
+the exact capture/golden; coordinate official Runtime artifacts/pins and actual
+App first-test integration proof. Keep all three App it.fails unchanged until
+that proof. All M2 merges stay held until PLAN records M1. Both commit message
+files are written beside this worker'"'s metadata for the harness.
+''')
+message = '''feat(timeline): add atomic free multi-clip moves
+
+Capture ordered parent clip members and explicit destination lanes with one
+anchor and absolute target, applying a shared quantized translation.
+
+Reuse M1 capture primitives and the staged guarded inverse; compose explicit
+track creation in the same batch. Guard lane membership, sources and ABA while
+allowing disjoint-lane edits to rebase. Add portable capture and conformance
+coverage for the first preserved App drag geometry, replay and exact undo/redo.
+
+Validation: 416 targeted tests passed; focused Ruff and diff checks passed.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+ (worker / name).write_text(message)
+PY" in /home/user/work/wt/agt-m2-free-move-set
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root = Path.cwd()
+removed = 0
+for directory in root.rglob('__pycache__'):
+    if directory.is_dir() and not directory.is_symlink():
+        shutil.rmtree(directory)
+        removed += 1
+cache = root / '.pytest_cache'
+if cache.exists():
+    shutil.rmtree(cache)
+print(f'Removed {removed} Python cache directories and pytest cache.')
+p = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/notes/report.md')
+p.write_text(p.read_text().replace('All three App it.fails files/assertions', 'All three App it.fails cases/assertions'))
+PY
+ git diff --check
+ git status --short" in /home/user/work/wt/agt-m2-free-move-set
+ succeeded in 513ms:
+Removed 18 Python cache directories and pytest cache.
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/_move_set.py
+?? tests/editing_conformance/fixtures/recipe_m2_free_move_set.json
+?? tests/editing_conformance/test_recipe_free_move_set.py
+
+codex
+Implemented `clip.move-set` with ordered members, one quantized delta, explicit lanes, atomic collision checks, and existing guarded undo/redo. Product change: 192 net lines.
+
+- Verification: **416 targeted tests passed**; Ruff and `git diff --check` clean. Exact commands are in the [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/notes/report.md).
+- Published the [App contract](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md) and portable golden.
+- Destination-lane occurrences explicitly refuse in this bounded slice.
+- Both commit messages are written; caches removed. No commits or merges performed.
+
+No implementation blocker. Live Runtime/browser qualification remains unverified. Next: manager/App review and coordinated integration proof. All three App `it.fails` remain unchanged; M2 merges remain held for PLAN M1.
+tokens used
+158,243
+Implemented `clip.move-set` with ordered members, one quantized delta, explicit lanes, atomic collision checks, and existing guarded undo/redo. Product change: 192 net lines.
+
+- Verification: **416 targeted tests passed**; Ruff and `git diff --check` clean. Exact commands are in the [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-free-move-set/notes/report.md).
+- Published the [App contract](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-free-move-contract.md) and portable golden.
+- Destination-lane occurrences explicitly refuse in this bounded slice.
+- Both commit messages are written; caches removed. No commits or merges performed.
+
+No implementation blocker. Live Runtime/browser qualification remains unverified. Next: manager/App review and coordinated integration proof. All three App `it.fails` remain unchanged; M2 merges remain held for PLAN M1.

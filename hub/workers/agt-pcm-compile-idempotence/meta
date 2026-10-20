@@ -1,0 +1,9 @@
+name=agt-pcm-compile-idempotence
+repo=agent
+base=tl/integration
+base_sha=408f3ba3
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-pcm-compile-idempotence
+started=2026-10-20T08:22:32Z

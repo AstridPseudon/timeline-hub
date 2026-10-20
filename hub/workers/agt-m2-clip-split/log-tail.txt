@@ -1,0 +1,400 @@
++
++
++def capture_clip_split(bundle, select, *, on, right_id):
++    """Allocate right_id once outside capture; replay never allocates an ID."""
++    from .commands import execute
++
++    return execute(bundle, [{'schema_version': 1, 'op': 'clip.split', 'version': '1',
++                             'select': select, 'args': {'on': on, 'right_id': right_id}}]).commands[0]
+diff --git a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py
+index afe6c6efd4caf74f9cb7a7fa1d9e112525d921d9..f9b7f72ce0fb951777a37ae7ca60a4004a89bee0
+--- a/astrid/sdk/timeline/commands.py
++++ b/astrid/sdk/timeline/commands.py
+@@ -35,10 +35,12 @@
+     """M1 native recipe entries; the full extensible registry belongs to M2."""
+     from ._clip_commands import clip_add
+     from ._scalar_commands import clip_set_params, track_set
++    from ._split_commands import clip_split
+     from .capture import MOVE_INTENT, move, track_create
+     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
++            'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
+             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
+             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
+ 
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_split.py b/tests/editing_conformance/test_recipe_m2_clip_split.py
+index a89f9755d5e572527aa521a0981b2879381e24ff..dca55c581f8624324fe7e5fb8231cd6e7c0eab19
+--- a/tests/editing_conformance/test_recipe_m2_clip_split.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_split.py
+@@ -43,6 +43,7 @@
+     if literal_for:
+         row['app']['astrid'] = {'for': 4, 'opaque': {'for': 'literal'}}
+     payload['config']['clips'] = copy.deepcopy(payload['clips'])
++    payload['registry'] = copy.deepcopy(payload['registry'])
+     payload['registry']['assets']['picture'].update(type=source_type, duration=20)
+     if not shared:
+         payload['occurrences'] = []
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_scalar_commands.py --tb=short' in /home/user/work/wt/agt-m2-clip-split
+exec
+/bin/bash -lc "rg -n 'socket|localhost|subprocess|"'^def test'"' tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_split_last.py tests/test_compiler_golden.py; rg -n '\\[tool.mypy|check_untyped_defs|disallow_untyped' pyproject.toml; git diff --check" in /home/user/work/wt/agt-m2-clip-split
+ succeeded in 103ms:
+tests/sdk/test_timeline_commit_provider_document.py:5:import subprocess
+tests/sdk/test_timeline_commit_provider_document.py:64:def test_complete_document_roundtrip_reuses_original_images_and_unknown_fields(shared):
+tests/sdk/test_timeline_commit_provider_document.py:74:def test_parent_edit_keeps_shared_child_closure_and_main_fields():
+tests/sdk/test_timeline_commit_provider_document.py:91:def test_occurrence_edit_closes_reused_sibling_and_new_exact_child():
+tests/sdk/test_timeline_commit_provider_document.py:112:def test_malformed_complete_closure_fails_closed(damage):
+tests/sdk/test_timeline_commit_provider_document.py:144:def test_retained_document_pins_are_part_of_revision_identity():
+tests/sdk/test_timeline_commit_provider_document.py:155:def test_pure_converter_imports_without_runtime_or_renderer():
+tests/sdk/test_timeline_commit_provider_document.py:172:    result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True,
+tests/sdk/test_timeline_split_last.py:31:def test_add_cut_on_now_keeps_the_film_length():
+tests/sdk/test_timeline_split_last.py:41:def test_splitting_the_last_cut_on_now_keeps_the_film_length():
+tests/sdk/test_timeline_split_last.py:49:def test_mid_film_split_is_unchanged():
+tests/sdk/test_timeline_split_last.py:60:def test_old_picture_ends_where_the_new_one_starts():
+tests/sdk/test_timeline_split_last.py:70:def test_footage_split_keeps_the_remaining_source_range():
+tests/sdk/test_timeline_split_last.py:84:def test_undo_restores_the_film_after_a_split_on_the_last_cut(tmp_path: Path, monkeypatch):
+tests/test_compiler_golden.py:25:import subprocess
+tests/test_compiler_golden.py:175:def test_golden_parity_counts_and_timing(
+tests/test_compiler_golden.py:304:def test_cumulative_timing_without_plan(
+tests/test_compiler_golden.py:337:def test_section_without_vo_compiles_broll_plate_only(
+tests/test_compiler_golden.py:359:def test_plan_missing_section_fails_closed(
+tests/test_compiler_golden.py:371:def test_import_failure_has_no_file_fallback(
+tests/test_compiler_golden.py:384:def test_cli_probe_failure_reports_clean_error(
+tests/test_compiler_golden.py:394:        raise subprocess.CalledProcessError(
+tests/test_compiler_golden.py:409:def test_cli_compile_writes_sidecars_and_report(
+tests/test_compiler_golden.py:442:def test_render_passthrough_invokes_sdk_capability() -> None:
+218:[tool.mypy]
+
+ succeeded in 8293ms:
+........................................................................ [ 21%]
+........................................................................ [ 43%]
+........................................................................ [ 65%]
+........................................................................ [ 87%]
+...........................................                              [100%]
+331 passed in 7.75s
+
+codex
+The compatibility run passed 321 targeted tests, including the existing append golden and M1 inverse cases. Precision checks also showed that the older length helper rounds source times, so the new handler now uses the same duration rules with unrounded arithmetic to preserve source halves and the literal end.
+
+I’m finishing checks for malformed order proofs, dependency changes, and shared source pins. No Runtime tests or full suite have run.
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_split_last.py --tb=short' in /home/user/work/wt/agt-m2-clip-split
+exec
+/bin/bash -lc "sed -n '218,240p' pyproject.toml; PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_split_commands.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_m2_clip_split.py; PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=silent --cache-dir=/tmp/agt-m2-clip-split-mypy astrid/sdk/timeline/_split_commands.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py' in /home/user/work/wt/agt-m2-clip-split
+ succeeded in 2055ms:
+........................                                                 [100%]
+24 passed in 1.47s
+
+ succeeded in 1826ms:
+[tool.mypy]
+python_version = "3.11"
+# Evidence: 7d343bc created this config with files = ["scripts/reshape"] alongside the first advisory CI gate.
+# Inference: core astrid typing was intentionally excluded at that point rather than accidentally omitted.
+files = ["astrid", "scripts/reshape"]
+follow_imports = "skip"
+ignore_missing_imports = true
+namespace_packages = true
+explicit_package_bases = true
+pretty = true
+show_error_codes = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+# Passed test sandboxes can contain full wheels, virtualenvs, rendered media,
+# and adversarial package copies. Remove each passed tmp_path at teardown so a
+# complete suite does not retain gigabytes until session end. Failed sandboxes
+# remain available for diagnosis.
+tmp_path_retention_policy = "failed"
+# --- Suite-wide hang guard (architectural root fix) ---
+# A DEFAULT per-test timeout applies to every test in the suite. Any test that
+# hangs (spawns a server/subprocess and waits forever, deadlocks, blocks on a
+# socket, etc.) is killed at this bound and reported as a failure with a full
+All checks passed!
+Success: no issues found in 4 source files
+
+exec
+/bin/bash -lc "git diff --check; wc -c tests/editing_conformance/fixtures/recipe_m2_clip_split.json; rg -n 'portable|golden|records ==' tests/editing_conformance/test_recipe_m1_commands.py | head -20; git status --short" in /home/user/work/wt/agt-m2-clip-split
+ succeeded in 212ms:
+57241 tests/editing_conformance/fixtures/recipe_m2_clip_split.json
+87:    assert replay(plan, before).records == plan.records
+312:def test_published_capture_golden_fixture(name):
+475:    assert replay(plan, original).records == plan.records
+515:def test_shared_first_materialization_golden_preserves_original_sibling_capture():
+608:    assert records == immutable_records
+824:    assert plan.records == immutable
+827:    assert replay(undone, plan.bundle, inverse_records=plan.records).records == undone.records
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/_split_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_clip_split.json
+?? tests/editing_conformance/test_recipe_m2_clip_split.py
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-split/meta; rg -n 'commit-msg|notes/report' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/* | head -55" in /home/user/work/wt/agt-m2-clip-split
+ succeeded in 0ms:
+name=agt-m2-clip-split
+repo=agent
+base=tl/agt-m2-root-boundary-fixture
+base_sha=51948d40
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-clip-split
+started=2026-10-19T23:44:23Z
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch:22:( { cat $O/COMMON.md; echo; echo "YOUR WORKTREE: $WT (branch tl/$N, repo $REPO). Do NOT run git commit/merge/checkout (.git is read-only to you). When done, write a conventional commit message (subject line + body) to $D/commit-msg; the harness commits all your worktree changes when you exit. Leave no build output or temp files in the worktree."; echo; echo "YOUR TASK ($N):"; cat $D/brief.md; } | \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch:30:  if [ -n "$(git -C $WT status --porcelain)" ]; then git -C $WT add -A && { [ -s $D/commit-msg ] && git -C $WT commit -q -F $D/commit-msg || git -C $WT commit -q -m "tl/$N: $(head -1 $D/brief.md | cut -c1-70)"; } > $D/commit.log 2>&1; fi
+
+exec
+/bin/bash -lc "cat >> tests/editing_conformance/test_recipe_m2_clip_split.py <<'PY'
+
+
+def test_null_hold_speed_and_intent_stay_present_through_reload_inverse_redo():
+    document = source_document()
+    payload = document['parent_revision']['payload']
+    for rows in (payload['clips'], payload['config']['clips']):
+        rows[0].update(hold=None, speed=None, params=None)
+        rows[0]['app']['astrid'] = {'for': None, 'on': None, 'empty': {}, 'list': []}
+    document['parent_revision']['content_digest'] = _digest(payload)
+    original = bundle_from_document(document)
+    plan = split(original, on=5)
+    for row in plan.bundle['parent']['clips'][:2]:
+        assert row['hold'] is row['speed'] is row['params'] is None
+        assert row['app']['astrid'] == State(original).entity(TARGET)['app']['astrid']
+    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
+    undone = inverse(reloaded, plan.records)
+    assert document_from_bundle(undone.bundle)['parent_revision']['payload'] == payload
+    assert document_from_bundle(inverse(undone.bundle, undone.records).bundle) == document_from_bundle(plan.bundle)
+
+
+@pytest.mark.parametrize('kind', ['clip', 'track'])
+def test_generic_create_after_proof_is_scoped_to_an_occurrence(kind):
+    original = bundle_from_document(source_document(shared=True))
+    ctx = Recording(copy.deepcopy(original), {'op': 'fixture.create'}, 0)
+    owner = 'occurrence:occ-a'
+    predecessor = owner + '/' + kind + ':' + ('clip-a' if kind == 'clip' else 'picture')
+    ctx.create(owner, kind, {'id': 'right', 'track': 'picture', 'at': 1, 'hold': 1}, after=predecessor)
+    assert order(ctx.state, owner, kind)[1] == owner + '/' + kind + ':right'
+    record = ctx.finish()
+    undone = inverse(ctx.state.bundle, [record])
+    assert undone.bundle == original
+    assert inverse(undone.bundle, undone.records).bundle == ctx.state.bundle
+PY
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_split_last.py --tb=short' in /home/user/work/wt/agt-m2-clip-split
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_split_commands.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_m2_clip_split.py; git diff --check' in /home/user/work/wt/agt-m2-clip-split
+ succeeded in 104ms:
+All checks passed!
+
+ succeeded in 9908ms:
+........................................................................ [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 60%]
+........................................................................ [ 80%]
+......................................................................   [100%]
+358 passed in 9.34s
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=silent --cache-dir=/tmp/agt-m2-clip-split-mypy astrid/sdk/timeline/_split_commands.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py; git diff --stat; git diff -- astrid/core/timeline/schema/edit-command.schema.json' in /home/user/work/wt/agt-m2-clip-split
+ succeeded in 274ms:
+Success: no issues found in 4 source files
+ .../core/timeline/schema/edit-command.schema.json  | 50 ++++++++++++++++++++++
+ astrid/sdk/timeline/_collections.py                | 35 +++++++++++----
+ astrid/sdk/timeline/_recording.py                  | 23 ++++++++--
+ astrid/sdk/timeline/commands.py                    |  2 +
+ 4 files changed, 99 insertions(+), 11 deletions(-)
+diff --git a/astrid/core/timeline/schema/edit-command.schema.json b/astrid/core/timeline/schema/edit-command.schema.json
+index c7207312..01271348 100644
+--- a/astrid/core/timeline/schema/edit-command.schema.json
++++ b/astrid/core/timeline/schema/edit-command.schema.json
+@@ -829,6 +829,36 @@
+               }
+             }
+           }
++        },
++        {
++          "if": {
++            "properties": {
++              "op": {
++                "const": "clip.split"
++              }
++            },
++            "required": [
++              "op"
++            ]
++          },
++          "then": {
++            "properties": {
++              "version": {
++                "const": "1"
++              },
++              "select": {
++                "type": "string",
++                "pattern": "^(?!.*::)parent/clip:[^/]+$"
++              },
++              "args": {
++                "$ref": "#/$defs/ClipSplitArgs"
++              },
++              "intent": {
++                "type": "object",
++                "additionalProperties": false
++              }
++            }
++          }
+         }
+       ]
+     },
+@@ -866,6 +896,26 @@
+         "type": "string"
+       },
+       "description": "Normalized property tokens, not entity collection positions. Empty array means the whole entity. Numeric array tokens use canonical decimal strings; provider validates pinned parent-container types before traversal."
++    },
++    "ClipSplitArgs": {
++      "type": "object",
++      "required": [
++        "on",
++        "right_id"
++      ],
++      "additionalProperties": false,
++      "properties": {
++        "on": {
++          "type": "number",
++          "minimum": 0,
++          "description": "Absolute timeline seconds strictly inside the clip. Preserve half-open frame geometry and literal film end."
++        },
++        "right_id": {
++          "type": "string",
++          "pattern": "^(?!.*::)[^/]+$",
++          "description": "Caller-allocated right clip ID, retained on replay and redo."
++        }
++      }
+     }
+   }
+ }
+
+codex
+Final verification passed: 358 targeted tests, lint, and typechecking. The tests cover append/M1 compatibility, portable split capture, source precision, reload → inverse → redo with stable IDs, dependency and ABA refusals, and disjoint edits.
+
+I’m writing the report and both commit-message files now. The branch remains held for M1; Runtime acceptance and full-suite validation are unverified.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-split')
+notes = worker / 'notes'
+notes.mkdir(exist_ok=True)
+message = '''feat(timeline): record stable insertion for literal media splits
+
+Add bounded clip.split v1 with absolute seconds and a caller-allocated right
+clip ID. Preserve source windows, playback speed, literal durations, opaque
+JSON and source pins while refusing unsupported timing and transitions.
+
+Extend native scoped creation with stable create-after selection proofs so
+existing generic inverses restore authored order and reuse IDs on redo.
+Keep append captures and accepted M1 records compatible.
+
+Add a portable golden and targeted conformance coverage for reload, inverse,
+redo, ABA, later dependencies, collisions, missing history and disjoint edits.
+Validation: 358 targeted tests passed; changed-file Ruff and mypy passed.
+
+Held for the PLAN M1 exit; no Runtime acceptance or full-suite claim.
+'''
+(worker / 'commit-msg').write_text(message)
+(notes / 'commit-msg').write_text(message)
+report = '''# agt-m2-clip-split — complete, held
+
+Implemented native "'`clip.split` v1 on base `51948d40`. No integration worktree edits, commits, merges, pushes, dependency installs, network access, or full-suite runs.
+
+## Changes
+
+- Added `_split_commands.py`, the registry entry, and closed schema arguments `{on, right_id}` with stable parent clip selection. The caller supplies the right ID once; capture, replay, inverse and redo never allocate IDs.
+- Added generic `Recording.create(..., after=stable_ref)` for scoped clip/track creation. Existing selection fields carry the proof: singleton predecessor membership, original collection order, and predecessor/successor boundaries. `_collections` derives forward order for the unchanged generic inverse. No new record DTO field, authored order property, whole-array authored write, State change, inverse handler, snapshot fallback, or compiler change.
+- Kept ordinary append capture byte-compatible, including existing clip-add and M1 portable goldens. Scoped create-after supports one creation per collection per record and refuses mixed creations whose order cannot be proven by this bounded proof.
+- Preserved opaque JSON, left identity, right caller identity, rate, source halves, literal film end, registry, source mapping and compiled source pins. Added portable split input/command/record/output golden.
+- Proved compiled reload → inverse restores original authored rows/order/presence/opaque JSON → redo restores the same right ID. Reversing a redo insertion retains the existing accepted-boundary requirement.
+- Covered strict start/end bounds, subframe geometry refusal, claims/order tampering, missing/corrupt history, collisions, property/order ABA, later edits to the created half, later following references on existing neighbors, and disjoint neighbor properties. Generic primitive tests include parent and occurrence-owned clips/tracks; public split remains parent-only.
+
+## Decisions and bounds
+
+- Used existing selection shape; no format gap required an escalation. Collection order is guarded conservatively, so concurrent structural edits conflict; unrelated neighbor properties remain writable.
+- Used main'"'s canonical source-duration/speed/frame arithmetic with unrounded literal arithmetic for the new split. The legacy "'`_set_length` rounds to six decimals; using it here would lose precise source endpoints. The precision regression verifies the original right source end survives exactly. No shared helper or units changed.
+- Moving video/audio requires explicit numeric `from` and `to`; matching numeric `hold` is supported, as are literal `for` values. Image hold-only rows are supported. Absent/null values retain presence through inverse/redo. Split seconds remain literal and must preserve the existing half-open frame geometry; unsuitable positions refuse atomically.
+- Recognized following/sequence/transcript timing, occurrence selection, effects/animation/fades, contradictory timing codecs and parent transitions refuse. Unknown nested JSON remains opaque. Narrow reads of recognized neighboring relation sites detect subsequently introduced dependencies; there is no whole-parent property guard.
+- Reading the target row in full is necessary to copy all opaque data into the right half. Concurrent changes to that row conflict; tested disjoint neighbor parameters survive replay and inverse.
+
+## Verification (final tree)
+
+All commands ran from `/home/user/work/wt/agt-m2-clip-split` with the existing shared environment; no suite requiring sockets/browsers was run.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_split_last.py --tb=short
+```
+
+**358 passed in 9.34s.** Includes 74 new split/primitive cases and 284 existing neighboring cases. Earlier development runs exposed mirror-write ordering and restoring-create guard mistakes; both were fixed and the original assertions pass in this final run.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_split_commands.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_m2_clip_split.py
+```
+
+**All checks passed.**
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=silent --cache-dir=/tmp/agt-m2-clip-split-mypy astrid/sdk/timeline/_split_commands.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py
+```
+
+**Success: no issues found in 4 source files.** Temporary cache removed afterward.
+
+```sh
+git diff --check
+```
+
+**Passed.**
+
+## Unverified and next steps
+
+No implementation blocker. No actual Runtime execution, full suite, `make check`, browser journey, or acceptance claim. Keep this M2 branch held until the orchestrator records the PLAN M1 exit. Then review the bounded schema/selection query with the Runtime owner and run central integration acceptance before widening support.
+
+Commit messages are written at the worker'"'s "'`commit-msg` and `notes/commit-msg`; the harness owns committing.
+'"'''
+(notes / 'report.md').write_text(report)
+shutil.rmtree('/tmp/agt-m2-clip-split-mypy', ignore_errors=True)
+for pattern in ('astrid/sdk/timeline/__pycache__/_split_commands.*.pyc',
+                'tests/editing_conformance/__pycache__/test_recipe_m2_clip_split.*.pyc'):
+    for path in Path.cwd().glob(pattern):
+        path.unlink()
+PY
+
+git diff --check; git status --short" in /home/user/work/wt/agt-m2-clip-split
+ succeeded in 325ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/_split_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_clip_split.json
+?? tests/editing_conformance/test_recipe_m2_clip_split.py
+
+codex
+Implemented `clip.split` v1 and generic stable create-after recording using the existing selection shape. Added a portable golden and inverse/redo safety coverage; append/M1 compatibility passes.
+
+- **358 targeted tests passed**
+- Ruff, mypy, and `git diff --check` passed
+- Report with exact commands and decisions: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-split/notes/report.md)
+- Both commit messages written
+
+No blocker. Full suite and Runtime acceptance remain unverified. Keep held until PLAN M1 exits.
+tokens used
+144,738
+Implemented `clip.split` v1 and generic stable create-after recording using the existing selection shape. Added a portable golden and inverse/redo safety coverage; append/M1 compatibility passes.
+
+- **358 targeted tests passed**
+- Ruff, mypy, and `git diff --check` passed
+- Report with exact commands and decisions: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-split/notes/report.md)
+- Both commit messages written
+
+No blocker. Full suite and Runtime acceptance remain unverified. Keep held until PLAN M1 exits.

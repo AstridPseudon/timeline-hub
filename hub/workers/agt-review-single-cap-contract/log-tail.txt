@@ -1,0 +1,400 @@
+   509	        raise ShotCompositionProjectionError("parent_revision.payload.registry.assets must be an object")
+   510	
+   511	    shots: dict[tuple[str, str], Mapping[str, Any]] = {}
+   512	    for index, raw in enumerate(shot_revisions):
+   513	        shot = _mapping(raw, f"shot_revisions[{index}]")
+   514	        key = (shot.get("shot_id"), shot.get("revision_id"))
+   515	        if not all(isinstance(value, str) and value for value in key):
+   516	            raise ShotCompositionProjectionError(
+   517	                f"shot_revisions[{index}] must carry shot_id and revision_id"
+   518	            )
+   519	        if key in shots:
+   520	            raise ShotCompositionProjectionError(f"duplicate shot revision {key[0]!r}/{key[1]!r}")
+   521	        shots[key] = shot
+   522	
+   523	    internals: dict[str, Mapping[str, Any]] = {}
+   524	    for index, raw in enumerate(internal_timeline_revisions):
+   525	        internal = _mapping(raw, f"internal_timeline_revisions[{index}]")
+   526	        revision_id = internal.get("revision_id")
+   527	        if not isinstance(revision_id, str) or not revision_id:
+   528	            raise ShotCompositionProjectionError(
+   529	                f"internal_timeline_revisions[{index}].revision_id must be a non-empty string"
+   530	            )
+   531	        if revision_id in internals:
+   532	            raise ShotCompositionProjectionError(f"duplicate internal timeline revision {revision_id!r}")
+   533	        internals[revision_id] = internal
+   534	
+   535	    occurrences: list[dict[str, Any]] = []
+   536	    outputs: list[dict[str, Any]] = []
+   537	    seen_occurrences: set[str] = set()
+   538	    for index, raw in enumerate(raw_occurrences):
+   539	        occurrence = copy.deepcopy(dict(_mapping(raw, f"occurrences[{index}]")))
+   540	        occurrence_id = occurrence.get("occurrence_id")
+   541	        shot_id = occurrence.get("shot_id")
+   542	        shot_revision_id = occurrence.get("shot_revision_id", occurrence.get("revision_id"))
+   543	        if not isinstance(occurrence_id, str) or not occurrence_id:
+   544	            raise ShotCompositionProjectionError(
+   545	                f"occurrences[{index}].occurrence_id must be a non-empty string"
+   546	            )
+   547	        if occurrence_id in seen_occurrences:
+   548	            raise ShotCompositionProjectionError(f"duplicate occurrence {occurrence_id!r}")
+   549	        seen_occurrences.add(occurrence_id)
+   550	        if not isinstance(shot_id, str) or not isinstance(shot_revision_id, str):
+   551	            raise ShotCompositionProjectionError(
+   552	                f"occurrences[{index}] must pin shot_id and shot_revision_id"
+   553	            )
+   554	        shot = shots.get((shot_id, shot_revision_id))
+   555	        if shot is None:
+   556	            raise ShotCompositionProjectionError(
+   557	                f"occurrences[{index}] references missing dependency {shot_id!r}/{shot_revision_id!r}"
+   558	            )
+   559	        internal_revision_id = shot.get("internal_timeline_revision_id")
+   560	        if not isinstance(internal_revision_id, str) or not internal_revision_id:
+   561	            shot_payload = _mapping(shot.get("payload"), f"shot_revisions[{index}].payload")
+   562	            internal_revision_id = shot_payload.get("internal_timeline_revision_id")
+   563	        internal = internals.get(internal_revision_id) if isinstance(internal_revision_id, str) else None
+   564	        if internal is None:
+   565	            raise ShotCompositionProjectionError(
+   566	                f"shot revision {shot_revision_id!r} is missing its pinned internal timeline"
+   567	            )
+   568	        timeline = _mapping(
+   569	            internal.get("payload"),
+   570	            f"internal_timeline_revisions[{internal_revision_id!r}].payload",
+   571	        )
+   572	        if timeline.get("compositing") not in (None, "source_over", "normal"):
+   573	            raise ShotCompositionProjectionError("unsupported compositing mode in internal timeline")
+   574	        _track_merge(config, timeline)
+   575	
+   576	        occurrence["revision_id"] = shot_revision_id
+   577	        occurrence["project_id"] = project_id
+   578	        occurrence["timeline_id"] = timeline_id
+   579	        occurrence.setdefault("ordinal", index)
+   580	        occurrence.setdefault(
+   581	            "output_identity", f"{parent_revision_id}:{occurrence_id}"
+   582	        )
+   583	        occurrence.setdefault(
+   584	            "stable_deep_link",
+   585	            f"astrid://projects/{project_id}/timelines/{timeline_id}/occurrences/{occurrence_id}",
+   586	        )
+   587	        start, end, duration = _occurrence_window(occurrence, path=f"occurrences[{index}]")
+   588	        occurrence["at"] = start
+   589	        occurrence["hold"] = duration
+   590	        occurrence["duration_seconds"] = duration
+
+codex
+The focused neighbor suite also passes: 152 passed, 2 xfailed; the only xfails are the unchanged audio envelope-source vectors 10–11. Ruff and `git diff --check` pass, production/pin/schema paths are unchanged, and a direct private Composition 0.0.12 Node entry check returns f90=1, f105=0.5, f119 present, f120 absent. The patch’s larger fixture is deliberate: it preserves the full editor analog plus full projected/serialized exact closure, with no fake production xfail.
+exec
+/bin/bash -lc 'ls -ld /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes; test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-single-cap-contract.md; printf '"'design_report_absent=%s\\n' \""'$?"; test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes/report.md; printf '"'notes_report_absent=%s\\n' \""'$?"' in /home/user/work/wt/agt-review-single-cap-contract
+ succeeded in 74ms:
+ls: cannot access '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes': No such file or directory
+drwxr-xr-x 3 root root 176128 Oct 20 12:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design
+drwxr-xr-x 2 root root   4096 Oct 20 12:38 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract
+design_report_absent=0
+notes_report_absent=0
+
+exec
+/bin/bash -lc 'mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes' in /home/user/work/wt/agt-review-single-cap-contract
+ succeeded in 49ms:
+exec
+/bin/bash -lc 'review_dir=/tmp/agt-review-single-cap.9yuzKV
+node_bin=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+test -x "$node_bin"
+node_path=$(mktemp -d /tmp/agt-public12.XXXXXX)
+tar -xzf "$review_dir/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz" -C "$node_path" package/dist package/package.json
+"$node_bin" --version
+"$node_bin" --input-type=module -e "const {clipOpacity,prepareScene,queryTrackFrame}=await import(process.argv[1]); const clip={id:'"'image',clipType:'image',asset:'image',track:'picture',at:0,hold:4,effects:{fade_out:1}}; const scene=prepareScene([{track:{id:'picture',kind:'visual'},clips:[clip],transitions:[]}],{assets:{}},30,1920,1080); const prepared=scene.tracks[0].prepared; console.log(JSON.stringify({f90:clipOpacity(clip,90,30),f105:clipOpacity(clip,105,30),f119:queryTrackFrame(prepared,119).layers.length,f120:queryTrackFrame(prepared,120).layers.length,own:prepared.plans[0].ownDuration,draw:prepared.plans[0].drawDuration}));\" \""'$node_path/package/dist/evaluation.js"
+status=$?
+printf '"'node_status=%s\\n' \""'$status"
+find "$node_path" -type f -print0 | xargs -0 rm --
+find "$node_path" -depth -type d -empty -exec rmdir {} +
+exit "$status"' in /home/user/work/wt/agt-review-single-cap-contract
+ succeeded in 711ms:
+v20.19.4
+{"f90":1,"f105":0.5,"f119":1,"f120":0,"own":120,"draw":120}
+node_status=0
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-single-cap-contract.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-single-cap-contract.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-single-cap-contract.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7c4f6cda3a96570a58db6338be103979975c05a2
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-single-cap-contract.md
+@@ -0,0 +1,109 @@
++# Independent review: Agent single-occurrence cap contract
++
++## Disposition
++
++**ACCEPT before merge.** Candidate `5bf1731a0c1dbb26e9a276df660172807a1bcd5e`
++(`tl/agt-m3-single-occurrence-cap-contract`, parent `d8749a9ce12a699672faf3ad96b4e4cbea9245c2`)
++is a bounded fixture/test/product-contract-doc patch. It needs no Agent product,
++SDK timing, package-pin, Runtime, or product-schema change.
++
++The commit changes only:
++
++- `docs/design/visual-compile-contract.md`;
++- `tests/editing_conformance/fixtures/main_image_cap_raw_closure.json`;
++- `tests/editing_conformance/fixtures/visual_compile_contract.json`;
++- `tests/editing_conformance/test_compile_contracts.py`.
++
++The separate raw fixture is justified by the exact byte-preservation/hash
++requirement. The larger shared fixture is not speculative bloat: it retains the
++full editor analog needed for the stored-2000/content-5000/next-4000 positive,
++and the exact closure's complete projected config, registry, serialized output,
++and cited MAIN observations. No source/README/process doc was changed.
++
++## Contract checks
++
++- Candidate raw fixture SHA256:
++  `ad3d0ad35876665489080703c2323a8840c9187428dbe28a913e8ab4ada53f04`.
++  It is byte-identical to
++  `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-raw-closure.json`.
++- Candidate shared corpus SHA256:
++  `43783e0f40ef1922b54af855379c8538074c8b1df3a7abd4472a8db93877a484`.
++- The raw closure has exactly one occurrence, stored `duration_ms: 4000`,
++  authored `hold: 5` and `fade_out: 1`, and no next occurrence.
++- The normal managed path is genuinely exercised: exact `_Runtime` reads feed
++  `resolve_managed_render_snapshot` / `project_runtime_parent_composition`,
++  then validation, materialization, and `_serialize_timeline`. The test compares
++  both full projected outputs to the shared fixture, checks projected and
++  serialized hold `4`, and verifies the raw object and input bytes remain equal.
++  No cap, next occurrence, `canonicalTiming`, or other production input is
++  inserted by the test.
++- The public 0.0.12 pure evaluator receives the actual serialized output. It
++  proves numeric 30fps: frame 90 opacity `1`, frame 105 opacity `0.5`, frame
++  119 present with opacity `1/30`, frame 120 absent, and own/draw duration 120.
++  Raw hold-5 direct `clipOpacity` is retained only as the explicitly labelled
++  diagnostic (`1`).
++- The editor analog remains positive and unchanged in meaning: authored
++  occurrence 2000ms, next same-lane start 4000ms, content hold 5, supplied
++  effective cap 4000ms, projected hold 4; the authored graph remains unchanged.
++- Existing A8/B10 overlap, overhang clamp, rational-clock, projector, timing,
++  reflow, and managed-render neighbors pass. The two existing audio xfails are
++  unchanged; no new xfail is present.
++- No production source, package pin, Runtime schema, or product schema path is
++  changed. The `schema_version: 5` increment is scoped to the shared test corpus
++  metadata for the added vectors.
++
++The App effective-duration discrepancy remains an external policy-resolution
++item. This Agent review does not approve or imply an App policy change. The
++document makes no claim of live Runtime acceptance, renderer/browser pixels,
++audio parity, owner-film behavior, or Gate 6 closure; MAIN pixels are only the
++cited reference from `app-main-cap-half-golden.md` / the MAIN reference.
++
++## Evidence
++
++All candidate tests were run from a temporary `git archive 5bf1731a` extraction
++under `/tmp`, leaving the assigned worktree unchanged. Shared dependencies and
++caches were not modified.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/agt-review-single-cap.9yuzKV \
++  /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  /tmp/agt-review-single-cap.9yuzKV/tests/editing_conformance/test_compile_contracts.py
++```
++
++Result: **32 passed, 2 xfailed**. The only xfails are the pre-existing audio
++vectors `fade-in-needs-prepared-envelope-source` and
++`fade-out-needs-prepared-envelope-source`.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/agt-review-single-cap.9yuzKV \
++  /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  /tmp/agt-review-single-cap.9yuzKV/tests/editing_conformance/test_compile_contracts.py \
++  /tmp/agt-review-single-cap.9yuzKV/tests/timeline/test_shot_composition_projection.py \
++  /tmp/agt-review-single-cap.9yuzKV/tests/core/timeline/test_shot_composition_projection_volume.py \
++  /tmp/agt-review-single-cap.9yuzKV/tests/sdk/test_timing_compiler.py \
++  /tmp/agt-review-single-cap.9yuzKV/tests/sdk/test_timeline_reflow_golden.py \
++  /tmp/agt-review-single-cap.9yuzKV/tests/packs/rendering/test_managed_timeline_render.py
++```
++
++Result: **152 passed, 2 xfailed in 16.95s**.
++
++Direct private public-entry check with Node `v20.19.4` and the extracted
++Composition 0.0.12 artifact returned:
++
++```text
++{"f90":1,"f105":0.5,"f119":1,"f120":0,"own":120,"draw":120}
++```
++
++Additional checks: Ruff passed on the touched Python test; `git diff --check`
++passed; exact raw-source `cmp` passed; the candidate has zero diff under
++`astrid/`, `remotion/package.json`, `runtime.lock.json`, and
++`astrid/core/timeline/schema`.
++
++No full suite, browser, live socket, real Runtime, or pixel rerun was requested
++or run.
++
++## Follow-up
++
++Merge the candidate as-is. Keep App policy reconciliation separate and preserve
++the App editor positive while deciding how its single-occurrence consumer should
++honor the stored 4000ms cap.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..cd133f38aabaf5bac9b1af36ed685ee6bd08c66d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): review single-occurrence cap contract
++
++Accept the bounded fixture, compile-contract test, and visual contract doc
++after verifying the exact closure and unchanged audio xfails.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..82c0930a0e34694392996e6f8c0752743a3e4e28
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes/report.md
+@@ -0,0 +1,86 @@
++# Review report: `5bf1731a`
++
++Result: **ACCEPT before merge**.
++
++Candidate: `5bf1731a0c1dbb26e9a276df660172807a1bcd5e` on
++`tl/agt-m3-single-occurrence-cap-contract`, parent
++`d8749a9ce12a699672faf3ad96b4e4cbea9245c2`.
++
++## What was verified
++
++- Four changed paths only: the visual contract doc, one byte-identical raw
++  fixture, the shared visual fixture, and the compile-contract test.
++- Raw closure SHA256 is
++  `ad3d0ad35876665489080703c2323a8840c9187428dbe28a913e8ab4ada53f04`, and it
++  is byte-identical to the requested handoff source.
++- Shared corpus SHA256 is
++  `43783e0f40ef1922b54af855379c8538074c8b1df3a7abd4472a8db93877a484`.
++- Exact closure is one occurrence only: stored 4000ms, child hold5/fade1,
++  no next occurrence. The normal managed exact-read → projection → validation
++  → materialization → serialization path produces hold4 and preserves the
++  authored source. The test checks raw object equality and original input bytes.
++- Actual serialized output goes into public Composition 0.0.12 pure evaluation:
++  f90 opacity1, f105 opacity0.5, f119 present at 1/30, f120 absent, own/draw
++  120. Raw hold5 direct opacity1 is diagnostic only.
++- Editor analog remains the stored2000/content5000/next4000 positive, with
++  supplied effective cap4000 and projected hold4; its source graph is unchanged.
++- Existing A8/B10 overlap, overhang, rational clocks, projector, timing,
++  reflow, and managed-render neighbors remain green.
++- No production code, package pin, Runtime/product schema, or other worktree was
++  changed. The fixture corpus version bump is test-fixture metadata only.
++- Candidate 6749's fake raw-input production xfail is not ported. There is no
++  new xfail. The only xfails remain the two audio envelope-source vectors.
++- The App effective-duration policy discrepancy is correctly left external.
++  The candidate does not claim real Runtime acceptance, rerun MAIN pixels,
++  owner-film behavior, audio parity, or Gate 6.
++
++The fixture size is acceptable: the editor analog preserves its full opaque
++input/output contract, while the exact closure keeps complete projected config,
++registry, and serialized timeline data required to prove no hidden filtering.
++The raw closure is referenced by hash rather than duplicated in the shared
++corpus. The four-path count is a necessary raw-fixture + shared-fixture split,
++not product or process-doc bloat.
++
++## Exact commands and results
++
++The candidate was tested from a temporary `git archive 5bf1731a` extraction at
++`/tmp/agt-review-single-cap.9yuzKV`; no source checkout or worktree mutation was
++performed.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/agt-review-single-cap.9yuzKV \
++  /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  /tmp/agt-review-single-cap.9yuzKV/tests/editing_conformance/test_compile_contracts.py
++```
++
++Pass: **32 passed, 2 xfailed**.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/agt-review-single-cap.9yuzKV \
++  /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  /tmp/agt-review-single-cap.9yuzKV/tests/editing_conformance/test_compile_contracts.py \
++  /tmp/agt-review-single-cap.9yuzKV/tests/timeline/test_shot_composition_projection.py \
++  /tmp/agt-review-single-cap.9yuzKV/tests/core/timeline/test_shot_composition_projection_volume.py \
++  /tmp/agt-review-single-cap.9yuzKV/tests/sdk/test_timing_compiler.py \
++  /tmp/agt-review-single-cap.9yuzKV/tests/sdk/test_timeline_reflow_golden.py \
++  /tmp/agt-review-single-cap.9yuzKV/tests/packs/rendering/test_managed_timeline_render.py
++```
++
++Pass: **152 passed, 2 xfailed in 16.95s**. The unchanged xfails are:
++
++- `test_audio_vector[fade-in-needs-prepared-envelope-source]`;
++- `test_audio_vector[fade-out-needs-prepared-envelope-source]`.
++
++Direct private Composition public-entry check, using Node `v20.19.4` and the
++candidate's 0.0.12 tarball, passed:
++
++```text
++{"f90":1,"f105":0.5,"f119":1,"f120":0,"own":120,"draw":120}
++```
++
++Also passed: Ruff on `tests/editing_conformance/test_compile_contracts.py`,
++`git diff --check`, exact source/fixture `cmp`, and the no-production-source/
++pin/schema-path diff check.
++
++Not run: full suite, browser/render/socket/live Runtime acceptance, pixel rerun,
++audio parity, or owner-film validation. No blocker found.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worktree status ---'; git status --short --branch; printf '%s\\n' '--- artifacts ---'; wc -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-single-cap-contract.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes/report.md; printf '%s\\n' '--- commit msg ---'; sed -n '1,30p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/commit-msg; printf '%s\\n' '--- done ---'; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/DONE && echo DONE" in /home/user/work/wt/agt-review-single-cap-contract
+ succeeded in 633ms:
+--- worktree status ---
+## tl/agt-review-single-cap-contract
+--- artifacts ---
+ 109 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-single-cap-contract.md
+  86 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes/report.md
+ 195 total
+--- commit msg ---
+test(timeline): review single-occurrence cap contract
+
+Accept the bounded fixture, compile-contract test, and visual contract doc
+after verifying the exact closure and unchanged audio xfails.
+--- done ---
+DONE
+
+codex
+## Result: ACCEPT
+
+Reviewed candidate `5bf1731a` independently.
+
+- Exact raw fixture SHA and byte comparison passed.
+- Normal managed projection/serialization preserves authored hold5, projects hold4, and yields public12 f90=1, f105=0.5, f119 present, f120 absent.
+- Targeted suite: **152 passed, 2 unchanged xfails** (audio vectors 10–11).
+- Direct Node v20.19.4 public evaluator check passed.
+- Ruff and `git diff --check` passed.
+- No production code, pin, Runtime/product schema, or worktree changes.
+- No new xfail; superseded fake raw-input production xfail was not ported.
+- App policy remains external; no real Runtime, pixel rerun, audio parity, or owner-film claim made.
+
+Reports written:
+
+- [design review](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-single-cap-contract.md)
+- [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes/report.md)
+
+Commit message and `DONE` were created.
+tokens used
+110,539
+## Result: ACCEPT
+
+Reviewed candidate `5bf1731a` independently.
+
+- Exact raw fixture SHA and byte comparison passed.
+- Normal managed projection/serialization preserves authored hold5, projects hold4, and yields public12 f90=1, f105=0.5, f119 present, f120 absent.
+- Targeted suite: **152 passed, 2 unchanged xfails** (audio vectors 10–11).
+- Direct Node v20.19.4 public evaluator check passed.
+- Ruff and `git diff --check` passed.
+- No production code, pin, Runtime/product schema, or worktree changes.
+- No new xfail; superseded fake raw-input production xfail was not ported.
+- App policy remains external; no real Runtime, pixel rerun, audio parity, or owner-film claim made.
+
+Reports written:
+
+- [design review](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-single-cap-contract.md)
+- [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes/report.md)
+
+Commit message and `DONE` were created.

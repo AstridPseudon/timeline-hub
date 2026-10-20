@@ -1,0 +1,400 @@
+
+exec
+/bin/bash -lc "ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md 2>/dev/null || true && python3 - <<'PY'
+import json, hashlib
+from pathlib import Path
+p=Path('astrid/core/timeline/schema/edit-command.schema.json')
+s=json.loads(p.read_text())
+ops=[c['if']['properties']['op']['const'] for c in s['"'$defs'"']['EditCommand']['allOf']]
+print('schema_sha256',hashlib.sha256(p.read_bytes()).hexdigest())
+print('defs',len(s['"'$defs'"']),'allOf',len(ops),'operations',len(set(ops)), 'clip.set',ops.count('clip.set'))
+print('opacity',s['"'$defs'"']['ClipSetArgs']['properties']['values']['properties']['opacity'])
+print('clear',s['"'$defs'"']['ClipSetArgs']['properties']['clear']['items']['enum'])
+PY
+git diff --check && git status --short && git diff --stat" in /home/user/work/wt/agt-review-opacity-source-contract
+ succeeded in 1360ms:
+schema_sha256 110165ab9f7e4be3e9766d06b5ceacab8c5e8c7cc12e7180929005b67bcc82d6
+defs 56 allOf 30 operations 30 clip.set 1
+opacity {'type': 'number', 'minimum': 0, 'maximum': 1, 'description': 'Raw visual opacity fraction in the inclusive range 0..1.'}
+clear ['hold', 'asset', 'transition', 'opacity']
+ M tests/sdk/test_timeline_materialization_schema_union.py
+ .../test_timeline_materialization_schema_union.py  | 32 ++++++++++++++++++----
+ 1 file changed, 27 insertions(+), 5 deletions(-)
+
+codex
+The final source audit is clean: Main’s slider reads `clip.opacity ?? 1` and emits `{ opacity: value }`; Agent’s schema is exactly `110165ab…`, with 56 definitions, 30 operation clauses, one existing `clip.set` clause, and no added operation. The only working-tree change is the bounded inventory-test helper. I’m recording an APPROVE review with the exact guard/semantics evidence, then I’ll rerun the final bounded inventory checks.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..003e0508004107ce50aeb165fe20dd261b63ebcf
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md
+@@ -0,0 +1,35 @@
++# Independent review: bounded clip opacity source
++
++## APPROVE
++
++Reviewed source tree `a53606703997434f8d9390a9f76fbe913bdd06e4` against base
++`e010e6a3868e963471244491bb6672c3e4a5135e` and the proposal in
++`agent-opacity-private-source-proposal.md`.
++
++The proposal is bounded to the existing `clip.set@1` operation. The canonical
++schema is SHA-256
++`110165ab9f7e4be3e9766d06b5ceacab8c5e8c7cc12e7180929005b67bcc82d6`, with 56
++definitions and 30 existing operation clauses. It adds no operation, pin,
++generation, activation, selected-pack manufacture, or public artifact.
++
++The contract matches Main’s producer in
++`/home/user/work/app/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx`:
++the slider reads `clip.opacity ?? 1` and emits `{ opacity: value }`. Agent
++captures this as top-level `clip.set` `args.values.opacity`, not
++`params.opacity`.
++
++The focused conformance covers exact presence for absent/null/zero/existing
++values, clear-as-removal, inclusive raw `0..1` validation, invalid/null/
++non-number and out-of-range refusal, hostile `params.opacity` bypass refusal,
++occurrence isolation, direct-neighbor preservation, inverse/redo, strict
++A→B→A inverse refusal, and disjoint-parameter rebase. Existing capture guards
++and v2/source identity machinery remain in the generic capture path.
++
++The seven inventory failures were caused only by comparing the new candidate
++bytes with frozen 613/392/6ba sources. The bounded test-only helper now strips
++only the opacity schema property, clear enum member, and description wording
++before reconstructing those historical bytes. No frozen fixture, hash, closure,
++typed-carrier, v2, old-schema refusal, or assertion was weakened.
++
++No counterexample found. Runtime/App ACK and any later generation or native
++consumer activation remain correctly outside this source-only proposal.
+diff --git a/tests/sdk/test_timeline_materialization_schema_union.py b/tests/sdk/test_timeline_materialization_schema_union.py
+index 1b8bbe4a5e772ebffa1b0f6b6b5b9330d24f9b2f..c010aa0f416e9f77a771da62f96429df63bf75b6
+--- a/tests/sdk/test_timeline_materialization_schema_union.py
++++ b/tests/sdk/test_timeline_materialization_schema_union.py
+@@ -19,9 +19,31 @@
+ PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
+ 
+ 
++def without_opacity(schema):
++    """Remove only the proposed opacity additions from a copied schema."""
++    candidate = copy.deepcopy(schema)
++    args = candidate['$defs']['ClipSetArgs']
++    values = args['properties']['values']['properties']
++    assert values.pop('opacity') == {
++        'type': 'number',
++        'minimum': 0,
++        'maximum': 1,
++        'description': 'Raw visual opacity fraction in the inclusive range 0..1.',
++    }
++    clear = args['properties']['clear']['items']['enum']
++    assert clear.pop() == 'opacity'
++    assert args['description'].startswith(
++        'Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction;')
++    args['description'] = (
++        'Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming '
++        'transition. Clear removes presence, never sets null/empty. Asset assignment requires the scoped '
++        'clip.swap-media or occurrence.swap-media; transition authoring is outside v1.')
++    return candidate
++
++
+ def ordinary_schema():
+-    """Remove only the reviewed carrier additions, checking each complete branch."""
+-    candidate = copy.deepcopy(_SCHEMA)
++    """Remove opacity and the reviewed carrier additions, checking each complete branch."""
++    candidate = without_opacity(_SCHEMA)
+     del candidate['$defs']['ProjectDataWriteArgs']
+     candidate['$defs']['EditCommand']['allOf'] = [
+         clause for clause in candidate['$defs']['EditCommand']['allOf']
+@@ -66,7 +88,7 @@
+ 
+ 
+ def test_removing_only_project_data_addition_reconstructs_private_carrier_bytes():
+-    candidate = copy.deepcopy(_SCHEMA)
++    candidate = without_opacity(_SCHEMA)
+     del candidate['$defs']['ProjectDataWriteArgs']
+     candidate['$defs']['EditCommand']['allOf'] = [
+         clause for clause in candidate['$defs']['EditCommand']['allOf']
+@@ -78,8 +100,8 @@
+     assert len(candidate['$defs']['EditCommand']['allOf']) == 29
+ 
+ 
+-def test_project_data_proposal_has_a_new_closed_schema_hash():
+-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
++def test_removing_only_opacity_addition_reconstructs_project_data_bytes():
++    raw = (json.dumps(without_opacity(_SCHEMA), indent=2) + '\n').encode()
+     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
+ 
+ 
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_materialization_schema_union.py tests/sdk/test_timeline_current_union_schema.py' in /home/user/work/wt/agt-review-opacity-source-contract
+ succeeded in 163421ms:
+....................................................                     [100%]
+=============================== warnings summary ===============================
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout_method
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+52 passed, 2 warnings in 162.60s (0:02:42)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-opacity-source-contract/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..003e0508004107ce50aeb165fe20dd261b63ebcf
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md
+@@ -0,0 +1,35 @@
++# Independent review: bounded clip opacity source
++
++## APPROVE
++
++Reviewed source tree `a53606703997434f8d9390a9f76fbe913bdd06e4` against base
++`e010e6a3868e963471244491bb6672c3e4a5135e` and the proposal in
++`agent-opacity-private-source-proposal.md`.
++
++The proposal is bounded to the existing `clip.set@1` operation. The canonical
++schema is SHA-256
++`110165ab9f7e4be3e9766d06b5ceacab8c5e8c7cc12e7180929005b67bcc82d6`, with 56
++definitions and 30 existing operation clauses. It adds no operation, pin,
++generation, activation, selected-pack manufacture, or public artifact.
++
++The contract matches Main’s producer in
++`/home/user/work/app/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx`:
++the slider reads `clip.opacity ?? 1` and emits `{ opacity: value }`. Agent
++captures this as top-level `clip.set` `args.values.opacity`, not
++`params.opacity`.
++
++The focused conformance covers exact presence for absent/null/zero/existing
++values, clear-as-removal, inclusive raw `0..1` validation, invalid/null/
++non-number and out-of-range refusal, hostile `params.opacity` bypass refusal,
++occurrence isolation, direct-neighbor preservation, inverse/redo, strict
++A→B→A inverse refusal, and disjoint-parameter rebase. Existing capture guards
++and v2/source identity machinery remain in the generic capture path.
++
++The seven inventory failures were caused only by comparing the new candidate
++bytes with frozen 613/392/6ba sources. The bounded test-only helper now strips
++only the opacity schema property, clear enum member, and description wording
++before reconstructing those historical bytes. No frozen fixture, hash, closure,
++typed-carrier, v2, old-schema refusal, or assertion was weakened.
++
++No counterexample found. Runtime/App ACK and any later generation or native
++consumer activation remain correctly outside this source-only proposal.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-opacity-source-contract/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-opacity-source-contract/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..97ad84e4c15224e23f3b2aff5db561386c615e51
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-opacity-source-contract/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): reconcile opacity schema inventory hashes
++
++Strip only the proposed clip opacity schema additions when reconstructing
++historical ordinary, carrier, and project-data source bytes. Preserve the
++frozen hashes and all existing compatibility assertions.
+diff --git a/tests/sdk/test_timeline_materialization_schema_union.py b/tests/sdk/test_timeline_materialization_schema_union.py
+index 1b8bbe4a5e772ebffa1b0f6b6b5b9330d24f9b2f..c010aa0f416e9f77a771da62f96429df63bf75b6
+--- a/tests/sdk/test_timeline_materialization_schema_union.py
++++ b/tests/sdk/test_timeline_materialization_schema_union.py
+@@ -19,9 +19,31 @@
+ PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
+ 
+ 
++def without_opacity(schema):
++    """Remove only the proposed opacity additions from a copied schema."""
++    candidate = copy.deepcopy(schema)
++    args = candidate['$defs']['ClipSetArgs']
++    values = args['properties']['values']['properties']
++    assert values.pop('opacity') == {
++        'type': 'number',
++        'minimum': 0,
++        'maximum': 1,
++        'description': 'Raw visual opacity fraction in the inclusive range 0..1.',
++    }
++    clear = args['properties']['clear']['items']['enum']
++    assert clear.pop() == 'opacity'
++    assert args['description'].startswith(
++        'Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction;')
++    args['description'] = (
++        'Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming '
++        'transition. Clear removes presence, never sets null/empty. Asset assignment requires the scoped '
++        'clip.swap-media or occurrence.swap-media; transition authoring is outside v1.')
++    return candidate
++
++
+ def ordinary_schema():
+-    """Remove only the reviewed carrier additions, checking each complete branch."""
+-    candidate = copy.deepcopy(_SCHEMA)
++    """Remove opacity and the reviewed carrier additions, checking each complete branch."""
++    candidate = without_opacity(_SCHEMA)
+     del candidate['$defs']['ProjectDataWriteArgs']
+     candidate['$defs']['EditCommand']['allOf'] = [
+         clause for clause in candidate['$defs']['EditCommand']['allOf']
+@@ -66,7 +88,7 @@
+ 
+ 
+ def test_removing_only_project_data_addition_reconstructs_private_carrier_bytes():
+-    candidate = copy.deepcopy(_SCHEMA)
++    candidate = without_opacity(_SCHEMA)
+     del candidate['$defs']['ProjectDataWriteArgs']
+     candidate['$defs']['EditCommand']['allOf'] = [
+         clause for clause in candidate['$defs']['EditCommand']['allOf']
+@@ -78,8 +100,8 @@
+     assert len(candidate['$defs']['EditCommand']['allOf']) == 29
+ 
+ 
+-def test_project_data_proposal_has_a_new_closed_schema_hash():
+-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
++def test_removing_only_opacity_addition_reconstructs_project_data_bytes():
++    raw = (json.dumps(without_opacity(_SCHEMA), indent=2) + '\n').encode()
+     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
+ 
+ 
+
+exec
+/bin/bash -lc 'ruff check tests/sdk/test_timeline_materialization_schema_union.py tests/sdk/test_timeline_current_union_schema.py astrid/sdk/timeline/_clip_scalar_commands.py tests/editing_conformance/test_recipe_clip_scalar_fields.py && python3 -m json.tool astrid/core/timeline/schema/edit-command.schema.json >/dev/null && git diff --check && git status --short && git diff --stat && git diff -- tests/sdk/test_timeline_materialization_schema_union.py' in /home/user/work/wt/agt-review-opacity-source-contract
+ succeeded in 1211ms:
+All checks passed!
+ M tests/sdk/test_timeline_materialization_schema_union.py
+ .../test_timeline_materialization_schema_union.py  | 32 ++++++++++++++++++----
+ 1 file changed, 27 insertions(+), 5 deletions(-)
+diff --git a/tests/sdk/test_timeline_materialization_schema_union.py b/tests/sdk/test_timeline_materialization_schema_union.py
+index 1b8bbe4a..c010aa0f 100644
+--- a/tests/sdk/test_timeline_materialization_schema_union.py
++++ b/tests/sdk/test_timeline_materialization_schema_union.py
+@@ -19,9 +19,31 @@ PRIVATE_CARRIER_SHA256 = '613123b2760150f9f33e23485516d757359c3eaebfe02d552bc971
+ PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
+ 
+ 
++def without_opacity(schema):
++    """Remove only the proposed opacity additions from a copied schema."""
++    candidate = copy.deepcopy(schema)
++    args = candidate['$defs']['ClipSetArgs']
++    values = args['properties']['values']['properties']
++    assert values.pop('opacity') == {
++        'type': 'number',
++        'minimum': 0,
++        'maximum': 1,
++        'description': 'Raw visual opacity fraction in the inclusive range 0..1.',
++    }
++    clear = args['properties']['clear']['items']['enum']
++    assert clear.pop() == 'opacity'
++    assert args['description'].startswith(
++        'Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction;')
++    args['description'] = (
++        'Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming '
++        'transition. Clear removes presence, never sets null/empty. Asset assignment requires the scoped '
++        'clip.swap-media or occurrence.swap-media; transition authoring is outside v1.')
++    return candidate
++
++
+ def ordinary_schema():
+-    """Remove only the reviewed carrier additions, checking each complete branch."""
+-    candidate = copy.deepcopy(_SCHEMA)
++    """Remove opacity and the reviewed carrier additions, checking each complete branch."""
++    candidate = without_opacity(_SCHEMA)
+     del candidate['$defs']['ProjectDataWriteArgs']
+     candidate['$defs']['EditCommand']['allOf'] = [
+         clause for clause in candidate['$defs']['EditCommand']['allOf']
+@@ -66,7 +88,7 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
+ 
+ 
+ def test_removing_only_project_data_addition_reconstructs_private_carrier_bytes():
+-    candidate = copy.deepcopy(_SCHEMA)
++    candidate = without_opacity(_SCHEMA)
+     del candidate['$defs']['ProjectDataWriteArgs']
+     candidate['$defs']['EditCommand']['allOf'] = [
+         clause for clause in candidate['$defs']['EditCommand']['allOf']
+@@ -78,8 +100,8 @@ def test_removing_only_project_data_addition_reconstructs_private_carrier_bytes(
+     assert len(candidate['$defs']['EditCommand']['allOf']) == 29
+ 
+ 
+-def test_project_data_proposal_has_a_new_closed_schema_hash():
+-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
++def test_removing_only_opacity_addition_reconstructs_project_data_bytes():
++    raw = (json.dumps(without_opacity(_SCHEMA), indent=2) + '\n').encode()
+     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
+ 
+ 
+
+codex
+Final bounded verification is green: the seven inventory assertions now pass together, the 111 opacity conformance tests remain green, and lint/JSON/diff checks pass. I’ve written the independent APPROVE review and commit message; I’m marking the worker complete now.
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-opacity-source-contract/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-opacity-source-contract/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-opacity-source-contract/DONE && printf '"'%s\\n' 'DONE marker created' && printf '%s\\n' '--- commit message ---' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-opacity-source-contract/commit-msg && printf '%s\\n' '--- review doc ---' && sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md && printf '%s\\n' '--- final status ---' && git status --short" in /home/user/work/wt/agt-review-opacity-source-contract
+ succeeded in 314ms:
+DONE marker created
+--- commit message ---
+test(timeline): reconcile opacity schema inventory hashes
+
+Strip only the proposed clip opacity schema additions when reconstructing
+historical ordinary, carrier, and project-data source bytes. Preserve the
+frozen hashes and all existing compatibility assertions.
+--- review doc ---
+# Independent review: bounded clip opacity source
+
+## APPROVE
+
+Reviewed source tree `a53606703997434f8d9390a9f76fbe913bdd06e4` against base
+`e010e6a3868e963471244491bb6672c3e4a5135e` and the proposal in
+`agent-opacity-private-source-proposal.md`.
+
+The proposal is bounded to the existing `clip.set@1` operation. The canonical
+schema is SHA-256
+`110165ab9f7e4be3e9766d06b5ceacab8c5e8c7cc12e7180929005b67bcc82d6`, with 56
+definitions and 30 existing operation clauses. It adds no operation, pin,
+generation, activation, selected-pack manufacture, or public artifact.
+
+The contract matches Main’s producer in
+`/home/user/work/app/src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx`:
+the slider reads `clip.opacity ?? 1` and emits `{ opacity: value }`. Agent
+captures this as top-level `clip.set` `args.values.opacity`, not
+`params.opacity`.
+
+The focused conformance covers exact presence for absent/null/zero/existing
+values, clear-as-removal, inclusive raw `0..1` validation, invalid/null/
+non-number and out-of-range refusal, hostile `params.opacity` bypass refusal,
+occurrence isolation, direct-neighbor preservation, inverse/redo, strict
+A→B→A inverse refusal, and disjoint-parameter rebase. Existing capture guards
+and v2/source identity machinery remain in the generic capture path.
+
+The seven inventory failures were caused only by comparing the new candidate
+bytes with frozen 613/392/6ba sources. The bounded test-only helper now strips
+only the opacity schema property, clear enum member, and description wording
+before reconstructing those historical bytes. No frozen fixture, hash, closure,
+typed-carrier, v2, old-schema refusal, or assertion was weakened.
+
+No counterexample found. Runtime/App ACK and any later generation or native
+consumer activation remain correctly outside this source-only proposal.
+--- final status ---
+ M tests/sdk/test_timeline_materialization_schema_union.py
+
+codex
+Implemented and approved.
+
+- Added a test-only `without_opacity` helper preserving frozen 392/613/6ba byte hashes.
+- Final inventory tests: 52 passed.
+- Opacity conformance: 111 passed.
+- Ruff, JSON validation, and `git diff --check`: passed.
+- Review: [agent-opacity-source-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md)
+- Commit message written; `DONE` marker created.
+
+No full/root suite, Runtime/App ACK, generation, pinning, or activation was run.
+tokens used
+117,665
+Implemented and approved.
+
+- Added a test-only `without_opacity` helper preserving frozen 392/613/6ba byte hashes.
+- Final inventory tests: 52 passed.
+- Opacity conformance: 111 passed.
+- Ruff, JSON validation, and `git diff --check`: passed.
+- Review: [agent-opacity-source-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-opacity-source-review.md)
+- Commit message written; `DONE` marker created.
+
+No full/root suite, Runtime/App ACK, generation, pinning, or activation was run.

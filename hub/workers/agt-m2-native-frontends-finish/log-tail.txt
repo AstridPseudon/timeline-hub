@@ -1,0 +1,400 @@
+--- /dev/null
++++ b/tests/editing_conformance/test_commit_runtime_native_frontends.py
+@@ -0,0 +1,163 @@
++"""Composed native frontends on the existing renderer-off HTTP/Runtime fixture.
++
++Run only through the central test service with a deliberately selected Runtime.
++"""
++from __future__ import annotations
++
++import copy
++import json
++
++import pytest
++
++from astrid.sdk.timeline._common import TimelineEditError
++from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
++from astrid.sdk.timeline_checkout import Checkout
++from astrid.sdk.timeline_sheet import NativeSheet, SheetError
++from astrid.sdk.workspace_client import WorkspaceClientError
++from tests.editing_conformance import test_commit_runtime_m1 as m1
++from tests.editing_conformance import test_commit_runtime_native_checkout as checkout
++from tests.sdk.test_timeline_sheet_native import edit_cell
++
++base_film, film = checkout.base_film, checkout.film
++renderer_off, wire = checkout.renderer_off, checkout.wire
++pytestmark = pytest.mark.integration
++REF = 'parent/clip:music-bed'
++
++
++@pytest.mark.parametrize('relevant', [False, True])
++def test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards(
++        tmp_path, film, wire, real_runtime, monkeypatch, relevant):
++    fixture, _, _ = film
++    observed, lose = wire
++    path = tmp_path / 'composed-outbox.json'
++    support = tmp_path / 'support'
++
++    def start(port=0):
++        return real_runtime(fixture.duplicate_root, support_root=support, port=port, authoring_profile='astrid')
++
++    def session(client):
++        return TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client, outbox_path=path)
++
++    daemon = start()
++    client = m1.open_client(daemon)
++    original = session(client)
++    stale = Checkout.attach(original)
++    sheet = NativeSheet.export(original)
++    draft = tmp_path / 'mixed.sheet'
++    draft.write_text(edit_cell(sheet.text, REF, '1'))
++    draft_bytes = draft.read_bytes()
++    lose.add('sheet-A')
++    with pytest.raises(WorkspaceClientError):
++        sheet.apply(draft.read_text(), session=original, dry_run=False, idempotency_key='sheet-A')
++    accepted_a = copy.deepcopy(observed[-1]['response'])
++    flight = json.loads(path.read_bytes())['flight']
++    before = path.read_bytes()
++    with pytest.raises(TimelineEditError, match='basis changed'):
++        stale.flush()
++    assert path.read_bytes() == before
++    tl = Checkout.attach(original)
++    tl.clip(REF).trim(1, 4)
++    suffix = json.loads(path.read_bytes())['pending'][1]
++    assert suffix['op'] == 'clip.trim' and suffix['reads'] and suffix['bindings']
++    assert tl.clip(REF).start == 1 and tl.clip(REF).data['hold'] == 3
++    peer = Checkout.attach(TimelineSession.open(fixture.project_id, fixture.timeline_id,
++        client=client, outbox_path=tmp_path / 'peer.json'))
++    peer.clip('music-other').on(2)
++    peer.flush()
++    if relevant:
++        peer.clip(REF).trim(0, 5)
++        peer.flush()
++    peer_head = copy.deepcopy(m1.history(client, fixture)['head'])
++    port = daemon.httpd.server_port
++    daemon.stop()
++    daemon = start(port)
++    client = m1.open_client(daemon)
++    restarted = session(client)
++    assert json.loads(path.read_bytes())['flight'] == flight
++    reads = len(observed)
++
++    def forbidden(*args, **kwargs):
++        pytest.fail('sheet retry fetched a new bundle or recaptured intent')
++
++    with monkeypatch.context() as patch:
++        patch.setattr(TimelineSession, '_bundle', forbidden)
++        retried = NativeSheet.load(restarted).apply(draft.read_text(), session=restarted, dry_run=False)
++    assert len(observed) == reads + 1
++    assert observed[-1]['response'] == accepted_a
++    assert retried['receipt'] == accepted_a['receipt']
++    assert observed[-1]['body'] == flight['body'].encode() and observed[-1]['key'] == flight['key']
++    assert m1.history(client, fixture)['head'] == peer_head
++    state = json.loads(path.read_bytes())
++    assert state['pending'] == [suffix] and state['flight'] is None
++    assert state['base'] == {'revision_id': accepted_a['data']['accepted_revision_id'],
++                             'publication_id': accepted_a['receipt']['receipt_id']}
++    preview = copy.deepcopy(tl.bundle)
++    for action in (lambda: tl.clip(REF).on(3), lambda: tl.flush()):
++        with pytest.raises(TimelineEditError, match='basis changed'):
++            action()
++        assert json.loads(path.read_bytes()) == state and tl.bundle == preview
++    tl = Checkout.attach(restarted)
++    from runtime_protocol.server import RuntimeHandler
++
++    requests = []
++    original_commit = RuntimeHandler._timeline_commit
++
++    def observe_request(handler, *args, **kwargs):
++        # The existing lost-ACK recorder observes successful deferred responses;
++        # record entry too, since guard conflicts leave that deferred path.
++        requests.append((handler._prefetched_body, handler.headers['Idempotency-Key']))
++        return original_commit(handler, *args, **kwargs)
++
++    monkeypatch.setattr(RuntimeHandler, '_timeline_commit', observe_request)
++    if relevant:
++        with pytest.raises(CommitConflict):
++            tl.flush()
++        assert json.loads(path.read_bytes())['pending'] == [suffix]
++        assert json.loads(path.read_bytes())['conflict']
++        assert m1.history(client, fixture)['head'] == peer_head
++        assert tl.clip(REF).data['from'] == 1 and tl.clip(REF).data['hold'] == 3
++    else:
++        result = tl.flush()
++        assert result['data']['status'] == 'rebased' and result['data']['commands'] == [suffix]
++        assert tl.clip(REF).data['from'] == 1 and tl.clip(REF).data['hold'] == 3
++        assert tl.clip('music-other').start == 2
++    assert len(requests) == 1
++    sent = json.loads(requests[0][0])
++    assert sent['commands'] == [suffix] and requests[0][1] != flight['key']
++    assert sent['base_revision_id'] == accepted_a['data']['accepted_revision_id']
++    assert sent['base_publication_id'] == accepted_a['receipt']['receipt_id']
++    assert draft.read_bytes() == draft_bytes
++
++
++def test_checkout_first_refuses_sheet_suffix_keeps_draft_and_pending_intent(
++        tmp_path, film, wire, real_runtime):
++    fixture, _, _ = film
++    observed, lose = wire
++    daemon = real_runtime(fixture.duplicate_root, support_root=tmp_path / 'support', authoring_profile='astrid')
++    client = m1.open_client(daemon)
++    session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client,
++                                   outbox_path=tmp_path / 'reverse-outbox.json')
++    sheet = NativeSheet.export(session)
++    draft = tmp_path / 'reverse.sheet'
++    draft.write_text(edit_cell(sheet.text, 'parent/clip:music-other', '2'))
++    draft_bytes = draft.read_bytes()
++    tl = Checkout.attach(session)
++    tl.clip(REF).on(1)
++    lose.add('checkout-A')
++    with pytest.raises(WorkspaceClientError):
++        tl.flush(idempotency_key='checkout-A')
++    before, preview = session.outbox.path.read_bytes(), copy.deepcopy(tl.bundle)
++    sent = len(observed)
++    for action in (lambda: NativeSheet.export(session),
++                   lambda: sheet.apply(draft.read_text(), session=session, dry_run=False)):
++        with pytest.raises(SheetError, match='pending intent'):
++            action()
++        assert session.outbox.path.read_bytes() == before and tl.bundle == preview
++        assert draft.read_bytes() == draft_bytes and len(observed) == sent
++    tl.flush()
++    assert observed[-1]['body'] == observed[-2]['body']
++    assert observed[-1]['key'] == observed[-2]['key'] == 'checkout-A'
++    acknowledged = session.outbox.path.read_bytes()
++    with pytest.raises(SheetError, match='original project, timeline and basis'):
++        sheet.apply(draft.read_text(), session=session, dry_run=False)
++    assert session.outbox.path.read_bytes() == acknowledged and draft.read_bytes() == draft_bytes
+diff --git a/tests/editing_conformance/test_native_sheet_ordinary.py b/tests/editing_conformance/test_native_sheet_ordinary.py
+index 8e72ced24e60ca4f95daec99cd6760cbd4ab481f..b6c930e9b10f199a028ef5bb7947eba266405b24
+--- a/tests/editing_conformance/test_native_sheet_ordinary.py
++++ b/tests/editing_conformance/test_native_sheet_ordinary.py
+@@ -19,6 +19,7 @@
+ from tests.editing_conformance.test_recipe_m1_commands import inverse
+ from tests.editing_conformance.test_recipe_m2_clip_trim import REF, bundle
+ from tests.sdk.test_timeline_sheet_native import sheet_for
++from tests.sdk.test_timeline_sync import initial_bundle
+ 
+ 
+ def edited(sheet):
+@@ -28,6 +29,22 @@
+     return text
+ 
+ 
++@pytest.mark.parametrize('start', [0, 0.0, 0.1, 1e-6])
++def test_exported_gutter_accepts_hold_edit_without_rewriting_timestamp(start):
++    original = initial_bundle()
++    row = State(original).entity('parent/clip:a')
++    row.update(at=start, transition=None, opaque={'values': [None, False, 1, 1.0]})
++    row['params'].update(size=None, italicWord=False)
++    sheet = sheet_for(original)
++    assert sheet.preview(sheet.text).commands == []
++    plan = sheet.preview(property_cell(sheet.text, 'parent/clip:a', 'hold', '2'))
++    expected = copy.deepcopy(row)
++    expected['hold'] = 2
++    assert request_bytes(State(plan.bundle).entity('parent/clip:a')) == request_bytes(expected)
++    assert plan.commands == [capture_clip_set(original, 'parent/clip:a', values={'hold': 2})]
++    assert _json(inverse(plan.bundle, plan.records).bundle) == _json(original)
++
++
+ def test_source_trim_clear_batch_uses_capturers_and_restores_exact_original():
+     original = bundle(transition={'type': 'crossfade', 'duration': .25})
+     before = request_bytes(original)
+diff --git a/tests/sdk/test_timeline_native_checkout.py b/tests/sdk/test_timeline_native_checkout.py
+index 4cda0a3f7f70604b0796f5a27edc6d9b682f6a44..66edc5461c01796a11ac6904a806fba15d26af6e
+--- a/tests/sdk/test_timeline_native_checkout.py
++++ b/tests/sdk/test_timeline_native_checkout.py
+@@ -33,6 +33,26 @@
+     return json.loads(connected[2].read_bytes())
+ 
+ 
++@pytest.mark.parametrize('type_key', ['clipType', 'clip_type'])
++def test_raw_element_alias_keeps_canvas_units_after_acceptance(connected, type_key):
++    row = State(connected[1].bundles['r0']).entity('parent/clip:a')
++    row.pop('clipType')
++    row[type_key] = 'am-sprite'
++    row['params'] = {'x': 27, 'scale': 6, 'opaque': [None, False, 1, 1.0]}
++    tl = attached(connected)
++    tl.clip('a').set(x=600)
++    command = pending(connected)['pending'][0]
++    assert command['expect']['parent/clip:a::params.x'] == {'state': 'present', 'value': 27}
++    assert {'ref': 'parent/clip:a', 'path': [type_key],
++            'state': {'state': 'present', 'value': 'am-sprite'}} in command['reads']
++    accepted = tl.flush()
++    stored = State(bundle_from_document(accepted['data']['canonical_document'])).entity('parent/clip:a')
++    assert stored['params'] == {'x': 100, 'scale': 6, 'opaque': [None, False, 1, 1.0]}
++    assert stored[type_key] == 'am-sprite'
++    assert ('clip_type' if type_key == 'clipType' else 'clipType') not in stored
++    assert accepted['data']['commands'] == [command]
++
++
+ def test_move_is_durable_before_preview_and_unchanged_write_is_captured(connected, monkeypatch):
+     tl = attached(connected)
+     clip = tl.clip('a')
+diff --git a/tests/sdk/test_timeline_native_frontends.py b/tests/sdk/test_timeline_native_frontends.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..de5bd5956d2906d5fe2a6418d2dd72ae26042685
+--- /dev/null
++++ b/tests/sdk/test_timeline_native_frontends.py
+@@ -0,0 +1,140 @@
++"""Checkout and sheet share one original capture and durable Session outbox."""
++from __future__ import annotations
++
++import copy
++import json
++
++import pytest
++
++from astrid.sdk.timeline._command_state import State
++from astrid.sdk.timeline._common import TimelineEditError
++from astrid.sdk.timeline.capture import capture_move
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
++from astrid.sdk.timeline_checkout import Checkout
++from astrid.sdk.timeline_sheet import NativeSheet, SheetError
++from astrid.sdk.workspace_client import WorkspaceClientError
++from tests.sdk import test_timeline_sync as sync
++from tests.sdk.test_timeline_sheet_native import edit_cell
++
++connected = sync.connected
++
++
++@pytest.mark.parametrize('relevant', [False, True])
++def test_sheet_lost_ack_checkout_suffix_exact_retry_and_original_guards(connected, relevant, monkeypatch):
++    client, generated, path = connected
++    session = sync.open_session(connected)
++    sheet = NativeSheet.export(session)
++    edited = edit_cell(sheet.text, 'parent/clip:a', '5')
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        sheet.apply(edited, session=session, dry_run=False, idempotency_key='sheet-A')
++    flight = json.loads(path.read_bytes())['flight']
++    accepted_a = copy.deepcopy(generated.accepted['sheet-A'][1])
++    tl = Checkout.attach(session)
++    tl.clip('a').on(7)
++    suffix = json.loads(path.read_bytes())['pending'][1]
++    assert suffix['expect']['parent/clip:a::at'] == {'state': 'present', 'value': 5}
++    head = generated.bundles['r1']
++    generated.bundles['peer'] = execute(head, [capture_move(
++        head, 'parent/clip:a' if relevant else 'parent/clip:b', 9)]).bundle
++    generated.head = {'revision_id': 'peer', 'publication_id': 'peer-publication'}
++    session = sync.open_session(connected)
++    reads = list(client.reads)
++    with monkeypatch.context() as patch:
++        patch.setattr(TimelineSession, '_bundle', lambda *a: pytest.fail('retry recaptured a bundle'))
++        retried = NativeSheet.load(session).apply(edited, session=session, dry_run=False)
++    assert retried['receipt'] == accepted_a['receipt']
++    assert client.reads == reads
++    assert generated.calls[0] == generated.calls[1] == (flight['body'].encode(), 'sheet-A')
++    state = json.loads(path.read_bytes())
++    assert state['pending'] == [suffix] and state['flight'] is None
++    assert state['base'] == {'revision_id': 'r1', 'publication_id': 'pub1'}
++    draft = copy.deepcopy(tl.bundle)
++    with pytest.raises(TimelineEditError, match='basis changed'):
++        tl.clip('a').on(8)
++    assert tl.bundle == draft and json.loads(path.read_bytes()) == state
++    tl = Checkout.attach(session)
++    if relevant:
++        with pytest.raises(CommitConflict):
++            tl.flush()
++        assert json.loads(path.read_bytes())['pending'] == [suffix]
++        assert tl.clip('a').start == 7
++    else:
++        accepted = tl.flush()
++        assert accepted['data']['commands'] == [suffix]
++        assert accepted['data']['status'] == 'rebased'
++        assert tl.clip('a').start == 7 and tl.clip('b').start == 9
++    body, key = generated.calls[-1]
++    assert key != flight['key']
++    assert json.loads(body)['commands'] == [suffix]
++    assert json.loads(body)['base_revision_id'] == 'r1'
++    assert json.loads(body)['base_publication_id'] == 'pub1'
++
++
++def test_checkout_first_sheet_refusal_keeps_draft_and_exact_pending_intent(connected):
++    _, generated, path = connected
++    session = sync.open_session(connected)
++    sheet = NativeSheet.export(session)
++    draft = edit_cell(sheet.text, 'parent/clip:b', '8')
++    tl = Checkout.attach(session)
++    tl.clip('a').on(5)
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        tl.flush(idempotency_key='checkout-A')
++    before, preview = path.read_bytes(), copy.deepcopy(tl.bundle)
++    for attempt in (lambda: NativeSheet.export(session),
++                    lambda: sheet.apply(draft, session=session, dry_run=False)):
++        with pytest.raises(SheetError, match='pending intent'):
++            attempt()
++        assert path.read_bytes() == before and tl.bundle == preview
++    assert sheet.preview(draft).commands == [capture_move(sync.initial_bundle(), 'parent/clip:b', 8)]
++    assert len(generated.calls) == 1
++    tl.flush()
++    assert generated.calls[0] == generated.calls[1]
++    acknowledged = path.read_bytes()
++    with pytest.raises(SheetError, match='original project, timeline and basis'):
++        sheet.apply(draft, session=session, dry_run=False)
++    assert path.read_bytes() == acknowledged
++
++
++@pytest.mark.parametrize('acknowledged', [False, True])
++@pytest.mark.parametrize('action', ['edit', 'flush', 'undo'])
++def test_external_sheet_stage_or_ack_requires_explicit_reattach(connected, acknowledged, action):
++    _, generated, path = connected
++    session = sync.open_session(connected)
++    tl = Checkout.attach(session)
++    clip = tl.clip('a')
++    sheet = NativeSheet.export(session)
++    draft = edit_cell(sheet.text, 'parent/clip:a', '5')
++    if acknowledged:
++        sheet.apply(draft, session=session, dry_run=False)
++    else:
++        generated.lose_ack = True
++        with pytest.raises(WorkspaceClientError):
++            sheet.apply(draft, session=session, dry_run=False)
++    before, preview = path.read_bytes(), copy.deepcopy(tl.bundle)
++    with pytest.raises(TimelineEditError, match='basis changed'):
++        if action == 'edit':
++            clip.on(7)
++        elif action == 'flush':
++            tl.flush()
++        else:
++            tl.undo(['pub1'])
++    assert path.read_bytes() == before and tl.bundle == preview
++    reattached = Checkout.attach(session)
++    reattached.clip('a').on(7)
++    assert reattached.clip('a').start == 7
++    assert json.loads(path.read_bytes())['pending'][-1]['expect']['parent/clip:a::at']['value'] == 5
++
++
++def test_equal_preview_with_changed_publication_still_requires_reattach(connected):
++    session = sync.open_session(connected)
++    tl = Checkout.attach(session)
++    session.commit({'schema_version': 1, 'op': 'clip.set-params', 'version': '1',
++                    'select': 'parent/clip:a', 'args': {'values': {'text': 'café'}, 'clear': []}})
++    before = connected[2].read_bytes()
++    assert State(tl.bundle).entity('parent/clip:a') == State(session._bundle(session._state())).entity('parent/clip:a')
++    with pytest.raises(TimelineEditError, match='basis changed'):
++        tl.clip('a').on(1)
++    assert connected[2].read_bytes() == before
+
+codex
+Completed both narrow ports, fixed both review findings, and added mixed-frontend/stale-handle coverage through one Session/outbox.
+
+- Local targeted tests: **609 passed**.
+- Central Runtime `94114269` development lane: **18 passed**.
+- Ruff baseline, mypy environment, and existing core-cycle issues remain; no full suite or final-tuple qualification claimed.
+
+Exact commands, results, limitations, and next steps: [detailed report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-frontends-finish/notes/report.md).
+
+`commit-msg` and `DONE` written. No implementation blocker.
+tokens used
+202,496
+Completed both narrow ports, fixed both review findings, and added mixed-frontend/stale-handle coverage through one Session/outbox.
+
+- Local targeted tests: **609 passed**.
+- Central Runtime `94114269` development lane: **18 passed**.
+- Ruff baseline, mypy environment, and existing core-cycle issues remain; no full suite or final-tuple qualification claimed.
+
+Exact commands, results, limitations, and next steps: [detailed report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-frontends-finish/notes/report.md).
+
+`commit-msg` and `DONE` written. No implementation blocker.

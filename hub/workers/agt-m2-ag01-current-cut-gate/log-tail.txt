@@ -1,0 +1,400 @@
+                      'args': {'values': copy.deepcopy(params or {}), 'clear': list(clear_params)}})
+    if pin is not None:
+        for call in calls:
+            if call['op'] in ('clip.set-element', 'clip.set-params'):
+                call['args']['schema_source'] = copy.deepcopy(pin)
+    return calls
+
+
+class _SelectionReads:
+    """Adapt one authenticated public history read to the native resolver port."""
+
+    def __init__(self, owner, project, timeline):
+        self.owner, self.project, self.timeline = owner, project, timeline
+        self.entries = {}
+
+    def history(self, through, *, after_publication_id=None, cursor=None, limit=100):
+        if after_publication_id is not None:
+            raise ValueError('Selection capture requires complete accepted history')
+        result = self.owner.history(self.project, self.timeline, cursor=cursor, limit=limit)
+        if not result.ok:
+            raise ValueError(result.error.message)
+        page = result.data
+        self.entries.update((entry['publication_id'], entry) for entry in page['items'])
+        return page
+
+    def history_entry(self, publication_id):
+        return self.entries[publication_id]
+
+    def revision_closure(self, revision_id):
+        for entry in self.entries.values():
+            if entry['revision_id'] == revision_id:
+                document = entry['receipt']['result'].get('canonical_document')
+                if document is not None:
+                    return document
+        raise ValueError('Accepted selection revision closure is unavailable')
+
+
+def _matches(saved, calls):
+    return len(saved) == len(calls) and all(
+        prior['op'] == call['op'] and prior['select'] == call['select']
+        and equal({k: v for k, v in prior['args'].items() if k != 'schema_source'}, call['args'])
+        for prior, call in zip(saved, calls))
+
+
+def _clip(bundle, clip_id):
+    clips = bundle['parent'].get('clips')
+    if not isinstance(clips, list):
+        raise ValueError('Canonical parent clips are unavailable')
+    matches = [clip for clip in clips if isinstance(clip, dict) and clip.get('id') == clip_id]
+    if len(matches) != 1:
+        raise ValueError('Expected one existing parent effect clip')
+    return copy.deepcopy(matches[0])
+
+
+def _result(session, data, receipt, before, clip_id, expected_head, key):
+    clip = _clip({'parent': data['canonical_document']['parent_revision']['payload']}, clip_id)
+    return DomainResult.success({
+        'project_id': session.project_id, 'timeline_id': session.timeline_id,
+        'expected_head': expected_head, 'new_head': data['accepted_revision_id'],
+        'clip_id': clip_id, 'element': clip.get('elementRef') or clip.get('element_ref'), 'duration': clip.get('hold'),
+        'params': clip.get('params', {}), 'before': {
+            'element': before.get('elementRef') or before.get('element_ref'),
+            'duration': before.get('hold'), 'params': before.get('params', {})},
+    }, receipt=CommandReceipt.from_dict(receipt), idempotency_key=key)
+    documents = [_document_pin(pin) for pin in manifest["documents"]]
+    _require(len({_json(pin) for pin in documents}) == len(documents), "duplicate document pin")
+    media = manifest["media"]
+    _require(isinstance(media, list), "invalid media manifest")
+    for row in media:
+        _require(isinstance(row, Mapping) and set(row) == {"media_id", "content_digest"}
+                 and isinstance(row["media_id"], str) and _DIGEST.fullmatch(row["media_id"])
+                 and row["content_digest"] == row["media_id"], "invalid immutable media pin")
+    _require(len({row["media_id"] for row in media}) == len(media), "duplicate media pin")
+    required_media = set().union(*(_collect_media(row["payload"])
+                                   for row in [parent, *shots, *internals]))
+    _require(required_media <= {row["media_id"] for row in media}, "missing media dependency")
+    _require(manifest == _manifest(shots, internals, media, documents),
+             "dependency manifest does not match the immutable closure")
+    _require(shots == sorted(shots, key=lambda row: (row["shot_id"], row["revision_id"]))
+             and internals == sorted(internals, key=lambda row: (
+                 row["timeline_id"], row["revision_id"])), "closure images must be sorted")
+
+
+def bundle_from_document(document):
+    """Open a complete immutable Runtime document without a Runtime dependency."""
+    document = copy.deepcopy(document)
+    _verify_document(document)
+    project, timeline = document["project_id"], document["timeline_id"]
+    bundle = open_authoring_bundle(
+        {**document["parent_revision"], "project_id": project, "timeline_id": timeline},
+        shot_revisions=[{**row, "project_id": project} for row in document["shot_revisions"]],
+        internal_timeline_revisions=[{**row, "project_id": project}
+                                     for row in document["internal_timeline_revisions"]],
+    )
+    bundle["source_mapping"]["_runtime_document"] = document
+    return bundle
+
+
+def _inverse_media_removals(records, bundle):
+    """Only accepted edges can prove that a retained pin was introduced by writes."""
+    from ._collections import AcceptedRecords
+    from ._command_state import CommandError, State, equal
+
+    if not records:
+        return set()
+    if not isinstance(records, AcceptedRecords):
+        raise CommandError('media inverse needs accepted boundaries', kind='history_unavailable')
+    if not equal(list(records), [record for entry in records.entries
+                                for record in entry['records']['commands']]):
+        raise CommandError('media inverse records differ from accepted history', kind='history_unavailable')
+    removed = set()
+    for entry in reversed(records.entries):
+        before, after = records.load_boundary(entry)
+        images = [value['source_mapping']['_runtime_document'] for value in (before, after)]
+        for image, pin in zip(images, (entry['previous'], entry)):
+            _verify_document(image)
+            _require((image['project_id'], image['timeline_id']) ==
+                     (bundle['project_id'], bundle['timeline_id'])
+                     and image['parent_revision']['revision_id'] == pin['revision_id'],
+                     'inverse media boundary mismatch')
+astrid/sdk/timeline_elements.py-50-        self.entries = {}
+astrid/sdk/timeline_elements.py-51-
+astrid/sdk/timeline_elements.py:52:    def history(self, through, *, after_publication_id=None, cursor=None, limit=100):
+astrid/sdk/timeline_elements.py-53-        if after_publication_id is not None:
+astrid/sdk/timeline_elements.py-54-            raise ValueError('Selection capture requires complete accepted history')
+astrid/sdk/timeline_elements.py:55:        result = self.owner.history(self.project, self.timeline, cursor=cursor, limit=limit)
+astrid/sdk/timeline_elements.py-56-        if not result.ok:
+astrid/sdk/timeline_elements.py-57-            raise ValueError(result.error.message)
+--
+astrid/sdk/timeline_elements.py-147-        cursor = None
+astrid/sdk/timeline_elements.py-148-        while state['flight'] is None and idempotency_key is not None:
+astrid/sdk/timeline_elements.py:149:            history = owner.history(session.project_id, session.timeline_id, cursor=cursor, limit=100)
+astrid/sdk/timeline_elements.py-150-            if not history.ok:
+astrid/sdk/timeline_elements.py-151-                return history
+--
+astrid/sdk/timeline_elements.py-183-            if state['base']['revision_id'] != expected_head:
+astrid/sdk/timeline_elements.py-184-                raise ValueError('Session base changed before element capture')
+astrid/sdk/timeline_elements.py:185:            current = owner.history(session.project_id, session.timeline_id, limit=1)
+astrid/sdk/timeline_elements.py-186-            if not current.ok:
+astrid/sdk/timeline_elements.py-187-                raise ValueError(current.error.message)
+--
+astrid/sdk/timeline/journal.py-231-
+astrid/sdk/timeline/journal.py-232-
+astrid/sdk/timeline/journal.py:233:def record_or_note(owner: Any, path: str | Path, **fields: Any) -> JournalRecord | None:
+astrid/sdk/timeline/journal.py-234-    try:
+astrid/sdk/timeline/journal.py-235-        return record_working_copy(path, owner=owner, **fields)
+--
+astrid/sdk/timeline/_collections.py-134-
+astrid/sdk/timeline/_collections.py-135-
+astrid/sdk/timeline/_collections.py:136:class AcceptedRecords(list):
+astrid/sdk/timeline/_collections.py-137-    """Accepted trace plus lazy verified boundaries; never rewritten recorder data."""
+astrid/sdk/timeline/_collections.py-138-
+--
+astrid/sdk/timeline/_collections.py-194-                              and not any(s['key'].startswith('collection.') for s in selected))
+astrid/sdk/timeline/_collections.py-195-            if legacy_inverse or not selected:
+astrid/sdk/timeline/_collections.py:196:                if not isinstance(records, AcceptedRecords):
+astrid/sdk/timeline/_collections.py-197-                    raise CommandError('original collection order is unavailable', kind='history_unavailable')
+astrid/sdk/timeline/_collections.py-198-                boundary = records.boundary(record)
+--
+astrid/sdk/timeline/_collections.py-246-            # prove append or create-after through their recorded selections.
+astrid/sdk/timeline/_collections.py-247-            if inserts and not _ordinary_create(record, writes, owner, kind):
+astrid/sdk/timeline/_collections.py:248:                if not isinstance(records, AcceptedRecords):
+astrid/sdk/timeline/_collections.py-249-                    raise CommandError('inverse insertion order needs an accepted boundary', kind='history_unavailable')
+astrid/sdk/timeline/_collections.py-250-                boundary = boundary or records.boundary(record)
+--
+astrid/sdk/timeline/transaction.py-81-            after: str | None = None, clips=(), cuts=(), error: str | None = None) -> None:
+astrid/sdk/timeline/transaction.py-82-    if tl.path:
+astrid/sdk/timeline/transaction.py:83:        _journal.record_or_note(tl, Path(tl.path), kind="edit", outcome=outcome, label=label,
+astrid/sdk/timeline/transaction.py-84-                                before=before, after=after, clips=tuple(clips), cuts=tuple(cuts),
+astrid/sdk/timeline/transaction.py-85-                                reason=reason, error=error)
+--
+astrid/sdk/timeline/transaction.py-159-        return
+astrid/sdk/timeline/transaction.py-160-
+astrid/sdk/timeline/transaction.py:161:    tl._journal.append((str(label), before_snapshot))
+astrid/sdk/timeline/transaction.py-162-    try:
+astrid/sdk/timeline/transaction.py-163-        if tl.path:
+--
+astrid/sdk/timeline/publish.py-47-        # Acceptance consumes the local steps before any follow-up read or
+astrid/sdk/timeline/publish.py-48-        # narration work can fail. This also fences a reload of a stale draft.
+astrid/sdk/timeline/publish.py:49:        self._retire_draft_history()
+astrid/sdk/timeline/publish.py-50-        receipt["narration_pinned"] = []
+astrid/sdk/timeline/publish.py-51-        if chapter_film or self.narration_changes():
+--
+astrid/sdk/timeline/publish.py-84-    def _reset_base(self, *, client: Any = None) -> None:
+astrid/sdk/timeline/publish.py-85-        """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""
+astrid/sdk/timeline/publish.py:86:        self._retire_draft_history()
+astrid/sdk/timeline/publish.py-87-        try:
+astrid/sdk/timeline/publish.py-88-            head = _store.fetch_bundle(str(self.bundle["project_id"]), str(self.bundle["timeline_id"]), client=client)
+--
+astrid/sdk/timeline/revisions.py-67-    """Recognize the public scoped immutable history signature.
+astrid/sdk/timeline/revisions.py-68-
+astrid/sdk/timeline/revisions.py:69:    Older clients may expose a legacy ``history(project, ref)`` helper under
+astrid/sdk/timeline/revisions.py-70-    the same name. It is not the immutable route and must retain the parent
+astrid/sdk/timeline/revisions.py-71-    link fallback until the public method grows its cursor/limit contract.
+--
+astrid/sdk/timeline/revisions.py-169-        silently downgrading to the legacy parent-link walk.
+astrid/sdk/timeline/revisions.py-170-        """
+astrid/sdk/timeline/revisions.py:171:        direct = getattr(self._client, "list_timeline_commits", None)
+astrid/sdk/timeline/revisions.py-172-        if callable(direct):
+astrid/sdk/timeline/revisions.py-173-            return direct
+--
+astrid/sdk/timeline/commit.py-164-def _inverse_media_removals(records, bundle):
+astrid/sdk/timeline/commit.py-165-    """Only accepted edges can prove that a retained pin was introduced by writes."""
+astrid/sdk/timeline/commit.py:166:    from ._collections import AcceptedRecords
+astrid/sdk/timeline/commit.py-167-    from ._command_state import CommandError, State, equal
+astrid/sdk/timeline/commit.py-168-
+astrid/sdk/timeline/commit.py-169-    if not records:
+astrid/sdk/timeline/commit.py-170-        return set()
+astrid/sdk/timeline/commit.py:171:    if not isinstance(records, AcceptedRecords):
+astrid/sdk/timeline/commit.py-172-        raise CommandError('media inverse needs accepted boundaries', kind='history_unavailable')
+astrid/sdk/timeline/commit.py-173-    if not equal(list(records), [record for entry in records.entries
+--
+astrid/sdk/timeline/commit.py-474-
+astrid/sdk/timeline/commit.py-475-
+astrid/sdk/timeline/commit.py:476:def _history(port, through, after, rejected, base):
+astrid/sdk/timeline/commit.py-477-    """Read a complete, bounded ancestry segment, never infer intent from bytes."""
+astrid/sdk/timeline/commit.py-478-    previous = copy.deepcopy(after)
+astrid/sdk/timeline/commit.py-479-    entries, cursor, cursors = [], None, set()
+astrid/sdk/timeline/commit.py-480-    while previous != through:
+astrid/sdk/timeline/commit.py:481:        page = port.history(through, after_publication_id=after["publication_id"] if after else None,
+astrid/sdk/timeline/commit.py-482-                            cursor=cursor, limit=100)
+astrid/sdk/timeline/commit.py-483-        if page["head"] != through:
+--
+astrid/sdk/timeline/commit.py-629-
+astrid/sdk/timeline/commit.py-630-    try:
+astrid/sdk/timeline/commit.py:631:        for entry in _history(port, current, None, rejected, base):
+astrid/sdk/timeline/commit.py-632-            if (not recorded and entry.get('intent') in {'bootstrap', 'legacy_unknown'}
+astrid/sdk/timeline/commit.py-633-                    and entry.get('records') is None):
+--
+astrid/sdk/timeline/commit.py-784-        from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+astrid/sdk/timeline/commit.py-785-
+astrid/sdk/timeline/commit.py:786:        from astrid.sdk.timeline._collections import AcceptedRecords
+astrid/sdk/timeline/commit.py-787-        from astrid.sdk.timeline._command_state import State
+astrid/sdk/timeline/commit.py-788-        from astrid.sdk.timeline.commands import CommandError, execute
+--
+astrid/sdk/timeline/commit.py-844-                    # client-provided inverse writes enter the core engine.
+astrid/sdk/timeline/commit.py-845-                    _load(port, context, target["revision_id"])
+astrid/sdk/timeline/commit.py:846:                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
+astrid/sdk/timeline/commit.py-847-                    segments.append(segment)
+astrid/sdk/timeline/commit.py-848-                # The longest segment begins at the earliest targeted edge.
+--
+astrid/sdk/timeline/commit.py-863-                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
+astrid/sdk/timeline/commit.py-864-                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
+astrid/sdk/timeline/commit.py:865:                    _history(port, pin, previous, CommitRejected, base)
+astrid/sdk/timeline/commit.py-866-                    return (_load(port, context, previous['revision_id']),
+astrid/sdk/timeline/commit.py-867-                            _load(port, context, entry['revision_id']))
+astrid/sdk/timeline/commit.py-868-
+astrid/sdk/timeline/commit.py-869-                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+astrid/sdk/timeline/commit.py:870:                inverse_records = AcceptedRecords(accepted, _records(
+astrid/sdk/timeline/commit.py-871-                    accepted, CommitRejected, base, current), load_boundary)
+astrid/sdk/timeline/commit.py-872-                # A gap before a later target is that target's input, not an
+--
+astrid/sdk/timeline/commit.py-921-                        raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+astrid/sdk/timeline/commit.py-922-                                                      base, current))
+astrid/sdk/timeline/commit.py:923:                    entries = _history(port, current, base, CommitRejected, base)
+astrid/sdk/timeline/commit.py-924-                    head_bundle = _load(port, context, current["revision_id"])
+astrid/sdk/timeline/commit.py-925-                    if not closures:
+--
+astrid/sdk/timeline/_selected_param_authority.py-58-        return CommandError(failure['message'], kind='history_unavailable', ref=select)
+astrid/sdk/timeline/_selected_param_authority.py-59-
+astrid/sdk/timeline/_selected_param_authority.py:60:    entries = _history(port, through, None, rejected, through)
+astrid/sdk/timeline/_selected_param_authority.py-61-    indices = {e['publication_id']: i for i, e in enumerate(entries)}
+astrid/sdk/timeline/_selected_param_authority.py-62-    owner = select.rsplit('/', 1)[0]
+--
+astrid/sdk/timeline/sync.py-154-                            raise TimelineEditError("pending intent belongs to a different original base")
+astrid/sdk/timeline/sync.py-155-                        return session
+astrid/sdk/timeline/sync.py:156:            head = base or _pin(_response(client.timelines.history(project_id, timeline_id, limit=1))["data"]["head"])
+astrid/sdk/timeline/sync.py-157-            with session.outbox.locked():
+astrid/sdk/timeline/sync.py-158-                if _connection(client) != identity:
+--
+astrid/sdk/timeline/checkout.py-279-        return session.undo(publications, **options)
+astrid/sdk/timeline/checkout.py-280-
+astrid/sdk/timeline/checkout.py:281:    def _retire_draft_history(self) -> None:
+astrid/sdk/timeline/checkout.py-282-        """Acknowledged intent cannot become unsent again, even at a retained revision."""
+astrid/sdk/timeline/checkout.py-283-        if self.path:
+--
+astrid/sdk/timeline/checkout.py-343-            _store._reconcile_restore(target)
+astrid/sdk/timeline/checkout.py-344-            self._reload()
+astrid/sdk/timeline/checkout.py:345:        _journal.record_or_note(self, target, kind=kind, outcome="changed", label="; ".join(labels)[:160],
+astrid/sdk/timeline/checkout.py-346-                                before=_journal.digest(start), after=_journal.digest(current))
+astrid/sdk/timeline/checkout.py-347-        return labels
+--
+astrid/sdk/timeline/checkout.py-364-            self._edit_depth -= 1
+astrid/sdk/timeline/checkout.py-365-        if _store._snapshot(self) != before:
+astrid/sdk/timeline/checkout.py:366:            self._journal.append((label, before))
+astrid/sdk/timeline/checkout.py-367-
+astrid/sdk/timeline/checkout.py-368-    # ---- working copy (draft) --------------------------------------------------
+--
+astrid/sdk/timeline/checkout.py-386-            path.parent.mkdir(parents=True, exist_ok=True)
+astrid/sdk/timeline/checkout.py-387-            tl.save(path)
+astrid/sdk/timeline/checkout.py:388:            _journal.record_or_note(tl, path, kind="checkout", outcome="changed", label="checkout",
+astrid/sdk/timeline/checkout.py-389-                                         after=_journal.digest(path.read_text(encoding="utf-8")))
+astrid/sdk/timeline/checkout.py-390-        _store.set_current_draft(project_id, timeline_id, name)  # commands that name no draft use this one
+--
+astrid/sdk/timeline/checkout.py-418-        if self.path and Path(self.path).is_file():
+astrid/sdk/timeline/checkout.py-419-            gone = Path(self.path)
+astrid/sdk/timeline/checkout.py:420:            _journal.record_or_note(self, gone, kind="discard", outcome="changed", label="discard",
+astrid/sdk/timeline/checkout.py-421-                                         before=_journal.digest(gone.read_text(encoding="utf-8")))  # before the file goes
+astrid/sdk/timeline/checkout.py-422-            gone.unlink()
+--
+astrid/sdk/timeline/checkout.py-458-        """The edit journal of this timeline (every working copy shares it), filtered: since, actor, op, cut, clip, outcome."""
+astrid/sdk/timeline/checkout.py-459-        path = _journal.journal_path(str(self.bundle.get("project_id") or ""), str(self.bundle.get("timeline_id") or ""))
+astrid/sdk/timeline/checkout.py:460:        return _journal.query(_journal.read(path), **filters)
+astrid/sdk/timeline/checkout.py-461-
+astrid/sdk/timeline/checkout.py-462-    def changes(self, against: Mapping[str, Any] | None = None) -> list[str]:
+--
+astrid/sdk/timeline/inverse.py-4-import copy
+astrid/sdk/timeline/inverse.py-5-
+astrid/sdk/timeline/inverse.py:6:from ._collections import AcceptedRecords, arrange, member, restoration_orders, selection_overlap
+astrid/sdk/timeline/inverse.py-7-from ._command_state import (
+astrid/sdk/timeline/inverse.py-8-    ABSENT,
+--
+astrid/sdk/timeline/inverse.py-266-def _legacy_inverse_sites(records, record):
+astrid/sdk/timeline/inverse.py-267-    """Recover only known v1 inverse read/create sites from its verified input."""
+astrid/sdk/timeline/inverse.py:268:    if record['command']['op'] != 'timeline.inverse' or not isinstance(records, AcceptedRecords):
+astrid/sdk/timeline/inverse.py-269-        raise CommandError('original read stage is unavailable', kind='history_unavailable')
+astrid/sdk/timeline/inverse.py-270-    state, after = records.boundary(record)
+--
+astrid/sdk/timeline/_root_inverse.py-4-import copy
+astrid/sdk/timeline/_root_inverse.py-5-
+astrid/sdk/timeline/_root_inverse.py:6:from ._collections import AcceptedRecords
+astrid/sdk/timeline/_root_inverse.py-7-from ._command_state import ABSENT, CommandError, equal, root_identity
+astrid/sdk/timeline/_root_inverse.py-8-
+--
+astrid/sdk/timeline/_root_inverse.py-39-    if not needed:
+astrid/sdk/timeline/_root_inverse.py-40-        return {}
+astrid/sdk/timeline/_root_inverse.py:41:    if not isinstance(records, AcceptedRecords):
+astrid/sdk/timeline/_root_inverse.py-42-        raise CommandError('removed occurrence needs accepted order/source boundaries', kind='history_unavailable')
+astrid/sdk/timeline/_root_inverse.py-43-    result = {}
+
+--- final status ---
+ M astrid/sdk/timeline/publish.py
+ M astrid/sdk/timeline/revisions.py
+ M astrid/sdk/timeline_sheet.py
+ M tests/sdk/test_timeline_checkout_history.py
+ M tests/sdk/test_timeline_checkout_history_runtime.py
+ M tests/sdk/test_timeline_journal.py
+DONE-ok
+fix(timeline): remove duplicate accepted journal history
+
+Route retained sheet basis lookup through verified Runtime history cursors and
+keep local draft journal, outbox, and recovery behavior intact.
+
+codex
+## Report
+
+Implemented the bounded `79b33f8a..77945bb6` port onto `3f770a45`:
+
+- Removed publish’s duplicate accepted-history journal append.
+- Routed sheet retained-basis lookup through verified Runtime cursor pagination.
+- Preserved local draft journal, outbox, undo/redo, and recovery behavior.
+- Added page-two pagination coverage.
+
+Files changed: [publish.py](/home/user/work/wt/agt-m2-ag01-current-cut-gate/astrid/sdk/timeline/publish.py), [revisions.py](/home/user/work/wt/agt-m2-ag01-current-cut-gate/astrid/sdk/timeline/revisions.py), [timeline_sheet.py](/home/user/work/wt/agt-m2-ag01-current-cut-gate/astrid/sdk/timeline_sheet.py), and focused tests.
+
+Tests:
+
+- Focused journal/history/sheet/recovery suite: `107 passed`
+- Revision/history suite: `32 passed`
+- Central Runtime lane: `35 passed, 5 failed`; the requested retained-history test passed. Failures were unrelated retired direct shot-write tests in `tests/stage1/test_runtime_client_cutover.py`.
+- `git diff --check`: passed.
+- No full suite requested.
+
+Remaining consumers found by `rg`:
+
+- Runtime accepted-history readers: `astrid/sdk/timeline/sync.py:156`, `astrid/sdk/timeline_elements.py:52-60,149-185`, and core inverse/history paths.
+- Local journal writers remain intentionally in `transaction.py` and `checkout.py` for unsent draft/recovery behavior.
+
+Next step: qualify or migrate those remaining accepted-history readers before any further deletion sweep.
+
+Commit message and `DONE` marker written.
+tokens used
+193,161
+## Report
+
+Implemented the bounded `79b33f8a..77945bb6` port onto `3f770a45`:
+
+- Removed publish’s duplicate accepted-history journal append.
+- Routed sheet retained-basis lookup through verified Runtime cursor pagination.
+- Preserved local draft journal, outbox, undo/redo, and recovery behavior.
+- Added page-two pagination coverage.
+
+Files changed: [publish.py](/home/user/work/wt/agt-m2-ag01-current-cut-gate/astrid/sdk/timeline/publish.py), [revisions.py](/home/user/work/wt/agt-m2-ag01-current-cut-gate/astrid/sdk/timeline/revisions.py), [timeline_sheet.py](/home/user/work/wt/agt-m2-ag01-current-cut-gate/astrid/sdk/timeline_sheet.py), and focused tests.
+
+Tests:
+
+- Focused journal/history/sheet/recovery suite: `107 passed`
+- Revision/history suite: `32 passed`
+- Central Runtime lane: `35 passed, 5 failed`; the requested retained-history test passed. Failures were unrelated retired direct shot-write tests in `tests/stage1/test_runtime_client_cutover.py`.
+- `git diff --check`: passed.
+- No full suite requested.
+
+Remaining consumers found by `rg`:
+
+- Runtime accepted-history readers: `astrid/sdk/timeline/sync.py:156`, `astrid/sdk/timeline_elements.py:52-60,149-185`, and core inverse/history paths.
+- Local journal writers remain intentionally in `transaction.py` and `checkout.py` for unsent draft/recovery behavior.
+
+Next step: qualify or migrate those remaining accepted-history readers before any further deletion sweep.
+
+Commit message and `DONE` marker written.

@@ -1,0 +1,400 @@
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_materialization_schema_union.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_workspace_client_timeline_commit.py' in /home/user/work/wt/agt-m2-private952-native-pair-prepare
+exec
+/bin/bash -lc 'env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95202c2b PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_native_batch_ingress.py -k '"'file_lost_ack_restart_exact_retry_before_original_suffix or guarded_undo_still_refuses_intervening_equal_state_writes or retry_distinguishes_boolean_capture_and_intent or retry_numeric_equivalence'" in /home/user/work/wt/agt-m2-private952-native-pair-prepare
+ succeeded in 17548ms:
+..................................................................       [100%]
+66 passed in 14.76s
+
+ succeeded in 36296ms:
+.................                                                        [100%]
+17 passed, 23 deselected in 33.97s
+
+ succeeded in 219438ms:
+...........................................................              [100%]
+59 passed in 217.28s (0:03:37)
+
+codex
+The bounded follow-up evidence is good: the real HTTP/native outbox subset passed `17 passed, 23 deselected`; v1/v2 materialization and map controls passed `66`; schema/client guards passed `59`. The full occurrence/identity pair remains `51 passed`. The native file’s six unrelated reload-shape failures remain visible and unchanged; I’m now doing final diff/hygiene checks and recording the exact fixture delta, source tuple, and limitations before writing the required handoff files.
+exec
+/bin/bash -lc "wc -l tests/editing_conformance/test_commit_runtime_occurrence_media.py; find . -maxdepth 3 -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -print | sed -n '1,80p'; find . -maxdepth 3 -type d \\( -name '.pytest_cache' -o -name '__pycache__' \\) -print | sed -n '1,80p'" in /home/user/work/wt/agt-m2-private952-native-pair-prepare
+exec
+/bin/bash -lc 'git diff --numstat; git diff --name-only; sha256sum runtime.lock.json astrid_runtime_client/contract_metadata.py astrid_runtime_client/generated.py astrid_runtime_client/timeline_commit_types.py; git -C /home/user/work/wt/rt-pin-95202c2b rev-parse HEAD HEAD''^{tree}' in /home/user/work/wt/agt-m2-private952-native-pair-prepare
+exec
+/bin/bash -lc 'git diff --check && git status --short --branch && git diff --stat && git diff -- tests/editing_conformance/test_commit_runtime_occurrence_media.py' in /home/user/work/wt/agt-m2-private952-native-pair-prepare
+ succeeded in 60ms:
+402 tests/editing_conformance/test_commit_runtime_occurrence_media.py
+
+ succeeded in 311ms:
+12	12	tests/editing_conformance/test_commit_runtime_occurrence_media.py
+tests/editing_conformance/test_commit_runtime_occurrence_media.py
+d047e48567428a75e05f3ec2f73804975e9909cfb2d8235370e18bf8deba12ee  runtime.lock.json
+0c4d89c8fd736f03988ae8b02d82fa1e9066a45a457fe2a260e756fc9d89ee6f  astrid_runtime_client/contract_metadata.py
+fc6a378b87cd6e448a50b395d84555f9bea5da859baea9a853276eb7db29edfb  astrid_runtime_client/generated.py
+78a76f4f87afcfd23c43d43fcb56c3130a9759d357d19b6eec5ec32b18261044  astrid_runtime_client/timeline_commit_types.py
+95202c2b09e83aaae028287d6c59b773410141f3
+d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2
+
+ succeeded in 794ms:
+## tl/agt-m2-private952-native-pair-prepare
+ M tests/editing_conformance/test_commit_runtime_occurrence_media.py
+ .../test_commit_runtime_occurrence_media.py        | 24 +++++++++++-----------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+diff --git a/tests/editing_conformance/test_commit_runtime_occurrence_media.py b/tests/editing_conformance/test_commit_runtime_occurrence_media.py
+index e61699e2..82080b0d 100644
+--- a/tests/editing_conformance/test_commit_runtime_occurrence_media.py
++++ b/tests/editing_conformance/test_commit_runtime_occurrence_media.py
+@@ -81,8 +81,6 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
+             pins.append(pin)
+         by_name = {row['variant_key']: pin for row, pin in zip(associations, pins)}
+         old, new = by_name['old'], by_name['new']
+-        from timeline_commit_film_fixture import _binding_descriptor
+-
+         from tests.sdk.test_timeline_commit_provider_document import (
+             MEDIA,
+             document_fixture,
+@@ -114,12 +112,9 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
+         for row in parent['occurrences']:
+             row.update(source_offset=0, speed=1)
+         parent['occurrences'][0]['placement']['start_ms'] = 8000
+-        service.create_project_shot(project, {'shot_id': 'chapter-shot', 'name': 'Chapter One'},
+-                                    idempotency_key='chapter-shot')
+-        binding = service.set_project_shot_text_binding(project, {
+-            'shot_id': 'chapter-shot', 'kind': 'transcript', 'text': 'A chapter', 'expected_head': 0,
+-        }, idempotency_key='chapter-text')['data']
+-        document['shot_revisions'][0]['payload']['text_bindings'] = [_binding_descriptor(binding, 'A chapter')]
++        # The current Runtime only accepts authoritative registered bindings;
++        # this media lifecycle does not exercise text binding semantics.
++        document['shot_revisions'][0]['payload'].pop('text_bindings', None)
+         service.publish_parent_composition(project, 'film', {
+             'project_id': project, 'timeline_id': 'film', 'expected_head': None,
+             'parent_revision_id': 'popup-baseline', 'parent_composition': parent,
+@@ -128,6 +123,7 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
+             'internal_timeline_revisions': [{key: value for key, value in internal.items()
+                                              if key != 'content_digest'}],
+         }, idempotency_key='popup-baseline')
++        baseline = service._timeline_commits()[0].revision_closure(project, 'film', 'popup-baseline')
+         service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+ 
+         selected, closures, candidates = [], [], []
+@@ -150,7 +146,8 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
+                                 associations=associations, selected=selected, closures=closures,
+                                 candidates=candidates, before_accept=None, credentials=credentials,
+                                 authorize=authorize, effect=effect, outputs=outputs,
+-                                fingerprint_inputs=fingerprint_inputs, kind=kind, operation=operation, root=tmp_path / "publish")
++                                fingerprint_inputs=fingerprint_inputs, kind=kind, operation=operation,
++                                baseline=baseline, root=tmp_path / "publish")
+ 
+         def accept(port, prepared):
+             candidates.append(copy.deepcopy(prepared))
+@@ -258,9 +255,9 @@ def test_exact_capture_acceptance_inverse_redo_restart_and_retry(editing, monkey
+     )
+ 
+     before = rows(editing)
+-    preview = commit(editing, body(editing, dry_run=True), 'preview')
+-    assert preview['receipt'] is None and rows(editing) == before
+-    baseline = editing.closures[0]
++    raw_preview = commit(editing, body(editing, dry_run=True), 'raw-preview')
++    assert raw_preview['receipt'] is None and rows(editing) == before
++    baseline = editing.baseline
+     assert editing.new['object_id'] not in {pin['media_id'] for pin in baseline['dependency_manifest']['media']}
+     bundle = bundle_from_document(baseline)
+     call = raw_command(editing)
+@@ -270,6 +267,9 @@ def test_exact_capture_acceptance_inverse_redo_restart_and_retry(editing, monkey
+     else:
+         captured = capture_occurrence_swap_media(bundle, TARGET, editing.old, editing.new,
+                                                  verified_media=editing.selected)
++    before = rows(editing)
++    preview = commit(editing, body(editing, [captured], dry_run=True), 'preview')
++    assert preview['receipt'] is None and rows(editing) == before
+     assert preview['data']['commands'] == [captured]
+     request = body(editing, [captured])
+     created = commit(editing, request, 'popup')
+
+codex
+Final hygiene is clean (`git diff --check` passes; only the 402-line existing test file changed). The source/artifact identities remain exact after the fixture-only edit, and no shared dependency/worktree was modified. I’m recording the handoff now with the passing bounded controls and the six native reload failures explicitly called out; those failures are not being converted to xfails or hidden.
+exec
+/bin/bash -lc 'python3 scripts/artifact_manifest.py --check' in /home/user/work/wt/rt-pin-95202c2b
+ succeeded in 213ms:
+contract/artifacts.json is current
+
+exec
+/bin/bash -lc 'python3 scripts/generate.py --check' in /home/user/work/wt/rt-pin-95202c2b
+ exited 2 in 153ms:
+python3: can't open file '/home/user/work/wt/rt-pin-95202c2b/scripts/generate.py': [Errno 2] No such file or directory
+
+exec
+/bin/bash -lc "rg --files /home/user/work/wt/rt-pin-95202c2b | rg '("'^|/)(generate|artifact_manifest)'"\\.py"'$'"' | sed -n '1,40p'; rg -n \"generate\\.py --check|artifact_manifest\\.py --check\" /home/user/work/wt/rt-pin-95202c2b/README.md /home/user/work/wt/rt-pin-95202c2b/docs /home/user/work/wt/rt-pin-95202c2b -g '*.md' -g '*.sh' -g '*.py' | head -80" in /home/user/work/wt/agt-m2-private952-native-pair-prepare
+ succeeded in 47ms:
+/home/user/work/wt/rt-pin-95202c2b/scripts/artifact_manifest.py
+/home/user/work/wt/rt-pin-95202c2b/generators/generate.py
+/home/user/work/wt/rt-pin-95202c2b/README.md:38:python generators/generate.py --check
+/home/user/work/wt/rt-pin-95202c2b/README.md:44:python scripts/artifact_manifest.py --check
+/home/user/work/wt/rt-pin-95202c2b/docs/runtime-portability-testing.md:108:Compilation, `git diff --check`, and `scripts/artifact_manifest.py --check`
+/home/user/work/wt/rt-pin-95202c2b/docs/runtime-portability-testing.md:108:Compilation, `git diff --check`, and `scripts/artifact_manifest.py --check`
+/home/user/work/wt/rt-pin-95202c2b/scripts/artifact_manifest.py:4:    python scripts/artifact_manifest.py --check  # exit 1, naming each changed path
+/home/user/work/wt/rt-pin-95202c2b/README.md:38:python generators/generate.py --check
+/home/user/work/wt/rt-pin-95202c2b/README.md:44:python scripts/artifact_manifest.py --check
+
+exec
+/bin/bash -lc 'python3 generators/generate.py --check' in /home/user/work/wt/rt-pin-95202c2b
+ succeeded in 3060ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..115d51d86a2bc741118618a719aa5647ca0ca451
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): qualify private occurrence lifecycle fixture
++
++Adapt the occurrence-media integration fixture to the current Runtime's
++authoritative binding and v2 materialization paths while preserving the real
++provider, capture, retry, inverse, and collision assertions.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..115d51d86a2bc741118618a719aa5647ca0ca451
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/commit-msg.txt
+@@ -0,0 +1,5 @@
++test(timeline): qualify private occurrence lifecycle fixture
++
++Adapt the occurrence-media integration fixture to the current Runtime's
++authoritative binding and v2 materialization paths while preserving the real
++provider, capture, retry, inverse, and collision assertions.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..608e781ec2d66b6de66156ee2c5cd30f3a3559cf
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/report.md
+@@ -0,0 +1,87 @@
++# Private 357/952 lifecycle preparation
++
++## Result
++
++Prepared one real private Agent/Runtime lifecycle pair after the exact Agent
++pin review ACK was present. No public pin, release, integration, adoption, or
++group/project-data claim was made.
++
++The only repository change is the existing
++`tests/editing_conformance/test_commit_runtime_occurrence_media.py` fixture:
++it no longer uses the retired direct shot/text-binding setup, obtains the
++baseline through Runtime's real revision-closure read, uses a real v1 media
++read only to obtain verified metadata, then captures and previews the exact
++v2 command before acceptance. Product code and assertions were not weakened.
++
++## Exact source and artifact guards
++
++- Agent commit/tree: `a53703ce66de7119b6bef51376e274b8ad6296e7` /
++  `d0e6f57acb8d806cb0cf9065eb12c36e1ee28e94`.
++- Runtime commit/tree: `95202c2b09e83aaae028287d6c59b773410141f3` /
++  `d438d3e28a29ad80fa6b7c19c55e1b7a4485eae2`.
++- Command schema SHA-256: `613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3`.
++- Runtime bundle SHA-256: `4a0779db14b9bbd827e964a495367b465bab5c00ee0b5717b8ff27777010a858`.
++- Runtime artifact manifest SHA-256: `35aa9d247979760b5570f804f30688fb6eaa179d57f5bbca0a41fd6e645deb9d`.
++- Runtime metadata SHA-256: `0c4d89c8fd736f03988ae8b02d82fa1e9066a45a457fe2a260e756fc9d89ee6f`.
++
++Guards:
++
++```text
++/home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-pin-95202c2b
++ok runtime.lock.json (matches producer manifest)
++
++python3 scripts/artifact_manifest.py --check       # Runtime exact tree: exit 0, current
++python3 generators/generate.py --check             # Runtime exact tree: exit 0
++git diff --check                                    # Agent worktree: exit 0
++```
++
++## Tests
++
++All Agent commands used `ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95202c2b`,
++`PYTHONDONTWRITEBYTECODE=1`, the Agent worktree as `PYTHONPATH`,
++`/home/user/work/venv-agent/bin/python`, and `-p no:cacheprovider`.
++
++Passing:
++
++```text
++tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_identity.py
++51 passed in 43.19s
++
++tests/editing_conformance/test_native_batch_ingress.py -k 'file_lost_ack_restart_exact_retry_before_original_suffix or guarded_undo_still_refuses_intervening_equal_state_writes or retry_distinguishes_boolean_capture_and_intent or retry_numeric_equivalence'
++17 passed, 23 deselected in 33.97s
++
++tests/editing_conformance/test_materialization_version_boundary.py tests/editing_conformance/test_materialization_map.py
++66 passed in 14.76s
++
++tests/sdk/test_timeline_materialization_schema_union.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_workspace_client_timeline_commit.py
++59 passed in 217.28s
++```
++
++The full native batch file was also run against the exact Runtime: `34
++passed, 6 failed`. The six failures are unchanged existing reload assertions;
++the first semantic difference is the reopened Runtime `_source_closure`
++shape versus the expected `source_mapping` after restart. No assertion was
++changed and the narrowed lost-ACK/restart/exact-retry subset above passes.
++
++## Coverage and limits
++
++The passing real occurrence pair covers the shared occurrence and sibling
++materialization, complete v2 owner/order/source claims, opaque child data,
++real capture/provider/Runtime acceptance, dry-run, lost acknowledgement and
++restart retry, exact request/receipt identity, own-slot reuse, guarded
++inverse/redo, and global-item collision refusal. The version-boundary lane
++preserves public-v1 capture 103/3, accepted-v1 ledger-first retry/undo/redo,
++and the new unsafe obsolete-v1 refusal with its draft retained alongside the
++equivalent current-v2 path.
++
++The first fixture attempts exposed and were corrected without product edits:
++the exact Runtime fixture lacks the old `_binding_descriptor` helper; direct
++shot writes now fail closed as retired; and embedded unregistered text
++bindings are refused. The lifecycle does not exercise text binding semantics,
++so the setup now omits that unrelated field and uses the current authoritative
++Runtime closure.
++
++No full suite, browser, live socket, public release, or integration-tree run
++was performed. The native file's six reload-shape failures remain a follow-up
++for the Runtime/Agent counterpart owners; this worker does not claim them
++green.
+diff --git a/tests/editing_conformance/test_commit_runtime_occurrence_media.py b/tests/editing_conformance/test_commit_runtime_occurrence_media.py
+index e61699e2ba2a0898984b9162aa845397038e3762..82080b0d890c5300484fe1403a7cef905a5bdbe6
+--- a/tests/editing_conformance/test_commit_runtime_occurrence_media.py
++++ b/tests/editing_conformance/test_commit_runtime_occurrence_media.py
+@@ -81,8 +81,6 @@
+             pins.append(pin)
+         by_name = {row['variant_key']: pin for row, pin in zip(associations, pins)}
+         old, new = by_name['old'], by_name['new']
+-        from timeline_commit_film_fixture import _binding_descriptor
+-
+         from tests.sdk.test_timeline_commit_provider_document import (
+             MEDIA,
+             document_fixture,
+@@ -114,12 +112,9 @@
+         for row in parent['occurrences']:
+             row.update(source_offset=0, speed=1)
+         parent['occurrences'][0]['placement']['start_ms'] = 8000
+-        service.create_project_shot(project, {'shot_id': 'chapter-shot', 'name': 'Chapter One'},
+-                                    idempotency_key='chapter-shot')
+-        binding = service.set_project_shot_text_binding(project, {
+-            'shot_id': 'chapter-shot', 'kind': 'transcript', 'text': 'A chapter', 'expected_head': 0,
+-        }, idempotency_key='chapter-text')['data']
+-        document['shot_revisions'][0]['payload']['text_bindings'] = [_binding_descriptor(binding, 'A chapter')]
++        # The current Runtime only accepts authoritative registered bindings;
++        # this media lifecycle does not exercise text binding semantics.
++        document['shot_revisions'][0]['payload'].pop('text_bindings', None)
+         service.publish_parent_composition(project, 'film', {
+             'project_id': project, 'timeline_id': 'film', 'expected_head': None,
+             'parent_revision_id': 'popup-baseline', 'parent_composition': parent,
+@@ -128,6 +123,7 @@
+             'internal_timeline_revisions': [{key: value for key, value in internal.items()
+                                              if key != 'content_digest'}],
+         }, idempotency_key='popup-baseline')
++        baseline = service._timeline_commits()[0].revision_closure(project, 'film', 'popup-baseline')
+         service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+ 
+         selected, closures, candidates = [], [], []
+@@ -150,7 +146,8 @@
+                                 associations=associations, selected=selected, closures=closures,
+                                 candidates=candidates, before_accept=None, credentials=credentials,
+                                 authorize=authorize, effect=effect, outputs=outputs,
+-                                fingerprint_inputs=fingerprint_inputs, kind=kind, operation=operation, root=tmp_path / "publish")
++                                fingerprint_inputs=fingerprint_inputs, kind=kind, operation=operation,
++                                baseline=baseline, root=tmp_path / "publish")
+ 
+         def accept(port, prepared):
+             candidates.append(copy.deepcopy(prepared))
+@@ -258,9 +255,9 @@
+     )
+ 
+     before = rows(editing)
+-    preview = commit(editing, body(editing, dry_run=True), 'preview')
+-    assert preview['receipt'] is None and rows(editing) == before
+-    baseline = editing.closures[0]
++    raw_preview = commit(editing, body(editing, dry_run=True), 'raw-preview')
++    assert raw_preview['receipt'] is None and rows(editing) == before
++    baseline = editing.baseline
+     assert editing.new['object_id'] not in {pin['media_id'] for pin in baseline['dependency_manifest']['media']}
+     bundle = bundle_from_document(baseline)
+     call = raw_command(editing)
+@@ -270,6 +267,9 @@
+     else:
+         captured = capture_occurrence_swap_media(bundle, TARGET, editing.old, editing.new,
+                                                  verified_media=editing.selected)
++    before = rows(editing)
++    preview = commit(editing, body(editing, [captured], dry_run=True), 'preview')
++    assert preview['receipt'] is None and rows(editing) == before
+     assert preview['data']['commands'] == [captured]
+     request = body(editing, [captured])
+     created = commit(editing, request, 'popup')
+
+exec
+/bin/bash -lc "find . -maxdepth 3 -type d \\( -name '.pytest_cache' -o -name '__pycache__' \\) -print; find . -maxdepth 3 -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -print" in /home/user/work/wt/agt-m2-private952-native-pair-prepare
+exec
+/bin/bash -lc "git status --short --branch; git diff --check; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/DONE && echo DONE-present; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-private952-native-pair-prepare/commit-msg" in /home/user/work/wt/agt-m2-private952-native-pair-prepare
+exec
+/bin/bash -lc 'git diff --stat && wc -l tests/editing_conformance/test_commit_runtime_occurrence_media.py' in /home/user/work/wt/agt-m2-private952-native-pair-prepare
+ succeeded in 17ms:
+ succeeded in 246ms:
+ .../test_commit_runtime_occurrence_media.py        | 24 +++++++++++-----------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+402 tests/editing_conformance/test_commit_runtime_occurrence_media.py
+
+ succeeded in 563ms:
+## tl/agt-m2-private952-native-pair-prepare
+ M tests/editing_conformance/test_commit_runtime_occurrence_media.py
+DONE-present
+test(timeline): qualify private occurrence lifecycle fixture
+
+Adapt the occurrence-media integration fixture to the current Runtime's
+authoritative binding and v2 materialization paths while preserving the real
+provider, capture, retry, inverse, and collision assertions.
+
+codex
+Prepared the real private Agent `a53703ce…` / Runtime `95202c2b…` pair after pin ACK.
+
+Changed only [test_commit_runtime_occurrence_media.py](/home/user/work/wt/agt-m2-private952-native-pair-prepare/tests/editing_conformance/test_commit_runtime_occurrence_media.py), adapting setup to current authoritative Runtime bindings and v2 capture.
+
+Guards passed:
+
+- Vendor lock matches Runtime manifest.
+- Runtime artifact and generator checks passed.
+- Schema: `613123…`; bundle: `4a0779…`; manifest: `35aa9d…`.
+
+Tests:
+
+- Occurrence + identity: **51 passed**
+- Native lost-ACK/restart subset: **17 passed**
+- Materialization/version/map: **66 passed**
+- Schema/client controls: **59 passed**
+
+Full native batch remains **34 passed, 6 failed** on existing reload `_source_closure` shape assertions; assertions were preserved.
+
+Wrote `commit-msg`, `commit-msg.txt`, report, and `DONE`.
+tokens used
+249,525
+Prepared the real private Agent `a53703ce…` / Runtime `95202c2b…` pair after pin ACK.
+
+Changed only [test_commit_runtime_occurrence_media.py](/home/user/work/wt/agt-m2-private952-native-pair-prepare/tests/editing_conformance/test_commit_runtime_occurrence_media.py), adapting setup to current authoritative Runtime bindings and v2 capture.
+
+Guards passed:
+
+- Vendor lock matches Runtime manifest.
+- Runtime artifact and generator checks passed.
+- Schema: `613123…`; bundle: `4a0779…`; manifest: `35aa9d…`.
+
+Tests:
+
+- Occurrence + identity: **51 passed**
+- Native lost-ACK/restart subset: **17 passed**
+- Materialization/version/map: **66 passed**
+- Schema/client controls: **59 passed**
+
+Full native batch remains **34 passed, 6 failed** on existing reload `_source_closure` shape assertions; assertions were preserved.
+
+Wrote `commit-msg`, `commit-msg.txt`, report, and `DONE`.

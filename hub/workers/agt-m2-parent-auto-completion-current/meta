@@ -1,0 +1,9 @@
+name=agt-m2-parent-auto-completion-current
+repo=agent
+base=tl/agt-m2-s3-reviewed-source-compose
+base_sha=537c2ecd
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-parent-auto-completion-current
+started=2026-10-20T13:03:36Z

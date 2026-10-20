@@ -1,0 +1,400 @@
++
++def capture_occurrence_resize(bundle, occurrence_id, duration_ms):
++    """Capture one explicit occurrence-duration write on the original bundle."""
++    from .commands import execute
++
++    owner = 'occurrence:' + occurrence_id
++    return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.resize', 'version': '1',
++                             'select': owner, 'args': {'duration_ms': duration_ms},
++                             'intent': OCCURRENCE_RESIZE_INTENT}]).commands[0]
+diff --git a/tests/editing_conformance/test_recipe_occurrence_resize.py b/tests/editing_conformance/test_recipe_occurrence_resize.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..cfd1d4255ab1df3a7d9dd4e4d737acccf79bcfcf
+--- /dev/null
++++ b/tests/editing_conformance/test_recipe_occurrence_resize.py
+@@ -0,0 +1,99 @@
++"""Private source proposal for the Main voiceover occurrence-duration carrier."""
++from __future__ import annotations
++
++import copy
++
++import pytest
++
++from astrid.packs.video_editing.shared import draft_voiceover as vo
++from astrid.sdk.timeline._command_state import CommandError, State, present
++from astrid.sdk.timeline.commands import execute, validate_command
++from astrid.sdk.timeline.native_occurrence_resize import capture_occurrence_resize
++from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.test_recipe_m1_commands import inverse
++from tests.packs.video_editing.test_draft_voiceover import fixture, synthesis
++
++
++def voiceover_bundle():
++    candidate, scripts = fixture()
++    scripts['occurrences'][0]['text'] = 'Long new narration'
++    candidate['placements'][0].update({
++        'opaque_occurrence': {'keep': [None, False, 0]},
++        'provenance': {'source': 'Main voiceover'},
++    })
++    candidate['placements'][0]['placement']['opaque_geometry'] = {'keep': True}
++    prepared = vo.prepare_draft_voiceover(
++        candidate, scripts, synthesize=synthesis, timing_policy='ripple', padding_seconds=.15,
++    )
++    # This is the existing authored candidate model. The native command
++    # engine needs only its ordinary source-mapping envelope; this proposal
++    # does not publish or materialize it.
++    original = copy.deepcopy(candidate)
++    original['parent']['config']['output'] = {'fps': {'numerator': 30000, 'denominator': 1001}}
++    original['placements'][0].update(
++        source_offset={'start': 0, 'end': 0}, speed={'numerator': 1, 'denominator': 1},
++    )
++    original['source_mapping'] = {'shots': {}, 'placements': {}}
++    return original, prepared
++
++
++def test_main_ripple_duration_is_carried_by_same_occurrence_identity():
++    original, prepared = voiceover_bundle()
++    command = capture_occurrence_resize(original, 'o1', prepared['candidate']['placements'][0]['duration_ms'])
++    validate_command(command)
++    plan = execute(original, [command])
++
++    assert State(plan.bundle).occurrence('occurrence:o1')['occurrence_id'] == 'o1'
++    assert State(plan.bundle).occurrence('occurrence:o1')['duration_ms'] == 4150
++    assert State(plan.bundle).occurrence('occurrence:o1')['shot_id'] == 's1'
++    assert State(plan.bundle).occurrence('occurrence:o1')['opaque_occurrence'] == {
++        'keep': [None, False, 0]}
++    assert State(plan.bundle).occurrence('occurrence:o1')['placement'] == {
++        'start_ms': 0, 'opaque_geometry': {'keep': True}}
++    assert [write['path'] for write in plan.records[0]['writes']] == [['duration_ms']]
++    # Ripple's parent extent is a separate authored field; this carrier does
++    # not invent a root writer or silently update it.
++    assert plan.bundle['parent']['config']['duration'] == 6
++
++
++def test_resize_inverse_redo_and_aba_guard_keep_the_original_identity():
++    original, _ = voiceover_bundle()
++    plan = execute(original, [capture_occurrence_resize(original, 'o1', 4150)])
++    undone = inverse(plan.bundle, plan.records)
++    assert undone.bundle == original
++    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
++    with pytest.raises(CommandError, match='intervening'):
++        inverse(plan.bundle, plan.records, [{
++            'writes': [{'ref': 'occurrence:o1', 'path': ['duration_ms'],
++                        'before': present(4150), 'after': present(4150)}]}])
++
++
++def test_resize_rebases_over_disjoint_occurrence_property_and_preserves_sibling():
++    original, _ = voiceover_bundle()
++    plan = execute(original, [capture_occurrence_resize(original, 'o1', 4150)])
++    head = copy.deepcopy(original)
++    State(head).occurrence('occurrence:o1')['opaque_occurrence']['concurrent'] = True
++    State(head).occurrence('occurrence:o2')['duration_ms'] = 3200
++    rebased = replay(plan, head)
++    assert State(rebased.bundle).occurrence('occurrence:o1')['duration_ms'] == 4150
++    assert State(rebased.bundle).occurrence('occurrence:o1')['opaque_occurrence']['concurrent'] is True
++    assert State(rebased.bundle).occurrence('occurrence:o2')['duration_ms'] == 3200
++    assert inverse(rebased.bundle, rebased.records).bundle == head
++
++
++@pytest.mark.parametrize('duration_ms', [0, -1, 1.5, True])
++def test_resize_requires_a_finite_positive_integer(duration_ms):
++    original, _ = voiceover_bundle()
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        capture_occurrence_resize(original, 'o1', duration_ms)
++    assert original == before
++
++
++def test_resize_requires_a_stable_identity_without_mutating_the_draft():
++    original, _ = voiceover_bundle()
++    original['placements'][0].pop('occurrence_id')
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        capture_occurrence_resize(original, 'o1', 4150)
++    assert original == before
+diff --git a/tests/sdk/test_timeline_materialization_schema_union.py b/tests/sdk/test_timeline_materialization_schema_union.py
+index 995be7fea0a86e10a78d12737588f92da446d357..59f99b1aa75ce4af74bb2c6979820ee7763bb5df
+--- a/tests/sdk/test_timeline_materialization_schema_union.py
++++ b/tests/sdk/test_timeline_materialization_schema_union.py
+@@ -18,15 +18,24 @@
+ PRIVATE_CARRIER_SHA256 = '613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3'
+ PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
+ PRIVATE_GROUP_SHA256 = '27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb'
++PRIVATE_GROUP_DURATION_SHA256 = '79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2'
+ 
+ 
+ def without_groups(schema):
+-    for name in ('MigrateGroupsArgs', 'OccurrenceMoveArgs'):
++    for name in ('MigrateGroupsArgs', 'OccurrenceMoveArgs', 'OccurrenceResizeArgs'):
+         del schema['$defs'][name]
+     schema['$defs']['EditCommand']['allOf'] = [
+         clause for clause in schema['$defs']['EditCommand']['allOf']
+         if clause['if']['properties']['op']['const'] not in
+-        ('timeline.migrate-groups', 'occurrence.move')]
++        ('timeline.migrate-groups', 'occurrence.move', 'occurrence.resize')]
++    return schema
++
++
++def without_resize(schema):
++    del schema['$defs']['OccurrenceResizeArgs']
++    schema['$defs']['EditCommand']['allOf'] = [
++        clause for clause in schema['$defs']['EditCommand']['allOf']
++        if clause['if']['properties']['op']['const'] != 'occurrence.resize']
+     return schema
+ 
+ 
+@@ -71,12 +80,12 @@
+     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
+     assert len(ordinary['$defs']) == 55
+     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
+-    assert len(_SCHEMA['$defs']) == 58
+-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
++    assert len(_SCHEMA['$defs']) == 59
++    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
+     assert compatibility_errors(ordinary, _SCHEMA) == []
+ 
+ 
+-def test_removing_only_group_additions_reconstructs_project_data_bytes():
++def test_removing_group_and_duration_additions_reconstructs_project_data_bytes():
+     candidate = without_groups(copy.deepcopy(_SCHEMA))
+     raw = (json.dumps(candidate, indent=2) + '\n').encode()
+     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
+@@ -102,11 +111,19 @@
+     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
+ 
+ 
+-def test_private_group_proposal_is_exactly_two_additions_on_project_data_floor():
+-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
++def test_private_group_proposal_is_preserved_before_duration_addition():
++    candidate = without_resize(copy.deepcopy(_SCHEMA))
++    raw = (json.dumps(candidate, indent=2) + '\n').encode()
+     assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
+-    assert len(_SCHEMA['$defs']) == 58
+-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
++    assert len(candidate['$defs']) == 58
++    assert len(candidate['$defs']['EditCommand']['allOf']) == 32
++
++
++def test_private_duration_proposal_is_one_closed_addition_on_group_floor():
++    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
++    assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_DURATION_SHA256
++    assert len(_SCHEMA['$defs']) == 59
++    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
+ 
+ 
+ def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib, subprocess
+from pathlib import Path
+files = [
+ 'astrid/core/timeline/schema/edit-command.schema.json',
+ 'astrid/sdk/timeline/commands.py',
+ 'astrid/sdk/timeline/native_occurrence_resize.py',
+ 'tests/editing_conformance/test_recipe_occurrence_resize.py',
+ 'tests/sdk/test_timeline_materialization_schema_union.py',
+]
+h=hashlib.sha256()
+for p in sorted(files):
+ b=Path(p).read_bytes(); print(hashlib.sha256(b).hexdigest(), p); h.update(p.encode()); h.update(b'\\0'); h.update(b); h.update(b'\\0')
+print('proposal_changed_files_digest',h.hexdigest())
+PY
+printf '\\n--- status ---\\n'
+git status --short" in /home/user/work/wt/agt-m2-occurrence-duration-carrier
+ succeeded in 114ms:
+79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2 astrid/core/timeline/schema/edit-command.schema.json
+d6172dd2511aed829ed95d4702e431a325503acd488a3ec72bedea5862eee10f astrid/sdk/timeline/commands.py
+4c249adec1913566fa1ac55f4d403cc895ff06e8a70fdf94c7124bb84627c678 astrid/sdk/timeline/native_occurrence_resize.py
+f67bd1711409e3e1adce9bf1da03c931cc512e089087086465af0e679cab18ad tests/editing_conformance/test_recipe_occurrence_resize.py
+13f0a9127934d4bdc303bd79b41f64b1c12dbb7bd86e70c90ad3da654f441131 tests/sdk/test_timeline_materialization_schema_union.py
+proposal_changed_files_digest ed5a57a1f72e8efb7266f7fe3290a2081341825792065e2356e15809f6992881
+
+--- status ---
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/commands.py
+ M tests/sdk/test_timeline_materialization_schema_union.py
+?? astrid/sdk/timeline/native_occurrence_resize.py
+?? tests/editing_conformance/test_recipe_occurrence_resize.py
+
+exec
+/bin/bash -lc "sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-duration-source.md && printf '\\n--- report ---\\n' && sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-duration-carrier/report.md && printf '\\n--- markers ---\\n' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-duration-carrier/{commit-msg,commit-msg.txt,DONE}" in /home/user/work/wt/agt-m2-occurrence-duration-carrier
+ succeeded in 0ms:
+# Agent occurrence duration carrier
+
+Status: **PRIVATE SOURCE PROPOSAL — peer ACK required before freeze, normal
+generation, pin, release, Runtime pairing, or consumer activation.** No Runtime
+DTO, endpoint, App writer, generation, pin, or release was changed.
+
+## Exact source and hashes
+
+- Base reviewed full-group source: Agent commit `c0644cf1`; base tree
+  `0699f877a4c809005536a80f5956b8051a814ef7`.
+- Candidate changed-files digest (sorted path + NUL + bytes):
+  `ed5a57a1f72e8efb7266f7fe3290a2081341825792065e2356e15809f6992881`.
+- Candidate schema:
+  `astrid/core/timeline/schema/edit-command.schema.json`, SHA-256
+  `79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2`.
+  It has 59 definitions and 33 operation clauses. Removing this resize
+  definition/clause reconstructs the reviewed group schema hash
+  `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
+- Source file
+  `astrid/sdk/timeline/native_occurrence_resize.py`, SHA-256
+  `4c249adec1913566fa1ac55f4d403cc895ff06e8a70fdf94c7124bb84627c678`.
+- Registry wiring `astrid/sdk/timeline/commands.py`, SHA-256
+  `d6172dd2511aed829ed95d4702e431a325503acd488a3ec72bedea5862eee10f`.
+- Conformance source
+  `tests/editing_conformance/test_recipe_occurrence_resize.py`, SHA-256
+  `f67bd1711409e3e1adce9bf1da03c931cc512e089087086465af0e679cab18ad`.
+- Schema-floor controls
+  `tests/sdk/test_timeline_materialization_schema_union.py`, SHA-256
+  `13f0a9127934d4bdc303bd79b41f64b1c12dbb7bd86e70c90ad3da654f441131`.
+
+## Command and units
+
+The proposal adds closed `occurrence.resize@1` with:
+
+```json
+{
+  "schema_version": 1,
+  "op": "occurrence.resize",
+  "version": "1",
+  "select": "occurrence:<stable-occurrence-id>",
+  "args": {"duration_ms": 4150},
+  "intent": {"ownership": "occurrence"}
+}
+```
+
+`duration_ms` is a finite positive integer in authored integer milliseconds,
+the same raw field Main stores. The handler writes only
+`occurrence.duration_ms`. It does not quantize or rewrite placement starts,
+parent extent, child timing, shot data, or opaque fields. Rational fps and
+half-open compiler behavior are therefore unchanged by this carrier.
+
+## Guards and refusal behavior
+
+- The selector must be one exact `occurrence:<id>` root; no display ID,
+  position, child selector, or guessed owner is accepted.
+- The row's `occurrence_id`, `shot_id`, and optional `shot_revision_id` are
+  read through the existing recorder. The occurrence collection and
+  `placement.owners` selection are recorded; shared ownership refuses with the
+  existing materialization-carrier boundary.
+- Existing `parent.config.pinnedShotGroups` refuses with the existing
+  migration-needed guard. No silent legacy migration is performed.
+- Existing occurrence timing codecs in `MAP_FIELDS` are guarded and retained;
+  none is replaced. A missing/malformed/non-positive existing duration refuses.
+- Schema and handler validation both require a positive integer `duration_ms`;
+  invalid values refuse before any write and the capture draft remains intact.
+- The recorder supplies direct before/after expectations, inverse/redo, replay,
+  and intervening-write/ABA guards. The command never replaces the occurrence
+  object, aliases `group.move`, or introduces a Runtime field.
+
+## Evidence
+
+The test uses the existing `tests/packs/video_editing/test_draft_voiceover.py`
+fixture and `prepare_draft_voiceover(..., timing_policy="ripple")`: its original
+occurrence `o1` is 3000 ms and the prepared result is 4150 ms. Native capture
+then targets `occurrence:o1` and proves the same identity, exact one-field
+write, retained placement/shot/opaque fields, rational-fps-shaped codecs,
+inverse/redo, strict ABA refusal, disjoint opaque/sibling rebase, invalid
+integer refusal, and missing-identity draft preservation. The schema controls
+preserve the previous ordinary and group floors and assert this as one
+additional closed operation.
+
+## Remaining gap
+
+The normal compiler does not author a parent `config.duration` consequence for
+this occurrence field write. In the original ripple fixture the legacy
+prepared candidate separately changes the following occurrence start, parent
+hold, and parent `config.duration` from 6 to 7.15 s; this carrier intentionally
+does not invent a root writer or claim those consequences. A separate reviewed
+command/batch lowering is required for the complete ripple proposal. Runtime
+pairing, native HTTP, generation/pin/release, and App adoption remain open
+pending peer ACK and the separate audio/provenance work.
+
+--- report ---
+# Report
+
+Implemented a private Agent source proposal for the missing Main voiceover
+occurrence-duration carrier on base `c0644cf1`.
+
+## Changed
+
+- Added closed, versioned `occurrence.resize@1` with explicit
+  `occurrence:<id>` selection and integer positive `duration_ms`.
+- Registered it through the existing command registry and recorder.
+- The handler records owner/selection/identity/timing guards and writes only
+  the existing raw `duration_ms` leaf. Placement, starts, shot pin, maps,
+  child content, and opaque fields are preserved.
+- Added compact conformance for the existing voiceover ripple fixture, same-ID
+  3000 -> 4150 ms outcome, inverse/redo, ABA, disjoint rebase, invalid values,
+  and missing stable identity.
+- Preserved prior schema floors and recorded the new 59-definition/33-clause
+  candidate hash.
+
+## Tests
+
+Passed:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_resize.py tests/sdk/test_timeline_materialization_schema_union.py
+29 passed in 1.57s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_resize.py tests/editing_conformance/test_recipe_m2_group_move.py tests/sdk/test_timeline_materialization_schema_union.py
+53 passed in 4.09s
+
+python3 -m json.tool astrid/core/timeline/schema/edit-command.schema.json
+PASS
+
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/native_occurrence_resize.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_occurrence_resize.py tests/sdk/test_timeline_materialization_schema_union.py
+All checks passed
+
+git diff --check
+PASS
+```
+
+The broader neighboring lane passed 199 tests and exposed 3 existing failures:
+two legacy-group delete/duplicate assertions receive `unsupported_dependency`
+instead of their expected `migration_needed`, and the existing delete portable
+golden differs. They are pre-handler/unrelated to `occurrence.resize`; they
+were not changed or reclassified here.
+
+## Decision / gap
+
+No exact existing duration carrier was present, so this proposal adds the
+minimal one. The normal compiler does not record parent extent consequences:
+the original ripple's following placement, parent hold, and parent duration
+remain a separate authored gap. No rootwriter, Runtime DTO, endpoint, audio
+source/provenance work, generation, pin, release, or native HTTP qualification
+was added. Peer ACK is still required before freeze.
+
+--- markers ---
+-rw-r--r-- 1 root root   0 Oct 20 20:58 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-duration-carrier/DONE
+-rw-r--r-- 1 root root 292 Oct 20 20:58 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-duration-carrier/commit-msg
+-rw-r--r-- 1 root root 292 Oct 20 20:58 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-duration-carrier/commit-msg.txt
+
+codex
+Implemented the private `occurrence.resize@1` source proposal.
+
+- Writes only `occurrence.duration_ms`; preserves identity, placement, shot pin, maps, and opaque fields.
+- Added schema/registry wiring and conformance tests for 3000→4150 ms, inverse/redo, ABA, disjoint rebase, invalid values, and missing identity.
+- Candidate schema hash: `79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2`.
+- Tests: targeted lanes passed (`29 passed`, `53 passed`); Ruff, JSON validation, and `git diff --check` passed.
+- Broader neighboring lane: `199 passed, 3 pre-existing unrelated failures`.
+- No full/native HTTP/generation/pin/release run. Peer ACK remains required.
+- Parent `config.duration`/ripple extent remains a separate authored gap; no root writer added.
+
+Files: [resize command](</home/user/work/wt/agt-m2-occurrence-duration-carrier/astrid/sdk/timeline/native_occurrence_resize.py>), [tests](</home/user/work/wt/agt-m2-occurrence-duration-carrier/tests/editing_conformance/test_recipe_occurrence_resize.py>), [handoff](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-duration-source.md), [report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-duration-carrier/report.md>).
+tokens used
+227,381
+Implemented the private `occurrence.resize@1` source proposal.
+
+- Writes only `occurrence.duration_ms`; preserves identity, placement, shot pin, maps, and opaque fields.
+- Added schema/registry wiring and conformance tests for 3000→4150 ms, inverse/redo, ABA, disjoint rebase, invalid values, and missing identity.
+- Candidate schema hash: `79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2`.
+- Tests: targeted lanes passed (`29 passed`, `53 passed`); Ruff, JSON validation, and `git diff --check` passed.
+- Broader neighboring lane: `199 passed, 3 pre-existing unrelated failures`.
+- No full/native HTTP/generation/pin/release run. Peer ACK remains required.
+- Parent `config.duration`/ripple extent remains a separate authored gap; no root writer added.
+
+Files: [resize command](</home/user/work/wt/agt-m2-occurrence-duration-carrier/astrid/sdk/timeline/native_occurrence_resize.py>), [tests](</home/user/work/wt/agt-m2-occurrence-duration-carrier/tests/editing_conformance/test_recipe_occurrence_resize.py>), [handoff](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-occurrence-duration-source.md), [report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-duration-carrier/report.md>).

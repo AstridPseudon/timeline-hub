@@ -1,0 +1,400 @@
++
++Approved as a bounded future WC5 carrier source. The delta is limited to
++verified `audio/*` admission in `_media_inputs.py`, audio-vs-visual raw-track
++selection in `native_occurrence_media_commands.py`, and conformance coverage.
++
++- The command wire remains the closed five-field `MediaSelection`; the
++  candidate schema is unchanged at 58 definitions / 32 operation conditions,
++  with raw schema SHA-256
++  `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
++- Audio requires the existing exact Runtime-verified selection, positive size,
++  and finite-positive server-carried `duration_seconds`. Source `from`/`to`,
++  `hold`, `speed`, and occurrence bounds remain in seconds; no caller duration,
++  probe, clamp, or audio-as-visual fallback is introduced.
++- Audio requires an already-existing active raw child track with `kind: audio`.
++  The operation does not create/adopt a raw track. Existing create-or-require
++  registry binding behavior remains exact, and the media kind is preserved on
++  swap.
++- The existing operation names, occurrence ownership/isolation, raw child
++  identity, dependency recording, and guarded inverse remain unchanged. The
++  real-WAV case records the exact five-field selection and strictly restores;
++  malformed duration and wrong-track refusals leave the bundle unchanged.
++
++No counterexample was found in the requested delta. This approval does not
++qualify Runtime managed-object admission, native HTTP, CAS custody, historical
++unregistered audio, automatic track birth, placement/ripple retiming, or the
++outer producer/requester settlement. Those remain separate future gates.
++
++### `tl/agt-m2-voiceover-provenance-property` — APPROVE
++
++Approved as a bounded informational metadata carrier source. The delta adds
++only the closed `shot.set` leaf `payload.metadata.draft_voiceover` (object or
++explicit `null`) and its explicit clear spelling. It does not add a producer,
++Runtime authority, task/run/media authorization, endpoint, DTO, or legacy
++writer.
++
++- `shot.set` still requires explicit occurrence ownership and writes only the
++  leaf. Existing metadata siblings, unknown/namespaced fields, settings,
++  source/root identity, and sibling occurrences are preserved; no whole-shot,
++  root, or metadata replacement occurs.
++- Set, explicit `null`, and explicit clear remain distinct. The recorder keeps
++  exact leaf before/after state, including absent/null metadata-container
++  presence; inverse restores absent and null containers exactly.
++- Disjoint leaf rebase succeeds, same-leaf ABA/intervening writes block
++  inverse, and shared-occurrence sibling isolation holds. The original
++  voiceover fixture is consumed as data; its text/digest/settings/audio/run/task
++  and base fields are not rewritten by this carrier.
++- The complete schema candidate hashes to the documented
++  `65bb68acbfbc72dabbbc83eab66e5309fe5cf5f42c1acb4bc821c62434742a1e`, while
++  removing only this leaf reconstructs the prior group candidate hash
++  `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
++
++No counterexample was found in the requested delta. The leaf intentionally
++does not authenticate or authorize any value inside the provenance object;
++future Runtime/producer authority must continue to use the existing guard,
++receipt, and settled-artifact path.
++
++## Evidence
++
++Candidate trees were tested from the two branch refs in private temporary
++directories using the shared Agent venv (no shared dependency was modified).
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$TREE /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py
++295 passed in 173.07s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$TREE /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_shot_set.py tests/sdk/test_timeline_materialization_schema_union.py
++85 passed in 3.00s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$TREE /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/video_editing/test_draft_voiceover.py
++22 passed in 0.27s
++
++/home/user/work/venv-agent/bin/python -m ruff check --no-cache [all changed Agent Python files in each candidate]
++All checks passed (both candidates).
++
++git diff --check c0644cf1a7b63c9bcff7f70502b953a07879c9f3 <audio-ref>
++PASS
++git diff --check c0644cf1a7b63c9bcff7f70502b953a07879c9f3 <provenance-ref>
++PASS
++```
++
++Additional focused probes passed: setting from absent/null metadata roots and
++exact inverse, clearing an absent leaf, and updating one shared occurrence
++while preserving its sibling. No full suite, live socket, Runtime HTTP,
++composition, release, or pin was run/requested.
++
++## Follow-up boundary
++
++The future tuple remains separate from current `392`. Before any adoption,
++qualify the Runtime-managed audio admission and the normal outer
++`video_editing.sync_draft_voiceover` requester/settlement path independently;
++do not treat this informational leaf as Runtime authority or as proof of a
++completed audio placement/timing carrier.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- report ---' && sed -n '1,280p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-carriers-source-review.md && printf '%s\\n' '--- neighboring worker control files ---' && find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers -maxdepth 2 -type f \\( -name 'commit-msg' -o -name 'commit-msg.txt' -o -name 'DONE' \\) | tail -30" in /home/user/work/wt/agt-review-voiceover-audio-provenance-sources
+ succeeded in 0ms:
+--- report ---
+# WC5 voiceover carrier source review
+
+Date: 2026-10-20 UTC. Reviewed only the deltas from Agent base
+`c0644cf1a7b63c9bcff7f70502b953a07879c9f3`; no composition, freeze, generation,
+pinning, or HTTP work was performed.
+
+## Decisions
+
+### `tl/agt-m2-occurrence-audio-media-native` — APPROVE
+
+Approved as a bounded future WC5 carrier source. The delta is limited to
+verified `audio/*` admission in `_media_inputs.py`, audio-vs-visual raw-track
+selection in `native_occurrence_media_commands.py`, and conformance coverage.
+
+- The command wire remains the closed five-field `MediaSelection`; the
+  candidate schema is unchanged at 58 definitions / 32 operation conditions,
+  with raw schema SHA-256
+  `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
+- Audio requires the existing exact Runtime-verified selection, positive size,
+  and finite-positive server-carried `duration_seconds`. Source `from`/`to`,
+  `hold`, `speed`, and occurrence bounds remain in seconds; no caller duration,
+  probe, clamp, or audio-as-visual fallback is introduced.
+- Audio requires an already-existing active raw child track with `kind: audio`.
+  The operation does not create/adopt a raw track. Existing create-or-require
+  registry binding behavior remains exact, and the media kind is preserved on
+  swap.
+- The existing operation names, occurrence ownership/isolation, raw child
+  identity, dependency recording, and guarded inverse remain unchanged. The
+  real-WAV case records the exact five-field selection and strictly restores;
+  malformed duration and wrong-track refusals leave the bundle unchanged.
+
+No counterexample was found in the requested delta. This approval does not
+qualify Runtime managed-object admission, native HTTP, CAS custody, historical
+unregistered audio, automatic track birth, placement/ripple retiming, or the
+outer producer/requester settlement. Those remain separate future gates.
+
+### `tl/agt-m2-voiceover-provenance-property` — APPROVE
+
+Approved as a bounded informational metadata carrier source. The delta adds
+only the closed `shot.set` leaf `payload.metadata.draft_voiceover` (object or
+explicit `null`) and its explicit clear spelling. It does not add a producer,
+Runtime authority, task/run/media authorization, endpoint, DTO, or legacy
+writer.
+
+- `shot.set` still requires explicit occurrence ownership and writes only the
+  leaf. Existing metadata siblings, unknown/namespaced fields, settings,
+  source/root identity, and sibling occurrences are preserved; no whole-shot,
+  root, or metadata replacement occurs.
+- Set, explicit `null`, and explicit clear remain distinct. The recorder keeps
+  exact leaf before/after state, including absent/null metadata-container
+  presence; inverse restores absent and null containers exactly.
+- Disjoint leaf rebase succeeds, same-leaf ABA/intervening writes block
+  inverse, and shared-occurrence sibling isolation holds. The original
+  voiceover fixture is consumed as data; its text/digest/settings/audio/run/task
+  and base fields are not rewritten by this carrier.
+- The complete schema candidate hashes to the documented
+  `65bb68acbfbc72dabbbc83eab66e5309fe5cf5f42c1acb4bc821c62434742a1e`, while
+  removing only this leaf reconstructs the prior group candidate hash
+  `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
+
+No counterexample was found in the requested delta. The leaf intentionally
+does not authenticate or authorize any value inside the provenance object;
+future Runtime/producer authority must continue to use the existing guard,
+receipt, and settled-artifact path.
+
+## Evidence
+
+Candidate trees were tested from the two branch refs in private temporary
+directories using the shared Agent venv (no shared dependency was modified).
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$TREE /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py
+295 passed in 173.07s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$TREE /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_shot_set.py tests/sdk/test_timeline_materialization_schema_union.py
+85 passed in 3.00s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$TREE /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/video_editing/test_draft_voiceover.py
+22 passed in 0.27s
+
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache [all changed Agent Python files in each candidate]
+All checks passed (both candidates).
+
+git diff --check c0644cf1a7b63c9bcff7f70502b953a07879c9f3 <audio-ref>
+PASS
+git diff --check c0644cf1a7b63c9bcff7f70502b953a07879c9f3 <provenance-ref>
+PASS
+```
+
+Additional focused probes passed: setting from absent/null metadata roots and
+exact inverse, clearing an absent leaf, and updating one shared occurrence
+while preserving its sibling. No full suite, live socket, Runtime HTTP,
+composition, release, or pin was run/requested.
+
+## Follow-up boundary
+
+The future tuple remains separate from current `392`. Before any adoption,
+qualify the Runtime-managed audio admission and the normal outer
+`video_editing.sync_draft_voiceover` requester/settlement path independently;
+do not treat this informational leaf as Runtime authority or as proof of a
+completed audio placement/timing carrier.
+--- neighboring worker control files ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-d13-regen/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-d13-regen/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-d13-regen/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-media-unify/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d07-cut/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-full-a610-triage/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-catalog-text-replay-fix/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-catalog-text-replay-fix/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-review-union-013/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-review-union-013/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-review-union-013/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc6-current014-final/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-group80-runtime-contract-delta/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-group80-runtime-contract-delta/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-viewing-extractions-current/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-viewing-extractions-current/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-authority-compose/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-authority-compose/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-commit-path-dedup/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-commit-path-dedup/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime952-private-counterpart/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-legacy-final-review/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-text-clear-legacy-final-review/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-cutover-route-tests/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/orch-fallback-smoke/commit-msg
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-carriers-source-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-carriers-source-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f9d3d067768212dacf9e151aa7547b1d5ecf64fa
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-carriers-source-review.md
+@@ -0,0 +1,101 @@
++# WC5 voiceover carrier source review
++
++Date: 2026-10-20 UTC. Reviewed only the deltas from Agent base
++`c0644cf1a7b63c9bcff7f70502b953a07879c9f3`; no composition, freeze, generation,
++pinning, or HTTP work was performed.
++
++## Decisions
++
++### `tl/agt-m2-occurrence-audio-media-native` — APPROVE
++
++Approved as a bounded future WC5 carrier source. The delta is limited to
++verified `audio/*` admission in `_media_inputs.py`, audio-vs-visual raw-track
++selection in `native_occurrence_media_commands.py`, and conformance coverage.
++
++- The command wire remains the closed five-field `MediaSelection`; the
++  candidate schema is unchanged at 58 definitions / 32 operation conditions,
++  with raw schema SHA-256
++  `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
++- Audio requires the existing exact Runtime-verified selection, positive size,
++  and finite-positive server-carried `duration_seconds`. Source `from`/`to`,
++  `hold`, `speed`, and occurrence bounds remain in seconds; no caller duration,
++  probe, clamp, or audio-as-visual fallback is introduced.
++- Audio requires an already-existing active raw child track with `kind: audio`.
++  The operation does not create/adopt a raw track. Existing create-or-require
++  registry binding behavior remains exact, and the media kind is preserved on
++  swap.
++- The existing operation names, occurrence ownership/isolation, raw child
++  identity, dependency recording, and guarded inverse remain unchanged. The
++  real-WAV case records the exact five-field selection and strictly restores;
++  malformed duration and wrong-track refusals leave the bundle unchanged.
++
++No counterexample was found in the requested delta. This approval does not
++qualify Runtime managed-object admission, native HTTP, CAS custody, historical
++unregistered audio, automatic track birth, placement/ripple retiming, or the
++outer producer/requester settlement. Those remain separate future gates.
++
++### `tl/agt-m2-voiceover-provenance-property` — APPROVE
++
++Approved as a bounded informational metadata carrier source. The delta adds
++only the closed `shot.set` leaf `payload.metadata.draft_voiceover` (object or
++explicit `null`) and its explicit clear spelling. It does not add a producer,
++Runtime authority, task/run/media authorization, endpoint, DTO, or legacy
++writer.
++
++- `shot.set` still requires explicit occurrence ownership and writes only the
++  leaf. Existing metadata siblings, unknown/namespaced fields, settings,
++  source/root identity, and sibling occurrences are preserved; no whole-shot,
++  root, or metadata replacement occurs.
++- Set, explicit `null`, and explicit clear remain distinct. The recorder keeps
++  exact leaf before/after state, including absent/null metadata-container
++  presence; inverse restores absent and null containers exactly.
++- Disjoint leaf rebase succeeds, same-leaf ABA/intervening writes block
++  inverse, and shared-occurrence sibling isolation holds. The original
++  voiceover fixture is consumed as data; its text/digest/settings/audio/run/task
++  and base fields are not rewritten by this carrier.
++- The complete schema candidate hashes to the documented
++  `65bb68acbfbc72dabbbc83eab66e5309fe5cf5f42c1acb4bc821c62434742a1e`, while
++  removing only this leaf reconstructs the prior group candidate hash
++  `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
++
++No counterexample was found in the requested delta. The leaf intentionally
++does not authenticate or authorize any value inside the provenance object;
++future Runtime/producer authority must continue to use the existing guard,
++receipt, and settled-artifact path.
++
++## Evidence
++
++Candidate trees were tested from the two branch refs in private temporary
++directories using the shared Agent venv (no shared dependency was modified).
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$TREE /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_materialization_schema_union.py
++295 passed in 173.07s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$TREE /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_shot_set.py tests/sdk/test_timeline_materialization_schema_union.py
++85 passed in 3.00s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$TREE /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/video_editing/test_draft_voiceover.py
++22 passed in 0.27s
++
++/home/user/work/venv-agent/bin/python -m ruff check --no-cache [all changed Agent Python files in each candidate]
++All checks passed (both candidates).
++
++git diff --check c0644cf1a7b63c9bcff7f70502b953a07879c9f3 <audio-ref>
++PASS
++git diff --check c0644cf1a7b63c9bcff7f70502b953a07879c9f3 <provenance-ref>
++PASS
++```
++
++Additional focused probes passed: setting from absent/null metadata roots and
++exact inverse, clearing an absent leaf, and updating one shared occurrence
++while preserving its sibling. No full suite, live socket, Runtime HTTP,
++composition, release, or pin was run/requested.
++
++## Follow-up boundary
++
++The future tuple remains separate from current `392`. Before any adoption,
++qualify the Runtime-managed audio admission and the normal outer
++`video_editing.sync_draft_voiceover` requester/settlement path independently;
++do not treat this informational leaf as Runtime authority or as proof of a
++completed audio placement/timing carrier.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..9ab03f59391af2a4333fbd86d07d7edd872f9357
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg
+@@ -0,0 +1,4 @@
++docs: review voiceover carrier sources
++
++Record independent data-loss review and bounded approval decisions for the
++occurrence audio and draft voiceover provenance candidates.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..9ab03f59391af2a4333fbd86d07d7edd872f9357
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs: review voiceover carrier sources
++
++Record independent data-loss review and bounded approval decisions for the
++occurrence audio and draft voiceover provenance candidates.
+
+exec
+/bin/bash -lc "git status --short --branch && printf '%s\\n' '--- control artifacts ---' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg* /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/DONE && printf '%s\\n' '--- report path ---' && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-carriers-source-review.md && echo present" in /home/user/work/wt/agt-review-voiceover-audio-provenance-sources
+ succeeded in 356ms:
+## tl/agt-review-voiceover-audio-provenance-sources
+--- control artifacts ---
+-rw-r--r-- 1 root root   0 Oct 20 20:59 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/DONE
+-rw-r--r-- 1 root root 175 Oct 20 20:59 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg
+-rw-r--r-- 1 root root 175 Oct 20 20:59 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-voiceover-audio-provenance-sources/commit-msg.txt
+--- report path ---
+present
+
+codex
+Completed the independent review.
+
+- `tl/agt-m2-occurrence-audio-media-native`: **APPROVE**, bounded to explicit raw audio tracks and exact Runtime-verified five-field selections.
+- `tl/agt-m2-voiceover-provenance-property`: **APPROVE**, informational metadata only; no Runtime authority.
+
+Evidence: audio `295 passed`; provenance `85 passed`; voiceover fixture `22 passed`; Ruff and diff checks passed. Additional absence/null-container, sibling-isolation, ABA, and inverse probes passed.
+
+Report: [agent-voiceover-carriers-source-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-carriers-source-review.md)
+
+No full suite, HTTP, composition, freeze, generation, or pinning was run. Worktree is clean; `commit-msg`, `commit-msg.txt`, and `DONE` were written.
+tokens used
+156,648
+Completed the independent review.
+
+- `tl/agt-m2-occurrence-audio-media-native`: **APPROVE**, bounded to explicit raw audio tracks and exact Runtime-verified five-field selections.
+- `tl/agt-m2-voiceover-provenance-property`: **APPROVE**, informational metadata only; no Runtime authority.
+
+Evidence: audio `295 passed`; provenance `85 passed`; voiceover fixture `22 passed`; Ruff and diff checks passed. Additional absence/null-container, sibling-isolation, ABA, and inverse probes passed.
+
+Report: [agent-voiceover-carriers-source-review.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-carriers-source-review.md)
+
+No full suite, HTTP, composition, freeze, generation, or pinning was run. Worktree is clean; `commit-msg`, `commit-msg.txt`, and `DONE` were written.

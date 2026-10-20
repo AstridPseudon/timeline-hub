@@ -1,0 +1,400 @@
++
++def test_inputs_mode_surfaces_read_only_refusal_before_view_write() -> None:
++    class ReadOnlyTransport(_NativeTransport):
++        def create_timeline_view(self, *args, **kwargs):  # noqa: ANN002, ANN003
++            raise WorkspaceClientError(
++                401,
++                "forbidden",
++                "projects:write is required to create a timeline view",
++                {"required_scope": "projects:write"},
++            )
++
++    result = RemoteTimelines(ReadOnlyTransport()).visualize(
++        "project-1", "main", mode="inputs"
++    )
++
++    assert not result.ok
++    assert result.error.code == "forbidden"
++    assert result.error.details == {"required_scope": "projects:write"}
++
++
+ def test_composed_mode_fails_closed_when_no_exact_render_reader_exists() -> None:
+     result = RemoteTimelines(_NativeTransport()).visualize(
+         "project-1", "main", mode="composed", occurrence="occ-1"
+diff --git a/tests/sdk/test_workspace_client_timeline_commit.py b/tests/sdk/test_workspace_client_timeline_commit.py
+index 1c465615c56e07b0e8d309c69f9be85bab863fcf..94e14b289bfff471fe7aa7688e1e95540fe2e09a
+--- a/tests/sdk/test_workspace_client_timeline_commit.py
++++ b/tests/sdk/test_workspace_client_timeline_commit.py
+@@ -99,6 +99,34 @@
+     )
+ 
+ 
++def test_workspace_client_create_timeline_view_forwards_explicit_key() -> None:
++    class Generated:
++        def create_timeline_view(
++            self,
++            project: str,
++            timeline: str,
++            options: dict[str, Any],
++            *,
++            idempotency_key: str,
++        ):
++            assert (project, timeline, options, idempotency_key) == (
++                "project-1",
++                "timeline-1",
++                {"revision_id": "revision-1", "formats": ["md"]},
++                "view-retry-1",
++            )
++            return {"artifact_id": "artifact-1"}
++
++    result = _client(Generated()).create_timeline_view(
++        "project-1",
++        "timeline-1",
++        {"revision_id": "revision-1", "formats": ["md"]},
++        idempotency_key="view-retry-1",
++    )
++
++    assert result == {"artifact_id": "artifact-1"}
++
++
+ def test_workspace_client_lists_exact_commit_history_page() -> None:
+     class Generated:
+         def list_timeline_commits(
+
+codex
+The central named lane completed with 34 passed and 5 failures, all existing retired direct-shot-write expectations unrelated to this view port; the report now records the exact service command and failure shape. I’m doing final diff hygiene and one small idempotency regression check, then I’ll write the harness commit message and DONE marker.
+exec
+/bin/bash -lc 'git diff --check && /home/user/work/venv-agent/bin/python -m pytest -q tests/stage1/test_remote_mutation_idempotency_luna.py && git status --short' in /home/user/work/wt/agt-m2-view-write-caller
+ succeeded in 4380ms:
+..                                                                       [100%]
+2 passed in 0.71s
+ M astrid/sdk/remote.py
+ M astrid/sdk/workspace_client.py
+ M tests/sdk/test_native_timeline_facades.py
+ M tests/sdk/test_workspace_client_timeline_commit.py
+?? docs/design/agent-view-write-caller.md
+?? notes/
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-view-write-caller/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-view-write-caller/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-view-write-caller/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-view-write-caller/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-view-write-caller/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-view-write-caller/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..cd8bbca1f43ddeec7b59d265aa42d22ee1ff3690
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-view-write-caller/commit-msg
+@@ -0,0 +1,4 @@
++fix(agent): port timeline view caller write scope
++
++Forward explicit view idempotency keys through the workspace facade and
++mutation dispatch, and cover native input retry identity and write refusal.
+diff --git a/astrid/sdk/remote.py b/astrid/sdk/remote.py
+index 9009c10e2ebddfef8f6f8722872a589c1612f4d3..87937432700fc3822819e9014eb114b63ca39669
+--- a/astrid/sdk/remote.py
++++ b/astrid/sdk/remote.py
+@@ -325,7 +325,7 @@
+         self._client = client
+ 
+     def _typed(self, operation: str, *args: Any, key: str | None = None, **kwargs: Any) -> DomainResult[Any]:
+-        reads = {"get_project", "list_projects", "current_project", "list_timelines", "list_timeline_history", "list_timeline_commits", "diff_timeline", "inspect_timeline", "create_timeline_view", "get_shot", "list_project_shots", "get_reference", "list_project_references", "get_object", "head_object", "list_project_objects", "list_media_relations", "get_task", "list_project_tasks", "list_managed_outputs", "get_managed_output", "get_run", "list_project_runs", "list_events", "list_run_events", "list_generations", "get_generation", "list_variants", "get_document", "list_documents", "get_preferences", "list_project_shot_text_bindings", "get_project_shot_text_binding", "get_project_shot_revision", "get_project_timeline_revision", "get_project_parent_composition_revision", "get_source_frame_thumbnail"}
++        reads = {"get_project", "list_projects", "current_project", "list_timelines", "list_timeline_history", "list_timeline_commits", "diff_timeline", "inspect_timeline", "get_shot", "list_project_shots", "get_reference", "list_project_references", "get_object", "head_object", "list_project_objects", "list_media_relations", "get_task", "list_project_tasks", "list_managed_outputs", "get_managed_output", "get_run", "list_project_runs", "list_events", "list_run_events", "list_generations", "get_generation", "list_variants", "get_document", "list_documents", "get_preferences", "list_project_shot_text_bindings", "get_project_shot_text_binding", "get_project_shot_revision", "get_project_timeline_revision", "get_project_parent_composition_revision", "get_source_frame_thumbnail"}
+         if key is None and operation not in reads:
+             key = uuid.uuid4().hex
+         try:
+@@ -379,7 +379,8 @@
+             elif operation == "get_run": value = self._client.get_run(*args, **kwargs)
+             elif operation == "get_task": value = self._client.get_task(*args, **kwargs)
+             elif operation == "inspect_timeline": value = self._client.inspect_timeline(*args, **kwargs)
+-            elif operation == "create_timeline_view": value = self._client.create_timeline_view(*args, **kwargs)
++            elif operation == "create_timeline_view":
++                value = self._client.create_timeline_view(*args, idempotency_key=key, **kwargs)
+             elif operation == "fail_attempt": value = self._client.fail_attempt(*args, **kwargs)
+             elif operation == "head_object": value = self._client.head_object(*args, **kwargs)
+             elif operation == "ensure_source_frame_thumbnail":
+diff --git a/astrid/sdk/workspace_client.py b/astrid/sdk/workspace_client.py
+index fe206c9548331df76c3ee5818559b343c75ddc18..18296b2d2b1486c135778ff5c0aa689a05edceb5
+--- a/astrid/sdk/workspace_client.py
++++ b/astrid/sdk/workspace_client.py
+@@ -557,10 +557,16 @@
+         project_id: str,
+         timeline_id: str,
+         options: Mapping[str, Any] | None = None,
++        *,
++        idempotency_key: str,
+     ) -> Any:
+         """Create a Runtime-owned declared-input timeline view."""
+         return self._call_generated(
+-            "create_timeline_view", project_id, timeline_id, options=options or {}
++            "create_timeline_view",
++            project_id,
++            timeline_id,
++            options=options or {},
++            idempotency_key=idempotency_key,
+         )
+ 
+     def list_timeline_history(self, timeline_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
+diff --git a/docs/design/agent-view-write-caller.md b/docs/design/agent-view-write-caller.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6fe7de830114e3044d6965d09d06a0535957bbd4
+--- /dev/null
++++ b/docs/design/agent-view-write-caller.md
+@@ -0,0 +1,26 @@
++# Agent view-write caller port
++
++## Source
++
++- Settled plan: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md`.
++- Runtime handoff: `/home/user/timeline-hub/hub/design/runtime-view-write-scope-handoff.md`.
++- Agent worktree base: `df2739f9` (`tl/integration` ancestry).
++- Handoff Runtime implementation basis: `642eef7`, with F1/F2 still requiring the final coordinated Runtime release.
++
++## Changes
++
++- `astrid/sdk/workspace_client.py` now requires an explicit keyword `idempotency_key` for `create_timeline_view` and forwards it unchanged to the generated client.
++- `astrid/sdk/remote.py` no longer classifies `create_timeline_view` as a read. The existing mutation-key allocator therefore gives each logical native-input view request a key, and the dispatch passes that same key to the generated client.
++- Native SDK tests cover `projects:write` refusal propagation, successful view calls, exact retry key/options, and a fresh key for a new request/head refresh.
++- Existing inspection/read and composed/diff paths remain unchanged. No endpoint, CLI key flag, authority scope, generated client, or contract pin was added or changed.
++
++## Results
++
++- `/home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_native_timeline_facades.py` — **31 passed**.
++- `/home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_timeline_route_integration.py tests/sdk/test_timeline_visualize_public_surface.py` — **26 passed in 57.87s**.
++- Central named `client-cutover-integration` — **34 passed, 5 failed**. The failures are pre-existing retired direct-shot-write expectations in `tests/stage1/test_runtime_client_cutover.py`, not view-caller failures.
++
++## Blocked pair / qualification boundary
++
++The checked-in `astrid_runtime_client.generated.WorkspaceClient.create_timeline_view` still has the old three-argument signature and does not accept `idempotency_key`. This branch intentionally targets the documented final official client signature; it does not add a compatibility bypass. The paired Runtime F1/F2 final union and generated-client pin must land before live write qualification or release. The expected old-client mismatch is therefore reported, not hidden.
++
+diff --git a/notes/report.md b/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f5257074fa5d19c20a4b4cc10731be662ee44abf
+--- /dev/null
++++ b/notes/report.md
+@@ -0,0 +1,40 @@
++# ASSIGNED10 report: Agent view-write caller port
++
++## Source and scope
++
++Implemented only the assigned Agent caller port from:
++
++- `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md`
++- `/home/user/timeline-hub/hub/design/runtime-view-write-scope-handoff.md`
++
++Changed `astrid/sdk/workspace_client.py`, `astrid/sdk/remote.py`, the direct native SDK tests, and the requested flat design/report documentation. No generated client, pin, endpoint, flag, authority scope, integration worktree, or Git metadata was changed.
++
++## Exact changes
++
++`WorkspaceClient.create_timeline_view` now takes required keyword `idempotency_key` and forwards it to the generated client. `_RemoteFamily._typed` treats view creation as a mutation, allocates a stable key for each logical request, and passes it as `idempotency_key` at dispatch. Exact retries preserve key/options; a fresh `visualize(..., mode="inputs")` call gets a new key. Inspection remains on the read path.
++
++## Exact tests and results
++
++```text
++/home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_native_timeline_facades.py
++31 passed in 1.28s
++
++/home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_timeline_route_integration.py tests/sdk/test_timeline_visualize_public_surface.py
++26 passed in 57.87s
++
++Central named command (`request-test agt-m2-view-write-caller client-cutover-integration`; service command `env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/stage1/test_runtime_client_cutover.py`):
++34 passed, 5 failed in 68.49s
++```
++
++The system `pytest` invocation was not usable because its environment lacked `jsonschema`; the shared Agent venv was used as required and passed the targeted suites.
++
++## Decisions
++
++The documented final generated-client signature was used even though this worktree still contains the old generated client. No bypass or manual generated-client edit was made. Composed capture and revision-diff callers retain their existing task/invocation behavior; only native inputs view creation crosses the write-authorized mutation boundary.
++
++## Blocked / unverified
++
++The paired Runtime F1/F2 final union and official generated-client/pin are not yet present. Consequently, live Runtime qualification of the new `/views` write call is unverified here and must be run after the coordinated pin. The old local generated client is expected to reject the new keyword until that pin lands. No full suite was requested.
++
++The five named-lane failures are the existing `tests/stage1/test_runtime_client_cutover.py` direct-shot-write expectations; they fail with `retired_route` and do not exercise the view caller port.
++
+diff --git a/tests/sdk/test_native_timeline_facades.py b/tests/sdk/test_native_timeline_facades.py
+index ba41d0e9fc2d9a452e8f7d111048d1f7b1601252..011e01fbae76ab186a75791243180a09742d6e6c
+--- a/tests/sdk/test_native_timeline_facades.py
++++ b/tests/sdk/test_native_timeline_facades.py
+@@ -4,6 +4,7 @@
+ 
+ from astrid.sdk.contracts import DomainResult
+ from astrid.sdk.remote import RemoteTimelines
++from astrid.sdk.workspace_client import WorkspaceClientError
+ 
+ 
+ class _NativeTransport:
+@@ -35,8 +36,8 @@
+             }],
+         }
+ 
+-    def create_timeline_view(self, project, timeline, *, options):
+-        self.view_calls.append((project, timeline, options))
++    def create_timeline_view(self, project, timeline, *, options, idempotency_key):
++        self.view_calls.append((project, timeline, options, idempotency_key))
+         return {
+             "inspection": {"revision_id": "rev-7", "snapshot_digest": "sha256:snapshot", "selectors": options},
+             "evidence_kind": "declared_inputs",
+@@ -275,6 +276,68 @@
+     assert transport.view_calls
+ 
+ 
++def test_inputs_mode_reuses_exact_key_and_options_for_a_transport_retry() -> None:
++    transport = _NativeTransport()
++    timelines = RemoteTimelines(transport)
++    options = {"revision_id": "rev-7", "formats": ["md"]}
++
++    first = timelines._typed(
++        "create_timeline_view",
++        "project-1",
++        "tl-1",
++        options=options,
++        key="view-retry-1",
++    )
++    replay = timelines._typed(
++        "create_timeline_view",
++        "project-1",
++        "tl-1",
++        options=options,
++        key="view-retry-1",
++    )
++
++    assert first.ok and replay.ok
++    assert transport.view_calls == [
++        ("project-1", "tl-1", options, "view-retry-1"),
++        ("project-1", "tl-1", options, "view-retry-1"),
++    ]
++
++
++def test_inputs_mode_allocates_a_fresh_key_for_a_new_head_request() -> None:
++    transport = _NativeTransport()
++    timelines = RemoteTimelines(transport)
++
++    first = timelines.visualize("project-1", "main", mode="inputs")
++    refreshed = timelines.visualize("project-1", "main", mode="inputs")
++
++    assert first.ok and refreshed.ok
++    assert first.idempotency_key
++    assert refreshed.idempotency_key
++    assert first.idempotency_key != refreshed.idempotency_key
++    assert transport.view_calls[0][2] == transport.view_calls[1][2]
++    assert transport.view_calls[0][3] == first.idempotency_key
++    assert transport.view_calls[1][3] == refreshed.idempotency_key
++
++
++def test_inputs_mode_surfaces_read_only_refusal_before_view_write() -> None:
++    class ReadOnlyTransport(_NativeTransport):
++        def create_timeline_view(self, *args, **kwargs):  # noqa: ANN002, ANN003
++            raise WorkspaceClientError(
++                401,
++                "forbidden",
++                "projects:write is required to create a timeline view",
++                {"required_scope": "projects:write"},
++            )
++
++    result = RemoteTimelines(ReadOnlyTransport()).visualize(
++        "project-1", "main", mode="inputs"
++    )
++
++    assert not result.ok
++    assert result.error.code == "forbidden"
++    assert result.error.details == {"required_scope": "projects:write"}
++
++
+ def test_composed_mode_fails_closed_when_no_exact_render_reader_exists() -> None:
+     result = RemoteTimelines(_NativeTransport()).visualize(
+         "project-1", "main", mode="composed", occurrence="occ-1"
+diff --git a/tests/sdk/test_workspace_client_timeline_commit.py b/tests/sdk/test_workspace_client_timeline_commit.py
+index 1c465615c56e07b0e8d309c69f9be85bab863fcf..94e14b289bfff471fe7aa7688e1e95540fe2e09a
+--- a/tests/sdk/test_workspace_client_timeline_commit.py
++++ b/tests/sdk/test_workspace_client_timeline_commit.py
+@@ -99,6 +99,34 @@
+     )
+ 
+ 
++def test_workspace_client_create_timeline_view_forwards_explicit_key() -> None:
++    class Generated:
++        def create_timeline_view(
++            self,
++            project: str,
++            timeline: str,
++            options: dict[str, Any],
++            *,
++            idempotency_key: str,
++        ):
++            assert (project, timeline, options, idempotency_key) == (
++                "project-1",
++                "timeline-1",
++                {"revision_id": "revision-1", "formats": ["md"]},
++                "view-retry-1",
++            )
++            return {"artifact_id": "artifact-1"}
++
++    result = _client(Generated()).create_timeline_view(
++        "project-1",
++        "timeline-1",
++        {"revision_id": "revision-1", "formats": ["md"]},
++        idempotency_key="view-retry-1",
++    )
++
++    assert result == {"artifact_id": "artifact-1"}
++
++
+ def test_workspace_client_lists_exact_commit_history_page() -> None:
+     class Generated:
+         def list_timeline_commits(
+
+exec
+/bin/bash -lc "test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-view-write-caller/DONE && echo DONE && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-view-write-caller/commit-msg && git diff --stat && git diff --check" in /home/user/work/wt/agt-m2-view-write-caller
+ succeeded in 535ms:
+DONE
+fix(agent): port timeline view caller write scope
+
+Forward explicit view idempotency keys through the workspace facade and
+mutation dispatch, and cover native input retry identity and write refusal.
+ astrid/sdk/remote.py                               |  5 +-
+ astrid/sdk/workspace_client.py                     |  8 ++-
+ tests/sdk/test_native_timeline_facades.py          | 67 +++++++++++++++++++++-
+ tests/sdk/test_workspace_client_timeline_commit.py | 28 +++++++++
+ 4 files changed, 103 insertions(+), 5 deletions(-)
+
+codex
+## Report
+
+Implemented the Agent view-write caller port:
+
+- `WorkspaceClient.create_timeline_view` forwards explicit `idempotency_key`.
+- Remote dispatch treats view creation as mutation, preserving retry keys and generating fresh keys for new requests.
+- Added native SDK retry/refusal tests.
+- Added [design handoff]( /home/user/work/wt/agt-m2-view-write-caller/docs/design/agent-view-write-caller.md) and [report]( /home/user/work/wt/agt-m2-view-write-caller/notes/report.md).
+
+Tests:
+
+- SDK targeted: 31 passed.
+- CLI/public visualization: 26 passed.
+- Idempotency regression: 2 passed.
+- Named integration: 34 passed, 5 unrelated existing retired-shot-write failures.
+
+Blocked: final Runtime F1/F2 union and generated-client pin are pending; live `/views` qualification remains unverified. Commit message and `DONE` marker created.
+tokens used
+196,122
+## Report
+
+Implemented the Agent view-write caller port:
+
+- `WorkspaceClient.create_timeline_view` forwards explicit `idempotency_key`.
+- Remote dispatch treats view creation as mutation, preserving retry keys and generating fresh keys for new requests.
+- Added native SDK retry/refusal tests.
+- Added [design handoff]( /home/user/work/wt/agt-m2-view-write-caller/docs/design/agent-view-write-caller.md) and [report]( /home/user/work/wt/agt-m2-view-write-caller/notes/report.md).
+
+Tests:
+
+- SDK targeted: 31 passed.
+- CLI/public visualization: 26 passed.
+- Idempotency regression: 2 passed.
+- Named integration: 34 passed, 5 unrelated existing retired-shot-write failures.
+
+Blocked: final Runtime F1/F2 union and generated-client pin are pending; live `/views` qualification remains unverified. Commit message and `DONE` marker created.

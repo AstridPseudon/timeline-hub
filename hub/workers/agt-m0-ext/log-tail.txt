@@ -1,0 +1,400 @@
++are atomic. Concurrent delete-vs-edit, reorder and parent replacement conflict
++by default. Unknown fields have conservative atomic merge, not last writer wins.
++Namespace registration grants no authority to write other packs' data.
++App `extensionContextFactory.ts:createExtensionTimelineOps` (125–233) already
++guards attribution and project-data targets; Runtime/provider must enforce the
++corresponding authority, not trust an App-only check.
++
++**Rationale and grouping.** Use the recipe's optional short `rationale` and
++`group_id`; `reason` is the reconciled commit-wire spelling of rationale. Show
++them in canonical history and projected diffs. Explanatory
++`why:` text in the cut sheet is existing **authored cut data**, not a substitute
++for command rationale. A gesture, deterministic macro or accepted producer batch
++is one undo unit and one atomic acceptance transaction. Producer artifact writes
++are independent immutable outputs: failure/rejection leaves unreferenced
++artifacts, never partial timeline edits. A shared group ID across requests does
++not make those requests atomic. Undo must retain the entire group's observations,
++including publication-pointer no-op writes, as the recipe requires.
++
++**Proposals.** Proposed envelope is identity + project/timeline + base accepted
++revision/publication pair + ordered commands (with captured IDs/bindings) + rationale + source
++pack/run/artifact refs and implementation versions. Preview/diff/findings are
++pinned derived outputs. Accept sends the original base and commands to Runtime
++for the recipe's authoritative rebase, validation and atomic commit. Conflicts
++leave the proposal reviewable; reject changes no authored state. Retry uses the
++same exact in-flight request; newer proposals do not replace uncertain sends.
++App `lib/proposal-runtime.ts` already has review/preview and TimelineOps acceptance
++but stores numeric `baseVersion` and patches (`ProposalPersistenceRecord`, 38–52);
++its UI/persistence can be adapted, not treated as the accepted history authority.
++
++**Automation/export policies.** Findings are advisory to human saves. Core
++schema/reference/authority/timing validity remains mandatory. Project policies
++may require named/versioned checks for a producer proposal's explicit
++auto-approval or for export; missing/stale/failed/unavailable required results
++mean approval/export is unavailable, with reasons, never implicit pass. Pin the
++policy Documents version and check inputs to the actual candidate/accepted
++revision; if rebase changes the candidate, rerun required checks before automatic
++acceptance, and validate candidate/head identity on commit. Do not run renderer
++checks inside the save transaction. A changed head retries planning/checking,
++not acceptance with a stale pass. Human review remains possible subject to core
++validity and the project's stated export policy. A producer cannot grant itself
++auto-approval; preference prose is not authorization. Export gating happens
++before producing a successful export, using the exact exported revision.
++Checks rerun asynchronously on new accepted revisions from their first release;
++old results remain labelled with their revision and cannot act as fresh passes.
++This notification/recomputation does not authorize automatic editing triggers.
++
++**Migration failure.** Owning packs provide deterministic migrations over detached
++payloads/commands with explicit reference rewrites and before/after schema checks.
++Never migrate on inspect, silently downgrade newer data, create defaults on read,
++or partially rewrite a document. An explicit migration proposal uses the normal
++command path; failure preserves original state, original command/proposal and
++artifacts with a repair diagnostic. Uninstall/disable preserves payloads and refs;
++missing renderer is reported as unavailable/unknown. App's
++`runtime/extensionReferenceReport.ts` already states preservation on uninstall;
++`extensionMigration.ts` handles existing package reconciliation but is not a
++substitute for payload/command semantic migrations.
++
++## Ten persona walks against real paths
++
++The names below are PLAN's sweet-spot ideas. Where a name alone leaves details
++open, the described behavior is the minimum seam exercise, not an expanded
++feature commitment. Existing examples establish reusable pieces, not readiness
++of the complete persona workflow.
++
++| Persona / workflow | Available real path | Required work on the five types/primitives |
++| --- | --- | --- |
++| Foley Ghost — infer and audition sound at visual events | Agent `packs/foley/actions/foley_map/run.py`, `packs/fal/actions/fal_foley/run.py`, `tests/packs/test_foley_review.py`; App `examples/extensions/creative-lab/foley-constellation/index.ts` | Producer pins visual/media inputs, emits immutable audio + event markers and a proposal; audio clips/components play accepted output. View auditions by revision; Command anchors placement; Check flags missing coverage. Current Foley generation is not persistent marker following. |
++| Stem Triggers — react to a musical stem | Agent `packs/music/actions/beats/run.py` emits beats.json; App dataKind series lanes; Composition `lib/audio-curves.generated.ts` | Stem separation/energy Producer, typed signal publication, optional threshold markers, explicit signal binding to animatable Element leaf. A deterministic snap is a Command; continuous response is element evaluation, not an automatic edit trigger. Current beat times/curves do not supply stem signals. |
++| Corkboard argument view — group claims and rearrange their presentation | Agent `timeline_views.py:render_script`, cut notes; App `runtime/ExtensionPanelHost.tsx`, `sdk/context.ts:CreativeContext.reader` | View projects shot/occurrence refs plus namespaced claim/relation data; editable actions emit existing reorder/move/note commands with rationale. Preserve unshown relations and repeated occurrences. No alternate board-owned timeline or unrestricted graph merge; missing command vocabulary precedes editor UI. |
++| Cold Open Lab — propose a different opening | Agent `timeline/edits.py` structural edits; App `lib/proposal-runtime.ts`, `examples/extensions/creative-lab/branching-cut/index.ts` | Producer proposes ordered existing commands on a pinned base, grouped for review/undo, with a comparative View. This can preview a candidate without accepting it. Persistent fork/variant ancestry/merge is PLAN's later core feature; do not implement it as an extension store or claim it exists. |
++| Replay Diff — explain what changed and why | Agent `packs/timeline/cli_history.py`, `cli_log.py`; R4 `commands.py` recorded writes and `rebase.py`; App proposal preview/diff | Revision-pinned View compares exact revisions and reads rationale, grouping and normalized commands. Respect authored-vs-derived differences; arbitrary textual diffs cannot recover intent/no-op writes. Accepted shared history and rationale projection need foundation work. |
++| Shot Match Lab — compare look/motion and propose matching edits | Agent `packs/rendering/actions/timeline_visualize/`, `cli_visualize.py`; App proposal runtime; Composition scene bounds/unknowns | Producer analyses pinned frames and publishes measurements/signals + proposed existing look commands, optionally modifiers. View compares output; Check can flag mismatch. Numerical look edits exist, but automatic matching/analysis and bindings are new work; unknown component internals cannot certify a visual match. |
++| Sign-language inset — add a synchronized interpreter | Agent media/clip authoring and explicit source time maps; App `sdk/video/families/clipTypeContributions.ts`; Composition component capability/bounds | Producer imports/generates immutable interpreter video with transcript/source provenance; Command adds occurrence-local inset; Component handles layout/playback with declared bounds. Word/marker anchors preserve synchronization; no speech-text-to-sign translation guarantee follows from the seam. Live feeds require materialization before reproducible export. |
++| Kinetic subtitles — timed expressive word animation | Agent `packs/editorial/actions/transcribe/run.py`, `packs/rendering/actions/timeline_visualize/transcripts.py`; R4 exact `source-word` grammar; Composition modifier keyframe/curve evaluators | Producer supplies immutable transcript/word identity; Commands author captions/bindings; Component/modifier + authored curves or signals evaluate motion; subtitle exporter is a View. Word spelling/index cannot be identity after re-transcription. New typography/animation capabilities need real parity coverage. |
++| Gaze Veto — flag visually obstructed or inappropriate gaze regions | App dataKind source/series projection; Composition `scene-evaluation.ts` bounds/coverage; Agent visualize overlays | Producer publishes gaze tracks/confidence as source signals; Check returns revision/ref-pinned findings and optional reframing/move proposal; View overlays. Unknown geometry/low confidence is unknown, not a pass or a fabricated face box. Policy may gate auto-approval/export, never ordinary human save. Gaze detection/check logic is new. |
++| Plain-text round-trip timeline | Agent `timeline_sheet.py`, `cli.py:_cmd_apply`, `tests/sdk/test_timeline_sheet.py`, `tests/editing_conformance` | Built-in editable View carries base/scope/ref map; parser + projection diff emits registered commands; server handles stale-head rebase. Existing sheet is the strongest precedent but its local hash/cache, omitted scope metadata and direct setters require replacement. Unknown payload, clears and concurrent members must survive. |
++
++## Ownership and M1–M4 preparation boundary
++
++Agent editing owns semantic schemas/refs/query/projection and command registry;
++Runtime owns accepted revisions, media/data custody, Documents, transaction and
++generated wire validation; Viewing owns Element/evaluator/capability/clock
++contracts; App owns panels, inspectors, gestures, outbox and review UI. Shared
++DTO/schema changes are agreed by Agent + Runtime with App/Viewing review, not
++four independent copies. Extension-specific payload schemas stay with their pack.
++
++| Milestone | Who prepares/implements the foundation seam | Explicit boundary |
++| --- | --- | --- |
++| M1 | Agent/Runtime: recipe registry/provider boundary, pinned dependencies and accepted revision IDs; App: durable command outbox/preview identity; Viewing: revision-labelled visualize consumption | Clip move/retry/undo proof only. No detector, generic extension host, new UI package or signal binding. |
++| M2 | Agent: complete registry/recording/query/reference and scoped opaque-data preservation, compiler and cut-sheet command adapter; Runtime: admitted storage/wire projections and exact dependencies; App: all writers including existing extension patches become command adapters or lose mutation access | If markers are approved at A, Agent owns the one generic core marker kind/table resolver/dependency graph and Runtime owns immutable closure pins, proved with core fixtures. Agree signal publication/ref schemas and proposal/base identity with Runtime/App. Five-type registration, detector publication/reconciliation UI and litmus examples stay M5. Preserve existing beat/word playback and built-in sheet behavior. |
++| M3 | Viewing: one published Composition evaluator and typed element/capability/parameter contracts; App/Agent: consume it for preview/render/visualize, including unknowns | If signals are approved at A, Viewing owns the pure signal sampling/time-domain/declared-leaf binding seam and Agent/Runtime own its pinned references; use core fixtures, not a new analysis producer. Current components/modifiers/transitions/curves and parity are foundation work; third-party element registration and examples remain M5. No scene evaluator in commit. |
++| M4 | Agent removes old extension engine after all consumers are inventoried/migrated or explicitly retired; all managers finish deletions, document schemas/APIs and verify unknown-data/renderer-independent behavior; Runtime/delivery owns ZIP | Do not require M5 framework to delete `core/extensions`. Inventory/remove old direct mutation dispatch and retain established built-in behaviors as commands/views. Foundation seams are concrete function/data boundaries and tests, not installed extensions. Hard stop remains. |
++
++M5 ownership after authorization: Agent implements the thin pack-to-five-types
++projection and author-facing marker/query/proposal adapters; Runtime supplies existing
++artifact/commit operations with agreed schema additions; Viewing implements
++admitted element/signal evaluation; App adapts presentation/review. This is an
++ownership statement, not an implementation backlog or permission to start it.
++
++## Recipe integration and counterexamples needing its attention
++
++The recipe draft read during this work was headed "early review draft" and
++already required recorded selection/order, pinned anchors, opaque namespaces,
++explicit clears, injective ID maps and grouped guards. Its subsequent
++"Concrete reconciliation with Runtime's first draft" and "Recorder additions"
++sections were also read: use base head pairs, wire `reason`, typed provenance
++in reads, and command-specific clear builders as specified there. Its executable evidence
++was still marked in progress. The extension design relies on that contract and
++does not claim its hard-case probes have passed. Cross-links for all PLAN cases:
++
++| Recipe hard case | Extension-specific application |
++| --- | --- |
++| Ripple/insert | Beat-snap or board selection captures membership/order; a concurrently inserted beat/clip cannot silently enter the batch. |
++| Transitions | Contributed transitions bind both endpoints/adjacency, not just a named style; deleted/reordered endpoint conflicts. |
++| Shared shots/occurrences | A marker/signal source may have two placements; occurrence-local subtitle/inset edits must not mutate a shared shot. |
++| Music beds | Source beat markers traverse arrangements/trim/speed; undo restores authored publication/source arrangement and recompiles. |
++| Transcript anchors | Kinetic subtitle/source-word refs survive spelling changes only through explicit source identity; removed words remain unresolved, not rebound by text. |
++| Track lifecycle | A producer adding a track cannot undo-delete it after another author adds dependents; namespace data and marker bindings count as dependencies. |
++| ID collisions | Imported/re-detected sets reserve stable IDs and use declared typed remaps; never rewrite a coincidentally matching string in opaque data. |
++| Explicit clears | Editable-view omission/null/elision/clear are separate, including namespace fields and complete collections. |
++| Media add/swap | Producers pin immutable authorised media; source replacement cannot silently carry a marker/signal lineage to different content. |
++
++Three extension counterexamples should be included in the recipe hard-case
++fixtures/conformance when that worker reconciles its final evidence:
++
++1. **Moving dependency without changed clip declaration.** Clip A follows marker
++   m2; re-detection inserts m0 and moves m2, then another client edits/reasserts
++   the selected publication A→B→A. A clip-only write footprint misses the change.
++   Record the selected set publication, exact item identity, follow policy and
++   time-map dependencies; undo/rebase must inspect publication writes/ancestry.
++   Follow deliberately permits a newer position for the same surviving identity
++   according to an explicit versioned policy, while changing/deleting identity
++   conflicts or yields the agreed retained orphan state. Do not default all
++   publication changes either to silent rebinding or unconditional conflict.
++2. **Lossy projection plus concurrent membership.** A partial text view elides
++   unknown namespace data and exports c1's members; another author adds a member
++   and changes a hidden field. An edited text omits one old visible row. Only
++   that base-scoped row is a removal; hidden data and the new member survive or
++   selection policy returns a clear conflict. Main `parse_sheet` ignores the
++   printed `scope` line: the envelope must carry completeness/membership, not
++   trust display text. The stdlib probe verifies this parser fact.
++3. **Unknown reference-bearing payload during structural remap.** An imported
++   unknown schema contains a clip-ID-shaped string. Preserve it exactly on
++   unrelated edits, but refuse a clone/remap requiring proof of its references
++   until a schema/migration is available. Do not assume every string is a ref,
++   or that unknown implies reference-free. Group atomicity includes the migration
++   and all known ref rewrites. Existing R4
++   `test_id_map_rewrites_only_recorded_scoped_ids_and_not_opaque_values`
++   (`tests/sdk/test_timeline_rebase.py`) covers the opaque-string half only.
++
++These are contract integration requirements, not permission to enlarge the M0
++implementation. The first requires new marker fixtures after marker admission;
++the second can already exercise sheet/projection semantics; the third tests the
++recipe's general opaque data and structural dependency rule.
++
++## M5 acceptance criteria only — approval required before implementation
++
++Common acceptance: each example is pack-admitted using existing source/resource
++validation; exact code/schema versions are recorded; unload/reload preserves
++unknown data; text/CLI/Python/App adapters agree on accepted revisions; all edits
++use the recipe and real Runtime acceptance. No proposed example is implemented
++or claimed working by this document.
++
++| Type | Observable acceptance criteria |
++| --- | --- |
++| Commands | Beat-snap selects stable clip and marker identities, declares follow/fixed and ripple/scope intent, previews without renderer, accepts atomically, retries after restart without duplicate IDs/revision, and undo/redo restores exact authored presence/data. Re-detecting beats with an inserted earlier event moves followed clips with the same surviving marker IDs, keeps fixed clips fixed, and never ordinal-rebinds deleted IDs. Rebase permits declared same-ID following and disjoint edits; conflicts name changed identity/membership or source mapping. Grouped no-op writes and A→B→A remain guarded. |
++| Views, including exporters and editable | Beat-grid text and visualize overlay show the same marker IDs/times at an explicit accepted revision. Script and shot-list projections agree on transcript, shots/occurrences and time windows with canonical show. A plain-text editable view exports/imports unchanged as no-op, emits commands for edits, supports scoped additions/removals/explicit clears and opaque elision, and gives one undo step. Stale base gets server rebase or an actionable conflict, never replacement; unavailable base/grammar fails without writes and retains text. Old/new revision view diff uses pinned options/version. One exporter (e.g. subtitles) pins revision and reports unsupported features; required export-policy failures prevent success without blocking save. |
++| Elements (all sub-kinds and curves) | At least one admitted component, modifier, transition and reusable curve exercises its actual typed contract and explicit animatable leaves. Preview, visualize and export agree on frame/audio behavior under rational fps and boundary/time-map cases; a planted mismatch is caught. A signal-bound leaf follows the selected immutable series with declared interpolation/units, while authored-curve evaluation stays deterministic. Invalid host/params, conflicting animation modes and missing materialization report precise errors. Unknown bounds/support/pixels are UNKNOWN, preserved in save, and never converted into proven coverage or export success. Renderer-off save remains green. |
++| Checks | Off-beat check returns stable clip/marker references, check version and revision-pinned findings in text and visualize overlay; a beat-snap fix is a proposal of existing commands. Accepting the fix removes the finding at the resulting revision; stale fixes rebase or conflict. Check failure/crash/unavailability never blocks human save. An explicit project policy blocks auto-approval/export on missing/stale/failing required results and reruns on a changed candidate; check execution never writes the timeline directly. |
++| Producers | A beat detector publishes an immutable artifact and named marker set with source/input/version identity, then proposes the selection/publication commands. A second run retains reconciled IDs, records inserted/deleted/ambiguous events explicitly, and demonstrates beat-snap following, beat-grid visualization and off-beat fix together. Reject/cancel/failure changes no timeline; artifacts remain inspectable. Acceptance is grouped, authorised and retry-safe; missing media/source-lineage change is diagnosed. A producer of a typed signal demonstrates source-to-occurrence mapping, and an importer proposes ordinary commands preserving unknown data rather than replacing a document. |
++
++The full litmus chain must be one tested journey: detector → immutable markers →
++snap → re-detect with retained IDs → followed placement → beat-grid/visualize →
++off-beat finding → proposed fix → accepted fix. Script/shot-list and editable
++text view are additional required journeys, not screenshots substituted for
++round-trip behavior. Structural identity/merge/orphan counterexamples above and
++the recipe hard cases must be represented in main suites before acceptance.
++
++## Verification and limitations
++
++This M0 work does not establish extension integration or Linux render parity.
++The standalone observations execute existing R4 pure moment code and AST-selected
++main pure parser functions; they do not execute a proposed marker implementation
++or a mocked substitute for the compiler. They are design probes, not gate proof.
++
++Commands actually run in `/home/user/work/wt/agt-m0-ext`:
++
++* `python3 -B tests/m0_extensions/probe_extensions.py -v`: first run, 3 passed,
++  1 error (`Any` absent from the extracted parser namespace); the probe namespace
++  was corrected. Second run: **4 passed**, 0.063 s. No third-party dependencies,
++  pack execution, files written by the probe, or network access.
++  After formatting only, the same command passed **4 tests in 0.102 s**.
++* `PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_show_views.py tests/editing_conformance`:
++  **219 passed, 4 skipped, 2 warnings in 31.87 s** (exit 0). The four existing
++  skips are `test_platform_safety_net.py:test_preview_matches_render_frame`
++  parametrizations; their pre-existing reason requires App preview/render frame
++  capture. No skip was added or weakened. Warnings report unknown pytest config
++  options `timeout` and `timeout_method` (system Python lacks pytest-timeout).
++  The dependency-only shared env `/home/user/work/venv-agent` was absent, so this
++  command used the available system Python environment; it is not an env-baseline
++  or full-gate result.
++* `git diff --check`: exit 0, no whitespace errors.
++* `python3 -m ruff --version`: exit 1, `No module named ruff`; no lint result is
++  claimed. The probe is outside the current configured Ruff include paths.
++
++Relevant main entry points (run only where included in the exact command above):
++`tests/sdk/test_timeline_sheet.py::{test_applying_the_printed_sheet_changes_nothing,
++test_a_fragment_touches_only_its_cuts_and_a_new_line_adds_a_layer,
++test_detail_prints_long_values_as_editable_json_and_round_trips,
++test_trim_syntax_on_a_visual_layer_is_refused_atomically}`;
++`tests/sdk/test_timeline_show_views.py`; `tests/sdk/test_timeline_selection.py`;
++`tests/packs/test_canonical_pack_v3.py`; `tests/packs/test_pack_quarantine.py`.
++`tests/editing_conformance/README.md` documents the CLI/Python/sheet scenario
++runner, exact undo/redo, no-op and refusal comparisons.
++
++Frozen R4 migration tests inspected, **not run here**:
++`tests/sdk/test_timing_cycles.py`, `test_timing_compiler.py`,
++`test_timeline_rebase.py`, `test_timeline_sheet_journal.py` (including
++`test_sheet_property_mapping_preserves_authored_values_and_atomic_refusal`).
++These require the real port environment/fixtures; do not count source inspection
++as a test pass. The recipe worker owns hard-case execution/classification.
++
++Relevant App suites, **not run here**: `src/tools/video-editor/lib/proposal-runtime.test.ts`,
++`runtime/extensionMigration.test.ts`,
++`components/TimelineEditor/TimelineExtensionOverlayHost.integration.test.tsx`
++("drives one validated manifest through the real provider assembly, lifecycle,
++hook, host, and marker"). Exact targeted command for the App owner:
++`npx vitest run --config config/testing/vitest.config.ts src/tools/video-editor/lib/proposal-runtime.test.ts src/tools/video-editor/runtime/extensionMigration.test.ts src/tools/video-editor/components/TimelineEditor/TimelineExtensionOverlayHost.integration.test.tsx`.
++Broader existing gates are App `npm test` and `npm run test:e2e:three-products`;
++Agent `make check` and `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance`;
++Runtime `python -m pytest -q -n 2`. None of those broad gates is claimed here.
++Composition `package.json` currently masks build failures with `|| true`; a
++successful old build command would not prove parity. Viewing owns removing it
++and adding unit tests; this worker did not change or build Composition.
++
++Linux only: no macOS/native custody, windowed App, actual detector/media inference,
++browser render/audio parity, export or cross-product journey was exercised here.
++No shared environment was installed or changed, no integration worktree written,
++and no git mutation/push performed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-ext/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-ext/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e6003ef1e034b5971ce46de20f1b759e3fb87a49
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-ext/commit-msg
+@@ -0,0 +1,8 @@
++test(timeline): probe extension seams for the M0 design
++
++Exercise frozen R4 moment identity and main cut-sheet parser behavior with
++read-only standard-library probes. Verify existing pack metadata slots
++without adding extension registration or changing product code.
++
++Record the extension/primitives design, source citations, ownership seams,
++persona walks and M5 acceptance criteria in the shared extensions.md.
+diff --git a/tests/m0_extensions/probe_extensions.py b/tests/m0_extensions/probe_extensions.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..37c730102a0bc842a1135b2e02c3037cd25d7b16
+--- /dev/null
++++ b/tests/m0_extensions/probe_extensions.py
+@@ -0,0 +1,102 @@
++"""Read-only M0 observations; no proposed extension implementation is executed.
++
++Run from the Agent worktree with Python's standard library only. Frozen source
++is read through git show, never checked out or imported through its package.
++"""
++
++import ast
++import json
++import re
++import subprocess
++import sys
++import types
++import unittest
++from pathlib import Path
++from typing import Any
++
++
++ROOT = Path(__file__).resolve().parents[2]
++R4_REPO = "/home/user/peteromallet/astrid-agent"
++R4_REF = "origin/codex/handover-timeline-r4-20261019-candidate-sdk"
++
++
++def frozen(path):
++    return subprocess.check_output(
++        ["git", "-C", R4_REPO, "show", f"{R4_REF}:{path}"], text=True
++    )
++
++
++def moments():
++    module = types.ModuleType("m0_frozen_moments")
++    sys.modules[module.__name__] = module
++    source = frozen("astrid/core/timeline/moments.py")
++    exec(compile(source, "<frozen R4 moments>", "exec"), module.__dict__)
++    return module
++
++
++class ExistingSeamObservations(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.mo = moments()
++
++    def test_beat_ordinal_changes_identity_when_an_earlier_beat_is_inserted(self):
++        ctx = types.SimpleNamespace(fps=30, cut_start=lambda _: 0)
++        ctx.beats = lambda _: [1.0, 2.0, 3.0]
++        self.assertEqual(self.mo.resolve("beat 2 after c1", ctx), 2.0)
++        ctx.beats = lambda _: [0.5, 1.05, 2.05, 3.05]
++        self.assertEqual(self.mo.resolve("beat 2 after c1", ctx), 1.05)
++
++    def test_exact_source_word_and_clip_anchor_grammar_round_trips(self):
++        for text in (
++            'source-word "doc" "lineage" "revision" '
++            '"occurrence:opening/clip:vo" "digest" "word-7"',
++            'clip-start "occurrence:opening/clip:title" +2f',
++        ):
++            moment = self.mo.parse(text)
++            self.assertEqual(self.mo.parse(self.mo.format_moment(moment)), moment)
++        self.assertEqual(self.mo.parse("marker").kind, "word")
++
++    def test_sheet_parser_retains_version_but_does_not_retain_scope(self):
++        # Only execute the existing pure parser helpers. No Checkout, pack,
++        # schema, media-handle or third-party imports are needed for these rows.
++        source = (ROOT / "astrid/sdk/timeline_sheet.py").read_text(encoding="utf-8")
++        names = {
++            "parse_sheet", "_strip_comment", "_parse_header", "_canon", "_parse_layer",
++            "_tokens", "_read_seconds", "_read_value", "_with_text",
++        }
++        tree = ast.parse(source)
++        body = [
++            node for node in tree.body
++            if isinstance(node, ast.FunctionDef) and node.name in names
++        ]
++        namespace = dict(
++            re=re, json=json, mo=self.mo, Any=Any, ELIDED=object(),
++            CLAUSES=("on", "until", "for"), SheetError=ValueError,
++        )
++        exec(compile(ast.Module(body=body, type_ignores=[]), "<main sheet parser>", "exec"), namespace)
++        parsed = namespace["parse_sheet"](
++            "film P · TL · 1920×1080 · 24 fps · v abcdef123456\n"
++            "scope c1 (1 cuts): apply changes only these cuts\n"
++            "0.00 ┃ c1\n"
++            'type title type "hello" for 12f\n'
++        )
++        self.assertEqual(parsed["version"], "abcdef123456")
++        self.assertEqual(parsed["cuts"][0]["layers"][0]["for"], 0.5)
++        self.assertNotIn("scope", parsed)
++        self.assertIs(namespace["_read_value"]("…", 1), namespace["ELIDED"])
++
++    def test_pack_v3_has_metadata_slot_but_no_top_level_extensions_slot(self):
++        schema = json.loads(
++            (ROOT / "astrid/core/pack/schemas/v3/pack.json").read_text(encoding="utf-8")
++        )
++        props = schema["properties"]
++        self.assertFalse(schema["additionalProperties"])
++        self.assertNotIn("extensions", props)
++        action = props["actions"]["additionalProperties"]
++        self.assertEqual(action["properties"]["metadata"], {"type": "object"})
++        rendering_types = props["rendering"]["additionalProperties"]["properties"]["type"]["enum"]
++        self.assertIn("element", rendering_types)
++
++
++if __name__ == "__main__":
++    unittest.main()
+
+exec
+/bin/bash -lc 'git diff --check; git diff --no-index --check /dev/null tests/m0_extensions/probe_extensions.py; git diff --no-index --check /dev/null /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/extensions.md; git status --short; ls -la tests/m0_extensions' in /home/user/work/wt/agt-m0-ext
+ succeeded in 0ms:
+?? tests/m0_extensions/
+total 20
+drwxr-xr-x  2 root root  4096 Oct 19 17:46 .
+drwxr-xr-x 20 root root 12288 Oct 19 17:46 ..
+-rw-r--r--  1 root root  4068 Oct 19 17:52 probe_extensions.py
+
+codex
+Completed [extensions.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/extensions.md): five types, pack APIs, marker/signal semantics, editable views, ownership, ten persona walks, and M5 acceptance criteria only. No product implementation or integration-worktree changes.
+
+Key findings: beat ordinals cannot preserve identity across re-detection; cut-sheet editing generalises with pinned scope/reference metadata and command builders.
+
+Validation:
+
+- `python3 -B tests/m0_extensions/probe_extensions.py -v` — **4 passed**.
+- `PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_show_views.py tests/editing_conformance` — **219 passed, 4 existing parity skips**, two missing-timeout-plugin warnings.
+- `git diff --check` — passed.
+
+Shared venv absent; tests used system Python. Ruff unavailable. App, Composition, rendering/audio parity, macOS and full gates remain unverified.
+
+Commit message written to the assigned path. Next: reconcile the three extension counterexamples with the recipe worker’s pending hard-case evidence before Checkpoint A.
+tokens used
+192,098
+Completed [extensions.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/extensions.md): five types, pack APIs, marker/signal semantics, editable views, ownership, ten persona walks, and M5 acceptance criteria only. No product implementation or integration-worktree changes.
+
+Key findings: beat ordinals cannot preserve identity across re-detection; cut-sheet editing generalises with pinned scope/reference metadata and command builders.
+
+Validation:
+
+- `python3 -B tests/m0_extensions/probe_extensions.py -v` — **4 passed**.
+- `PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_show_views.py tests/editing_conformance` — **219 passed, 4 existing parity skips**, two missing-timeout-plugin warnings.
+- `git diff --check` — passed.
+
+Shared venv absent; tests used system Python. Ruff unavailable. App, Composition, rendering/audio parity, macOS and full gates remain unverified.
+
+Commit message written to the assigned path. Next: reconcile the three extension counterexamples with the recipe worker’s pending hard-case evidence before Checkpoint A.

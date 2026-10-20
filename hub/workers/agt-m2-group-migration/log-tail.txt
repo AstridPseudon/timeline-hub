@@ -1,0 +1,400 @@
+s=p.read_text()
+s=s.replace(\"        # Neutral legacy publication has no DocumentPin field; that is a\\n        # separate interface limit, not evidence of retained transcript custody.\\n        document['dependency_manifest']['documents'] = []\\n\",'')
+a=s.index('        before = service.get_project_timeline')
+b=s.index(\"        assert service.get_project_timeline(project, 'film') == before\",a)
+s=s[:a]+'''        before = service.get_project_timeline(project, 'film')
+        publication = {
+            'project_id': project, 'timeline_id': 'film', 'expected_head': None,
+            'parent_revision_id': parent['revision_id'], 'parent_composition': parent['payload'],
+            'shot_revisions': [], 'internal_timeline_revisions': [],
+            'dependency_manifest': document['dependency_manifest'],
+        }
+        # Neutral legacy publication has no DocumentPin field. Removing it
+        # for the second probe exposes the independent rational-fps refusal.
+        with pytest.raises(ValidationError, match='dependency_manifest contains unsupported fields') as error:
+            service.publish_parent_composition(project, 'film', publication, idempotency_key='legacy-pins')
+        assert error.value.details == {'field': 'documents'}
+        del publication['dependency_manifest']['documents']
+        with pytest.raises(ValidationError, match='visual timing fps must be finite and positive'):
+            service.publish_parent_composition(project, 'film', publication, idempotency_key='legacy-seed')
+'''+s[b:]
+p.write_text(s)
+PY
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/sdk/test_timeline_group_migration_runtime.py' in /home/user/work/wt/agt-m2-group-migration
+ succeeded in 1591ms:
+Found 1 error (1 fixed, 0 remaining).
+.                                                                        [100%]
+1 passed in 0.95s
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_group_migration_provider.py tests/editing_conformance/test_recipe_m2_group_migration.py
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/new_group_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commit.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_group_migration_runtime.py
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=silent astrid/sdk/timeline/new_group_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commit.py' in /home/user/work/wt/agt-m2-group-migration
+exec
+/bin/bash -lc "git diff --numstat; wc -l astrid/sdk/timeline/new_group_commands.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_group_migration_runtime.py tests/editing_conformance/fixtures/recipe_m2_group_migration.json; git diff --check; git status --short; sed -n '1225,1243p' astrid/core/timeline/authoring_bundle.py" in /home/user/work/wt/agt-m2-group-migration
+ succeeded in 33ms:
+4	0	astrid/core/timeline/authoring_bundle.py
+72	0	astrid/core/timeline/schema/edit-command.schema.json
+8	1	astrid/sdk/timeline/_recording.py
+11	1	astrid/sdk/timeline/commands.py
+29	10	astrid/sdk/timeline/commit.py
+  161 astrid/sdk/timeline/new_group_commands.py
+  278 tests/editing_conformance/test_recipe_m2_group_migration.py
+   48 tests/sdk/test_timeline_group_migration_provider.py
+   54 tests/sdk/test_timeline_group_migration_runtime.py
+ 2346 tests/editing_conformance/fixtures/recipe_m2_group_migration.json
+ 2887 total
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+?? astrid/sdk/timeline/new_group_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_group_migration.json
+?? tests/editing_conformance/test_recipe_m2_group_migration.py
+?? tests/sdk/test_timeline_group_migration_provider.py
+?? tests/sdk/test_timeline_group_migration_runtime.py
+    # The base stores placements keyed by occurrence id and the candidate keeps
+    # an ordered list; compare like with like, or every check reports the whole
+    # placement map as changed. Clips are keyed by their id so a diff path names
+    # the clip (``clips[c21-00-plate].at``) instead of a list position.
+    changes: list[dict[str, Any]] = []
+    base_order = list(source_placements)
+    current["placements"] = _keyed_rows(current["placements"], "occurrence_id")
+    base["placements"] = _keyed_rows(base["placements"], "occurrence_id")
+    if isinstance(current["placements"], Mapping):
+        current_order = list(current["placements"])
+        shared = [key for key in current_order if key in base_order]
+        if shared != [key for key in base_order if key in current_order]:
+            changes.append({"path": "placements.order", "kind": "changed", "before": base_order, "after": current_order})
+    for side in (base, current):
+        for shot in side["shots"].values():
+            internal = shot.get("internal_timeline")
+            if isinstance(internal, Mapping) and isinstance(internal.get("clips"), list):
+                shot["internal_timeline"] = {**internal, "clips": _keyed_rows(internal["clips"], "id")}
+    _diff_values(base, current, "", changes)
+
+ succeeded in 2623ms:
+.............................x.x........                                 [100%]
+38 passed, 2 xfailed in 1.42s
+All checks passed!
+Success: no issues found in 4 source files
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD:/home/user/work/runtime /home/user/work/venv-agent/bin/python - <<'"'PY'
+import json
+from tests.editing_conformance.test_recipe_m2_group_migration import FIXTURE
+from runtime_protocol.timeline_commit_validation import validate_commit_value
+from runtime_protocol.errors import ValidationError
+fixture=json.loads(FIXTURE.read_text())
+for name,value,definition in [('command',fixture['commands'][0],'EditCommand'),('candidate',fixture['output'],'CanonicalDocument')]:
+ try:
+  validate_commit_value(value,definition)
+  print(name, 'schema accepts')
+ except ValidationError as exc:
+  print(name, str(exc), exc.details)
+PY" in /home/user/work/wt/agt-m2-group-migration
+ succeeded in 256ms:
+command invalid EditCommand: 'shot:new-shot::' does not match '^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|"(?:[^"\\\\\\x00-\\x1f]|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*")\\])*)?$' None
+candidate schema accepts
+
+exec
+/bin/bash -lc "rg -n 'commit-msg|commit.message' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/run-worker.sh | head -20; ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-command-composition; rg -n 'commitmsg|both.*commit|commit-msg' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent | head -20" in /home/user/work/wt/agt-m2-group-migration
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch:22:( { cat $O/COMMON.md; echo; echo "YOUR WORKTREE: $WT (branch tl/$N, repo $REPO). Do NOT run git commit/merge/checkout (.git is read-only to you). When done, write a conventional commit message (subject line + body) to $D/commit-msg; the harness commits all your worktree changes when you exit. Leave no build output or temp files in the worktree."; echo; echo "YOUR TASK ($N):"; cat $D/brief.md; } | \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch:30:  if [ -n "$(git -C $WT status --porcelain)" ]; then git -C $WT add -A && { [ -s $D/commit-msg ] && git -C $WT commit -q -F $D/commit-msg || git -C $WT commit -q -m "tl/$N: $(head -1 $D/brief.md | cut -c1-70)"; } > $D/commit.log 2>&1; fi
+total 752
+drwxr-xr-x   3 root root   4096 Oct 19 23:17 .
+drwxr-xr-x 180 root root  12288 Oct 19 23:24 ..
+-rw-r--r--   1 root root   2896 Oct 19 23:08 brief.md
+-rw-r--r--   1 root root    861 Oct 19 23:17 commit-msg
+-rw-r--r--   1 root root    861 Oct 19 23:17 commit-msg.txt
+-rw-r--r--   1 root root      0 Oct 19 23:17 commit.log
+-rw-r--r--   1 root root     21 Oct 19 23:17 ended
+-rw-r--r--   1 root root      2 Oct 19 23:17 exit
+-rw-r--r--   1 root root 717372 Oct 19 23:17 log.txt
+-rw-r--r--   1 root root    213 Oct 19 23:08 meta
+drwxr-xr-x   2 root root   4096 Oct 19 23:17 notes
+-rw-r--r--   1 root root    911 Oct 19 23:17 report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-core.md:7:Read repo AGENTS.md, /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md and updated COMMON.md/MANAGER-COMMON.md. Base tl/integration (e51595c6); ONLY assigned paths in your worktree, never integration/other worktrees. Frozen R4 is parts bin at /home/user/peteromallet/astrid-agent ref origin/codex/handover-timeline-r4-20261019-candidate-sdk; never merge its branch or port stubs. Shared deps-only /home/user/work/venv-agent; PYTHONPATH=$PWD. Publish/refine internal seam in design/m1-agent-coordination.md early (append only your own section). Targeted tests run locally with private --basetemp; full/socket suites use bin/request-test + wait-test, no self-run full suite. No installs, push or git mutations. Write commit-msg to /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-core/commit-msg. Report exact tests, limitations and product line count.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-visualize-read.md:5:Read PLAN M1 and recent Agent INBOX19:25 Viewing note plus design/viewing.md. Add focused actual divergent head/request fixture test proving historical content+label (or explicit refusal) and CLI native/rendered/candidate labels. Run existing relevant filmstrip/CLI visualization test files + ruff/diff-check. No full/socket/browser, no installs/git mutations. Write commit-msg/report with exact passing commands. Coordinate Viewing label helper work via shared doc, not overlapping edits.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-structure-metadata.md:6:Acceptance: narrow tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale now proceeds beyond missing workspace entry and still fails at inherited generic_host count as beforeport; manager-readable independent inventory audit proves both M1-owned entries exist/exact and no newly oversized undocumented files. git diff --check. No full/socket/browser/install, no unnecessary new tests. Report exact command/result and known baseline names; commit message in own worker dir, harness commits at exit. Manager will review inventory diff and keep old gate honestly RED until M4.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-frontends.md:7:Read repo AGENTS.md, /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md and updated COMMON.md/MANAGER-COMMON.md. Base tl/integration (e51595c6); ONLY assigned paths in your worktree, never integration/other worktrees. Frozen R4 is parts bin at /home/user/peteromallet/astrid-agent ref origin/codex/handover-timeline-r4-20261019-candidate-sdk; never merge its branch or port stubs. Shared deps-only /home/user/work/venv-agent; PYTHONPATH=$PWD. Publish/refine internal seam in design/m1-agent-coordination.md early (append only your own section). Targeted tests run locally with private --basetemp; full/socket suites use bin/request-test + wait-test, no self-run full suite. No installs, push or git mutations. Write commit-msg to /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-frontends/commit-msg. Report exact tests, limitations and product line count.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-projection-regression.md:5:Coordinate expectedreason withRuntimefix: genericconflict withclear destination-occupied reason/message, NO DTO/schema changeorblanketcollisionweakening. OncurrentRuntimeexpectRED; do NOTxfail/skip/convertintodenialofpositive. Targetlocalrealinprocess tests okayifnosockets; full/socketcentralonly. Report REDsource andrequest centraltargeted ONCE finalRuntimepatchavailable (managerwilldrive). No full suite/productfix. Write ABSOLUTE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-projection-regression/notes/report.md andbothcommitmsgfiles. M1fixbranchtest canmergewhenreviewed; M2mergesHELD.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m0-spike.md:6:Base: tl/integration (main e51595c6). Read PLAN.md, repo AGENTS.md and ../luna/reports/18-astra-plan.md. M0 ONLY; do not implement M1 or modify integration worktrees. Frozen R4: origin/codex/handover-timeline-r4-20261019-candidate-sdk in /home/user/peteromallet/astrid-agent (git show/archive; never checkout). Shared Python env is dependencies-only /home/user/work/venv-agent: use PYTHONPATH=$PWD, never editable-install a worktree there. Coordinate via reports/files; no git mutations. Write conventional commit message to /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-spike/commit-msg (expand ORCH to the orchestration root). Report exact commands/results and Linux limitations.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-canonical-design.md:12:Allowed writes ONLY design/m2-move-draft.md, a compact replacement/update of first-drag dependency paragraph in design/port-manifest.md (don't overwrite historicalM0 orothersections), workers/agt-m2-canonical-design/notes/probes/report. Keep draft no longer than current (~500lines), simplify superseded alternatives. Tiny read-only offline probes allowed with shared venv/PYTHONPATH, accurately distinguish observed failures from implemented tests. No code/test/gen/otherdoc edits, no installs/network/full/service. Provide ready implementation split/pathownership with exact sources and blockers; productworktree clean. Write BOTH commit-msg and commit-msg.txt if harnessneeds; no repo changes expected.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m0-command-schema.md:5:ABI is now initial slim ABI 1 (main has no prior ABI), fixed create_runtime_commit_service; use Runtime context/port/prepared/Candidate/record shape exactly. State design source path and future Agent packaged schema path `astrid/core/timeline/schema/edit-command.schema.json` (core JSON is already packaged) and Runtime pinned projection `contract/schemas/edit-command.json`, one authoritative source; how to check equality must be concrete. No new version framework, aliases for rationale, or evidence wrappers. Confirm groups list explicit publications; missing baseline history fails closed, bootstrap uses Runtime §5 rules. Read final recipe before finish and enumerate concrete mismatch corrections for manager to apply. All tests are schema design validation, not product gate passes. Write commit message /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-command-schema/commit-msg.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-read-fixtures.md:6:Use deps-only /home/user/work/venv-agent/bin/python normal worktree imports. Acceptance: pytest -q tests/sdk/test_timeline_cuts.py tests/sdk/test_timeline_show_published.py tests/test_artifact_manifest.py (find exact existing neighbor if filename differs); scripts/gen_cli_surface.py --check; appropriate artifact check; git diff --check. No full/socket/browser/install. No new broad test framework, skips/xfail, mocks disabling strict readback. Report exact tests/counts and small diff. Put commit message in own worker commit-msg.txt; harness commits on exit, no git mutation.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-consumer-metadata.md:5:Acceptance /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_cuts.py tests/sdk/test_timeline_show_views.py tests/test_artifact_manifest.py; pytest -q -m 'not integration' tests/packs/rendering/test_composition_package.py; both generators --check; git diff --check. No installs/full/browser/socket/Node build. Package chain already has140focused+79central validation; do not duplicate it. Report exact base/currentcommit, counts and generated hashdelta only; no product changes beyond inherited7a chain. Commit message own worker dir; harness commits at exit. Your branch will supersede319314c4 for merge; keep source/report, no git mutation.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-ruff-baseline.md:3:Identify exact removed finding against existing baseline and prove it is improvement, not suppressed/relocated errors. Run existing `python -m scripts.reshape.compare_ruff_baseline --write-baseline` using venv-agent, inspect resulting diff. Commit ONLY baseline decrease if no introduced finding; if relocation/new finding STOP/report, don't allowlist. Then run `make PY=/home/user/work/venv-agent/bin/python ruff` PASS and diff-check. No new tests, installs, git mutations, sockets/full suite. Tiny change, concise report exact delta and harness commit-msg.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m0-a-primitives.md:6:Validate via source/doc review, grep for contradictory missing-marker/orphan/pre-stop/migration text, and existing `python3 -B /home/user/work/wt/agt-m0-ext/tests/m0_extensions/probe_extensions.py -v` only if needed (no behavioral claim for unimplemented marker resolver). No full suite, installs, new product tests or implementation. Report exact edits/checks and unverified scope. Write commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-a-primitives/commit-msg. This branch is docs-only outside git and not for merge.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-consumer-inventory.md:3:Verify physicalcount atcurrent source1353 and diffexactONEtableentry; gitdiffcheck. Fullstructuretest remainsREDforoldGenericHost; don'tweaken orclaimgreen. Staticindependentaudit ownchangedcount suffices; no reruntestsforone-line doc. Report exactscope+physicalcount+limits. Write BOTH commit-msg and commit-msg.txt at ABSOLUTE ORCHworker directory givenbyharness, NOT relative workers/ path inrepoworktree. Productworktree mustcontainonlyONEdocentrydiff. No gitmutation/push.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-parent-label-proof.md:5:Centraltestservice mayneed own named suite to add --runxfail (allowed filesflagcannotcarryCLIflags). Addonlyownlineifneeded, no bin/test-run edit. Use existingrealintegrationfixture and sourceCURRENT Runtime forqualification; M1projectionfix underwayelsewhere, don'tmodifyRuntime. Targetedlocal suites +ONEactualnodecentral afterfinaledit; nofull orM2merge. Write ABSOLUTE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-parent-label-proof/notes/report.md +bothcommitmsgfiles, reportexactfailurecause/correctedcounts/source. This remainsM2priority1after M1blocker, notM1codechange.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m0-ext.md:6:Base: tl/integration (main e51595c6). Read PLAN.md, repo AGENTS.md and ../luna/reports/18-astra-plan.md. M0 ONLY; do not implement M1 or modify integration worktrees. Frozen R4: origin/codex/handover-timeline-r4-20261019-candidate-sdk in /home/user/peteromallet/astrid-agent (git show/archive; never checkout). Shared Python env is dependencies-only /home/user/work/venv-agent: use PYTHONPATH=$PWD, never editable-install a worktree there. Coordinate via reports/files; no git mutations. Write conventional commit message to /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m0-ext/commit-msg (expand ORCH to the orchestration root). Report exact commands/results and Linux limitations.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-registry-plan.md:8:Allowed writes ONLY appended section of design/port-manifest.md + workers/agt-m2-registry-plan/notes/report. No code/tests/generated artifacts, no other design edits, no installs/network/full/test-service requests. Read-only code inspection and tiny offline probes okay; label evidence accurately. Return 1-screen report with exact SHA/source seams, readiness and blockers. Product worktree clean. No merge request. Worker commit-msg only if harness requires.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-restore-adapter.md:10:Test first replace existing temporary unsupported-restore expectation with real positive restore and retain mixed/stale checks; add digest mismatch, same revision/different publication, accept race, dry run, exact full closure+unknown fields, inverse/redo, later overlapping/same-value/ABA refusal, source identity/reservation cases. Run targeted tests locally with PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/editing_conformance/test_recipe_m1_commands.py. For real Runtime use central request-test YOURNAME targeted --files 'tests/sdk/test_timeline_commit_provider_runtime.py' (suite default excludes integration; prefer named commit-integration plus extend only if needed; coordinate manager). No full per worker; manager one postmerge full batch. Exact commands/results in report, no sockets outside service. Write commit-msg.txt in worker ORCH dir. No git mutation/push.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m1-readback.md:6:Read repo AGENTS.md, /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md and updated COMMON.md/MANAGER-COMMON.md. Base tl/integration (e51595c6); ONLY assigned paths in your worktree, never integration/other worktrees. Frozen R4 is parts bin at /home/user/peteromallet/astrid-agent ref origin/codex/handover-timeline-r4-20261019-candidate-sdk; never merge its branch or port stubs. Shared deps-only /home/user/work/venv-agent; PYTHONPATH=$PWD. Publish/refine internal seam in design/m1-agent-coordination.md early (append only your own section). Targeted tests run locally with private --basetemp; full/socket suites use bin/request-test + wait-test, no self-run full suite. No installs, push or git mutations. Write commit-msg to /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-readback/commit-msg. Report exact tests, limitations and product line count.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-materialization-collision-audit.md:10:Pure in-process realRuntime test needs no sockets; local sharedvenv-runtime with PYTHONPATH runtime+thisAgentworktree allowed. If any socket needed, usecentralnamedcommit-integration, no --net/no full. No packageinstall/network/full. Only ORCHworker notes/report/probes maybewritten; ownworktreeclean, BOTH absoluteORCHcommitmsgfiles ifrequired. No gitmutation/push.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-graph-roots.md:10:Acceptance actualprimitive/nativeexecutor repo tests: newshot+occurrence creates correctmaincompiledclosedocument, exactopaque/rawrootpreservation, missingrootnotexception, duplicate/occupied/localvirtualslot/scope/refusal no partialmutations, unchanged M1move/create/restore suites. Rootabsence+inverse/redo expectations with currentframework shouldstaypositive whereimplemented, knownstagingdependency explicitnotfakepass. Unit testops may register only via testfixture toexercise primitives; never handconstructacceptedreceipts orclaimrealRuntimeacceptance beforeofficialschema/atomicIDguard integration. Sourceclass tests alone don'tqualify fullmigration. Run targetedown+existing recipe/provider/document tests sharedvenv/PYTHONPATH, Ruff/diffcheck. No full/socket/network/install/service. Keep code small/reusemainmaterializer. Write BOTH ABSOLUTE ORCHworker commit-msg andcommit-msg.txt; notesONLYORCH, notreporelativeworkers/. BranchONLY/no mergerequest.
+
+exec
+/bin/bash -lc "cat >> tests/sdk/test_timeline_group_migration_runtime.py <<'PY'
+
+
+def test_official_runtime_schema_admits_compiled_canonical_candidate():
+    use_runtime()
+    from runtime_protocol.timeline_commit_validation import validate_commit_value
+
+    from tests.editing_conformance.test_recipe_m2_group_migration import FIXTURE
+
+    validate_commit_value(json.loads(FIXTURE.read_text())['output'], 'CanonicalDocument')
+
+
+@pytest.mark.xfail(strict=True, reason='Official Runtime commit schema must admit the shot root TargetKey guards supplied by recorded root creation')
+def test_official_runtime_schema_admits_recorded_migration_command():
+    use_runtime()
+    from runtime_protocol.timeline_commit_validation import validate_commit_value
+
+    from tests.editing_conformance.test_recipe_m2_group_migration import FIXTURE
+
+    validate_commit_value(json.loads(FIXTURE.read_text())['commands'][0], 'EditCommand')
+PY
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/sdk/test_timeline_group_migration_runtime.py' in /home/user/work/wt/agt-m2-group-migration
+ succeeded in 1626ms:
+..x                                                                      [100%]
+2 passed, 1 xfailed in 1.05s
+
+codex
+The neighboring-test run passed: 370 passed and 3 expected failures, including the existing root-boundary case. The Runtime schema accepts the compiled candidate but still rejects the command’s `shot:new-shot::` guard address. I’m documenting these blockers and leaving the branch unmerged. Lint and targeted type checking pass; including `authoring_bundle.py` exposes two type errors on an unchanged line.
+exec
+/bin/bash -lc 'git diff --check; PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/new_group_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commit.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_group_migration_runtime.py; git rev-parse HEAD; git -C /home/user/work/runtime rev-parse HEAD; git diff -- astrid/sdk/timeline/commands.py astrid/core/timeline/authoring_bundle.py astrid/sdk/timeline/_recording.py' in /home/user/work/wt/agt-m2-group-migration
+ succeeded in 0ms:
+All checks passed!
+00a9eb9a8bd721365d4a49218e7c60c321a8a7a5
+ddf08f1aa92692f5cf1880d041880e15d9d803f3
+diff --git a/astrid/core/timeline/authoring_bundle.py b/astrid/core/timeline/authoring_bundle.py
+index af152e01..34293e7d 100644
+--- a/astrid/core/timeline/authoring_bundle.py
++++ b/astrid/core/timeline/authoring_bundle.py
+@@ -298,6 +298,7 @@ def open_authoring_bundle(
+     *,
+     shot_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+     internal_timeline_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
++    legacy_group_migration: bool = False,
+ ) -> dict[str, Any]:
+     """Open one exact immutable closure as a detached, lossless working copy.
+ 
+@@ -311,6 +312,9 @@ def open_authoring_bundle(
+     timeline_id = _string(parent.get("timeline_id"), "parent_revision.timeline_id")
+     revision_id = _string(parent.get("revision_id"), "parent_revision.revision_id")
+     payload = _mapping(parent.get("payload"), "parent_revision.payload")
++    if (isinstance(payload.get('config'), Mapping)
++            and 'pinnedShotGroups' in payload['config'] and not legacy_group_migration):
++        raise AuthoringBundleError('pinnedShotGroups requires explicit timeline.migrate-groups admission')
+     parent_digest = _verify_digest(
+         payload, parent.get("content_digest"), "parent_revision.content_digest"
+     )
+diff --git a/astrid/sdk/timeline/_recording.py b/astrid/sdk/timeline/_recording.py
+index 029ec680..8f8a1a90 100644
+--- a/astrid/sdk/timeline/_recording.py
++++ b/astrid/sdk/timeline/_recording.py
+@@ -16,6 +16,13 @@ def active(row):
+ def selection(state, key, owner, members=()):
+     if key == "move.target":
+         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
++    elif key == 'migration.groups':
++        # Proposed identities come from the sealed args; the complete original
++        # legacy array is a separate tagged read, including on inverse stages.
++        if owner != 'parent' or len(set(members)) != len(members) or any(
++                not ref.startswith('occurrence:') or '/' in ref for ref in members):
++            raise CommandError('invalid migration group selection')
++        result = list(members)
+     elif key in KINDS:
+         result = order(state, owner, KINDS[key])
+     elif key == "move.blockers":
+@@ -172,7 +179,7 @@ class Recording:
+             command['selections'] = copy.deepcopy(self.record['selections'])
+             command['bindings'] = {b['key']: b['ref'] for b in self.record['bindings']
+                                    if '/clip:' in b['ref'] or '/track:' in b['ref']
+-                                   or (b['ref'].startswith('occurrence:') and '/' not in b['ref'])}
++                                   or (b['ref'].startswith(('occurrence:', 'shot:')) and '/' not in b['ref'])}
+             command['created'] = [item['ref'] for item in self.record['created']]
+             command['expect'], command['authorship'] = {}, {}
+             for write in self.record['writes']:
+diff --git a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py
+index afe6c6ef..b8e16f99 100644
+--- a/astrid/sdk/timeline/commands.py
++++ b/astrid/sdk/timeline/commands.py
+@@ -36,11 +36,13 @@ def operations():
+     from ._clip_commands import clip_add
+     from ._scalar_commands import clip_set_params, track_set
+     from .capture import MOVE_INTENT, move, track_create
++    from .new_group_commands import migrate_groups
+     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
+             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
+-            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
++            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
++            'timeline.migrate-groups': Operation(_SCHEMA['$defs']['MigrateGroupsArgs'], migrate_groups, {})}
+ 
+ 
+ @dataclass
+@@ -126,6 +128,14 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
+ 
+     if not commands:
+         raise CommandError("command batch must not be empty")
++    config = bundle['parent'].get('config')
++    if isinstance(config, dict) and 'pinnedShotGroups' in config:
++        migration = len(commands) == 1 and commands[0].get('op') == 'timeline.migrate-groups'
++        reversing = len(commands) == 1 and commands[0].get('op') == 'timeline.inverse' and any(
++            w['ref'] == 'parent' and w['path'] == ['config', 'pinnedShotGroups']
++            for record in inverse_records for w in record['writes'])
++        if not migration and not reversing:
++            raise CommandError('legacy groups require the sole recorded migration command')
+     if id_map and any(key != value for key, value in id_map.items()):
+         raise CommandError("id_map must contain identity pairs only", kind='identity_collision')
+     if any(call.get('op') == 'timeline.restore' for call in commands) and len(commands) != 1:
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration')
+(root/'notes').mkdir(exist_ok=True)
+report='''# agt-m2-group-migration — branch only, HOLD
+
+Implemented the bounded forward "'`timeline.migrate-groups` v1 on Agent base `00a9eb9a8bd721365d4a49218e7c60c321a8a7a5`. This is **not qualified for merge or accepted migration use**: the strict positive inverse and canonical graph tests expose existing primitive/validation gaps. M1/M2 holds remain in force.
+
+## Changes and proven behavior
+
+- Added `new_group_commands.py`, the closed schema/registry entry, explicit capture helper, `migration.groups` selection and shot-root binding capture. Caller supplies every destination shot/occurrence ID; handler allocates nothing.
+- The two members c1@0/c2@2, hold2, V1 create one shot and one 4000ms occurrence using native `Recording.create_entity`. Canonical items are empty. Full original group/mode/snapshot/unknown/null fields and ordered member identity mapping survive in occurrence migration provenance. No recursive sanitization or invented source revisions/pins.
+- Records contain explicit absent-before root creates, complete consumed clip-root removals, tagged legacy-field clear, original full-row reads, track/registry/output reads, collection membership/order and source/destination bindings. Parent mirror updates remain native derived writes. Ungrouped rows/order, opaque parent/clip data, complete copied tracks, registry/output and exact media/DocumentPins survive compilation/reload.
+- Unsupported ordering/interleaving/duplicates/missing members/items/maps/aliases/follow timing/fractional milliseconds/divergent mirrors or registries, occupied identities and forged capture refuse without mutating the input.
+- Added portable `recipe_m2_group_migration.json` with input, sealed command, native records and compiled output. This is an Agent fixture, not an official Runtime schema/client artifact.
+- Added explicit legacy admission to the existing bundle/provider loader, restricted ordinary execution on such a basis, and admitted authenticated migration/inverse history boundaries for eventual undo/redo. Ordinary reads/edits refuse the structural legacy field. No second editable model, load-time migration/save, new recorder, or inverse fallback.
+
+Inspection correction to the task premise: on this exact base, `open_authoring_bundle`/`bundle_from_document` did **not** already reject the structural field. The separate canonical graph validator does reject it recursively. The new loader check makes default authoring reads strict and admits migration explicitly; it does not strip any input.
+
+## Blockers and unverified requirements
+
+1. **Inverse primitive gap:** `inverse._validate_inputs` validates destination bindings after reversing the created occurrence/shot. A required binding such as `occurrence:new-occ/clip:c1` then fails with `CommandError: missing or ambiguous identity '"'new-occ'"'`. The strict positive test keeps exact legacy restoration and same-ID redo assertions; it is `xfail(strict=True)`. Do not drop destination bindings to manufacture a passing inverse. `_command_state`, root primitives, inverse and collection/order implementation remain unchanged.
+2. **Canonical graph gap:** `shot_composition._walk_for_legacy` recursively rejects opaque provenance containing original `pinnedShotGroups`/`clipType:shot` keys. A strict positive graph test preserves this requirement and currently xfails. No sanitizer or validator bypass was added.
+3. **Actual Runtime public seed gaps:** at inspected Runtime `ddf08f1aa92692f5cf1880d041880e15d9d803f3`, the public neutral publication API rejects the fixture'"'s manifest "'`documents` field (`dependency_manifest contains unsupported fields`, details `{'"'field':'documents'}"'`). Removing only that field for an independent diagnostic exposes the next refusal: rational fps causes `visual timing fps must be finite and positive`. Tests prove no parent revision is stored and the timeline head/resource stays unchanged. A separate exploratory numeric-fps/text-only seed was accepted, which does not qualify the exact fixture and was not substituted into its test.
+4. **Official Runtime contract gap:** the actual Runtime `CanonicalDocument` validator accepts the compiled fixture; its `EditCommand` validator rejects the sealed command'"'s "'`shot:new-shot::` TargetKey. That positive command-schema test is strict xfail pending the official root-guard schema update. No Runtime files/schema/SQL were patched. No accepted migration or accepted undo/redo has been claimed or fabricated.
+5. **Type-check limit:** including `authoring_bundle.py` reports two union-attribute errors at its unchanged line 1239 (`side["shots"].values()`). Baseline type-check comparison was not run; these locations are outside this diff. No unrelated fix made.
+
+Thus legacy → command → canonical candidate → compiled reload and deterministic replay are proven locally; exact inverse/redo, canonical graph acceptance, real migration acceptance, restart/retry and cross-product acceptance remain pending. Provider preview uses the existing detached test port and is explicitly provider-only, not Runtime acceptance evidence.
+
+## Exact validation commands and results
+
+All commands ran from `/home/user/work/wt/agt-m2-group-migration` using the shared dependency environment. No full suite, sockets, browsers, installs, official artifact generation or git mutation ran.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_group_migration.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/timeline/test_authoring_bundle.py
+```
+
+**370 passed, 1 deselected, 3 xfailed in 20.95s.** Two migration requirements above and the pre-existing graph-root compiled-reload parent-pin test are expected failures. The deselected case is an existing lane-marked test. An earlier run found two fixture-registration errors introduced during Ruff cleanup; those were corrected and the complete same targeted command rerun to the result above.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_group_migration_provider.py tests/editing_conformance/test_recipe_m2_group_migration.py
+```
+
+**38 passed, 2 xfailed in 1.42s**, after the final fixture import/format cleanup.
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/sdk/test_timeline_group_migration_runtime.py
+```
+
+**2 passed, 1 xfailed in 1.05s.** Uses an in-process real Runtime/temporary realm only; no daemon or socket. An initial invocation without `-m integration` deselected the test (exit 5); the explicit lane command above ran it. The first exploratory seed-positive version failed on the rational-fps refusal; the final suite records the exact interface refusal and keeps the official command-schema positive as strict xfail.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --runxfail tests/editing_conformance/test_recipe_m2_group_migration.py::test_compiled_reload_guarded_inverse_restores_exact_legacy_then_redo_same_ids
+```
+
+**1 failed**, deliberately exposing the primitive-gap traceback at inverse.py:215 → `_command_state.py:165` (`new-occ` missing). The positive test remains strict xfail in normal runs.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/new_group_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commit.py astrid/core/timeline/authoring_bundle.py tests/editing_conformance/test_recipe_m2_group_migration.py tests/sdk/test_timeline_group_migration_provider.py tests/sdk/test_timeline_group_migration_runtime.py
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=silent astrid/sdk/timeline/new_group_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commit.py
+git diff --check
+```
+
+**All pass; mypy checks four source files.** The same mypy command additionally listing `astrid/core/timeline/authoring_bundle.py` fails with the two unchanged-line errors described above. `make check` and full suites were not run per task scope.
+
+## Cost and next steps
+
+Product diff: **285 added / 12 removed, net +273 lines**, including 72 schema lines. New migration module: 161 lines. New tests: 278 conformance + 48 provider + 73 Runtime lines; portable golden: 2346 lines. No unrelated product paths changed.
+
+Recommended order: keep this branch held; obtain owner-scoped primitive work for binding validation at the creation/reversal stage, scope-aware canonical graph checks, and Runtime'"'s official root-guard schema plus exact legacy seed/pin/rational-fps admission. Then remove the strict expected-failure markers only when their original positive assertions pass and qualify real accepted migration → reload → guarded inverse → redo. No occurrence.move/UI/sheet work or merge request here. After that consumer cutover is proven, the legacy publisher/provenance-sanitizer path in "'`shot_composition_migration.py` is a deletion candidate; it was not copied into the new command.
+'"'''
+(root/'notes'/'report.md').write_text(report)
+message='''feat(timeline): record explicit lossless legacy group migration
+
+Add the closed timeline.migrate-groups v1 command with caller-allocated
+canonical shot/occurrence roots, exact legacy provenance, immutable pins,
+structural guards, explicit legacy read admission and a portable golden.
+
+Keep this branch held: strict positive tests expose destination-binding
+inverse validation, opaque canonical provenance and official Runtime
+root-guard schema gaps. Record actual public-seed DocumentPin/rational-fps
+refusals without changing Runtime or inventing accepted state.
+'''
+(root/'commit-msg').write_text(message)
+(root/'commit-msg.txt').write_text(message)
+PY
+wc -l tests/sdk/test_timeline_group_migration_runtime.py
+git diff --check" in /home/user/work/wt/agt-m2-group-migration
+ succeeded in 13ms:
+73 tests/sdk/test_timeline_group_migration_runtime.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import os
+import shutil
+from pathlib import Path
+root=Path.cwd()
+removed=[]
+for current, dirs, files in os.walk(root, topdown=True, followlinks=False):
+    for name in list(dirs):
+        path=Path(current)/name
+        if name in {'.git', 'node_modules', '.venv'} or path.is_symlink():
+            dirs.remove(name)
+        elif name in {'__pycache__', '.mypy_cache', '.ruff_cache', '.pytest_cache'}:
+            shutil.rmtree(path)
+            removed.append(str(path.relative_to(root)))
+            dirs.remove(name)
+print('Removed',len(removed),'local generated cache directories')
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-group-migration
+ succeeded in 77ms:
+Removed 21 local generated cache directories
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+?? astrid/sdk/timeline/new_group_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_group_migration.json
+?? tests/editing_conformance/test_recipe_m2_group_migration.py
+?? tests/sdk/test_timeline_group_migration_provider.py
+?? tests/sdk/test_timeline_group_migration_runtime.py
+
+codex
+Implemented the branch-only migration command, explicit legacy admission, capture, portable golden, and adjacent tests. Both commit-message files are written.
+
+Validation: **370 passed, 3 xfailed** in neighboring suites; real Runtime checks: **2 passed, 1 xfailed**. Ruff and targeted mypy pass. Product growth: **+273 net lines**.
+
+**Keep held.** Exact inverse/redo is blocked by destination-binding validation. Canonical provenance validation, Runtime root-guard schema, and public seed admission also need owner fixes. No Runtime acceptance is claimed.
+
+[Report with exact commands, results, blockers, and recommended next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration/notes/report.md).
+tokens used
+191,487
+Implemented the branch-only migration command, explicit legacy admission, capture, portable golden, and adjacent tests. Both commit-message files are written.
+
+Validation: **370 passed, 3 xfailed** in neighboring suites; real Runtime checks: **2 passed, 1 xfailed**. Ruff and targeted mypy pass. Product growth: **+273 net lines**.
+
+**Keep held.** Exact inverse/redo is blocked by destination-binding validation. Canonical provenance validation, Runtime root-guard schema, and public seed admission also need owner fixes. No Runtime acceptance is claimed.
+
+[Report with exact commands, results, blockers, and recommended next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration/notes/report.md).

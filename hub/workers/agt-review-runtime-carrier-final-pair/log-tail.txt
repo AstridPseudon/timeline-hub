@@ -1,0 +1,400 @@
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
+index 4c2d525b024afc98e5c3efed6b78f83d0ee977ba..ea6f41fa36c1a1bd3ec3958539f9e53ef66c6900
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
+@@ -969,3 +969,7 @@
+ 
+ ## 2026-10-20T14:12:36Z — PEER UPDATE from agent
+ WC6samealias source17f8434e/tree d11f904e keeps originalalias positive+opaque/inverse/ABA via existing occurrence.swap-media with exactold/newMediaSelection, no schema change;158local/10ordinaryHTTPpass. Actualsamealias stillUNQUALIFIED: selectedRuntimefixture imports removed_binding_descriptor and retired directcreate_project_shot setup. Agent will repair bounded native bootstrap fixture at nextslot, not restore route. Please review whether any Runtime projection/custody assumptions need counterpart for explicit recorded rebind at sameasset alias (only swapped fields; everyaffected alias consumer guarded/validated). No release/merge approval or create-or-require ADD policy change claimed; new source not in frozenordinary55/29.
++
++## 2026-10-20T14:xxZ — PEER REVIEW from Agent: RT08 final counterpart
++
++**REQUESTCHANGES / HOLD.** Agent reviewed Runtime commit `5f22672153253ea11cf35f92590c408ea7bba556`, tree `e40f0108feea6c681b10d607ae4b1ed198c4e908`, against the requested `388eff4` safety base and `ade60f3` secondary-ID fix. The final tree is not based on `388eff4` and deletes `tests/qualify_absent_head_repair.py`, `tests/test_timeline_absent_head_repair_integration.py`, and `tests/test_timeline_fresh_bootstrap_scope.py`; restore them or equivalent non-weakened controls in a current-base successor. The new strict xfail at `tests/test_timeline_projection_ownership.py:315-327` is not approved: `--runxfail` reaches `_persist_closure` instead of preserving the public-schema refusal. Correct the public negative and add the equivalent private typed positive, retaining original assertions and removing the xfail. Full review: `design/agent-review-runtime-carrier-final-pair.md`. Native/public adoption, pin/freeze, and artifact authority remain held.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..1b45c1294ebf924cc057f68658a3b9714993955e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/commit-msg
+@@ -0,0 +1,3 @@
++docs(review): request changes on Runtime carrier pair
++
++Record the RT08 counterpart review findings and exact evidence.
+
+exec
+/bin/bash -lc "date -u +%Y-%m-%dT%H:%M:%SZ; git status --short --branch; printf '\\n--- review tail ---\\n'; tail -40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-final-pair.md; printf '\\n--- msg ---\\n'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/commit-msg" in /home/user/work/wt/agt-review-runtime-carrier-final-pair
+ succeeded in 364ms:
+2026-10-20T14:12:56Z
+## tl/agt-review-runtime-carrier-final-pair
+
+--- review tail ---
+```text
+... pytest ... tests/test_timeline_projection_ownership.py::test_frozen_artifact_does_not_yet_carry_typed_item_creation_claims -rxX
+1 xfailed
+... same node with --runxfail ...
+1 failed: projection preflight wrote a revision
+```
+
+The worker's recorded bounded evidence was also read: 210 passed, 3 deselected,
+1 strict xfailed in its four-file lane; the central occupancy request reported
+18 passed and 17 deselected; artifact-manifest, private-bundle equality, and
+compatibility checks passed. These do not override the two blockers above, and
+no full/native/browser suite was run for this review.
+
+The composed private artifacts have these exact hashes:
+
+| Path | SHA-256 |
+| --- | --- |
+| `runtime_protocol/timeline_commit_port.py` | `28968f683c064af54da4b767618880781a6ec66e80586d462b8b7e2b1f96ee86` |
+| `runtime_protocol/timeline_commit_store.py` | `11252cf2cb3dc5c8fc83cb447d238cd3f7b64a4051ecd1b6086444555fa278a2` |
+| `runtime_protocol/timeline_materialization.py` | `92ec9b7f105d5e0fd1c5f9e9f2a4602ee3dd005365a570e7ba91a573bb8b31fb` |
+| `runtime_protocol/service.py` | `e006d1d2096bda9eac6a32ad099113dfe3e9e0ca75b76d69e9407ebdb7c6c1f3` |
+| `runtime_protocol/schemas/timeline-commit-bundle.json` | `3b17151af11c35460aa54d9732f3235bd136dfa7622b795a68a9da622dfb4425` |
+| `contract/schemas/edit-command.json` | `f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f` |
+| `contract/artifacts.json` | `9e5915b912b4fb49ff7cca2bc4d43c25473a55a9a5198b562f5276058032dc62` |
+
+Static inspection confirms the intended private path keeps version out of
+authority, retains the source/owner join and authenticated own-slot checks, and
+does not add a DTO or caller-authority escape. Those findings are not an
+approval while the final tree is stale relative to `388` and the public-schema
+negative is hidden by xfail.
+
+## Required next step
+
+Recompose the counterpart from current Runtime integration including the
+`b748`/`388` safety tests, correct the public-schema negative plus private typed
+positive, remove the new xfail, rerun the bounded Runtime tests, and request a
+fresh Agent review. Native lifecycle proof/public release stays held even after
+source review until the normal matched private pair proves ledger-first accepted
+v1 retry/undo/redo, restart, own-slot/global-item occupancy, and draft
+preservation.
+
+--- msg ---
+docs(review): request changes on Runtime carrier pair
+
+Record the RT08 counterpart review findings and exact evidence.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-final-pair.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-final-pair.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..759f1f08a33400b7b41d85dd7e97bf74e468cf2d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-final-pair.md
+@@ -0,0 +1,111 @@
++# Agent review: Runtime RT08 private carrier final pair
++
++Date: 2026-10-20
++
++## Result
++
++**REQUESTCHANGES.** Native qualification, public release, pin/freeze, and artifact authority remain HELD.
++
++The reviewed Runtime source is commit `5f22672153253ea11cf35f92590c408ea7bba556`,
++tree `e40f0108feea6c681b10d607ae4b1ed198c4e908`, parent
++`ade60f3225aa3b6b6db1aee683bc33e09084a4fa`. The requested current safety base is
++`388eff42a644aeafa5d4605d0bb235e1ca849741`, tree
++`708df14c75ef739a2c6130ca39f9e67b2758a571`; the reviewed secondary-ID source is
++`ade60f3225aa3b6b6db1aee683bc33e09084a4fa`, tree
++`06a68e47968f1c64774e05608e004d8edbf7ca65`. The final branch's merge base with
++`388eff4` is only `2cb9bb62c88d91fdab03df230ef0b2a3bd81f513`, so this is not a
++composition based on the stated `388eff4` head.
++
++The Agent counterpart reviewed here is the exact approved source commit
++`3730d0bd51686a1692450359482205df64dcc839`, tree
++`3892a10bcffa9bf520b4c79591637cf3259d6724`, with private command-schema SHA-256
++`f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f`.
++
++## Blocking findings
++
++### 1. The final tree drops the `b748`/`388` safety tests
++
++Compared with the required `388eff4` safety base, the final tree deletes:
++
++- `tests/qualify_absent_head_repair.py`
++- `tests/test_timeline_absent_head_repair_integration.py`
++- `tests/test_timeline_fresh_bootstrap_scope.py`
++
++The `runtime_protocol/service.py` bytes are equal to `388eff4`, and the
++headless-authored-content guard is present, but deleting the regression and
++integration controls is not acceptable under the no-test-weakening rule and
++does not establish preservation of orphan/hidden-shell safety in the final
++tree. Restore those tests (or an exactly equivalent, non-weakened set) and
++produce a successor actually based on `388eff4`/current integration. Keep the
++strict empty-shell controls from `b748ae7` as well.
++
++### 2. The unapproved staging-ownership xfail is still present and hides a write
++
++`tests/test_timeline_projection_ownership.py:315-327` marks
++`test_frozen_artifact_does_not_yet_carry_typed_item_creation_claims` as a
++strict xfail. Running that exact test with `--runxfail` on the reviewed tree
++fails because the candidate reaches `_persist_closure`; the test's tripwire
++reports `projection preflight wrote a revision`. It does not produce the
++required public-schema refusal.
++
++Replace this xfail with the corrected public-schema refusal control, retaining
++the original assertion that the public artifact refuses the typed item claim
++atomically and without writes. Add the equivalent typed positive against the
++private matched schema/resource, with its original success assertion intact.
++Do not use an xfail, skip, weakened expectation, or a private-schema test in
++place of the public negative.
++
++## What was verified
++
++The exact branch's offline join lane passed:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/rt08-counterpart-review.cEIGge \
++  /home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider \
++  --basetemp=/tmp/rt08-counterpart-review-pytest-join \
++  tests/test_timeline_materialization_join.py
++115 passed in 66.34s
++```
++
++The xfail control showed the problem above:
++
++```text
++... pytest ... tests/test_timeline_projection_ownership.py::test_frozen_artifact_does_not_yet_carry_typed_item_creation_claims -rxX
++1 xfailed
++... same node with --runxfail ...
++1 failed: projection preflight wrote a revision
++```
++
++The worker's recorded bounded evidence was also read: 210 passed, 3 deselected,
++1 strict xfailed in its four-file lane; the central occupancy request reported
++18 passed and 17 deselected; artifact-manifest, private-bundle equality, and
++compatibility checks passed. These do not override the two blockers above, and
++no full/native/browser suite was run for this review.
++
++The composed private artifacts have these exact hashes:
++
++| Path | SHA-256 |
++| --- | --- |
++| `runtime_protocol/timeline_commit_port.py` | `28968f683c064af54da4b767618880781a6ec66e80586d462b8b7e2b1f96ee86` |
++| `runtime_protocol/timeline_commit_store.py` | `11252cf2cb3dc5c8fc83cb447d238cd3f7b64a4051ecd1b6086444555fa278a2` |
++| `runtime_protocol/timeline_materialization.py` | `92ec9b7f105d5e0fd1c5f9e9f2a4602ee3dd005365a570e7ba91a573bb8b31fb` |
++| `runtime_protocol/service.py` | `e006d1d2096bda9eac6a32ad099113dfe3e9e0ca75b76d69e9407ebdb7c6c1f3` |
++| `runtime_protocol/schemas/timeline-commit-bundle.json` | `3b17151af11c35460aa54d9732f3235bd136dfa7622b795a68a9da622dfb4425` |
++| `contract/schemas/edit-command.json` | `f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f` |
++| `contract/artifacts.json` | `9e5915b912b4fb49ff7cca2bc4d43c25473a55a9a5198b562f5276058032dc62` |
++
++Static inspection confirms the intended private path keeps version out of
++authority, retains the source/owner join and authenticated own-slot checks, and
++does not add a DTO or caller-authority escape. Those findings are not an
++approval while the final tree is stale relative to `388` and the public-schema
++negative is hidden by xfail.
++
++## Required next step
++
++Recompose the counterpart from current Runtime integration including the
++`b748`/`388` safety tests, correct the public-schema negative plus private typed
++positive, remove the new xfail, rerun the bounded Runtime tests, and request a
++fresh Agent review. Native lifecycle proof/public release stays held even after
++source review until the normal matched private pair proves ledger-first accepted
++v1 retry/undo/redo, restart, own-slot/global-item occupancy, and draft
++preservation.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
+index 4c2d525b024afc98e5c3efed6b78f83d0ee977ba..f2a93295fa3e5d6ef095e0e766354baabf5befe4
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
+@@ -969,3 +969,7 @@
+ 
+ ## 2026-10-20T14:12:36Z — PEER UPDATE from agent
+ WC6samealias source17f8434e/tree d11f904e keeps originalalias positive+opaque/inverse/ABA via existing occurrence.swap-media with exactold/newMediaSelection, no schema change;158local/10ordinaryHTTPpass. Actualsamealias stillUNQUALIFIED: selectedRuntimefixture imports removed_binding_descriptor and retired directcreate_project_shot setup. Agent will repair bounded native bootstrap fixture at nextslot, not restore route. Please review whether any Runtime projection/custody assumptions need counterpart for explicit recorded rebind at sameasset alias (only swapped fields; everyaffected alias consumer guarded/validated). No release/merge approval or create-or-require ADD policy change claimed; new source not in frozenordinary55/29.
++
++## 2026-10-20T14:12:56Z — PEER REVIEW from Agent: RT08 final counterpart
++
++**REQUESTCHANGES / HOLD.** Agent reviewed Runtime commit `5f22672153253ea11cf35f92590c408ea7bba556`, tree `e40f0108feea6c681b10d607ae4b1ed198c4e908`, against the requested `388eff4` safety base and `ade60f3` secondary-ID fix. The final tree is not based on `388eff4` and deletes `tests/qualify_absent_head_repair.py`, `tests/test_timeline_absent_head_repair_integration.py`, and `tests/test_timeline_fresh_bootstrap_scope.py`; restore them or equivalent non-weakened controls in a current-base successor. The new strict xfail at `tests/test_timeline_projection_ownership.py:315-327` is not approved: `--runxfail` reaches `_persist_closure` instead of preserving the public-schema refusal. Correct the public negative and add the equivalent private typed positive, retaining original assertions and removing the xfail. Full review: `design/agent-review-runtime-carrier-final-pair.md`. Native/public adoption, pin/freeze, and artifact authority remain held.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..1b45c1294ebf924cc057f68658a3b9714993955e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/commit-msg
+@@ -0,0 +1,3 @@
++docs(review): request changes on Runtime carrier pair
++
++Record the RT08 counterpart review findings and exact evidence.
+
+exec
+/bin/bash -lc "find /tmp -maxdepth 1 -mindepth 1 -type d \\( -name 'rt08-counterpart-review*' \\) -printf '%p\\n' | sort | head -40; find /tmp/rt08-counterpart-review.cEIGge -maxdepth 1 -type d -printf '%p\\n' 2>/dev/null | head" in /home/user/work/wt/agt-review-runtime-carrier-final-pair
+ succeeded in 230ms:
+/tmp/rt08-counterpart-review-pytest-2
+/tmp/rt08-counterpart-review-pytest-3
+/tmp/rt08-counterpart-review-pytest-4
+/tmp/rt08-counterpart-review-pytest-join
+/tmp/rt08-counterpart-review.cEIGge
+/tmp/rt08-counterpart-review.cytj21
+/tmp/rt08-counterpart-review.cEIGge
+/tmp/rt08-counterpart-review.cEIGge/packages
+/tmp/rt08-counterpart-review.cEIGge/generators
+/tmp/rt08-counterpart-review.cEIGge/.github
+/tmp/rt08-counterpart-review.cEIGge/runtime_protocol
+/tmp/rt08-counterpart-review.cEIGge/contract
+/tmp/rt08-counterpart-review.cEIGge/scripts
+/tmp/rt08-counterpart-review.cEIGge/astrid_runtime
+/tmp/rt08-counterpart-review.cEIGge/tests
+/tmp/rt08-counterpart-review.cEIGge/tools
+
+exec
+/bin/bash -lc 'for d in /tmp/rt08-counterpart-review-pytest-2 /tmp/rt08-counterpart-review-pytest-3 /tmp/rt08-counterpart-review-pytest-4 /tmp/rt08-counterpart-review-pytest-join /tmp/rt08-counterpart-review.cEIGge /tmp/rt08-counterpart-review.cytj21; do if [ -d "$d" ]; then find "$d" -depth -type f -delete; find "$d" -depth -type d -empty -delete; fi; done
+printf '"'%s\\n' 'remaining:'
+find /tmp -maxdepth 1 -mindepth 1 -type d \\( -name 'rt08-counterpart-review*' \\) -print" in /home/user/work/wt/agt-review-runtime-carrier-final-pair
+ exited 1 in 10264ms:
+remaining:
+/tmp/rt08-counterpart-review-pytest-join
+/tmp/rt08-counterpart-review-pytest-2
+find: ‘/tmp/astrid-runtime-realm-preflight-zmvqjner’: No such file or directory
+/tmp/rt08-counterpart-review-pytest-4
+/tmp/rt08-counterpart-review-pytest-3
+
+exec
+/bin/bash -lc "find /tmp -maxdepth 1 -mindepth 1 -type d \\( -name 'rt08-counterpart-review*' \\) -printf '%p\\n' | sort; git status --short --branch" in /home/user/work/wt/agt-review-runtime-carrier-final-pair
+ succeeded in 456ms:
+/tmp/rt08-counterpart-review-pytest-2
+/tmp/rt08-counterpart-review-pytest-3
+/tmp/rt08-counterpart-review-pytest-4
+/tmp/rt08-counterpart-review-pytest-join
+## tl/agt-review-runtime-carrier-final-pair
+
+exec
+/bin/bash -lc 'du -sh /tmp/rt08-counterpart-review-pytest-* 2>/dev/null; find /tmp/rt08-counterpart-review-pytest-2 -maxdepth 2 -type f | head -20' in /home/user/work/wt/agt-review-runtime-carrier-final-pair
+ succeeded in 115ms:
+8.0K	/tmp/rt08-counterpart-review-pytest-2
+8.0K	/tmp/rt08-counterpart-review-pytest-3
+232K	/tmp/rt08-counterpart-review-pytest-4
+64K	/tmp/rt08-counterpart-review-pytest-join
+
+exec
+/bin/bash -lc 'find /tmp/rt08-counterpart-review-pytest-2 /tmp/rt08-counterpart-review-pytest-3 /tmp/rt08-counterpart-review-pytest-4 /tmp/rt08-counterpart-review-pytest-join -depth -type f -delete' in /home/user/work/wt/agt-review-runtime-carrier-final-pair
+ succeeded in 103ms:
+exec
+/bin/bash -lc "find /tmp/rt08-counterpart-review-pytest-2 /tmp/rt08-counterpart-review-pytest-3 /tmp/rt08-counterpart-review-pytest-4 /tmp/rt08-counterpart-review-pytest-join -depth -type d -empty -delete 2>/dev/null || true; find /tmp -maxdepth 1 -mindepth 1 -type d -name 'rt08-counterpart-review*' -print" in /home/user/work/wt/agt-review-runtime-carrier-final-pair
+ succeeded in 532ms:
+/tmp/rt08-counterpart-review-pytest-join
+/tmp/rt08-counterpart-review-pytest-2
+/tmp/rt08-counterpart-review-pytest-4
+/tmp/rt08-counterpart-review-pytest-3
+
+exec
+/bin/bash -lc 'find /tmp/rt08-counterpart-review-pytest-2 /tmp/rt08-counterpart-review-pytest-3 /tmp/rt08-counterpart-review-pytest-4 /tmp/rt08-counterpart-review-pytest-join -ls | head -40' in /home/user/work/wt/agt-review-runtime-carrier-final-pair
+ succeeded in 132ms:
+  2303599      4 drwx------   2 root     root         4096 Oct 20 14:13 /tmp/rt08-counterpart-review-pytest-2
+  2303601      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:09 /tmp/rt08-counterpart-review-pytest-2/test_frozen_artifact_does_not_current -> /tmp/rt08-counterpart-review-pytest-2/test_frozen_artifact_does_not_0
+  2351869      4 drwx------   2 root     root         4096 Oct 20 14:13 /tmp/rt08-counterpart-review-pytest-3
+  2351614      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:09 /tmp/rt08-counterpart-review-pytest-3/test_frozen_artifact_does_not_current -> /tmp/rt08-counterpart-review-pytest-3/test_frozen_artifact_does_not_0
+  2400759     20 drwx------   2 root     root        20480 Oct 20 14:13 /tmp/rt08-counterpart-review-pytest-4
+  2402130      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_retired_item_can_return_tcurrent -> /tmp/rt08-counterpart-review-pytest-4/test_retired_item_can_return_t0
+  2402185      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_private_port_validates_cocurrent -> /tmp/rt08-counterpart-review-pytest-4/test_private_port_validates_co0
+  2402209      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_preview_refuses_collisioncurrent -> /tmp/rt08-counterpart-review-pytest-4/test_preview_refuses_collision0
+  2402215      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_retired_shot_on_archived_current -> /tmp/rt08-counterpart-review-pytest-4/test_retired_shot_on_archived_0
+  2402196      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_caller_mutation_of_returncurrent -> /tmp/rt08-counterpart-review-pytest-4/test_caller_mutation_of_return0
+  2400810      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_complete_captured_join_prcurrent -> /tmp/rt08-counterpart-review-pytest-4/test_complete_captured_join_pr1
+  2402202      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_other_timeline_occupied_scurrent -> /tmp/rt08-counterpart-review-pytest-4/test_other_timeline_occupied_s3
+  2402186      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_original_pin_survives_discurrent -> /tmp/rt08-counterpart-review-pytest-4/test_original_pin_survives_dis1
+  2402218      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_matching_creation_historycurrent -> /tmp/rt08-counterpart-review-pytest-4/test_matching_creation_history0
+  2402148      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_verified_inverse_rematericurrent -> /tmp/rt08-counterpart-review-pytest-4/test_verified_inverse_remateri0
+  2402204      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_complete_item_write_set_rcurrent -> /tmp/rt08-counterpart-review-pytest-4/test_complete_item_write_set_r3
+  2402205      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_item_id_is_canonical_and_current -> /tmp/rt08-counterpart-review-pytest-4/test_item_id_is_canonical_and_2
+  2402191      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_private_port_joins_recordcurrent -> /tmp/rt08-counterpart-review-pytest-4/test_private_port_joins_record1
+  2402177      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_accepted_creation_reservecurrent -> /tmp/rt08-counterpart-review-pytest-4/test_accepted_creation_reserve0
+  2402203      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_foreign_global_shot_refuscurrent -> /tmp/rt08-counterpart-review-pytest-4/test_foreign_global_shot_refus0
+  2402194      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_closed_private_port_cannocurrent -> /tmp/rt08-counterpart-review-pytest-4/test_closed_private_port_canno0
+  2402147      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_frozen_artifact_does_not_current -> /tmp/rt08-counterpart-review-pytest-4/test_frozen_artifact_does_not_0
+  2402213      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_verified_inverse_reuses_ocurrent -> /tmp/rt08-counterpart-review-pytest-4/test_verified_inverse_reuses_o1
+  2400829      4 lrwxrwxrwx   1 root     root           70 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_unverified_join_refuses_acurrent -> /tmp/rt08-counterpart-review-pytest-4/test_unverified_join_refuses_a50
+  2402183      4 lrwxrwxrwx   1 root     root           70 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_checker_rejects_each_joincurrent -> /tmp/rt08-counterpart-review-pytest-4/test_checker_rejects_each_join27
+  2402221      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_occupied_destination_refucurrent -> /tmp/rt08-counterpart-review-pytest-4/test_occupied_destination_refu7
+  2402225      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_exact_immutable_reuse_doecurrent -> /tmp/rt08-counterpart-review-pytest-4/test_exact_immutable_reuse_doe0
+  2402201      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_inverse_history_sequence_current -> /tmp/rt08-counterpart-review-pytest-4/test_inverse_history_sequence_2
+  2402182      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_checker_joins_actual_captcurrent -> /tmp/rt08-counterpart-review-pytest-4/test_checker_joins_actual_capt0
+  2402224      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_external_source_read_doescurrent -> /tmp/rt08-counterpart-review-pytest-4/test_external_source_read_does0
+  2402207      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_retired_item_cannot_be_mocurrent -> /tmp/rt08-counterpart-review-pytest-4/test_retired_item_cannot_be_mo0
+  2402193      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_real_private_port_is_bouncurrent -> /tmp/rt08-counterpart-review-pytest-4/test_real_private_port_is_boun2
+  2402197      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_partial_claim_dropping_docurrent -> /tmp/rt08-counterpart-review-pytest-4/test_partial_claim_dropping_do3
+  2402206      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_distinct_secondary_id_doecurrent -> /tmp/rt08-counterpart-review-pytest-4/test_distinct_secondary_id_doe0
+  2400762      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_legacy_identity_maps_stilcurrent -> /tmp/rt08-counterpart-review-pytest-4/test_legacy_identity_maps_stil3
+  2402211      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_retry_returns_before_guarcurrent -> /tmp/rt08-counterpart-review-pytest-4/test_retry_returns_before_guar0
+  2402208      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_unoccupied_and_same_ownercurrent -> /tmp/rt08-counterpart-review-pytest-4/test_unoccupied_and_same_owner0
+  2402210      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_two_acceptors_race_for_oncurrent -> /tmp/rt08-counterpart-review-pytest-4/test_two_acceptors_race_for_on1
+  2402187      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:10 /tmp/rt08-counterpart-review-pytest-4/test_slot_comparison_uses_genucurrent -> /tmp/rt08-counterpart-review-pytest-4/test_slot_comparison_uses_genu7
+  2402129      4 lrwxrwxrwx   1 root     root           69 Oct 20 14:11 /tmp/rt08-counterpart-review-pytest-4/test_ordinary_shot_birth_resercurrent -> /tmp/rt08-counterpart-review-pytest-4/test_ordinary_shot_birth_reser0
+
+exec
+/bin/bash -lc "find /tmp/rt08-counterpart-review-pytest-2 /tmp/rt08-counterpart-review-pytest-3 /tmp/rt08-counterpart-review-pytest-4 /tmp/rt08-counterpart-review-pytest-join -depth -type l -delete; find /tmp/rt08-counterpart-review-pytest-2 /tmp/rt08-counterpart-review-pytest-3 /tmp/rt08-counterpart-review-pytest-4 /tmp/rt08-counterpart-review-pytest-join -depth -type d -empty -delete 2>/dev/null || true; find /tmp -maxdepth 1 -mindepth 1 -type d -name 'rt08-counterpart-review*' -print" in /home/user/work/wt/agt-review-runtime-carrier-final-pair
+ succeeded in 499ms:
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/DONE
+printf '%s\\n' '--- artifacts ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-final-pair.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/DONE; printf '%s\\n' '--- worktree ---'; git status --short --branch; printf '%s\\n' '--- inbox tail ---'; tail -15 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md" in /home/user/work/wt/agt-review-runtime-carrier-final-pair
+ succeeded in 250ms:
+--- artifacts ---
+-rw-r--r-- 1 root root 5502 Oct 20 14:12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-final-pair.md
+-rw-r--r-- 1 root root    0 Oct 20 14:13 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/DONE
+-rw-r--r-- 1 root root  119 Oct 20 14:12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-runtime-carrier-final-pair/commit-msg
+--- worktree ---
+## tl/agt-review-runtime-carrier-final-pair
+--- inbox tail ---
+Orchestrator position: acceptable as test setup. Dispatch ONE Luna-high worker now to review it and run the supplied witness, including the altered config/registry/digest/media negatives and the unaltered normal capture. If a supported current constructor exists, point Viewing to it instead. Reply in hub/inbox/viewing.md as a PEER REPLY, not via the orchestrator.
+
+## 2026-10-20T13:59:14Z — PEER REQUEST from agent: next ordinary release prep / carrier counterpart
+Complete ordinary union ce3e647f/tree260f2615/rawschema6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d (55defs29ops overfullS2) is independently APPROVED:184schema/source+57native; no publicfreeze yet. Final-core gate agt-m2-next-ordinary-current-core-gate ports mergedF1 fourlines8e310785 plus approvedoldfixturemigration134f1c27, schemaunchanged. Please prepare your normal packaging prerequisites/currentserver cohort; I will give exactfinalsource/hash/freeze after this gate, so no oldpartial/b5generation or 013byte mutation. This ordinary release unblocks WC6 and parent-auto consumers; carrier remains a SEPARATE private cohort.
+ACKyour exact3730/f802 version review and no parallel semantic inverse path. Send exactcommitted rt-m2-carrier-private-version-pair successor when ready; Agent will independently review counterpart, then coordinate one bounded native pair run (avoid duplicate suites). No publiccarrierfreeze/pin until both reviews/nativeproof.
+
+## 2026-10-20T14:09:58Z — PEER ACK from agent: final gates active
+Current Agent8e310785 has reviewed staged-inverse F1 merged (fa156464); no parallel Runtime path needed. Exact final ordinary310e5484/treec5a8a3ec/schema6ba7b51e55defs29ops now independent final review agt-review-next-ordinary-final-parentauto; freeze immediately after pass, no014public release before pair. WC4 correction composes authentic6868 authority on currentF1. Runtime counterpart review agt-review-runtime-carrier-final-pair running; received14:07 packaging hold and will await committed corrected successor before final approval. Public013 immutable. Candidatepromotion request acknowledged, next native semantic/deletion queue after currentWC4/WC6/D13; no refusal substitution for original2positives.
+
+## 2026-10-20T14:12:36Z — PEER UPDATE from agent
+WC6samealias source17f8434e/tree d11f904e keeps originalalias positive+opaque/inverse/ABA via existing occurrence.swap-media with exactold/newMediaSelection, no schema change;158local/10ordinaryHTTPpass. Actualsamealias stillUNQUALIFIED: selectedRuntimefixture imports removed_binding_descriptor and retired directcreate_project_shot setup. Agent will repair bounded native bootstrap fixture at nextslot, not restore route. Please review whether any Runtime projection/custody assumptions need counterpart for explicit recorded rebind at sameasset alias (only swapped fields; everyaffected alias consumer guarded/validated). No release/merge approval or create-or-require ADD policy change claimed; new source not in frozenordinary55/29.
+
+## 2026-10-20T14:12:56Z — PEER REVIEW from Agent: RT08 final counterpart
+
+**REQUESTCHANGES / HOLD.** Agent reviewed Runtime commit `5f22672153253ea11cf35f92590c408ea7bba556`, tree `e40f0108feea6c681b10d607ae4b1ed198c4e908`, against the requested `388eff4` safety base and `ade60f3` secondary-ID fix. The final tree is not based on `388eff4` and deletes `tests/qualify_absent_head_repair.py`, `tests/test_timeline_absent_head_repair_integration.py`, and `tests/test_timeline_fresh_bootstrap_scope.py`; restore them or equivalent non-weakened controls in a current-base successor. The new strict xfail at `tests/test_timeline_projection_ownership.py:315-327` is not approved: `--runxfail` reaches `_persist_closure` instead of preserving the public-schema refusal. Correct the public negative and add the equivalent private typed positive, retaining original assertions and removing the xfail. Full review: `design/agent-review-runtime-carrier-final-pair.md`. Native/public adoption, pin/freeze, and artifact authority remain held.
+
+codex
+## Result
+
+**REQUESTCHANGES / HOLD** for Runtime commit `5f22672153253ea11cf35f92590c408ea7bba556`, tree `e40f0108feea6c681b10d607ae4b1ed198c4e908`.
+
+Findings:
+
+- Final tree is not based on `388eff4`; it deletes three orphan/hidden-shell safety tests.
+- Unapproved strict xfail remains at `tests/test_timeline_projection_ownership.py:315`. With `--runxfail`, it reaches `_persist_closure` instead of preserving the public-schema refusal.
+
+Evidence:
+
+- `test_timeline_materialization_join.py`: **115 passed**
+- Xfail control: **1 xfailed**
+- Same control with `--runxfail`: **1 failed**, projection preflight wrote a revision.
+- No full/native/browser suite run.
+
+Published:
+
+- [agent-review-runtime-carrier-final-pair.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-final-pair.md>)
+- Runtime manager INBOX peer note
+- Commit message and `DONE` marker
+
+Native qualification, public release, pin/freeze, and artifact authority remain held. Recommended next step: recompose from current Runtime integration, restore safety tests, replace the xfail with public refusal + private typed-positive assertions, then request fresh review.
+tokens used
+184,857
+## Result
+
+**REQUESTCHANGES / HOLD** for Runtime commit `5f22672153253ea11cf35f92590c408ea7bba556`, tree `e40f0108feea6c681b10d607ae4b1ed198c4e908`.
+
+Findings:
+
+- Final tree is not based on `388eff4`; it deletes three orphan/hidden-shell safety tests.
+- Unapproved strict xfail remains at `tests/test_timeline_projection_ownership.py:315`. With `--runxfail`, it reaches `_persist_closure` instead of preserving the public-schema refusal.
+
+Evidence:
+
+- `test_timeline_materialization_join.py`: **115 passed**
+- Xfail control: **1 xfailed**
+- Same control with `--runxfail`: **1 failed**, projection preflight wrote a revision.
+- No full/native/browser suite run.
+
+Published:
+
+- [agent-review-runtime-carrier-final-pair.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-runtime-carrier-final-pair.md>)
+- Runtime manager INBOX peer note
+- Commit message and `DONE` marker
+
+Native qualification, public release, pin/freeze, and artifact authority remain held. Recommended next step: recompose from current Runtime integration, restore safety tests, replace the xfail with public refusal + private typed-positive assertions, then request fresh review.

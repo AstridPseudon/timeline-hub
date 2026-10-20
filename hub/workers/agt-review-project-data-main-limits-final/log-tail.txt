@@ -1,0 +1,400 @@
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-201-| **Effect IDs** | Must be declared with the same `effectId` | CR:M7-001, S-080 |
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-202-| **Transition IDs** | Must be declared with the same `transitionId` | CR:M8-001, S-090 |
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-203-| **Shader IDs** | Must be declared with the same shader registration | CR:M13-001, S-130 |
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md:204:| **Project-data keys** | Extension-scoped project data is keyed by extension ID — must remain stable | S-039 |
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md:205:| **Source-map entries** | Stored under `__sm__:<entryId>` in project-data — extension ID must be stable | S-040 |
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-206-
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md:207:**Important:** If an extension changes its `id` during migration, all project-data and source-map entries are orphaned. The migration path must preserve the extension ID.
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-208-
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md:209:**Evidence:** [Provider Compatibility Matrix §7–8](./provider-compatibility-matrix.md#7-extension-project-data-limits-by-provider); [Supported/Deferred Matrix §2.14](./extension-platform-supported-deferred.md#214-provider-compatibility); [Contract-Recheck CR:M14-007](./extension-platform-contract-recheck.md#215-m14--packaging-runtime-loader-extension-manager).
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-210-
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-211----
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-212-
+--
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-313-- [x] Keep extension ID stable across versions.
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-314-- [x] Keep contribution IDs stable across versions.
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-315-- [x] Keep effect/transition/clip-type/shader IDs stable across versions.
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md:316:- [x] Do not change the format of project-data keys.
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-317-
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-318-### 8.4 What not to do
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-319-
+--
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-322-- [ ] Do not implement integrity hashing — `defineExtension()` does not yet accept hashes (D-003).
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-323-- [ ] Do not depend on `dependsOn` resolution — it's validated but not executed (D-009).
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-324-- [ ] Do not assume cloud loading or a marketplace will be available — they are unsupported (D-123).
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md:325:- [ ] Do not delete project data from generic `DisposeHandle.dispose()` — dispose also runs on provider unmount, HMR, and reload. Provide an explicit Clear/Delete Data action; automatic deletion waits for a reason-aware uninstall lifecycle.
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-326-
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-327----
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-328-
+--
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-410-| Date | Change |
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-411-|---|---|
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md-412-| 2026-06-20 | Initial migration guide for M15. Covers V1 source-local posture, settings migration infrastructure (T10), manifest format continuity, reference continuity, deferred M14 packaging pieces (D-001–D-010, B-001), unsupported cloud/export/marketplace paths, provider compatibility for migration, pre-M14 preparation checklist, and automated quality checks. All workflows linked to tests, examples, matrix rows, absence checks, and blockers. |
+/home/user/work/app/docs/video-editor/extensions-migration-local-to-pack.md:413:| 2026-08-11 | T7.4: corrected manager/persistence claims — installed packages already have enable/disable, settings editing, and persisted enablement (S-160–S-164); install/update/delete, bundler, marketplace, discovery, and update tooling remain absent (D-001, D-004, D-123). DEV-local extensions use the DEV-only Local extensions manager section (S-170). Added explicit guidance that generic disposal never deletes project data. |
+--
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-90-| M3-009 | Golden patch replay tests prove representative batches validate/apply/undo/replay across at least two providers | gap | supported | `timeline-golden-replay.test.ts` — 81 tests; InMemory and Supabase covered; Astrid listed as N/A | `timeline-golden-replay.test.ts` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-91-| M3-010 | Provider compatibility matrix updated with pass/defer notes for patch/proposal behavior | pass | supported | `docs/video-editor/provider-compatibility-matrix.md` — § 3–§ 9 cover all M3 behaviors across providers | `provider-compatibility-matrix.md` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-92-| M3-011 | Patch extension mechanism documented and tested with at least one namespaced no-op/example extension operation | pass | supported | `timeline-patch-operations.md` § 7 — extension mechanism with validation, serialization, previewability contracts; `extension.noop` reserved family | `docs/video-editor/timeline-patch-operations.md` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md:93:| M3-012 | Extension-owned project data persistence/replay, oversized payload rejection with diagnostics, proposal rationale/source mapping | pass | supported | `project-data.write`/`project-data.delete` op families; `ProjectDataLimitDetail` with 64KB/1MB/128-entry limits; `source-map-runtime.test.ts` — 31 tests | `timeline-patch-operations.md` § 3.11, `source-map-runtime.test.ts` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md:94:| M3-013 | DSL/compiler canary reads `CreativeContext.timeline`, stores source/source-map in namespaced project namespace, emits `TimelineProposal` | gap | supported | `SourceMapRuntime` and project-data infrastructure exists; explicit DSL canary test not identified as standalone | `source-map-runtime.test.ts` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-95-| M3-014 | Source-to-timeline and timeline-to-source navigation metadata, stale source maps, generated-object cleanup proposals | pass | supported | `SourceMapEntry`, `stale` flag, bidirectional navigation; `managed-object-guard.test.ts` covers overwrite warnings | `source-map-runtime.test.ts` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-96-| M3-015 | Proposal diff rendering, source-map navigation from diff/diagnostic UI, stale badges, managed-object overwrite confirmation | gap | supported | Infrastructure exists; dedicated diff rendering tests not identified; managed-object guard tested | `managed-object-guard.test.ts` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-97-| M3-016 | `clip.split`/slice reservation or implementation and managed-content warning metadata | pass | deferred | Reserved operation families produce warning diagnostics with `{ reserved: true, deferred: true }`; never executed | `timeline-patch-operations.md` § 4 |
+--
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-273-| X-010 | `timelineOverlay` is a live host-rendered surface, not reserved: required non-empty `render` id (no `when`), renderer bound via `ctx.ui.registerRenderer()`, unregistered overlays omitted, undeclared render ids diagnosed (T6/T7) | pass | supported | `src/sdk/ui.ts`, `src/sdk/video/families/timelineOverlays.ts`; `src/tools/video-editor/runtime/extensionRenderSurface.ts`; TEST:`TimelineExtensionOverlayHost.integration.test.tsx` | `src/sdk/video/families/timelineOverlays.ts` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-274-| X-011 | Ruler-only marker primitive: `primitives.markerLayer()` with `placement: 'ruler'` only, preview/commit intents, frame-grid snapping at commit, accessible markers, culling with overscan | pass | supported | `src/tools/video-editor/components/TimelineEditor/TimelineMarkerLayer.tsx`, `useTimelineMarkerDrag.ts`; TEST:`TimelineMarkerLayer.test.tsx` | `src/tools/video-editor/components/TimelineEditor/TimelineMarkerLayer.tsx` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-275-| X-012 | Passive gesture arbitration: `'overlay'` gesture owner, click-through wrappers until `claimPointer()` succeeds, foreign-owner/claimant decline, release on up/cancel/blur/error/disable/unmount, pinch refusal while overlay owns, `touch-action: none` limited to interactive marker hit targets | pass | supported | `src/tools/video-editor/lib/mobile-interaction-model.ts`, `lib/timeline-dom.ts`; TEST:`TimelineExtensionOverlayHost.integration.test.tsx` (T5.1 passive parity and ownership arbitration) | `src/tools/video-editor/lib/mobile-interaction-model.ts` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md:276:| X-013 | Storage-neutral persistence: overlay/project data persists through the standard `project-data.write` path; generic disposal never deletes project data (dispose also runs on unmount, HMR, reload); explicit Clear/Delete Data actions | pass | supported | `src/tools/video-editor/dev/scene-phase-markers/ScenePhaseMarkersPanel.tsx`; DOC:`timeline-patch-operations.md`§3.11; S-169 | `src/tools/video-editor/dev/scene-phase-markers/` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-277-| X-014 | Canary gate and dev-local management: `timelineOverlaysEnabled` defaults false (DEV `?timelineOverlayCanary=1` implemented — flips the flag in DEV builds, production never honors it); maturity promotion deferred until the passive-gesture release criterion passes; DEV-only Local extensions manager section with enable/disable | pass | supported | `src/tools/video-editor/dev/devExtensionEnablement.ts`; `src/tools/video-editor/components/ExtensionManager/ExtensionManager.tsx`; TEST:`ExtensionManager.test.tsx` (T2.4), `BrowserVideoEditorProvider.test.tsx`; S-170, S-171 | `src/tools/video-editor/components/ExtensionManager/ExtensionManager.tsx` |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-278-
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-279----
+--
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-331-| Date | Change |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-332-|---|---|
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md-333-| 2026-06-20 | Initial contract-recheck matrix for M15. Covers M0–M14 Done Criteria against current `main` evidence. |
+/home/user/work/app/docs/video-editor/extension-platform-contract-recheck.md:334:| 2026-08-11 | T7.4: added X-010–X-014 for the timeline-overlay host (required-render + `ctx.ui`, ruler-only `markerLayer`, passive gesture arbitration, storage-neutral persistence with disposal never deleting project data, canary gate + dev-local manager seam). Updated M2-001/M2-003 evidence; totals now 127 rows (75 pass / 52 gap), 113 supported / 14 deferred. |
+--
+/home/user/work/app/docs/structure_detail/tool_video_editor.md-197-
+/home/user/work/app/docs/structure_detail/tool_video_editor.md-198-**`timelineOverlay` is a live, host-rendered surface.** `TimelineExtensionOverlayHost` (mounted by `TimelineCanvas.tsx`) consumes `useVideoEditorTimelineOverlays()` — resolved descriptors only — and portals extension renderer output into content-coordinate roots inside the scroller, with `markerLayer` rendering into a ruler portal root outside the scroller driven by one imperatively updated `translateX(-scrollLeft)` strip. The contribution contract is **required-render**: the manifest declares a non-empty `render` id (no `when` clause), the extension binds the renderer through `ctx.ui.registerRenderer(renderId, renderer)` during `activate()` (SDK: `src/sdk/ui.ts`, `src/sdk/video/families/timelineOverlays.ts`), and the runtime reconciles via `resolveRegisteredRenderers()` (`runtime/extensionRenderSurface.ts`, `runtime/extensionRendererRegistry.ts`). Overlays whose renderer was never registered are omitted — there is no callable/null placeholder. Each renderer renders through React component semantics inside `HostContributionErrorBoundary` (error → claim released → fallback), keyed by both `extensionId` and contribution ID.
+/home/user/work/app/docs/structure_detail/tool_video_editor.md-199-
+/home/user/work/app/docs/structure_detail/tool_video_editor.md:200:The V1 host-owned primitive is `primitives.markerLayer(...)`, **ruler-only** (`placement: 'ruler'` only — no `trackId`, no canvas placement). Markers are controlled input with preview/commit intents; commits snap to the frame grid. The phase-marker canary (`dev/scene-phase-markers/`) is the living consumer: markers persist via the standard storage-neutral `project-data.write` path and are **never deleted by generic disposal** — the panel's "Clear/Delete Data" action is the explicit user-triggered clear.
+/home/user/work/app/docs/structure_detail/tool_video_editor.md-201-
+/home/user/work/app/docs/structure_detail/tool_video_editor.md-202-**Gesture arbitration.** `lib/mobile-interaction-model.ts` adds the host-internal `'overlay'` gesture owner. Overlay wrappers are `pointer-events: none` until `claimPointer()` succeeds (claimant key `${extensionId}:${contributionId}`); `claimPointer()` returns `false` for any foreign owner or foreign overlay claimant; while `gestureOwner === 'overlay'`, marquee/context-menu ignore the overlay-interactive attribute and pinch refuses to initialize or continue without `preventDefault()` in the declined path. `touch-action: none` is limited to interactive marker hit targets. The release criterion is **"All existing timeline gestures behave identically when no overlay has an active claim"** (clip drag, trim, ruler scrub, marquee, selection, context menus, wheel/native scrolling, auto-scroll, drop/reorder, pinch zoom).
+/home/user/work/app/docs/structure_detail/tool_video_editor.md-203-
+--
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-22-Temporal Origami; Soundtrack Cartographer.
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-23-
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-24-Selected: **Soundtrack Cartographer** — an emotional-terrain cue map stored in
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md:25:extension-owned project data, using the proven ruler-marker surface.
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-26-
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-27-## 3. Accessibility-first editor
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-28-
+--
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-96-- Import only from `@astrid/editor-sdk`.
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-97-- Use one independent extension ID and package manifest per concept.
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-98-- Keep algorithms pure, bounded, deterministic, and fixture-testable.
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md:99:- Persist only namespaced extension-owned data through `project-data.write`.
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-100-- Register and dispose every command or renderer through public lifecycle APIs.
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-101-- Treat audio, transcript, pixel, semantic, GPU, and export analysis as deferred
+/home/user/work/app/docs/extensions/creative-extension-lab-concepts.md-102-  unless the public runtime supplies it explicitly.
+--
+/home/user/work/app/docs/extensions/composition-spine/v8-architecture-baseline.md-435-  declines while the overlay owns. Release criterion: all existing timeline
+/home/user/work/app/docs/extensions/composition-spine/v8-architecture-baseline.md-436-  gestures behave identically when no overlay has an active claim.
+/home/user/work/app/docs/extensions/composition-spine/v8-architecture-baseline.md-437-- **Storage-neutral persistence.** Marker data persists through the standard
+/home/user/work/app/docs/extensions/composition-spine/v8-architecture-baseline.md:438:  `project-data.write` path; generic disposal never deletes project data —
+/home/user/work/app/docs/extensions/composition-spine/v8-architecture-baseline.md-439-  extensions expose explicit Clear/Delete Data actions.
+/home/user/work/app/docs/extensions/composition-spine/v8-architecture-baseline.md-440-- **Dev-local manager behavior.** A DEV-only Local extensions section in the
+/home/user/work/app/docs/extensions/composition-spine/v8-architecture-baseline.md-441-  Extension Manager inventories `devLocalExtensions` (external store
+--
+
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python - <<'"'PY'
+import copy
+import hashlib
+import json
+from astrid.sdk.timeline._command_state import CommandError
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.test_recipe_m1_commands import bundle
+from tests.editing_conformance.test_recipe_m2_project_data import command, project_data, TARGET
+
+
+def refusal(label, action, original):
+    before = copy.deepcopy(original)
+    try:
+        action()
+    except CommandError as exc:
+        assert original == before, (label, 'mutated')
+        print(label, 'refused', exc.kind)
+    else:
+        raise AssertionError(label + ' unexpectedly accepted')
+
+base = bundle()
+first = execute(base, [command('source', 'A')])
+other = execute(base, [command('source', 'B')])
+refusal('changed-key/same-leaf', lambda: replay(first, other.bundle, intervening_records=other.records), other.bundle)
+
+wrong = bundle()
+wrong['parent']['config']['app'] = {TARGET: 'not-an-object'}
+refusal('wrong-container', lambda: execute(wrong, [command('source', 1)]), wrong)
+
+identity = bundle()
+identity_command = command('source', 1)
+identity_command['created'] = ['parent']
+refusal('occupied-identity', lambda: execute(identity, [identity_command]), identity)
+
+data = bundle()
+opaque = {'__proto__': {'constructor': ['plain']}, 'constructor': None, 'prototype': [1]}
+plan = execute(data, [command('nested', opaque)])
+assert project_data(plan.bundle)[TARGET]['nested'] == opaque
+assert [w['path'] for w in plan.records[0]['writes']] == [
+    ['config'], ['config', 'app'], ['config', 'app', TARGET], ['config', 'app', TARGET, 'nested']
+]
+print('nested-opaque/plain-recording', 'ok')
+
+# Exact accepted boundaries: JSON value bytes 64 KiB and 128th entry.
+boundary = bundle()
+plan = execute(boundary, [command('edge', 'x' * (64 * 1024 - 2))])
+assert len(json.dumps('x' * (64 * 1024 - 2), ensure_ascii=False, separators=(',', ':')).encode()) == 64 * 1024
+print('entry-boundary', 'accepted')
+
+print('schema-sha256', hashlib.sha256(open('astrid/core/timeline/schema/edit-command.schema.json','rb').read()).hexdigest())
+PY" in /home/user/work/wt/agt-review-project-data-main-limits-final
+ exited 1 in 775ms:
+changed-key/same-leaf refused dependency_changed
+wrong-container refused invalid_edit_command
+occupied-identity refused invalid_edit_command
+Traceback (most recent call last):
+  File "<stdin>", line 39, in <module>
+AssertionError
+
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python - <<'"'PY'
+from astrid.sdk.timeline.commands import execute
+from tests.editing_conformance.test_recipe_m1_commands import bundle
+from tests.editing_conformance.test_recipe_m2_project_data import command, project_data, TARGET
+opaque={'__proto__': {'constructor':['plain']}, 'constructor': None, 'prototype':[1]}
+plan=execute(bundle(), [command('nested', opaque)])
+print(project_data(plan.bundle)[TARGET]['nested'])
+print([w['path'] for w in plan.records[0]['writes']])
+print(plan.records[0]['reads'])
+PY" in /home/user/work/wt/agt-review-project-data-main-limits-final
+ succeeded in 283ms:
+{'__proto__': {'constructor': ['plain']}, 'constructor': None, 'prototype': [1]}
+[['config', 'app'], ['config', 'app', 'com.example.compiler-canary'], ['config', 'app', 'com.example.compiler-canary', 'nested']]
+[{'ref': 'parent', 'path': ['config', 'app'], 'state': {'state': 'absent'}}, {'ref': 'parent', 'path': ['config', 'app', 'com.example.compiler-canary'], 'state': {'state': 'absent'}}]
+
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python - <<'"'PY'
+import copy, hashlib, json
+from astrid.sdk.timeline._command_state import CommandError
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.test_recipe_m1_commands import bundle, inverse
+from tests.editing_conformance.test_recipe_m2_project_data import command, project_data, TARGET
+
+for label, initial in [('absence', None), ('null', None), ('empty', {})]:
+    original = bundle()
+    if label "'!= '"'absence':
+        original['parent']['config']['app'] = {TARGET: initial}
+    before = copy.deepcopy(original)
+    first = execute(original, [command('source', 'A')])
+    undone = inverse(first.bundle, first.records)
+    assert undone.bundle == before, label
+    print(label, 'inverse-exact', 'ok', 'writes=', [w['path'] for w in first.records[0]['writes']])
+
+original = bundle()
+first = execute(original, [command('source', 'A')])
+later = execute(first.bundle, [command('source-map', {'id':'B'})])
+try:
+    inverse(later.bundle, first.records, later.records)
+except CommandError as exc:
+    print('later-dependent-key', 'refused', exc.kind)
+else:
+    raise AssertionError('dependent key inverse accepted')
+
+# Accepted limits and opaque JSON are evaluated using the same recording seam.
+plan = execute(bundle(), [command('nested', {'__proto__': {'constructor': ['plain']}, 'constructor': None, 'prototype': [1]})])
+assert project_data(plan.bundle)[TARGET]['nested']['__proto__']['constructor'] == ['plain']
+assert [w['path'] for w in plan.records[0]['writes']] == [
+    ['config', 'app'], ['config', 'app', TARGET], ['config', 'app', TARGET, 'nested']
+]
+print('nested-opaque/plain-recording', 'ok')
+
+value = 'x' * (64 * 1024 - 2)
+assert len(json.dumps(value, ensure_ascii=False, separators=(',', ':')).encode()) == 64 * 1024
+execute(bundle(), [command('edge', value)])
+print('entry-boundary', 'accepted')
+print('schema-sha256', hashlib.sha256(open('astrid/core/timeline/schema/edit-command.schema.json','rb').read()).hexdigest())
+PY" in /home/user/work/wt/agt-review-project-data-main-limits-final
+ succeeded in 275ms:
+absence inverse-exact ok writes= [['config', 'app'], ['config', 'app', 'com.example.compiler-canary'], ['config', 'app', 'com.example.compiler-canary', 'source']]
+null inverse-exact ok writes= [['config', 'app', 'com.example.compiler-canary'], ['config', 'app', 'com.example.compiler-canary', 'source']]
+empty inverse-exact ok writes= [['config', 'app', 'com.example.compiler-canary', 'source']]
+later-dependent-key refused intervening_write
+nested-opaque/plain-recording ok
+entry-boundary accepted
+schema-sha256 89ed90ce0a4a95559a6d086d57f851fbcc6d224c9e7658f41467dfa9280eb0c3
+
+codex
+The focused lane passes: `17 passed`. Direct probes also confirmed exact inverse restoration for absent, null, and empty containers; same-key changed-value replay refuses; malformed containers and occupied identities refuse without mutating the input; the exact 64 KiB JSON-value boundary is accepted; and nested `__proto__`/`constructor`/`prototype` keys remain ordinary opaque JSON. I’m doing the final provenance/status checks and writing the harness markers now.
+exec
+/bin/bash -lc "WORKER_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final; printf '%s\\n' '--- worker dir ---'; ls -la \""'$WORKER_DIR" 2>/dev/null || true; printf '"'%s\\n' '--- status ---'; git status --short --branch; printf '%s\\n' '--- provenance ---'; git rev-parse HEAD; git show -s --format='%T' HEAD; sha256sum astrid/core/timeline/schema/edit-command.schema.json; printf '%s\\n' '--- successor diff summary ---'; git diff --numstat HEAD"'^ HEAD -- astrid/core/timeline/schema/edit-command.schema.json astrid/sdk/timeline/_project_data_commands.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_m2_project_data.py; printf '"'%s\\n' '--- test-file deletion count ---'; git diff --numstat HEAD"'^ HEAD -- tests/editing_conformance/test_recipe_m2_project_data.py' in /home/user/work/wt/agt-review-project-data-main-limits-final
+ succeeded in 71ms:
+--- worker dir ---
+total 592
+drwxr-xr-x   2 root root   4096 Oct 20 16:37 .
+drwxr-xr-x 999 root root  65536 Oct 20 16:37 ..
+-rw-r--r--   1 root root   1274 Oct 20 16:37 brief.md
+-rw-r--r--   1 root root 520339 Oct 20 16:38 log.txt
+-rw-r--r--   1 root root    258 Oct 20 16:37 meta
+-rw-r--r--   1 root root      0 Oct 20 16:37 running
+--- status ---
+## tl/agt-review-project-data-main-limits-final
+--- provenance ---
+0a774e4968f5a9728c4ee6b5bbbfe286e26f29a3
+2f3eee4e9a7d37db80374b5e98d16f1e08082a35
+89ed90ce0a4a95559a6d086d57f851fbcc6d224c9e7658f41467dfa9280eb0c3  astrid/core/timeline/schema/edit-command.schema.json
+--- successor diff summary ---
+10	1	astrid/core/timeline/schema/edit-command.schema.json
+50	6	astrid/sdk/timeline/_project_data_commands.py
+88	10	astrid/sdk/timeline/commands.py
+83	0	tests/editing_conformance/test_recipe_m2_project_data.py
+--- test-file deletion count ---
+83	0	tests/editing_conformance/test_recipe_m2_project_data.py
+
+2026-10-20T16:38:51.397738Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid hunk at line 3, 'review(timeline): qualify private project-data limits' is not a valid hunk header. Valid hunk headers: '*** Add File: {path}', '*** Delete File: {path}', '*** Update File: {path}'
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..304033c4ca6873139a49c281be8b1dd0ecefcebd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg
+@@ -0,0 +1,4 @@
++review(timeline): qualify private project-data limits
++
++Review successor 0a774e49 for bounded replace-only project data, recorder-based
++rebasing, atomic refusal, and exact container inverse behavior.
+
+exec
+/bin/bash -lc "find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers -maxdepth 2 -type f \\( -name 'commit-msg' -o -name 'commit-msg.txt' -o -name 'DONE' -o -name 'BLOCKED' \\) | head -60" in /home/user/work/wt/agt-review-project-data-main-limits-final
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-current-s3-birth-reservation-proof/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-current-s3-birth-reservation-proof/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-stack-sync-2/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-stack-sync-2/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-spec-compaction-fixture/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-paired-qualify/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-paired-qualify/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-track-union-generator/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-crash-reconcile/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-history-crash-reconcile/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-deny-integrated-gates/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-deny-integrated-gates/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-safe-s2-pin-integration-gate/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-direct-render-fixtures/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-empty-timeline-door-route/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-deletion-core-split/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-deletion-core-split/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-deletion-core-split/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-element-retain/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-element-retain/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-artifact-plan/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-artifact-plan/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-native-historical-render-admission/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-native-historical-render-admission/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-historical-retained-pack/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-historical-retained-pack/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-render-admission-retry/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-delete-continue/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-delete-continue/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-catalog-fence-compose/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-catalog-fence-compose/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-carrier-catalog-fence-compose/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-pack-document-read/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-pack-document-read/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-pack-document-read/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m1-app-label-review/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-params-retained-wire/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-params-retained-wire/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-document-authority/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-document-authority/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/BLOCKED
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-command-union-compose/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-compile-contracts/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-compile-contracts/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-auto-pool-guard/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m0-journey-runtime-env/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-crash-window-audit/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-crash-window-audit/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-crash-window-audit/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-readback-live-adapter/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-raw-base-eligibility-fix/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-raw-base-eligibility-fix/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m3-capture-alias-uncertified/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m3-capture-alias-uncertified/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m3-capture-alias-uncertified/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-release-s2-final-review/commit-msg.txt
+find: ‘standard output’: Broken pipe
+find: write error
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..304033c4ca6873139a49c281be8b1dd0ecefcebd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg
+@@ -0,0 +1,4 @@
++review(timeline): qualify private project-data limits
++
++Review successor 0a774e49 for bounded replace-only project data, recorder-based
++rebasing, atomic refusal, and exact container inverse behavior.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..304033c4ca6873139a49c281be8b1dd0ecefcebd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg.txt
+@@ -0,0 +1,4 @@
++review(timeline): qualify private project-data limits
++
++Review successor 0a774e49 for bounded replace-only project data, recorder-based
++rebasing, atomic refusal, and exact container inverse behavior.
+
+exec
+/bin/bash -lc 'WORKER_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final; touch "$WORKER_DIR/DONE"; printf '"'%s\\n' '--- markers ---'; ls -l \""'$WORKER_DIR/commit-msg" "$WORKER_DIR/commit-msg.txt" "$WORKER_DIR/DONE"; printf '"'%s\\n' '--- final worktree status ---'; git status --short --branch; printf '%s\\n' '--- commit message ---'; sed -n '1,20p' \""'$WORKER_DIR/commit-msg"' in /home/user/work/wt/agt-review-project-data-main-limits-final
+ succeeded in 42ms:
+--- markers ---
+-rw-r--r-- 1 root root   0 Oct 20 16:39 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/DONE
+-rw-r--r-- 1 root root 199 Oct 20 16:38 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg
+-rw-r--r-- 1 root root 199 Oct 20 16:38 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-project-data-main-limits-final/commit-msg.txt
+--- final worktree status ---
+## tl/agt-review-project-data-main-limits-final
+--- commit message ---
+review(timeline): qualify private project-data limits
+
+Review successor 0a774e49 for bounded replace-only project data, recorder-based
+rebasing, atomic refusal, and exact container inverse behavior.
+
+exec
+/bin/bash -lc 'for rev in HEAD''^ HEAD; do total=0; while IFS= read -r path; do count=$(git show "$rev:$path" 2>/dev/null | rg -c '"'"'^def test_|''^class Test'"' || true); total="'$((total + count)); done < <(git ls-tree -r --name-only "$rev" tests/editing_conformance | rg '"'\\.py"'$'"'); printf '%s %s\\n' \""'$rev" "$total"; done && printf '"'%s\\n' 'test files:' && git ls-tree -r --name-only HEAD tests/editing_conformance | rg '\\.py"'$'"' | wc -l" in /home/user/work/wt/agt-review-project-data-main-limits-final
+ succeeded in 1717ms:
+HEAD^ 709
+HEAD 715
+test files:
+82
+
+codex
+APPROVE — Agent successor review.
+
+- Commit: `0a774e4968f5a9728c4ee6b5bbbfe286e26f29a3`
+- Tree: `2f3eee4e9a7d37db80374b5e98d16f1e08082a35`
+- Schema SHA-256: `89ed90ce0a4a95559a6d086d57f851fbcc6d224c9e7658f41467dfa9280eb0c3`
+- Original assertions unchanged: successor test diff is `83 additions, 0 deletions`; no skips/xfails/matrix/product changes.
+- Focused test: `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_project_data.py` → `17 passed`.
+- Direct probes passed for limits, opaque nested JSON, atomic refusals, absent/null/empty inverse restoration, rebasing, and dependent-key refusal.
+
+HOLD overall release/freeze: this remains a private candidate. Runtime handoff must state Agent is the sole semantic provider; Runtime accepts only official schema/registry compatibility, with no second handler. App/Runtime should receive the closed args/goldens only after their agreement review.
+
+Markers written: `commit-msg`, `commit-msg.txt`, and `DONE`.
+tokens used
+113,141
+APPROVE — Agent successor review.
+
+- Commit: `0a774e4968f5a9728c4ee6b5bbbfe286e26f29a3`
+- Tree: `2f3eee4e9a7d37db80374b5e98d16f1e08082a35`
+- Schema SHA-256: `89ed90ce0a4a95559a6d086d57f851fbcc6d224c9e7658f41467dfa9280eb0c3`
+- Original assertions unchanged: successor test diff is `83 additions, 0 deletions`; no skips/xfails/matrix/product changes.
+- Focused test: `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_project_data.py` → `17 passed`.
+- Direct probes passed for limits, opaque nested JSON, atomic refusals, absent/null/empty inverse restoration, rebasing, and dependent-key refusal.
+
+HOLD overall release/freeze: this remains a private candidate. Runtime handoff must state Agent is the sole semantic provider; Runtime accepts only official schema/registry compatibility, with no second handler. App/Runtime should receive the closed args/goldens only after their agreement review.
+
+Markers written: `commit-msg`, `commit-msg.txt`, and `DONE`.

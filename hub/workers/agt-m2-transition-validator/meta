@@ -1,0 +1,9 @@
+name=agt-m2-transition-validator
+repo=agent
+base=tl/integration
+base_sha=fec45b08
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-transition-validator
+started=2026-10-19T23:04:42Z

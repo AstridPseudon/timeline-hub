@@ -1,0 +1,400 @@
++
++def test_sprite_registered_ssr_preserves_drawing(sprite_ssr, tmp_path):
++    import hashlib
++    cases = [
++        {}, {'x': 4212, 'y': 20, 'scale': 8},
++        {'x': 10, 'y': 20, 'scale': 6, 'enter': 'stamp', 'blinkAt': 8},
++        {'x': 10, 'y': 20, 'scale': 8, 'enter': 'slideIn', 'slideFrom': 'right',
++         'keyframes': [{'frame': 5, 'x': 40, 'y': 22, 'flipX': True}]},
++        {'x': 10, 'y': 20, 'frames': {'frameWidth': 8, 'frameHeight': 16, 'count': 4, 'fps': 12},
++         'blinkAt': 8, 'blinkIndex': 3, 'outline': {'px': 2, 'pulse': 3},
++         'shadow': {'groundY': 45}, 'silhouette': {'until': 6}},
++    ]
++    hashes = []
++    for params in cases:
++        p = prepared_props(tmp_path, [sprite(params)], {'R': asset()})
++        hashes.append([hashlib.sha256(html.encode()).hexdigest() for html in sprite_ssr(p, [0, 1, 2, 5, 6, 8, 12])])
++    assert hashlib.sha256(json.dumps(hashes).encode()).hexdigest() == "963140ecb235706a8f4c0ab57f5ba8f17984bad9ed58fa4f3647a128d888ca2b"
++
++
++def test_public_sprite_offcanvas_run_in_mixedscale_and_integrity_addresses(native_host, sprite_ssr, tmp_path):
++    clips = [
++        sprite({'x': 4212, 'scale': 8, 'keyframes': [{'frame': 12, 'x': 4300, 'y': 20}]}, at=1, hold=1),
++        sprite({'x': 20, 'scale': 6}, id='a-hourglass', asset='H', at=1.25, hold=.5),
++        sprite({'x': -900, 'scale': 6, 'keyframes': [{'frame': 8, 'x': 300, 'y': 20}]},
++               id='a-runner', asset='H', at=1.25, hold=.5),
++    ]
++    assets = {'R': asset(pixel_provenance={'executor': 'pixel.sprites', 'run_id': 'sprite-run',
++              'lattice': {'detected': True, 'block': 4.0}, 'outline_integrity': {'fraction': .70}}),
++              'H': asset(pixel_provenance={'outline_integrity': {'fraction': .56}})}
++    p = prepared_props(tmp_path, clips, assets)
++    # Use the compiler's explicit source join, never split a generated clip ID.
++    compiled = {c['id']: c for c in p['timeline']['clips']}
++    rows = scene_answers.host_frames_at(p, BASIS, [30, 38, 42, 46, 52])
++    by_source = [{compiled[layer['clipId']]['app']['astrid_shot_composition']['source_clip_id']: layer
++                  for layer in row['layers']} for row in rows]
++    assert all(row['a-rocket']['bounds']['rect']['x'] >= BASIS['width'] for row in by_source)
++    assert by_source[1]['a-runner']['bounds']['rect']['x'] == -5400
++    assert by_source[3]['a-runner']['bounds']['rect'] == {'x': 1800, 'y': 120, 'width': 96, 'height': 96}
++    assert by_source[1]['a-rocket']['bounds']['rect']['width'] == 128
++    assert by_source[1]['a-hourglass']['bounds']['rect']['width'] == 96
++    for source, fraction in [('a-rocket', .70), ('a-hourglass', .56)]:
++        layer = by_source[1][source]
++        c = compiled[layer['clipId']]
++        assert c['shot_occurrence_id'] == 'occ-1'
++        assert p['assets']['assets'][c['asset']]['pixel_provenance']['outline_integrity']['fraction'] == fraction
++    html = sprite_ssr(p, [38, 46])
++    assert 'left:-5400px' in html[0] and 'left:1800px;top:120px;transform:scale(6)' in html[1]
++    assert 'left:25272px' in html[0] and 'left:25800px' in html[1]
++    assert 'transform:scale(8)' in html[0] and 'transform:scale(6)' in html[0]
++
++
++@pytest.mark.parametrize('extra', [{}, {'alpha': False, 'opaque': True}])
++def test_known_sprite_bounds_do_not_invent_media_alpha(native_host, tmp_path, extra):
++    p = prepared_props(tmp_path, [sprite({'x': 10, 'y': 20})], {'R': asset(**extra)})
++    row = scene_answers.host_frames_at(p, BASIS, [0])[0]
++    layer = row['layers'][0]
++    assert layer['bounds']['rect'] == {'x': 60, 'y': 120, 'width': 96, 'height': 96}
++    assert layer['visible'] == 'unknown' and layer['opacity'] is None
++    assert layer['opaqueSupport'] == 'unknown'
++    assert row['coverage'] == 'UNKNOWN'
++
++
++@pytest.mark.parametrize('params,entry', [
++    ({}, None), ({'width': 16, 'height': 16}, {'file': '/unknown.png'}),
++    ({'src': '/static.png'}, {'resolution': '16x16'}),
++    ({'outline': {'px': 2}}, asset()), ({'shadow': {'groundY': 45}}, asset()),
++])
++def test_sprite_missing_dimensions_and_decorations_stay_unknown(native_host, sprite_ssr, tmp_path, params, entry):
++    p = prepared_props(tmp_path, [sprite(params)], {'R': entry} if entry else {})
++    layer = scene_answers.host_frames_at(p, BASIS, [0])[0]['layers'][0]
++    assert layer['bounds']['status'] == 'unknown'
++    html = sprite_ssr(p, [0])[0]
++    assert ('<img' in html) is (entry is not None)
++
++
++def test_sprite_stepped_strip_and_hidden_frames_use_the_draw_clock(native_host, sprite_ssr, tmp_path):
++    p = prepared_props(tmp_path, [sprite({'x': 10, 'y': 20, 'scale': 8, 'enter': 'stamp', 'blinkAt': 8,
++        'keyframes': [{'frame': 5, 'x': 40, 'y': 22, 'flipX': True}]})], {'R': asset()})
++    rows = scene_answers.host_frames_at(p, BASIS, [0, 1, 2, 5, 6, 8, 10])
++    assert [row['layers'][0]['bounds']['rect']['y'] for row in rows] == [114, 114, 120, 120, 132, 132, 132]
++    html = sprite_ssr(p, [1, 6, 8, 10])
++    assert 'display:none' in html[0] and 'display:none' in html[2]
++    assert 'left:240px;top:132px;transform:scale(8)' in html[1]
++    assert 'scaleX(-1)' in html[1]
++    for index in [1, 5]:
++        assert rows[index]['layers'][0]['visible'] is False
++    strip = prepared_props(tmp_path, [sprite({'src': '/strip.png', 'scale': 8, 'blinkAt': 8, 'blinkIndex': 3,
++        'frames': {'frameWidth': 8, 'frameHeight': 16, 'count': 4, 'fps': 12}}, asset='missing')])
++    layer = scene_answers.host_frames_at(strip, BASIS, [8])[0]['layers'][0]
++    assert layer['bounds']['rect'] == {'x': 0, 'y': 0, 'width': 64, 'height': 128}
++    assert 'left:-24px' in sprite_ssr(strip, [8])[0]
++
++
++def test_sprite_renderer_selected_source_wins_over_static_fallback(native_host, sprite_ssr, tmp_path):
++    p = prepared_props(tmp_path, [sprite({'src': '/wrong.png'})], {'R': asset(file='/selected.png')})
++    layer = scene_answers.host_frames_at(p, BASIS, [0])[0]['layers'][0]
++    assert layer['bounds']['rect']['width'] == 96
++    html = sprite_ssr(p, [0])[0]
++    assert '<img' in html
++    assert sprite_ssr(p, [0], sources=True) == ['/selected.png']
++    c = p['timeline']['clips'][0]
++    c['elementRef']['packId'] = 'missing'
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match='Unknown effect owner'):
++        scene_answers.host_frames_at(p, BASIS, [0])
++
++
++@pytest.mark.parametrize('outer', [{'cropLeft': .1}, {'entrance': {'type': 'fade-up', 'duration': .2}}, {'exit': {'type': 'fade-up', 'duration': .2}}])
++def test_sprite_unsupported_outer_geometry_stays_unknown(native_host, tmp_path, outer):
++    p = prepared_props(tmp_path, [sprite(**outer)], {'R': asset()})
++    layer = scene_answers.host_frames_at(p, BASIS, [2])[0]['layers'][0]
++    assert layer['bounds']['status'] == 'unknown'
++
++
++def test_sprite_public12_declarations_and_installed_bytes(native_host, tmp_path):
++    import hashlib
++    import shutil
++    import tarfile
++
++    package = native_host / 'node_modules/@banodoco/timeline-composition'
++    archive = ROOT / 'remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz'
++    with tarfile.open(archive) as tar:
++        expected = {m.name.removeprefix('package/'): hashlib.sha256(tar.extractfile(m).read()).hexdigest()
++                    for m in tar.getmembers() if m.isfile()}
++
++    def hashes():
++        return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
++                for p in package.rglob('*') if p.is_file()}
++
++    assert len(expected) == 77 and hashes() == expected
++    assert json.loads((package / 'package.json').read_text())['version'] == '0.0.12'
++    modules = native_host / 'node_modules'
++    # Scopes belong to this stage; only dependency leaves point into read-only peers.
++    assert not (modules / '@banodoco').is_symlink()
++    assert not (modules / '@remotion').is_symlink()
++    peers = Path(os.environ.get('ASTRID_TEST_NODE_MODULES', ROOT / 'remotion/node_modules'))
++    for name in ['typescript', '@types/react', '@types/react-dom', '@types/node', 'csstype']:
++        target = modules / name
++        target.parent.mkdir(parents=True, exist_ok=True)
++        target.symlink_to((peers / name).resolve(), target_is_directory=True)
++    project = tmp_path / 'typecheck'
++    project.mkdir()
++    (project / 'node_modules').symlink_to(modules, target_is_directory=True)
++    for relative in [
++        'astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx',
++        'astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx',
++        'astrid/packs/rendering/shared/element_contracts.ts',
++    ]:
++        target = project / relative
++        target.parent.mkdir(parents=True, exist_ok=True)
++        shutil.copyfile(ROOT / relative, target)
++    (project / 'tsconfig.json').write_text(json.dumps({'compilerOptions': {
++        'target': 'ES2022', 'module': 'ESNext', 'moduleResolution': 'Bundler', 'jsx': 'react-jsx',
++        'strict': True, 'skipLibCheck': True, 'noEmit': True}, 'include': ['astrid']}))
++    node = resolve_pinned_node(ROOT / 'remotion', override=os.environ.get('ASTRID_NODE_EXECUTABLE'))
++    assert node.ok, node.problem
++    result = subprocess.run([str(node.path), str(modules / 'typescript/bin/tsc'),
++                             '--project', str(project / 'tsconfig.json')],
++                            cwd=project, text=True, capture_output=True, timeout=60)
++    assert result.returncode == 0, result.stdout + result.stderr
++    assert hashes() == expected
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- final worktree ---'; git status --short; printf '%s\\n' '--- report ---'; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sprite-current-artifact-gate.md; printf '%s\\n' '--- commit message ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sprite-current-artifact-gate/commit-msg; printf '%s\\n' '--- markers ---'; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sprite-current-artifact-gate/DONE && echo DONE-present; test "'! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sprite-current-artifact-gate/DONE && echo DONE-empty; find . -type d '"\\( -name __pycache__ -o -name .pytest_cache -o -name node_modules \\) -prune -print | head -30" in /home/user/work/wt/agt-m3-sprite-current-artifact-gate
+ succeeded in 533ms:
+--- final worktree ---
+ M artifacts.json
+ M astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx
+ M astrid/packs/rendering/elements/catalog.ts
+?? tests/packs/rendering/test_sprite_scene_capability.py
+--- report ---
+# Agent sprite current artifact gate
+
+Date: 2026-10-20
+
+## Decision and scope
+
+Ported the approved sprite unit from reviewed commit
+9d93e66e4e031b98fc042235334d1a4723006ebb onto current integration
+8130a401 (WC4 merge). No plate 48f3eef4, broad branch files, private crop,
+D09, cache/query activation, public Runtime schema/client/pin changes, or
+Composition 0.0.12 changes were included.
+
+The sprite component and direct test are byte-identical to the reviewed
+commit. The catalog and artifacts manifest were regenerated by their normal
+scripts.
+
+## Changed files and hashes
+
+Only these four paths changed:
+
+- `astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx`
+  — sha256:fc79cee164d9d7aeb2a008d9d924e7b41710856b0b630bbc91137ff504b5172e
+- `tests/packs/rendering/test_sprite_scene_capability.py`
+  — sha256:b150fab9792d35429128994a38a1ef2f11c22b8e51473955eaa730d505764cfa
+- `astrid/packs/rendering/elements/catalog.ts`
+  — sha256:542ea5db49f7b88c931bd476aa509a7f531dc16c4b67b1102e1330e8d28a94b2
+  — AM-sprite revision: `sha256:da9e894e6ad65f4503f60a9adf80596ad88ec1436302dcf57783d880496e1966`
+- `artifacts.json`
+  — sha256:e8ee67519bde7177174c6b2ed1858d222ecfc01419aa46c00364cf1bb4f991d0
+  — generated manifest version: `sha256:7aeac2b943ed5c1145145c9eb630f03bdc05061a898926f1c884d4ce902cefa6`
+
+The manifest refresh changed only the AM-sprite component digest, catalog
+digest, and manifest version. No unrelated source-normalization drift was
+produced.
+
+## Test commands and results
+
+The direct lane used the pinned environment from
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-current.env`,
+Node 20.19.4, and a private peer overlay at
+`/tmp/agt-m3-sprite-peers.Y2th2G` pointing read-only at
+`/home/user/work/runtimes/agent-remotion-current/node_modules`. The overlay
+and pytest basetemp were removed after the run.
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/tmp/agt-m3-sprite-peers.Y2th2G /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/agt-m3-sprite-targeted-pytest tests/packs/rendering/test_sprite_scene_capability.py tests/packs/rendering/test_scene_host.py tests/sdk/test_timeline_checkout.py::test_check_flags_offcanvas_mixed_scale_and_damaged_sprite_by_address
+
+Result: 33 passed in 60.89s. This includes real public `TimelineComposition`
+SSR, semantic scene capability checks, source selection, off-canvas and
+mixed-scale geometry, hidden frames, immutable inputs, and the public12
+package/typecheck integrity check.
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/rendering/test_sprite_scene_capability.py
+
+Result: All checks passed.
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
+    git diff --check
+
+Results: catalog current; artifacts.json current; diff check passed.
+
+## Current rechecks
+
+- Reviewed component hash matches commit 9d93e66e4 exactly.
+- Reviewed direct test hash matches commit 9d93e66e4 exactly.
+- Changed-path audit is exactly the four paths listed above.
+- Protected current source/schema/vendor/lock/package bytes were unchanged
+  from current HEAD. Current protected hashes include
+  `runtime.lock.json` c2ed617f38bc53e4f90dc082f082d38828d8f68a93e61776300ec7082ef23311,
+  Composition 0.0.12 archive
+  0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3, and
+  `remotion/package-lock.json`
+  cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597.
+- No plate paths, Runtime public contract paths, schema/client/pin paths, or
+  shared dependency/cache paths were changed.
+
+## Remaining gates
+
+This is only the approved Agent sprite unit. Plate remains a separate
+follow-up after this unit is accepted. Runtime admission, App integration,
+full suites, browser/live-socket journeys, physical pixel/audio parity,
+private-crop deletion, D09 closure, artifact repack, and downstream merge
+qualification remain unrun and unclaimed.
+--- commit message ---
+feat(rendering): gate current AM-sprite artifact
+
+Port the approved AM-sprite capability and direct SSR/semantic tests onto
+current integration, then refresh the generated catalog and artifact manifest.
+--- markers ---
+DONE-present
+DONE-empty
+./astrid/__pycache__
+./astrid/core/element/__pycache__
+./astrid/core/registry/__pycache__
+./astrid/core/foundation/__pycache__
+./astrid/core/__pycache__
+./astrid/core/contracts/__pycache__
+./astrid/core/pack/__pycache__
+
+codex
+The final audit is clean: only the four approved paths are modified, and all protected current paths are unchanged from HEAD. I did find ignored `__pycache__` directories created by the earlier generator/help inspection, so I’m removing only those generated caches from this worktree before handing off.
+exec
+/bin/bash -lc "find . -type d \\( -name __pycache__ -o -name .pytest_cache \\) -prune -print; find . -depth -type d \\( -name __pycache__ -o -name .pytest_cache \\) -delete; printf '%s\\n' 'generated Python/test caches removed'; find . -type d \\( -name __pycache__ -o -name .pytest_cache \\) -prune -print; git status --short" in /home/user/work/wt/agt-m3-sprite-current-artifact-gate
+ succeeded in 167ms:
+./astrid/__pycache__
+./astrid/core/element/__pycache__
+./astrid/core/registry/__pycache__
+./astrid/core/foundation/__pycache__
+./astrid/core/__pycache__
+./astrid/core/contracts/__pycache__
+./astrid/core/pack/__pycache__
+generated Python/test caches removed
+find: cannot delete ‘./astrid/__pycache__’: Directory not empty
+find: cannot delete ‘./astrid/core/element/__pycache__’: Directory not empty
+find: cannot delete ‘./astrid/core/registry/__pycache__’: Directory not empty
+find: cannot delete ‘./astrid/core/foundation/__pycache__’: Directory not empty
+find: cannot delete ‘./astrid/core/__pycache__’: Directory not empty
+find: cannot delete ‘./astrid/core/contracts/__pycache__’: Directory not empty
+find: cannot delete ‘./astrid/core/pack/__pycache__’: Directory not empty
+./astrid/__pycache__
+./astrid/core/element/__pycache__
+./astrid/core/registry/__pycache__
+./astrid/core/foundation/__pycache__
+./astrid/core/__pycache__
+./astrid/core/contracts/__pycache__
+./astrid/core/pack/__pycache__
+ M artifacts.json
+ M astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx
+ M astrid/packs/rendering/elements/catalog.ts
+?? tests/packs/rendering/test_sprite_scene_capability.py
+
+exec
+/bin/bash -lc "find astrid -type d -name __pycache__ -print -exec ls -la {} \\; | head -100" in /home/user/work/wt/agt-m3-sprite-current-artifact-gate
+ succeeded in 88ms:
+astrid/__pycache__
+total 16
+drwxr-xr-x  2 root root 4096 Oct 20 14:30 .
+drwxr-xr-x 10 root root 4096 Oct 20 14:30 ..
+-rw-r--r--  1 root root 1913 Oct 20 14:30 __init__.cpython-313.pyc
+-rw-r--r--  1 root root 1834 Oct 20 14:30 version.cpython-313.pyc
+astrid/core/element/__pycache__
+total 104
+drwxr-xr-x 2 root root  4096 Oct 20 14:30 .
+drwxr-xr-x 3 root root  4096 Oct 20 14:30 ..
+-rw-r--r-- 1 root root  1050 Oct 20 14:30 __init__.cpython-313.pyc
+-rw-r--r-- 1 root root 20526 Oct 20 14:30 catalog.cpython-313.pyc
+-rw-r--r-- 1 root root  8461 Oct 20 14:30 metadata.cpython-313.pyc
+-rw-r--r-- 1 root root 21269 Oct 20 14:30 registry.cpython-313.pyc
+-rw-r--r-- 1 root root 30929 Oct 20 14:30 schema.cpython-313.pyc
+astrid/core/registry/__pycache__
+total 20
+drwxr-xr-x 2 root root 4096 Oct 20 14:30 .
+drwxr-xr-x 3 root root 4096 Oct 20 14:30 ..
+-rw-r--r-- 1 root root  664 Oct 20 14:30 __init__.cpython-313.pyc
+-rw-r--r-- 1 root root 7464 Oct 20 14:30 base.cpython-313.pyc
+astrid/core/foundation/__pycache__
+total 24
+drwxr-xr-x 2 root root 4096 Oct 20 14:30 .
+drwxr-xr-x 3 root root 4096 Oct 20 14:30 ..
+-rw-r--r-- 1 root root  253 Oct 20 14:30 __init__.cpython-313.pyc
+-rw-r--r-- 1 root root 2067 Oct 20 14:30 paths.cpython-313.pyc
+-rw-r--r-- 1 root root 5784 Oct 20 14:30 project_paths.cpython-313.pyc
+astrid/core/__pycache__
+total 24
+drwxr-xr-x  2 root root 4096 Oct 20 14:30 .
+drwxr-xr-x 32 root root 4096 Oct 20 14:30 ..
+-rw-r--r--  1 root root 1474 Oct 20 14:30 __init__.cpython-313.pyc
+-rw-r--r--  1 root root 2560 Oct 20 14:30 env_vars.cpython-313.pyc
+-rw-r--r--  1 root root 5177 Oct 20 14:30 ids.cpython-313.pyc
+astrid/core/contracts/__pycache__
+total 84
+drwxr-xr-x 2 root root  4096 Oct 20 14:30 .
+drwxr-xr-x 3 root root  4096 Oct 20 14:30 ..
+-rw-r--r-- 1 root root  2835 Oct 20 14:30 __init__.cpython-313.pyc
+-rw-r--r-- 1 root root  8324 Oct 20 14:30 artifact_types.cpython-313.pyc
+-rw-r--r-- 1 root root 12432 Oct 20 14:30 capability_schema.cpython-313.pyc
+-rw-r--r-- 1 root root 12117 Oct 20 14:30 errors.cpython-313.pyc
+-rw-r--r-- 1 root root  2211 Oct 20 14:30 identifiers.cpython-313.pyc
+-rw-r--r-- 1 root root  1554 Oct 20 14:30 project_theme.cpython-313.pyc
+-rw-r--r-- 1 root root 11309 Oct 20 14:30 schema.cpython-313.pyc
+-rw-r--r-- 1 root root  5956 Oct 20 14:30 scoped_config.cpython-313.pyc
+-rw-r--r-- 1 root root  1647 Oct 20 14:30 writer.cpython-313.pyc
+astrid/core/pack/__pycache__
+total 212
+drwxr-xr-x 2 root root  4096 Oct 20 14:30 .
+drwxr-xr-x 4 root root  4096 Oct 20 14:30 ..
+-rw-r--r-- 1 root root  4194 Oct 20 14:30 __init__.cpython-313.pyc
+-rw-r--r-- 1 root root  7615 Oct 20 14:30 _common.cpython-313.pyc
+-rw-r--r-- 1 root root  9921 Oct 20 14:30 alias_resolver.cpython-313.pyc
+-rw-r--r-- 1 root root 61397 Oct 20 14:30 canonical.cpython-313.pyc
+-rw-r--r-- 1 root root  5076 Oct 20 14:30 definition.cpython-313.pyc
+-rw-r--r-- 1 root root 20287 Oct 20 14:30 discovery.cpython-313.pyc
+-rw-r--r-- 1 root root 17826 Oct 20 14:30 loader.cpython-313.pyc
+-rw-r--r-- 1 root root  6094 Oct 20 14:30 manifest.cpython-313.pyc
+-rw-r--r-- 1 root root 17801 Oct 20 14:30 permissions.cpython-313.pyc
+-rw-r--r-- 1 root root 25293 Oct 20 14:30 registry.cpython-313.pyc
+-rw-r--r-- 1 root root 10219 Oct 20 14:30 walkers.cpython-313.pyc
+
+exec
+/bin/bash -lc "find . -type f \\( -path '*/__pycache__/*' -o -path '*/.pytest_cache/*' \\) -delete
+find . -depth -type d \\( -name __pycache__ -o -name .pytest_cache \\) -delete
+printf '%s\\n' 'generated Python/test caches removed'
+find . -type d \\( -name __pycache__ -o -name .pytest_cache \\) -prune -print
+git status --short" in /home/user/work/wt/agt-m3-sprite-current-artifact-gate
+ succeeded in 402ms:
+generated Python/test caches removed
+ M artifacts.json
+ M astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx
+ M astrid/packs/rendering/elements/catalog.ts
+?? tests/packs/rendering/test_sprite_scene_capability.py
+
+codex
+Implemented the approved sprite-only port on current integration.
+
+- Changed sprite component, direct semantic/SSR tests, generated catalog, and `artifacts.json`.
+- 33 targeted tests passed; Ruff, catalog, manifest, and diff checks passed.
+- No plate, Runtime schema/client/pin, Composition, or shared dependency changes.
+- Wrote report: [agent-sprite-current-artifact-gate.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sprite-current-artifact-gate.md)
+- Wrote commit message and created `DONE`.
+- Remaining: manager review/merge; plate and downstream gates remain separate.
+tokens used
+121,057
+Implemented the approved sprite-only port on current integration.
+
+- Changed sprite component, direct semantic/SSR tests, generated catalog, and `artifacts.json`.
+- 33 targeted tests passed; Ruff, catalog, manifest, and diff checks passed.
+- No plate, Runtime schema/client/pin, Composition, or shared dependency changes.
+- Wrote report: [agent-sprite-current-artifact-gate.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-sprite-current-artifact-gate.md)
+- Wrote commit message and created `DONE`.
+- Remaining: manager review/merge; plate and downstream gates remain separate.

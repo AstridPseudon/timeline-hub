@@ -1,0 +1,400 @@
+import json
+import subprocess
+
+root = Path('"'/home/user/work/wt/agt-m2-bundle2-release-compose')
+notes = Path(__file__).parent
+orch = notes.parents[2]
+manifest = json.loads((notes / 'final-manifest.json').read_text())
+
+def git(*args):
+    return subprocess.check_output(['git', '-C', str(root), *args], text=True).strip()
+
+commit = git('rev-parse', 'HEAD')
+if commit == manifest['base']:
+    raise SystemExit('Harness commit is still pending; no document changed.')
+if git('rev-parse', 'HEAD"'^{tree}'"') "'!= manifest['"'tree'] or git('rev-parse', 'HEAD"'^'"') "'!= manifest['"'base']:
+    raise SystemExit('Harness tree/parent differs from the tested candidate; no document changed.')
+for path in (orch / 'design/m2-writer-bundle-2.md', notes / 'report.md'):
+    content = path.read_text()
+    path.write_text(content.replace('**PENDING RELEASE-COMPOSE HARNESS COMMIT**', '"'`'"' + commit + '"'`'"'))
+print('Verified candidate commit:', commit)
+print('Tree:', manifest['tree'])
+PY
+ cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/commit-msg <<'EOF'
+feat(timeline): compose ordinary Bundle2 release candidate
+
+Pin the official d691 Runtime client without changing the frozen command schema.
+Add native command batches and ordinary equal-state replay while retaining
+original claims, exact outbox retries and guarded inverse identity history.
+
+Restore permanent shared redo, sibling, source and ABA controls. Preserve the
+bounded twelve-operation registry and portable captures. Keep final consumer
+qualification held for reviewed numeric preservation and nullable-speed source
+followups, with no change to frozen Bundle1 or generation inputs.
+EOF
+ cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/commit-msg.txt
+ tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes/focused-final.log" in /home/user/work/wt/agt-m2-bundle2-release-compose
+ succeeded in 46ms:
+........................................................................ [ 45%]
+........................................................................ [ 50%]
+........................................................................ [ 54%]
+........................................................................ [ 59%]
+........................................................................ [ 63%]
+........................................................................ [ 68%]
+........................................................................ [ 72%]
+...................................
+codex
+The composition audit passes: the frozen schema, all 16 portable goldens, all 12 capture exports and the unchanged M2 provider match the expected sources. Vendor and CLI surface checks also pass. The central suite is defined with an exact d691 preflight but remains unrequested. I’m preparing the HOLD handoff with the final tree identity and remaining qualification steps.
+exec
+/bin/bash -lc 'tail -7 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes/focused-final.log; tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md; tail -7 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md; git diff --check' in /home/user/work/wt/agt-m2-bundle2-release-compose
+ succeeded in 730ms:
+........................................................................ [ 54%]
+........................................................................ [ 59%]
+........................................................................ [ 63%]
+........................................................................ [ 68%]
+........................................................................ [ 72%]
+........................................................................ [ 77%]
+................................................................ONE final central opaque-preservation-integration with --files tests/editing_conformance/test_commit_runtime_numeric_move.py: 29PASS70.75s, exit0, service80s, request agt-m1-numeric-image-preservation-opaque-preservation-integration-1020020727-20566; SAME final tree, central ext Runtime9f. Includes daemon lostACK/restart exactretry centrally only. First wait124 followed SAME request; no resubmit. Existing post-a610 historical full untouched/unrelabeled; no newfull or localsockets. Exact hashes/commands/logs/limits: workers/agt-m1-numeric-image-preservation/notes/report.md. All four final localfiles match central snapshot blobs; every other tracked file unchanged. Product SHA256 commit.py d3aab1f07d136bc90cc1aa5c33513df5ba4e4f08b5a0b0d2be6657eeabe1ab20; authoring_bundle.py fa9da8b30ec667fb554708be0377971326081f4da94cc4434d1595a18a6e6807. No blocker; recommend manager review/integrate via queue. Both commitmsgs ready; no own merge/push. M2 remains separately held.
+
+
+## Runtime manager02:11 — item-ref input WITHDRAWN / no public candidate
+ACK Agent02:10correction. rt-m2-itemref-official-artifacts hadstartedafter02:05explicitfreeze; its10cinput/outputWITHDRAWN, neverpinnable/mergeable. STOPredirectappendedbothbriefcopies; outsideorchestratorinterruptrequestedbecauseexternalworkerPIDnotvisibleinsideSandbox. PreserveWIPgeneratorfindingsonly; no release. Newcompleteordinary+itemrefsAgentunionfreeze requiredforfresh0.2.5generation. ExistingflatjoinACK/Runtimeimplementationcontinues; do notreruncontractdebate. D13validfreeze1bffd/0.2.4generationunaffected.
+
+
+rt-m2-null-speed-clean-candidate audit update: stable d797 native inspection tests consumed VERBATIM (SHA256652216e92455d015b01d912db0b6fd1cbc9e571503d285e85bff3b33d3fb57b7). Direct native+dispatch-context53PASS/1HTTPdeselected17.34s; sixRuffdiagnostics identicald691. Read current new retained-read file only (not copied until announced stable): storage acceptance/fullclosure/realrecord/event/reopen proof shape matches manager authorization. One required case gap to close before freezing: new legacy publisher refusal currently covers null ONLY; task explicitly requires public legacy publisher null AND rational rejection. Please extend same refusal test with rationalpair+rationalstring parameters (both slots), preserving null cases; avoid duplicated helper. Own finalcentralf423 request still held until source announcement.
+Gates: A APPROVED; newM1gate1opaque FIXED23PASS, fullqualificationpending; otherM1proofs preserved. Fullregistry/compiler/writers, gate6parity anddelivery OPEN.
+Inbox: ACK through01:45opaque decision/proof immediatelyreported;01:40D13implementation correction assigned;01:30canonical-source critical NEXT dispatched; packmixedpolicy assigned; perareaLedgerACK; RuntimeBundle2generation/sourceleases and C4catalog/text decisions ACK. No M2integrationmerge until PLAN record.
+Resources: 16GiBfree (orchestrator recycled122 clean published/merged trees; leases preserved); ONE Agent full-remotion-integration requested afterM1merge, supportedenv-i pinnedRemotion; prior19/tree281 supersededby23/tree8f046. Added named opaque-preservation-integration +full-remotion-integration suites, no duplicatefocusedrequest. M2mergesheld. Preserve frozen refs/reports and LEASED b2/356/Appsourcepairs. OldinterruptedWIP preserved incommittedsuccessors; orchestrator mayrecycleabandonedpredecessors afterleasecheck. No manager product edits/gitmutations/pushes.
+Latest02:01: M1a76 MERGED a610 exactcentraltree8f046/23PASS; Appparity doc design/opaque-remap-contract.md PUBLISHED NOW, AppINBOXnotified withexactlocations/fixtures/rules. Neworchestrator01:58 M1closureexplicitly requires Agentmerge +Runtimeknown-nullspeedfix +Appparityport; nullfixownedrt-m2-null-speed-first-clip, f423sourceLEASED. PostmergeONEfull agent-full-remotion-integration-1020015823-24749 RUNNING (~9%), no resultyet. Added namedfull-remotion-integration own suite usingenv-i officialtests/agent-remotion.env andnormalASTRID_RUNTIME_CHECKOUT, no fakevalidation. RuntimeasksD13guardfreeze1441/schema1bffd655 fornormalnewartifact; exactsourceavailable, insertionnewopsseparateexplicitsuccessor. Materializationreviewb3c0dbd7 615PASS/7existingdeselect net387lines, new18counterexamplesfixed, actualRuntimejoin/artifactstillunqualified. Fiveworkersnowqueued/running: numericrevision, capture-sourceproof, finalBundle2releasecompose, nativeproducerinsertion, groupofficialrootproof. NoM2merge. Ledgerownrowsremainheld.
+02:05 fallback: agt-m3-capture-source-proof repeatedly model-filter errored after leaving one untracked test; applicationtestnotqualified. MODELS.md ownerfallback APPLIED newagt-m3-capture-source-recover --modelclaude-sonnet-5-5 withSAMEtask/brief+exactWIPcopyallowed, no scope/rewordingfilterbypass. PreservepredecessorWIP. AgentnormalworkersremainCodex. Added seventhboundedproducer-requester-target foractualoriginalheadpair/settledoutputdeclaration seam; no duplicatehandler/schema ornewcoordinator.
+02:06 NEWM1preservation evidence: numericworkeractualnativeMOVEproves independentparent0int→0.0float revision_identity_mismatch andchildsilentoldtype onf6/875/1e1 (2FAIL4controlsPASS each). Narrowexactencodingimage-reuse21touchedlines fixes, no hashes/normalization/guardchange. TOPagt-m1-numeric-image-preservation portsontoa610+normalRuntime9f+sixpermanentmoveprobes; olda610fullcontinuesexacthistoricalsnapshot, norelabel/cancel/duplicatefull. Escalationagent-20261020T0206Z-m1-numeric-image-reuse. INBOX02:01groupdeleteACK/ASSIGNED agt-m2-occurrence-delete, exactcanonicalownership+goldensforApporiginalshot-menufixture. Apparentdeadmodel-filteredcaptureworkerhasemptyrunningmarker, actualfallbackactive; orchestratorcanfixmarkerwithouttouchingWIP.
+02:09 source-freezeCORRECTION: b3c materialization10c schema predates8ordinarydefs; managerWITHDRAWSfullgenerationfreeze (featureprovenanceONLY). Runtime0.2.5generatorhadstartedper02:07; urgentcorrectionescalated+INBOX. agt-m2-materialization-union-compose ona31 nowbuildsFULL47262212ops+params/popupunion withONLY4itemrefextensions+currentcorecarrier; publishNEWsource/hash, no silentoldrefs/dropops. D13guard1441/1bffd freezecomplete/unaffected. MODELSfallbackrunnerpermissions nowFIXED perorchestrator02:07; staleoriginalcapturemarker cleared byowner; sourceWIPkept. Managerdirectprobehitfixture-invalid idempotencykey before anyadmission; diagnosticcopyfixesONLYkeyformat, unqualifieduntilactualresult.
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes/report.md <<'EOF'
+# Ordinary Bundle2 release composition — HOLD
+
+Candidate branch "'`tl/agt-m2-bundle2-release-compose` in `/home/user/work/wt/agt-m2-bundle2-release-compose`, base/current pre-harness HEAD `a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83`. Final candidate commit: **PENDING RELEASE-COMPOSE HARNESS COMMIT**. Exact final source tree `3143c1e88522fed078ef1068a431fec7bee57ee3`. Run `notes/finalize-handoff.py` after the harness commits; it verifies exact tree and parent before publishing the actual commit here and in the absolute design document. This is a new bounded review candidate, not App readiness or M2 completion/integration approval.
+
+## Changes and reconciliation decisions
+
+- Applied **only** f423074778f4220df808799a4f7b308e56885397'"'s six-file delta: exact normal Runtime d691ddadb4ef3f5881a25fa893b4fb812211f102 pin, official client0.2.3/schemaa435/artifact0f3d; removed its twelve old asset-schema strict xfail gates, retaining every original positive/race assertion. All six files are byte-identical to f423. The leased f423 worktree and frozen refs were not touched.
+- Applied exact a95c58f1 native-batch delta, followed by reviewed2590f86c ordinary equal-state replay fix. "'`queue_many`/`commit_many` stage atomically through the existing outbox; commands-file requires the original immutable revision/publication. Exact request prefix retry precedes a newer suffix; supplied capture/value/identity claims remain intact. CLI/sync/surface files match a95c exactly; new native ingress tests match2590 exactly. No old whole CLI/core overlay.
+- Reconciled2590 with current inverse state: retained `State(head_bundle)`, logical root/source address handling and all `schema_inputs`/`realm_id`/`resolve_inputs` replay forwarding. Ordinary identity checks also retain identities derived from current `source_roots` (two glue lines); inverse/restore retain full history-sensitive checks. Original inverse ABA, owner/container replacement and selection guards remain.
+- Current a31 already has the correct M1 helper, historical image reuse, reverse alias and reviewed M2 inverse. Added only the missing a76 test controls: disjoint sibling, touching ABA, redo-after-undo ABA, and exact reverse source/project/timeline/occurrence validation. Shared Runtime test file now matches a76 exactly. No M1 provider overlay.
+- The full newer recipe neighborhood exposed sixteen old ordinary equal-state refusal expectations in four extra files (clear batches, delete, scalar and split). Reconciled only those expectations to require successful exact replay while retaining every inverse refusal and delete identity/container replacement refusal. This widens successful ordinary behavior as the settled decision requires; no passing positive behavior was changed to refusal, skipped, deleted or newly xfailed.
+- No NativeSheet/ecdf overlay was needed: the baseline has no NativeSheet callers and native batches add none. Existing `timeline_sheet.py` remains byte-identical to a31, with its sheet tests exercised. No sheet grammar expansion.
+
+Frozen d474/schema472622, Bundle1 refs, twelve registry ops, all sixteen goldens, canonical/compiled schemas, model, renderer, materialization maps, producer guards and unrelated pins remain untouched. Source provider/commands/authoring_bundle/_command_state match a31 exactly. Capture exports, complete golden hashes and final manifest: `notes/final-manifest.json`; permanent tuple history and final paths are in absolute `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md`.
+
+## Exact validation
+
+All commands ran from the assigned worktree, using the shared dependency-only venv. No installs, network, local daemon, HTTP dispatch, browsers, full suite, commits, merges, pushes or integration-worktree writes. HTTP memory-transport native ingress tests are intentionally reserved for central service under the task'"'s stricter HTTP rule.
+
+Final focused command (includes modified recipes, provider/rebase neighbors, sync, CLI, sheet, registry and golden freshness):
+
+"'```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m '"'not integration' tests/editing_conformance tests/sdk/test_timeline_commit_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_selected_schema.py tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_native.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_parity.py tests/stage1/test_runtime_client_cutover.py --tb=short
+"'```
+
+**FINAL_FOCUSED_RESULT** (`focused-final.log`).
+
+Actual clean official Runtime d691 source, direct in-process service/provider/storage, with normal schemas/admissions and no validator substitution:
+
+```sh
+git -C /home/user/work/wt/rt-m2-bundle2-runtime-artifacts status --short
+git -C /home/user/work/wt/rt-m2-bundle2-runtime-artifacts rev-parse HEAD
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-bundle2-runtime-artifacts PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_commit_runtime_identity.py tests/sdk/test_timeline_commit_provider_add_delete_runtime.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py --tb=short
+```
+
+**96 passed in99.55s, exit0** (`runtime-d691-direct-initial.log`); includes unchanged popup positives after the twelve marker removals, actual selected PARAM and scope controls, media, scalar, occupied identity, opaque6 and all shared redo/ABA controls. Includes the21 socket-free obligations from M1'"'s23-case cohort. The other2 daemon M1 cases and the complete final23 cohort remain unverified on this larger release pair. Subsequent edits changed only extra ordinary recipe expectations, not any product/pin/direct-test file.
+
+Scoped final Ruff:
+
+"'```sh
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/packs/timeline/cli_native.py astrid/packs/timeline/cli_parser.py scripts/gen_cli_surface.py tests/editing_conformance/test_native_batch_ingress.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recording_clear.py
+```
+
+**All checks passed, exit0** (`ruff-final.log`). All changed Python files were additionally checked with `ruff check --no-cache --output-format json` (file list is `changed_files` in the manifest). This broader check exits1 on76 baseline diagnostics, CLI15 and generated client61. Each file'"'s complete code/message multiset equals its HEAD blob checked through "'`ruff check --stdin-filename FILE -`; zero new diagnostics (`ruff-all.json`, `ruff-baseline.json`). No lint weakening or generated-file edits.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --python-version 3.13 --follow-imports=silent --cache-dir=/tmp/agt-m2-release-compose-mypy astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py astrid/sdk/timeline/sync.py astrid/packs/timeline/cli_native.py scripts/gen_cli_surface.py
+```
+
+**Success: no issues in5 source files, exit0** (`mypy-native.log`). Python3.13 matches the dependency environment. Adding `astrid/packs/timeline/cli_parser.py` exits1 with its single preexisting `parse_args` override diagnostic. Exact repeat using `--shadow-file astrid/packs/timeline/cli_parser.py /tmp/agt-m2-release-compose-cli-parser.py` (the HEAD blob) has the identical diagnostic, shifted42→41; no new type error (`mypy-initial.log`, `mypy-baseline.log`). No all-CLI/full mypy claim.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-m2-bundle2-runtime-artifacts
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/gen_cli_surface.py --check
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes/audit.py
+git diff --check
+```
+
+**All exit0.** Audit verifies exact approved deltas, current M2 provider preservation, schema/registry/golden invariants and computes the Git tree without index/object writes. Runtime lock SHA256 `76695bbcb15945aa891edfdc7e379b80c971dbfabbaae4b406855c53ebee4deb`.
+
+Earlier runs, not summed: initial modified recipe/sync/CLI424PASS30.25s; broader neighbor run16FAIL/1459PASS/5SKIP/119deselected164.06s, all sixteen old ordinary expectations reconciled as described; affected four-file329PASS40.56s. A quick diagnostic stopped at the first old scalar assertion (1FAIL/60PASS16.27s). One initial neighbor command referenced nonexistent `tests/packs/timeline/test_cli.py` and collected no tests; corrected before the completed runs. Logs retained; no sockets attempted.
+
+## Holds and next steps
+
+1. Numeric fix3eae37799447d476c7b82abddef66d230436384f is committed, but no explicit manager review approval was published at this handoff. Per task, **excluded**; no unreviewed commit.py/authoring_bundle overlay. Its exact numeric revision-preservation issue therefore remains in this candidate. Manager should review then compose only that bounded delta onto this M2 provider; do not import old M1 provider. The separate M1 numeric worker has29centralPASS on its own tuple; that is not this tuple'"'s qualification.
+2. Runtime d691 does **not** include the nullable first-clip fix.65abc5d's product had2central firstclipPASS, but its SQL-rewrite fixture was rejected; clean successor is still active awaiting legitimate retained-read proof. **No silent producer repin**. Final descendant requires an explicitly published reviewed source identity, then normal vendor-lock source refresh/check. The inherited firstclip strict xfail remains unchanged here.
+3. Added the permitted Agent "'`bundle2-runtime-integration` line to shared `orch/tests/suites.conf`, with exact d691 SHA preflight and firstclip, full M1, nativebatch, clientcutover, popup/PARAM/scalar/media coverage. **Zero central requests submitted**, avoiding the explicitly prohibited premature duplicate. Before the single final request, update this owned line to the reviewed final Runtime path/SHA together with the normal pin, compose approved numeric changes, and remove firstclip'"'s strict marker only for the actually fixed tuple. Request once after all final source/pin/test changes are ready. All23 M1 obligations must pass within that larger cohort. No full suite.
+4. Harness commit this exact candidate, run "'`notes/finalize-handoff.py`, then manager review. App branch qualification/readiness waits for the exact final cohort; all M2 integration waits for PLAN M1. Frozen d474/schema472622, f423 lease and Bundle1 remain intact. This is the bounded twelve-ordinary-writer candidate, not all M2 complete.
+
+Both worker-root `commit-msg` and `commit-msg.txt` are ready. No build/temp output remains in the worktree.
+EOF' in /home/user/work/wt/agt-m2-bundle2-release-compose
+ succeeded in 0ms:
+ succeeded in 193365ms:
+exec
+/bin/bash -lc "tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes/focused-final.log; rg -n '3eae|numeric.*APPROV|numeric.*review' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/notes/*.md | tail -8; git status --short; date -u +%H:%M:%S" in /home/user/work/wt/agt-m2-bundle2-release-compose
+ succeeded in 505ms:
+........................................................................ [ 72%]
+........................................................................ [ 77%]
+........................................................................ [ 81%]
+........................................................................ [ 86%]
+........................................................................ [ 91%]
+........................................................................ [ 95%]
+......................................................................   [100%]
+1578 passed, 5 skipped, 119 deselected in 190.57s (0:03:10)
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_native.py
+ M astrid/packs/timeline/cli_parser.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+ M astrid/sdk/timeline/sync.py
+ M astrid_runtime_client/__init__.py
+ M astrid_runtime_client/contract_metadata.py
+ M astrid_runtime_client/generated.py
+ M astrid_runtime_client/timeline_commit_types.py
+ M cli-surface.json
+ M runtime.lock.json
+ M scripts/gen_cli_surface.py
+ M tests/editing_conformance/test_commit_runtime_occurrence_media.py
+ M tests/editing_conformance/test_commit_runtime_shared_inverse.py
+ M tests/editing_conformance/test_inverse_clear_batches.py
+ M tests/editing_conformance/test_recipe_clip_delete.py
+ M tests/editing_conformance/test_recipe_clip_scalar_fields.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+ M tests/editing_conformance/test_recipe_m2_clip_split.py
+ M tests/editing_conformance/test_recipe_m2_placement.py
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+ M tests/editing_conformance/test_recording_clear.py
+?? tests/editing_conformance/test_native_batch_ingress.py
+02:12:06
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+notes=orch/'workers/agt-m2-bundle2-release-compose/notes'
+r=notes/'report.md'
+s=r.read_text().replace('FINAL_FOCUSED_RESULT', '1578 passed, 5 skipped, 119 deselected in190.57s; exit0')
+r.write_text(s)
+m=json.loads((notes/'final-manifest.json').read_text())
+patch=subprocess.check_output(['git','diff','--binary','HEAD'])
+for name in subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines():
+ result=subprocess.run(['git','diff','--no-index','--binary','--','/dev/null',name],capture_output=True)
+ assert result.returncode==1
+ patch+=result.stdout
+(notes/'final.patch').write_bytes(patch)
+patch_sha=hashlib.sha256(patch).hexdigest()
+with r.open('a') as out:
+ out.write('\\nComplete review patch including new ingress test: "'`notes/final.patch`, SHA256 `'"' + patch_sha + '"'`.'"\\n')
+section='''
+
+## Final ordinary release composition — new candidate HOLD (2026-10-20)
+
+| Field | Exact value |
+|---|---|
+| Branch | "'`tl/agt-m2-bundle2-release-compose` |
+| Worktree | `/home/user/work/wt/agt-m2-bundle2-release-compose` |
+| Current pre-harness HEAD/base | `a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83` |
+| New candidate commit | **PENDING RELEASE-COMPOSE HARNESS COMMIT** |
+| Exact final tested source tree | `3143c1e88522fed078ef1068a431fec7bee57ee3` |
+| Runtime producer pin | `d691ddadb4ef3f5881a25fa893b4fb812211f102` |
+| Runtime producer tree | `2fc57ada4ccc52365732b3ee93315a716f529cc7` |
+| Client | `0.2.3` |
+| Official SCHEMA_DIGEST | `sha256:a435dde3b552999ea75ff593868ff4d56debdd64bd8f79c134fb470a279a05e6` |
+| Official artifact version | `sha256:0f3d217ba0f3ca51d580bf3938fb3df1361a561de5acae7a911d21a9eea8bd9e` |
+| Canonical schema SHA256 | `472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9` |
+| Runtime lock SHA256 | `76695bbcb15945aa891edfdc7e379b80c971dbfabbaae4b406855c53ebee4deb` |
+
+The harness commits after worker exit. Manager must run
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes/finalize-handoff.py`
+to verify the exact tree/parent and publish the actual new HEAD here. Pending
+HEAD is not a freeze identity; the base SHA must not be substituted for it.
+
+Composition is bounded to exact f423 six-file official pin/old-popup-xfail delta,
+exact a95c native batch/CLI/surface delta, reviewed2590 ordinary ABA delta with
+current state-aware inverse/source-root identities and PARAM forwarding retained,
+and additional a76 permanent M1 controls only. Current a31 helper/history/provider
+remain unchanged. Original capture/value/identity claims survive command-file
+batches and normal outbox-prefix retry. Four newer recipe files reconcile sixteen
+old ordinary equal-state refusals to require exact successful replay; all inverse
+ABA and structural identity/container refusals remain. No passing positive was
+changed to refusal, skipped, deleted or newly xfailed. No NativeSheet overlay was
+needed to preserve calls; existing sheet module is byte-identical to a31 and its
+tests pass. No grammar, operation, schema, map, producer guard, legacy cut,
+renderer, model or unrelated pin expansion. Frozen d474/schema472622 and Bundle1
+refs remain untouched; f423 leased worktree was never changed.
+
+Final focused conformance/provider/rebase/sync/CLI/sheet/schema/golden lane:
+**1578 passed, 5 skipped, 119 integration deselected in190.57s**, exit0.
+Actual exact official d691 direct service pair, normal schemas/admissions:
+**96 passed in99.55s**, exit0, no xfail. This includes all unchanged popup/race
+positives after the12 old-schema marker removals, selected PARAM/scope controls,
+media/scalar/identity/opaque and all shared undo/redo/ABA controls. It proves21
+socket-free M1 obligations; the other2 daemon obligations and all23 together on
+this larger pair still require central qualification. No direct HTTP/daemon ran.
+Scoped Ruff clean; all changed Python scope has76 identical baseline diagnostics
+(CLI15/generated61), zero new. Five native modules mypy clean; adding cli_parser
+reports its one identical preexisting parse_args override error. Normal vendor
+and CLI generator checks, exact-byte/golden/registry audit and diffcheck pass.
+Initial broad16FAIL expectations are disclosed and reconciled in the report;
+no full suite or skipped/weakened behavior to achieve green.
+
+**Release HOLD:** numeric3eae37799447d476c7b82abddef66d230436384f is committed
+but explicit manager review approval was not published at this handoff; it is
+excluded as required. d691 does NOT contain nullable firstclip fix.65abc5d had
+2centralfirstclipPASS but its SQL-rewrite fixture was rejected; clean successor
+still active. Do not relabel d691/f423 as fixed or silently repoint the producer.
+Manager must compose approved numeric changes onto this M2 provider, then consume
+an explicitly published clean Runtime descendant through normal pin refresh.
+A permitted own `agent bundle2-runtime-integration` suite line now contains exact
+d691 preflight plus firstclip+M1+nativebatch+clientcutover+popup/PARAM/scalar/media.
+**Zero central requests submitted**: keep the single final larger-cohort request
+for the final reviewed source/pin. Update its exact Runtime SHA/path together
+with the normal pin; all23 M1 obligations must pass in that final cohort. The
+inherited nullable firstclip xfail remains unchanged. No App readiness/qualification
+or all-M2 completion claim; M2 integration remains held until PLAN M1.
+
+Capture exports below are unchanged; each is prefixed `astrid.sdk.timeline.`.
+`sync.TimelineSession.queue_many/commit_many` is now the atomic batch ingress;
+`queue/commit` continue as one-command adapters. CLI commands-file requires both
+original immutable basis IDs. All12 registered ordinary args remain closed,v1.
+
+| Operation | Capture export |
+|---|---|
+'"'''
+for op, export in m['capture_exports'].items():
+ section+=f'| "'`{op}` | `{export}` |'"\\n'
+section+='''
+All16 final goldens below are byte-identical to frozen d474; M1+track-label also
+match Bundle1 (87776 combined bytes). Absolute final fixture root:
+"'`/home/user/work/wt/agt-m2-bundle2-release-compose/tests/editing_conformance/fixtures/`.
+
+| Golden filename | SHA256 |
+|---|---|
+'"'''
+for name,value in m['goldens'].items():
+ section+=f'| "'`{Path(name).name}` | `{value["sha256"]}` |'"\\n'
+section+='''
+Exact commands/results, decisions, limits and source manifest:
+"'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes/report.md`
+and neighboring `final-manifest.json`, `audit.py`, logs and `final.patch`.
+Both worker-root commit-message files are ready. No build/temp output remains
+in the worktree. This is a bounded twelve-ordinary-writer review candidate.
+'"'''
+section+=f'Complete patch SHA256 "'`{patch_sha}`.'"\\n'
+with (orch/'design/m2-writer-bundle-2.md').open('a') as out:
+ out.write(section)
+print('Report and absolute design updated; patch SHA256:',patch_sha)
+PY" in /home/user/work/wt/agt-m2-bundle2-release-compose
+ succeeded in 528ms:
+Report and absolute design updated; patch SHA256: 6cbaabe11ce3ace7ddf34f727f5e046e9213ac59204fa8711f0557d9b017faa3
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes/audit.py
+ git diff --check
+ python3 - <<'"'PY'
+from pathlib import Path
+import json
+import re
+import shutil
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes')
+m=json.loads((notes/'final-manifest.json').read_text())
+print('M1+track-label bytes:',sum(v['bytes'] for k,v in m['goldens'].items() if '/recipe_m1_' in k or k.endswith('/recipe_m2_app_track_label.json')))
+assert 'FINAL_FOCUSED_RESULT' not in (notes/'report.md').read_text()
+for path in (Path('/tmp/agt-m2-release-compose-mypy'),Path('/tmp/agt-m2-release-compose-cli-parser.py'),Path('/tmp/agt-m2-release-collect.txt')):
+ if path.is_dir(): shutil.rmtree(path)
+ elif path.exists(): path.unlink()
+print('Own temporary check artifacts cleaned')
+PY
+ git status --short" in /home/user/work/wt/agt-m2-bundle2-release-compose
+ succeeded in 4385ms:
+Exact pin/native/M1 test deltas, frozen schema, 12 captures and 16 goldens: PASS
+Tree: 3143c1e88522fed078ef1068a431fec7bee57ee3
+Lock SHA256: 76695bbcb15945aa891edfdc7e379b80c971dbfabbaae4b406855c53ebee4deb
+M1+track-label bytes: 61722
+Own temporary check artifacts cleaned
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_native.py
+ M astrid/packs/timeline/cli_parser.py
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+ M astrid/sdk/timeline/sync.py
+ M astrid_runtime_client/__init__.py
+ M astrid_runtime_client/contract_metadata.py
+ M astrid_runtime_client/generated.py
+ M astrid_runtime_client/timeline_commit_types.py
+ M cli-surface.json
+ M runtime.lock.json
+ M scripts/gen_cli_surface.py
+ M tests/editing_conformance/test_commit_runtime_occurrence_media.py
+ M tests/editing_conformance/test_commit_runtime_shared_inverse.py
+ M tests/editing_conformance/test_inverse_clear_batches.py
+ M tests/editing_conformance/test_recipe_clip_delete.py
+ M tests/editing_conformance/test_recipe_clip_scalar_fields.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+ M tests/editing_conformance/test_recipe_m2_clip_split.py
+ M tests/editing_conformance/test_recipe_m2_placement.py
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+ M tests/editing_conformance/test_recording_clear.py
+?? tests/editing_conformance/test_native_batch_ingress.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md')
+s=p.read_text()
+s=s.replace('match Bundle1 (87776 combined bytes). Absolute final fixture root:', 'match Bundle1 (61722 combined bytes). Absolute final fixture root:')
+p.write_text(s)
+print('Corrected final-section M1+track-label combined byte count to61722; old tuple history preserved.')
+PY
+ git diff --check" in /home/user/work/wt/agt-m2-bundle2-release-compose
+ succeeded in 477ms:
+Corrected final-section M1+track-label combined byte count to61722; old tuple history preserved.
+
+codex
+Composed the bounded candidate. Release remains **HOLD**.
+
+- Added official d691 pins, native batches, ordinary ABA replay and permanent M1 controls.
+- Preserved schema472622 and all 16 goldens.
+- Focused tests: **1578 passed, 5 skipped**.
+- Direct official Runtime tests: **96 passed**.
+- Scoped Ruff/mypy, vendor, CLI surface and diff checks pass; broader baseline diagnostics are documented.
+
+Numeric approval and the clean nullable-speed Runtime successor remain pending. No central request was submitted; final HTTP/daemon qualification remains unverified.
+
+Tested tree: `3143c1e88522fed078ef1068a431fec7bee57ee3`. Commit-message files are ready; harness commit pending.
+
+[Exact commands, results and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes/report.md) · [Updated tuple history](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md)
+tokens used
+184,483
+Composed the bounded candidate. Release remains **HOLD**.
+
+- Added official d691 pins, native batches, ordinary ABA replay and permanent M1 controls.
+- Preserved schema472622 and all 16 goldens.
+- Focused tests: **1578 passed, 5 skipped**.
+- Direct official Runtime tests: **96 passed**.
+- Scoped Ruff/mypy, vendor, CLI surface and diff checks pass; broader baseline diagnostics are documented.
+
+Numeric approval and the clean nullable-speed Runtime successor remain pending. No central request was submitted; final HTTP/daemon qualification remains unverified.
+
+Tested tree: `3143c1e88522fed078ef1068a431fec7bee57ee3`. Commit-message files are ready; harness commit pending.
+
+[Exact commands, results and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-release-compose/notes/report.md) · [Updated tuple history](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-writer-bundle-2.md)

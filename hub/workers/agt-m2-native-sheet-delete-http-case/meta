@@ -1,0 +1,9 @@
+name=agt-m2-native-sheet-delete-http-case
+repo=agent
+base=tl/agt-m2-native-sheet-delete-cut
+base_sha=b24144d9
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-native-sheet-delete-http-case
+started=2026-10-20T15:23:41Z

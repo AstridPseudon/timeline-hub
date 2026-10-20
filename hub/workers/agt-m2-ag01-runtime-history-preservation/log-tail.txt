@@ -1,0 +1,400 @@
++++ b/tests/sdk/test_timeline_checkout_history.py
+@@ -4,15 +4,17 @@
+ import copy
+ import hashlib
+ import json
++from types import SimpleNamespace
+ 
+ import pytest
+ 
+ from astrid.sdk import storage_root
+ from astrid.sdk.timeline import store
+ from astrid.sdk.timeline._common import TimelineEditError
+-from astrid.sdk.timeline_checkout import Checkout
+ from astrid.sdk.timeline.outbox import request_bytes
++from astrid.sdk.timeline.revisions import Revision, RuntimeRevisions
+ from astrid.sdk.timeline.sync import TimelineSession
++from astrid.sdk.timeline_checkout import Checkout
+ from astrid.sdk.timeline_sheet import find_version, sheet_version
+ from astrid.sdk.workspace_client import WorkspaceClientError
+ from tests.sdk.test_timeline_sync import connected  # noqa: F401
+@@ -83,3 +85,28 @@
+     draft.save(quiet=True)
+     store._write_step(store._history_dir(draft.path), 'old accepted basis', old)
+     assert find_version(draft, version) is None
++
++
++def test_sheet_basis_with_client_uses_runtime_history_before_local_snapshots(draft, monkeypatch):
++    draft.clip('c1.rocket').set(x=40)
++    draft.save(quiet=True)
++    historical = copy.deepcopy(draft.bundle)
++    version = sheet_version(draft)
++    draft.clip('c1.rocket').set(x=99)
++    draft.save(quiet=True)
++    draft._exported = {version: historical}
++    retained = Checkout(copy.deepcopy(historical))
++    opened = []
++
++    monkeypatch.setattr(RuntimeRevisions, 'list', lambda self, project, timeline, limit: [
++        Revision('retained-revision', 'astrid', None, None, None, 'retained-publication', None),
++    ])
++
++    def open_retained(cls, project, timeline, *, revision_id=None, client=None):
++        opened.append((project, timeline, revision_id, client))
++        return retained
++
++    monkeypatch.setattr(Checkout, 'open', classmethod(open_retained))
++    client = SimpleNamespace(timelines=object())
++    assert find_version(draft, version, client=client) is retained
++    assert opened == [('p', 't', 'retained-revision', client)]
+diff --git a/tests/sdk/test_timeline_checkout_history_runtime.py b/tests/sdk/test_timeline_checkout_history_runtime.py
+index e0c3a24797a1602f47e4555a446b50f0259f9cbe..538243520708da99128b5a35fc7577dd9b1e7715
+--- a/tests/sdk/test_timeline_checkout_history_runtime.py
++++ b/tests/sdk/test_timeline_checkout_history_runtime.py
+@@ -2,25 +2,32 @@
+ from __future__ import annotations
+ 
+ import copy
++import os
+ 
+ import pytest
+ 
+-from tests.helpers.runtime import use_runtime, vendored_runtime_commit
+ from tests.editing_conformance.test_commit_runtime_m1 import (
+-    assert_readback, cli, film, open_client, parent_of, renderer_off,
++    assert_readback,
++    cli,
++    film,
++    open_client,
++    parent_of,
++    renderer_off,
+ )
++from tests.helpers.runtime import use_runtime, vendored_runtime_commit
+ 
+ pytestmark = pytest.mark.integration
+ # Like the client cutover suite, read the existing lock; never change or bypass
+ # either side of the public handshake to test a different Runtime contract.
++os.environ.setdefault('ASTRID_RUNTIME_CHECKOUT', '/home/user/work/runtime')
+ RUNTIME = use_runtime(vendored_runtime_commit())
+ 
+ 
+ def test_checkout_reload_undo_cli_redo_uses_retained_history(
+     tmp_path, monkeypatch, capsys, film, renderer_off, real_runtime,
+ ):
+-    from astrid.sdk.timeline_checkout import Checkout
+     from astrid.sdk.timeline.sync import TimelineSession
++    from astrid.sdk.timeline_checkout import Checkout
+     from astrid.sdk.timeline_sheet import find_version, sheet_version
+ 
+     fixture, original_parent, _ = film
+
+ succeeded in 30098ms:
+test agt-m2-ag01-runtime-history-preservation-targeted-1020172115-28733: pass exit=0 in 10s — targeted on agt-m2-ag01-runtime-history-preservation (agent tree 3190b22e8f5425077a8a788ef9e69c181ade65d0)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_checkout_history_runtime.py tests/sdk/test_timeline_checkout_history.py tests/sdk/test_timeline_checkout_publication_retry.py tests/sdk/test_timeline_journal.py
+counts: 27 passed, 2 deselected in 4.70s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-ag01-runtime-history-preservation-targeted-1020172115-28733/log.txt ---
+...........................                                              [100%]
+27 passed, 2 deselected in 4.70s
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-accepted-journal-consumer-cut.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-accepted-journal-consumer-cut.md
+index e8aa77b8bd4f97cd99dbc9160ca71d6e336c0c59..a8e10ef1c7eff4a927b5bd0cb5df97d3857d6114
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-accepted-journal-consumer-cut.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-accepted-journal-consumer-cut.md
+@@ -17,3 +17,24 @@
+ not qualified because its test environment had no Runtime checkout (one skip,
+ exit 5). AG01 stays **in progress** pending manager ledger update after merge;
+ WC7/WC8 remain held.
++
++## Follow-up consumer migration — 2026-10-20
++
++The follow-up worker migrated the first remaining real accepted-history consumer:
++legacy sheet basis lookup in `astrid/sdk/timeline_sheet.py`. With an
++authenticated client, `find_version` now uses the existing `RuntimeRevisions`
++adapter and opens exact retained revisions through `Checkout.open`; it no longer
++uses local exported/undo snapshots to answer an accepted-history lookup. The
++no-client local draft journal/stack path is preserved. This closes the
++consumer/equivalence gap without adding a journal, snapshot writer, API, or
++second outbox/history.
++
++The integration module’s ephemeral Runtime locator is now explicitly
++`/home/user/work/runtime` by default and still honors `ASTRID_RUNTIME_CHECKOUT`.
++The locked producer remains `2c4ac180c2220bdad966bc01e95ad230e99ce26a`.
++
++Final central targeted result `agt-m2-ag01-runtime-history-preservation-targeted-1020172115-28733`:
++**27 passed, 2 deselected**, exit 0, tree
++`3190b22e8f5425077a8a788ef9e69c181ade65d0`. Direct focused results: history 5,
++journal/revisions 46, sheet/native 73 passed. AG01 remains **in progress**
++until integration; WC7/WC8 remain held.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..09427921ef9f9fc9a970194146130f63739dfe19
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/commit-msg.txt
+@@ -0,0 +1,5 @@
++feat(timeline): use Runtime history for retained sheet bases
++
++Route authenticated retained sheet-basis reads through the existing Runtime
++history adapter and exact revision checkout, while preserving legacy local
++draft history and the durable native outbox.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0fa292a871600d219ec7c03bd752bc4486cb9f0b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/report.md
+@@ -0,0 +1,52 @@
++# AG01 Runtime history preservation
++
++## Result
++
++Migrated the first remaining real accepted-history consumer: legacy sheet basis
++lookup in `astrid/sdk/timeline_sheet.py`. When an authenticated client is
++available, `find_version` now asks the existing `RuntimeRevisions` adapter for
++the bounded accepted ancestry and opens each exact retained revision through
++the existing `Checkout.open(..., revision_id=...)` path. It no longer consults
++local exported/undo snapshots for that accepted lookup, so a retained revision
++with a new publication identity cannot silently cross an accepted boundary.
++
++The no-client legacy lookup order and local draft journal/stack behavior remain
++unchanged. The existing native session outbox remains the authority for pending
++commands, exact in-flight body/key, receipt, and accepted acknowledgement state;
++no second history or checkpoint store was added. The existing publish duplicate
++`kind=publish` write remains removed by the predecessor candidate.
++
++The integration test module now defaults only its ephemeral Runtime locator to
++`/home/user/work/runtime`, while honoring an explicit `ASTRID_RUNTIME_CHECKOUT`.
++It still uses the locked public producer commit `2c4ac180c2220bdad966bc01e95ad230e99ce26a` and normal generated client/health/door/auth path.
++
++## Tests
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_checkout_history.py` — **5 passed**.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_journal.py tests/sdk/test_timeline_revisions.py` — **46 passed**.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sheet_native.py` — **73 passed**.
++- Central targeted Runtime-paired run `agt-m2-ag01-runtime-history-preservation-targeted-1020172115-28733`, exact final snapshot tree `3190b22e8f5425077a8a788ef9e69c181ade65d0`: **27 passed, 2 deselected**, exit 0. This included the actual retained-history/reload/native undo/redo path; the prior missing-Runtime skip was removed by the explicit allowed locator.
++- `git diff --check` — **pass**.
++
++Targeted Ruff was not green on the touched source because the file has inherited
++diagnostics outside this change (`E701/E702/E731/E741` and one pre-existing
++import-order diagnostic at `timeline_sheet.py:1266`). The newly changed test
++import blocks are sorted; no whole-repo lint or full suite was run.
++
++## Decisions and limits
++
++- Runtime-first lookup is used only when a client is supplied. Without one,
++  legacy local sheet/draft history remains available and unchanged.
++- The current derived base bundle is still accepted as a local safe basis before
++  Runtime ancestry is read; older accepted bases require Runtime proof.
++- No Runtime/API/schema/table/journal/snapshot-writer/generic candidate path was
++  added. No old positive assertion was weakened, skipped, or xfailed.
++- This does not close WC7/WC8 whole-candidate publication/merge migration, and
++  AG01 should remain **in progress** until this branch is integrated. No full
++  suite or owner-gated integration cut was requested.
++
++## Next step
++
++Manager should review and merge this small consumer migration together with the
++predecessor accepted-journal deletion candidate when the owner’s historical
++raw-audio and registered-completion tuple gate permits the integration cut.
+diff --git a/astrid/sdk/timeline_sheet.py b/astrid/sdk/timeline_sheet.py
+index 4b2eca5571a2f92ecc674984e294c4a73bc5aff5..0f619f5109aea5b57a17b5cabf545171fc727161
+--- a/astrid/sdk/timeline_sheet.py
++++ b/astrid/sdk/timeline_sheet.py
+@@ -881,6 +881,33 @@
+ 
+     if sheet_version(tl) == version:
+         return tl
++    if client is not None:
++        try:
++            base = Checkout(base_bundle(tl.document()))
++            if sheet_version(base) == version:
++                return base
++        except Exception:  # noqa: BLE001
++            pass
++
++        # Runtime owns accepted ancestry. Do not consult local snapshots once
++        # an authenticated client is available: a retained revision may have
++        # a new publication identity after restore, so revision-only local
++        # state cannot prove that it is the requested accepted basis.
++        from astrid.sdk.timeline.revisions import RuntimeRevisions
++
++        try:
++            revisions = RuntimeRevisions(client.timelines).list(
++                tl.bundle["project_id"], tl.bundle["timeline_id"], limit=100,
++            )
++        except TimelineEditError as exc:
++            raise SheetError(f"could not read retained sheet basis: {exc}") from exc
++        for revision in revisions or []:
++            other = Checkout.open(tl.bundle["project_id"], tl.bundle["timeline_id"],
++                                  revision_id=revision.id, client=client)
++            if sheet_version(other) == version:
++                return other
++        return None
++
+     kept = (getattr(tl, "_exported", None) or {}).get(version)
+     if kept is not None and kept.get("base_parent") == tl.bundle.get("base_parent"):
+         return Checkout(copy.deepcopy(kept))
+@@ -909,21 +936,6 @@
+             return base
+     except Exception:  # noqa: BLE001
+         pass
+-    if client is not None:
+-        cursor = None
+-        while True:
+-            result = client.timelines.history(tl.bundle["project_id"], tl.bundle["timeline_id"],
+-                                              limit=100, cursor=cursor)
+-            if not result.ok:
+-                raise SheetError(f"could not read retained sheet basis: {result.error}")
+-            for row in result.data["items"]:
+-                other = Checkout.open(tl.bundle["project_id"], tl.bundle["timeline_id"],
+-                                      revision_id=row["revision_id"], client=client)
+-                if sheet_version(other) == version:
+-                    return other
+-            cursor = result.data.get("next_cursor")
+-            if cursor is None:
+-                break
+     return None
+ 
+ 
+diff --git a/tests/sdk/test_timeline_checkout_history.py b/tests/sdk/test_timeline_checkout_history.py
+index da0672dd2077ad4a769d53675f446327b2fe1577..90b4fe171bc291a4b2cd395409edb69be24746f3
+--- a/tests/sdk/test_timeline_checkout_history.py
++++ b/tests/sdk/test_timeline_checkout_history.py
+@@ -4,15 +4,17 @@
+ import copy
+ import hashlib
+ import json
++from types import SimpleNamespace
+ 
+ import pytest
+ 
+ from astrid.sdk import storage_root
+ from astrid.sdk.timeline import store
+ from astrid.sdk.timeline._common import TimelineEditError
+-from astrid.sdk.timeline_checkout import Checkout
+ from astrid.sdk.timeline.outbox import request_bytes
++from astrid.sdk.timeline.revisions import Revision, RuntimeRevisions
+ from astrid.sdk.timeline.sync import TimelineSession
++from astrid.sdk.timeline_checkout import Checkout
+ from astrid.sdk.timeline_sheet import find_version, sheet_version
+ from astrid.sdk.workspace_client import WorkspaceClientError
+ from tests.sdk.test_timeline_sync import connected  # noqa: F401
+@@ -83,3 +85,28 @@
+     draft.save(quiet=True)
+     store._write_step(store._history_dir(draft.path), 'old accepted basis', old)
+     assert find_version(draft, version) is None
++
++
++def test_sheet_basis_with_client_uses_runtime_history_before_local_snapshots(draft, monkeypatch):
++    draft.clip('c1.rocket').set(x=40)
++    draft.save(quiet=True)
++    historical = copy.deepcopy(draft.bundle)
++    version = sheet_version(draft)
++    draft.clip('c1.rocket').set(x=99)
++    draft.save(quiet=True)
++    draft._exported = {version: historical}
++    retained = Checkout(copy.deepcopy(historical))
++    opened = []
++
++    monkeypatch.setattr(RuntimeRevisions, 'list', lambda self, project, timeline, limit: [
++        Revision('retained-revision', 'astrid', None, None, None, 'retained-publication', None),
++    ])
++
++    def open_retained(cls, project, timeline, *, revision_id=None, client=None):
++        opened.append((project, timeline, revision_id, client))
++        return retained
++
++    monkeypatch.setattr(Checkout, 'open', classmethod(open_retained))
++    client = SimpleNamespace(timelines=object())
++    assert find_version(draft, version, client=client) is retained
++    assert opened == [('p', 't', 'retained-revision', client)]
+diff --git a/tests/sdk/test_timeline_checkout_history_runtime.py b/tests/sdk/test_timeline_checkout_history_runtime.py
+index e0c3a24797a1602f47e4555a446b50f0259f9cbe..538243520708da99128b5a35fc7577dd9b1e7715
+--- a/tests/sdk/test_timeline_checkout_history_runtime.py
++++ b/tests/sdk/test_timeline_checkout_history_runtime.py
+@@ -2,25 +2,32 @@
+ from __future__ import annotations
+ 
+ import copy
++import os
+ 
+ import pytest
+ 
+-from tests.helpers.runtime import use_runtime, vendored_runtime_commit
+ from tests.editing_conformance.test_commit_runtime_m1 import (
+-    assert_readback, cli, film, open_client, parent_of, renderer_off,
++    assert_readback,
++    cli,
++    film,
++    open_client,
++    parent_of,
++    renderer_off,
+ )
++from tests.helpers.runtime import use_runtime, vendored_runtime_commit
+ 
+ pytestmark = pytest.mark.integration
+ # Like the client cutover suite, read the existing lock; never change or bypass
+ # either side of the public handshake to test a different Runtime contract.
++os.environ.setdefault('ASTRID_RUNTIME_CHECKOUT', '/home/user/work/runtime')
+ RUNTIME = use_runtime(vendored_runtime_commit())
+ 
+ 
+ def test_checkout_reload_undo_cli_redo_uses_retained_history(
+     tmp_path, monkeypatch, capsys, film, renderer_off, real_runtime,
+ ):
+-    from astrid.sdk.timeline_checkout import Checkout
+     from astrid.sdk.timeline.sync import TimelineSession
++    from astrid.sdk.timeline_checkout import Checkout
+     from astrid.sdk.timeline_sheet import find_version, sheet_version
+ 
+     fixture, original_parent, _ = film
+
+exec
+/bin/bash -lc 'git diff --check && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ag01-runtime-history-preservation/BLOCKED && echo markers=ok && git status --short && git diff --stat' in /home/user/work/wt/agt-m2-ag01-runtime-history-preservation
+ succeeded in 780ms:
+markers=ok
+ M astrid/sdk/timeline_sheet.py
+ M tests/sdk/test_timeline_checkout_history.py
+ M tests/sdk/test_timeline_checkout_history_runtime.py
+ astrid/sdk/timeline_sheet.py                       | 42 ++++++++++++++--------
+ tests/sdk/test_timeline_checkout_history.py        | 29 ++++++++++++++-
+ .../sdk/test_timeline_checkout_history_runtime.py  | 13 +++++--
+ 3 files changed, 65 insertions(+), 19 deletions(-)
+
+codex
+Implemented the AG01 consumer migration.
+
+- Authenticated sheet-basis reads now use `RuntimeRevisions` and exact retained revisions; legacy local draft history remains unchanged.
+- Added regression coverage for Runtime-first lookup and explicit `/home/user/work/runtime` test resolution.
+- Preserved native outbox/retry/undo/redo behavior and existing assertions.
+
+Tests:
+
+- History: 5 passed
+- Journal/revisions: 46 passed
+- Sheet/native: 73 passed
+- Central Runtime lane: 27 passed, 2 deselected
+- `git diff --check`: passed
+
+Ruff reports only inherited diagnostics outside this change. AG01 remains in progress until integration; no full suite or integration cut was run. Report, shared note, commit message, and `DONE` marker are written.
+tokens used
+271,771
+Implemented the AG01 consumer migration.
+
+- Authenticated sheet-basis reads now use `RuntimeRevisions` and exact retained revisions; legacy local draft history remains unchanged.
+- Added regression coverage for Runtime-first lookup and explicit `/home/user/work/runtime` test resolution.
+- Preserved native outbox/retry/undo/redo behavior and existing assertions.
+
+Tests:
+
+- History: 5 passed
+- Journal/revisions: 46 passed
+- Sheet/native: 73 passed
+- Central Runtime lane: 27 passed, 2 deselected
+- `git diff --check`: passed
+
+Ruff reports only inherited diagnostics outside this change. AG01 remains in progress until integration; no full suite or integration cut was run. Report, shared note, commit message, and `DONE` marker are written.

@@ -1,0 +1,400 @@
+      4
+    ],
+    "fixtures": [
+      6,
+      911,
+      0
+    ],
+    "tests": [
+      8,
+      1509,
+      0
+    ]
+  },
+  "total": [
+    24,
+    3043,
+    41
+  ]
+}
+
+App fixtures:
+/home/user/work/wt/agt-m2-command-composition/tests/editing_conformance/fixtures/recipe_m2_clip_add.json sha256:5e9a54e75a0901724dedd3e62c0f37f78840a8edee001f30b92306383800479b
+/home/user/work/wt/agt-m2-command-composition/tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json sha256:63541a7c4b9c17663b577d0bed40681842ac944c3abe4699bfec74803036679b
+/home/user/work/wt/agt-m2-command-composition/tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json sha256:20bc5467bdfca447363816e0c86cf31c383afb9515a1a154a46a42feda5415d5
+/home/user/work/wt/agt-m2-command-composition/tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json sha256:be191fce0fca6d92194e034f9de7fce1328ed6ad831227225b5bba1176e50b3a
+/home/user/work/wt/agt-m2-command-composition/tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json sha256:30f6ef768d52affc7ac511a1b01aa09910fd0deae37f366c26e7293a47c80918
+/home/user/work/wt/agt-m2-command-composition/tests/editing_conformance/fixtures/recipe_m2_scalar_track.json sha256:f982beb0493fbda9196d99c2dfb5200c26cb82d58cd23535b87eb7295747c75d
+All five original M1 recipe/Runtime/provider/document/sync files unchanged from e49f422a.
+
+exec
+/bin/bash -lc 'tail -12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-command-composition-commit-integration-1019231558-15787/log.txt; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-command-composition-commit-integration-1019231558-15787/ext; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-command-composition-commit-integration-1019231558-15787/snap; git status --short' in /home/user/work/wt/agt-m2-command-composition
+ succeeded in 307ms:
+...x.                                                                    [100%]
+4 passed, 1 xfailed in 21.74s
+external=runtime=80973d34ae10e498d7213c30287012c9876f4b1a app=bdc9dcd9b5bacb5ef0466e167b7af06d15c2d362 composition=7aa384a9f3c815f78ce88ff9b47de5adee7bf34a 
+tree=945cb51b8a822b391c7bc7161199475c7304162f
+key=8734d16d0e5bed18e9b29634c8e5a005
+worktree=/home/user/work/wt/agt-m2-command-composition
+ M astrid/core/timeline/authoring_bundle.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+?? astrid/sdk/timeline/_clip_commands.py
+?? astrid/sdk/timeline/_scalar_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_clip_add.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json
+?? tests/editing_conformance/fixtures/recipe_m2_scalar_track.json
+?? tests/editing_conformance/test_commit_runtime_first_clip.py
+?? tests/editing_conformance/test_commit_runtime_scalar.py
+?? tests/editing_conformance/test_recipe_m2_clip_add.py
+?? tests/editing_conformance/test_recipe_scalar_commands.py
+?? tests/editing_conformance/test_recorded_graph_roots.py
+?? tests/sdk/test_timeline_clip_add_provider.py
+?? tests/sdk/test_timeline_commit_graph_roots.py
+?? tests/sdk/test_timeline_commit_provider_scalar.py
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-command-composition-commit-integration-1019231558-15787 1' in /home/user/work/wt/agt-m2-command-composition
+ succeeded in 0ms:
+test agt-m2-command-composition-commit-integration-1019231558-15787: pass exit=0 in 23s — commit-integration on agt-m2-command-composition (agent tree 945cb51b8a822b391c7bc7161199475c7304162f)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_scalar.py
+counts: 4 passed, 1 xfailed in 21.74s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-command-composition-commit-integration-1019231558-15787/log.txt ---
+...x.                                                                    [100%]
+4 passed, 1 xfailed in 21.74s
+
+codex
+The central batch passed: 4 passed and the expected Runtime null-speed failure remained. It used source tree `945cb51b8a822b391c7bc7161199475c7304162f` against Runtime `80973d34`.
+
+I’m writing the report and both commit-message files. The branch remains held because the original bare-record graph identity test is still a strict expected failure.
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-command-composition/notes/line-budget.json; git diff --name-only e49f422a -- tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_commit_runtime_m1.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py' in /home/user/work/wt/agt-m2-command-composition
+ succeeded in 0ms:
+{
+  "base": "e49f422a",
+  "categories": {
+    "product": [
+      9,
+      404,
+      37
+    ],
+    "schema": [
+      1,
+      219,
+      4
+    ],
+    "fixtures": [
+      6,
+      911,
+      0
+    ],
+    "tests": [
+      8,
+      1509,
+      0
+    ]
+  },
+  "total": [
+    24,
+    3043,
+    41
+  ],
+  "files": [
+    {
+      "path": "astrid/core/timeline/authoring_bundle.py",
+      "added": 15,
+      "removed": 9,
+      "final_lines": 1654
+    },
+    {
+      "path": "astrid/core/timeline/schema/edit-command.schema.json",
+      "added": 219,
+      "removed": 4,
+      "final_lines": 871
+    },
+    {
+      "path": "astrid/sdk/timeline/_collections.py",
+      "added": 13,
+      "removed": 5,
+      "final_lines": 225
+    },
+    {
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "added": 92,
+      "removed": 6,
+      "final_lines": 378
+    },
+    {
+      "path": "astrid/sdk/timeline/_recording.py",
+      "added": 26,
+      "removed": 0,
+      "final_lines": 195
+    },
+    {
+      "path": "astrid/sdk/timeline/commands.py",
+      "added": 9,
+      "removed": 3,
+      "final_lines": 178
+    },
+    {
+      "path": "astrid/sdk/timeline/commit.py",
+      "added": 66,
+      "removed": 10,
+      "final_lines": 581
+    },
+    {
+      "path": "astrid/sdk/timeline/inverse.py",
+      "added": 25,
+      "removed": 4,
+      "final_lines": 280
+    },
+    {
+      "path": "astrid/sdk/timeline/_clip_commands.py",
+      "added": 70,
+      "removed": 0,
+      "final_lines": 70
+    },
+    {
+      "path": "astrid/sdk/timeline/_scalar_commands.py",
+      "added": 88,
+      "removed": 0,
+      "final_lines": 88
+    },
+    {
+      "path": "tests/editing_conformance/fixtures/recipe_m2_clip_add.json",
+      "added": 906,
+      "removed": 0,
+      "final_lines": 906
+    },
+    {
+      "path": "tests/editing_conformance/fixtures/recipe_m2_scalar_disjoint.json",
+      "added": 1,
+      "removed": 0,
+      "final_lines": 1
+    },
+    {
+      "path": "tests/editing_conformance/fixtures/recipe_m2_scalar_params_absent.json",
+      "added": 1,
+      "removed": 0,
+      "final_lines": 1
+    },
+    {
+      "path": "tests/editing_conformance/fixtures/recipe_m2_scalar_params_null.json",
+      "added": 1,
+      "removed": 0,
+      "final_lines": 1
+    },
+    {
+      "path": "tests/editing_conformance/fixtures/recipe_m2_scalar_params_object.json",
+      "added": 1,
+      "removed": 0,
+      "final_lines": 1
+    },
+    {
+      "path": "tests/editing_conformance/fixtures/recipe_m2_scalar_track.json",
+      "added": 1,
+      "removed": 0,
+      "final_lines": 1
+    },
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_first_clip.py",
+      "added": 127,
+      "removed": 0,
+      "final_lines": 127
+    },
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_scalar.py",
+      "added": 92,
+      "removed": 0,
+      "final_lines": 92
+    },
+    {
+      "path": "tests/editing_conformance/test_recipe_m2_clip_add.py",
+      "added": 245,
+      "removed": 0,
+      "final_lines": 245
+    },
+    {
+      "path": "tests/editing_conformance/test_recipe_scalar_commands.py",
+      "added": 255,
+      "removed": 0,
+      "final_lines": 255
+    },
+    {
+      "path": "tests/editing_conformance/test_recorded_graph_roots.py",
+      "added": 240,
+      "removed": 0,
+      "final_lines": 240
+    },
+    {
+      "path": "tests/sdk/test_timeline_clip_add_provider.py",
+      "added": 182,
+      "removed": 0,
+      "final_lines": 182
+    },
+    {
+      "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+      "added": 170,
+      "removed": 0,
+      "final_lines": 170
+    },
+    {
+      "path": "tests/sdk/test_timeline_commit_provider_scalar.py",
+      "added": 198,
+      "removed": 0,
+      "final_lines": 198
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib,json
+work=Path('/home/user/work/wt/agt-m2-command-composition')
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-command-composition')
+fixtures=sorted((work/'tests/editing_conformance/fixtures').glob('recipe_m2_*.json'))
+fixture_lines='\\n'.join(f'- "'`{p}` — `sha256:{hashlib.sha256(p.read_bytes()).hexdigest()}`'"' for p in fixtures)
+report='''# agt-m2-command-composition — HELD, not merge-ready
+
+Composed the reviewed additive diffs from scalar "'`ceb2ab67` (base `fec45b08`), first clip `0ace5c0b` (base `2ed3ff2b`), and graph roots `af6e67e5` (base `b63a89aa`) onto assigned staged/ordered base `e49f422a`. No git mutation, integration-worktree edits, Runtime/App edits, pushes, dependency installation, schema artifact regeneration/pins, metadata/threshold changes, or full suite.
+
+## Result and decisions
+
+- Native registry adds only `clip.add`, `track.set`, and `clip.set-params`; root operations remain fixture-only. Retained dynamic operation admission and schema-root `$ref` resolution through the existing validator.
+- Ordinary append proof authenticates exact scoped kind/owner/ref and row identity; inverse insertion still needs its accepted boundary. Clip reservation validation now accepts exact clip as well as track facts; malformed scopes and retired identities refuse.
+- Composed native create → add → label → params passes reload, guarded inverse/redo, exact order/IDs/opaque JSON, explicit clears, disjoint preservation, own-consumer removal, external-dependent/ABA refusal and late-bad-stage atomicity. No original M1 suites were edited.
+- Root inverse/redo restores through `create_entity(..., restoring=True)` only in trusted inverse dispatch. Root guards ignore only a compiler link matching the verified source mapping; opaque data, null/bool distinctions, internal content and unverified links remain guarded.
+- Scalar occurrence undo'"'s ORIGINAL closure strict-xfail is resolved, with its assertion body preserved. Provider compilation can reuse authenticated publication-boundary images only after exact authored shot/internal comparison; an unchanged sibling retains its accepted pins. Parent revision reuse requires exact complete parent and manifest equality. No parent snapshot is installed and no whole-parent restore fallback is used.
+- The staged first-clip xfail and local root-redo xfail now pass and their decorators were removed. The original bare-record root-reload identity positive remains **strict xfail**, with its assertions unchanged. Runtime null-speed readback remains its original **strict xfail**.
+
+## Unresolved invariant — stop / no readiness claim
+
+"'`tests/editing_conformance/test_recorded_graph_roots.py::test_creation_inverse_after_compiled_reload_restores_original_absence` now passes authored-root guards and restores every authored byte, child image and manifest. Its final equality still fails solely on the original parent revision name: it produces `authoring-parent-revision-4261783be526a424ea4cc583d4604c5eb511368d5725d8695841d0edc46b1942` instead of `parent-1`.
+
+Those bare root records contain no parent input pin, and the reloaded canonical document contains no predecessor. `notes/probe_missing_parent_pin.py` proves two valid original closures with parent IDs `parent-1` and `different-original-parent` produce **identical records and identical accepted documents**. A deterministic inverse receiving those identical inputs cannot recover both different original IDs. Its JSON output is in `notes/probe_missing_parent_pin.json`; all authored content and dependency closure compare exactly.
+
+The authenticated provider root create → compiled reload → inverse → redo **does pass exact closure identity**, because its existing publication boundary supplies the missing original identity. Added proof: `tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_root_creation_reload_inverse_redo_exact_closure`.
+
+This is a missing input in the original record-only fixture/API, not evidence against PLAN'"'s guarded inverse design. Stopped widening here as requested. **One of the two original graph strict-xfails remains unresolved; do not advertise this branch as merge-ready.** Recommended manager follow-up: explicitly supply authenticated input boundaries to that core path/fixture, or approve the minimal recorded input identity needed for bare-record recovery, keeping its original exact positive assertions. No new operation or whole-parent fallback is needed. Runtime project-wide root/item collision admission remains separately owned and unverified here.
+
+## Verification (final source)
+
+From "'`/home/user/work/wt/agt-m2-command-composition`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_commit_graph_roots.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_sync.py
+```
+
+**468 passed, 1 strict xfailed, 20.48s.** The sole xfail is the parent-identity gap above. Original recipe/M1 Runtime/provider/document/sync source files are byte-unchanged from `e49f422a`; provider file includes its original restore tests.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/timeline/test_authoring_bundle.py
+```
+
+**25 passed, 1 integration test deselected by the repository default lane, 7.79s.** No live socket tests were run directly.
+
+Exactly one central targeted actual-Runtime batch was requested after final edits:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-command-composition commit-integration --files "tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_scalar.py"
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-command-composition-commit-integration-1019231558-15787 1
+```
+
+Service command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_scalar.py
+```
+
+**4 passed, 1 strict xfailed, 21.74s; exit 0.** Sole xfail is unchanged Runtime explicit-null-speed inspection behavior. This uses the normal product provider, no fabricated acceptance receipt. Includes original M1 lost-ACK/restart/retry path and first-clip/scalar accepted reload/inverse/redo. Test source tree: `945cb51b8a822b391c7bc7161199475c7304162f`; Runtime `80973d34ae10e498d7213c30287012c9876f4b1a`; App `bdc9dcd9b5bacb5ef0466e167b7af06d15c2d362`; Composition `7aa384a9f3c815f78ce88ff9b47de5adee7bf34a`. Result directory: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-command-composition-commit-integration-1019231558-15787/`.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/_clip_commands.py astrid/sdk/timeline/_scalar_commands.py astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/core/timeline/authoring_bundle.py
+/home/user/work/venv-agent/bin/ruff check --config '"'include=[\"*.py\"]' tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_commit_runtime_first_clip.py tests/editing_conformance/test_commit_runtime_scalar.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_add_provider.py tests/sdk/test_timeline_commit_graph_roots.py
+git diff --check
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-command-composition/notes/probe_missing_parent_pin.py
+```
+
+All exit 0; both Ruff commands report all checks passed. Canonical schema also parsed with a duplicate-key-rejecting JSON decoder (26 definitions, none duplicate).
+
+Not run: full pytest, `make check`, broad structure/typecheck gates, App/browser/parity journeys, Runtime full suite, real Runtime root persistence/project-wide collision matrix, artifact generation/pin refresh. No claim that those gates pass.
+
+## App handoff — exact held sources and portable goldens
+
+- `/home/user/work/wt/agt-m2-command-composition/astrid/core/timeline/schema/edit-command.schema.json` — canonical additive closed args; generated artifacts/pins deliberately pending.
+- `/home/user/work/wt/agt-m2-command-composition/astrid/sdk/timeline/_clip_commands.py` — `capture_clip_add` and literal parent-only creation handler. Media/occurrence adds remain unsupported.
+- `/home/user/work/wt/agt-m2-command-composition/astrid/sdk/timeline/_scalar_commands.py` — `capture_track_set` / `capture_clip_set_params`, absence/null/empty preservation, exact original claims.
+- `/home/user/work/wt/agt-m2-command-composition/astrid/sdk/timeline/commands.py` — the single operation registry/executor.
+
+Portable fixture bytes are unchanged from the reviewed scalar/first-clip commits:
+
+'"'''+fixture_lines+'''
+
+## Line budget and delivery
+
+Compared with assigned "'`e49f422a`: **24 files, +3043 / -41 lines (net +3002)**, including all three reviewed overlays. Product Python: **9 files, +404 / -37 (net +367)**. Canonical schema: **+219 / -4 (net +215)**. Eight test modules: **+1509**; six portable goldens: **+911**. `notes/line-budget.json` has exact per-file counts. Existing large files end at `authoring_bundle.py` 1654 lines (+6 net) and `commit.py` 581 (+56 net); no metadata thresholds were raised and broad structure gates were not run.
+
+Both `commit-msg` and `commit-msg.txt` are present beside `notes/`. All source changes stay in the assigned worktree; notes/messages stay in the assigned worker directory. No build output/temp files were intentionally retained in the worktree. Harness owns committing; M2 integration still waits for PLAN'"'s M1 record and the unresolved root identity requirement above.
+'''
+(worker/'notes/report.md').write_text(report)
+message='''feat(timeline): compose native writers with staged undo
+
+Combine the reviewed clip.add, track.set, and clip.set-params recipes with
+ordered collection reversal and additive graph-root primitives. Authenticate
+scoped creation facts and clip reservations, restore roots through trusted
+inverse dispatch, and reuse verified historical images after exact authored
+content comparison without replacing the parent document.
+
+Cover combined native edits, explicit clears, ordered inverse and redo,
+disjoint preservation, retired identities, ABA, external consumers, atomic
+late refusal, and exact scalar occurrence source closure restoration.
+
+Keep the original bare-record root parent-identity positive as a strict
+expected failure: exact recovery needs its authenticated input boundary.
+Retain Runtime null-speed readback's strict expected failure. M2 remains held.
+'''
+for name in ('commit-msg','commit-msg.txt'):
+    (worker/name).write_text(message)
+print(str(worker/'notes/report.md'))
+print('Both commit-message files written; source tree unchanged after central test.')
+PY" in /home/user/work/wt/agt-m2-command-composition
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-command-composition/notes/report.md
+Both commit-message files written; source tree unchanged after central test.
+
+codex
+Composed the reviewed native writer diffs with ordered/staged undo, typed clip reservations, and exact scalar closure restoration.
+
+**HELD—not merge-ready:** one original graph test remains strict-xfail because bare root records lack the original parent revision pin. The authenticated provider round-trip passes. Next step: supply that authenticated input boundary while preserving the original assertion.
+
+Validation:
+
+- SDK/conformance: **468 passed, 1 strict-xfail**
+- Authoring bundle: **25 passed, 1 deselected**
+- Central M1/first-clip/scalar: **4 passed, 1 strict-xfail** (unchanged Runtime null-speed issue)
+- Ruff and diff checks passed; no full suite run.
+
+[Report with exact commands, source/golden paths, and line budget](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-command-composition/notes/report.md). Both commit-message files are written.
+tokens used
+185,948
+Composed the reviewed native writer diffs with ordered/staged undo, typed clip reservations, and exact scalar closure restoration.
+
+**HELD—not merge-ready:** one original graph test remains strict-xfail because bare root records lack the original parent revision pin. The authenticated provider round-trip passes. Next step: supply that authenticated input boundary while preserving the original assertion.
+
+Validation:
+
+- SDK/conformance: **468 passed, 1 strict-xfail**
+- Authoring bundle: **25 passed, 1 deselected**
+- Central M1/first-clip/scalar: **4 passed, 1 strict-xfail** (unchanged Runtime null-speed issue)
+- Ruff and diff checks passed; no full suite run.
+
+[Report with exact commands, source/golden paths, and line budget](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-command-composition/notes/report.md). Both commit-message files are written.

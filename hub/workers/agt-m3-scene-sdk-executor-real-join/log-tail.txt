@@ -1,0 +1,400 @@
+index 2ba92bbac2238bd89b9927a04a9c0949fb556941..8b8f3024a835dcc3e5acc9973bf6cd9f47afa1da
+--- a/astrid/sdk/timeline_filmstrip.py
++++ b/astrid/sdk/timeline_filmstrip.py
+@@ -1519,7 +1519,9 @@
+             if actual_files != verified | {manifest_name}:
+                 return None
+             entrypoints = manifest.get("entrypoints")
+-            scene_name = entrypoints.get("scene_answers") if isinstance(entrypoints, Mapping) else None
++            # The current managed executor names this existing entrypoint
++            # ``scene``; its stable file is still ``scene-answers.json``.
++            scene_name = entrypoints.get("scene") if isinstance(entrypoints, Mapping) else None
+             if scene_name != "scene-answers.json" or scene_name not in names:
+                 return None
+             if scene_name not in verified:
+diff --git a/tests/sdk/test_scene_caller_preservation.py b/tests/sdk/test_scene_caller_preservation.py
+index 99d070280d24505d2c1059ce09d77233bb977763..2e20ec7f1cc93de84d08029f1e884272dc79fa6c
+--- a/tests/sdk/test_scene_caller_preservation.py
++++ b/tests/sdk/test_scene_caller_preservation.py
+@@ -134,7 +134,7 @@
+     scene_bytes = json.dumps(scene, sort_keys=True, separators=(',', ':')).encode()
+     manifest = {
+         'kind': 'timeline_filmstrip',
+-        'entrypoints': {'scene_answers': 'scene-answers.json'},
++        'entrypoints': {'scene': 'scene-answers.json'},
+         'outputs': [{
+             'path': 'scene-answers.json',
+             'content_hash': 'sha256:' + hashlib.sha256(scene_bytes).hexdigest(),
+
+codex
+The shared D09 note now records the superseding exact contract, and I’ve added the flat Viewing peer note with the concrete missing field rather than proposing a new packet. I’m doing the final changed-file lint/diff checks and rerunning the focused SDK evidence now.
+exec
+/bin/bash -lc 'set -o pipefail
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline_filmstrip.py tests/sdk/test_scene_caller_preservation.py
+git diff --check
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_scene_caller_preservation.py tests/sdk/test_scene_save_core.py tests/sdk/test_timeline_filmstrip.py tests/sdk/test_timeline_filmstrip_invocation.py' in /home/user/work/wt/agt-m3-scene-sdk-executor-real-join
+ succeeded in 7103ms:
+astrid/sdk/timeline_filmstrip.py:99:12: BLE001 Do not catch blind exception: `Exception`
+    |
+ 97 |     try:
+ 98 |         page_value = list_runs(project_id, cursor=None, limit=limit)
+ 99 |     except Exception:
+    |            ^^^^^^^^^ BLE001
+100 |         return None
+101 |     if hasattr(page_value, "ok") and hasattr(page_value, "data"):
+    |
+
+astrid/sdk/timeline_filmstrip.py:339:9: I001 [*] Import block is un-sorted or un-formatted
+    |
+337 |         _fail("Input inspection requires an immutable parent composition head for shot placements.")
+338 |     try:
+339 |         from astrid.packs.rendering.actions.render.managed_timeline import _project_exact_parent_head
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ I001
+340 |
+341 |         parent, projected, expansion = _project_exact_parent_head(
+    |
+    = help: Organize imports
+
+astrid/sdk/timeline_filmstrip.py:375:12: BLE001 Do not catch blind exception: `Exception`
+    |
+373 |     try:
+374 |         run = client.get_run(run_id)
+375 |     except Exception as exc:
+    |            ^^^^^^^^^ BLE001
+376 |         _fail(f"Explicit render_run {run_id!r} cannot be resolved to a saved revision: {exc}")
+377 |     if not isinstance(run, Mapping):
+    |
+
+astrid/sdk/timeline_filmstrip.py:390:16: BLE001 Do not catch blind exception: `Exception`
+    |
+388 |         try:
+389 |             task = client.get_task(str(task_id))
+390 |         except Exception as exc:
+    |                ^^^^^^^^^ BLE001
+391 |             _fail(f"Explicit render_run {run_id!r} task cannot be resolved: {exc}")
+392 |         if isinstance(task, Mapping) and _render_capability(task) == "rendering.render":
+    |
+
+astrid/sdk/timeline_filmstrip.py:615:41: E702 Multiple statements on one line (semicolon)
+    |
+613 |         if end_frame <= start_frame:
+614 |             continue
+615 |         start = start_frame / float(fps); end = end_frame / float(fps)
+    |                                         ^ E702
+616 |         shot_occurrences.append({'occurrence_id': occurrence_id, 'shot_id': shot_id,
+617 |             'shot_name': shot['name'], 'start': start, 'end': end,
+    |
+
+astrid/sdk/timeline_filmstrip.py:714:5: I001 [*] Import block is un-sorted or un-formatted
+    |
+712 |         exact = None
+713 |     canonical_project = str(project_row.get('slug') or project)
+714 |     from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import normalize_components
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ I001
+715 |     components = normalize_components(inputs.get('show'), inputs.get('hide'))
+716 |     timeline_row = None
+    |
+    = help: Organize imports
+
+astrid/sdk/timeline_filmstrip.py:844:20: BLE001 Do not catch blind exception: `Exception`
+    |
+842 |             except CapabilityValidationError as exc:
+843 |                 _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
+844 |             except Exception as exc:
+    |                    ^^^^^^^^^ BLE001
+845 |                 _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
+846 |         # The parent projection carries canonical media identities. Check them
+    |
+
+astrid/sdk/timeline_filmstrip.py:1054:24: E702 Multiple statements on one line (semicolon)
+     |
+1052 |         if len(tasks) != 1:
+1053 |             continue
+1054 |         task = tasks[0]; envelope = candidate_envelope or _envelope(task)
+     |                        ^ E702
+1055 |         authority = candidate_authority or _authority(envelope)
+1056 |         if timeline_row and authority.get('timeline_id') != _identifier(timeline_row, 'timeline_id', 'id'):
+     |
+
+astrid/sdk/timeline_filmstrip.py:1120:24: BLE001 Do not catch blind exception: `Exception`
+     |
+1118 |                 try:
+1119 |                     live = live_reader(str(pin.get("timeline_id")))
+1120 |                 except Exception:
+     |                        ^^^^^^^^^ BLE001
+1121 |                     live = None
+1122 |                 if isinstance(live, Mapping):
+     |
+
+astrid/sdk/timeline_filmstrip.py:1182:16: BLE001 Do not catch blind exception: `Exception`
+     |
+1180 |                     association=association,
+1181 |                 )
+1182 |         except Exception as exc:
+     |                ^^^^^^^^^ BLE001
+1183 |             _fail(f'include_media render has no admitted managed video association: {exc}')
+1184 |         if association is None:
+     |
+
+Found 10 errors.
+[*] 2 fixable with the `--fix` option.
+........................................................................ [ 80%]
+.................                                                        [100%]
+89 passed in 5.02s
+
+2026-10-20T18:06:13.365118Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid hunk at line 3, 'fix(sdk): align scene bundle entrypoint contract' is not a valid hunk header. Valid hunk headers: '*** Add File: {path}', '*** Delete File: {path}', '*** Update File: {path}'
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/d09-scene-check-save-core-handoff.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/d09-scene-check-save-core-handoff.md
+index 98502e9f0f392b9146ec43b8899447c168b27979..9d763d5d7fc5d8dc0041344da6964b5d70ad0e90
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/d09-scene-check-save-core-handoff.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/d09-scene-check-save-core-handoff.md
+@@ -71,3 +71,43 @@
+ source label without PNG rendering. Ordinary `Checkout.check()` activation stays
+ held until that executor is ready; `_check_core`, save, publish, and transaction
+ paths remain pure core paths and do not use this adapter.
++
++## Agent/View exact managed join boundary — 2026-10-20
++
++This section supersedes the guessed `scene_result` packet above and the earlier
++`scene_answers` manifest-entrypoint spelling. The current executor contract is
++the source of truth. On the Agent candidate at `9b887e232934c210575007680c8d26a52e6a6946`,
++the private request remains the existing managed `rendering.timeline_visualize`
++invocation with `mode: "scene_only"`, `view: "filmstrip"`, `formats: ["md"]`,
++and no PNG request. The request is prepared through the existing saved or
++admitted candidate `prepare_filmstrip` path; it does not add a Scene to save,
++introduce a DTO/SourceFactory, or edit `run.py`/Root-prep/authority code.
++
++The actual current executor produces a `filmstrip-bundle.zip` whose stable
++members are `manifest.json` and `scene-answers.json`. The nested manifest is
++`kind: "timeline_filmstrip"` and names the existing answer entrypoint as
++`entrypoints.scene: "scene-answers.json"`. The answer document is exact-key
++`{answers, scene_clips, snapshot_label}`. The SDK now reads this actual
++`entrypoints.scene` field and rejects traversal, digest, byte-count, kind,
++answer-key, frame-extent, scene-clip/address-map, and snapshot-label mismatches
++as advisory `UNAVAILABLE`; it does not accept an invented packet shape.
++
++The remaining join blocker is in the current managed executor receipt path:
++its `filmstrip_bundle` receipt entry does not carry the existing source
++provenance needed by the SDK gate (`provenance.video_digest` equal to the
++prepared capture identity, plus the existing `timeline_id` when one was
++prepared). Therefore the SDK correctly keeps the managed result advisory
++`UNAVAILABLE`; it does not infer provenance from the ZIP or create a new
++provenance schema. Viewing should populate the existing receipt provenance map
++from the already-bound prepared source, preserving the exact fields and no new
++DTO. No ordinary Scene-check activation or D09 deletion claim is made until
++that managed receipt field and the stale controls qualify.
++
++Evidence from this worker: the focused SDK preservation/save/filmstrip lanes
++pass `89 passed`; the actual saved/candidate preparation and source-runtime
++checks pass `2 passed`, with the native renderer parametrization blocked by the
++missing current Remotion/React peer graph; the actual candidate transport lane
++passes `1 passed`. The current Node/Remotion12 managed executor acceptance path
++and an ordinary positive managed join remain unverified for that environment.
++The flat Viewing coordination note is
++`peer-agent-to-viewing-20261020T-scene-real-join-response.md`.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-viewing-20261020T-scene-real-join-response.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-viewing-20261020T-scene-real-join-response.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6881d96818c49369807489cd270922724b5b4412
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-viewing-20261020T-scene-real-join-response.md
+@@ -0,0 +1,58 @@
++# Agent → Viewing: D09 current Scene executor join response
++
++Date: 2026-10-20 UTC  
++Agent candidate: `9b887e232934c210575007680c8d26a52e6a6946`  
++Scope: private Scene-only managed caller; no ordinary activation claim.
++
++## Exact contract observed
++
++The current managed executor is the authority for the wire shape. It accepts
++the existing prepared saved or admitted candidate source through the
++`rendering.timeline_visualize` managed invocation, with `mode: "scene_only"`,
++`view: "filmstrip"`, `formats: ["md"]`, and no PNG output.
++
++Its filmstrip bundle is a ZIP containing the existing `manifest.json` and
++`scene-answers.json` artifacts. The nested manifest currently uses:
++
++```json
++{
++  "kind": "timeline_filmstrip",
++  "entrypoints": {"scene": "scene-answers.json"}
++}
++```
++
++The answer document has the exact top-level keys
++`{answers, scene_clips, snapshot_label}`. The SDK caller now consumes
++`entrypoints.scene` (not the obsolete guessed `entrypoints.scene_answers`),
++then validates ZIP traversal, declared and actual digest/byte counts, manifest
++kind, exact answer keys, full frame extent, compiled-ID/address map, clip
++labels, and snapshot label. Any absent or stale binding remains one advisory
++`UNAVAILABLE` result.
++
++## Current blocker to the managed join
++
++The current executor's `filmstrip_bundle` receipt entry does not populate the
++existing managed receipt `provenance` map. Consequently the SDK cannot verify
++the required source binding (`provenance.video_digest == prepared capture
++identity`, and the existing `timeline_id` when prepared) and correctly refuses
++to treat the answer as an accepted managed result.
++
++Please carry the already-bound prepared-source values through the existing
++receipt provenance fields. This is a request to populate the existing field,
++not to introduce a DTO, a new provenance schema, a SourceFactory, a Root-prep
++duplicate, or a `run.py` change. The Agent will not infer provenance from the
++ZIP and will not loosen the validation gate.
++
++## Evidence and boundary
++
++On the Agent tree, focused SDK preservation/save/filmstrip tests pass `89
++passed`. Actual saved/candidate preparation and source-runtime checks pass `2
++passed`; the native renderer parametrization errors before execution because
++the current Remotion/React peer graph is absent. The same real candidate source
++path through transport passes `1 passed`. The current pinned Node/Remotion12
++managed executor acceptance path and a positive managed join are therefore
++still unverified here. Ordinary Scene-check activation remains held pending
++the receipt provenance fix and stale-control qualification.
++
++No Agent edits were made to `run.py`, Root-prep, projector, validator, or
++authority paths.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..1a0e6cafed4b5dbe2b4bbf52598fa9b7cf481110
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg
+@@ -0,0 +1,4 @@
++fix(sdk): align scene bundle entrypoint contract
++
++Read the current managed executor's scene entrypoint while retaining strict
++bundle, source-binding, and advisory-unavailable validation.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..1a0e6cafed4b5dbe2b4bbf52598fa9b7cf481110
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg.txt
+@@ -0,0 +1,4 @@
++fix(sdk): align scene bundle entrypoint contract
++
++Read the current managed executor's scene entrypoint while retaining strict
++bundle, source-binding, and advisory-unavailable validation.
+diff --git a/astrid/sdk/timeline_filmstrip.py b/astrid/sdk/timeline_filmstrip.py
+index 2ba92bbac2238bd89b9927a04a9c0949fb556941..8b8f3024a835dcc3e5acc9973bf6cd9f47afa1da
+--- a/astrid/sdk/timeline_filmstrip.py
++++ b/astrid/sdk/timeline_filmstrip.py
+@@ -1519,7 +1519,9 @@
+             if actual_files != verified | {manifest_name}:
+                 return None
+             entrypoints = manifest.get("entrypoints")
+-            scene_name = entrypoints.get("scene_answers") if isinstance(entrypoints, Mapping) else None
++            # The current managed executor names this existing entrypoint
++            # ``scene``; its stable file is still ``scene-answers.json``.
++            scene_name = entrypoints.get("scene") if isinstance(entrypoints, Mapping) else None
+             if scene_name != "scene-answers.json" or scene_name not in names:
+                 return None
+             if scene_name not in verified:
+diff --git a/tests/sdk/test_scene_caller_preservation.py b/tests/sdk/test_scene_caller_preservation.py
+index 99d070280d24505d2c1059ce09d77233bb977763..2e20ec7f1cc93de84d08029f1e884272dc79fa6c
+--- a/tests/sdk/test_scene_caller_preservation.py
++++ b/tests/sdk/test_scene_caller_preservation.py
+@@ -134,7 +134,7 @@
+     scene_bytes = json.dumps(scene, sort_keys=True, separators=(',', ':')).encode()
+     manifest = {
+         'kind': 'timeline_filmstrip',
+-        'entrypoints': {'scene_answers': 'scene-answers.json'},
++        'entrypoints': {'scene': 'scene-answers.json'},
+         'outputs': [{
+             'path': 'scene-answers.json',
+             'content_hash': 'sha256:' + hashlib.sha256(scene_bytes).hexdigest(),
+
+codex
+The focused suite remains green at 89 passed. Changed-file Ruff reports only pre-existing violations in this large module (10 findings outside this one-line contract adjustment); `git diff --check` is clean. I’ve also written the conventional commit message in both harness-compatible paths.
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/DONE
+printf 'HEAD '; git rev-parse HEAD
+git status --short
+git diff --stat
+git diff --check
+printf '\\nSDK contract line:\\n'
+nl -ba astrid/sdk/timeline_filmstrip.py | sed -n '1510,1530p'
+printf '\\nMarkers:\\n'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/DONE" in /home/user/work/wt/agt-m3-scene-sdk-executor-real-join
+ succeeded in 1386ms:
+HEAD 9b887e232934c210575007680c8d26a52e6a6946
+ M astrid/sdk/timeline_filmstrip.py
+ M tests/sdk/test_scene_caller_preservation.py
+ astrid/sdk/timeline_filmstrip.py            | 4 +++-
+ tests/sdk/test_scene_caller_preservation.py | 2 +-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+SDK contract line:
+  1510	                        or "\\" in member_name or member_name in verified or member_name == manifest_name
+  1511	                        or member_name not in names):
+  1512	                    return None
+  1513	                member_bytes = archive.read(member_name)
+  1514	                if (entry.get("bytes") != len(member_bytes)
+  1515	                        or entry.get("content_hash") != "sha256:" + hashlib.sha256(member_bytes).hexdigest()):
+  1516	                    return None
+  1517	                verified.add(member_name)
+  1518	            actual_files = {member.filename for member in members if not member.is_dir()}
+  1519	            if actual_files != verified | {manifest_name}:
+  1520	                return None
+  1521	            entrypoints = manifest.get("entrypoints")
+  1522	            # The current managed executor names this existing entrypoint
+  1523	            # ``scene``; its stable file is still ``scene-answers.json``.
+  1524	            scene_name = entrypoints.get("scene") if isinstance(entrypoints, Mapping) else None
+  1525	            if scene_name != "scene-answers.json" or scene_name not in names:
+  1526	                return None
+  1527	            if scene_name not in verified:
+  1528	                return None
+  1529	            scene_bytes = archive.read(scene_name)
+  1530	            payload = json.loads(scene_bytes)
+
+Markers:
+-rw-r--r-- 1 root root   0 Oct 20 18:06 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/DONE
+-rw-r--r-- 1 root root 187 Oct 20 18:06 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg
+-rw-r--r-- 1 root root 187 Oct 20 18:06 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-sdk-executor-real-join/commit-msg.txt
+
+codex
+Implemented D09 SDK/executor join alignment.
+
+- Updated SDK and fixture to consume the actual executor field `entrypoints.scene`.
+- Preserved strict ZIP, digest, provenance, map, label, and advisory-`UNAVAILABLE` validation.
+- Appended exact contract/boundary to the shared D09 handoff.
+- Added flat Viewing peer note requesting existing receipt provenance population.
+- No `run.py`, Root-prep, projector, validator, authority, save, or DTO changes.
+
+Tests:
+
+```text
+89 passed
+1 transport candidate source test passed
+2 saved/candidate preparation tests passed
+```
+
+Native renderer test remains blocked by missing Remotion/React peer dependencies. Ruff reports 10 pre-existing module findings; `git diff --check` passes. No full suite requested.
+
+Current managed positive join and ordinary activation remain unverified until Viewing adds receipt provenance. `DONE` and commit message files were created.
+2026-10-20T18:06:27.836602Z ERROR codex_core::session: failed to record rollout items: thread 01a15a79-37b1-72f3-b64d-25e719768449 not found
+tokens used
+275,993
+Implemented D09 SDK/executor join alignment.
+
+- Updated SDK and fixture to consume the actual executor field `entrypoints.scene`.
+- Preserved strict ZIP, digest, provenance, map, label, and advisory-`UNAVAILABLE` validation.
+- Appended exact contract/boundary to the shared D09 handoff.
+- Added flat Viewing peer note requesting existing receipt provenance population.
+- No `run.py`, Root-prep, projector, validator, authority, save, or DTO changes.
+
+Tests:
+
+```text
+89 passed
+1 transport candidate source test passed
+2 saved/candidate preparation tests passed
+```
+
+Native renderer test remains blocked by missing Remotion/React peer dependencies. Ruff reports 10 pre-existing module findings; `git diff --check` passes. No full suite requested.
+
+Current managed positive join and ordinary activation remain unverified until Viewing adds receipt provenance. `DONE` and commit message files were created.

@@ -1,0 +1,400 @@
+-
+-**Do not** commit this to version control.
+-
+-See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
+diff --git a/.pytest_cache/v/cache/lastfailed b/.pytest_cache/v/cache/lastfailed
+deleted file mode 100644
+index 9e26dfeeb6e641a33dae4961196235bdb965b21b..0000000000000000000000000000000000000000
+--- a/.pytest_cache/v/cache/lastfailed
++++ /dev/null
+@@ -1 +0,0 @@
+-{}
+\ No newline at end of file
+diff --git a/.pytest_cache/v/cache/nodeids b/.pytest_cache/v/cache/nodeids
+deleted file mode 100644
+index 58782a86b825e7c60fa9adb6902b3c7bd6902d42..0000000000000000000000000000000000000000
+--- a/.pytest_cache/v/cache/nodeids
++++ /dev/null
+@@ -1,231 +0,0 @@
+-[
+-  "tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]",
+-  "tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_capture_refuses_unsupported_owner_and_identity_before_execution",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_cannot_reuse_a_removed_clip_identity_while_it_is_occupied",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_is_scoped_birth_and_leaves_parent_and_sibling_untouched",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[after-end]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[before-occurrence]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[bool-on]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[extra-arg]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[hidden-lane]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[missing-media]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[negative-on]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[occupied]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[parent-select]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[shared-intent]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[shared-root]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[slash-id]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[source-map]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[video]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[wrong-object]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_create_refusals_preserve_input[zero-hold]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_disjoint_edit_rebases_and_retains_original_capture",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_exact_capture_replay_inverse_and_redo[create]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_exact_capture_replay_inverse_and_redo[unplace]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_later_consumer_of_created_binding_blocks_inverse",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_pool_auto_and_relative_placement_are_not_supported",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_portable_goldens[create]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_portable_goldens[unplace]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_provider_accepts_create_with_exact_undo_and_redo",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_provider_accepts_unplace_with_exact_undo_and_redo",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_registry_binding_aba_blocks_undo_and_replay_refuses_changed_binding",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_undo_of_create_refuses_after_any_intervening_write_to_the_created_clip",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_unplace_clears_the_child_and_keeps_its_registry_binding",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_unplace_refusals_preserve_input[missing-target]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_unplace_refusals_preserve_input[nested]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_unplace_refusals_preserve_input[not-media]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_unplace_refusals_preserve_input[relation]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_unplace_refusals_preserve_input[shared-root]",
+-  "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_unplace_refuses_when_a_member_declares_a_relation",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_append_birth_inverse_preserves_existing_order_and_opaque_content",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_birth_exact_roots_capture_replay_reload_inverse_redo[None]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_birth_exact_roots_capture_replay_reload_inverse_redo[fps1]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_birth_quantizer_overflow_is_permanent_and_does_not_mutate_capture",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_birth_then_existing_track_and_media_commands_in_one_batch",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_closed_birth_inputs_refuse_before_mutation[change0]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_closed_birth_inputs_refuse_before_mutation[change1]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_closed_birth_inputs_refuse_before_mutation[change2]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_closed_birth_inputs_refuse_before_mutation[change3]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_closed_birth_inputs_refuse_before_mutation[change4]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_closed_birth_inputs_refuse_before_mutation[change5]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_closed_birth_inputs_refuse_before_mutation[change6]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_closed_birth_inputs_refuse_before_mutation[change7]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_later_child_or_occurrence_dependency_prevents_birth_undo",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_original_guards_refuse_atomically[legacy]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_original_guards_refuse_atomically[occurrence]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_original_guards_refuse_atomically[occurrences]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_original_guards_refuse_atomically[output]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_original_guards_refuse_atomically[shot]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_original_guards_refuse_atomically[track]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_original_guards_refuse_atomically[tracks-order]",
+-  "tests/editing_conformance/test_recipe_occurrence_create.py::test_unrelated_scalar_rebases_and_later_noop_or_aba_dependency_write_blocks_inverse",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_changed_target_membership_source_or_identity_refuses_atomically[duplicate]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_changed_target_membership_source_or_identity_refuses_atomically[membership]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_changed_target_membership_source_or_identity_refuses_atomically[metadata]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_changed_target_membership_source_or_identity_refuses_atomically[order]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_changed_target_membership_source_or_identity_refuses_atomically[shot-content]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_changed_target_membership_source_or_identity_refuses_atomically[source]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_closed_schema_and_portable_native_capture_golden",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[1-0]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[3-0]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[3-1]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[3-2]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_equal_state_and_aba_publication_history_accepts_replay[occurrence:occ-1-path0]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_equal_state_and_aba_publication_history_accepts_replay[occurrence:occ-1/clip:clip-a-path1]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_equal_state_and_aba_publication_history_accepts_replay[occurrence:occ-1/shot-path2]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_equal_state_and_aba_publication_history_refuses[occurrence:occ-1-path0]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_equal_state_and_aba_publication_history_refuses[occurrence:occ-1-path1]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_equal_state_and_aba_publication_history_refuses[occurrence:occ-1/clip:clip-a-path2]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_equal_state_and_aba_publication_history_refuses[occurrence:occ-1/shot-path4]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_equal_state_and_aba_publication_history_refuses[occurrence:occ-1/source-path3]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[None]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[absent]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[metadata2]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[metadata3]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_explicit_single_occurrence_identity_only[occ-1:clip-a]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_explicit_single_occurrence_identity_only[occurrence:missing]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_explicit_single_occurrence_identity_only[occurrence:occ-1/clip:clip-a]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_explicit_single_occurrence_identity_only[parent]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_explicit_single_occurrence_identity_only[shot:chapter-shot]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_explicit_single_occurrence_identity_only[shot:picture]",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_inverse_requires_authenticated_order_and_source_boundary",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_legacy_group_refuses_with_migration_needed_and_no_mutation",
+-  "tests/editing_conformance/test_recipe_occurrence_delete.py::test_other_occurrence_child_edit_and_metadata_do_not_conflict",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_changed_source_or_identity_refuses_atomically[duplicate]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_changed_source_or_identity_refuses_atomically[membership]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_changed_source_or_identity_refuses_atomically[metadata]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_changed_source_or_identity_refuses_atomically[shot-content]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_changed_source_or_identity_refuses_atomically[source-shot]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_closed_occurrence_duplicate_schema[args-value0]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_closed_occurrence_duplicate_schema[args-value1]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_closed_occurrence_duplicate_schema[intent-value2]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_closed_occurrence_duplicate_schema[version-2]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_copy_preserves_exact_source_content_and_only_identity_changes",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_copy_rederives_only_root_identity_against_compiled_destination",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_derived_item_identity_collision_refuses_without_mutation",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_duplicate_reload_exact_guarded_inverse_redo[1-0]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_duplicate_reload_exact_guarded_inverse_redo[2-0]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_duplicate_reload_exact_guarded_inverse_redo[2-1]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_equal_state_and_aba_publication_history_refuses_on_inverse[occurrence:occ-0-path0]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_equal_state_and_aba_publication_history_refuses_on_inverse[occurrence:occ-0-path1]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_equal_state_and_aba_publication_history_refuses_on_inverse[occurrence:occ-0/shot-path3]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_equal_state_and_aba_publication_history_refuses_on_inverse[occurrence:occ-0/source-path2]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_equal_state_and_aba_publication_refuses_on_ordinary_replay[occurrence:occ-0-path0]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_equal_state_and_aba_publication_refuses_on_ordinary_replay[occurrence:occ-0/source-path1]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_equal_value_sub_path_publication_on_ordinary_replay_reproduces_same_copy[occurrence:occ-0-path0]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_equal_value_sub_path_publication_on_ordinary_replay_reproduces_same_copy[occurrence:occ-0/shot-path1]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_explicit_single_occurrence_identity_only[occ-0]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_explicit_single_occurrence_identity_only[occurrence:missing]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_explicit_single_occurrence_identity_only[occurrence:occ-0/clip:clip-a]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_explicit_single_occurrence_identity_only[parent]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_explicit_single_occurrence_identity_only[shot:chapter-shot]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_legacy_group_refuses_with_migration_needed_and_no_mutation",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_portable_native_capture_golden_matches_fixture",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_reserved_identity_collisions_refuse[occ-1-shot-copy]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_reserved_identity_collisions_refuse[occ-copy-chapter-shot]",
+-  "tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_shared_source_copy_and_later_sibling_edit_are_isolated",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_asset_address_alias_overlap_and_guarded_dependency",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_asset_removal_checks_declared_references_across_owners[foreign-ref]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_asset_removal_checks_declared_references_across_owners[local-alias]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_asset_removal_checks_declared_references_across_owners[shot-ref]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_disjoint_edit_rebases_but_same_value_asset_write_blocks_undo",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_exact_capture_replay_scoped_birth_and_inverse[image-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_exact_capture_replay_scoped_birth_and_inverse[image-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_exact_capture_replay_scoped_birth_and_inverse[video-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_exact_capture_replay_scoped_birth_and_inverse[video-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_existing_binding_is_required_exactly_without_birth[add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_existing_binding_is_required_exactly_without_birth[swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_missing_port_pin_refuses_before_acceptance[add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_missing_port_pin_refuses_before_acceptance[swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_noninteger_positive_speed_preserves_source_units_and_half_open_boundary",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_occupied_asset_alias_is_never_replaced[False]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_occupied_asset_alias_is_never_replaced[None]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_occupied_asset_alias_is_never_replaced[entry2]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_occupied_asset_alias_is_never_replaced[entry3]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_portable_goldens[add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_portable_goldens[swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_provider_exact_reload_inverse_redo_and_retired_asset_reservation[add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_provider_exact_reload_inverse_redo_and_retired_asset_reservation[swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[binding-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[binding-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[birth-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[birth-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[boolean-speed-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[boolean-speed-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[display-child-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[display-child-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[membership-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[membership-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[missing-input-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[missing-input-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[negative-speed-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[negative-speed-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[order-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[order-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[outside-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[outside-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[parent-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[parent-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[shared-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[shared-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[source-map-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[source-map-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[track-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[track-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[window-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[window-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[wrong-catalog-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[wrong-catalog-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[wrong-object-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[wrong-object-swap]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[zero-speed-add]",
+-  "tests/editing_conformance/test_recipe_occurrence_media.py::test_refusals_preserve_input[zero-speed-swap]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_batch_refusal_is_atomic[bad-occurrence]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_batch_refusal_is_atomic[duplicate]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_batch_refusal_is_atomic[occupied]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_batch_refusal_is_atomic[source-shot]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_batch_refusal_is_atomic[virtual-slot]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_child_inverse_requires_complete_exact_root_context[changed-owner]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_child_inverse_requires_complete_exact_root_context[duplicate-owner]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_child_inverse_requires_complete_exact_root_context[missing-created]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_child_inverse_requires_complete_exact_root_context[missing-owner]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_child_inverse_requires_complete_exact_root_context[missing-source]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_child_inverse_requires_complete_exact_root_context[wrong-kind]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_child_inverse_requires_complete_exact_root_context[wrong-owner]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_root_child_same_value_and_aba_publications_refuse[values0]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_root_child_same_value_and_aba_publications_refuse[values1]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_root_child_stages_replay_inverse_redo_and_compiled_reload",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_created_shot_later_occurrence_dependency_refuses",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_creation_inverse_after_compiled_reload_restores_original_absence",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_creation_inverse_redo_reuses_exact_roots",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_creation_inverse_restores_original_root_absence",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_executor_creates_full_roots_replays_and_compiles_without_source_pins",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_fixture_root_ops_stay_private_and_public_create_args_stay_closed",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_generic_net_zero_root_edges_inverse_redo_preserve_absence_and_created_facts",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_invalid_root_scope_refuses_before_mutation[occurrence:new-occ-occurrence-None]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_invalid_root_scope_refuses_before_mutation[parent-shot-None]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_invalid_root_scope_refuses_before_mutation[parent/track:new-track-parent]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_invalid_root_scope_refuses_before_mutation[shot: -shot-None]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_invalid_root_scope_refuses_before_mutation[shot:-shot-None]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_invalid_root_scope_refuses_before_mutation[shot:bad/name-shot-None]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_invalid_root_scope_refuses_before_mutation[shot:new-shot-occurrence-parent]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_invalid_root_scope_refuses_before_mutation[shot:new-shot-shot-parent]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_invalid_root_scope_refuses_before_mutation[shot:x::y-shot-None]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_main_bundle_new_roots_compile_without_runtime_bookkeeping",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_missing_occurrence_scopes_have_absent_input_guards[clip:title]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_missing_occurrence_scopes_have_absent_input_guards[registry]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_missing_occurrence_scopes_have_absent_input_guards[shot]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_missing_occurrence_scopes_have_absent_input_guards[source]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_missing_occurrence_scopes_have_absent_input_guards[track:picture]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_missing_roots_are_tagged_absent",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_one_recipe_creates_roots_then_reads_and_edits_their_children[edit]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_one_recipe_creates_roots_then_reads_and_edits_their_children[read]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_one_recipe_creates_roots_then_reads_and_edits_their_children[selection]",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_record_only_inverse_cannot_distinguish_original_parent_revision_names",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_record_only_inverse_restores_authored_closure_but_not_parent_pin",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_root_and_child_aliases_use_exact_authored_owner_not_shared_source",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_root_envelopes_and_leaf_writes_cannot_edit_compiler_bookkeeping",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_root_replace_remove_and_existing_baseline_recovery_are_lossless",
+-  "tests/editing_conformance/test_recorded_graph_roots.py::test_unrecorded_or_orphan_shot_cannot_be_compiled"
+-]
+\ No newline at end of file
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..bb576afbf109f52f9b20ecc3da31fb267f62edcd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/commit-msg
+@@ -0,0 +1,5 @@
++fix(timeline): classify occurrence birth quantizer overflow
++
++Translate finite-input frame quantizer ValueError and OverflowError into the
++permanent unsupported_timing command error, matching clip move. Cover capture
++and real Runtime atomic no-write/history regressions for on=1e308.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..a6dad53a0283544e39e7c939fd0bd8b8de9d9b55
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/notes/report.md
+@@ -0,0 +1,23 @@
++# Occurrence birth quantizer overflow fix
++
++## Change
++
++- Wrapped `clip_start_frame()` in `astrid/sdk/timeline/native_occurrence_create.py` with the same `ValueError`/`OverflowError` translation used by ordinary clip move.
++- Quantizer failures now raise permanent `CommandError(kind="unsupported_timing")`; no duration cap, schema change, writer change, or Runtime source change.
++- Added a capture regression for finite `on=1e308`, asserting permanent classification, no retry advice, and no mutation.
++- Added a real `RuntimeService` regression for the invalid commit, asserting HTTP/status 409, `unsupported_timing`, no exact-retry advice, unchanged timeline head, and unchanged history.
++
++## Tests
++
++- `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/editing_conformance/test_recipe_occurrence_create.py tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_occurrence_delete.py` — **87 passed, 2 deselected** (integration cases deselected by default).
++- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_occurrence_create.py` — **2 passed**.
++- `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py` — **140 passed**.
++- `git diff --check` — passed.
++
++The first explicit integration command without `ASTRID_RUNTIME_CHECKOUT` failed setup because this linked worktree helper searches for an `astrid-runtime` sibling; it was rerun successfully with the orchestrator-provided `/home/user/work/runtime` checkout.
++
++## Limits
++
++- No full or `full*` suite requested.
++- Ruff could not run: `/usr/bin/python3: No module named ruff`.
++- Shared Runtime checkout was read-only and unchanged. Schema files, generated schema counts, and all unrelated controls were untouched.
+diff --git a/astrid/sdk/timeline/native_occurrence_create.py b/astrid/sdk/timeline/native_occurrence_create.py
+index ac28018dc13d3e21b61894368d709f05a509ec08..0b98d05acaec55c353ad9ec58d5b8b038dc7ba31
+--- a/astrid/sdk/timeline/native_occurrence_create.py
++++ b/astrid/sdk/timeline/native_occurrence_create.py
+@@ -32,7 +32,10 @@
+     fps = rate(output.get('fps'))
+     on = number(args['on'], 'on')
+     duration = number(args['duration'], 'duration', positive=True)
+-    frame = clip_start_frame({'at': on, 'hold': duration}, float(fps))
++    try:
++        frame = clip_start_frame({'at': on, 'hold': duration}, float(fps))
++    except (ValueError, OverflowError) as exc:
++        raise CommandError(str(exc), kind='unsupported_timing') from exc
+     start_ms = float(Fraction(frame, 1) / fps) * 1000
+     shot_id, occurrence_id = args['shot_id'], args['occurrence_id']
+     ctx.create_entity('shot:' + shot_id, kind='shot', owner=None, value={
+diff --git a/tests/editing_conformance/test_commit_runtime_occurrence_create.py b/tests/editing_conformance/test_commit_runtime_occurrence_create.py
+index e76d88a95e549226643aed5cc85fc18a6a0f11b5..a135c3720d705a82c664ced003aca8cdbb8f9fab
+--- a/tests/editing_conformance/test_commit_runtime_occurrence_create.py
++++ b/tests/editing_conformance/test_commit_runtime_occurrence_create.py
+@@ -162,6 +162,18 @@
+         bundle = bundle_from_document(before)
+         birth = capture_occurrence_create(bundle, 'first-occurrence', 'first-shot', name='Chapter one',
+                                           track='picture', on=0, duration=10)
++        invalid_birth = {key: copy.deepcopy(birth[key])
++                         for key in ('schema_version', 'op', 'version', 'select', 'args')}
++        invalid_birth['args']['on'] = 1e308
++        history_before_invalid = copy.deepcopy(history())
++        head_before_invalid = service.get_project_timeline(project, 'film')
++        with pytest.raises(RuntimeErrorBase) as error:
++            commit(body([invalid_birth]), 'invalid-birth-quantizer')
++        assert error.value.status == 409
++        assert error.value.details['reason'] == 'unsupported_timing'
++        assert 'retry the exact request' not in str(error.value)
++        assert service.get_project_timeline(project, 'film') == head_before_invalid
++        assert history() == history_before_invalid
+         born = execute(bundle, [birth]).bundle
+         child_track = capture_track_create(born, OWNER, {'id': 'picture', 'kind': 'visual'})
+         child_bundle = execute(born, [child_track]).bundle
+diff --git a/tests/editing_conformance/test_recipe_occurrence_create.py b/tests/editing_conformance/test_recipe_occurrence_create.py
+index cfd1b324108bf95892d77eeb420a661fefccda4a..6fa2f43a1a251472c2b0a6b3ca3211d860cfa4a8
+--- a/tests/editing_conformance/test_recipe_occurrence_create.py
++++ b/tests/editing_conformance/test_recipe_occurrence_create.py
+@@ -159,6 +159,16 @@
+     assert original == before
+ 
+ 
++def test_birth_quantizer_overflow_is_permanent_and_does_not_mutate_capture():
++    original = empty_bundle()
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError) as error:
++        birth(original, on=1e308)
++    assert error.value.kind == 'unsupported_timing'
++    assert 'retry' not in str(error.value).lower()
++    assert original == before
++
++
+ def test_append_birth_inverse_preserves_existing_order_and_opaque_content():
+     original = empty_bundle()
+     existing = execute(original, [birth(original, occurrence_id='existing', shot_id='existing')]).bundle
+
+exec
+/bin/bash -lc "test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/DONE && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/commit-msg && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-occurrence-birth-quantizer-fix/notes/report.md && git status --short && git diff --stat && git diff --check && find . -maxdepth 2 -type d -name '.pytest_cache' -o -name '__pycache__' | head -40" in /home/user/work/wt/agt-m2-occurrence-birth-quantizer-fix
+ succeeded in 1500ms:
+ M astrid/sdk/timeline/native_occurrence_create.py
+ M tests/editing_conformance/test_commit_runtime_occurrence_create.py
+ M tests/editing_conformance/test_recipe_occurrence_create.py
+ astrid/sdk/timeline/native_occurrence_create.py              |  5 ++++-
+ .../test_commit_runtime_occurrence_create.py                 | 12 ++++++++++++
+ tests/editing_conformance/test_recipe_occurrence_create.py   | 10 ++++++++++
+ 3 files changed, 26 insertions(+), 1 deletion(-)
+
+codex
+Implemented the P2 fix.
+
+- Quantizer `ValueError`/`OverflowError` now maps to permanent `unsupported_timing`, matching `move`.
+- Added capture and real Runtime no-write/history regressions for `on=1e308`.
+- No schema, Runtime source, writer, or cap changes.
+
+Tests:
+
+- Birth/duplicate/delete: 87 passed.
+- Real Runtime lifecycle: 2 passed.
+- Typed-ID/media/placement neighbors: 140 passed.
+- `git diff --check`: passed.
+- Ruff unavailable: `No module named ruff`.
+- No full suite run.
+
+Commit message and detailed report written; `DONE` created. Next step: manager review before cohort/schema join.
+tokens used
+128,588
+Implemented the P2 fix.
+
+- Quantizer `ValueError`/`OverflowError` now maps to permanent `unsupported_timing`, matching `move`.
+- Added capture and real Runtime no-write/history regressions for `on=1e308`.
+- No schema, Runtime source, writer, or cap changes.
+
+Tests:
+
+- Birth/duplicate/delete: 87 passed.
+- Real Runtime lifecycle: 2 passed.
+- Typed-ID/media/placement neighbors: 140 passed.
+- `git diff --check`: passed.
+- Ruff unavailable: `No module named ruff`.
+- No full suite run.
+
+Commit message and detailed report written; `DONE` created. Next step: manager review before cohort/schema join.

@@ -1,0 +1,400 @@
+- SHA-256: `e87e88705679e320bc83b6c72dff31fe23bbd0122981f314b5890411d6449cfb`
+- Four members, flat copies, metadata, and hashes agree.
+- Exact extracted suite: **124 passed**
+- Focused malformed-input replay: **84 passed**
+- Existing Agent codec suite: **102 passed**
+
+Verified fail-closed malformed entrance/opacity/audio-fade/curve/list/path cases, one projector, `stored_at_audio`, bounded openable paths, explicit clears, opaque extensions, and no owner data.
+
+Review: [agent-review-scanner-1.0.8.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scanner-1.0.8.md>)
+
+No full suite, owner-film run, product edits, ZIP publishing, or integration performed. `DONE` and commit message were written; worktree is clean.### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-current-owner/report.md
+## Verdict: APPROVE, bounded to the scene-label join the unit claims
+
+The review is at `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-current-owner.md`. I found no blocking defect. The D09 check half is not in this unit and stays open.
+
+## What I checked
+
+- **Scope:** merge-base with tl/integration is 931d7ec5, which is the current head, so there are no conflicts today. The diff is exactly the five paths in the handoff report, +811/-19.
+- **Renderer-free save:** `host_frames_at` is reached only through the capture observer. `prepare_filmstrip` is called only by visualize paths.
+- **Fail-closed callback:** the observer runs at `run.py:1169` on the final merged props. Any mismatch raises, the capture cleans up, and no cache or scene facts are kept. That matches the decided semantics.
+- **Fresh-only labels:** only frames in the fresh copy set get scene labels, and only after the whole batch succeeds. Cache hits fall back to legacy labels.
+- **Tests:** the named tests exist and the new file has no skip or xfail. The closure-source file is unchanged.
+
+## Conditions
+
+1. **Commit message count is wrong.** It says "201 passed"; the report's count is 229 passed / 9 xfailed. Fix it before commit.
+2. **D09 check half is missing.** Only labels consume scene facts. Keep the check half open in the D09 record.
+3. **PCM trap.** The observer requires the final timeline to equal the retained compiled unsliced timeline. If the PCM helper adds `audio.render_source` before `run.py:1169`, every composed capture with audio fails closed. Settle this when the PCM join lands.
+4. **Production shape not verified.** The registry must equal the retained registry exactly, and the scene mapping depends on projector stamps. Check both against one real materialized capture.
+5. **fps derivation changed** in `prepare_filmstrip`. Malformed canvases now raise instead of falling back to 30, and the envelope uses the builtin theme.
+6. **Theme never reaches visualize.** No caller passes `theme_path`, so both sides use the builtin theme. This is consistent with the render but means the runtime theme is not used.
+
+## Expected conflicts
+
+- Not merged and touching the same files: `tl/vw-m3-scene-stage-four` (09cfd10a), `tl/vw-m3-uncertified-capture-labels` (2a862eaf), `tl/vw-m3-scene-stage-three` (7b8c4dc4). Whichever lands second conflicts with this unit. Do not merge two competing joins.
+- PCM branches share no paths by name, but their planned `run.py` hunk sits next to the callback at 1169.
+
+## Tests
+
+I did not re-run the suites. My pytest run was refused by the sandbox for approval, and I did not work around it. The counts above are Viewing's, as cited in the handoff report.
+
+## Housekeeping
+
+- I wrote the DONE file, and the worktree is clean.
+- `rm` was denied, so my scratch export and `candidate.tar` remain in `orch/workers/agt-review-scene-current-owner/`. They can be deleted by the orchestrator.
+### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-selected-param-authority/report.md
+Read-only review complete. [Report]( /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-selected-param-authority.md) and worker copy contain exact commands/results.
+
+- **APPROVE_PRIVATE bounded resolver; HOLD compatible integration.**
+- Found a native same-batch inverse guard bypass, reproduced on base and candidate.
+- Legacy-alias positive remains blocked; Runtime ACK and App gates remain open.
+- Reruns: **150 passed / 1 xfail**, **26 native passed**, **35 schema/history probes passed**. Negative reproductions are documented.
+
+No source changes. `commit-msg` and `DONE` written.### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/report.md
+## Result: ACCEPT
+
+Reviewed candidate `5bf1731a` independently.
+
+- Exact raw fixture SHA and byte comparison passed.
+- Normal managed projection/serialization preserves authored hold5, projects hold4, and yields public12 f90=1, f105=0.5, f119 present, f120 absent.
+- Targeted suite: **152 passed, 2 unchanged xfails** (audio vectors 10–11).
+- Direct Node v20.19.4 public evaluator check passed.
+- Ruff and `git diff --check` passed.
+- No production code, pin, Runtime/product schema, or worktree changes.
+- No new xfail; superseded fake raw-input production xfail was not ported.
+- App policy remains external; no real Runtime, pixel rerun, audio parity, or owner-film claim made.
+
+Reports written:
+
+- [design review](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-single-cap-contract.md)
+- [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-single-cap-contract/notes/report.md)
+
+Commit message and `DONE` were created.### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-text-current-pair/report.md
+**APPROVE, bounded to the private candidate `09ca873c`.** No blocking findings.
+
+Verified exact schema/artifact identities and passed targeted checks: 21 native, 2 original strict positives, 474 Agent/schema, and 202 Runtime tests.
+
+[Review](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-text-current-pair.md) · [Exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-text-current-pair/notes/report.md)
+
+Public release and App cutover remain held; destructive GC is unverified. Source unchanged, temporary files cleaned, `commit-msg` and `DONE` written.### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-timing-main-map/report.md
+## Review complete
+
+Approved `5dc90c42` as a bounded inactive kernel slice.
+
+- Added review: [ORCH/design/agent-review-timing-main-map.md](/home/user/work/wt/agt-review-timing-main-map/ORCH/design/agent-review-timing-main-map.md)
+- Detailed report: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-timing-main-map/notes/report.md`
+- Commit message and `DONE` written.
+
+Validation from private target archive:
+
+- Timing/compiler/facade tests: **74 passed**
+- Retained-input integration: **9 passed**
+- Compile contracts: **27 passed, 2 unchanged xfailed**
+- Ruff: passed
+- `git diff --check`: passed
+
+Default activation remains held. Future native word-binding and trim adapters must guard actual `from_ms`/`to_ms` inputs; evaluator tests do not constitute command-replay proof.### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/report.md
+Recommend merging Agent `efce2897`. The original integer-bound violation is repaired; native/model overrange requests refuse before writes. No product changes made.
+
+Validation: **60 passed, 89 deselected**:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_media_verbs.py -k 'portable_boundary_vectors or portable_golden or bad_closed_bounds or preserves_raw_integer_bound or hold_is_source_time'
+```
+
+Direct counterexample/extreme-value probes, targeted Ruff and diff checks also passed. No full, Runtime or browser qualification claimed.
+
+**App handoff needs refresh:** shared exports still contain 17 vectors; this candidate contains 34. Refresh both flat exports before App mirroring.
+
+[Verdict](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-trim-integer-final.md) · [Detailed report with exact commands/results and source SHAs](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-integer-final/notes/report.md)
+
+Commit message and `DONE` written; repository remains clean.### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-trim-interior/report.md
+Blocking case found: raw integer duration `9007199254740995` with an exact-end request writes `to=hold=9007199254740996.0`, exceeding the unrounded bound. The model also accepts an overrange request at that value.
+
+Independent verification:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py -k 'portable_boundary_vectors or portable_golden or rational_fps or retrim or only_existing or replay_consumed or bad_closed_bounds'
+```
+
+**39 passed, 59 deselected**, including all 17 vectors. Additional probes reproduced the integer violation and confirmed 12 invalid native inputs refuse before writes. Reused the reported 281+168 neighbor passes; no full suite run.
+/bin/bash: line 1: echo: write error: Broken pipe
+sed: couldn't flush stdout: Broken pipe
+/bin/bash: line 1: echo: write error: Broken pipe
+sed: couldn't flush stdout: Broken pipe
+/bin/bash: line 1: echo: write error: Broken pipe
+sed: couldn't flush stdout: Broken pipe
+/bin/bash: line 1: echo: write error: Broken pipe
+sed: couldn't flush stdout: Broken pipe
+/bin/bash: line 1: echo: write error: Broken pipe
+sed: couldn't flush stdout: Broken pipe
+/bin/bash: line 1: echo: write error: Broken pipe
+sed: couldn't flush stdout: Broken pipe
+/bin/bash: line 1: echo: write error: Broken pipe
+sed: couldn't flush stdout: Broken pipe
+
+exec
+/bin/bash -lc 'git diff --check f5d0b4e090fba31a6e3c55baa55b63b2e739d337''^ f5d0b4e090fba31a6e3c55baa55b63b2e739d337; git diff --numstat f5d0b4e090fba31a6e3c55baa55b63b2e739d337''^ f5d0b4e090fba31a6e3c55baa55b63b2e739d337; git status --porcelain=v1 --untracked-files=all' in /home/user/work/wt/agt-review-scene-save-core
+ succeeded in 347ms:
+1	1	astrid/packs/timeline/cli.py
+26	18	astrid/sdk/timeline/check.py
+1	1	astrid/sdk/timeline/publish.py
+1	1	astrid/sdk/timeline/store.py
+2	2	astrid/sdk/timeline/transaction.py
+2	2	astrid/sdk/timeline_duplicate.py
+1	1	tests/packs/timeline/test_verbs_working_copy.py
+1	1	tests/sdk/test_media_transcript.py
+191	0	tests/sdk/test_scene_save_core.py
+1	1	tests/sdk/test_timeline_checkout.py
+4	0	tests/sdk/test_timeline_checkout_facade.py
+1	1	tests/sdk/test_timeline_checkout_history_boundaries.py
+2	1	tests/sdk/test_timeline_persistence.py
+2	1	tests/sdk/test_timeline_publish_connection.py
+
+codex
+The candidate behavior passes when executed from its own root: 56 focused tests passed. The only issue found is the new subprocess fence test’s cwd sensitivity, which is non-blocking for the normal worktree test runner but should be made self-contained before that test is reused outside the checkout root. I’m recording an APPROVE-bounded review with that finding and the remaining qualification limits now.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5d151987b155c607f79926c49ba6cae5b0166099
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md
+@@ -0,0 +1,30 @@
++# Agent scene/save-core review
++
++## Verdict
++
++**APPROVE the bounded candidate `f5d0b4e090fba31a6e3c55baa55b63b2e739d337`** (`tl/agt-m3-scene-save-core-resume`, tree `f4d74d55c77c76b8d20e5e4b3fd7bb2719f4d1be`). No blocking product defect was found.
++
++The candidate implements the settled D09 Agent half: `Checkout.check()` keeps explicit diagnostics, while `_check_core()` shares the authoritative structural/timing/reference validation without scene evaluation or renderer-preview imports. Publication, checked transactions, duplicate preflights and the detached CLI edit report use the private core path. Ordinary file save and attached/native save remain renderer-independent. The candidate does not touch Root preparation, `run.py`, cache seams, source hosting, public APIs, DTOs, or `SourceFactory`.
++
++## What was verified
++
++- Candidate diff is the intended 14-path change: six production callers/methods plus focused tests, with no unrelated product or schema work.
++- `_check_core()` calls the existing `_check(diagnostics=False)` implementation; there is no duplicate validator. Public `check()` calls `_check(diagnostics=True)` and retains geometry, lint, text, scene/unknown and OFFCANVAS classification.
++- Core still runs the canonical authoring validator, formula resolution, orphan/empty/outside/type/stale-beat/shot-length checks, and publication guards. The renderer-bearing SDK facade is avoided by importing `astrid.core.timeline.authoring_bundle` directly.
++- The explicit OFFCANVAS negative and core-valid save/publish positive are both present. The positive preserves raw `params.x=10000` through ordinary save/reload and the real publication payload; no clamp, hiding or autofix was introduced.
++- Existing publication, transaction, retry/recovery, ownership, schema and native assertions remain represented. Test stubs were moved only to the new private seam or the defining pure authoring module.
++- `git diff --check f5d0b4e0^ f5d0b4e0` passed. The assigned review worktree remained clean.
++
++## Concrete finding (non-blocking)
++
++**N1 — the fresh-process import-fence test is cwd-sensitive.** In `tests/sdk/test_scene_save_core.py:189-190`, the child `python -c` process inherits the caller's cwd and receives no explicit candidate root in `cwd` or `PYTHONPATH`. Running the focused tests from a different checkout therefore imported the review worktree's parent-side `astrid` package and failed with `AttributeError: _check_core`, rather than testing the candidate. Running from the candidate root passed. Make the child self-contained by setting its cwd or explicitly prepending the test checkout root to the child environment before relying on the test outside the normal worktree runner. This is test harness robustness, not a production save-path defect.
++
++## Qualification boundaries
++
++- No full suite was requested or run.
++- Runtime integration was not independently rerun here. The worker's exact-tree central named lane was inspected: 40 passed / 24 deselected, exit 0. The worker also reports 958 targeted Agent passes, 27 working-copy caller passes and 10 immutable public12 scene-answer passes; those results are recorded as worker/central evidence, not re-run claims by this reviewer.
++- D09 remains held for Viewing's Root-prep seam, cache physical-key parity and physical pixel/audio parity. No public13 adoption or owner-film qualification is claimed.
++- The review worktree was the protected current root `8e310785`; it was not checked out over another branch and no source, branch, ref or dependency was modified.
++
++Detailed commands and results are in the worker report:
++`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/notes/report.md`.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..364ca31ae39e6b890b9a133131f66a577e9799f9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/commit-msg
+@@ -0,0 +1,5 @@
++docs(review): record scene save-core review
++
++Record the bounded read-only review of the Agent scene/save-core candidate,
++including focused test evidence and the non-blocking cwd-sensitive fence-test
++finding.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..abc5441b4ae1a2a3ec1abd7d3264153806dbe1c6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/notes/report.md
+@@ -0,0 +1,99 @@
++# Read-only review report: scene/save-core separation
++
++## Verdict
++
++**APPROVE, bounded to the Agent save-core candidate.** No blocking product finding. One non-blocking test portability finding is recorded below.
++
++Reviewed commit: `f5d0b4e090fba31a6e3c55baa55b63b2e739d337`
++
++Reviewed branch: `tl/agt-m3-scene-save-core-resume`
++
++Reviewed tree: `f4d74d55c77c76b8d20e5e4b3fd7bb2719f4d1be`
++
++Parent: `4ef1391c2c104d5d11b3a27265035c51be296045`
++
++## Exact review commands
++
++Read-only source and candidate inspection:
++
++```sh
++git show --stat --oneline f5d0b4e090fba31a6e3c55baa55b63b2e739d337
++git show --format= --find-renames f5d0b4e090fba31a6e3c55baa55b63b2e739d337 -- \
++  astrid/packs/timeline/cli.py astrid/sdk/timeline/check.py \
++  astrid/sdk/timeline/publish.py astrid/sdk/timeline/store.py \
++  astrid/sdk/timeline/transaction.py astrid/sdk/timeline_duplicate.py \
++  tests/sdk/test_scene_save_core.py
++git grep -n -E '_check_core|\\.check\\(' f5d0b4e090fba31a6e3c55baa55b63b2e739d337 -- \
++  'astrid/**/*.py' 'tests/**/*.py'
++git diff --check f5d0b4e090fba31a6e3c55baa55b63b2e739d337^ \
++  f5d0b4e090fba31a6e3c55baa55b63b2e739d337
++git status --porcelain=v1 --untracked-files=all
++```
++
++Results: candidate paths and callers match the stated seam; diff check passed; the assigned review worktree was clean.
++
++## Independent focused tests
++
++I ran the candidate from an ephemeral `git archive` with bytecode and pytest caches disabled. The first invocation intentionally used the assigned review worktree as cwd:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$CANDIDATE \
++  /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  $CANDIDATE/tests/sdk/test_scene_save_core.py \
++  $CANDIDATE/tests/sdk/test_timeline_checkout_facade.py \
++  $CANDIDATE/tests/sdk/test_timeline_publish_connection.py \
++  $CANDIDATE/tests/packs/timeline/test_verbs_working_copy.py
++```
++
++Result: **55 passed, 1 failed**. The failure was only `test_fresh_check_import_and_core_validation_do_not_import_renderer`: the child process inherited the review worktree cwd and imported that worktree's parent-side `astrid`, which has no `_check_core`. This demonstrates N1 below.
++
++I reran the identical four-file command from the archived candidate root:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
++  /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider \
++  tests/sdk/test_scene_save_core.py \
++  tests/sdk/test_timeline_checkout_facade.py \
++  tests/sdk/test_timeline_publish_connection.py \
++  tests/packs/timeline/test_verbs_working_copy.py
++```
++
++Result: **56 passed in 6.24s**, exit 0. The archive and all generated temporary files were removed afterward; no shared dependency or worktree file was changed.
++
++Worker/central evidence inspected from the candidate's exact-tree report:
++
++- Local targeted Agent lane: **958 passed, 26 deselected**, four existing Pillow deprecation warnings.
++- Working-copy caller lane: **27 passed**.
++- Immutable public12 scene-answer lane: **10 passed**.
++- Central named renderer-off/native/recovery lane on the exact candidate tree: **40 passed, 24 deselected**, exit 0.
++
++The detailed worker evidence and exact commands are in the completed candidate report at:
++`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-save-core-resume/notes/report.md`.
++
++No full suite was requested or run.
++
++## Review findings
++
++### N1 — test-only cwd sensitivity (non-blocking)
++
++`tests/sdk/test_scene_save_core.py:189-190` starts `python -c` with `env={**os.environ, ...}` but no explicit `cwd` or source-root `PYTHONPATH`. The test passes in the normal runner whose cwd is the candidate worktree, but fails when the same test file is invoked from another checkout because the child resolves `astrid` from the inherited cwd. The observed error was:
++
++```text
++AttributeError: _check_core
++```
++
++Recommended follow-up: derive the checkout root from `__file__` and pass it as the child `cwd` or prepend it to `PYTHONPATH`. This does not indicate a production save-core defect and does not block the bounded candidate approval.
++
++## Product review
++
++The production diff is narrow and follows the settled handoff. `Checkout.check()` retains the existing diagnostics through `_check(diagnostics=True)`. `_check_core()` disables only lint/scene/sprite/text/look/music diagnostics and still performs the authoritative core validation and transaction guards. Publish and both transaction report branches call `_check_core()`, as do detached CLI edit reports and both duplicate preflights. The publisher and validator use their defining core module directly, avoiding the eager SDK preview facade. Ordinary file save performs no check or renderer evaluation, and attached/native save is held to its existing command/Runtime path.
++
++The explicit OFFCANVAS test still asserts the old diagnostic classification. The same raw coordinate is then core-valid, saved/reloaded and published exactly, including in the publication payload. This is the approved PLAN §§2.5/4.2 policy, not an assertion deletion or clamp.
++
++No new public API, DTO, `SourceFactory`, Root-prep/cache/run.py path, fallback source, broad xfail/skip, or weakened core guard was found.
++
++## Limits and next steps
++
++- D09 remains HELD until Viewing's frozen Root-prep/query lifetime and cache physical parity qualify, followed by physical pixel/audio parity.
++- Runtime/App pairing, public13 adoption and owner-film viewing are outside this bounded Agent review.
++- Fix N1 when the test is expected to run from arbitrary cwd; then retain this bounded approval and continue the normal harness/integration qualification.
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md && echo design-ok; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/notes/report.md && echo report-ok; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/commit-msg && echo commit-msg-ok; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/DONE && echo done-ok; test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/BLOCKED && echo not-blocked; git status --short; sed -n '"'1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md" in /home/user/work/wt/agt-review-scene-save-core
+ succeeded in 219ms:
+design-ok
+report-ok
+commit-msg-ok
+done-ok
+not-blocked
+# Agent scene/save-core review
+
+## Verdict
+
+**APPROVE the bounded candidate `f5d0b4e090fba31a6e3c55baa55b63b2e739d337`** (`tl/agt-m3-scene-save-core-resume`, tree `f4d74d55c77c76b8d20e5e4b3fd7bb2719f4d1be`). No blocking product defect was found.
+
+The candidate implements the settled D09 Agent half: `Checkout.check()` keeps explicit diagnostics, while `_check_core()` shares the authoritative structural/timing/reference validation without scene evaluation or renderer-preview imports. Publication, checked transactions, duplicate preflights and the detached CLI edit report use the private core path. Ordinary file save and attached/native save remain renderer-independent. The candidate does not touch Root preparation, `run.py`, cache seams, source hosting, public APIs, DTOs, or `SourceFactory`.
+
+## What was verified
+
+- Candidate diff is the intended 14-path change: six production callers/methods plus focused tests, with no unrelated product or schema work.
+- `_check_core()` calls the existing `_check(diagnostics=False)` implementation; there is no duplicate validator. Public `check()` calls `_check(diagnostics=True)` and retains geometry, lint, text, scene/unknown and OFFCANVAS classification.
+- Core still runs the canonical authoring validator, formula resolution, orphan/empty/outside/type/stale-beat/shot-length checks, and publication guards. The renderer-bearing SDK facade is avoided by importing `astrid.core.timeline.authoring_bundle` directly.
+- The explicit OFFCANVAS negative and core-valid save/publish positive are both present. The positive preserves raw `params.x=10000` through ordinary save/reload and the real publication payload; no clamp, hiding or autofix was introduced.
+- Existing publication, transaction, retry/recovery, ownership, schema and native assertions remain represented. Test stubs were moved only to the new private seam or the defining pure authoring module.
+- `git diff --check f5d0b4e0^ f5d0b4e0` passed. The assigned review worktree remained clean.
+
+## Concrete finding (non-blocking)
+
+**N1 — the fresh-process import-fence test is cwd-sensitive.** In `tests/sdk/test_scene_save_core.py:189-190`, the child `python -c` process inherits the caller's cwd and receives no explicit candidate root in `cwd` or `PYTHONPATH`. Running the focused tests from a different checkout therefore imported the review worktree's parent-side `astrid` package and failed with `AttributeError: _check_core`, rather than testing the candidate. Running from the candidate root passed. Make the child self-contained by setting its cwd or explicitly prepending the test checkout root to the child environment before relying on the test outside the normal worktree runner. This is test harness robustness, not a production save-path defect.
+
+## Qualification boundaries
+
+- No full suite was requested or run.
+- Runtime integration was not independently rerun here. The worker's exact-tree central named lane was inspected: 40 passed / 24 deselected, exit 0. The worker also reports 958 targeted Agent passes, 27 working-copy caller passes and 10 immutable public12 scene-answer passes; those results are recorded as worker/central evidence, not re-run claims by this reviewer.
+- D09 remains held for Viewing's Root-prep seam, cache physical-key parity and physical pixel/audio parity. No public13 adoption or owner-film qualification is claimed.
+- The review worktree was the protected current root `8e310785`; it was not checked out over another branch and no source, branch, ref or dependency was modified.
+
+Detailed commands and results are in the worker report:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/notes/report.md`.
+
+codex
+## Review complete — APPROVE
+
+Reviewed candidate `f5d0b4e0` read-only. No blocking product defects found.
+
+Tests:
+
+- Candidate focused suite: **56 passed**
+- Central named integration lane: **40 passed / 24 deselected**
+- Worker evidence: **958 + 27 + 10 passes**
+- `git diff --check`: passed
+- No full suite run.
+
+Non-blocking finding: the fresh-process import-fence test is cwd-sensitive and should explicitly set its source root.
+
+Reports:
+
+- [Design review](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md>)
+- [Detailed report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/notes/report.md>)
+
+`commit-msg` and `DONE` were written. D09 remains held for Viewing/cache/physical parity qualification.
+tokens used
+148,652
+## Review complete — APPROVE
+
+Reviewed candidate `f5d0b4e0` read-only. No blocking product defects found.
+
+Tests:
+
+- Candidate focused suite: **56 passed**
+- Central named integration lane: **40 passed / 24 deselected**
+- Worker evidence: **958 + 27 + 10 passes**
+- `git diff --check`: passed
+- No full suite run.
+
+Non-blocking finding: the fresh-process import-fence test is cwd-sensitive and should explicitly set its source root.
+
+Reports:
+
+- [Design review](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-scene-save-core.md>)
+- [Detailed report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-scene-save-core/notes/report.md>)
+
+`commit-msg` and `DONE` were written. D09 remains held for Viewing/cache/physical parity qualification.

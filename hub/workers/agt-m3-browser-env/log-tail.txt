@@ -1,0 +1,400 @@
+24 | | )
+25 | | from astrid.core.env_vars import (
+26 | |     ASTRID_PACKS_PATH as PACKS_PATH_ENV,
+27 | | )
+28 | | from astrid.core.env_vars import (
+29 | |     ASTRID_PROJECT_RUN as PROJECT_RUN_ENV,
+30 | | )
+31 | | from astrid.core.env_vars import (
+32 | |     ASTRID_PROJECT_SLUG as PROJECT_SLUG_ENV,
+33 | | )
+34 | | from astrid.core.env_vars import (
+35 | |     ASTRID_PROJECTS_ROOT as PROJECTS_ROOT_ENV,
+36 | | )
+37 | | from astrid.core.env_vars import (
+38 | |     ASTRID_TASK_ITEM_ID as TASK_ITEM_ID_ENV,
+39 | | )
+40 | | from astrid.core.env_vars import (
+41 | |     ASTRID_TASK_ITERATION as TASK_ITERATION_ENV,
+42 | | )
+43 | | from astrid.core.env_vars import (
+44 | |     ASTRID_TASK_PROJECT as TASK_PROJECT_ENV,
+45 | | )
+46 | | from astrid.core.env_vars import (
+47 | |     ASTRID_TASK_RUN_ID as TASK_RUN_ID_ENV,
+48 | | )
+49 | | from astrid.core.env_vars import (
+50 | |     ASTRID_TASK_STEP_ID as TASK_STEP_ID_ENV,
+51 | | )
+52 | | from astrid.core.env_vars import (
+53 | |     ASTRID_TIMELINE_SCHEMA_PYTHONPATH as TIMELINE_SCHEMA_PYTHONPATH_ENV,
+54 | | )
+55 | | from astrid.core.env_vars import ASTRID_VIBECOMFY_CHECKOUT
+   | |__________________________________________________________^
+56 |
+57 |   _SAFE_BASE_ENV = frozenset(
+   |
+help: Organize imports
+   |
+10 | from astrid.core.env_vars import (
+   -     ASTRID_ENV_FILE,
+11 |     ASTRID_ACTOR,
+12 |     ASTRID_AUTHOR_TEST,
+13 +     ASTRID_ENV_FILE,
+14 |     ASTRID_INTERNAL_INVOCATION,
+15 |     ASTRID_NODE_EXECUTABLE,
+16 +     ASTRID_REMOTION_PROJECT_DIR,
+17 +     ASTRID_REMOTION_VALIDATION_LAUNCH,
+18 |     ASTRID_REMOTION_VALIDATION_PATH,
+19 +     ASTRID_REMOTION_VALIDATION_ROLE,
+20 |     ASTRID_REMOTION_VALIDATION_SHA256,
+   -     ASTRID_REMOTION_VALIDATION_LAUNCH,
+   -     ASTRID_REMOTION_VALIDATION_ROLE,
+   -     ASTRID_REMOTION_PROJECT_DIR,
+21 +     ASTRID_VIBECOMFY_CHECKOUT,
+22 | )
+--------------------------------------------------------------------------------
+55 | )
+   - from astrid.core.env_vars import ASTRID_VIBECOMFY_CHECKOUT
+56 |
+   |
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+unformatted: File would be reformatted
+   --> astrid/core/subprocess_env.py:100:1
+    |
+99  |         ASTRID_REMOTION_VALIDATION_ROLE,
+    -
+100 |         ASTRID_REMOTION_PROJECT_DIR,
+--------------------------------------------------------------------------------
+159 |     for key, value in (explicit_env or {}).items():
+    -         if key in {ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256, ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE}:
+160 +         if key in {
+161 +             ASTRID_REMOTION_VALIDATION_PATH,
+162 +             ASTRID_REMOTION_VALIDATION_SHA256,
+163 +             ASTRID_REMOTION_VALIDATION_LAUNCH,
+164 +             ASTRID_REMOTION_VALIDATION_ROLE,
+165 +         }:
+166 |             raise SubprocessEnvPolicyError("launch validation references are parent-owned")
+167 |         if _is_secret_name(str(key)) and str(key) not in secret_names:
+    -             raise SubprocessEnvPolicyError(f"secret env {key!r} must be supplied through secret_values")
+168 +             raise SubprocessEnvPolicyError(
+169 +                 f"secret env {key!r} must be supplied through secret_values"
+170 +             )
+171 |         env[str(key)] = str(value)
+--------------------------------------------------------------------------------
+185 |         inherited = parent_env.get(cf_key)
+    -         supplied = [mapping[cf_key] for mapping in (base_env, explicit_env or {}) if cf_key in mapping]
+186 +         supplied = [
+187 +             mapping[cf_key] for mapping in (base_env, explicit_env or {}) if cf_key in mapping
+188 +         ]
+189 |         if inherited is None:
+190 |             if supplied:
+191 |                 raise SubprocessEnvPolicyError("Darwin CF encoding requires an inherited owner pin")
+192 |         else:
+    -             if (not isinstance(inherited, str) or not inherited or "\0" in inherited
+    -                     or any(value != inherited for value in supplied)):
+    -                 raise SubprocessEnvPolicyError("Darwin CF encoding conflicts with its inherited owner pin")
+193 +             if (
+194 +                 not isinstance(inherited, str)
+195 +                 or not inherited
+196 +                 or "\0" in inherited
+197 +                 or any(value != inherited for value in supplied)
+198 +             ):
+199 +                 raise SubprocessEnvPolicyError(
+200 +                     "Darwin CF encoding conflicts with its inherited owner pin"
+201 +                 )
+202 |             env[cf_key] = inherited
+--------------------------------------------------------------------------------
+217 |         if not _ENV_NAME_RE.fullmatch(value):
+    -             raise SubprocessEnvPolicyError(f"{label} entry {value!r} is not a valid environment variable name")
+218 +             raise SubprocessEnvPolicyError(
+219 +                 f"{label} entry {value!r} is not a valid environment variable name"
+220 +             )
+221 |         if _is_secret_name(value):
+--------------------------------------------------------------------------------
+230 |         if not isinstance(value, str) or not value or not _ENV_NAME_RE.fullmatch(value):
+    -             raise SubprocessEnvPolicyError(f"{label} entries must be valid environment variable names")
+231 +             raise SubprocessEnvPolicyError(
+232 +                 f"{label} entries must be valid environment variable names"
+233 +             )
+234 |         if not _is_secret_name(value):
+    |
+
+unformatted: File would be reformatted
+  --> tests/core/test_subprocess_env.py:30:68
+   |
+29 |
+   -     executor_environment = executor_runner._command_subprocess_env(
+   -         executor, request, {}
+   -     )
+30 +     executor_environment = executor_runner._command_subprocess_env(executor, request, {})
+31 |     assert executor_environment[marker] == "1"
+   |
+
+2 files would be reformatted
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/test_subprocess_env.py && git diff --check && printf '"'\\n--- status ---\\n' && git status --short && printf '\\n--- diff stat ---\\n' && git diff --stat" in /home/user/work/wt/agt-m3-browser-env
+ succeeded in 2186ms:
+..                                                                       [100%]
+2 passed in 0.40s
+
+--- status ---
+ M astrid/core/subprocess_env.py
+ M tests/core/test_subprocess_env.py
+
+--- diff stat ---
+ astrid/core/subprocess_env.py     |  1 +
+ tests/core/test_subprocess_env.py | 14 ++++++++++++++
+ 2 files changed, 15 insertions(+)
+
+codex
+The final focused command passes (`2 passed in 0.40s`), with only the two authorized files changed. Ruff reports one pre-existing import-order diagnostic in `astrid/core/subprocess_env.py` plus existing formatting diagnostics in both files; I’m preserving those unrelated lines per the task and recording that precisely.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-browser-env/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-browser-env/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-browser-env/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..4779e0034645d1e07a477171cb4a0cf20a7a3a24
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-browser-env/commit-msg.txt
+@@ -0,0 +1,4 @@
++fix(env): preserve local Remotion browser selector
++
++Propagate the parent-owned ASTRID_REMOTION_BROWSER_EXECUTABLE into child
++process environments and cover parent precedence over conflicting values.
+diff --git a/astrid/core/subprocess_env.py b/astrid/core/subprocess_env.py
+index efc5593c6ea9a97b19d6d9ce2de58af7c4283169..6e2e717fcd4ce828a9591396de5b7c7e434d2e09
+--- a/astrid/core/subprocess_env.py
++++ b/astrid/core/subprocess_env.py
+@@ -99,6 +99,7 @@
+         ASTRID_REMOTION_VALIDATION_ROLE,
+ 
+         ASTRID_REMOTION_PROJECT_DIR,
++        "ASTRID_REMOTION_BROWSER_EXECUTABLE",
+         "ASTRID_RENDER_INHERIT_PROCESS_GROUP",
+         # RunPod executor manifests explicitly declare this host-owned path.
+         # It must survive the supervised host -> executor -> SSH child
+diff --git a/tests/core/test_subprocess_env.py b/tests/core/test_subprocess_env.py
+index e9b473c04244f0f4d314586ce96e3cfe43df25b8..d5d128b607862178ad76fb23d39e1369325dcfbc
+--- a/tests/core/test_subprocess_env.py
++++ b/tests/core/test_subprocess_env.py
+@@ -8,6 +8,7 @@
+ from astrid.core.rendering import transport as rendering_transport
+ from astrid.core.rendering.contracts import SCHEMA_VERSION, SupportReport
+ from astrid.core.rendering.transport import CommandTransport
++from astrid.core.subprocess_env import build_child_subprocess_env
+ 
+ 
+ def test_render_process_group_marker_survives_executor_and_transport(
+@@ -74,3 +75,16 @@
+     assert report.supported is True
+     assert launched["start_new_session"] is False
+     assert launched["env"][marker] == "1"
++
++
++def test_remotion_browser_executable_is_parent_owned_and_unlisted_env_is_dropped() -> None:
++    selector = "ASTRID_REMOTION_BROWSER_EXECUTABLE"
++    child = build_child_subprocess_env(
++        base={selector: "/base/browser", "ASTRID_UNLISTED_BASE": "base"},
++        parent={selector: "/parent/browser", "ASTRID_UNLISTED_PARENT": "parent"},
++        explicit_env={selector: "/explicit/browser"},
++    )
++
++    assert child[selector] == "/parent/browser"
++    assert "ASTRID_UNLISTED_BASE" not in child
++    assert "ASTRID_UNLISTED_PARENT" not in child
+
+exec
+/bin/bash -lc 'set +e
+for file in astrid/core/subprocess_env.py tests/core/test_subprocess_env.py; do
+  echo "--- baseline ruff: $file ---"
+  git show "HEAD:$file" | ruff check --stdin-filename "$file" -
+  echo "exit=$?"
+done
+printf '"'\\n--- final diff ---\\n'
+git diff -- astrid/core/subprocess_env.py tests/core/test_subprocess_env.py
+printf '\\n--- commit message ---\\n'
+sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-browser-env/commit-msg.txt
+printf '\\n--- final status ---\\n'
+git status --short" in /home/user/work/wt/agt-m3-browser-env
+ succeeded in 269ms:
+--- baseline ruff: astrid/core/subprocess_env.py ---
+I001 [*] Import block is un-sorted or un-formatted
+  --> astrid/core/subprocess_env.py:3:1
+   |
+ 1 |   """Canonical child-process environment policy."""
+ 2 |
+ 3 | / from __future__ import annotations
+ 4 | |
+ 5 | | import os
+ 6 | | import re
+ 7 | | import sys
+ 8 | | from collections.abc import Iterable, Mapping
+ 9 | |
+10 | | from astrid.core.env_vars import (
+11 | |     ASTRID_ENV_FILE,
+12 | |     ASTRID_ACTOR,
+13 | |     ASTRID_AUTHOR_TEST,
+14 | |     ASTRID_INTERNAL_INVOCATION,
+15 | |     ASTRID_NODE_EXECUTABLE,
+16 | |     ASTRID_REMOTION_VALIDATION_PATH,
+17 | |     ASTRID_REMOTION_VALIDATION_SHA256,
+18 | |     ASTRID_REMOTION_VALIDATION_LAUNCH,
+19 | |     ASTRID_REMOTION_VALIDATION_ROLE,
+20 | |     ASTRID_REMOTION_PROJECT_DIR,
+21 | | )
+22 | | from astrid.core.env_vars import (
+23 | |     ASTRID_HOME as ASTRID_HOME_ENV,
+24 | | )
+25 | | from astrid.core.env_vars import (
+26 | |     ASTRID_PACKS_PATH as PACKS_PATH_ENV,
+27 | | )
+28 | | from astrid.core.env_vars import (
+29 | |     ASTRID_PROJECT_RUN as PROJECT_RUN_ENV,
+30 | | )
+31 | | from astrid.core.env_vars import (
+32 | |     ASTRID_PROJECT_SLUG as PROJECT_SLUG_ENV,
+33 | | )
+34 | | from astrid.core.env_vars import (
+35 | |     ASTRID_PROJECTS_ROOT as PROJECTS_ROOT_ENV,
+36 | | )
+37 | | from astrid.core.env_vars import (
+38 | |     ASTRID_TASK_ITEM_ID as TASK_ITEM_ID_ENV,
+39 | | )
+40 | | from astrid.core.env_vars import (
+41 | |     ASTRID_TASK_ITERATION as TASK_ITERATION_ENV,
+42 | | )
+43 | | from astrid.core.env_vars import (
+44 | |     ASTRID_TASK_PROJECT as TASK_PROJECT_ENV,
+45 | | )
+46 | | from astrid.core.env_vars import (
+47 | |     ASTRID_TASK_RUN_ID as TASK_RUN_ID_ENV,
+48 | | )
+49 | | from astrid.core.env_vars import (
+50 | |     ASTRID_TASK_STEP_ID as TASK_STEP_ID_ENV,
+51 | | )
+52 | | from astrid.core.env_vars import (
+53 | |     ASTRID_TIMELINE_SCHEMA_PYTHONPATH as TIMELINE_SCHEMA_PYTHONPATH_ENV,
+54 | | )
+55 | | from astrid.core.env_vars import ASTRID_VIBECOMFY_CHECKOUT
+   | |__________________________________________________________^
+56 |
+57 |   _SAFE_BASE_ENV = frozenset(
+   |
+help: Organize imports
+   |
+10 | from astrid.core.env_vars import (
+   -     ASTRID_ENV_FILE,
+11 |     ASTRID_ACTOR,
+12 |     ASTRID_AUTHOR_TEST,
+13 +     ASTRID_ENV_FILE,
+14 |     ASTRID_INTERNAL_INVOCATION,
+15 |     ASTRID_NODE_EXECUTABLE,
+16 +     ASTRID_REMOTION_PROJECT_DIR,
+17 +     ASTRID_REMOTION_VALIDATION_LAUNCH,
+18 |     ASTRID_REMOTION_VALIDATION_PATH,
+19 +     ASTRID_REMOTION_VALIDATION_ROLE,
+20 |     ASTRID_REMOTION_VALIDATION_SHA256,
+   -     ASTRID_REMOTION_VALIDATION_LAUNCH,
+   -     ASTRID_REMOTION_VALIDATION_ROLE,
+   -     ASTRID_REMOTION_PROJECT_DIR,
+21 +     ASTRID_VIBECOMFY_CHECKOUT,
+22 | )
+--------------------------------------------------------------------------------
+55 | )
+   - from astrid.core.env_vars import ASTRID_VIBECOMFY_CHECKOUT
+56 |
+   |
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+exit=1
+--- baseline ruff: tests/core/test_subprocess_env.py ---
+All checks passed!
+exit=0
+
+--- final diff ---
+diff --git a/astrid/core/subprocess_env.py b/astrid/core/subprocess_env.py
+index efc5593c..6e2e717f 100644
+--- a/astrid/core/subprocess_env.py
++++ b/astrid/core/subprocess_env.py
+@@ -99,6 +99,7 @@ _ASTRID_PROPAGATED_ENV = frozenset(
+         ASTRID_REMOTION_VALIDATION_ROLE,
+ 
+         ASTRID_REMOTION_PROJECT_DIR,
++        "ASTRID_REMOTION_BROWSER_EXECUTABLE",
+         "ASTRID_RENDER_INHERIT_PROCESS_GROUP",
+         # RunPod executor manifests explicitly declare this host-owned path.
+         # It must survive the supervised host -> executor -> SSH child
+diff --git a/tests/core/test_subprocess_env.py b/tests/core/test_subprocess_env.py
+index e9b473c0..d5d128b6 100644
+--- a/tests/core/test_subprocess_env.py
++++ b/tests/core/test_subprocess_env.py
+@@ -8,6 +8,7 @@ from astrid.core.execution.executor import runner as executor_runner
+ from astrid.core.rendering import transport as rendering_transport
+ from astrid.core.rendering.contracts import SCHEMA_VERSION, SupportReport
+ from astrid.core.rendering.transport import CommandTransport
++from astrid.core.subprocess_env import build_child_subprocess_env
+ 
+ 
+ def test_render_process_group_marker_survives_executor_and_transport(
+@@ -74,3 +75,16 @@ def test_render_process_group_marker_survives_executor_and_transport(
+     assert report.supported is True
+     assert launched["start_new_session"] is False
+     assert launched["env"][marker] == "1"
++
++
++def test_remotion_browser_executable_is_parent_owned_and_unlisted_env_is_dropped() -> None:
++    selector = "ASTRID_REMOTION_BROWSER_EXECUTABLE"
++    child = build_child_subprocess_env(
++        base={selector: "/base/browser", "ASTRID_UNLISTED_BASE": "base"},
++        parent={selector: "/parent/browser", "ASTRID_UNLISTED_PARENT": "parent"},
++        explicit_env={selector: "/explicit/browser"},
++    )
++
++    assert child[selector] == "/parent/browser"
++    assert "ASTRID_UNLISTED_BASE" not in child
++    assert "ASTRID_UNLISTED_PARENT" not in child
+
+--- commit message ---
+fix(env): preserve local Remotion browser selector
+
+Propagate the parent-owned ASTRID_REMOTION_BROWSER_EXECUTABLE into child
+process environments and cover parent precedence over conflicting values.
+
+--- final status ---
+ M astrid/core/subprocess_env.py
+ M tests/core/test_subprocess_env.py
+
+codex
+## Done
+
+- Added `ASTRID_REMOTION_BROWSER_EXECUTABLE` to the parent-owned child environment allowlist.
+- Added regression coverage for parent precedence and dropping unrelated variables.
+- Wrote commit message to the requested `commit-msg.txt`.
+
+## Tests
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/test_subprocess_env.py` — **2 passed**
+- `git diff --check` — **passed**
+- Ruff reports only inherited diagnostics; no unrelated reformatting applied.
+
+No blockers. Recommended next step: harness commit and rerun the viewing CPU export qualification.
+tokens used
+50,716
+## Done
+
+- Added `ASTRID_REMOTION_BROWSER_EXECUTABLE` to the parent-owned child environment allowlist.
+- Added regression coverage for parent precedence and dropping unrelated variables.
+- Wrote commit message to the requested `commit-msg.txt`.
+
+## Tests
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/test_subprocess_env.py` — **2 passed**
+- `git diff --check` — **passed**
+- Ruff reports only inherited diagnostics; no unrelated reformatting applied.
+
+No blockers. Recommended next step: harness commit and rerun the viewing CPU export qualification.

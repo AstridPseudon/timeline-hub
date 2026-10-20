@@ -1,0 +1,9 @@
+name=agt-review-word-anchor-native
+repo=agent
+base=tl/agt-m2-word-anchor-native
+base_sha=caea687e
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-word-anchor-native
+started=2026-10-20T10:41:20Z

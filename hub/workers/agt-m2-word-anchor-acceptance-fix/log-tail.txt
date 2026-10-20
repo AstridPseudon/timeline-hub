@@ -1,0 +1,400 @@
++    before = copy.deepcopy(ctx.state.bundle)
++    with pytest.raises(CommandError, match=match):
++        declare(ctx, call)
++    assert ctx.record['writes'] == []
++    assert ctx.state.bundle == before
++
++
++@pytest.mark.parametrize('retained', [{'duration_ms': 1750}], indirect=True)
++def test_word_ending_at_occurrence_end_preserves_revision_only_restore_and_inverse(recipe):
++    case = recipe
++    a = case.submit(case.request([pick(case, 1)]), 'boundary-a')
++    timing_a = projected(case).timings[TARGET]
++    b = case.submit(case.request([pick(case)]), 'boundary-b')
++    timing_b = projected(case).timings[TARGET]
++    assert timing_a != timing_b
++    undo(case, b, 'boundary-undo-b')
++    assert projected(case).timings[TARGET] == timing_a
++    case.restart()
++    restore(case, b, 'boundary-restore-b')
++    assert projected(case).timings[TARGET] == timing_b
++    restore(case, a, 'boundary-restore-a')
++    assert projected(case).timings[TARGET] == timing_a
++
++
++def test_occurrence_window_is_rechecked_for_source_move_stale_replay_and_inverse(recipe):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    case = recipe
++    selected = pick(case, 1)
++    anchored = case.submit(case.request([selected]), 'window-anchor')
++    move = {'schema_version': 1, 'op': 'clip.move', 'version': '1',
++            'select': 'occurrence:occ/clip:voice', 'args': {'on': 15}}
++    head = case.head()
++    with pytest.raises(RuntimeErrorBase, match='half-open occurrence interval'):
++        case.submit(case.request([move]), 'outside-with-live-anchor')
++    assert case.head() == head
++    undo(case, anchored, 'remove-live-anchor')
++    selected = pick(case, 1)
++    base = case.head()
++    case.submit(case.request([move]), 'outside-without-anchor')
++    head = case.head()
++    with pytest.raises(RuntimeErrorBase, match='half-open occurrence interval'):
++        case.submit(case.request([selected], base), 'stale-outside-occurrence')
++    assert case.head() == head
++    # Restore recovers the whole immutable revision, including its valid source.
++    restore(case, anchored, 'restore-original-source-and-anchor')
++    assert authored(bundle(case))[KEY] == selected['args']
++    clear = {'schema_version': 1, 'op': OP, 'version': '1', 'select': REF,
++             'args': {'field': 'on', 'declaration': None, 'choice': None}}
++    cleared = case.submit(case.request([clear]), 'clear-for-inverse')
++    case.submit(case.request([move]), 'outside-before-inverse')
++    head = case.head()
++    with pytest.raises(RuntimeErrorBase, match='half-open occurrence interval'):
++        undo(case, cleared, 'inverse-outside-occurrence')
++    assert case.head() == head
++
++
+ @pytest.mark.parametrize("same_text", [False, True])
+ @pytest.mark.parametrize("retained", [True], indirect=True)
+ def test_undo_recovers_before_binding_even_when_text_writes_are_equal(recipe, same_text):
+diff --git a/tests/editing_conformance/test_native_word_anchor_vectors.py b/tests/editing_conformance/test_native_word_anchor_vectors.py
+index 0179f0aedc73dbf9f4d2e72056463183eb6a2b8d..85d85f96f167c576af310b097c02f8903926c7e7
+--- a/tests/editing_conformance/test_native_word_anchor_vectors.py
++++ b/tests/editing_conformance/test_native_word_anchor_vectors.py
+@@ -70,8 +70,8 @@
+ 
+ 
+ def test_closed_native_schema_refuses_inline_transcript_authority():
+-    # This is the additive slice; publishing still requires the manager's S1
+-    # union and the Runtime's ordinary generator/compatibility checks.
++    # Full frozen-S2 containment is guarded separately; these captures retain
++    # the closed word-choice envelope in that additive successor.
+     from astrid.sdk.timeline.commands import _SCHEMA, operations
+ 
+     assert operations()['clip.anchor'].parameters == _SCHEMA['$defs']['ClipAnchorArgs']
+@@ -150,3 +150,17 @@
+     with pytest.raises(CommandError, match='active source selection|supported source map'):
+         declare(ctx, command)
+     assert ctx.record['writes'] == []
++
++
++@pytest.mark.parametrize('duration', [None, float('inf')])
++def test_unresolvable_occurrence_window_refuses_before_declaration_writes(duration):
++    from astrid.sdk.timeline._recording import Recording
++    from astrid.sdk.timeline.native_word_anchor import declare
++
++    bundle, _, _ = fixture()
++    bundle['placements'][0]['duration_ms'] = duration
++    ctx = Recording(copy.deepcopy(bundle), vector('a')['command'], 0)
++    with pytest.raises(CommandError, match='resolvable occurrence interval'):
++        declare(ctx, ctx.record['command'])
++    assert ctx.record['writes'] == []
++    assert ctx.state.bundle == bundle
+diff --git a/tests/sdk/test_timeline_selected_schema_runtime.py b/tests/sdk/test_timeline_selected_schema_runtime.py
+index e6e97d179ef04fd481494167ac9b92ff6bc25ce6..5d7b0ad7338b2aa1284c335223523c3067bf283a
+--- a/tests/sdk/test_timeline_selected_schema_runtime.py
++++ b/tests/sdk/test_timeline_selected_schema_runtime.py
+@@ -144,6 +144,26 @@
+             'select': None, 'args': {'publications': [publication]}}
+ 
+ 
++def test_element_first_use_retains_declaration_without_param_writes(retained_pack):
++    from runtime_protocol.service import RuntimeService
++
++    case = retained_pack
++    before = copy.deepcopy(case.bundle()['parent']['clips'][0])
++    assert case.bundle()['source_mapping']['_runtime_document']['dependency_manifest']['documents'] == []
++    call = {'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': REF,
++            'args': {'elementRef': case.selected, 'schema_source': case.pin}}
++    accepted = case.submit(case.request([call]), 'element-first-use')
++    assert accepted['data']['canonical_document']['dependency_manifest']['documents'] == [case.pin]
++    assert case.bundle()['parent']['clips'][0] == before
++    case.service.close()
++    case.service = RuntimeService(case.root)
++    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
++    undone = case.submit(case.request([inverse(accepted['receipt']['receipt_id'])]), 'element-inverse')
++    assert case.bundle()['parent']['clips'][0] == before
++    redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'element-redo')
++    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
++
++
+ def raw_params(case, values, clear=()):
+     # Deliberately bypass the capture helper; only the provider can authorize values.
+     return {'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': REF,
+diff --git a/tests/sdk/test_timing_compiler.py b/tests/sdk/test_timing_compiler.py
+index a2857f55f90c67bb0071481b2c3b4e7f63df1715..b226fcef4db4b52759b012e1c60e97079545d27d
+--- a/tests/sdk/test_timing_compiler.py
++++ b/tests/sdk/test_timing_compiler.py
+@@ -69,6 +69,31 @@
+     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+ 
+ 
++@pytest.mark.parametrize('duration_ms', [100, 1500, 1749])
++def test_selected_word_must_fit_the_visible_half_open_occurrence(duration_ms):
++    bundle, document, pin = captured()
++    bundle['placements'][0]['duration_ms'] = duration_ms
++    before = encoded([bundle, document])
++    with pytest.raises(TimingCompileError, match='half-open occurrence interval'):
++        project(bundle, document, [pin])
++    assert encoded([bundle, document]) == before
++
++
++def test_selected_word_may_end_exactly_at_the_occurrence_boundary():
++    bundle, document, pin = captured()
++    bundle['placements'][0]['duration_ms'] = 1750
++    assert project(bundle, document, [pin]).timings[CARD]['start_frame'] == 106
++
++
++def test_raw_source_window_is_not_an_implicit_literal_source_codec():
++    bundle, document, pin = captured()
++    bundle['shots']['shot']['internal_timeline']['clips'][0]['source_window'] = {'from': 20, 'to': 30}
++    before = encoded([bundle, document])
++    with pytest.raises(TimingCompileError, match='unsupported explicit map source_window'):
++        project(bundle, document, [pin])
++    assert encoded([bundle, document]) == before
++
++
+ def test_exact_binding_uses_selected_duplicate_word_and_preserves_authored_commands_and_clears():
+     bundle, document, pin = captured()
+     card(bundle).update(params={"clear": None, "opaque": [False, {"strange": "💫"}]}, to=None)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import io,subprocess,tarfile
+from pathlib import Path
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes')
+dest=notes/'red-agent-source';dest.mkdir()
+with tarfile.open(fileobj=io.BytesIO(subprocess.check_output(['git','archive','HEAD']))) as archive:
+    archive.extractall(dest,filter='data')
+for name in ['tests/editing_conformance/native_word_anchor_fixture.py','tests/editing_conformance/test_native_word_anchor.py']:
+    (dest/name).write_bytes(Path(name).read_bytes())
+PY" in /home/user/work/wt/agt-m2-word-anchor-acceptance-fix
+ succeeded in 1909ms:
+exec
+/bin/bash -lc 'env ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/runtime-generation ASTRID_WORD_ANCHOR_SEED_RUNTIME=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/historical-runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_native_word_anchor.py -k review_source_counterexamples > ../red-exact.log 2>&1' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/red-agent-source
+ exited 1 in 4139ms:
+exec
+/bin/bash -lc 'tail -9 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/red-exact.log && env ASTRID_RUNTIME_CHECKOUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/runtime-generation ASTRID_WORD_ANCHOR_SEED_RUNTIME=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/historical-runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_native_word_anchor_vectors.py tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/acceptance-exact-final.log 2>&1' in /home/user/work/wt/agt-m2-word-anchor-acceptance-fix
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes')
+p=notes/'report.md';report=p.read_text()
+report=report.replace('"'`again` word from `occurrence:occ/clip:voice` with `offset_frames=1`.'"', '"'`again` word from `occurrence:occ/clip:voice`, declaration `"again"`,'"\\n  with no offsets, matching the review command exactly.')
+report=report.replace('**Permanent counterexamples, before the product edits:**', '''**Permanent exact review counterexamples, against the original product:**
+
+A private "'`git archive HEAD` copy of the original Agent product was extracted to
+`$W/red-agent-source`; only the final native test file and seed fixture were copied
+from this worktree into it. From that private Agent directory, using its own
+`PYTHONPATH=$PWD` and the same final normally generated Runtime, the command was:'"''')
+report=report.replace('''Exit 1: **2 failed, 50 deselected in 4.08s**, both "'`DID NOT RAISE`.
+Log: `red-before.log`. Same targeted command after the fix: exit 0,
+**2 passed, 50 deselected in 3.24s**, `green-first.log`. Both cases also pass in
+the final complete-successor run below.'"''','''Exit 1: **2 failed, 52 deselected in 3.39s**, both "'`DID NOT RAISE`.
+Log: `red-exact.log`. The permanent cases use exactly the review'"'s "'`"again"`
+declaration and unoffset stable-ID choice. Both pass against the fixed worktree
+in the final complete-successor run below.
+
+Earlier `red-before.log` and `green-first.log` show the same two source defects
+with an additional +1-frame choice offset: 2 failures in 4.08s before the fix,
+then 2 passes in 3.24s after it. Those were stronger offset variants, not the
+exact review command spelling; they are supplementary evidence.'"''')
+paths=(notes/'ruff-files.txt').read_text().splitlines()
+report=report.replace('/home/user/work/venv-agent/bin/ruff check --no-cache <all paths in notes/ruff-files.txt>', '/home/user/work/venv-agent/bin/ruff check --no-cache '+(' \\\\\\n  '.join(paths)))
+report=report.replace('**145 passed in 94.08s**, "'`acceptance-final.log`.'"', '**FINAL_RESULT**, "'`acceptance-exact-final.log`.'"')
+report=report.replace('''An earlier native + retained-element invocation passed
+**75 in 152.08s**, "'`native-final.log`; the final 145 result supersedes it.'"''','''An earlier native + retained-element invocation passed
+**75 in 152.08s**, "'`native-final.log`; a subsequent complete acceptance pass
+returned **145 passed in 94.08s**, `acceptance-final.log`. Those used the extra
++1-frame reproducer variant; the final exact-spelling run supersedes them.'"''')
+p.write_text(report)
+PY" in /home/user/work/wt/agt-m2-word-anchor-acceptance-fix
+ succeeded in 91ms:
+codex
+I matched the permanent reproducers to the review’s exact command spelling, with no offset. Both still fail against a private copy of the original Agent product. The final targeted run is now checking those exact cases against the fix.
+
+exec
+/bin/bash -lc 'tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/acceptance-exact-final.log && git diff --check && /home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/test_native_word_anchor.py' in /home/user/work/wt/agt-m2-word-anchor-acceptance-fix
+ succeeded in 545ms:
+.................................All checks passed!
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/report.md')
+text=p.read_text()
+assert 'SCHEMA_HASH' not in text
+assert 'GENERATED_HASH' not in text
+assert 'FINAL_RESULT' in text
+print(text[text.index('**Lint and whitespace:**'):text.index('An initial new lifecycle-test invocation')])
+PY" in /home/user/work/wt/agt-m2-word-anchor-acceptance-fix
+ succeeded in 133ms:
+**Lint and whitespace:**
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/__init__.py \
+  astrid/sdk/timeline/_clip_scalar_commands.py \
+  astrid/sdk/timeline/_recording.py \
+  astrid/sdk/timeline/_timing_evaluators.py \
+  astrid/sdk/timeline/commands.py \
+  astrid/sdk/timeline/commit.py \
+  astrid/sdk/timeline/compiler.py \
+  astrid/sdk/timeline/native_word_anchor.py \
+  astrid/sdk/timeline/rebase.py \
+  astrid/sdk/timeline/sync.py \
+  tests/editing_conformance/native_word_anchor_fixture.py \
+  tests/editing_conformance/test_native_word_anchor.py \
+  tests/editing_conformance/test_native_word_anchor_vectors.py \
+  tests/editing_conformance/test_recipe_clip_set_element.py \
+  tests/sdk/test_timeline_selected_schema.py \
+  tests/sdk/test_timeline_selected_schema_runtime.py \
+  astrid/sdk/timeline/producer.py \
+  tests/editing_conformance/test_producer_guard.py \
+  tests/editing_conformance/test_settled_proposal_contract.py \
+  tests/sdk/command_schema_compatibility.py \
+  tests/sdk/test_timeline_current_union_schema.py \
+  tests/sdk/test_timeline_producer_guard.py \
+  tests/sdk/test_timing_compiler.py \
+  tests/sdk/test_timing_cycles.py
+git diff --check
+```
+
+The actual Ruff invocation supplied all 24 changed/new Python paths as separate
+arguments (the exact list is `ruff-files.txt`): exit 0, **All checks passed**,
+`ruff-final.log`. Whitespace check exit 0. One initial new-test import ordering
+error was corrected. An exploratory wider `ruff check astrid/sdk/timeline ...`
+returned 19 diagnostics in untouched existing modules; those files were left
+unchanged. No repository-wide lint pass is claimed.
+
+
+
+exec
+/bin/bash -lc 'tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/acceptance-exact-final.log' in /home/user/work/wt/agt-m2-word-anchor-acceptance-fix
+ succeeded in 0ms:
+....................................................
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib,json
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes')
+meta=json.loads((notes/'generated-source-hashes.json').read_text())
+assert hashlib.sha256(Path('astrid/core/timeline/schema/edit-command.schema.json').read_bytes()).hexdigest()==meta['schema_sha256']
+assert (notes/'runtime-generation/contract/schemas/edit-command.json').read_bytes()==Path('astrid/core/timeline/schema/edit-command.schema.json').read_bytes()
+print('Final schema and normal-generator input match saved hashes.')
+PY" in /home/user/work/wt/agt-m2-word-anchor-acceptance-fix
+ succeeded in 76ms:
+Final schema and normal-generator input match saved hashes.
+
+exec
+/bin/bash -lc 'tail -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/acceptance-exact-final.log' in /home/user/work/wt/agt-m2-word-anchor-acceptance-fix
+ succeeded in 0ms:
+........................................................................ [ 49%]
+.............
+ succeeded in 148026ms:
+>       with pytest.raises(RuntimeErrorBase, match=match) as error:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'runtime_protocol.errors.RuntimeErrorBase'>
+
+tests/editing_conformance/test_native_word_anchor.py:128: Failed
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_native_word_anchor.py::test_native_acceptance_refuses_review_source_counterexamples_before_writes[short-occurrence]
+FAILED tests/editing_conformance/test_native_word_anchor.py::test_native_acceptance_refuses_review_source_counterexamples_before_writes[raw-source-window]
+2 failed, 52 deselected in 3.39s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import re,shutil
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix')
+notes=worker/'notes'
+result=(notes/'acceptance-exact-final.log').read_text()
+match=re.search(r'145 passed in ([0-9.]+)s',result)
+assert match,result[-1500:]
+p=notes/'report.md'
+report=p.read_text().replace('**FINAL_RESULT**','**145 passed in '+match.group(1)+'s**')
+assert 'FINAL_RESULT' not in report
+p.write_text(report)
+for name in ('runtime-generation','historical-runtime','red-agent-source'):
+    shutil.rmtree(notes/name)
+assert (worker/'commit-msg').is_file()
+assert not (worker/'BLOCKED').exists()
+(worker/'DONE').touch()
+print(result[-300:])
+print('Report:',p)
+print('Private temporary sources removed. Commit message and DONE written.')
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-word-anchor-acceptance-fix
+ succeeded in 1475ms:
+........................................................................ [ 49%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+145 passed in 144.55s (0:02:24)
+
+Report: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/report.md
+Private temporary sources removed. Commit message and DONE written.
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/__init__.py
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/_timing_evaluators.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/compiler.py
+ M astrid/sdk/timeline/native_word_anchor.py
+ M astrid/sdk/timeline/rebase.py
+ M astrid/sdk/timeline/sync.py
+ M tests/editing_conformance/fixtures/recipe_m2_clip_set_element.json
+ M tests/editing_conformance/native_word_anchor_fixture.py
+ M tests/editing_conformance/test_native_word_anchor.py
+ M tests/editing_conformance/test_native_word_anchor_vectors.py
+ M tests/editing_conformance/test_recipe_clip_set_element.py
+ M tests/sdk/test_timeline_selected_schema.py
+ M tests/sdk/test_timeline_selected_schema_runtime.py
+?? astrid/sdk/timeline/producer.py
+?? tests/editing_conformance/fixtures/settled_proposal_move.artifact.json
+?? tests/editing_conformance/fixtures/settled_proposal_move.json
+?? tests/editing_conformance/fixtures/settled_proposal_numeric.artifact.json
+?? tests/editing_conformance/test_producer_guard.py
+?? tests/editing_conformance/test_settled_proposal_contract.py
+?? tests/fixtures/current-union-command-schemas/
+?? tests/sdk/command_schema_compatibility.py
+?? tests/sdk/test_timeline_current_union_schema.py
+?? tests/sdk/test_timeline_producer_guard.py
+?? tests/sdk/test_timing_compiler.py
+?? tests/sdk/test_timing_cycles.py
+
+codex
+Fixed both acceptance gaps before writes and composed complete frozen S2 plus word anchors: **50 definitions / 23 operations**. Stable-ID, retained-transcript and revision-only restore cases pass. No pins or other writers changed.
+
+Validation:
+
+- Exact reproducers: **2 failed before**, pass after.
+- Final targeted acceptance/kernel tests: **145 passed**.
+- Original portable/neighbor tests: **453 passed**.
+- Composition/schema tests: **258 passed**.
+- Generator, `--check`, changed-file Ruff and whitespace checks passed.
+
+Runtime evidence uses an **unpublished, normally generated private candidate**. No published pair, full suite or live transport qualification is claimed.
+
+[Detailed report with exact commands, hashes and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/report.md).
+
+`commit-msg` and `DONE` are written. No blockers; coordinated consumer qualification remains next.
+tokens used
+193,786
+Fixed both acceptance gaps before writes and composed complete frozen S2 plus word anchors: **50 definitions / 23 operations**. Stable-ID, retained-transcript and revision-only restore cases pass. No pins or other writers changed.
+
+Validation:
+
+- Exact reproducers: **2 failed before**, pass after.
+- Final targeted acceptance/kernel tests: **145 passed**.
+- Original portable/neighbor tests: **453 passed**.
+- Composition/schema tests: **258 passed**.
+- Generator, `--check`, changed-file Ruff and whitespace checks passed.
+
+Runtime evidence uses an **unpublished, normally generated private candidate**. No published pair, full suite or live transport qualification is claimed.
+
+[Detailed report with exact commands, hashes and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-anchor-acceptance-fix/notes/report.md).
+
+`commit-msg` and `DONE` are written. No blockers; coordinated consumer qualification remains next.

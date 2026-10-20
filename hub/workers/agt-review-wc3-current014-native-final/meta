@@ -1,0 +1,9 @@
+name=agt-review-wc3-current014-native-final
+repo=agent
+base=tl/agt-m2-wc3-current014-real-consumer
+base_sha=3dae5bd4
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-wc3-current014-native-final
+started=2026-10-20T15:59:08Z

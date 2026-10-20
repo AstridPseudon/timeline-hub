@@ -1,0 +1,400 @@
++Agent rendering source computes `sha256:5e566b1a94381b45c5af4d8afbdf3b010444405e923c39dd1354bc670b650f5d`,
++which is not the requested source. The frozen R4 builtin catalog contains
++`sha256:2a9b21e82fc08b9222d553e680883c190dc0e9d7751e46b3fd5320c54841ac4e`,
++also a different source. Neither is evidence for `8e3a…`.
++
++The containing project document supplies the exact `DocumentPin`:
++
++```json
++{
++  "document_id": "<row.document_id>",
++  "version": <row.version>,
++  "content_digest": "sha256:<digest of row.content>"
++}
++```
++
++Agent's existing `resolve_admitted_element()` returns this binding as
++`binding.projectId`, `binding.documentId`, `binding.documentVersion`, and
++`binding.contentDigest` (`astrid/core/element/project_packs.py:704-731`).
++Map those fields to the `DocumentPin`; App must not hash a document body or
++choose a first/latest admission. The selected admission's
++`snapshot_object.object_id` is the only object ID for the exact
++`owner/id/kind/revision` tuple.
++
++## Existing path, end to end
++
++1. `admit_project_pack()` validates the configured project-pack document and
++   source closure, copies every declared file into the immutable local
++   snapshot, and preserves `.build-receipt.json`
++   (`astrid/core/element/project_packs.py:392-488`).
++2. It serializes the portable snapshot (sorted path/hash/bytes plus the build
++   receipt), imports it through the existing managed media/CAS import, and
++   records the returned `{object_id, digest, size, media_type}` in the same
++   project-pack document admission (`:488-500`). The document remains the
++   source of the admission identity; the CAS object is the retained bytes.
++3. Agent/App2 carry the exact pin in the existing selected-PARAM command:
++
++   ```json
++   {
++     "op": "clip.set-params",
++     "args": {
++       "values": {"<parameter>": "<value>"},
++       "clear": [],
++       "schema_source": {
++         "document_id": "<exact>",
++         "version": 1,
++         "content_digest": "sha256:<exact>"
++       }
++     }
++   }
++   ```
++
++   `schema_source` is an existing optional `DocumentPin`, not a new DTO.
++4. The generated retained reads already exposed by the SDK are:
++
++   ```python
++   client.get_project_verified_document(project_id, pin)
++   client.get_project_verified_document_object(project_id, pin, object_id)
++   ```
++
++   Their generated routes are respectively:
++
++   ```text
++   GET /v1/projects/{project_id}/document-inputs/verified
++   GET /v1/projects/{project_id}/document-objects/verified
++   ```
++
++   The second request repeats the exact pin and adds the selected
++   `snapshot_object.object_id`. Runtime returns the retained `VerifiedDocument`
++   and closed `VerifiedDocumentObject`; Agent's
++   `admitted_element_snapshot_descriptor()` validates the admission, closure,
++   build receipt, descriptor, and bytes
++   (`astrid/core/element/project_packs.py:678-701`).
++
++5. The normal provider consumes only that verified pair. It records the pin
++   and snapshot descriptor as command dependencies and uses the exact source
++   again for retry, inverse, redo, and replay. No local source, build cache,
++   renderer, browser catalog, or re-discovered latest admission is consulted.
++
++## Reproducible ephemeral proof
++
++The existing fixture `retained_pack` is test-only. It creates a temporary
++Runtime realm/project/timeline, seeds a project pack, calls the real
++`packs.admit_project_pack()` with a Runtime-backed test client, reads the
++project document and its CAS bytes, and submits a native PARAM request whose
++provider must consume only the selected snapshot object. Temporary source,
++artifact, RealmStore, document, and CAS state are all under pytest's `tmp_path`.
++
++Exact command run from this Agent worktree:
++
++```text
++ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime \
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++/home/user/work/venv-agent/bin/python -m pytest -q -rs \
++  -o addopts= -p no:cacheprovider \
++  tests/sdk/test_timeline_selected_schema_runtime.py::test_native_params_reads_only_the_exact_selected_object
++```
++
++Result: **1 passed in 2.35s**. The proof is the same normal source/admission,
++managed CAS, project document, exact pin, exact object read, and provider
++validation path App2/Runtime must use. It is intentionally not a browser,
++hosted, installed-host, renderer, or full-suite claim.
++
++## System-pack constraint and smallest peer question
++
++`admit_project_pack()` is for a project-owned source binding. Its document
++requires `astrid.project-pack/v1`, `source_binding_key: project-packs`, a
++project-scoped relative manifest, and an owner-qualified project-pack
++admission. The built-in/system rendering source (`pack:rendering`, or the
++hosted builtin) is not that project-owned source. Giving it a guessed
++`packId`, copying the builtin revision, or making App's browser catalog stand
++in for the admission would violate the existing custody contract.
++
++Therefore the exact hosted `8e3a…` descriptor is **not yet a qualified
++carrier** from the evidence supplied here. The smallest peer question is:
++
++> Can App2/Viewing provide the exact full `packId` plus full 64-hex revision
++> and `DocumentPin` from an actual prior Agent `admit_project_pack()` for this
++> `audio-reactive-colour` effect, or is `8e3a…` a system-pack source that must
++> remain visibly unsupported until an owner-approved system-pack carrier
++> exists?
++
++Until that answer is yes, App2 must keep the selected-PARAM write refused with
++the draft preserved. Do not substitute builtin `2a9b…`, invent a project-pack
++owner, re-admit inside save, or add a route/DTO/manifest.
++
++## Evidence boundaries
++
++- Peer input: `peer-app-to-runtime-20261020T2027Z-selected-catalog-normal-carrier.md`.
++- Viewing report: `handoff-vw-m3-d10-selected-catalog-normal-producer-report.md`;
++  93 targeted checks passed and hosted `runtimeOrigin() !== ''` disables the
++  virtual admission module and `/api/astrid-element-admissions`.
++- No product code, public API, endpoint, schema, or test was changed here.
++- No browser, installed-host, renderer, full, or live-hosted suite was run.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7b7005a091932c9fba612c4eb3486a01a8faebed
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md
+@@ -0,0 +1,45 @@
++# PEER RESPONSE from Agent — selected catalog normal carrier
++
++The existing supported carrier is the normal project-pack path:
++
++```text
++project-pack init --realm <realm> --project <project> [--collection <owner>]
++project-pack admit --realm <realm> --project <project> [--collection <owner>]
++```
++
++`admit_project_pack()` captures the declared portable files and
++`.build-receipt.json`, imports the portable snapshot through managed
++project-scoped CAS, and stores its exact object descriptor in the existing
++`astrid.project-pack/v1` document admission. Agent returns the binding as
++`projectId/documentId/documentVersion/contentDigest`; App2 maps it directly to
++the existing `DocumentPin {document_id, version, content_digest}`.
++
++For selected PARAM, carry that pin in the existing `clip.set-params.args.schema_source`.
++Read the exact document and selected `snapshot_object.object_id` through the
++existing generated methods/routes:
++
++```text
++get_project_verified_document(project_id, pin)
++  GET /v1/projects/{project_id}/document-inputs/verified
++get_project_verified_document_object(project_id, pin, object_id)
++  GET /v1/projects/{project_id}/document-objects/verified
++```
++
++Exact in-process proof on the Agent branch: `test_native_params_reads_only_the_exact_selected_object`
++passed in 2.35s with `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime`.
++The fixture is ephemeral and uses real normal admission, project document,
++managed CAS, exact pin, exact object read, and provider validation.
++
++Boundary: the peer descriptor is only
++`rendering/effect/audio-reactive-colour@sha256:8e3a…`. The current Agent
++rendering source and frozen builtin are different revisions; hosted
++`runtimeOrigin() !== ''` also disables the virtual admission route. No full
++revision, project owner, or pin can be inferred from the browser catalog.
++`admit_project_pack()` cannot legitimately claim a system/builtin source as a
++project-owned pack. Please provide the full owner-qualified Agent admission
++tuple and pin from a prior normal admission, or confirm that this system-pack
++source remains visibly unsupported pending an owner-approved carrier. Do not
++substitute builtin `2a9b…`, invent `packId`, re-admit during save, or add an
++endpoint/DTO/manifest.
++
++Full trace and commands: `design/agent-selected-catalog-normal-carrier.md`.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md
+index 7f59604cd4e92dd47e0d518aed6d709ef9fe51a7..7dd953caca9d054d4a19ba7ea8c3cf15261bae02
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md
+@@ -1,5 +1,11 @@
+ # Inbox: app2 manager (orchestrator → you)
+ 
++## 2026-10-20T20:50Z — PEER RESPONSE (peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md)
++
++Agent confirms the existing normal carrier: `admit_project_pack()` captures portable files plus `.build-receipt.json`, imports one managed project-scoped CAS snapshot, and records its exact descriptor in the existing `astrid.project-pack/v1` document. Carry the returned binding directly as `DocumentPin {document_id, version, content_digest}` in existing `clip.set-params.args.schema_source`; read with generated `get_project_verified_document(project_id, pin)` and `get_project_verified_document_object(project_id, pin, object_id)`.
++
++The ephemeral normal proof `test_native_params_reads_only_the_exact_selected_object` passed in 2.35s with `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime`. The requested hosted `rendering/effect/audio-reactive-colour@sha256:8e3a…` has no qualified full owner/revision/pin in the supplied evidence. Current Agent and frozen builtin revisions differ, and hosted `runtimeOrigin() !== ''` disables the virtual admission route. Do not substitute builtin `2a9b…`, invent a project-pack identity, re-admit during save, or add a route/DTO/manifest. Provide the full tuple/pin from a prior normal Agent admission, or keep the write visibly unsupported if this is a system-pack source. Full trace: `design/agent-selected-catalog-normal-carrier.md`.
++
+ ## 13:54Z — orchestrator: you are starting fresh. Read BRIEF.md, MANAGER-COMMON.md (especially "Decide it yourself") and PLAN.md, then dispatch 5 workers on your rows straight away.
+ 
+ ## 14:08Z — orchestrator: App split confirmed. App keeps D01-app-transition-none-serialization and D01-app-shot-graph-settings (it already has live work on them). Your rows are the other 7: element-routes, ordinary-batch, duplicate, parent-media, bootstrap, resolved-edit-serializer, selected-param (last). useTimelineOps core edits stay with App until you agree each seam with App via PEER REQUEST. App is preparing a source handoff for your rows: check hub/status/app.md and hub/design for it.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
+index 2d55bee204e11097c53b1c487f8b7a46cab370d1..75571e717e55fc897987de9660db2414bd7d2636
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md
+@@ -1,5 +1,11 @@
+ 
+ ## 2026-10-19 17:50Z — orchestrator
++
++## 2026-10-20T20:50Z — PEER RESPONSE (peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md)
++
++Agent confirms the existing normal carrier: `admit_project_pack()` captures portable files plus `.build-receipt.json`, imports one managed project-scoped CAS snapshot, and records its exact descriptor in the existing `astrid.project-pack/v1` document. Carry the returned binding directly as `DocumentPin {document_id, version, content_digest}` in existing `clip.set-params.args.schema_source`; read with generated `get_project_verified_document(project_id, pin)` and `get_project_verified_document_object(project_id, pin, object_id)`.
++
++The ephemeral normal proof `test_native_params_reads_only_the_exact_selected_object` passed in 2.35s with `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime`. The requested hosted `rendering/effect/audio-reactive-colour@sha256:8e3a…` has no qualified full owner/revision/pin in the supplied evidence. Current Agent and frozen builtin revisions differ, and hosted `runtimeOrigin() !== ''` disables the virtual admission route. Do not substitute builtin `2a9b…`, invent a project-pack identity, re-admit during save, or add a route/DTO/manifest. Provide the full tuple/pin from a prior normal Agent admission, or keep the write visibly unsupported if this is a system-pack source. Full trace: `design/agent-selected-catalog-normal-carrier.md`.
+ - commitTimeline: settled by PLAN §2. It is a normal `/v1` Runtime-door operation returning main's CommittedMutation envelope. Drop `/astrid/v1`, the loopback gateway and paired routes. Don't reopen it; design commit-contract.md on that basis.
+ - Composition evaluator vs Runtime checks: saving never depends on rendering or scene evaluation. The commit validates the document and timing only. The evaluator runs outside the commit, as advisory checks, preview or on demand. Viewing owns the evaluator (design/viewing.md). You only make sure no commit path calls it.
+ - The Composition `|| true` masking belongs to vw-m0-build (Viewing). Not yours.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..baf473721022ee60764ee964570abb0a58b53f28
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/commit-msg
+@@ -0,0 +1,4 @@
++docs: record selected catalog admission carrier
++
++Document the existing project-pack admission and retained DocumentPin/CAS
++read path, plus the concrete system-pack boundary for the hosted descriptor.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..baf473721022ee60764ee964570abb0a58b53f28
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs: record selected catalog admission carrier
++
++Document the existing project-pack admission and retained DocumentPin/CAS
++read path, plus the concrete system-pack boundary for the hosted descriptor.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..1319893203ec41ced7aed0480a91d8588e7fba00
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/report.md
+@@ -0,0 +1,98 @@
++# Worker report: selected catalog admission carrier
++
++## Result
++
++**PASS**: the existing normal project-pack admission is a complete carrier
++from Agent source files/build receipt through managed CAS, the project
++document's exact admission, `DocumentPin`, selected `snapshot_object`, and
++generated retained reads.
++
++**BLOCKED for the hosted/system source**: the supplied target is only
++`rendering/effect/audio-reactive-colour@sha256:8e3a…`; it does not supply a
++full owner-qualified project-pack tuple or pin. The current Agent rendering
++source and frozen builtin are different revisions. A system/builtin source
++cannot be represented as a project-owned `admit_project_pack()` binding by
++guessing `packId`, copying builtin `2a9b…`, or hashing in App.
++
++## Existing signature and path
++
++```python
++admit_project_pack(
++    realm: str,
++    project: str,
++    *,
++    client=None,
++    collection="default",
++) -> dict[str, Any]
++```
++
++CLI:
++
++```text
++python3 -m astrid.core.element.cli project-pack init --realm <realm> --project <project> [--collection <owner>]
++python3 -m astrid.core.element.cli project-pack admit --realm <realm> --project <project> [--collection <owner>]
++python3 -m astrid.core.element.cli project-pack resolve --realm <realm> --project <project> --pack <packId> --element <id> --kind <effect|animation|transition> --revision <sha256:...>
++```
++
++Exact selected reference:
++
++```text
++packId:   admission.pack_id (must equal elementRef.packId)
++id:       audio-reactive-colour
++kind:     effect
++revision: full 64-hex sha256 returned by the admission
++```
++
++Agent's `resolve_admitted_element()` returns the containing document binding
++(`projectId`, `documentId`, `documentVersion`, `contentDigest`), which maps
++directly to existing `DocumentPin`:
++`{document_id, version, content_digest}`. The selected admission's
++`snapshot_object.object_id` is then the exact object ID for the retained
++portable snapshot.
++
++The existing selected-PARAM request carries the pin as
++`clip.set-params.args.schema_source`. The generated SDK calls are:
++
++```python
++client.get_project_verified_document(project_id, pin)
++client.get_project_verified_document_object(project_id, pin, object_id)
++```
++
++They use the existing `/v1/projects/{project_id}/document-inputs/verified` and
++`/v1/projects/{project_id}/document-objects/verified` routes. No endpoint,
++DTO, manifest, browser validator, caller hash, or save-time re-admission is
++needed.
++
++## Proof
++
++The test-only `retained_pack` fixture creates a temporary RealmStore,
++project/timeline, source pack, document, and CAS object. It calls the real
++`packs.admit_project_pack()` and submits native selected PARAM through the
++normal provider, which reads only the exact selected object.
++
++Command:
++
++```text
++ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime \
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
++/home/user/work/venv-agent/bin/python -m pytest -q -rs \
++  -o addopts= -p no:cacheprovider \
++  tests/sdk/test_timeline_selected_schema_runtime.py::test_native_params_reads_only_the_exact_selected_object
++```
++
++Result: **1 passed in 2.35s**.
++
++An initial run without `ASTRID_RUNTIME_CHECKOUT` skipped because no Runtime
++checkout was configured; it was rerun with the assigned shared Runtime
++checkout and passed. No full, browser, installed-host, renderer, or live
++hosted suite was run.
++
++## Handoff
++
++- Full trace: `design/agent-selected-catalog-normal-carrier.md`.
++- Peer flat note: `design/peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md`.
++- App2 and Runtime hub inboxes contain the same carrier and boundary.
++- Smallest open question: provide the full `packId`, full revision, and
++  Agent-produced `DocumentPin` from a prior normal admission for the `8e3a…`
++  descriptor, or confirm it is a system-pack source that remains visibly
++  unsupported pending an owner-approved carrier.
+
+exec
+/bin/bash -lc "git status --short; git diff --check; printf '\\n--- required artifacts ---\\n'; for f in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-selected-catalog-normal-carrier.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/DONE; do test -f \""'$f" && echo "OK $f" || echo "MISSING $f"; done; printf '"'\\n--- inbox marker ---\\n'; rg -n '20:50Z.*selected-catalog-carrier' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/{app2,runtime}/INBOX.md" in /home/user/work/wt/agt-m2-selected-catalog-admission-carrier
+ succeeded in 388ms:
+
+--- required artifacts ---
+OK /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-selected-catalog-normal-carrier.md
+OK /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md
+OK /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/report.md
+OK /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/commit-msg
+OK /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-selected-catalog-admission-carrier/DONE
+
+--- inbox marker ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md:4:## 2026-10-20T20:50Z — PEER RESPONSE (peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md:3:## 2026-10-20T20:50Z — PEER RESPONSE (peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md)
+
+codex
+Completed and marked `DONE`.
+
+- Published the carrier trace: [agent-selected-catalog-normal-carrier.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-selected-catalog-normal-carrier.md)
+- Sent peer response to App2/Runtime inboxes and flat note.
+- Recorded exact `admit_project_pack`, CLI, `DocumentPin`, CAS snapshot, and generated retained-read signatures.
+- Result: normal project-pack carrier **PASS**; hosted/system-pack `8e3a…` remains concretely **BLOCKED** without a full owner/revision/pin.
+- Test:
+
+```text
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime \
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
+/home/user/work/venv-agent/bin/python -m pytest -q -rs \
+  -o addopts= -p no:cacheprovider \
+  tests/sdk/test_timeline_selected_schema_runtime.py::test_native_params_reads_only_the_exact_selected_object
+```
+
+`1 passed in 2.35s`.
+
+`git diff --check` passed; no product files changed. Report and commit metadata are in the worker directory.
+tokens used
+214,120
+Completed and marked `DONE`.
+
+- Published the carrier trace: [agent-selected-catalog-normal-carrier.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-selected-catalog-normal-carrier.md)
+- Sent peer response to App2/Runtime inboxes and flat note.
+- Recorded exact `admit_project_pack`, CLI, `DocumentPin`, CAS snapshot, and generated retained-read signatures.
+- Result: normal project-pack carrier **PASS**; hosted/system-pack `8e3a…` remains concretely **BLOCKED** without a full owner/revision/pin.
+- Test:
+
+```text
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime \
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
+/home/user/work/venv-agent/bin/python -m pytest -q -rs \
+  -o addopts= -p no:cacheprovider \
+  tests/sdk/test_timeline_selected_schema_runtime.py::test_native_params_reads_only_the_exact_selected_object
+```
+
+`1 passed in 2.35s`.
+
+`git diff --check` passed; no product files changed. Report and commit metadata are in the worker directory.

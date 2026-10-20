@@ -1,0 +1,400 @@
+        armed = False
+        denied = []
+        def snapshot_then_arm():
+            nonlocal armed
+            snapshot = original_snapshot()
+            assert snapshot[child].birth == child_birth
+            armed = True
+            return snapshot
+        def denied_child_stat(file, *args, **kwargs):
+            if armed and str(file) == f"/proc/{child}/stat":
+                denied.append(str(file))
+                raise PermissionError(errno.EACCES, "independent review: proc identity unreadable")
+            return original_open(file, *args, **kwargs)
+        try:
+            with monkeypatch.context() as patch:
+                patch.setattr(groups, "_process_snapshot", snapshot_then_arm)
+                patch.setattr(builtins, "open", denied_child_stat)
+                groups.observe_tree(process)
+            assert denied and child not in owner._handles
+            assert original_identity(child) == child_birth  # It was live, never gone.
+            process.stdin.write("exit\n")
+            process.stdin.flush()
+            process.wait(timeout=5)
+            assert original_identity(child) == child_birth
+>           with pytest.raises(custody.CustodyError):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE <class 'astrid.core.execution.custody_broker.CustodyError'>
+
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py:188: Failed
+=========================== short test summary info ============================
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py::test_unknown_identity_cannot_be_forgotten_and_certified_absent[empty-before-bind]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py::test_unknown_identity_cannot_be_forgotten_and_certified_absent[empty-after-bind]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py::test_real_live_child_proc_read_denial_cannot_certify_release
+3 failed, 6 passed in 0.33s
+fail
+
+exec
+/bin/bash -lc 'REVIEW_BASELINE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-baseline.log 2>&1' in /home/user/work/wt/agt-review-d13-unowned-census-successor
+ exited 1 in 1249ms:
+codex
+I found a false-release counterexample: after a real census sees a live detached child, an injected `/proc/<pid>/stat` permission error makes registration return without a handle. The pruning forgets that child, and `verify_tree_absent()` later succeeds while it is still alive. I’m comparing this with the original tree; this is a fault-injection result, not a demonstrated ordinary exploit.
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-baseline.log && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-review-d13-unowned-census-successor-root-prep-current-integration-1020182207-14802 0' in /home/user/work/wt/agt-review-d13-unowned-census-successor
+ exited 1 in 0ms:
+.....F...                                                                [100%]
+=================================== FAILURES ===================================
+______ test_positive_departure_never_signals_numeric_replacement[reused] _______
+
+state = (<astrid.core.execution.custody_broker.ProcessCustody object at 0x7f9bc8ec39b0>, namespace(pid=11001, returncode=0, _a...9: _ProcessInfo(pid=11999, ppid=1, pgid=11999, birth='other', status=None, start_sec=None, start_usec=None, uid=None)})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9bc8f32b50>
+mode = 'reused'
+
+    @pytest.mark.parametrize("mode", ["gone", "reused", "pidfd-esrch"])
+    def test_positive_departure_never_signals_numeric_replacement(state, monkeypatch, mode):
+        owner, process, snapshot = state
+        hide_identity(monkeypatch, mode)
+        def absent(*_):
+            if mode != "pidfd-esrch":
+                pytest.fail("attempted pidfd bind without matching birth")
+            raise ProcessLookupError(errno.ESRCH, "review departed candidate")
+        monkeypatch.setattr(custody.os, "pidfd_open", absent)
+        groups.observe_tree(process)
+        assert 11002 not in owner._handles
+        snapshot.pop(process.pid)
+        if mode == "reused":
+            snapshot[11002] = groups._ProcessInfo(11002, 1, 11002, "replacement")
+        else:
+            snapshot.pop(11002)
+        process.returncode = 0
+>       groups.verify_tree_absent(process)
+
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py:128: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/baseline_process_group.py:594: in verify_tree_absent
+    _verify_tree_absent(process, deadline=deadline)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/baseline_process_group.py:614: in _verify_tree_absent
+    if observe_tree(process, **({"deadline": deadline} if bounded else {})):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/baseline_process_group.py:514: in observe_tree
+    return _observe_tree(process, deadline=deadline if bounded else None)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+process = namespace(pid=11001, returncode=0, _astrid_process_birth='root', _astrid_process_group_id=11001, _astrid_custody=<astr...520>, _astrid_tree_members={11001: 'root', 11002: 'child'}, _astrid_tree_uncertain='owned process identity was reused')
+
+    def _observe_tree(process: subprocess.Popen, *, deadline: float | None = None) -> dict[int, str]:
+        snapshot = _process_snapshot()
+        if not snapshot:
+            raise CleanupUncertainError(_census_message("owned process census unavailable", snapshot))
+        known = getattr(process, "_astrid_tree_members", None)
+        if known is None:
+            known = {}
+            process._astrid_tree_members = known
+        if not known and process.pid not in snapshot:
+            # An unreaped leader that already exited is a known outcome when the
+            # census lists exactly the incarnation custody bound at launch.
+            bound = getattr(process, "_astrid_process_birth", None)
+            if not (bound and getattr(snapshot, "exited", {}).get(process.pid) == bound):
+                raise CleanupUncertainError("owned leader exited before ancestry capture")
+        for pid, birth in tuple(known.items()):
+            current = snapshot.get(pid)
+            if current is not None and current.birth != birth:
+                # Popen.poll()/wait() positively reaps the original leader before
+                # the final descendant census.  Its numeric PID may then already
+                # belong to another incarnation; that replacement is not part of
+                # the owned tree.  Linux pidfds provide the same positive exit
+                # proof for observed descendants. Unreaped roots and descendants
+                # without an exact retained exit proof still fail closed below.
+                if ((pid == process.pid and process.returncode is not None)
+                        or _retained_incarnation_exited(process, pid, birth)):
+                    continue
+>               raise CleanupUncertainError("owned process identity was reused")
+E               astrid.core.execution.custody_broker.CustodyError: owned process identity was reused
+
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/baseline_process_group.py:549: CustodyError
+=========================== short test summary info ============================
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py::test_positive_departure_never_signals_numeric_replacement[reused]
+1 failed, 8 passed in 0.45s
+test agt-review-d13-unowned-census-successor-root-prep-current-integration-1020182207-14802: fail exit=1 in 51s — root-prep-current-integration on agt-review-d13-unowned-census-successor (agent tree b62e2173338212dc2b667600466e1f813872b158)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py
+counts: 2 failed, 650 passed, 16 skipped in 46.37s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-d13-unowned-census-successor-root-prep-current-integration-1020182207-14802/log.txt ---
+F..........s...............s..F...s..s......s........................... [ 10%]
+........................................................................ [ 21%]
+........................................................................ [ 32%]
+........................................................................ [ 43%]
+........................................................................ [ 53%]
+........................................................................ [ 64%]
+........................................................................ [ 75%]
+..s..............ss............................................ss....... [ 86%]
+.........s........................................ss......sss........... [ 97%]
+....................                                                     [100%]
+=================================== FAILURES ===================================
+_ test_unadmitted_disappearance_reconciles_and_cleanup_waits_only_retained_root _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3324/test_unadmitted_disappearance_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f1aa02fdba0>
+
+    def test_unadmitted_disappearance_reconciles_and_cleanup_waits_only_retained_root(tmp_path, monkeypatch):
+        process, owner = _unadmitted_process(tmp_path, monkeypatch)
+        initial = _snapshot()
+        fresh = {100: initial[100], 900: initial[900]}
+        snapshots = iter((initial, fresh))
+        monkeypatch.setattr(groups, "_process_snapshot", lambda: next(snapshots))
+        assert groups.observe_tree(process) == {100: "root"}
+>       assert 200 in process._astrid_tree_members and 200 not in owner._handles
+E       AssertionError: assert (200 in {100: 'root'})
+E        +  where {100: 'root'} = namespace(pid=100, _astrid_process_birth='root', poll=<function _process.<locals>.<lambda> at 0x7f1aa01e8400>, wait=<f...mitted_evidence': '/tmp/pytest-of-root/pytest-3324/test_unadmitted_disappearance_0/custody/observed-containment.json'})._astrid_tree_members
+
+tests/core/execution/test_process_group.py:59: AssertionError
+_ test_terminal_candidate_is_not_actionable_but_present_group_cannot_be_clean __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3324/test_terminal_candidate_is_not0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f1aa01f9320>
+
+    def test_terminal_candidate_is_not_actionable_but_present_group_cannot_be_clean(tmp_path, monkeypatch):
+        process, owner, census = _terminal_process(tmp_path, monkeypatch)
+        monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
+        assert groups.observe_tree(process) == {100: "root"}
+>       assert 200 in process._astrid_tree_members and 200 not in owner._handles
+E       AssertionError: assert (200 in {100: 'root'})
+E        +  where {100: 'root'} = namespace(pid=100, _astrid_process_birth='root', poll=<function _process.<locals>.<lambda> at 0x7f1aa01eba60>, wait=<f...mitted_evidence': '/tmp/pytest-of-root/pytest-3324/test_terminal_candidate_is_not0/custody/observed-containment.json'})._astrid_tree_members
+
+tests/core/execution/test_process_group.py:514: AssertionError
+=========================== short test summary info ============================
+FAILED tests/core/execution/test_process_group.py::test_unadmitted_disappearance_reconciles_and_cleanup_waits_only_retained_root
+FAILED tests/core/execution/test_process_group.py::test_terminal_candidate_is_not_actionable_but_present_group_cannot_be_clean
+2 failed, 650 passed, 16 skipped in 46.37s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py')
+s = p.read_text().replace('import importlib.util\\n', 'import importlib.util\\nimport json\\n')
+s = s.replace('        assert denied and child not in owner._handles\\n', '        assert denied and child not in owner._handles\\n        remembered = child in process._astrid_tree_members\\n')
+s = s.replace('        with pytest.raises(custody.CustodyError):\\n            groups.verify_tree_absent(process)\\n    finally:\\n        signal.pidfd_send_signal(child_pidfd, signal.SIGKILL)\\n', '        refusal = None\\n        try:\\n            groups.verify_tree_absent(process)\\n        except custody.CustodyError as error:\\n            refusal = str(error)\\n        same_live_child = original_identity(child) == child_birth\\n        print(json.dumps({\"baseline\": os.environ.get(\"REVIEW_BASELINE\") == \"1\",\\n                          \"root_pid\": process.pid, \"child_pid\": child, \"birth\": child_birth,\\n                          \"denied_reads\": len(denied), \"remembered_after_observe\": remembered,\\n                          \"verification_refusal\": refusal, \"same_child_live_after_verify\": same_live_child,\\n                          \"tree_uncertain\": getattr(process, \"_astrid_tree_uncertain\", None),\\n                          \"custody_uncertain\": str(owner._uncertain) if owner._uncertain else None}))\\n        assert same_live_child\\n        assert refusal is not None, \"cleanup certified while the observed child is still live\"\\n    finally:\\n        signal.pidfd_send_signal(child_pidfd, signal.SIGKILL)\\n')
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -s -q -o addopts= -p no:cacheprovider /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-current-final.log 2>&1' in /home/user/work/wt/agt-review-d13-unowned-census-successor
+exec
+/bin/bash -lc 'REVIEW_BASELINE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -s -q -o addopts= -p no:cacheprovider /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py::test_unknown_identity_cannot_be_forgotten_and_certified_absent /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py::test_real_live_child_proc_read_denial_cannot_certify_release > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-baseline-counterexample.log 2>&1' in /home/user/work/wt/agt-review-d13-unowned-census-successor
+ exited 1 in 1438ms:
+ succeeded in 1194ms:
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-d13-unowned-census-successor-root-prep-current-integration-1020182207-14802/snap && rg -n 'remembered_after_observe|passed|failed' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-*-final.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-baseline-counterexample.log && git status --short && nl -ba astrid/core/execution/process_group.py | sed -n '188,210p;563,583p' && nl -ba astrid/core/execution/custody_broker.py | sed -n '3081,3107p'" in /home/user/work/wt/agt-review-d13-unowned-census-successor
+ succeeded in 603ms:
+tree=b62e2173338212dc2b667600466e1f813872b158
+key=35b71e2d57a318f3991106251ab76710
+worktree=/home/user/work/wt/agt-review-d13-unowned-census-successor
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-baseline-counterexample.log:1:..{"baseline": true, "root_pid": 4, "child_pid": 5, "birth": "b38142f7-84c5-487d-95a4-8180cbff3972:6359398", "denied_reads": 1, "remembered_after_observe": true, "verification_refusal": "owned command descendants remain", "same_child_live_after_verify": true, "tree_uncertain": "owned command descendants remain", "custody_uncertain": null}
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-baseline-counterexample.log:3:3 passed in 0.32s
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-current-final.log:1:FF......{"baseline": false, "root_pid": 5, "child_pid": 6, "birth": "b38142f7-84c5-487d-95a4-8180cbff3972:6359289", "denied_reads": 1, "remembered_after_observe": false, "verification_refusal": null, "same_child_live_after_verify": true, "tree_uncertain": null, "custody_uncertain": null}
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-current-final.log:118:                              "denied_reads": len(denied), "remembered_after_observe": remembered,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/probe-current-final.log:132:3 failed, 6 passed in 0.54s
+   188	            + "; ".join(str(note) for note in record.get("notes", [])))
+   189	
+   190	
+   191	def process_birth_identity(pid: int | None = None) -> str:
+   192	    """Return the canonical PID-reuse token shared with remote worker ownership.
+   193	
+   194	    Linux exposes a kernel boot ID and process start tick in ``/proc``. Using
+   195	    that pair lets the SSH-side owner and GenericPackHost attest the same
+   196	    incarnation. Other platforms retain the existing ``ps lstart`` token.
+   197	    """
+   198	    process_id = int(pid if pid is not None else os.getpid())
+   199	    if process_id <= 0:
+   200	        return ""
+   201	    if sys.platform.startswith("linux"):
+   202	        try:
+   203	            with open("/proc/%d/stat" % process_id, encoding="ascii") as stream:
+   204	                stat_fields = stream.read().rsplit(")", 1)[1].split()
+   205	            if stat_fields[0] in {"Z", "X"}:
+   206	                return ""
+   207	            with open("/proc/sys/kernel/random/boot_id", encoding="ascii") as stream:
+   208	                boot_id = stream.read().strip()
+   209	            start_ticks = stat_fields[19]
+   210	            if not boot_id or not start_ticks.isdigit():
+   563	    if isinstance(custody, ProcessCustody):
+   564	        live = custody.observe_census(
+   565	            live, census=_census_evidence(snapshot),
+   566	            fresh_census=lambda: _census_evidence(_process_snapshot()),
+   567	            **({"deadline": deadline} if deadline is not None else {}),
+   568	        )
+   569	        # Fresh reconciliation observations must survive subsequent reparenting.
+   570	        # A Linux child can exit between the census and pidfd binding; register
+   571	        # deliberately declines that already-gone candidate because no retained
+   572	        # kernel handle exists. Do not keep that unowned census row in the
+   573	        # ancestry map, or a later PID reuse would be mistaken for its identity.
+   574	        retained = {pid: birth for pid, (birth, _) in custody._handles.items()}
+   575	        for pid in tuple(known):
+   576	            if pid not in retained:
+   577	                del known[pid]
+   578	        known.update(retained)
+   579	        live = {pid: birth for pid, birth in live.items()
+   580	                if retained.get(pid) == birth}
+   581	        if sys.platform == "darwin" and getattr(getattr(custody, "_launch_broker", None), "role", None) == "command":
+   582	            process._astrid_cleanup_semantics = {
+   583	                "coverage": "retained_observed_set_and_final_owned_group_checks",
+  3081	                    )
+  3082	                    # Our own unreaped launch may already be a zombie; any other
+  3083	                    # candidate that exited (or whose pid was reused) between the
+  3084	                    # census and now is simply absent: nothing is left to signal,
+  3085	                    # and its children stay fail-closed in the ancestry census.
+  3086	                    held = pid == getattr(getattr(self, "process", None), "pid", None)
+  3087	                    identify = held_child_birth_identity if held else process_birth_identity
+  3088	                    if identify(pid) != birth:
+  3089	                        if held:
+  3090	                            raise CustodyError("launch registration identity is uncertain")
+  3091	                        return
+  3092	                    stage = "pidfd-bind"
+  3093	                    try:
+  3094	                        descriptor = os.pidfd_open(pid, 0)
+  3095	                    except ProcessLookupError:
+  3096	                        if held:
+  3097	                            raise
+  3098	                        return
+  3099	                    if identify(pid) != birth:
+  3100	                        os.close(descriptor)
+  3101	                        if held:
+  3102	                            raise CustodyError("descendant changed during pidfd binding")
+  3103	                        return
+  3104	                    os.set_inheritable(descriptor, False)
+  3105	                    proofs = getattr(self, "_pidfd_exit_proofs", None)
+  3106	                    if proofs is None:
+  3107	                        proofs = self._pidfd_exit_proofs = {}
+
+codex
+The original tree refuses cleanup in the same live-child scenario; the new tree reports success with both uncertainty markers unset. The central run also found two failures in unchanged tests: 650 passed and 16 Darwin tests skipped. I’m recording a HOLD with the reproduction and test results. No product changes were made.
+exec
+/bin/bash -lc 'sha256sum astrid/core/execution/process_group.py tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/baseline_process_group.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py && git diff --exit-code && git status --short' in /home/user/work/wt/agt-review-d13-unowned-census-successor
+ succeeded in 973ms:
+17db94e15bf571972d8404c51d04d1e6a87cbe37dcc1c53f4fc967e912780aab  astrid/core/execution/process_group.py
+c43f3a8be25b68aa729b2c4ff12e83d6a96774d4a6970e7e99d1b9fc0844f43e  tests/core/execution/test_process_group.py
+ea6b9b779d6c4f857e55da4138cda267d1afdb00f1a7cf989b0149023a753c91  tests/core/execution/test_custody_broker.py
+1234b73f61ee47de14f9006fdd0bf7c8b958da16e9d54ea15ac7fdbe0d4321d2  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/baseline_process_group.py
+0eac995175b944f0ecade692608a8b1375c0fe07db755becda6dd1b7219f6f08  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/test_pruning_review.py
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/report.md <<'MD'
+# HOLD — unowned census pruning can certify release of a live observed child
+
+Reviewed commit "'`e6e69814ee714418f3e136a365db8e20447f5f94`, tree `b62e2173338212dc2b667600466e1f813872b158`, against parent `cd85667f75a5dbeab0d5037a915beb2d9170a2a9`, tree `d4871247bc072c5c32b3c6366e79ae2df33aa930`. The entire tree diff is eleven insertions and one deletion in `astrid/core/execution/process_group.py`. Product source, tests, guards, refs and pins remain unchanged. Previously approved retained epoll/OFD code was not re-reviewed.
+
+## Blocking finding: unknown identity is silently converted into forgotten ancestry
+
+At `process_group.py:574–580`, absence from `_handles` unconditionally deletes a census-observed identity from both `known` and `live`. But absence of a handle does not prove departure. The existing Linux `ProcessCustody.register()` returns without a handle when either bind-time identity read differs from the census birth (`custody_broker.py:3088–3091`, `3099–3103`). `process_birth_identity()` returns the same empty string for an exited process and an unreadable identity, including `PermissionError` from `/proc/<pid>/stat` (`process_group.py:203–214`). Previously the observed birth remained in `known`; the new deletion destroys that refusal boundary.
+
+Fresh independent real-process reproduction, using no product test helpers or author probes:
+
+1. Launch a real root with a real detached `setsid` child; bind root custody using real pidfds.
+2. Take the real process census, which positively sees the child and its birth/ancestry.
+3. Inject exactly one `PermissionError(EACCES)` reading that child'"'s "'`/proc/<pid>/stat` during registration, after the census completed. Leave every other operation real. The child remains alive with the same birth.
+4. Let the root exit normally and reap it. The detached child remains alive, outside the owned group and reparented away from the root.
+5. Call the actual `verify_tree_absent()`. On the candidate it returns successfully. A subsequent real identity read still proves the same child live. Neither `process._astrid_tree_uncertain` nor `custody._uncertain` is set.
+6. With only the original `process_group.py` loaded from tree `d4871247…`, the same test refuses with `owned command descendants remain` and sets tree uncertainty.
+
+The real-process diagnostic output is recorded in `probe-current-final.log` and `probe-baseline-counterexample.log`. Candidate: `remembered_after_observe=false`, `verification_refusal=null`, `same_child_live_after_verify=true`, both uncertainty markers null. Original: remembered true, refusal `owned command descendants remain`, same live child true. Both runs kill their own test child through a separately retained private pidfd and release descriptors.
+
+Two additional independent deterministic scenarios cover unknown identity before and after pidfd binding. Both fail the required refusal assertion on the candidate and pass against the original module. This isolates the regression to the new pruning rather than merely to the existing registration return.
+
+This is an actual execution of the cleanup API with real processes and one injected read failure. It is **not** proof that ordinary unmodified workloads can induce this permission failure, nor an exploit or an escape claim. No broadening of the existing bounded main grant is proposed. The task explicitly requires unknown identity/registration uncertainty to preserve refusal, which this change violates.
+
+## Original bounded tests also regress
+
+Central result `agt-review-d13-unowned-census-successor-root-prep-current-integration-1020182207-14802`, snapshot tree exactly `b62e2173338212dc2b667600466e1f813872b158`:
+
+**2 failed, 650 passed, 16 skipped in 46.37s; exit 1.**
+
+Unchanged failures:
+
+- `tests/core/execution/test_process_group.py::test_unadmitted_disappearance_reconciles_and_cleanup_waits_only_retained_root`, line 59.
+- `tests/core/execution/test_process_group.py::test_terminal_candidate_is_not_actionable_but_present_group_cannot_be_clean`, line 514.
+
+Both require an unadmitted Darwin candidate to stay in ancestry while remaining outside `_handles`. The unconditional pruning removes it. These are Linux-executed simulated Darwin tests; all 16 native Darwin tests remain skipped. `git diff --exit-code d487 HEAD -- tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py` passed. The required original 652/16 result is therefore **not reproduced** on this tree; no tests were changed, skipped, xfailed or weakened.
+
+## Commands and results
+
+All private diagnostics are in this worker folder. For compact reproduction, define:
+
+```sh
+W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+cd /home/user/work/wt/agt-review-d13-unowned-census-successor
+```
+
+Central request and completed wait (no full or default root suite):
+
+```sh
+$O/bin/request-test agt-review-d13-unowned-census-successor root-prep-current-integration --files "tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py"
+$O/bin/wait-test agt-review-d13-unowned-census-successor-root-prep-current-integration-1020182207-14802 0
+```
+
+Service test command, under the named suite'"'s recorded clean environment:
+
+"'```sh
+/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py
+```
+
+Result: 2 failed / 650 passed / 16 skipped, exit 1. Full log and snapshot are in `$O/tests/agt-review-d13-unowned-census-successor-root-prep-current-integration-1020182207-14802/`.
+
+Private candidate diagnostics:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -s -q -o addopts= -p no:cacheprovider "$W/test_pruning_review.py"
+```
+
+Result: **3 failed, 6 passed in 0.54s**, exit 1 (`probe-current-final.log`). Three failures are the two unknown-identity refusal cases and the real-process refusal case, all showing false certification. Six controls pass: explicit pidfd EPERM and thrown identity error stay sticky; truly gone, different birth and pidfd ESRCH do not acquire a replacement handle; an already retained live child still blocks cleanup after reparenting. The reused-birth control specifically verifies the observed change permits release without acquiring a replacement, not that complete descendant history has been proved.
+
+Original module extracted read-only:
+
+```sh
+git show d487:astrid/core/execution/process_group.py > "$W/baseline_process_group.py"
+REVIEW_BASELINE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -s -q -o addopts= -p no:cacheprovider "$W/test_pruning_review.py::test_unknown_identity_cannot_be_forgotten_and_certified_absent" "$W/test_pruning_review.py::test_real_live_child_proc_read_denial_cannot_certify_release"
+```
+
+Result: **3 passed in 0.32s**, exit 0 (`probe-baseline-counterexample.log`). The original module overlay uses the unchanged custody module from the worktree; the tree diff confirms custody is identical across the comparison.
+
+Initial diagnostic runs used the same explicit private file with `-q` instead of `-s -q`: candidate 3 failed / 6 passed in 0.33s (`probe-current.log`); baseline with `REVIEW_BASELINE=1` 1 failed / 8 passed in 0.45s (`probe-baseline.log`). The baseline'"'s extra failure is the positive reused-birth release control: the old code conservatively refuses reuse without retained exit proof. It does not undermine the three safety regressions. That assertion remains intact. The final probe revision adds JSON state output and verifies the child is still live *after* verification; it retains the required refusal assertion.
+
+## Decision and limits
+
+HOLD this eleven-line change. The source owner should make true pre-bind departure distinguishable from unknown identity without losing census-observed cleanup obligations, preserve Darwin unadmitted bookkeeping, and supply direct negative tests before resubmission. No reviewer fix was made. This report does not reopen or withhold approval of unchanged epoll/OFD code.
+
+The review task is complete, not blocked. Native macOS, ordinary-workload inducibility of proc read denial, full suites and the actual D13 integration journey were not run. Prior D13 positives are not evidence against this fault-injection counterexample. Shared dependencies were read-only throughout; the repository has no modifications or build output. "'`commit-msg`, `commit-msg.txt`, and `DONE` accompany this report in the worker folder.
+MD
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/commit-msg <<'"'MSG'
+docs(review): hold unowned census pruning on false cleanup proof
+
+Record independent unknown-identity counterexamples against the original and
+candidate process-group modules and the bounded central custody test result.
+Leave all product source and tests unchanged for source-owner follow-up.
+MSG
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/commit-msg.txt
+touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/DONE" in /home/user/work/wt/agt-review-d13-unowned-census-successor
+ succeeded in 23ms:
+codex
+**HOLD** `e6e69814` / tree `b62e2173`.
+
+Private diagnostics prove that an injected identity-read denial can cause pruning to forget a live child and falsely certify cleanup. The original tree refuses the same scenario.
+
+- Central unchanged tests: **650 passed, 2 failed, 16 skipped**.
+- Private diagnostics: **6 passed, 3 counterexamples failed**; all three pass against the original.
+- Product unchanged. No ordinary exploit claim; macOS unverified.
+
+[Report with exact commands, reproduction, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/report.md).
+
+Review complete; commit-message files and `DONE` written. Source-owner correction and requalification recommended.
+tokens used
+82,742
+**HOLD** `e6e69814` / tree `b62e2173`.
+
+Private diagnostics prove that an injected identity-read denial can cause pruning to forget a live child and falsely certify cleanup. The original tree refuses the same scenario.
+
+- Central unchanged tests: **650 passed, 2 failed, 16 skipped**.
+- Private diagnostics: **6 passed, 3 counterexamples failed**; all three pass against the original.
+- Product unchanged. No ordinary exploit claim; macOS unverified.
+
+[Report with exact commands, reproduction, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d13-unowned-census-successor/report.md).
+
+Review complete; commit-message files and `DONE` written. Source-owner correction and requalification recommended.

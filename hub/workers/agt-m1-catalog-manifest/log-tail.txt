@@ -1,0 +1,400 @@
+     "astrid/packs/rendering/editor/live-scenes/identity.ts": "sha256:ab1fa9c6972518d85dd39f5f1fdeee983a2754b6ad04a738d3e4dff13ed2b3b9",
+     "astrid/packs/rendering/editor/live-scenes/runtime.ts": "sha256:3bdfa73290d935699d3937798df950376cfd25209a442fc9b294fc12c98a14f2",
+-    "astrid/packs/rendering/elements/catalog.ts": "sha256:b5bbae29786685482e77c9a7d8811b30c617496c669cbc2f70e5ea60be4ef75b",
++    "astrid/packs/rendering/elements/catalog.ts": "sha256:86cdbe82390a3055f68cb65b3e9563f5dc5a6685102a7c68f66679101257e08c",
+     "astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx": "sha256:5d0712d03bab1ccb4f3401b6ecef80c8c9c90c409d4067695d2542a84eac4cca",
+     "astrid/packs/rendering/rendering/elements/animations/fade-up/element.yaml": "sha256:2534d142fb47e573489ddc08727c26292492f377c6ba39881ee9d1005eb1081d",
+     "astrid/packs/rendering/rendering/elements/animations/fade/component.tsx": "sha256:cd0a71e4c02debf9d326a6644b4d1c8a8de95a60bf60062201023da25abf52f3",
+@@ -163,5 +163,5 @@
+     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
+   },
+   "producer": "astrid-agent",
+-  "version": "sha256:e556b0d9215a1924f01d0526df886642b047af955c238ab3ebcf47d7b886083b"
++  "version": "sha256:b335927288abf8ae55cb56a2f8eff24bcb658fd2a1d1e0b98593952f6f1f54ed"
+ }
+
+--- status ---
+ M artifacts.json
+
+--- generated checks ---
+artifacts.json is current
+
+codex
+The normal artifact generator changed exactly two manifest fields: the `catalog.ts` SHA-256 entry and the manifest aggregate `version`; no other artifact entries changed. The catalog generator check remains clean, confirming the catalog itself is already the authorized inherited output. I’ll now run the focused manifest/catalog tests and capture provenance comparisons for the report.
+exec
+/bin/bash -lc "sed -n '1,280p' tests/test_artifact_manifest.py; printf '\\n--- catalog freshness tests ---\\n'; rg -n -C 3 \"gen_element_catalog|catalog\\.ts|artifact_manifest\" tests | sed -n '1,240p'; printf '\\n--- relevant commits/blobs ---\\n'; printf 'HEAD catalog blob: '; git rev-parse HEAD:astrid/packs/rendering/elements/catalog.ts; printf 'HEAD manifest blob: '; git rev-parse HEAD:artifacts.json; printf 'parent catalog blob: '; git rev-parse HEAD"'^:astrid/packs/rendering/elements/catalog.ts; printf '"'parent manifest blob: '; git rev-parse HEAD"'^:artifacts.json; printf '"'\\n--- catalog commit history ---\\n'; git log --follow --format='%h %ad %s' --date=short -- astrid/packs/rendering/elements/catalog.ts | sed -n '1,30p'; printf '\\n--- manifest commit history ---\\n'; git log --format='%h %ad %s' --date=short -- artifacts.json | sed -n '1,30p'" in /home/user/work/wt/agt-m1-catalog-manifest
+ succeeded in 114ms:
+"""artifacts.json and cli-surface.json must match what they describe (testing plan C1, R-3)."""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+import shutil
+from pathlib import Path
+
+from scripts import gen_tool_catalog
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load(name: str):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / f"{name}.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+artifact_manifest = _load("artifact_manifest")
+gen_cli_surface = _load("gen_cli_surface")
+
+SAMPLE = ["astrid/tools/catalog.json", "astrid/packs/rendering/elements/catalog.ts"]
+
+
+def test_committed_artifact_manifest_is_current() -> None:
+    assert artifact_manifest.check() == [], "run `python scripts/gen_cli_surface.py && python scripts/artifact_manifest.py`"
+
+
+def test_cli_surface_is_current() -> None:
+    assert gen_cli_surface.check() == [], "run `python scripts/gen_cli_surface.py`"
+
+
+def test_tool_catalog_is_current() -> None:
+    assert gen_tool_catalog.main(["--check"]) == 0
+
+
+def test_planted_tool_catalog_drift_names_regenerate_command(tmp_path: Path, capsys) -> None:
+    catalog = tmp_path / "catalog.json"
+    shutil.copyfile(ROOT / "astrid/tools/catalog.json", catalog)
+    catalog.write_bytes(catalog.read_bytes() + b" ")
+
+    assert gen_tool_catalog.main([str(catalog), "--check"]) == 1
+    assert "is stale; run scripts/gen_tool_catalog.py" in capsys.readouterr().err
+
+
+def test_cli_surface_covers_the_timelines_verbs_consumers_prompt() -> None:
+    timelines = json.loads((ROOT / "cli-surface.json").read_text(encoding="utf-8"))["families"]["timelines"]["verbs"]
+    assert {"show", "checkout", "edit", "publish"} <= set(timelines)
+    assert "--at" in timelines["show"]["flags"]
+
+
+def test_cli_surface_is_an_artifact() -> None:
+    assert "cli-surface.json" in json.loads((ROOT / "artifacts.json").read_text(encoding="utf-8"))["artifacts"]
+
+
+def test_planted_one_byte_change_is_detected_and_named(tmp_path: Path) -> None:
+    for relative in SAMPLE:
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / relative, target)
+    patterns = ["astrid/tools/catalog.json", "astrid/packs/rendering/elements/catalog.ts"]
+    artifact_manifest.write(tmp_path, patterns)
+    assert artifact_manifest.check(tmp_path, patterns) == []
+
+    planted = tmp_path / SAMPLE[0]
+    data = bytearray(planted.read_bytes())
+    data[0] ^= 1
+    planted.write_bytes(bytes(data))
+
+    assert artifact_manifest.check(tmp_path, patterns) == [f"{SAMPLE[0]}: changed"]
+
+
+def test_planted_cli_surface_drift_is_named(tmp_path: Path) -> None:
+    surface = json.loads((ROOT / "cli-surface.json").read_text(encoding="utf-8"))
+    del surface["families"]["timelines"]["verbs"]["show"]["flags"]["--at"]
+    (tmp_path / "cli-surface.json").write_text(json.dumps(surface, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    assert gen_cli_surface.check(tmp_path) == ["timelines show: changed"]
+
+--- catalog freshness tests ---
+tests/test_editor_extension_catalog_v3.py-56-        lambda: discover_packs(repo / "astrid/packs"),
+tests/test_editor_extension_catalog_v3.py-57-    )
+tests/test_editor_extension_catalog_v3.py-58-
+tests/test_editor_extension_catalog_v3.py:59:    generated = generator.generate(repo / "astrid/packs/rendering/editor/catalog.ts")
+tests/test_editor_extension_catalog_v3.py-60-
+tests/test_editor_extension_catalog_v3.py-61-    assert generated.count("import editorExtension") == 1
+tests/test_editor_extension_catalog_v3.py-62-    assert "ui/live-scenes/extension" in generated
+--
+tests/test_artifact_manifest.py-19-    return module
+tests/test_artifact_manifest.py-20-
+tests/test_artifact_manifest.py-21-
+tests/test_artifact_manifest.py:22:artifact_manifest = _load("artifact_manifest")
+tests/test_artifact_manifest.py-23-gen_cli_surface = _load("gen_cli_surface")
+tests/test_artifact_manifest.py-24-
+tests/test_artifact_manifest.py:25:SAMPLE = ["astrid/tools/catalog.json", "astrid/packs/rendering/elements/catalog.ts"]
+tests/test_artifact_manifest.py-26-
+tests/test_artifact_manifest.py-27-
+tests/test_artifact_manifest.py:28:def test_committed_artifact_manifest_is_current() -> None:
+tests/test_artifact_manifest.py:29:    assert artifact_manifest.check() == [], "run `python scripts/gen_cli_surface.py && python scripts/artifact_manifest.py`"
+tests/test_artifact_manifest.py-30-
+tests/test_artifact_manifest.py-31-
+tests/test_artifact_manifest.py-32-def test_cli_surface_is_current() -> None:
+--
+tests/test_artifact_manifest.py-61-        target = tmp_path / relative
+tests/test_artifact_manifest.py-62-        target.parent.mkdir(parents=True, exist_ok=True)
+tests/test_artifact_manifest.py-63-        shutil.copyfile(ROOT / relative, target)
+tests/test_artifact_manifest.py:64:    patterns = ["astrid/tools/catalog.json", "astrid/packs/rendering/elements/catalog.ts"]
+tests/test_artifact_manifest.py:65:    artifact_manifest.write(tmp_path, patterns)
+tests/test_artifact_manifest.py:66:    assert artifact_manifest.check(tmp_path, patterns) == []
+tests/test_artifact_manifest.py-67-
+tests/test_artifact_manifest.py-68-    planted = tmp_path / SAMPLE[0]
+tests/test_artifact_manifest.py-69-    data = bytearray(planted.read_bytes())
+tests/test_artifact_manifest.py-70-    data[0] ^= 1
+tests/test_artifact_manifest.py-71-    planted.write_bytes(bytes(data))
+tests/test_artifact_manifest.py-72-
+tests/test_artifact_manifest.py:73:    assert artifact_manifest.check(tmp_path, patterns) == [f"{SAMPLE[0]}: changed"]
+tests/test_artifact_manifest.py-74-
+tests/test_artifact_manifest.py-75-
+tests/test_artifact_manifest.py-76-def test_planted_cli_surface_drift_is_named(tmp_path: Path) -> None:
+--
+tests/core/test_editor_element_catalog.py-10-from astrid.core.element.registry import load_default_registry
+tests/core/test_editor_element_catalog.py-11-
+tests/core/test_editor_element_catalog.py-12-ROOT = Path(__file__).resolve().parents[2]
+tests/core/test_editor_element_catalog.py:13:GENERATOR = ROOT / "scripts" / "gen_element_catalog.py"
+tests/core/test_editor_element_catalog.py-14-
+tests/core/test_editor_element_catalog.py-15-
+tests/core/test_editor_element_catalog.py-16-def test_projection_covers_every_editor_element_kind() -> None:
+
+--- relevant commits/blobs ---
+HEAD catalog blob: c3b8fe2f301ae77efaa8739baa4db874fbf556dc
+HEAD manifest blob: a695829995304ec67596bbb4c6c49d76f19674a9
+parent catalog blob: c3b8fe2f301ae77efaa8739baa4db874fbf556dc
+parent manifest blob: a695829995304ec67596bbb4c6c49d76f19674a9
+
+--- catalog commit history ---
+0422a817 2026-10-19 fix(rendering): validate public text-card SSR output
+680d1aa4 2026-10-19 fix(rendering): share anonymous managed media request policy
+dd439a2c 2026-10-18 Apply the Astrid rename (rename.py)
+b97ad591 2026-10-18 Apply Astrid rename (rename.py)
+d71d1336 2026-10-16 fix: registries and generated catalogs catch up with the actions added since the pack-v3 ports
+8769a354 2026-10-16 test: Astrid host, catalog, pack-surface and editing-conformance tests match the product (testing plan UA)
+71d43e00 2026-10-14 Preserve validated A23 combined integration before latest review merge
+e5b2f959 2026-10-14 Checkpoint latest local Astrid candidate for review
+2ca53e04 2026-10-06 Refresh generated element catalog
+7f039441 2026-10-06 Complete composed frame renderer source closure
+8e639b69 2026-09-20 Publish Astrid workflow, RunPod, and lifecycle updates
+
+--- manifest commit history ---
+bcd851c2 2026-10-19 chore(agent): refresh timeline consumer metadata
+e4e52353 2026-10-19 chore(artifacts): regenerate the manifest for the readiness image
+bfab57d9 2026-10-19 chore(artifacts): regenerate the manifest for the transcript panel hover
+e1bc5f46 2026-10-19 Merge branch 'tp/coupling-2' into tp/land2
+19e7d198 2026-10-19 fix(contracts): keep the public bundle in the schema tree
+94d44ff9 2026-10-19 feat(contracts): publish the versioned Astrid public boundary
+b0e18b97 2026-10-19 chore(tools): regenerate the Astrid Tool catalog from current pack sources
+fd578b6c 2026-10-19 chore(cli): regenerate the CLI surface and artifact manifest after the conformance verbs
+2ce970a0 2026-10-18 fix(artifacts): index the renamed consumer files and merged catalogs
+8a6ef67e 2026-10-16 fix: hold the gates after the second main merge (transcripts, chapters, music tail)
+3a303638 2026-10-16 test: follow upstream's new timeline verbs (rename, restructure, named duplicate) (R-7)
+d71d1336 2026-10-16 fix: registries and generated catalogs catch up with the actions added since the pack-v3 ports
+30590372 2026-10-16 chore: regenerate artifacts.json after the upstream am-footage and am-type changes
+87465cab 2026-10-16 contract: artifacts.json and a generated CLI surface for consumers (testing plan C1.2, R-3)
+
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_artifact_manifest.py tests/core/test_editor_element_catalog.py tests/core/test_element_catalog_cutover.py tests/timeline/test_timeline_elements_catalog.py tests/timeline/test_effects_catalog.py' in /home/user/work/wt/agt-m1-catalog-manifest
+ succeeded in 42079ms:
+.....................                                                    [100%]
+21 passed in 41.49s
+
+codex
+The focused suite passed (`21 passed in 41.49s`). I’m doing the final provenance/diff audit now, then I’ll write the required absolute report and both harness commit-message files; no merge or full suite will be requested.
+exec
+/bin/bash -lc "set -e
+printf '%s\\n' '--- inherited-base provenance ---'
+python3 - <<'PY'
+import hashlib, json, subprocess
+from pathlib import Path
+
+def blob_at(rev, path):
+    return subprocess.check_output(['git', 'show', f'{rev}:{path}'])
+
+def sha(data):
+    return 'sha256:' + hashlib.sha256(data).hexdigest()
+path='astrid/packs/rendering/elements/catalog.ts'
+manifest='artifacts.json'
+base_catalog=blob_at('fc324e83', path)
+base_manifest=json.loads(blob_at('fc324e83', manifest))
+print('base catalog bytes:', len(base_catalog))
+print('base catalog digest:', sha(base_catalog))
+print('base manifest entry:', base_manifest['artifacts'][path])
+print('base manifest version:', base_manifest['version'])
+print('base catalog entry matches manifest:', base_manifest['artifacts'][path] == sha(base_catalog))
+print('working catalog unchanged from base:', Path(path).read_bytes() == base_catalog)
+print('working catalog digest:', sha(Path(path).read_bytes()))
+PY
+printf '%s\\n' '--- final checks ---'
+python3 scripts/artifact_manifest.py --check
+PYTHONPATH=\""'$PWD" /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
+printf '"'%s\\n' '--- final diff validation ---'
+git diff --check
+test \""'$(git diff --name-only)" = artifacts.json
+test "$(git diff --numstat)" = "2'"\\t2\\tartifacts.json\"
+git status --short
+printf '%s\\n' '--- final diff ---'
+git diff -- artifacts.json" in /home/user/work/wt/agt-m1-catalog-manifest
+ exited 1 in 3945ms:
+--- inherited-base provenance ---
+base catalog bytes: 166180
+base catalog digest: sha256:86cdbe82390a3055f68cb65b3e9563f5dc5a6685102a7c68f66679101257e08c
+base manifest entry: sha256:b5bbae29786685482e77c9a7d8811b30c617496c669cbc2f70e5ea60be4ef75b
+base manifest version: sha256:e556b0d9215a1924f01d0526df886642b047af955c238ab3ebcf47d7b886083b
+base catalog entry matches manifest: False
+working catalog unchanged from base: True
+working catalog digest: sha256:86cdbe82390a3055f68cb65b3e9563f5dc5a6685102a7c68f66679101257e08c
+--- final checks ---
+artifacts.json is current
+--- final diff validation ---
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..19fee87701cd918c7ef24762d02b0791563bb2f7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg
+@@ -0,0 +1,3 @@
++chore(artifacts): refresh catalog digest
++
++Regenerate artifacts.json after the authorized element catalog update.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..19fee87701cd918c7ef24762d02b0791563bb2f7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg.txt
+@@ -0,0 +1,3 @@
++chore(artifacts): refresh catalog digest
++
++Regenerate artifacts.json after the authorized element catalog update.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..29fd2874f85108e8d6fe29f4f06c747a7a9d3e38
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/notes/report.md
+@@ -0,0 +1,33 @@
++# agt-m1-catalog-manifest report
++
++## Result
++
++Updated the generated `artifacts.json` metadata at integration base `fc324e83`.
++The authorized inherited catalog was not changed. No tests or product/source files were modified.
++
++## Provenance and diff
++
++- `git status --short --branch` initially showed a clean `tl/agt-m1-catalog-manifest` worktree at `fc324e83`.
++- `fc324e83:astrid/packs/rendering/elements/catalog.ts` is 166,180 bytes with digest `sha256:86cdbe82390a3055f68cb65b3e9563f5dc5a6685102a7c68f66679101257e08c`.
++- The working catalog is byte-for-byte unchanged from `fc324e83` and has that same digest.
++- The inherited `fc324e83:artifacts.json` entry was `sha256:b5bbae29786685482e77c9a7d8811b30c617496c669cbc2f70e5ea60be4ef75b`, so the base catalog entry did not match the inherited catalog.
++- The inherited manifest version was `sha256:e556b0d9215a1924f01d0526df886642b047af955c238ab3ebcf47d7b886083b`.
++- Ran the normal generator: `python3 scripts/artifact_manifest.py`.
++- The resulting diff is exactly two fields in `artifacts.json`: the catalog artifact digest changed to `sha256:86cdbe82390a3055f68cb65b3e9563f5dc5a6685102a7c68f66679101257e08c`, and the aggregate manifest version changed to `sha256:b335927288abf8ae55cb56a2f8eff24bcb658fd2a1d1e0b98593952f6f1f54ed`.
++- `git diff --name-only` is exactly `artifacts.json`; no other generated entries changed. `git diff --check` passed.
++
++## Checks and tests
++
++- `python3 scripts/artifact_manifest.py --check` — passed: `artifacts.json is current`.
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check` — passed (before and after regeneration).
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_artifact_manifest.py tests/core/test_editor_element_catalog.py tests/core/test_element_catalog_cutover.py tests/timeline/test_timeline_elements_catalog.py tests/timeline/test_effects_catalog.py` — passed: `21 passed in 41.49s`.
++
++No full, install, merge, or browser/live-socket suite was run or requested.
++
++## Decisions / blockers
++
++No new decisions were required. The normal generator was used instead of a hand edit, and the generator produced only the intended catalog entry plus its aggregate version. The frozen bundle1 reference `3bf9e536` was not touched. Nothing is blocked.
++
++## Recommended next step
++
++Have the harness commit the single-file metadata correction, then record M1 in the plan before any M2 integration merge as directed.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- report ---'; sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/notes/report.md; printf '%s\\n' '--- commit messages ---'; for f in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg.txt; do echo \"["'$f]"; sed -n '"'1,20p' \""'$f"; done; printf '"'%s\\n' '--- worktree ---'; git status --short; git diff --check" in /home/user/work/wt/agt-m1-catalog-manifest
+ succeeded in 243ms:
+--- report ---
+# agt-m1-catalog-manifest report
+
+## Result
+
+Updated the generated `artifacts.json` metadata at integration base `fc324e83`.
+The authorized inherited catalog was not changed. No tests or product/source files were modified.
+
+## Provenance and diff
+
+- `git status --short --branch` initially showed a clean `tl/agt-m1-catalog-manifest` worktree at `fc324e83`.
+- `fc324e83:astrid/packs/rendering/elements/catalog.ts` is 166,180 bytes with digest `sha256:86cdbe82390a3055f68cb65b3e9563f5dc5a6685102a7c68f66679101257e08c`.
+- The working catalog is byte-for-byte unchanged from `fc324e83` and has that same digest.
+- The inherited `fc324e83:artifacts.json` entry was `sha256:b5bbae29786685482e77c9a7d8811b30c617496c669cbc2f70e5ea60be4ef75b`, so the base catalog entry did not match the inherited catalog.
+- The inherited manifest version was `sha256:e556b0d9215a1924f01d0526df886642b047af955c238ab3ebcf47d7b886083b`.
+- Ran the normal generator: `python3 scripts/artifact_manifest.py`.
+- The resulting diff is exactly two fields in `artifacts.json`: the catalog artifact digest changed to `sha256:86cdbe82390a3055f68cb65b3e9563f5dc5a6685102a7c68f66679101257e08c`, and the aggregate manifest version changed to `sha256:b335927288abf8ae55cb56a2f8eff24bcb658fd2a1d1e0b98593952f6f1f54ed`.
+- `git diff --name-only` is exactly `artifacts.json`; no other generated entries changed. `git diff --check` passed.
+
+## Checks and tests
+
+- `python3 scripts/artifact_manifest.py --check` — passed: `artifacts.json is current`.
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check` — passed (before and after regeneration).
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_artifact_manifest.py tests/core/test_editor_element_catalog.py tests/core/test_element_catalog_cutover.py tests/timeline/test_timeline_elements_catalog.py tests/timeline/test_effects_catalog.py` — passed: `21 passed in 41.49s`.
+
+No full, install, merge, or browser/live-socket suite was run or requested.
+
+## Decisions / blockers
+
+No new decisions were required. The normal generator was used instead of a hand edit, and the generator produced only the intended catalog entry plus its aggregate version. The frozen bundle1 reference `3bf9e536` was not touched. Nothing is blocked.
+
+## Recommended next step
+
+Have the harness commit the single-file metadata correction, then record M1 in the plan before any M2 integration merge as directed.
+--- commit messages ---
+[/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg]
+chore(artifacts): refresh catalog digest
+
+Regenerate artifacts.json after the authorized element catalog update.
+[/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/commit-msg.txt]
+chore(artifacts): refresh catalog digest
+
+Regenerate artifacts.json after the authorized element catalog update.
+--- worktree ---
+ M artifacts.json
+
+codex
+## Completed
+
+- Regenerated `artifacts.json` using the normal generator.
+- Diff is limited to the catalog SHA-256 and aggregate manifest version.
+- Confirmed `catalog.ts` is byte-identical to base `fc324e83`; only its inherited manifest entry was stale.
+- Frozen bundle1 `3bf9e536` untouched.
+
+Checks:
+
+- `artifact_manifest.py --check` — passed.
+- `gen_element_catalog.py --check` — passed.
+- Targeted pytest — `21 passed in 41.49s`.
+- `git diff --check` — passed.
+
+Files:
+
+- [artifacts.json](/home/user/work/wt/agt-m1-catalog-manifest/artifacts.json)
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/notes/report.md)
+- Commit messages written to both required paths.
+tokens used
+40,074
+## Completed
+
+- Regenerated `artifacts.json` using the normal generator.
+- Diff is limited to the catalog SHA-256 and aggregate manifest version.
+- Confirmed `catalog.ts` is byte-identical to base `fc324e83`; only its inherited manifest entry was stale.
+- Frozen bundle1 `3bf9e536` untouched.
+
+Checks:
+
+- `artifact_manifest.py --check` — passed.
+- `gen_element_catalog.py --check` — passed.
+- Targeted pytest — `21 passed in 41.49s`.
+- `git diff --check` — passed.
+
+Files:
+
+- [artifacts.json](/home/user/work/wt/agt-m1-catalog-manifest/artifacts.json)
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-catalog-manifest/notes/report.md)
+- Commit messages written to both required paths.

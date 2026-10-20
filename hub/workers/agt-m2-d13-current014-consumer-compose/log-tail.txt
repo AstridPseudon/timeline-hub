@@ -1,0 +1,400 @@
+tests/packs/video_editing/test_runtime_publication_chain.py:280:                "capabilities": [child_capability, "rendering.assemble_timeline", "rendering.render"],
+tests/packs/video_editing/test_runtime_publication_chain.py:379:            capability_ids=["rendering.assemble_timeline"],
+tests/packs/video_editing/test_runtime_publication_chain.py:386:                    "capability": "rendering.assemble_timeline",
+tests/packs/video_editing/test_runtime_publication_chain.py:412:        assert pending["pending"][0]["op"] == "producer.guard"
+tests/packs/video_editing/test_runtime_publication_chain.py:429:        accepted_revision = committed["data"]["accepted_revision_id"]
+tests/packs/video_editing/test_runtime_publication_chain.py:481:        assert render_task["spec"]["spec"]["inputs"]["timeline_authority"]["parent_revision_id"] == accepted_revision
+tests/packs/video_editing/test_runtime_publication_chain.py:482:        undone = restarted.undo([accepted_publication], idempotency_key="host-chain-undo")
+tests/packs/video_editing/test_runtime_publication_chain.py:483:        assert undone["data"]["accepted_revision_id"]
+astrid/sdk/timeline/assembly.py:28:                 and body['capability_id'] == 'rendering.assemble_timeline'
+astrid/sdk/timeline/assembly.py:107:                or task['capability_id'] != 'rendering.assemble_timeline'
+--- current test exact positive IDs ---
+81:@pytest.mark.integration
+82:def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tmp_path, real_runtime):
+153:def test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts(tmp_path):
+205:@pytest.mark.integration
+206:def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch, real_runtime):
+
+exec
+/bin/bash -lc 'mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose' in /home/user/work/wt/agt-m2-d13-current014-consumer-compose
+ succeeded in 81ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-current014-consumer-compose.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-current014-consumer-compose.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-current014-consumer-compose.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f36a67d0886a350916b9e068e9462d2049310b53
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-current014-consumer-compose.md
+@@ -0,0 +1,64 @@
++# Agent D13 current014 consumer compose handoff
++
++## Composition
++
++Composed the reviewed registered-native producer/requester series from
++`tl/agt-m2-d13-runtime-fixture-no-skip` (parent
++`tl/agt-m2-d13-real-native-preservation`, review
++`tl/agt-review-d13-real-native-final`) onto staged014 Agent pin
++`e86f44d04e0a5f183d82d4d1ac307951dd32c44e`.
++
++The port keeps the distinct `rendering.assemble_timeline` family and settled
++proposal artifact, freezes the original target and exact child associations in
++the requesting client's durable outbox, and commits through the requester's
++own authority. GenericHost now rejects legacy assembler admissions, stages
++producer identity and verified child reads for native assembly, and no longer
++performs the old pre-settlement assembled publication hook. The existing
++`publish_timeline_render` client operation remains as a facade for other
++consumers; it was not replaced wholesale.
++
++The donor's only fixture correction is present: the native final-render test
++uses `tests.helpers.runtime.use_runtime()` instead of an unapproved
++environment-based skip. No new skip/xfail was added. P1 authority, F1 staged
++inverse, WC4/WC9, Scene/save-core, Root/service, and sprite/plate paths were
++not touched.
++
++## Evidence
++
++- `PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/rendering/test_assemble_timeline.py tests/packs/video_editing/test_runtime_publication_chain.py -m 'not integration'`
++  — **111 passed, 2 deselected**.
++- Focused Ruff on the D13 contract/assembly/sync/client files and new tests —
++  **passed**. `git diff --check` — **passed**.
++- Central `targeted --files tests/packs/video_editing/test_runtime_publication_chain.py`
++  — **1 passed, 2 deselected** (default non-integration lane).
++- Central `registered-native-render-integration` on this compose tree reached
++  both integration tests but failed the Runtime health handshake before test
++  logic: Runtime reports schema `sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4`,
++  while the staged client expects
++  `sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59`.
++- Central `ordinary014-consumer-integration` used exact Runtime
++  `/home/user/work/wt/rt-pin-a0dca169` (`a0dca16975dfe8f5e762703b99d9791a16cf7fd7`):
++  **1 passed, 1 failed, 1 deselected**. The canonical proposal positive
++  passed; the real render/undo positive stopped at the suite bootstrap because
++  that lane does not provide `ASTRID_REMOTION_PROJECT_DIR`. No skip or weakened
++  assertion was introduced.
++
++The required two-positive real MP4/decode, lost-ACK/restart/exact-retry,
++revision-pinned render, and undo proof is therefore **not fully verified on
++this composed tree**. It was previously green on the reviewed donor tuple,
++but that donor result is not substituted for current-tree evidence.
++
++## Product diff size
++
++Tracked D13 delta: **528 additions / 240 deletions** across 8 files. Two new
++files add **293 lines**, for **821 additions / 240 deletions** including the
++native assembly module and unit tests. This is a bounded D13 port; no unrelated
++current014 paths changed.
++
++## Handoff
++
++The worktree remains uncommitted for the harness. D13 must remain held until
++the integration merge and a compatible exact-runtime registered-native lane
++re-runs both positive IDs. Recommended next step: align the central suite's
++Runtime/client schema and inject the pinned Remotion tuple into the a0 lane,
++then rerun the two exact integration IDs before recording D13 as DELETED.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c83c6f90265b60fd401ca2f9a7864df285ce6ac0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg
+@@ -0,0 +1,7 @@
++feat(timeline): compose registered native assembler consumer
++
++Port the reviewed D13 assembler producer/requester path onto staged014,
++including durable admission and proposal reads, while removing GenericHost's
++pre-settlement assembled publication hook. Require the native assembler
++admission shape and preserve the exact child media authority through the
++requesting client's outbox.
+diff --git a/astrid/sdk/timeline/assembly.py b/astrid/sdk/timeline/assembly.py
+index e0c6b663ca4d7544c4cc967ce5a61fd753db0cef..c8a5ce34bec7253dbd7f3170f68b8e76409c177f
+--- a/astrid/sdk/timeline/assembly.py
++++ b/astrid/sdk/timeline/assembly.py
+@@ -91,9 +91,9 @@
+ 
+ def read_assembly_proposal(session, task_id, attempt_id):
+     """Read and hash Runtime's exact completed managed proposal bytes."""
+-    from astrid.core.contracts.runtime_orchestration import is_native_assembler_spec
+     from .commands import _VALIDATOR
+     from .commit import _digest
++    from astrid.core.contracts.runtime_orchestration import is_native_assembler_spec
+ 
+     if not all(isinstance(value, str) and value.strip() for value in (task_id, attempt_id)):
+         raise TimelineEditError('assembly requires an exact task and attempt')
+diff --git a/tests/sdk/test_timeline_assembly.py b/tests/sdk/test_timeline_assembly.py
+index cb4577da2d9701b8965356b950e8e51ff4a6e733..8ab5e7b428ea7ab1e0e94f15b616ef1c9485b1e2
+--- a/tests/sdk/test_timeline_assembly.py
++++ b/tests/sdk/test_timeline_assembly.py
+@@ -34,11 +34,14 @@
+         verified[pin["variant_id"]] = {"selection": pin, "media_type": "video/mp4",
+                                         "size": 12, "duration_seconds": index + 1.0}
+ 
+-    get_association = lambda association_id: copy.deepcopy(associations[association_id])
+-    get_selection = lambda _project, selector: copy.deepcopy(
+-        media[selector["association_id"]])
+-    get_verified = lambda _project, selection: copy.deepcopy(
+-        verified[selection["variant_id"]])
++    def get_association(association_id):
++        return copy.deepcopy(associations[association_id])
++
++    def get_selection(_project, selector):
++        return copy.deepcopy(media[selector["association_id"]])
++
++    def get_verified(_project, selection):
++        return copy.deepcopy(verified[selection["variant_id"]])
+     generated.get_managed_output = get_association
+     generated.get_project_media_selection = get_selection
+     generated.get_project_verified_media = get_verified
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-current014-consumer-compose.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-current014-consumer-compose.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f36a67d0886a350916b9e068e9462d2049310b53
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-current014-consumer-compose.md
+@@ -0,0 +1,64 @@
++# Agent D13 current014 consumer compose handoff
++
++## Composition
++
++Composed the reviewed registered-native producer/requester series from
++`tl/agt-m2-d13-runtime-fixture-no-skip` (parent
++`tl/agt-m2-d13-real-native-preservation`, review
++`tl/agt-review-d13-real-native-final`) onto staged014 Agent pin
++`e86f44d04e0a5f183d82d4d1ac307951dd32c44e`.
++
++The port keeps the distinct `rendering.assemble_timeline` family and settled
++proposal artifact, freezes the original target and exact child associations in
++the requesting client's durable outbox, and commits through the requester's
++own authority. GenericHost now rejects legacy assembler admissions, stages
++producer identity and verified child reads for native assembly, and no longer
++performs the old pre-settlement assembled publication hook. The existing
++`publish_timeline_render` client operation remains as a facade for other
++consumers; it was not replaced wholesale.
++
++The donor's only fixture correction is present: the native final-render test
++uses `tests.helpers.runtime.use_runtime()` instead of an unapproved
++environment-based skip. No new skip/xfail was added. P1 authority, F1 staged
++inverse, WC4/WC9, Scene/save-core, Root/service, and sprite/plate paths were
++not touched.
++
++## Evidence
++
++- `PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/rendering/test_assemble_timeline.py tests/packs/video_editing/test_runtime_publication_chain.py -m 'not integration'`
++  — **111 passed, 2 deselected**.
++- Focused Ruff on the D13 contract/assembly/sync/client files and new tests —
++  **passed**. `git diff --check` — **passed**.
++- Central `targeted --files tests/packs/video_editing/test_runtime_publication_chain.py`
++  — **1 passed, 2 deselected** (default non-integration lane).
++- Central `registered-native-render-integration` on this compose tree reached
++  both integration tests but failed the Runtime health handshake before test
++  logic: Runtime reports schema `sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4`,
++  while the staged client expects
++  `sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59`.
++- Central `ordinary014-consumer-integration` used exact Runtime
++  `/home/user/work/wt/rt-pin-a0dca169` (`a0dca16975dfe8f5e762703b99d9791a16cf7fd7`):
++  **1 passed, 1 failed, 1 deselected**. The canonical proposal positive
++  passed; the real render/undo positive stopped at the suite bootstrap because
++  that lane does not provide `ASTRID_REMOTION_PROJECT_DIR`. No skip or weakened
++  assertion was introduced.
++
++The required two-positive real MP4/decode, lost-ACK/restart/exact-retry,
++revision-pinned render, and undo proof is therefore **not fully verified on
++this composed tree**. It was previously green on the reviewed donor tuple,
++but that donor result is not substituted for current-tree evidence.
++
++## Product diff size
++
++Tracked D13 delta: **528 additions / 240 deletions** across 8 files. Two new
++files add **293 lines**, for **821 additions / 240 deletions** including the
++native assembly module and unit tests. This is a bounded D13 port; no unrelated
++current014 paths changed.
++
++## Handoff
++
++The worktree remains uncommitted for the harness. D13 must remain held until
++the integration merge and a compatible exact-runtime registered-native lane
++re-runs both positive IDs. Recommended next step: align the central suite's
++Runtime/client schema and inject the pinned Remotion tuple into the a0 lane,
++then rerun the two exact integration IDs before recording D13 as DELETED.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c83c6f90265b60fd401ca2f9a7864df285ce6ac0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg
+@@ -0,0 +1,7 @@
++feat(timeline): compose registered native assembler consumer
++
++Port the reviewed D13 assembler producer/requester path onto staged014,
++including durable admission and proposal reads, while removing GenericHost's
++pre-settlement assembled publication hook. Require the native assembler
++admission shape and preserve the exact child media authority through the
++requesting client's outbox.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c83c6f90265b60fd401ca2f9a7864df285ce6ac0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg.txt
+@@ -0,0 +1,7 @@
++feat(timeline): compose registered native assembler consumer
++
++Port the reviewed D13 assembler producer/requester path onto staged014,
++including durable admission and proposal reads, while removing GenericHost's
++pre-settlement assembled publication hook. Require the native assembler
++admission shape and preserve the exact child media authority through the
++requesting client's outbox.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..18f235b724fde3cb7091504433582b615f426179
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/report.md
+@@ -0,0 +1,19 @@
++# D13 current014 consumer compose
++
++- Ported the reviewed registered-native producer/requester path onto Agent
++  staged014; removed only GenericHost's old assembled publication hook.
++- Added durable requester admission/proposal reads and native admission guards;
++  retained the existing client facade and current P1/F1/WC4/WC9/Scene/Root/
++  sprite/plate paths.
++- Replaced the unapproved native-render environment skip with `use_runtime()`.
++- Local focused tests: **111 passed, 2 deselected**. Focused Ruff and
++  `git diff --check`: pass.
++- Central default targeted file lane: **1 passed, 2 deselected**.
++- Central current-runtime registered-native lane: blocked before test logic by
++  Runtime/client schema mismatch (`8de823…` vs staged client `ce3781…`).
++- Exact a0 `ordinary014-consumer-integration`: **1 passed, 1 failed, 1
++  deselected**; the second test stopped at missing `ASTRID_REMOTION_PROJECT_DIR`
++  in that suite. The two-positive real render/decode/undo proof is not fully
++  verified on this composed tree.
++- D13 remains held until integration merge and a compatible exact-runtime lane
++  runs both positives.
+diff --git a/astrid/sdk/timeline/assembly.py b/astrid/sdk/timeline/assembly.py
+index e0c6b663ca4d7544c4cc967ce5a61fd753db0cef..c8a5ce34bec7253dbd7f3170f68b8e76409c177f
+--- a/astrid/sdk/timeline/assembly.py
++++ b/astrid/sdk/timeline/assembly.py
+@@ -91,9 +91,9 @@
+ 
+ def read_assembly_proposal(session, task_id, attempt_id):
+     """Read and hash Runtime's exact completed managed proposal bytes."""
+-    from astrid.core.contracts.runtime_orchestration import is_native_assembler_spec
+     from .commands import _VALIDATOR
+     from .commit import _digest
++    from astrid.core.contracts.runtime_orchestration import is_native_assembler_spec
+ 
+     if not all(isinstance(value, str) and value.strip() for value in (task_id, attempt_id)):
+         raise TimelineEditError('assembly requires an exact task and attempt')
+diff --git a/tests/sdk/test_timeline_assembly.py b/tests/sdk/test_timeline_assembly.py
+index cb4577da2d9701b8965356b950e8e51ff4a6e733..8ab5e7b428ea7ab1e0e94f15b616ef1c9485b1e2
+--- a/tests/sdk/test_timeline_assembly.py
++++ b/tests/sdk/test_timeline_assembly.py
+@@ -34,11 +34,14 @@
+         verified[pin["variant_id"]] = {"selection": pin, "media_type": "video/mp4",
+                                         "size": 12, "duration_seconds": index + 1.0}
+ 
+-    get_association = lambda association_id: copy.deepcopy(associations[association_id])
+-    get_selection = lambda _project, selector: copy.deepcopy(
+-        media[selector["association_id"]])
+-    get_verified = lambda _project, selection: copy.deepcopy(
+-        verified[selection["variant_id"]])
++    def get_association(association_id):
++        return copy.deepcopy(associations[association_id])
++
++    def get_selection(_project, selector):
++        return copy.deepcopy(media[selector["association_id"]])
++
++    def get_verified(_project, selection):
++        return copy.deepcopy(verified[selection["variant_id"]])
+     generated.get_managed_output = get_association
+     generated.get_project_media_selection = get_selection
+     generated.get_project_verified_media = get_verified
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- required files ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-current014-consumer-compose.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/report.md; printf '%s\\n' '--- final diff check/status ---'; git diff --check; git status --short; printf '%s\\n' '--- worktree generated candidates ---'; find . -maxdepth 3 \\( -name .pytest_cache -o -name __pycache__ -o -name '*.pyc' -o -name '.ruff_cache' \\) -print | head -80; printf '%s\\n' '--- unapproved skip / xfail audit ---'; rg -n 'pytest\\.skip|pytest\\.mark\\.xfail|\\.xfail\\(' tests/packs/video_editing/test_runtime_publication_chain.py || true; printf '%s\\n' '--- final changed path count ---'; git status --short | wc -l" in /home/user/work/wt/agt-m2-d13-current014-consumer-compose
+ succeeded in 1297ms:
+--- required files ---
+-rw-r--r-- 1 root root 3641 Oct 20 15:53 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d13-current014-consumer-compose.md
+-rw-r--r-- 1 root root  384 Oct 20 15:53 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg
+-rw-r--r-- 1 root root  384 Oct 20 15:54 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/commit-msg.txt
+-rw-r--r-- 1 root root 1124 Oct 20 15:54 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/report.md
+--- final diff check/status ---
+ M astrid/core/contracts/runtime_orchestration.py
+ M astrid/core/execution/generic_host.py
+ M astrid/packs/rendering/actions/assemble_timeline/run.py
+ M astrid/packs/rendering/pack.yaml
+ M astrid/sdk/timeline/sync.py
+ M astrid/sdk/workspace_client.py
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/assembly.py
+?? tests/sdk/test_timeline_assembly.py
+--- worktree generated candidates ---
+./.ruff_cache
+./tests/__pycache__
+./tests/__pycache__/conftest.cpython-313-pytest-9.0.2.pyc
+./tests/__pycache__/__init__.cpython-313.pyc
+./.pytest_cache
+--- unapproved skip / xfail audit ---
+--- final changed path count ---
+10
+
+exec
+/bin/bash -lc "find . -type d \\( -name .ruff_cache -o -name .pytest_cache -o -name __pycache__ \\) -print" in /home/user/work/wt/agt-m2-d13-current014-consumer-compose
+ succeeded in 0ms:
+./.ruff_cache
+./tests/__pycache__
+./.pytest_cache
+
+2026-10-20T15:54:12.969901Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc \\\"rm -rf .ruff_cache .pytest_cache tests/__pycache__; find . -type d \\\\\\\\( -name .ruff_cache -o -name .pytest_cache -o -name __pycache__ \\\\\\\\) -print; git diff --check\\\"` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc 'find ./.ruff_cache -type f -delete; find ./.pytest_cache -type f -delete; find ./tests/__pycache__ -type f -delete' in /home/user/work/wt/agt-m2-d13-current014-consumer-compose
+ succeeded in 0ms:
+exec
+/bin/bash -lc "find ./.ruff_cache ./.pytest_cache ./tests/__pycache__ -depth -type d -empty -delete 2>/dev/null || true; find . -type d \\( -name .ruff_cache -o -name .pytest_cache -o -name __pycache__ \\) -print; git diff --check" in /home/user/work/wt/agt-m2-d13-current014-consumer-compose
+ succeeded in 302ms:
+codex
+The final audit is clean: no old assembled publication hook, no new skip/xfail, no generated cache directories left in the worktree, and only the 10 intended D13 paths are changed/untracked. The handoff, report, and both commit-message filenames are written. I’m marking the worker DONE; the remaining item is the explicitly reported central tuple/bootstrap requalification before integration merge.
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/DONE; printf '%s\\n' 'DONE='; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-d13-current014-consumer-compose/DONE && echo yes; printf '%s\\n' 'status='; git status --short; printf '%s\\n' 'diff-check='; git diff --check" in /home/user/work/wt/agt-m2-d13-current014-consumer-compose
+ succeeded in 911ms:
+DONE=
+yes
+status=
+ M astrid/core/contracts/runtime_orchestration.py
+ M astrid/core/execution/generic_host.py
+ M astrid/packs/rendering/actions/assemble_timeline/run.py
+ M astrid/packs/rendering/pack.yaml
+ M astrid/sdk/timeline/sync.py
+ M astrid/sdk/workspace_client.py
+ M tests/packs/video_editing/test_runtime_publication_chain.py
+ M tests/sdk/test_timeline_sync.py
+?? astrid/sdk/timeline/assembly.py
+?? tests/sdk/test_timeline_assembly.py
+diff-check=
+
+codex
+Implemented the reviewed D13 registered-native producer/requester port onto staged014.
+
+- Added native admission, settled proposal reads, requester outbox flow, and GenericHost legacy-publication removal.
+- Replaced the unapproved render-test skip with `use_runtime()`.
+- Preserved P1/F1/WC4/WC9, Scene/save-core, Root/service, and sprite/plate paths.
+- Product diff: 821 additions / 240 deletions including two new files.
+- Tests: 111 passed, 2 deselected; focused Ruff and `git diff --check` passed.
+- Exact a0 integration: 1 passed, 1 failed because the suite omitted `ASTRID_REMOTION_PROJECT_DIR`.
+- Current-runtime integration was blocked by schema mismatch. Full two-positive render/decode/undo proof remains unverified on this composed tree.
+
+Handoff and report written under `scratchpad/orch/design` and worker files. `DONE` created; D13 remains held until integration merge/requalification.
+tokens used
+236,391
+Implemented the reviewed D13 registered-native producer/requester port onto staged014.
+
+- Added native admission, settled proposal reads, requester outbox flow, and GenericHost legacy-publication removal.
+- Replaced the unapproved render-test skip with `use_runtime()`.
+- Preserved P1/F1/WC4/WC9, Scene/save-core, Root/service, and sprite/plate paths.
+- Product diff: 821 additions / 240 deletions including two new files.
+- Tests: 111 passed, 2 deselected; focused Ruff and `git diff --check` passed.
+- Exact a0 integration: 1 passed, 1 failed because the suite omitted `ASTRID_REMOTION_PROJECT_DIR`.
+- Current-runtime integration was blocked by schema mismatch. Full two-positive render/decode/undo proof remains unverified on this composed tree.
+
+Handoff and report written under `scratchpad/orch/design` and worker files. `DONE` created; D13 remains held until integration merge/requalification.

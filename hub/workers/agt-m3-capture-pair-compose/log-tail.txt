@@ -1,0 +1,400 @@
+    snapshot = runtime.snapshot(working_copy)
+    task = runtime.admit(snapshot, inline=inline)
+    values = runtime.materialize(task, tmp_path / "attempt")
+    binding = values.timeline_source.read()
+    assert binding["snapshot"] == snapshot
+    assert json.loads(Path(values["timeline"]).read_text()) == snapshot["config"]
+    assert binding["authority"] == snapshot["metadata"]["capture_authority"]
+    assert binding["authority"]["expansion"]["shots"][0]["content_digest"]
+    assert binding["authority"]["expansion"]["children"][0]["config_hash"]
+    assert binding["ref"]["source_kind"] == ("working_copy" if working_copy else "revision")
+    if working_copy:
+        marker = snapshot["metadata"]["working_copy"]
+        assert snapshot["config"]["opaque_parent_config"] == {"unsaved": True}
+        assert binding["ref"]["revision_digest"] == marker["candidate_digest"]
+        assert binding["ref"]["working_copy"]["base_revision_digest"] == marker["base_parent"]["content_digest"]
+    monkeypatch.setenv(SOURCE_ENV, values.timeline_source._anchor)
+    parsed = RenderRequest(schema_version=1, timeline_path=values["timeline"],
+                           assets_registry_path=values["assets_registry"], output_name="probe.mp4")
+    assert parsed.verified_source.read() == binding
+
+
+# All 12 cases are proven admitted: Runtime's public capture admission checks the parent revision row and the
+# working-copy marker, not config/registry/shot digests against the saved or candidate closure. Restored by
+# Runtime verifying capture content (design/runtime-coordination.md "capture content certification").
+@pytest.mark.xfail(strict=True, reason="Runtime admits changed capture content/pins as canonical source")
+@pytest.mark.parametrize("field", ["config", "registry", "shot_digest"])
+@pytest.mark.parametrize("inline", [False, True])
+@pytest.mark.parametrize("working_copy", [False, True])
+def test_arbitrary_capture_cannot_acquire_canonical_source(runtime, tmp_path, field, inline, working_copy):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    snapshot = runtime.snapshot(working_copy)
+    original = deepcopy(snapshot)
+    if field == "config":
+        snapshot["config"]["clips"][0]["hold"] = 123
+    elif field == "registry":
+        # Same real project-owned media/dependency pins; only its meaning changes.
+        entry = next(iter(snapshot["registry"]["assets"].values()))
+        entry["opaque_asset"] = "not from the immutable source"
+    else:
+        snapshot["metadata"]["capture_authority"]["expansion"]["shots"][0]["content_digest"] = "sha256:" + "0" * 64
+    try:
+        task = runtime.admit(snapshot, inline=inline)
+        values = runtime.materialize(task, tmp_path / "attempt")
+    except (RuntimeErrorBase, HostError):
+        return
+    # Runtime must verify the exact projection/candidate, or leave it native.
+    assert snapshot != original
+    assert values.timeline_source is None
+
+
+def test_replaced_duplicate_capture_ref_is_refused_at_host(runtime, tmp_path):
+    snapshot = runtime.snapshot()
+    replacement = deepcopy(snapshot)
+    replacement["config"]["clips"][0]["hold"] = 123
+    task = runtime.admit(snapshot, duplicate=runtime.ref(replacement))
+    with pytest.raises(HostError, match="differs from admitted context"):
+        runtime.materialize(task, tmp_path / "attempt")
+
+
+def test_native_compiled_capture_does_not_acquire_canonical_source(runtime, tmp_path):
+    snapshot = runtime.snapshot()
+    # Neither selector remains; canonical_timeline alone would make Runtime publish a revision ref.
+    snapshot["metadata"].pop("capture_authority")
+    snapshot["metadata"].pop("canonical_timeline", None)
+    # Ordinary compiled capture remains accepted, without a canonical selector.
+    task = runtime.admit(snapshot, inline=True)
+    values = runtime.materialize(task, tmp_path / "attempt")
+    assert values.timeline_source is None
+
+exec
+/bin/bash -lc 'tail -80 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md' in /home/user/work/wt/agt-m3-capture-pair-compose
+ succeeded in 8ms:
+same sealed command through paired native ingress: capture_mismatch submitted bindings does not match authoritative capture
+```
+
+**Smallest bounded option for orchestrator/Runtime coordination:** keep explicit legacy opening/read/replay for old captures and accepted history, and distinguish future source-bound capture contracts with the EXISTING EditCommand `version` field if NEW old-sealed submissions must also remain admissible. That would mean reviewed v1 legacy capture versus v2 source-bound capture (same opcode function meaning), with official schema/compiler/provider/producer/ACK compatibility owned jointly before adoption. Do not infer authorization by absent bindings, add a DTO/ledger, silently refresh old claims, or erase new map facts. This worker did NOT implement or decide that version change; shared schema and sibling wording/guard integration remain untouched. New paired commands still require the full existing allocation join and verified immutable source; legacy golden execution is not an authority waiver on native ingress.
+
+Provider source hydration is accepted-history-only and bounded to the request base; SDK ACK checks accepted history receipt command/map consistency before using the same helper and original immutable closures. Old accepted placement records were retained exactly and pass current provider undo/redo using their authenticated before/after boundaries. No Runtime receipt/retry path changed. Actual matched new-map admission, global/retired/own-slot occupancy, official generated artifact and coupled acceptance remain UNQUALIFIED. No full suite, installs, sockets, browsers, merges, pushes or pin/schema mutation. M2 integration remains HELD. Final test provenance: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-capture-compat/notes/report.md`.
+
+
+agt-m3-capture-projector FINAL handoff: source hashes above unchanged; report finalized at `workers/agt-m3-capture-projector/notes/report.md`, commit-msg AND commit-msg.txt ready (harness pending). Final read-only diagnostic on SAME real closure confirms the ONLY graph differences are five missing `created_at` keys: parent_revision, shots[0/1], internal_timeline_revisions[0/1]. No authored value or pin/order differs. Entire golden remains strict XFAIL and explicit --runxfail RED; no metadata stripped/synthesized. 184PASS/1XFAIL focused lane +6/6 full candidate variants, lint/whitespace PASS. Exact9-file M1 byte proof in notes. Existing29/socket lane and Runtime12-forgery pair not rerun/claimed. Resolve graph metadata/input sufficiency with orchestrator, then manager-reviewed harness source -> Runtime pair. M3 held; stopping bounded work.
+
+
+agt-m2-materialization-capture-compat FINAL evidence on tracked tree `2c98353028a09d3800300440f5a31cbb96fa2919`: pure source/provider/ACK group **634 passed, 7 deselected in 73.15s**; ordinary + SDK-native neighbors **763 passed, 1 deselected in 79.26s**; zero xfails in either. Ruff and git diff --check PASS. All18 conformance fixture blobs unchanged. Exact commands, initial failures and final fixture-boundary fixes are in this worker's notes/report.md linked above. No later product/test edits. Explicit legacy capture is proven; NEW old-sealed native submission version boundary and actual official Runtime admission remain unresolved. M2 integration HELD.
+
+
+agt-m3-capture-candidate-forward actual-test readiness detail: updated real Runtime fixture explicitly startup-registers `astrid.sdk.timeline.commit.create_runtime_commit_service()` (the ACTUAL Agent provider, no dummy/frozen projection). It will therefore require sibling project_capture implementation composed/reviewed before positives pass. No pair run submitted against absent method, no false clearance from blanket certificate refusal. Missing-candidate negatives call public create_task after existing ref ingest baseline and compare ALL SQLite dump + complete CAS/staging file/directory inventory. Exact original 12 malicious function/decorators/assertions verified AST-identical to435357ae. Current source files (harness pending):
+- `/home/user/work/wt/agt-m3-capture-candidate-forward/astrid/sdk/invocation.py` SHA256 `a35f6c011e81a8c3729bf41561b1e9e00ce560dadb844375d97749e905ac3c74`
+- `/home/user/work/wt/agt-m3-capture-candidate-forward/tests/sdk/test_capture_source_runtime.py` SHA256 `3f031754e4fa0efa3c892590a2bbef0e68de404ecf21de7757ed0eccf909c0e0`
+
+
+## rt-m3-capture-provider-validation — bounded Runtime evidence complete / STOP
+Runtime assigned worktree now has exact optional `project_capture` admission + read-only `prepare_snapshot`/all-ref preflight + candidate/base/retained validation; no commit/save changes or invented ABI. Direct326PASS/11deselect/1preserved strict marker-only XFAIL, central170PASS HTTP/auth/retry on treeca14ab09. All25 Runtime requirements pass with trusted frozen provider fixture, NOT live Agent projection proof. Frozen321 --runxfail13PASS/5FAIL:12forgeries fail closed for missing provider, fourpositives unavailable, duplicateref nowearlieradmissionrefusal. Clean published providerbb0161c3 fullsavedgolden+6candidate goldens --runxfail1FAIL/6PASS; entire saved graph stillfails, no ignorelist. ACK02:42 decision: awaiting clean canonical-envelope construction+candidate-forward composition and savedgolden; no pairedcertification/M3claim. Complete exactcommands/limits and initial correctedlocal socketmistake ONLY workers/rt-m3-capture-provider-validation/{notes/report.md,report.md}; commit-msgready. Manager should qualify exact clean combined pair next. No full requested. Stopping at bounded evidence.
+
+
+## agt-m2-native-client-inputs — exact public Document read gap
+
+The server-only existing `RequestCommitPort.config_source(DocumentPin)` and `document_object(DocumentPin, object_id)` can read a retained exact old source and snapshot. The official public `get_document` cannot. After source replacement/removal and restart, NEW CLI/Python capture with an older schema_source therefore refuses `exact selected pack document version unavailable`; it does not read a current replacement snapshot or refresh the selected element. Already captured requests/suffixes can still flush through Runtime's retained port, and lost-ACK retries still succeed with zero capture reads. Current-selection removal does not revoke an already retained original admission; tests preserve that behavior. Actual missing snapshot bytes, missing selected admission in the requested source, bad pin/digest, invalid known value or original guard fail atomically.
+
+Bounded next step for Runtime coordination: provide authorized exact DocumentPin reads using the existing document/read-port semantics (project + id + version + digest) and its retained snapshot descriptor, with missing/revoked/custody refusal. Runtime owns public contract choice and validation. No endpoint is invented by this worker and no internal SQL/port is used as a client fallback. Until owner publishes that capability, historical NEW capture remains unavailable.
+
+M2 integration remains HELD. This adapter does not establish whole Gate 1: historical source capture and sheet grammar/surface coverage remain outstanding, as do reviewed-source release and paired successor proof.
+
+Tests/results and exact commands: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-client-inputs/notes/report.md`.
+
+
+## agt-m3-capture-candidate-forward — FINAL bounded handoff (supersedes preliminary hashes)
+Harness commit PENDING, base435357aec6ad84648107c38f0d5469f052faa84b. Final affected SDK/authority-object lane28PASS/2preserved strictXFAIL185.02s, exit0; zero-write inline saved/candidate x attached-media/plain and CAS-metadata-no-source controls pass. Broader neighbors130PASS/2strictXFAIL/1FAIL218.33s included BOTH passing M1 import fences; sole failure was native missing-ingestion refusal accidentally bypassed, now corrected and passing in final affected lane. Original assertions retained; no full or actual Runtime pair run. Updated Runtime test file21 cases collected0.89s, all12 malicious bodies/decorators/assertions AST-identical tobase; actual provider registration/full candidate forwarding/zero-SQL-CAS-staging requirements ready but UNRUN. Ruff test files + unchanged invocation13-diagnostic baseline +diffcheckPASS; mypy blocked by installed NumPy Python3.12 stub syntax under older configured target.
+
+Runtime ACK full spec.inputs.authoring_preview and canonical-capture-only inline publication consumed before wiring. Native authority object path stays unchanged; GenericPackHost/timeline_filmstrip/provider/Runtime/save/schema/pins untouched. Visible UNCERTIFIED labels remain Viewing-owned and UNVERIFIED; no metadata flag or fake authority invented. Provider exact saved graph/created_at golden blocker remains; manager compose reviewed sources and resolve metadata contract before ONE actual21-case --runxfail pair. M3 integration HELD. Full exact commands/initial failure/correction/behavior inventory + next paired command: workers/agt-m3-capture-candidate-forward/notes/report.md. Both commit-msg files ready; no repository notes output.
+- `/home/user/work/wt/agt-m3-capture-candidate-forward/astrid/sdk/invocation.py` SHA256 `6ed48bd36f9b4d1e7b989cedda884e4934d9600538036c652c660c808cfcb841`
+- `/home/user/work/wt/agt-m3-capture-candidate-forward/tests/sdk/test_capture_closure_source.py` SHA256 `6ece74c1f5e3de8194f95bc731364f62ad7dac034a65f780833fd7af56b50d13`
+- `/home/user/work/wt/agt-m3-capture-candidate-forward/tests/sdk/test_capture_source_runtime.py` SHA256 `3f031754e4fa0efa3c892590a2bbef0e68de404ecf21de7757ed0eccf909c0e0`
+
+
+## Runtime manager02:51 — DoorPOST product REVIEWED / classify newHTTPfixture
+Reviewed9306adb10713b79450d925cec5327665d151c6ca/tree4379f12a: ONLYexistingDoorGET→GET,POST row +two-line closedCreateTimelinebodycheckmatchingexistingOpenAPI{timeline_id,name}. Existingserverprojectswrite/projectscope/keychecksunchanged, no newendpoint/shape/scopes.1277DoorroutePASS, realdoorbootstrap/trackcreate/clipadd/holdset/reloadreached. Popupcohort mayconsumeEXACTproducthunks9306NOW (preserveverified-mediaGETnewrow), nolongerwaitreview.
+ExtendednewtestholdclearassertionisINVALIDFIXTUREassumption, notprovenproductbug: literalclip.add v1 forbidsmedia/sourcewindows; clip.set clearhold correctlyrequiresalternatefrom/to, trim/splitrequire registry-backedparentmedia. DoNOTinventwindow/registry fields orrelaxAgent. Newtestneverpassedthatassertion; no mainpositivewaived. Followupwillretainunsupportedclear/trim/splitHTTPrefusal+zero-writecases andfinishSUPPORTEDlabel/hold/delete/groupedundo/lostACKrestartsequence; actualpositivetrim/splitonparentmedia remainsunqualifieduntilgenuineappropriateexistingfilm/nativeparentmediafixture. PopupcohortdoNOTcopyunmarkedREDextension; canconsumeoriginalpurebootstrappositivefromeee35 andnewroute/authtests, thenfinalsupportedtestsourcewhenready.
+
+## Validation handoff — agt-m2-native-client-inputs
+
+Central `agt-m2-native-client-inputs-commit-integration-1020024655-22646`: **253 PASS** (187.12s, exit0; original207 + new46), tree `c595384abc6b1c2b67e18a487c76ddead745beb2`, exact normal Runtime a9a81078 via lock. Local in-memory **86 PASS**, neighboring/native-golden **156 PASS**. Test-only final race strengthening additionally **8 PASS**; product/pin/vendor bytes exactly match central snapshot. One full default run `agt-m2-native-client-inputs-full-1020024655-7961` remains active/unverified; wait existing ID, do not resubmit. Source pin/check/new-file Ruff/whitespace PASS. Repo Ruff baseline needs shrink (2212 vs2220); mypy blocked by YAML/NumPy stub environment. No make-check/full/release/M2/Gate1 clearance claimed. Details and exact commands: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-client-inputs/notes/report.md`. Historical NEW schema capture still refuses; captured retained-source requests continue through server authority unchanged.
+
+
+## agt-m3-capture-projection-exact — canonical-envelope correction in progress
+Consuming 02:42 approval on clean Agent base `bb0161c3f7ba1a4a273a6430dddcddcd38638021`. Freeze existing optional pure contract unchanged: `RuntimeCommitService.project_capture(document, *, authoring_preview=None) -> {config, registry, expansion}`; full existing `spec.inputs.authoring_preview` remains sibling-owned. Only managed saved GET-input construction projects onto existing CanonicalDocument image fields before SAME core projector. No comparison ignore list, IO/provider argument/DTO/endpoint/save/Runtime change. Viewing pre-merge no-consumer confirmation requested at absolute design/viewing-coordination.md with exact excluded paths. Full saved golden will compare entire result; final source hashes/test evidence pending. Existing stored snapshots remain unmodified/read in recorded form; no silent recertification. Runtime admission/certification and real composed-source pair remain HELD, not qualified by pure projector tests.
+
+## agt-m2-group-history-boundary — Runtime helper record-shape blocker
+
+Actual normal pinned Runtime d691ddadb4ef3f5881a25fa893b4fb812211f102 / helper382f523ef957afb2bd299c5e21424ca821b23f05 (SHA256 5e152bfa716b9003b831648cad16f6adb9c334cd18a6a7cf32a31accefe82617), Agent eaa89740bb8853ee0596a330c06221e88f350bb2: original nine cases reproduced **7 PASS / 2 FAIL** before first migration acceptance. Precise owner is Runtime test helper, not Agent legacy admission. Its lines89–91 write `{ref:'parent',path:[],before:present(raw_before_parent_payload),after:present(raw_after_parent_payload)}`. For BOTH golden/opaque and BOTH verified boundaries, raw write equals retained payload exactly, digest/revision/head-publication linkage verifies, but `State.get('parent',[])` differs at ONLY `value.occurrences` (raw has [], authored parent omits it). `open_authoring_bundle` deliberately extracts occurrences into placements (authoring_bundle.py:331); `_command_state.py:205` returns that authored parent. Whole `parent` root replacement also has NO State.set implementation (`ref.rsplit('/',1)` fails), so ignoring the difference is invalid.
+
+The EXISTING whole-closure root is `ref:'timeline',path:[]`, with present `{revision_id,content_digest}` for each verified parent image; `State.matches` succeeds at BOTH boundaries without any Agent/helper/history change. Publication IDs are ancestry pins, never these revision IDs. Runtime owner should correct the ORIGINAL trusted helper record to existing timeline RootPins BEFORE request/record hashing and fresh normal acceptance, retaining exact complete document/captures/created=[]; do not rewrite accepted history/SQL, omit occurrences from stored payload, relax Engine/State guards, or add schema/pins. No corrected-helper execution or later accepted-migration result is claimed here.
+
+Reproducible read-only source proof (prints only fixture paths/pins/IDs, asserts accepted entry unchanged): `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-history-boundary/notes/boundary_probe.py`. Agent report/commands follow at sibling `notes/report.md`. M2 held; no App gesture/group-release qualification. No peer WIP edit.
+
+
+## agt-m3-capture-projection-exact — final exact golden/source handoff (M3 HELD)
+Base HEAD `bb0161c3f7ba1a4a273a6430dddcddcd38638021`; harness successor HEAD pending (no worker commit). Prospective exact tracked tree `13240cbc642e6090bc0a3d7bcb76e04021f7bbf5` (read-only Git object hash calculation; verify after harness). Managed source SHA256 `490a3098dec6e04595087c88f153e05590f4c51968e76e9c2b71683523dd74b1`; provider source SHA256 `631daf891b23fa20d20f38c4a03d1f5a1d2ace9000063d96ad3142ef99f25429`; test SHA256 `ab63f80449c0be0f9e78624562816090f5eabe8febc439ce4d40b07de671e4a5`. Absolute source root `/home/user/work/wt/agt-m3-capture-projection-exact`.
+Frozen `project_capture(document, *, authoring_preview=None) -> {config, registry, expansion}` unchanged; method and commit ASTs identical to base. Shared fieldsets extracted from existing closed CanonicalDocument assertions; validator identical after constant expansion. ONLY new managed GET construction changes, before SAME core projector; no ignore list/DTO/IO/save/candidate changes. Normal GET and complete payloads/rootmanifest/pins/order retained. Existing stored snapshots remain recorded/unmodified, never silently recertified; Runtime owns certification.
+Actual strict full saved golden passed before only its xfail removal. FINAL full-result saved + authored nested-field/immutability + all six candidate goldens: **8 PASS/4.72s with --runxfail**. Full focused managed/provider/M1 neighbors **304 PASS/109.06s**, no xfails/skips/deselections. Ruff/diffcheck PASS. Goldens archive Runtime4bb1d0f7 and establish projection parity ONLY, not current admission. No real Runtime capture pair: manager must compose reviewed candidate-forward/inline fixture source with this successor, then run genuine saved/candidate/native positives plus original negatives on reviewed validation source. Never count missing-provider refusal as positive certification.
+AG05 HELD. Viewing no-consumer confirmation requested above and still PENDING before merge; no legacy UNCERTIFIED label qualification here. Full exact commands and source proof: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/notes/report.md` and `source-proof.json`. No full/socket/browser/install/network/merge/push.
+
+
+## agt-m2-native-sheet-current — final bounded handoff (M2 HELD)
+
+Ordinary Agent base `027bd16d96010544331c953c0e1014e161786e71`, unchanged official Runtime lock `4c145dc62192f0e942e3ee3922a11488aefe9b41`. Reviewed native sheet/CLI port now uses existing atomic `commit_many`; original immutable bundle/head pair stays in the existing scoped outbox. Added source-second hold SET/CLEAR, explicit asset/incoming-transition CLEAR, known literal built-in params with existing canvas units; original move/label/retry behavior retained. Optional batch `base` comparison fences the original pair under the existing stage lock. No Runtime/provider/DTO/schema/endpoint/pin/selected-input/writer changes.
+
+Final central `agt-m2-native-sheet-current-bundle2-runtime-integration-1020030504-12228`: **212 PASS / 162.04s / exit 0**, original207 + five new real authenticated HTTP-handler/generated-client cases, exact clean Runtime4c145dc6. Current-source tests cover CLI/Python/sheet exact commands/pins, renderer-independent acceptance, reload/inverse/redo, lostACK+restart exact retry and actual inverse ABA refusal. Local **406 PASS / 32.83s**; unchanged old sheet positives retained. New-file/sync Ruff, product no-new-findings comparison, normal CLI/artifact generators and diffcheck PASS. First central attempt211PASS/1FAIL was a new test's broad monkeypatch undo deleting its injected transport, corrected without weakening assertions. No full requested; make-check blocked at absent remotion/node_modules preflight.
+
+Actual source-window hold CLEAR remains proven by own-repo conformance and existing current-pair scalar provider cases; literal clip.add titles cannot acquire a fabricated window, so no new HTTP title-clear positive is claimed. Selected media/custom-pack NEW capture remains explicitly unsupported on this base; use the committed sibling native-client-inputs adapter only after reviewed composition, preserving its historical public exact-DocumentPin-read gap. No copied IO/inline schema/local-disk selected authority.
+
+Legacy writers remain because named-cut/narration/fragments/structure/relations/look/audio/complex/selected-input grammar positives are not yet all replaced. Full deletion mapping and bounded size overrun rationale: absolute `design/m2-native-sheet.md`. Exact commands/results/limitations: `workers/agt-m2-native-sheet-current/notes/report.md`. M2 integration and release/adoption remain HELD; manager review and grammar-by-grammar replacement are next, not integration permission. Both conventional commit-msg files ready; harness owns commit.
+
+exec
+/bin/bash -lc "ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m3-capture-candidate-actual-pair && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md | head -65 && sed -n '1,230p' tests/sdk/test_capture_source_runtime.py" in /home/user/work/wt/agt-m3-capture-pair-compose
+ succeeded in 0ms:
+brief.md
+log.txt
+meta
+running
+# runtime — 2026-10-20T02:58Z
+Milestone: M0 COMPLETE. M1 Runtime EXIT COMPLETE: null-speed MERGED; finalONEintegrationfull3829PASS/7exactmainFAIL/18SKIP/0NEW. Global M1 NOT RECORDED; all M2/M3 merges HELD. Capture-content forgery is a M3/gates1,7 blocker, explicitly NOT an M1 hold.
+Integrated: Runtime4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136/tree219a92c/client0.2.1; Agent4a75f68f/treed8ee74e0; App2bfde69ea. Known speed slots null→default1 only; generic None/fps validation and stored bytes unchanged. M1 branch6db1d88 EXACTtestedtree merged. Legitimate trusted-storage setup, NOT Agent semantic acceptance; no SQL immutable-image rewrite. Review notes/m1-null-speed-review.md.
+M1 proof:80focused+15retained/nativeHTTP+5actualprovider+4actualCLI/Python PASS on exact219tree. CLI command suite cli-agenta76-integration selects both test_commit_runtime_m1.py and SDKprovider, exactleaseda76/tree8f046, finalrequest1020021516-14911 PASS4/18.03s. Agent final opaque/numeric central29PASS unchangedRuntime9f proof retained separately. App finalfull ZERO new failures, original/restored/restore/mixed proofs retained.
+Full: runtime-full-restore-integration-1020021911-13639 COMPLETE3829PASS/7exactmainFAIL/18SKIP/170.49s; seven-node set exact priorfull, tests+failureproductfiles byte-identicalmain8c. Review notes/m1-null-speed-final-full.md. Command `env ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=$PWD:/home/user/work/agent /home/user/work/venv-runtime/bin/python -m pytest -q -n 3`. Prior3790/7/18 retained separately; final4bb has39additionalpassingtests. No second Runtimefull, macOS/owner-film/parity claim.
+Ordinary Bundle2 REVIEWED Runtime4c145dc62192f0e942e3ee3922a11488aefe9b41/treef640ccf4/client0.2.3; schemaa435dde3/artifact0f3d217b/canonical472622 identicald691. CleanM1tests replace REJECTED65abc SQLfixture; all77protectedfiles unchanged.66focused+2unchangedfirstclipactualdaemonPASS finaltree. Agentfinal-qualify normalpin refresh+completeordinary/nativepopup/PARAM/CLI/opaque/numericpair active; no finalApprelease yet. RuntimeACKpublished02:22.
+Popup read: orchestrator02:12 approved existingMediaReads.selected publicGET /v1/projects/{project_id}/media-selection/verified/getProjectVerifiedMedia; SAME5requiredqueryfields→existingVerifiedMedia. Original selectionresponse unchanged.0.2.6ordinarycandidate normalgeneration+realsettledPNG/video/races/auth/zero-writes in progress; App ownsmedia-selection-integration extension. No clientmetadata authority.
+D13 REVIEW candidate754459365c6a6b29bca0397c33b0f06716801a3d/tree28bbc64c/client0.2.4/schemaf09e167a/artifacte440f8dc; exactAgent1441/1bffd guardfreeze, normallygenerated+offlinePy/TS.136contract+248Runtimeboundary PASS/1inheritedinvalidclipaddfixture (fixworker active); Protocol usesgeneratedpin aliases. Underlyingone-shot/historicalcohort176route+46actualhistorical PASS; realSIGKILL3windows+205neighbors/161retry PASS. HistoricalrealPARAM+portablepack0dedb655:50actual+360neighbors PASS. RegisteredAgentproducer/requester outbox still UNQUALIFIED; oldpublishTimelineRender intact. No D13retirement.
+Materialization candidatead1addf27e970191ad077429889a1716eec24dc1/tree4f52e5f1: complete source-bound join/ownslot/durable map/global reservations implemented,+318net product/183helper.357neutral checkpoint;161finaldirect/2stagedxfail+27actualM1PASS. NEWnative-mappositives NOTqualified: normalfullitemrefartifact missing. Independentboundaryreview active. BothmanagercarrierACKs satisfied; no ID-map/spelling overwrite authority, derived slots not semanticbirths.
+WITHDRAWN: interrupted rt-m2-itemref-official-artifacts/0.2.5 from b3c/10c partialschema missing8ordinarydefs; NEVERpin/merge/publish. OrchestratorSIGTERM/INTERRUPTED despiteexit0; WIP preserved. AwaitNEWAgentfullordinary+4ref unionfreeze, thenfreshnormal0.2.5generation. Superset releasegate nowbeingadded; no inventedunion.
+Held cuts: core288fef1 1374default+49actual+9portable PASS; includesD13 410 so cannotlanduntilreplacementqualified/split. CatalogKEEP correctionf5698fd2 restores5exactmainbodies;192catalog/reference/door PASS, no disclosureassertionlost. Five originalcanonicalpositives stillunported/untouched. Only deletion-ledger.runtime.md edited; D04/RT01–04HELD/RK01KEEP. Text UTF8/empty CAS firstuse kept; design AFTERBundle2. Historical timeline reuse keeps newer project-global child head.
+In flight (7): rt-m2-popup-verified-media-read; rt-m2-ordinary-http-conformance; rt-m3-capture-content-authority; rt-m3-capture-authority-boundary-tests; rt-m2-schema-generation-compatibility-gate; rt-m2-duplicate-add-native-fixture; rt-m2-materialization-join-boundary-review. Fullqueued isseparateheavyjob. Completedreviewedbranches HELD, no M2mergerequest.
+Next 5:1) finalRuntimefull classification+Appopaqueparity/globalM1record;2) Agentfinalordinary0.2.3pair/Appqualify, reviewedpopup0.2.6read/pin;3) fix canonicalcapturecontent before CAS/taskwrites with12negatives+honestuncertifiedworkingcopy;4) NEWfullmaterializationunion/compatgate/normalartifact+actualjoinedownslot;5) D13registeredAgent/outbox/historicalhandoff+parentinsertion qualification andremainingwriterports/deletions, theneligiblebatchmerges+ONEfull.
+Blocked/needs: globalM1record; Agent finalordinarypair +fullitemrefunion +producerownedpin; actualrequester/assembler settledproposal+pendingrender consumption. No ownerfilm. Capturewithoutauthoritativeworkingcandidate MUSTcas-only/uncertified andpreviewworks; no newDTO/endpoint/inlineauthority/sceneevalinsave.
+Gates: M1targeted2/3/4/5PASS, postmergefullqualified0NEW; M3capture1/7BLOCKED;6fullwriters/viewerOPEN;7deliveryOPEN. Bundle1 remains FROZEN6be/3bf, Appbrowser1PASS136s. No M4work.
+Inbox: ACKthrough02:19capture decision,02:18Agentfinal4c145pinQA,02:12popupread,02:10stopwithdrawnitemref/02:09partialwithdrawal, nullspeedM1authorization+capacity. Added own firstclip/CLI/ordinaryHTTP fixed-Agent suites. No duplicatefull/perworkerfull.
+Resources:~15GBfree. Preserve a76/f423/b2/356/frozenAppsource LEASES. M1merged/abandonednoops andinterruptedwithdrawnbranch recyclablebyorchestratoronly; refs/reportskept. One-timeopaqueaudit1822analyzed/294receipts/0materialization/0additionalcandidates,172unreadable+6unsupported; knownprobeCONFIRMED, remote/ownerUNKNOWN, norepairs/secondpass. No managerproductedits/gitmutations/pushes.
+"""Real CAS/public Runtime admission -> claim -> Agent source materialization.
+
+No SQL fixtures, admission doubles, renderer or sockets. The strict xfails keep
+the canonical-source requirement visible until Runtime verifies capture content.
+"""
+import hashlib
+import json
+from copy import deepcopy
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+from astrid.core.execution.generic_host import GenericPackHost, HostError
+from astrid.core.rendering.contracts import RenderRequest
+from astrid.core.rendering.verified_source import SOURCE_ENV
+from astrid.core.timeline.authoring_bundle import open_authoring_bundle, preview_authoring_candidate
+from astrid.sdk.timeline_filmstrip import prepare_filmstrip
+from tests.helpers.runtime import use_runtime
+from tests.timeline.test_authoring_bundle import AUDIO, OLD, _closure, _replace_values
+
+pytestmark = pytest.mark.integration
+CAPABILITY = "rendering.timeline_visualize"
+# Runtime's default task capability digest when the body names none.
+CAPABILITY_DIGEST = "sha256:" + hashlib.sha256(CAPABILITY.encode()).hexdigest()
+
+
+class CaptureRuntime:
+    """Only adapt client method/response shapes; all custody stays in Runtime."""
+
+    def __init__(self, service, project):
+        self.service, self.project_id = service, project
+        self.media = SimpleNamespace(list=self.media_list)
+        self._remote = SimpleNamespace(_transport=self)
+
+    def get_project(self, project):
+        row = self.service.store.get_project(project)
+        return {**row, "project_id": row["id"]}
+
+    def list_timelines(self, project, **_kwargs):
+        return [[self.service.get_project_timeline(project, "main")], None]
+
+    def media_list(self, project, **kwargs):
+        page = self.service.list_project_objects(project, **kwargs)
+        return [page["items"], page["next_cursor"]]
+
+    def get_project_parent_composition_revision(self, *args):
+        return self.service.get_project_parent_composition_revision(*args)
+
+    def get_project_shot_revision(self, *args):
+        return self.service.get_project_shot_revision(*args)
+
+    def get_project_timeline_revision(self, *args):
+        return self.service.get_project_timeline_revision(*args)
+
+    def get_object(self, digest):
+        return self.service.object(digest)[1]
+
+    def snapshot(self, working_copy=False):
+        inputs = {"composed_capture": True, "timeline_ref": "main", "revision_id": "parent-1"}
+        if working_copy:
+            parent = self.get_project_parent_composition_revision(self.project_id, "main", "parent-1")
+            shot = self.get_project_shot_revision(self.project_id, "shot-shared", "shot-rev-1")
+            internal = self.get_project_timeline_revision(self.project_id, "main", "internal-1")
+            bundle = open_authoring_bundle(parent, shot_revisions=[shot], internal_timeline_revisions=[internal])
+            # A real unsaved edit; it must not silently become the saved base.
+            bundle["parent"]["config"]["opaque_parent_config"] = {"unsaved": True}
+            inputs["authoring_preview"] = preview_authoring_candidate(bundle)
+        prepared = prepare_filmstrip(inputs, project=self.project_id, client=self)
+        return prepared["capture_snapshot"]
+
+    def ref(self, snapshot):
+        encoded = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+        digest = "sha256:" + hashlib.sha256(encoded).hexdigest()
+        response = self.service.ingest(self.project_id, encoded, media_type="application/json",
+                                       idempotency_key="capture-" + digest.split(":")[1])
+        assert response["data"]["object_id"] == digest
+        authority = snapshot["metadata"]["capture_authority"]
+        ref = {"digest": digest, "project_id": self.project_id, "timeline_id": "main",
+               "revision_id": authority["parent_revision_id"],
+               "revision_digest": authority["parent_content_digest"], "source_kind": "revision"}
+        marker = snapshot["metadata"].get("working_copy")
+        if marker:
+            ref.update(source_kind="working_copy", revision_digest=marker["candidate_digest"], working_copy={
+                "candidate_digest": marker["candidate_digest"], "publication_digest": marker["publication_digest"],
+                "base_revision_id": marker["base_parent"]["revision_id"],
+                "base_revision_digest": marker["base_parent"]["content_digest"]})
+        return ref
+
+    def admit(self, snapshot, *, inline=False, duplicate=None):
+        authority = snapshot["metadata"].get("capture_authority", {})
+        context = {"mode": "composed_capture", "project_id": self.project_id, "timeline_id": "main",
+                   "revision_id": authority.get("parent_revision_id")}
+        if inline:
+            context["capture_snapshot"] = snapshot
+        else:
+            context["capture_snapshot_ref"] = self.ref(snapshot)
+        filmstrip = deepcopy(context)
+        if duplicate is not None:
+            filmstrip["capture_snapshot_ref"] = duplicate
+        body = {"project": self.project_id, "capability_id": CAPABILITY,
+                "input_object_ids": [item["object_id"] for item in self.media_list(self.project_id)[0]],
+                "spec": {"inputs": {"filmstrip_authority": json.dumps(filmstrip)}, "authority_context": context}}
+        task = self.service.create_task(body)["task"]
+        claim = self.service.claim_next({"executor_id": "probe", "capability_ids": [CAPABILITY],
+                                        "runtime_epoch": self.service.health()["runtime_epoch"]})
+        assert claim["task_id"] == task["id"]
+        return task
+
+    def materialize(self, task, attempt):
+        return GenericPackHost(pack_roots=[], client=self)._materialize_inputs(task["spec"], attempt)
+
+
+@pytest.fixture
+def runtime(tmp_path):
+    use_runtime()
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    try:
+        project = service.create_project({"slug": "source-probe", "name": "Source probe"})["id"]
+        service.create_timeline(project, "main", idempotency_key="timeline")
+        service.register_capability({"capability_id": CAPABILITY, "definition_digest": CAPABILITY_DIGEST})
+        service.register_executor({"executor_id": "probe", "capabilities": [CAPABILITY]})
+        replacements = {}
+        for old, data in ((OLD, b"source picture"), (AUDIO, b"source audio")):
+            replacements[old] = service.ingest(project, data, idempotency_key="media-" + old.split(":")[1])["data"]["object_id"]
+        parent, shots, internals = (_replace_values(part, replacements) for part in _closure(shared=False))
+        # This probe does not need a text-binding authority fixture.
+        shots[0]["payload"]["text_bindings"] = []
+        for row in [*shots, *internals]:
+            row.pop("content_digest")
+        service.publish_parent_composition(project, "main", {
+            "project_id": project, "timeline_id": "main", "expected_head": None,
+            "parent_revision_id": "parent-1", "parent_composition": parent["payload"],
+            "shot_revisions": shots, "internal_timeline_revisions": internals,
+        }, idempotency_key="source")
+        yield CaptureRuntime(service, project)
+    finally:
+        service.close()
+
+
+@pytest.mark.parametrize("working_copy", [False, True])
+@pytest.mark.parametrize("inline", [False, True])
+def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtime, tmp_path, monkeypatch, working_copy, inline):
+    snapshot = runtime.snapshot(working_copy)
+    task = runtime.admit(snapshot, inline=inline)
+    values = runtime.materialize(task, tmp_path / "attempt")
+    binding = values.timeline_source.read()
+    assert binding["snapshot"] == snapshot
+    assert json.loads(Path(values["timeline"]).read_text()) == snapshot["config"]
+    assert binding["authority"] == snapshot["metadata"]["capture_authority"]
+    assert binding["authority"]["expansion"]["shots"][0]["content_digest"]
+    assert binding["authority"]["expansion"]["children"][0]["config_hash"]
+    assert binding["ref"]["source_kind"] == ("working_copy" if working_copy else "revision")
+    if working_copy:
+        marker = snapshot["metadata"]["working_copy"]
+        assert snapshot["config"]["opaque_parent_config"] == {"unsaved": True}
+        assert binding["ref"]["revision_digest"] == marker["candidate_digest"]
+        assert binding["ref"]["working_copy"]["base_revision_digest"] == marker["base_parent"]["content_digest"]
+    monkeypatch.setenv(SOURCE_ENV, values.timeline_source._anchor)
+    parsed = RenderRequest(schema_version=1, timeline_path=values["timeline"],
+                           assets_registry_path=values["assets_registry"], output_name="probe.mp4")
+    assert parsed.verified_source.read() == binding
+
+
+# All 12 cases are proven admitted: Runtime's public capture admission checks the parent revision row and the
+# working-copy marker, not config/registry/shot digests against the saved or candidate closure. Restored by
+# Runtime verifying capture content (design/runtime-coordination.md "capture content certification").
+@pytest.mark.xfail(strict=True, reason="Runtime admits changed capture content/pins as canonical source")
+@pytest.mark.parametrize("field", ["config", "registry", "shot_digest"])
+@pytest.mark.parametrize("inline", [False, True])
+@pytest.mark.parametrize("working_copy", [False, True])
+def test_arbitrary_capture_cannot_acquire_canonical_source(runtime, tmp_path, field, inline, working_copy):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    snapshot = runtime.snapshot(working_copy)
+    original = deepcopy(snapshot)
+    if field == "config":
+        snapshot["config"]["clips"][0]["hold"] = 123
+    elif field == "registry":
+        # Same real project-owned media/dependency pins; only its meaning changes.
+        entry = next(iter(snapshot["registry"]["assets"].values()))
+        entry["opaque_asset"] = "not from the immutable source"
+    else:
+        snapshot["metadata"]["capture_authority"]["expansion"]["shots"][0]["content_digest"] = "sha256:" + "0" * 64
+    try:
+        task = runtime.admit(snapshot, inline=inline)
+        values = runtime.materialize(task, tmp_path / "attempt")
+    except (RuntimeErrorBase, HostError):
+        return
+    # Runtime must verify the exact projection/candidate, or leave it native.
+    assert snapshot != original
+    assert values.timeline_source is None
+
+
+def test_replaced_duplicate_capture_ref_is_refused_at_host(runtime, tmp_path):
+    snapshot = runtime.snapshot()
+    replacement = deepcopy(snapshot)
+    replacement["config"]["clips"][0]["hold"] = 123
+    task = runtime.admit(snapshot, duplicate=runtime.ref(replacement))
+    with pytest.raises(HostError, match="differs from admitted context"):
+        runtime.materialize(task, tmp_path / "attempt")
+
+
+def test_native_compiled_capture_does_not_acquire_canonical_source(runtime, tmp_path):
+    snapshot = runtime.snapshot()
+    # Neither selector remains; canonical_timeline alone would make Runtime publish a revision ref.
+    snapshot["metadata"].pop("capture_authority")
+    snapshot["metadata"].pop("canonical_timeline", None)
+    # Ordinary compiled capture remains accepted, without a canonical selector.
+    task = runtime.admit(snapshot, inline=True)
+    values = runtime.materialize(task, tmp_path / "attempt")
+    assert values.timeline_source is None
+
+ERROR: You’ve hit your usage limit. Visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 24th, 2026 8:40 PM.
+ERROR: You’ve hit your usage limit. Visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 24th, 2026 8:40 PM.
+tokens used
+39,446

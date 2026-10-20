@@ -1,0 +1,400 @@
++    command = capture_clip_delete(fixture['bundle'], fixture['select'])
++    assert command == fixture['command']
++    plan = execute(fixture['bundle'], [command])
++    assert plan.bundle == fixture['after_bundle'] and plan.records == fixture['records']
++    Draft202012Validator(operations()['clip.delete'].parameters).validate({})
+diff --git a/tests/sdk/test_timeline_commit_provider.py b/tests/sdk/test_timeline_commit_provider.py
+index 183197ef573555719b7ff1f9be827a71d443dd9c..ffe8c8ac8b6ea1daeaaf8bbd228cc2ef5629f2df
+--- a/tests/sdk/test_timeline_commit_provider.py
++++ b/tests/sdk/test_timeline_commit_provider.py
+@@ -1234,3 +1234,158 @@
+         realm.call([inverse([undone['receipt']['receipt_id']])])
+     assert error.value.failure['details']['reason'] == 'intervening_write'
+     assert realm.head == head and len(realm.accepted) == count
++
++
++@pytest.mark.parametrize('identity', ['clip-a', 'clip-b', 'clip-c'])
++@pytest.mark.parametrize('source_kind', ['transcript', 'config'])
++def test_native_clip_delete_reload_inverse_redo_preserves_rows_order_and_retained_pins(identity, source_kind):
++    from astrid.sdk.timeline.capture import capture_clip_delete
++    from tests.editing_conformance.test_recipe_clip_delete import delete_document
++
++    document = delete_document()
++    source = source_fixture(source_kind)
++    document['dependency_manifest']['documents'] = [source['pin']]
++    realm = DetachedRealm(document)
++    key = _digest(source['pin'])
++    realm.live_sources[key] = detached(source)
++    call = capture_clip_delete(bundle_from_document(document), 'parent/clip:' + identity)
++    deleted = realm.call([call])
++    removed_document = detached(deleted['data']['canonical_document'])
++    assert deleted['data']['commands'] == [call] and deleted['data']['id_map'] == {}
++    assert removed_document['shot_revisions'] == document['shot_revisions']
++    assert removed_document['internal_timeline_revisions'] == document['internal_timeline_revisions']
++    assert removed_document['dependency_manifest'] == document['dependency_manifest']
++    assert removed_document['parent_revision']['payload']['registry'] == document['parent_revision']['payload']['registry']
++    assert realm.retained_sources[key] == source
++    # Every call constructs a fresh provider and reloads detached accepted JSON.
++    realm.live_sources.clear()
++    undo = realm.call([inverse([deleted['receipt']['receipt_id']])])
++    restored = undo['data']['canonical_document']['parent_revision']['payload']
++    assert restored == document['parent_revision']['payload']
++    assert json.dumps(restored['clips']) == json.dumps(document['parent_revision']['payload']['clips'])
++    assert undo['data']['canonical_document']['dependency_manifest'] == document['dependency_manifest']
++    redo = realm.call([inverse([undo['receipt']['receipt_id']])])
++    assert redo['data']['canonical_document'] == removed_document
++    assert realm.retained_sources[key] == source
++
++
++def test_native_delete_stale_disjoint_opaque_publications_preserve_both():
++    from astrid.sdk.timeline._recording import Recording
++    from astrid.sdk.timeline.capture import capture_clip_delete
++
++    realm = DetachedRealm()
++    original = detached(realm.documents['parent-1'])
++    base = detached(realm.head)
++    call = capture_clip_delete(bundle_from_document(original), 'parent/clip:clip-a')
++    candidate = bundle_from_document(original)
++    ctx = Recording(candidate, {'schema_version': 1, 'op': 'fixture.property', 'version': '1',
++                                'select': 'parent/clip:clip-b', 'args': {}}, 0)
++    ctx.write('parent/clip:clip-b', ['earlier'], {'nullable': None})
++    ctx.compile_mirrors()
++    accept_recorded_fixture(realm, candidate, [ctx.finish(capture=True)])
++    removed = realm.call([call], base=base)
++    assert removed['data']['status'] == 'rebased'
++    candidate = bundle_from_document(realm.documents[realm.head['revision_id']])
++    ctx = Recording(candidate, {'schema_version': 1, 'op': 'fixture.property', 'version': '1',
++                                'select': 'parent/clip:clip-b', 'args': {}}, 0)
++    ctx.write('parent/clip:clip-b', ['opaque'], {'literal': 'parent/clip:clip-a', 'nullable': None})
++    ctx.compile_mirrors()
++    accept_recorded_fixture(realm, candidate, [ctx.finish(capture=True)])
++    undone = realm.call([inverse([removed['receipt']['receipt_id']])])
++    rows = undone['data']['canonical_document']['parent_revision']['payload']['clips']
++    assert [row['id'] for row in rows] == ['clip-a', 'clip-b']
++    assert rows[0] == original['parent_revision']['payload']['clips'][0]
++    assert rows[1]['earlier'] == {'nullable': None}
++    assert rows[1]['opaque'] == {'literal': 'parent/clip:clip-a', 'nullable': None}
++
++
++@pytest.mark.parametrize('change', ['membership', 'order-aba', 'dependency-aba', 'target-source-aba'])
++def test_native_delete_provider_refuses_structural_or_dependency_publications_atomically(change):
++    from astrid.sdk.timeline._command_state import ABSENT
++    from astrid.sdk.timeline._recording import Recording
++    from astrid.sdk.timeline.capture import capture_clip_delete
++
++    realm = DetachedRealm()
++    base = detached(realm.head)
++    original = bundle_from_document(realm.documents['parent-1'])
++    command = capture_clip_delete(original, 'parent/clip:clip-a')
++    accepted = realm.call([command])
++    candidate = bundle_from_document(realm.documents[realm.head['revision_id']])
++    ctx = Recording(candidate, {'schema_version': 1, 'op': 'fixture.property', 'version': '1',
++                                'select': 'parent/clip:clip-b', 'args': {}}, 0)
++    if change == 'membership':
++        ctx.create('parent', 'clip', {'id': 'new', 'track': 'picture', 'at': 9, 'hold': 1})
++    elif change == 'order-aba':
++        ctx.write('parent', ['clips'], detached(candidate['parent']['clips']))
++    elif change == 'dependency-aba':
++        ctx.write('parent/clip:clip-b', ['app', 'on'], 'c01')
++        ctx.assign('parent/clip:clip-b', ['app', 'on'], ABSENT)
++    else:
++        # The deleted identity is still absent after the intervening publication.
++        ctx.write('parent/clip:clip-a', [], detached(original['parent']['clips'][0]))
++        ctx.assign('parent/clip:clip-a', [], ABSENT)
++    ctx.compile_mirrors()
++    accept_recorded_fixture(realm, candidate, [ctx.finish(capture=True)])
++    head, count = detached(realm.head), len(realm.accepted)
++    for call, on in ((inverse([accepted['receipt']['receipt_id']]), head), (command, base)):
++        with pytest.raises(CommitRejected) as error:
++            realm.call([call], base=on)
++        assert error.value.failure['details']['reason'] in {'intervening_write', 'selection_changed'}
++        assert realm.head == head and len(realm.accepted) == count
++
++
++@pytest.mark.parametrize('previously_created', [False, True])
++def test_native_delete_retired_clip_identity_cannot_be_reallocated(native_staging_operations, previously_created):
++    from astrid.sdk.timeline.capture import capture_clip_delete
++
++    realm = DetachedRealm()
++    identity = 'created' if previously_created else 'clip-a'
++    row = {'id': identity, 'track': 'picture', 'at': 3, 'hold': 1}
++    create = {'schema_version': 1, 'op': 'fixture.clip-create', 'version': '1',
++              'select': 'parent', 'args': {'row': row}}
++    if previously_created:
++        realm.call([create])
++    bundle = bundle_from_document(realm.documents[realm.head['revision_id']])
++    deletion = realm.call([capture_clip_delete(bundle, 'parent/clip:' + identity)])
++    head, count = detached(realm.head), len(realm.accepted)
++    with pytest.raises(CommitRejected) as error:
++        realm.call([create])
++    assert error.value.failure['details']['reason'] == 'identity_collision'
++    assert realm.head == head and len(realm.accepted) == count
++    # Historical restoration remains the only admitted reuse.
++    restored = realm.call([inverse([deletion['receipt']['receipt_id']])])
++    assert any(clip['id'] == identity for clip in restored['data']['canonical_document']['parent_revision']['payload']['clips'])
++
++
++def test_native_delete_then_reallocate_in_same_batch_is_atomic(native_staging_operations):
++    from astrid.sdk.timeline.capture import capture_clip_delete
++
++    realm = DetachedRealm()
++    document = detached(realm.documents['parent-1'])
++    deletion = capture_clip_delete(bundle_from_document(document), 'parent/clip:clip-a')
++    create = {'schema_version': 1, 'op': 'fixture.clip-create', 'version': '1',
++              'select': 'parent', 'args': {'row': document['parent_revision']['payload']['clips'][0]}}
++    head = detached(realm.head)
++    with pytest.raises(CommitRejected) as error:
++        realm.call([deletion, create])
++    assert error.value.failure['details']['reason'] == 'identity_collision'
++    assert realm.head == head and realm.accepted == [] and realm.documents == {'parent-1': document}
++
++
++def test_native_move_then_delete_succeeds_and_unsupported_batch_keeps_original_document():
++    from astrid.sdk.timeline.capture import capture_clip_delete
++
++    realm = DetachedRealm()
++    realm.call([realm.move()])
++    document = detached(realm.documents[realm.head['revision_id']])
++    call = capture_clip_delete(bundle_from_document(document), 'parent/clip:clip-a')
++    deletion = realm.call([call])
++    undo = realm.call([inverse([deletion['receipt']['receipt_id']])])
++    assert undo['data']['canonical_document'] == document
++    head, count = detached(realm.head), len(realm.accepted)
++    invalid = {'schema_version': 1, 'op': 'clip.delete', 'version': '1',
++               'select': 'occurrence:occ-a/clip:clip-a', 'args': {}}
++    with pytest.raises(CommitRejected) as error:
++        realm.call([realm.move(), invalid])
++    assert error.value.failure['details']['reason'] == 'unsupported_ownership'
++    assert realm.head == head and len(realm.accepted) == count
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+from tests.editing_conformance.test_recipe_clip_delete import portable_golden, FIXTURE
+import json
+FIXTURE.write_text(json.dumps(portable_golden(), sort_keys=True, separators=(',', ':'), ensure_ascii=False) + '\\n')
+print('golden bytes', FIXTURE.stat().st_size)
+PY" in /home/user/work/wt/agt-m2-clip-delete
+ succeeded in 318ms:
+golden bytes 46406
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD make cycles PY=/home/user/work/venv-agent/bin/python' in /home/user/work/wt/agt-m2-clip-delete
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_native_timeline_facades.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/timeline/test_inverses.py tests/timeline/test_shot_composition.py tests/timeline/test_shot_composition_projection.py' in /home/user/work/wt/agt-m2-clip-delete
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_delete_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_recipe_clip_delete.py tests/sdk/test_timeline_commit_provider.py; git diff --check' in /home/user/work/wt/agt-m2-clip-delete
+ succeeded in 293ms:
+All checks passed!
+
+ succeeded in 1291ms:
+cross-package 2-cycles: 6
+  _shared <-> contracts
+  element <-> pack
+  element <-> timeline
+  execution <-> generation
+  execution <-> pack
+  execution <-> rendering
+larger SCCs (>=3 nodes): 1
+  cli -> element -> execution -> generation -> pack -> registry -> rendering -> timeline
+
+OK: no new cycles (fixed 0, remaining 6).
+✓ import cycles (no new cross-package cycle)
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import json
+from pathlib import Path
+p=Path('tests/editing_conformance/fixtures/recipe_clip_delete.json')
+f=json.loads(p.read_text())
+r=f['records'][0]
+print({'golden_bytes': p.stat().st_size, 'reads':len(r['reads']), 'selections':len(r['selections']), 'authored_writes':len(r['writes']), 'derived_writes':len(r['derived_writes']), 'created':r['created']})
+PY" in /home/user/work/wt/agt-m2-clip-delete
+ succeeded in 0ms:
+{'golden_bytes': 46406, 'reads': 130, 'selections': 2, 'authored_writes': 1, 'derived_writes': 1, 'created': []}
+
+ succeeded in 30686ms:
+........................................................................ [ 17%]
+........................................................................ [ 35%]
+........................................................................ [ 52%]
+........................................................................ [ 70%]
+........................................................................ [ 87%]
+...................................................                      [100%]
+411 passed, 1 deselected in 29.98s
+
+codex
+The implementation and portable golden are ready. Import-cycle checks passed; typechecking is blocked by missing YAML stubs and incompatible NumPy stub syntax in the shared environment. The handoff report will include those limits, the conservative dependency refusals, and the exact App capture source.
+
+exec
+/bin/bash -lc "git diff --check; git diff --numstat; wc -l astrid/sdk/timeline/_delete_commands.py tests/editing_conformance/test_recipe_clip_delete.py; sed -n '968,983p' tests/timeline/test_authoring_bundle.py" in /home/user/work/wt/agt-m2-clip-delete
+ succeeded in 547ms:
+6	0	astrid/sdk/timeline/capture.py
+6	2	astrid/sdk/timeline/commands.py
+16	4	astrid/sdk/timeline/commit.py
+155	0	tests/sdk/test_timeline_commit_provider.py
+   48 astrid/sdk/timeline/_delete_commands.py
+  243 tests/editing_conformance/test_recipe_clip_delete.py
+  291 total
+    }
+    assert {row["media_id"] for row in inspection["media"]} == {OLD, AUDIO}
+    assert inspection["omissions"] == {"placements": 1}
+    assert "opaque_parent" not in json.dumps(inspection)
+    text = format_authoring_inspection(inspection)
+    assert "head=parent-1" in text
+    assert "placement occ-2" in text
+
+
+@pytest.mark.integration  # a real Runtime from a second checkout
+def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path):
+    from runtime_protocol import service as runtime_service
+    from runtime_protocol import store as runtime_store
+
+    root = tmp_path / "realm"
+    runtime_store.RealmStore.initialize(root).close()
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-delete/notes/report.md <<'EOF'
+# agt-m2-clip-delete
+
+Implemented the first bounded native "'`clip.delete` on base `e49f422a`. Ready for manager review; no integration merge, Runtime changes, schema-artifact refresh, or git mutations performed.
+
+## Result and contract
+
+- `astrid/sdk/timeline/_delete_commands.py` registers a deterministic parent-only whole-row removal using existing Recording/collection/order/inverse primitives. Its parameter schema is closed: an empty object only. Version `1`, one exact `parent/clip:ID`, empty intent, exact singleton resolved identity. Missing/duplicate identities, divergent mirrors, unsupported ownership, forged capture claims and extra args refuse atomically.
+- The sole authored write is the scoped clip row becoming absent. The handler explicitly reads the entire original row (including source selectors and opaque bytes), captures collection shape/membership/order, and guards declared semantic fields. Existing mirror compilation supplies derived mirror writes. No authored array/snapshot patch, registry cleanup, handler IO, clock, randomness or ID allocation.
+- Exact first/middle/last order, absent/null/opaque fields, payload/config/null collection shapes, shared child closures, registry and immutable document/media pins survive delete → reload → inverse → redo. Unrelated opaque property publications rebase and survive undo. Original M1 move → fresh delete → reload/undo succeeds.
+- State, Recording, collection/order, inverse and rebase implementations are unchanged. Added product lines total **76**, including the **48-line** delete module and the reservation correction below (within the approximate 100-line budget).
+
+## Necessary additional seam, demonstrated before fixing
+
+`_check_reservations` previously reserved only recorded-created IDs. A bootstrap clip could be deleted and then reallocated by an ordinary registered create recipe. Before fixing, this exact command produced **1 failed, 1 passed, 100 deselected** (the bootstrap case failed to refuse; the recorded-created case correctly refused):
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider.py -k native_delete_retired
+```
+
+This finding was recorded in this report before the fix. The small correction in `astrid/sdk/timeline/commit.py` also reserves explicit scoped whole-row removals from authenticated records and checks batch stages in execution order. Tests cover bootstrap and recorded-created IDs, same-batch delete/reallocate refusal without acceptance, and authorized inverse restoration. No new history fields or reference system were introduced.
+
+## Exact App capture and portable golden
+
+Capture source: `/home/user/work/wt/agt-m2-clip-delete/astrid/sdk/timeline/capture.py`, `capture_clip_delete(bundle, select)` → `_capture` → authoritative `commands.execute`. Registered args schema: `_delete_commands.PARAMETERS`; handler: `_delete_commands.delete`.
+
+Input to capture (the sealed command additionally contains executor-produced guards):
+
+```json
+{"schema_version":1,"op":"clip.delete","version":"1","select":"parent/clip:clip-b","args":{},"intent":{}}
+```
+
+Portable JSON: `/home/user/work/wt/agt-m2-clip-delete/tests/editing_conformance/fixtures/recipe_clip_delete.json`. It contains `bundle`, `select`, the exact `command`, `after_bundle`, and complete authoritative `records`; 46,406 bytes, 130 reads, two selections, one authored write, one derived mirror write, no created IDs. Executable fixture source: `portable_golden()` in `/home/user/work/wt/agt-m2-clip-delete/tests/editing_conformance/test_recipe_clip_delete.py`. Its test recomputes the golden and verifies native execution exactly. No App code was changed or qualified.
+
+## Decisions and known limits
+
+Main reference semantics were read in `astrid/core/timeline/astrid_ns.py`, `moments.py`, `cuts.py`, `shot_composition_migration.py`, `astrid/sdk/timeline_intent.py`, and `astrid/sdk/timeline/{lookup,reflow}.py`.
+
+There is no reusable recorder query proving all existing word/cut/formula/sequence dependencies safe. This bounded handler therefore **refuses conservatively** with `unsupported_dependency` when declared semantic relations/source features are nonempty anywhere in parent/occurrence clip rows, or declared film sequences/formulas/slots or legacy pinned groups are present. Incoming transitions are also refused. It records the exact declared paths, including their absence, so later dependency changes and ABA writes conflict. It does not parse arbitrary opaque JSON, strings, display IDs or invented clip-reference fields. Opaque literals resembling scoped refs remain untouched.
+
+Consequences: some semantically independent deletes are intentionally refused; broad source/collection guards can conflict on occurrence membership or unchanged writes to declared relation fields. A stale delete across another M1 move can conflict because move explicitly clears guarded relation fields; a fresh delete after a move is covered and passes. Dependency resolution/wider concurrency policy needs a later settled slice.
+
+Occurrence/shared deletion, legacy shot rows and nested child ownership explicitly refuse with `unsupported_ownership`; trim/split/media-add and registry cleanup remain future work. Unknown extension contents remain opaque; no claim is made to resolve undeclared extension references.
+
+## Validation on final source
+
+From `/home/user/work/wt/agt-m2-clip-delete`:
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_native_timeline_facades.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/timeline/test_inverses.py tests/timeline/test_shot_composition.py tests/timeline/test_shot_composition_projection.py
+```
+
+**411 passed, 1 deselected in 29.98s.** The deselected test is the existing integration-marked `test_candidate_compiler_integrates_with_runtime_atomic_publication`; repository default lane selection excludes it. No tests were skipped, weakened, or marked xfail by this change; original test bodies are unchanged.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_delete_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commit.py tests/editing_conformance/test_recipe_clip_delete.py tests/sdk/test_timeline_commit_provider.py
+```
+
+**PASS: All checks passed.** `git diff --check` also **PASS**.
+
+```sh
+PYTHONPATH=$PWD make structure ruff mypy cycles PY=/home/user/work/venv-agent/bin/python
+```
+
+Structure **PASS** (15 existing violations, zero new/fixed). The command stops at the Ruff baseline gate: **2,217 findings vs stored 2,220**, which requires locking in unrelated baseline improvement. No baseline was changed. Base versions of all four modified existing Python files also pass Ruff via stdin, and all newly added files pass; this change does not account for the baseline mismatch.
+
+```sh
+PYTHONPATH=$PWD make mypy cycles PY=/home/user/work/venv-agent/bin/python
+```
+
+**BLOCKED** at mypy, exit 2: shared environment lacks YAML typing stubs and installed NumPy stubs contain syntax incompatible with the configured target. Dependencies and typecheck settings were not changed; cycles was not reached in this command.
+
+```sh
+PYTHONPATH=$PWD make cycles PY=/home/user/work/venv-agent/bin/python
+```
+
+**PASS:** no new import cycles; six existing two-package cycles remain.
+
+Full suites, full `make check`, sockets/browser/live lanes, real Runtime acceptance and App golden consumption were **not run**, per task boundary. The provider tests use the existing detached in-memory Runtime ABI fixture with real Agent execution; they do not claim transport/browser qualification.
+
+## Recommended next steps
+
+Manager review the bounded dependency refusals and the demonstrated reservation correction. After PLAN records the M1 gate, integrate through the normal queue and hand the published capture/golden to the App writer worker. Keep unsupported ownership/semantic cases visibly refused; widen them through later native slices. Resolve the unrelated lint-baseline/shared-typecheck environment issues in their owning lane before claiming repository gates green.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-delete/commit-msg <<'"'EOF'
+feat(timeline): add guarded native parent clip deletion
+
+Capture scoped whole-row removals with the native recorder and reuse ordered
+inverse restoration. Publish a portable command golden and refuse unsupported
+ownership or semantic dependency proof without touching opaque data or pins.
+
+Reserve explicitly removed identities, including bootstrap IDs and earlier
+batch removals, while retaining authenticated inverse restoration.
+
+Validate with 411 targeted tests and changed-file lint. Repository-wide lint
+baseline and shared-environment mypy issues remain documented in the report.
+EOF
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-delete/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-delete/commit-msg.txt" in /home/user/work/wt/agt-m2-clip-delete
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root = Path.cwd()
+for name in ('.pytest_cache', '.mypy_cache', '.ruff_cache'):
+    path = root / name
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+for path in root.rglob('__pycache__'):
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-clip-delete
+ succeeded in 660ms:
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M tests/sdk/test_timeline_commit_provider.py
+?? astrid/sdk/timeline/_delete_commands.py
+?? tests/editing_conformance/fixtures/recipe_clip_delete.json
+?? tests/editing_conformance/test_recipe_clip_delete.py
+
+codex
+Implemented bounded parent `clip.delete`, native capture/golden, ordered undo/redo, and retired-ID protection. Unsupported ownership and semantic dependencies refuse explicitly.
+
+- **411 tests passed**, 1 existing integration case deselected.
+- Changed-file lint, structure, and cycle checks passed.
+- Repository lint baseline and shared-environment mypy remain blocked.
+- Full/browser/Runtime integration tests were not run.
+
+[Report with exact commands and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-delete/notes/report.md). Both commit-message files are written.
+
+Next: manager review, then App adoption after the M1 gate.
+tokens used
+191,347
+Implemented bounded parent `clip.delete`, native capture/golden, ordered undo/redo, and retired-ID protection. Unsupported ownership and semantic dependencies refuse explicitly.
+
+- **411 tests passed**, 1 existing integration case deselected.
+- Changed-file lint, structure, and cycle checks passed.
+- Repository lint baseline and shared-environment mypy remain blocked.
+- Full/browser/Runtime integration tests were not run.
+
+[Report with exact commands and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-clip-delete/notes/report.md). Both commit-message files are written.
+
+Next: manager review, then App adoption after the M1 gate.

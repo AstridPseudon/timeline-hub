@@ -1,0 +1,400 @@
++A genuinely overrange raw request is refused even if rounding would fit.
++Existing native source identity, unsupported source-map/window, provenance,
++capture, replay and inverse guards remain in force.
++
++The exact policy (all binary64 conversions use nearest, ties to even):
++
++```text
++Q = 1_000_000
++E(x) = the exact rational value of the input binary64 number x
++N(x) = binary64(nearest_even_integer(Q * E(x)) / Q)
++I = N(in)
++O = N(out)
++if O > D:
++    O = binary64(floor(Q * E(D)) / Q)
++H = N(binary64(O - I))
++refuse if O <= I or H <= 0
++write from=I, to=O, hold=H
++```
++
++`N` is the existing Python `round(float(x), 6)`; unrelated `_r` calls are
++unchanged. The interior floor uses exact multiplication, with no epsilon.
++In particular, `D=1.0485929999999999` has an interior endpoint `1.048592`;
++binary64 `D * Q` rounds up to `1048593.0`, so `Math.floor(D * Q) / Q` is
++incorrect. Decimal-string ties and `Math.round(x * Q)` also do not reproduce
++Python's binary64 nearest rule; the vectors include both tie directions.
++
++The policy refuses a positive raw interval if its applied endpoints coincide,
++including after moving the out point inward. It never stretches a collapsed
++interval to manufacture a minimum duration. A file shorter than one
++microsecond has no positive six-decimal source window. This is source
++precision only: rational fps and half-open playback boundaries are unchanged.
++
++Portable vectors are in
++`tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json`.
++Start each case with the unchanged sibling `recipe_m2_clip_trim.json`'s
++`input`; replace only `parent_revision.payload.registry.assets.picture.duration`
++and recompute that payload's required content digest. Apply the case's `args`.
++`applied` gives exact authored numeric values; `error` requires refusal before
++writes. The original golden's commands, records and compiled output still
++match exactly. Native tests exercise model parity, publication mirrors,
++opaque data, child pins, exact replay/retry and guarded undo/redo.
++
++| Raw duration | Requested out (`in=0`) | Authored out / hold |
++| --- | --- | --- |
++| 9.9999999 | 9.99999989 | 9.999999 |
++| 9.9999999 | 9.9999999 | 9.999999 |
++| 9.9999999 | 9.999999900000002 or 10 | Refused before writes |
++| 0.0000009 | 0.0000009 | Refused: no positive authored window |
++
++Source identity for the App handoff: integration base commit
++`df2739f903edac02bd36b4446deeea847524c040`; the commit containing this fix is
++assigned by the worker harness. Exact changed source **Git blob SHAs**:
++
++| File | Blob SHA |
++| --- | --- |
++| `astrid/sdk/timeline/units.py` | `f30260efaef8f0d9d6735d4d13a042a8eadf4bee` |
++| `astrid/sdk/timeline/_trim_commands.py` | `c5dd666a676d09c2a232e3f81031b736feb50916` |
++| `astrid/sdk/timeline/model.py` | `2101f1e6611518b43a1c4f5bf57060df1ac6dbc5` |
++
++The original golden's SHA-256 is
++`4d71a9d184db1b85c220de10842b2dc68e5eb9b48afee180b6c29cf0d5b06152`.
++The escalation's pinned native source commit
++`76737ca2f9c86a075e7e03dfc8990e3090acc234` reproduces `to=hold=10` for
++both below-end and exact-end requests; the corrected source and model both
++produce `to=hold=9.999999`, preserving raw duration `9.9999999`.
++
++Mirror this policy in App, then qualify its native capture parity against
++these vectors and the untouched original golden. Runtime receipt retry,
++browser preview and rendering require their own qualification; these native
++domain tests make no claim about those paths.
+diff --git a/tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json b/tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..314da4b943a3b9354311a4a8f3628e4d58016dac
+--- /dev/null
++++ b/tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json
+@@ -0,0 +1,107 @@
++{
++  "base_fixture": "recipe_m2_clip_trim.json",
++  "cases": [
++    {
++      "id": "app-just-below-raw-end",
++      "duration": 9.9999999,
++      "args": {"in_s": 0, "out_s": 9.99999989},
++      "applied": {"from": 0.0, "to": 9.999999, "hold": 9.999999}
++    },
++    {
++      "id": "exact-raw-end",
++      "duration": 9.9999999,
++      "args": {"in_s": 0, "out_s": 9.9999999},
++      "applied": {"from": 0.0, "to": 9.999999, "hold": 9.999999}
++    },
++    {
++      "id": "rounded-end-is-not-a-valid-request",
++      "duration": 9.9999999,
++      "args": {"in_s": 0, "out_s": 10},
++      "error": "must fit inside the file"
++    },
++    {
++      "id": "one-binary-step-past-end",
++      "duration": 9.9999999,
++      "args": {"in_s": 0, "out_s": 9.999999900000002},
++      "error": "must fit inside the file"
++    },
++    {
++      "id": "interior-end-with-rounded-in",
++      "duration": 9.9999999,
++      "args": {"in_s": 1.0000004, "out_s": 9.99999989},
++      "applied": {"from": 1.0, "to": 9.999999, "hold": 8.999999}
++    },
++    {
++      "id": "hold-follows-applied-endpoints",
++      "duration": 10,
++      "args": {"in_s": 1.0000006, "out_s": 3.0000004},
++      "applied": {"from": 1.000001, "to": 3.0, "hold": 1.999999}
++    },
++    {
++      "id": "exact-six-decimal-end",
++      "duration": 9.999999,
++      "args": {"in_s": 0, "out_s": 9.999999},
++      "applied": {"from": 0.0, "to": 9.999999, "hold": 9.999999}
++    },
++    {
++      "id": "nearest-end-already-interior",
++      "duration": 9.9999994,
++      "args": {"in_s": 0, "out_s": 9.9999994},
++      "applied": {"from": 0.0, "to": 9.999999, "hold": 9.999999}
++    },
++    {
++      "id": "binary-multiplication-floor-trap",
++      "duration": 1.0485929999999999,
++      "args": {"in_s": 0, "out_s": 1.0485929999999999},
++      "applied": {"from": 0.0, "to": 1.048592, "hold": 1.048592}
++    },
++    {
++      "id": "binary-nearest-rounds-above-decimal-tie",
++      "duration": 10,
++      "args": {"in_s": 0, "out_s": 1.0000005},
++      "applied": {"from": 0.0, "to": 1.000001, "hold": 1.000001}
++    },
++    {
++      "id": "binary-nearest-rounds-below-decimal-tie",
++      "duration": 10,
++      "args": {"in_s": 0, "out_s": 1.0000015},
++      "applied": {"from": 0.0, "to": 1.000001, "hold": 1.000001}
++    },
++    {
++      "id": "exact-binary-tie-to-even-down",
++      "duration": 10,
++      "args": {"in_s": 0, "out_s": 0.0078125},
++      "applied": {"from": 0.0, "to": 0.007812, "hold": 0.007812}
++    },
++    {
++      "id": "exact-binary-tie-to-even-up",
++      "duration": 10,
++      "args": {"in_s": 0, "out_s": 0.0234375},
++      "applied": {"from": 0.0, "to": 0.023438, "hold": 0.023438}
++    },
++    {
++      "id": "interior-adjustment-collapses-window",
++      "duration": 9.9999999,
++      "args": {"in_s": 9.9999994, "out_s": 9.9999999},
++      "error": "collapses at authored precision"
++    },
++    {
++      "id": "positive-subprecision-window",
++      "duration": 10,
++      "args": {"in_s": 0, "out_s": 0.0000001},
++      "error": "collapses at authored precision"
++    },
++    {
++      "id": "file-has-no-positive-six-decimal-end",
++      "duration": 0.0000009,
++      "args": {"in_s": 0, "out_s": 0.0000009},
++      "error": "collapses at authored precision"
++    },
++    {
++      "id": "smallest-positive-authored-window",
++      "duration": 0.0000011,
++      "args": {"in_s": 0, "out_s": 0.0000011},
++      "applied": {"from": 0.0, "to": 0.000001, "hold": 0.000001}
++    }
++  ]
++}
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index da9ad99dca8b1abfb93018a02b1b53210d7598c6..b6587b7f46b200c733f04da94bfcc1b47bcdad9e
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -16,6 +16,8 @@
+     timeline_duration_seconds,
+ )
+ from astrid.sdk.timeline._command_state import ABSENT, CommandError, State
++from astrid.sdk.timeline._common import TimelineEditError
++from astrid.sdk.timeline._recording import Recording
+ from astrid.sdk.timeline.capture import capture_move
+ from astrid.sdk.timeline._trim_commands import capture_clip_trim
+ from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+@@ -26,6 +28,7 @@
+ from tests.sdk.test_timeline_commit_provider_document import document_fixture
+ 
+ FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_clip_trim.json'
++BOUNDARIES = json.loads(FIXTURE.with_name('recipe_m2_clip_trim_boundaries.json').read_text())
+ REF = 'parent/clip:clip-a'
+ 
+ 
+@@ -76,7 +79,7 @@
+                    inverse(plan.bundle, plan.records).records).bundle == plan.bundle
+ 
+ 
+-@pytest.mark.parametrize('speed', [2, 3 / 2])
++@pytest.mark.parametrize('speed', [1, 2, .5, 3 / 2])
+ def test_trim_hold_is_source_time_and_playback_duration_applies_speed(monkeypatch, speed):
+     original = bundle(speed=speed, hold=17)
+     row = copy.deepcopy(clip(original))
+@@ -304,3 +307,61 @@
+     dynamic = bundle(app={'astrid': {'on': 'word:one'}})
+     with pytest.raises(CommandError, match='does not support'):
+         capture_clip_trim(dynamic, REF, in_s=1, out_s=5)
++
++
++@pytest.mark.parametrize('case', BOUNDARIES['cases'], ids=lambda case: case['id'])
++def test_portable_boundary_vectors_match_model_and_preserve_native_guards(monkeypatch, case):
++    # Reproduce App's counterexample from its unchanged original raw fixture;
++    # only authoritative duration and its required digest change in the input.
++    document = json.loads(FIXTURE.read_text())['input']
++    payload = document['parent_revision']['payload']
++    payload['registry']['assets']['picture']['duration'] = case['duration']
++    document['parent_revision']['content_digest'] = _digest(payload)
++    before = copy.deepcopy(document)
++    original = bundle_from_document(document)
++    row = copy.deepcopy(clip(original))
++    model_before = copy.deepcopy(row)
++    tl = SimpleNamespace(_is_audio=lambda *args: False, _mcache='unchanged')
++    monkeypatch.setattr(Clip, '_source_duration', lambda self: case['duration'])
++    model = Clip(tl, None, row)
++    if 'error' in case:
++        def unexpected_write(*args):
++            pytest.fail('invalid trim must refuse before recording any write')
++
++        monkeypatch.setattr(Recording, 'write', unexpected_write)
++        with pytest.raises(CommandError, match=case['error']):
++            capture_clip_trim(original, REF, **case['args'])
++        with pytest.raises(TimelineEditError, match=case['error']):
++            model.trim(**case['args'])
++        assert row == model_before and tl._mcache == 'unchanged'
++    else:
++        model.trim(**case['args'])
++        command = capture_clip_trim(original, REF, **case['args'])
++        plan = execute(original, [command])
++        assert clip(plan.bundle) == row
++        assert {key: row[key] for key in case['applied']} == case['applied']
++        assert 0 <= row['from'] < row['to'] <= case['duration']
++        assert clip_timeline_duration(row) == pytest.approx(row['hold'] / row['speed'])
++        # Exact retry/replay and guarded undo/redo still use the raw source pin.
++        assert execute(original, [command]).records == plan.records
++        assert replay(plan, original).records == plan.records
++        undone = inverse(plan.bundle, plan.records)
++        assert undone.bundle == original
++        assert inverse(undone.bundle, undone.records).bundle == plan.bundle
++        with pytest.raises(CommandError, match='intervening'):
++            inverse(plan.bundle, plan.records, [later(REF, ['hold'], row['hold'])])
++        forged = copy.deepcopy(command)
++        forged['reads'] = []
++        with pytest.raises(CommandError, match='reads'):
++            execute(original, [forged])
++        published = document_from_bundle(plan.bundle)
++        output = published['parent_revision']['payload']
++        for rows in (output['clips'], output['config']['clips']):
++            assert next(item for item in rows if item['id'] == 'clip-a') == row
++        assert output['registry'] == payload['registry']
++        assert output['occurrences'] == payload['occurrences']
++        assert output['config']['output'] == payload['config']['output']
++        for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
++            assert published[key] == document[key]
++    assert document == before
++    assert original == bundle_from_document(before)
+diff --git a/tests/sdk/test_timeline_media_verbs.py b/tests/sdk/test_timeline_media_verbs.py
+index 0c3e51bf1f18808c187faf27df1704d404d293c0..54587131e249d2539af0af308137d19bd343d252
+--- a/tests/sdk/test_timeline_media_verbs.py
++++ b/tests/sdk/test_timeline_media_verbs.py
+@@ -1,5 +1,6 @@
+ from __future__ import annotations
+ 
++import copy
+ import json
+ from pathlib import Path
+ 
+@@ -40,6 +41,35 @@
+     assert clip.data["to"] == 5
+ 
+ 
++@pytest.mark.parametrize("speed", [1, 2, 3 / 2])
++@pytest.mark.parametrize("out_s", [None, 9.9999999, 9.99999989])
++def test_trim_raw_file_end_keeps_source_seconds_and_registry_unchanged(speed, out_s):
++    tl = tiny()
++    registry = tl.bundle["shots"]["A"]["internal_timeline"]["registry"]
++    registry["assets"]["Q"]["duration"] = 9.9999999
++    clip = tl.clip("a-music")
++    clip.data.update(speed=speed, **{"from": None, "to": None})
++    before_registry, before_start = copy.deepcopy(registry), clip.start
++    clip.trim(in_s=1.0000004, out_s=out_s)
++    assert (clip.data["from"], clip.data["to"], clip.data["hold"]) == (1, 9.999999, 8.999999)
++    assert clip.duration == pytest.approx(8.999999 / speed, abs=1e-6)
++    assert clip.start == before_start
++    assert clip.data["speed"] == speed
++    assert registry == before_registry
++
++
++@pytest.mark.parametrize("in_s,out_s", [(0, 10), (0, 9.999999900000002),
++    (0, .0000001), (9.9999994, 9.9999999)])
++def test_trim_unrepresentable_or_raw_overrange_window_leaves_model_unchanged(in_s, out_s):
++    tl = tiny()
++    tl.bundle["shots"]["A"]["internal_timeline"]["registry"]["assets"]["Q"]["duration"] = 9.9999999
++    clip = tl.clip("a-music")
++    before = copy.deepcopy(clip.data)
++    with pytest.raises(TimelineEditError, match="a-music:.*(must fit|collapses)"):
++        clip.trim(in_s=in_s, out_s=out_s)
++    assert clip.data == before
++
++
+ @pytest.mark.parametrize("method", [lambda clip: clip.trim(in_s=-1), lambda clip: clip.trim(out_s=11), lambda clip: clip.slip(-1), lambda clip: clip.slip(7)])
+ def test_source_bounds_name_the_clip_and_file_limit(method):
+     tl = tiny()
+
+codex
+The pinned-source reproduction confirms the fix in both native trim and `Clip.trim`: the below-end and exact-end requests previously authored `to=hold=10`; both now author `9.999999` and preserve the raw registry duration. The App contract, vectors, detailed report, and commit message are written. No full suite or live Runtime/browser qualification was run.
+exec
+/bin/bash -lc "git diff --check && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = root / 'workers/agt-m2-trim-interior-rounding'
+assert Path('docs/timeline-trim-precision.md').read_bytes() == (root / 'design/agent-trim-interior-rounding.md').read_bytes()
+vectors = Path('tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json')
+assert vectors.read_bytes() == (root / 'design/agent-trim-interior-rounding-vectors.json').read_bytes()
+assert len(json.loads(vectors.read_text())['cases']) == 17
+original = Path('tests/editing_conformance/fixtures/recipe_m2_clip_trim.json')
+assert original.read_bytes() == subprocess.check_output(['git', 'show', 'HEAD:' + str(original)])
+assert hashlib.sha256(original.read_bytes()).hexdigest() == '4d71a9d184db1b85c220de10842b2dc68e5eb9b48afee180b6c29cf0d5b06152'
+for name in ['astrid/sdk/timeline/units.py', 'astrid/sdk/timeline/_trim_commands.py', 'astrid/sdk/timeline/model.py']:
+    blob = subprocess.check_output(['git', 'hash-object', name], text=True).strip()
+    assert blob in Path('docs/timeline-trim-precision.md').read_text()
+assert (worker / 'commit-msg').stat().st_size > 0
+assert (worker / 'notes/report.md').stat().st_size > 0
+(worker / 'DONE').touch()
+print('Exports identical; 17 vectors; original golden unchanged; source blob SHAs match; commit-msg/report/DONE ready.')
+PY
+git status --short" in /home/user/work/wt/agt-m2-trim-interior-rounding
+ succeeded in 557ms:
+Exports identical; 17 vectors; original golden unchanged; source blob SHAs match; commit-msg/report/DONE ready.
+ M astrid/sdk/timeline/_trim_commands.py
+ M astrid/sdk/timeline/model.py
+ M astrid/sdk/timeline/units.py
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+ M tests/sdk/test_timeline_media_verbs.py
+?? docs/timeline-trim-precision.md
+?? tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json
+
+codex
+Implemented shared interior rounding for native trim and `Clip.trim`. Exact-end and just-below requests now author `to=hold=9.999999` within raw duration `9.9999999`. Genuine overrange requests and collapsed intervals refuse before writes. The original golden remains unchanged.
+
+Final targeted commands, run from the assigned worktree:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_media_verbs.py tests/sdk/test_timeline_clip_trim_provider.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py
+```
+
+**281 passed.**
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timeline_cuts.py tests/sdk/test_timeline_param_values.py tests/packs/timeline/test_edit_verbs.py tests/packs/timeline/test_verbs_working_copy.py
+```
+
+**168 passed, 17 default-lane deselections, 4 Pillow deprecation warnings.** Targeted Ruff and diff checks passed.
+
+[Contract and exact formula](/home/user/work/wt/agt-m2-trim-interior-rounding/docs/timeline-trim-precision.md) and 17 vectors are exported for App. [Detailed report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-interior-rounding/notes/report.md) includes the pinned-source reproduction.
+
+No blockers. No full suite or live Runtime/browser qualification run. Commit message and `DONE` written. Next: orchestrator review, then App parity qualification.
+tokens used
+110,614
+Implemented shared interior rounding for native trim and `Clip.trim`. Exact-end and just-below requests now author `to=hold=9.999999` within raw duration `9.9999999`. Genuine overrange requests and collapsed intervals refuse before writes. The original golden remains unchanged.
+
+Final targeted commands, run from the assigned worktree:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_media_verbs.py tests/sdk/test_timeline_clip_trim_provider.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py
+```
+
+**281 passed.**
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timeline_cuts.py tests/sdk/test_timeline_param_values.py tests/packs/timeline/test_edit_verbs.py tests/packs/timeline/test_verbs_working_copy.py
+```
+
+**168 passed, 17 default-lane deselections, 4 Pillow deprecation warnings.** Targeted Ruff and diff checks passed.
+
+[Contract and exact formula](/home/user/work/wt/agt-m2-trim-interior-rounding/docs/timeline-trim-precision.md) and 17 vectors are exported for App. [Detailed report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-interior-rounding/notes/report.md) includes the pinned-source reproduction.
+
+No blockers. No full suite or live Runtime/browser qualification run. Commit message and `DONE` written. Next: orchestrator review, then App parity qualification.

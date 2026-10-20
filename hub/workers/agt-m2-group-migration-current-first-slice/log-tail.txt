@@ -1,0 +1,400 @@
+fake physical-slot creation records or caller-authorized id_map entries.
+
+Complete group metadata, mode, snapshots, null/opaque fields and ordered
+`{legacy_clip_id,clip_id}` mapping remain under the occurrence'"'s
+"'`provenance.group_migration`. Parent ungrouped rows, unknown fields and order
+survive. Member rows become canonical children with local starts; exact raw
+original restoration uses accepted recorded writes and existing collection
+order/inverse machinery, never a second editable group store or a converter.
+The sanitizer is not called. The graph exception matches only the exact token
+path `occurrences[index].provenance.group_migration.legacy_group`.
+
+Interleaved/reordered/duplicate-shot-ID groups, duplicated/shared/missing
+members, nonempty legacy items, occupied destinations, divergent mirrors or
+registries, ambiguous lane aliases, following timing/maps, and unrepresentable
+geometry refuse without changing the supplied document. Ordinary edits cannot
+use a legacy basis; migration is a sole command, and legacy inverse admission
+requires authenticated migration/inverse history.
+
+Private `occurrence.move` v1 selects an exact occurrence root and takes closed
+`{on,track,child_track}`. `on` is global seconds quantized with the existing
+parent rational-fps policy. Parent/raw child destination refs are explicit and
+existing; the whole-group temporal move writes occurrence placement and
+atomically retracks current raw children. It records membership/order and
+lane occupancy, with half-open collisions. Ordinary movement never rewrites a
+whole parent/group array. Shared-source derived owners explicitly refuse until
+the materialization carrier is qualified; display IDs or `(shotId,trackId)`
+never infer ownership. The recovered optional typed child-lane composition is
+kept internal; no new-parent-track or free multi-drag milestone is claimed.
+
+`project_group_view(bundle)` is pure. `pinnedShotGroups` in its return is a
+read-side compatibility projection, not persisted editing state. Current
+canonical child membership supplies clipIds; provenance supplies display
+metadata only. Parallel bindings explicitly carry occurrence, scoped raw clip,
+raw child track and parent track. Canonical children without migration metadata
+remain visible without invented legacy groups. Parent/child duplicate display
+IDs remain distinguishable through the bindings. Unsupported maps and legacy
+unmigrated input refuse. Source windows/hold/speed, metadata and rational output
+are retained.
+
+## Current-code corrections, not a new framework
+
+1. New canonical occurrence records explicitly include `gain:1`, matching the
+   current `occurrence.create` birth. The recovered old omission was accepted
+   but Runtime materialized gain=1 while retained payload omitted it, causing
+   `occurrence_field_mismatch` and refusal on reopen. Adding the default at the
+   NEW birth fixes integrity without modifying the legacy input or its inverse.
+2. Current `_validate_inputs.proven_sites` needs one `staged.compile_mirrors()`
+   after each reconstructed forward write. The existing reverse-stage refresh
+   already exists. Without the forward refresh, restoring removed parent clips
+   fails against a stale config.clips mirror. This change is PRIVATE only.
+3. Private selections `migration.groups` and `lane.members` and the reviewed
+   lane-selection overlap support are restored onto current recorder/collections.
+   No generic authoring context, journal, DTO, SourceFactory, endpoint or root
+   replacement API is introduced.
+4. Shared-source authoring owners are recognized through the existing canonical
+   `/shot` mapping and refuse before writes/births. Merely opening a repeated
+   source into independent authoring owners does not qualify physical ownership.
+
+## Real source/setup and tests
+
+Real Runtime product probe: archived
+`a51af885ea631c695a857985239c7fe7bf2e871f`, tree
+`7c6ab6700307309a7942e64eb4d0c6c7cc42b681`, through the normal locator. This
+is a source probe with the unchanged ordinary provider/client pin, not a new
+matched generated cohort. It uses actual Runtime acceptance and retained reads;
+no live socket/HTTP, SQL, fabricated accepted history, retired writer or guard
+override is involved.
+
+The explicitly requested helper382f was tested first, unchanged:
+**7 passed / 2 failed** at `semantic identity boundary differs from writes`.
+It does contain both `created:[]` lists, but its raw parent-root write remains
+incompatible with authored State. This is evidence the requested helper source
+is stale; no Agent guard was relaxed.
+
+A previously reviewed Runtime-owned successor already exists:
+`54db299d6ebb9ec98649895760a4cd37cee6c147`, helper SHA256
+`9f61af7be9518aa9d2442091257d6cdae99c65db0773377a53244f8807b30e13`.
+It changes only trusted TEST SETUP to existing whole-closure timeline RootPins
+before request/record acceptance; full legacy bytes and created arrays stay
+intact. This successor was selected explicitly in the PRIVATE candidate only.
+It is not silently adopted as a public pin or a product operation.
+
+Final actual Runtime lane: **11 passed in 4.90s**. This includes the original
+nine cases with every positive assertion live, plus two current-source cases:
+
+- Real managed PNG CAS and real media.transcript/v1 `segments` Document exist
+  BEFORE the exact 30000/1001 legacy parent + DocumentPins setup.
+- Accepted migration, canonical reload, transcript-v2/reopen retention, exact raw
+  original guarded undo and same-ID redo. Both normal and opaque variants pass.
+- Existing authored V2 move displays c1 at1.001/c2 at3.001, both hold2 onV2,
+  current ordered images membership, retained pin, healthy integrity, restart,
+  grouped migration+move exact raw undo and redo.
+- Two migrated groups commit independently; a stale first-group move actually
+  returns `rebased` after the other group'"'s move, preserving that group's exact
+  children/metadata. Removing the touched canonical owner then submitting a
+  previously captured move refuses and leaves accepted head/closure unchanged.
+
+Current ordinary worktree tests: **37 passed**, including ten new pure-view /
+geometry / shared-owner guard cases and document neighbors. Private inverse /
+root / semantic-reservation neighbors: **204 passed**. Private recovered group
+suite plus current-policy tests: **83 passed / 2 failed**. Both failures retain
+old spike assertions that ordinary equal-state activity/selection ABA must be
+refused. Current settled replay intentionally uses identities-only intervening
+checks and validates values/membership on final head. No code changed this
+policy and neither assertion was removed/weakened/marked. New direct cases
+prove changed birth/removal/order/lane membership conflicts, and strict undo
+continues to reject same-value writes/lane ABA. The two diagnostic failures
+remain explicit for orchestrator review, not an all-green recovered suite claim.
+
+Ruff (product plus isolated direct test checks), schema/pin byte audit and git
+diff check pass. Fixtures are generated at test time; no giant golden is added.
+All new test modules are under500 lines. Commands and logs: worker
+"'`notes/report.md`. No full*, HTTP/browser/App, renderer, macOS, or public normal
+artifact-generation lane was run.
+
+## App outcomes and open dependencies
+
+Original App three `it.fails` stay byte-identical and unrun:
+
+| Original outcome | This slice |
+| --- | --- |
+| Existing-lane pinned drag: V1 empty, V2 clip1[1,3),clip2[3,5), hold2, images order/mode, effect IDs, selection, one transaction | Exact30fps authored fixture values pass privately through canonical compile/reload/view. Real rational fixture additionally passes1.001/3.001 onV2. App effect/selection/transaction adaptation is UNQUALIFIED. |
+| New-lane pinned drag ontoV3: [3,5),[5,7), same ordered images metadata | Not this existing-lane slice; original positive remains open. |
+| Free multi-drag onto new bottomV3: V1/V2/V3 once, clip1[1,3)onV2,clip2[3,5)onV3, selection[clip2,clip1], ghosts, one transaction | Not this occurrence-owned group slice; original positive remains open. |
+
+Peer carrier source is now reviewed private Runtime
+`7b8d6d9afe963e2b7a6c6b32fd4e3797451090da`, tree
+`d20b745c26a33c2ea4e20863f846335c8cf33e1e`, preserving current catalog-head
+fences on81f over83fe. Its Agent counterpart remains3730/f802 (**48/22**),
+not the full ordinary55/29 floor. It was NOT substituted here. No reviewed
+full55/29+group+carrier union or matched normal artifact currently exists.
+`notes/peer-coordination.md` records the exact dependency request and probe update.
+
+Before public source/schema freeze, peers must agree the exact full current
+carrier/sourceRef join and normal generation. This read view exports explicit
+owner bindings, but does not invent a new public `sourceRef` contract. Shared
+physical remapping and semantic item births remain outside the supported slice.
+Public release, App adapter/browser qualification and the other two drag
+outcomes are OPEN. The worker leaves BLOCKED for this final cohort dependency;
+the private executable recovery and pure worktree code are complete/reviewable.
+EOF' in /home/user/work/wt/agt-m2-group-migration-current-first-slice
+ succeeded in 0ms:
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/report.md <<'EOF'
+# Group current first slice
+
+Private executable recovery is ready. Public source/schema/carrier agreement and
+App qualification remain blocked; no public registration/pin or integration
+change was made. Worktree contains three recovered pure/internal helper modules
+and one direct test module. Full private registration/admission/core changes and
+test-time fixtures are reproducible in "'`notes/candidate` and
+`notes/private-candidate.patch`.
+
+Architecture, exact source/schema tuples, mapping, App outcomes and gaps:
+[agent-group-current-first-slice.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-group-current-first-slice.md).
+
+## Commands and results
+
+Definitions for the commands below:
+
+```bash
+W=/home/user/work/wt/agt-m2-group-migration-current-first-slice
+N=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes
+C=$N/candidate
+P=/home/user/work/venv-agent/bin/python
+```
+
+Ordinary worktree, final:
+
+```bash
+cd "$W"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" "$P" -B -m pytest -q -p no:cacheprovider '"\\
+  tests/editing_conformance/test_group_read_view.py \\
+  tests/sdk/test_timeline_commit_provider_document.py --tb=short
+"'```
+
+**37 passed in2.28s**, exit0 (`worktree-targeted.log`). Ten new direct cases
+cover metadata/source/order preservation, detached view, explicit duplicate-ID
+ownership bindings, absent provenance, unsupported maps/legacy input and
+shared-source refusal before any writes or semantic creation.
+
+Private reconstruction (no git mutations or shared installs):
+
+```bash
+cd "$W"
+GROUP_BOOTSTRAP_HELPER=54db299d6ebb9ec98649895760a4cd37cee6c147 '"\\
+  python3 \""'$N/prepare_candidate.py"
+python3 "$N/save_candidate_patch.py"
+```
+
+Exit0. Exact original55/29 schema bytes and existing six pin/qualification files
+preserved. Private57/31 schema SHA256
+`c51d71e687e9962fd5309528d6d69d266e319ebffe9a1dc46af20be7add8afc3`.
+All exact source hashes are in `source-audit.txt`. No normal generation or
+compatibility approval is claimed.
+
+Final private real Runtime source lane:
+
+```bash
+cd "$C"
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 '"\\
+PYTHONPATH=\""'$PWD" "$P" -B - <<'"'PY'
+from tests.helpers.runtime import use_runtime
+use_runtime('a51af885ea631c695a857985239c7fe7bf2e871f')
+import pytest
+raise SystemExit(pytest.main([
+    '-q', '-p', 'no:cacheprovider', '-m', 'integration or not integration',
+    'tests/sdk/test_timeline_group_migration_runtime.py',
+    'tests/sdk/test_current_group_runtime.py', '--tb=short',
+]))
+PY
+"'```
+
+**11 passed in4.90s**, exit0 (`runtime-final-eleven.log`). The original nine
+positive/negative cases remain live. The two extra cases prove accepted
+existing-lane move/view/restart/exact grouped raw undo/same-ID redo and actual
+server independent-group rebase plus atomic touched-owner refusal. All use
+actual Runtime acceptance, real PNG CAS, media.transcript/v1 segments before
+legacy setup, rational30000/1001 and retained DocumentPins. No HTTP/socket or
+browser is started; central service was therefore not needed.
+
+Important source distinction: this final lane explicitly uses Runtime'"'s
+reviewed helper successor54db299, SHA256
+"'`9f61af7be9518aa9d2442091257d6cdae99c65db0773377a53244f8807b30e13`, for
+TEST SETUP only. With the requested382f helper unchanged, the original nine
+cases instead yielded **7 passed /2 failed in3.67s**, exit1 at
+`semantic identity boundary differs from writes` (`runtime-original-nine.log`).
+That run used located Runtimea51 code via:
+
+```bash
+cd "$C"
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 '"\\
+PYTHONPATH=\""'$PWD" "$P" -B -m pytest -q -p no:cacheprovider -m integration '"\\
+  tests/sdk/test_timeline_group_migration_runtime.py --tb=short
+"'```
+
+The generator defaults to382f unless `GROUP_BOOTSTRAP_HELPER` is supplied.
+The old fixture/source is also retained in
+`test_timeline_group_migration_runtime.382f.py`. Successor selection was private
+and explicit; accepted history was never repaired or manufactured.
+
+Private current group semantic suite, final:
+
+```bash
+cd "$C"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" "$P" -B -m pytest -q -p no:cacheprovider '"\\
+  tests/editing_conformance/test_recipe_m2_group_migration.py \\
+  tests/editing_conformance/test_recipe_m2_group_move.py \\
+  tests/editing_conformance/test_group_read_view.py \\
+  tests/editing_conformance/test_current_group_slice.py --tb=short
+"'```
+
+**83 passed /2 failed in8.13s**, exit1 (`candidate-current-final.log`). Failed:
+`test_membership_aba_and_destination_lane_aba_are_guarded` and
+`test_unrelated_lane_activity_rebases_but_inactive_destination_members_are_guarded`.
+These inherited spike assertions demand ordinary equal-state intervening-write
+refusal. Current settled ordinary replay intentionally permits equal-state ABA
+while checking original values/membership on final head. They are retained as
+explicit diagnostics, not weakened/deleted/marked. Current direct tests prove
+actual changed membership/order/lane conflicts and strict inverse same-value /
+lane-ABA protection. The required shared-isolation positive remains in the
+archived original source; it is not claimed implemented, and no new xfail/skip
+marker was introduced into the worktree or candidate suite.
+
+Private neighboring tests:
+
+```bash
+cd "$C"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" "$P" -B -m pytest -q -p no:cacheprovider '"\\
+  tests/editing_conformance/test_recorded_graph_roots.py \\
+  tests/editing_conformance/test_grouped_clip_cache_inverse.py \\
+  tests/editing_conformance/test_inverse_clear_batches.py \\
+  tests/sdk/test_timeline_commit_provider_document.py \\
+  tests/sdk/test_timeline_semantic_reservations.py --tb=short
+"'```
+
+**204 passed in7.10s**, exit0 (`candidate-neighbors.log`).
+
+```bash
+cd "$W"
+"$P" -m ruff check --no-cache astrid/sdk/timeline/new_group_commands.py '"\\
+  astrid/sdk/timeline/occurrence_commands.py astrid/sdk/timeline/group_view.py
+\""'$P" -m ruff check --no-cache --isolated --select E4,E7,E9,F,I,BLE '"\\
+  tests/editing_conformance/test_group_read_view.py
+git diff --check
+"'```
+
+All pass, exit0. No full*, HTTP/browser, renderer or macOS tests were run or
+requested; shared environments and caches were not modified.
+
+## Decisions and remaining block
+
+- Kept ordinary55/29/public013/staged014 artifacts unchanged. New operations
+  execute only in the explicit private overlay, through the real existing
+  recorder/executor/provider. No opcode alias was publicly shipped.
+- Used the reviewed Runtime-owned54db299 helper ONLY in an additional explicit
+  private proof after reproducing the requested382f capture failure. This is
+  evidence382f is stale, not a silent public helper adoption or guard weakening.
+- Added gain1 to new occurrence births because Runtime'"'s existing default and
+  integrity checks otherwise disagree on retained bytes at reopen. Legacy raw
+  state and exact inverse are preserved. Diagnostic native-probe.log records the
+  original occurrence_field_mismatch before the fix.
+- Refreshed derived mirrors in the private existing inverse forward-stage loop;
+  no new inverse or root replacement framework. Existing204 neighbors pass.
+- A move followed by an accepted undo remains later write history for a
+  migration-only undo. Exact full raw undo after both operations therefore
+  targets migration+move as one guarded group; strict ABA protection is retained.
+
+Final adoption is BLOCKED on a reviewed full ordinary55/29+group schema/source
+cohort with the current Runtime carrier/fence/sourceRef join and matching normal
+artifacts. Runtime7b8/83's Agent3730/f802 counterpart is only48/22, so it cannot
+be substituted. Semantic item mapping, shared physical remapping, App adapter /
+browser qualification, new-parent-track and free multi-drag are not claimed.
+Original App three it.fails and all assertions are untouched. Next: peers review
+the private patch/schema/explicit owner binding contract, settle that exact
+cohort, then normally generate and qualify it before public registration/pinning.
+EOF
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/peer-coordination.md <<'EOF'
+
+Final update: private successor54db299 plus explicit gain1 at NEW occurrence
+birth passes11 actual Runtime cases on archiveda51af885/tree7c6ab670. Exact raw
+legacy grouped undo/redo, retained-source-v2/restart, existingV2 view, independent
+group real rebase and touched-owner atomic refusal pass. RootPins correction is
+therefore an available implementation path, not merely a stale reported block.
+No public helper/schema/client/Runtime carrier adoption is inferred. The exact
+requested382f source still reproduces7PASS/2FAIL; keep that distinction in review.
+Full current ordinary55/29 + group + carrier/sourceRef normal-generation agreement
+remains the final publication dependency. Please use the named design/report
+for the source patch and commands; do not replace ordinary55/29 with48/22 f802.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/commit-msg <<'EOF'
+feat(timeline): recover bounded canonical group helpers
+
+Recover lossless legacy-group migration, occurrence movement and a pure
+legacy-shaped read view with explicit canonical owner bindings. Preserve
+source windows, metadata and order; refuse unsupported shared ownership.
+
+Keep new command registration, schema and admission changes in a reviewable
+private candidate while the current sourceRef and Runtime carrier cohort is
+unagreed. Leave the frozen ordinary schema and runtime pins unchanged.
+Add direct view and ownership tests against the current ordinary source.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/BLOCKED <<'EOF'
+Public registration/integration requires peer approval of the exact full ordinary55/29 + group schema/source + current Runtime carrier/fence/sourceRef cohort and matching normal artifacts. No such reviewed cohort is available; Runtime7b8/83 still pairs with Agent3730/f80248/22. Private recovery is executable and actual Runtime11 cases pass (explicit reviewed helper54db299; requested382f reproduces7PASS/2FAIL). Worktree37PASS; private inverse/root/reservation204PASS; recovered diagnostics83PASS/2FAIL retain obsolete ordinary-ABA expectations. See design/agent-group-current-first-slice.md and workers/agt-m2-group-migration-current-first-slice/notes/report.md. No public pin/schema or App expected failures changed.
+EOF" in /home/user/work/wt/agt-m2-group-migration-current-first-slice
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes')
+p=notes/'prepare_candidate.py'
+s=p.read_text().replace(\"(NOTES / 'original-shared-positive.py').write_text(text[a:b])\", \"(NOTES / 'original-shared-positive.py').write_text(text[text.index('def test_shared_occurrence_move', a):b])\")
+p.write_text(s)
+p=notes/'original-shared-positive.py'
+s=p.read_text(); p.write_text(s[s.index('def test_shared_occurrence_move'):])
+for backup in (notes/'candidate').rglob('*.orig'):
+    backup.unlink()
+PY
+python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/save_candidate_patch.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/source-audit.txt
+head -4 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/source-audit.txt
+git status --short
+git diff --check
+rg --files -g '__pycache__' -g '*.pyc' -g '.pytest_cache' -g '*.orig' astrid/sdk/timeline tests/editing_conformance" in /home/user/work/wt/agt-m2-group-migration-current-first-slice
+ exited 1 in 454ms:
+ordinary schema floor: byte-identical 55 definitions / 29 operation clauses
+private schema: 57 definitions / 31 operation clauses
+private schema SHA256: c51d71e687e9962fd5309528d6d69d266e319ebffe9a1dc46af20be7add8afc3
+private patch SHA256: 74f657c0308d931334361426925851a9413657d688f1261e3195e80d519a573d
+?? astrid/sdk/timeline/group_view.py
+?? astrid/sdk/timeline/new_group_commands.py
+?? astrid/sdk/timeline/occurrence_commands.py
+?? tests/editing_conformance/test_group_read_view.py
+
+codex
+Recovered the group helpers and an executable private candidate; public registration remains blocked.
+
+- Ordinary worktree tests: **37 passed**.
+- Real Runtime migration/move/restart/undo/rebase tests: **11 passed**.
+- Private inverse/root/reservation neighbors: **204 passed**.
+- Recovered diagnostics: **83 passed, 2 failed**, retaining old expectations that conflict with settled equal-state replay policy.
+
+The private proof uses reviewed helper `54db299` explicitly and records `gain:1` at occurrence birth. Frozen ordinary schema/pins and original App tests remain untouched.
+
+[Report with exact commands, results, decisions, and source mapping](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/report.md).
+
+Next: peer approval of the full current schema/carrier/sourceRef cohort, then normal generation and App qualification. `commit-msg` and `BLOCKED` are written. No full suite ran.
+tokens used
+249,485
+Recovered the group helpers and an executable private candidate; public registration remains blocked.
+
+- Ordinary worktree tests: **37 passed**.
+- Real Runtime migration/move/restart/undo/rebase tests: **11 passed**.
+- Private inverse/root/reservation neighbors: **204 passed**.
+- Recovered diagnostics: **83 passed, 2 failed**, retaining old expectations that conflict with settled equal-state replay policy.
+
+The private proof uses reviewed helper `54db299` explicitly and records `gain:1` at occurrence birth. Frozen ordinary schema/pins and original App tests remain untouched.
+
+[Report with exact commands, results, decisions, and source mapping](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-group-migration-current-first-slice/notes/report.md).
+
+Next: peer approval of the full current schema/carrier/sourceRef cohort, then normal generation and App qualification. `commit-msg` and `BLOCKED` are written. No full suite ran.

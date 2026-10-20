@@ -1,0 +1,400 @@
++existing `_registry` binding and dependency machinery are reused.
++
++`MediaSelection` remains exactly the existing five fields. No caller-provided
++duration, file probe, guessed media length, audio-as-video coercion, epsilon,
++clamp, or arbitrary registry write was added. `capture_clip_trim` gained only a
++non-wire `verified_media` argument so deterministic capture can exercise the
++same server-carried metadata as execution.
++
++## Runtime peer ACK / exact-carrier boundary
++
++The current Runtime `timeline_commit_port.py:selected_media` implementation
++only returns metadata for a selection already declared by the request. Current
++`clip.trim` has no media-selection field, and the historical imported audio
++registry row has no complete declared selection tuple. The public S2 literal
++journey and Runtime reports likewise leave that original audio positive open.
++
++Therefore this Agent patch does not invent a trim carrier or silently call
++`selected_media` for an undeclared selection. Historical audio trim is positive
++when an exact retained/verified media carrier is already present; the real
++provider path for an old unregistered audio row remains OPEN until Runtime
++supplies the agreed small exact carrier. Changed/missing/wrong verified input,
++kind, track, source window, and range fail before writes.
++
++## Tests
++
++Focused command:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_commit_runtime_parent_media.py tests/editing_conformance/test_commit_runtime_occurrence_media.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_clip_trim_provider.py
++```
++
++Result: `275 passed, 84 deselected`.
++
++Lint command:
++
++```text
++/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_media_inputs.py astrid/sdk/timeline/_trim_commands.py astrid/sdk/timeline/native_occurrence_media_commands.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py
++```
++
++Result: `All checks passed!`
++
++No full or HTTP/browser suite was run. Real tiny-WAV CAS/provider acceptance
++and the historical imported-audio positive remain unverified/open pending the
++Runtime exact-carrier decision.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-audio-media-preserve/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-audio-media-preserve/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-audio-media-preserve/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-audio-media-preserve/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..09727091c29a3fa5427694ea1c4ec149a01b4c59
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-audio-media-preserve/commit-msg
+@@ -0,0 +1,5 @@
++feat(timeline): preserve native audio media inputs
++
++Admit Runtime-verified audio selections on existing media carriers and use
++verified duration metadata for guarded legacy audio trims without changing the
++timeline wire schema.
+diff --git a/astrid/sdk/timeline/_media_inputs.py b/astrid/sdk/timeline/_media_inputs.py
+index a094c607077d04c820d15dcd1c0c01759e39d850..2031d891bb588d6937ea39a14be08eea95723ed7
+--- a/astrid/sdk/timeline/_media_inputs.py
++++ b/astrid/sdk/timeline/_media_inputs.py
+@@ -12,9 +12,9 @@
+     value = matches[0]
+     media_type = value.get('media_type')
+     kind = media_type.split('/')[0] if isinstance(media_type, str) and '/' in media_type else None
+-    if kind not in ('image', 'video') or type(value.get('size')) is not int or value['size'] <= 0:
+-        raise CommandError('media edit requires verified image/video metadata', kind='unsupported_media')
+-    if kind == 'video':
++    if kind not in ('image', 'video', 'audio') or type(value.get('size')) is not int or value['size'] <= 0:
++        raise CommandError('media edit requires verified image/video/audio metadata', kind='unsupported_media')
++    if kind in ('video', 'audio'):
+         number(value.get('duration_seconds'), 'intrinsic duration', positive=True)
+     return value, kind
+ 
+diff --git a/astrid/sdk/timeline/_trim_commands.py b/astrid/sdk/timeline/_trim_commands.py
+index c5dd666a676d09c2a232e3f81031b736feb50916..762c4d8c86497dd0970641343db8bc3b3e9e3ff0
+--- a/astrid/sdk/timeline/_trim_commands.py
++++ b/astrid/sdk/timeline/_trim_commands.py
+@@ -8,10 +8,46 @@
+ 
+ from ._command_state import CommandError
+ from ._common import TimelineEditError
++from ._recording import active
+ from .capture import CLIP_FIELDS, RELATIONS, number
+ from .units import trim_source_interval
+ 
+ 
++def _media_kind(value):
++    media_type = (value.get('type') if 'type' in value else value.get('media_type')) \
++        if isinstance(value, dict) else None
++    if isinstance(media_type, str):
++        return media_type.split('/', 1)[0]
++    return None
++
++
++def _verified_source_duration(ctx, source, expected_kind):
++    """Use only the Runtime-carried duration when the old registry is incomplete."""
++    limit = source['duration']
++    if limit is not None:
++        number(limit, 'registry source duration', positive=True)
++        return limit, None
++    object_id = next((source.get(key) for key in
++                      ('object_id', 'media_id', 'digest', 'content_digest')
++                      if source.get(key) is not None), None)
++    if object_id is None:
++        raise CommandError('registry source duration requires an exact media identity',
++                           kind='dependency_changed')
++    matches = [value for value in ctx.verified_media
++               if isinstance(value, dict)
++               and isinstance(value.get('selection'), dict)
++               and value['selection'].get('object_id') == object_id]
++    if not matches or any(value != matches[0] for value in matches):
++        raise CommandError('registry source duration requires exact Runtime-verified media metadata',
++                           kind='dependency_changed')
++    value = matches[0]
++    if _media_kind(value) != expected_kind or type(value.get('size')) is not int or value['size'] <= 0:
++        raise CommandError('trim source media kind differs from the active clip track',
++                           kind='unsupported_media')
++    number(value.get('duration_seconds'), 'intrinsic duration', positive=True)
++    return value['duration_seconds'], value
++
++
+ def clip_trim(ctx, command):
+     ref = command['select']
+     if not isinstance(ref, str) or not re.fullmatch(r'parent/clip:[^/]+', ref) or '::' in ref:
+@@ -43,7 +79,7 @@
+                 number(value, 'for', positive=True)
+             elif value is not None:
+                 raise CommandError(f'clip.trim v1 does not support {key}', kind='unsupported_timing', ref=ref)
+-    if clip['clipType'] not in (None, 'media') or clip['clip_type'] not in (None, 'media'):
++    if clip['clipType'] not in (None, 'media', 'audio') or clip['clip_type'] not in (None, 'media', 'audio'):
+         raise CommandError('clip.trim applies to media clips', ref=ref)
+     asset = clip['asset']
+     if not isinstance(asset, str) or not asset or any(clip[key] is not None for key in
+@@ -61,8 +97,15 @@
+                'duration_ms', 'duration_seconds', 'source', 'source_window', 'time_map', 'timeMap')}
+     if any(source[key] is not None for key in ('source', 'source_window', 'time_map', 'timeMap')):
+         raise CommandError('clip.trim v1 does not support a mapped media source', kind='unsupported_map', ref=ref)
+-    limit = source['duration']
+-    number(limit, 'registry source duration', positive=True)
++    source_kind = _media_kind(source)
++    clip_kind = 'audio' if 'audio' in (clip['clipType'], clip['clip_type'], source_kind) else source_kind
++    if clip_kind == 'audio':
++        track = ctx.read('parent/track:' + str(clip['track']))
++        if not isinstance(track, dict) or track.get('kind') != 'audio' or not active(track):
++            raise CommandError('clip.trim requires an active raw audio track', ref=ref)
++        if source_kind != 'audio':
++            raise CommandError('clip.trim audio track requires an audio registry asset', ref=ref)
++    limit, verified = _verified_source_duration(ctx, source, clip_kind)
+     endpoints = []
+     for key, arg, default in (('from', 'in_s', 0), ('to', 'out_s', limit)):
+         current = default if clip[key] is None else clip[key]
+@@ -77,7 +120,10 @@
+         source_in, source_out, hold = trim_source_interval(source_in, source_out, limit)
+     except TimelineEditError as exc:
+         raise CommandError(str(exc), ref=ref) from exc
+-    ctx.dependency('trim.source', 'entity', {'asset': asset, 'source': source})
++    dependency = {'asset': asset, 'source': source}
++    if verified is not None:
++        dependency['verified_media'] = verified
++    ctx.dependency('trim.source', 'entity', dependency)
+     ctx.bind('trim.target', ref, dependencies=['trim.source'])
+     for key, value in (('from', source_in), ('to', source_out), ('hold', hold)):
+         ctx.write(ref, [key], value)
+@@ -92,10 +138,10 @@
+         ctx.clear(ref, ['app'])
+ 
+ 
+-def capture_clip_trim(bundle, select, *, in_s=None, out_s=None):
++def capture_clip_trim(bundle, select, *, in_s=None, out_s=None, verified_media=()):
+     """Capture original claims. Null endpoints retain the current/default bound."""
+     from .commands import execute
+ 
+     return execute(bundle, [{'schema_version': 1, 'op': 'clip.trim', 'version': '1',
+                              'select': select, 'args': {'in_s': in_s, 'out_s': out_s},
+-                             'intent': {}}]).commands[0]
++                             'intent': {}}], verified_media=verified_media).commands[0]
+diff --git a/astrid/sdk/timeline/native_occurrence_media_commands.py b/astrid/sdk/timeline/native_occurrence_media_commands.py
+index 6723a656e12e66c361e3230a7b89e0fc81860f97..bff9314a615f7d1b76bb0d79e27c37e0f4c709a6
+--- a/astrid/sdk/timeline/native_occurrence_media_commands.py
++++ b/astrid/sdk/timeline/native_occurrence_media_commands.py
+@@ -144,9 +144,10 @@
+     track = owner + '/track:' + str(row.get('track'))
+     ctx.select('collection.tracks', owner)
+     value = ctx.read(track)
+-    if (not isinstance(value, dict) or value.get('kind') != 'visual'
++    track_kind = 'audio' if kind == 'audio' else 'visual'
++    if (not isinstance(value, dict) or value.get('kind') != track_kind
+             or value.get('role', 'output') != 'output' or not active(value)):
+-        raise CommandError('media edit requires an active raw visual child track')
++        raise CommandError(f'media edit requires an active raw {track_kind} child track')
+     ctx.bind('media.track', track)
+ 
+ 
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index 62384aad61494c67a614ad1a7122fee4119e0829..9914f62fab9471f094858f0aa2a28873abcc9849
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -57,6 +57,44 @@
+     return State(value).entity(REF)
+ 
+ 
++def audio_bundle_without_registry_duration():
++    original = bundle()
++    parent = original['parent']
++    for rows in (parent['clips'], parent['config']['clips']):
++        rows[0].update({'asset': 'voice', 'clipType': 'audio', 'track': 'music',
++                        'from': 2, 'to': 6, 'hold': 4})
++    parent['config']['tracks'].append({'id': 'music', 'kind': 'audio'})
++    parent['registry']['assets']['voice'] = {'media_id': 'voice-object', 'type': 'audio'}
++    return original
++
++
++def test_audio_trim_uses_exact_verified_duration_when_registry_duration_is_missing():
++    original = audio_bundle_without_registry_duration()
++    verified = [{'selection': {'asset': 'voice', 'generation_id': 'generation-voice',
++                               'variant_id': 'variant-voice', 'object_id': 'voice-object',
++                               'catalog_digest': 'catalog-voice'},
++                 'media_type': 'audio/wav', 'size': 123, 'duration_seconds': 6}]
++    command = capture_clip_trim(original, REF, in_s=1, out_s=5, verified_media=verified)
++    plan = execute(original, [command], verified_media=verified)
++    assert (clip(plan.bundle)['from'], clip(plan.bundle)['to'], clip(plan.bundle)['hold']) == (1, 5, 4)
++    assert plan.records[0]['dependencies'][0]['pin']['verified_media'] == verified[0]
++    assert inverse(plan.bundle, plan.records).bundle == original
++    assert replay(plan, original, verified_media=verified).records == plan.records
++
++
++def test_audio_trim_without_the_exact_verified_input_refuses_without_writes():
++    original = audio_bundle_without_registry_duration()
++    verified = [{'selection': {'asset': 'voice', 'generation_id': 'generation-voice',
++                               'variant_id': 'variant-voice', 'object_id': 'voice-object',
++                               'catalog_digest': 'catalog-voice'},
++                 'media_type': 'audio/wav', 'size': 123, 'duration_seconds': 6}]
++    command = capture_clip_trim(original, REF, in_s=1, out_s=5, verified_media=verified)
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError, match='exact Runtime-verified media metadata'):
++        execute(original, [command])
++    assert original == before
++
++
+ @pytest.mark.parametrize('changes,args', [({}, {'in_s': 1, 'out_s': 5}),
+     ({'speed': None}, {'in_s': 0, 'out_s': 10}), ({'speed': .5}, {'out_s': 10}),
+     ({}, {'in_s': .000001, 'out_s': 1.000002}),
+diff --git a/tests/editing_conformance/test_recipe_m2_parent_media.py b/tests/editing_conformance/test_recipe_m2_parent_media.py
+index 6052a414c1c09d819e27de8d65d493ca9d1ba060..f2748a9546c048ea0c966daef9b9ca517e425a62
+--- a/tests/editing_conformance/test_recipe_m2_parent_media.py
++++ b/tests/editing_conformance/test_recipe_m2_parent_media.py
+@@ -51,7 +51,9 @@
+     """The occurrence fixture plus a free parent lane 'overlay' holding one media clip."""
+     document, old, new, verified = inputs(kind)
+     payload = document['parent_revision']['payload']
+-    payload['config']['tracks'].append({'id': 'overlay', 'kind': 'visual', 'role': 'output'})
++    payload['config']['tracks'].append({'id': 'overlay',
++                                       'kind': 'audio' if kind == 'audio' else 'visual',
++                                       'role': 'output'})
+     for identity, at in (('ov-a', 0), ('ov-b', 5)):
+         clip = {'id': identity, 'track': 'overlay', 'asset': 'picture', 'clipType': 'media', 'at': at, 'hold': 2}
+         payload['config']['clips'].append(copy.deepcopy(clip))
+@@ -64,8 +66,12 @@
+ 
+ def args(new, kind, **changes):
+     # Completion scalars are a thin builder; only the complete row crosses the wire.
+-    row = {'id': 'born', 'clipType': kind, 'asset': new['asset'], 'track': 'overlay',
++    row = {'id': 'born', 'clipType': 'media' if kind == 'audio' else kind,
++           'asset': new['asset'], 'track': 'overlay',
+            'at': 3, 'hold': 4 if kind == 'video' else 1.25}
++    if kind in ('video', 'audio'):
++        row.update({'from': 2 if kind == 'video' else 0,
++                    'to': 6 if kind == 'video' else 1.25})
+     if kind == 'video':
+         row.update({'from': 2, 'to': 6, 'speed': 2})
+     row.update(changes)
+@@ -119,7 +125,7 @@
+     return [row['id'] for row in State(bundle).collection('parent', 'clip')]
+ 
+ 
+-@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('kind', ['image', 'video', 'audio'])
+ def test_exact_capture_replay_scoped_birth_and_inverse(kind):
+     document, bundle, command, verified = captured(kind)
+     before = copy.deepcopy(bundle)
+@@ -135,7 +141,8 @@
+     assert birth(command)['created'] == [ASSET, CHILD]
+     assert plan.bundle['placements'] == before['placements'] and plan.bundle['shots'] == before['shots']
+     row = State(plan.bundle).entity(CHILD)
+-    assert (row['asset'], row['track'], row['clipType']) == ('reserved-new', 'overlay', kind)
++    assert (row['asset'], row['track'], row['clipType']) == (
++        'reserved-new', 'overlay', 'media' if kind == 'audio' else kind)
+     assert row['at'] == pytest.approx(round(3 * 30000 / 1001) * 1001 / 30000)
+     if kind == 'video':
+         assert (row['from'], row['to'], row['hold'], row['speed']) == (2, 6, 4, 2)
+diff --git a/tests/editing_conformance/test_recipe_occurrence_media.py b/tests/editing_conformance/test_recipe_occurrence_media.py
+index e0b6d8e3a8fe017b479df50d5d9e55e7f002185c..0cce88935b78739536b020280aa1a273ed37b214
+--- a/tests/editing_conformance/test_recipe_occurrence_media.py
++++ b/tests/editing_conformance/test_recipe_occurrence_media.py
+@@ -44,6 +44,9 @@
+     payload['registry']['assets']['picture']['type'] = kind
+     if kind == 'video':
+         payload['clips'][0].update({'from': 2, 'to': 6, 'hold': 4, 'speed': 2})
++    elif kind == 'audio':
++        payload['tracks'][0]['kind'] = 'audio'
++        payload['clips'][0].update({'clipType': 'audio', 'from': 0, 'to': 1, 'hold': 1})
+     for row in document['parent_revision']['payload']['occurrences']:
+         row.update(source_offset=0, speed=1)
+     document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
+@@ -56,7 +59,8 @@
+     new = {'asset': 'reserved-new', 'generation_id': 'generation-new', 'variant_id': 'variant-new',
+            'object_id': NEW, 'catalog_digest': 'sha256:' + 'b' * 64}
+     verified = [{'selection': copy.deepcopy(pin), 'media_type': kind + '/fixture', 'size': 123,
+-                 **({'duration_seconds': 6} if kind == 'video' else {})} for pin in (old, new)]
++                 **({'duration_seconds': 6} if kind in ('video', 'audio') else {})}
++                for pin in (old, new)]
+     return document, old, new, verified
+ 
+ 
+@@ -64,10 +68,12 @@
+     document, old, new, verified = inputs(kind)
+     bundle = bundle_from_document(document)
+     if operation == 'add':
+-        row = {'id': 'reserved-child', 'clipType': kind, 'asset': new['asset'], 'track': 'picture',
++        row = {'id': 'reserved-child', 'clipType': 'media' if kind == 'audio' else kind,
++               'asset': new['asset'], 'track': 'picture',
+                'at': .125, 'hold': 4 if kind == 'video' else 1.25,
+                'params': None, 'opaque': [None, False, {}],
+-               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else {})}
++               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else
++                  {'from': 0, 'to': 1.25} if kind == 'audio' else {})}
+         command = capture_occurrence_add_media(bundle, OWNER, row, new, verified_media=verified)
+     else:
+         command = capture_occurrence_swap_media(bundle, TARGET, old, new, verified_media=verified)
+@@ -75,7 +81,7 @@
+ 
+ 
+ @pytest.mark.parametrize('operation', ['add', 'swap'])
+-@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('kind', ['image', 'video', 'audio'])
+ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
+     document, bundle, command, verified = captured(operation, kind)
+     before = copy.deepcopy(bundle)
+
+exec
+/bin/bash -lc 'git diff --check && git status --short && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-audio-media-preserve/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-audio-media-preserve/DONE && echo DONE_OK && sed -n '"'1,12p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-audio-media-preserve/commit-msg" in /home/user/work/wt/agt-m2-native-audio-media-preserve
+ succeeded in 486ms:
+ M astrid/sdk/timeline/_media_inputs.py
+ M astrid/sdk/timeline/_trim_commands.py
+ M astrid/sdk/timeline/native_occurrence_media_commands.py
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+ M tests/editing_conformance/test_recipe_m2_parent_media.py
+ M tests/editing_conformance/test_recipe_occurrence_media.py
+DONE_OK
+feat(timeline): preserve native audio media inputs
+
+Admit Runtime-verified audio selections on existing media carriers and use
+verified duration metadata for guarded legacy audio trims without changing the
+timeline wire schema.
+
+codex
+Implemented native audio media support and guarded verified-duration audio trims.
+
+Changes:
+- Accept verified `audio/*` media on existing `clip.add-media` / `occurrence.add-media`.
+- Require explicit active audio tracks and exact source windows.
+- Allow legacy audio trim using exact `VerifiedMedia.duration_seconds` when registry duration is absent.
+- Preserve existing schema, registry shape, image/video behavior, inverse, replay, and guards.
+- Added focused audio authoring/trim coverage.
+
+Tests:
+
+```text
+275 passed, 84 deselected
+```
+
+Ruff: `All checks passed!`
+
+Historical provider-bound audio trim remains OPEN because Runtime currently cannot provide an undeclared exact media-selection carrier. Full details: [agent-native-audio-media-preserve.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-native-audio-media-preserve.md)
+
+Commit message and `DONE` marker written.
+tokens used
+354,671
+Implemented native audio media support and guarded verified-duration audio trims.
+
+Changes:
+- Accept verified `audio/*` media on existing `clip.add-media` / `occurrence.add-media`.
+- Require explicit active audio tracks and exact source windows.
+- Allow legacy audio trim using exact `VerifiedMedia.duration_seconds` when registry duration is absent.
+- Preserve existing schema, registry shape, image/video behavior, inverse, replay, and guards.
+- Added focused audio authoring/trim coverage.
+
+Tests:
+
+```text
+275 passed, 84 deselected
+```
+
+Ruff: `All checks passed!`
+
+Historical provider-bound audio trim remains OPEN because Runtime currently cannot provide an undeclared exact media-selection carrier. Full details: [agent-native-audio-media-preserve.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-native-audio-media-preserve.md)
+
+Commit message and `DONE` marker written.

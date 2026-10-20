@@ -1,0 +1,9 @@
+name=agt-m2-occurrence-delete-continue
+repo=agent
+base=tl/agt-m2-occurrence-delete
+base_sha=1d3ead87
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-occurrence-delete-continue
+started=2026-10-20T04:23:53Z

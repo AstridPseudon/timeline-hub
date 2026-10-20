@@ -1,0 +1,400 @@
+  git -C /home/user/work/$repo worktree add -q --detach "$W" "tl/$target" 2>/dev/null || git -C /home/user/work/$repo worktree add -q --detach "$W" "hub/tl/$target" 2>/dev/null; fi
+[ -d "$W" ] || bad "worktree $W not found (and no tl/$target branch to recreate it from)"
+CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
+OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
+HV=light; case $suite in full*) HV=heavy;; esac
+if [ -z "$RUN" ]; then
+  IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null
+  TREE=$(GIT_INDEX_FILE=$IDX git -C $W write-tree); rm -f $IDX; [ -n "$TREE" ] || bad "could not compute tree of $W"
+  # cross-product suites (e2e, journeys, commit-integration, or a command naming another repo) also depend on the
+  # other repos' integration code: add their tl/integration heads to the key so a stale pass is never reused
+  EXT=""; case "$suite $CMD" in *e2e*|*integration*|*three-products*|*journey*) EXT=x;; esac
+  for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
+  [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
+  KEY=$(echo "$repo $TREE $suite $files $CMD $EXT" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
+  if [ $nocache = 0 ] && [ -f $C/$KEY ] && SRC=$O/tests/$(cat $C/$KEY) && [ -f $SRC/summary ]; then
+    cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
+    basename $SRC > $D/cached_from; cp $SRC/status $D/status; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
+  [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
+  [ $HV = heavy ] && [ $(alive heavy) -ge 1 ] && { echo "a full suite is already running" | tee $D/why; exit 3; }
+  [ $HV = light ] && [ $(alive light) -ge 2 ] && { echo "2 targeted/named runs already running" | tee $D/why; exit 3; }
+  FLOOR=5; [ $HV = heavy ] && FLOOR=8; [ $(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9) -lt $FLOOR ] && { echo "low disk (<${FLOOR}G free; heavy runs need 8G so Runtime storage preflight does not cause false reds)" | tee $D/why; exit 3; }
+  [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
+  setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+fi
+echo $$ > $D/running; SNAP=/home/user/work/wt/.test-$ID; T0=$(date +%s)
+COMMIT=$(git -C $W commit-tree $tree -p HEAD -m "test snapshot $ID") && git -C $W worktree add -q --detach $SNAP $COMMIT || { echo 1 > $D/exit; echo error > $D/status; echo "snapshot failed" > $D/summary; rm -f $D/running $C/$key.running; exit 1; }
+NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules; case $repo in app|composition) [ -e $SNAP/node_modules ] || ln -s "$(readlink -f $NM)" $SNAP/node_modules;; esac
+# agent: link the worktree's installed Remotion runtime (remotion/node_modules), else the integration checkout's, read-only by convention
+if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
+  [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
+( cd $SNAP && PYTHONPATH=$SNAP timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
+git -C $W worktree remove --force $SNAP 2>/dev/null || { rm -rf $SNAP; git -C $W worktree prune; }
+ST=fail; [ $RC = 0 ] && ST=pass; [ $RC = 124 -o $RC = 137 ] && ST=timeout
+{ echo "test $ID: $ST exit=$RC in $(( $(date +%s) - T0 ))s — $suite on $target ($repo tree $tree)"; echo "cmd: $CMD"
+  echo "counts: $(grep -aE '[0-9]+ (passed|failed)|Tests +[0-9]|^# (pass|fail) ' $D/log.txt | tail -3 | tr '\n' ' ')"; echo "--- last 60 lines of $D/log.txt ---"; tail -60 $D/log.txt; } > $D/summary
+echo $RC > $D/exit; echo $ST > $D/status; [ $RC = 0 -o $RC = 1 ] && echo $ID > $C/$key; rm -f $D/running $C/$key.running
+
+codex
+R1 and N1 are fixed: the test now reads the serialized Python theme constant, and the tarball check uses exact equality. The explicit historical theme and SSR hashes are unchanged. I also confirmed the shared Remotion lock differs only by eight missing `libc` fields; I’ll report both hashes and leave that runtime untouched.
+exec
+/bin/bash -lc 'ln -s /home/user/work/runtimes/agent-remotion-0012/node_modules remotion/node_modules
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_series_inspection.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_composition_package.py tests/test_artifact_manifest.py' in /home/user/work/wt/agt-m3-consume12-current
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent12-current-adoption.md')
+p.write_text('''# Agent 0.0.12 current adoption — in progress
+
+Worker: agt-m3-consume12-current.
+
+Merge-forward prerequisite blocked by sandbox: "'`bin/merge-forward agt-m3-consume12-current` exits 128 because `.git/worktrees/agt-m3-consume12-current/ORIG_HEAD.lock` is read-only. Please execute this helper outside the sandbox; the worker can resolve conflicts afterward. Corrections R1/N1 are already present as uncommitted edits in the two presenter capability tests. Do not overwrite those edits when merging.
+
+Starting cohort SHA: ce2510034f3edebef7430dd018c566101ea298fb. Observed current integration SHA: c456b3281497653cecf44f61acd6fa30565d83c8. Its Runtime pin is 94114269d1ce23ab3224d7eca5a85138ce2b5fed; detached producer checkout `/home/user/work/wt/rt-pin-94114269` has that exact HEAD. Final descendant SHA cannot be published before the external merge/harness commit.
+
+Composition artifact: 0.0.12, SHA256 0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3; SRI sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==.
+
+Committed cohort lock `ce2510034f3edebef7430dd018c566101ea298fb:remotion/package-lock.json` SHA256: cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597.
+Shared `/home/user/work/runtimes/agent-remotion-0012/package-lock.json` SHA256: 783795c9ebfd9fa9c3aa5c4fb3032f134d2f2887cdf342cab676d423319ec11d. Exact JSON equality holds after removing the eight libc fields from the committed lock; no other difference. Shared runtime is read-only and was not edited.
+
+No normal source/PCM activation. No ledger edited. Acceptance and final tuple pending merge-forward.
+'"''')
+PY" in /home/user/work/wt/agt-m3-consume12-current
+ succeeded in 0ms:
+ succeeded in 24854ms:
+...............................................                          [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/agt-m3-consume12-current/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+47 passed, 5 warnings in 24.21s
+
+exec
+/bin/bash -lc 'git status --short && git diff -- tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/presenter_scene_capability.mjs && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check' in /home/user/work/wt/agt-m3-consume12-current
+ succeeded in 286ms:
+ M tests/packs/rendering/presenter_scene_capability.mjs
+ M tests/packs/rendering/test_presenter_scene_capability.py
+?? remotion/node_modules
+diff --git a/tests/packs/rendering/presenter_scene_capability.mjs b/tests/packs/rendering/presenter_scene_capability.mjs
+index 34a4a5c0..3478c79b 100644
+--- a/tests/packs/rendering/presenter_scene_capability.mjs
++++ b/tests/packs/rendering/presenter_scene_capability.mjs
+@@ -2,6 +2,7 @@
+ // These inspect markup and declared regions, never decoded pixels or lip-sync statistics.
+ import assert from 'node:assert/strict';
+ import {createHash} from 'node:crypto';
++import {readFileSync} from 'node:fs';
+ import path from 'node:path';
+ import {pathToFileURL} from 'node:url';
+ import {build} from 'esbuild';
+@@ -49,15 +50,7 @@ const basis = {width: 1920, height: 1080, fps: 30};
+ // Composition 0.0.12's package default is Agent's navy theme. The historical
+ // SSR hashes intentionally use this explicit pre-12 theme so the presenter
+ // preservation check does not silently turn an old fixture into a new default.
+-assert.deepEqual(DEFAULT_THEME, {
+-  id: 'banodoco-default',
+-  visual: {
+-    color: {fg: '#FAFAFA', bg: '#050814', accent: '#67E8F9'},
+-    type: {families: {heading: 'Arial', body: 'Arial', mono: 'monospace'},
+-      size: {base: 32, small: 22, large: 84}, weight: {normal: 400, bold: 600}, lineHeight: 1.2},
+-    motion: {fadeMs: 450}, canvas: {width: 1920, height: 1080, fps: 30},
+-  },
+-});
++assert.deepEqual(DEFAULT_THEME, JSON.parse(readFileSync(path.join(project, 'builtin-default-theme.json'), 'utf8')));
+ const theme = {
+   id: 'banodoco-default',
+   visual: {
+diff --git a/tests/packs/rendering/test_presenter_scene_capability.py b/tests/packs/rendering/test_presenter_scene_capability.py
+index 30965b8c..9d58b34a 100644
+--- a/tests/packs/rendering/test_presenter_scene_capability.py
++++ b/tests/packs/rendering/test_presenter_scene_capability.py
+@@ -10,6 +10,7 @@ from pathlib import Path
+ import pytest
+ 
+ from astrid.core.rendering.node_pin import resolve_pinned_node
++from astrid.core.theme._schema import BUILTIN_DEFAULT_THEME
+ from scripts import gen_effect_registry
+ 
+ SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+@@ -24,9 +25,7 @@ def presenter_query(tmp_path_factory):
+     artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
+         ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz")))
+     # Explicit immutable releases only; this override does not change the host pin.
+-    assert hashlib.sha256(artifact.read_bytes()).hexdigest() in {
+-        SHA256, "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+-    }
++    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
+     peers = Path(os.environ.get("ASTRID_COMPOSITION_TEST_NODE_MODULES", str(
+         ROOT / "remotion/node_modules"))).resolve()
+     node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+@@ -58,6 +57,7 @@ def presenter_query(tmp_path_factory):
+     for kind in ("effects", "animations", "transitions"):
+         (source / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
+     shutil.copyfile(Path(__file__).with_name("presenter_scene_capability.mjs"), project / "query.mjs")
++    (project / "builtin-default-theme.json").write_text(json.dumps(BUILTIN_DEFAULT_THEME))
+     env = {k: v for k, v in os.environ.items() if k not in ("NODE_OPTIONS", "NODE_PATH")}
+ 
+     def hashes():
+wrote artifacts.json: 162 artifacts, sha256:9c6bc05bef1d7a2c4d76ad3dc62e18437e12e9f9df2947798fdd941e1e715a68
+artifacts.json is current
+
+exec
+/bin/bash -lc "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-consume12-current remotion-0012-nodes --files '-o addopts= tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_series_inspection.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_composition_package.py tests/test_artifact_manifest.py'" in /home/user/work/wt/agt-m3-consume12-current
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-current-remotion-0012-nodes-1020092420-15148/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-consume12-current-remotion-0012-nodes-1020092420-15148
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-current/BLOCKED')
+p.write_text('Merge prerequisite: bin/merge-forward agt-m3-consume12-current exits 128 (ORIG_HEAD.lock read-only). Orchestrator must run helper outside sandbox; worker can resolve subsequent conflicts. R1/N1 corrections are present; preliminary direct 47-test set passed; central remotion-0012-nodes request agt-m3-consume12-current-remotion-0012-nodes-1020092420-15148 pending. No final descendant/current Runtime vendor qualification possible before merge. Shared Remotion lock also differs only by eight libc metadata fields; see design/agent12-current-adoption.md.\\n')
+PY
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test" in /home/user/work/wt/agt-m3-consume12-current
+ succeeded in 0ms:
+#!/bin/bash
+# wait-test ID|RESULT-DIR [MAX-MIN]  — poll every 30 s until the test run is done, print its summary, exit with its exit code.
+# Exits 124 (still queued/running) after MAX-MIN minutes (default 100); just run it again.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+D=$O/tests/$(basename "$1"); [ -f $D/status ] || { echo "no test run $1"; exit 2; }; END=$(( $(date +%s) + ${2:-100}*60 ))
+while grep -qE '^(queued|running)' $D/status; do
+  [ $(date +%s) -ge $END ] && { echo "still $(cat $D/status) after ${2:-100} min $(cat $D/why 2>/dev/null); rerun wait-test"; exit 124; }; sleep 30; done
+cat $D/summary; exit $(cat $D/exit 2>/dev/null || echo 1)
+
+codex
+All 47 selected tests passed locally, including the historical SSR expectations and the theme comparison. The same six-file set is queued with the central `remotion-0012-nodes` runner, with integration tests enabled. This is preliminary evidence on the cohort branch; qualification against current integration still depends on the merge-forward.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-consume12-current-remotion-0012-nodes-1020092420-15148 1' in /home/user/work/wt/agt-m3-consume12-current
+ exited 1 in 0ms:
+bad file arg -o (relative path/glob/node-id, no ..)
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-pin-94114269' in /home/user/work/wt/agt-m3-consume12-current
+ exited 1 in 66ms:
+producer commit: expected 6be970633cc82ab412428151e6bf42f3e7fc3081, got 94114269d1ce23ab3224d7eca5a85138ce2b5fed
+producer manifest version differs from lock
+producer changed: packages/python/astrid_runtime_client/__init__.py
+producer changed: packages/python/astrid_runtime_client/contract_metadata.py
+producer changed: packages/python/astrid_runtime_client/generated.py
+producer changed: packages/python/astrid_runtime_client/timeline_commit_types.py
+re-vendor with: python scripts/vendor_lock.py update runtime.lock.json --producer <astrid-runtime checkout>
+
+exec
+/bin/bash -lc "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-consume12-current remotion-0012-nodes --files 'tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_series_inspection.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_composition_package.py tests/test_artifact_manifest.py'" in /home/user/work/wt/agt-m3-consume12-current
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227
+
+exec
+/bin/bash -lc 'git status --short && git rev-parse HEAD tl/integration && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227 1' in /home/user/work/wt/agt-m3-consume12-current
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, subprocess, tempfile
+from pathlib import Path
+from scripts.vendor_lock import check
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-current')
+pin='c456b3281497653cecf44f61acd6fa30565d83c8'
+with tempfile.TemporaryDirectory(dir=worker,prefix='integration-vendor-check-') as directory:
+ root=Path(directory)
+ contents=subprocess.check_output(['git','show',f'{pin}:runtime.lock.json'])
+ (root/'runtime.lock.json').write_bytes(contents)
+ lock=json.loads(contents)
+ for target in lock['files']:
+  path=root/target
+  path.parent.mkdir(parents=True,exist_ok=True)
+  path.write_bytes(subprocess.check_output(['git','show',f'{pin}:{target}']))
+ problems=check(root/'runtime.lock.json',Path('/home/user/work/wt/rt-pin-94114269'),root=root)
+ print('READ-ONLY INTEGRATION PIN CHECK:',pin)
+ print('Runtime source_commit:',lock['source_commit'])
+ print('Result:',problems or 'PASS (all 15 vendored paths match exact producer)')
+ raise SystemExit(bool(problems))
+PY" in /home/user/work/wt/agt-m3-consume12-current
+ succeeded in 189ms:
+READ-ONLY INTEGRATION PIN CHECK: c456b3281497653cecf44f61acd6fa30565d83c8
+Runtime source_commit: 94114269d1ce23ab3224d7eca5a85138ce2b5fed
+Result: PASS (all 15 vendored paths match exact producer)
+
+codex
+The central runner rejected the `-o addopts=` argument. Its named command inherits the repository’s default exclusion of integration tests, so I’ve submitted the accepted six-file request and will report its deselected count. A read-only check also confirms that current integration’s 15 vendored Runtime files match the exact `94114269` producer.
+ succeeded in 30107ms:
+ M tests/packs/rendering/presenter_scene_capability.mjs
+ M tests/packs/rendering/test_presenter_scene_capability.py
+?? remotion/node_modules
+ce2510034f3edebef7430dd018c566101ea298fb
+c456b3281497653cecf44f61acd6fa30565d83c8
+test agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227: pass exit=0 in 8s — remotion-0012-nodes on agt-m3-consume12-current (agent tree dd0659b9df6ce9d1a447a78962d120e0538ebddd)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_series_inspection.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_composition_package.py tests/test_artifact_manifest.py
+counts: 13 passed, 5 warnings in 6.04s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227/log.txt ---
+bringing up nodes...
+bringing up nodes...
+
+.............                                                            [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/.test-agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 5 warnings in 6.04s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227/status; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227/why; git diff --check' in /home/user/work/wt/agt-m3-consume12-current
+ succeeded in 98ms:
+pass
+cat: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227/why: No such file or directory
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227 1' in /home/user/work/wt/agt-m3-consume12-current
+ succeeded in 0ms:
+test agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227: pass exit=0 in 8s — remotion-0012-nodes on agt-m3-consume12-current (agent tree dd0659b9df6ce9d1a447a78962d120e0538ebddd)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_series_inspection.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_composition_package.py tests/test_artifact_manifest.py
+counts: 13 passed, 5 warnings in 6.04s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227/log.txt ---
+bringing up nodes...
+bringing up nodes...
+
+.............                                                            [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/.test-agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 5 warnings in 6.04s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('remotion/node_modules')
+assert p.is_symlink() and str(p.readlink()) == '/home/user/work/runtimes/agent-remotion-0012/node_modules'
+p.unlink()
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
+git diff --check
+git status --short" in /home/user/work/wt/agt-m3-consume12-current
+ succeeded in 377ms:
+artifacts.json is current
+ M tests/packs/rendering/presenter_scene_capability.mjs
+ M tests/packs/rendering/test_presenter_scene_capability.py
+
+codex
+The central run passed 13 tests; its default marker filter excluded the 34 integration cases that passed locally. I’m writing the report and blocker now. The required next steps are to run merge-forward outside the sandbox, resolve the merged tree, and qualify it centrally with integration tests enabled. I’ve removed the temporary dependency symlink and left shared dependencies untouched.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=orch/'workers/agt-m3-consume12-current'
+report='''# Agent 0.0.12 current adoption — BLOCKED
+
+Implemented R1 and N1 on the exact starting cohort "'`ce2510034f3edebef7430dd018c566101ea298fb`. Only two tracked files changed:
+- `tests/packs/rendering/test_presenter_scene_capability.py` imports and serializes `astrid.core.theme._schema.BUILTIN_DEFAULT_THEME` beside `query.mjs`, and checks artifact SHA256 with exact equality.
+- `tests/packs/rendering/presenter_scene_capability.mjs` parses that serialized value and compares it to the public package `DEFAULT_THEME`. The copied navy expected object is removed. The explicit historical black/Georgia theme and all 286 SSR expectations remain unchanged.
+
+`artifacts.json` was regenerated normally and is byte-unchanged on this starting tree. No SDK/client/schema/fixture files were restored from an older branch. No normal source/PCM activation; no shared dependency files were changed. The temporary worktree-local `remotion/node_modules` symlink used to borrow read-only peers was removed after testing. No commit, push, integration edit, ledger edit, or full suite was performed.
+
+## Merge prerequisite (blocking)
+
+Exact command:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/merge-forward agt-m3-consume12-current
+```
+
+Exit 128: `fatal: update_ref failed for ref '"'ORIG_HEAD': cannot lock ref 'ORIG_HEAD': Unable to create '/home/user/peteromallet/astrid-agent/.git/worktrees/agt-m3-consume12-current/ORIG_HEAD.lock': Read-only file system"'`.
+
+No merge began. HEAD remains `ce2510034f3edebef7430dd018c566101ea298fb`; observed current `tl/integration` is `c456b3281497653cecf44f61acd6fa30565d83c8`. The requested descendant does not yet exist. The sandbox cannot complete the prerequisite ancestry operation. Run the authorized helper outside the sandbox, retain these two test corrections, and resume conflict resolution/qualification. No DONE file is claimed.
+
+## Exact tuple and lock identities
+
+- Cohort/base: Agent `ce2510034f3edebef7430dd018c566101ea298fb` (uncommitted R1/N1 corrections awaiting harness commit).
+- Required current Agent parent: `c456b3281497653cecf44f61acd6fa30565d83c8` (not merged).
+- Required Runtime producer: `94114269d1ce23ab3224d7eca5a85138ce2b5fed`; `/home/user/work/wt/rt-pin-94114269` has that exact HEAD. Current integration already pins it; keep its bytes exactly.
+- Composition: `0.0.12`; artifact `remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz`, SHA256 `0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3`; SRI `sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==`.
+- Exact committed lock: `ce2510034f3edebef7430dd018c566101ea298fb:remotion/package-lock.json` (worktree path `/home/user/work/wt/agt-m3-consume12-current/remotion/package-lock.json`), SHA256 `cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597`.
+- Shared `/home/user/work/runtimes/agent-remotion-0012/package-lock.json`, SHA256 `783795c9ebfd9fa9c3aa5c4fb3032f134d2f2887cdf342cab676d423319ec11d`.
+- The only JSON difference is eight missing `libc` fields in shared runtime optional native dependencies: four `@remotion/compositor-linux-*` and four `@rspack/binding-linux-*` entries. Exact equality holds after stripping those fields from the committed lock. Both package.json hashes equal `58460ce59e2473d74f44238a2e5e78e2d4bd8a79a0bd94e430f7ae5eb6c2778a`. Do not rewrite the committed npm lock to match the shared runtime. Orchestrator owns shared-runtime reprovisioning; readiness itself was not exercised here.
+
+## Tests and checks
+
+Preliminary evidence below is on the corrected cohort, NOT a current-integration descendant.
+
+Local targeted command (after adding a temporary worktree-local symlink from `remotion/node_modules` to `/home/user/work/runtimes/agent-remotion-0012/node_modules`):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_series_inspection.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_composition_package.py tests/test_artifact_manifest.py
+```
+
+Result: **47 passed, 5 tar extraction deprecation warnings, 24.21s**. This includes all integration-marked presenter/package cases and the 286 historical SSR comparisons.
+
+Central named command:
+
+```sh
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-consume12-current remotion-0012-nodes --files '"'tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_series_inspection.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_composition_package.py tests/test_artifact_manifest.py')
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test \""'$R" 1
+```
+
+Result `agt-m3-consume12-current-remotion-0012-nodes-1020092457-1227`: **13 passed, 5 warnings, exit 0**; snapshot tree `dd0659b9df6ce9d1a447a78962d120e0538ebddd` includes the temporary dependency symlink. The named suite inherits pyproject'"'s "'`not integration` selection, so the 34 integration cases did NOT run centrally. An earlier request `agt-m3-consume12-current-remotion-0012-nodes-1020092420-15148` attempted `--files '"'-o addopts= ...'"'` and was rejected with `bad file arg -o`; it ran no tests. The central command needs an orchestrator-owned correction to clear addopts/include integration before qualifying all 47 cases. No tests were skipped/disabled/rewritten to obtain these results.
+
+Other exact commands:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
+git diff --check
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-pin-94114269
+```
+
+Manifest regeneration/check: PASS, 162 artifacts, version `sha256:9c6bc05bef1d7a2c4d76ad3dc62e18437e12e9f9df2947798fdd941e1e715a68`; regeneration leaves no diff. Diff whitespace check: PASS. Vendor check on this unmerged worktree: FAIL as expected because its old Runtime pin remains `6be970633cc82ab412428151e6bf42f3e7fc3081`. It reports producer commit/version plus the four changed client files. This is a missing merge prerequisite, not a reason to restore old Runtime files.
+
+Separately, a read-only Python heredoc extracted `runtime.lock.json` and its 15 consumer paths using `git show c456b3281497653cecf44f61acd6fa30565d83c8:<path>` into a temporary worker-local directory and called `scripts.vendor_lock.check(lock, Path('"'/home/user/work/wt/rt-pin-94114269'), root=temporary_root)"'`: **PASS**, all 15 paths match the exact producer. The temporary directory was removed. This establishes that integration already has the required pin; it is not final merged-tree qualification.
+
+## Decisions, remaining work, ledger
+
+Kept this a two-file review correction. No plan decision changed. Did not reconstruct a fake merge or copy current SDK files into an unrelated ancestry, and did not edit shared runtime metadata to erase its mismatch.
+
+Required next steps: run merge-forward externally; resolve the documented cohort conflicts while preserving current SDK/fixtures and Runtime 94114269; regenerate artifacts normally; correct the central named lane selection and run all six files on the merged tree; check the final artifact manifest and vendor lock against the exact producer; publish the harness-produced final Agent SHA here. The coordinated adoption tuple and renderer readiness remain unverified.
+
+Required ledger/coordination update (orchestrator only): record R1/N1 implemented with 47-case preliminary local proof, 13-case limited central proof, merge-forward and central integration-selection blockers, and shared Remotion lock reprovisioning outstanding. Do not mark M3/current adoption accepted or normal source/PCM activation complete from this report.
+'"'''
+(worker/'report.md').write_text(report)
+(orch/'design/agent12-current-adoption.md').write_text(report)
+(worker/'commit-msg').write_text('test(rendering): compare public theme with host default\\n\\nSerialize BUILTIN_DEFAULT_THEME into the presenter fixture and compare it\\nwith Composition DEFAULT_THEME while preserving historical SSR styling.\\nUse exact equality for the immutable Composition artifact checksum.\\n')
+(worker/'BLOCKED').write_text('Cannot produce current-integration descendant: authorized bin/merge-forward exits 128 because ORIG_HEAD.lock is on read-only .git. Run merge-forward externally, preserve R1/N1 edits, then resume. Central remotion-0012-nodes inherits not-integration and rejects -o args (13 cases ran; all 47 passed locally); its command needs orchestrator correction before acceptance. Shared Remotion 0.0.12 lock lacks eight libc fields; exact committed/shared hashes and all evidence are in report.md and design/agent12-current-adoption.md. Runtime 94114269 remains correctly on integration, not yet merged here.\\n')
+PY" in /home/user/work/wt/agt-m3-consume12-current
+ succeeded in 0ms:
+codex
+Implemented R1/N1; preserved the historical theme and all 286 SSR expectations.
+
+- Local targeted tests: **47 passed**.
+- Central `remotion-0012-nodes`: **13 passed**; its default marker filter excluded 34 integration cases.
+- Manifest and whitespace checks passed.
+
+**Blocked:** merge-forward cannot write read-only Git metadata. The orchestrator must run it externally, then qualify the merged tree with integration tests enabled. The shared Remotion lock also lacks eight `libc` fields.
+
+Wrote `commit-msg`, `BLOCKED`, and the [report with exact commands, hashes, tuple, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent12-current-adoption.md). No DONE claimed.
+tokens used
+81,332
+Implemented R1/N1; preserved the historical theme and all 286 SSR expectations.
+
+- Local targeted tests: **47 passed**.
+- Central `remotion-0012-nodes`: **13 passed**; its default marker filter excluded 34 integration cases.
+- Manifest and whitespace checks passed.
+
+**Blocked:** merge-forward cannot write read-only Git metadata. The orchestrator must run it externally, then qualify the merged tree with integration tests enabled. The shared Remotion lock also lacks eight `libc` fields.
+
+Wrote `commit-msg`, `BLOCKED`, and the [report with exact commands, hashes, tuple, and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent12-current-adoption.md). No DONE claimed.

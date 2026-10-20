@@ -1,0 +1,9 @@
+name=agt-tests-lock-env-isolation
+repo=agent
+base=tl/integration
+base_sha=140e84cc
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-tests-lock-env-isolation
+started=2026-10-20T12:43:42Z

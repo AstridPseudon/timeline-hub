@@ -1,0 +1,400 @@
+    ok = True
+
+    def __init__(self, data):
+        self.data = data
+
+
+class _Tasks:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def create(self, **kwargs):
+        self.calls.append(kwargs)
+        return _Result({"run_id": "run-1", "task_id": "task-1"})
+
+
+class _Client:
+    def __init__(self) -> None:
+        self.tasks = _Tasks()
+
+
+def test_admission_uses_injected_runtime_task_client() -> None:
+    client = _Client()
+    context = kernel_admission.admit_orchestrator_project_run(
+        project="demo",
+        tool_id="video_editing.hype",
+        argv=["--project", "demo"],
+        client=client,
+    )
+
+    assert context.run_id == "run-1"
+    assert context.project_slug == "demo"
+    assert context.run_root.is_dir()
+    assert client.tasks.calls[0]["project_id"] == "demo"
+    assert client.tasks.calls[0]["capability"] == "video_editing.hype"
+    assert client.tasks.calls[0]["spec"]["argv"] == ["--project", "demo"]
+
+
+def test_admission_requires_explicit_runtime_client() -> None:
+    import pytest
+
+    with pytest.raises(kernel_admission.ProjectRuntimeError, match="explicit generated"):
+        kernel_admission.admit_orchestrator_project_run(
+            project="demo",
+            tool_id="video_editing.hype",
+            argv=[],
+        )
+
+
+def test_admission_and_normal_callers_have_no_local_composition() -> None:
+    paths = [
+        Path(kernel_admission.__file__),
+        Path(__file__).parents[2]
+        / "astrid"
+        / "packs"
+        / "video_editing"
+        / "actions"
+        / "thumbnail_maker"
+        / "run.py",
+        Path(__file__).parents[2]
+        / "astrid"
+        / "packs"
+        / "video_editing"
+        / "actions"
+        / "event_talks"
+        / "run.py",
+        Path(__file__).parents[2]
+        / "astrid"
+        / "packs"
+        / "video_editing"
+        / "actions"
+        / "hype"
+        / "project_adapter.py",
+    ]
+    forbidden = {"compose_standard_application", "derive_database_path", "UnitOfWork"}
+    for path in paths:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        names = {
+            node.id
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Name)
+        }
+        assert not forbidden & names, f"local authority remains in {path}"
+tests/timeline/test_timeline_kernel_kinds.py:16:  closed when runtime discovery is unavailable.
+tests/timeline/test_timeline_kernel_kinds.py:388:    """The retired local doctor is replaced by the runtime gateway route."""
+tests/timeline/test_timeline_kernel_kinds.py:394:    def test_public_doctor_route_fails_closed_without_runtime(self) -> None:
+tests/timeline/test_timeline_kernel_kinds.py:413:        self.assertEqual(payload["problem_code"], "runtime_unavailable")
+tests/timeline/test_timeline_kernel_kinds.py:415:        self.assertEqual(diagnostic["problemCode"], "runtime_unavailable")
+tests/timeline/test_timeline_kernel_kinds.py:416:        self.assertEqual(diagnostic["failureBoundary"], "runtime-contact")
+tests/timeline/test_timeline_kernel_kinds.py:417:        self.assertEqual([action["commandId"] for action in diagnostic["nextActions"]], ["runtime-up"])
+tests/stage1/test_kernel_admission_runtime.py:1:"""Focused coverage for runtime-owned pack orchestration admission."""
+tests/stage1/test_kernel_admission_runtime.py:32:def test_admission_uses_injected_runtime_task_client() -> None:
+tests/stage1/test_kernel_admission_runtime.py:49:def test_admission_requires_explicit_runtime_client() -> None:
+
+exec
+/bin/bash -lc 'python3 -m pytest --collect-only -q tests/stage1/test_kernel_admission_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py tests/timeline/test_timeline_kernel_kinds.py tests/editing_conformance/test_timing_retained_inputs.py tests/editing_conformance/test_word_binding_recipe.py 2>/dev/null | tail -5' in /home/user/work/wt/agt-m2-word-reference-review
+ succeeded in 939ms:
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+48/97 tests collected (49 deselected) in 0.46s
+
+codex
+The requested 97-case lane resolves cleanly to the exact scoped set: 41 word-reference cases, 6 retained-input timing cases, 45 timeline-kernel cases, 3 kernel-admission cases, and 2 real-Runtime ABI/reservation cases. I’m running that combined set now with the supplied Runtime checkout, then I’ll record the exact source SHA and before/after regression behavior in the required report.
+exec
+/bin/bash -lc 'ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime python3 -m pytest -q tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/timeline/test_timeline_kernel_kinds.py tests/stage1/test_kernel_admission_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py' in /home/user/work/wt/agt-m2-word-reference-review
+ succeeded in 9852ms:
+................................................                 [100%]
+=============================== warnings summary ===============================
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout_method
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+48 passed, 49 deselected, 2 warnings, 8 subtests passed in 9.18s
+
+exec
+/bin/bash -lc 'ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime python3 -m pytest -q -m integration tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/timeline/test_timeline_kernel_kinds.py tests/stage1/test_kernel_admission_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py' in /home/user/work/wt/agt-m2-word-reference-review
+ succeeded in 20693ms:
+.................................................                        [100%]
+=============================== warnings summary ===============================
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout_method
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+49 passed, 48 deselected, 2 warnings in 20.15s
+
+codex
+The 97-case scoped lane is green when split according to this repository’s default integration deselection: 48 non-integration cases passed, and the 49 integration cases passed with `-m integration` (97 total; 8 subtests included). I’m doing the final zero-xfail/status/source-SHA checks now, then writing the report and both requested commit-message paths.
+exec
+/bin/bash -lc "printf '%s\\n' '--- source identity ---'; git rev-parse HEAD; git rev-parse HEAD"'^{tree}; printf '"'%s\\n' '--- diff checks ---'; git diff --check; printf '%s\\n' '--- target xfail scan ---'; if rg -n 'xfail|XFAIL|expected.?failure' tests/editing_conformance/test_word_binding_recipe.py; then exit 1; else echo 'no xfail declarations in word-reference test'; fi; printf '%s\\n' '--- status ---'; git status --short; printf '%s\\n' '--- diff stat ---'; git diff --stat; printf '%s\\n' '--- relevant diff ---'; git diff -- tests/editing_conformance/test_word_binding_recipe.py" in /home/user/work/wt/agt-m2-word-reference-review
+ succeeded in 765ms:
+--- source identity ---
+fd27d5ebdb795b4855e42f5389793eb99637ae7e
+b5663c5b4a06f239d44bb74c41d6b43e4744c390
+--- diff checks ---
+--- target xfail scan ---
+no xfail declarations in word-reference test
+--- status ---
+ M tests/editing_conformance/test_word_binding_recipe.py
+--- diff stat ---
+ .../test_word_binding_recipe.py                    | 22 ++++++++++++++--------
+ 1 file changed, 14 insertions(+), 8 deletions(-)
+--- relevant diff ---
+diff --git a/tests/editing_conformance/test_word_binding_recipe.py b/tests/editing_conformance/test_word_binding_recipe.py
+index 168a908b..510e2b69 100644
+--- a/tests/editing_conformance/test_word_binding_recipe.py
++++ b/tests/editing_conformance/test_word_binding_recipe.py
+@@ -230,15 +230,21 @@ def test_last_write_clear_undo_restore_and_restore_inverse(recipe):
+     assert authored(bundle(case))[KEY] == b["args"]
+ 
+ 
+-@pytest.mark.xfail(strict=True, raises=AssertionError,
+-                   reason="Authored stable references fix the 437a4b6a revision collision")
+-def test_equal_text_revision_only_restore_is_an_executable_counterexample(recipe):
+-    # Keep the original collision assertions from 437a4b6a as pre-fix evidence.
+-    # The obsolete provenance fold is deleted; positive restore is tested below.
++def test_equal_text_references_produce_distinct_canonical_revisions(recipe):
++    # A and B deliberately share the same text echo but bind different words.
++    # Their authored references, and therefore their canonical revisions, must
++    # remain distinct without consulting or folding accepted history.
+     case = recipe
+-    a = case.submit(case.request([pick(case)]), "a")
+-    b = case.submit(case.request([pick(case, 1)]), "b")
+-    assert a["data"]["canonical_document"] == b["data"]["canonical_document"]
++    command_a = pick(case)
++    a = case.submit(case.request([command_a]), "a")
++    command_b = pick(case, 1)
++    b = case.submit(case.request([command_b]), "b")
++    assert command_a["args"]["declaration"] == command_b["args"]["declaration"] == '"again"'
++    assert command_a["args"]["choice"]["word_ids"] != command_b["args"]["choice"]["word_ids"]
++    assert a["data"]["canonical_document"] != b["data"]["canonical_document"]
++    for name in ("revision_id", "content_digest"):
++        assert (a["data"]["canonical_document"]["parent_revision"][name]
++                != b["data"]["canonical_document"]["parent_revision"][name])
+     assert a["receipt"]["receipt_id"] != b["receipt"]["receipt_id"]
+ 
+ 
+
+exec
+/bin/bash -lc 'ls -ld /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/notes 2>&1 || true' in /home/user/work/wt/agt-m2-word-reference-review
+ succeeded in 0ms:
+ls: cannot access '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/notes': No such file or directory
+drwxr-xr-x 2 root root 4096 Oct 20 01:19 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review
+
+exec
+/bin/bash -lc 'mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/notes' in /home/user/work/wt/agt-m2-word-reference-review
+ succeeded in 0ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..ca27e001fc56ed607d28db0810615bfcd96103f9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): assert distinct word-anchor revisions
++
++Replace the obsolete canonical A==B collision xfail with positive assertions
++for same-echo, different-word stable references and distinct revision identity.
++Keep publication-specific restore coverage unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ca27e001fc56ed607d28db0810615bfcd96103f9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg.txt
+@@ -0,0 +1,5 @@
++test(timeline): assert distinct word-anchor revisions
++
++Replace the obsolete canonical A==B collision xfail with positive assertions
++for same-echo, different-word stable references and distinct revision identity.
++Keep publication-specific restore coverage unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..821fb1a72bc0356fb64ea6e8fbf36e56b13c1c2a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/notes/report.md
+@@ -0,0 +1,43 @@
++# M2 canonical word-reference review
++
++## Result
++
++Updated `tests/editing_conformance/test_word_binding_recipe.py` on source
++`fd27d5ebdb795b4855e42f5389793eb99637ae7e` (tree
++`b5663c5b4a06f239d44bb74c41d6b43e4744c390`). Removed the obsolete strict xfail
++that required the old canonical A==B collision. The test now asserts the
++ratified behavior: A and B use the same `"again"` echo but different stable
++word IDs, and therefore have different canonical documents, parent revision
++IDs, content digests, and receipts. The separate positive restore test remains
++unchanged and continues to restore each publication's own reference/timing.
++
++The old equality was preserved as historical evidence in the review context,
++not as a passing test requirement: commit `437a4b6a` recorded the pre-authored-
++reference collision where equal text declarations selected different words but
++the canonical documents compared equal. The current test no longer requires
++that wrong equality and performs no history fold or restore-argument change.
++
++## Tests
++
++- `git diff --check` — passed.
++- `python3 -m pytest -q tests/editing_conformance/test_word_binding_recipe.py` — 41 deselected by the repository's default integration filter; 2 config warnings.
++- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime python3 -m pytest -q -m integration tests/editing_conformance/test_word_binding_recipe.py` — 41 passed; 2 config warnings.
++- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime python3 -m pytest -q tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/timeline/test_timeline_kernel_kinds.py tests/stage1/test_kernel_admission_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py` — 48 passed, 49 deselected, 8 subtests passed; 2 config warnings.
++- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime python3 -m pytest -q -m integration tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/timeline/test_timeline_kernel_kinds.py tests/stage1/test_kernel_admission_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py` — 49 passed, 48 deselected; 2 config warnings.
++
++The two scoped runs cover 97 collected cases total: 41 word-reference, 6
++retained-input timing, 45 timeline-kernel, 3 kernel-admission, and 2 actual
++Runtime ABI/reservation cases. The warnings are the existing unknown `timeout`
++and `timeout_method` pytest options. No full, browser, live-socket, install, or
++network suite was run. The edited word-reference file has zero xfail
++declarations.
++
++## Blockers and next steps
++
++No code blocker remains. The first integration invocation needed the explicit
++provided Runtime checkout because this worktree does not have the legacy
++`/home/user/work/wt/astrid-runtime` path; rerunning with
++`ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime` passed. Orchestrator should
++integrate the one-file test change and retain the 437a4b6a collision as report
++history only. Full validation remains subject to the central test service and
++the PLAN M1 hold.
+diff --git a/tests/editing_conformance/test_word_binding_recipe.py b/tests/editing_conformance/test_word_binding_recipe.py
+index 168a908b2b7478762c524d1afc7e15fae5158ed3..510e2b691f6c47b36cfef9fcae01342f430e2a46
+--- a/tests/editing_conformance/test_word_binding_recipe.py
++++ b/tests/editing_conformance/test_word_binding_recipe.py
+@@ -230,15 +230,21 @@
+     assert authored(bundle(case))[KEY] == b["args"]
+ 
+ 
+-@pytest.mark.xfail(strict=True, raises=AssertionError,
+-                   reason="Authored stable references fix the 437a4b6a revision collision")
+-def test_equal_text_revision_only_restore_is_an_executable_counterexample(recipe):
+-    # Keep the original collision assertions from 437a4b6a as pre-fix evidence.
+-    # The obsolete provenance fold is deleted; positive restore is tested below.
++def test_equal_text_references_produce_distinct_canonical_revisions(recipe):
++    # A and B deliberately share the same text echo but bind different words.
++    # Their authored references, and therefore their canonical revisions, must
++    # remain distinct without consulting or folding accepted history.
+     case = recipe
+-    a = case.submit(case.request([pick(case)]), "a")
+-    b = case.submit(case.request([pick(case, 1)]), "b")
+-    assert a["data"]["canonical_document"] == b["data"]["canonical_document"]
++    command_a = pick(case)
++    a = case.submit(case.request([command_a]), "a")
++    command_b = pick(case, 1)
++    b = case.submit(case.request([command_b]), "b")
++    assert command_a["args"]["declaration"] == command_b["args"]["declaration"] == '"again"'
++    assert command_a["args"]["choice"]["word_ids"] != command_b["args"]["choice"]["word_ids"]
++    assert a["data"]["canonical_document"] != b["data"]["canonical_document"]
++    for name in ("revision_id", "content_digest"):
++        assert (a["data"]["canonical_document"]["parent_revision"][name]
++                != b["data"]["canonical_document"]["parent_revision"][name])
+     assert a["receipt"]["receipt_id"] != b["receipt"]["receipt_id"]
+ 
+ 
+
+codex
+The required report and both commit-message files are written. The report records the exact source commit/tree, the historical 437a4b6a collision as evidence only, the positive before/after behavior, all commands/results, the Runtime-checkout caveat, and the central-suite/M1 hold. I’m performing one final artifact/status verification.
+exec
+/bin/bash -lc "printf '%s\\n' '--- worktree ---'; git status --short --branch; printf '%s\\n' '--- report ---'; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/notes/report.md; printf '%s\\n' '--- commit message files ---'; cmp -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg.txt && echo 'identical'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/commit-msg; printf '%s\\n' '--- final diff check ---'; git diff --check" in /home/user/work/wt/agt-m2-word-reference-review
+ succeeded in 421ms:
+--- worktree ---
+## tl/agt-m2-word-reference-review
+ M tests/editing_conformance/test_word_binding_recipe.py
+--- report ---
+# M2 canonical word-reference review
+
+## Result
+
+Updated `tests/editing_conformance/test_word_binding_recipe.py` on source
+`fd27d5ebdb795b4855e42f5389793eb99637ae7e` (tree
+`b5663c5b4a06f239d44bb74c41d6b43e4744c390`). Removed the obsolete strict xfail
+that required the old canonical A==B collision. The test now asserts the
+ratified behavior: A and B use the same `"again"` echo but different stable
+word IDs, and therefore have different canonical documents, parent revision
+IDs, content digests, and receipts. The separate positive restore test remains
+unchanged and continues to restore each publication's own reference/timing.
+
+The old equality was preserved as historical evidence in the review context,
+not as a passing test requirement: commit `437a4b6a` recorded the pre-authored-
+reference collision where equal text declarations selected different words but
+the canonical documents compared equal. The current test no longer requires
+that wrong equality and performs no history fold or restore-argument change.
+
+## Tests
+
+- `git diff --check` — passed.
+- `python3 -m pytest -q tests/editing_conformance/test_word_binding_recipe.py` — 41 deselected by the repository's default integration filter; 2 config warnings.
+- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime python3 -m pytest -q -m integration tests/editing_conformance/test_word_binding_recipe.py` — 41 passed; 2 config warnings.
+- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime python3 -m pytest -q tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/timeline/test_timeline_kernel_kinds.py tests/stage1/test_kernel_admission_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py` — 48 passed, 49 deselected, 8 subtests passed; 2 config warnings.
+- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime python3 -m pytest -q -m integration tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/timeline/test_timeline_kernel_kinds.py tests/stage1/test_kernel_admission_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py` — 49 passed, 48 deselected; 2 config warnings.
+
+The two scoped runs cover 97 collected cases total: 41 word-reference, 6
+retained-input timing, 45 timeline-kernel, 3 kernel-admission, and 2 actual
+Runtime ABI/reservation cases. The warnings are the existing unknown `timeout`
+and `timeout_method` pytest options. No full, browser, live-socket, install, or
+network suite was run. The edited word-reference file has zero xfail
+declarations.
+
+## Blockers and next steps
+
+No code blocker remains. The first integration invocation needed the explicit
+provided Runtime checkout because this worktree does not have the legacy
+`/home/user/work/wt/astrid-runtime` path; rerunning with
+`ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime` passed. Orchestrator should
+integrate the one-file test change and retain the 437a4b6a collision as report
+history only. Full validation remains subject to the central test service and
+the PLAN M1 hold.
+--- commit message files ---
+identical
+test(timeline): assert distinct word-anchor revisions
+
+Replace the obsolete canonical A==B collision xfail with positive assertions
+for same-echo, different-word stable references and distinct revision identity.
+Keep publication-specific restore coverage unchanged.
+--- final diff check ---
+
+codex
+Implemented the scoped test correction.
+
+- Removed obsolete canonical-collision xfail.
+- Added positive assertions for same echo/different word IDs producing distinct revisions and digests.
+- Preserved existing restore and anchored-reference coverage.
+- No product code, schema, registry, or restore args changed.
+
+Tests: 97 scoped cases passed across word-reference, timing, kernel, and Runtime ABI suites. `git diff --check` passed; zero xfails remain in the edited test.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/notes/report.md)
+
+Commit message files written; no commit performed.
+tokens used
+143,771
+Implemented the scoped test correction.
+
+- Removed obsolete canonical-collision xfail.
+- Added positive assertions for same echo/different word IDs producing distinct revisions and digests.
+- Preserved existing restore and anchored-reference coverage.
+- No product code, schema, registry, or restore args changed.
+
+Tests: 97 scoped cases passed across word-reference, timing, kernel, and Runtime ABI suites. `git diff --check` passed; zero xfails remain in the edited test.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-reference-review/notes/report.md)
+
+Commit message files written; no commit performed.

@@ -1,0 +1,400 @@
+        from referencing.exceptions import Unresolvable
+    
+        try:
+>           _validator(definition).validate(value)
+
+../rt-m2-native-clip-replacement-positives/runtime_protocol/timeline_commit_validation.py:97: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Draft202012Validator(schema={'$ref': 'https://astr...CommitRequest'}, format_checker=None)
+args = ({'api_version': 1, 'base_publication_id': 'txn-52803a32f65440a08fd7bbc662b0e220', 'base_revision_id': 'popup-baseline...171f076cc5ea1cc', ...}}, 'intent': {'ownership': 'parent'}, 'op': 'clip.swap-media', 'schema_version': 1, ...}], ...},)
+kwargs = {}
+error = <ValidationError: "'parent' is not one of ['shared', 'occurrence']">
+
+    def validate(self, *args, **kwargs):
+        for error in self.iter_errors(*args, **kwargs):
+>           raise error
+E           jsonschema.exceptions.ValidationError: 'parent' is not one of ['shared', 'occurrence']
+E           
+E           Failed validating 'enum' in schema['properties']['commands']['items']['properties']['intent']['properties']['ownership']:
+E               {'enum': ['shared', 'occurrence']}
+E           
+E           On instance['commands'][0]['intent']['ownership']:
+E               'parent'
+
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:450: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+editing = namespace(project='645733a368cc4da4afe2d42cd7932c92', old={'asset': 'variant-a4c7d7bc76f986139ab13e4fa9767cabdcf45c115...tocol.auth.CredentialStore object at 0x7ff909e6c7d0>, authorize=<function editing.<locals>.<lambda> at 0x7ff909d91080>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff90b3f75c0>
+
+    def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editing, monkeypatch):
+        import runtime_protocol.service as service_module
+        import runtime_protocol.visual_seam as visual_seam
+        from runtime_protocol.errors import RuntimeErrorBase
+        from runtime_protocol.service import RuntimeService
+        from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+    
+        from astrid.sdk.remote import RemoteTimelines
+        from astrid.sdk.timeline import commands
+        from astrid.sdk.timeline._command_state import State
+        from astrid.sdk.timeline.commit import bundle_from_document
+        from astrid.sdk.timeline.native_occurrence_media_commands import (
+            capture_parent_swap_media,
+        )
+    
+        def renderer_unavailable(*args, **kwargs):
+            pytest.fail('media replacement called the renderer')
+    
+        monkeypatch.setattr(service_module, 'evaluate_closure', renderer_unavailable)
+        monkeypatch.setattr(visual_seam, 'evaluate_closure', renderer_unavailable)
+        before = rows(editing)
+>       preview = commit(editing, body(editing, [command(editing)], dry_run=True), 'preview')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/editing_conformance/test_commit_runtime_parent_media_swap.py:166: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_occurrence_media.py:209: in commit
+    return editing.service.commit_timeline(
+../rt-m2-native-clip-replacement-positives/runtime_protocol/service.py:2399: in commit_timeline
+    validate_request(body)
+../rt-m2-native-clip-replacement-positives/runtime_protocol/timeline_commit_port.py:62: in validate_request
+    validate_commit_value(request, "CommitRequest")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'api_version': 1, 'base_publication_id': 'txn-52803a32f65440a08fd7bbc662b0e220', 'base_revision_id': 'popup-baseline'...ac171f076cc5ea1cc', ...}}, 'intent': {'ownership': 'parent'}, 'op': 'clip.swap-media', 'schema_version': 1, ...}], ...}
+definition = 'CommitRequest'
+
+    def validate_commit_value(value, definition: str) -> None:
+        """Raise Runtime ValidationError without changing the submitted JSON value.
+    
+        Schema dependencies are loaded only when validation is requested; importing
+        this module or the provider ABI requires only the standard library.
+        """
+        finite_json(value)
+        from jsonschema.exceptions import ValidationError as SchemaValidationError
+        from referencing.exceptions import Unresolvable
+    
+        try:
+            _validator(definition).validate(value)
+        except SchemaValidationError as exc:
+>           raise ValidationError(f"invalid {definition}: {exc.message}") from exc
+E           runtime_protocol.errors.ValidationError: invalid CommitRequest: 'parent' is not one of ['shared', 'occurrence']
+
+../rt-m2-native-clip-replacement-positives/runtime_protocol/timeline_commit_validation.py:99: ValidationError
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo[image]
+FAILED tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo[video]
+2 failed in 5.08s
+
+exec
+/bin/bash -lc 'git diff 310e5484..130b4937 -- astrid/sdk/workspace_client.py; git show 310e5484:astrid/sdk/workspace_client.py | rg -n "get_project_media_selection|get_project_verified_media|list_generations|list_variants"; git show 130b4937:astrid/sdk/workspace_client.py | rg -n "get_project_media_selection|get_project_verified_media|list_generations|list_variants"; git diff --check HEAD''^ HEAD; git status --short --branch' in /home/user/work/wt/agt-review-wc3-media-swap-final
+ succeeded in 615ms:
+diff --git a/astrid/sdk/workspace_client.py b/astrid/sdk/workspace_client.py
+index 36798449..acd8ca95 100644
+--- a/astrid/sdk/workspace_client.py
++++ b/astrid/sdk/workspace_client.py
+@@ -238,6 +238,7 @@ class WorkspaceClient:
+                 "create_timeline_document", "update_timeline_document", "list_timelines",
+                 "get_timeline", "get_project_timeline", "list_timeline_history",
+                 "commit_timeline", "list_timeline_commits", "replace_timeline_clip",
++                "get_project_verified_document", "get_project_verified_document_object",
+                 "diff_timeline", "archive_timeline",
+                 "recover_timeline", "list_project_shots", "create_project_shot",
+                 "inspect_timeline", "create_timeline_view",
+@@ -521,6 +522,12 @@ class WorkspaceClient:
+             limit=limit,
+         )
+ 
++    def get_project_verified_document(self, project_id: str, pin: Mapping[str, Any]) -> Any:
++        return self._call_generated("get_project_verified_document", project_id, pin)
++
++    def get_project_verified_document_object(self, project_id: str, pin: Mapping[str, Any], object_id: str) -> Any:
++        return self._call_generated("get_project_verified_document_object", project_id, pin, object_id)
++
+     def get_timeline(self, timeline_id: str, *, project_id: str | None = None) -> Any:
+         if hasattr(self._generated, "get_timeline"):
+             return self._call_generated("get_timeline", timeline_id)
+266:                "get_managed_output", "list_generations",
+267:                "get_generation", "list_variants", "attach_variant_thumbnail",
+1083:    def list_generations(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
+1084:        return self._call_generated("list_generations", project_id, cursor=cursor, limit=limit)
+1089:    def list_variants(self, generation_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
+1090:        return self._call_generated("list_variants", generation_id, cursor=cursor, limit=limit)
+267:                "get_managed_output", "list_generations",
+268:                "get_generation", "list_variants", "attach_variant_thumbnail",
+1090:    def list_generations(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
+1091:        return self._call_generated("list_generations", project_id, cursor=cursor, limit=limit)
+1096:    def list_variants(self, generation_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
+1097:        return self._call_generated("list_variants", generation_id, cursor=cursor, limit=limit)
+## tl/agt-review-wc3-media-swap-final
+
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py' in /home/user/work/wt/agt-review-wc3-media-swap-final
+ succeeded in 2390ms:
+......                                                                   [100%]
+6 passed in 1.31s
+
+codex
+The focused evidence is now clear. Native recipe/session coverage passes (142 tests), and the adapter’s fresh exact source/body mismatch correctly refuses before flush with the outbox untouched. The independent adversarial probe reproduces a real gate failure: an existing same-operation pending swap for another target is flushed. The real parent-provider integration is also not independently green because both available Runtime trees reject the parent ownership enum before the adapter runs; I’ll record that as unverified and document the exact cross-repo overlap.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f99cad9678ba78ed53f21f6811e7682f41621659
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md
+@@ -0,0 +1,57 @@
++# WC3 media-swap deletion gate review
++
++## Verdict
++
++CONCRETE BUG — do not approve.
++
++The WC3 branch is at `449dc471` (`feat(timeline): route media swaps through native sessions`), based on `310e5484`. The worktree is clean. No source files were changed by this review.
++
++### Blocking bug: retry can flush an unrelated pending swap
++
++`astrid/sdk/timeline_media_replacement.py:233-239` treats any pending command whose operation is `clip.swap-media` or `occurrence.swap-media` as the requested retry. It checks the original revision, but does not compare the pending command's `select`, old-media pin, new-media pin/source object, or ownership intent with the current call. Therefore a request for clip B can flush a durable pending swap for clip A; a request with a different source can likewise reuse the pending identity. This violates the settled retry rule that a retry must bind the same user intent, head, reference, and source, and can POST unrelated work under the new call's key.
++
++An inline private-buffer probe reproduced this: an outbox containing `occurrence:other/clip:other` caused a request for `occurrence:occ-a/clip:clip-a` to call `flush()` once. The same probe confirmed that a fresh exact source/body mismatch refuses with no flush and no outbox write.
++
++## Required behavior review
++
++- The old whole-publication path is deleted on this branch; `RemoteTimelines.replace_parent_media` delegates to the existing `TimelineSession` adapter. No new endpoint, DTO, schema, fallback writer, candidate diff, or legacy document route was added by WC3.
++- The exact-object scan is project-scoped through `list_generations(project_id)` and `list_variants(generation_id)`, requires exactly one object match, and does not call latest/current/gallery selectors. A duplicate-object private probe refused as ambiguous.
++- Selected media is re-read as the exact five-field selection and verified selection before capture. Native capture retains the existing command guards, source-window handling, opaque fields, occurrence isolation, and parent/occurrence operation distinction.
++- Fresh exact source/body mismatch refusal and outbox preservation were verified privately. The unrelated-pending retry failure above remains blocking.
++- The adapter-specific lost-ack/retry test is not present. Existing `TimelineSession` retry tests do not prove that `replace_parent_media` binds the same target/source after a lost acknowledgement or restart.
++
++## Positive assertion and provider coverage gap
++
++The original whole-publication positive test had six meaningful assertions: success, exactly one publication, idempotency key, selected asset, preserved timing (`at`/`hold`), and expected head. The converted unit test is now only a no-publication negative test, while the converted parent-provider case asserts only success and the final asset. It does not assert the key/receipt, exactly-once acceptance, expected-head binding, or timing preservation one-to-one. The parent-provider test uses a real Runtime commit provider but supplies explicit old/new selections and does not cover the new source-object-only scan.
++
++## Integration overlap
++
++Compared with current Agent integration `130b4937` (and still overlapping current `30fc8dd1`) from base `310e5484`, the exact WC3-overlapping paths are:
++
++- `astrid/sdk/remote.py`: integration removes the WC3 adapter arguments/dispatch and retains the old whole-closure implementation.
++- `astrid/sdk/timeline_media_replacement.py`: integration deletes the file.
++- `tests/editing_conformance/test_commit_runtime_parent_media_swap.py`: integration deletes the real parent-provider test.
++- `tests/test_timeline_clip_replacement.py`: integration deletes the converted adapter tests.
++
++The non-overlapping integration work includes selected-parameter authority and timeline command/inverse changes, scene/rendering/extraction changes (`astrid/core/rendering/service.py`, `window_inputs.py`, composed-frame/Remotion paths, and timeline elements), plus architecture and timeline documentation. WC3 must be reconciled with those changes; the ordinary canonical `310e5484` work cannot be treated as a standalone merge before the paired public-014 Runtime contract is available.
++
++## Tests and evidence
++
++Passed:
++
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py` — **6 passed**.
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_sync.py` — **142 passed**.
++- `git diff --check HEAD^ HEAD` — passed.
++- Private adversarial probes — ambiguous object refused; fresh source/body mismatch refused before flush with unchanged outbox; unrelated same-op pending intent incorrectly flushed once.
++
++Unverified/blocked:
++
++- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ... pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_undo_and_redo` — both parametrizations fail before the adapter because the current Runtime schema rejects `intent.ownership='parent'` (expects `shared`/`occurrence`).
++- The same test against `/home/user/work/wt/rt-m2-native-clip-replacement-positives` — same pre-adapter schema failure. Thus the real parent-provider positive and adapter-specific native ACK/retry case are not independently qualified here.
++- No full/public/matrix/live broad suite was requested or run.
++
++## Recommended next steps
++
++1. Make the pending/flight path require exact equality of the saved command's target, ownership, old-media five-tuple, new-media five-tuple/object identity, and original head before calling `flush`; otherwise retain the outbox and return the existing typed error.
++2. Restore one-to-one positive assertions for parent and occurrence adapters, including receipt/key, head pair, exactly-once acceptance, timing/source-window preservation, and shared-isolation behavior.
++3. Add an adapter-level lost-ACK/restart test and a source-object-only real-provider positive/ambiguous-selection lane after the paired public-014 Runtime contract is available.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..29b0b09eb54085de4d62867bbd41e67fb77de4b1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/commit-msg
+@@ -0,0 +1,3 @@
++test(timeline): review WC3 media swap deletion gate
++
++Record the independent WC3 review findings and focused test evidence.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..df64393ac79601f7fe198512bdceb6757444c02e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md
+@@ -0,0 +1,57 @@
++# WC3 media-swap deletion gate review
++
++## Verdict
++
++CONCRETE BUG — do not approve.
++
++The WC3 branch is at `449dc471` (`feat(timeline): route media swaps through native sessions`), based on `310e5484`. The worktree is clean. No source files were changed by this review.
++
++### Blocking bug: retry can flush an unrelated pending swap
++
++`astrid/sdk/timeline_media_replacement.py:233-239` treats any pending command whose operation is `clip.swap-media` or `occurrence.swap-media` as the requested retry. It checks the original revision, but does not compare the pending command's `select`, old-media pin, new-media pin/source object, or ownership intent with the current call. Therefore a request for clip B can flush a durable pending swap for clip A; a request with a different source can likewise reuse the pending identity. This violates the settled retry rule that a retry must bind the same user intent, head, reference, and source, and can POST unrelated work under the new call's key.
++
++An inline private-buffer probe reproduced this: an outbox containing `occurrence:other/clip:other` caused a request for `occurrence:occ-a/clip:clip-a` to call `flush()` once. The same probe confirmed that a fresh exact source/body mismatch refuses with no flush and no outbox write.
++
++## Required behavior review
++
++- The old whole-publication path is deleted on this branch; `RemoteTimelines.replace_parent_media` delegates to the existing `TimelineSession` adapter. No new endpoint, DTO, schema, fallback writer, candidate diff, or legacy document route was added by WC3.
++- The exact-object scan is project-scoped through `list_generations(project_id)` and `list_variants(generation_id)`, requires exactly one object match, and does not call latest/current/gallery selectors. A duplicate-object private probe refused as ambiguous.
++- Selected media is re-read as the exact five-field selection and verified selection before capture. Native capture retains the existing command guards, source-window handling, opaque fields, occurrence isolation, and parent/occurrence operation distinction.
++- Fresh exact source/body mismatch refusal and outbox preservation were verified privately. The unrelated-pending retry failure above remains blocking.
++- The adapter-specific lost-ack/retry test is not present. Existing `TimelineSession` retry tests do not prove that `replace_parent_media` binds the same target/source after a lost acknowledgement or restart.
++
++## Positive assertion and provider coverage gap
++
++The original whole-publication positive test had six meaningful assertions: success, exactly one publication, idempotency key, selected asset, preserved timing (`at`/`hold`), and expected head. The converted unit test is now only a no-publication negative test, while the converted parent-provider case asserts only success and the final asset. It does not assert the key/receipt, exactly-once acceptance, expected-head binding, or timing preservation one-to-one. The parent-provider test uses a real Runtime commit provider but supplies explicit old/new selections and does not cover the new source-object-only scan.
++
++## Integration overlap
++
++Compared with current Agent integration `130b4937` (and still overlapping current `30fc8dd1`) from base `310e5484`, the exact WC3-overlapping paths are:
++
++- `astrid/sdk/remote.py`: integration removes the WC3 adapter arguments/dispatch and retains the old whole-closure implementation.
++- `astrid/sdk/timeline_media_replacement.py`: integration deletes the file.
++- `tests/editing_conformance/test_commit_runtime_parent_media_swap.py`: integration deletes the real parent-provider test.
++- `tests/test_timeline_clip_replacement.py`: integration deletes the converted adapter tests.
++
++The non-overlapping integration work includes selected-parameter authority and timeline command/inverse changes, scene/rendering/extraction changes (`astrid/core/rendering/service.py`, `window_inputs.py`, composed-frame/Remotion paths, and timeline elements), plus architecture and timeline documentation. WC3 must be reconciled with those changes; the ordinary canonical `310e5484` work cannot be treated as a standalone merge before the paired public-014 Runtime contract is available.
++
++## Tests and evidence
++
++Passed:
++
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py` — **6 passed**.
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_sync.py` — **142 passed**.
++- `git diff --check HEAD^ HEAD` — passed.
++- Private adversarial probes — ambiguous object refused; fresh source/body mismatch refused before flush with unchanged outbox; unrelated same-op pending intent incorrectly flushed once.
++
++Unverified/blocked:
++
++- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo` — both parametrizations fail before the adapter because the current Runtime schema rejects `intent.ownership='parent'` (expects `shared`/`occurrence`).
++- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-native-clip-replacement-positives PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo` — same pre-adapter schema failure. Thus the real parent-provider positive and adapter-specific native ACK/retry case are not independently qualified here.
++- No full/public/matrix/live broad suite was requested or run.
++
++## Recommended next steps
++
++1. Make the pending/flight path require exact equality of the saved command's target, ownership, old-media five-tuple, new-media five-tuple/object identity, and original head before calling `flush`; otherwise retain the outbox and return the existing typed error.
++2. Restore one-to-one positive assertions for parent and occurrence adapters, including receipt/key, head pair, exactly-once acceptance, timing/source-window preservation, and shared-isolation behavior.
++3. Add an adapter-level lost-ACK/restart test and a source-object-only real-provider positive/ambiguous-selection lane after the paired public-014 Runtime contract is available.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..29b0b09eb54085de4d62867bbd41e67fb77de4b1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/commit-msg
+@@ -0,0 +1,3 @@
++test(timeline): review WC3 media swap deletion gate
++
++Record the independent WC3 review findings and focused test evidence.
+
+exec
+/bin/bash -lc "git status --short --branch; printf '\\n--- report ---\\n'; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md; printf '\\n--- markers ---\\n'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/{commit-msg,DONE}; wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/DONE" in /home/user/work/wt/agt-review-wc3-media-swap-final
+ succeeded in 388ms:
+## tl/agt-review-wc3-media-swap-final
+
+--- report ---
+# WC3 media-swap deletion gate review
+
+## Verdict
+
+CONCRETE BUG — do not approve.
+
+The WC3 branch is at `449dc471` (`feat(timeline): route media swaps through native sessions`), based on `310e5484`. The worktree is clean. No source files were changed by this review.
+
+### Blocking bug: retry can flush an unrelated pending swap
+
+`astrid/sdk/timeline_media_replacement.py:233-239` treats any pending command whose operation is `clip.swap-media` or `occurrence.swap-media` as the requested retry. It checks the original revision, but does not compare the pending command's `select`, old-media pin, new-media pin/source object, or ownership intent with the current call. Therefore a request for clip B can flush a durable pending swap for clip A; a request with a different source can likewise reuse the pending identity. This violates the settled retry rule that a retry must bind the same user intent, head, reference, and source, and can POST unrelated work under the new call's key.
+
+An inline private-buffer probe reproduced this: an outbox containing `occurrence:other/clip:other` caused a request for `occurrence:occ-a/clip:clip-a` to call `flush()` once. The same probe confirmed that a fresh exact source/body mismatch refuses with no flush and no outbox write.
+
+## Required behavior review
+
+- The old whole-publication path is deleted on this branch; `RemoteTimelines.replace_parent_media` delegates to the existing `TimelineSession` adapter. No new endpoint, DTO, schema, fallback writer, candidate diff, or legacy document route was added by WC3.
+- The exact-object scan is project-scoped through `list_generations(project_id)` and `list_variants(generation_id)`, requires exactly one object match, and does not call latest/current/gallery selectors. A duplicate-object private probe refused as ambiguous.
+- Selected media is re-read as the exact five-field selection and verified selection before capture. Native capture retains the existing command guards, source-window handling, opaque fields, occurrence isolation, and parent/occurrence operation distinction.
+- Fresh exact source/body mismatch refusal and outbox preservation were verified privately. The unrelated-pending retry failure above remains blocking.
+- The adapter-specific lost-ack/retry test is not present. Existing `TimelineSession` retry tests do not prove that `replace_parent_media` binds the same target/source after a lost acknowledgement or restart.
+
+## Positive assertion and provider coverage gap
+
+The original whole-publication positive test had six meaningful assertions: success, exactly one publication, idempotency key, selected asset, preserved timing (`at`/`hold`), and expected head. The converted unit test is now only a no-publication negative test, while the converted parent-provider case asserts only success and the final asset. It does not assert the key/receipt, exactly-once acceptance, expected-head binding, or timing preservation one-to-one. The parent-provider test uses a real Runtime commit provider but supplies explicit old/new selections and does not cover the new source-object-only scan.
+
+## Integration overlap
+
+Compared with current Agent integration `130b4937` (and still overlapping current `30fc8dd1`) from base `310e5484`, the exact WC3-overlapping paths are:
+
+- `astrid/sdk/remote.py`: integration removes the WC3 adapter arguments/dispatch and retains the old whole-closure implementation.
+- `astrid/sdk/timeline_media_replacement.py`: integration deletes the file.
+- `tests/editing_conformance/test_commit_runtime_parent_media_swap.py`: integration deletes the real parent-provider test.
+- `tests/test_timeline_clip_replacement.py`: integration deletes the converted adapter tests.
+
+The non-overlapping integration work includes selected-parameter authority and timeline command/inverse changes, scene/rendering/extraction changes (`astrid/core/rendering/service.py`, `window_inputs.py`, composed-frame/Remotion paths, and timeline elements), plus architecture and timeline documentation. WC3 must be reconciled with those changes; the ordinary canonical `310e5484` work cannot be treated as a standalone merge before the paired public-014 Runtime contract is available.
+
+## Tests and evidence
+
+Passed:
+
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py` — **6 passed**.
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_sync.py` — **142 passed**.
+- `git diff --check HEAD^ HEAD` — passed.
+- Private adversarial probes — ambiguous object refused; fresh source/body mismatch refused before flush with unchanged outbox; unrelated same-op pending intent incorrectly flushed once.
+
+Unverified/blocked:
+
+- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo` — both parametrizations fail before the adapter because the current Runtime schema rejects `intent.ownership='parent'` (expects `shared`/`occurrence`).
+- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-m2-native-clip-replacement-positives PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo` — same pre-adapter schema failure. Thus the real parent-provider positive and adapter-specific native ACK/retry case are not independently qualified here.
+- No full/public/matrix/live broad suite was requested or run.
+
+## Recommended next steps
+
+1. Make the pending/flight path require exact equality of the saved command's target, ownership, old-media five-tuple, new-media five-tuple/object identity, and original head before calling `flush`; otherwise retain the outbox and return the existing typed error.
+2. Restore one-to-one positive assertions for parent and occurrence adapters, including receipt/key, head pair, exactly-once acceptance, timing/source-window preservation, and shared-isolation behavior.
+3. Add an adapter-level lost-ACK/restart test and a source-object-only real-provider positive/ambiguous-selection lane after the paired public-014 Runtime contract is available.
+
+--- markers ---
+-rw-r--r-- 1 root root   0 Oct 20 14:54 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/DONE
+-rw-r--r-- 1 root root 123 Oct 20 14:54 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/commit-msg
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-media-swap-final/DONE
+
+codex
+## WC3 review: concrete bug — do not approve
+
+Found a blocking retry bug: `timeline_media_replacement.py:233-239` flushes any pending media-swap command with the same operation/head, without matching clip/occurrence, source, or media identity. This can submit unrelated pending work.
+
+Evidence:
+
+- `tests/test_timeline_clip_replacement.py` — 6 passed.
+- Native parent/occurrence recipes + sync tests — 142 passed.
+- Adversarial probes: ambiguity and fresh mismatch refusal passed; unrelated pending retry bug reproduced.
+- Real parent-provider integration is blocked by Runtime schema mismatch (`parent` ownership rejected before adapter execution).
+
+Integration overlap and full findings are in [agent-review-wc3-media-swap-final.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md).
+
+No source files changed. Wrote the commit message and `DONE` marker.
+tokens used
+196,172
+## WC3 review: concrete bug — do not approve
+
+Found a blocking retry bug: `timeline_media_replacement.py:233-239` flushes any pending media-swap command with the same operation/head, without matching clip/occurrence, source, or media identity. This can submit unrelated pending work.
+
+Evidence:
+
+- `tests/test_timeline_clip_replacement.py` — 6 passed.
+- Native parent/occurrence recipes + sync tests — 142 passed.
+- Adversarial probes: ambiguity and fresh mismatch refusal passed; unrelated pending retry bug reproduced.
+- Real parent-provider integration is blocked by Runtime schema mismatch (`parent` ownership rejected before adapter execution).
+
+Integration overlap and full findings are in [agent-review-wc3-media-swap-final.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc3-media-swap-final.md).
+
+No source files changed. Wrote the commit message and `DONE` marker.

@@ -1,0 +1,400 @@
+index dc6674e066fe06745e00cf996b8526411d4098cd..d97a3124c5c905dbeb9f1b65dc725512daf230c0
+--- a/astrid/sdk/timeline/outbox.py
++++ b/astrid/sdk/timeline/outbox.py
+@@ -20,7 +20,17 @@
+ 
+     @contextmanager
+     def locked(self):
++        missing, directory = [], self.path.parent
++        while not directory.exists():
++            missing.append(directory)
++            directory = directory.parent
+         self.path.parent.mkdir(parents=True, exist_ok=True)
++        for directory in reversed(missing):
++            descriptor = os.open(directory.parent, os.O_RDONLY | os.O_DIRECTORY)
++            try:
++                os.fsync(descriptor)
++            finally:
++                os.close(descriptor)
+         with self.path.with_suffix(self.path.suffix + ".lock").open("a") as lock:
+             fcntl.flock(lock, fcntl.LOCK_EX)
+             yield
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index 40282c4b3ca4d4711a650b5eaa2284940539e358..f10f1602d0c53f18a7e7ecf9059fd1525666e37c
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -10,7 +10,6 @@
+ import json
+ import shlex
+ import uuid
+-from pathlib import Path
+ from urllib.parse import quote
+ 
+ from astrid.sdk.timeline._common import TimelineEditError
+@@ -33,7 +32,8 @@
+ 
+ 
+ def _pin(value):
+-    if not isinstance(value, dict) or not all(value.get(key) for key in ("revision_id", "publication_id")):
++    if not isinstance(value, dict) or not all(isinstance(value.get(key), str) and value[key]
++                                             for key in ("revision_id", "publication_id")):
+         raise TimelineEditError("timeline has no verified publication; editing is unavailable")
+     return {key: value[key] for key in ("revision_id", "publication_id")}
+ 
+@@ -46,8 +46,8 @@
+ 
+     @classmethod
+     def open(cls, project, timeline, *, client, outbox_path=None):
++        from astrid.sdk.storage_root import resolve_runtime_data_root
+         from astrid.sdk.timeline.store import resolve_ids
+-        from astrid.sdk.storage_root import resolve_runtime_data_root
+ 
+         generated, identity = _connection(client)
+         project_id, timeline_id, _ = resolve_ids(project, timeline, client=client)
+@@ -63,6 +63,9 @@
+                 session.outbox.write({"scope": scope, "base": _pin(head), "pending": [], "flight": None})
+             elif state["scope"] != scope:
+                 raise TimelineEditError("outbox belongs to a different realm, actor, project or timeline")
++            elif not state["pending"] and state["flight"] is None:
++                state["base"] = _pin(generated.list_timeline_commits(project_id, timeline_id, limit=1)["head"])
++                session.outbox.write(state)
+         return session
+ 
+     def _state(self):
+@@ -75,8 +78,8 @@
+         return state
+ 
+     def _bundle(self, state):
++        from astrid.sdk.timeline.commands import execute
+         from astrid.sdk.timeline.store import fetch_bundle
+-        from astrid.sdk.timeline.commands import execute
+ 
+         bundle = fetch_bundle(self.project_id, self.timeline_id,
+                               revision_id=state["base"]["revision_id"], client=self.client)
+@@ -103,8 +106,11 @@
+                 command = pending[0]
+                 if len(pending) != 1 or command["op"] != "clip.move" or command["select"] != select or command["args"] != {"on": on}:
+                     raise TimelineEditError("pending intent differs; flush the original request before another move")
+-        if not pending:
+-            self.queue_move(select, on)
++            else:
++                from astrid.sdk.timeline.capture import capture_move
++
++                pending.append(capture_move(self._bundle(state), select, on))
++                self.outbox.write(state)
+         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+ 
+     def undo(self, publications, *, idempotency_key=None, dry_run=False, via="python"):
+@@ -133,7 +139,7 @@
+                         "base_revision_id": state["base"]["revision_id"],
+                         "base_publication_id": state["base"]["publication_id"],
+                         "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
+-                key = idempotency_key or f"timeline-edit-{uuid.uuid4().hex}"
++                key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
+                 if key == state.get("preview_key"):
+                     raise TimelineEditError("use a fresh key after a preview")
+                 flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
+@@ -142,6 +148,10 @@
+                 self.outbox.write(state)
+             body = json.loads(flight["body"])
+             if (flight["path"] != self.path or body["commands"] != state["pending"][:flight["count"]]
++                    or request_bytes(body).decode() != flight["body"]
++                    or body["project_id"] != self.project_id or body["timeline_id"] != self.timeline_id
++                    or body["base_revision_id"] != state["base"]["revision_id"]
++                    or body["base_publication_id"] != state["base"]["publication_id"]
+                     or (idempotency_key is not None and idempotency_key != flight["key"])
+                     or body["dry_run"] != dry_run):
+                 raise TimelineEditError("in-flight request is immutable; retry its original payload and key")
+@@ -167,6 +177,8 @@
+             else:
+                 if data.get("status") not in {"accepted", "rebased"} or not receipt:
+                     raise TimelineEditError("Runtime did not acknowledge acceptance; request remains in flight")
++                if receipt.get("idempotency_key") != flight["key"] or receipt.get("project_id") != self.project_id:
++                    raise TimelineEditError("Runtime acknowledged another request; request remains in flight")
+                 state["base"] = _pin({"revision_id": data.get("accepted_revision_id"),
+                                        "publication_id": receipt.get("receipt_id")})
+                 del state["pending"][:flight["count"]]
+diff --git a/tests/packs/timeline/test_cli_commit_move.py b/tests/packs/timeline/test_cli_commit_move.py
+index 8582c9e43eb744aa5dcd9453df693bf2c8e8a21b..a15fbc5de15e5cd74bc0718dd8b24e413f1b4e39
+--- a/tests/packs/timeline/test_cli_commit_move.py
++++ b/tests/packs/timeline/test_cli_commit_move.py
+@@ -10,12 +10,13 @@
+ from astrid.sdk import storage_root
+ from astrid.sdk.timeline.capture import capture_move
+ from astrid.sdk.timeline.outbox import request_bytes
+-from tests.sdk.test_timeline_sync import connected, initial_bundle  # noqa: F401
++from tests.sdk.test_timeline_sync import connected as sync_connection  # noqa: F401
++from tests.sdk.test_timeline_sync import initial_bundle
+ 
+ 
+ @pytest.fixture
+-def command(connected, monkeypatch):
+-    client, generated, path = connected
++def command(sync_connection, monkeypatch):  # noqa: F811 - imported pytest fixture
++    client, generated, path = sync_connection
+     monkeypatch.setattr(storage_root, "resolve_runtime_data_root", lambda: path.parent)
+     scope = {"realm_id": "realm", "actor_id": "actor", "project_id": "p", "timeline_id": "t"}
+     generated.path = path.parent / "timeline-outbox" / (hashlib.sha256(request_bytes(scope)).hexdigest() + ".json")
+diff --git a/tests/sdk/test_timeline_sync.py b/tests/sdk/test_timeline_sync.py
+index 1052b082e9a6a334f96d96f892b3381a5b83ffa6..196bd27408a406fa35d37e3d356c453f2680a214
+--- a/tests/sdk/test_timeline_sync.py
++++ b/tests/sdk/test_timeline_sync.py
+@@ -58,7 +58,7 @@
+         if idempotency_key in self.accepted:
+             original, response = self.accepted[idempotency_key]
+             if original != raw:
+-                raise ApiError(409, "conflict", "key payload changed", {"status": "refused"})
++                raise ApiError(409, "conflict", "key payload changed", details={"status": "refused"})
+             return copy.deepcopy(response)
+         inverse_records = []
+         if body["commands"][0]["op"] == "timeline.inverse":
+@@ -69,7 +69,7 @@
+             if self.head["revision_id"] != body["base_revision_id"]:
+                 plan = replay(plan, self.bundles[self.head["revision_id"]])
+         except TimelineEditError as exc:
+-            raise ApiError(409, "conflict", str(exc), {"status": "conflict", "reason": "guard_changed"}) from exc
++            raise ApiError(409, "conflict", str(exc), details={"status": "conflict", "reason": "guard_changed"}) from exc
+         if body["dry_run"]:
+             return {"data": {"status": "preview", "evaluated_head": copy.deepcopy(self.head), "id_map": {}}, "receipt": None}
+         ordinal = len(self.accepted) + 1
+@@ -128,14 +128,16 @@
+     assert command == capture_move(initial_bundle(), "parent/clip:a", 0)
+     result = session.flush()
+     assert generated.bundles["r1"]["parent"]["clips"][0]["at"] == 0
+-    assert generated.records["pub1"][0]["direct_writes"]
++    assert any(write["path"] == ["at"] and write["before"] == write["after"]
++               for write in generated.records["pub1"][0]["writes"])
+     assert result["data"]["accepted_publication_id"] == "pub1"
+     assert result["data"]["show_command"] == "astrid timelines show t --project p --published --revision-id r1"
+     assert json.loads(path.read_bytes())["pending"] == []
+     assert client.reads == ["r0"]
+ 
+ 
+-def test_lost_ack_reload_retries_exact_request_before_sending_suffix(connected):
++@pytest.mark.parametrize("target", ["parent/clip:a", "parent/clip:b"])
++def test_lost_ack_reload_retries_exact_request_before_sending_suffix(connected, target):
+     session = open_session(connected)
+     client, generated, path = connected
+     generated.lose_ack = True
+@@ -143,7 +145,7 @@
+         session.move("parent/clip:a", 5, idempotency_key="original")
+     before = json.loads(path.read_bytes())["flight"]
+     session = open_session(connected)
+-    suffix = session.queue_move("parent/clip:b", 7)
++    suffix = session.queue_move(target, 7)
+     # An independent peer changes the head after the ambiguous request.
+     generated.bundles["peer"] = copy.deepcopy(generated.bundles["r1"])
+     generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
+@@ -165,6 +167,44 @@
+     assert client.reads == ["r0", "r0"]
+ 
+ 
++def test_failed_ack_write_recovers_the_original_flight(connected, monkeypatch):
++    session = open_session(connected)
++    _, generated, path = connected
++    write = session.outbox.write
++
++    def fail_ack(state):
++        if state["base"]["revision_id"] == "r1":
++            raise OSError("disk unavailable while acknowledging")
++        write(state)
++
++    monkeypatch.setattr(session.outbox, "write", fail_ack)
++    with pytest.raises(OSError):
++        session.move("parent/clip:a", 5)
++    assert json.loads(path.read_bytes())["flight"]
++    open_session(connected).flush()
++    assert len(generated.accepted) == 1
++    assert generated.calls[0] == generated.calls[1]
++    assert json.loads(path.read_bytes())["pending"] == []
++
++
++def test_failed_fsync_prevents_send_and_atomic_replace_preserves_unsent_intent(connected, monkeypatch):
++    from astrid.sdk.timeline import outbox
++
++    session = open_session(connected)
++    _, generated, path = connected
++    session.queue_move("parent/clip:a", 5)
++    unsent = path.read_bytes()
++    with monkeypatch.context() as patch:
++        patch.setattr(outbox.os, "fsync", lambda fd: (_ for _ in ()).throw(OSError("fsync failed")))
++        with pytest.raises(OSError):
++            session.flush()
++    assert generated.calls == []
++    assert path.read_bytes() == unsent
++    assert list(path.parent.glob(".outbox-*")) == []
++    session.flush()
++    assert generated.accepted
++
++
+ def test_changed_intent_key_and_dry_run_cannot_replace_an_ambiguous_request(connected):
+     session = open_session(connected)
+     _, generated, path = connected
+@@ -233,6 +273,18 @@
+     assert generated.calls == []
+ 
+ 
++def test_new_clean_session_captures_current_published_state(connected):
++    session = open_session(connected)
++    _, generated, _ = connected
++    session.move("parent/clip:a", 5)
++    generated.bundles["peer"] = execute(generated.bundles["r1"], [
++        capture_move(generated.bundles["r1"], "parent/clip:b", 3),
++    ]).bundle
++    generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
++    command = open_session(connected).queue_move("parent/clip:b", 7)
++    assert command == capture_move(generated.bundles["peer"], "parent/clip:b", 7)
++
++
+ def test_nonidentity_map_does_not_acknowledge_pending_work(connected, monkeypatch):
+     session = open_session(connected)
+     _, generated, path = connected
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD:/tmp/agt-m1-frontends-test-overlay /home/user/work/venv-agent/bin/python -m pytest -q -p core_overlay tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_publish_connection.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_history.py tests/packs/timeline/test_cli_status_publish.py tests/packs/timeline/test_cli_parity.py tests/packs/timeline/test_edit_verbs.py --basetemp=/tmp/agt-m1-frontends-pytest-final' in /home/user/work/wt/agt-m1-frontends
+ succeeded in 6453ms:
+........................................................................ [ 51%]
+...................................................................      [100%]
+139 passed in 5.75s
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/sync.py astrid/sdk/timeline/outbox.py astrid/packs/timeline/cli_parser.py tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py; PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=skip astrid/sdk/timeline/sync.py astrid/sdk/timeline/outbox.py; git diff --check; git diff --numstat; wc -l astrid/sdk/timeline/{sync,outbox}.py tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py; git status --short' in /home/user/work/wt/agt-m1-frontends
+ succeeded in 336ms:
+All checks passed!
+Success: no issues found in 2 source files
+54	2	astrid/packs/timeline/cli.py
+8	2	astrid/packs/timeline/cli_parser.py
+  195 astrid/sdk/timeline/sync.py
+   56 astrid/sdk/timeline/outbox.py
+  302 tests/sdk/test_timeline_sync.py
+   76 tests/packs/timeline/test_cli_commit_move.py
+  629 total
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_parser.py
+?? astrid/sdk/timeline/outbox.py
+?? astrid/sdk/timeline/sync.py
+?? tests/packs/timeline/test_cli_commit_move.py
+?? tests/sdk/test_timeline_sync.py
+
+codex
+The final focused run passes 139 tests. The product diff adds 313 lines and removes 4. It uses the connected generated client, adds no fallback writer or renderer calls, and preserves local draft handling. I’ll now record the handoff limits and write the commit message; the integrated full suite remains for the central service.
+
+exec
+/bin/bash -lc 'git show HEAD:astrid/packs/timeline/cli_parser.py > /tmp/agt-m1-frontends-base-parser.py
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=skip /tmp/agt-m1-frontends-base-parser.py' in /home/user/work/wt/agt-m1-frontends
+ exited 1 in 240ms:
+/tmp/agt-m1-frontends-base-parser.py:38: error: Signature of "parse_args"
+incompatible with supertype "argparse.ArgumentParser"  [override]
+        def parse_args(self, args: Any = None, namespace: Any = None) -> a...
+        ^
+/tmp/agt-m1-frontends-base-parser.py:38: note:      Superclass:
+/tmp/agt-m1-frontends-base-parser.py:38: note:          @overload
+/tmp/agt-m1-frontends-base-parser.py:38: note:          def parse_args(self, args: Sequence[str] | None = ..., namespace: None = ...) -> Namespace
+/tmp/agt-m1-frontends-base-parser.py:38: note:          @overload
+/tmp/agt-m1-frontends-base-parser.py:38: note:          def [_N] parse_args(self, args: Sequence[str] | None, namespace: _N) -> _N
+/tmp/agt-m1-frontends-base-parser.py:38: note:          @overload
+/tmp/agt-m1-frontends-base-parser.py:38: note:          def [_N] parse_args(self, *, namespace: _N) -> _N
+/tmp/agt-m1-frontends-base-parser.py:38: note:      Subclass:
+/tmp/agt-m1-frontends-base-parser.py:38: note:          def parse_args(self, args: Any = ..., namespace: Any = ...) -> Namespace
+Found 1 error in 1 file (checked 1 source file)
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import collections
+import json
+import subprocess
+import sys
+path = 'astrid/packs/timeline/cli.py'
+old = subprocess.check_output(['git', 'show', 'HEAD:' + path])
+new = open(path, 'rb').read()
+def findings(source):
+    result = subprocess.run([sys.executable, '-m', 'ruff', 'check', '--stdin-filename', path, '--output-format', 'json', '-'], input=source, capture_output=True)
+    return collections.Counter(row['code'] for row in json.loads(result.stdout))
+before, after = findings(old), findings(new)
+print('CLI ruff baseline:', dict(before))
+print('CLI ruff current:', dict(after))
+assert not (after - before), after - before
+print('No additional CLI ruff findings')
+PY" in /home/user/work/wt/agt-m1-frontends
+ succeeded in 120ms:
+CLI ruff baseline: {'I001': 7, 'E731': 1, 'E701': 1, 'BLE001': 1, 'F841': 1, 'E702': 4}
+CLI ruff current: {'I001': 7, 'E731': 1, 'E701': 1, 'BLE001': 1, 'F841': 1, 'E702': 4}
+No additional CLI ruff findings
+
+exec
+/bin/bash -lc "cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md <<'EOF'
+
+### agt-m1-frontends implementation refinement / handoff
+Implemented "'`TimelineSession` in sync.py + 56-line outbox.py. Default outbox scope hashes authenticated realm/actor and main-resolved canonical project/timeline; exact invocation path, generated-serializer body bytes, key, original base pair and prefix count persist before send. New clean sessions refresh the head; any pending/in-flight session retains its original base/capture. ACK removes only the frozen prefix; subsequent suffix submission binds the accepted pair with a fresh key and unchanged commands. Known refusals retain conflict details; ambiguous failures retain the exact flight. Nonidentity maps and mismatched receipt scope/key cannot ACK it. Preview remains unsent and its key cannot be reused for acceptance. No retained snapshots or accepted journal.
+
+CLI uses an isolated move parser routed by TimelinesParser for `edit move`; legacy edit parsing stays intact. Accepted undo is `undo TL --project P --publication RECEIPT` (repeat oldest first), which calls the same SDK session. Both support --dry-run / --idempotency-key / --json. Result data adds accepted_publication_id + show_command; no local draft reads/writes. Product: 313 lines added, 4 removed.
+
+Validation: 139 focused/neighbor tests passed (2026-10-19). The real parallel core was imported read-only through a temporary pytest overlay adding `/home/user/work/wt/agt-m1-core/astrid/sdk/timeline` to `astrid.sdk.timeline.__path__`; no core copies/stubs in product or tests. Generated transport alone is fixture-faked. Core modules and regenerated Runtime client must integrate before these new tests run on this branch without that temporary overlay. No real Runtime/socket/full suite claimed; request the combined integration full suite centrally after merges. New modules pass ruff/mypy; CLI lint counts match base, and parser'"'s pre-existing mypy override error was reproduced from HEAD.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-frontends/commit-msg <<'EOF'
+feat(timeline): commit guarded moves with a durable request outbox
+
+Add a Python timeline session and CLI edit move entrypoint using core capture
+and the connected generated Runtime commit operation. Persist original request
+bytes, key, base pins and identity before sending; preserve ambiguous retries
+and newer unsent commands across reload, and acknowledge only the sent prefix.
+
+Submit accepted undo as timeline.inverse with publication targets and a fresh
+key. Report accepted revision/publication and immutable show commands without
+writing local drafts or invoking legacy publication paths.
+
+Cover parser/SDK parity, durable retries and fsync failures, suffix retention,
+conflicts, previews, identity checks and guarded inverse with real core and a
+fake generated transport.
+EOF
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import shutil
+from pathlib import Path
+for path in Path('/tmp').glob('agt-m1-frontends-pytest-*'):
+    shutil.rmtree(path)
+shutil.rmtree('/tmp/agt-m1-frontends-test-overlay')
+Path('/tmp/agt-m1-frontends-base-parser.py').unlink()
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m1-frontends
+ succeeded in 7ms:
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_parser.py
+?? astrid/sdk/timeline/outbox.py
+?? astrid/sdk/timeline/sync.py
+?? tests/packs/timeline/test_cli_commit_move.py
+?? tests/sdk/test_timeline_sync.py
+
+codex
+Implemented CLI/Python move, durable exact-request retries, suffix retention, conflict preservation, and publication-based undo. Accepted results include revision/publication IDs and an immutable show command. Product diff: **313 added, 4 removed lines**.
+
+Validation:
+
+```bash
+PYTHONPATH=$PWD:/tmp/agt-m1-frontends-test-overlay /home/user/work/venv-agent/bin/python -m pytest -q -p core_overlay tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_publish_connection.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_history.py tests/packs/timeline/test_cli_status_publish.py tests/packs/timeline/test_cli_parity.py tests/packs/timeline/test_edit_verbs.py --basetemp=/tmp/agt-m1-frontends-pytest-final
+```
+
+**139 passed.** The temporary overlay imported the parallel owner’s real core read-only; generated transport was faked. Temporary files were removed.
+
+Ruff passed for new modules, parser, and tests; mypy passed for both new modules; `git diff --check` passed. Existing CLI lint counts were unchanged; the parser’s existing mypy override error was reproduced from HEAD.
+
+Used the connected generated client directly because its workspace allowlist is outside this task’s ownership. No fallback writer, renderer call, or accepted-history journal was added.
+
+Seam updated and commit message written. Next: integrate core and regenerated Runtime client, then run the combined full/live suite centrally. Those integration checks remain unverified.
+tokens used
+155,337
+Implemented CLI/Python move, durable exact-request retries, suffix retention, conflict preservation, and publication-based undo. Accepted results include revision/publication IDs and an immutable show command. Product diff: **313 added, 4 removed lines**.
+
+Validation:
+
+```bash
+PYTHONPATH=$PWD:/tmp/agt-m1-frontends-test-overlay /home/user/work/venv-agent/bin/python -m pytest -q -p core_overlay tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_publish_connection.py tests/sdk/test_timeline_journal.py tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_history.py tests/packs/timeline/test_cli_status_publish.py tests/packs/timeline/test_cli_parity.py tests/packs/timeline/test_edit_verbs.py --basetemp=/tmp/agt-m1-frontends-pytest-final
+```
+
+**139 passed.** The temporary overlay imported the parallel owner’s real core read-only; generated transport was faked. Temporary files were removed.
+
+Ruff passed for new modules, parser, and tests; mypy passed for both new modules; `git diff --check` passed. Existing CLI lint counts were unchanged; the parser’s existing mypy override error was reproduced from HEAD.
+
+Used the connected generated client directly because its workspace allowlist is outside this task’s ownership. No fallback writer, renderer call, or accepted-history journal was added.
+
+Seam updated and commit message written. Next: integrate core and regenerated Runtime client, then run the combined full/live suite centrally. Those integration checks remain unverified.

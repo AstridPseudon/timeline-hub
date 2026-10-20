@@ -1,0 +1,400 @@
+        'Native clip.set-params requires a value or clear; element-only empty params needs '
+        'a native retained declaration validation operation (outside WC4 scope)'))
+    def test_element_only_without_existing_params(monkeypatch, configured):
+        owner, bundle, ref = setup_owner(monkeypatch, configured)
+        bundle['parent']['clips'][0].pop('params')
+        result = update(owner, ref)
+>       assert result.ok, result.error
+E       AssertionError: ErrorObject(code='validation_error', message="{'values': {}, 'clear': [], 'schema_source': {'document_id': 'document:2...54ee82a0cdc109b76db99f9b1b8b7ae5b3717dc5f1ed97c86435bc4cae'}} is not valid under any of the given schemas", details={})
+E       assert False
+E        +  where False = DomainResult(ok=False, data=None, error=ErrorObject(code='validation_error', message="{'values': {}, 'clear': [], 'sch...under any of the given schemas", details={}), receipt=None, idempotency_key='element-182fd0c023da40e1b82e0c9842f46f63').ok
+
+tests/core/test_timeline_element_publication.py:173: AssertionError
+=========================== short test summary info ============================
+FAILED tests/core/test_timeline_element_publication.py::test_element_only_without_existing_params
+1 failed in 1.33s
+
+exec
+/bin/bash -lc "sed -n '1,80p' tests/editing_conformance/test_commit_runtime_m1.py; rg -n 'bad file arg|files\\b|validate.*file' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/*test* | head -35; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-element-update-native-targeted-1020093441-26362/status" in /home/user/work/wt/agt-m2-element-update-native
+ succeeded in 0ms:
+"""Required M1 lane: real CLI/SDK outbox, Runtime restart, readback and inverse.
+
+Run with ``pytest -m integration tests/editing_conformance/test_commit_runtime_m1.py``
+against the paired Runtime checkout selected by tests.helpers.runtime.
+"""
+from __future__ import annotations
+
+import copy
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+from tests.helpers.runtime import use_runtime
+
+pytestmark = pytest.mark.integration
+
+
+@pytest.fixture
+def film(tmp_path, monkeypatch):
+    runtime = use_runtime()
+    # Reuse Runtime's API-built duplicate realm/CAS fixture, as its own real
+    # provider lane does. Never create a second bootstrap or DB model here.
+    monkeypatch.syspath_prepend(str(runtime / "tests"))
+    from runtime_protocol.service import RuntimeService
+    from timeline_commit_film_fixture import build_film_fixture
+
+    fixture = build_film_fixture(tmp_path)
+    service = RuntimeService(fixture.duplicate_root)
+    try:
+        original = service.get_project_parent_composition_revision(
+            fixture.project_id, fixture.timeline_id, fixture.parent_revision_id,
+        )
+        parent = copy.deepcopy(original["payload"])
+        parent["config"]["tracks"].append({"id": "music-other", "kind": "audio"})
+        parent["clips"][0]["app"] = {
+            "on": "word:word-1", "until": None, "until_film_end": True,
+            "astrid": {"on": "word:word-1", "until": None, "until_film_end": True,
+                       "fixed_start": False, "for": 5.5, "opaque": [None, {"keep": True}]},
+        }
+        parent["clips"].append({
+            "id": "music-other", "clipType": "audio", "asset": "music-bed",
+            "track": "music-other", "at": 0, "hold": 5.5,
+            "extension": {"opaque": [None, {"keep": True}]},
+        })
+        parent["config"]["clips"] = copy.deepcopy(parent["clips"])
+        publication = service.publish_parent_composition(
+            fixture.project_id, fixture.timeline_id,
+            {"project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
+             "expected_head": fixture.parent_revision_id,
+             "parent_revision_id": "m1-journey-baseline", "parent_composition": parent},
+            idempotency_key="m1-journey-baseline",
+        )
+    finally:
+        service.close()
+    return fixture, parent, publication
+
+
+@pytest.fixture
+def renderer_off(film, monkeypatch):
+    class NoSceneImports:
+        def find_spec(self, fullname, path=None, target=None):
+            if (fullname.startswith(("composition", "remotion",
+                                     "astrid.sdk.authoring_render_preview",
+                                     "astrid.core.timeline.compatibility"))
+                    or ".scene" in fullname):
+                raise AssertionError("commit imported scene evaluation: " + fullname)
+
+    monkeypatch.setattr(sys, "meta_path", [NoSceneImports(), *sys.meta_path])
+
+    def unavailable(*args, **kwargs):
+        raise AssertionError("commit evaluated a scene with the renderer off")
+
+    import runtime_protocol.service as service_module
+    import runtime_protocol.visual_seam as visual_seam
+
+    # The neutral film seed predates this tripwire. Actual commits, all exact
+    # reads and inverse stay under it, including the restarted provider.
+    monkeypatch.setattr(service_module, "evaluate_closure", unavailable)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:2:# request-test WORKER|integration:REPO SUITE [--files "a b c"] [--no-cache]  — queue a test run (done by the dispatcher OUTSIDE the
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:3:# sandbox, so localhost/browsers work). SUITE: full | targeted (needs --files) | a named suite from $ORCH/tests/suites.conf.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:7:while [ $# -gt 0 ]; do case $1 in --files) F=$2; shift 2;; --no-cache) NC=1; shift;; *) echo "unknown arg $1"; exit 2;; esac; done
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:11:[ $S = targeted ] && [ -z "$F" ] && { echo "targeted needs --files"; exit 2; }
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:13:printf 'target=%q\nrepo=%q\nsuite=%q\nfiles=%q\nnocache=%s\nrequested=%s\n' "$T" "$R" "$S" "$F" $NC $(date -u +%FT%TZ) > $D/request
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:5:# changes) + suite + files + command. Result: tests/ID/{status,exit,summary,log.txt}; status = queued|running|pass|fail|timeout|error.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:16:OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:26:  KEY=$(echo "$repo $TREE $suite $files $CMD $EXT" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
+error
+
+exec
+/bin/bash -lc "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-element-update-native commit-integration --files 'tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py'" in /home/user/work/wt/agt-m2-element-update-native
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-element-update-native-commit-integration-1020093521-10245/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-element-update-native-commit-integration-1020093521-10245
+
+exec
+/bin/bash -lc "git show HEAD:astrid/sdk/timeline_elements.py | nl -ba | sed -n '24,73p'; nl -ba astrid/sdk/timeline_elements.py | tail -65; rg -n '"'^def test_'"' tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py; git diff --check; /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline_elements.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py" in /home/user/work/wt/agt-m2-element-update-native
+ succeeded in 130ms:
+    24	    if params is not None and (not isinstance(params,dict) or len(json.dumps(params))>16384):
+    25	        return DomainResult.failure(ErrorObject('validation_error','Params must be a bounded JSON object',{}),idempotency_key=key)
+    26	    opened=owner.open_bundle(project,timeline)
+    27	    if not opened.ok or not isinstance(opened.data,Mapping):return opened
+    28	    data=opened.data
+    29	    if data.get('head_revision_id')!=expected_head or data.get('revision_id')!=expected_head:
+    30	        return DomainResult.failure(ErrorObject('conflict','Timeline head changed; inspect before making a fresh edit',{'expected_head':expected_head,'actual_head':data.get('head_revision_id')}),idempotency_key=key)
+    31	    candidate=copy.deepcopy(data['bundle']);project_id=str(data['project_id']);timeline_id=str(data['timeline_id'])
+    32	    try:
+    33	        resolve_admitted_element(realm,project_id,element,client=SimpleNamespace(documents=Documents(owner._client)))
+    34	        parent=candidate['parent'];clips=parent.get('clips')
+    35	        if not isinstance(clips,list):raise ValueError('Canonical parent clips are unavailable')
+    36	        matches=[c for c in clips if isinstance(c,dict) and c.get('id')==clip_id]
+    37	        if len(matches)!=1:raise ValueError('Expected one existing parent effect clip')
+    38	        clip=matches[0];before=copy.deepcopy(clip)
+    39	        old_ref=clip.get('elementRef') or clip.get('element_ref')
+    40	        if not isinstance(old_ref,dict) or old_ref.get('kind')!='effect' or clip.get('clipType')!=old_ref.get('id') or not isinstance(clip.get('hold'),(int,float)) or any(k in clip for k in ('asset','file','src','source','from','to')):
+    41	            raise ValueError('Update requires an existing generated hold effect without media source trimming')
+    42	        if element.get('kind')!='effect' or element.get('id')!=old_ref.get('id'):
+    43	            raise ValueError('Update must preserve the existing effect identity')
+    44	        config=parent.get('config')
+    45	        if not isinstance(config,dict):raise ValueError('Canonical parent config is unavailable')
+    46	        # Config.clips is a legacy mirror, not a separately patched projection.
+    47	        if 'clips' in config and config['clips']!=clips:raise ValueError('Parent clip mirror is inconsistent; refusing to overwrite')
+    48	        clip['elementRef']=dict(element);clip.pop('element_ref',None)
+    49	        if duration is not None:clip['hold']=duration
+    50	        if params is not None:clip['params']={**(clip.get('params') or {}),**params}
+    51	        if 'clips' in config:config['clips']=copy.deepcopy(clips)
+    52	        legacy=(config.get('app') or {}).get('elements')
+    53	        if isinstance(legacy,dict) and old_ref.get('id') in legacy:
+    54	            remaining=[c for c in clips if c is not clip and (c.get('elementRef') or c.get('element_ref'))==old_ref]
+    55	            if not remaining:legacy.pop(old_ref['id'])
+    56	        validate_authoring_candidate(candidate)
+    57	        class Writer:
+    58	            result=None
+    59	            def publish_parent_composition(self,_project,_timeline,publication,*,idempotency_key):
+    60	                self.result=owner._typed('publish_parent_composition',_project,_timeline,publication,key=idempotency_key,idempotency_key=idempotency_key)
+    61	                if not self.result.ok:raise RuntimeError(self.result.error.message if self.result.error else 'Publication failed')
+    62	                return self.result.data
+    63	        writer=Writer()
+    64	        try:receipt=publish_authoring_candidate(candidate,writer,idempotency_key=key)
+    65	        except RuntimeError:
+    66	            if writer.result is not None:return writer.result
+    67	            raise
+    68	        publication=receipt.get('publication',{})
+    69	        new_head=publication.get('new_head') or publication.get('revision_id') or publication.get('parent_revision_id')
+    70	        if not isinstance(new_head,str) or not new_head:raise ValueError('Publication receipt omitted committed head')
+    71	        return DomainResult.success({'project_id':project_id,'timeline_id':timeline_id,'expected_head':expected_head,'new_head':new_head,'clip_id':clip_id,'element':element,'duration':clip.get('hold'),'params':clip.get('params',{}),'before':{'element':old_ref,'duration':before.get('hold'),'params':before.get('params',{})}},receipt=writer.result.receipt if writer.result else None,idempotency_key=key)
+    72	    except (ValueError,KeyError,TypeError) as exc:
+    73	        return DomainResult.failure(ErrorObject('validation_error',str(exc),{}),idempotency_key=key)
+    42	        project_id, timeline_id = str(data['project_id']), str(data['timeline_id'])
+    43	        history = owner.history(project_id, timeline_id, limit=1)
+    44	        if not history.ok:
+    45	            return history
+    46	        head = history.data['head']
+    47	        if head['revision_id'] != expected_head:
+    48	            return DomainResult.failure(ErrorObject(
+    49	                'conflict', 'Timeline head changed; inspect before making a fresh edit',
+    50	                {'expected_head': expected_head, 'actual_head': head['revision_id']}), idempotency_key=key)
+    51	        clips = bundle['parent'].get('clips')
+    52	        if not isinstance(clips, list):
+    53	            raise ValueError('Canonical parent clips are unavailable')
+    54	        matches = [c for c in clips if isinstance(c, dict) and c.get('id') == clip_id]
+    55	        if len(matches) != 1:
+    56	            raise ValueError('Expected one existing parent effect clip')
+    57	        before = copy.deepcopy(matches[0])
+    58	        old_ref = before.get('elementRef') or before.get('element_ref')
+    59	        if (not isinstance(old_ref, dict) or old_ref.get('kind') != 'effect'
+    60	                or before.get('clipType') != old_ref.get('id')
+    61	                or isinstance(before.get('hold'), bool) or not isinstance(before.get('hold'), (int, float))
+    62	                or any(k in before for k in ('asset', 'file', 'src', 'source', 'from', 'to'))):
+    63	            raise ValueError('Update requires an existing generated hold effect without media source trimming')
+    64	        if not isinstance(element, dict) or element.get('kind') != 'effect' or element.get('id') != old_ref.get('id'):
+    65	            raise ValueError('Update must preserve the existing effect identity')
+    66	        target = f'parent/clip:{clip_id}'
+    67	        calls = [capture_clip_set_element(bundle, target, element=element)]
+    68	        if duration is not None:
+    69	            state = execute(bundle, calls).bundle
+    70	            calls.append(capture_clip_set(state, target, values={'hold': duration}))
+    71	        # Read only the selected declaration. Runtime resolves and validates its
+    72	        # retained snapshot at the params stage, after the element revision write.
+    73	        client = SimpleNamespace(documents=Documents(owner._client))
+    74	        document_id, document = _read_document(client, realm, project_id)
+    75	        if document is None or document['content']['pack_id'] != element.get('packId'):
+    76	            document_id, document = _read_document(client, realm, project_id, element.get('packId'))
+    77	        if document is None or document['content']['pack_id'] != element.get('packId'):
+    78	            raise ValueError('Element owner/revision is not admitted for this project')
+    79	        pin = {'document_id': document_id, 'version': document['version'],
+    80	               'content_digest': _json_digest(document['content'])}
+    81	        # An unchanged params write also validates an element-only revision change.
+    82	        calls.append({'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': target,
+    83	                      'args': {'values': copy.deepcopy(params or before.get('params') or {}),
+    84	                               'clear': [], 'schema_source': pin}})
+    85	        for call in calls:
+    86	            validate_command(call)
+    87	        committed = owner.commit(project_id, timeline_id, {
+    88	            'api_version': 1, 'project_id': project_id, 'timeline_id': timeline_id,
+    89	            'base_revision_id': expected_head, 'base_publication_id': head['publication_id'],
+    90	            'commands': calls, 'dry_run': False,
+    91	        }, idempotency_key=key)
+    92	        if not committed.ok:
+    93	            return committed
+    94	        new_head = committed.data.get('accepted_revision_id')
+    95	        if not isinstance(new_head, str) or not new_head:
+    96	            raise ValueError('Publication receipt omitted committed head')
+    97	        parent = committed.data['canonical_document']['parent_revision']['payload']
+    98	        clip = next(c for c in parent['clips'] if c.get('id') == clip_id)
+    99	        return DomainResult.success({
+   100	            'project_id': project_id, 'timeline_id': timeline_id, 'expected_head': expected_head,
+   101	            'new_head': new_head, 'clip_id': clip_id, 'element': element, 'duration': clip.get('hold'),
+   102	            'params': clip.get('params', {}), 'before': {
+   103	                'element': old_ref, 'duration': before.get('hold'), 'params': before.get('params', {})},
+   104	        }, receipt=committed.receipt, idempotency_key=key)
+   105	    except (ValueError, KeyError, TypeError) as exc:
+   106	        return DomainResult.failure(ErrorObject('validation_error', str(exc), {}), idempotency_key=key)
+tests/core/test_timeline_element_publication.py:75:def test_sameclip_exacthead_publication_preserves_closure_and_user_params(monkeypatch, configured):
+tests/core/test_timeline_element_publication.py:110:def test_stale_head_and_concurrent_cas_reject_without_rebase(monkeypatch, configured):
+tests/core/test_timeline_element_publication.py:125:def test_bad_duration_never_publishes(monkeypatch, configured, duration):
+tests/core/test_timeline_element_publication.py:132:def test_unadmitted_owner_and_sourceclip_reject(monkeypatch, configured):
+tests/core/test_timeline_element_publication.py:144:def test_element_only_and_same_revision_keep_unknown_props(monkeypatch, configured, field):
+tests/core/test_timeline_element_publication.py:159:def test_invalid_json_params_refuse_before_commit(monkeypatch, configured, params):
+tests/core/test_timeline_element_publication.py:169:def test_element_only_without_existing_params(monkeypatch, configured):
+tests/core/test_timeline_element_publication.py:177:def test_invalid_known_param_is_validated_in_native_commit(monkeypatch, configured):
+tests/core/test_timeline_element_publication.py:186:def test_wrong_revision_cannot_use_an_admitted_sibling_schema(monkeypatch, configured):
+tests/core/test_timeline_element_publication.py:193:def test_history_head_race_never_submits(monkeypatch, configured):
+tests/core/test_timeline_element_publication_runtime.py:60:def test_native_element_update_reload_guarded_inverse_and_exact_retry(retained_pack, monkeypatch,
+tests/core/test_timeline_element_publication_runtime.py:139:def test_native_element_batch_refusal_is_atomic(retained_pack, monkeypatch, damage):
+All checks passed!
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-element-update-native-commit-integration-1020093521-10245' in /home/user/work/wt/agt-m2-element-update-native
+ succeeded in 29951ms:
+test agt-m2-element-update-native-commit-integration-1020093521-10245: pass exit=0 in 39s — commit-integration on agt-m2-element-update-native (agent tree 3d9080739b7fc38e9a406483628d049db5f6cd40)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+counts: 29 passed in 36.60s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-element-update-native-commit-integration-1020093521-10245/log.txt ---
+.............................                                            [100%]
+29 passed in 36.60s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-element-update-native-commit-integration-1020093521-10245/status; tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-element-update-native-commit-integration-1020093521-10245/log.txt; wc -l tests/core/test_timeline_element_publication_runtime.py' in /home/user/work/wt/agt-m2-element-update-native
+ succeeded in 2ms:
+pass
+.............................                                            [100%]
+29 passed in 36.60s
+152 tests/core/test_timeline_element_publication_runtime.py
+
+codex
+Final verification passed: 204 local tests with one strict expected gap, plus 29 central integration tests. The legacy publisher and mirror-maintenance code are removed. I’ll mark the worker blocked on the empty-params case and document the native operation needed to restore that public behavior.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-update-native/report.md <<'EOF'
+# agt-m2-element-update-native
+
+Status: **BLOCKED on the empty-params element-only case.** The native migration and all other targeted acceptance tests are implemented and passing. Do not close WC4 as fully qualified until the native gap below is resolved.
+
+## Changes
+
+- "'`astrid/sdk/timeline_elements.py` emits one native Runtime commit: `clip.set-element`, optional `clip.set` for hold, and `clip.set-params` against the selected exact admitted declaration pin. No whole-row/root replacement or legacy publisher fallback remains.
+- Removed local `resolve_admitted_element`, candidate validation/publication, and helper-owned `config.clips` / `config.app.elements` maintenance. Native projection maintains the clip mirror; unrelated legacy element bytes and other unknown data survive.
+- Preserved the public result fields, receipt object, explicit/generated idempotency key, stale-head preflight, native failure passthrough, same element identity, params merge, and duration behavior for the qualified cases. Added a history read for the base publication/revision pair. `remote.py` is unchanged.
+- Parameter value authority is the existing native retained-snapshot validator, executed after the element revision command. No launcher, renderer, local pack source or build cache is used to authorize save-time parameters.
+
+## WC4 deletion and replacing tests
+
+Product diff: **58 lines deleted / 91 added / net +33** in `timeline_elements.py` (formatting included). In particular, old lines 44–67 (24 lines) contained direct clip/config mutations, mirror pruning, candidate validation, the `Writer` shim, and whole-candidate publication/error routing. These are replaced by the native command construction and sole `owner.commit` call at new lines 66–91. The old local snapshot resolver at line 33 and candidate deepcopy/publication imports are also gone.
+
+Exact replacing tests:
+
+- `tests/core/test_timeline_element_publication.py::test_sameclip_exacthead_publication_preserves_closure_and_user_params`: same original success expectation, actual native command execution in the test adapter, exact command operations/args and base pair, result/receipt/key, unknown fields, sibling, registry, transcript closure, compiler mirror, and untouched caller bundle.
+- `::test_stale_head_and_concurrent_cas_reject_without_rebase`, `::test_bad_duration_never_publishes`, `::test_unadmitted_owner_and_sourceclip_reject`: original error behaviors preserved on the new route.
+- `::test_element_only_and_same_revision_keep_unknown_props[elementRef/element_ref]`: same revision, alias normalization, omitted patch, opaque params, retained declaration validation.
+- `::test_invalid_known_param_is_validated_in_native_commit`, `::test_wrong_revision_cannot_use_an_admitted_sibling_schema`, `::test_history_head_race_never_submits`, and bounded JSON cases cover the new seams.
+- `tests/core/test_timeline_element_publication_runtime.py::test_native_element_update_reload_guarded_inverse_and_exact_retry[False/True]`: actual Runtime provider, changed and unchanged revisions, new revision'"'s schema (16 accepted only under the newer maximum 20), source/cache removed and launcher forbidden, success → reload → restart → exact request retry → inverse → redo, newer disjoint label preservation, and ABA undo refusal.
+- "'`::test_native_element_batch_refusal_is_atomic[params/revision]`: invalid params and unadmitted exact revision leave head and complete bundle unchanged despite preceding commands in the batch.
+- Existing native set-element/scalar/params recipe neighbors and retained-schema provider tests, including foreign admission provenance, are unchanged and passed.
+
+## Decisions and blocker
+
+1. **94114269 acceptance is NOT blocked by its missing generated set-element entry.** Static inspection found no generated `clip.set-element` variant, but real Runtime evidence shows that its generic envelope accepts the command and invokes the real provider. No schema/validator bypass or contract substitution was used. The paired tests explicitly select `vendored_runtime_commit()` = `94114269d1ce23ab3224d7eca5a85138ce2b5fed` through the standard Runtime helper.
+2. Element-only calls with existing params record unchanged params to invoke the native retained-declaration check. This preserves literal unknown values, including values outside the changed-property schema, and validates the exact selected ref even when no new params were requested.
+3. **Precise blocker:** if neither the request nor the existing clip has params, `ClipSetParamsArgs` requires `values.minProperties >= 1` or `clear.minItems >= 1`. `{values: {}, clear: [], schema_source: exact_pin}` is rejected. `clip.set-element` itself does not accept `schema_source` or resolve the retained declaration. Thus there is no allowed native operation to authenticate the changed admitted revision without inventing a parameter write or clear. No such workaround was added. `test_element_only_without_existing_params` retains the success expectation with `@pytest.mark.xfail(strict=True, raises=AssertionError)` naming this requirement. No original passing positive was changed to expect refusal.
+4. Native undo restores the exact authored parent payload, clips/params, shots and internals, but retains immutable declaration provenance in the dependency manifest for redo. Its revision ID can therefore differ from the original pre-pin document. The new test initially overasserted complete pre-pin document identity; it now separately asserts exact authored restoration and exactly retained input pins. This is existing native provider behavior; `commit.py` was not changed.
+5. The new path follows the settled server rebase policy after the stale-head preflight. It returns native conflict/error envelopes directly. Strict refusal of every disjoint race after preflight is not an extra client-side policy.
+
+Recommended next step: have the native-command owner provide retained exact-declaration validation with no params mutation (e.g. retained `schema_source` validation on `clip.set-element`, or an explicitly supported empty params validation command). Then remove only the strict gap marker and rerun these targeted lanes. No schema, commit provider, or command implementation was changed here because those paths are outside this task'"'s scope.
+
+## Verification
+
+Local, no sockets:
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/core/test_timeline_element_publication.py tests/editing_conformance/test_recipe_clip_set_element.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/editing_conformance/test_recipe_scalar_commands.py
+```
+
+**204 passed, 1 xfailed in 23.08s.** The one strict gap is described above.
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/core/test_timeline_element_publication_runtime.py
+```
+
+**2 passed in 5.72s**, before adding the two atomic-refusal cases subsequently covered by the final central run. This test file uses direct RuntimeService calls, no localhost/sockets.
+
+Final central named request:
+
+```sh
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-element-update-native commit-integration --files '"'tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py') && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test \""'$R"
+```
+
+Result **agt-m2-element-update-native-commit-integration-1020093521-10245: 29 passed in 36.60s**, source tree `3d9080739b7fc38e9a406483628d049db5f6cd40`. Executed command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+```
+
+Although the named suite sets the locator to the integration checkout, the test module selects the immutable vendored 94114269 archive before any fixtures run. M1 daemon/lost-ACK/renderer-off tests were run by the central service only.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --runxfail tests/core/test_timeline_element_publication.py::test_element_only_without_existing_params
+```
+
+**1 failed in 1.33s**, deliberately confirming the exact unresolved schema gap. The ordinary lane retains its strict xfail.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline_elements.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py
+git diff --check
+```
+
+Both passed.
+
+Earlier central diagnostic run:
+
+```sh
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-element-update-native pin94114269-integration --files '"'tests/core/test_timeline_element_publication_runtime.py tests/sdk/test_timeline_selected_schema_runtime.py tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py') && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test \""'$R"
+```
+
+Result **agt-m2-element-update-native-pin94114269-integration-1020093043-28861: 61 passed / 7 failed / 3 errors**. Two failures were the new tests'"' pre-pin whole-document inverse assertion described above, corrected and requalified in the final run. Five failures were untouched "'`tests/stage1/test_runtime_client_cutover.py` tests calling retired shot-write routes (including one resulting None dereference); three setup errors were untouched `test_commit_runtime_identity.py` tests importing unavailable `_media` from Runtime'"'s film fixture. These eight untouched nodes were not changed, and no baseline equivalence is claimed for them. Full log is in that central result directory.
+
+A subsequent "'`targeted --files '"'-m=integration ...'"'` service request was rejected before running tests because the service only accepts paths/node IDs in --files (result `agt-m2-element-update-native-targeted-1020093441-26362`). The supported named request above replaced it.
+
+No full suite, make check, macOS lane, push, commit, integration-worktree edit, shared dependency write, or shared ledger edit was performed. Only the assigned helper and its direct tests changed. The empty-params gap is unqualified; other targeted acceptance above passed.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-update-native/commit-msg <<'"'EOF'
+refactor(timeline): commit parent element updates with native commands
+
+Replace whole-candidate publication and helper-owned legacy mirrors with
+clip.set-element, scalar hold, and retained-schema params in one Runtime
+commit. Preserve result fields, receipts, keys, and opaque authored data.
+
+Exercise actual provider reload, retry, guarded inverse, and atomic refusal.
+Keep a strict expected gap for element-only updates without existing params,
+which require native retained-declaration validation without a value write.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-update-native/BLOCKED <<'EOF'
+Native retained-declaration validation is unavailable for element-only updates with no existing/requested params: ClipSetParamsArgs rejects empty values+clear, while clip.set-element has no schema_source/retained declaration check. Success expectation remains a strict xfail. Native schema/provider/command changes are outside this task's allowed paths. Other acceptance passed: 204 local tests + 29 central integration tests. See report.md for exact commands, WC4 deletion lines, passing actual-provider proof on 94114269, and the precise native follow-up.
+EOF
+git status --short" in /home/user/work/wt/agt-m2-element-update-native
+ succeeded in 233ms:
+ M astrid/sdk/timeline_elements.py
+ M tests/core/test_timeline_element_publication.py
+?? tests/core/test_timeline_element_publication_runtime.py
+
+codex
+Migrated the helper to one native command batch; removed whole-candidate publication and legacy mirror writes. Deleted 58 helper lines.
+
+- Local tests: **204 passed, 1 strict xfail**.
+- Central integration: **29 passed**.
+- Ruff and diff checks passed.
+
+**Blocked:** element-only updates with empty params need native retained-declaration validation without a parameter write. The success expectation remains intact.
+
+Wrote `BLOCKED`, `commit-msg`, and [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-update-native/report.md) with exact commands, results, decisions, and recommended follow-up.
+tokens used
+150,884
+Migrated the helper to one native command batch; removed whole-candidate publication and legacy mirror writes. Deleted 58 helper lines.
+
+- Local tests: **204 passed, 1 strict xfail**.
+- Central integration: **29 passed**.
+- Ruff and diff checks passed.
+
+**Blocked:** element-only updates with empty params need native retained-declaration validation without a parameter write. The success expectation remains intact.
+
+Wrote `BLOCKED`, `commit-msg`, and [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-update-native/report.md) with exact commands, results, decisions, and recommended follow-up.

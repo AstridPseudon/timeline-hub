@@ -1,0 +1,9 @@
+name=agt-public10-finish
+repo=agent
+base=tl/agt-public10-adoption
+base_sha=fc6c1f26
+model=claude-haiku-5-5
+effort=high
+heavy=1
+worktree=/home/user/work/wt/agt-public10-finish
+started=2026-10-20T04:45:30Z

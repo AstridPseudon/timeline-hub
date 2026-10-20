@@ -1,0 +1,9 @@
+name=agt-review-viewing-landings
+repo=agent
+base=tl/integration
+base_sha=4e40f5c4
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-viewing-landings
+started=2026-10-20T07:43:47Z

@@ -1,0 +1,9 @@
+name=agt-review-media-fixture-current
+repo=agent
+base=tl/integration
+base_sha=4ef1391c
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-media-fixture-current
+started=2026-10-20T13:35:08Z

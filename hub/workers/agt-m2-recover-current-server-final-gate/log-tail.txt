@@ -1,0 +1,400 @@
+            value = resolved.data.get("version", resolved.data.get("config_version", 1))
+            current_version = int(value)
+            expected = int(expected_version) if expected_version is not None else current_version
+            target = current_version if version is None else int(version)
+        except (TypeError, ValueError):
+            return DomainResult.failure(
+                ErrorObject("protocol_error", "Runtime timeline listing has no valid version", {}),
+                idempotency_key=key,
+            )
+        return self._typed(
+            "recover_timeline",
+            timeline_id,
+            key=key,
+            expected_version=expected,
+            version=target,
+            idempotency_key=key,
+        )
+
+
+--- current CLI recover ---
+        parsed.ref,
+        idempotency_key=parsed.idempotency_key,
+    )
+    return print_result(result, as_json=parsed.json)
+
+
+def _cmd_recover(parsed: argparse.Namespace) -> int:
+    result = parsed.client.timelines.recover(
+        parsed.project,
+        parsed.ref,
+        idempotency_key=parsed.idempotency_key,
+    )
+    return print_result(result, as_json=parsed.json)
+
+
+def _cmd_history(parsed: argparse.Namespace) -> int:
+    from astrid.packs.timeline.cli_history import run_history
+
+    return run_history(parsed)
+
+
+def _cmd_diff(parsed: argparse.Namespace) -> int:
+    from astrid.packs.timeline.cli_history import diff_ref
+
+    refused = diff_ref(parsed)  # TL@prev: the base is that revision
+    if refused is not None:
+        return refused
+    from_revision = getattr(parsed, "from_revision", None)
+    to_revision = getattr(parsed, "to_revision", None)
+    from_version = getattr(parsed, "from_version", None)
+    to_version = getattr(parsed, "to_version", None)
+    output_format = getattr(parsed, "format", None)
+    as_json = output_format == "json" or bool(getattr(parsed, "json", False))
+
+    # No --from/--to: the published head against the working copy (when there is one and --published is not given).
+    plain = from_revision is None and to_revision is None and from_version is None and to_version is None
+
+codex
+The rerun passed: exactly 1 test, 7.27s, against Runtime `3b900c3` and the normal generated client/auth/door. The final diff is limited to the current Runtime selector, correction of the test’s exact retry version reuse, and the narrow Agent restore transport-preservation fix. I’m doing the required narrow current-integration consumer/deletion audit now, then I’ll write the commit message and completion marker.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-recover-current-server-final-gate/astrid/sdk/timeline/sync.py
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index 8c05fcd366925e5510805679c6d8375517a8cff0..dc0e37356f6395b0c0a19f77d4c0c0486fdb8d03
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -360,6 +360,15 @@
+                 self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+             ))
+         except Exception as exc:
++            if (
++                isinstance(exc, WorkspaceClientError)
++                and exc.code == "transport_error"
++                and any(
++                    command.get("op") == "timeline.restore"
++                    for command in body.get("commands", [])
++                )
++            ):
++                raise ConnectionError(exc.message) from exc
+             details = getattr(exc, "details", {})
+             if isinstance(details, dict) and details.get("status") in {"conflict", "refused"}:
+                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+diff --git a/tests/sdk/test_timeline_checkout_history_runtime.py b/tests/sdk/test_timeline_checkout_history_runtime.py
+index 20775f055cb8e4eee98203e293752b2d0ba1d164..89722213ac9462a11f933060d698b32abbf4ef80
+--- a/tests/sdk/test_timeline_checkout_history_runtime.py
++++ b/tests/sdk/test_timeline_checkout_history_runtime.py
+@@ -13,7 +13,7 @@
+ pytestmark = pytest.mark.integration
+ # Keep this bounded real-HTTP qualification on the exact catalog-visibility
+ # candidate; do not switch either side of the public handshake to a fake route.
+-CATALOG_RUNTIME = "ca1f1b6df9a4df9a7febd03c4d3b3f9cd2260b99"
++CATALOG_RUNTIME = "3b900c377e7126e14eeb92dc2ce73114cbda5a0e"
+ RUNTIME = use_runtime(CATALOG_RUNTIME)
+ import runtime_protocol  # noqa: F401  # lock the daemon fixture to CATALOG_RUNTIME
+ 
+@@ -299,9 +299,10 @@
+ 
+         # Repeat the catalog lifecycle through the explicit current version;
+         # the exact archive/recover receipts remain replayable.
++        archive_again_version = recovered_absent.data["version"]
+         archived_again = client.timelines.archive(
+             fixture.project_id, fixture.timeline_id,
+-            expected_version=recovered_absent.data["version"],
++            expected_version=archive_again_version,
+             idempotency_key="catalog-archive-2",
+         )
+         assert archived_again.ok, archived_again.as_dict()
+@@ -318,7 +319,7 @@
+         ).data == accepted_history.data
+         assert client.timelines.archive(
+             fixture.project_id, fixture.timeline_id,
+-            expected_version=archived_again.data["version"],
++            expected_version=archive_again_version,
+             idempotency_key="catalog-archive-2",
+         ).data == archived_again.data
+         assert client.timelines.recover(
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-recover-current-server-final-gate/astrid/sdk/timeline/sync.py
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index 8c05fcd366925e5510805679c6d8375517a8cff0..dea1272b7e74c9447757489ae4b97c7f0001a988
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -360,6 +360,12 @@
+                 self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+             ))
+         except Exception as exc:
++            if (
++                isinstance(exc, WorkspaceClientError)
++                and exc.code == "transport_error"
++                and any(command.get("op") == "timeline.restore" for command in body.get("commands", []))
++            ):
++                raise ConnectionError(exc.message) from exc
+             details = getattr(exc, "details", {})
+             if isinstance(details, dict) and details.get("status") in {"conflict", "refused"}:
+                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+diff --git a/tests/sdk/test_timeline_checkout_history_runtime.py b/tests/sdk/test_timeline_checkout_history_runtime.py
+index 20775f055cb8e4eee98203e293752b2d0ba1d164..89722213ac9462a11f933060d698b32abbf4ef80
+--- a/tests/sdk/test_timeline_checkout_history_runtime.py
++++ b/tests/sdk/test_timeline_checkout_history_runtime.py
+@@ -13,7 +13,7 @@
+ pytestmark = pytest.mark.integration
+ # Keep this bounded real-HTTP qualification on the exact catalog-visibility
+ # candidate; do not switch either side of the public handshake to a fake route.
+-CATALOG_RUNTIME = "ca1f1b6df9a4df9a7febd03c4d3b3f9cd2260b99"
++CATALOG_RUNTIME = "3b900c377e7126e14eeb92dc2ce73114cbda5a0e"
+ RUNTIME = use_runtime(CATALOG_RUNTIME)
+ import runtime_protocol  # noqa: F401  # lock the daemon fixture to CATALOG_RUNTIME
+ 
+@@ -299,9 +299,10 @@
+ 
+         # Repeat the catalog lifecycle through the explicit current version;
+         # the exact archive/recover receipts remain replayable.
++        archive_again_version = recovered_absent.data["version"]
+         archived_again = client.timelines.archive(
+             fixture.project_id, fixture.timeline_id,
+-            expected_version=recovered_absent.data["version"],
++            expected_version=archive_again_version,
+             idempotency_key="catalog-archive-2",
+         )
+         assert archived_again.ok, archived_again.as_dict()
+@@ -318,7 +319,7 @@
+         ).data == accepted_history.data
+         assert client.timelines.archive(
+             fixture.project_id, fixture.timeline_id,
+-            expected_version=archived_again.data["version"],
++            expected_version=archive_again_version,
+             idempotency_key="catalog-archive-2",
+         ).data == archived_again.data
+         assert client.timelines.recover(
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..bfdbc9c4fc650fabebfb5609532c2a82966aaa79
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg
+@@ -0,0 +1,4 @@
++fix(timeline): qualify current catalog recovery
++
++Use the merged current Runtime for the real catalog recovery gate, preserve
++the accepted retry version, and keep lost restore acknowledgements ambiguous.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..bfdbc9c4fc650fabebfb5609532c2a82966aaa79
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg.txt
+@@ -0,0 +1,4 @@
++fix(timeline): qualify current catalog recovery
++
++Use the merged current Runtime for the real catalog recovery gate, preserve
++the accepted retry version, and keep lost restore acknowledgements ambiguous.
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index 8c05fcd366925e5510805679c6d8375517a8cff0..dea1272b7e74c9447757489ae4b97c7f0001a988
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -360,6 +360,12 @@
+                 self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+             ))
+         except Exception as exc:
++            if (
++                isinstance(exc, WorkspaceClientError)
++                and exc.code == "transport_error"
++                and any(command.get("op") == "timeline.restore" for command in body.get("commands", []))
++            ):
++                raise ConnectionError(exc.message) from exc
+             details = getattr(exc, "details", {})
+             if isinstance(details, dict) and details.get("status") in {"conflict", "refused"}:
+                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+diff --git a/tests/sdk/test_timeline_checkout_history_runtime.py b/tests/sdk/test_timeline_checkout_history_runtime.py
+index 20775f055cb8e4eee98203e293752b2d0ba1d164..89722213ac9462a11f933060d698b32abbf4ef80
+--- a/tests/sdk/test_timeline_checkout_history_runtime.py
++++ b/tests/sdk/test_timeline_checkout_history_runtime.py
+@@ -13,7 +13,7 @@
+ pytestmark = pytest.mark.integration
+ # Keep this bounded real-HTTP qualification on the exact catalog-visibility
+ # candidate; do not switch either side of the public handshake to a fake route.
+-CATALOG_RUNTIME = "ca1f1b6df9a4df9a7febd03c4d3b3f9cd2260b99"
++CATALOG_RUNTIME = "3b900c377e7126e14eeb92dc2ce73114cbda5a0e"
+ RUNTIME = use_runtime(CATALOG_RUNTIME)
+ import runtime_protocol  # noqa: F401  # lock the daemon fixture to CATALOG_RUNTIME
+ 
+@@ -299,9 +299,10 @@
+ 
+         # Repeat the catalog lifecycle through the explicit current version;
+         # the exact archive/recover receipts remain replayable.
++        archive_again_version = recovered_absent.data["version"]
+         archived_again = client.timelines.archive(
+             fixture.project_id, fixture.timeline_id,
+-            expected_version=recovered_absent.data["version"],
++            expected_version=archive_again_version,
+             idempotency_key="catalog-archive-2",
+         )
+         assert archived_again.ok, archived_again.as_dict()
+@@ -318,7 +319,7 @@
+         ).data == accepted_history.data
+         assert client.timelines.archive(
+             fixture.project_id, fixture.timeline_id,
+-            expected_version=archived_again.data["version"],
++            expected_version=archive_again_version,
+             idempotency_key="catalog-archive-2",
+         ).data == archived_again.data
+         assert client.timelines.recover(
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..bfdbc9c4fc650fabebfb5609532c2a82966aaa79
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg
+@@ -0,0 +1,4 @@
++fix(timeline): qualify current catalog recovery
++
++Use the merged current Runtime for the real catalog recovery gate, preserve
++the accepted retry version, and keep lost restore acknowledgements ambiguous.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..bfdbc9c4fc650fabebfb5609532c2a82966aaa79
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg.txt
+@@ -0,0 +1,4 @@
++fix(timeline): qualify current catalog recovery
++
++Use the merged current Runtime for the real catalog recovery gate, preserve
++the accepted retry version, and keep lost restore acknowledgements ambiguous.
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index 8c05fcd366925e5510805679c6d8375517a8cff0..dea1272b7e74c9447757489ae4b97c7f0001a988
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -360,6 +360,12 @@
+                 self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+             ))
+         except Exception as exc:
++            if (
++                isinstance(exc, WorkspaceClientError)
++                and exc.code == "transport_error"
++                and any(command.get("op") == "timeline.restore" for command in body.get("commands", []))
++            ):
++                raise ConnectionError(exc.message) from exc
+             details = getattr(exc, "details", {})
+             if isinstance(details, dict) and details.get("status") in {"conflict", "refused"}:
+                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+diff --git a/tests/sdk/test_timeline_checkout_history_runtime.py b/tests/sdk/test_timeline_checkout_history_runtime.py
+index 20775f055cb8e4eee98203e293752b2d0ba1d164..89722213ac9462a11f933060d698b32abbf4ef80
+--- a/tests/sdk/test_timeline_checkout_history_runtime.py
++++ b/tests/sdk/test_timeline_checkout_history_runtime.py
+@@ -13,7 +13,7 @@
+ pytestmark = pytest.mark.integration
+ # Keep this bounded real-HTTP qualification on the exact catalog-visibility
+ # candidate; do not switch either side of the public handshake to a fake route.
+-CATALOG_RUNTIME = "ca1f1b6df9a4df9a7febd03c4d3b3f9cd2260b99"
++CATALOG_RUNTIME = "3b900c377e7126e14eeb92dc2ce73114cbda5a0e"
+ RUNTIME = use_runtime(CATALOG_RUNTIME)
+ import runtime_protocol  # noqa: F401  # lock the daemon fixture to CATALOG_RUNTIME
+ 
+@@ -299,9 +299,10 @@
+ 
+         # Repeat the catalog lifecycle through the explicit current version;
+         # the exact archive/recover receipts remain replayable.
++        archive_again_version = recovered_absent.data["version"]
+         archived_again = client.timelines.archive(
+             fixture.project_id, fixture.timeline_id,
+-            expected_version=recovered_absent.data["version"],
++            expected_version=archive_again_version,
+             idempotency_key="catalog-archive-2",
+         )
+         assert archived_again.ok, archived_again.as_dict()
+@@ -318,7 +319,7 @@
+         ).data == accepted_history.data
+         assert client.timelines.archive(
+             fixture.project_id, fixture.timeline_id,
+-            expected_version=archived_again.data["version"],
++            expected_version=archive_again_version,
+             idempotency_key="catalog-archive-2",
+         ).data == archived_again.data
+         assert client.timelines.recover(
+
+exec
+/bin/bash -lc "git diff --check; printf '%s\\n' '--- final status ---'; git status --short --branch; printf '%s\\n' '--- final diff stat ---'; git diff --stat; printf '%s\\n' '--- current integration audit refs ---'; CUR="'$(git -C /home/user/work/agent rev-parse HEAD); printf '"'current integration %s; candidate base %s\\n' \""'$CUR" "$(git rev-parse HEAD)"; git diff --name-status "$CUR"..HEAD -- astrid/sdk/remote.py astrid/sdk/timeline/sync.py tests/sdk/test_native_timeline_facades.py tests/sdk/test_timeline_checkout_history_runtime.py tests/v10/test_domain_cli_projects_timelines.py; printf '"'%s\\n' '--- markers ---'; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/DONE && echo DONE; test "'! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/BLOCKED && echo no-BLOCKED; printf '"'%s\\n' '--- commit msg ---'; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-current-server-final-gate/commit-msg" in /home/user/work/wt/agt-m2-recover-current-server-final-gate
+ succeeded in 222ms:
+--- final status ---
+## tl/agt-m2-recover-current-server-final-gate
+ M astrid/sdk/timeline/sync.py
+ M tests/sdk/test_timeline_checkout_history_runtime.py
+--- final diff stat ---
+ astrid/sdk/timeline/sync.py                         | 6 ++++++
+ tests/sdk/test_timeline_checkout_history_runtime.py | 7 ++++---
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+--- current integration audit refs ---
+current integration 53af5383802e995f78b3693a22d54b3e86062eff; candidate base 4085164760ae8be4aaeffe81b442889e66ac65b9
+M	astrid/sdk/remote.py
+M	astrid/sdk/timeline/sync.py
+M	tests/sdk/test_native_timeline_facades.py
+M	tests/sdk/test_timeline_checkout_history_runtime.py
+M	tests/v10/test_domain_cli_projects_timelines.py
+--- markers ---
+DONE
+no-BLOCKED
+--- commit msg ---
+fix(timeline): qualify current catalog recovery
+
+Use the merged current Runtime for the real catalog recovery gate, preserve
+the accepted retry version, and keep lost restore acknowledgements ambiguous.
+
+codex
+## Report
+
+Implemented and qualified AG-RECOVER.
+
+Changes:
+- Selected Runtime `3b900c3`.
+- Preserved original catalog retry version/body.
+- Preserved raw transport ambiguity for `timeline.restore` retries.
+
+Test:
+
+```text
+env ... ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime
+pytest -q -o addopts= -p no:cacheprovider -m integration
+tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore
+```
+
+Result: **1 passed in 7.27s**. No other cases or full suites ran. `git diff --check` passed.
+
+Audit: current Agent integration `53af5383` still lacks the AG-RECOVER candidate changes in `remote.py`, restore facade tests, and related CLI tests. The AG-RECOVER deletion row must remain **HELD** pending independent Agent review and merge onto `tl/integration`; do not mark it DELETED yet. Runtime `3b900c3` / reviewed `2eacf2f` is already merged.
+
+Commit message and `DONE` marker written.
+tokens used
+279,023
+## Report
+
+Implemented and qualified AG-RECOVER.
+
+Changes:
+- Selected Runtime `3b900c3`.
+- Preserved original catalog retry version/body.
+- Preserved raw transport ambiguity for `timeline.restore` retries.
+
+Test:
+
+```text
+env ... ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime
+pytest -q -o addopts= -p no:cacheprovider -m integration
+tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore
+```
+
+Result: **1 passed in 7.27s**. No other cases or full suites ran. `git diff --check` passed.
+
+Audit: current Agent integration `53af5383` still lacks the AG-RECOVER candidate changes in `remote.py`, restore facade tests, and related CLI tests. The AG-RECOVER deletion row must remain **HELD** pending independent Agent review and merge onto `tl/integration`; do not mark it DELETED yet. Runtime `3b900c3` / reviewed `2eacf2f` is already merged.
+
+Commit message and `DONE` marker written.

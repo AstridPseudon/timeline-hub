@@ -1,0 +1,400 @@
+-    # Original pre-fix assertions retained as regression evidence, not the new
+-    # desired behavior. Distinct references now fail its first assertion.
+-    from tests.editing_conformance.word_binding_history_counterexample import fold
+-
++    # Keep the original collision assertions from 437a4b6a as pre-fix evidence.
++    # The obsolete provenance fold is deleted; positive restore is tested below.
+     case = recipe
+     a = case.submit(case.request([pick(case)]), "a")
+     b = case.submit(case.request([pick(case, 1)]), "b")
+     assert a["data"]["canonical_document"] == b["data"]["canonical_document"]
+     assert a["receipt"]["receipt_id"] != b["receipt"]["receipt_id"]
+-    restore(case, a, "restore-a")
+-    with pytest.raises(CommandError, match="ambiguous binding provenance"):
+-        fold(history(case))
+ 
+ 
+ def test_equal_text_restore_recovers_the_selected_publications_binding(recipe):
+@@ -231,8 +271,9 @@
+         else:
+             call["args"]["choice"]["word_ids"] = ["word:" + "0" * 64]
+         from runtime_protocol.errors import RuntimeErrorBase
+-        with pytest.raises((RuntimeErrorBase, TimingCompileError)):
++        with pytest.raises(RuntimeErrorBase) as error:
+             case.submit(case.request([call]), damage)
++        assert error.value.details["reason"] == ("capture_mismatch" if damage == "invented" else "invalid_anchor")
+     else:
+         candidate = bundle(case)
+         sources = candidate["source_mapping"]["pinned_documents"]
+@@ -242,7 +283,262 @@
+             sources[0]["document"]["project_id"] = "foreign-project"
+         # Source authority is enforced by the real Runtime port in the retained
+         # input neighbor tests. The pure recipe receives only allowed captures.
+-        with pytest.raises(TimingCompileError, match="missing or revoked|scoped pin"):
++        with pytest.raises(CommandError, match="missing or revoked|scoped pin"):
+             commands.execute(candidate, [call])
+     assert case.head() == current
+ 
++
++def test_raw_canonical_bundle_compiles_in_fresh_process_without_history(recipe):
++    case = recipe
++    accepted = case.submit(case.request([pick(case, 1, text='"again" +1f')]), "canonical")
++    raw = bundle_from_document(json.loads(json.dumps(accepted["data"]["canonical_document"])))
++    sources = copy.deepcopy(case.hydrated[-1]["source_mapping"]["pinned_documents"])
++    assert raw["parent"]["clips"][0]["app"]["astrid"]["word_anchors"]["on"]["document"] == case.pin
++    # This process receives no Runtime root, accepted records, history or picker
++    # command. Both inputs are plain JSON, and no registry hook is installed.
++    script = '''
++import json
++import sys
++from tests.editing_conformance.word_binding_recipe import compile_authored
++from astrid.sdk.timeline.commands import operations
++assert "clip.anchor" not in operations()
++bundle, sources = json.load(sys.stdin)
++result = compile_authored(bundle, sources)
++assert result.bundle == bundle
++interval = result.timings[("parent", "", "card")]
++print(json.dumps({key: str(interval[key]) for key in ("start", "end", "start_frame", "end_frame")}))
++'''
++    completed = subprocess.run([sys.executable, "-c", script], input=json.dumps([raw, sources]),
++                               capture_output=True, text=True, timeout=30)
++    assert completed.returncode == 0, completed.stderr
++    assert json.loads(completed.stdout) == {
++        "start": "7007/2000", "end": "8007/2000", "start_frame": "105", "end_frame": "120"}
++    case.restart()
++    assert projected(case).timings[TARGET]["start"] == Fraction(7007, 2000)
++
++
++@pytest.mark.parametrize("echo", ['"stop" #99 +300f', "obsolete display label", None])
++def test_reference_is_authoritative_and_kernel_never_searches_echo(recipe, monkeypatch, echo):
++    case = recipe
++    case.submit(case.request([pick(case, 1)]), "reference")
++    current = bundle(case)
++    sources = current["source_mapping"]["pinned_documents"]
++    expected = compile_authored(current, sources)
++    if echo is not None:
++        case.submit(case.request([{"schema_version": 1, "op": OP, "version": "1", "select": REF,
++            "args": {"field": "on", "declaration": echo,
++                     "choice": authored(current)[KEY]["choice"]}}]), "change-echo")
++        case.restart()
++        current = bundle(case)
++    app = current["parent"]["clips"][0]["app"]["astrid"]
++    if echo is None:
++        del app["on"]
++    else:
++        app["on"] = echo
++
++    def no_search(*args, **kwargs):
++        pytest.fail("a present stable reference must never search for text")
++
++    monkeypatch.setattr(moments, "find_words", no_search)
++    result = compile_authored(current, sources)
++    assert result.timings == expected.timings
++    assert result.bundle == current
++
++
++@pytest.mark.parametrize("text", ['"again"', '"again" #2', '"again" in line #2'])
++def test_legacy_ambiguous_text_refuses_choose_occurrence(recipe, text):
++    current = bundle(recipe)
++    app = current["parent"]["clips"][0]["app"]["astrid"]
++    assert "word_anchors" not in app
++    app["on"] = text
++    with pytest.raises(TimingCompileError, match="^ambiguous anchor; choose occurrence$"):
++        compile_authored(current, current["source_mapping"]["pinned_documents"])
++
++
++@pytest.mark.parametrize("retained", [True], indirect=True)
++def test_legacy_unique_word_in_reused_cas_is_still_ambiguous_without_raw_clip(recipe):
++    current = bundle(recipe)
++    current["parent"]["clips"][0]["app"]["astrid"]["on"] = '"stop"'
++    with pytest.raises(TimingCompileError, match="^ambiguous anchor; choose occurrence$"):
++        compile_authored(current, current["source_mapping"]["pinned_documents"])
++
++
++def test_unique_legacy_word_compiles_without_persisting_a_reference(recipe):
++    current = bundle(recipe)
++    app = current["parent"]["clips"][0]["app"]["astrid"]
++    app["on"] = 'after "stop" -1f'
++    before = copy.deepcopy(current)
++    result = compile_authored(current, current["source_mapping"]["pinned_documents"])
++    assert result.timings[TARGET]["start_frame"] == 148
++    assert result.bundle == current == before
++    assert "word_anchors" not in app
++
++
++def test_on_until_clear_preserves_other_reference_and_opaque_fields(recipe):
++    case = recipe
++    on = pick(case)
++    case.submit(case.request([on]), "on")
++    until = pick(case, 2, text='after "stop" -1f', field="until")
++    accepted = case.submit(case.request([until]), "until")
++    expected = dict(projected(case).timings[TARGET])
++    assert expected["end_frame"] == 148
++    clear = {"schema_version": 1, "op": OP, "version": "1", "select": REF,
++             "args": {"field": "until", "declaration": None, "choice": None}}
++    cleared = case.submit(case.request([clear]), "clear-until")
++    assert authored(bundle(case)) == {KEY: on["args"]}
++    assert projected(case).timings[TARGET]["end"] != expected["end"]
++    inverse = undo(case, cleared, "undo-clear-until")
++    assert authored(bundle(case))[(REF, "until")] == until["args"]
++    assert projected(case).timings[TARGET] == expected
++    undo(case, inverse, "redo-clear-until")
++    assert authored(bundle(case)) == {KEY: on["args"]}
++    restore(case, accepted, "restore-both")
++    current = bundle(case)
++    app = current["parent"]["clips"][0]["app"]["astrid"]
++    app["other_extension"] = {"opaque": [None, False, {"value": "kept"}]}
++    current["parent"]["clips"][0]["app"]["another.namespace"] = {"unknown": None}
++    before = copy.deepcopy(current)
++    plan = commands.execute(current, [clear])
++    after = plan.bundle["parent"]["clips"][0]["app"]
++    assert after["astrid"]["other_extension"] == app["other_extension"]
++    assert after["another.namespace"] == {"unknown": None}
++    assert after["astrid"]["word_anchors"] == {"on": on["args"]["choice"]}
++    assert current == before
++
++
++def test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance(recipe, monkeypatch):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    case = recipe
++    chosen = pick(case, 2, text='after "stop" -1f')
++    case.submit(case.request([chosen]), "end-word")
++    # The selected word ends exactly at source.to = 6, which is allowed.
++    assert projected(case).timings[TARGET]["start_frame"] == 148
++    valid = window_command(monkeypatch, 3, 6)
++    accepted = case.submit(case.request([valid]), "narrow-window")
++    assert projected(case).timings[TARGET]["start_frame"] == 133
++    case.restart()
++    assert projected(case).timings[TARGET]["start_frame"] == 133
++    head = case.head()
++    # Starting at the exclusive source end cannot include this word.
++    invalid = copy.deepcopy(valid)
++    invalid["args"] = {"from": 2, "to": 5.5}
++    with pytest.raises(RuntimeErrorBase, match="outside the half-open source window") as error:
++        case.submit(case.request([invalid]), "exclude-word")
++    assert error.value.details["reason"] == "invalid_anchor"
++    assert error.value.details["status"] == "refused"
++    assert case.head() == head
++    undo(case, accepted, "undo-window")
++    assert projected(case).timings[TARGET]["start_frame"] == 148
++
++
++def test_stale_anchor_refuses_when_intervening_window_excludes_selected_word(recipe, monkeypatch):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    case = recipe
++    selected = pick(case, 1)
++    base = case.head()
++    # No authored reference exists yet, so the fixture can narrow the window.
++    case.submit(case.request([window_command(monkeypatch, 4, 6)]), "trim-before-anchor")
++    head = case.head()
++    with pytest.raises(RuntimeErrorBase, match="outside the half-open source window") as error:
++        case.submit(case.request([selected], base), "stale-outside-window")
++    assert error.value.details["reason"] == "invalid_anchor"
++    assert error.value.details["status"] == "refused"
++    assert case.head() == head
++
++
++@pytest.mark.parametrize("damage,match", [
++    ("missing-occurrence", "source occurrence/clip is missing"),
++    ("missing-clip", "source occurrence/clip is missing"),
++    ("missing-word", "stable word is missing"),
++    ("missing-pin", "exact transcript pin is missing"),
++    ("wrong-pin", "exact transcript pin is missing"),
++    ("malformed-id", "invalid authored word reference"),
++    ("empty-ids", "invalid authored word reference"),
++    ("duplicate-ids", "invalid authored word reference"),
++    ("null-reference", "invalid authored word reference"),
++    ("unknown-field", "invalid authored word anchor fields"),
++    ("outside-window", "outside the half-open source window"),
++    ("nonfinite-offset", "expected finite JSON"),
++    ("offset-precision", "exceeds main Moment precision"),
++    ("unsupported-owner", "spike requires parent word anchor owner"),
++])
++def test_invalid_authored_reference_never_falls_back_to_valid_echo(recipe, damage, match):
++    case = recipe
++    case.submit(case.request([pick(case, 1)]), "chosen")
++    current = bundle(case)
++    app = current["parent"]["clips"][0]["app"]["astrid"]
++    ref = app["word_anchors"]["on"]
++    sources = current["source_mapping"]["pinned_documents"]
++    if damage == "missing-occurrence":
++        ref["source"] = "occurrence:gone/clip:voice"
++    elif damage == "missing-clip":
++        ref["source"] = "occurrence:occ/clip:gone"
++    elif damage == "missing-word":
++        ref["word_ids"] = ["word:" + "0" * 64]
++    elif damage == "missing-pin":
++        sources.clear()
++    elif damage == "wrong-pin":
++        ref["document"]["version"] = 2
++    elif damage == "malformed-id":
++        ref["word_ids"] = ["word:invented"]
++    elif damage == "empty-ids":
++        ref["word_ids"] = []
++    elif damage == "duplicate-ids":
++        ref["word_ids"] *= 2
++    elif damage == "null-reference":
++        app["word_anchors"]["on"] = None
++    elif damage == "unknown-field":
++        app["word_anchors"]["for"] = ref
++    elif damage == "outside-window":
++        current["shots"]["shot"]["internal_timeline"]["clips"][0]["to"] = 3
++    elif damage == "nonfinite-offset":
++        ref["offset_s"] = float("inf")
++    elif damage == "offset-precision":
++        ref["offset_s"] = 0.0000001
++    elif damage == "unsupported-owner":
++        current["shots"]["shot"]["internal_timeline"]["clips"][0]["app"] = {
++            "astrid": {"word_anchors": {"on": ref}}}
++    before = copy.deepcopy(current)
++    head = case.head()
++    with pytest.raises(TimingCompileError, match=match):
++        compile_authored(current, sources)
++    assert current == before
++    assert case.head() == head
++
++
++def test_typed_second_offset_preserves_main_precision_at_rational_frame_boundary(recipe):
++    case = recipe
++    selected = pick(case, 1, text='"again" +1.237399s')
++    case.submit(case.request([selected]), "seconds")
++    # Generic human Moment formatting uses six significant digits, which would
++    # spell +1.2374s and cross main's frame-tolerance boundary. Typed values must not drift.
++    result = projected(case).timings[TARGET]
++    assert result["start_frame"] == 141
++    assert result["start"] == Fraction(141141, 30000)
++    assert authored(bundle(case))[KEY]["choice"]["offset_s"] == 1.237399
++
++
++def test_stale_choice_and_guarded_inverse_refuse_competing_target_writes(recipe):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    case = recipe
++    case.submit(case.request([pick(case)]), "a")
++    choice_a = authored(bundle(case))[KEY]
++    base = case.head()
++    stale = pick(case, 2, text='"stop"')
++    accepted_b = case.submit(case.request([pick(case, 1)]), "b")
++    head = case.head()
++    with pytest.raises(RuntimeErrorBase) as error:
++        case.submit(case.request([stale], base), "stale-target")
++    assert error.value.details["status"] == "conflict"
++    assert case.head() == head
++    # A later write of the SAME B reference still prevents undoing the older B.
++    case.submit(case.request([pick(case, 1)]), "same-b-again")
++    head = case.head()
++    with pytest.raises(RuntimeErrorBase) as error:
++        undo(case, accepted_b, "undo-over-newer-b")
++    assert error.value.details["status"] == "conflict"
++    assert case.head() == head
++    assert authored(bundle(case))[KEY]["choice"]["word_ids"] != choice_a["choice"]["word_ids"]
+diff --git a/tests/editing_conformance/word_binding_recipe.py b/tests/editing_conformance/word_binding_recipe.py
+index 6fbb871044d998fded397e2e6ad61ffdec83f7e1..c980d9897657ea91f096486f19eb6f084b49a476
+--- a/tests/editing_conformance/word_binding_recipe.py
++++ b/tests/editing_conformance/word_binding_recipe.py
+@@ -6,7 +6,9 @@
+ from __future__ import annotations
+ 
+ import copy
++import json
+ from dataclasses import replace
++from decimal import Decimal
+ from fractions import Fraction
+ from types import SimpleNamespace
+ 
+@@ -67,6 +69,10 @@
+ 
+ 
+ def binding(bundle, target, field, choice, sources):
++    try:
++        json.dumps(choice, allow_nan=False)
++    except (ValueError, TypeError) as exc:
++        raise TimingCompileError("invalid authored word reference: expected finite JSON") from exc
+     errors = list(Draft202012Validator(REFERENCE).iter_errors(choice))
+     if errors:
+         raise TimingCompileError("invalid authored word reference: " + errors[0].message)
+@@ -88,7 +94,11 @@
+     text = " ".join(words[key]["text"] for key in choice["word_ids"])
+     moment = moments.Moment(kind="word", text=text, edge=choice.get("edge", "start"),
+         offset_s=choice.get("offset_s", 0), offset_frames=choice.get("offset_frames", 0))
+-    declaration = moments.format_moment(moment)
++    declaration = moments.format_moment(replace(moment, offset_s=0))
++    if moment.offset_s:
++        declaration += f" {Decimal(str(moment.offset_s)):+f}s"
++        if Fraction(str(moments.parse(declaration).offset_s)) != Fraction(str(moment.offset_s)):
++            raise TimingCompileError("word reference second offset exceeds main Moment precision")
+     return WordBinding(("parent", "", target.removeprefix("parent/clip:")), field,
+         declaration, (occurrence, placements[0]["shot_id"], clip),
+         pin["document_id"], pin["version"], pin["content_digest"], choice["word_ids"])
+@@ -131,6 +141,9 @@
+ 
+ def compile_authored(bundle, sources):
+     """Extract first, then compile. No history, IO, registry or authoring writes."""
++    if any(clip.get("app", {}).get("astrid", {}).get("word_anchors")
++           for shot in bundle["shots"].values() for clip in shot["internal_timeline"]["clips"]):
++        raise TimingCompileError("spike requires parent word anchor owner")
+     projection, bindings = copy.deepcopy(bundle), []
+     for clip in projection["parent"]["clips"]:
+         app = clip.get("app", {}).get("astrid", {})
+@@ -205,8 +218,11 @@
+         # recipe owns a field, every native edit/restore validates the result.
+         if any("word_anchors" in clip.get("app", {}).get("astrid", {})
+                for clip in ctx.state.bundle["parent"]["clips"]):
+-            compile_authored(ctx.state.bundle,
+-                ctx.state.bundle["source_mapping"].get("pinned_documents", []))
++            try:
++                compile_authored(ctx.state.bundle,
++                    ctx.state.bundle["source_mapping"].get("pinned_documents", []))
++            except TimingCompileError as exc:
++                raise CommandError(str(exc), kind="invalid_anchor") from exc
+ 
+     monkeypatch.setattr(commands, "operations", registered)
+     monkeypatch.setattr(commands, "validate_command", checked)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+for name in ('.pytest_cache', '.ruff_cache'):
+    path = Path.cwd() / name
+    if path.is_dir():
+        shutil.rmtree(path)
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-word-authored-reference
+ succeeded in 107ms:
+ M astrid/sdk/timeline/_timing_evaluators.py
+ M tests/editing_conformance/test_word_binding_recipe.py
+ M tests/editing_conformance/word_binding_recipe.py
+
+codex
+Implemented authored `app.astrid.word_anchors` references. Identical echoes selecting different words now produce distinct revisions/digests; restore, inverse and redo preserve each choice. Removed the history fold and made the pure evaluator resolve bound IDs without text searching.
+
+Verification:
+
+```bash
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -o addopts= -q -rx tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py
+```
+
+**97 passed, 1 strict xfailed** preserving the pre-fix collision evidence. Targeted Ruff and `git diff --check` passed.
+
+[Design](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-word-binding-contract.md) and [report with exact commands and boundaries](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-authored-reference/notes/report.md) written, plus both commit-message files.
+
+No blockers. Product registration/default compiler remain inactive; full suites were not run. Next: review the schema, then qualify first-use hydration and ownership/projection support.
+tokens used
+157,160
+Implemented authored `app.astrid.word_anchors` references. Identical echoes selecting different words now produce distinct revisions/digests; restore, inverse and redo preserve each choice. Removed the history fold and made the pure evaluator resolve bound IDs without text searching.
+
+Verification:
+
+```bash
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -o addopts= -q -rx tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py
+```
+
+**97 passed, 1 strict xfailed** preserving the pre-fix collision evidence. Targeted Ruff and `git diff --check` passed.
+
+[Design](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-word-binding-contract.md) and [report with exact commands and boundaries](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-authored-reference/notes/report.md) written, plus both commit-message files.
+
+No blockers. Product registration/default compiler remain inactive; full suites were not run. Next: review the schema, then qualify first-use hydration and ownership/projection support.

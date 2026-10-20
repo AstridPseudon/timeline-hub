@@ -1,0 +1,400 @@
+        assert not missing_from_rationale, (
+            f"Files over {GIANT_THRESHOLD} lines missing from "
+            f"giant-file-rationale.md: {sorted(missing_from_rationale)}"
+        )
+    
+        # ── 4. Every rationale entry must match an existing over-threshold file ─
+        for entry_path, entry_lines in rationale_entries.items():
+            assert entry_path in py_files, (
+                f"giant-file-rationale.md entry '{entry_path}' does not exist on disk"
+            )
+            actual_lines = py_files[entry_path]
+            assert actual_lines > GIANT_THRESHOLD, (
+                f"giant-file-rationale.md entry '{entry_path}' is only "
+                f"{actual_lines} lines (threshold: {GIANT_THRESHOLD})"
+            )
+            # Line count should match within a reasonable tolerance (the doc
+            # is a snapshot; a small drift from whitespace changes is acceptable).
+>           assert abs(actual_lines - entry_lines) <= 50, (
+                f"giant-file-rationale.md entry '{entry_path}' claims "
+                f"{entry_lines} lines but on-disk count is {actual_lines}"
+            )
+E           AssertionError: giant-file-rationale.md entry 'astrid/core/rendering/service.py' claims 2314 lines but on-disk count is 2367
+E           assert 53 <= 50
+E            +  where 53 = abs((2367 - 2314))
+
+tests/test_structure_contracts.py:1029: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+1 failed, 5 passed in 13.01s
+
+ exited 1 in 60227ms:
+test agt-m2-pinned-full-six-classify-targeted-1020141315-6837: fail exit=1 in 19s — targeted on agt-m2-pinned-full-six-classify (agent tree bd36b27861808a19f1e0895be947de629667ef65)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/timeline/test_cli_media.py::test_trim_and_slip_keep_the_film_span tests/packs/timeline/test_cli_media.py::test_a_trimmed_bed_is_extended_to_the_film_end_under_keep_end tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+counts: 1 failed, 5 passed in 13.01s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pinned-full-six-classify-targeted-1020141315-6837/log.txt ---
+        # ── 2. Parse the rationale doc ──────────────────────────────────────
+        rationale_path = REPO_ROOT / "docs" / "giant-file-rationale.md"
+        if not rationale_path.is_file():
+            pytest.skip("retired M4 giant-file rationale inventory is not shipped")
+        rationale_text = rationale_path.read_text(encoding="utf-8")
+    
+        # Extract table entries of the form: | N | `path` | NNNN | ...
+        # Pattern: | number | `astrid/...` | digits | ...
+        entry_pattern = re.compile(
+            r"\|\s*\d+\s*\|\s*`([^`]+)`\s*\|\s*([\d,]+)\s*\|"
+        )
+        rationale_entries: dict[str, int] = {}
+        for match in entry_pattern.finditer(rationale_text):
+            file_path = match.group(1)
+            lines_str = match.group(2).replace(",", "")
+            rationale_entries[file_path] = int(lines_str)
+    
+        m4_complete = "M4-complete" in rationale_text
+        if not m4_complete:
+            assert rationale_entries, (
+                "giant-file-rationale.md must contain at least one table entry "
+                "(or include an M4-complete marker when all files are below threshold)"
+            )
+    
+        # ── 3. Every file over threshold must be in rationale ───────────────
+        over_threshold = {
+            rel: lines
+            for rel, lines in py_files.items()
+            if lines > GIANT_THRESHOLD
+        }
+        missing_from_rationale = over_threshold.keys() - rationale_entries.keys()
+        assert not missing_from_rationale, (
+            f"Files over {GIANT_THRESHOLD} lines missing from "
+            f"giant-file-rationale.md: {sorted(missing_from_rationale)}"
+        )
+    
+        # ── 4. Every rationale entry must match an existing over-threshold file ─
+        for entry_path, entry_lines in rationale_entries.items():
+            assert entry_path in py_files, (
+                f"giant-file-rationale.md entry '{entry_path}' does not exist on disk"
+            )
+            actual_lines = py_files[entry_path]
+            assert actual_lines > GIANT_THRESHOLD, (
+                f"giant-file-rationale.md entry '{entry_path}' is only "
+                f"{actual_lines} lines (threshold: {GIANT_THRESHOLD})"
+            )
+            # Line count should match within a reasonable tolerance (the doc
+            # is a snapshot; a small drift from whitespace changes is acceptable).
+>           assert abs(actual_lines - entry_lines) <= 50, (
+                f"giant-file-rationale.md entry '{entry_path}' claims "
+                f"{entry_lines} lines but on-disk count is {actual_lines}"
+            )
+E           AssertionError: giant-file-rationale.md entry 'astrid/core/rendering/service.py' claims 2314 lines but on-disk count is 2367
+E           assert 53 <= 50
+E            +  where 53 = abs((2367 - 2314))
+
+tests/test_structure_contracts.py:1029: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+1 failed, 5 passed in 13.01s
+
+codex
+The post-fix central result is 5 passed / 1 failed. The only remaining failure is the current giant-file inventory: `service.py` is 2,367 lines while its rationale snapshot says 2,314 (53 beyond the fixed ±50 tolerance). The historical `generic_host.py` drift is no longer the failing entry on current source, consistent with the extraction; I’ll report the service inventory to Viewing as the structural owner and leave it unchanged.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5a3fb4e3779ab2da2c4ba38a8fd6875e24767d4d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md
+@@ -0,0 +1,52 @@
++# Pinned Agent full4758 classification
++
++Date: 2026-10-20
++
++## Source identities
++
++- Pinned full: commit `13a05d553a50d62538db3cd6bc1f09da6983b3d5`, tree
++  `a5e00ca29a72ba00d34c0d8b1bcea67132a8e954`.
++- Current source before this worker's test-only edit: commit
++  `8e3107853d17453758a933d1f47215cc1c002660`, tree
++  `7b395a0165b00808b9b554213ff015838e813e51`.
++- Final central targeted snapshot including the edit below: tree
++  `bd36b27861808a19f1e0895be947de629667ef65`.
++
++The pinned run `agent-full-remotion12-s2-integration-1020122457-4758` was not
++rerun, cancelled, or relabelled. Its recorded result remains 14,577 passed,
++6 failed, 452 skipped, 4 xfailed, 565 subtests passed in 4,905.65 seconds.
++
++## Six-node evidence
++
++| Exact node | Pinned traceback / cause | Current targeted result and classification |
++|---|---|---|
++| `tests/packs/timeline/test_cli_media.py::test_trim_and_slip_keep_the_film_span` | `tests/packs/timeline/test_cli_media.py:27` passed `object()` to `build_parser`; native trim reached `astrid/sdk/timeline/store.py:590`, `c.timelines.open_composition(...)`, and raised `AttributeError: 'object' object has no attribute 'timelines'`. | First current run: failed with the same traceback. The detached test helper now builds with `client=None`, so native dispatch is not asked to inspect Runtime before the patched checkout path. Final targeted run: passed. **Old test-setup defect; fixed current.** |
++| `tests/packs/timeline/test_cli_media.py::test_a_trimmed_bed_is_extended_to_the_film_end_under_keep_end` | Same exact `store.py:590` `AttributeError` from the opaque parser client, before the keep-end edit or assertion. | First current run: failed identically. Final targeted run: passed after the same bounded fixture correction; trim and film-end semantic assertions were retained. **Old test-setup defect; fixed current.** |
++| `tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name` | The holder owned `.main.json.lock`; pinned line 379 called `Checkout.load(path)` while it was held. `store.py:148` first got `BlockingIOError: [Errno 11] Resource temporarily unavailable`, then `store.py:155` raised `TimelineEditError: another writer (pid 13471) has held ... for 0.5 s`. | Current `ce363f6d` setup loads the checkout before starting the holder, preserving the positive timeout/refusal-by-PID assertion. Final targeted run: passed. **Historical test-setup defect; fixed current.** |
++| `tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary` | The pinned full exported VibeComfy variables. Its fake `runner.subprocess.run` returned `CompletedProcess(..., returncode=0)` with `stdout=None`; the ambient identity check reached `vibecomfy_dependency.py:106`, `result.stdout.strip()`, and raised `AttributeError: 'NoneType' object has no attribute 'strip'` before the executor boundary assertion. | Current `ce363f6d` clears the VibeComfy selection/candidate/attestation variables in this test. Final targeted run: passed. The subprocess-boundary assertion remains intact. **Old environment/test-isolation defect; fixed current.** |
++| `tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context` | The pinned test computed expected paths with ambient `_dependency_pythonpath()`, while the launch candidates used the explicit `environment`. Assertion differed by `/home/user/work/fixtures/vibecomfy`. | Current `ce363f6d` computes expected paths with `dependency_pythonpath(environment)`. Final targeted run: passed. **Old environment/test-isolation defect; fixed current.** |
++| `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale` | Pinned inventory stopped at `astrid/core/execution/generic_host.py`: rationale 13,798 vs on-disk 13,860, a 62-line drift beyond the ±50 tolerance. | First current run no longer failed on `generic_host.py`; current source is 13,816, within 18 lines of the rationale, consistent with the extraction. It now fails on Viewing-owned `astrid/core/rendering/service.py`: rationale 2,314 vs on-disk 2,367, a 53-line drift. Final targeted result: failed. **Historical host drift fixed by extraction; current structural inventory regression belongs to Viewing.** Do not loosen threshold/tolerance or edit this inventory here. |
++
++## Changes made
++
++One test-only change in `tests/packs/timeline/test_cli_media.py`: the detached
++working-copy helper now passes `None` rather than an opaque `object()` as its
++parser client. This uses the existing detached path seam and changes no
++product code or semantic assertion.
++
++## Verification
++
++- Central targeted, before the edit: `3 failed, 3 passed in 11.37s`; the two
++  CLI nodes and the giant-file node failed.
++- Central targeted, after the edit, exact six node IDs: **1 failed, 5 passed
++  in 13.01s**; only the Viewing `service.py` inventory drift failed.
++- Direct local targeted edited tests, with private/no pytest cache:
++  `env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_media.py::test_trim_and_slip_keep_the_film_span tests/packs/timeline/test_cli_media.py::test_a_trimmed_bed_is_extended_to_the_film_end_under_keep_end`
++  -> **2 passed in 2.70s**.
++
++No full suite, full-remotion suite, browser, localhost, live-socket, or
++subprocess qualification suite was run or requested by this worker. The six
++historical full-run artifacts (`request`, `ext`, `log.txt`, `summary`, and
++status/exit) and `agent-full797-classification.md` plus
++`agent-baseline-109-cutlist.md` were read. No shared dependency, runtime,
++fixture, integration worktree, branch, or ref was modified.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..8b319b31eaea1d7b1522edf1007daf525d9d588f
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/commit-msg
+@@ -0,0 +1,6 @@
++test(timeline): isolate detached media CLI fixture
++
++Use a None client in the detached timeline media test helper so native trim
++dispatch does not inspect Runtime through an opaque fake client. This preserves
++the trim/slip and keep-end product assertions while removing test-only setup
++pollution from the CLI media nodes.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..563235e691cccae67fc6833215e9ac357777a021
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md
+@@ -0,0 +1,18 @@
++# Report
++
++Classified all six failures from pinned full
++`agent-full-remotion12-s2-integration-1020122457-4758`.
++
++- Historical CLI media failures were stale opaque-client test setup; fixed in
++  this worker by passing `None` for the detached working-copy parser fixture.
++- Persistence, subprocess-boundary, and generic-host failures were fixed by
++  the existing `ce363f6d` test-isolation changes and pass current targeted
++  testing.
++- Historical generic-host giant-file drift is fixed on current source after
++  extraction. The current remaining inventory failure is Viewing-owned
++  `astrid/core/rendering/service.py` metadata drift (2,367 actual vs 2,314
++  recorded); no threshold/tolerance weakening or structural edit was made.
++
++Final central targeted result: **1 failed, 5 passed in 13.01s**. Direct local
++edited CLI tests: **2 passed in 2.70s**. No full suite was run or requested.
++See [the full six-row classification](../../design/agent-pinned-full4758-classification.md).
+diff --git a/tests/packs/timeline/test_cli_media.py b/tests/packs/timeline/test_cli_media.py
+index 1304054f842781470c21410cb83209060130988d..4740af633bb30e184a20b035b12d46c3fe910b35
+--- a/tests/packs/timeline/test_cli_media.py
++++ b/tests/packs/timeline/test_cli_media.py
+@@ -23,7 +23,10 @@
+     monkeypatch.setattr(timeline_cli, "_edit_checkout", lambda _parsed: tl)
+     monkeypatch.setattr(cli_sweep, "touched_cuts", lambda *_args: set())
+     monkeypatch.setattr(cli_sweep, "auto_sweep_after_edit", lambda *_args, **_kwargs: 0)
+-    parsed = timeline_cli.build_parser(object()).parse_args(["edit", "--project", "p1", "main", *argv])
++    # These cases exercise the detached working-copy path.  Supplying an
++    # opaque client makes native trim dispatch try to inspect Runtime before
++    # the patched checkout path can run.
++    parsed = timeline_cli.build_parser(None).parse_args(["edit", "--project", "p1", "main", *argv])
+     return parsed.handler(parsed)
+ 
+ 
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5a3fb4e3779ab2da2c4ba38a8fd6875e24767d4d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md
+@@ -0,0 +1,52 @@
++# Pinned Agent full4758 classification
++
++Date: 2026-10-20
++
++## Source identities
++
++- Pinned full: commit `13a05d553a50d62538db3cd6bc1f09da6983b3d5`, tree
++  `a5e00ca29a72ba00d34c0d8b1bcea67132a8e954`.
++- Current source before this worker's test-only edit: commit
++  `8e3107853d17453758a933d1f47215cc1c002660`, tree
++  `7b395a0165b00808b9b554213ff015838e813e51`.
++- Final central targeted snapshot including the edit below: tree
++  `bd36b27861808a19f1e0895be947de629667ef65`.
++
++The pinned run `agent-full-remotion12-s2-integration-1020122457-4758` was not
++rerun, cancelled, or relabelled. Its recorded result remains 14,577 passed,
++6 failed, 452 skipped, 4 xfailed, 565 subtests passed in 4,905.65 seconds.
++
++## Six-node evidence
++
++| Exact node | Pinned traceback / cause | Current targeted result and classification |
++|---|---|---|
++| `tests/packs/timeline/test_cli_media.py::test_trim_and_slip_keep_the_film_span` | `tests/packs/timeline/test_cli_media.py:27` passed `object()` to `build_parser`; native trim reached `astrid/sdk/timeline/store.py:590`, `c.timelines.open_composition(...)`, and raised `AttributeError: 'object' object has no attribute 'timelines'`. | First current run: failed with the same traceback. The detached test helper now builds with `client=None`, so native dispatch is not asked to inspect Runtime before the patched checkout path. Final targeted run: passed. **Old test-setup defect; fixed current.** |
++| `tests/packs/timeline/test_cli_media.py::test_a_trimmed_bed_is_extended_to_the_film_end_under_keep_end` | Same exact `store.py:590` `AttributeError` from the opaque parser client, before the keep-end edit or assertion. | First current run: failed identically. Final targeted run: passed after the same bounded fixture correction; trim and film-end semantic assertions were retained. **Old test-setup defect; fixed current.** |
++| `tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name` | The holder owned `.main.json.lock`; pinned line 379 called `Checkout.load(path)` while it was held. `store.py:148` first got `BlockingIOError: [Errno 11] Resource temporarily unavailable`, then `store.py:155` raised `TimelineEditError: another writer (pid 13471) has held ... for 0.5 s`. | Current `ce363f6d` setup loads the checkout before starting the holder, preserving the positive timeout/refusal-by-PID assertion. Final targeted run: passed. **Historical test-setup defect; fixed current.** |
++| `tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary` | The pinned full exported VibeComfy variables. Its fake `runner.subprocess.run` returned `CompletedProcess(..., returncode=0)` with `stdout=None`; the ambient identity check reached `vibecomfy_dependency.py:106`, `result.stdout.strip()`, and raised `AttributeError: 'NoneType' object has no attribute 'strip'` before the executor boundary assertion. | Current `ce363f6d` clears the VibeComfy selection/candidate/attestation variables in this test. Final targeted run: passed. The subprocess-boundary assertion remains intact. **Old environment/test-isolation defect; fixed current.** |
++| `tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context` | The pinned test computed expected paths with ambient `_dependency_pythonpath()`, while the launch candidates used the explicit `environment`. Assertion differed by `/home/user/work/fixtures/vibecomfy`. | Current `ce363f6d` computes expected paths with `dependency_pythonpath(environment)`. Final targeted run: passed. **Old environment/test-isolation defect; fixed current.** |
++| `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale` | Pinned inventory stopped at `astrid/core/execution/generic_host.py`: rationale 13,798 vs on-disk 13,860, a 62-line drift beyond the ±50 tolerance. | First current run no longer failed on `generic_host.py`; current source is 13,816, within 18 lines of the rationale, consistent with the extraction. It now fails on Viewing-owned `astrid/core/rendering/service.py`: rationale 2,314 vs on-disk 2,367, a 53-line drift. Final targeted result: failed. **Historical host drift fixed by extraction; current structural inventory regression belongs to Viewing.** Do not loosen threshold/tolerance or edit this inventory here. |
++
++## Changes made
++
++One test-only change in `tests/packs/timeline/test_cli_media.py`: the detached
++working-copy helper now passes `None` rather than an opaque `object()` as its
++parser client. This uses the existing detached path seam and changes no
++product code or semantic assertion.
++
++## Verification
++
++- Central targeted, before the edit: `3 failed, 3 passed in 11.37s`; the two
++  CLI nodes and the giant-file node failed.
++- Central targeted, after the edit, exact six node IDs: **1 failed, 5 passed
++  in 13.01s**; only the Viewing `service.py` inventory drift failed.
++- Direct local targeted edited tests, with private/no pytest cache:
++  `env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_media.py::test_trim_and_slip_keep_the_film_span tests/packs/timeline/test_cli_media.py::test_a_trimmed_bed_is_extended_to_the_film_end_under_keep_end`
++  -> **2 passed in 2.70s**.
++
++No full suite, full-remotion suite, browser, localhost, live-socket, or
++subprocess qualification suite was run or requested by this worker. The six
++historical full-run artifacts (`request`, `ext`, `log.txt`, `summary`, and
++status/exit) and `agent-full797-classification.md` plus
++`agent-baseline-109-cutlist.md` were read. No shared dependency, runtime,
++fixture, integration worktree, branch, or ref was modified.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..8b319b31eaea1d7b1522edf1007daf525d9d588f
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/commit-msg
+@@ -0,0 +1,6 @@
++test(timeline): isolate detached media CLI fixture
++
++Use a None client in the detached timeline media test helper so native trim
++dispatch does not inspect Runtime through an opaque fake client. This preserves
++the trim/slip and keep-end product assertions while removing test-only setup
++pollution from the CLI media nodes.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..841bbff1db5976719db11fb03109c7fd366133dd
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md
+@@ -0,0 +1,18 @@
++# Report
++
++Classified all six failures from pinned full
++`agent-full-remotion12-s2-integration-1020122457-4758`.
++
++- Historical CLI media failures were stale opaque-client test setup; fixed in
++  this worker by passing `None` for the detached working-copy parser fixture.
++- Persistence, subprocess-boundary, and generic-host failures were fixed by
++  the existing `ce363f6d` test-isolation changes and pass current targeted
++  testing.
++- Historical generic-host giant-file drift is fixed on current source after
++  extraction. The current remaining inventory failure is Viewing-owned
++  `astrid/core/rendering/service.py` metadata drift (2,367 actual vs 2,314
++  recorded); no threshold/tolerance weakening or structural edit was made.
++
++Final central targeted result: **1 failed, 5 passed in 13.01s**. Direct local
++edited CLI tests: **2 passed in 2.70s**. No full suite was run or requested.
++See [the full six-row classification](../../../design/agent-pinned-full4758-classification.md).
+diff --git a/tests/packs/timeline/test_cli_media.py b/tests/packs/timeline/test_cli_media.py
+index 1304054f842781470c21410cb83209060130988d..4740af633bb30e184a20b035b12d46c3fe910b35
+--- a/tests/packs/timeline/test_cli_media.py
++++ b/tests/packs/timeline/test_cli_media.py
+@@ -23,7 +23,10 @@
+     monkeypatch.setattr(timeline_cli, "_edit_checkout", lambda _parsed: tl)
+     monkeypatch.setattr(cli_sweep, "touched_cuts", lambda *_args: set())
+     monkeypatch.setattr(cli_sweep, "auto_sweep_after_edit", lambda *_args, **_kwargs: 0)
+-    parsed = timeline_cli.build_parser(object()).parse_args(["edit", "--project", "p1", "main", *argv])
++    # These cases exercise the detached working-copy path.  Supplying an
++    # opaque client makes native trim dispatch try to inspect Runtime before
++    # the patched checkout path can run.
++    parsed = timeline_cli.build_parser(None).parse_args(["edit", "--project", "p1", "main", *argv])
+     return parsed.handler(parsed)
+ 
+ 
+
+exec
+/bin/bash -lc "git diff --check && git status --short && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/commit-msg && printf 'worktree files:\\n' && find . -maxdepth 3 -type f \\( -name '.pytest_cache' -o -name '*.pyc' \\) -print | head -20" in /home/user/work/wt/agt-m2-pinned-full-six-classify
+ succeeded in 1799ms:
+ M tests/packs/timeline/test_cli_media.py
+worktree files:
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/DONE && wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/DONE && sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md | tail -40" in /home/user/work/wt/agt-m2-pinned-full-six-classify
+ succeeded in 271ms:
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/DONE
+  `bd36b27861808a19f1e0895be947de629667ef65`.
+
+The pinned run `agent-full-remotion12-s2-integration-1020122457-4758` was not
+rerun, cancelled, or relabelled. Its recorded result remains 14,577 passed,
+6 failed, 452 skipped, 4 xfailed, 565 subtests passed in 4,905.65 seconds.
+
+## Six-node evidence
+
+| Exact node | Pinned traceback / cause | Current targeted result and classification |
+|---|---|---|
+| `tests/packs/timeline/test_cli_media.py::test_trim_and_slip_keep_the_film_span` | `tests/packs/timeline/test_cli_media.py:27` passed `object()` to `build_parser`; native trim reached `astrid/sdk/timeline/store.py:590`, `c.timelines.open_composition(...)`, and raised `AttributeError: 'object' object has no attribute 'timelines'`. | First current run: failed with the same traceback. The detached test helper now builds with `client=None`, so native dispatch is not asked to inspect Runtime before the patched checkout path. Final targeted run: passed. **Old test-setup defect; fixed current.** |
+| `tests/packs/timeline/test_cli_media.py::test_a_trimmed_bed_is_extended_to_the_film_end_under_keep_end` | Same exact `store.py:590` `AttributeError` from the opaque parser client, before the keep-end edit or assertion. | First current run: failed identically. Final targeted run: passed after the same bounded fixture correction; trim and film-end semantic assertions were retained. **Old test-setup defect; fixed current.** |
+| `tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name` | The holder owned `.main.json.lock`; pinned line 379 called `Checkout.load(path)` while it was held. `store.py:148` first got `BlockingIOError: [Errno 11] Resource temporarily unavailable`, then `store.py:155` raised `TimelineEditError: another writer (pid 13471) has held ... for 0.5 s`. | Current `ce363f6d` setup loads the checkout before starting the holder, preserving the positive timeout/refusal-by-PID assertion. Final targeted run: passed. **Historical test-setup defect; fixed current.** |
+| `tests/stage1/test_zero_shim_execution_pack_deletion.py::test_external_executor_command_always_crosses_subprocess_boundary` | The pinned full exported VibeComfy variables. Its fake `runner.subprocess.run` returned `CompletedProcess(..., returncode=0)` with `stdout=None`; the ambient identity check reached `vibecomfy_dependency.py:106`, `result.stdout.strip()`, and raised `AttributeError: 'NoneType' object has no attribute 'strip'` before the executor boundary assertion. | Current `ce363f6d` clears the VibeComfy selection/candidate/attestation variables in this test. Final targeted run: passed. The subprocess-boundary assertion remains intact. **Old environment/test-isolation defect; fixed current.** |
+| `tests/test_generic_host.py::test_launch_worker_projection_matches_fixed_execution_context` | The pinned test computed expected paths with ambient `_dependency_pythonpath()`, while the launch candidates used the explicit `environment`. Assertion differed by `/home/user/work/fixtures/vibecomfy`. | Current `ce363f6d` computes expected paths with `dependency_pythonpath(environment)`. Final targeted run: passed. **Old environment/test-isolation defect; fixed current.** |
+| `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale` | Pinned inventory stopped at `astrid/core/execution/generic_host.py`: rationale 13,798 vs on-disk 13,860, a 62-line drift beyond the ±50 tolerance. | First current run no longer failed on `generic_host.py`; current source is 13,816, within 18 lines of the rationale, consistent with the extraction. It now fails on Viewing-owned `astrid/core/rendering/service.py`: rationale 2,314 vs on-disk 2,367, a 53-line drift. Final targeted result: failed. **Historical host drift fixed by extraction; current structural inventory regression belongs to Viewing.** Do not loosen threshold/tolerance or edit this inventory here. |
+
+## Changes made
+
+One test-only change in `tests/packs/timeline/test_cli_media.py`: the detached
+working-copy helper now passes `None` rather than an opaque `object()` as its
+parser client. This uses the existing detached path seam and changes no
+product code or semantic assertion.
+
+## Verification
+
+- Central targeted, before the edit: `3 failed, 3 passed in 11.37s`; the two
+  CLI nodes and the giant-file node failed.
+- Central targeted, after the edit, exact six node IDs: **1 failed, 5 passed
+  in 13.01s**; only the Viewing `service.py` inventory drift failed.
+- Direct local targeted edited tests, with private/no pytest cache:
+  `env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_media.py::test_trim_and_slip_keep_the_film_span tests/packs/timeline/test_cli_media.py::test_a_trimmed_bed_is_extended_to_the_film_end_under_keep_end`
+  -> **2 passed in 2.70s**.
+
+No full suite, full-remotion suite, browser, localhost, live-socket, or
+subprocess qualification suite was run or requested by this worker. The six
+historical full-run artifacts (`request`, `ext`, `log.txt`, `summary`, and
+status/exit) and `agent-full797-classification.md` plus
+`agent-baseline-109-cutlist.md` were read. No shared dependency, runtime,
+fixture, integration worktree, branch, or ref was modified.
+
+codex
+Completed classification and artifacts.
+
+- Pinned full was not rerun, cancelled, or relabelled.
+- Fixed the bounded CLI test fixture; semantic assertions unchanged.
+- Central targeted result: 1 failed, 5 passed. Remaining failure is Viewing-owned `service.py` inventory drift.
+- Direct CLI tests: 2 passed.
+- Wrote [classification report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md) and [worker notes](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md).
+- Wrote commit message and created `DONE`.
+- No full suite or shared dependency/runtime changes.
+tokens used
+139,190
+Completed classification and artifacts.
+
+- Pinned full was not rerun, cancelled, or relabelled.
+- Fixed the bounded CLI test fixture; semantic assertions unchanged.
+- Central targeted result: 1 failed, 5 passed. Remaining failure is Viewing-owned `service.py` inventory drift.
+- Direct CLI tests: 2 passed.
+- Wrote [classification report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-pinned-full4758-classification.md) and [worker notes](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pinned-full-six-classify/notes/report.md).
+- Wrote commit message and created `DONE`.
+- No full suite or shared dependency/runtime changes.

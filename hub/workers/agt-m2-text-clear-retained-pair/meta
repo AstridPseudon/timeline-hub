@@ -1,0 +1,9 @@
+name=agt-m2-text-clear-retained-pair
+repo=agent
+base=tl/agt-m2-text-binding-native
+base_sha=cb1e907c
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-text-clear-retained-pair
+started=2026-10-20T11:23:53Z

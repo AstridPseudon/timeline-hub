@@ -1,0 +1,400 @@
+remotion/tests/composition-package.mjs
+docs/reference/timeline-composition-v0.0.6/types.ts
+docs/reference/timeline-composition-v0.0.6/transitions.generated.ts
+docs/reference/timeline-composition-v0.0.6/lib/transitions.tsx
+docs/reference/timeline-composition-v0.0.6/lib/fade.ts
+docs/reference/timeline-composition-v0.0.6/lib/duration.ts
+docs/reference/timeline-composition-v0.0.6/lib/tracks.ts
+docs/reference/timeline-composition-v0.0.6/lib/render-bounds.ts
+docs/reference/timeline-composition-v0.0.6/lib/trim.ts
+docs/reference/timeline-composition-v0.0.6/lib/animations.tsx
+docs/reference/timeline-composition-v0.0.6/lib/effect-params.ts
+docs/reference/timeline-composition-v0.0.6/AudioTrack.tsx
+docs/reference/timeline-composition-v0.0.6/animations.generated.ts
+docs/reference/timeline-composition-v0.0.6/VisualClip.tsx
+docs/reference/timeline-composition-v0.0.6/effects-types.ts
+docs/reference/timeline-composition-v0.0.6/effects.generated.ts
+docs/reference/timeline-composition-v0.0.6/ThemeContext.tsx
+docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx
+docs/reference/timeline-composition-v0.0.6/theme-api.ts
+docs/reference/timeline-composition-v0.0.6/README.md
+docs/reference/timeline-composition-v0.0.6/index.ts
+docs/reference/timeline-composition-v0.0.6/registry.generated.ts
+astrid/core/timeline/shot_composition_migration.py
+astrid/core/timeline/shot_composition_projection.py
+astrid/core/timeline/shot_composition.py
+tests/core/timeline/test_shot_composition_projection_volume.py
+tests/stage1/test_pack_composition_cutover.py
+tests/editing_conformance/test_recipe_add_delete_composition.py
+tests/packs/rendering/test_live_scene_composition.py
+tests/packs/rendering/test_composition_package.py
+tests/packs/test_composition_elements.py
+tests/integrations/test_generation_runtime_composition.py
+tests/timeline/test_shot_composition_migration.py
+tests/timeline/test_shot_composition.py
+tests/timeline/test_shot_composition_projection.py
+tests/fixtures/timeline/shot_composition.json
+astrid/packs/rendering/editor/catalog.ts
+astrid/packs/rendering/elements/catalog.ts
+
+ succeeded in 160ms:
+artifacts.json is current
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worker queue record ---'; find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m3-plate-preserve-fill-guard -maxdepth 2 -type f -print -exec sed -n '1,200p' {} \\; 2>/dev/null; printf '%s\\n' '--- current/base hashes ---'; for p in astrid/packs/rendering/elements/catalog.ts artifacts.json remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz; do printf '%s current ' \""'$p"; sha256sum "$p" | cut -d'"' ' -f1; printf '%s base    ' \""'$p"; git show HEAD:"$p" | sha256sum | cut -d'"' ' -f1; done; printf '%s\\n' '--- diff paths ---'; git diff --name-status HEAD --; git diff --check" in /home/user/work/wt/agt-m3-plate-preserve-fill-guard
+ succeeded in 783ms:
+--- worker queue record ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-m3-plate-preserve-fill-guard
+dispatched agt-m3-plate-preserve-fill-guard in /home/user/work/wt/agt-m3-plate-preserve-fill-guard (base tl/agt-m3-plate-current-artifact-gate)
+--- current/base hashes ---
+astrid/packs/rendering/elements/catalog.ts current e981170d497f9483aa4682bee9defba367b6fdb155071420a19e8e827f59dcba
+astrid/packs/rendering/elements/catalog.ts base    e981170d497f9483aa4682bee9defba367b6fdb155071420a19e8e827f59dcba
+artifacts.json current 6963e3393d22b8e46d1df5f2cb81f401bee7080407bd3f61f108560a2ef9a176
+artifacts.json base    6963e3393d22b8e46d1df5f2cb81f401bee7080407bd3f61f108560a2ef9a176
+remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz current 0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3
+remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz base    0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3
+--- diff paths ---
+M	tests/packs/test_am_snap_plate_fill.py
+
+ succeeded in 6785ms:
+codex
+The requested scene/SSR lane passes 14/14, including the registered SSR variants and explicit fill/background precedence. Both normal freshness checks pass (`gen_element_catalog.py --check` and `artifact_manifest.py --check`), and the working diff is exactly one test file. I also verified the normal catalog, `artifacts.json`, and the checked-in public12 Composition 0.0.12 artifact are byte-identical to the base.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest --collect-only -q -p no:cacheprovider -o addopts= tests/packs/test_am_snap_plate_fill.py tests/packs/rendering/test_am_snap_plate_scene_capability.py | tail -25' in /home/user/work/wt/agt-m3-plate-preserve-fill-guard
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/test_am_snap_plate_fill.py && git diff --check' in /home/user/work/wt/agt-m3-plate-preserve-fill-guard
+exec
+/bin/bash -lc 'for root in /home/user/work/runtimes/agent-remotion-current /home/user/work /tmp; do test -d "$root" && find "$root" -maxdepth 5 -type f '"\\( -iname '*0.0.13*' -o -iname '*public13*' -o -iname '*composition*0.0.12*' \\) -print 2>/dev/null | sed -n '1,40p'; done" in /home/user/work/wt/agt-m3-plate-preserve-fill-guard
+ succeeded in 392ms:
+All checks passed!
+
+ succeeded in 1083ms:
+/home/user/work/runtimes/agent-remotion-current/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/home/user/work/wt/agt-review-mouth-partial-current/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/home/user/work/wt/agt-m2-native-audio-media-preserve/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/home/user/work/wt/agt-m2-d13-real-native-preservation/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/home/user/work/wt/.test-agent-full-remotion12-s2-integration-1020143255-24995/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/home/user/work/wt/agt-m3-plate-preserve-fill-guard/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/home/user/work/agent/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/home/user/work/runtimes/agent-remotion-current/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/home/user/work/runtimes/agent-remotion-0012/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/tmp/rt-m2-carrier-private-pair-agent3730.m99Etr/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/tmp/agt-review-am-composed.hJNpJz/combined/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/tmp/agt-review-am-composed.hJNpJz/sprite/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/tmp/agt-review-single-cap.9yuzKV/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/tmp/agt-review-timing-main-map.urPA6m/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/tmp/runtime-ordinary014-agent.8LXIDE/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+/tmp/agt-review-mouth.89drCV/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+
+ succeeded in 2670ms:
+tests/packs/test_am_snap_plate_fill.py::AmSnapPlateFillTest::test_component_renders_without_an_asset_when_fill_is_set
+tests/packs/test_am_snap_plate_fill.py::AmSnapPlateFillTest::test_fill_is_declared_in_schema_and_not_a_default
+tests/packs/test_am_snap_plate_fill.py::AmSnapPlateFillTest::test_skill_does_not_ask_for_placeholder_pngs
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_real_plate_background_picture_and_gap[False]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_real_plate_background_picture_and_gap[True]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_empty_raw_plate_stays_unknown
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_registered_plate_ssr_preserves_existing_draw_and_default_theme
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_managed_transparent_image_has_opaque_backing_without_media_alpha_proof
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_real_plate_fade_dip_and_translucent_gap
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_real_plate_wipe_mosaic_pan_and_tint_keep_the_painted_backing
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params0]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params1]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params2]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params3]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer0]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer1]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer2]
+
+17 tests collected in 1.42s
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest --collect-only -q -p no:cacheprovider -o addopts= tests/packs/test_am_snap_plate_fill.py tests/packs/rendering/test_am_snap_plate_scene_capability.py' in /home/user/work/wt/agt-m3-plate-preserve-fill-guard
+ succeeded in 3558ms:
+tests/packs/test_am_snap_plate_fill.py::AmSnapPlateFillTest::test_component_renders_without_an_asset_when_fill_is_set
+tests/packs/test_am_snap_plate_fill.py::AmSnapPlateFillTest::test_fill_is_declared_in_schema_and_not_a_default
+tests/packs/test_am_snap_plate_fill.py::AmSnapPlateFillTest::test_skill_does_not_ask_for_placeholder_pngs
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_real_plate_background_picture_and_gap[False]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_real_plate_background_picture_and_gap[True]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_empty_raw_plate_stays_unknown
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_registered_plate_ssr_preserves_existing_draw_and_default_theme
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_managed_transparent_image_has_opaque_backing_without_media_alpha_proof
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_real_plate_fade_dip_and_translucent_gap
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_real_plate_wipe_mosaic_pan_and_tint_keep_the_painted_backing
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params0]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params1]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params2]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params3]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer0]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer1]
+tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer2]
+
+17 tests collected in 1.75s
+
+exec
+/bin/bash -lc 'wc -l tests/packs/test_am_snap_plate_fill.py astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts; sha256sum astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts tests/packs/rendering/test_am_snap_plate_scene_capability.py tests/packs/test_am_snap_plate_fill.py' in /home/user/work/wt/agt-m3-plate-preserve-fill-guard
+ succeeded in 20ms:
+  41 tests/packs/test_am_snap_plate_fill.py
+ 156 astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx
+  23 astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts
+  22 astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts
+ 242 total
+93fc2fb7ab03a4d64d9e1c53a9a40de6de75860576b77f5b6f2c31cbd9c292ee  astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx
+5c844e62bd6d32673d16ad17d61435380050ffbe2cb92036d2251ac3579edd49  astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts
+e43bb6dfe94a770df11e21bcf5e959e9591387d7952dda11176c79fc9e2c686e  astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts
+4008e2531149329d59ac821557d8ed5316f977499fda9ca20307ddb317064820  tests/packs/rendering/test_am_snap_plate_scene_capability.py
+efa18f1ca8a72e0259f08c78fb315b86b46cf2ce0750c6bf285cf9245c8acbcd  tests/packs/test_am_snap_plate_fill.py
+
+codex
+All requested evidence is green: fill 3/3, scene/SSR 14/14, Ruff, whitespace, catalog freshness, and artifact-manifest freshness. I’m recording the bounded repair now with exact source/test counts and protected hashes, then I’ll write the harness commit message and DONE marker and perform the final one-file/status audit.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c4c09a5cbf31720982bbdb8903e0ff40b82356aa
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md
+@@ -0,0 +1,53 @@
++# AM snap-plate preserved fill guard
++
++## Scope
++
++- Base: `d7c03af259abe7169e05996a3adce0a3838af6e1` (`tl/agt-m3-plate-current-artifact-gate`).
++- Changed repository path: `tests/packs/test_am_snap_plate_fill.py` only.
++- Restored `AmSnapPlateFillTest::test_component_renders_without_an_asset_when_fill_is_set` with all four original assertions unchanged.
++- The source fixture now joins the 156-line `component.tsx` and 23-line extracted `surface.ts` (179 source lines total), so the guard/JSX assertions remain covered while `FILL_TOKENS` and the background fallback are read from their current helper location.
++- Production source was not changed: `component.tsx` 156 lines, `surface.ts` 23 lines, `scene.ts` 22 lines.
++
++## Test counts
++
++- `tests/packs/test_am_snap_plate_fill.py`: 3 passed.
++- `tests/packs/rendering/test_am_snap_plate_scene_capability.py`: 14 passed, including the registered actual SSR lane (10 variants × 9 frames) and explicit fill/background precedence.
++- No assertions were removed, skipped, weakened, or marked expected-to-fail.
++
++## Exact evidence
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short tests/packs/test_am_snap_plate_fill.py
++3 passed in 0.50s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules ASTRID_TEST_COMPOSITION_ARTIFACT="$PWD/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/agt-m3-plate-preserve-fill-guard-scene tests/packs/rendering/test_am_snap_plate_scene_capability.py
++14 passed in 48.13s
++
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/test_am_snap_plate_fill.py
++All checks passed!
++
++git diff --check
++pass
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
++pass
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
++artifacts.json is current
++```
++
++## Protected bytes
++
++The normal catalog, manifest, and checked-in public12 Composition artifact are unchanged from base:
++
++```text
++astrid/packs/rendering/elements/catalog.ts
++e981170d497f9483aa4682bee9defba367b6fdb155071420a19e8e827f59dcba
++artifacts.json
++6963e3393d22b8e46d1df5f2cb81f401bee7080407bd3f61f108560a2ef9a176
++remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
++0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3
++```
++
++The existing private peer tree was used read-only. No public13 artifact exists in this Agent repository; no public13 or Composition artifact was changed. No full suite, new matrix, integration, browser, live socket, install, or git mutation was run.
++
+diff --git a/tests/packs/test_am_snap_plate_fill.py b/tests/packs/test_am_snap_plate_fill.py
+index 45dfd055b9c96a0e4ff39ea2df44622f6ab1661b..ee6b00d395e7e844c32178831ea4ecbc294078f6
+--- a/tests/packs/test_am_snap_plate_fill.py
++++ b/tests/packs/test_am_snap_plate_fill.py
+@@ -18,6 +18,20 @@
+         self.assertNotIn("fill", definition.defaults)
+         self.assertEqual(definition.defaults["background"], "#F7F4ED")
+ 
++    def test_component_renders_without_an_asset_when_fill_is_set(self) -> None:
++        source = "\n".join(
++            (
++                (PLATE / "component.tsx").read_text(encoding="utf-8"),
++                (PLATE / "surface.ts").read_text(encoding="utf-8"),
++            )
++        )
++        # Returns null only when there is neither a source nor a fill.
++        self.assertIn("if (!url && !fill) {", source)
++        self.assertIn("FILL_TOKENS", source)
++        # The image is only drawn when there is a url.
++        self.assertIn("{!url ? null : block > 0 ? (", source)
++        self.assertIn("params.background ?? fill ?? COLOR.paper", source)
++
+     def test_skill_does_not_ask_for_placeholder_pngs(self) -> None:
+         text = (ROOT / "astrid" / "packs" / "astrid_motion" / "docs" / "SKILL.md").read_text(encoding="utf-8")
+         self.assertIn("params.fill", text)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c4c09a5cbf31720982bbdb8903e0ff40b82356aa
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md
+@@ -0,0 +1,53 @@
++# AM snap-plate preserved fill guard
++
++## Scope
++
++- Base: `d7c03af259abe7169e05996a3adce0a3838af6e1` (`tl/agt-m3-plate-current-artifact-gate`).
++- Changed repository path: `tests/packs/test_am_snap_plate_fill.py` only.
++- Restored `AmSnapPlateFillTest::test_component_renders_without_an_asset_when_fill_is_set` with all four original assertions unchanged.
++- The source fixture now joins the 156-line `component.tsx` and 23-line extracted `surface.ts` (179 source lines total), so the guard/JSX assertions remain covered while `FILL_TOKENS` and the background fallback are read from their current helper location.
++- Production source was not changed: `component.tsx` 156 lines, `surface.ts` 23 lines, `scene.ts` 22 lines.
++
++## Test counts
++
++- `tests/packs/test_am_snap_plate_fill.py`: 3 passed.
++- `tests/packs/rendering/test_am_snap_plate_scene_capability.py`: 14 passed, including the registered actual SSR lane (10 variants × 9 frames) and explicit fill/background precedence.
++- No assertions were removed, skipped, weakened, or marked expected-to-fail.
++
++## Exact evidence
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short tests/packs/test_am_snap_plate_fill.py
++3 passed in 0.50s
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules ASTRID_TEST_COMPOSITION_ARTIFACT="$PWD/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/agt-m3-plate-preserve-fill-guard-scene tests/packs/rendering/test_am_snap_plate_scene_capability.py
++14 passed in 48.13s
++
++PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/test_am_snap_plate_fill.py
++All checks passed!
++
++git diff --check
++pass
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
++pass
++
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
++artifacts.json is current
++```
++
++## Protected bytes
++
++The normal catalog, manifest, and checked-in public12 Composition artifact are unchanged from base:
++
++```text
++astrid/packs/rendering/elements/catalog.ts
++e981170d497f9483aa4682bee9defba367b6fdb155071420a19e8e827f59dcba
++artifacts.json
++6963e3393d22b8e46d1df5f2cb81f401bee7080407bd3f61f108560a2ef9a176
++remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
++0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3
++```
++
++The existing private peer tree was used read-only. No public13 artifact exists in this Agent repository; no public13 or Composition artifact was changed. No full suite, new matrix, integration, browser, live socket, install, or git mutation was run.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..5524ab7b156bfedbf87bcfe78869bdb35af3a13c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/commit-msg
+@@ -0,0 +1,3 @@
++test(rendering): restore AM snap-plate fill guard
++
++Restore the original assetless-fill source assertions and include the extracted surface helper in their fixture.
+diff --git a/tests/packs/test_am_snap_plate_fill.py b/tests/packs/test_am_snap_plate_fill.py
+index 45dfd055b9c96a0e4ff39ea2df44622f6ab1661b..ee6b00d395e7e844c32178831ea4ecbc294078f6
+--- a/tests/packs/test_am_snap_plate_fill.py
++++ b/tests/packs/test_am_snap_plate_fill.py
+@@ -18,6 +18,20 @@
+         self.assertNotIn("fill", definition.defaults)
+         self.assertEqual(definition.defaults["background"], "#F7F4ED")
+ 
++    def test_component_renders_without_an_asset_when_fill_is_set(self) -> None:
++        source = "\n".join(
++            (
++                (PLATE / "component.tsx").read_text(encoding="utf-8"),
++                (PLATE / "surface.ts").read_text(encoding="utf-8"),
++            )
++        )
++        # Returns null only when there is neither a source nor a fill.
++        self.assertIn("if (!url && !fill) {", source)
++        self.assertIn("FILL_TOKENS", source)
++        # The image is only drawn when there is a url.
++        self.assertIn("{!url ? null : block > 0 ? (", source)
++        self.assertIn("params.background ?? fill ?? COLOR.paper", source)
++
+     def test_skill_does_not_ask_for_placeholder_pngs(self) -> None:
+         text = (ROOT / "astrid" / "packs" / "astrid_motion" / "docs" / "SKILL.md").read_text(encoding="utf-8")
+         self.assertIn("params.fill", text)
+
+2026-10-20T14:49:19.287468Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc \\\"test -d /tmp/agt-m3-plate-preserve-fill-guard-scene && rm -rf /tmp/agt-m3-plate-preserve-fill-guard-scene || true\\nprintf '%s\\\\\\\\n' '--- repo status ---'\\ngit status --short --branch\\nprintf '%s\\\\\\\\n' '--- diff stat/check ---'\\ngit diff --stat\\ngit diff --check\\nprintf '%s\\\\\\\\n' '--- changed paths ---'\\ngit diff --name-only\\nprintf '%s\\\\\\\\n' '--- …247 chars truncated…agt-m3-plate-preserve-fill-guard/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md\\nprintf '%s\\\\\\\\n' '--- commit message ---'\\nsed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/commit-msg\\\"` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+codex
+The required design note, conventional commit message, and DONE marker are now published. I hit only a safety rejection on a cleanup command using `rm -rf`; I’m replacing it with an explicit file-and-empty-directory cleanup, then checking the final worktree and marker contents.
+exec
+/bin/bash -lc "if test -d /tmp/agt-m3-plate-preserve-fill-guard-scene; then find /tmp/agt-m3-plate-preserve-fill-guard-scene -depth -type f -delete; find /tmp/agt-m3-plate-preserve-fill-guard-scene -depth -type d -empty -delete; fi
+printf '%s\\n' '--- repo status ---'
+git status --short --branch
+printf '%s\\n' '--- diff stat/check ---'
+git diff --stat
+git diff --check
+printf '%s\\n' '--- changed paths ---'
+git diff --name-only
+printf '%s\\n' '--- markers ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md
+printf '%s\\n' '--- commit message ---'
+sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/commit-msg" in /home/user/work/wt/agt-m3-plate-preserve-fill-guard
+ succeeded in 848ms:
+--- repo status ---
+## tl/agt-m3-plate-preserve-fill-guard
+ M tests/packs/test_am_snap_plate_fill.py
+--- diff stat/check ---
+ tests/packs/test_am_snap_plate_fill.py | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+--- changed paths ---
+tests/packs/test_am_snap_plate_fill.py
+--- markers ---
+-rw-r--r-- 1 root root 2963 Oct 20 14:49 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md
+-rw-r--r-- 1 root root    0 Oct 20 14:49 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/DONE
+-rw-r--r-- 1 root root  164 Oct 20 14:49 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/commit-msg
+--- commit message ---
+test(rendering): restore AM snap-plate fill guard
+
+Restore the original assetless-fill source assertions and include the extracted surface helper in their fixture.
+
+codex
+Implemented and verified the final plate gate repair.
+
+- Restored the original 3rd fill test with all 4 assertions.
+- Fixture now reads both `component.tsx` and `surface.ts`.
+- Changed paths: [test_am_snap_plate_fill.py](/home/user/work/wt/agt-m3-plate-preserve-fill-guard/tests/packs/test_am_snap_plate_fill.py) only.
+- Tests: fill `3 passed`; plate SSR/scene `14 passed`.
+- Ruff, `git diff --check`, catalog `--check`, and artifact manifest `--check` all passed.
+- Protected catalog, manifest, and Composition 0.0.12 hashes unchanged.
+- No full/integration/matrix suites run; no blockers.
+
+Report: [agent-plate-preserved-fill-final-gate.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md)
+
+Commit message and `DONE` marker written.
+tokens used
+110,209
+Implemented and verified the final plate gate repair.
+
+- Restored the original 3rd fill test with all 4 assertions.
+- Fixture now reads both `component.tsx` and `surface.ts`.
+- Changed paths: [test_am_snap_plate_fill.py](/home/user/work/wt/agt-m3-plate-preserve-fill-guard/tests/packs/test_am_snap_plate_fill.py) only.
+- Tests: fill `3 passed`; plate SSR/scene `14 passed`.
+- Ruff, `git diff --check`, catalog `--check`, and artifact manifest `--check` all passed.
+- Protected catalog, manifest, and Composition 0.0.12 hashes unchanged.
+- No full/integration/matrix suites run; no blockers.
+
+Report: [agent-plate-preserved-fill-final-gate.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-preserved-fill-final-gate.md)
+
+Commit message and `DONE` marker written.

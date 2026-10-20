@@ -1,0 +1,9 @@
+name=agt-m1-public-markup-review
+repo=agent
+base=tl/vw-m1-consumer-full-fixes
+base_sha=0422a817
+model=gpt-5.6-luna
+effort=high
+heavy=1
+worktree=/home/user/work/wt/agt-m1-public-markup-review
+started=2026-10-19T23:04:41Z

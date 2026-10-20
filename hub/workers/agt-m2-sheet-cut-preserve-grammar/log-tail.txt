@@ -1,0 +1,400 @@
+-    return _cmd_commit_edit(parsed, sheet=True)
++    # A connected Runtime client has the bound NativeSheet consumer. Keep the
++    # detached path for the existing offline/Main grammar until those callers
++    # have a bound replacement; it still owns local parsing, merge, and save.
++    if parsed.native or parsed.client is not None:
++        return _cmd_commit_edit(parsed, sheet=True)
++    if parsed.dry_run or parsed.idempotency_key or parsed.json:
++        raise _VerbError("--native is required with commit apply options", 2)
++    from astrid.sdk.timeline_sheet import apply_sheet
++    tl = _edit_checkout(parsed)
++    before = tl.document()
++    changes = apply_sheet(tl, Path(parsed.sheet_file).read_text(encoding="utf-8"))
++    if changes or before != tl.document():
++        tl.save(quiet=True)
++        print("applied sheet")
++        return 0
++    print("no change (the sheet matches the working copy)")
++    return 3
+ 
+ 
+ def _cmd_undo(parsed: argparse.Namespace) -> int:
+
+exec
+/bin/bash -lc "git diff --check && git status --short && printf '\\n--- changed source diff ---\\n' && git diff --stat && git diff -- astrid/packs/timeline/cli.py && printf '\\n--- markers ---\\n' && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/{report.md,commit-msg,commit-msg.txt,DONE} && printf '\\n--- ledger row ---\\n' && rg -n '"'^'"\\| AG03' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md" in /home/user/work/wt/agt-m2-sheet-cut-preserve-grammar
+ succeeded in 2336ms:
+ M astrid/packs/timeline/cli.py
+
+--- changed source diff ---
+ astrid/packs/timeline/cli.py | 23 +++++++++++++++++------
+ 1 file changed, 17 insertions(+), 6 deletions(-)
+diff --git a/astrid/packs/timeline/cli.py b/astrid/packs/timeline/cli.py
+index 70a815d4..27f6652d 100644
+--- a/astrid/packs/timeline/cli.py
++++ b/astrid/packs/timeline/cli.py
+@@ -3587,12 +3587,23 @@ def _cmd_check(parsed: argparse.Namespace) -> int:
+ 
+ 
+ def _cmd_apply(parsed: argparse.Namespace) -> int:
+-    # Sheet acceptance is always native now. The old branch applied an
+-    # unbound projection to a detached Checkout, merged it locally, and then
+-    # saved the whole document. A sheet file without a retained NativeSheet
+-    # export is deliberately refused by _cmd_commit_edit, with the edited
+-    # text path included in the user-facing error.
+-    return _cmd_commit_edit(parsed, sheet=True)
++    # A connected Runtime client has the bound NativeSheet consumer. Keep the
++    # detached path for the existing offline/Main grammar until those callers
++    # have a bound replacement; it still owns local parsing, merge, and save.
++    if parsed.native or parsed.client is not None:
++        return _cmd_commit_edit(parsed, sheet=True)
++    if parsed.dry_run or parsed.idempotency_key or parsed.json:
++        raise _VerbError("--native is required with commit apply options", 2)
++    from astrid.sdk.timeline_sheet import apply_sheet
++    tl = _edit_checkout(parsed)
++    before = tl.document()
++    changes = apply_sheet(tl, Path(parsed.sheet_file).read_text(encoding="utf-8"))
++    if changes or before != tl.document():
++        tl.save(quiet=True)
++        print("applied sheet")
++        return 0
++    print("no change (the sheet matches the working copy)")
++    return 3
+ 
+ 
+ def _cmd_undo(parsed: argparse.Namespace) -> int:
+
+--- markers ---
+-rw-r--r-- 1 root root    0 Oct 20 18:07 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/DONE
+-rw-r--r-- 1 root root  187 Oct 20 18:07 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/commit-msg
+-rw-r--r-- 1 root root  187 Oct 20 18:07 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/commit-msg.txt
+-rw-r--r-- 1 root root 3732 Oct 20 18:07 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/report.md
+
+--- ledger row ---
+17:| AG03 | Cut-sheet client three-way merge/save | server-side replay only | NativeSheet parser emits captured commands | agent | M2 | in-progress (partial; bound consumer only) | Original basis ecdf preserved. Source b24144d+021a375d adds parent-clip omission through capture_clip_delete, no whole writer. This cut keeps the connected Runtime-client/default and explicit `--native` callers on retained NativeSheet, while restoring the no-client Main caller in `tests/editing_conformance/runner.py::_apply_sheet` to `apply_sheet`/local merge/save. Donor diagnostic was exactly 46 failed / 2056 passed: the sheet cases `audio.add.media-bed`, `audio.add.sfx-viral`, `audio.look.music-volume`, `audio.set.music-volume`, `audio.trim-slip.music`, `audio.volume.music-minus-3db`; `code.python.two-sets-one-save`; `look.add-then-swap.sprite`, `look.add.label`, `look.add.sprite`, `look.entrance.card-fade-ease-out`, `look.entrance.card-scale-in`, `look.exit.card-fade`, `look.fade-in.card-8f-ease-out`, `look.fade-in.card-8f`, `look.look.rocket-opacity`, `look.opacity.rocket-60`, `look.remove.card`, `look.set.card-text`, `look.set.plate-zoom-focus`, `look.set.rocket-enter`, `look.set.rocket-keyframes`, `look.set.rocket-x`, `look.set.rocket-xy`, `look.swap-asset.rocket`; `structure.add-cut.now`, `structure.close-gap.live`, `structure.cut-on.c2-now`, `structure.cut-on.c3-four`, `structure.extend-end.last-cut`, `structure.film-end.extend-1s`, `structure.gap-after.s1`, `structure.remove-line.music-keep-end`, `structure.remove-line.music-plays-on`, `structure.remove-line.s2`, `structure.shorten-end.last-cut`, `structure.split.c1-went`; `timing.at-word-offset.rocket`, `timing.for.card`, `timing.nudge-frames.rocket`, `timing.nudge-seconds.card`, `timing.on.rocket-went`, `timing.until-end.rocket-noop`, `timing.until.card-now`; plus both `test_runner_selftest.py` clean/idempotent sheet cases. The remaining debt is the no-client/offline caller and these Main-positive creation/media/group/follow/narration/look/structure/timing grammars; do not delete `apply_sheet`/`_apply_parsed`/`merge_sheet` or convert them to blanket refusals until each has a bound NativeSheet replacement. Local repair proof: 176 grammar/self-tests and 104 native unit tests pass. The required central nine-case HTTP attempt was blocked before collection by Runtime/Agent schema digest mismatch (`ce3781…` reported vs `8de823…` expected); no HTTP pass is claimed. Not DELETED. |
+
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m ruff check astrid/packs/timeline/cli.py' in /home/user/work/wt/agt-m2-sheet-cut-preserve-grammar
+ exited 1 in 146ms:
+astrid/packs/timeline/cli.py:57:1: I001 [*] Import block is un-sorted or un-formatted
+   |
+55 |   """
+56 |
+57 | / from __future__ import annotations
+58 | |
+59 | | import argparse
+60 | | import copy
+61 | | import json
+62 | | import re
+63 | | import shlex
+64 | | import sys
+65 | | import uuid
+66 | | from functools import wraps
+67 | | from collections.abc import Mapping
+68 | | from fractions import Fraction
+69 | | from pathlib import Path
+70 | | from typing import Any
+71 | |
+72 | | from astrid.core.cli.domain_output import DomainResult, envelope_dict, print_result, render_human
+73 | | from astrid.core.cli.registration import CommandSpec, register_product_commands
+74 | | from astrid.core.cli.task_progress import task_handoff
+75 | | from astrid.packs.timeline.cli_visualize import (  # noqa: F401  (re-exported: the verb's helpers live beside it)
+76 | |     _changed_cuts_line,
+77 | |     _clips_changed,
+78 | |     _print_visualization_timing,
+79 | |     _read_beats,
+80 | |     _resolve_view,
+81 | |     _resolve_visualize_addresses,
+82 | |     _short_rev,
+83 | |     _visualization_summary,
+84 | |     _visualization_timing,
+85 | |     _visualize_plan,
+86 | |     _visualize_working_copy,
+87 | |     _window_navigation,
+88 | | )
+   | |_^ I001
+89 |
+90 |   __all__ = ["COMMANDS", "build_parser"]
+   |
+   = help: Organize imports
+
+astrid/packs/timeline/cli.py:714:5: I001 [*] Import block is un-sorted or un-formatted
+    |
+712 | def _human_motion_lines(clip: Mapping[str, Any], *, detail: bool = False) -> list[str]:
+713 |     """Present only producer-supported intervals; custom clocks stay declarations."""
+714 |     from astrid.packs.rendering.actions.timeline_visualize.readable_timing import project_readable_timing
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ I001
+715 |     if "timed_changes" not in clip:
+716 |         clip = project_readable_timing([clip])[0]
+    |
+    = help: Organize imports
+
+astrid/packs/timeline/cli.py:751:13: E731 Do not assign a `lambda` expression, use a `def`
+    |
+749 | …     source = transition.get("from_target", {})
+750 | …     destination = transition.get("to_target", {})
+751 | …     target = lambda value: "/".join(str(value[key]) for key in ("occurrence_id", "clip_id") if value.get(key)) or str(value.get("render_clip_id"))
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ E731
+752 | …     lines.append(f"{_human_time(transition['start'])}–{_human_time(transition['end'])} transition {identifier}: {target(source)} → {target(destination)…
+753 | … else:
+    |
+    = help: Rewrite `target` as a `def`
+
+astrid/packs/timeline/cli.py:1007:5: I001 [*] Import block is un-sorted or un-formatted
+     |
+1005 |             return _print_cut_table(parsed, bundle_opener)
+1006 |
+1007 |     from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import inspection_options
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ I001
+1008 |     normalized = inspection_options(values)
+1009 |     opener = getattr(parsed.client.timelines, "open_composition", None)
+     |
+     = help: Organize imports
+
+astrid/packs/timeline/cli.py:1277:60: E701 Multiple statements on one line (colon)
+     |
+1275 |     from astrid.core.element.project_packs import configured_realm, timeline_element_authoring
+1276 |     opened=parsed.client.timelines.open_bundle(parsed.project,parsed.ref)
+1277 |     if not opened.ok or not isinstance(opened.data,Mapping):return print_result(opened,as_json=parsed.json)
+     |                                                            ^ E701
+1278 |     data=opened.data
+1279 |     try:
+     |
+
+astrid/packs/timeline/cli.py:1481:9: I001 [*] Import block is un-sorted or un-formatted
+     |
+1479 |       view = getattr(parsed, "presentation", None) or "cuts"
+1480 |       if view != "cuts":
+1481 | /         import difflib
+1482 | |         from astrid.sdk.timeline_views import render_code, render_script
+     | |________________________________________________________________________^ I001
+1483 |           render = render_script if view == "script" else render_code
+1484 |           lines = difflib.unified_diff(
+     |
+     = help: Organize imports
+
+astrid/packs/timeline/cli.py:2026:5: I001 [*] Import block is un-sorted or un-formatted
+     |
+2025 | def _cmd_inspect(parsed: argparse.Namespace) -> int:
+2026 |     from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import inspect_filmstrip
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ I001
+2027 |
+2028 |     result = inspect_filmstrip(parsed.manifest, section=parsed.section, limit=parsed.limit, cursor=parsed.cursor,
+     |
+     = help: Organize imports
+
+astrid/packs/timeline/cli.py:2037:5: I001 [*] Import block is un-sorted or un-formatted
+     |
+2036 | def _configure_inspect(subparser: argparse.ArgumentParser) -> None:
+2037 |     from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import INSPECTION_SECTIONS
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ I001
+2038 |
+2039 |     subparser.description = "Inspect a verified materialized filmstrip offline; no runtime or render admission. Responses are capped…
+     |
+     = help: Organize imports
+
+astrid/packs/timeline/cli.py:2063:9: I001 [*] Import block is un-sorted or un-formatted
+     |
+2061 |         return _cmd_inspect(parser.parse_args(args))
+2062 |     except ValueError:
+2063 |         from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import _inspection_error
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ I001
+2064 |         print(json.dumps(_inspection_error("invalid_arguments"), separators=(",", ":")))
+2065 |         return 2
+     |
+     = help: Organize imports
+
+astrid/packs/timeline/cli.py:2126:16: BLE001 Do not catch blind exception: `Exception`
+     |
+2124 |         try:
+2125 |             path = find_draft(parsed.project, parsed.ref, draft or None, client=parsed.client)
+2126 |         except Exception as exc:  # the runtime is not reachable
+     |                ^^^^^^^^^ BLE001
+2127 |             return print_result(
+2128 |                 DomainResult.failure(ErrorObject("unavailable", f"working copy not checked: {exc}", {})),
+     |
+
+astrid/packs/timeline/cli.py:3341:5: F841 Local variable `line_operation` is assigned to but never used
+     |
+3339 |     from astrid.sdk.timeline_editing import TimelineEditError
+3340 |
+3341 |     line_operation = bool(parsed.replace_line or parsed.insert_line or parsed.from_script)
+     |     ^^^^^^^^^^^^^^ F841
+3342 |     line_only_args = bool(
+3343 |         parsed.take or parsed.words or parsed.after or parsed.insert_gap_after is not None
+     |
+     = help: Remove assignment to unused variable `line_operation`
+
+astrid/packs/timeline/cli.py:3614:30: E702 Multiple statements on one line (semicolon)
+     |
+3612 |     if any(getattr(parsed, name, None) for name in ("dry_run", "idempotency_key", "json")):
+3613 |         raise _VerbError("--publication is required with commit undo options", 2)
+3614 |     tl=_edit_checkout(parsed); labels=tl.undo(parsed.steps)
+     |                              ^ E702
+3615 |     print("undid "+"; ".join(labels)); return 0
+     |
+
+astrid/packs/timeline/cli.py:3615:38: E702 Multiple statements on one line (semicolon)
+     |
+3613 |         raise _VerbError("--publication is required with commit undo options", 2)
+3614 |     tl=_edit_checkout(parsed); labels=tl.undo(parsed.steps)
+3615 |     print("undid "+"; ".join(labels)); return 0
+     |                                      ^ E702
+     |
+
+astrid/packs/timeline/cli.py:3623:30: E702 Multiple statements on one line (semicolon)
+     |
+3621 |     if any(getattr(parsed, name, None) for name in ("dry_run", "idempotency_key", "json")):
+3622 |         raise _VerbError("--publication is required with commit redo options", 2)
+3623 |     tl=_edit_checkout(parsed); labels=tl.redo(parsed.steps)
+     |                              ^ E702
+3624 |     print("redid "+"; ".join(labels)); return 0
+     |
+
+astrid/packs/timeline/cli.py:3624:38: E702 Multiple statements on one line (semicolon)
+     |
+3622 |         raise _VerbError("--publication is required with commit redo options", 2)
+3623 |     tl=_edit_checkout(parsed); labels=tl.redo(parsed.steps)
+3624 |     print("redid "+"; ".join(labels)); return 0
+     |                                      ^ E702
+     |
+
+Found 15 errors.
+[*] 7 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md
+index 5fb8bc179b15b86b3006ab3df4b4cd34e4e2b50b..2bc6c7bbcfcb2e5dbe4644cead3bbcdf08511f19
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md
+@@ -14,7 +14,7 @@
+ 
+ | AG02 | Legacy SDK/CLI snapshot publication and working-copy saves | one edit path | native registry ingress | agent | M2 | in-progress | Bundle1 label actual success/reload/undo/lostACK; native-batch-ingress in flight for atomicJSON/CLI. Remaining old saves present. |
+ 
+-| AG03 | Cut-sheet client three-way merge/save | server-side replay only | NativeSheet parser emits captured commands | agent | M2 | in-progress (bounded omission merged 73427b02) | Originalbasis ecdf preserved. Source b24144d+021a375d adds parent-clip omission through capture_clip_delete, no whole writer. Permanent test_native_sheet_current_runtime.py::test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed_selection:16 realHTTP PASS (lostACK/restart/exactretry, undo/redo, disjoint rebase, raw opaque/order, zero-write membership/target refusals); 83 unit, independent4 focused APPROVE. Postmerge current31852 running. Legacy apply_sheet/_apply_parsed and unsupported grammar remain; not DELETED. |
++| AG03 | Cut-sheet client three-way merge/save | server-side replay only | NativeSheet parser emits captured commands | agent | M2 | in-progress (partial; bound consumer only) | Original basis ecdf preserved. Source b24144d+021a375d adds parent-clip omission through capture_clip_delete, no whole writer. This cut keeps the connected Runtime-client/default and explicit `--native` callers on retained NativeSheet, while restoring the no-client Main caller in `tests/editing_conformance/runner.py::_apply_sheet` to `apply_sheet`/local merge/save. Donor diagnostic was exactly 46 failed / 2056 passed: the sheet cases `audio.add.media-bed`, `audio.add.sfx-viral`, `audio.look.music-volume`, `audio.set.music-volume`, `audio.trim-slip.music`, `audio.volume.music-minus-3db`; `code.python.two-sets-one-save`; `look.add-then-swap.sprite`, `look.add.label`, `look.add.sprite`, `look.entrance.card-fade-ease-out`, `look.entrance.card-scale-in`, `look.exit.card-fade`, `look.fade-in.card-8f-ease-out`, `look.fade-in.card-8f`, `look.look.rocket-opacity`, `look.opacity.rocket-60`, `look.remove.card`, `look.set.card-text`, `look.set.plate-zoom-focus`, `look.set.rocket-enter`, `look.set.rocket-keyframes`, `look.set.rocket-x`, `look.set.rocket-xy`, `look.swap-asset.rocket`; `structure.add-cut.now`, `structure.close-gap.live`, `structure.cut-on.c2-now`, `structure.cut-on.c3-four`, `structure.extend-end.last-cut`, `structure.film-end.extend-1s`, `structure.gap-after.s1`, `structure.remove-line.music-keep-end`, `structure.remove-line.music-plays-on`, `structure.remove-line.s2`, `structure.shorten-end.last-cut`, `structure.split.c1-went`; `timing.at-word-offset.rocket`, `timing.for.card`, `timing.nudge-frames.rocket`, `timing.nudge-seconds.card`, `timing.on.rocket-went`, `timing.until-end.rocket-noop`, `timing.until.card-now`; plus both `test_runner_selftest.py` clean/idempotent sheet cases. The remaining debt is the no-client/offline caller and these Main-positive creation/media/group/follow/narration/look/structure/timing grammars; do not delete `apply_sheet`/`_apply_parsed`/`merge_sheet` or convert them to blanket refusals until each has a bound NativeSheet replacement. Local repair proof: 176 grammar/self-tests and 104 native unit tests pass. The required central nine-case HTTP attempt was blocked before collection by Runtime/Agent schema digest mismatch (`ce3781…` reported vs `8de823…` expected); no HTTP pass is claimed. Not DELETED. |
+ 
+ | AG-M2-TB01 | Agent astrid/sdk/remote.py set_text_binding / rebind_text_binding (2446,2456); astrid/sdk/timeline/publish.py pin_narration (173-189); astrid/packs/rendering/docs/scripts/timeline_document.py:179-185; astrid/packs/shots/cli.py text (135) | direct shot text-binding writers outside the one edit path | recorded text-binding.set EditCommand (design/m2-text-binding-contract.md) committed through the one commit path | agent+runtime | M2 | held | design only, nothing deleted. Spike tests/editing_conformance/test_recipe_text_binding_spike.py: 22 pass, 1 strict xfail G-RT1 (Runtime text_selection not yet declared). Gaps G-SCHEMA, G-STATE, G-OP, G-INV1, G-INV2, G-LEGACY listed in the contract. Blocked on O1-O7 and the Runtime P1/P2 owner ACK. |
+ | AG-M3-CAP-01 | test_capture_source_runtime.py original working_copy=True, inline=False positive without forwarding candidate | Hash-only working-copy certificate contradicts PLAN02:28 real authored candidate authority | Same complete positive/assertion inventory now forwards actual spec.inputs.authoring_preview; separate no-candidate CAS preview expects no source and separate claimed-ref refusal checks zero writes. Visible UNCERTIFIED label pending Viewing | agent+runtime+viewing | M3 | held | No positive assertions deleted; real paired rerun blocked on reviewed provider/Runtime exact graph agreement; no relabel-green |
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..727ad0f537f2ea0c7bec8a613e1db27402d85fff
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/commit-msg
+@@ -0,0 +1,4 @@
++fix(timeline): preserve legacy sheet grammar offline
++
++Keep detached Main sheet apply for callers without a Runtime client while
++retaining bound NativeSheet apply for connected consumers.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..727ad0f537f2ea0c7bec8a613e1db27402d85fff
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/commit-msg.txt
+@@ -0,0 +1,4 @@
++fix(timeline): preserve legacy sheet grammar offline
++
++Keep detached Main sheet apply for callers without a Runtime client while
++retaining bound NativeSheet apply for connected consumers.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7d401843f8b06f4b4e0154ec65a63985a50d922d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/report.md
+@@ -0,0 +1,26 @@
++## AG03 report
++
++Source: Agent worktree `/home/user/work/wt/agt-m2-sheet-cut-preserve-grammar`, base `4704b980` (`feat(timeline): route sheet apply through native session`), with one uncommitted change in `astrid/packs/timeline/cli.py`.
++
++### Change
++
++`timelines apply` uses the bound `NativeSheet`/`TimelineSession` path when `--native` is explicit or a Runtime client is connected. The no-client/Main caller retains the existing detached `apply_sheet` parse/merge/save path. This keeps the supported native HTTP default and connected unbound refusal while preserving Main’s existing positive sheet grammar before capture migration.
++
++### Evidence
++
++- `PYTHONPATH="$PWD" python3 -m pytest -q tests/editing_conformance/test_conformance.py tests/editing_conformance/test_runner_selftest.py` — **176 passed**, 2 pytest-config warnings.
++- `PYTHONPATH="$PWD" python3 -m pytest -q tests/packs/timeline/test_cli_native_sheet.py tests/sdk/test_timeline_sheet_native.py tests/editing_conformance/test_native_sheet_current.py` — **104 passed**, 2 pytest-config warnings.
++- Donor diagnostic before this repair: `PYTHONPATH="$PWD" python3 -m pytest -q tests/editing_conformance` — **46 failed, 2056 passed, 4 skipped, 217 deselected, 2 xfailed**. All 46 were sheet-path regressions from forcing the no-client conformance caller into native Runtime-only apply.
++- Central HTTP attempt `agt-m2-sheet-cut-preserve-grammar-registered7d-current-integration-1020180658-32016` ran the requested Runtime-marked file but was blocked before native assertions: **10 failed, 1 deselected** because Runtime reported schema digest `sha256:ce3781c2…` and the Agent client expected `sha256:8de82301…`. No HTTP pass is claimed. The first generic targeted request deselected integration tests and exited 5; it is not evidence.
++- `git diff --check` — passed.
++- `/home/user/work/venv-agent/bin/python -m ruff check astrid/packs/timeline/cli.py` — existing-file baseline failure: 15 findings across unrelated import/style/dead-code lines; none are in the changed block. No formatter changes were made.
++
++### Exact remaining AG03 debt
++
++The no-client caller remains `tests/editing_conformance/runner.py::_apply_sheet`, and the legacy `apply_sheet`, `_apply_parsed`, and `merge_sheet` writer/merge surface remains in `astrid/sdk/timeline_sheet.py`. The 46 donor failures were the sheet cases: audio `add.media-bed`, `add.sfx-viral`, `look.music-volume`, `set.music-volume`, `trim-slip.music`, `volume.music-minus-3db`; code `python.two-sets-one-save`; look `add-then-swap.sprite`, `add.label`, `add.sprite`, `entrance.card-fade-ease-out`, `entrance.card-scale-in`, `exit.card-fade`, `fade-in.card-8f-ease-out`, `fade-in.card-8f`, `look.rocket-opacity`, `opacity.rocket-60`, `remove.card`, `set.card-text`, `set.plate-zoom-focus`, `set.rocket-enter`, `set.rocket-keyframes`, `set.rocket-x`, `set.rocket-xy`, `swap-asset.rocket`; structure `add-cut.now`, `close-gap.live`, `cut-on.c2-now`, `cut-on.c3-four`, `extend-end.last-cut`, `film-end.extend-1s`, `gap-after.s1`, `remove-line.music-keep-end`, `remove-line.music-plays-on`, `remove-line.s2`, `shorten-end.last-cut`, `split.c1-went`; timing `at-word-offset.rocket`, `for.card`, `nudge-frames.rocket`, `nudge-seconds.card`, `on.rocket-went`, `until-end.rocket-noop`, `until.card-now`; and `test_runner_selftest.py::test_clean_scenario_has_no_failures_on_all_three_paths` plus `::test_idempotent_scenario_passes_when_the_second_run_is_a_no_change`.
++
++These remain open caller/grammar migration debt, not blanket unsafe-input refusals. Do not delete the detached writer or convert these Main positives until each has an equivalent bound NativeSheet command path and HTTP proof. AG03 remains partial/in-progress in the Agent ledger.
++
++### Blocked / next step
++
++Re-run the nine native HTTP cases against a Runtime with the matching schema digest, then migrate the remaining caller families one bounded grammar at a time. No full suite was run or requested.
+diff --git a/astrid/packs/timeline/cli.py b/astrid/packs/timeline/cli.py
+index 70a815d47c22f30ce45a6c89cefe412b415d4c7d..27f6652d309449f8b7b4607d10f9e9fa6518756d
+--- a/astrid/packs/timeline/cli.py
++++ b/astrid/packs/timeline/cli.py
+@@ -3587,12 +3587,23 @@
+ 
+ 
+ def _cmd_apply(parsed: argparse.Namespace) -> int:
+-    # Sheet acceptance is always native now. The old branch applied an
+-    # unbound projection to a detached Checkout, merged it locally, and then
+-    # saved the whole document. A sheet file without a retained NativeSheet
+-    # export is deliberately refused by _cmd_commit_edit, with the edited
+-    # text path included in the user-facing error.
+-    return _cmd_commit_edit(parsed, sheet=True)
++    # A connected Runtime client has the bound NativeSheet consumer. Keep the
++    # detached path for the existing offline/Main grammar until those callers
++    # have a bound replacement; it still owns local parsing, merge, and save.
++    if parsed.native or parsed.client is not None:
++        return _cmd_commit_edit(parsed, sheet=True)
++    if parsed.dry_run or parsed.idempotency_key or parsed.json:
++        raise _VerbError("--native is required with commit apply options", 2)
++    from astrid.sdk.timeline_sheet import apply_sheet
++    tl = _edit_checkout(parsed)
++    before = tl.document()
++    changes = apply_sheet(tl, Path(parsed.sheet_file).read_text(encoding="utf-8"))
++    if changes or before != tl.document():
++        tl.save(quiet=True)
++        print("applied sheet")
++        return 0
++    print("no change (the sheet matches the working copy)")
++    return 3
+ 
+ 
+ def _cmd_undo(parsed: argparse.Namespace) -> int:
+
+codex
+Implemented AG03 partial compatibility cut in [cli.py](/home/user/work/wt/agt-m2-sheet-cut-preserve-grammar/astrid/packs/timeline/cli.py:3587):
+
+- Connected/default Runtime callers remain bound `NativeSheet`.
+- No-client Main callers retain legacy sheet grammar and local save behavior.
+- AG03 ledger updated with exact remaining debt and 46 diagnostic failures.
+
+Tests:
+
+- Grammar/self-tests: 176 passed.
+- Native focused tests: 104 passed.
+- Central HTTP lane blocked by Runtime/Agent schema digest mismatch; no pass claimed.
+- No full suite run.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/report.md)
+tokens used
+264,162
+Implemented AG03 partial compatibility cut in [cli.py](/home/user/work/wt/agt-m2-sheet-cut-preserve-grammar/astrid/packs/timeline/cli.py:3587):
+
+- Connected/default Runtime callers remain bound `NativeSheet`.
+- No-client Main callers retain legacy sheet grammar and local save behavior.
+- AG03 ledger updated with exact remaining debt and 46 diagnostic failures.
+
+Tests:
+
+- Grammar/self-tests: 176 passed.
+- Native focused tests: 104 passed.
+- Central HTTP lane blocked by Runtime/Agent schema digest mismatch; no pass claimed.
+- No full suite run.
+
+Report: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-cut-preserve-grammar/report.md)

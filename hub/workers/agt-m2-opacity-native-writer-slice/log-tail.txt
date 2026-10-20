@@ -1,0 +1,400 @@
+def test_clear_hold_uses_surviving_source_window_and_clear_set_batch_inverse():
+    original = bundle()
+    clip(original, REF).update({'from': 1, 'to': 5, 'speed': 2})
+    cleared = execute(original, [capture_clip_set(original, REF, clear=['hold'])])
+    assert 'hold' not in clip(cleared.bundle, REF)
+    assert inverse(cleared.bundle, cleared.records).bundle == original
+    set_again = capture_clip_set(cleared.bundle, REF, values={'hold': 3})
+    plan = execute(original, [cleared.commands[0], set_again])
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == original
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+    with pytest.raises(CommandError):
+      "properties": {
+        "values": {
+          "type": "object",
+          "properties": {
+            "hold": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Positive finite source seconds; timeline duration is hold/speed."
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Raw visual opacity fraction in the inclusive range 0..1."
+            }
+          },
+          "additionalProperties": false
+        },
+        "clear": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "hold",
+              "asset",
+              "transition",
+              "opacity"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "values",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "values": {
+              "minProperties": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "clear": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "description": "Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; explicitly remove hold, asset, incoming transition or opacity. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
+    },
+    "ClipTrimArgs": {
+    for key in sorted(values):
+        ctx.write(ref, [key], values[key])
+    for key in sorted(clear):
+        ctx.clear(ref, [key])
+
+
+def capture_clip_set(bundle, select, *, values=None, clear=()):
+    """Capture bounded raw hold/opacity writes and explicit field removal."""
+    return _capture(bundle, 'clip.set', select, values, clear)
+
+
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-opacity-native-writer-slice/astrid/core/timeline/schema/edit-command.schema.json
+/home/user/work/wt/agt-m2-opacity-native-writer-slice/astrid/sdk/timeline/_clip_scalar_commands.py
+/home/user/work/wt/agt-m2-opacity-native-writer-slice/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+exec
+/bin/bash -lc 'git status --short; git diff --check; sha256sum astrid/core/timeline/schema/edit-command.schema.json; git diff --stat' in /home/user/work/wt/agt-m2-opacity-native-writer-slice
+ succeeded in 183ms:
+a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef  astrid/core/timeline/schema/edit-command.schema.json
+
+exec
+/bin/bash -lc 'python3 -m pytest -q tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_current_union_schema.py' in /home/user/work/wt/agt-m2-opacity-native-writer-slice
+ succeeded in 112959ms:
+........................................................................ [ 60%]
+...............................................                          [100%]
+=============================== warnings summary ===============================
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout_method
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+119 passed, 2 warnings in 112.04s (0:01:52)
+
+codex
+The final tree is clean again and the canonical schema hash is restored. The bounded final lane passes 119 tests, including the scalar clip suite and the approved schema-union/S2 byte-floor checks. I’m now writing the private opacity contract with the exact Main mapping and reviewed golden, plus the explicit remaining-consumer/blocker note; no App, Runtime, generated schema, or frozen artifact is being touched.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f6950370aefbeb1c593de7c763bdae452ffbc5d3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg
+@@ -0,0 +1,4 @@
++docs(timeline): propose native opacity clip-set contract
++
++Record the Main-parity raw opacity SET/CLEAR contract and exact clip.set golden
++while preserving the approved canonical schema floor until Runtime/App agreement.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..f6950370aefbeb1c593de7c763bdae452ffbc5d3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(timeline): propose native opacity clip-set contract
++
++Record the Main-parity raw opacity SET/CLEAR contract and exact clip.set golden
++while preserving the approved canonical schema floor until Runtime/App agreement.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6699c0d7e728c0d192ea095dc919de77d29d5aa5
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/report.md
+@@ -0,0 +1,95 @@
++## Result
++
++Reviewed and recovered the prior property-family work:
++
++- `agt-m2-opacity-set` reviewed candidate: `c7533012`
++- `agt-m2-property-review-compose-b`: composed opacity with unrelated position,
++  transition, and effects work; those families were deliberately not ported.
++- Current App writer census: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md`
++
++## Main raw contract
++
++Verified in the live App worktree (`8cfcee9c0403d113463c7859f6c835d3bfd79668`):
++
++- `src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx:437-443`
++  reads `clip.opacity ?? 1`, exposes a slider with `min={0}`, `max={1}` and
++  `step={0.05}`, and emits `onChange({ opacity: value })`.
++- `src/tools/video-editor/lib/timeline-domain.ts:158-190` keeps `opacity` as a
++  top-level canonical clip field, not `params.opacity`.
++- `src/tools/video-editor/hooks/useClipEditing.ts:160-201,235-283` carries
++  ordinary patches into the existing row edit path; `PropertiesPanel.tsx:560-565`
++  wires the selected clip directly to that callback.
++- The current durable writer remains the App snapshot path through
++  `useTimelinePersistence.ts:380-405`; this worker does not migrate it.
++
++Raw authored semantics for the private native proposal are therefore:
++
++- SET: finite JSON number in inclusive raw range `0..1`, stored at
++  `parent/clip:<id>::opacity` or `occurrence:<id>/clip:<id>::opacity`.
++- CLEAR: remove the `opacity` leaf; do not write `null`, `0`, or a default.
++- `ABSENT`, `null`, and `0` remain distinct stored states and are restored exactly
++  by inverse. `null`, booleans, strings, non-finite values, out-of-range numbers,
++  unknown keys, and SET+CLEAR of the same key are refused.
++- The command must retain the selected parent/occurrence owner, exact leaf read
++  guard, unchanged writes, opaque siblings, shared-occurrence isolation,
++  disjoint `params` rebase, and strict inverse ABA refusal.
++
++## Exact proposed carrier and golden
++
++Use the existing `clip.set` operation, with a private closed-args proposal:
++
++```json
++{
++  "schema_version": 1,
++  "op": "clip.set",
++  "version": "1",
++  "select": "parent/clip:f2-app-clip",
++  "args": {"values": {"opacity": 0.4}, "clear": []}
++}
++```
++
++For a source row containing `opacity: 0.9`, the capture golden adds exactly:
++
++```json
++{
++  "expect": {"parent/clip:f2-app-clip::opacity": {"state": "present", "value": 0.9}},
++  "authorship": {"parent/clip:f2-app-clip::opacity": "direct"},
++  "resolved": ["parent/clip:f2-app-clip"]
++}
++```
++
++`clip.set-params` is not a valid substitute: it owns `params.opacity`, while Main
++authors the top-level clip `opacity` field.
++
++## Freeze decision / implementation status
++
++The reviewed candidate cannot be ported into this current tree as product source.
++Its required `ClipSetArgs` addition changes the canonical
++`astrid/core/timeline/schema/edit-command.schema.json`, which is frozen by the
++approved S2/public schema floor. The existing `tests/sdk/test_timeline_current_union_schema.py`
++then fails its two approved-union equality checks and byte SHA check. The restored
++canonical schema SHA is:
++
++`a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`
++
++Accordingly, no Agent product files were left changed, no public013/ordinary6ba/
++private613 artifact was mutated, and no generated Runtime client or App writer was
++changed. The exact contract above is the private source proposal for Runtime/App
++agreement before a later schema-generation/update step.
++
++Remaining consumer: App `ClipPanelBody` opacity still uses the old snapshot writer;
++it must stay in place until the matched native consumer proves success, retry,
++reload, and undo.
++
++## Tests
++
++Final tree (clean):
++
++```text
++python3 -m pytest -q tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_current_union_schema.py
++119 passed, 2 warnings in 112.04s
++```
++
++The warnings are the environment's existing unknown `timeout` and `timeout_method`
++pytest options. No full suite, Runtime/App suite, browser, socket, or generation
++run was requested.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f6950370aefbeb1c593de7c763bdae452ffbc5d3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg
+@@ -0,0 +1,4 @@
++docs(timeline): propose native opacity clip-set contract
++
++Record the Main-parity raw opacity SET/CLEAR contract and exact clip.set golden
++while preserving the approved canonical schema floor until Runtime/App agreement.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..f6950370aefbeb1c593de7c763bdae452ffbc5d3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(timeline): propose native opacity clip-set contract
++
++Record the Main-parity raw opacity SET/CLEAR contract and exact clip.set golden
++while preserving the approved canonical schema floor until Runtime/App agreement.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6699c0d7e728c0d192ea095dc919de77d29d5aa5
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/report.md
+@@ -0,0 +1,95 @@
++## Result
++
++Reviewed and recovered the prior property-family work:
++
++- `agt-m2-opacity-set` reviewed candidate: `c7533012`
++- `agt-m2-property-review-compose-b`: composed opacity with unrelated position,
++  transition, and effects work; those families were deliberately not ported.
++- Current App writer census: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-writers.md`
++
++## Main raw contract
++
++Verified in the live App worktree (`8cfcee9c0403d113463c7859f6c835d3bfd79668`):
++
++- `src/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx:437-443`
++  reads `clip.opacity ?? 1`, exposes a slider with `min={0}`, `max={1}` and
++  `step={0.05}`, and emits `onChange({ opacity: value })`.
++- `src/tools/video-editor/lib/timeline-domain.ts:158-190` keeps `opacity` as a
++  top-level canonical clip field, not `params.opacity`.
++- `src/tools/video-editor/hooks/useClipEditing.ts:160-201,235-283` carries
++  ordinary patches into the existing row edit path; `PropertiesPanel.tsx:560-565`
++  wires the selected clip directly to that callback.
++- The current durable writer remains the App snapshot path through
++  `useTimelinePersistence.ts:380-405`; this worker does not migrate it.
++
++Raw authored semantics for the private native proposal are therefore:
++
++- SET: finite JSON number in inclusive raw range `0..1`, stored at
++  `parent/clip:<id>::opacity` or `occurrence:<id>/clip:<id>::opacity`.
++- CLEAR: remove the `opacity` leaf; do not write `null`, `0`, or a default.
++- `ABSENT`, `null`, and `0` remain distinct stored states and are restored exactly
++  by inverse. `null`, booleans, strings, non-finite values, out-of-range numbers,
++  unknown keys, and SET+CLEAR of the same key are refused.
++- The command must retain the selected parent/occurrence owner, exact leaf read
++  guard, unchanged writes, opaque siblings, shared-occurrence isolation,
++  disjoint `params` rebase, and strict inverse ABA refusal.
++
++## Exact proposed carrier and golden
++
++Use the existing `clip.set` operation, with a private closed-args proposal:
++
++```json
++{
++  "schema_version": 1,
++  "op": "clip.set",
++  "version": "1",
++  "select": "parent/clip:f2-app-clip",
++  "args": {"values": {"opacity": 0.4}, "clear": []}
++}
++```
++
++For a source row containing `opacity: 0.9`, the capture golden adds exactly:
++
++```json
++{
++  "expect": {"parent/clip:f2-app-clip::opacity": {"state": "present", "value": 0.9}},
++  "authorship": {"parent/clip:f2-app-clip::opacity": "direct"},
++  "resolved": ["parent/clip:f2-app-clip"]
++}
++```
++
++`clip.set-params` is not a valid substitute: it owns `params.opacity`, while Main
++authors the top-level clip `opacity` field.
++
++## Freeze decision / implementation status
++
++The reviewed candidate cannot be ported into this current tree as product source.
++Its required `ClipSetArgs` addition changes the canonical
++`astrid/core/timeline/schema/edit-command.schema.json`, which is frozen by the
++approved S2/public schema floor. The existing `tests/sdk/test_timeline_current_union_schema.py`
++then fails its two approved-union equality checks and byte SHA check. The restored
++canonical schema SHA is:
++
++`a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`
++
++Accordingly, no Agent product files were left changed, no public013/ordinary6ba/
++private613 artifact was mutated, and no generated Runtime client or App writer was
++changed. The exact contract above is the private source proposal for Runtime/App
++agreement before a later schema-generation/update step.
++
++Remaining consumer: App `ClipPanelBody` opacity still uses the old snapshot writer;
++it must stay in place until the matched native consumer proves success, retry,
++reload, and undo.
++
++## Tests
++
++Final tree (clean):
++
++```text
++python3 -m pytest -q tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_current_union_schema.py
++119 passed, 2 warnings in 112.04s
++```
++
++The warnings are the environment's existing unknown `timeout` and `timeout_method`
++pytest options. No full suite, Runtime/App suite, browser, socket, or generation
++run was requested.
+
+codex
+## Report
+
+- Recovered opacity candidate `c7533012` and App writer census.
+- Verified Main path: `ClipPanelBody.tsx:437-443` writes top-level `clip.opacity`, raw range `0..1`.
+- `clip.set-params` is invalid because it targets `params.opacity`.
+- Candidate schema change conflicts with the frozen approved S2 schema; reverted it. No Agent product files changed.
+- Published private contract/golden in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/report.md).
+
+Tests:
+
+```text
+python3 -m pytest -q tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_current_union_schema.py
+119 passed, 2 warnings
+```
+
+Agent tree: `a760ecca`; canonical schema SHA restored to `a6f1aaa9…190ef`. App consumer remains on the snapshot writer pending Runtime/App agreement and schema generation. `DONE` and commit message files created.
+tokens used
+186,078
+## Report
+
+- Recovered opacity candidate `c7533012` and App writer census.
+- Verified Main path: `ClipPanelBody.tsx:437-443` writes top-level `clip.opacity`, raw range `0..1`.
+- `clip.set-params` is invalid because it targets `params.opacity`.
+- Candidate schema change conflicts with the frozen approved S2 schema; reverted it. No Agent product files changed.
+- Published private contract/golden in [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-opacity-native-writer-slice/report.md).
+
+Tests:
+
+```text
+python3 -m pytest -q tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_current_union_schema.py
+119 passed, 2 warnings
+```
+
+Agent tree: `a760ecca`; canonical schema SHA restored to `a6f1aaa9…190ef`. App consumer remains on the snapshot writer pending Runtime/App agreement and schema generation. `DONE` and commit message files created.

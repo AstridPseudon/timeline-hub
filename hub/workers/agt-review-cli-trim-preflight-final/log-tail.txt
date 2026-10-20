@@ -1,0 +1,400 @@
+    72	    if app is not None and not isinstance(app, dict):
+    73	        raise CommandError('trim intent container must be object or null', ref=ref)
+    74	    nested = app.get('astrid') if isinstance(app, dict) else None
+    75	    if nested is not None and not isinstance(nested, dict):
+    76	        raise CommandError('trim intent container must be object or null', ref=ref)
+    77	    for prefix, container in (([], clip), (['app'], app), (['app', 'astrid'], nested)):
+    78	        for key in (*RELATIONS, 'anchor', 'standin', 'standin_intent', 'animation', 'animations'):
+    79	            value = ctx.read(ref, prefix + [key]) if not prefix else (container or {}).get(key)
+    80	            if key == 'fixed_start' and value in (None, True):
+    81	                continue
+    82	            if key == 'for' and prefix and value is not None:
+    83	                number(value, 'for', positive=True)
+    84	            elif value is not None:
+    85	                raise CommandError(f'clip.trim v1 does not support {key}', kind='unsupported_timing', ref=ref)
+    86	    if clip['clipType'] not in (None, 'media', 'audio') or clip['clip_type'] not in (None, 'media', 'audio'):
+    87	        raise CommandError('clip.trim applies to media clips', ref=ref)
+    88	    asset = clip['asset']
+    89	    if not isinstance(asset, str) or not asset or any(clip[key] is not None for key in
+    90	            ('asset_id', 'media_id', 'object_id')):
+    91	        raise CommandError('clip.trim requires the current registry asset identity', ref=ref)
+    92	    start = number(clip['at'], 'clip.at')
+    93	    if start < 0:
+    94	        raise CommandError('clip.trim requires a non-negative literal start', ref=ref)
+    95	    if clip['hold'] is not None:
+    96	        number(clip['hold'], 'clip.hold', positive=True)
+    97	    speed = 1 if clip['speed'] is None else clip['speed']
+    98	    number(speed, 'clip.speed', positive=True)
+    99	    source = {key: ctx.read('parent/registry', ['assets', asset, key]) for key in
+   100	              ('media_id', 'object_id', 'digest', 'content_digest', 'type', 'duration',
+   101	               'duration_ms', 'duration_seconds', 'source', 'source_window', 'time_map', 'timeMap')}
+   102	    if any(source[key] is not None for key in ('source', 'source_window', 'time_map', 'timeMap')):
+   103	        raise CommandError('clip.trim v1 does not support a mapped media source', kind='unsupported_map', ref=ref)
+   104	    source_kind = _media_kind(source)
+   105	    clip_kind = 'audio' if 'audio' in (clip['clipType'], clip['clip_type'], source_kind) else source_kind
+   106	    if clip_kind == 'audio':
+   107	        track = ctx.read('parent/track:' + str(clip['track']))
+   108	        if not isinstance(track, dict) or track.get('kind') != 'audio' or not active(track):
+   109	            raise CommandError('clip.trim requires an active raw audio track', ref=ref)
+   110	        if source_kind != 'audio':
+   111	            raise CommandError('clip.trim audio track requires an audio registry asset', ref=ref)
+   112	    limit, _ = _verified_source_duration(ctx, source, clip_kind)
+   113	    endpoints = []
+   114	    for key, arg, default in (('from', 'in_s', 0), ('to', 'out_s', limit)):
+   115	        current = default if clip[key] is None else clip[key]
+   116	        number(current, 'clip.' + key)
+   117	        value = command['args'].get(arg)
+   118	        endpoints.append(current if value is None else value)
+   119	    source_in, source_out = endpoints
+   120	    if source_in < 0 or source_out > limit or source_out <= source_in:
+   121	        raise CommandError(f'source range must fit inside the file (0–{limit:g} s)', ref=ref)
+   122	    # ``hold`` is authored source time; playback duration applies ``speed``.
+   123	    try:
+   124	        source_in, source_out, hold = trim_source_interval(source_in, source_out, limit)
+   125	    except TimelineEditError as exc:
+   126	        raise CommandError(str(exc), ref=ref) from exc
+   127	    ctx.dependency('trim.source', 'entity', {'asset': asset, 'source': source})
+   128	    ctx.bind('trim.target', ref, dependencies=['trim.source'])
+   129	    for key, value in (('from', source_in), ('to', source_out), ('hold', hold)):
+   130	        ctx.write(ref, [key], value)
+   131	    # Main's clear helpers also tidy empty/null containers and handle legacy
+   132	    # flat intent precedence. Guard the app object they consume as one unit.
+   133	    cleared = {'app': copy.deepcopy(app)}
+   134	    intent.set_until(cleared, None)
+   135	    intent.set_for(cleared, None)
+   136	    if 'app' in cleared:
+   137	        ctx.write(ref, ['app'], cleared['app'])
+   138	    else:
+   139	        ctx.clear(ref, ['app'])
+   140	
+   141	
+   142	def capture_clip_trim(bundle, select, *, in_s=None, out_s=None, verified_media=()):
+   143	    """Capture original claims. Null endpoints retain the current/default bound."""
+   144	    from .commands import execute
+   145	
+   146	    return execute(bundle, [{'schema_version': 1, 'op': 'clip.trim', 'version': '1',
+   147	                             'select': select, 'args': {'in_s': in_s, 'out_s': out_s},
+   148	                             'intent': {}}], verified_media=verified_media).commands[0]
+   270	                raise refused("dependency_unavailable", "media selection was not declared")
+   271	            value = MediaReads(self.__service).selected(self.__project, selection)
+   272	            self.__media[canonical_json(selection)] = (copy.deepcopy(selection), value)
+   273	            return value
+   274	        return self._read(read)
+   275	
+   276	    def text_selection(self, selection):
+   277	        def read():
+   278	            if selection not in self.__declared:
+   279	                raise refused("dependency_unavailable", "text selection was not declared")
+   280	            value = MediaReads(self.__service).text(self.__project, selection)
+   281	            self.__texts[canonical_json(selection)] = (copy.deepcopy(selection), value)
+   282	            return value
+   283	        return self._read(read)
+   284	
+   285	    def narration_take(self, refs):
+   286	        def read():
+   287	            if refs not in self.__declared:
+   288	                raise refused("dependency_unavailable", "narration take was not declared")
+   289	            value = MediaReads(self.__service).narration(self.__project, refs)
+   290	            self.__takes[canonical_json(refs)] = (copy.deepcopy(refs), value)
+   291	            return value
+   292	        return self._read(read)
+   293	
+   294	    def _document(self, pin, transcript):
+   295	        from .timeline_commit_inputs import (
+   296	            PROJECT_PACK_KIND,
+   297	            PROJECT_PACK_SCHEMA,
+   298	            capture_document_input,
+   299	        )
+   300	        def read():
+   301	            reachable = [item for closure in self.__closures.values()
+   302	                         for item in closure["dependency_manifest"]["documents"]]
+   303	            reachable.extend(item for closure in self.__shots.values() for item in closure["documents"])
+   304	            reachable.extend(self.__history_pins)
+   305	            if pin not in self.__declared and pin not in reachable:
+   400	                raise refused("dependency_unavailable", "captured media changed")
+   401	        for selection, captured in self.__texts.values():
+   402	            if reads.text(self.__project, selection) != captured:
+   403	                raise refused("dependency_unavailable", "captured text changed")
+   404	        for refs, captured in self.__takes.values():
+   405	            if reads.narration(self.__project, refs) != captured:
+   406	                raise refused("dependency_unavailable", "captured narration changed")
+   407	        manifest = prepared["canonical_document"]["dependency_manifest"]
+   408	        authorized_media = {item["media_id"] for closure in self.__closures.values()
+   409	                            for item in closure["dependency_manifest"]["media"]}
+   410	        authorized_media.update(item["media_id"] for closure in self.__shots.values() for item in closure["media"])
+   411	        authorized_media.update(value["selection"]["object_id"] for _, value in self.__media.values())
+   412	        authorized_media.update(value["object_id"] for _, value in self.__texts.values())
+   413	        authorized_media.update(item for _, value in self.__takes.values() for item in value["dependency_objects"])
+   414	        if any(item["media_id"] not in authorized_media for item in manifest["media"]):
+   415	            raise refused("dependency_unavailable", "candidate media was not captured through this port")
+   416	        pins = manifest["documents"]
+   417	        if sorted(map(canonical_json, pins)) != sorted(self.__documents):
+   418	            raise refused("dependency_unavailable", "candidate document pins differ from captured inputs")
+   419	        recorded = [dep["pin"] for record in prepared["records"]["commands"]
+   420	                    for dep in record["dependencies"] if dep["kind"] in {"transcript", "source"}
+   421	                    and {"document_id", "version", "content_digest"} <= dep["pin"].keys()]
+   422	        if any(pin not in recorded for pin in pins):
+   423	            raise refused("dependency_unavailable", "document input lacks a recorded dependency")
+   424	        validate_captured_document_inputs(self.__service.store.conn, self.__documents.values())
+   425	        for descriptor, data, identity in self.__document_objects.values():
+   426	            current = read_pack_snapshot_object(
+   427	                self.__service.store.conn, self.__service.cas, self.__project, descriptor,
+   428	                max_bytes=self.__service.max_object_bytes,
+   429	            )
+   430	            if current != (data, identity):
+   860	            association = self.store.get_managed_output(ref["association_id"])
+   861	            if association["project_id"] != project_id:
+   862	                raise NotFoundError("narration input is outside the selected project")
+   863	            if (association["object_id"] != ref["object_id"] or association["lifecycle"]["version"] != ref["version"]
+   864	                    or association["output_port"] != port or association["durability"] != "durable"
+   865	                    or association["lifecycle"]["state"] not in {"available", "promoted"}):
+   866	                raise ConflictError("narration managed output identity changed")
+   867	            task = self.store.conn.execute(
+   868	                "SELECT t.status, t.result_json, t.attempt_id, t.capability, r.project_id FROM tasks t "
+   869	                "JOIN runs r ON r.id=t.run_id WHERE t.id=?", (association["task_id"],),
+   870	            ).fetchone()
+   871	            attempt = self.store.conn.execute("SELECT * FROM attempts WHERE id=?", (association["attempt_id"],)).fetchone()
+   872	            outputs = json.loads(task["result_json"] or "{}").get("outputs", []) if task else []
+   873	            matches = [item for item in outputs if self.store._generation_publish_output_key(item) == (
+   874	                association["output_port"], association["group_key"], association["variant_key"], association["ordinal"])]
+   875	            if (not task or task["status"] != "completed" or task["project_id"] != project_id
+   876	                    or task["attempt_id"] != association["attempt_id"] or not attempt or not attempt["settled"]
+   877	                    or attempt["task_id"] != association["task_id"] or len(matches) != 1
+   878	                    or any(matches[0].get(key) != expected for key, expected in (
+   879	                        ("kind", "object"), ("digest", ref["object_id"]),
+   880	                        ("size", association["size"]), ("media_type", association["media_type"])))):
+   881	                raise ConflictError("narration is not an exact settled task result")
+   882	            if any(association["provenance"].get(key) != expected for key, expected in (
+   883	                    ("task_id", association["task_id"]), ("attempt_id", association["attempt_id"]),
+   884	                    ("capability_id", task["capability"]), ("executor_id", attempt["executor_id"]),
+   885	                    ("fence", attempt["fence"]), ("runtime_epoch", attempt["runtime_epoch"]))):
+   886	                raise ConflictError("narration attempt provenance changed")
+   887	            owned = self.store.conn.execute("SELECT 1 FROM project_objects WHERE project_id=? AND digest=? AND relation='managed'",
+   888	                                            (project_id, ref["object_id"][7:])).fetchone()
+   889	            if owned is None:
+   890	                raise ConflictError("narration object lacks current managed ownership")
+   891	            data = self.cas.read(ref["object_id"][7:])
+   892	            if "sha256:" + hashlib.sha256(data).hexdigest() != ref["object_id"] or len(data) != association["size"]:
+   893	                raise ConflictError("narration object bytes changed")
+   894	            dependencies.add(ref["object_id"])
+   895	            if association.get("manifest_ref") not in (None, refs["speech_manifest"]["object_id"]):
+   896	                raise ConflictError("narration manifest linkage disagrees with the declared take")
+   897	            if port == "speech":
+   898	                if not association["media_type"].startswith("audio/"):
+   899	                    raise ValidationError("narration speech must be audio")
+   900	                speech = {key: association[key] for key in ("object_id", "size", "media_type")}
+   901	            else:
+   902	                if association["media_type"] != "application/json":
+   903	                    raise ValidationError("narration auxiliary output must be JSON")
+   904	                documents[port] = detached(json.loads(data))
+   905	            associations.append(association)
+   906	        if len({(item["task_id"], item["attempt_id"]) for item in associations}) != 1:
+   907	            raise ValidationError("narration refs must name one settled attempt")
+   908	        manifest, words = documents["speech_manifest"], documents["speech_words"]
+   909	        validate_narration_artifacts(refs, manifest, words)
+   910	        speech["duration_seconds"] = manifest["duration_seconds"]
+   911	        return {"refs": copy.deepcopy(refs), "speech": speech, "manifest": manifest, "words": words,
+   912	                "dependency_objects": sorted(dependencies),
+   913	                "dependency_digest": digest(sorted(associations, key=lambda item: item["output_port"]))}
+   914	
+   915	
+   916	def validate_narration_artifacts(refs, manifest, words):
+   917	    audio = refs['speech']['object_id'][7:]
+   918	    if (not isinstance(manifest, dict) or type(manifest.get('schema_version')) is not int
+   919	            or manifest['schema_version'] != 1 or not isinstance(manifest.get('text'), str)
+   920	            or not manifest['text'] or not isinstance(manifest.get('settings'), dict)
+
+codex
+The public WorkspaceClient/timeline-provider checks pass (120 tests). The broader `test_sdk_public_surface.py` invocation was interrupted after stalling in unrelated import/discovery coverage; it is not part of the trim change, and I will record it as not completed rather than claim it. The Agent tree remains clean and the review decision is APPROVE.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-cli-trim-preflight-final.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-cli-trim-preflight-final.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-cli-trim-preflight-final.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..b080978b87bac8f95d438806d14e26225d0a29ee
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-cli-trim-preflight-final.md
+@@ -0,0 +1,21 @@
++# CLI trim preflight review
++
++**Decision: APPROVE**
++
++Reviewed Agent `f97b2b87688abb20280572a5fc23e4f69ec9e3f8`, tree
++`b229a2856c7aad8afe2faf2fdf61fa4f78bcc2b6`, with Runtime handoff
++`7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`.
++
++The CLI fix delegates the no-pending native trim to the existing
++`TimelineSession.trim` context, retaining original-base alias resolution,
++preflight, command shape, normal flush, and retry behavior. Existing trim
++registry-duration precedence, exact media reads, source-bound rounding,
++hold/speed semantics, and explicit-null guards remain intact. Runtime `7d1cfa6`
++requires a declared base-closure pin and derives raw WAV duration through one
++descriptor with an acceptance recheck.
++
++Focused Agent evidence: 138 CLI/conformance tests, 124 sync/native frontend
++tests, and 120 public WorkspaceClient/provider tests passed. The broad public
++surface test was interrupted after stalling in unrelated discovery coverage
++and is not claimed. Remaining gate: rerun only the unchanged failed Runtime
++node with the actual `7d1cfa6` pairing.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..7f145894715850bb95750c8ddeeb20394c595507
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/commit-msg
+@@ -0,0 +1,4 @@
++docs(review): approve CLI trim preflight
++
++Record approval of the verified native CLI trim preflight handoff. No product
++source changes were made by this review.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5d939de03e91431881b4b41962d699a75ea9bf93
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/report.md
+@@ -0,0 +1,52 @@
++# APPROVE — CLI trim verified preflight
++
++## Exact reviewed source
++
++- Agent commit: `f97b2b87688abb20280572a5fc23e4f69ec9e3f8`
++- Agent tree: `b229a2856c7aad8afe2faf2fdf61fa4f78bcc2b6`
++- Parent: `dbb34e2124a7f8196f27b7ee5625b81818bd3666`
++- Runtime handoff inspected: `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`
++- Runtime tree: `ac693097189637d3bd0fc3a39299d9b166758853`
++
++The Agent worktree is clean. The reviewed Agent commit changes only
++`astrid/packs/timeline/cli_native.py` and adds the forwarding regression in
++`tests/packs/timeline/test_cli_commit_trim.py`.
++
++## Review result
++
++APPROVE. `commit_trim` still resolves aliases against the original base and
++preserves the pending-prefix path. With no pending commands it now delegates
++to the existing `TimelineSession.trim` method, so capture and request-scoped
++audio preflight remain in the established sync context. There is no new
++resolver, timing math, authority endpoint, or I/O in pure `capture_clip_trim`.
++
++The existing trim implementation retains the required guards: authored
++registry duration wins; otherwise the exact verified media pin supplies the
++duration read; source bounds go through `trim_source_interval`; hold remains
++source time and speed remains playback-only; literal parent identity,
++audio-track, mapped-source, and explicit-null/original read guards remain
++unchanged. Client WAV probing is explicitly nonauthoritative and Runtime
++recomputes the claim.
++
++Runtime `7d1cfa6` keeps raw metadata private to the normal commit port,
++requires the exact declared media pin from the requested base closure, and
++rechecks the same open descriptor after WAV parsing. Existing body, key,
++outbox, retry, result/error, `DomainResult`, and public `WorkspaceClient`
++surfaces are untouched by this Agent change. No raw command shape, schema, or
++client pin artifact changed; no test assertion was weakened or duplicated for
++the Runtime comprehensive case.
++
++## Evidence
++
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/timeline/test_cli_commit_trim.py tests/editing_conformance/test_recipe_m2_clip_trim.py` — **138 passed**.
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_native_checkout.py` — **124 passed**.
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_timeline_commit_provider.py` — **120 passed**.
++- `git diff --check HEAD^ HEAD` — passed.
++- `test_sdk_public_surface.py` was started with the above public checks but stalled in unrelated import/discovery coverage and was interrupted; it is **not claimed** as evidence.
++
++## Remaining gate / next step
++
++The only remaining actual gate is the orchestrator's already-identified
++unchanged failed Runtime node rerun against Agent `f97b2b8` paired with Runtime
++`7d1cfa6`. Do not rerun the Runtime comprehensive case for this review. No
++source blocker was found.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- agent status ---'; git status --short --branch; printf '%s\\n' '--- artifacts ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-cli-trim-preflight-final.md; printf '%s\\n' '--- commit message ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/commit-msg; printf '%s\\n' '--- report tail ---'; tail -25 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/report.md" in /home/user/work/wt/agt-review-cli-trim-preflight-final
+ succeeded in 75ms:
+--- agent status ---
+## tl/agt-review-cli-trim-preflight-final
+--- artifacts ---
+-rw-r--r-- 1 root root 1055 Oct 20 17:32 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-cli-trim-preflight-final.md
+-rw-r--r-- 1 root root    0 Oct 20 17:32 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/DONE
+-rw-r--r-- 1 root root  161 Oct 20 17:32 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/commit-msg
+-rw-r--r-- 1 root root 3061 Oct 20 17:32 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/report.md
+--- commit message ---
+docs(review): approve CLI trim preflight
+
+Record approval of the verified native CLI trim preflight handoff. No product
+source changes were made by this review.
+--- report tail ---
+unchanged. Client WAV probing is explicitly nonauthoritative and Runtime
+recomputes the claim.
+
+Runtime `7d1cfa6` keeps raw metadata private to the normal commit port,
+requires the exact declared media pin from the requested base closure, and
+rechecks the same open descriptor after WAV parsing. Existing body, key,
+outbox, retry, result/error, `DomainResult`, and public `WorkspaceClient`
+surfaces are untouched by this Agent change. No raw command shape, schema, or
+client pin artifact changed; no test assertion was weakened or duplicated for
+the Runtime comprehensive case.
+
+## Evidence
+
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/timeline/test_cli_commit_trim.py tests/editing_conformance/test_recipe_m2_clip_trim.py` — **138 passed**.
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_native_checkout.py` — **124 passed**.
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_timeline_commit_provider.py` — **120 passed**.
+- `git diff --check HEAD^ HEAD` — passed.
+- `test_sdk_public_surface.py` was started with the above public checks but stalled in unrelated import/discovery coverage and was interrupted; it is **not claimed** as evidence.
+
+## Remaining gate / next step
+
+The only remaining actual gate is the orchestrator's already-identified
+unchanged failed Runtime node rerun against Agent `f97b2b8` paired with Runtime
+`7d1cfa6`. Do not rerun the Runtime comprehensive case for this review. No
+source blocker was found.
+
+codex
+# APPROVE
+
+- Agent: `f97b2b87688abb20280572a5fc23e4f69ec9e3f8`, tree `b229a2856c7aad8afe2faf2fdf61fa4f78bcc2b6`
+- Runtime handoff: `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`, tree `ac693097189637d3bd0fc3a39299d9b166758853`
+- Delegation, guards, command shape, public surfaces, and retry behavior verified. Worktree unchanged/clean.
+
+Tests:
+
+- CLI/conformance: 138 passed
+- Sync/native frontends: 124 passed
+- WorkspaceClient/provider: 120 passed
+- `git diff --check`: passed
+- Broad `test_sdk_public_surface.py`: interrupted after stalling; unverified.
+
+Remaining gate: rerun only the previously failed unchanged Runtime node with the Agent/Runtime SHA pairing above.
+
+Artifacts written:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/report.md)
+- [design note](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-cli-trim-preflight-final.md)
+- Commit message and `DONE` marker created.
+tokens used
+155,478
+# APPROVE
+
+- Agent: `f97b2b87688abb20280572a5fc23e4f69ec9e3f8`, tree `b229a2856c7aad8afe2faf2fdf61fa4f78bcc2b6`
+- Runtime handoff: `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`, tree `ac693097189637d3bd0fc3a39299d9b166758853`
+- Delegation, guards, command shape, public surfaces, and retry behavior verified. Worktree unchanged/clean.
+
+Tests:
+
+- CLI/conformance: 138 passed
+- Sync/native frontends: 124 passed
+- WorkspaceClient/provider: 120 passed
+- `git diff --check`: passed
+- Broad `test_sdk_public_surface.py`: interrupted after stalling; unverified.
+
+Remaining gate: rerun only the previously failed unchanged Runtime node with the Agent/Runtime SHA pairing above.
+
+Artifacts written:
+
+- [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-cli-trim-preflight-final/report.md)
+- [design note](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-cli-trim-preflight-final.md)
+- Commit message and `DONE` marker created.

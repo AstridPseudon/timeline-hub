@@ -1,0 +1,400 @@
+   705	narration with head `0`, then publish the descriptor through the parent CAS. These
+   706	are explicit supported steps; registration alone does not change an existing
+   707	composition's pinned narration. A stale head requires a fresh checkout and explicit
+   708	reconciliation, never substitution of the latest text.
+   709	
+   710	The runnable checkout example includes this complete path for a registered shot:
+   711	
+   712	```bash
+   713	python3 scripts/timeline_document.py checkout --project <project> --timeline <timeline> --file /tmp/edit.json
+   714	python3 scripts/timeline_document.py bind-script --file /tmp/edit.json --shot <registered-shot-id> \
+   715	  --text-file <script.txt> --expected-head 0 --idempotency-key narration-01
+   716	python3 scripts/timeline_document.py check --file /tmp/edit.json
+   717	python3 scripts/timeline_document.py publish --file /tmp/edit.json --idempotency-key pin-narration-01
+   718	python3 -m astrid timelines script <timeline> --project <project> --json
+
+--- exact architecture/current tuple ---
+     1	# Timeline architecture
+     2	
+     3	**Status:** Agent-owned landing page for the approved canonical path and current
+     4	M4 groundwork. M4 is not complete. The historical R4 control documents remain
+     5	archived; this page does not delete or rewrite them.
+     6	
+     7	Timeline has one accepted authored model and three surfaces. **Read** is a
+     8	revision-pinned projection: Agent owns timeline meaning and text/CLI views,
+     9	Runtime owns the accepted closure and history, and App owns presentation. A
+    10	view never relabels old content with a newer head. **See** is also a projection:
+    11	one Composition package/evaluator answers what is on screen; preview and export
+    12	stay outside save. **Edit** is the single write path.
+    13	
+    14	Authors provide stable entity/anchor references and deterministic commands with
+    15	declared intent. SDK/CLI, App gestures and editable inputs become the same
+    16	command batch. The client persists the exact request, idempotency key, allocated
+    17	IDs and newer commands in a crash-safe outbox. Runtime's normal `/v1` door
+    18	loads the Agent provider before readiness. The provider works on a detached
+    19	candidate; Runtime permits only exact declared reads of the head/history,
+    20	revision closure, selected media and other pinned inputs. The recorder captures
+    21	writes (including unchanged writes), reads, selections/order, bindings and
+    22	created IDs; that record is accepted meaning, not merely a diff.
+    23	
+    24	Acceptance is ledger-first: exact scope, key and request-hash replay is resolved
+    25	before provider work, then one transaction rechecks authority and ancestry and
+    26	atomically stores the immutable closure, accepted history/head, input links and
+    27	receipt. Undo is a new guarded inverse command; restore is a new sole-command
+    28	commit naming an immutable historical revision while guarding the current head.
+    29	Neither rewinds history nor invokes Composition.
+    30	
+    31	Slow producers store immutable artifacts and task proposals. They do not publish
+    32	timeline edits: the requesting client supplies verified requester authority and
+    33	submits commands through the same commit path. A dry run is a semantic plan,
+    34	not a mutation receipt.
+    35	
+    36	The current tuple is Runtime013's immutable `artifactproducer2c` client/artifact
+    37	producer (`2c4ac180c2220bdad966bc01e95ad230e99ce26a`) with compatible Runtime
+    38	server at `7f6dd89`; no second producer/client pin or delivery-completion claim
+    39	is made. Agent public Composition `0.0.12` is integrated. App adoption and the
+    40	final viewing/writer gates remain pending.
+    41	
+    42	Open work is explicit: legacy/fallback writers and the cut-sheet migration are
+    43	not fully retired; native capture authority and `RenderRequest` propagation are
+    44	not fully qualified; frame/audio parity, final export and the owner-film viewing
+    45	gate remain open. These gaps do not justify a second writer, evaluator or
+    46	save-time renderer.
+    47	
+    48	**Code anchors:** Runtime `runtime_protocol/daemon.py`,
+    49	`runtime_protocol/timeline_commit_port.py`,
+    50	`runtime_protocol/timeline_commit_store.py`,
+    51	`runtime_protocol/timeline_commit_producer.py`; Agent
+    52	`astrid/sdk/timeline/commit.py`, `astrid/sdk/timeline/outbox.py`,
+    53	`astrid/sdk/timeline/sync.py`; App
+    54	`src/integrations/runtime/dataProvider.ts`; Composition
+    55	`typescript/src/scene-evaluation.ts`.
+
+--- candidate changed-doc line counts ---
+401 docs/architecture/timeline.md
+
+ succeeded in 16330ms:
+doc-refs: 0 error(s), 0 warning(s); checked 193 docs, 547 capability refs, 263 CLI refs in 16.2s
+docrefs_exit=0
+diffcheck_exit=0
+
+--- exact conflicting guidance ---
+   245	   `occurrence_id` plus optional clip, track, media, text/property path and
+   246	   half-open time window. Shot names and ordinals are display conveniences, not
+   247	   identity. Switching text ↔ visual preserves scope, target, time window,
+   248	   expansion, and filters. A missing frame or source is reported explicitly;
+   249	   never substitute a nearby frame or a different occurrence.
+   250	4. **Choose the smallest supported edit.** Use a public command for a direct,
+   251	   exact Runtime operation such as replacing admitted media or rendering. Use
+   252	   the [helper catalog](references/document-checkout.md#editing-helper-catalog)
+   253	   for sequence, reorder, quantize, ripple, layout, or repeated transforms;
+   254	   those helpers operate on the same detached authoring bundle. That code is a
+   255	   candidate transform, not a new format or hidden command language. Do not
+   256	   edit Runtime files directly, call undocumented endpoints, or silently rebase
+   257	   a stale candidate.
+   258	5. **Validate and save.** Validate the complete candidate, inspect its diff,
+   259	   and save through the existing compare-and-swap/idempotent publication boundary.
+   260	   Preview, rendering, and focused readback are optional unless the request
+   261	   needs them. For an explicit preview-before-save request, inspect/deliver a
+   262	   successful unpublished candidate render before saving that same candidate.
+   263	   Keep the receipt; further corrective edits and saves are allowed.
+   264	6. **Explain the evidence.** Report what was observed, what was changed, and
+   265	   what remains unavailable separately. A successful command, a semantic
+   266	   readback, a decoded media check, and a browser/render proof are different
+   267	   claims; do not collapse them into one “done”.
+   268	
+   269	The short agent preamble is:
+   270	
+   271	> Open one pinned composition. Find the target in the structural view, carry its
+   272	> exact identity to the visual view, and expand only as needed. Use the smallest
+   273	> supported command; otherwise edit a detached same-schema candidate with
+   274	> ordinary code. Validate, diff, and save. Choose source inspection, rendered
+   275	> preview, or readback when the request needs it. Keep current, candidate, and
+   276	> historical evidence distinct.
+   277	
+   278	For discovery, `timelines show` answers structural/text questions, and
+   660	
+   661	Grouping existing timeline clips remains an unimplemented product route; do
+   662	not infer it from the reusable-shot commands above.
+   663	
+   664	The supported commands above create, inspect, populate, remove, and reorder
+   665	project-level shot records. They do not rewrite a timeline document or replace
+   666	multiple authored clips with a shot. Use the detached checkout recipe for that
+   667	complete composition edit, with Runtime head comparison at publication.
+   668	
+   669	Keep narration in the shot's canonical `voiceover_script` text binding alongside
+   670	its voiceover media. Do not leave the only copy in a generation script:
+   671	
+   672	```bash
+   673	python3 -m astrid timelines shots text set <shot-id> --project <project> \
+   674	  --kind voiceover_script --text-file <script.txt> --expected-head 0
+   675	python3 -m astrid timelines shots text list --project <project> \
+   676	  --kind voiceover_script
+   677	```
+   678	
+   679	For timeline-wide draft VO updates, the owner is
+   680	`video_editing.sync_draft_voiceover`; this timeline skill defines the structure
+   681	and timing rules it preserves. The workflow reads script text pinned to the
+   682	selected composition revision. Missing or invalid script bindings are reported,
+   683	and an intentionally empty script is skipped. It only replaces VO that it owns
+   684	as draft; existing final, recorded, or locked audio is protected. Adopting a
+   685	legacy clip requires its exact clip ID in `adopt_clip_ids`.
+   686	
+   687	The sync can keep every shot window with `timing_policy="preserve"`; narration
+   688	that exceeds a window then fails before publication. With
+   689	`timing_policy="ripple"`, duration changes move later shots and parent visual
+   690	layers. Ripple rejects overlapping shot placements, source offsets or non-unit
+   691	speed, parent or internal audio that would need stretching, and parameterized
+   692	layers without an explicit `app.draft_voiceover_timing="stretch"` declaration.
+   693	Inspect its detached plan and diff before deciding whether to apply it. It does
+   694	not render a preview or change the live timeline while preparing speech. The
+   695	workflow's broad candidate publication remains a held legacy seam until its
+   696	edit families have native commands; do not present it as the native session
+   697	route.
+   698	
+   699	Publication accepts registered text descriptors in `shot["payload"]["text_bindings"]`.
+   700	The descriptor's `binding_id`, `head`, `media_id`, `content_hash`, and byte size pin
+   701	one verified revision; publication checks the registered head for a changed shot
+   702	revision. Arbitrary embedded-only narration and conflicting metadata copies are
+   703	rejected. Keep the registration receipt and publish that exact descriptor. For a
+   704	new reusable shot, publish its media/structure first to register it, register its
+   705	narration with head `0`, then publish the descriptor through the parent CAS. These
+   706	are explicit supported steps; registration alone does not change an existing
+   707	composition's pinned narration. A stale head requires a fresh checkout and explicit
+   708	reconciliation, never substitution of the latest text.
+   709	
+   710	The runnable checkout example includes this complete path for a registered shot:
+   711	
+   712	```bash
+   713	python3 scripts/timeline_document.py checkout --project <project> --timeline <timeline> --file /tmp/edit.json
+   714	python3 scripts/timeline_document.py bind-script --file /tmp/edit.json --shot <registered-shot-id> \
+   715	  --text-file <script.txt> --expected-head 0 --idempotency-key narration-01
+   716	python3 scripts/timeline_document.py check --file /tmp/edit.json
+   717	python3 scripts/timeline_document.py publish --file /tmp/edit.json --idempotency-key pin-narration-01
+   718	python3 -m astrid timelines script <timeline> --project <project> --json
+
+--- exact architecture/current tuple ---
+     1	# Timeline architecture
+     2	
+     3	**Status:** Agent-owned landing page for the approved canonical path and current
+     4	M4 groundwork. M4 is not complete. The historical R4 control documents remain
+     5	archived; this page does not delete or rewrite them.
+     6	
+     7	Timeline has one accepted authored model and three surfaces. **Read** is a
+     8	revision-pinned projection: Agent owns timeline meaning and text/CLI views,
+     9	Runtime owns the accepted closure and history, and App owns presentation. A
+    10	view never relabels old content with a newer head. **See** is also a projection:
+    11	one Composition package/evaluator answers what is on screen; preview and export
+    12	stay outside save. **Edit** is the single write path.
+    13	
+    14	Authors provide stable entity/anchor references and deterministic commands with
+    15	declared intent. SDK/CLI, App gestures and editable inputs become the same
+    16	command batch. The client persists the exact request, idempotency key, allocated
+    17	IDs and newer commands in a crash-safe outbox. Runtime's normal `/v1` door
+    18	loads the Agent provider before readiness. The provider works on a detached
+    19	candidate; Runtime permits only exact declared reads of the head/history,
+    20	revision closure, selected media and other pinned inputs. The recorder captures
+    21	writes (including unchanged writes), reads, selections/order, bindings and
+    22	created IDs; that record is accepted meaning, not merely a diff.
+    23	
+    24	Acceptance is ledger-first: exact scope, key and request-hash replay is resolved
+    25	before provider work, then one transaction rechecks authority and ancestry and
+    26	atomically stores the immutable closure, accepted history/head, input links and
+    27	receipt. Undo is a new guarded inverse command; restore is a new sole-command
+    28	commit naming an immutable historical revision while guarding the current head.
+    29	Neither rewinds history nor invokes Composition.
+    30	
+    31	Slow producers store immutable artifacts and task proposals. They do not publish
+    32	timeline edits: the requesting client supplies verified requester authority and
+    33	submits commands through the same commit path. A dry run is a semantic plan,
+    34	not a mutation receipt.
+    35	
+    36	The current tuple is Runtime013's immutable `artifactproducer2c` client/artifact
+    37	producer (`2c4ac180c2220bdad966bc01e95ad230e99ce26a`) with compatible Runtime
+    38	server at `7f6dd89`; no second producer/client pin or delivery-completion claim
+    39	is made. Agent public Composition `0.0.12` is integrated. App adoption and the
+    40	final viewing/writer gates remain pending.
+    41	
+    42	Open work is explicit: legacy/fallback writers and the cut-sheet migration are
+    43	not fully retired; native capture authority and `RenderRequest` propagation are
+    44	not fully qualified; frame/audio parity, final export and the owner-film viewing
+    45	gate remain open. These gaps do not justify a second writer, evaluator or
+    46	save-time renderer.
+    47	
+    48	**Code anchors:** Runtime `runtime_protocol/daemon.py`,
+    49	`runtime_protocol/timeline_commit_port.py`,
+    50	`runtime_protocol/timeline_commit_store.py`,
+    51	`runtime_protocol/timeline_commit_producer.py`; Agent
+    52	`astrid/sdk/timeline/commit.py`, `astrid/sdk/timeline/outbox.py`,
+    53	`astrid/sdk/timeline/sync.py`; App
+    54	`src/integrations/runtime/dataProvider.ts`; Composition
+    55	`typescript/src/scene-evaluation.ts`.
+
+--- architecture words ---
+401 docs/architecture/timeline.md
+
+codex
+The lightweight checks pass: doc-reference audit reports 0 errors/0 warnings, `git diff --check` passes, and the help/signature probes match. I’m recording a HOLD rather than approval because the same skill still contains uncaveated fallback instructions at exact lines 250–263, 271–276, 664–667, and 710–717; these can still lead an agent to publish through the held detached writer after the new sections say unsupported edits must be reported.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc9-architecture-docs.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc9-architecture-docs/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc9-architecture-docs/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc9-architecture-docs.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc9-architecture-docs.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f3b1b658797c9b186df3da15445afe55db42cfb1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc9-architecture-docs.md
+@@ -0,0 +1,35 @@
++# WC9 architecture/docs gate — HOLD
++
++Reviewed candidate commit `61064382` against its base (`tl/agt-m2-wc9-native-docs-cut`), plus the candidate worker report. No repository source changes were made.
++
++## Decision
++
++HOLD. The native examples and architecture landing page are otherwise consistent with the public Agent APIs and settled plan, but the rendering skill retains uncaveated legacy fallback instructions that can teach an agent to publish through the held detached writer. The ledger should remain held until these references are corrected.
++
++## Required documentation fixes
++
++1. `astrid/packs/rendering/docs/SKILL.md:250-263` — the general workflow says to use the detached helper catalog for transforms, then “validate the complete candidate” and save through the compare-and-swap/idempotent publication boundary. Rewrite this as migration/read-only preparation only: use a native command when covered; otherwise retain the draft and report the missing command, with no detached publication fallback.
++2. `astrid/packs/rendering/docs/SKILL.md:271-276` — the agent preamble says “otherwise edit a detached same-schema candidate with ordinary code. Validate, diff, and save.” Replace that branch with an explicit visible refusal/retained draft and “do not publish through the held checkout writer.”
++3. `astrid/packs/rendering/docs/SKILL.md:664-667` — “Use the detached checkout recipe for that complete composition edit, with Runtime head comparison at publication” contradicts the held-writer policy. State that the complete composition edit is currently migration-only/held and must not be published as a fallback.
++4. `astrid/packs/rendering/docs/SKILL.md:710-717` — the “runnable checkout example” still presents checkout → bind-script → check → publish as a complete path, despite the surrounding text saying the broad candidate publication is held. Mark the block explicitly migration-only and say that unsupported normal edits must be retained/reported rather than sent to `publish`, or remove the publication example until native coverage exists.
++
++The changed guide/reference pages already contain the required explicit warnings (for example `docs/timeline-editing-guide.md:292-297`, `astrid/packs/rendering/docs/references/document-checkout.md:3-16`, and `astrid/packs/rendering/docs/references/editing.md:80-102`); preserve those distinctions when fixing the skill.
++
++## Verified as correct
++
++- `TimelineSession.open(project, timeline, *, client, outbox_path=None, base_revision_id=None, base_publication_id=None)` and the documented `move`, `trim`, `commit`, `commit_many`, `queue_proposal`, `flush`, and `undo` calls match the current public Agent signatures.
++- Native CLI examples match help: `timelines edit move` accepts `--clip`, `--on`, `--dry-run`, `--idempotency-key`, `--json`; `track-label` accepts `--track`, `--set|--clear` and the same publication controls.
++- The examples describe original guard capture, durable exact-flight outbox retry, fresh keys for new intent, and no guard recapture after a lost acknowledgement. Proposal artifacts/dry runs are correctly distinguished from Runtime receipts.
++- `docs/architecture/timeline.md` is 401 words, explicitly says M4 is not complete, preserves the R4 archive, names the immutable producer `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, compatible server `7f6dd89`, and public Composition `0.0.12`, and lists held seams/open gates.
++- Distinct Read/See/Edit, producer, view, and held authoring-bundle capability explanations remain present.
++
++## Checks
++
++- `PYTHONPATH="$PWD" python3 scripts/reshape/check_doc_references.py` — PASS (0 errors, 0 warnings; 193 docs, 547 capability refs, 263 CLI refs).
++- `git diff --check HEAD^ HEAD` — PASS.
++- `PYTHONPATH="$PWD" python3 -m astrid timelines edit --help`, `edit move --help`, `edit track-label --help`, `undo --help`, `redo --help`, `show --help`, `visualize --help` — PASS; documented flags/signatures present.
++- Python `inspect.signature` probe for public `TimelineSession`, `Checkout`, and `RemoteTimelines.open_composition` — PASS.
++- Python AST compile probe for fenced Python examples in all five changed docs — PASS.
++
++No full or browser/live-socket suite was requested. No code, templates, scripts, fixtures, shared dependencies, integration worktrees, or R4 archive were modified.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc9-architecture-docs/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc9-architecture-docs/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc9-architecture-docs/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc9-architecture-docs/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..2616365df0db0b8b211f7bfb94b5a5f59c1ff880
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc9-architecture-docs/commit-msg
+@@ -0,0 +1,4 @@
++docs(timeline): review WC9 architecture documentation
++
++Record the WC9 docs gate and hold approval pending removal of uncaveated
++detached-writer fallback guidance.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- review report ---'; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc9-architecture-docs.md; printf '%s\\n' '--- commit message ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc9-architecture-docs/commit-msg; printf '%s\\n' '--- repo status ---'; git status --short; printf '%s\\n' '--- markers ---'; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc9-architecture-docs/DONE && echo DONE" in /home/user/work/wt/agt-review-wc9-architecture-docs
+ succeeded in 266ms:
+--- review report ---
+# WC9 architecture/docs gate — HOLD
+
+Reviewed candidate commit `61064382` against its base (`tl/agt-m2-wc9-native-docs-cut`), plus the candidate worker report. No repository source changes were made.
+
+## Decision
+
+HOLD. The native examples and architecture landing page are otherwise consistent with the public Agent APIs and settled plan, but the rendering skill retains uncaveated legacy fallback instructions that can teach an agent to publish through the held detached writer. The ledger should remain held until these references are corrected.
+
+## Required documentation fixes
+
+1. `astrid/packs/rendering/docs/SKILL.md:250-263` — the general workflow says to use the detached helper catalog for transforms, then “validate the complete candidate” and save through the compare-and-swap/idempotent publication boundary. Rewrite this as migration/read-only preparation only: use a native command when covered; otherwise retain the draft and report the missing command, with no detached publication fallback.
+2. `astrid/packs/rendering/docs/SKILL.md:271-276` — the agent preamble says “otherwise edit a detached same-schema candidate with ordinary code. Validate, diff, and save.” Replace that branch with an explicit visible refusal/retained draft and “do not publish through the held checkout writer.”
+3. `astrid/packs/rendering/docs/SKILL.md:664-667` — “Use the detached checkout recipe for that complete composition edit, with Runtime head comparison at publication” contradicts the held-writer policy. State that the complete composition edit is currently migration-only/held and must not be published as a fallback.
+4. `astrid/packs/rendering/docs/SKILL.md:710-717` — the “runnable checkout example” still presents checkout → bind-script → check → publish as a complete path, despite the surrounding text saying the broad candidate publication is held. Mark the block explicitly migration-only and say that unsupported normal edits must be retained/reported rather than sent to `publish`, or remove the publication example until native coverage exists.
+
+The changed guide/reference pages already contain the required explicit warnings (for example `docs/timeline-editing-guide.md:292-297`, `astrid/packs/rendering/docs/references/document-checkout.md:3-16`, and `astrid/packs/rendering/docs/references/editing.md:80-102`); preserve those distinctions when fixing the skill.
+
+## Verified as correct
+
+- `TimelineSession.open(project, timeline, *, client, outbox_path=None, base_revision_id=None, base_publication_id=None)` and the documented `move`, `trim`, `commit`, `commit_many`, `queue_proposal`, `flush`, and `undo` calls match the current public Agent signatures.
+- Native CLI examples match help: `timelines edit move` accepts `--clip`, `--on`, `--dry-run`, `--idempotency-key`, `--json`; `track-label` accepts `--track`, `--set|--clear` and the same publication controls.
+- The examples describe original guard capture, durable exact-flight outbox retry, fresh keys for new intent, and no guard recapture after a lost acknowledgement. Proposal artifacts/dry runs are correctly distinguished from Runtime receipts.
+- `docs/architecture/timeline.md` is 401 words, explicitly says M4 is not complete, preserves the R4 archive, names the immutable producer `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, compatible server `7f6dd89`, and public Composition `0.0.12`, and lists held seams/open gates.
+- Distinct Read/See/Edit, producer, view, and held authoring-bundle capability explanations remain present.
+
+## Checks
+
+- `PYTHONPATH="$PWD" python3 scripts/reshape/check_doc_references.py` — PASS (0 errors, 0 warnings; 193 docs, 547 capability refs, 263 CLI refs).
+- `git diff --check HEAD^ HEAD` — PASS.
+- `PYTHONPATH="$PWD" python3 -m astrid timelines edit --help`, `edit move --help`, `edit track-label --help`, `undo --help`, `redo --help`, `show --help`, `visualize --help` — PASS; documented flags/signatures present.
+- Python `inspect.signature` probe for public `TimelineSession`, `Checkout`, and `RemoteTimelines.open_composition` — PASS.
+- Python AST compile probe for fenced Python examples in all five changed docs — PASS.
+
+No full or browser/live-socket suite was requested. No code, templates, scripts, fixtures, shared dependencies, integration worktrees, or R4 archive were modified.
+
+--- commit message ---
+docs(timeline): review WC9 architecture documentation
+
+Record the WC9 docs gate and hold approval pending removal of uncaveated
+detached-writer fallback guidance.
+--- repo status ---
+--- markers ---
+DONE
+
+codex
+## WC9 Review: HOLD
+
+Reviewed candidate `61064382`; no repository changes made.
+
+Found uncaveated detached-writer fallback guidance in:
+
+- `astrid/packs/rendering/docs/SKILL.md:250-263`
+- `:271-276`
+- `:664-667`
+- `:710-717`
+
+These should explicitly state migration-only/held behavior and refuse or retain unsupported edits rather than publishing through Checkout/CAS.
+
+Verified native examples, public signatures, CLI flags, architecture tuple, M4-incomplete status, R4 archive preservation, and capability distinctions.
+
+Checks passed:
+
+- Doc references: 0 errors, 0 warnings
+- `git diff --check`
+- CLI help probes
+- Public API signature probe
+- Fenced Python AST compilation
+
+Published report: [agent-review-wc9-architecture-docs.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc9-architecture-docs.md)
+
+Commit message and `DONE` marker created.
+tokens used
+133,827
+## WC9 Review: HOLD
+
+Reviewed candidate `61064382`; no repository changes made.
+
+Found uncaveated detached-writer fallback guidance in:
+
+- `astrid/packs/rendering/docs/SKILL.md:250-263`
+- `:271-276`
+- `:664-667`
+- `:710-717`
+
+These should explicitly state migration-only/held behavior and refuse or retain unsupported edits rather than publishing through Checkout/CAS.
+
+Verified native examples, public signatures, CLI flags, architecture tuple, M4-incomplete status, R4 archive preservation, and capability distinctions.
+
+Checks passed:
+
+- Doc references: 0 errors, 0 warnings
+- `git diff --check`
+- CLI help probes
+- Public API signature probe
+- Fenced Python AST compilation
+
+Published report: [agent-review-wc9-architecture-docs.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-wc9-architecture-docs.md)
+
+Commit message and `DONE` marker created.

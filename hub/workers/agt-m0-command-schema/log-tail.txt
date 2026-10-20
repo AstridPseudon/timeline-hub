@@ -1,0 +1,400 @@
++    validator().validate(value)
++    assert value == original
++    validator("AgentState").validate({"state": "absent"})
++    validator("AgentState").validate({"state": "present", "value": opaque})
++
++
++def test_recorder_leaves_keep_unchanged_writes_and_r4_maps():
++    state = {"state": "present", "value": None}
++    validator("AgentWrite").validate({"ref": "parent/clip:x", "path": ["params"], "before": state, "after": state})
++    validator("AgentDerivedWrite").validate({"ref": "parent/clip:x", "path": ["at"], "before": state, "after": state, "cause": 0})
++    validator("AgentRead").validate({"ref": "parent", "path": ["config", "app"], "state": state})
++    validator("AgentBinding").validate({"key": "beat 2", "ref": "beat:1", "policy": "fixed", "dependencies": ["source"]})
++    validator("AgentCreatedID").validate({"ref": "occurrence:opening/clip:x", "kind": "clip", "owner": "occurrence:opening"})
++    validator("AgentDependency").validate({"key": "source", "kind": "entity", "pin": {"ref": "parent/clip:music"}, "policy": "exact"})
++    validator("AgentSelection").validate({"key": "ripple.members", "query_version": 1, "owner": "parent", "members": ["parent/clip:x"], "order": ["parent/clip:x"], "boundaries": [], "policy": "guard-membership"})
++
++
++@pytest.mark.parametrize(
++    "definition,value",
++    [
++        ("AgentRead", {"id": "parent", "path": "config", "state": {"state": "absent"}}),
++        ("AgentRead", {"ref": "parent", "path": [0], "state": {"state": "absent"}}),
++        ("AgentBinding", {"beat 2": "beat:1"}),
++        ("AgentCreatedID", "parent/clip:x"),
++        ("AgentCreatedID", {"ref": "parent/clip:x", "kind": "clip", "owner": ""}),
++        ("AgentDependency", {"key": "x", "kind": "media", "pin": None, "policy": "exact"}),
++        ("AgentDependency", {"key": "x", "kind": "media", "pin": {}, "policy": "latest"}),
++        ("AgentDerivedWrite", {"ref": "parent/clip:x", "path": ["at"], "before": {"state": "absent"}, "after": {"state": "absent"}}),
++    ],
++)
++def test_enriched_recorder_leaves_do_not_replace_old_command_field_types(definition, value):
++    assert not validator(definition).is_valid(value)
++
++
++def handoff_examples():
++    pattern = r"<!-- schema: (accept|reject)-(command|batch) -->\s*```json\n(.*?)\n```"
++    return [(status, kind, json.loads(raw)) for status, kind, raw in re.findall(pattern, HANDOFF.read_text(), re.S)]
++
++
++@pytest.mark.parametrize("status,kind,value", handoff_examples())
++def test_handoff_json_examples(status, kind, value):
++    check = validator("CommandBatch" if kind == "batch" else "EditCommand")
++    assert check.is_valid(value) == (status == "accept"), list(check.iter_errors(value))
++
++
++def test_handoff_has_both_accepted_and_rejected_examples():
++    statuses = {status for status, _, _ in handoff_examples()}
++    assert statuses == {"accept", "reject"}
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m ruff format tests/m0_command_schema/test_command_schema.py' in /home/user/work/wt/agt-m0-command-schema
+ succeeded in 0ms:
+1 file reformatted
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/m0_command_schema' in /home/user/work/wt/agt-m0-command-schema
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m ruff check --isolated --select E4,E7,E9,F,I,BLE tests/m0_command_schema && git diff --check' in /home/user/work/wt/agt-m0-command-schema
+ succeeded in 16ms:
+All checks passed!
+
+exec
+/bin/bash -lc 'tail -65 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-recipe.md && git status --short' in /home/user/work/wt/agt-m0-command-schema
+ succeeded in 0ms:
+### Forward-overlay execution blocker
+
+After `port-spike-ready.md` appeared, the same nine R4 cases were run read-only
+against `/home/user/work/wt/agt-m0-spike`. All nine fail at
+`astrid/sdk/timeline/transaction.py:73`: `Edit._check_context()` imports absent
+`astrid.core.pack.checks.CheckAdmissionContext`; `_apply` reaches that method at
+the transaction validation boundary (`transaction.py:260`). The overlay's
+successful import walk and compiler tests do not establish executable command
+acceptance. Required source change: replace that R4 Pack V3 admission-context
+dependency with main-compatible structural/reference/timing validation context
+and keep optional advisory checks outside save; do not port cut Pack V3
+infrastructure or disable transaction checking to make the spike green.
+No other worker's files were changed. The frozen-source cases remain the
+executable semantic observations while this forward-overlay blocker is fixed.
+
+### Verification and limits
+
+Initial system-Python iterations exposed fixture/API mistakes; those were fixed
+without changing product code or disabling assertions. The system-Python final
+iteration was `12 passed, 2 warnings in 145.97s` (warnings: missing pytest-timeout
+plugin in system interpreter). The first required shared-environment run was
+`12 passed in 145.41s`; it was repeated after adding the schema checks and
+follow-anchor/path-spelling observations (final result below). No dependencies
+were installed or modified by this worker.
+
+Commands run from `/home/user/work/wt/agt-m0-recipe`; logs under
+`ORCH/workers/agt-m0-recipe/`, outside git:
+
+* `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/m0_recipe`
+  — **14 passed in 157.21s**, no warnings or skips (`final-spikes.log`).
+* `PYTHONPATH=$PWD ASTRID_RECIPE_R4_ROOT=/home/user/work/wt/agt-m0-spike /home/user/work/venv-agent/bin/python -m pytest -q tests/m0_recipe/test_recipe_spikes.py`
+  — **9 failed in 14.69s**, all at the exact overlay blocker above (`port-spike.log`).
+* `/home/user/work/venv-agent/bin/python -m ruff check --isolated --select E4,E7,E9,F,I,BLE tests/m0_recipe`
+  — passed. Isolated configuration is explicit because repo lint excludes tests.
+* `PYTHONPATH=$PWD make check PY=/home/user/work/venv-agent/bin/python`
+  — blocked at preflight, exit 2: this worktree lacks `remotion/node_modules`
+  (`make-check.log`). Shared Python dependencies are ready; no Node install was
+  attempted. No claim that the full gate passed.
+
+Linux only. Live Runtime atomicity/retry/credential authority, App browser/outbox
+journey, renderer-off provider startup/save, actual Composition preview/export
+pixels/PCM, native macOS and full repository default/conformance suites were not
+run by this worker. They remain their owners' M1+ gates. Saving without scene
+evaluation is the specified contract and an identified required deletion, not a
+property proven of frozen R4's current `RuntimeCommitService.commit`.
+
+### Remaining contract handoff
+
+Re-read Runtime's frozen §4.1 before handoff: initial ABI 1, fixed factory,
+`provider_id="astrid-v1"`, integer version and exact generated schema digest;
+complete timestamp-free `CanonicalDocument` closure on the wire (not internal
+Checkout bundles), Runtime-derived accepted/rebased status and publication ID,
+token-array conflict paths, `rationale`, explicit inverse publication list and
+sole-command historical restore are adopted here. The schema artifact above
+supplies the requested semantic leaf names and inverse/restore argument shapes.
+
+Unresolved implementation seams: App's optimistic suffix basis must be retained
+and checked without a client rebase; per-operation parameter/UI annotations and
+registered fact payload mappings must be filled in during registry port;
+main transcript DocumentPin must replace the R4 transcript codec; compiler-only
+derived writes need the named migration and legacy format normalization.
+These are source/fixture requirements, not permission to weaken PLAN. Runtime's
+bootstrap/baseline mapping and receipt retention are Runtime-owned and adopted
+fail-closed. Managers still own review/sign-off; this worker does not approve
+Checkpoint A or authorize M1.
+?? tests/m0_command_schema/
+
+ succeeded in 999ms:
+........................................................................ [ 75%]
+.......................                                                  [100%]
+95 passed in 0.46s
+
+codex
+Final validation passed: 95 schema-design tests and the focused Ruff check. The handoff lists the remaining recipe corrections, including retiring its competing schema source and specifying token-path normalization. I’ll now remove test caches and write the commit message for the harness.
+
+exec
+/bin/bash -lc 'rg --files --hidden --no-ignore tests/m0_command_schema .pytest_cache tests/__pycache__ 2>/dev/null && ls -ld .ruff_cache' in /home/user/work/wt/agt-m0-command-schema
+ succeeded in 0ms:
+tests/m0_command_schema/test_command_schema.py
+.pytest_cache/v/cache/nodeids
+.pytest_cache/.gitignore
+.pytest_cache/README.md
+.pytest_cache/CACHEDIR.TAG
+tests/__pycache__/__init__.cpython-313.pyc
+tests/__pycache__/conftest.cpython-313-pytest-9.0.2.pyc
+drwxr-xr-x 3 root root 4096 Oct 19 18:03 .ruff_cache
+
+exec
+/bin/bash -lc "tail -26 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/command-schema-handoff.md && sed -n '1,140p' tests/m0_command_schema/test_command_schema.py" in /home/user/work/wt/agt-m0-command-schema
+ succeeded in 0ms:
+   strict restore current-pair comparison. These already agree in the final
+   recipe; keep them when removing its competing artifact reference.
+
+The App optimistic suffix basis issue remains implementation work under the
+frozen request/port rules; this schema does not invent a new proof wrapper.
+The extensions document's historical "wire reason" sentence near its recipe
+counterexamples is also stale; new metadata is `rationale` only. Its marker and
+opaque-remap counterexamples still apply and are not solved by widening strings.
+
+## Verification and limits
+
+Run from the assigned Agent worktree with shared dependencies:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/m0_command_schema
+```
+
+The tests validate Draft 2020-12 structure/local refs, real accepted/rejected
+handoff JSON, required field/version types, R4 recorder vocabulary and tagged
+presence, opaque values, inverse target uniqueness, restore pins/sole-command,
+and property-token syntax. These isolated M0 tests read the shared design
+artifact by its explicit scratch path; before any product-suite integration,
+retarget them to the packaged Agent schema. They deliberately do not import a frozen R4 provider
+or claim runtime semantics from substitute implementations. Final command/result
+is recorded in the worker report. No `make check`, editing-conformance,
+Runtime/App/Composition suites or product gates are claimed by this M0 task.
+"""M0 schema design examples, not provider or product acceptance tests."""
+
+import copy
+import json
+import re
+from pathlib import Path
+
+import pytest
+from jsonschema import Draft202012Validator
+
+DESIGN = Path(
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design"
+)
+SCHEMA = json.loads((DESIGN / "edit-command.schema.json").read_text())
+HANDOFF = DESIGN / "command-schema-handoff.md"
+
+
+def validator(definition="EditCommand"):
+    return Draft202012Validator({**SCHEMA, "$ref": f"#/$defs/{definition}"})
+
+
+def command(op="clip.move", **overrides):
+    value = {
+        "schema_version": 1,
+        "op": op,
+        "version": "1",
+        "select": "occurrence:opening/clip:title",
+        "args": {"on": 2.5},
+    }
+    if op == "timeline.inverse":
+        value.update(select=None, args={"publications": ["txn-a", "txn-b"]})
+    elif op == "timeline.restore":
+        value.update(
+            select=None,
+            args={"revision_id": "parent-old", "content_digest": "sha256:" + "a" * 64},
+        )
+    return {**value, **overrides}
+
+
+def test_draft_2020_12_and_all_local_references():
+    assert SCHEMA["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+    Draft202012Validator.check_schema(SCHEMA)
+
+    def walk(value):
+        if isinstance(value, dict):
+            if "$ref" in value:
+                assert value["$ref"].startswith("#/$defs/")
+                assert value["$ref"].removeprefix("#/$defs/") in SCHEMA["$defs"]
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    walk(SCHEMA)
+
+
+@pytest.mark.parametrize("key", ["schema_version", "op", "version", "select", "args"])
+def test_required_wire_fields(key):
+    value = command()
+    del value[key]
+    assert not validator().is_valid(value)
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"schema_version": 2},
+        {"schema_version": True},
+        {"version": None},
+        {"version": 1},
+        {"version": ""},
+        {"version": "0.9.0"},
+        {"op": "move"},
+        {"args": None},
+        {"args": {"on": None}},
+        {"args": {"on": -1}},
+        {"args": {"on": 1, "clear": ["on"]}},
+        {"select": "title"},
+        {"select": "shot:shared/clip:title"},
+        {"reason": "old spelling"},
+        {"publisher": "spoofed actor"},
+        {"writes": []},
+        {"rationale": None},
+        {"group_id": ""},
+        {"resolved": ["title"]},
+        {"created": ["parent/clip:x", "parent/clip:x"]},
+        {"created": None},
+        {"bindings": {"word": {"id": "parent/clip:x"}}},
+        {"expect": {"at": None}},
+        {"expect": {"at": {"state": "present"}}},
+        {"expect": {"at": {"state": "absent", "value": None}}},
+        {"authorship": {"at": "alice"}},
+        {"intent": {"ripple": "ripple"}},
+        {"intent": {"anchor": "follow"}},
+    ],
+)
+def test_invalid_envelopes_and_minimal_move(overrides):
+    assert not validator().is_valid(command(**overrides))
+
+
+@pytest.mark.parametrize("op", ["timeline.inverse", "timeline.restore"])
+def test_history_operations_are_not_selected_or_version_guessed(op):
+    assert validator().is_valid(command(op))
+    assert not validator().is_valid(command(op, select="parent"))
+    assert not validator().is_valid(command(op, version="2"))
+    assert not validator().is_valid(command(op, intent={"position": "relative"}))
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        {},
+        {"publications": []},
+        {"publications": ["txn-a", "txn-a"]},
+        {"publications": [""]},
+        {"publications": [None]},
+        {"publications": ["txn-a"], "group_id": "gesture"},
+        {"publication": "txn-a"},
+        {"publications": ["txn-a"], "writes": []},
+        {"publications": ["txn-a"], "expected_head": "revision"},
+    ],
+)
+def test_inverse_requires_explicit_unique_publications(args):
+    assert not validator().is_valid(command("timeline.inverse", args=args))
+
+
+def test_inverse_preserves_publication_order_without_guessing_ancestry():
+    value = command("timeline.inverse")
+    original = copy.deepcopy(value)
+    validator().validate(value)
+    assert value == original
+    # Order/ancestry/scope are provider checks against accepted Runtime history.
+    value["args"]["publications"].reverse()
+    validator().validate(value)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+import shutil
+from pathlib import Path
+
+root = Path('/home/user/work/wt/agt-m0-command-schema')
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+handoff = orch / 'design/command-schema-handoff.md'
+s = handoff.read_text().replace(
+    'retarget them to the packaged Agent schema. They deliberately do not import a frozen R4 provider\\nor claim runtime semantics from substitute implementations. Final command/result\\nis recorded in the worker report.',
+    'retarget them to the packaged Agent schema. They deliberately do not import a\\nfrozen R4 provider or claim runtime semantics from substitute implementations.\\nFinal run: **95 passed in 0.46s**, no warnings or skips. The focused lint command\\n"'`/home/user/work/venv-agent/bin/python -m ruff check --isolated --select E4,E7,E9,F,I,BLE tests/m0_command_schema`'"\\nalso passed; "'`git diff --check` exited 0.'"'
+)
+handoff.write_text(s)
+paths = [root / 'tests/m0_command_schema/test_command_schema.py', handoff, orch / 'design/edit-command.schema.json']
+for path in paths:
+    for line_number, line in enumerate(path.read_text().splitlines(), 1):
+        assert line == line.rstrip(), (str(path), line_number, 'trailing whitespace')
+json.loads((orch / 'design/edit-command.schema.json').read_text())
+for path in root.rglob('__pycache__'):
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+for name in ('.pytest_cache', '.ruff_cache'):
+    path = root / name
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+commit = orch / 'workers/agt-m0-command-schema/commit-msg'
+commit.parent.mkdir(parents=True, exist_ok=True)
+commit.write_text('''test(timeline): validate canonical M0 command schemas
+
+Validate the shared Draft 2020-12 EditCommand design and handoff examples,
+including required versions, R4 recorder fields, tagged presence, opaque JSON,
+explicit inverse publication targets, and sole-command historical restore.
+
+Cover the minimal clip move schema and final recipe recorder leaves without
+changing product code or Runtime-owned DTOs. Record artifact projection and
+remaining recipe corrections in the shared command-schema handoff.
+''')
+print('Design artifacts checked; test caches removed; commit message written.')
+PY
+git status --short
+git diff --check" in /home/user/work/wt/agt-m0-command-schema
+ succeeded in 194ms:
+Design artifacts checked; test caches removed; commit message written.
+?? tests/m0_command_schema/
+
+codex
+Created the [canonical schema](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-command.schema.json) and [handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/command-schema-handoff.md), with inverse/restore signatures, minimal `clip.move`, projection checks, and validated examples.
+
+Preserved R4 command field types and adopted the final recipe’s enriched recorder leaves. Runtime-owned shapes and product code remain untouched.
+
+Validation:
+
+- `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/m0_command_schema` — **95 passed in 0.46s**.
+- `/home/user/work/venv-agent/bin/python -m ruff check --isolated --select E4,E7,E9,F,I,BLE tests/m0_command_schema` — passed.
+- `git diff --check` — passed.
+
+No blockers. These are schema-design checks; product gates and provider behavior remain unverified.
+
+Next: apply the handoff’s enumerated recipe corrections, retire its competing schema source, and pin the canonical artifact into Agent/Runtime. Retarget the isolated tests to the packaged schema before product-suite integration.
+
+Commit message written to the requested path; test caches removed.
+tokens used
+156,037
+Created the [canonical schema](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-command.schema.json) and [handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/command-schema-handoff.md), with inverse/restore signatures, minimal `clip.move`, projection checks, and validated examples.
+
+Preserved R4 command field types and adopted the final recipe’s enriched recorder leaves. Runtime-owned shapes and product code remain untouched.
+
+Validation:
+
+- `PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/m0_command_schema` — **95 passed in 0.46s**.
+- `/home/user/work/venv-agent/bin/python -m ruff check --isolated --select E4,E7,E9,F,I,BLE tests/m0_command_schema` — passed.
+- `git diff --check` — passed.
+
+No blockers. These are schema-design checks; product gates and provider behavior remain unverified.
+
+Next: apply the handoff’s enumerated recipe corrections, retire its competing schema source, and pin the canonical artifact into Agent/Runtime. Retarget the isolated tests to the packaged schema before product-suite integration.
+
+Commit message written to the requested path; test caches removed.

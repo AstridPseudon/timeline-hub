@@ -1,0 +1,400 @@
+         runtime.admit(snapshot, duplicate=runtime.ref(replacement))
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
+ def test_native_compiled_capture_does_not_acquire_canonical_source(runtime, tmp_path):
+     snapshot = runtime.snapshot()
+     # Neither selector remains; canonical_timeline alone would make Runtime publish a revision ref.
+diff --git a/tests/sdk/test_timeline_capture_projection.py b/tests/sdk/test_timeline_capture_projection.py
+index dc0b572916cd0165c856e9c07bc9ffd8dccbdf17..c2d999609d4fa810bf1fe972e67805d571760fce
+--- a/tests/sdk/test_timeline_capture_projection.py
++++ b/tests/sdk/test_timeline_capture_projection.py
+@@ -28,6 +28,32 @@
+     return bundle
+ 
+ 
++@pytest.mark.parametrize("changed", [False, True])
++def test_capture_candidate_inputs_exact_pure_detached_golden(monkeypatch, changed):
++    document = document_fixture()
++    candidate = draft(document) if changed else bundle_from_document(document)
++    before = copy.deepcopy((document, candidate))
++    expected = {"base": bundle_from_document(document),
++                "preview": preview_authoring_candidate(candidate)}
++    provider = RuntimeCommitService("unused-by-pure-capture")
++
++    def forbidden(*args, **kwargs):
++        raise AssertionError("pure capture inputs attempted IO")
++
++    with monkeypatch.context() as no_io:
++        for target, name in ((builtins, "open"), (io, "open"), (Path, "open"),
++                             (socket, "socket"), (socket, "create_connection"),
++                             (subprocess, "Popen"), (subprocess, "run")):
++            no_io.setattr(target, name, forbidden)
++        result = provider.capture_candidate_inputs(document, candidate=candidate)
++        assert json.dumps(result, sort_keys=True, allow_nan=False) == json.dumps(
++            expected, sort_keys=True, allow_nan=False)
++        result["base"]["parent"]["config"]["opaque"]["v"].append("caller change")
++        result["preview"]["candidate"]["parent"]["config"]["opaque"]["v"].append("caller change")
++        assert provider.capture_candidate_inputs(document, candidate=candidate) == expected
++    assert (document, candidate) == before
++
++
+ @pytest.mark.parametrize("candidate", [False, True])
+ def test_projection_is_detached_json_deterministic_without_io(monkeypatch, candidate):
+     document = document_fixture()
+@@ -167,6 +193,8 @@
+ document = document_fixture()
+ assert project(document)['expansion']['canonical'] is True
+ assert project(document, preview_authoring_candidate(draft(document)))['expansion']['working_copy']
++from astrid.sdk.timeline.commit import RuntimeCommitService
++assert set(RuntimeCommitService('pure').capture_candidate_inputs(document, candidate=draft(document))) == {'base', 'preview'}
+ '''
+     result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True,
+                             env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+
+codex
+The outside-repo handoff, flat SHA manifest, commit message, and `DONE` marker are written. I’m performing the final allowlist comparison against `8c29243d` and checking that no caches, reports, or unrelated paths entered the worktree.
+exec
+/bin/bash -lc "set -o pipefail
+allowed='astrid/core/execution/generic_host.py astrid/core/rendering/verified_source.py astrid/sdk/invocation.py astrid/sdk/timeline/commit.py astrid/sdk/timeline_filmstrip.py tests/packs/rendering/test_verified_source.py tests/sdk/test_capture_closure_source.py tests/sdk/test_capture_source_runtime.py tests/sdk/test_timeline_capture_projection.py'
+printf '%s\\n' '--- status ---'; git status --short --untracked-files=all
+printf '%s\\n' '--- changed tracked paths vs approved guard tip (should be empty) ---'; git diff --name-status 8c29243d -- astrid/core/execution/generic_host.py astrid/sdk/invocation.py astrid/sdk/timeline/commit.py astrid/sdk/timeline_filmstrip.py tests/sdk/test_capture_closure_source.py tests/sdk/test_capture_source_runtime.py tests/sdk/test_timeline_capture_projection.py
+printf '%s\\n' '--- approved path count ---'; printf '%s\\n' \""'$allowed" | wc -l
+printf '"'%s\\n' '--- forbidden repo artifacts ---'; test "'! -e notes/report.md && echo '"'notes/report.md absent'; test "'! -d docs/design && echo '"'docs/design absent'; find . -path './.git' -prune -o -type d \\( -name '__pycache__' -o -name '.pytest_cache' -o -name '.ruff_cache' \\) -print
+printf '%s\\n' '--- outside handoff markers ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/notes/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/notes/agent-capture-provider-current.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/DONE
+printf '%s\\n' '--- report tail ---'; tail -20 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/notes/report.md" in /home/user/work/wt/agt-m3-capture-sdk-current-gate
+ succeeded in 0ms:
+--- status ---
+ M astrid/core/execution/generic_host.py
+ M astrid/sdk/invocation.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline_filmstrip.py
+ M tests/sdk/test_capture_closure_source.py
+ M tests/sdk/test_capture_source_runtime.py
+ M tests/sdk/test_timeline_capture_projection.py
+?? astrid/core/rendering/verified_source.py
+?? tests/packs/rendering/test_verified_source.py
+--- changed tracked paths vs approved guard tip (should be empty) ---
+--- approved path count ---
+1
+--- forbidden repo artifacts ---
+./astrid/__pycache__
+./astrid/core/rendering/__pycache__
+./astrid/core/foundation/__pycache__
+./astrid/core/__pycache__
+--- outside handoff markers ---
+-rw-r--r-- 1 root root    0 Oct 20 10:50 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/DONE
+-rw-r--r-- 1 root root  280 Oct 20 10:50 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/commit-msg
+-rw-r--r-- 1 root root 1430 Oct 20 10:50 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/notes/agent-capture-provider-current.md
+-rw-r--r-- 1 root root 4463 Oct 20 10:50 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/notes/report.md
+--- report tail ---
+expectations. `tests/sdk/test_capture_source_runtime.py` was linted but its
+Runtime owner-pair lane was not repeated, per task instruction.
+
+## Decisions and limits
+
+- Applied only the exact approved delta; `notes/report.md` from the source
+  guard commit was deliberately copied outside the repository and omitted.
+- Used the readonly public-12 peer override for the 59-case scene-source lane;
+  no node_modules or runtime files were created, replaced, or linked.
+- Did not request a full or central Runtime pair suite. The results above are
+  targeted source/host/provider evidence only, not Runtime admission,
+  renderer propagation, capture certification, or release evidence.
+- No blockers for this port. Independent Runtime comparison, RenderRequest
+  propagation, and any later verifier retirement remain owner work.
+
+## Source hashes
+
+The flat path/SHA handoff is in the sibling
+`agent-capture-provider-current.md` file. Its hashes were computed after the
+final edit and include all nine changed code/test paths.
+
+2026-10-20T10:50:39.102549Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc \\\"rm -rf ./astrid/__pycache__ ./astrid/core/__pycache__ ./astrid/core/foundation/__pycache__ ./astrid/core/rendering/__pycache__\\nfind . -path './.git' -prune -o -type d \\\\\\\\( -name '__pycache__' -o -name '.pytest_cache' -o -name '.ruff_cache' \\\\\\\\) -print\\ngit status --short --untracked-files=all\\\"` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc "find ./astrid -type f -name '*.pyc' -delete
+find ./astrid -type d -name '__pycache__' -empty -delete
+find . -path './.git' -prune -o -type d \\( -name '__pycache__' -o -name '.pytest_cache' -o -name '.ruff_cache' \\) -print
+git status --short --untracked-files=all" in /home/user/work/wt/agt-m3-capture-sdk-current-gate
+ succeeded in 0ms:
+ M astrid/core/execution/generic_host.py
+ M astrid/sdk/invocation.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline_filmstrip.py
+ M tests/sdk/test_capture_closure_source.py
+ M tests/sdk/test_capture_source_runtime.py
+ M tests/sdk/test_timeline_capture_projection.py
+?? astrid/core/rendering/verified_source.py
+?? tests/packs/rendering/test_verified_source.py
+
+exec
+/bin/bash -lc "git diff -- astrid/sdk/invocation.py astrid/sdk/timeline/commit.py astrid/sdk/timeline_filmstrip.py tests/sdk/test_capture_closure_source.py tests/sdk/test_capture_source_runtime.py tests/sdk/test_timeline_capture_projection.py | sed -n '1,320p'; printf '\\n--- final hygiene ---\\n'; git diff --check; find . -path './.git' -prune -o -type d \\( -name '__pycache__' -o -name '.pytest_cache' -o -name '.ruff_cache' \\) -print; printf '\\n--- commit message ---\\n'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/commit-msg; printf '\\n--- final status ---\\n'; git status --short --untracked-files=all" in /home/user/work/wt/agt-m3-capture-sdk-current-gate
+ succeeded in 10ms:
+diff --git a/astrid/sdk/invocation.py b/astrid/sdk/invocation.py
+index ecd9488f..86790724 100644
+--- a/astrid/sdk/invocation.py
++++ b/astrid/sdk/invocation.py
+@@ -4093,6 +4093,13 @@ def invoke(
+ 
+     intent_modality = _generation_capability_modality(capability)
+     request_inputs = dict(inputs or {})
++    if capability.id in {"rendering.render", "rendering.timeline_visualize"}:
++        from astrid.core.rendering.verified_source import reject_source_keys
++
++        try:
++            reject_source_keys(request_inputs)
++        except ValueError as exc:
++            raise CapabilityValidationError(str(exc)) from exc
+     if capability.id == "rendering.render":
+         # Apply caller/mode checks before delegated child dispatch as well as
+         # top-level preflight. Child file custody still belongs to the bridge.
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index 39660ba6..397018e1 100644
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -633,6 +633,14 @@ class RuntimeCommitService:
+     def __init__(self, contract_digest):
+         self.contract_digest = contract_digest
+ 
++    def capture_candidate_inputs(self, document, *, candidate):
++        """Pure optional inputs for Runtime's working-copy verification."""
++        document, candidate = copy.deepcopy((document, candidate))
++        return copy.deepcopy({
++            "base": bundle_from_document(document),
++            "preview": preview_authoring_candidate(candidate),
++        })
++
+     def project_capture(self, document, *, authoring_preview=None):
+         """Pure optional capture admission; Runtime supplies a verified closure."""
+         from astrid.core.timeline.shot_composition_projection import (
+diff --git a/astrid/sdk/timeline_filmstrip.py b/astrid/sdk/timeline_filmstrip.py
+index d2029bab..03a06bd2 100644
+--- a/astrid/sdk/timeline_filmstrip.py
++++ b/astrid/sdk/timeline_filmstrip.py
+@@ -338,6 +338,7 @@ def _open_current_input_closure(
+     if not isinstance(projected_config, Mapping) or not isinstance(projected_registry, Mapping):
+         _fail("Runtime returned an invalid exact parent composition closure.")
+     authority = {
++        **deepcopy(dict(expansion or {})),
+         "parent_revision_id": parent_head,
+         "parent_content_digest": parent.get("content_digest"),
+         "children": deepcopy(list((expansion or {}).get("children") or [])),
+@@ -676,6 +677,9 @@ def prepare_filmstrip(
+     _composed_media_attachment: bool = False,
+ ) -> dict:
+     """Select a successful managed render; never admit a caller-provided file."""
++    from astrid.core.rendering.verified_source import reject_source_keys
++
++    reject_source_keys(inputs)
+     if client is None:
+         from .client import AstridClient
+         with AstridClient.open_from_launcher() as connected:
+diff --git a/tests/sdk/test_capture_closure_source.py b/tests/sdk/test_capture_closure_source.py
+index 6e08aa95..41922af1 100644
+--- a/tests/sdk/test_capture_closure_source.py
++++ b/tests/sdk/test_capture_closure_source.py
+@@ -73,6 +73,18 @@ def test_historical_capture_keeps_exact_parent_and_child_pins(client):
+     ]
+ 
+ 
++def test_saved_capture_keeps_the_entire_managed_expansion(client):
++    parent, projected, expansion = managed_timeline._project_exact_parent_head(
++        client=client, project_id=client.project_id, timeline_id=client.timeline_id,
++        parent_revision_id="parent-1")
++    snapshot = prepare(client)["capture_snapshot"]
++    assert snapshot["config"] == projected.config
++    assert snapshot["registry"] == projected.registry
++    assert snapshot["metadata"]["capture_authority"]["expansion"] == {
++        **expansion, "parent_content_digest": parent["content_digest"]}
++    assert expansion["graph"] and "outputs" in expansion
++
++
+ @pytest.mark.parametrize("field,value", [
+     ("project_id", "foreign"), ("timeline_id", "foreign"),
+     ("revision_id", "newer-head"), ("content_digest", None),
+@@ -226,7 +238,6 @@ def test_sdk_capture_reaches_runtime_before_any_snapshot_write(client, monkeypat
+         assert 'authoring_preview' not in spec['inputs']
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs the host-owned verified timeline source (435357ae verified_source/generic_host)")
+ def test_cas_capture_metadata_cannot_mint_source_or_activate_canonical_compiler(tmp_path):
+     import hashlib
+     import json
+@@ -295,14 +306,12 @@ def test_candidate_shape_or_label_cannot_replace_authored_data(client, preview):
+     assert runtime.created == [] and runtime.objects == before
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs reject_source_keys from the verified timeline source (435357ae)")
+ @pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
+ def test_sdk_capture_reserved_source_ports_are_refused(client, key):
+     with pytest.raises(ValueError, match='host-owned'):
+         prepare(client, **{key: {'source_kind': 'revision', 'revision_id': 'forged'}})
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs reject_source_keys from the verified timeline source (435357ae)")
+ @pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
+ def test_sdk_capture_invocation_refuses_source_before_admission(key):
+     from astrid.sdk.invocation import _invoke_internal_result
+diff --git a/tests/sdk/test_capture_source_runtime.py b/tests/sdk/test_capture_source_runtime.py
+index 687144d5..48567945 100644
+--- a/tests/sdk/test_capture_source_runtime.py
++++ b/tests/sdk/test_capture_source_runtime.py
+@@ -166,8 +166,37 @@ def open_source_runtime(tmp_path, before_provider=lambda runtime: None):
+         service.close()
+ 
+ 
+-# The xfails below need the host-owned verified timeline source (435357ae: verified_source, generic_host).
+-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
++@pytest.mark.parametrize("working_copy", [False, True])
++@pytest.mark.parametrize("inline", [False, True])
++def test_current_capture_reaches_claim_and_verified_host(runtime, tmp_path, working_copy, inline):
++    snapshot = runtime.snapshot(working_copy)
++    task = runtime.admit(snapshot, inline=inline)
++    values = runtime.materialize(task, tmp_path / "attempt")
++    source = values.timeline_source
++    binding = source.read()
++    assert binding["snapshot"] == snapshot
++    assert binding["authority"] == snapshot["metadata"]["capture_authority"]
++    assert json.loads(Path(values["timeline"]).read_text()) == snapshot["config"]
++    source.validate(values["timeline"], values["assets_registry"])
++    source.validate_snapshot(snapshot)
++    assert binding["ref"]["source_kind"] == ("working_copy" if working_copy else "revision")
++    if working_copy:
++        assert task["spec"]["spec"]["inputs"]["authoring_preview"] == runtime.authoring_preview
++    else:
++        from astrid.packs.rendering.actions.render.managed_timeline import (
++            _project_exact_parent_head,
++        )
++
++        parent, projected, expansion = _project_exact_parent_head(
++            client=runtime, project_id=runtime.project_id, timeline_id="main", parent_revision_id="parent-1")
++        assert snapshot["config"] == projected.config
++        assert snapshot["registry"] == projected.registry
++        assert binding["authority"]["expansion"] == {
++            **expansion, "parent_content_digest": parent["content_digest"]}
++
++
++# Renderer request propagation is still separate from the now-restored host handoff.
++@pytest.mark.xfail(strict=True, reason="needs verified source propagation through RenderRequest")
+ @pytest.mark.parametrize("working_copy", [False, True])
+ @pytest.mark.parametrize("inline", [False, True])
+ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtime, tmp_path, monkeypatch, working_copy, inline):
+@@ -203,7 +232,6 @@ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtim
+     assert parsed.verified_source.read() == binding
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
+ def test_missing_candidate_explicit_cas_preview_stays_uncertified(runtime, tmp_path):
+     snapshot = runtime.snapshot(working_copy=True)
+     task = runtime.admit(snapshot, forward_candidate=False, uncertified=True)
+@@ -280,7 +308,6 @@ def test_replaced_duplicate_capture_ref_is_refused_at_admission(runtime):
+         runtime.admit(snapshot, duplicate=runtime.ref(replacement))
+ 
+ 
+-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
+ def test_native_compiled_capture_does_not_acquire_canonical_source(runtime, tmp_path):
+     snapshot = runtime.snapshot()
+     # Neither selector remains; canonical_timeline alone would make Runtime publish a revision ref.
+diff --git a/tests/sdk/test_timeline_capture_projection.py b/tests/sdk/test_timeline_capture_projection.py
+index dc0b5729..c2d99960 100644
+--- a/tests/sdk/test_timeline_capture_projection.py
++++ b/tests/sdk/test_timeline_capture_projection.py
+@@ -28,6 +28,32 @@ def draft(document):
+     return bundle
+ 
+ 
++@pytest.mark.parametrize("changed", [False, True])
++def test_capture_candidate_inputs_exact_pure_detached_golden(monkeypatch, changed):
++    document = document_fixture()
++    candidate = draft(document) if changed else bundle_from_document(document)
++    before = copy.deepcopy((document, candidate))
++    expected = {"base": bundle_from_document(document),
++                "preview": preview_authoring_candidate(candidate)}
++    provider = RuntimeCommitService("unused-by-pure-capture")
++
++    def forbidden(*args, **kwargs):
++        raise AssertionError("pure capture inputs attempted IO")
++
++    with monkeypatch.context() as no_io:
++        for target, name in ((builtins, "open"), (io, "open"), (Path, "open"),
++                             (socket, "socket"), (socket, "create_connection"),
++                             (subprocess, "Popen"), (subprocess, "run")):
++            no_io.setattr(target, name, forbidden)
++        result = provider.capture_candidate_inputs(document, candidate=candidate)
++        assert json.dumps(result, sort_keys=True, allow_nan=False) == json.dumps(
++            expected, sort_keys=True, allow_nan=False)
++        result["base"]["parent"]["config"]["opaque"]["v"].append("caller change")
++        result["preview"]["candidate"]["parent"]["config"]["opaque"]["v"].append("caller change")
++        assert provider.capture_candidate_inputs(document, candidate=candidate) == expected
++    assert (document, candidate) == before
++
++
+ @pytest.mark.parametrize("candidate", [False, True])
+ def test_projection_is_detached_json_deterministic_without_io(monkeypatch, candidate):
+     document = document_fixture()
+@@ -167,6 +193,8 @@ from astrid.core.timeline.authoring_bundle import preview_authoring_candidate
+ document = document_fixture()
+ assert project(document)['expansion']['canonical'] is True
+ assert project(document, preview_authoring_candidate(draft(document)))['expansion']['working_copy']
++from astrid.sdk.timeline.commit import RuntimeCommitService
++assert set(RuntimeCommitService('pure').capture_candidate_inputs(document, candidate=draft(document))) == {'base', 'preview'}
+ '''
+     result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True,
+                             env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+
+--- final hygiene ---
+
+--- commit message ---
+feat(timeline): port current capture source handoff
+
+Port the approved verified capture provider and SDK source-key guard onto the
+current Agent integration root, preserving existing kernel and renderer
+contracts. Add the targeted source, host, closure, and scene-callback tests.
+
+--- final status ---
+ M astrid/core/execution/generic_host.py
+ M astrid/sdk/invocation.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline_filmstrip.py
+ M tests/sdk/test_capture_closure_source.py
+ M tests/sdk/test_capture_source_runtime.py
+ M tests/sdk/test_timeline_capture_projection.py
+?? astrid/core/rendering/verified_source.py
+?? tests/packs/rendering/test_verified_source.py
+
+codex
+# Report
+
+Ported the approved capture handoff and SDK guard onto current Agent integration. Exactly nine code/test paths changed; no in-repo report or unrelated artifacts added.
+
+Tests:
+
+- Provider: 34 passed
+- Projection goldens: 9 passed
+- Verified host: 33 passed
+- Closure: 26 passed, 2 expected xfails
+- Public-12 source callback: 59 passed
+- Ruff and `git diff --check`: passed
+- Runtime owner pair/full suite: not run, as instructed
+
+Handoff: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/notes/report.md)
+
+Commit message and `DONE` marker are written.
+tokens used
+119,676
+# Report
+
+Ported the approved capture handoff and SDK guard onto current Agent integration. Exactly nine code/test paths changed; no in-repo report or unrelated artifacts added.
+
+Tests:
+
+- Provider: 34 passed
+- Projection goldens: 9 passed
+- Verified host: 33 passed
+- Closure: 26 passed, 2 expected xfails
+- Public-12 source callback: 59 passed
+- Ruff and `git diff --check`: passed
+- Runtime owner pair/full suite: not run, as instructed
+
+Handoff: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/notes/report.md)
+
+Commit message and `DONE` marker are written.

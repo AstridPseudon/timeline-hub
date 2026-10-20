@@ -1,0 +1,400 @@
++    if row['clipType'].lower() in ('media', 'image', 'video', 'audio'):
++        raise CommandError('clip.add v1 does not support media clips', kind='unsupported_media')
++    # Main treats even a null media-selector key as a selection. Do not turn
++    # it into absence or silently manufacture registry/media authority.
++    for key in ('asset', 'asset_id', 'media_id', 'object_id'):
++        if key in row:
++            raise CommandError(f'clip.add v1 does not support {key}', kind='unsupported_media')
++    for key in ('sourceURL', 'sourceUrl', 'source_url', 'src', 'source_uuid', 'source',
++                'from', 'to', 'from_ms', 'to_ms', 'at_ms', 'duration', 'duration_ms',
++                'time_map', 'timeMap', 'clips', 'children', 'clip_type', 'anchor'):
++        if row.get(key) is not None:
++            raise CommandError(f'clip.add v1 does not support {key}', kind='unsupported_timing')
++    if row.get('speed') is not None and (isinstance(row['speed'], bool) or row['speed'] != 1):
++        raise CommandError('clip.add v1 requires literal hold timing without speed changes',
++                           kind='unsupported_timing')
++    app = row.get('app')
++    if app is not None and not isinstance(app, dict):
++        raise CommandError('clip.add intent container must be object or null')
++    nested = app.get('astrid') if isinstance(app, dict) else None
++    if nested is not None and not isinstance(nested, dict):
++        raise CommandError('clip.add intent container must be object or null')
++    for container in (row, app, nested):
++        if isinstance(container, dict):
++            for key in (*RELATIONS, 'anchor', 'standin', 'standin_intent'):
++                if container.get(key) is not None:
++                    raise CommandError(f'clip.add v1 does not support {key}', kind='unsupported_timing')
++    ref = 'parent/track:' + row['track']
++    for key in ('id', 'kind', 'role', 'enabled', 'active', 'disabled', 'hidden', 'deleted'):
++        ctx.read(ref, [key])
++    track = ctx.state.entity(ref, optional=True)
++    if track is None:
++        raise CommandError('clip.add destination track is missing', kind='identity_conflict', ref=ref)
++    if track.get('kind') not in ('visual', 'audio') or track.get('role', 'output') != 'output':
++        raise CommandError('clip.add requires an output track', ref=ref)
++    if not active(track):
++        raise CommandError('clip.add requires an active track', ref=ref)
++    ctx.bind('add.track', ref)
++    ctx.create('parent', 'clip', row)
++
++
++def capture_clip_add(bundle, owner, row):
++    """Capture through native execution; the caller allocates row.id beforehand."""
++    from .commands import execute
++
++    return execute(bundle, [{'schema_version': 1, 'op': 'clip.add', 'version': '1',
++                             'select': owner, 'args': {'row': copy.deepcopy(row)},
++                             'intent': {}}]).commands[0]
+diff --git a/astrid/sdk/timeline/_collections.py b/astrid/sdk/timeline/_collections.py
+index 9db0a28d9c96248f93b68406a07857f3bc0b402e..d0ae883dd54995da82c8f7ecafb31f49bb7d035e
+--- a/astrid/sdk/timeline/_collections.py
++++ b/astrid/sdk/timeline/_collections.py
+@@ -142,6 +142,18 @@
+         raise CommandError('inverse collection boundary is unavailable', kind='history_unavailable')
+ 
+ 
++def _ordinary_append(record, writes, owner, kind):
++    """Trusted create primitives append; reversing insertions still needs a boundary."""
++    if record['command']['op'] in ('timeline.inverse', 'timeline.restore'):
++        return False
++    created = {item['ref'] for item in record['created']
++               if item['owner'] == owner and item['kind'] == kind}
++    return created == {w['ref'] for w in writes} and all(
++        w['before'] == ABSENT and w['after']['state'] == 'present'
++        and isinstance(w['after']['value'], dict)
++        and w['after']['value'].get('id') == member(w['ref'])[2] for w in writes)
++
++
+ def restoration_orders(records):
+     """Project only structural membership; inverse insert positions need a boundary."""
+     touched = {member(w['ref'])[:2] for record in records for w in record['writes']
+@@ -194,7 +206,8 @@
+             if legacy_inverse and any(s['members'] != s['order'] or s['boundaries'] != s['order']
+                                       or s['order'] not in stages for s in selected):
+                 raise CommandError('unrecoverable legacy selection stage', kind='history_unavailable')
+-            if inserts and record['command']['op'] != 'track.create':
++            if (inserts and record['command']['op'] != 'track.create'
++                    and not _ordinary_append(record, writes, owner, kind)):
+                 if not isinstance(records, AcceptedRecords):
+                     raise CommandError('inverse insertion order needs an accepted boundary', kind='history_unavailable')
+                 boundary = boundary or records.boundary(record)
+diff --git a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py
+index 0729532d797bc3b899674362efd7192b397a93a5..889a6517765d289632a9aa5505cf5e7b18c5d3c3
+--- a/astrid/sdk/timeline/commands.py
++++ b/astrid/sdk/timeline/commands.py
+@@ -34,7 +34,9 @@
+ def operations():
+     """M1 native recipe entries; the full extensible registry belongs to M2."""
+     from .capture import MOVE_INTENT, move, track_create
++    from ._clip_commands import clip_add
+     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
++            'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
+             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {})}
+ 
+ 
+@@ -59,7 +61,7 @@
+         raise CommandError(errors[0].message)
+     if command['version'] != '1':
+         raise CommandError("unsupported operation version", kind='unsupported_version')
+-    if command['op'] not in ('clip.move', 'track.create', 'timeline.inverse', 'timeline.restore'):
++    if command['op'] not in ('clip.move', 'clip.add', 'track.create', 'timeline.inverse', 'timeline.restore'):
+         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
+     operation = operations().get(command['op'])
+     if operation is not None:
+diff --git a/tests/editing_conformance/test_commit_runtime_first_clip.py b/tests/editing_conformance/test_commit_runtime_first_clip.py
+index bb46a5f4305e00701eb9aefc0d61cc7d8110f818..99962dce65594a138b4d8b8e4fb784758502d083
+--- a/tests/editing_conformance/test_commit_runtime_first_clip.py
++++ b/tests/editing_conformance/test_commit_runtime_first_clip.py
+@@ -9,6 +9,7 @@
+ 
+ import pytest
+ 
++from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+ from astrid.sdk.timeline._clip_commands import capture_clip_add
+ from astrid.sdk.timeline.capture import capture_track_create
+ from astrid.sdk.timeline.commit import bundle_from_document
+@@ -19,8 +20,10 @@
+ pytestmark = pytest.mark.integration
+ 
+ 
++@pytest.mark.parametrize('nullable_speed', [False, pytest.param(True, marks=pytest.mark.xfail(
++    strict=True, reason='Runtime timeline_inspection must support main\'s explicit null speed default'))])
+ def test_empty_bootstrap_first_clip_client_commit_exact_reload_inverse_redo(
+-    tmp_path, monkeypatch, real_runtime,
++    tmp_path, monkeypatch, real_runtime, nullable_speed,
+ ):
+     use_runtime()
+     monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
+@@ -65,9 +68,17 @@
+ 
+     def reload_document(result):
+         document = result.data['canonical_document']
++        stored = client._remote._transport.get_project_parent_composition_revision(
++            project, 'film', result.data['accepted_revision_id'])
++        for key, value in document['parent_revision'].items():
++            assert stored[key] == value
++        assert stored['dependency_manifest'] == document['dependency_manifest']
+         opened = client.timelines.open_bundle(project, 'film', revision_id=result.data['accepted_revision_id'])
+         assert opened.ok, opened.as_dict()
+-        assert opened.data['bundle']['parent'] == document['parent_revision']['payload']
++        # Main moves occurrences out of parent into placements when opening.
++        assert opened.data['bundle'] == open_authoring_bundle(
++            {**document['parent_revision'], 'project_id': project, 'timeline_id': 'film'},
++            shot_revisions=[], internal_timeline_revisions=[])
+         assert opened.data['bundle']['shots'] == {}
+         return document
+ 
+@@ -80,11 +91,12 @@
+         'id': 'first-track', 'kind': 'visual', 'role': 'output', 'opaque': [None, False]})
+     tracked = commit([track], 'create-track')
+     before = reload_document(tracked)
+-    add = capture_clip_add(bundle_from_document(before), 'parent', literal_row())
++    row = literal_row(**({'speed': None} if nullable_speed else {}))
++    add = capture_clip_add(bundle_from_document(before), 'parent', row)
+     created = commit([add], 'create-first-clip')
+     document = reload_document(created)
+-    assert document['parent_revision']['payload']['clips'] == [literal_row()]
+-    assert document['parent_revision']['payload']['config']['clips'] == [literal_row()]
++    assert document['parent_revision']['payload']['clips'] == [row]
++    assert document['parent_revision']['payload']['config']['clips'] == [row]
+     assert document['dependency_manifest'] == before['dependency_manifest']
+     assert document['shot_revisions'] == document['internal_timeline_revisions'] == []
+     accepted = history()
+@@ -106,10 +118,10 @@
+         assert history() == prior
+ 
+     refuse('occupied-first-clip')
+-    undone = inverse(created.receipt['receipt_id'], 'undo-first-clip')
++    undone = inverse(created.as_dict()['receipt']['receipt_id'], 'undo-first-clip')
+     assert reload_document(undone) == before
+     refuse('retired-first-clip')
+-    redone = inverse(undone.receipt['receipt_id'], 'redo-first-clip')
++    redone = inverse(undone.as_dict()['receipt']['receipt_id'], 'redo-first-clip')
+     assert reload_document(redone) == document
+-    again = inverse(redone.receipt['receipt_id'], 'undo-redone-first-clip')
++    again = inverse(redone.as_dict()['receipt']['receipt_id'], 'undo-redone-first-clip')
+     assert reload_document(again) == before
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_add.py b/tests/editing_conformance/test_recipe_m2_clip_add.py
+index fc6d7f60a357bd482e715324d3371ab6654d8afc..c85c846a80c23bb5702c055dcac5656064584ae8
+--- a/tests/editing_conformance/test_recipe_m2_clip_add.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_add.py
+@@ -44,7 +44,7 @@
+     return {'id': 'first-clip', 'clipType': 'text', 'track': 'first-track',
+             'at': .017, 'hold': 1.013, 'params': {'text': 'First'},
+             'app': {'astrid': {'on': None, 'opaque': ['first-clip', None]}, 'future': False},
+-            'nullable': None, 'sourceURL': None, 'from': None, 'speed': None,
++            'nullable': None, 'sourceURL': None, 'from': None,
+             'opaque': {'id': 'first-clip', 'ordered': [None, False, 0, {}, []]}, **changes}
+ 
+ 
+@@ -97,6 +97,15 @@
+     assert replay(plan, original).records == plan.records
+ 
+ 
++def test_explicit_null_speed_is_preserved_by_native_creation_and_compilation():
++    original = with_track()
++    row = literal_row(speed=None)
++    plan = execute(original, [capture_clip_add(original, 'parent', row)])
++    assert State(plan.bundle).entity('parent/clip:first-clip') == row
++    assert document_from_bundle(plan.bundle)['parent_revision']['payload']['clips'] == [row]
++    assert inverse(plan.bundle, plan.records).bundle == original
++
++
+ def test_append_preserves_existing_rows_order_and_closed_source_pins_on_rebase_and_inverse():
+     original = bundle_from_document(document_fixture())
+     row = literal_row(track='picture')
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import json
+from tests.editing_conformance.test_recipe_m2_clip_add import empty_document, literal_row, FIXTURE
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline._clip_commands import capture_clip_add
+from astrid.sdk.timeline.commands import execute
+original = bundle_from_document(empty_document())
+track = capture_track_create(original, 'parent', {'id': 'first-track', 'kind': 'visual', 'role': 'output', 'unknown': [None, False]})
+first = execute(original, [track])
+add = capture_clip_add(first.bundle, 'parent', literal_row())
+plan = execute(original, [track, add])
+FIXTURE.write_text(json.dumps({'input': empty_document(), 'commands': plan.commands, 'records': plan.records, 'output': document_from_bundle(plan.bundle)}, indent=2, ensure_ascii=False, allow_nan=False) + '\\n')
+PY
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py' in /home/user/work/wt/agt-m2-first-clip
+ succeeded in 11921ms:
+.....................................................x.................. [ 26%]
+........................................................................ [ 53%]
+........................................................................ [ 80%]
+......................................................                   [100%]
+269 passed, 1 xfailed in 10.86s
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_clip_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_collections.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/editing_conformance/test_commit_runtime_first_clip.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-first-clip commit-integration --files tests/editing_conformance/test_commit_runtime_first_clip.py
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-clip/report.md <<'"'EOF'
+
+Central second attempt: **1 failed, 2 passed in 14.50s**, exit 1. New first-clip command DID accept/store exact nonempty JSON, but "'`open_bundle` inspection failed on explicit `speed: null`: Runtime `runtime_protocol/timeline_inspection.py:415` calls `_fraction(raw.get('"'speed', 1))"'`, so null does not take the default. Main `astrid/core/timeline/duration.py:148-151` explicitly accepts null speed as 1. Product semantics are unchanged; no normalization/refusal substituted. Retained an explicit positive native null-speed creation/compile/inverse test. Added a strict expected-failure real Runtime variant, naming the required Runtime inspection correction. The primary row/golden omits speed and still preserves other explicit nulls, opaque arrays/maps and all unknown fields. This is an external read-side mismatch for manager disposition, NOT claimed as supported end-to-end. No main passing behavior tests altered.
+EOF' in /home/user/work/wt/agt-m2-first-clip
+ succeeded in 0ms:
+All checks passed!
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-first-clip-commit-integration-1019230358-2285
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-clip-commit-integration-1019230358-2285/
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-clip-commit-integration-1019230358-2285/status; rg --files --hidden -uuu -g '*.pyc' -g '.pytest_cache/**' | head -25; git status --short; git diff --check" in /home/user/work/wt/agt-m2-first-clip
+ succeeded in 479ms:
+queued
+.pytest_cache/v/cache/nodeids
+.pytest_cache/.gitignore
+.pytest_cache/README.md
+.pytest_cache/CACHEDIR.TAG
+tests/__pycache__/__init__.cpython-313.pyc
+tests/__pycache__/conftest.cpython-313-pytest-9.0.2.pyc
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/_clip_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_clip_add.json
+?? tests/editing_conformance/test_commit_runtime_first_clip.py
+?? tests/editing_conformance/test_recipe_m2_clip_add.py
+?? tests/sdk/test_timeline_clip_add_provider.py
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-clip/commit-msg <<'EOF'
+feat(timeline): register literal parent clip creation
+
+Add clip.add v1 with a closed row argument, caller-allocated identities,
+recorded destination-track guards and lossless ordinary clip appends.
+Preserve authored seconds and opaque JSON through native capture,
+compilation and guarded inverse/redo without a renderer or hidden lane.
+
+Extend structural order verification using trusted create primitive facts,
+retaining accepted inverse boundary checks and existing M1 records.
+Add portable capture goldens and native/provider/real Runtime coverage;
+retain positive expected failures for staged new-lane undo and Runtime's
+explicit-null-speed inspection mismatch.
+EOF
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-first-clip-commit-integration-1019230358-2285 1" in /home/user/work/wt/agt-m2-first-clip
+ succeeded in 0ms:
+test agt-m2-first-clip-commit-integration-1019230358-2285: pass exit=0 in 19s — commit-integration on agt-m2-first-clip (agent tree 99e6db282f5dd9194bffd2c0030c37b52085b5b7)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_first_clip.py
+counts: 3 passed, 1 xfailed in 16.55s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-clip-commit-integration-1019230358-2285/log.txt ---
+...x                                                                     [100%]
+3 passed, 1 xfailed in 16.55s
+
+codex
+The final central run passed: **3 passed, 1 strict expected failure**. That proves empty bootstrap → registered track creation → registered first clip → exact stored/client reload → inverse/redo with the renderer blocked, alongside both unchanged M1 journeys. The remaining known limits are staged new-lane undo and Runtime inspection of explicit null speed. I’m writing the handoff report and commit message; no merge or full suite was requested.
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-clip/report.md <<'EOF'
+# agt-m2-first-clip — branch-only result
+
+Implemented "'`clip.add` v1 through the current native registry and `Recording.create`. No merge/push/commit/full suite/install/network requested or performed. Commit message is at `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-clip/commit-msg`.
+
+## Runtime / App handoff
+
+Worktree: `/home/user/work/wt/agt-m2-first-clip`.
+
+- Canonical schema: `/home/user/work/wt/agt-m2-first-clip/astrid/core/timeline/schema/edit-command.schema.json` (`ClipAddArgs`, `clip.add` conditional).
+- Handler/capture: `/home/user/work/wt/agt-m2-first-clip/astrid/sdk/timeline/_clip_commands.py`; `capture_clip_add(bundle, '"'parent', row)"'` executes the real native framework and returns the authoritative captured command.
+- Portable golden: `/home/user/work/wt/agt-m2-first-clip/tests/editing_conformance/fixtures/recipe_m2_clip_add.json`. Includes exact input canonical document, captured track/create + clip/add commands, actual framework records, and output canonical document. No hand-manufactured captures or diff/setter implementation.
+- Real client/provider proof: `/home/user/work/wt/agt-m2-first-clip/tests/editing_conformance/test_commit_runtime_first_clip.py`.
+
+Exact minimal command:
+
+```json
+{"schema_version":1,"op":"clip.add","version":"1","select":"parent","args":{"row":{"id":"first-clip","clipType":"text","track":"first-track","at":0.017,"hold":1.013}},"intent":{}}
+```
+
+`args` is closed to `row`. Complete row requires address-safe preallocated `id`, `clipType`, address-safe existing `track`, explicit finite `at >= 0`, and finite `hold > 0`. Unknown finite JSON and admitted explicit nulls survive verbatim. Handler records destination-track ID/kind/role/activity, original clip membership/order and new-ID absence; only new row is authored. No existing clip extraction/diff, registry mutation, hidden allocation or after-snapshot setter. Caller composes explicit `track.create` in the same batch for new lanes; acceptance works, grouped undo remains below.
+
+Parent-only literal hold semantics: main'"'s lossless authoring-bundle compiler carries seconds unchanged; "'`clip.add` does not imitate high-level Checkout.add'"'s quantization or generate app intent. Native test proves "'`.017`/`1.013` survive reload while main'"'s duration evaluator rounds only the evaluated frames at rational FPS. No FPS/window input is consumed by this parent row append. Non-null media/source-window/maps/anchors/follow intent refuse; even null asset-selector keys refuse because main treats their presence as a media selection. No popup/media/swap/occurrence coverage claimed.
+
+"'`_collections.py` adds only generic ordinary append proof from trusted recorder-created identities plus absent→present whole-row writes. Accepted inverse insertions retain their verified boundary requirement; old `track.create`/M1 proof remains intact.
+
+## Exact validation
+
+Run in `/home/user/work/wt/agt-m2-first-clip`:
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/editing_conformance/test_recipe_m1_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py
+```
+
+**269 passed, 1 xfailed in 10.86s.** Covers atomic rejection, ID collisions and retired IDs, exact native/provider inverse/redo, disjoint existing-row fields/order, source/closure pins, missing/source/inactive tracks, interval/media/follow refusal, forged claims, golden equality, and unchanged M1/global restore/order guards. Strict xfail retains the positive grouped new-track + clip exact inverse expectation; staged consumer reversal is the follow-up requirement.
+
+Central service request and wait (not run locally):
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-first-clip commit-integration --files tests/editing_conformance/test_commit_runtime_first_clip.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-first-clip-commit-integration-1019230358-2285 1
+```
+
+Exact executed command:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_first_clip.py
+```
+
+**3 passed, 1 xfailed in 16.55s**, exit 0. Agent source tree `99e6db282f5dd9194bffd2c0030c37b52085b5b7`. Result/log: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-first-clip-commit-integration-1019230358-2285/`. Positive first clip uses only empty bootstrap, registered commands and real client/provider; public legacy publication and scene evaluation are tripwired off. Checks exact stored payload/digest/dependency manifest, opened bundle, accepted recorder history, collision/retired refusal and inverse/redo/second undo. Both existing M1 journeys pass unchanged.
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_clip_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_collections.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/editing_conformance/test_commit_runtime_first_clip.py
+git diff --check
+```
+
+Both pass. No full suite or `make check` run under the explicit no-full/install scope.
+
+## Findings, limits and next steps
+
+1. **Official Runtime schema handoff still required before M2 merge.** Current Runtime'"'s generic operation envelope let this actual-provider integration run; that is not a substitute for refreshing its byte-identical Agent schema projection.
+2. **Existing Runtime null-speed read mismatch:** "'`runtime_protocol/timeline_inspection.py:415` applies `_fraction(raw.get('"'speed', 1))"'` and rejects explicit null. Main `astrid/core/timeline/duration.py` defaults null to 1. Actual provider acceptance/raw canonical reload preserve null speed exactly, but public `open_bundle` inspection fails. Product semantics were not changed to refuse or normalize it. Native positive null-speed preservation is retained, and the full real Runtime positive is a strict xfail naming the required inspection correction. Primary first-clip row/golden omits speed and still preserves other nulls and opaque values. Manager should route the read-side fix or decide admission scope; do not claim complete null-speed end-to-end coverage.
+3. **New-lane batch inverse** still refuses created-track surviving dependents before staged consumer reversal. Acceptance works without hidden IDs; positive strict xfail remains. Implement staged inverses on the designated follow-up branch, without claiming this closes new-track undo.
+4. First central attempt failed only a new test assertion that incorrectly equated bundle.parent with canonical payload (main extracts occurrences into placements); fixed to check exact stored bytes and main'"'s codec. Second attempt accepted/stored the new clip and exposed null-speed inspection (above). Final run keeps that original positive expectation as strict xfail rather than encoding refusal/missing behavior. No existing passing behavior tests were edited, skipped or weakened.
+5. Keep this branch unmerged pending the recorded M1 gate and manager review. Media/add-swap, occurrence creation, popup producer migration and writer retirement remain separate work. The successful first nonempty command path is now available for Runtime's blocker-removal tests.
+EOF
+python3 - <<'PY'
+from pathlib import Path
+import shutil
+for path in (Path('.pytest_cache'), Path('tests/__pycache__')):
+    if path.exists():
+        shutil.rmtree(path)
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m2-first-clip
+ succeeded in 444ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/_clip_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_clip_add.json
+?? tests/editing_conformance/test_commit_runtime_first_clip.py
+?? tests/editing_conformance/test_recipe_m2_clip_add.py
+?? tests/sdk/test_timeline_clip_add_provider.py
+
+codex
+Implemented parent-only `clip.add` v1 with native capture, preallocated IDs, destination-track guards, lossless row preservation, portable goldens and exact inverse/redo.
+
+Validation:
+
+- Focused native/provider tests: **269 passed, 1 strict xfailed**.
+- Central real Runtime/client integration: **3 passed, 1 strict xfailed**, including both unchanged M1 journeys.
+- Ruff and `git diff --check`: passed.
+- No full suite or merge requested.
+
+Known limits: grouped new-track undo needs staged reversal; Runtime inspection rejects explicit null speed despite accepting/storing it. Both positive expectations remain strict xfails. Runtime’s official schema projection still needs updating before M2 merge.
+
+[Report with exact commands, artifacts and findings](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-clip/report.md) · [Commit message](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-clip/commit-msg)
+tokens used
+171,635
+Implemented parent-only `clip.add` v1 with native capture, preallocated IDs, destination-track guards, lossless row preservation, portable goldens and exact inverse/redo.
+
+Validation:
+
+- Focused native/provider tests: **269 passed, 1 strict xfailed**.
+- Central real Runtime/client integration: **3 passed, 1 strict xfailed**, including both unchanged M1 journeys.
+- Ruff and `git diff --check`: passed.
+- No full suite or merge requested.
+
+Known limits: grouped new-track undo needs staged reversal; Runtime inspection rejects explicit null speed despite accepting/storing it. Both positive expectations remain strict xfails. Runtime’s official schema projection still needs updating before M2 merge.
+
+[Report with exact commands, artifacts and findings](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-clip/report.md) · [Commit message](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-first-clip/commit-msg)

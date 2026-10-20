@@ -1,0 +1,400 @@
++        request = {'target': {'kind': 'default'}, 'inputs': [descriptor]}
++        submissions = []
++        dispatch = transport.dispatch_task_admission
++
++        def record_dispatch(arguments):
++            submissions.append(copy.deepcopy(arguments))
++            return dispatch(arguments)
++
++        transport.dispatch_task_admission = record_dispatch
++        invoked = sdk.invoke(OUTER, kind='executor', project=project_id, client=client,
++            inputs={'project': project_id, 'timeline_ref': 'film', 'timing_policy': 'ripple',
++                'occurrence_ids': ['o1']},
++            wait=False, idempotency_key='outer-normal-submit')
++        assert invoked.ok, invoked.error
++        ordinary = submissions[0]
++        assert ordinary['capability_id'] == OUTER
++        assert ordinary['input_object_ids'] == []
++        ordinary_task = daemon.service.task(invoked.kernel_task_id)['task']
++        with capsys.disabled():
++            print('OUTER_NORMAL_TASK_ID=' + invoked.kernel_task_id)
++            print('OUTER_NORMAL_SUBMIT=' + json.dumps(ordinary, sort_keys=True))
++            print('OUTER_NORMAL_ADMITTED_SPEC=' + json.dumps(ordinary_task['spec'], sort_keys=True))
++
++        # Inspect the accepted bootstrap history read-only.
++        history = 'SELECT * FROM timeline_commit_history WHERE project_id=? AND timeline_id=?'
++        before = daemon.service.store.conn.execute(history, (project_id, 'film')).fetchall()
++        worker = WorkspaceClient(daemon.endpoint, daemon.worker_token)
++        # Authorization must refuse before command validation. No substitute
++        # voiceover edits or borrowed requester credential belong here.
++        with pytest.raises(ApiError) as error:
++            worker._generated.commit_timeline(project_id, 'film',
++                {'api_version': 1, **target, 'commands': [], 'rationale': 'Worker cannot commit'},
++                idempotency_key='outer-worker-denied')
++        assert error.value.status == 401
++        assert error.value.code == 'unauthorized'
++        assert error.value.message == 'credential lacks required scope'
++        assert daemon.service.store.conn.execute(history, (project_id, 'film')).fetchall() == before
++        assert daemon.service.get_project_timeline(project_id, 'film') == timeline
++        with capsys.disabled():
++            print('OUTER_WORKER_COMMIT_DENIED=' + str(error.value.status))
++        transport._generated.cancel_task(invoked.kernel_task_id, expected_version=None,
++            idempotency_key='cancel-' + invoked.kernel_task_id)
++
++        # Preserve the required successful target/script admission, but never
++        # invent two continuation children to satisfy the current Runtime.
++        spec = copy.deepcopy(ordinary['spec'])
++        spec['runtime_dependencies'] = {'publication': {'admitted_target': target}}
++        pinned = client.tasks.create(project_id=project_id, capability=OUTER, spec=spec,
++            execution_request=request, input_manifest=[object_id], idempotency_key='outer-pinned-submit')
++        with capsys.disabled():
++            print('OUTER_PINNED_SUBMIT=' + json.dumps(submissions[1], sort_keys=True))
++        if (not pinned.ok and pinned.error.code == 'validation_error'
++                and pinned.error.message == 'runtime continuation requires exactly two ordered dependency edges'):
++            with capsys.disabled():
++                print('OUTER_PINNED_ADMISSION_BLOCKED=' + pinned.error.message)
++            raise _MissingTargetCarrier(pinned.error.message)
++        assert pinned.ok, pinned.error
++        task = daemon.service.task(pinned.data['task_id'])['task']
++        assert task['capability'] == OUTER
++        assert task['spec']['spec']['runtime_dependencies']['publication']['admitted_target'] == target
++        assert task['spec']['spec']['inputs']['script'] == descriptor
++        assert submissions[1]['input_object_ids'] == [object_id]
++        assert submissions[1]['execution_request']['inputs'] == [descriptor]
++        with capsys.disabled():
++            print('OUTER_PINNED_TASK_ID=' + pinned.data['task_id'])
++            print('OUTER_PINNED_ADMITTED_SPEC=' + json.dumps(task['spec'], sort_keys=True))
++        transport._generated.cancel_task(pinned.data['task_id'], expected_version=None,
++            idempotency_key='cancel-' + pinned.data['task_id'])
++    finally:
++        host.shutdown()
++        daemon.stop()
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/video_editing/test_outer_voiceover_native.py && git diff --check && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-voiceover-outer-native-producer native014-sockets-integration --files tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority' in /home/user/work/wt/agt-m2-voiceover-outer-native-producer
+ succeeded in 52ms:
+All checks passed!
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468/
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468' in /home/user/work/wt/agt-m2-voiceover-outer-native-producer
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-outer-native-handoff.md')
+s = p.read_text().replace('asserts HTTP 403 plus unchanged accepted history', 'asserts exact HTTP 401 / unauthorized / credential lacks required scope, plus unchanged\\naccepted bootstrap history and head')
+s = s.replace('The request\\'s empty command suffix is', 'The request\\'s empty command suffix is')
+s = s.replace('Central admission/authority result and snapshot tree: pending. The initial test\\nrequest "'`1020202335-31688` was rejected by the service before pytest because'"\\n"'`--files` forbids `-s`; it executed no tests. The replacement uses only one'"\\nexplicit node, with captured trace output enabled by the test fixture.', '''Central final admission/authority result and snapshot tree: pending.
+Only the one explicit admission/authority node is selected; no outer settlement
+or inner generation case is run. Trace output uses the test capture fixture.
+
+Diagnostic history (all the same bounded node, no product changes):
+
+- "'`1020202335-31688`: service rejected `-s` in --files before pytest; zero tests.
+- `1020202406-19667`: failed before admission because test executor identity
+  differed from the fixture'"'s credential binding; use actual astrid-pack-host.
+- "'`1020202605-21464`: normal SDK refuses added undeclared file descriptor
+  because its explicit [] input_object_ids does not mirror the script input.
+- `1020202707-8097`: normal outer submit succeeded; the pinned RemoteTasks
+  request reached Runtime and failed the two-edge continuation requirement.
+- `1020202818-26978`: public commit-history read on a provider-less empty
+  timeline failed history_unavailable before the authority negative. Fixed
+  fixture to install the normal provider, bootstrap an actual base pair,
+  and compare read-only history plus public head.
+- `1020202917-5715`: superseded run cancelled (not qualification evidence).
+  Its partial log also showed the real missing-scope response is HTTP 401,
+  rather than the probe'"'s guessed 403; final assertion requires exact 401,
+  unauthorized, and credential lacks required scope.
+
+A strict expected failure preserves the successful target/script admission
+requirement and matches only this precise Runtime continuation rejection via a
+test-private exception. Other integration assertion failures remain failures.
+The registry metadata requirement is a separate strict positive xfail.''')
+p.write_text(s)
+PY" in /home/user/work/wt/agt-m2-voiceover-outer-native-producer
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468/status && tail -12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468/log.txt' in /home/user/work/wt/agt-m2-voiceover-outer-native-producer
+ succeeded in 0ms:
+pass
+OUTER_NORMAL_TASK_ID=7dcf6d2ad4204beda5612b9922900a5e
+OUTER_NORMAL_SUBMIT={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "generation_intent": null, "idempotency_key": "outer-normal-submit", "input_object_ids": [], "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}, "storage_estimate": null}
+OUTER_NORMAL_ADMITTED_SPEC={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "input_object_ids": [], "schema_version": "1", "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}}
+OUTER_WORKER_COMMIT_DENIED=401
+OUTER_PINNED_SUBMIT={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "execution_request": {"inputs": [{"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}], "target": {"kind": "default"}}, "generation_intent": null, "idempotency_key": "outer-pinned-submit", "input_object_ids": ["sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd"], "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "script": {"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}, "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}, "runtime_dependencies": {"publication": {"admitted_target": {"base_publication_id": "txn-8c90769ad56c4dc0aec194764f7836f0", "base_revision_id": "bootstrap-cb774932ae3441fbb975e60242d287a1", "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_id": "film"}}}}, "storage_estimate": null}
+OUTER_PINNED_ADMISSION_BLOCKED=runtime continuation requires exactly two ordered dependency edges
+x                                                                        [100%]
+1 xfailed in 13.67s
+
+codex
+The final bounded probe completed as a strict expected failure at the known admission blocker. Before reaching it, the test recorded a normal outer task, a real bootstrap revision/publication pair, exact script descriptors, and worker commit refusal with unchanged history/head.
+
+The full outer flow remains unqualified. I’m writing the handoff with those results and the missing command carriers. No inner task or outer settlement/requester case was run.
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468/summary && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468/snap && git status --short' in /home/user/work/wt/agt-m2-voiceover-outer-native-producer
+ succeeded in 0ms:
+test agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468: pass exit=0 in 20s — native014-sockets-integration on agt-m2-voiceover-outer-native-producer (agent tree 3f9514685990cd261c54ecbfd28580e2df014b90)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+counts: 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468/log.txt ---
+OUTER_NORMAL_TASK_ID=7dcf6d2ad4204beda5612b9922900a5e
+OUTER_NORMAL_SUBMIT={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "generation_intent": null, "idempotency_key": "outer-normal-submit", "input_object_ids": [], "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}, "storage_estimate": null}
+OUTER_NORMAL_ADMITTED_SPEC={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "input_object_ids": [], "schema_version": "1", "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}}
+OUTER_WORKER_COMMIT_DENIED=401
+OUTER_PINNED_SUBMIT={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "execution_request": {"inputs": [{"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}], "target": {"kind": "default"}}, "generation_intent": null, "idempotency_key": "outer-pinned-submit", "input_object_ids": ["sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd"], "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "script": {"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}, "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}, "runtime_dependencies": {"publication": {"admitted_target": {"base_publication_id": "txn-8c90769ad56c4dc0aec194764f7836f0", "base_revision_id": "bootstrap-cb774932ae3441fbb975e60242d287a1", "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_id": "film"}}}}, "storage_estimate": null}
+OUTER_PINNED_ADMISSION_BLOCKED=runtime continuation requires exactly two ordered dependency edges
+x                                                                        [100%]
+1 xfailed in 13.67s
+tree=3f9514685990cd261c54ecbfd28580e2df014b90
+key=85ca1439dae1c87b665352eca2fded96
+worktree=/home/user/work/wt/agt-m2-voiceover-outer-native-producer
+?? tests/packs/video_editing/test_outer_voiceover_native.py
+
+ succeeded in 29957ms:
+test agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468: pass exit=0 in 20s — native014-sockets-integration on agt-m2-voiceover-outer-native-producer (agent tree 3f9514685990cd261c54ecbfd28580e2df014b90)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+counts: 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468/log.txt ---
+OUTER_NORMAL_TASK_ID=7dcf6d2ad4204beda5612b9922900a5e
+OUTER_NORMAL_SUBMIT={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "generation_intent": null, "idempotency_key": "outer-normal-submit", "input_object_ids": [], "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}, "storage_estimate": null}
+OUTER_NORMAL_ADMITTED_SPEC={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "input_object_ids": [], "schema_version": "1", "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}}
+OUTER_WORKER_COMMIT_DENIED=401
+OUTER_PINNED_SUBMIT={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "execution_request": {"inputs": [{"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}], "target": {"kind": "default"}}, "generation_intent": null, "idempotency_key": "outer-pinned-submit", "input_object_ids": ["sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd"], "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "script": {"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}, "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}, "runtime_dependencies": {"publication": {"admitted_target": {"base_publication_id": "txn-8c90769ad56c4dc0aec194764f7836f0", "base_revision_id": "bootstrap-cb774932ae3441fbb975e60242d287a1", "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_id": "film"}}}}, "storage_estimate": null}
+OUTER_PINNED_ADMISSION_BLOCKED=runtime continuation requires exactly two ordered dependency edges
+x                                                                        [100%]
+1 xfailed in 13.67s
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_fixture_still_requires_audio_provenance_and_ripple tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_fixture_provenance_can_be_captured_without_a_snapshot_writer tests/packs/video_editing/test_draft_voiceover.py tests/sdk/test_timeline_producer_guard.py' in /home/user/work/wt/agt-m2-voiceover-outer-native-producer
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+import subprocess
+from pathlib import Path
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = orch / 'workers/agt-m2-voiceover-outer-native-producer'
+result = orch / 'tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468'
+trace = {}
+for line in (result / 'log.txt').read_text().splitlines():
+    if line.startswith('OUTER_'):
+        key, value = line.split('=', 1)
+        trace[key] = json.loads(value) if value.startswith('{') else value
+(worker / 'outer-admission.json').write_text(json.dumps(trace, indent=2, ensure_ascii=False) + '\\n')
+source = Path('tests/packs/video_editing/test_outer_voiceover_native.py')
+assert source.read_bytes() == subprocess.check_output(['git', 'show', '3f9514685990cd261c54ecbfd28580e2df014b90:' + str(source)])
+print('Final source matches central tree 3f9514685990cd261c54ecbfd28580e2df014b90')
+p = orch / 'design/agent-voiceover-outer-native-handoff.md'
+s = p.read_text().replace('Central final admission/authority result and snapshot tree: pending.', '''Central final result "'`1020203011-12468`: **1 xfailed in 13.67 seconds**;
+service exit 0. This is the missing target admission requirement, NOT a passing
+outer settlement. Final source tree **3f9514685990cd261c54ecbfd28580e2df014b90**;
+source bytes were compared with the central snapshot tree.
+
+- Actual outer queued task: `7dcf6d2ad4204beda5612b9922900a5e`.
+- Registered capability digest:
+  `sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5`.
+- Project `4399b84a8caf4bf6bfa1d261c786185e`, timeline `film`.
+- Actual original base revision `bootstrap-cb774932ae3441fbb975e60242d287a1`,
+  publication `txn-8c90769ad56c4dc0aec194764f7836f0`.
+- Script object/digest
+  `sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd`.
+- Worker negative completed before pinned submit: exact 401/unauthorized/missing
+  required scope; accepted history and real bootstrap head unchanged.
+- Pinned request was refused before task creation: no pinned admitted spec,
+  attempt, settled proposal or producer digest exists.
+
+Exact captured normal request, normal admitted spec and refused pinned request:
+`workers/agt-m2-voiceover-outer-native-producer/outer-admission.json`.
+Central complete command/result:
+`tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468/{summary,log.txt}`.
+
+Exact service invocation:
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+$ORCH/bin/request-test agt-m2-voiceover-outer-native-producer native014-sockets-integration --files tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+$ORCH/bin/wait-test agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468
+```
+
+The named suite'"'s actual pytest suffix is:
+
+"'```sh
+/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+```'"''')
+p.write_text(s)
+PY" in /home/user/work/wt/agt-m2-voiceover-outer-native-producer
+ succeeded in 0ms:
+Final source matches central tree 3f9514685990cd261c54ecbfd28580e2df014b90
+
+ succeeded in 3188ms:
+.x........................................                               [100%]
+41 passed, 1 xfailed in 2.50s
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468' in /home/user/work/wt/agt-m2-voiceover-outer-native-producer
+ succeeded in 0ms:
+test agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468: pass exit=0 in 20s — native014-sockets-integration on agt-m2-voiceover-outer-native-producer (agent tree 3f9514685990cd261c54ecbfd28580e2df014b90)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+counts: 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468/log.txt ---
+OUTER_NORMAL_TASK_ID=7dcf6d2ad4204beda5612b9922900a5e
+OUTER_NORMAL_SUBMIT={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "generation_intent": null, "idempotency_key": "outer-normal-submit", "input_object_ids": [], "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}, "storage_estimate": null}
+OUTER_NORMAL_ADMITTED_SPEC={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "input_object_ids": [], "schema_version": "1", "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}}
+OUTER_WORKER_COMMIT_DENIED=401
+OUTER_PINNED_SUBMIT={"capability_digest": "sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "execution_request": {"inputs": [{"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}], "target": {"kind": "default"}}, "generation_intent": null, "idempotency_key": "outer-pinned-submit", "input_object_ids": ["sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd"], "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "4399b84a8caf4bf6bfa1d261c786185e", "script": {"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}, "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}, "runtime_dependencies": {"publication": {"admitted_target": {"base_publication_id": "txn-8c90769ad56c4dc0aec194764f7836f0", "base_revision_id": "bootstrap-cb774932ae3441fbb975e60242d287a1", "project_id": "4399b84a8caf4bf6bfa1d261c786185e", "timeline_id": "film"}}}}, "storage_estimate": null}
+OUTER_PINNED_ADMISSION_BLOCKED=runtime continuation requires exactly two ordered dependency edges
+x                                                                        [100%]
+1 xfailed in 13.67s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = orch / 'workers/agt-m2-voiceover-outer-native-producer'
+p = orch / 'design/agent-voiceover-outer-native-handoff.md'
+s = p.read_text().replace('Result: **41 passed, 1 xfailed**, 4.85 seconds.', 'Final-tree result: **41 passed, 1 xfailed**, 2.50 seconds (earlier bounded run: 4.85 seconds).')
+s = s.replace('The integration negative submits', 'The admission fixture uses an empty canonical bootstrap, not a seeded voiceover\\ntimeline. The ripple counterexample uses the original detached unit fixture.\\nNo end-to-end authored voiceover materialization is claimed.\\n\\nThe integration negative submits')
+p.write_text(s)
+report = '''# Outer voiceover native producer — BLOCKED
+
+Added one bounded test module; no product or declaration changes. The outer
+integration double remains. Original22 positives and both inherited actual
+inner speech/WAV cases are byte-unchanged.
+
+Source: base 9c8a38e067ce5ba14612c2179abc89fb5487ddb3 /
+83f16e907286f0a33b92a15a9df42277b4188264. Final qualified test source tree:
+**3f9514685990cd261c54ecbfd28580e2df014b90**, compared byte-for-byte to the
+central snapshot. Normal 0.2.14 a0/f021 client and exact ad97 server retained.
+
+## What was established
+
+- Existing registered outer executor video_editing.sync_draft_voiceover was
+  admitted normally, with task 7dcf6d2ad4204beda5612b9922900a5e. No attempt
+  was claimed. Inner generation.generate_speech remains separate and was not
+  run. No family remap or parent-child relation was invented.
+- Real worker bearer cannot commit: exact HTTP 401 / unauthorized /
+  credential lacks required scope, with accepted bootstrap history and head
+  unchanged. Requester authority was never lent to the worker.
+- Recorded the exact normal request/admitted spec and the exact attempted
+  target/script request in outer-admission.json. Normal SDK admission carries
+  no target pair or file inputs. The separate ordinary RemoteTasks request
+  carries the real original bootstrap pair and ordered script descriptors.
+- That pinned request is refused by Runtime: runtime continuation requires
+  exactly two ordered dependency edges. ad97 store._continuation_predecessors
+  treats any runtime_dependencies as a two-child continuation and also
+  forbids nonempty inputs. This contradicts the source-only native carrier
+  audit's usable-admission claim. Reported rather than bypassed or fixed.
+- Actual original ripple fixture still requires 4150ms first duration/second
+  start, 4.15s still, 4s speech window, 7.15s spanning parent/config duration,
+  and exact payload.metadata.draft_voiceover provenance. shot.set's closed
+  schema cannot write metadata; strict positive xfail proves that missing
+  carrier. Existing media commands accept only image/video, not audio, and
+  no operation writes the required occurrence/parent durations.
+
+## Exact validation
+
+"'```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_fixture_still_requires_audio_provenance_and_ripple tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_fixture_provenance_can_be_captured_without_a_snapshot_writer tests/packs/video_editing/test_draft_voiceover.py tests/sdk/test_timeline_producer_guard.py
+```
+
+**41 passed, 1 xfailed in 2.50s**, on final source. Original behavior expectations
+unchanged. The xfail is a successful metadata-carrier requirement, not an
+expectation that voiceover should be refused.
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+$ORCH/bin/request-test agt-m2-voiceover-outer-native-producer native014-sockets-integration --files tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+$ORCH/bin/wait-test agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468
+```
+
+Central exit 0; **1 strict xfailed in 13.67s**, not a passing producer flow.
+Prior assertions prove normal admission and worker denial; only the precise
+known continuation refusal raises the test-private expected-failure exception.
+Unexpected setup/authority failures remain failures. Exact underlying command
+and trace are in that result'"'s summary/log.txt. Diagnostic attempts and their
+failures/cancellation are listed in the design handoff; none qualifies an outer
+settlement. No full suite, duplicate inner WAV cases, live speech/model work or
+real outer settlement/requester case was run.
+
+"'```sh
+env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/video_editing/test_outer_voiceover_native.py
+git diff --check
+git diff --exit-code 9c8a38e067ce5ba14612c2179abc89fb5487ddb3 -- tests/packs/video_editing/test_draft_voiceover.py tests/packs/video_editing/test_runtime_publication_chain.py astrid/sdk astrid/packs/video_editing runtime.lock.json astrid_runtime_client
+```
+
+All PASS. Shared dependencies stayed read-only. No build output or temporary
+files were left in the worktree.
+
+## Decisions and limits
+
+Used the explicitly authorized BLOCKED fallback: the installed registry cannot
+express even the mandatory provenance write. Did not add an operation/schema,
+DTO, endpoint, authority carrier, journal, coordinator, snapshot-diff writer,
+fictional continuation children, raw adoption or legacy writer. No settled
+proposal digest/attempt identity exists to forward. The completed five-field
+selection/WAV/absence-only intrinsic metadata behavior remains inherited,
+unchanged and unrerun; it is not outer custody evidence.
+
+The admission fixture is an empty real canonical bootstrap; the authored result
+counterexample is the original detached ripple fixture. No real voiceover
+result was committed. D13/WC5 remains open.
+
+Next: orchestrator asks Runtime owner to resolve the observed continuation-only
+admission restriction and registry owner to provide lossless audio/provenance/
+ripple command meaning. Then implement the declared proposal output and owned
+producer/session adapter, freeze source and run one actual outer settlement ->
+requester/outbox case with the authority negative first. No settled design is
+changed by this worker.
+
+Detailed handoff: ../../design/agent-voiceover-outer-native-handoff.md.
+Wrote BLOCKED, commit-msg and commit-msg.txt; no DONE success marker.
+'"'''
+(worker / 'report.md').write_text(report)
+msg = '''test(agent): expose blocked native outer voiceover carriers
+
+Record normal registered outer admission and exact target/script submission
+on the private 0.2.14 client and ad97 Runtime. Verify that the real worker
+credential cannot commit and leaves the bootstrap history and head intact.
+
+Preserve the successful ripple/provenance intent with strict positive xfails
+for missing shot metadata command meaning and the Runtime continuation-only
+target admission restriction. Keep original voiceover and inner WAV cases
+unchanged; do not claim outer settlement or requester qualification.
+'''
+(worker / 'commit-msg').write_text(msg)
+(worker / 'commit-msg.txt').write_text(msg)
+(worker / 'BLOCKED').write_text('WC5 remains blocked: installed commands cannot author exact draft voiceover provenance/audio/ripple, and ad97 rejects the publication-only admitted_target + ordered script-input request as a missing two-child continuation. See report.md and REAL ORCH/design/agent-voiceover-outer-native-handoff.md. No outer settlement/requester qualification.\\n')
+print('Wrote handoff, worker report, captured admissions, commit messages and BLOCKED.')
+PY" in /home/user/work/wt/agt-m2-voiceover-outer-native-producer
+ succeeded in 0ms:
+Wrote handoff, worker report, captured admissions, commit messages and BLOCKED.
+
+exec
+/bin/bash -lc 'git diff --check && git status --short && env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/video_editing/test_outer_voiceover_native.py' in /home/user/work/wt/agt-m2-voiceover-outer-native-producer
+ succeeded in 124ms:
+?? tests/packs/video_editing/test_outer_voiceover_native.py
+All checks passed!
+
+codex
+**BLOCKED.** Recorded normal outer admission and verified worker commit refusal. Exact D13 target/script admission fails because Runtime requires two continuation children. Existing commands also cannot preserve the fixture’s audio/provenance/ripple outcome.
+
+- Local: **41 passed, 1 strict xfailed**.
+- Central bounded node: **1 strict xfailed** at the admission blocker.
+- Ruff and diff checks passed.
+- Original positives and inner WAV cases unchanged; no outer settlement/requester success claimed.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-outer-native-producer/report.md) · [Handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-outer-native-handoff.md)
+
+Wrote both commit-message files and `BLOCKED`. Next steps require Runtime and command-registry owner decisions.
+tokens used
+240,981
+**BLOCKED.** Recorded normal outer admission and verified worker commit refusal. Exact D13 target/script admission fails because Runtime requires two continuation children. Existing commands also cannot preserve the fixture’s audio/provenance/ripple outcome.
+
+- Local: **41 passed, 1 strict xfailed**.
+- Central bounded node: **1 strict xfailed** at the admission blocker.
+- Ruff and diff checks passed.
+- Original positives and inner WAV cases unchanged; no outer settlement/requester success claimed.
+
+[Report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-voiceover-outer-native-producer/report.md) · [Handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-voiceover-outer-native-handoff.md)
+
+Wrote both commit-message files and `BLOCKED`. Next steps require Runtime and command-registry owner decisions.

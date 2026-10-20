@@ -1,0 +1,400 @@
+ M tests/packs/rendering/presenter_crop_geometry.mjs
+ M tests/packs/rendering/presenter_scene_capability.mjs
+ M tests/packs/rendering/test_presenter_crop_equivalence.py
+--- report files ---
+-rw-r--r-- 1 root root    0 Oct 20 16:12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/DONE
+-rw-r--r-- 1 root root  218 Oct 20 16:12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/commit-msg
+-rw-r--r-- 1 root root  218 Oct 20 16:12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/commit-msg.txt
+-rw-r--r-- 1 root root 2697 Oct 20 16:12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/report.md
+--- final diff check ---
+
+codex
+The port is complete and the worktree is clean of generated Python caches. I’ve written the APPROVE report, both harness-compatible commit-message filenames, and the empty DONE marker. I’m adding the full literal test commands to the report before handing off.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..60957220b9229f1df36992e852732316ba7fd8d6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/commit-msg
+@@ -0,0 +1,4 @@
++fix(rendering): preserve presenter known-state semantics
++
++Port the reviewed presenter mouth state/compatibility split onto current Agent,
++regenerate the element catalog and artifact manifest, and retain direct guards.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..60957220b9229f1df36992e852732316ba7fd8d6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/commit-msg.txt
+@@ -0,0 +1,4 @@
++fix(rendering): preserve presenter known-state semantics
++
++Port the reviewed presenter mouth state/compatibility split onto current Agent,
++regenerate the element catalog and artifact manifest, and retain direct guards.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c1730024c25d31d753097d16f3f3032f715bfe7e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/report.md
+@@ -0,0 +1,91 @@
++# Mouth known-state current-port review
++
++## Verdict
++
++**APPROVE** corrected source `2b5b7fed4711af4e726f2b90fc8ddebf1c65e3cf` for
++port onto current Agent `f133a87986d839d7716d3efac2c2ba25fe036098`.
++It supersedes rejected `ee71010a0947edcbbacbf8178e5fee11ab6bab3d`.
++
++The current worktree patch identity is `sha256:c204047748992f54aa061219809b0c66c582bea9af1eb4dfec7612e2583c2887`.
++Generated artifact manifest version is
++`sha256:7d8210633274e68ee38cdf339d0bbf6c62eabc1dd52cbd6b5c04ad739f05f851`.
++
++## Scope
++
++- Ported exactly the corrected three-file presenter component delta:
++  `element.yaml`, `motion.ts`, and `scene.ts`.
++- Ported the three corresponding direct tests.
++- Regenerated the current-root `astrid/packs/rendering/elements/catalog.ts` and
++  `artifacts.json`; no old catalog or manifest was copied wholesale.
++- Semantic default/partial/clamped/raw-invalid normalized facts remain
++  `KNOWN` through `mouthStateRect`.
++- Legacy compatibility `mouthInspectionRect` remains conservative: absent or
++  malformed input returns no ROI, and authored partial `{x,y}` keeps legacy
++  width 16. Explicit width 19 and partial width 16 remain covered.
++- Existing private crop/statistics/caller activation paths remain untouched.
++  This review makes no D09 deletion or physical parity claim.
++
++## Verification
++
++Focused command:
++
++```sh
++env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_COMPOSITION_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py
++```
++
++Neighbor command:
++
++```sh
++env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_COMPOSITION_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/astrid_motion/test_astrid_motion_pack.py tests/packs/rendering/test_remotion_element_generation.py tests/packs/rendering/test_timeline_visualize_motion_views.py
++```
++
++Artifact/catalog command:
++
++```sh
++env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/venv-agent/bin:/usr/local/bin:/usr/bin:/bin /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/test_artifact_manifest.py && python scripts/gen_element_catalog.py --check && python scripts/artifact_manifest.py --check && git diff --check
++```
++
++Focused presenter scene/crop lane:
++
++```text
++17 passed in 32.73s
++```
++
++Neighbor lane (`test_astrid_motion_pack.py`,
++`test_remotion_element_generation.py`, and
++`test_timeline_visualize_motion_views.py`):
++
++```text
++40 passed in 36.80s
++```
++
++Artifact/catalog freshness:
++
++```text
++tests/test_artifact_manifest.py: 8 passed in 9.68s
++python scripts/gen_element_catalog.py --check: passed
++python scripts/artifact_manifest.py --check: artifacts.json is current
++git diff --check: passed
++```
++
++The focused lane included the existing registered SSR snapshot and all five
++registered scene cases, preserving geometry, unknown/mosaic, and clock
++coverage. A separate composition-package check was attempted but could not
++start in this worker because its test hard-codes the absent local
++`remotion/node_modules`; it is not claimed as evidence here.
++
++No full suite, matrix, browser/live-socket suite, new skip, or xfail was run
++or added.
++
++## Changed paths
++
++```text
++artifacts.json
++astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
++astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
++astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
++astrid/packs/rendering/elements/catalog.ts
++tests/packs/rendering/presenter_crop_geometry.mjs
++tests/packs/rendering/presenter_scene_capability.mjs
++tests/packs/rendering/test_presenter_crop_equivalence.py
++```
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
+index 6c8aaece3907ea1fc7e0a2292260b2e464b2d97e..5263a9d6f7632dd2f513fa8167ecc85988918ac3
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
+@@ -5,7 +5,8 @@
+ short_description: Animated pixel presenter overlay with mouth, blinks, bob, punch and crisp REC/label chrome.
+ description: Draws the speaker's pixel mouth (closed, half, open on a 3-frame cycle in word spans), blinks, a 1 px bob on stressed words and an optional zoom punch over an am-snap-plate presenter plate. Pixels use the plate's view geometry. The plate needs the same zoom, focus, punchAt, words, seed and bob, with pan 0. Also draws the label chip, crop marks, REC timecode and a status chip.
+ # Mouth inspection pads the shared erase rect by 1 px horizontally and 2 vertically.
+-# Normalized default/partial/raw-invalid anchors are known; mosaic/unsupported geometry is unknown.
++# Drawing normalization remains semantic; compatibility inspection preserves the
++# absent/default skip, partial legacy width 16, and malformed-input refusal.
+ # Presence is unknown, opaqueSupport is none; legacy crop equivalence is separately qualified.
+ keywords:
+ - presenter
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+index dfe1e25b01c329f6ffdd50a8be4a8b3c050abf88..69918c5e852110b14d466db01a879b4ffaa15559
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+@@ -33,15 +33,33 @@
+ // The drawing erases this rectangle before the half/open mouth pixels.
+ export const mouthEraseRect = (m: Anchor): PixelRect => ({x: m.x - 1, y: m.y - 1, w: m.w + 2, h: 4});
+ 
+-// Public inspection area around the actual drawing geometry, including closed
+-// pose. It deliberately follows the same normalization as drawing, so default,
+-// partial, fractional and raw-invalid anchors retain their known normalized
+-// public region.
+-export const mouthInspectionRect = (raw: unknown): PixelRect => {
++// Public state area around the actual drawing geometry, including closed pose.
++// It deliberately follows the same normalization as drawing, so defaults,
++// partial anchors and raw-invalid anchors retain their known public region.
++export const mouthStateRect = (raw: unknown): PixelRect => {
+   const r = mouthEraseRect(mouthAnchor(raw));
+   return {x: r.x - 1, y: r.y - 2, w: r.w + 2, h: r.h + 4};
+ };
+ 
++// Legacy compatibility inspection area around the actual drawing geometry.
++// This seam keeps the old pixel consumer's input rules: an absent mouth skips
++// inspection, while an authored x/y without w retains the old width-16
++// footprint. Invalid or non-integral anchors do not invent a crop, even though
++// drawing normalization remains safe and deterministic.
++export const mouthInspectionRect = (raw: unknown): PixelRect | null => {
++  const value = narrowParams<{mouth?: unknown}>(raw).mouth;
++  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
++  const mouth = value as Record<string, unknown>;
++  const x = mouth.x;
++  const y = mouth.y;
++  const width = mouth.w === undefined ? 16 : mouth.w;
++  if (typeof x !== 'number' || !Number.isInteger(x) || x < 0 || x >= LOGICAL_W
++    || typeof y !== 'number' || !Number.isInteger(y) || y < 0 || y >= LOGICAL_H
++    || typeof width !== 'number' || !Number.isInteger(width) || width < 1 || width > 40) return null;
++  const r = mouthEraseRect({...mouthAnchor(raw), w: width});
++  return {x: r.x - 1, y: r.y - 2, w: r.w + 2, h: r.h + 4};
++};
++
+ export const pixelGeometry = (r: PixelRect, v: PresenterView): {left: number; top: number; width: number; height: number} => ({
+   left: v.originX + r.x * v.scale,
+   top: v.originY + r.y * v.scale,
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+index 74512683e218641beb392b7e008a90e2a8219596..bb134c5dbd8c057359abb2b17ae2800e5b740e1d
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+@@ -2,7 +2,7 @@
+ import type {ElementComponentProps} from '../../../../../rendering/shared/element_contracts';
+ import {clipFrames, narrowParams} from '../../_shared/am';
+ import {mosaicBlockAt, type MosaicRamp} from '../../_shared/mosaic';
+-import {motionAt, mouthInspectionRect, pixelGeometry, presenterAt} from './motion';
++import {motionAt, mouthStateRect, pixelGeometry, presenterAt} from './motion';
+ 
+ export const presenterMosaicAt = (raw: unknown, clip: ElementComponentProps['clip'], frame: number, fps: number): boolean => {
+   const p = narrowParams<{mosaicIn?: MosaicRamp | null; mosaicOut?: MosaicRamp | null}>(raw);
+@@ -14,7 +14,7 @@
+   // The public scene supplies the same speed-remapped frame as the component.
+   frame: frame => {
+     const {view} = presenterAt(clip.params, frame, fps);
+-    const {left, top, width: w, height: h} = pixelGeometry(mouthInspectionRect(clip.params), view);
++    const geometry = pixelGeometry(mouthStateRect(clip.params), view);
+     return {
+       presence: 'unknown',
+       opaqueSupport: 'none',
+@@ -22,10 +22,10 @@
+       bounds: {status: 'known', rect: {x: 0, y: 0, width, height}},
+       diagnostics: {
+         motion: motionAt(clip.params, frame, fps),
+-        // Padded inspection ROI, including closed pose; no plate or alpha claim.
++        // Padded mouth ROI, including closed pose; no plate or alpha claim.
+         mouth: presenterMosaicAt(clip.params, clip, frame, fps)
+           ? {status: 'unknown', reason: 'Presenter mouth overlay is hidden by mosaic'}
+-          : {status: 'known', rect: {x: left, y: top, width: w, height: h}},
++          : {status: 'known', rect: {x: geometry.left, y: geometry.top, width: geometry.width, height: geometry.height}},
+       },
+     };
+   },
+diff --git a/tests/packs/rendering/presenter_crop_geometry.mjs b/tests/packs/rendering/presenter_crop_geometry.mjs
+index 1c5d2d486c3d6b8c68d1dfdc9c19a6718051a548..efd4172ba9ae840eeb285d1a59acba8aeba03bf0
+--- a/tests/packs/rendering/presenter_crop_geometry.mjs
++++ b/tests/packs/rendering/presenter_crop_geometry.mjs
+@@ -12,6 +12,14 @@
+   return {status: 'known', rect: {x, y, width, height}};
+ };
+ 
++export const legacyInspectionRegion = (raw, frame, fps) => {
++  const rect = shared.mouthInspectionRect(raw);
++  if (!rect) return null;
++  const {left: x, top: y, width, height} = shared.pixelGeometry(
++    rect, shared.presenterAt(raw, frame, fps).view);
++  return {status: 'known', rect: {x, y, width, height}};
++};
++
+ export const basis = {width: 1920, height: 1080, fps: 30};
+ export const frames = [0, 3, 4, 5, 15, 29];
+ export const params = {mouth: {x: 151, y: 104, w: 19}, words: [[.1, .4]],
+@@ -32,7 +40,9 @@
+     assert.equal(answer.layers.length, 1);
+     const layer = answer.layers[0];
+     assert.equal(layer.clipId, props.timeline.clips[0].id);
+-    return {frame, mouth: layer.diagnostics.mouth, motion: layer.diagnostics.motion};
++    return {frame, mouth: layer.diagnostics.mouth,
++      legacyInspection: legacyInspectionRegion(props.timeline.clips[0].params, frame, b.fps),
++      motion: layer.diagnostics.motion};
+   });
+ };
+ 
+diff --git a/tests/packs/rendering/presenter_scene_capability.mjs b/tests/packs/rendering/presenter_scene_capability.mjs
+index 3478c79b969b86e716d5c819c54120f8e924cb77..a768f8f23e43ce945907314b9b0b480223f6c65e
+--- a/tests/packs/rendering/presenter_scene_capability.mjs
++++ b/tests/packs/rendering/presenter_scene_capability.mjs
+@@ -122,8 +122,8 @@
+   };
+   const erase = (c, frame, fps) => pixelRect(source.pixelGeometry(
+     source.mouthEraseRect(source.mouthAnchor(c.params)), presenterAt(c.params, frame, fps).view));
+-  const inspection = (c, frame, fps) => pixelRect(source.pixelGeometry(
+-    source.mouthInspectionRect(c.params), presenterAt(c.params, frame, fps).view));
++  const stateRegion = (c, frame, fps) => pixelRect(source.pixelGeometry(
++    source.mouthStateRect(c.params), presenterAt(c.params, frame, fps).view));
+   const support = (c, frame, b = basis) => source.Presenter.prepareSceneCapability({clip: c, ...b,
+     rendererIdentity: 'registered-ssr', fontDigests: {}}).frame(frame);
+   const drawnOverlay = (c, frame, b = basis) => render({clip: c, params: c.params, fps: b.fps}, frame, b,
+@@ -155,7 +155,7 @@
+           seen.add(state);
+           const html = render(props, frame, b);
+           assert.ok(html.includes(drawnOverlay(c, frame, b)), `registered drawing ${fps}:${frame}`);
+-          assert.deepEqual(layer.diagnostics.mouth.rect, inspection(c, frame, fps));
++          assert.deepEqual(layer.diagnostics.mouth.rect, stateRegion(c, frame, fps));
+           const mouth = erase(c, frame, fps);
+           assert.equal(html.includes(eraseStyle(mouth) + '#EDB98E'), state !== 'closed');
+         }
+@@ -191,7 +191,7 @@
+         assert.equal(layer.diagnostics.mouth.status, 'known');
+         const state = mouthStateAt(presenterAt(c.params, frame, fps).timing, frame);
+         const html = render(props, frame, b);
+-        assert.deepEqual(layer.diagnostics.mouth.rect, inspection(c, frame, fps));
++        assert.deepEqual(layer.diagnostics.mouth.rect, stateRegion(c, frame, fps));
+         if (state !== 'closed') assert.ok(html.includes(eraseStyle(erase(c, frame, fps)) + '#EDB98E'));
+         assert.equal(layer.visible, 'unknown');
+         assert.equal(layer.opaqueSupport, 'none');
+@@ -199,11 +199,24 @@
+         assert.equal(layer.diagnostics.text, undefined);
+       }
+     }
+-    assert.deepEqual(query(clip(), 0).diagnostics.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
+-    assert.deepEqual(query(clip({mouth: {x: -1, y: 999, w: 0}}), 0).diagnostics.mouth.rect,
+-      {x: -12, y: 1056, width: 30, height: 48});
++    assert.deepEqual(query(clip({mouth: {x: 151, y: 104, w: 19}}), 0).diagnostics.mouth.rect,
++      {x: 894, y: 606, width: 138, height: 48});
++    assert.deepEqual(query(clip({mouth: {x: 151, y: 104}}), 0).diagnostics.mouth.rect,
++      {x: 894, y: 606, width: 138, height: 48});
++    assert.deepEqual(source.mouthAnchor({mouth: {x: 151, y: 104}}), {x: 151, y: 104, w: 19});
++    assert.deepEqual(source.mouthInspectionRect({mouth: {x: 151, y: 104}}), {x: 149, y: 101, w: 20, h: 8});
++    assert.equal(source.mouthInspectionRect({}), null);
++    assert.deepEqual(query(clip(), 0).diagnostics.mouth.rect,
++      {x: 894, y: 606, width: 138, height: 48});
++    const malformed = {mouth: {x: 'bad', y: null, w: 900}};
++    assert.deepEqual(source.mouthAnchor(malformed), {x: 151, y: 104, w: 40});
++    assert.deepEqual(motionAt(malformed, 0, basis.fps), motionAt({mouth: {x: 151, y: 104, w: 40}}, 0, basis.fps));
++    assert.equal(source.mouthInspectionRect(malformed), null);
++    assert.deepEqual(query(clip(malformed), 0).diagnostics.mouth.rect,
++      {x: 894, y: 606, width: 264, height: 48});
++    assert.equal(query(clip({mouth: {x: -1, y: 999, w: 0}}), 0).diagnostics.mouth.status, 'known');
+     const small = {...basis, width: 960, height: 540};
+-    const layer = query(clip(), 0, small);
++    const layer = query(clip({mouth: {x: 151, y: 104, w: 19}}), 0, small);
+     // Logical overlay pixels are not rescaled to an invented 320x180 viewport.
+     assert.deepEqual(layer.diagnostics.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
+     assert.deepEqual(layer.bounds.rect, {x: 0, y: 0, width: 960, height: 540});
+@@ -217,7 +230,7 @@
+     const s = support(c, 0);
+     assert.equal(s.presence, 'unknown');
+     assert.equal(s.opaqueSupport, 'none');
+-    assert.equal(s.diagnostics.mouth.status, 'known'); // footprint, not occupied pixels
++    assert.equal(s.diagnostics.mouth.status, 'known'); // normalized footprint, not occupied pixels
+     assert.equal(querySceneFrame(prepareHostScene(props, basis, {}), 0).coverage, 'UNKNOWN');
+     for (const missing of [{asset: 'missing'}, {params: {...c.params, src: '/not-a-presenter-asset.png'}}]) {
+       const other = {...c, ...missing};
+@@ -226,7 +239,7 @@
+     }
+     for (const ramps of [{mosaicIn: {frames: 8}}, {mosaicOut: {frames: 8}},
+       {mosaicIn: {frames: 8, steps: [48, 6]}}]) {
+-      const m = clip({...ramps, words, chrome: 'none', blinkEvery: 0});
++      const m = clip({...ramps, mouth: {x: 151, y: 104, w: 19}, words, chrome: 'none', blinkEvery: 0});
+       for (const frame of [0, 1, 3, 4, 6, 7, 8, 52, 53, 54, 55, 56, 57, 58, 59]) {
+         const layer = query(m, frame);
+         assertMotion(m, frame, basis, layer);
+@@ -238,8 +251,9 @@
+         }
+       }
+     }
+-    assert.equal(query(clip({mosaicIn: {frames: 8}}), 0).diagnostics.mouth.status, 'unknown');
+-    assert.equal(query(clip({mosaicIn: {frames: 8}}), 6).diagnostics.mouth.status, 'known');
++    const mosaic = {mosaicIn: {frames: 8}, mouth: {x: 151, y: 104, w: 19}};
++    assert.equal(query(clip(mosaic), 0).diagnostics.mouth.status, 'unknown');
++    assert.equal(query(clip(mosaic), 6).diagnostics.mouth.status, 'known');
+     for (const extra of [{cropLeft: .1}, {entrance: 'fade-up'}, {exit: 'fade-up'},
+       {modifiers: [{id: 'unknown', element: {packId: 'missing', kind: 'modifier', id: 'missing'}, params: {}}]}]) {
+       const outer = query({...c, ...extra}, 2);
+diff --git a/tests/packs/rendering/test_presenter_crop_equivalence.py b/tests/packs/rendering/test_presenter_crop_equivalence.py
+index 44ca746dbc499bd8114ecf888fb73a23adab949b..39ac8454ff8476b19a89170b6a906e7704270a01
+--- a/tests/packs/rendering/test_presenter_crop_equivalence.py
++++ b/tests/packs/rendering/test_presenter_crop_equivalence.py
+@@ -60,12 +60,18 @@
+     return r["x"], r["y"], r["x"] + r["width"], r["y"] + r["height"]
+ 
+ 
++def legacy_box(row):
++    assert row["legacyInspection"]["status"] == "known"
++    r = row["legacyInspection"]["rect"]
++    return r["x"], r["y"], r["x"] + r["width"], r["y"] + r["height"]
++
++
+ def area(crop):
+     return (crop[2] - crop[0]) * (crop[3] - crop[1])
+ 
+ 
+ def legacy_qualified(case):
+-    # Eligibility only: normalization belongs to the actual component helper.
++    # Legacy equivalence is qualified only for complete normalized anchors.
+     raw = case["props"]["timeline"]["clips"][0]["params"].get("mouth")
+     return isinstance(raw, dict) and all(
+         type(raw.get(key)) is int and raw[key] == case["normalizedMouth"][key]
+@@ -80,7 +86,8 @@
+             assert old is None
+             assert public_box(row) == (894, 606, 1032, 654)
+         elif case["name"] == "partial":
+-            assert old == (894, 606, 1014, 654)  # legacy w=16, actual w=19
++            assert old == (894, 606, 1014, 654)  # legacy w=16, actual drawing w=19
++            assert legacy_box(row) == (894, 606, 1014, 654)
+             assert public_box(row) == (894, 606, 1032, 654)
+         elif case["name"] == "rawInvalid":
+             assert public_box(row) == (894, 606, 1158, 654)
+
+codex
+APPROVE.
+
+- Ported corrected `2b5b7fed4` onto `f133a879`.
+- Preserved `KNOWN` normalized facts and legacy ROI behavior.
+- Regenerated catalog and artifact manifest.
+- Tests: focused `17 passed`; neighbors `40 passed`; artifact `8 passed`; freshness and diff checks passed.
+- Composition-package check remains unverified due missing local `remotion/node_modules`.
+- Wrote [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/report.md), commit message, and DONE marker.
+tokens used
+151,343
+APPROVE.
+
+- Ported corrected `2b5b7fed4` onto `f133a879`.
+- Preserved `KNOWN` normalized facts and legacy ROI behavior.
+- Regenerated catalog and artifact manifest.
+- Tests: focused `17 passed`; neighbors `40 passed`; artifact `8 passed`; freshness and diff checks passed.
+- Composition-package check remains unverified due missing local `remotion/node_modules`.
+- Wrote [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-mouth-known-current-port/report.md), commit message, and DONE marker.

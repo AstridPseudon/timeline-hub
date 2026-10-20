@@ -1,0 +1,400 @@
++                assert exc.code == 23
++                assert events.index("retire") < events.index("delivered")
++            except RuntimeError as exc:
++                if boundary in ("replacement", "birth", "nonchild"):
++                    adopted.assert_not_called()
++                    assert "retire" not in events
++                    assert marker.exists() and ready_marker.exists()
++                    assert all(child.poll() is None for child in children)
++                    assert "registration differs" in str(exc) or "not this helper's child" in str(exc)
++                else:
++                    assert boundary == "cleanup-failure"
++                    assert str(exc) == "injected cleanup failure"
++            else:
++                raise AssertionError("expected signal or ownership refusal")
++        assert signal.pthread_sigmask(signal.SIG_BLOCK, []) == set()
++        assert all(signal.getsignal(sig) == interrupted
++                   for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGALRM))
++    finally:
++        for child in children:
++            if child.poll() is None:
++                child.kill()
++            child.wait(timeout=5)
++
++
++@pytest.mark.parametrize("boundary", ["replacement", "birth", "nonchild"])
++def test_adoption_never_constructs_replacement_cleanup_handle(tmp_path, boundary):
++    _run_boundary_process(tmp_path, boundary, signal.SIGTERM)
++
++
++@pytest.mark.parametrize("boundary", ["returned", "adoption", "child-proof", "retire", "reap"])
++@pytest.mark.parametrize("sig", [signal.SIGINT, signal.SIGTERM, signal.SIGALRM])
++def test_pending_signal_cleans_owned_child_before_delivery(tmp_path, boundary, sig):
++    _run_boundary_process(tmp_path, boundary, sig)
++
++
++def test_cleanup_failure_surfaces_with_pending_termination(tmp_path):
++    _run_boundary_process(tmp_path, "cleanup-failure", signal.SIGTERM)
++
++
++def _run_boundary_process(tmp_path, boundary, sig):
++    code = ("from tests.packs.rendering.test_real_pack_host import _exercise_boundary; "
++            "import sys; _exercise_boundary(sys.argv[1], sys.argv[2], int(sys.argv[3]))")
++    result = subprocess.run([sys.executable, "-c", code, str(tmp_path), boundary, str(int(sig))],
++                            capture_output=True, text=True, timeout=25)
++    assert result.returncode == 0, result.stdout + result.stderr
++
++
+ @pytest.mark.integration
+ @pytest.mark.timeout(240)
+-def test_real_host_cli_catalog_and_owned_group_cleanup(tmp_path, real_runtime, owned_process_groups):
++@pytest.mark.parametrize("stop", ["explicit", "eof", "sigterm"])
++def test_real_host_cli_catalog_and_owned_group_cleanup(tmp_path, real_runtime, owned_process_groups, stop):
+     # Match DirectHarness.start(), which creates private support before the daemon.
+     (tmp_path / "support").mkdir(mode=0o700)
+     daemon = real_runtime(production_worker_credentials=True)
+@@ -94,10 +261,21 @@
+         assert "rendering.render" in ready["host_ready_capabilities"]
+         state = json.loads((daemon.support_root / "generic-host.json").read_text())
+         assert state["remotion_validation"]
++        # A second actual CLI must never attach to or retire the first one's host.
++        foreign = subprocess.run(command, cwd=source, env=child_env, input="stop\n",
++                                 capture_output=True, text=True, timeout=40)
++        assert foreign.returncode == 1
++        assert json.loads(foreign.stdout)["status"] == "failed"
++        assert json.loads((daemon.support_root / "generic-host.json").read_text()) == state
++        assert os.getpgid(pid) == pid
++        assert RuntimeProtocolClient(daemon.endpoint, daemon.worker_token).health().status == "ok"
+     finally:
+-        stdout, stderr = process.communicate("stop\n", timeout=40)
+-    assert process.returncode == 0, stderr
+-    assert json.loads(stdout)["status"] == "stopped"
++        if stop == "sigterm":
++            process.send_signal(signal.SIGTERM)
++        stdout, stderr = process.communicate("stop\n" if stop == "explicit" else "", timeout=40)
++    assert process.returncode == (1 if stop == "sigterm" else 0), stderr
++    if stop != "sigterm":
++        assert json.loads(stdout)["status"] == "stopped"
+     assert not host_bootstrap._group_survivors(pid)
+     assert not (daemon.support_root / "generic-host.json").exists()
+     assert not (daemon.support_root / "generic-host.ready.json").exists()
+
+ succeeded in 31136ms:
+.........................                                                [100%]
+25 passed, 3 deselected in 30.61s
+
+exec
+/bin/bash -lc 'git status --short && git diff --check && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F,I,BLE tests/packs/rendering/real_pack_host.py tests/packs/rendering/test_real_pack_host.py' in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 505ms:
+ M tests/packs/rendering/real_pack_host.py
+ M tests/packs/rendering/test_real_pack_host.py
+All checks passed!
+
+codex
+The focused tests pass: 25 passed, 3 integration cases deselected. They check that signals reach the original handler after markers are removed and the owned child is reaped, and that a cleanup failure remains visible when termination is pending. Ruff and whitespace checks pass. I’m submitting the final source to the central `real-pack-host-integration` batch.
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-pack-helper-ownership real-pack-host-integration' in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 0ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/
+
+exec
+/bin/bash -lc "cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/status && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/snap && sed -n '30,50p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run" in /home/user/work/wt/agt-m2-pack-helper-ownership
+ exited 1 in 0ms:
+queued
+cat: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/snap: No such file or directory
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-pack-helper-ownership /home/user/work/venv-agent/bin/python -m pytest -q -m 'not integration' tests/packs/rendering/test_real_pack_host.py" in /home/user/work/wt/agt-m2-pack-helper-ownership
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417 1' in /home/user/work/wt/agt-m2-pack-helper-ownership
+exec
+/bin/bash -lc "sed -n '30,50p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run && git diff --numstat && git rev-parse HEAD HEAD"'^{tree}' in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 201ms:
+  [ $HV = light ] && [ $(alive light) -ge 2 ] && { echo "2 targeted/named runs already running" | tee $D/why; exit 3; }
+  [ $(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9) -lt 5 ] && { echo "low disk" | tee $D/why; exit 3; }
+  [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
+  setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+fi
+echo $$ > $D/running; SNAP=/home/user/work/wt/.test-$ID; T0=$(date +%s)
+COMMIT=$(git -C $W commit-tree $tree -p HEAD -m "test snapshot $ID") && git -C $W worktree add -q --detach $SNAP $COMMIT || { echo 1 > $D/exit; echo error > $D/status; echo "snapshot failed" > $D/summary; rm -f $D/running $C/$key.running; exit 1; }
+NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules; case $repo in app|composition) [ -e $SNAP/node_modules ] || ln -s "$(readlink -f $NM)" $SNAP/node_modules;; esac
+# agent: link the worktree's installed Remotion runtime (remotion/node_modules), else the integration checkout's, read-only by convention
+if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
+  [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
+( cd $SNAP && PYTHONPATH=$SNAP timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
+git -C $W worktree remove --force $SNAP 2>/dev/null || { rm -rf $SNAP; git -C $W worktree prune; }
+ST=fail; [ $RC = 0 ] && ST=pass; [ $RC = 124 -o $RC = 137 ] && ST=timeout
+{ echo "test $ID: $ST exit=$RC in $(( $(date +%s) - T0 ))s — $suite on $target ($repo tree $tree)"; echo "cmd: $CMD"
+  echo "counts: $(grep -aE '[0-9]+ (passed|failed)|Tests +[0-9]|^# (pass|fail) ' $D/log.txt | tail -3 | tr '\n' ' ')"; echo "--- last 60 lines of $D/log.txt ---"; tail -60 $D/log.txt; } > $D/summary
+echo $RC > $D/exit; echo $ST > $D/status; [ $RC = 0 -o $RC = 1 ] && echo $ID > $C/$key; rm -f $D/running $C/$key.running
+90	33	tests/packs/rendering/real_pack_host.py
+182	4	tests/packs/rendering/test_real_pack_host.py
+3f100a06370235d47d35908f6ca190f591d0c3fa
+a064422af8480318e328fc2795f3b63a59a8c83b
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+path = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md')
+text = path.read_text()
+text = text.replace('## Agent real pack-host helper handshake (agt-m2-real-pack-host-helper, candidate)', '## Agent real pack-host helper handshake (agt-m2-pack-helper-ownership, candidate)')
+text = text.replace('runtime_instance_id=runtimeInstanceId) as host:"'`.'"', 'runtime_instance_id=runtimeInstanceId) as host:"'`. This is now a context-manager factory: launch/adoption happen on entry, and the owning `finally` remains active through the entire caller body. Do not call it expecting an already-started raw handle.'"')
+old = 'Cleanup: write "'`stop'"\\\\n"'` and end stdin (EOF alone also requests cleanup), then wait for `status=stopped` AND process exit 0. The helper closes under the production host lifecycle lock, refuses changed registrations/process identities, calls production group retirement, and verifies no surviving owned group. It leaves the Runtime running. SIGTERM/SIGINT unwind the same cleanup; these exits need not emit the stopped line. Startup is bounded to 180 seconds in the CLI, with production'"\\'s progress-idle window set to 30 seconds; wrapper watchdog should allow cleanup time beyond 180 seconds. A failed JSON line reports only exception type/location, not arbitrary exception text. Startup must use a dedicated fresh host registration; it refuses to attach or retire an existing host.'
+new = 'Cleanup: write "'`stop'"\\\\n"'` and end stdin (EOF alone also requests cleanup), then wait for `status=stopped` AND process exit 0. The helper adopts a marker only under the existing production lock, after matching the exact returned PID to its live OS birth identity and proving it is this process'"\\'s still-live child. The production receipt contains a PID, not a birth token; the independent live-child/birth observation anchors that PID before adoption. A marker mismatch or non-child result never constructs a cleanup handle; production registration/retirement must reconcile that race. Close retains full marker equality and process-identity guards, calls actual production retirement, verifies the birth-anchored group is absent, and reaps the owned child. INT/TERM/ALRM are deferred during launch/adoption without inheriting a blocked signal mask into the host. Pending launch signals run owned close before delivery to the original handler. Retirement, survivor census, waitpid and the closed flag run with those signals blocked; pending delivery follows cleanup, with cleanup failures preserved. The Runtime stays running. SIGTERM/SIGINT exits need not emit "'`stopped` (the CLI raising handler exits 1). Startup is bounded to 180 seconds in the CLI, with production'"\\'s progress-idle window set to 30 seconds; wrapper watchdog should allow cleanup time beyond 180 seconds. A failed JSON line reports only exception type/location. Startup must use a dedicated fresh host registration; it refuses an existing registration. Linux main-thread operation only; SIGKILL, a busy production lock, or a replaced registration cannot promise owned cleanup, and no broad kill or replacement retirement is attempted.'
+assert old in text
+text = text.replace(old, new)
+start = text.index('Qualification: central "'`real-pack-host-integration`'"')
+end = text.index('\\n\\nFixture corrections:', start)
+text = text[:start] + ('Qualification of the revised ownership/signal helper is PENDING. Previous explicit-stop evidence (1 passed, 6 deselected in 56.50s on base tree "'`a064422af8480318e328fc2795f3b63a59a8c83b`) remains historical only and does not qualify all cleanup paths. Revised source base SHA: `3f100a06370235d47d35908f6ca190f591d0c3fa`; final harness commit is not yet assigned. One central `real-pack-host-integration` batch is queued: `agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417`, covering actual CLI explicit stop, EOF and SIGTERM plus a second real CLI refusal while the first host remains alive. Offline isolated-executable race/signal regressions: 25 passed, 3 integration cases deselected; doubles are limited to deterministic race injection, not production qualification. Exact tested snapshot SHA/tree and central outcome will be recorded after completion. No full suite, render/browser/App-wrapper/parity or macOS claim. All M2 merges remain HELD until PLAN records M1.'"') + text[end:]
+path.write_text(text)
+PY" in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/status && ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/ && git rev-parse HEAD HEAD''^{tree}' in /home/user/work/wt/.test-agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417
+ succeeded in 0ms:
+running
+ext
+log.txt
+request
+runner.log
+running
+snap
+status
+f1097a6d3e31c3b29f6e7b212e09a3d0f6ce2cdc
+15e1885b5df66bbd488dbf44fc14176dfb618232
+
+ succeeded in 28806ms:
+.........................                                                [100%]
+25 passed, 3 deselected in 28.09s
+
+codex
+The central batch is running on snapshot `f1097a6d3e31c3b29f6e7b212e09a3d0f6ce2cdc`, tree `15e1885b5df66bbd488dbf44fc14176dfb618232`. The final-source offline rerun passed all 25 focused cases. I’ve updated the coordination page with the context-manager handshake and limits; central qualification remains pending there.
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/snap && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/ext && tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/log.txt' in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 3ms:
+tree=15e1885b5df66bbd488dbf44fc14176dfb618232
+key=36b8ff46d018f4f3ee014bdff0ee6700
+worktree=/home/user/work/wt/agt-m2-pack-helper-ownership
+external=runtime=9f9b25c000485e919f30f1411831fe2d5a3c1316 app=2bfde69eac32335eae0bc5fa2820940c0b3c694b composition=2ac77f40d45d593e68ef281df50d2408d5a0f5a3 
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+path = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md')
+text = path.read_text()
+text = text.replace('One central "'`real-pack-host-integration` batch is queued:'"', 'One central "'`real-pack-host-integration` batch is running:'"')
+text = text.replace('Exact tested snapshot SHA/tree and central outcome will be recorded after completion.', 'Exact central snapshot SHA "'`f1097a6d3e31c3b29f6e7b212e09a3d0f6ce2cdc`, tree `15e1885b5df66bbd488dbf44fc14176dfb618232`; central outcome will be recorded after completion. This is the test-service snapshot commit, not the eventual harness branch commit.'"')
+path.write_text(text)
+PY" in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-ownership')
+message = '''test(rendering): guard real host adoption and signal cleanup
+
+Adopt only the returned live child PID and matching birth identity under
+production's lifecycle lock; never construct a replacement cleanup handle.
+Keep ownership across the managed caller body, defer launch termination,
+and shield production retirement and reaping before pending delivery.
+
+Add isolated executable ownership/signal regressions and centrally exercised
+CLI stop, EOF, SIGTERM and concurrent-helper refusal journeys.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (root / name).write_text(message)
+(root / 'notes').mkdir(exist_ok=True)
+PY" in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 0ms:
+ exited 124 in 59956ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417 1' in /home/user/work/wt/agt-m2-pack-helper-ownership
+exec
+/bin/bash -lc 'tail -10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/log.txt && git diff --check && git status --short && wc -l tests/packs/rendering/real_pack_host.py' in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 481ms:
+. M tests/packs/rendering/real_pack_host.py
+ M tests/packs/rendering/test_real_pack_host.py
+218 tests/packs/rendering/real_pack_host.py
+
+codex
+The first central journey has passed; the batch is still running the remaining cases. The helper is 218 lines, and the diff is confined to the helper and its tests. The report will distinguish these tested paths from cases that must refuse cleanup, such as a replaced registration or busy lifecycle lock.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-ownership')
+(root / 'notes' / 'report.md').write_text('''# Real pack-host helper ownership and signals
+
+Implemented the three independent review findings in "'`tests/packs/rendering` only. No product-core, launcher, authority, credential-scope, source-closure or environment-selection changes. Helper: 218 lines.
+
+- Adoption holds the existing production lifecycle lock, matches the exact receipt PID to its live OS birth identity, and requires a still-live own child before constructing `RealPackHost`. A replacement PID/birth or non-child never creates a cleanup handle. Close retains full-marker equality, refuses foreign/reused identity, and checks the birth-anchored group.
+- `start_real_pack_host` is now a context-manager factory: use `with start_real_pack_host(...) as host:`. Its ownership `finally` spans launch/adoption and the caller body. This intentionally closes the return-to-caller ownership gap; callers must not expect an already-started raw handle.
+- Launch uses deferred INT/TERM/ALRM handlers, without passing a blocked mask to the production child. Deferred signals close the adopted host before reaching the original handler. Close blocks those signals through actual production retirement, group census, waitpid and the closed flag; pending delivery follows cleanup. Cleanup errors take precedence over a pending raising handler.
+- Deterministic isolated executables exercise replacement PID, wrong birth and non-child rejection; each of INT/TERM/ALRM at production return, locked marker adoption, child proof, retirement and reaping; and cleanup failure with pending termination. Doubles inject these boundaries, while real children and OS signals establish executable lifecycle behavior. They do not fabricate production qualification.
+- Central actual-CLI cases cover explicit stop, EOF and SIGTERM. Each also launches a second actual CLI against the live first registration and asserts refusal without changing/stopping that host.
+
+## Source identity
+
+Base branch HEAD: `3f100a06370235d47d35908f6ca190f591d0c3fa` (base tree `a064422af8480318e328fc2795f3b63a59a8c83b`). Central test-service snapshot commit: `f1097a6d3e31c3b29f6e7b212e09a3d0f6ce2cdc`; exact final source tree: `15e1885b5df66bbd488dbf44fc14176dfb618232`. This snapshot SHA is not the eventual harness-created branch commit. No source changes after submission.
+
+Central dependency snapshot: Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316`, App `2bfde69eac32335eae0bc5fa2820940c0b3c694b`, Composition `2ac77f40d45d593e68ef281df50d2408d5a0f5a3` (App/Composition journeys are not claimed).
+
+## Commands and results
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m2-pack-helper-ownership /home/user/work/venv-agent/bin/python -m pytest -q -m '"'not integration' tests/packs/rendering/test_real_pack_host.py
+"'```
+
+Final source: **25 passed, 3 deselected in 28.09s**. An initial run exposed a race in the retirement double (TERM returned before the stand-in child exited): 1 failed, 24 passed. Fixed the double with `waitid(WEXITED | WNOWAIT)`, retaining the actual helper reap boundary and every original expectation; the next run passed 25 in 30.61s, followed by the final-source result above.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F,I,BLE tests/packs/rendering/real_pack_host.py tests/packs/rendering/test_real_pack_host.py
+git diff --check
+```
+
+Both passed.
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-pack-helper-ownership real-pack-host-integration
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417 1
+```
+
+Central result: **PENDING**. The same request is reused after wait-test exit 124; no duplicate submission. Result directory: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/`.
+
+## Limits and handoff
+
+Linux/main-thread helper only. No full suite, make check, browser/render/install, App wrapper or parity journey run. SIGKILL, production-lock contention, a replacement registration and cleanup errors cannot promise automatic owned cleanup: report refusal/failure and let production reconcile, never retire the replacement or broadly kill processes. The production receipt exposes PID only; birth is independently observed under lock and anchored by live own-child proof.
+
+Updated the ABSOLUTE `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md` with the revised Python/CLI handshake, snapshot identity and explicit qualification limits. Earlier universal cleanup approval wording was removed. Wrote both worker `commit-msg` and `commit-msg.txt`; no git mutations/pushes/merges.
+
+Implementation is ready for owner review subject to central result. **All M2 merges remain HELD until PLAN records M1.** Next: review this exact descendant, let the harness assign its final branch commit, then Viewing may qualify its actual wrapper against it when the orchestrator permits integration.
+'"''')
+PY" in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'tail -10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/log.txt && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/status' in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 0ms:
+..running
+
+ exited 124 in 59923ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/status && tail -6 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/log.txt' in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 0ms:
+running
+..
+codex
+Explicit stop and EOF have passed centrally; SIGTERM is still running. Each completed case also confirmed that a second CLI refused the live registration without changing it, followed by removal of the owned host and markers while Runtime stayed healthy.
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417 1' in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 0ms:
+test agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417: pass exit=0 in 165s — real-pack-host-integration on agt-m2-pack-helper-ownership (agent tree 15e1885b5df66bbd488dbf44fc14176dfb618232)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/packs/rendering/test_real_pack_host.py
+counts: 3 passed, 25 deselected in 163.29s (0:02:43) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/log.txt ---
+...                                                                      [100%]
+3 passed, 25 deselected in 163.29s (0:02:43)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import shutil
+from pathlib import Path
+cache = Path('/home/user/work/wt/agt-m2-pack-helper-ownership/.pytest_cache')
+if cache.is_dir():
+    shutil.rmtree(cache)
+PY" in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 0ms:
+codex
+The central batch passed: 3 passed, 25 deselected in 163.29s. Explicit stop, EOF, and SIGTERM each proved the owned host group and markers were gone, Runtime remained healthy, and the competing CLI had left the live host untouched. I’m recording the result and final source identity in the coordination page and worker report. M2 merges remain held until PLAN records M1.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+path = orch / 'design' / 'viewing-coordination.md'
+text = path.read_text()
+text = text.replace('Qualification of the revised ownership/signal helper is PENDING.', 'Qualification of the revised ownership/signal helper: central PASS for the explicitly tested paths below; this is not universal cleanup or App-wrapper approval.')
+text = text.replace('One central "'`real-pack-host-integration` batch is running:'"', 'One central "'`real-pack-host-integration` batch PASSED (**3 passed, 25 deselected in 163.29s**, service exit 0):'"')
+text = text.replace('central outcome will be recorded after completion.', 'each stop/EOF/SIGTERM case proved no live owned host/group, no registration/ready markers, a healthy Runtime, and a competing actual CLI refusing without changing or retiring the live foreign host.')
+text = text.replace('Offline isolated-executable race/signal regressions: 25 passed, 3 integration cases deselected;', 'Offline isolated-executable race/signal regressions: 25 passed, 3 integration cases deselected in 28.09s;')
+text += '\\n\\n## Agent ownership fix qualification00:33 — descendant ready for review, merge HELD\\nTest-only "'`agt-m2-pack-helper-ownership` completed the three review findings. Managed Python entry and CLI handshake above are current. Exact test-service snapshot `f1097a6d3e31c3b29f6e7b212e09a3d0f6ce2cdc`, tree `15e1885b5df66bbd488dbf44fc14176dfb618232`; eventual branch commit is assigned by the harness. Central stop/EOF/SIGTERM plus foreign-CLI refusal: 3PASS; isolated deterministic ownership/INT/TERM/ALRM boundaries: 25PASS; Ruff and diff checks pass. Production source/closure/manifest/validation and worker scopes remain real and unchanged. No render/browser/full-suite/App wrapper claim. Report: `workers/agt-m2-pack-helper-ownership/notes/report.md`. Owner review and PLAN M1 record still required before any M2 merge.'"\\n'
+path.write_text(text)
+report = orch / 'workers' / 'agt-m2-pack-helper-ownership' / 'notes' / 'report.md'
+text = report.read_text()
+text = text.replace('Central result: **PENDING**. The same request is reused after wait-test exit 124; no duplicate submission.', 'Central result: **3 passed, 25 deselected in 163.29s**, service **exit 0 in 165s**. Actual production startup/catalog/source/closure/boot-manifest/validation checks passed for explicit stop, EOF and SIGTERM. Every case then proved the host process/group and both markers absent and Runtime healthy; the competing actual CLI refused without changing or retiring the already-live host. The same request was reused after wait-test exit 124; no duplicate submission.')
+text = text.replace('Implementation is ready for owner review subject to central result.', 'Implementation and the named central evidence are ready for owner review. No implementation/test blocker remains; final branch commit assignment belongs to the harness.')
+report.write_text(text)
+PY" in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'git status --short && git diff --stat && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-ownership/commit-msg && tail -18 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-ownership/notes/report.md' in /home/user/work/wt/agt-m2-pack-helper-ownership
+ succeeded in 467ms:
+ M tests/packs/rendering/real_pack_host.py
+ M tests/packs/rendering/test_real_pack_host.py
+ tests/packs/rendering/real_pack_host.py      | 123 +++++++++++++-----
+ tests/packs/rendering/test_real_pack_host.py | 186 ++++++++++++++++++++++++++-
+ 2 files changed, 272 insertions(+), 37 deletions(-)
+test(rendering): guard real host adoption and signal cleanup
+
+Adopt only the returned live child PID and matching birth identity under
+production's lifecycle lock; never construct a replacement cleanup handle.
+Keep ownership across the managed caller body, defer launch termination,
+and shield production retirement and reaping before pending delivery.
+
+Add isolated executable ownership/signal regressions and centrally exercised
+CLI stop, EOF, SIGTERM and concurrent-helper refusal journeys.
+```
+
+Both passed.
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-pack-helper-ownership real-pack-host-integration
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417 1
+```
+
+Central result: **3 passed, 25 deselected in 163.29s**, service **exit 0 in 165s**. Actual production startup/catalog/source/closure/boot-manifest/validation checks passed for explicit stop, EOF and SIGTERM. Every case then proved the host process/group and both markers absent and Runtime healthy; the competing actual CLI refused without changing or retiring the already-live host. The same request was reused after wait-test exit 124; no duplicate submission. Result directory: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-pack-helper-ownership-real-pack-host-integration-1020002805-8417/`.
+
+## Limits and handoff
+
+Linux/main-thread helper only. No full suite, make check, browser/render/install, App wrapper or parity journey run. SIGKILL, production-lock contention, a replacement registration and cleanup errors cannot promise automatic owned cleanup: report refusal/failure and let production reconcile, never retire the replacement or broadly kill processes. The production receipt exposes PID only; birth is independently observed under lock and anchored by live own-child proof.
+
+Updated the ABSOLUTE `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-coordination.md` with the revised Python/CLI handshake, snapshot identity and explicit qualification limits. Earlier universal cleanup approval wording was removed. Wrote both worker `commit-msg` and `commit-msg.txt`; no git mutations/pushes/merges.
+
+Implementation and the named central evidence are ready for owner review. No implementation/test blocker remains; final branch commit assignment belongs to the harness. **All M2 merges remain HELD until PLAN records M1.** Next: review this exact descendant, let the harness assign its final branch commit, then Viewing may qualify its actual wrapper against it when the orchestrator permits integration.
+
+codex
+Fixed all three findings within `tests/packs/rendering`. Adoption now requires locked PID/birth/own-child proof; replacement markers never become cleanup handles. Signal handling protects adoption, production retirement, and reaping. The helper is 218 lines.
+
+Validation:
+
+- Focused pytest: **25 passed, 3 deselected**.
+- Central `real-pack-host-integration`: **3 passed, 25 deselected**—explicit stop, EOF, SIGTERM, and competing-CLI refusal.
+- Ruff and whitespace checks passed.
+
+`start_real_pack_host` now requires context-manager use to retain ownership across handoff. Full-suite, render/browser, and App-wrapper qualification remain unverified.
+
+Updated the coordination page and both commit-message files. [Report with exact commands, SHA/tree, decisions, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-ownership/notes/report.md).
+
+No implementation blocker remains. Next: owner review and harness commit. **M2 merges remain HELD until PLAN records M1.**
+tokens used
+103,214
+Fixed all three findings within `tests/packs/rendering`. Adoption now requires locked PID/birth/own-child proof; replacement markers never become cleanup handles. Signal handling protects adoption, production retirement, and reaping. The helper is 218 lines.
+
+Validation:
+
+- Focused pytest: **25 passed, 3 deselected**.
+- Central `real-pack-host-integration`: **3 passed, 25 deselected**—explicit stop, EOF, SIGTERM, and competing-CLI refusal.
+- Ruff and whitespace checks passed.
+
+`start_real_pack_host` now requires context-manager use to retain ownership across handoff. Full-suite, render/browser, and App-wrapper qualification remain unverified.
+
+Updated the coordination page and both commit-message files. [Report with exact commands, SHA/tree, decisions, and limits](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-pack-helper-ownership/notes/report.md).
+
+No implementation blocker remains. Next: owner review and harness commit. **M2 merges remain HELD until PLAN records M1.**

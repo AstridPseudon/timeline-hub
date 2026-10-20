@@ -1,0 +1,9 @@
+name=agt-m2-registered-proposal-requester
+repo=agent
+base=tl/agt-m2-registered-native-proposal-output
+base_sha=0536d246
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-registered-proposal-requester
+started=2026-10-20T12:30:06Z

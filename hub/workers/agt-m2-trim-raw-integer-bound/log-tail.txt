@@ -1,0 +1,400 @@
++
++Ordinary nearest-six-decimal behavior and the original golden remain
++unchanged. Hold is computed from the actual chosen endpoints with the existing
++six-decimal rule; speed applies once to playback. Registry duration is never
++rounded or replaced. No stored film rewrite or schema/argument/alias change.
++
++## Coverage and App contract
++
++The repository document `docs/timeline-trim-precision.md` gives the exact
++integer/binary64 formula, predecessor rule and JSON input requirements.
++The fixture
++`tests/editing_conformance/fixtures/recipe_m2_clip_trim_boundaries.json`
++contains all original 17 vectors unchanged plus 17 new vectors. New cases
++cover the reviewer counterexample, just-below, genuine integer/float
++overrange, positive and collapsed interior intervals, representable integer
++controls, and integer-versus-float comparisons around `2**53`.
++
++All 34 vectors use real model duration lookup rather than mocking
++`Clip._source_duration`. Successful vectors check native/model equality and
++the bound after JSON round-trip, actual publication mirrors, unchanged raw
++registry/opaque fields/child pins, exact capture retry/replay and guarded
++inverse/redo. Refusal vectors fail if any native write is attempted and check
++model data/cache preservation. Eight additional Checkout tests exercise
++explicit, retained and default huge endpoints and raw overrange controls.
++
++JSON integer tokens must remain lossless for raw comparisons. App cannot
++round them through `JSON.parse` into Number and still claim these cases;
++the contract explains integer tokens versus decimal/exponent binary64 inputs.
++No new API argument is proposed.
++
++The pre-existing shared exports at
++`$ORCH/design/agent-trim-interior-rounding.md` and
++`$ORCH/design/agent-trim-interior-rounding-vectors.json` were not overwritten:
++they are outside this worker's assigned write paths and still describe the
++old candidate. Before App mirrors or qualifies the fix, the orchestrator
++should replace those exports from this worktree's updated repository files.
++
++## Exact commands and results
++
++Commands ran from the assigned worktree. Python bytecode and pytest caches
++were disabled. Shared dependencies remained read-only. No dependency install,
++full suite, full-test request, browser or localhost/socket suite was run.
++
++Initial vector-only verification (before adding the Checkout endpoint cases):
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py -k portable_boundary_vectors
++```
++
++Exit 0: **34 passed, 81 deselected in 4.22s**. Superseded by the final focused
++run below, which includes all those vectors.
++
++Final native trim/move/split/add/provider neighbors:
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_media_verbs.py tests/sdk/test_timeline_clip_trim_provider.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/editing_conformance/test_recipe_m1_commands.py
++```
++
++Exit 0: **431 passed in 27.68s**. Includes original golden, all 34 vectors,
++rational-fps/half-open timing, speed/source-hold, unsupported source-map and
++window refusals, raw source-read guards, replay and inverse controls.
++
++Final model/helper/checkout/CLI neighbors:
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timeline_cuts.py tests/sdk/test_timeline_param_values.py tests/packs/timeline/test_edit_verbs.py tests/packs/timeline/test_verbs_working_copy.py
++```
++
++Exit 0: **168 passed, 17 deselected, 4 warnings in 15.84s**. Deselections are
++the repository's existing default lane exclusions. Warnings are the existing
++Pillow `Image.getdata()` deprecation in
++`test_fast_lane_real_ffmpeg_decodes_exact_selected_frame_numbers`.
++
++Product lint:
++
++```bash
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache --select E4,E7,E9,F astrid/sdk/timeline/units.py astrid/sdk/timeline/_trim_commands.py astrid/sdk/timeline/model.py
++```
++
++Exit 0: **All checks passed**. A separate read-only Python/subprocess check
++compared configured Ruff's JSON findings for `git show HEAD:<file>` with
++working contents via `ruff check --no-cache --output-format=json
++--stdin-filename <file> -`. Findings were identical: units 0, native trim 0,
++model 1 pre-existing import-order finding. The same check asserted all
++original 17 vector objects are unchanged and all 34 case IDs are unique.
++
++```bash
++git diff --check
++git diff --exit-code HEAD -- tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
++git hash-object astrid/sdk/timeline/units.py astrid/sdk/timeline/_trim_commands.py astrid/sdk/timeline/model.py
++sha256sum tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
++```
++
++All exit 0. Source blobs in command order:
++
++- `11bb609c6116fe2d2a50f880fbd3f92c60ee1d43`
++- `c5dd666a676d09c2a232e3f81031b736feb50916`
++- `f8115879a7cd666ea9b99bd5e1884ddbec8b7ab8`
++
++Original golden SHA-256 remains
++`4d71a9d184db1b85c220de10842b2dc68e5eb9b48afee180b6c29cf0d5b06152`.
++
++## Decisions, limits and next steps
++
++Use a binary64 predecessor only after the exact interior floor's serialized
++numeric representation still exceeds the original bound; keep ordinary
++nearest-six-decimal rounding intact. Preserve the established refusal for
++collapsed intervals instead of manufacturing a minimum window. The huge
++positive interval vector proves the interior choice can also retain a
++positive source hold (`2.0`) near the bound.
++
++No full suite or make check was run under this no-full brief. No App/Runtime
++live retry, browser preview or render qualification is claimed. Provider
++neighbors use their existing in-memory ABI stub.
++
++Recommended next step: orchestrator reviews/integrates this bounded patch,
++refreshes the shared App handoff exports from the updated canonical document
++and fixture, and has App mirror the policy and qualify the original golden
++plus all 34 vectors. No integration worktree, other worker, shared dependency,
++ledger, branch/ref or external service was modified. No git commit, merge,
++rebase, checkout or push was run. Commit message and DONE are supplied for
++the harness.
+diff --git a/astrid/sdk/timeline/model.py b/astrid/sdk/timeline/model.py
+index 2101f1e6611518b43a1c4f5bf57060df1ac6dbc5..f8115879a7cd666ea9b99bd5e1884ddbec8b7ab8
+--- a/astrid/sdk/timeline/model.py
++++ b/astrid/sdk/timeline/model.py
+@@ -421,21 +421,27 @@
+                 f"but it is only {limit:g} s long (the most this clip can fill is {(limit - source_in) / speed:.3f} s; "
+                 f"slip or trim-in the source window first)")
+ 
+-    def _source_duration(self) -> float:
++    def _source_duration(self) -> int | float:
+         entry = self._tl._registry(self.shot_id).get(str(self.data.get("asset"))) or {}
+-        duration = _num(entry.get("duration")) or _store.media_seconds(
++        raw_duration = entry.get("duration")
++        duration = (raw_duration if type(raw_duration) is int else _num(raw_duration)) or _store.media_seconds(
+             str(self._tl.bundle.get("project_id") or ""), entry)
+         if duration is None or duration <= 0:
+             raise TimelineEditError(f"{self.address}: cannot read the source file's duration to validate this edit")
+-        return float(duration)
++        return duration
+ 
+     def trim(self, in_s: float | None = None, out_s: float | None = None) -> "Clip":
+         """Set the source in/out in seconds. The film start stays put and its length follows the source window."""
+         if not self.is_audio and self.element != "media":
+             raise TimelineEditError(f"{self.address}: trim applies to media clips")
+         limit = self._source_duration()
+-        source_in = _num(self.data.get("from")) if in_s is None else float(in_s)
+-        source_out = (_num(self.data.get("to"), limit) if out_s is None else float(out_s))
++        source_in = self.data.get("from") if in_s is None else in_s
++        source_out = self.data.get("to") if out_s is None else out_s
++        # Preserve raw numbers for range checks, especially integers above 2**53.
++        if not isinstance(source_in, int):
++            source_in = _num(source_in) if in_s is None else float(source_in)
++        if not isinstance(source_out, int):
++            source_out = _num(source_out, limit) if out_s is None else float(source_out)
+         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
+             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
+         try:
+diff --git a/astrid/sdk/timeline/units.py b/astrid/sdk/timeline/units.py
+index f30260efaef8f0d9d6735d4d13a042a8eadf4bee..11bb609c6116fe2d2a50f880fbd3f92c60ee1d43
+--- a/astrid/sdk/timeline/units.py
++++ b/astrid/sdk/timeline/units.py
+@@ -10,17 +10,22 @@
+ from astrid.sdk.timeline._common import LOGICAL_PX, POSITION_KEYS, TimelineEditError, _num, _r
+ 
+ 
+-def trim_source_interval(source_in: float, source_out: float, limit: float) -> tuple[float, float, float]:
++def trim_source_interval(source_in: int | float, source_out: int | float,
++                         limit: int | float) -> tuple[float, float, float]:
+     """Round an already validated source interval without exceeding the raw file limit.
+ 
+     Keep nearest six-decimal precision, moving an overshooting out point to
+     the greatest six-decimal point inside the file. Do the floor in exact
+     arithmetic: floating multiplication could round back up to the boundary.
++    If converting the floor to binary64 exceeds the original integer limit,
++    use its immediate binary64 predecessor (the floor itself is inside).
+     Refuse collapsed intervals rather than expanding a tiny requested window.
+     """
+     applied_in, applied_out = _r(source_in), _r(source_out)
+     if applied_out > limit:
+         applied_out = math.floor(Fraction(limit) * 1_000_000) / 1_000_000
++        if applied_out > limit:
++            applied_out = math.nextafter(applied_out, -math.inf)
+     hold = _r(applied_out - applied_in)
+     if applied_out <= applied_in or hold <= 0:
+         raise TimelineEditError("source range collapses at authored precision")
+diff --git a/docs/timeline-trim-precision.md b/docs/timeline-trim-precision.md
+index ccae95c40483dee91034c04cda63af043471dc52..7a508cbde88de6885645e66e23388f0e42803f8a
+--- a/docs/timeline-trim-precision.md
++++ b/docs/timeline-trim-precision.md
+@@ -10,6 +10,10 @@
+ `from` to zero and missing `to` to the raw file duration `D`. Before rounding
+ or writing anything, require finite endpoints and `0 <= in < out <= D`.
+ A genuinely overrange raw request is refused even if rounding would fit.
++Preserve integer inputs exactly for this check, including the registry bound,
++explicit requests and retained/default endpoints. Do not convert them to
++binary64 first: integer `9007199254740993` exceeds binary64 `9007199254740992.0`
++even though converting the integer to binary64 makes them equal.
+ Existing native source identity, unsupported source-map/window, provenance,
+ capture, replay and inverse guards remain in force.
+ 
+@@ -18,11 +22,15 @@
+ ```text
+ Q = 1_000_000
+ E(x) = the exact rational value of the input binary64 number x
+-N(x) = binary64(nearest_even_integer(Q * E(x)) / Q)
++V(x) = x exactly for an integer, E(x) for a binary64 input
++N(x) = binary64(nearest_even_integer(Q * E(binary64(x))) / Q)
+ I = N(in)
+ O = N(out)
+-if O > D:
+-    O = binary64(floor(Q * E(D)) / Q)
++if E(O) > V(D):
++    F = floor(Q * V(D)) / Q                 # exact rational division
++    O = binary64(F)
++    if E(O) > V(D):
++        O = predecessor_binary64(O)
+ H = N(binary64(O - I))
+ refuse if O <= I or H <= 0
+ write from=I, to=O, hold=H
+@@ -35,6 +43,25 @@
+ incorrect. Decimal-string ties and `Math.round(x * Q)` also do not reproduce
+ Python's binary64 nearest rule; the vectors include both tie directions.
+ 
++`predecessor_binary64` means the immediately preceding finite IEEE-754
++binary64 value toward negative infinity (`math.nextafter(O, -math.inf)` in
++Python). This is a portable numeric rule, independent of host formatting or
++rounding modes. For positive finite numbers, App can decrement the unsigned
++64-bit IEEE-754 bit pattern by one. One step suffices: `F <= V(D)`, and the
++predecessor of a nearest binary64 value that exceeds `F` is below `F`.
++The additional step is needed for integer bounds beyond binary64's exact
++integer range; that predecessor is itself an integer, hence on the
++six-decimal grid. A binary64 bound is already representable, so converting
++`F <= D` with nearest rounding cannot exceed it.
++
++For the review's integer `D=9007199254740995`, both the nearest endpoint and
++the binary64 conversion of its exact floor are `9007199254740996.0`. The
++predecessor is `9007199254740994.0`, which is the authored endpoint and (for
++`in=0`) hold. Raw `out=9007199254740996` or `9007199254740996.0` refuses before
++writes. A float duration `9007199254740996.0` instead admits that exact end.
++Hold always comes from the actual chosen endpoints, using the existing
++six-decimal rule; speed applies once to playback.
++
+ The policy refuses a positive raw interval if its applied endpoints coincide,
+ including after moving the out point inward. It never stretches a collapsed
+ interval to manufacture a minimum duration. A file shorter than one
+@@ -47,7 +74,14 @@
+ `input`; replace only `parent_revision.payload.registry.assets.picture.duration`
+ and recompute that payload's required content digest. Apply the case's `args`.
+ `applied` gives exact authored numeric values; `error` requires refusal before
+-writes. The original golden's commands, records and compiled output still
++writes. The 34 vectors retain the original 17 cases and add integer/float
++boundaries around `2**53`, the review's exact end, just-below and overrange
++controls, a positive interior interval and a collapsed interior interval.
++JSON integer tokens must be read losslessly for raw checks (for example with
++BigInt); ordinary `JSON.parse` into Number loses the distinction these cases
++test. Decimal/exponent tokens denote binary64 inputs. Applied outputs are
++finite binary64 numbers and remain bounded after JSON round-trip. The
++original golden's commands, records and compiled output still
+ match exactly. Native tests exercise model parity, publication mirrors,
+ opaque data, child pins, exact replay/retry and guarded undo/redo.
+ 
+@@ -57,16 +91,19 @@
+ | 9.9999999 | 9.9999999 | 9.999999 |
+ | 9.9999999 | 9.999999900000002 or 10 | Refused before writes |
+ | 0.0000009 | 0.0000009 | Refused: no positive authored window |
++| 9007199254740995 (integer) | 9007199254740995 | 9007199254740994.0 |
++| 9007199254740995 (integer) | 9007199254740996 | Refused before writes |
++| 9007199254740996.0 (binary64) | 9007199254740996.0 | 9007199254740996.0 |
+ 
+-Source identity for the App handoff: integration base commit
+-`df2739f903edac02bd36b4446deeea847524c040`; the commit containing this fix is
++Source identity for the App handoff: candidate base commit
++`e4bec724bec39865b9b6b73b8754abd82d4f4449`; the commit containing this fix is
+ assigned by the worker harness. Exact changed source **Git blob SHAs**:
+ 
+ | File | Blob SHA |
+ | --- | --- |
+-| `astrid/sdk/timeline/units.py` | `f30260efaef8f0d9d6735d4d13a042a8eadf4bee` |
++| `astrid/sdk/timeline/units.py` | `11bb609c6116fe2d2a50f880fbd3f92c60ee1d43` |
+ | `astrid/sdk/timeline/_trim_commands.py` | `c5dd666a676d09c2a232e3f81031b736feb50916` |
+-| `astrid/sdk/timeline/model.py` | `2101f1e6611518b43a1c4f5bf57060df1ac6dbc5` |
++| `astrid/sdk/timeline/model.py` | `f8115879a7cd666ea9b99bd5e1884ddbec8b7ab8` |
+ 
+ The original golden's SHA-256 is
+ `4d71a9d184db1b85c220de10842b2dc68e5eb9b48afee180b6c29cf0d5b06152`.
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index b6587b7f46b200c733f04da94bfcc1b47bcdad9e..61ce50df0c65df80336e3117007d6e4335b06e40
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -321,8 +321,8 @@
+     original = bundle_from_document(document)
+     row = copy.deepcopy(clip(original))
+     model_before = copy.deepcopy(row)
+-    tl = SimpleNamespace(_is_audio=lambda *args: False, _mcache='unchanged')
+-    monkeypatch.setattr(Clip, '_source_duration', lambda self: case['duration'])
++    tl = SimpleNamespace(_is_audio=lambda *args: False, _mcache='unchanged',
++                         _registry=lambda *args: payload['registry']['assets'])
+     model = Clip(tl, None, row)
+     if 'error' in case:
+         def unexpected_write(*args):
+@@ -341,6 +341,8 @@
+         assert clip(plan.bundle) == row
+         assert {key: row[key] for key in case['applied']} == case['applied']
+         assert 0 <= row['from'] < row['to'] <= case['duration']
++        serialized = json.loads(json.dumps(row, allow_nan=False))
++        assert 0 <= serialized['from'] < serialized['to'] <= case['duration']
+         assert clip_timeline_duration(row) == pytest.approx(row['hold'] / row['speed'])
+         # Exact retry/replay and guarded undo/redo still use the raw source pin.
+         assert execute(original, [command]).records == plan.records
+diff --git a/tests/sdk/test_timeline_media_verbs.py b/tests/sdk/test_timeline_media_verbs.py
+index 54587131e249d2539af0af308137d19bd343d252..3cf3ea92225113204835ba6a74f796aed0eadbaf
+--- a/tests/sdk/test_timeline_media_verbs.py
++++ b/tests/sdk/test_timeline_media_verbs.py
+@@ -70,6 +70,38 @@
+     assert clip.data == before
+ 
+ 
++@pytest.mark.parametrize("duration,current_out,out_s,expected", [
++    (9007199254740995, None, None, 9007199254740994),
++    (9007199254740995, 9007199254740995, None, 9007199254740994),
++    (9007199254740995, 6, 9007199254740995, 9007199254740994),
++    (9007199254740995, 6, 9007199254740996, None),
++    (9007199254740995, 9007199254740996, None, None),
++    (9007199254740992.0, 9007199254740993, None, None),
++    (9007199254740992, 6, 9007199254740993, None),
++    (9007199254740996.0, None, None, 9007199254740996),
++])
++def test_trim_preserves_raw_integer_bound_and_explicit_current_or_default_end(
++        duration, current_out, out_s, expected):
++    tl = tiny()
++    registry = tl.bundle["shots"]["A"]["internal_timeline"]["registry"]
++    registry["assets"]["Q"]["duration"] = duration
++    clip = tl.clip("a-music")
++    clip.data.update(speed=2, **{"from": None, "to": current_out})
++    before_registry, before = copy.deepcopy(registry), copy.deepcopy(clip.data)
++    if expected is None:
++        with pytest.raises(TimelineEditError, match="must fit inside the file"):
++            clip.trim(out_s=out_s)
++        assert clip.data == before
++    else:
++        clip.trim(out_s=out_s)
++        assert clip.data["from"] == 0
++        assert clip.data["to"] == clip.data["hold"] == expected
++        assert json.loads(json.dumps(clip.data))["to"] <= duration
++        assert clip.data["speed"] == 2
++        assert clip.duration == pytest.approx(expected / 2)
++    assert registry == before_registry
++
++
+ @pytest.mark.parametrize("method", [lambda clip: clip.trim(in_s=-1), lambda clip: clip.trim(out_s=11), lambda clip: clip.slip(-1), lambda clip: clip.slip(7)])
+ def test_source_bounds_name_the_clip_and_file_limit(method):
+     tl = tiny()
+
+codex
+Fixed raw integer trim bounds. For duration `9007199254740995`, native/model now author `9007199254740994.0` at exact end and refuse genuine overrange before writes.
+
+The documented rule uses the immediate binary64 predecessor when converting the exact interior floor still exceeds the raw bound. All original 17 vectors remain unchanged; 17 new vectors cover integer/float boundaries and collapse controls.
+
+Final test commands, both exit 0:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_media_verbs.py tests/sdk/test_timeline_clip_trim_provider.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/editing_conformance/test_recipe_m1_commands.py
+```
+
+**431 passed.**
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timeline_cuts.py tests/sdk/test_timeline_param_values.py tests/packs/timeline/test_edit_verbs.py tests/packs/timeline/test_verbs_working_copy.py
+```
+
+**168 passed, 17 existing lane exclusions, 4 existing warnings.** Scoped Ruff and diff checks passed; original golden unchanged.
+
+No blockers. No full or App/browser qualification run. Next: refresh the shared App handoff copies from the updated repository document/vectors, then qualify App parity.
+
+[Report]( /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-raw-integer-bound/notes/report.md) contains details. `commit-msg` and empty `DONE` written.
+tokens used
+89,436
+Fixed raw integer trim bounds. For duration `9007199254740995`, native/model now author `9007199254740994.0` at exact end and refuse genuine overrange before writes.
+
+The documented rule uses the immediate binary64 predecessor when converting the exact interior floor still exceeds the raw bound. All original 17 vectors remain unchanged; 17 new vectors cover integer/float boundaries and collapse controls.
+
+Final test commands, both exit 0:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_media_verbs.py tests/sdk/test_timeline_clip_trim_provider.py tests/editing_conformance/test_recipe_m2_clip_split.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/sdk/test_timeline_clip_add_provider.py tests/editing_conformance/test_recipe_m1_commands.py
+```
+
+**431 passed.**
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timeline_cuts.py tests/sdk/test_timeline_param_values.py tests/packs/timeline/test_edit_verbs.py tests/packs/timeline/test_verbs_working_copy.py
+```
+
+**168 passed, 17 existing lane exclusions, 4 existing warnings.** Scoped Ruff and diff checks passed; original golden unchanged.
+
+No blockers. No full or App/browser qualification run. Next: refresh the shared App handoff copies from the updated repository document/vectors, then qualify App parity.
+
+[Report]( /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-trim-raw-integer-bound/notes/report.md) contains details. `commit-msg` and empty `DONE` written.

@@ -1,0 +1,9 @@
+name=agt-m3-mouth-product-and-xfail-drop
+repo=agent
+base=tl/integration
+base_sha=470e4001
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-mouth-product-and-xfail-drop
+started=2026-10-20T06:24:05Z

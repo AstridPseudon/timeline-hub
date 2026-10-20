@@ -1,0 +1,400 @@
+             if pin not in pins:
+                 pins.append(pin)
+@@ -398,9 +398,10 @@
+     def resolve(ctx):
+         command = ctx.record['command']
+         required = []
+-        if command['op'] == 'clip.set-params' and 'schema_source' in command['args']:
++        if command['op'] in ('clip.set-params', 'clip.set') and 'schema_source' in command['args']:
+             row = ctx.state.entity(command['select'])
+-            selected = row.get('elementRef') or row.get('element_ref')
++            selected = command['args'].get('values', {}).get(
++                'elementRef', row.get('elementRef') or row.get('element_ref'))
+             if isinstance(selected, dict) and selected.get('packId'):
+                 required.append((command['args']['schema_source'], selected))
+         elif command['op'] == 'timeline.inverse':
+diff --git a/tests/editing_conformance/test_recipe_clip_scalar_fields.py b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+index 4319da921dd31e9b67d74127936222a1111e88d0..3140a887bb1da10252fc2818c8fb186ef66723cc
+--- a/tests/editing_conformance/test_recipe_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+@@ -122,7 +122,7 @@
+ 
+ @pytest.mark.parametrize('values,clear', [({'hold': 2}, ['hold']), ({'asset': 'anything'}, []),
+     ({'asset': ''}, []), ({'asset': None}, []), ({'transition': None}, []),
+-    ({'transition': {'type': 'crossfade', 'duration': 0.5}}, []), ({'params': {}}, []),
++    ({'transition': {'type': 'crossfade'}}, []), ({'params': {}}, []),
+     ({}, ['speed']), ({}, ['hold', 'hold']), ({}, [])])
+ def test_closed_bounded_fields_and_disjoint_set_clear(values, clear):
+     with pytest.raises(CommandError):
+diff --git a/tests/editing_conformance/test_recipe_transition_set.py b/tests/editing_conformance/test_recipe_transition_set.py
+index 649d4484d79e7babe40757dfbaadbe8e9e378af0..98e29936c80abde91c579f6115511ae7ab9186a0
+--- a/tests/editing_conformance/test_recipe_transition_set.py
++++ b/tests/editing_conformance/test_recipe_transition_set.py
+@@ -176,6 +176,8 @@
+     path = directory / 'element.yaml'
+     definition = yaml.safe_load(path.read_text())
+     definition['kind'] = 'transition'
++    manifest['rendering']['transitions/reveal'] = manifest['rendering'].pop('effects/reveal')
++    (root / 'pack.yaml').write_text(yaml.safe_dump(manifest))
+     definition['schema']['properties']['seed']['maximum'] = 20
+     path.write_text(yaml.safe_dump(definition))
+     old = project_packs.admit_project_pack('realm', 'project-1')['elements'][0]['descriptor']
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/sdk/test_timeline_transition_schema.py')
+s=p.read_text().replace('from astrid.sdk.timeline.commands import execute\\n','').replace('        configured_project_pack):','        configured_project_pack):  # noqa: F811 - shared admission fixture').replace('old, selected =','_, selected =')
+s=s.replace(\"    assert undone['data']['canonical_document'] == before\\n\", \"    restored = undone['data']['canonical_document']\\n    assert restored['parent_revision']['payload'] == before['parent_revision']['payload']\\n    assert restored['shot_revisions'] == before['shot_revisions']\\n    assert restored['internal_timeline_revisions'] == before['internal_timeline_revisions']\\n\")
+s=s[:s.index('    # Frozen capture/replay')]
+s+='''
+
+@pytest.mark.xfail(strict=True, reason='Exact inverse must remove newly introduced DocumentPins when no later dependent needs them')
+def test_first_selected_transition_exact_document_inverse(configured_project_pack):  # noqa: F811
+    _, selected = admitted_transition(configured_project_pack)
+    realm = DetachedRealm(app_document())
+    options = schema_options(configured_project_pack, selected)
+    verified, realm.snapshot_objects = options['schema_inputs'][0]
+    realm.live_sources[_digest(verified['pin'])] = verified
+    before = copy.deepcopy(realm.documents[realm.head['revision_id']])
+    values = {'elementRef': selected, 'transition': {'type': selected['id'], 'duration': .5,
+              'revision': selected['revision'], 'params': {'seed': 8}}}
+    accepted = commit(realm, [capture_clip_set(current(realm), PARENT, values=values, **options)])
+    undone = commit(realm, [inverse([accepted['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == before
+'''
+p.write_text(s)
+PY
+cat >> tests/editing_conformance/test_recipe_transition_set.py <<'EOF'
+
+
+def test_actual_app_selected_builtin_uses_exact_shipped_catalog_reference():
+    from astrid.core.element.catalog import list_element_descriptors
+
+    descriptor = next(d for d in list_element_descriptors('transitions') if d['id'] == 'cross-fade')
+    selected = {key: descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
+    original = app_bundle()
+    values = {'elementRef': selected, 'transition': {'type': selected['id'], 'duration': 8 / 30,
+              'revision': selected['revision'], 'params': {'easing': 'linear'}}}
+    plan = execute(original, [capture_clip_set(original, PARENT, values=values)])
+    exact(clip(plan.bundle, PARENT), dict(clip(original, PARENT), **values))
+    exact(inverse(plan.bundle, plan.records).bundle, original)
+    exact(replay(plan, original).records, plan.records)
+    for key in ('revision', 'packId'):
+        bad = copy.deepcopy(values)
+        bad['elementRef'][key] = 'unavailable'
+        with pytest.raises(CommandError):
+            capture_clip_set(original, PARENT, values=bad)
+    values['transition']['params']['easing'] = 'not-linear'
+    with pytest.raises(CommandError):
+        capture_clip_set(original, PARENT, values=values)
+EOF
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache --fix astrid/sdk/timeline/_clip_scalar_commands.py tests/sdk/test_timeline_transition_schema.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_transition_set.py tests/sdk/test_timeline_transition_schema.py tests/sdk/test_timeline_clip_scalar_provider.py' in /home/user/work/wt/agt-m2-transition-set
+codex
+The provider check found a real limitation: undo restores the authored fields exactly, but the existing retention path keeps a newly introduced `DocumentPin` in the manifest. That prevents a byte-exact document round-trip for the first selected-pack application. I’m keeping an executable strict xfail and documenting the smallest contract change needed. I also found an existing shipped-catalog resolver for App built-ins; selected built-ins can use an exact owner/revision match without a project-pack fallback.
+
+ exited 1 in 21396ms:
+Found 2 errors (2 fixed, 0 remaining).
+...................................F.x................                   [100%]
+=================================== FAILURES ===================================
+____ test_actual_app_selected_builtin_uses_exact_shipped_catalog_reference _____
+
+    def test_actual_app_selected_builtin_uses_exact_shipped_catalog_reference():
+        from astrid.core.element.catalog import list_element_descriptors
+    
+        descriptor = next(d for d in list_element_descriptors('transitions') if d['id'] == 'cross-fade')
+        selected = {key: descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
+        original = app_bundle()
+        values = {'elementRef': selected, 'transition': {'type': selected['id'], 'duration': 8 / 30,
+                  'revision': selected['revision'], 'params': {'easing': 'linear'}}}
+        plan = execute(original, [capture_clip_set(original, PARENT, values=values)])
+        exact(clip(plan.bundle, PARENT), dict(clip(original, PARENT), **values))
+        exact(inverse(plan.bundle, plan.records).bundle, original)
+        exact(replay(plan, original).records, plan.records)
+        for key in ('revision', 'packId'):
+            bad = copy.deepcopy(values)
+            bad['elementRef'][key] = 'unavailable'
+            with pytest.raises(CommandError):
+                capture_clip_set(original, PARENT, values=bad)
+        values['transition']['params']['easing'] = 'not-linear'
+>       with pytest.raises(CommandError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'astrid.sdk.timeline._command_state.CommandError'>
+
+tests/editing_conformance/test_recipe_transition_set.py:252: Failed
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_recipe_transition_set.py::test_actual_app_selected_builtin_uses_exact_shipped_catalog_reference
+1 failed, 52 passed, 1 xfailed in 18.65s
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-transition-set/astrid/sdk/timeline/_clip_scalar_commands.py
+diff --git a/astrid/sdk/timeline/_clip_scalar_commands.py b/astrid/sdk/timeline/_clip_scalar_commands.py
+index bedbed1643d7c18129c08d4cef3b5cd264402903..de17cf48d9311912fb39463118f01471b9a34c1d
+--- a/astrid/sdk/timeline/_clip_scalar_commands.py
++++ b/astrid/sdk/timeline/_clip_scalar_commands.py
+@@ -6,8 +6,15 @@
+ 
+ from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
+ 
+-from ._command_state import CommandError
+-from ._scalar_commands import _capture, _changes, _clip_basis, _target
++from ._command_state import CommandError, equal, present
++from ._scalar_commands import (
++    _capture,
++    _changes,
++    _clip_basis,
++    _selected_schema,
++    _target,
++    _validate_param_values,
++)
+ from .capture import CLIP_FIELDS, MAP_FIELDS, RELATIONS, _duration, number, occurrence_start, rate
+ 
+ 
+@@ -81,10 +88,79 @@
+     return duration_paths, duration
+ 
+ 
++def _transition_set(ctx, command, ref, values, identity):
++    from astrid.core.element.catalog import (
++        list_element_descriptors,
++        list_transition_ids,
++        read_transition_schema,
++    )
++
++    transition = values['transition']
++    number(transition['duration'], 'transition.duration', positive=True)
++    selected = values.get('elementRef', identity['elementRef'] or identity['element_ref'])
++    if selected is not None:
++        if (not isinstance(selected, dict) or selected.get('kind') != 'transition'
++                or selected.get('id') != transition['type']
++                or ('revision' in transition and transition['revision'] != selected.get('revision'))):
++            raise CommandError('transition requires its matching selected reference', ref=ref)
++    before = ctx.read(ref, ['transition'])
++    same = isinstance(before, dict) and before.get('type') == transition['type']
++    same = same and equal(selected, identity['elementRef'] or identity['element_ref'])
++    changed = {key: value for key, value in transition.get('params', {}).items()
++               if not same or not equal(present(value), ctx.state.get(ref, ['transition', 'params', key]))}
++    builtin = next((item for item in list_element_descriptors('transitions')
++                    if selected and all(item[key] == selected.get(key)
++                                        for key in ('id', 'kind', 'revision', 'packId'))), None)
++    if builtin is not None:
++        if 'schema_source' in command['args']:
++            raise CommandError('builtin transition does not use schema_source', ref=ref)
++        schema = builtin['schema']
++    elif isinstance(selected, dict) and selected.get('packId'):
++        schema = (_selected_schema(ctx, command, ref, selected)
++                  if changed or not same or 'schema_source' in command['args'] else {})
++    else:
++        if 'schema_source' in command['args']:
++            raise CommandError('schema_source requires a selected project pack transition', ref=ref)
++        if selected:
++            raise CommandError('selected transition declaration is unavailable', ref=ref)
++        schema = read_transition_schema(transition['type']) if transition['type'] in list_transition_ids() else {}
++    _validate_param_values(ref, changed, schema)
++    owner = ref.rsplit('/', 1)[0]
++    if identity['clipType'] == 'effect-layer':
++        raise CommandError('effect layers cannot own incoming transitions', ref=ref)
++    lane = ctx.read(ref, ['track'])
++    if not isinstance(lane, str) or not lane:
++        raise CommandError('transition requires an owning track', ref=ref)
++    ctx.read(owner + '/track:' + lane, ['id'])
++    fps = rate(ctx.read('parent', ['config', 'output', 'fps']))
++    frames = transition['duration'] * float(fps)
++    if not math.isfinite(frames) or frames < .5 or frames >= 2**53 - .5:
++        raise CommandError('transition requires positive safe whole frames', ref=ref)
++    if owner != 'parent':
++        for path in MAP_FIELDS:
++            ctx.read(owner, path)
++    for neighbor in [ref, *ctx.select('transition.predecessor', ref)]:
++        basis = _clip_basis(ctx, neighbor)
++        asset = basis['asset'] or basis['asset_id']
++        if isinstance(asset, str):
++            ctx.read(owner + '/registry', ['assets', asset, 'content_sha256'])
++        for key in CLIP_FIELDS:
++            ctx.read(neighbor, [key])
++        for prefix in ([], ['app'], ['app', 'astrid']):
++            for key in RELATIONS:
++                ctx.read(neighbor, prefix + [key])
++
++
+ def clip_set(ctx, command):
+     ref = _target(ctx, command, 'clip')
+     values, clear = _changes(command)
+-    _clip_basis(ctx, ref)
++    identity = _clip_basis(ctx, ref)
++    if 'elementRef' in values and 'transition' not in values:
++        raise CommandError('elementRef requires transition SET', ref=ref)
++    if 'transition' in values:
++        _transition_set(ctx, command, ref, values, identity)
++    elif 'schema_source' in command['args']:
++        raise CommandError('schema_source requires transition SET', ref=ref)
+     row = ctx.state.entity(ref)
+     if 'asset' in clear:
+         for key in ('asset_id', 'media_id', 'object_id'):
+@@ -103,6 +179,8 @@
+         ctx.clear(ref, [key])
+ 
+ 
+-def capture_clip_set(bundle, select, *, values=None, clear=()):
+-    """Capture source hold set/clear and explicit raw asset/transition removal."""
+-    return _capture(bundle, 'clip.set', select, values, clear)
++def capture_clip_set(bundle, select, *, values=None, clear=(), schema_source=None,
++                     schema_inputs=(), realm_id=None):
++    """Capture source hold, incoming transition SET, or explicit raw field removal."""
++    return _capture(bundle, 'clip.set', select, values, clear, schema_source=schema_source,
++                    schema_inputs=schema_inputs, realm_id=realm_id)
+diff --git a/astrid/sdk/timeline/_collections.py b/astrid/sdk/timeline/_collections.py
+index ebecfc2c73b4527770d99fdce1f4d604990d1d87..abe1cc35ce881135d7649863b1c11a1d7908504f
+--- a/astrid/sdk/timeline/_collections.py
++++ b/astrid/sdk/timeline/_collections.py
+@@ -105,6 +105,17 @@
+ 
+ 
+ def selection_overlap(selected, write):
++    if selected['key'] == 'transition.predecessor':
++        scope, lane = selected['boundaries'][0].rsplit('/track:', 1)
++        if write['ref'] in selected['order']:
++            return not write['path'] or write['path'] in (['id'], ['track'], ['at'])
++        if write['ref'].startswith(scope + '/clip:'):
++            for tag in ('before', 'after'):
++                value = write.get(tag, {}).get('value')
++                if (not write['path'] and isinstance(value, dict) and value.get('track') == lane
++                        or write['path'] == ['track'] and value == lane):
++                    return True
++        return False
+     if selected['key'] == 'placement.owners':
+         if (write['ref'].startswith('occurrence:') and '/' not in write['ref']
+                 and write['path'] in ([], ['shot_id'])):
+diff --git a/astrid/sdk/timeline/_recording.py b/astrid/sdk/timeline/_recording.py
+index 688bcfc9752ca8f951937f3d709d766627e1804f..cdc288f8b0f85370e129bc9e7a850cd85dadb190
+--- a/astrid/sdk/timeline/_recording.py
++++ b/astrid/sdk/timeline/_recording.py
+@@ -17,6 +17,20 @@
+     boundaries = None
+     if key == "move.target":
+         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
++    elif key == 'transition.predecessor':
++        from .capture import number
++
++        target = state.entity(owner)
++        scope = owner.rsplit('/', 1)[0]
++        lane = [ref for ref in order(state, scope, 'clip')
++                if state.entity(ref).get('track') == target.get('track')]
++        lane.sort(key=lambda ref: number(state.entity(ref).get(
++            'at', number(state.entity(ref).get('at_ms', 0), 'clip.at_ms') / 1000), 'clip.at'))
++        index = lane.index(owner)
++        return {'key': key, 'query_version': 1, 'owner': owner,
++                'members': lane[max(0, index - 1):index], 'order': lane,
++                'boundaries': [scope + '/track:' + str(target.get('track'))],
++                'policy': 'guard-membership'}
+     elif key in KINDS:
+         result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
+                   else order(state, owner, KINDS[key]))
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index f28d62a50dfd119d4381181ce69deb07af872b54..42fb19928881904b3cf547718b0d1d4a15695b41
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -350,7 +350,7 @@
+     pins = copy.deepcopy(document["dependency_manifest"]["documents"])
+     for call in calls:
+         pin = call.get('args', {}).get('schema_source')
+-        if call['op'] == 'clip.set-params' and pin is not None:
++        if call['op'] in ('clip.set-params', 'clip.set') and pin is not None:
+             pin = _document_pin(pin)
+             if pin not in pins:
+                 pins.append(pin)
+@@ -398,9 +398,10 @@
+     def resolve(ctx):
+         command = ctx.record['command']
+         required = []
+-        if command['op'] == 'clip.set-params' and 'schema_source' in command['args']:
++        if command['op'] in ('clip.set-params', 'clip.set') and 'schema_source' in command['args']:
+             row = ctx.state.entity(command['select'])
+-            selected = row.get('elementRef') or row.get('element_ref')
++            selected = command['args'].get('values', {}).get(
++                'elementRef', row.get('elementRef') or row.get('element_ref'))
+             if isinstance(selected, dict) and selected.get('packId'):
+                 required.append((command['args']['schema_source'], selected))
+         elif command['op'] == 'timeline.inverse':
+diff --git a/tests/editing_conformance/test_recipe_clip_scalar_fields.py b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+index 4319da921dd31e9b67d74127936222a1111e88d0..3140a887bb1da10252fc2818c8fb186ef66723cc
+--- a/tests/editing_conformance/test_recipe_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+@@ -122,7 +122,7 @@
+ 
+ @pytest.mark.parametrize('values,clear', [({'hold': 2}, ['hold']), ({'asset': 'anything'}, []),
+     ({'asset': ''}, []), ({'asset': None}, []), ({'transition': None}, []),
+-    ({'transition': {'type': 'crossfade', 'duration': 0.5}}, []), ({'params': {}}, []),
++    ({'transition': {'type': 'crossfade'}}, []), ({'params': {}}, []),
+     ({}, ['speed']), ({}, ['hold', 'hold']), ({}, [])])
+ def test_closed_bounded_fields_and_disjoint_set_clear(values, clear):
+     with pytest.raises(CommandError):
+diff --git a/tests/editing_conformance/test_recipe_transition_set.py b/tests/editing_conformance/test_recipe_transition_set.py
+index 649d4484d79e7babe40757dfbaadbe8e9e378af0..98e29936c80abde91c579f6115511ae7ab9186a0
+--- a/tests/editing_conformance/test_recipe_transition_set.py
++++ b/tests/editing_conformance/test_recipe_transition_set.py
+@@ -176,6 +176,8 @@
+     path = directory / 'element.yaml'
+     definition = yaml.safe_load(path.read_text())
+     definition['kind'] = 'transition'
++    manifest['rendering']['transitions/reveal'] = manifest['rendering'].pop('effects/reveal')
++    (root / 'pack.yaml').write_text(yaml.safe_dump(manifest))
+     definition['schema']['properties']['seed']['maximum'] = 20
+     path.write_text(yaml.safe_dump(definition))
+     old = project_packs.admit_project_pack('realm', 'project-1')['elements'][0]['descriptor']
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import json
+p=Path('astrid/core/timeline/schema/edit-command.schema.json'); schema=json.loads(p.read_text())
+t=schema['"'$defs'"']['ClipSetArgs']['properties']['values']['properties']['transition']
+for key in ('id','durationFrames','align','incomingPolicy'):
+    t['properties'][key]=False
+p.write_text(json.dumps(schema,indent=2)+'\\n')
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-transition-set.md')
+s=p.read_text().replace('Any selected\\n  reference carrying packId requires the existing admitted immutable snapshot.\\n  In particular an App static catalog reference with packId=rendering does NOT\\n  gain project-pack authority from its type name. An exact snapshot/admission\\n  must be available before that selected producer can be removed.', 'Selected shipped built-ins require an exact id/kind/packId/revision match\\n  through the existing catalog descriptor resolver (no type-only fallback).\\n  Other selected pack references require an admitted immutable snapshot.')
+s+='''
+
+Canonical SET accepts App "'`type` and seconds `duration`; compiled-only
+`id`, `durationFrames`, `align`, `incomingPolicy` fields are refused in this
+bounded input. Extra opaque keys remain literal. Seconds must quantize to a
+positive safe whole-frame window at the retained rational frame rate.
+
+## Executable contract gap: first-use document pin inverse
+
+`tests/sdk/test_timeline_transition_schema.py::test_first_selected_transition_exact_document_inverse`
+is a strict expected failure. First applying a selected pack can introduce its
+DocumentPin. Existing document_from_bundle keeps that pin after inverse even
+when the authored transition/elementRef are exactly restored. Authored payload
+undo/redo and retained snapshot reads pass; the entire manifest/revision image
+does not return byte-exactly to the original. This is existing retention behavior,
+not justification to rewrite the expected exact-document assertion.
+
+Smallest proposed contract: record introduced DocumentPins on the existing
+native record, analogously to introduced media, and let the existing guarded
+inverse drop a newly introduced manifest pin only when no surviving/later
+binding depends on it. Keep immutable historical custody available for redo.
+This worker does not invent a second retention mechanism or silently claim
+exact first-use selected-pack undo. M2 and that consumer deletion remain held.
+'"'''
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import json
+from pathlib import Path
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+from astrid.sdk.timeline.commands import execute
+from tests.editing_conformance.test_recipe_clip_scalar_fields import PARENT, app_bundle
+original=app_bundle()
+transition={'type':'crossfade','duration':0.75,'params':{'future':{'literal':[None,False,0,'','ƒ(x)']}},'future':[None,2.0]}
+plan=execute(original,[capture_clip_set(original,PARENT,values={'transition':transition})])
+Path('tests/editing_conformance/fixtures/recipe_m2_app_transition_set.json').write_text(json.dumps({'bundle':original,'commands':plan.commands,'records':plan.records,'after_bundle':plan.bundle},sort_keys=True,ensure_ascii=False,indent=2)+'\\n')
+PY" in /home/user/work/wt/agt-m2-transition-set
+ succeeded in 3609ms:
+ERROR: You’ve hit your usage limit. Visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 24th, 2026 8:40 PM.
+ERROR: You’ve hit your usage limit. Visit https://chatgpt.com/settings/usage to purchase more credits or try again at Oct 24th, 2026 8:40 PM.
+tokens used
+163,754

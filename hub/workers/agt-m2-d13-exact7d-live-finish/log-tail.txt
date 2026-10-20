@@ -1,0 +1,400 @@
+                                raise CustodyError("terminal candidate member identity changed")
+                            entry['handled'] = True
+                            continue  # Never upgrade a terminal candidate.
+                        active_pid = pid
+                        self._register_census_candidate(pid, birth, census=entry['census'],
+                                                        root_pid=root_pid, root_handle=root_handle,
+                                                        actor=actor, previously_admitted=previously_admitted,
+                                                        census_round=reconciliation_round,
+                                                        new_absences=new_absences,
+                                                        fresh_census=fresh_census,
+                                                        retry_admissions=retry_admissions,
+                                                        _first_observed_row=(entry['row'] if entry['sample'] > 0
+                                                                            or sample_number > entry['sample'] else None))
+                        entry['handled'] = True
+                        active_pid = None
+                    _check_reconciliation_deadline(deadline)
+                    if not new_absences and not retry_admissions:
+                        return {pid: birth for pid, birth in members.items()
+                                if pid not in self._unadmitted_absent}
+                    fresh = fresh_census()
+                    self._revalidate_post_absence(fresh, new_absences, actor, root_pid, root_handle)
+                    _check_reconciliation_deadline(deadline)
+                    members = self._owned_census_members(fresh)
+                    for pid in new_absences:
+                        record = self._unadmitted_absent[pid]
+                        record["disposition"] = ("UNADMITTED_ZOMBIE" if record.get("outcome") == "ZOMBIE"
+                                                 else "UNADMITTED_ABSENT")
+                        record["reconciliation_sequence"] = self._census_sequence
+                        record["reconciliation_census_sha256"] = _digest_bytes(_canonical(dict(fresh)))
+                    if new_absences:
+                        self._write_observed_containment()
+                    if next_pending < len(pending):
+                        reconciliation_round += 1
+                        continue
+                    return members
+            except BaseException as error:
+                self._uncertain = error
+                raise
+
+    def _register_census_candidate(self, pid, birth, *, census, root_pid, root_handle,
+                                   actor, previously_admitted, census_round, new_absences,
+                                   fresh_census=None, retry_admissions=None, _capture_retry=False,
+                                   _retry_expected=None, _first_observed_row=None):
+        try:
+            observation = ordinary_candidate_observation(pid) if pid not in self._handles else None
+            if (_first_observed_row is not None and observation is not None
+                    and observation.get('outcome') in {'LIVE', 'ZOMBIE'}):
+                native = observation.get('native')
+                precise = ('pid', 'uid', 'parent_pid', 'pgid', 'start_sec', 'start_usec')
+                if (not isinstance(native, Mapping) or _first_observed_row.get('birth_id') != birth
+                        or any(type(native.get(k)) is not int or type(_first_observed_row.get(k)) is not int
+                               or native[k] != _first_observed_row[k] for k in precise)):
+                    raise CustodyError('delayed candidate differs from its first precise census')
+            if _capture_retry:
+                native = observation.get('native') if isinstance(observation, Mapping) else None
+                precise = ('pid', 'uid', 'parent_pid', 'pgid', 'start_sec', 'start_usec')
+                if (not isinstance(observation, Mapping) or observation.get('outcome') != 'LIVE'
+                        or not isinstance(native, Mapping) or not isinstance(_retry_expected, Mapping)
+                        or _retry_expected.get('birth_id') != birth
+                        or any(type(native.get(k)) is not int or type(_retry_expected.get(k)) is not int
+                               or native[k] != _retry_expected[k] for k in precise)):
+                    raise CustodyError('candidate changed before bounded capture retry')
+            self.register(pid, birth, _observation=observation)
+        except CustodyError as error:
+            cause = error.__cause__
+            capture = getattr(cause, "capture_failure", None)
+            observations = getattr(cause, "candidate_observations", None)
+            if isinstance(cause, NativeTokenCaptureError) and observations is not None:
+                census_fields = ("pid", "uid", "birth_id", "parent_pid", "pgid", "status", "start_sec", "start_usec")
+                diagnostic = {"pid": pid, "birth_id": birth, "capture_failure": capture,
+                              "observations": observations,
+                              "census": {member: {key: row[key] for key in census_fields if key in row}
+                                         for member, row in census.items()},
+                              "census_sha256": _digest_bytes(_canonical(dict(census))),
+                              "root": {"pid": root_pid, "birth_id": root_handle[0]},
+                              "observer": {key: actor[key] for key in ("pid", "uid", "birth_id")},
+                              "observation_sequence": self._census_sequence,
+                              "census_round": census_round, "admitted": False}
+                if getattr(self, "command_diagnostics", False):
+                    commands = getattr(cause, "failure_command_observations", None)
+                    try:
+                        pre = observations.get("pre", {}).get("native")
+                        post = observations.get("post", {}).get("native")
+                        row = census.get(pid)
+                        parent = commands.get("parent_pid") if isinstance(commands, Mapping) else None
+                        # Every association must agree with BOTH precise capture
+                        # observations and the original census, including UID.
+                        parent_bound = (isinstance(pre, Mapping) and isinstance(post, Mapping)
+                                        and type(parent) is int and parent > 0
+                                        and pre.get("parent_pid") == post.get("parent_pid") == parent)
+                        diagnostic["failure_command_observations"] = {
+                            "candidate_pid": pid, "parent_pid": parent,
+                            "target": _capture_failure_command_evidence(
+                                commands.get("target") if isinstance(commands, Mapping) else None,
+                                [pre, post, row]),
+                            "parent": _capture_failure_command_evidence(
+                                commands.get("parent") if isinstance(commands, Mapping) else None,
+                                [census.get(parent)] if parent_bound else []),
+                            "authority": "NONE",
+                            "observation_error_type": commands.get("error_type") if isinstance(commands, Mapping) else None,
+                        }
+                        # A malformed optional augmentation must not prevent
+                        # persistence of the mandatory capture-failure journal.
+                        _canonical(diagnostic["failure_command_observations"])
+                    except BaseException as diagnostic_error:
+                        diagnostic["failure_command_observations"] = {
+                            "classification": "UNPROVED", "authority": "NONE",
+                            "error_type": type(diagnostic_error).__name__,
+                        }
+                self._capture_failure_observations = getattr(self, "_capture_failure_observations", []) + [diagnostic]
+                try:
+                    self._write_observed_containment()
+                except BaseException as persistence_error:
+                    error.evidence_error_type = type(persistence_error).__name__
+                    raise CustodyError("capture-failure diagnostic persistence failed") from error
+            # One synchronous retry can acquire actual authority; it never defers
+            # an uncaptured process to another census or grants numeric authority.
+            if _capture_retry:
+                raise
+            later_terminal_observation = None
+            later_terminal_census = None
+            if (fresh_census is not None and retry_admissions is not None
+                    and getattr(error, 'registration_stage', None) == 'token-capture'
+                    and type(cause) is NativeTokenCaptureError
+                    and isinstance(capture, Mapping) and isinstance(observations, Mapping)
+                    and isinstance(observations.get('pre'), Mapping)
+                    and isinstance(observations.get('post'), Mapping)
+                    and observations['pre'].get('outcome') == observations['post'].get('outcome') == 'LIVE'
+                    and type(capture.get('kern_return')) is int
+                    and ((capture.get('substage') == 'task_info_first'
+                          and capture['kern_return'] == 0x10000003
+                          and capture.get('port_acquired') is True
+                          and capture.get('port_release_succeeded') is True)
+                         or (capture.get('substage') == 'task_name_for_pid'
+                             and capture['kern_return'] == 5
+                             and capture.get('port_acquired') is False))
+                    and getattr(cause, 'port_release_error', None) is None):
+                decision = {"version": "astrid.capture-retry-decision/v1", "authority": "NONE",
+                            "stage": "initial-eligibility", "outcome": "ENTERED",
+                            "retry_registration_started": False}
+                # Augment the already durable original failure, never replace
+                # its observations or infer authority from diagnostic fields.
+
+codex
+The failure is a real custody race, not a D13 assertion failure: the render’s live MP4/ffprobe/undo path completed, but a short-lived descendant was added to the ancestry map before Linux pidfd registration. If it exited before binding, the later PID reuse was treated as unresolved even though no retained handle existed. I’ll make one bounded fix in `process_group.py`: after custody reconciliation, retain ancestry entries only for incarnations actually held by `ProcessCustody`; Kernel19e4’s pidfd proof and fail-closed behavior remain intact. Then I’ll rerun only the same named two-case suite.
+exec
+/bin/bash -lc "sed -n '548,582p' astrid/core/execution/process_group.py" in /home/user/work/wt/agt-m2-d13-exact7d-live-finish
+ succeeded in 0ms:
+                continue
+            raise CleanupUncertainError("owned process identity was reused")
+        if current is None and any(
+            info.ppid == pid and info.pid not in known for info in snapshot.values()
+        ):
+            raise CleanupUncertainError("unverified child of missing owned parent")
+    live = _tree_members(process, known, snapshot)
+    if (witness := getattr(snapshot, "exited", {}).get(process.pid)) is not None:
+        # Only the retained child itself; other zombies are no one's evidence.
+        process._astrid_census_exited = {process.pid: witness}  # type: ignore[attr-defined]
+    if process.pid not in known:
+        raise CleanupUncertainError("owned leader identity unavailable")
+    custody = getattr(process, "_astrid_custody", None)
+    if custody is None:
+        raise CleanupUncertainError("owned tree lacks retained cleanup custody")
+    if isinstance(custody, ProcessCustody):
+        live = custody.observe_census(
+            live, census=_census_evidence(snapshot),
+            fresh_census=lambda: _census_evidence(_process_snapshot()),
+            **({"deadline": deadline} if deadline is not None else {}),
+        )
+        # Fresh reconciliation observations must survive subsequent reparenting.
+        known.update({pid: birth for pid, (birth, _) in custody._handles.items()})
+        if sys.platform == "darwin" and getattr(getattr(custody, "_launch_broker", None), "role", None) == "command":
+            process._astrid_cleanup_semantics = {
+                "coverage": "retained_observed_set_and_final_owned_group_checks",
+                "complete_descendant_history": "UNPROVED",
+                "unadmitted_evidence": str(custody.root / "observed-containment.json")
+                    if custody._unadmitted_absent else None,
+            }
+    else:
+        custody.observe(live)
+    return live
+
+
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-d13-exact7d-live-finish/astrid/core/execution/process_group.py
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index c0d0ec0dff40c41baf03bfad4b97fa6abcab9448..e53b8a6f6ceea2c4e49bb4094ae21e1965371ab8
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -1,4 +1,5 @@
+ # Test-service allow-list: one line per "REPO SUITE COMMAND...". Run by bin/test-run (outside the sandbox) via bash -c
++agent registered7d-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+ # in a throwaway snapshot of the target worktree (node_modules symlinked for app/composition).
+ # SUITE "full" (and any name starting with "full") is heavy: at most one runs at a time.
+ # SUITE "targeted": the request's --files are appended. Any other name is a "named" suite (--files appended if given).
+diff --git a/astrid/core/execution/process_group.py b/astrid/core/execution/process_group.py
+index 5803ea62ea52a07f64b9c24110e8f27135fee780..8e5f5be68e715d939d41d04698de54f487e77756
+--- a/astrid/core/execution/process_group.py
++++ b/astrid/core/execution/process_group.py
+@@ -567,7 +567,13 @@
+             **({"deadline": deadline} if deadline is not None else {}),
+         )
+         # Fresh reconciliation observations must survive subsequent reparenting.
+-        known.update({pid: birth for pid, (birth, _) in custody._handles.items()})
++        # A Linux child can exit between the census and pidfd binding; register
++        # deliberately declines that already-gone candidate because no retained
++        # kernel handle exists. Do not keep that unowned census row in the
++        # ancestry map, or a later PID reuse would be mistaken for its identity.
++        retained = {pid: birth for pid, (birth, _) in custody._handles.items()}
++        known.intersection_update(retained)
++        known.update(retained)
+         if sys.platform == "darwin" and getattr(getattr(custody, "_launch_broker", None), "role", None) == "command":
+             process._astrid_cleanup_semantics = {
+                 "coverage": "retained_observed_set_and_final_owned_group_checks",
+
+exec
+/bin/bash -lc 'git diff --check && git diff -- astrid/core/execution/process_group.py && git status --short --branch && git rev-parse HEAD''^{tree} && git -C /home/user/work/wt/rt-pin-7d1cfa6b rev-parse HEAD' in /home/user/work/wt/agt-m2-d13-exact7d-live-finish
+ succeeded in 1231ms:
+diff --git a/astrid/core/execution/process_group.py b/astrid/core/execution/process_group.py
+index 5803ea62..8e5f5be6 100644
+--- a/astrid/core/execution/process_group.py
++++ b/astrid/core/execution/process_group.py
+@@ -567,7 +567,13 @@ def _observe_tree(process: subprocess.Popen, *, deadline: float | None = None) -
+             **({"deadline": deadline} if deadline is not None else {}),
+         )
+         # Fresh reconciliation observations must survive subsequent reparenting.
+-        known.update({pid: birth for pid, (birth, _) in custody._handles.items()})
++        # A Linux child can exit between the census and pidfd binding; register
++        # deliberately declines that already-gone candidate because no retained
++        # kernel handle exists. Do not keep that unowned census row in the
++        # ancestry map, or a later PID reuse would be mistaken for its identity.
++        retained = {pid: birth for pid, (birth, _) in custody._handles.items()}
++        known.intersection_update(retained)
++        known.update(retained)
+         if sys.platform == "darwin" and getattr(getattr(custody, "_launch_broker", None), "role", None) == "command":
+             process._astrid_cleanup_semantics = {
+                 "coverage": "retained_observed_set_and_final_owned_group_checks",
+## tl/agt-m2-d13-exact7d-live-finish
+ M astrid/core/execution/process_group.py
+d4871247bc072c5c32b3c6366e79ae2df33aa930
+7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-d13-exact7d-live-finish/astrid/core/execution/process_group.py
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index c0d0ec0dff40c41baf03bfad4b97fa6abcab9448..e53b8a6f6ceea2c4e49bb4094ae21e1965371ab8
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -1,4 +1,5 @@
+ # Test-service allow-list: one line per "REPO SUITE COMMAND...". Run by bin/test-run (outside the sandbox) via bash -c
++agent registered7d-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+ # in a throwaway snapshot of the target worktree (node_modules symlinked for app/composition).
+ # SUITE "full" (and any name starting with "full") is heavy: at most one runs at a time.
+ # SUITE "targeted": the request's --files are appended. Any other name is a "named" suite (--files appended if given).
+diff --git a/astrid/core/execution/process_group.py b/astrid/core/execution/process_group.py
+index 5803ea62ea52a07f64b9c24110e8f27135fee780..0f07eab3f6e6c8e0a17e1c40c72e1c35ccfb19d1
+--- a/astrid/core/execution/process_group.py
++++ b/astrid/core/execution/process_group.py
+@@ -567,7 +567,15 @@
+             **({"deadline": deadline} if deadline is not None else {}),
+         )
+         # Fresh reconciliation observations must survive subsequent reparenting.
+-        known.update({pid: birth for pid, (birth, _) in custody._handles.items()})
++        # A Linux child can exit between the census and pidfd binding; register
++        # deliberately declines that already-gone candidate because no retained
++        # kernel handle exists. Do not keep that unowned census row in the
++        # ancestry map, or a later PID reuse would be mistaken for its identity.
++        retained = {pid: birth for pid, (birth, _) in custody._handles.items()}
++        known.intersection_update(retained)
++        known.update(retained)
++        live = {pid: birth for pid, birth in live.items()
++                if retained.get(pid) == birth}
+         if sys.platform == "darwin" and getattr(getattr(custody, "_launch_broker", None), "role", None) == "command":
+             process._astrid_cleanup_semantics = {
+                 "coverage": "retained_observed_set_and_final_owned_group_checks",
+
+codex
+The bounded change is in place and `git diff --check` is clean. It only filters the ancestry/live result through retained custody handles after reconciliation; it does not alter pidfd binding, signal authority, or any D13 behavior. I’m submitting the same named lane again on this one-change tree.
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-d13-exact7d-live-finish registered7d-current-integration) && printf '"'%s\\n' \""'$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m2-d13-exact7d-live-finish
+ exited 1 in 30074ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-d13-exact7d-live-finish-registered7d-current-integration-1020180704-9124
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-exact7d-live-finish-registered7d-current-integration-1020180704-9124/
+test agt-m2-d13-exact7d-live-finish-registered7d-current-integration-1020180704-9124: fail exit=1 in 17s — registered7d-current-integration on agt-m2-d13-exact7d-live-finish (agent tree 316be5cb0577c634a8ae69605bea082ffc439e11)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+counts: 1 failed, 1 passed, 1 deselected in 14.94s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-exact7d-live-finish-registered7d-current-integration-1020180704-9124/log.txt ---
+        known = getattr(process, "_astrid_tree_members", None)
+        if known is None:
+            known = {}
+            process._astrid_tree_members = known
+        if not known and process.pid not in snapshot:
+            # An unreaped leader that already exited is a known outcome when the
+            # census lists exactly the incarnation custody bound at launch.
+            bound = getattr(process, "_astrid_process_birth", None)
+            if not (bound and getattr(snapshot, "exited", {}).get(process.pid) == bound):
+                raise CleanupUncertainError("owned leader exited before ancestry capture")
+        for pid, birth in tuple(known.items()):
+            current = snapshot.get(pid)
+            if current is not None and current.birth != birth:
+                # Popen.poll()/wait() positively reaps the original leader before
+                # the final descendant census.  Its numeric PID may then already
+                # belong to another incarnation; that replacement is not part of
+                # the owned tree.  Linux pidfds provide the same positive exit
+                # proof for observed descendants. Unreaped roots and descendants
+                # without an exact retained exit proof still fail closed below.
+                if ((pid == process.pid and process.returncode is not None)
+                        or _retained_incarnation_exited(process, pid, birth)):
+                    continue
+                raise CleanupUncertainError("owned process identity was reused")
+            if current is None and any(
+                info.ppid == pid and info.pid not in known for info in snapshot.values()
+            ):
+                raise CleanupUncertainError("unverified child of missing owned parent")
+        live = _tree_members(process, known, snapshot)
+        if (witness := getattr(snapshot, "exited", {}).get(process.pid)) is not None:
+            # Only the retained child itself; other zombies are no one's evidence.
+            process._astrid_census_exited = {process.pid: witness}  # type: ignore[attr-defined]
+        if process.pid not in known:
+            raise CleanupUncertainError("owned leader identity unavailable")
+        custody = getattr(process, "_astrid_custody", None)
+        if custody is None:
+            raise CleanupUncertainError("owned tree lacks retained cleanup custody")
+        if isinstance(custody, ProcessCustody):
+            live = custody.observe_census(
+                live, census=_census_evidence(snapshot),
+                fresh_census=lambda: _census_evidence(_process_snapshot()),
+                **({"deadline": deadline} if deadline is not None else {}),
+            )
+            # Fresh reconciliation observations must survive subsequent reparenting.
+            # A Linux child can exit between the census and pidfd binding; register
+            # deliberately declines that already-gone candidate because no retained
+            # kernel handle exists. Do not keep that unowned census row in the
+            # ancestry map, or a later PID reuse would be mistaken for its identity.
+            retained = {pid: birth for pid, (birth, _) in custody._handles.items()}
+>           known.intersection_update(retained)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'dict' object has no attribute 'intersection_update'
+
+astrid/core/execution/process_group.py:575: AttributeError
+----------------------------- Captured stderr call -----------------------------
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "owned_probe", "outcome": "failed", "process_id": 30259, "elapsed_ms": 28}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "registry_settle", "outcome": "failed", "process_id": 30259, "elapsed_ms": 29}
+{"diagnostic": "astrid.remotion_validation_phase", "phase": "launch_transaction", "outcome": "failed", "process_id": 30259, "elapsed_ms": 247}
+=========================== short test summary info ============================
+FAILED tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+1 failed, 1 passed, 1 deselected in 14.94s
+
+codex
+The first rerun caught a mechanical issue in the bounded patch (`dict` has no `intersection_update`); the failure occurred immediately during the intended filtering and did not reach the render path. I’m correcting that to an explicit key-prune, with no change in semantics, then rerunning the same named lane once more.
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-d13-exact7d-live-finish/astrid/core/execution/process_group.py
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index c0d0ec0dff40c41baf03bfad4b97fa6abcab9448..e53b8a6f6ceea2c4e49bb4094ae21e1965371ab8
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -1,4 +1,5 @@
+ # Test-service allow-list: one line per "REPO SUITE COMMAND...". Run by bin/test-run (outside the sandbox) via bash -c
++agent registered7d-current-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent-child-s2/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_runtime_publication_chain.py
+ # in a throwaway snapshot of the target worktree (node_modules symlinked for app/composition).
+ # SUITE "full" (and any name starting with "full") is heavy: at most one runs at a time.
+ # SUITE "targeted": the request's --files are appended. Any other name is a "named" suite (--files appended if given).
+diff --git a/astrid/core/execution/process_group.py b/astrid/core/execution/process_group.py
+index 5803ea62ea52a07f64b9c24110e8f27135fee780..9f5c707559d9530ba6855da2a2376c98e7a883e4
+--- a/astrid/core/execution/process_group.py
++++ b/astrid/core/execution/process_group.py
+@@ -567,7 +567,17 @@
+             **({"deadline": deadline} if deadline is not None else {}),
+         )
+         # Fresh reconciliation observations must survive subsequent reparenting.
+-        known.update({pid: birth for pid, (birth, _) in custody._handles.items()})
++        # A Linux child can exit between the census and pidfd binding; register
++        # deliberately declines that already-gone candidate because no retained
++        # kernel handle exists. Do not keep that unowned census row in the
++        # ancestry map, or a later PID reuse would be mistaken for its identity.
++        retained = {pid: birth for pid, (birth, _) in custody._handles.items()}
++        for pid in tuple(known):
++            if pid not in retained:
++                del known[pid]
++        known.update(retained)
++        live = {pid: birth for pid, birth in live.items()
++                if retained.get(pid) == birth}
+         if sys.platform == "darwin" and getattr(getattr(custody, "_launch_broker", None), "role", None) == "command":
+             process._astrid_cleanup_semantics = {
+                 "coverage": "retained_observed_set_and_final_owned_group_checks",
+
+exec
+/bin/bash -lc 'git diff --check && R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-d13-exact7d-live-finish registered7d-current-integration) && printf '"'%s\\n' \""'$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m2-d13-exact7d-live-finish
+codex
+The corrected rerun is still active with no duplicate submission; the previous 14-second failure was only the patch typo. The lane is again running the two original cases on the exact pinned Runtime and current Remotion environment.
+exec
+/bin/bash -lc 'RESULT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-exact7d-live-finish-registered7d-current-integration-1020180740-10286; echo status=$(cat "$RESULT/status"); wc -c "$RESULT/log.txt"; tail -5 "$RESULT/log.txt"' in /home/user/work/wt/agt-m2-d13-exact7d-live-finish
+ succeeded in 164ms:
+status=running
+1 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-d13-exact7d-live-finish-registered7d-current-integration-1020180740-10286/log.txt
+.

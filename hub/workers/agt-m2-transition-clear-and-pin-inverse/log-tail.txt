@@ -1,0 +1,400 @@
++            for clip in State(bundle).collection(owner, 'clip'):
++                for key in ('elementRef', 'element_ref'):
++                    selected = clip.get(key)
++                    if isinstance(selected, dict) and selected.get('packId'):
++                        current_pack_ids.add(selected['packId'])
++        for pin in introduced:
++            if not current_pack_ids.intersection(pack_ids.get(pin, ())):
++                removed.add(pin)
++    return removed
++
++
+ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
+     """Compile exact inputs; inverse pin removal requires provider-verified records.
+ 
+-    Historical source images alone never authorize dropping retained media.
++    Historical source images alone never authorize dropping retained pins.
+     """
++    from ._command_state import State
++
+     # Immutable reuse follows exact encoded content, independently of value guards.
+     source = bundle["source_mapping"]["_runtime_document"]
+     publication = compile_authoring_candidate(bundle).publication
+@@ -283,11 +365,38 @@
+         for capture in bundle['source_mapping'].get('pinned_documents', []):
+             if capture['pin'] not in documents:
+                 documents.append(copy.deepcopy(capture['pin']))
++        if inverse_records and source_bundles:
++            current_pack_ids = {
++                selected['packId']
++                for owner in ['parent', *('occurrence:' + row['occurrence_id']
++                                          for row in bundle['placements'])]
++                for clip in State(bundle).collection(owner, 'clip')
++                for key in ('elementRef', 'element_ref')
++                for selected in [clip.get(key)]
++                if isinstance(selected, dict) and selected.get('packId')}
++            reintroduced = []
++            for record in inverse_records:
++                for dependency in record.get('dependencies', []):
++                    if dependency.get('key') != 'params.snapshot':
++                        continue
++                    snapshot = dependency.get('pin', {})
++                    source_pin = snapshot.get('source')
++                    element = snapshot.get('element', {})
++                    if not (isinstance(source_pin, dict) and isinstance(element, dict)
++                            and element.get('packId') in current_pack_ids):
++                        continue
++                    if any(source_pin in historical['source_mapping']['_runtime_document']
++                           ['dependency_manifest']['documents'] for historical in source_bundles):
++                        reintroduced.append(source_pin)
++            for pin in reintroduced:
++                if pin not in documents:
++                    documents.append(copy.deepcopy(pin))
+     # Retained inputs may include media consumed through a transcript or other
+     # immutable binding rather than a selected clip. Keep those existing pins.
+     media = {row["media_id"]: row for row in source["dependency_manifest"]["media"]}
+     media.update({row["media_id"]: row for row in publication["dependency_manifest"]["media"]})
+     removals = _inverse_media_removals(inverse_records, bundle)
++    document_removals = _inverse_document_removals(inverse_records, bundle)
+     if removals:
+         from ._command_state import CommandError
+ 
+@@ -301,6 +410,8 @@
+             raise CommandError('introduced media has surviving dependents', kind='surviving_dependents')
+         for identity in removals:
+             media.pop(identity, None)
++    if document_removals:
++        documents = [pin for pin in documents if _json(pin) not in document_removals]
+     manifest = _manifest(shots, internals, list(media.values()), documents)
+     digest = _digest(parent)
+     # A historical publication boundary wins over the opened source image.
+@@ -413,8 +524,10 @@
+                                        ref=command['select'])
+         if command['op'] in ('clip.set-params', 'clip.set-element', 'clip.set') and 'schema_source' in command['args']:
+             row = ctx.state.entity(command['select'])
+-            selected = (command['args']['elementRef'] if command['op'] in ('clip.set-element', 'clip.set')
+-                        else row.get('elementRef') or row.get('element_ref'))
++            selected = (command['args']['elementRef'] if command['op'] == 'clip.set-element'
++                        else (command['args']['values'].get('elementRef')
++                              if command['op'] == 'clip.set'
++                              else row.get('elementRef') or row.get('element_ref')))
+             if isinstance(selected, dict) and selected.get('packId'):
+                 required.append((command['args']['schema_source'], selected))
+         elif command['op'] == 'timeline.inverse':
+@@ -905,6 +1018,20 @@
+                 schema_inputs.extend(_hydrate(port, source))
+             if not closures:
+                 schema_inputs = _hydrate(port, bundle, calls)
++                known_pins = {
++                    _json(pin) for pin in bundle['source_mapping']['_runtime_document']
++                    ['dependency_manifest']['documents']}
++                for source in inverse_sources:
++                    source_pins = {
++                        _json(pin) for pin in source['source_mapping']['_runtime_document']
++                        ['dependency_manifest']['documents']}
++                    if source_pins <= known_pins:
++                        continue
++                    for candidate in _hydrate(port, source):
++                        if not any(candidate[0]['pin'] == existing[0]['pin']
++                                   for existing in schema_inputs):
++                            schema_inputs.append(candidate)
++                    known_pins.update(source_pins)
+             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                               context=context, through=base)
+             original = execute(bundle, calls, inverse_records=inverse_records,
+@@ -922,7 +1049,7 @@
+                                                       base, current))
+                     entries = _history(port, current, base, CommitRejected, base)
+                     head_bundle = _load(port, context, current["revision_id"])
+-                    if not closures:
++                    if not closures and not inverse_sources:
+                         schema_inputs = _hydrate(port, head_bundle, calls)
+                     resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                                       context=context, through=current)
+diff --git a/tests/editing_conformance/test_recipe_clip_scalar_fields.py b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+index f817d1b955e8d21e4d582439af3700eab860e1c3..632487b2d71bac586f2479330194b767d2f441db
+--- a/tests/editing_conformance/test_recipe_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+@@ -400,13 +400,71 @@
+     assert clip(changed.bundle, PARENT)['transition'] == updated
+     assert clip(changed.bundle, PARENT)['elementRef'] == element
+     removed = execute(changed.bundle, [capture_clip_set(changed.bundle, PARENT,
+-        clear=['transition'])])
++        clear=['transition', 'elementRef'])])
+     assert all(key not in clip(removed.bundle, PARENT) for key in ('transition', 'elementRef', 'element_ref'))
+     assert {tuple(write['path']) for write in removed.records[0]['writes']} == {
+         ('transition',), ('elementRef',)}
+     assert inverse(removed.bundle, removed.records).bundle == changed.bundle
+ 
+ 
++@pytest.mark.parametrize('field', ['elementRef', 'element_ref'])
++def test_transition_only_clear_preserves_unrelated_element_identity(field):
++    original = app_bundle()
++    selected = {'id': 'rocket', 'kind': 'effect', 'revision': 'r1'}
++    clip(original, PARENT)['transition'] = {'type': 'cross-fade', 'duration': .5}
++    clip(original, PARENT)[field] = copy.deepcopy(selected)
++    before = copy.deepcopy(original)
++    plan = execute(original, [capture_clip_set(original, PARENT, clear=['transition'])])
++    assert clip(plan.bundle, PARENT)[field] == selected
++    assert 'transition' not in clip(plan.bundle, PARENT)
++    assert plan.records[0]['writes'] == [
++        {'ref': PARENT, 'path': ['transition'],
++         'before': present({'type': 'cross-fade', 'duration': .5}), 'after': {'state': 'absent'}}]
++    assert inverse(plan.bundle, plan.records).bundle == before
++
++
++@pytest.mark.parametrize('field,value', [
++    ('elementRef', {'id': 'cross-fade', 'kind': 'transition', 'revision': 'r1'}),
++    ('element_ref', {'id': 'cross-fade', 'kind': 'transition', 'revision': 'r1'}),
++])
++def test_explicit_transition_remove_clears_matching_legacy_spelling_exactly(field, value):
++    original = app_bundle()
++    clip(original, PARENT)['transition'] = {'type': 'cross-fade', 'duration': .5, 'revision': 'r1'}
++    clip(original, PARENT)[field] = copy.deepcopy(value)
++    before = copy.deepcopy(original)
++    plan = execute(original, [capture_clip_set(original, PARENT,
++                                                clear=['transition', 'elementRef'])])
++    assert all(key not in clip(plan.bundle, PARENT) for key in ('transition', 'elementRef', 'element_ref'))
++    assert inverse(plan.bundle, plan.records).bundle == before
++
++
++@pytest.mark.parametrize('presence', [ABSENT, present(None), present(''),
++                                      present({'opaque': [None, False, 0]})])
++def test_explicit_transition_remove_roundtrips_exact_legacy_transition_presence(presence):
++    original = app_bundle()
++    State(original).set(PARENT, ['transition'], presence)
++    before = copy.deepcopy(original)
++    plan = execute(original, [capture_clip_set(original, PARENT,
++                                                clear=['transition', 'elementRef'])])
++    assert 'transition' not in clip(plan.bundle, PARENT)
++    assert inverse(plan.bundle, plan.records).bundle == before
++
++
++@pytest.mark.parametrize('value', [
++    {'id': 'rocket', 'kind': 'effect', 'revision': 'r1'},
++    {'id': 'cross-fade', 'kind': 'transition', 'revision': 'wrong'},
++    'opaque legacy reference',
++])
++def test_explicit_transition_remove_refuses_unsafe_identity_and_keeps_draft(value):
++    original = app_bundle()
++    clip(original, PARENT)['transition'] = {'type': 'cross-fade', 'duration': .5, 'revision': 'r1'}
++    clip(original, PARENT)['element_ref'] = copy.deepcopy(value)
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        capture_clip_set(original, PARENT, clear=['transition', 'elementRef'])
++    assert original == before
++
++
+ @pytest.mark.parametrize('values', [
+     {'transition': {'type': 'cross-fade', 'duration': .75}},
+     {'transition': {'type': 'cross-fade', 'duration': .5},
+diff --git a/tests/sdk/test_timeline_commit_provider.py b/tests/sdk/test_timeline_commit_provider.py
+index b3f725775bdbeebcd1e6b7e27af40e5d83d71d6c..0a00c096483d90622c8e437c0bf8b02d1d049101
+--- a/tests/sdk/test_timeline_commit_provider.py
++++ b/tests/sdk/test_timeline_commit_provider.py
+@@ -193,7 +193,19 @@
+         assert prepared["semantic_events"] == []
+         document = prepared["canonical_document"]
+         pins = document["dependency_manifest"]["documents"]
+-        assert {_digest(pin) for pin in pins} == self.captures.keys()
++        captured = self.captures.keys()
++        if set(_digest(pin) for pin in pins) != captured:
++            # An accepted inverse may drop a newly introduced pin once its
++            # authored dependency is gone; Runtime still had to authenticate
++            # that exact captured source.
++            assert all(record["command"]["op"] == "timeline.inverse" for record in records)
++            missing = captured - {_digest(pin) for pin in pins}
++            assert missing <= {
++                _digest(dependency["pin"])
++                for record in records
++                for dependency in record["dependencies"]
++                if dependency["key"] == "params.schema"
++            }
+         for pin in pins:
+             assert any(dep["pin"] == pin and dep["kind"] in {"transcript", "source"}
+                        for record in records for dep in record["dependencies"])
+diff --git a/tests/sdk/test_timeline_current_union_schema.py b/tests/sdk/test_timeline_current_union_schema.py
+index 5d9c43a4263fdd2258e8af0beeb5e51a76b93241..4dc7824e8fe744439794d4c4aceb897b12eab436
+--- a/tests/sdk/test_timeline_current_union_schema.py
++++ b/tests/sdk/test_timeline_current_union_schema.py
+@@ -98,7 +98,7 @@
+ def test_canonical_schema_is_byte_identical_to_approved_s2():
+     path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
+     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+-        'ca4c59d47127e4846a7a7ae4cce2c02b097a73a051391677f5df40d468664f22')
++        'a70f0e8898c6acccb34062e73733c93dd4e7bc22c34ef012431e1791907e1f4a')
+ 
+ 
+ def test_private_transition_successor_is_an_additive_clip_set_carrier():
+@@ -111,7 +111,8 @@
+     assert transition['properties']['durationFrames'] is False
+     assert transition['properties']['align'] is False
+     assert transition['properties']['incomingPolicy'] is False
+-    assert args['properties']['clear']['items']['enum'] == ['hold', 'asset', 'transition']
++    assert args['properties']['clear']['items']['enum'] == [
++        'hold', 'asset', 'transition', 'elementRef']
+ 
+ 
+ def test_all_published_floors_preserve_every_field_with_only_historical_pattern_widening():
+diff --git a/tests/sdk/test_timeline_transition_schema.py b/tests/sdk/test_timeline_transition_schema.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..c3b5c483474b1aa4fba73276c2a5ae17f3a23d6f
+--- /dev/null
++++ b/tests/sdk/test_timeline_transition_schema.py
+@@ -0,0 +1,87 @@
++"""The ordinary provider resolves and retains the exact transition declaration."""
++from __future__ import annotations
++
++import copy
++
++import yaml
++
++from astrid.core.element import project_packs
++from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
++from astrid.sdk.timeline.commit import _digest
++from tests.editing_conformance.test_recipe_clip_scalar_fields import PARENT
++from tests.editing_conformance.test_recipe_scalar_commands import schema_options
++from tests.core import test_project_packs
++from tests.sdk.test_timeline_clip_scalar_provider import app_document, current
++from tests.sdk.test_timeline_commit_provider import CommitRejected, DetachedRealm, inverse
++from tests.sdk.test_timeline_selected_schema import (  # noqa: F401
++    commit,
++    configured_project_pack,
++    runtime_abi,
++)
++
++
++def admitted_transition(configured):
++    root, directory, manifest = test_project_packs.seed('project-1')
++    definition_path = directory / 'element.yaml'
++    definition = yaml.safe_load(definition_path.read_text())
++    definition.update(id='pack-cross-fade', kind='transition')
++    definition['schema']['properties']['seed']['maximum'] = 10
++    definition_path.write_text(yaml.safe_dump(definition))
++    declaration = manifest['rendering'].pop('effects/reveal')
++    declaration['path'] = declaration['path'].replace('effects/reveal', 'transitions/pack-cross-fade')
++    for resource in declaration['resources']:
++        resource['path'] = resource['path'].replace('effects/reveal', 'transitions/pack-cross-fade')
++    manifest['rendering']['transitions/pack-cross-fade'] = declaration
++    transition_dir = root / 'rendering/elements/transitions/pack-cross-fade'
++    transition_dir.mkdir(parents=True)
++    for path in directory.iterdir():
++        path.rename(transition_dir / path.name)
++    directory.rmdir()
++    (root / 'pack.yaml').write_text(yaml.safe_dump(manifest))
++    result = project_packs.admit_project_pack('realm', 'project-1')
++    selected = next(item['descriptor'] for item in result['elements']
++                    if item['descriptor']['kind'] == 'transition')
++    return result, {key: selected[key] for key in ('id', 'kind', 'revision', 'packId')}
++
++
++def test_provider_selected_transition_validates_exact_schema_and_redoes(configured_project_pack):  # noqa: F811
++    _, selected = admitted_transition(configured_project_pack)
++    realm = DetachedRealm(app_document())
++    options = schema_options(configured_project_pack, selected)
++    verified, realm.snapshot_objects = options['schema_inputs'][0]
++    realm.live_sources[_digest(verified['pin'])] = verified
++    values = {'elementRef': selected, 'transition': {'type': selected['id'], 'duration': .5,
++              'revision': selected['revision'], 'params': {'seed': 8}}}
++    accepted = commit(realm, [capture_clip_set(current(realm), PARENT, values=values, **options)])
++    document = accepted['data']['canonical_document']
++    assert document['dependency_manifest']['documents'] == [options['schema_source']]
++    invalid = copy.deepcopy(values)
++    invalid['transition']['params']['seed'] = 16
++    raw = {'schema_version': 1, 'op': 'clip.set', 'version': '1', 'select': PARENT,
++           'args': {'values': invalid, 'clear': [], 'schema_source': options['schema_source']}}
++    snapshot = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    try:
++        commit(realm, [raw])
++    except CommitRejected:
++        pass
++    else:
++        raise AssertionError('invalid selected transition was accepted')
++    assert snapshot == (realm.head, realm.entries, realm.documents)
++    undone = commit(realm, [inverse([accepted['receipt']['receipt_id']])])
++    assert undone['data']['canonical_document']['dependency_manifest']['documents'] == []
++    redone = commit(realm, [inverse([undone['receipt']['receipt_id']])])
++    assert redone['data']['canonical_document'] == document
++
++
++def test_first_selected_transition_exact_document_inverse(configured_project_pack):  # noqa: F811
++    _, selected = admitted_transition(configured_project_pack)
++    realm = DetachedRealm(app_document())
++    options = schema_options(configured_project_pack, selected)
++    verified, realm.snapshot_objects = options['schema_inputs'][0]
++    realm.live_sources[_digest(verified['pin'])] = verified
++    before = copy.deepcopy(realm.documents[realm.head['revision_id']])
++    values = {'elementRef': selected, 'transition': {'type': selected['id'], 'duration': .5,
++              'revision': selected['revision'], 'params': {'seed': 8}}}
++    accepted = commit(realm, [capture_clip_set(current(realm), PARENT, values=values, **options)])
++    undone = commit(realm, [inverse([accepted['receipt']['receipt_id']])])
++    assert undone['data']['canonical_document'] == before
+
+codex
+All requested markers are written. One final rerun remains for the strict transition-provider file after the last source-hydration adjustment; then I’ll report the exact HEAD/tree identity, bounded test results, and that no full/whole-root suite was run.
+exec
+/bin/bash -lc "PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_transition_schema.py && git diff --check && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-clear-and-pin-inverse/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-clear-and-pin-inverse/DONE && printf '\\nHEAD %s\\nTREE %s\\n' \""'$(git rev-parse HEAD)" "$(git rev-parse HEAD''^{tree})" && git status --short --branch' in /home/user/work/wt/agt-m2-transition-clear-and-pin-inverse
+ succeeded in 8524ms:
+..                                                                       [100%]
+2 passed in 6.72s
+
+HEAD e529366e1881c7391f4e005aad22e753c3fa9224
+TREE fe853633e545eb2e49559ebe8b1556cdc53371b7
+## tl/agt-m2-transition-clear-and-pin-inverse
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/commit.py
+ M tests/editing_conformance/test_recipe_clip_scalar_fields.py
+ M tests/sdk/test_timeline_commit_provider.py
+ M tests/sdk/test_timeline_current_union_schema.py
+?? tests/sdk/test_timeline_transition_schema.py
+
+codex
+Implemented and marked complete.
+
+- Preserved legacy `clear=["transition"]` behavior and unrelated effect/component refs.
+- Added explicit closed removal pair: `clear=["transition","elementRef"]`, with strict transition identity validation.
+- Added exact absent/null/legacy inverse coverage.
+- Restored strict first-selected transition document inverse; introduced pins are cleaned through existing accepted-history seams.
+- Fixed nested `values.elementRef` schema resolution.
+- Frozen fixtures/docs remain untouched.
+
+Tests:
+
+- Scalar/schema/transition neighbors: `133 passed`
+- Selected schema: `32 passed`
+- Clip scalar provider: `15 passed`
+- Transition provider: `2 passed`
+- Focused transition regressions: `12 passed, 98 deselected`
+- `git diff --check`: passed
+- No full or whole-root suites run.
+
+Base HEAD: `e529366e1881c7391f4e005aad22e753c3fa9224`  
+Base tree: `fe853633e545eb2e49559ebe8b1556cdc53371b7`
+
+Commit message and `DONE` marker written. Next step is App2/Runtime peer agreement on the exact closed args before generation.
+tokens used
+270,281
+Implemented and marked complete.
+
+- Preserved legacy `clear=["transition"]` behavior and unrelated effect/component refs.
+- Added explicit closed removal pair: `clear=["transition","elementRef"]`, with strict transition identity validation.
+- Added exact absent/null/legacy inverse coverage.
+- Restored strict first-selected transition document inverse; introduced pins are cleaned through existing accepted-history seams.
+- Fixed nested `values.elementRef` schema resolution.
+- Frozen fixtures/docs remain untouched.
+
+Tests:
+
+- Scalar/schema/transition neighbors: `133 passed`
+- Selected schema: `32 passed`
+- Clip scalar provider: `15 passed`
+- Transition provider: `2 passed`
+- Focused transition regressions: `12 passed, 98 deselected`
+- `git diff --check`: passed
+- No full or whole-root suites run.
+
+Base HEAD: `e529366e1881c7391f4e005aad22e753c3fa9224`  
+Base tree: `fe853633e545eb2e49559ebe8b1556cdc53371b7`
+
+Commit message and `DONE` marker written. Next step is App2/Runtime peer agreement on the exact closed args before generation.

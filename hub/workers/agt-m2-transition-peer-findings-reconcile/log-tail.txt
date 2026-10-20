@@ -1,0 +1,400 @@
++        verified, objects = options['schema_inputs'][0]
++        realm.live_sources[_digest(verified['pin'])] = verified
++        realm.snapshot_objects.update(objects)
++
++    def values(element, seed):
++        return {'elementRef': element, 'transition': {
++            'type': element['id'], 'duration': .5, 'revision': element['revision'],
++            'params': {'seed': seed}}}
++
++    first_command = capture_clip_set(current(realm), PARENT, values=values(first, 8), **p1)
++    commit(realm, [first_command])
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    later = capture_clip_set(current(realm), PARENT, values=values(second, 16), **p2)
++    with pytest.raises(CommitRejected, match='source changed|authority|selected'):
++        commit(realm, [later])
++    assert (realm.head, realm.entries, realm.documents) == before
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-peer-findings-reconcile/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-peer-findings-reconcile/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-peer-findings-reconcile/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..5b92eac764941bd6540c62176ba8686aeec57fae
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-peer-findings-reconcile/commit-msg
+@@ -0,0 +1,6 @@
++fix(timeline): reconcile incoming transition writer controls
++
++Enforce Main adjacency and shortest-neighbor fit for incoming transition SETs.
++Reuse retained selected-pack authority for same-reference clip.set updates so
++later pins cannot replace the accepted P1. Add bounded peer counterexamples
++without changing the command schema or inverse machinery.
+diff --git a/ORCH/design/agent-transition-eb115-peer-reconciliation.md b/ORCH/design/agent-transition-eb115-peer-reconciliation.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5269655ad77b4c5ad3b026d4d162a4b042679969
+--- /dev/null
++++ b/ORCH/design/agent-transition-eb115-peer-reconciliation.md
+@@ -0,0 +1,33 @@
++# Agent transition peer reconciliation
++
++## Disposition
++
++Both peer findings against Agent candidate `eb115db81ac2c24b182fe6873fbd883da851571e` are confirmed and corrected in this worktree. The correction is writer-side only; the `clip.set` carrier, canonical incoming policy, explicit paired clear, transition-only clear, and existing inverse/P1/P2 proof remain in place.
++
++## Controls and correction
++
++- `_transition_set` now requires exactly one same-track predecessor from the existing recorded `transition.predecessor` selection, applies Main’s literal adjacency tolerance (`abs(predecessor_end - destination_start) < 0.001`), and applies Main’s shortest-neighbor fit (`duration_frames <= min(predecessor_duration, destination_duration) * fps + 0.0001`). No duration clamping or field stripping was added.
++- The selected-pack `clip.set` resolver now participates in the existing retained selected-authority chain. For a stable `(packId, id, kind)` reference, a revision-only update must use the accepted P1 source/snapshot proof; a later P2 pin is refused atomically. `clip.set-element` remains the explicit reselection operation. Existing inverse/replay machinery was not changed.
++- `clear: ['transition', 'elementRef']` still performs the guarded paired removal, including legacy `element_ref`; `clear: ['transition']` still preserves unrelated references. No DTO, schema, generated artifact, public pin, normal-generation path, freeze, or new API was added.
++
++The new writer checks govern newly authored SETs. No playback/compiler rule was widened or changed, so old data remains readable through the existing playback path; the legacy transition-only clear remains independently executable.
++
++## Executable evidence
++
++Added counterexamples for a gap, cross-track destination, and oversized transition, plus a provider-level first-P1 then same-reference P2 substitution. The P2 attempt leaves the Runtime-shaped realm head, entries, and documents unchanged. Existing selected-authority forward/inverse tests remain unchanged in meaning and pass.
++
++Exact targeted command:
++
++```text
++PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -q tests/sdk/test_timeline_transition_schema.py tests/sdk/test_timeline_selected_param_authority.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_current_union_schema.py
++```
++
++Result: **183 passed in 205.49s**. No full suite, browser, socket, or live Runtime run was requested.
++
++## Source/schema identity
++
++- Base/source candidate: `eb115db81ac2c24b182fe6873fbd883da851571e`.
++- Source files changed: `_clip_scalar_commands.py`, `_selected_param_authority.py`, `commit.py`; their post-change SHA-256 values are `db72c5dbaed2eac46b9a5132dcbbc5533bcca904fdc725e9a5e821b9d6dbf8d6`, `2747d3c64a5eebe9ee11c5c8fca5f23afaa13f6c9ef406a98eeaec572924bed8`, and `d5faef1698d183017eb6a39710ca012e83d26469f88e1621f0214ab164c6ce88` respectively.
++- Schema unchanged: `astrid/core/timeline/schema/edit-command.schema.json` SHA-256 `a70f0e8898c6acccb34062e73733c93dd4e7bc22c34ef012431e1791907e1f4a`.
++
++The Runtime/App peer contracts remain unpublished and were not modified here.
+diff --git a/astrid/sdk/timeline/_clip_scalar_commands.py b/astrid/sdk/timeline/_clip_scalar_commands.py
+index 02e437c77090a7d2562d0f3a6cc7e4f61c9f4a89..2a452d8f6d9e93522b47071857e96953026f4fcd
+--- a/astrid/sdk/timeline/_clip_scalar_commands.py
++++ b/astrid/sdk/timeline/_clip_scalar_commands.py
+@@ -4,7 +4,7 @@
+ import copy
+ import math
+ 
+-from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
++from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip_timeline_duration
+ 
+ from ._command_state import CommandError, equal, present
+ from ._scalar_commands import (
+@@ -139,7 +139,33 @@
+     if owner != 'parent':
+         for path in MAP_FIELDS:
+             ctx.read(owner, path)
+-    for neighbor in [ref, *ctx.select('transition.predecessor', ref)]:
++    predecessors = ctx.select('transition.predecessor', ref)
++    if len(predecessors) != 1:
++        raise CommandError('transition requires an adjacent predecessor on the same track', ref=ref)
++    predecessor = predecessors[0]
++    predecessor_row = ctx.state.entity(predecessor)
++    target_row = ctx.state.entity(ref)
++
++    def authored_start(row):
++        if 'at' in row:
++            return number(row['at'], 'clip.at')
++        if 'at_ms' in row:
++            return number(row['at_ms'], 'clip.at_ms') / 1000
++        raise CommandError('transition requires explicit clip starts', ref=ref)
++
++    try:
++        predecessor_duration = clip_timeline_duration(predecessor_row)
++        target_duration = clip_timeline_duration(target_row)
++    except (TypeError, ValueError) as exc:
++        raise CommandError('transition requires valid adjacent clip durations',
++                           kind='unsupported_timing', ref=ref) from exc
++    if abs(authored_start(predecessor_row) + predecessor_duration - authored_start(target_row)) >= .001:
++        raise CommandError('transition requires adjacent clips on the same track', ref=ref)
++    shortest_clip_frames = min(predecessor_duration, target_duration) * float(fps)
++    if shortest_clip_frames <= 0 or frames > shortest_clip_frames + .0001:
++        raise CommandError('transition duration exceeds the shorter adjacent clip', ref=ref)
++
++    for neighbor in [ref, predecessor]:
+         basis = _clip_basis(ctx, neighbor)
+         asset = basis['asset'] or basis['asset_id']
+         if isinstance(asset, str):
+diff --git a/astrid/sdk/timeline/_selected_param_authority.py b/astrid/sdk/timeline/_selected_param_authority.py
+index da312d50ed71e568b0a9165f21d090538eebd854..5f698cdb3b6e7f6673f953a601fcb8ab356f64fd
+--- a/astrid/sdk/timeline/_selected_param_authority.py
++++ b/astrid/sdk/timeline/_selected_param_authority.py
+@@ -37,11 +37,15 @@
+             or set(pin['element']) != {'packId', 'id', 'kind', 'revision'}):
+         return None
+     _document_pin(pin['source'])
+-    if command['op'] == 'clip.set-params':
++    if command['op'] in ('clip.set-params', 'clip.set'):
+         reads = {r['path'][0]: r['state'].get('value') for r in record['reads']
+                  if r['ref'] == select and r['path'] in (['elementRef'], ['element_ref'])}
+-        if (reads.get('elementRef') or reads.get('element_ref')) != pin['element']:
++        previous = reads.get('elementRef') or reads.get('element_ref')
++        if previous is not None and previous != pin['element']:
+             return None
++        if (command['op'] == 'clip.set'
++                and command['args']['values'].get('elementRef') != pin['element']):
++            return None
+     return pin
+ 
+ 
+@@ -83,14 +87,17 @@
+                         if current.entity(owner, optional=True) is not None else None)
+                 if shot and ref == 'shot:' + shot['shot_id']:
+                     return True
+-        return record['command']['select'] == select and record['command']['op'] in (
+-            'clip.set-element', 'clip.set-params')
++        command = record['command']
++        return (command['select'] == select and command['op'] in (
++            'clip.set-element', 'clip.set-params')) or (
++                command['select'] == select and command['op'] == 'clip.set'
++                and 'schema_source' in command['args'])
+ 
+     def effect(value, record, index, envelope=None):
+         if not relevant(record, index):
+             return value
+         command = record['command']
+-        if command['op'] in ('clip.set-element', 'clip.set-params'):
++        if command['op'] in ('clip.set-element', 'clip.set-params', 'clip.set'):
+             association = _association(record, select)
+             if association is None:
+                 return None
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index e8e4ece85d39b17882a8389de2c220db4f6ee50c..a599face7a6ec6f10e47baa83459f70ecaabdf83
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -510,10 +510,16 @@
+         command = ctx.record['command']
+         required = []
+         authority = None
+-        if command['op'] == 'clip.set-params':
++        if command['op'] in ('clip.set-params', 'clip.set'):
+             row = ctx.state.entity(command['select'])
+             selected = row.get('elementRef') or row.get('element_ref')
+-            if isinstance(selected, dict) and selected.get('packId'):
++            requested = (command['args']['values'].get('elementRef')
++                         if command['op'] == 'clip.set' else selected)
++            same_reference = (isinstance(selected, dict) and isinstance(requested, dict)
++                              and all(selected.get(key) == requested.get(key)
++                                      for key in ('packId', 'id', 'kind')))
++            if isinstance(selected, dict) and selected.get('packId') and (
++                    command['op'] == 'clip.set-params' or same_reference):
+                 from ._selected_param_authority import resolve_selected_param_source
+ 
+                 authority = resolve_selected_param_source(
+diff --git a/tests/editing_conformance/test_recipe_clip_scalar_fields.py b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+index 632487b2d71bac586f2479330194b767d2f441db..7a7bd18baab27731b9e3352fb478bb8ac4ca9c28
+--- a/tests/editing_conformance/test_recipe_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_recipe_clip_scalar_fields.py
+@@ -71,6 +71,14 @@
+     return open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+ 
+ 
++def adjacent_transition_bundle():
++    original = app_bundle()
++    rows = original['parent']['clips']
++    rows[1]['at'] = 3
++    original['parent']['config']['clips'] = copy.deepcopy(rows)
++    return original
++
++
+ def app_calls(original):
+     return [capture_clip_set(original, CHILD, values={'hold': 4}),
+             capture_clip_set(original, CLEAR, clear=['asset']),
+@@ -375,7 +383,7 @@
+     descriptor = next(item for item in list_element_descriptors('transitions')
+                       if item['id'] == 'cross-fade')
+     element = {key: descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
+-    original = app_bundle()
++    original = adjacent_transition_bundle()
+     original_clip = clip(original, PARENT)
+     original_clip['element_ref'] = {'id': 'legacy', 'kind': 'transition', 'revision': 'old'}
+     original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+@@ -475,3 +483,26 @@
+ def test_private_transition_set_refuses_unpaired_or_invalid_values(values):
+     with pytest.raises(CommandError):
+         capture_clip_set(app_bundle(), PARENT, values=values)
++
++
++@pytest.mark.parametrize('change', ['gap', 'track', 'oversize'])
++def test_transition_set_enforces_main_adjacency_and_shortest_clip_fit(change):
++    from astrid.core.element.catalog import list_element_descriptors
++
++    descriptor = next(item for item in list_element_descriptors('transitions')
++                      if item['id'] == 'cross-fade')
++    element = {key: descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
++    original = adjacent_transition_bundle()
++    target = clip(original, PARENT)
++    if change == 'gap':
++        target['at'] = 3.002
++    elif change == 'track':
++        target['track'] = 'S1'
++    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
++    duration = 3.1 if change == 'oversize' else .5
++    with pytest.raises(CommandError, match='adjacent|shorter'):
++        capture_clip_set(original, PARENT, values={
++            'elementRef': element,
++            'transition': {'type': element['id'], 'duration': duration,
++                           'revision': element['revision']},
++        })
+diff --git a/tests/sdk/test_timeline_transition_schema.py b/tests/sdk/test_timeline_transition_schema.py
+index c3b5c483474b1aa4fba73276c2a5ae17f3a23d6f..15aeb3a239b00b64a890070b139d84a14acfec25
+--- a/tests/sdk/test_timeline_transition_schema.py
++++ b/tests/sdk/test_timeline_transition_schema.py
+@@ -3,6 +3,7 @@
+ 
+ import copy
+ 
++import pytest
+ import yaml
+ 
+ from astrid.core.element import project_packs
+@@ -20,7 +21,7 @@
+ )
+ 
+ 
+-def admitted_transition(configured):
++def transition_pack():
+     root, directory, manifest = test_project_packs.seed('project-1')
+     definition_path = directory / 'element.yaml'
+     definition = yaml.safe_load(definition_path.read_text())
+@@ -38,15 +39,29 @@
+         path.rename(transition_dir / path.name)
+     directory.rmdir()
+     (root / 'pack.yaml').write_text(yaml.safe_dump(manifest))
++    return transition_dir
++
++
++def admitted_transition(configured):
++    transition_pack()
+     result = project_packs.admit_project_pack('realm', 'project-1')
+     selected = next(item['descriptor'] for item in result['elements']
+                     if item['descriptor']['kind'] == 'transition')
+     return result, {key: selected[key] for key in ('id', 'kind', 'revision', 'packId')}
+ 
+ 
++def adjacent_app_document():
++    document = app_document()
++    rows = document['parent_revision']['payload']['clips']
++    rows[1]['at'] = 3
++    document['parent_revision']['payload']['config']['clips'] = copy.deepcopy(rows)
++    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
++    return document
++
++
+ def test_provider_selected_transition_validates_exact_schema_and_redoes(configured_project_pack):  # noqa: F811
+     _, selected = admitted_transition(configured_project_pack)
+-    realm = DetachedRealm(app_document())
++    realm = DetachedRealm(adjacent_app_document())
+     options = schema_options(configured_project_pack, selected)
+     verified, realm.snapshot_objects = options['schema_inputs'][0]
+     realm.live_sources[_digest(verified['pin'])] = verified
+@@ -75,7 +90,7 @@
+ 
+ def test_first_selected_transition_exact_document_inverse(configured_project_pack):  # noqa: F811
+     _, selected = admitted_transition(configured_project_pack)
+-    realm = DetachedRealm(app_document())
++    realm = DetachedRealm(adjacent_app_document())
+     options = schema_options(configured_project_pack, selected)
+     verified, realm.snapshot_objects = options['schema_inputs'][0]
+     realm.live_sources[_digest(verified['pin'])] = verified
+@@ -85,3 +100,39 @@
+     accepted = commit(realm, [capture_clip_set(current(realm), PARENT, values=values, **options)])
+     undone = commit(realm, [inverse([accepted['receipt']['receipt_id']])])
+     assert undone['data']['canonical_document'] == before
++
++
++def test_selected_transition_update_retains_first_pin_for_same_reference(configured_project_pack):  # noqa: F811
++    transition_dir = transition_pack()
++    first_result = project_packs.admit_project_pack('realm', 'project-1')
++    first_descriptor = next(item['descriptor'] for item in first_result['elements']
++                            if item['descriptor']['kind'] == 'transition')
++    definition_path = transition_dir / 'element.yaml'
++    definition = yaml.safe_load(definition_path.read_text())
++    definition['schema']['properties']['seed']['maximum'] = 20
++    definition_path.write_text(yaml.safe_dump(definition))
++    second_result = project_packs.admit_project_pack('realm', 'project-1')
++    second_descriptor = next(item['descriptor'] for item in second_result['elements']
++                             if item['descriptor']['kind'] == 'transition')
++    first = {key: first_descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
++    second = {key: second_descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
++    p1 = schema_options(configured_project_pack, first)
++    p2 = schema_options(configured_project_pack, second)
++    realm = DetachedRealm(adjacent_app_document())
++    for options in (p1, p2):
++        verified, objects = options['schema_inputs'][0]
++        realm.live_sources[_digest(verified['pin'])] = verified
++        realm.snapshot_objects.update(objects)
++
++    def values(element, seed):
++        return {'elementRef': element, 'transition': {
++            'type': element['id'], 'duration': .5, 'revision': element['revision'],
++            'params': {'seed': seed}}}
++
++    first_command = capture_clip_set(current(realm), PARENT, values=values(first, 8), **p1)
++    commit(realm, [first_command])
++    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
++    later = capture_clip_set(current(realm), PARENT, values=values(second, 16), **p2)
++    with pytest.raises(CommitRejected, match='source changed|authority|selected'):
++        commit(realm, [later])
++    assert (realm.head, realm.entries, realm.documents) == before
+
+exec
+/bin/bash -lc "git status --short --untracked-files=all && git diff --check && test -s ORCH/design/agent-transition-eb115-peer-reconciliation.md && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-peer-findings-reconcile/commit-msg && printf '%s\\n' '--- report hash ---' && sha256sum ORCH/design/agent-transition-eb115-peer-reconciliation.md && printf '%s\\n' '--- marker directory ---' && ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-peer-findings-reconcile" in /home/user/work/wt/agt-m2-transition-peer-findings-reconcile
+ succeeded in 711ms:
+ M astrid/sdk/timeline/_clip_scalar_commands.py
+ M astrid/sdk/timeline/_selected_param_authority.py
+ M astrid/sdk/timeline/commit.py
+ M tests/editing_conformance/test_recipe_clip_scalar_fields.py
+ M tests/sdk/test_timeline_transition_schema.py
+?? ORCH/design/agent-transition-eb115-peer-reconciliation.md
+--- report hash ---
+b91b6c746a67eaff9ddc040f99d5c0df373e59898726d231d1a4ff9c22fde1fb  ORCH/design/agent-transition-eb115-peer-reconciliation.md
+--- marker directory ---
+total 872
+drwxr-xr-x    2 root root   4096 Oct 20 20:06 .
+drwxr-xr-x 1226 root root  69632 Oct 20 20:04 ..
+-rw-r--r--    1 root root   1378 Oct 20 19:58 brief.md
+-rw-r--r--    1 root root    353 Oct 20 20:06 commit-msg
+-rw-r--r--    1 root root 797791 Oct 20 20:06 log.txt
+-rw-r--r--    1 root root    260 Oct 20 19:58 meta
+-rw-r--r--    1 root root      0 Oct 20 19:58 running
+-rw-r--r--    1 root root     18 Oct 20 19:58 tmpdir
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-peer-findings-reconcile/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-peer-findings-reconcile/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-transition-peer-findings-reconcile/DONE && printf '"'%s\\n' DONE" in /home/user/work/wt/agt-m2-transition-peer-findings-reconcile
+ succeeded in 186ms:
+DONE
+
+codex
+Implemented and verified the transition reconciliation.
+
+- Enforced Main adjacency and shortest-neighbor fit.
+- Added retained-P1 authority for same-reference selected-pack `clip.set`; P2 substitution now refuses atomically.
+- Preserved clear semantics, schema, and inverse machinery.
+- Added executable counterexamples and published [reconciliation report](/home/user/work/wt/agt-m2-transition-peer-findings-reconcile/ORCH/design/agent-transition-eb115-peer-reconciliation.md).
+
+Tests:
+
+```text
+PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -q tests/sdk/test_timeline_transition_schema.py tests/sdk/test_timeline_selected_param_authority.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_current_union_schema.py
+```
+
+Result: 183 passed. No full/browser/socket suites run. No blockers. Commit message and `DONE` marker created.
+tokens used
+220,228
+Implemented and verified the transition reconciliation.
+
+- Enforced Main adjacency and shortest-neighbor fit.
+- Added retained-P1 authority for same-reference selected-pack `clip.set`; P2 substitution now refuses atomically.
+- Preserved clear semantics, schema, and inverse machinery.
+- Added executable counterexamples and published [reconciliation report](/home/user/work/wt/agt-m2-transition-peer-findings-reconcile/ORCH/design/agent-transition-eb115-peer-reconciliation.md).
+
+Tests:
+
+```text
+PYTHONPATH=. /home/user/work/venv-agent/bin/pytest -q tests/sdk/test_timeline_transition_schema.py tests/sdk/test_timeline_selected_param_authority.py tests/editing_conformance/test_recipe_clip_scalar_fields.py tests/sdk/test_timeline_clip_scalar_provider.py tests/sdk/test_timeline_current_union_schema.py
+```
+
+Result: 183 passed. No full/browser/socket suites run. No blockers. Commit message and `DONE` marker created.

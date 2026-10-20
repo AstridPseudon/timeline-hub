@@ -1,0 +1,400 @@
++
++        with pytest.raises(ObservedRoot):
++            run._execute_remotion_locked(
++                timeline, assets, tmp_path / "unused.mp4", provenance_out_path=tmp_path / "unused.mp4",
++                project_dir=host, composition_id=run.DEFAULT_COMPOSITION_ID, theme_path=None,
++                min_free_gb=None, frame_numbers=(0,), frame_output_dir=tmp_path / "unused-frames",
++                on_scene_props=observe,
++                **({"materialized_root": materialized, "materialized_objects": objects} if managed else {}))
++        assert not (tmp_path / ".remotion-props.json").exists()
++        assert not list(tmp_path.glob(".remotion-runtime-*"))
++        profile = run._canonical_profile(timeline, snapshot["registry"], None)
++        basis = {"width": profile.width, "height": profile.height,
++                 "fps": profile.fps_rational[0] / profile.fps_rational[1]}
++        assert basis == {"width": 200, "height": 100, "fps": 24}
++        assert observed[0]["theme"]["visual"]["color"]["bg"] == "#050814"
++        return observed[0], basis, snapshot
++
++    yield prepare
++    assert hashes() == before
++
++
++def plate(params=None, **fields):
++    return {"id": "opaque:plate", "track": "picture", "clipType": "am-snap-plate",
++            "at": 0, "hold": 1, "params": {} if params is None else params,
++            "app": {"astrid": {"cut": "c08", "layer": "field"}}, **fields}
++
++
++@pytest.mark.parametrize("owned", [False, True])
++def test_prepared_real_plate_background_picture_and_gap(prepared_root, owned):
++    owner = {"elementRef": {"kind": "effect", "id": "am-snap-plate", "packId": "astrid_motion"}} if owned else {}
++    props, basis, snapshot = prepared_root([
++        plate({"src": SRC}, id="picture", hold=0.5, **owner),
++        plate({"fill": "#F7F4ED"}, id="field", at=0.75, hold=0.25, **owner),
++    ])
++    rows = scene_answers.host_frames_at(props, basis, [0, 11, 12, 17, 18, 23, 24, 42, 48])
++    assert [(r["coverage"], r["content"]) for r in rows] == [
++        ("COVERED", "CONTENT"), ("COVERED", "CONTENT"), ("GAP", None), ("GAP", None),
++        ("COVERED", "EMPTY"), ("COVERED", "EMPTY"), ("COVERED", "CONTENT"),
++        ("COVERED", "EMPTY"), ("GAP", None),
++    ]
++    for row in rows:
++        for layer in row["layers"]:
++            assert layer["bounds"] == {"status": "known", "rect": {"x": 0, "y": 0, "width": 200, "height": 100}}
++            assert layer["fullFrame"] and layer["opacity"] == 1 and layer["visible"] is True
++            assert layer["opaqueSupport"] == "rect"
++            assert layer["clipId"] in snapshot["metadata"]["scene_clips"]
++            assert not row["findings"]
++
++
++def test_prepared_empty_raw_plate_stays_unknown(prepared_root):
++    props, basis, _ = prepared_root([plate()])
++    assert props["timeline"]["clips"][0]["params"] == {}
++    row = scene_answers.host_frames_at(props, basis, [0])[0]
++    assert row["coverage"] == "UNKNOWN" and row["content"] is None
++    assert row["layers"][0]["bounds"]["status"] == "unknown"
++    assert row["layers"][0]["opacity"] is None
++
++
++SSR_SCRIPT = r"""
++import {createHash} from 'node:crypto';
++import {readFileSync} from 'node:fs';
++import path from 'node:path';
++import {pathToFileURL} from 'node:url';
++import {build} from 'esbuild';
++import {createElement as h} from 'react';
++import {renderToStaticMarkup} from 'react-dom/server';
++import {Internals} from 'remotion';
++import {TimelineComposition, DEFAULT_THEME} from '@banodoco/timeline-composition';
++import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
++const project = process.cwd();
++const aliases = remotionPrimitiveAliasesFor(project)({}).resolve.alias;
++const bundle = await build({stdin: {contents: `
++export {resolveHostRegistries} from './src/host-registries';
++export {default as Plate} from '../astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component';`,
++resolveDir: project}, bundle: true, write: false, platform: 'node', format: 'esm', jsx: 'automatic',
++nodePaths: [path.join(project, 'node_modules')], logLevel: 'silent',
++plugins: [{name: 'renderer-aliases', setup(builder) {
++  builder.onResolve({filter: /^[^./]/}, async args => {
++    if (args.pluginData?.resolvingPackage) return;
++    const alias = Object.keys(aliases).find(key => args.path === key || args.path.startsWith(`${key}/`));
++    if (alias) return builder.resolve(path.join(aliases[alias], args.path.slice(alias.length).split('?')[0]),
++      {kind: args.kind, resolveDir: project});
++    const resolved = await builder.resolve(args.path, {kind: args.kind, resolveDir: args.resolveDir,
++      pluginData: {resolvingPackage: true}});
++    if (resolved.errors.length) return {errors: resolved.errors};
++    return {path: path.isAbsolute(resolved.path) ? pathToFileURL(resolved.path).href : resolved.path, external: true};
++  });
++}}]});
++const {resolveHostRegistries, Plate} = await import(
++  `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
++const {props, basis, cases} = JSON.parse(readFileSync(0, 'utf8'));
++const registries = resolveHostRegistries(props.theme);
++const metadata = {id: 'plate', component: TimelineComposition, defaultProps: {}, ...basis,
++  durationInFrames: 48, folderName: null, parentFolderName: null, nonce: [], schema: null,
++  calculateMetadata: null, stack: null};
++const render = (p, frame) => renderToStaticMarkup(h(Internals.CompositionManager.Provider, {value: {
++  compositions: [metadata], currentCompositionMetadata: null, folders: [],
++  canvasContent: {type: 'composition', compositionId: 'plate'},
++}}, h(Internals.TimelineContext.Provider, {value: {frame: {plate: frame}, playing: false,
++  imperativePlaying: {current: false}, audioAndVideoTags: {current: []}}},
++h(Internals.CanUseRemotionHooksProvider, null, h(TimelineComposition, {...p, registries})))));
++const result = {};
++for (const [name, params] of Object.entries(cases)) {
++  const p = structuredClone(props);
++  for (const c of p.timeline.clips) c.params = params;
++  const html = [0, 1, 2, 6, 12, 23, 24, 47, 48].map(frame => render(p, frame));
++  result[name] = {hash: createHash('sha256').update(JSON.stringify(html)).digest('hex'), first: html[0]};
++}
++console.log(JSON.stringify({result, defaultTheme: DEFAULT_THEME,
++  registered: typeof Plate.prepareSceneCapability === 'function'}));
++"""
++
++
++@pytest.fixture
++def plate_ssr(prepared_root, host):
++    node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
++    assert node.ok and node.version == "v20.19.4"
++    script = host / "plate-ssr.mjs"
++    script.write_text(SSR_SCRIPT)
++
++    def render(props, basis, cases):
++        result = subprocess.run([str(node.path), str(script)], cwd=host,
++                                input=json.dumps({"props": props, "basis": basis, "cases": cases}),
++                                text=True, capture_output=True, timeout=60)
++        assert result.returncode == 0, result.stdout + result.stderr
++        return json.loads(result.stdout)
++
++    return render
++
++
++def test_registered_plate_ssr_preserves_existing_draw_and_default_theme(prepared_root, plate_ssr):
++    from astrid.core.theme import builtin_theme
++
++    props, basis, _ = prepared_root([plate()])
++    cases = {
++        "empty": {}, "fill": {"fill": "paper"}, "token": {"fill": "  ink  "},
++        "image": {"src": SRC},
++        # Explicit background still wins over fill, while the image remains drawn.
++        "background": {"src": SRC, "fill": "ink", "background": "#123456"},
++        "transparent": {"fill": "transparent", "background": "transparent"},
++        "tint": {"src": SRC, "tint": {"color": "#123456", "opacity": 0.4}},
++        "wipe": {"src": SRC, "enter": "blockWipe", "exitWipe": "blockWipe"},
++        "mosaic": {"src": SRC, "mosaicIn": {"frames": 8}, "mosaicOut": {"frames": 8}},
++        "motion": {"src": SRC, "zoom": 2, "pan": {"dx": 2, "dy": -1},
++                   "punchAt": [2], "push": {"to": 3, "frames": 12}, "bob": 1, "words": [[0, 0.5]]},
++    }
++    result = plate_ssr(props, basis, cases)
++    assert result["defaultTheme"] == builtin_theme()
++    # Captured from the unchanged component before adding its capability.
++    assert {name: row["hash"] for name, row in result["result"].items()} == {
++        "background": "f03701fabf14defa15d1cb0e39aa05d6321165df41ca2203d778a762cdec13f1",
++        "empty": "494c59a53d312da7d0aca95fc478bffd202e84a19698e2ecbc4a1c960417cd11",
++        "fill": "74b910d8107ce9374dada339226fb023e079bd27e69924283363ce56136fcfa9",
++        "image": "381a3ab52c2ce585098c21cdd5958ee46f6ce07d280487fec3e8445e3c4dc0f5",
++        "mosaic": "39d65ebf2c9bfec6d51d88984ff5a5078cb766fab80ce4d2ec461d0a5f3fdbe3",
++        "motion": "80585d662bcfbeb756a4ce648ac64fe8ccabdd816420895e4e036964b8820d35",
++        "tint": "51c9d82d6501c194183be031d8146c0e8d35986e223ad97eefae0e3d83d7d95d",
++        "token": "f4d67b0ff68ace889c403f50d6ebe5895db5a9856d399a7a980e170e2b5468f9",
++        "transparent": "22df2962249e97750fc7b5fa62d737f705be3fbbd627b2542afaa0dfce50990d",
++        "wipe": "087dfc0b1c79e255db26e347d8e0195032045ee8db0fe986c3637ddf2621543e",
++    }
++    assert result["registered"] is True
++    # These are the extracted plateSurface decisions exercised by the actual
++    # registered component, rather than source-location checks: a fill can
++    # paint an assetless plate, an asset still draws over its backing, and an
++    # explicit background wins over fill.
++    assert 'background-color:#F7F4ED' in result["result"]["fill"]["first"]
++    assert '<img' not in result["result"]["fill"]["first"]
++    assert 'background-color:#25241F' in result["result"]["token"]["first"]
++    assert '<img' in result["result"]["image"]["first"]
++    assert 'background-color:#123456' in result["result"]["background"]["first"]
++    assert 'background-color:#F7F4ED' in result["result"]["image"]["first"]
++    assert '<img' not in result["result"]["empty"]["first"]
++
++
++def test_managed_transparent_image_has_opaque_backing_without_media_alpha_proof(prepared_root):
++    props, basis, _ = prepared_root([plate(asset="P")], managed=True)
++    asset = props["timeline"]["clips"][0]["asset"]
++    assert props["assets"]["assets"][asset]["file"] == "http://127.0.0.1:4321/plate.png"
++    assert props["timeline"]["clips"][0]["params"] == {}
++    row = scene_answers.host_frames_at(props, basis, [0])[0]
++    assert (row["coverage"], row["content"]) == ("COVERED", "CONTENT")
++    assert row["layers"][0]["opaqueSupport"] == "rect"
++    assert row["layers"][0]["opacity"] == 1
++
++
++def test_real_plate_fade_dip_and_translucent_gap(prepared_root):
++    props, basis, _ = prepared_root([plate({"src": SRC}, effects={"fade_in": 0.5})])
++    rows = scene_answers.host_frames_at(props, basis, [0, 1, 6, 11, 12, 23, 48])
++    assert [r["coverage"] for r in rows] == ["DIP"] * 4 + ["COVERED", "COVERED", "GAP"]
++    assert [r["content"] for r in rows] == [None] * 4 + ["CONTENT", "CONTENT", None]
++    assert rows[2]["layers"][0]["opacity"] == 0.5
++    assert all(r["layers"][0]["fullFrame"] for r in rows[:-1])
++    props, basis, _ = prepared_root([plate({"src": SRC}, opacity=0.4)])
++    row = scene_answers.host_frames_at(props, basis, [0])[0]
++    assert row["coverage"] == "GAP" and row["content"] is None
++    assert row["layers"][0]["opacity"] == 0.4
++    assert row["layers"][0]["bounds"]["status"] == "known"
++
++
++def test_real_plate_wipe_mosaic_pan_and_tint_keep_the_painted_backing(prepared_root):
++    props, basis, _ = prepared_root([plate({
++        "src": SRC, "zoom": 2, "pan": {"dx": 4, "dy": -3}, "punchAt": [2],
++        "tint": {"color": "#123456", "opacity": 0.5},
++        "enter": "blockWipe", "exitWipe": "blockWipe",
++        "mosaicIn": {"frames": 8}, "mosaicOut": {"frames": 8},
++    })])
++    rows = scene_answers.host_frames_at(props, basis, [0, 1, 2, 6, 12, 23])
++    assert all((r["coverage"], r["content"]) == ("COVERED", "CONTENT") for r in rows)
++    assert all(r["layers"][0]["opacity"] == 1 for r in rows)
++
++
++@pytest.mark.parametrize("params", [
++    {"src": SRC, "background": "transparent"},
++    {"fill": "rgba(0, 0, 0, .5)"},
++    {"fill": "var(--unresolved)"},
++    {"fill": "   "},
++])
++def test_unproven_backing_cannot_claim_opaque_coverage(prepared_root, params):
++    props, basis, _ = prepared_root([plate(params)])
++    row = scene_answers.host_frames_at(props, basis, [0])[0]
++    assert row["coverage"] == "UNKNOWN" and row["content"] is None
++    assert row["layers"][0]["opacity"] is None
++
++
++@pytest.mark.parametrize("outer", [
++    {"cropLeft": 0.2},
++    {"entrance": {"type": "scale-in", "duration": 0.5}},
++    {"entrance": {"type": "fade-up", "duration": 0.5}},
++])
++def test_public12_outer_geometry_gap_does_not_erase_original_positive(prepared_root, outer):
++    from astrid.core.timeline.onscreen import element_coverage, visible_at
++
++    # Public12 itself marks these outer wrappers unknown. Keep the private
++    # positive intact until a package-owned replacement evaluates the wrapper.
++    original = plate({"src": SRC}, **outer)
++    private = visible_at({"tracks": [{"id": "picture", "kind": "visual"}], "clips": [original]},
++                         0, 24, {"width": 200, "height": 100}, element_coverage(["am-snap-plate"]))[0]
++    if "fade-up" in str(outer):
++        assert private.opacity == 0 and private.full_frame is True
++    else:
++        assert private.full_frame is False and private.opacity == 1
++    props, basis, _ = prepared_root([original])
++    row = scene_answers.host_frames_at(props, basis, [0])[0]
++    assert row["coverage"] == "UNKNOWN" and row["content"] is None
++    assert row["layers"][0]["bounds"]["status"] == "unknown"
++    assert "unknown-animation-geometry" in {finding["code"] for finding in row["layers"][0]["findings"]}
+diff --git a/tests/packs/test_am_snap_plate_fill.py b/tests/packs/test_am_snap_plate_fill.py
+index 56a58cfcc26a8896076d1593de8bb4666f7f799c..45dfd055b9c96a0e4ff39ea2df44622f6ab1661b
+--- a/tests/packs/test_am_snap_plate_fill.py
++++ b/tests/packs/test_am_snap_plate_fill.py
+@@ -18,15 +18,6 @@
+         self.assertNotIn("fill", definition.defaults)
+         self.assertEqual(definition.defaults["background"], "#F7F4ED")
+ 
+-    def test_component_renders_without_an_asset_when_fill_is_set(self) -> None:
+-        source = (PLATE / "component.tsx").read_text(encoding="utf-8")
+-        # Returns null only when there is neither a source nor a fill.
+-        self.assertIn("if (!url && !fill) {", source)
+-        self.assertIn("FILL_TOKENS", source)
+-        # The image is only drawn when there is a url.
+-        self.assertIn("{!url ? null : block > 0 ? (", source)
+-        self.assertIn("params.background ?? fill ?? COLOR.paper", source)
+-
+     def test_skill_does_not_ask_for_placeholder_pngs(self) -> None:
+         text = (ROOT / "astrid" / "packs" / "astrid_motion" / "docs" / "SKILL.md").read_text(encoding="utf-8")
+         self.assertIn("params.fill", text)
+
+codex
+The absolute gate report is written with exact approved source/test hashes, generated catalog/manifest hashes, preserved sprite digests, protected-byte hashes, test commands/results, and remaining unrun gates. I’ve also written the conventional commit message and created the required DONE marker; I’m performing one last status and marker check before handing off.
+exec
+/bin/bash -lc 'set -e
+report=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-current-artifact-gate.md
+commitmsg=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-current-artifact-gate/commit-msg
+donefile=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-current-artifact-gate/DONE
+test -s "$report"
+test -s "$commitmsg"
+test -f "$donefile"
+test ! -s "$donefile"
+printf '"'%s\\n' '--- final status ---'
+git status --short
+printf '%s\\n' '--- commit message ---'
+sed -n '1,20p' \""'$commitmsg"
+printf '"'%s\\n' '--- report ---'
+sed -n '1,240p' \""'$report"
+printf '"'%s\\n' '--- worktree temp candidates ---'
+find . -maxdepth 3 -type f \\( -name '.remotion-props.json' -o -name '*.mp4' -o -name '*.tgz' \\) -print" in /home/user/work/wt/agt-m3-plate-current-artifact-gate
+ succeeded in 690ms:
+--- final status ---
+ M artifacts.json
+ M astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx
+ M astrid/packs/rendering/elements/catalog.ts
+ M tests/packs/test_am_snap_plate_fill.py
+?? astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts
+?? astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts
+?? tests/packs/rendering/test_am_snap_plate_scene_capability.py
+--- commit message ---
+feat(rendering): gate current AM snap plate artifact
+
+Port the approved AM snap-plate capability and registered SSR tests after the
+current AM-sprite source, then refresh the normal catalog and artifact manifest.
+--- report ---
+# Agent AM snap-plate current-artifact gate
+
+Date: 2026-10-20
+
+## Scope and source
+
+Worker base: `ded9b0c9` (`feat(rendering): gate current AM-sprite artifact`).
+The approved plate unit from `48f3eef4bfe876fe2481d950ae33fa370fd03c58` was ported
+after the reviewed sprite source. No integration worktree or frozen branch was
+modified. The five plate source/direct-test files below are byte-identical to
+the approved commit:
+
+| File | SHA-256 |
+| --- | --- |
+| `astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx` | `93fc2fb7ab03a4d64d9e1c53a9a40de6de75860576b77f5b6f2c31cbd9c292ee` |
+| `astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts` | `e43bb6dfe94a770df11e21bcf5e959e9591387d7952dda11176c79fc9e2c686e` |
+| `astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts` | `5c844e62bd6d32673d16ad17d61435380050ffbe2cb92036d2251ac3579edd49` |
+| `tests/packs/rendering/test_am_snap_plate_scene_capability.py` | `4008e2531149329d59ac821557d8ed5316f977499fda9ca20307ddb317064820` |
+| `tests/packs/test_am_snap_plate_fill.py` | `dba93ca344215033cd910d5635a60f543c33203f91918884038f0076f80555f9` |
+
+The normal generated files after refresh are:
+
+- `astrid/packs/rendering/elements/catalog.ts`: `e981170d497f9483aa4682bee9defba367b6fdb155071420a19e8e827f59dcba`
+- `artifacts.json`: `6963e3393d22b8e46d1df5f2cb81f401bee7080407bd3f61f108560a2ef9a176`
+
+The reviewed sprite row/digests remain exact:
+
+- catalog revision: `am-sprite = sha256:da9e894e6ad65f4503f60a9adf80596ad88ec1436302dcf57783d880496e1966`
+- manifest digest: `am-sprite/component.tsx = sha256:fc79cee164d9d7aeb2a008d9d924e7b41710856b0b630bbc91137ff504b5172e`
+
+## Evidence
+
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/test_am_snap_plate_fill.py` — **2 passed**.
+- `ASTRID_TEST_NODE_MODULES=<private /tmp overlay of current Remotion peers> ASTRID_TEST_COMPOSITION_ARTIFACT=/home/user/work/runtimes/agent-remotion-current/artifacts/banodoco-timeline-composition-0.0.12.tgz ASTRID_NODE_EXECUTABLE=/home/user/work/node-v20.19.4-linux-x64/bin/node PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_am_snap_plate_scene_capability.py` — **14 passed in 45.85s**. This includes the real registered public Composition SSR coverage; pinned Node was `v20.19.4`, Remotion peers were private symlinks, and shared dependency trees remained read-only.
+- `python3 scripts/gen_element_catalog.py` — pass; normal catalog refreshed.
+- `python3 scripts/artifact_manifest.py` — pass; wrote manifest version `sha256:2f525459601d8a3adfd29825b40a7522e536c6e809795691fa39c3e9d8b474e6`.
+- `python3 scripts/gen_element_catalog.py --check` — pass.
+- `python3 scripts/artifact_manifest.py --check` — pass (`artifacts.json is current`).
+- `git diff --check` — pass.
+
+## Protected bytes
+
+The following were unchanged from this worker's exact `ded9b0c9` base and were
+recorded with these hashes:
+
+| File | SHA-256 |
+| --- | --- |
+| `astrid/core/rendering/verified_source.py` | `c0dcabd27230f9661be59b2461c9759716daad215e1b508c8f9e73bb96e326d8` |
+| `tests/packs/rendering/test_verified_source.py` | `aa087e5840fbe84606ef8cdf85f971e5d9a17c8038c6cad23bd8513b6467b9c5` |
+| `tests/fixtures/current-union-command-schemas/published-sources.json` | `1deac01582348b27a90455c27010622280178919ee2c3daed1e0c025b571dda6` |
+| `astrid/sdk/remote.py` | `7f6e67cde9e6de48dbd3ffdb603d5cbd46ab23bf87dcd0e037d6e54418f033ff` |
+| `astrid/sdk/timeline/commit.py` | `25920c4c155d81cf66a807e0129b7289b76c02ab7988054231b459bab56d4c5f` |
+| `runtime.lock.json` | `c2ed617f38bc53e4f90dc082f082d38828d8f68a93e61776300ec7082ef23311` |
+| `docs/design/visual-compile-contract.md` | `94581609e327918152ee6779e8fb3915391c091167eba8758ecbe38a4200cbf4` |
+| `remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz` | `0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3` |
+| `remotion/package-lock.json` | `cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597` |
+
+The two SDK hashes differ from the older small-unit review's 6a6d92d snapshot,
+but are unchanged on this worker base; no SDK files were edited here.
+
+## Remaining gates / limits
+
+This is only the approved Agent AM plate unit. No full suite, browser journey,
+live socket, Runtime admission, physical pixel/audio parity, artifact repack,
+Composition 0.0.13 change, D09 closure, private-crop deletion, or legacy-caller
+deletion was run or claimed. Sprite manager acceptance/merge remains the prior
+gate; this worker preserved its current source/catalog row and did not perform
+integration mutation.
+--- worktree temp candidates ---
+./remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+
+codex
+Implemented the approved AM snap-plate unit after sprite source `ded9b0c9`.
+
+- Ported exact plate source/direct tests from `48f3eef4b`.
+- Refreshed and verified `catalog.ts` and `artifacts.json`.
+- Preserved sprite revision/digest and protected bytes.
+- Tests:
+  - `test_am_snap_plate_fill.py`: 2 passed
+  - `test_am_snap_plate_scene_capability.py`: 14 passed
+  - Catalog/manifest checks and `git diff --check`: passed
+- No full suites or broader integration changes run.
+- Report: [agent-plate-current-artifact-gate.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-current-artifact-gate.md)
+- Commit message and `DONE` marker written.
+tokens used
+125,853
+Implemented the approved AM snap-plate unit after sprite source `ded9b0c9`.
+
+- Ported exact plate source/direct tests from `48f3eef4b`.
+- Refreshed and verified `catalog.ts` and `artifacts.json`.
+- Preserved sprite revision/digest and protected bytes.
+- Tests:
+  - `test_am_snap_plate_fill.py`: 2 passed
+  - `test_am_snap_plate_scene_capability.py`: 14 passed
+  - Catalog/manifest checks and `git diff --check`: passed
+- No full suites or broader integration changes run.
+- Report: [agent-plate-current-artifact-gate.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-plate-current-artifact-gate.md)
+- Commit message and `DONE` marker written.

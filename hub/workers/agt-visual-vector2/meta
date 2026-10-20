@@ -1,0 +1,9 @@
+name=agt-visual-vector2
+repo=agent
+base=tl/agt-visual-contract-correct
+base_sha=048864e1
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-visual-vector2
+started=2026-10-20T05:07:22Z

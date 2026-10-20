@@ -1,0 +1,400 @@
+        node_version=runtime_tools.node_version,
+        remotion_cli=runtime_tools.remotion_cli,
+    )
+
+
+4b9f2eee4dda960dc3a38aeba8943368c0fed3d5 chore(composition): prepare 0.0.12 package
+5e06f40146573a529896cc812229eb890c53c81a Merge tl/vw-m3-release12
+1	1	astrid/core/rendering/remotion_runtime.py
+-	-	remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz
+4	4	remotion/package-lock.json
+1	1	remotion/package.json
+1	1	tests/core/timeline/test_clip_fields.py
+1	1	tests/journeys/test_journey_plumbing.py
+32	1	tests/packs/rendering/presenter_crop_geometry.mjs
+14	1	tests/packs/rendering/presenter_scene_capability.mjs
+6	6	tests/packs/rendering/test_composition_package.py
+9	4	tests/packs/rendering/test_presenter_scene_capability.py
+1	1	tests/packs/rendering/test_render_export_task_adapter.py
+2	2	tests/packs/rendering/test_scene_answers.py
+5	5	tests/packs/rendering/test_scene_host.py
+
+ succeeded in 31227ms:
+........................................................................ [ 48%]
+........................................................................ [ 97%]
+....                                                                     [100%]
+148 passed in 30.27s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib
+import subprocess
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-port-current')
+patch = subprocess.check_output(['git','diff','--binary','HEAD'])
+for path in subprocess.check_output(['git','ls-files','--others','--exclude-standard']).decode().splitlines():
+    result = subprocess.run(['git','diff','--no-index','--binary','--','/dev/null',path],capture_output=True)
+    assert result.returncode == 1, (path,result.stderr)
+    patch += result.stdout
+(worker / 'final.patch').write_bytes(patch)
+stat = subprocess.check_output(['git','apply','--stat'], input=patch).decode()
+print(stat)
+print('patch sha256',hashlib.sha256(patch).hexdigest())
+PY" in /home/user/work/wt/agt-m3-consume12-port-current
+ succeeded in 121ms:
+ astrid/core/rendering/remotion_runtime.py          |    2 
+ .../banodoco-timeline-composition-0.0.10.tgz       |  Bin
+ remotion/package-lock.json                         |    8 -
+ remotion/package.json                              |    2 
+ tests/core/timeline/test_clip_fields.py            |    2 
+ tests/journeys/test_journey_plumbing.py            |    2 
+ tests/packs/rendering/presenter_crop_geometry.mjs  |   33 ++
+ .../packs/rendering/presenter_scene_capability.mjs |   15 +
+ tests/packs/rendering/test_composition_package.py  |   12 -
+ .../rendering/test_presenter_scene_capability.py   |   13 +
+ .../rendering/test_render_export_task_adapter.py   |    2 
+ tests/packs/rendering/test_scene_answers.py        |    4 
+ tests/packs/rendering/test_scene_host.py           |   10 -
+ .../banodoco-timeline-composition-0.0.12.tgz       |  Bin
+ tests/fixtures/presenter_selected_cut/README.md    |   20 +
+ tests/fixtures/presenter_selected_cut/frame-0.png  |  Bin
+ tests/fixtures/presenter_selected_cut/frame-3.png  |  Bin
+ tests/fixtures/presenter_selected_cut/frame-4.png  |  Bin
+ tests/fixtures/presenter_selected_cut/frame-5.png  |  Bin
+ .../presenter_selected_cut/inspection.json         |    1 
+ tests/fixtures/presenter_selected_cut/sha256.json  |    7 +
+ .../rendering/presenter_selected_cut_query.mjs     |   39 +++
+ .../rendering/presenter_series_inspection.mjs      |   41 +++
+ .../test_presenter_selected_cut_aggregate.py       |  271 ++++++++++++++++++++
+ .../rendering/test_presenter_series_inspection.py  |   29 ++
+ 25 files changed, 485 insertions(+), 28 deletions(-)
+
+patch sha256 2c54de69f47e08e8678bcc97e6c58ead82f3bfea78649ed46b98cb36f89443dc
+
+exec
+/bin/bash -lc "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-consume12-port-current remotion-0012-nodes --no-cache --files 'tests/core/rendering/test_node_pin.py tests/reshape/test_remotion_gate.py tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_scene_answers.py tests/packs/rendering/test_scene_host.py tests/packs/rendering/test_render_export_task_adapter.py'" in /home/user/work/wt/agt-m3-consume12-port-current
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764
+
+exec
+/bin/bash -lc "git apply --check --reverse /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-port-current/final.patch && python3 - <<'PY'
+import json
+from pathlib import Path
+ssr = json.loads(Path('tests/packs/rendering/presenter_ssr_before.json').read_text())
+print(type(ssr).__name__,list(ssr)[:10])
+PY" in /home/user/work/wt/agt-m3-consume12-port-current
+ succeeded in 0ms:
+dict ['30:defaults', '30:empty', '30:poses', '30:clamps', '30:malformed', '30:focus', '30:push', '30:punch', '30:bob', '30:mosaic']
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764 0' in /home/user/work/wt/agt-m3-consume12-port-current
+ exited 124 in 0ms:
+still queued after 0 min 2 targeted/named runs already running; rerun wait-test
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+p=Path('tests/packs/rendering/presenter_ssr_before.json')
+x=json.loads(p.read_text())
+print('Historical SSR expectations:',sum(len(v) for v in x.values()))
+PY
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/status" in /home/user/work/wt/agt-m3-consume12-port-current
+ succeeded in 0ms:
+Historical SSR expectations: 286
+queued
+
+codex
+The local checks also pass: 47 presenter/package/manifest tests and 148 neighboring tests. I’ve saved the exact binary patch and verified that it matches the worktree. A final readiness rerun is queued so the handoff can cite a run made entirely after the dependency setup was fixed; then I’ll remove the private dependency copy and write the completion files.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764 1' in /home/user/work/wt/agt-m3-consume12-port-current
+ exited 124 in 60012ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+w=orch/'workers/agt-m3-consume12-port-current'
+changed=subprocess.check_output(['git','diff','--name-status','HEAD']).decode().splitlines()
+changed += ['A\\t'+p for p in subprocess.check_output(['git','ls-files','--others','--exclude-standard']).decode().splitlines()]
+files='tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_series_inspection.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_composition_package.py tests/test_artifact_manifest.py'
+neighbors='tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_scene_answers.py tests/packs/rendering/test_scene_host.py tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix'
+ready='tests/core/rendering/test_node_pin.py tests/reshape/test_remotion_gate.py tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_scene_answers.py tests/packs/rendering/test_scene_host.py tests/packs/rendering/test_render_export_task_adapter.py'
+report=f'''# Agent 0.0.12 current adoption — qualified source, harness commit pending
+
+Supersedes the previous BLOCKED report from "'`agt-m3-consume12-current`. Its R1/N1 fix was committed as `94091f05`; its merge-forward operation failed because Git metadata was read-only. This worker instead ports the reviewed worktree delta onto current integration, without any ancestry mutation. The orchestrator has also aligned the shared 0012 lock; neither previous blocker remains.
+
+## Result and scope
+
+Base/parent: `c456b3281497653cecf44f61acd6fa30565d83c8`, branch `tl/agt-m3-consume12-port-current`. Ported only the reviewed 33-path cohort from `94091f05`; actual change is **25 paths, 485 insertions, 28 deletions**, including the binary archive replacement and original selected-cut PNGs. Every cohort path other than the separately regenerated manifest is byte-equal to `94091f05` (including absent obsolete archive).
+
+R1 serializes the real Python `BUILTIN_DEFAULT_THEME` into the test project and compares public `DEFAULT_THEME` with that parsed object. No copied navy expectation remains. N1 uses exact SHA256 equality. The explicit historical black/Georgia theme remains, and `presenter_ssr_before.json` is byte-unchanged with all **286** SSR expectations exercised.
+
+Preserved current SDK/client/schema, Runtime pin and response fixtures, current Remotion host and smoke source, final-props/source carry, and presenter product files. `artifacts.json` was regenerated; it is byte-unchanged because current integration already has the identical presenter product and manifest entries. Manifest: 162 artifacts, version `sha256:ad0b7b331cfce0bcc6c5779993b1004b0d87f63212f819cb5988ba3ad7407d41`.
+
+No normal PCM/source activation, package rebuild, shared dependency mutation, push, direct integration edit, commit, merge, rebase or checkout. No test expectations were weakened or disabled.
+
+## Exact source and pair
+
+- Qualified Agent source tree: `42d59104ef24fc745a56c55d81694a1cdb932f91` (both central lanes).
+- Harness-produced Agent commit: pending worker exit; verify its tree equals the qualified tree above. This worker cannot truthfully report a SHA for a commit that has not yet been created.
+- Runtime consumer pin, unchanged: `94114269d1ce23ab3224d7eca5a85138ce2b5fed`; vendor verification against `/home/user/work/wt/rt-pin-94114269` passes for every locked consumer artifact.
+- Composition `0.0.12`, release preparation `4b9f2eee4dda960dc3a38aeba8943368c0fed3d5`, integration release merge `5e06f40146573a529896cc812229eb890c53c81a`.
+- Archive SHA256: `0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3`, 58,444 bytes; exact blob from `94091f05`.
+- Archive integrity: `sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==`.
+- Exact committed lock source: `94091f05:remotion/package-lock.json`; Git blob `5d3c765daa707065e8da5db94f3f06d21d37b7a2`, SHA256 `cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597`. Worktree and shared `/home/user/work/runtimes/agent-remotion-0012/package-lock.json` match these bytes exactly, including libc fields.
+- Worktree and shared package.json SHA256: `58460ce59e2473d74f44238a2e5e78e2d4bd8a79a0bd94e430f7ae5eb6c2778a`.
+- Observed integration heads for context only: Runtime `6023cfb10307b4c0004642b5fa1995d72ba4f6d1`, App `18becfbede00038830b97e63345445eeef54fa42`, Composition `e80c46baf5aa4b50a10b77a5ceadcb7ec4ab27ab`. This is Agent/Composition package qualification, not qualification of those other integration heads.
+
+Exact binary diff: [final.patch](../workers/agt-m3-consume12-port-current/final.patch), SHA256 `2c54de69f47e08e8678bcc97e6c58ead82f3bfea78649ed46b98cb36f89443dc`. `git apply --check --reverse` succeeds against the final worktree.
+
+```text
+{chr(10).join(sorted(changed))}
+```
+
+## Tests and exact commands
+
+All commands run from the assigned worktree. Shared venv and runtime dependencies remained read-only. A private, ignored `remotion/node_modules` copy (375 MB, copied with `cp -a --reflink=auto`) supplied local tests and central snapshot peers. No install or tool cache wrote to shared dependencies. The private copy is removed before completion.
+
+Local presenter/package/manifest command:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider {files}
+```
+
+**47 passed, 5 tar extraction deprecation warnings, 34.19s.** Includes the actual host-theme equality and historical SSR comparisons.
+
+Local neighboring tests:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider {neighbors}
+```
+
+**148 passed, 30.27s.**
+
+Central final owner lane:
+
+```sh
+R=$({orch}/bin/request-test agt-m3-consume12-port-current composition12-owner-integration --no-cache)
+{orch}/bin/wait-test "$R" 1
+```
+
+Run `agt-m3-consume12-port-current-composition12-owner-integration-1020093050-23242`: **47 passed, 5 warnings, pytest 36.35s, service 40s, exit 0**. The named lane explicitly clears addopts; all 47 cases execute. Full resolved command is retained in its `summary` and `log.txt` under `{orch}/tests/`.
+
+Central readiness and neighbors:
+
+```sh
+R=$({orch}/bin/request-test agt-m3-consume12-port-current remotion-0012-nodes --no-cache --files '"'{ready}')
+{orch}/bin/wait-test \""'$R" 1
+```
+
+Final run `agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764`: READINESS_RESULT_PENDING. Covers package positive/negative readiness, launch binding, Node pin, gate validation, scene host/answers, export adapter and changed receiving-default neighbors. This lane keeps the normal integration filter; integration-marked presenter/package cases are separately covered by the 47-case owner lane.
+
+Additional checks:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-pin-94114269
+git diff --check
+git apply --check --reverse {w}/final.patch
+```
+
+All pass. Read-only byte comparisons also verify shared package/lock equality, all reviewed cohort paths, and no changes to protected current paths.
+
+## Initial setup failure and decisions
+
+The first local/central owner attempts used an ignored directory of per-package symlinks. The fixture correctly refused it: real peer files resolved outside that directory (`17 passed, 30 setup errors`; central run `...composition12-owner-integration-1020092931-3922`). Replaced only this private dependency setup with the physical copy, preserving the containment assertion and every test. A no-cache named rerun was necessary because the service caches failures by source tree and does not hash dependency provisioning.
+
+An earlier readiness run `...remotion-0012-nodes-1020092957-6729` passed **292 tests, 62 warnings, 43.10s**, but overlapped the private dependency reprovisioning. The final named readiness run above repeats it after provisioning is stable. Source tree stayed identical throughout; no product or test changes were made after the narrow port.
+
+No plan decisions changed. Used an ordinary worktree-only forward port because it preserves current integration and requires no Git ancestry mutation. No full suite, make-check aggregate, browser render, physical pixel/audio parity, normal PCM/source activation, or cross-product journey is claimed.
+
+## Handoff
+
+No remaining task blocker. Harness should commit the worktree using the supplied commit message, confirm the resulting commit tree is `42d59104ef24fc745a56c55d81694a1cdb932f91`, then submit that exact descendant through the orchestrator'"'s normal merge queue. App pairing/normal source activation remains separate work.
+'''
+(orch/'design/agent12-current-adoption.md').write_text(report)
+(w/'commit-msg').write_text('feat(rendering): adopt corrected Composition 0.0.12 on current integration\\n\\nPort the reviewed public package and presenter regression cohort while\\npreserving current SDK, schema, source carry and Runtime 94114269 pins.\\nCompare the public default theme with the real host constant and retain\\nthe explicit historical theme and all 286 SSR expectations.\\n\\nReplace the obsolete archive with the exact 0.0.12 release, retain its npm\\nlock bytes, and regenerate the artifact manifest. Qualify the paired\\nsource with the central owner integration and readiness lanes.\\n')
+print('Wrote shared adoption report and conventional commit message; completion waits for stable readiness result.')
+PY" in /home/user/work/wt/agt-m3-consume12-port-current
+ succeeded in 163ms:
+Wrote shared adoption report and conventional commit message; completion waits for stable readiness result.
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/status && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/why' in /home/user/work/wt/agt-m3-consume12-port-current
+ exited 1 in 0ms:
+running
+cat: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/why: No such file or directory
+
+exec
+/bin/bash -lc 'tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/log.txt && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/snap' in /home/user/work/wt/agt-m3-consume12-port-current
+ succeeded in 0ms:
+    archive.extractall(project)
+
+tests/packs/rendering/test_render_export_task_adapter.py: 57 warnings
+  /home/user/work/wt/.test-agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/tests/packs/rendering/test_render_export_task_adapter.py:51: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(runtime)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+292 passed, 62 warnings in 46.09s
+tree=42d59104ef24fc745a56c55d81694a1cdb932f91
+key=9fff2b59b165c3218d0a118a8930c5bc
+worktree=/home/user/work/wt/agt-m3-consume12-port-current
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764 1' in /home/user/work/wt/agt-m3-consume12-port-current
+ succeeded in 0ms:
+test agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764: pass exit=0 in 49s — remotion-0012-nodes on agt-m3-consume12-port-current (agent tree 42d59104ef24fc745a56c55d81694a1cdb932f91)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 2 tests/core/rendering/test_node_pin.py tests/reshape/test_remotion_gate.py tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_scene_answers.py tests/packs/rendering/test_scene_host.py tests/packs/rendering/test_render_export_task_adapter.py
+counts: 292 passed, 62 warnings in 46.09s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/log.txt ---
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 24%]
+........................................................................ [ 49%]
+........................................................................ [ 73%]
+........................................................................ [ 98%]
+....                                                                     [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]
+tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]
+tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness
+  /home/user/work/wt/.test-agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/tests/packs/rendering/test_composition_package.py:32: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(project)
+
+tests/packs/rendering/test_render_export_task_adapter.py: 57 warnings
+  /home/user/work/wt/.test-agt-m3-consume12-port-current-remotion-0012-nodes-1020093220-18764/tests/packs/rendering/test_render_export_task_adapter.py:51: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(runtime)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+292 passed, 62 warnings in 46.09s
+
+codex
+The final readiness rerun passed all 292 tests on tree `42d59104ef24fc745a56c55d81694a1cdb932f91`, matching the 47-test owner run. I’m completing the handoff and cleanup. The remaining publication step belongs to the harness: create the commit and confirm that it has this tested tree.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+report=orch/'design/agent12-current-adoption.md'
+text=report.read_text().replace('READINESS_RESULT_PENDING', '**292 passed, 62 warnings, pytest 46.09s, service 49s, exit 0**')
+report.write_text(text)
+modules=Path('remotion/node_modules')
+assert modules.is_dir() and not modules.is_symlink()
+shutil.rmtree(modules)
+worker=orch/'workers/agt-m3-consume12-port-current'
+worker.joinpath('report.md').write_text(f'''# Completed: Composition 0.0.12 on current integration
+
+Ported the reviewed cohort plus R1/N1 from "'`94091f05` onto `c456b3281497653cecf44f61acd6fa30565d83c8` using worktree edits only. **25 paths, +485/-28**, all within the allowed cohort. Removed the obsolete archive and retained the exact 0.0.12 blob and lock. Current SDK/client/schema/source carry, Runtime 94114269 pin, presenter product and all 286 historical SSR hashes are unchanged. Regenerated `artifacts.json`; its bytes remain current and unchanged.
+
+Real theme equality consumes serialized `BUILTIN_DEFAULT_THEME`; no copied navy expectation. No normal PCM/source activation or shared dependency mutation.
+
+## Validation
+
+Exact central requests (follow each returned path with `{orch}/bin/wait-test "$R" 1`):
+
+```sh
+R=$({orch}/bin/request-test agt-m3-consume12-port-current composition12-owner-integration --no-cache)
+R=$({orch}/bin/request-test agt-m3-consume12-port-current remotion-0012-nodes --no-cache --files '"'tests/core/rendering/test_node_pin.py tests/reshape/test_remotion_gate.py tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix tests/core/timeline/test_clip_fields.py tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_scene_answers.py tests/packs/rendering/test_scene_host.py tests/packs/rendering/test_render_export_task_adapter.py')
+"'```
+
+- Central owner `...1020093050-23242`: **47 passed**, 5 deprecation warnings, exit 0.
+- Central readiness `...1020093220-18764`: **292 passed**, 62 deprecation warnings, exit 0.
+- Local presenter/package/manifest: **47 passed**; local neighbors: **148 passed**.
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check`: PASS.
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-pin-94114269`: PASS.
+- `git diff --check` and reverse application check of `final.patch`: PASS.
+
+Both final central runs qualified tree **`42d59104ef24fc745a56c55d81694a1cdb932f91`**. Exact local commands, complete changed-path list, lock hashes, pair tuple and logs are in [the superseding adoption report](../../design/agent12-current-adoption.md). [final.patch](final.patch) contains the exact binary diff.
+
+## Decisions and limitations
+
+Used the narrow forward port because it needs no ancestry mutation and preserves current integration. Initial local/central setup had 30 containment errors from per-package symlinks; replaced only the private dependency setup with a physical copy and reran the affected lane without caching. The first passing readiness run overlapped that setup replacement, so repeated it after provisioning stabilized. No test or assertion was changed for this correction. Private dependencies were removed after testing.
+
+No task blocker remains. The old read-only merge-forward and shared-lock blockers are superseded. No full suite, make-check aggregate, physical pixel/audio parity, source activation or cross-product journey was run or claimed.
+
+Next: harness commits with `commit-msg`, verifies its commit tree equals the tested tree above, and orchestrator submits that exact descendant through the normal merge queue. No push or integration edit was performed. Final commit SHA is necessarily pending harness execution.
+'"''')
+print('Updated adoption report; wrote worker report; removed private dependencies.')
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-pin-94114269
+git diff --check
+git apply --check --reverse /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-port-current/final.patch
+git status --short --ignored" in /home/user/work/wt/agt-m3-consume12-port-current
+ succeeded in 12527ms:
+Updated adoption report; wrote worker report; removed private dependencies.
+artifacts.json is current
+ok runtime.lock.json (matches producer manifest)
+ M astrid/core/rendering/remotion_runtime.py
+ D remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz
+ M remotion/package-lock.json
+ M remotion/package.json
+ M tests/core/timeline/test_clip_fields.py
+ M tests/journeys/test_journey_plumbing.py
+ M tests/packs/rendering/presenter_crop_geometry.mjs
+ M tests/packs/rendering/presenter_scene_capability.mjs
+ M tests/packs/rendering/test_composition_package.py
+ M tests/packs/rendering/test_presenter_scene_capability.py
+ M tests/packs/rendering/test_render_export_task_adapter.py
+ M tests/packs/rendering/test_scene_answers.py
+ M tests/packs/rendering/test_scene_host.py
+?? remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz
+?? tests/fixtures/presenter_selected_cut/
+?? tests/packs/rendering/presenter_selected_cut_query.mjs
+?? tests/packs/rendering/presenter_series_inspection.mjs
+?? tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+?? tests/packs/rendering/test_presenter_series_inspection.py
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib
+import subprocess
+worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-port-current')
+patch = subprocess.check_output(['git','diff','--binary','HEAD'])
+for path in subprocess.check_output(['git','ls-files','--others','--exclude-standard']).decode().splitlines():
+    result=subprocess.run(['git','diff','--no-index','--binary','--','/dev/null',path],capture_output=True)
+    assert result.returncode == 1
+    patch += result.stdout
+assert patch == (worker/'final.patch').read_bytes()
+assert hashlib.sha256(patch).hexdigest() == '2c54de69f47e08e8678bcc97e6c58ead82f3bfea78649ed46b98cb36f89443dc'
+assert not Path('remotion/node_modules').exists()
+assert (worker/'report.md').is_file() and (worker/'commit-msg').is_file()
+assert 'READINESS_RESULT_PENDING' not in (worker.parents[1]/'design/agent12-current-adoption.md').read_text()
+(worker/'DONE').touch()
+print('Final patch unchanged; cleanup verified; DONE created.')
+PY" in /home/user/work/wt/agt-m3-consume12-port-current
+ succeeded in 185ms:
+Final patch unchanged; cleanup verified; DONE created.
+
+codex
+Completed the narrow port: 25 paths, preserving current SDK/schema/source carry and Runtime pin.
+
+- Central owner lane: **47 passed**.
+- Central readiness lane: **292 passed**.
+- Local tests: **47 + 148 passed**.
+- Manifest, vendor lock and diff checks passed.
+
+Wrote `commit-msg` and `DONE`; removed private dependencies. No blockers remain. Harness commit and orchestrator merge are next.
+
+[Report with exact commands, hashes, diff and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-port-current/report.md).
+tokens used
+122,875
+Completed the narrow port: 25 paths, preserving current SDK/schema/source carry and Runtime pin.
+
+- Central owner lane: **47 passed**.
+- Central readiness lane: **292 passed**.
+- Local tests: **47 + 148 passed**.
+- Manifest, vendor lock and diff checks passed.
+
+Wrote `commit-msg` and `DONE`; removed private dependencies. No blockers remain. Harness commit and orchestrator merge are next.
+
+[Report with exact commands, hashes, diff and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-port-current/report.md).

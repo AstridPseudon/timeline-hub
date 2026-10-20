@@ -1,0 +1,9 @@
+name=agt-m2-label-handoff
+repo=agent
+base=tl/agt-m2-scalar-commands
+base_sha=ceb2ab67
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-label-handoff
+started=2026-10-19T23:09:15Z

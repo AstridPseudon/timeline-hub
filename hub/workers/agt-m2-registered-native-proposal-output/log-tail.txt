@@ -1,0 +1,400 @@
++    env = {**os.environ, 'PYTHONDONTWRITEBYTECODE': '1', 'PYTHONPATH': str(runtime)}
++
++    def run(*args):
++        subprocess.run(args, cwd=runtime, env=env, check=True)
++
++    run(sys.executable, 'generators/generate.py')
++    generated = root / 'conformance'
++    command = ('node', 'tools/generate_typescript_conformance.mjs', '--contract',
++               'contract/openapi/workspace-v1.yaml', '--schema-manifest', 'contract/manifest.json',
++               '--component-manifest', 'contract/component-manifest.json')
++    run(*command, '--output-root', str(generated))
++    for client in json.loads((runtime / 'contract/component-manifest.json').read_text())['clients']:
++        if client['language'] == 'typescript':
++            for output, dest in (('output', 'source'), ('metadata_output', 'metadata_source')):
++                shutil.copyfile(generated / client[output], runtime / client[dest])
++    run(sys.executable, 'scripts/artifact_manifest.py')
++    run(sys.executable, 'generators/generate.py', '--check')
++    run(*command, '--fixture-root', 'conformance/fixtures', '--check')
++    run(sys.executable, 'scripts/artifact_manifest.py', '--check')
++    # Copy the normally generated client into this disposable pair only. This is
++    # an uncommitted candidate, so it cannot be a source_commit or public lock update.
++    manifest = json.loads((runtime / 'contract/artifacts.json').read_text())
++    for name, digest in manifest['artifacts'].items():
++        assert 'sha256:' + hashlib.sha256((runtime / name).read_bytes()).hexdigest() == digest
++    for path in (runtime / 'packages/python/astrid_runtime_client').glob('*.py'):
++        shutil.copyfile(path, agent / 'astrid_runtime_client' / path.name)
++    print(json.dumps({'agent_source': AGENT, 'runtime_source': RUNTIME,
++                      'private_contract_version': '0.2.14',
++                      'schema_sha256': hashlib.sha256(schema.read_bytes()).hexdigest(),
++                      'artifact_manifest': manifest['version']}, sort_keys=True), flush=True)
++    return agent, runtime
+diff --git a/tests/packs/rendering/test_registered_native_assembler.py b/tests/packs/rendering/test_registered_native_assembler.py
+index a004f563e934b961d42e61b2fbed1dbe7d72eaea..8028c3f37483a1e33ecc585ed10466b09c821cc5
+--- a/tests/packs/rendering/test_registered_native_assembler.py
++++ b/tests/packs/rendering/test_registered_native_assembler.py
+@@ -43,6 +43,17 @@
+         service.create_timeline(project, 'main', idempotency_key='timeline')
+         with open_client(daemon) as client:
+             session = TimelineSession.open(project, 'main', client=client, outbox_path=tmp_path / 'requester.json')
++            prior = {'id': 'prior', 'clipType': 'text', 'track': 'visual', 'at': 0.0, 'hold': 1.0,
++                     'params': {'text': 'Original'}, 'opaque': [1.0, -0.0, False, None]}
++            track = {'id': 'visual', 'kind': 'visual', 'label': 'Original lane', 'opaque': [False, 1.0]}
++            if duplicate_cas:
++                session.commit_many([
++                    {'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
++                     'args': {'row': track}},
++                    {'schema_version': 1, 'op': 'clip.add', 'version': '1', 'select': 'parent',
++                     'args': {'row': prior}},
++                ], idempotency_key='original-content')
++            replace_clips = ['parent/clip:prior'] if duplicate_cas else []
+             original = session.outbox.read()['base']
+             children, effects = [], []
+             for index in range(2):
+@@ -69,7 +80,7 @@
+             peer = TimelineSession.open(project, 'main', client=client, outbox_path=tmp_path / 'peer.json')
+             peer.commit({'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
+                          'args': {'row': {'id': 'peer', 'kind': 'visual'}}}, idempotency_key='peer-track')
+-            result = session.admit_assembly(selectors, replace_clips=[], assembler_digest=record.capability_digest,
++            result = session.admit_assembly(selectors, replace_clips=replace_clips, assembler_digest=record.capability_digest,
+                                             idempotency_key='assembly', rationale='Ordered café visuals 1.0')
+             author = result['data']['task_id']
+             task = service.task(author)['task']
+@@ -79,7 +90,7 @@
+                 'project_id': project, 'timeline_id': 'main',
+                 'base_revision_id': original['revision_id'], 'base_publication_id': original['publication_id']}
+             assert capture['bundle']['base_parent']['revision_id'] == original['revision_id']
+-            assert capture['bundle']['parent']['config']['tracks'] == []
++            assert capture['bundle']['parent']['config']['tracks'] == ([track] if duplicate_cas else [])
+             assert public['outputs']['authoring_proposal'] == {
+                 'type': 'file', 'artifact_type': 'timeline/authoring-proposal'}
+             claim = worker.claim_next(executor_id=worker.executor_id, capability_ids=[record.id],
+@@ -97,25 +108,22 @@
+             before = service.list_timeline_commits(project, 'main', authorize=lambda: None)
+             calls = []
+ 
+-            def observe(name):
+-                operation = getattr(worker, name)
++            def observe(target, name):
++                operation = getattr(target, name)
+ 
+                 def delegated(*args, **kwargs):
+                     calls.append(name)
+                     return operation(*args, **kwargs)
+ 
+-                monkeypatch.setattr(worker, name, delegated)
++                monkeypatch.setattr(target, name, delegated)
+ 
+             for name in ('publish_timeline_render', 'upload_object', 'settle'):
+-                observe(name)
+-            error = None
+-            try:
+-                host.run_task({'task': {**task, 'project_id': project, 'run_id': claim.run_id,
+-                                        'runtime_epoch': claim.runtime_epoch}},
+-                              lease_token=claim.lease_id, attempt_id=claim.attempt_id,
+-                              fence=claim.fence, keep_attempt=True)
+-            except RuntimeError as exc:
+-                error = exc
++                observe(worker, name)
++            observe(host, '_upload_outputs')
++            host.run_task({'task': {**task, 'project_id': project, 'run_id': claim.run_id,
++                                    'runtime_epoch': claim.runtime_epoch}},
++                          lease_token=claim.lease_id, attempt_id=claim.attempt_id,
++                          fence=claim.fence, keep_attempt=True)
+             attempt = tmp_path / 'host-attempt'
+             assembled_input = json.loads((attempt / 'inputs/resolved-children.json').read_bytes())
+             proposal = json.loads((attempt / 'outputs/authoring-proposal.json').read_bytes())
+@@ -137,8 +145,12 @@
+                                                           if key != 'proposal_digest'})
+             commands = proposal['commands']
+             assert commands[0]['op'] == 'timeline.assembled-target'
+-            assert commands[0]['args'] == {'replace_clips': []}
+-            assert commands[0]['selections'] and commands[0]['reads'] == []
++            assert commands[0]['args'] == {'replace_clips': replace_clips}
++            assert commands[0]['selections']
++            if duplicate_cas:
++                assert any(read['ref'] == 'parent/clip:prior' and read['path'] == []
++                           and read['state']['value'] == prior for read in commands[0]['reads'])
++                assert [call['select'] for call in commands if call['op'] == 'clip.delete'] == replace_clips
+             additions = [call for call in commands if call['op'] == 'clip.add-media']
+             assert [call['args']['row']['id'] for call in additions] == [derive_clip_id(author, i) for i in range(2)]
+             assert [call['args']['row']['asset'] for call in additions] == [derive_asset_key(author, i) for i in range(2)]
+@@ -149,6 +161,8 @@
+             replay = execute(capture['bundle'], commands,
+                              verified_media=[row['verified_media'] for row in capture['children']])
+             assert replay.commands == commands
++            if duplicate_cas:
++                assert replay.bundle['parent']['config']['tracks'] == [track]
+             # Captured inputs stay exact, including reversed completion and duplicate CAS.
+             import copy
+             for change in ('association', 'version', 'order', 'selection', 'duration'):
+@@ -166,12 +180,10 @@
+                 with pytest.raises(TimelineAuthoringError, match='exact ordered verified'):
+                     build_native_proposal(wrong, build_authoring_proposal(wrong))
+             assert service.list_timeline_commits(project, 'main', authorize=lambda: None) == before
+-            if error is not None:
+-                # The initial qualification observes the real native file before
+-                # the legacy pre-settlement hook can be routed around.
+-                raise error
+             assert 'publish_timeline_render' not in calls
+-            assert calls[-1] == 'settle' and 'upload_object' in calls
++            # Small JSON files use the normal inline settlement transport;
++            # larger files use upload_object inside the same host output path.
++            assert calls[0] == '_upload_outputs' and calls[-1] == 'settle'
+             settled = service.task(author)['task']
+             assert settled['status'] == 'completed'
+             output, = [row for row in settled['result']['outputs'] if row['name'] == 'authoring_proposal']
+diff --git a/tests/packs/rendering/test_registered_native_pair.py b/tests/packs/rendering/test_registered_native_pair.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c4386b5ea4cc49dc5b099f0b623109054e6e3f9
+--- /dev/null
++++ b/tests/packs/rendering/test_registered_native_pair.py
+@@ -0,0 +1,27 @@
++"""Run the actual registered host against a private normally generated native pair."""
++from __future__ import annotations
++
++import os
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++
++from tests.helpers.registered_native_pair import prepare_pair
++
++
++@pytest.mark.integration
++def test_registered_native_pair(tmp_path, capsys):
++    agent, runtime = prepare_pair(Path(__file__).resolve().parents[3], tmp_path)
++    result = subprocess.run([sys.executable, '-m', 'pytest', '-q', '-p', 'no:cacheprovider', '-m', 'integration',
++                    'tests/packs/rendering/test_registered_native_assembler.py',
++                    'tests/packs/rendering/test_registered_assembler_admission.py',
++                    'tests/packs/rendering/test_registered_assembler_producer.py'],
++                   cwd=agent, env={**os.environ, 'PYTHONPATH': str(agent),
++                                   'PYTHONDONTWRITEBYTECODE': '1',
++                                   'ASTRID_RUNTIME_CHECKOUT': str(runtime)}, text=True, capture_output=True)
++    with capsys.disabled():
++        print(result.stdout, end='')
++        print(result.stderr, end='')
++    result.check_returncode()
+diff --git a/tests/sdk/test_timeline_assembly.py b/tests/sdk/test_timeline_assembly.py
+index e0a358073899c4fbb1eac9a63bb8cef40ec21259..644c2c875dbf89fe1fd1aac03138feefed08b402
+--- a/tests/sdk/test_timeline_assembly.py
++++ b/tests/sdk/test_timeline_assembly.py
+@@ -182,3 +182,55 @@
+             host._materialize_inputs(spec, tmp_path / 'other-attempt', continuation_id='assembler')
+     finally:
+         host.shutdown()
++
++
++def test_native_protocol_requires_immutable_declaration_and_keeps_stitch_aliases(tmp_path):
++    from astrid.core.contracts.runtime_orchestration import (
++        STITCH_CAPABILITIES,
++        OrchestrationContractError,
++        is_native_assembler_spec,
++    )
++
++    session, _, outputs, _, calls = requester(tmp_path)
++    session.admit_assembly(outputs, replace_clips=['parent/clip:a', 'parent/clip:b'],
++                           assembler_digest=DIGEST, idempotency_key='assembly', rationale='Café 1.0')
++    spec = calls[0]['spec']
++    assert spec['inputs']['resolved_children']['rationale'] == 'Café 1.0'
++    assert is_native_assembler_spec(spec)
++    assert STITCH_CAPABILITIES == {'travel_stitch': 'rendering.render', 'join_final_stitch': 'rendering.render'}
++    assert not is_native_assembler_spec({'capability_id': 'rendering.render'})
++    assert not is_native_assembler_spec({'capability_id': 'rendering.assemble_timeline'})
++    del spec['outputs']['authoring_proposal']
++    with pytest.raises(OrchestrationContractError, match='proposal declaration'):
++        is_native_assembler_spec(spec)
++
++
++def test_native_host_owns_attempt_identity_and_reads_exact_associations(tmp_path):
++    from dataclasses import make_dataclass
++
++    session, _, outputs, associations, calls = requester(tmp_path, duplicate_cas=True)
++    admit(session, outputs)
++    public = calls[0]['spec']
++    # Admitted user JSON cannot supply the host's producer identity.
++    public['inputs']['resolved_children']['producer'] = {'task_id': 'forged'}
++    public['runtime_dependencies']['resolved_children'] = []
++    reads = []
++
++    def read(association_id):
++        reads.append(association_id)
++        row = copy.deepcopy(associations[association_id])
++        # The generated client returns dataclasses, rather than JSON mappings.
++        return make_dataclass('Association', list(row))(**row)
++
++    host = GenericPackHost(pack_roots=[], client=SimpleNamespace(child_output=read))
++    producer = {'task_id': 'assembler', 'attempt_id': 'attempt', 'executor_id': 'host',
++                'fence': 2, 'runtime_epoch': 3}
++    try:
++        values = host._materialize_inputs({'spec': public}, tmp_path / 'attempt',
++                                         continuation_id='assembler', producer_identity=producer)
++        envelope = json.loads(open(values['resolved_children']).read())
++        assert envelope['producer'] == producer
++        assert envelope['associations'] == [associations[row['association_id']] for row in outputs]
++        assert reads == ['assoc-0', 'assoc-1']
++    finally:
++        host.shutdown()
+
+exec
+/bin/bash -lc "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-registered-native-proposal-output identity-pin94114269-integration --files 'tests/packs/rendering/test_registered_native_pair.py'" in /home/user/work/wt/agt-m2-registered-native-proposal-output
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-native-proposal-output-identity-pin94114269-integration-1020122122-30403/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-registered-native-proposal-output-identity-pin94114269-integration-1020122122-30403
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import collections,json,subprocess
+from pathlib import Path
+from unittest.mock import patch
+from scripts.reshape.import_cycles import build_graph
+path='astrid/core/execution/generic_host.py'
+counts=[]
+for revision in ('HEAD','working'):
+    raw=subprocess.check_output(['git','show','HEAD:'+path]) if revision=='HEAD' else Path(path).read_bytes()
+    result=subprocess.run(['/home/user/work/venv-agent/bin/python','-m','ruff','check','--no-cache','--output-format','json','--stdin-filename',path,'-'],input=raw,capture_output=True)
+    counts.append(collections.Counter((i['code'],i['message']) for i in json.loads(result.stdout)))
+print('Host Ruff counts:',sum(counts[0].values()),sum(counts[1].values()),'new:',dict(counts[1]-counts[0]))
+root=Path('astrid/core')
+current=build_graph(root,'astrid.core','top',False)
+paths=[path,'astrid/core/contracts/runtime_orchestration.py']
+before={Path(p).resolve(): subprocess.check_output(['git','show','HEAD:'+p]).decode() for p in paths}
+read=Path.read_text
+def original(path,*args,**kwargs):
+    return before[path.resolve()] if path.resolve() in before else read(path,*args,**kwargs)
+with patch.object(Path,'read_text',original):
+    baseline=build_graph(root,'astrid.core','top',False)
+print('Core import graph equals HEAD:',current==baseline)
+for p in ['tests/packs/rendering/test_registered_assembler_admission.py','tests/packs/rendering/test_registered_assembler_producer.py']:
+    assert Path(p).read_bytes()==subprocess.check_output(['git','show','HEAD:'+p])
+print('Predecessor tests byte-identical')
+PY" in /home/user/work/wt/agt-m2-registered-native-proposal-output
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/core/contracts/runtime_orchestration.py astrid/sdk/timeline/assembly.py astrid/sdk/timeline/sync.py astrid/packs/rendering/actions/assemble_timeline/run.py tests/sdk/test_timeline_assembly.py tests/helpers/registered_native_pair.py tests/packs/rendering/test_registered_native_pair.py tests/packs/rendering/test_registered_native_assembler.py; git diff --check' in /home/user/work/wt/agt-m2-registered-native-proposal-output
+ succeeded in 422ms:
+All checks passed!
+
+ succeeded in 3443ms:
+Host Ruff counts: 102 102 new: {}
+Core import graph equals HEAD: True
+Predecessor tests byte-identical
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-native-proposal-output-identity-pin94114269-integration-1020122122-30403/status; tail -12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-native-proposal-output-identity-pin94114269-integration-1020122122-30403/log.txt; date -u' in /home/user/work/wt/agt-m2-registered-native-proposal-output
+ succeeded in 0ms:
+running
+...Tue Oct 20 12:22:13 UTC 2026
+
+codex
+The host completed settlement in both cases. The test then failed on a transport assumption: these small JSON outputs use the host’s normal inline settlement path, so no separate `upload_object` call occurs. I corrected the assertion to observe the normal output path and settlement; the final stored-byte and association checks are still being rerun.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/notes/report.md')
+s=p.read_text().replace('Latest result to be finalized. Earlier runs:', '**92 passed in 16.60s, exit 0 on final product source.** Earlier runs:')
+s=s.replace('Final artifact qualification, routing result and final test IDs to be filled after evidence.', '''- "'`...-1020121642-23733`: outer 3 passed/1 failed; inner 2 failed/2 passed/2 xfailed. **Intentional pre-routing qualification:** both normal registered executions produced and fully validated real native artifacts, exact command replay and malformed-child refusals; each printed `Qualified real native artifact, exact capture replay and child refusals before legacy hook`, then raised the held hook'"'s "'`authoring proposal is not Runtime-owned`. The duplicate-CAS case replaced an original authored text row containing `[1.0, -0.0, false, null]` and preserved its existing track/opaque fields. The legacy hook had not been routed around at this stage. [Log](../../../../tests/agt-m2-registered-native-proposal-output-identity-pin94114269-integration-1020121642-23733/log.txt).
+- Only after that evidence, native immutable admissions were routed to ordinary file settlement. The old hook remains unchanged for legacy admissions.
+- `...-1020121852-12979`: outer 3 passed/1 failed; inner 2 failed/2 passed/2 xfailed. Both real native host calls completed, but the new test assumed every file causes a separate `upload_object` RPC. The normal host sends small JSON outputs inline in settlement; corrected observation to require the same existing `_upload_outputs` path and final `settle`, retaining the completed task/stored bytes/managed association/history assertions. No product change was needed.
+
+Final central result pending.'"''')
+s=s.replace('Native capture is imported lazily:', 'The native path now continues through the existing host "'`_upload_outputs` and normal settlement, with no worker commit/publication call. Small JSON files use the standard inline settlement transport. The unchanged legacy hook remains available for legacy admissions; this is not its deletion. Native capture is imported lazily:'"')
+p.write_text(s)
+PY" in /home/user/work/wt/agt-m2-registered-native-proposal-output
+ succeeded in 0ms:
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-registered-native-proposal-output-identity-pin94114269-integration-1020122122-30403 0' in /home/user/work/wt/agt-m2-registered-native-proposal-output
+ succeeded in 0ms:
+test agt-m2-registered-native-proposal-output-identity-pin94114269-integration-1020122122-30403: pass exit=0 in 58s — identity-pin94114269-integration on agt-m2-registered-native-proposal-output (agent tree d18ffe461179e0d26878322ac0e0576d4db2d1c0)
+cmd: test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/packs/rendering/test_registered_native_pair.py
+counts: 4 passed, 2 xfailed in 42.50s 4 passed in 54.81s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-native-proposal-output-identity-pin94114269-integration-1020122122-30403/log.txt ---
+.......xx                                                                   [100%]
+4 passed, 2 xfailed in 42.50s
+.                                                                     [100%]
+4 passed in 54.81s
+
+codex
+The final central run passed: the private native suite has 4 passes and the 2 unchanged strict legacy xfails; the outer lane has 4 passes. Both native cases completed normal settlement, with stored bytes and attempt-bound managed associations verified and canonical history unchanged. I’m finishing the report, commit message, and DONE marker.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output')
+p=w/'notes/report.md'
+s=p.read_text()
+s=s.replace('../../../../tests/', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/')
+s=s.replace('Final central result pending.', '''**Final central pass:** "'`agt-m2-registered-native-proposal-output-identity-pin94114269-integration-1020122122-30403`, Agent source tree **`d18ffe461179e0d26878322ac0e0576d4db2d1c0`**, exit 0, service wall time 58s. Actual private suite: **4 passed, 2 xfailed in 42.50s**; outer named lane: **4 passed in 54.81s** (three unchanged M1 identity controls plus the private-pair wrapper). [Final central log](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-native-proposal-output-identity-pin94114269-integration-1020122122-30403/log.txt).
+
+The final native positives cover distinct CAS into an empty original and duplicate CAS replacing an explicit original populated parent. Both admit from the authorized original session, advance the canonical head through an independent peer, run the actual registered action, preserve the old base instead of refreshing it, validate the frozen schema/hash/capture, refuse changed exact associations/selections/durations, and replay the complete commands against the original bundle. They observe the normal host output path then settlement, assert no publication RPC, read back the exact CAS bytes and their outer digest, and verify the durable available managed association belongs to the exact attempt and proposal port. Canonical accepted history stays byte-equal across host execution. Existing original tracks/labels/opaque fields survive the native replacement plan. The two unchanged legacy completion tests retain their exact strict xfails, rather than being rewritten to expect refusal.
+
+**Task status: COMPLETE for the bounded native producer artifact/settlement unit.** No blocker. The retained legacy/public-render/requester limits below are explicit and are not claimed as solved.'"''')
+s += '''\\n## Handoff files and size\\n\\nChanged product files: "'`astrid/core/contracts/runtime_orchestration.py`, `astrid/core/execution/generic_host.py`, `astrid/packs/rendering/actions/assemble_timeline/run.py`, `astrid/packs/rendering/pack.yaml`, `astrid/sdk/timeline/assembly.py`, `astrid/sdk/timeline/sync.py`. Product diff: +129/-25 (net +104) lines. Existing SDK admission test additions: +52 lines. Three new test/helper files contain only private-pair preparation and permanent registered-host assertions; no generated schema/client, output artifact or process note is added to the repository.'"\\n\\nCommit message: "'`workers/agt-m2-registered-native-proposal-output/commit-msg`; whole-task completion marker: `workers/agt-m2-registered-native-proposal-output/DONE`. Harness owns commit creation. No BLOCKED marker. Recommended next step: review this bounded patch with its private-pair evidence, compose the independently reviewed native schema/source cohort through the normal release process, then qualify the original requester'"'s authoritative settled-file read and existing outbox commit/restart before restoring/claiming registered render or retiring the held legacy publication path.\\n'''
+p.write_text(s)
+(w/'commit-msg').write_text('''feat(rendering): settle registered native assembler proposals
+
+Capture ordered verified child outputs against the admitted original timeline
+and emit the frozen native proposal with host-owned attempt identity. Select
+the protocol from immutable admission and settle through the normal host path,
+leaving legacy stitch aliases and publication behavior unchanged.
+
+Freeze requester rationale and reserve JSON storage before execution. Qualify
+normal registered-host artifacts in a private normally generated native pair;
+keep published schemas, pins and requester commit/recovery outside this unit.
+''')
+PY
+git diff --check
+git status --short
+wc -l tests/helpers/registered_native_pair.py tests/packs/rendering/test_registered_native_pair.py tests/packs/rendering/test_registered_native_assembler.py" in /home/user/work/wt/agt-m2-registered-native-proposal-output
+ succeeded in 435ms:
+ M astrid/core/contracts/runtime_orchestration.py
+ M astrid/core/execution/generic_host.py
+ M astrid/packs/rendering/actions/assemble_timeline/run.py
+ M astrid/packs/rendering/pack.yaml
+ M astrid/sdk/timeline/assembly.py
+ M astrid/sdk/timeline/sync.py
+ M tests/sdk/test_timeline_assembly.py
+?? tests/helpers/registered_native_pair.py
+?? tests/packs/rendering/test_registered_native_assembler.py
+?? tests/packs/rendering/test_registered_native_pair.py
+   78 tests/helpers/registered_native_pair.py
+   27 tests/packs/rendering/test_registered_native_pair.py
+  202 tests/packs/rendering/test_registered_native_assembler.py
+  307 total
+
+exec
+/bin/bash -lc "rg -n 'pending|finaliz|blocked|TODO|to be filled' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/notes/report.md; touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/DONE" in /home/user/work/wt/agt-m2-registered-native-proposal-output
+ succeeded in 0ms:
+83:The next requester must read the authoritative managed output association for completed assembler task/attempt and output_port `authoring_proposal`, fetch/hash its object bytes, decode the unchanged frozen proposal, and pass it to the existing reviewed `TimelineSession.queue_proposal`/outbox. Its original admitted revision/publication pair, commands, rationale and producer digest must remain unchanged. Only that authorized requester submits the normal commit; the host must never commit using worker authority. Pair the reviewed native source/full schema and normally generated Runtime client before qualifying acceptance. D13 deletion, pending completion/render, cancellation/races and final retry/restart remain separate until that consumer is qualified.
+
+codex
+Implemented native proposal production and normal host settlement. Stitch aliases remain `rendering.render`; native proposals never commit with worker authority.
+
+Validation:
+
+- Focused pytest: **92 passed** across assembly, sync, stitch, and assembler tests.
+- Central `identity-pin94114269-integration --files tests/packs/rendering/test_registered_native_pair.py`: **4 outer passes**; private suite **4 passed, 2 unchanged strict xfails**.
+- Ruff and `git diff --check` passed. Cycle check retains the verified baseline failure.
+
+The private pair qualifies actual registered-host artifacts and settled associations. Published schemas/pins remain untouched. Requester commit/restart, lost-ACK admission durability, and registered render remain unqualified.
+
+[Detailed report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/notes/report.md)
+
+Commit message and `DONE` written. No blocker.
+tokens used
+256,940
+Implemented native proposal production and normal host settlement. Stitch aliases remain `rendering.render`; native proposals never commit with worker authority.
+
+Validation:
+
+- Focused pytest: **92 passed** across assembly, sync, stitch, and assembler tests.
+- Central `identity-pin94114269-integration --files tests/packs/rendering/test_registered_native_pair.py`: **4 outer passes**; private suite **4 passed, 2 unchanged strict xfails**.
+- Ruff and `git diff --check` passed. Cycle check retains the verified baseline failure.
+
+The private pair qualifies actual registered-host artifacts and settled associations. Published schemas/pins remain untouched. Requester commit/restart, lost-ACK admission durability, and registered render remain unqualified.
+
+[Detailed report with exact commands and results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-native-proposal-output/notes/report.md)
+
+Commit message and `DONE` written. No blocker.

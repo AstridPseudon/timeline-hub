@@ -1,0 +1,400 @@
++    result = sheet.apply(edited, session=session, dry_run=False)
++    assert client.reads == reads  # retry uses original capture without fetching a newer head
++    assert generated.calls[0] == generated.calls[1]
++    assert result["data"]["accepted_revision_id"] == "r1"
++    assert json.loads(path.read_bytes())["pending"] == []
++    session.undo(["pub1"])
++    assert generated.bundles["r2"] == initial_bundle()
++
++
++@pytest.mark.parametrize("mismatch", ["project", "timeline", "revision", "publication", "bundle", "pending"])
++def test_commit_requires_exact_pinned_session_and_never_replaces_pending(connected, mismatch):  # noqa: F811
++    session = open_session(connected)
++    _, generated, path = connected
++    original = initial_bundle()
++    if mismatch == "bundle":
++        original["parent"]["clips"][0]["params"]["opaque"] = True
++    sheet = sheet_for(original)
++    if mismatch in ("project", "timeline"):
++        sheet._bundle[mismatch + "_id"] = "other"
++    if mismatch in ("revision", "publication"):
++        sheet._basis[mismatch + "_id"] = "other"
++    if mismatch == "pending":
++        session.queue_move("parent/clip:b", 8)
++    before = path.read_bytes()
++    with pytest.raises(SheetError):
++        sheet.apply(edit_cell(sheet.text, "parent/clip:a", "5"), session=session, dry_run=False)
++    assert path.read_bytes() == before and generated.calls == []
++
++
++def test_stale_original_guards_conflict_without_refreshing(connected):  # noqa: F811
++    session = open_session(connected)
++    _, generated, path = connected
++    original = initial_bundle()
++    sheet = sheet_for(original)
++    edited = edit_cell(sheet.text, "parent/clip:a", "5")
++    generated.bundles["other"] = execute(original, [capture_move(original, "parent/clip:a", 7)]).bundle
++    generated.head = {"revision_id": "other", "publication_id": "other-pub"}
++    with pytest.raises(CommitConflict):
++        sheet.apply(edited, session=session, dry_run=False)
++    state = json.loads(path.read_bytes())
++    assert state["pending"] == [capture_move(original, "parent/clip:a", 5)]
++    assert state["flight"] is not None and state["conflict"]
++    assert generated.accepted == {}
++
++
++def test_disjoint_head_edit_rebases_without_writing_unchanged_cells(connected):  # noqa: F811
++    session = open_session(connected)
++    _, generated, _ = connected
++    original = initial_bundle()
++    sheet = sheet_for(original)
++    other = capture_move(original, "parent/clip:b", 7)
++    generated.bundles["other"] = execute(original, [other]).bundle
++    generated.head = {"revision_id": "other", "publication_id": "other-pub"}
++    result = sheet.apply(edit_cell(sheet.text, "parent/clip:a", "5"), session=session, dry_run=False)
++    assert result["data"]["status"] == "rebased"
++    assert len(result["data"]["commands"]) == 1
++    assert State(generated.bundles["r1"]).entity("parent/clip:b")["at"] == 7
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sheet_native.py tests/editing_conformance/test_sheet_native_commands.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py' in /home/user/work/wt/agt-m2-sheet-commands
+exec
+/bin/bash -lc "rg -n 'both.*commit|commit-msg|commit_msg' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/templates 2>/dev/null | head -60; git diff --check; git status --short; git diff --stat; /home/user/work/venv-agent/bin/python -m ruff check tests/sdk/test_timeline_sheet_native.py tests/editing_conformance/test_sheet_native_commands.py" in /home/user/work/wt/agt-m2-sheet-commands
+ succeeded in 1314ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch:22:( { cat $O/COMMON.md; echo; echo "YOUR WORKTREE: $WT (branch tl/$N, repo $REPO). Do NOT run git commit/merge/checkout (.git is read-only to you). When done, write a conventional commit message (subject line + body) to $D/commit-msg; the harness commits all your worktree changes when you exit. Leave no build output or temp files in the worktree."; echo; echo "YOUR TASK ($N):"; cat $D/brief.md; } | \
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatch:30:  if [ -n "$(git -C $WT status --porcelain)" ]; then git -C $WT add -A && { [ -s $D/commit-msg ] && git -C $WT commit -q -F $D/commit-msg || git -C $WT commit -q -m "tl/$N: $(head -1 $D/brief.md | cut -c1-70)"; } > $D/commit.log 2>&1; fi
+ M astrid/sdk/timeline_sheet.py
+?? tests/editing_conformance/test_sheet_native_commands.py
+?? tests/sdk/test_timeline_sheet_native.py
+ astrid/sdk/timeline_sheet.py | 148 +++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 142 insertions(+), 6 deletions(-)
+All checks passed!
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python - <<'"'PY'
+import collections,json,subprocess
+path='astrid/sdk/timeline_sheet.py'
+py='/home/user/work/venv-agent/bin/python'
+head=subprocess.check_output(['git','show','HEAD:'+path],text=True)
+def findings(source):
+ result=subprocess.run([py,'-m','ruff','check','--output-format','json','--stdin-filename',path,'-'],input=source,text=True,capture_output=True)
+ return collections.Counter((r['code'],r['message']) for r in json.loads(result.stdout))
+old=findings(head)
+new=findings(open(path).read())
+print('Existing lint findings:',sum(old.values()))
+print('Current lint findings:',sum(new.values()))
+print('New lint findings:',dict(new-old))
+assert not new-old
+PY" in /home/user/work/wt/agt-m2-sheet-commands
+ succeeded in 238ms:
+Existing lint findings: 10
+Current lint findings: 10
+New lint findings: {}
+
+ succeeded in 16550ms:
+........................................................................ [ 22%]
+........................................................................ [ 44%]
+........................................................................ [ 66%]
+........................................................................ [ 89%]
+...................................                                      [100%]
+323 passed in 15.77s
+
+exec
+/bin/bash -lc 'git diff -- astrid/sdk/timeline_sheet.py; /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline_sheet.py --select E9,F63,F7,F82; /home/user/work/venv-agent/bin/python -m ruff check tests/sdk/test_timeline_sheet_native.py tests/editing_conformance/test_sheet_native_commands.py; git diff --check' in /home/user/work/wt/agt-m2-sheet-commands
+ succeeded in 313ms:
+diff --git a/astrid/sdk/timeline_sheet.py b/astrid/sdk/timeline_sheet.py
+index 08621d85..b79d301b 100644
+--- a/astrid/sdk/timeline_sheet.py
++++ b/astrid/sdk/timeline_sheet.py
+@@ -348,8 +348,10 @@ def parse_sheet(text: str) -> dict[str, Any]:
+             continue
+         if raw.startswith(("film ", "WORKING COPY", "PUBLISHED", "next:", "scope ")) or body.startswith((">", "↳")) or raw.startswith("# "):
+             continue
+-        if body in ("lines", "orphans", "sound"):
++        if body in ("lines", "orphans", "sound", "clips", "tracks"):
+             section, cut = body, None
++            if body in ("clips", "tracks"):
++                sheet.setdefault(body, [])
+             if body == "lines":
+                 sheet["has_lines_section"] = True
+             continue
+@@ -370,12 +372,12 @@ def parse_sheet(text: str) -> dict[str, Any]:
+             continue
+         if section == "orphans":
+             continue
+-        if section == "sound" and cut is None:
++        if section in ("sound", "clips", "tracks") and cut is None:
+             try:
+-                sheet.setdefault("sound", []).append(_parse_layer(body, number, fps))
++                sheet.setdefault(section, []).append(_parse_layer(body, number, fps))
+             except SheetError as exc:
+                 raise SheetError(_with_text(str(exc), number, body)) from None
+-            sheet["sound"][-1]["text_line"] = body
++            sheet[section][-1]["text_line"] = body
+             continue
+         if cut is None:
+             raise SheetError(f"line {number}: {body[:60]!r} is outside any cut (a cut starts with a '┃ cNN' line)")
+@@ -404,9 +406,13 @@ def _with_text(message, number, body):
+ 
+ 
+ def _strip_comment(raw):
+-    out, quote = [], False
++    out, quote, escape = [], False, False
+     for i, char in enumerate(raw):
+-        if char == '"':
++        if escape:
++            escape = False
++        elif char == "\\" and quote:
++            escape = True
++        elif char == '"':
+             quote = not quote
+         if char == "#" and not quote and i+1 < len(raw) and raw[i+1] == " " and (i == 0 or raw[i-1] == " "):
+             if raw[:i].strip() == "":
+@@ -593,12 +599,142 @@ def range_cuts(tl: Any, text: str) -> list[str]:
+     return [cut_id for cut_id in order if cut_id in chosen]
+ 
+ 
++class NativeSheet:
++    """Pinned native adapter using the cut sheet's row grammar and alignment.
++
++    The legacy named-cut view has neither scoped row bindings nor a publication
++    pin, and Checkout may flatten/migrate its input. This opt-in projection reads
++    the untouched authoring bundle instead. Retain this object beside edited
++    ``text``; there is no new checkout/persistent format. ``# ref`` comments are
++    hidden editor bindings, never names or row positions. Only clip start gutters
++    and parent track labels are editable; ``label=clear`` removes a label,
++    ``label=""`` sets an empty string. All other cells are read-only.
++
++    ``basis`` is TimelineSession's revision/publication pair for the input bundle.
++    ``apply`` previews locally by default. Its commit seam uses the session's
++    locked outbox and flush, preserving original capture on retries; it never
++    invokes Checkout edits, save, or its journal.
++    """
++
++    def __init__(self, bundle, *, basis):
++        from astrid.sdk.timeline._command_state import State
++        from astrid.sdk.timeline.capture import number, occurrence_start
++        from astrid.sdk.timeline.sync import _pin
++
++        self._basis = _pin(basis)
++        if bundle.get("base_parent", {}).get("revision_id") != self._basis["revision_id"]:
++            raise SheetError("sheet basis does not match the bundle revision")
++        self._bundle = copy.deepcopy(bundle)
++        state = State(self._bundle)
++        header = json.dumps([bundle["project_id"], bundle["timeline_id"], self._basis], sort_keys=True)
++        out = [f"film {header}", "clips"]
++        rows, refs = [], []
++        owners = [("parent", 0)] + [
++            ("occurrence:" + row["occurrence_id"], occurrence_start(row))
++            for row in bundle["placements"]
++        ]
++        for owner, offset in owners:
++            for clip in state.collection(owner, "clip"):
++                start = (number(clip["at"], "clip start") if "at" in clip else
++                         number(clip.get("at_ms", 0), "clip start") / 1000) + offset
++                rows.append([repr(start), _value(clip.get("track") or "visual"), _value(clip["id"]),
++                             _value(_short(clip.get("clipType") or clip.get("clip_type") or "media")),
++                             _value(clip["asset"]) if "asset" in clip else "", "", ""])
++                refs.append(owner + "/clip:" + clip["id"])
++        out.extend(line + " # ref " + json.dumps(ref) for line, ref in zip(_align(rows), refs))
++        out.append("tracks")
++        rows, refs = [], []
++        for track in state.collection("parent", "track"):
++            label = json.dumps(track["label"], ensure_ascii=False) if "label" in track else "clear"
++            rows.append(["", _value(track["id"]), "label", "track", "", "label=" + label, ""])
++            refs.append("parent/track:" + track["id"])
++        out.extend(line + " # ref " + json.dumps(ref) for line, ref in zip(_align(rows), refs))
++        self.text = "\n".join(out) + "\n"
++        self._rows, self._frame = self._read(self.text)
++
++    @staticmethod
++    def _read(text):
++        parsed = parse_sheet(text)
++        lines = text.splitlines()
++        rows, used = {}, set()
++        for section in ("clips", "tracks"):
++            for row in parsed.get(section, []):
++                raw = lines[row["line"] - 1]
++                body, separator, binding = raw.rpartition(" # ref ")
++                try:
++                    ref = json.loads(binding) if separator else None
++                except ValueError:
++                    raise SheetError("invalid sheet row binding") from None
++                if not isinstance(ref, str) or ref in rows:
++                    raise SheetError("missing or duplicate sheet row binding")
++                rows[ref] = (section, _tokens(body.strip()), row)
++                used.add(row["line"] - 1)
++        return rows, [line for i, line in enumerate(lines) if i not in used]
++
++    def preview(self, text):
++        """Return native commands, records and preview bundle without writing anything."""
++        from astrid.sdk.timeline._command_state import equal
++        from astrid.sdk.timeline._scalar_commands import capture_track_set
++        from astrid.sdk.timeline.capture import capture_move
++        from astrid.sdk.timeline.commands import Plan, execute
++
++        rows, frame = self._read(text)
++        if frame != self._frame or rows.keys() != self._rows.keys():
++            raise SheetError("sheet structure/basis is read-only; additions and removals are unsupported")
++        plan = Plan(copy.deepcopy(self._bundle), [])
++        commands = []
++        for ref, (section, before, original) in self._rows.items():
++            current_section, after, row = rows[ref]
++            if current_section != section:
++                raise SheetError("sheet row ownership is read-only")
++            if before == after:
++                continue
++            if section == "clips" and before[1:] == after[1:] and row["at"] is not None:
++                if row["at"] == original["at"]:
++                    continue
++                command = capture_move(plan.bundle, ref, _read_value(after[0], row["line"]))
++            elif section == "tracks" and before[:-1] == after[:-1] and after[-1].startswith("label="):
++                clear = after[-1] == "label=clear"
++                if clear == (before[-1] == "label=clear") and equal(row["params"], original["params"]):
++                    continue
++                command = capture_track_set(plan.bundle, ref, values={} if clear else row["params"],
++                                            clear=["label"] if clear else [])
++            else:
++                raise SheetError(f"unsupported cell edit at {ref}; only start and parent track label are editable")
++            commands.append(command)
++            plan = execute(self._bundle, commands)
++        return plan
++
++    def apply(self, text, *, session=None, dry_run=True, idempotency_key=None):
++        """Preview only, or queue the entire captured batch atomically and flush it."""
++        plan = self.preview(text)
++        if dry_run or not plan.commands:
++            return plan
++        if session is None:
++            raise SheetError("sheet commits require a TimelineSession")
++        with session.outbox.locked():
++            state = session._state()
++            if (session.project_id != self._bundle["project_id"]
++                    or session.timeline_id != self._bundle["timeline_id"] or state["base"] != self._basis):
++                raise SheetError("sheet and session must share the original project, timeline and basis")
++            if state["pending"] != plan.commands:
++                if state["pending"] or state["flight"] is not None:
++                    raise SheetError("flush original pending intent before applying another sheet")
++                if session._bundle(state) != self._bundle:
++                    raise SheetError("sheet bundle differs from its pinned session basis")
++                state["pending"] = plan.commands
++                session.outbox.write(state)
++        return session.flush(idempotency_key=idempotency_key, via="sheet")
++
++
+ def apply_sheet(tl: Checkout, text: str) -> list[str]:
+     """Apply a full sheet or fragment atomically and return the checkout's change summary.
+ 
+     A sheet exported from an earlier version merges three-way (what the sheet changed since it was exported,
+     onto what is here now): an edit made after the export is never reverted."""
+     parsed = parse_sheet(text)
++    if "clips" in parsed or "tracks" in parsed:
++        raise SheetError("native sheet rows require NativeSheet and TimelineSession")
+     before = Checkout(copy.deepcopy(tl.bundle))
+     if parsed.get("version") and parsed["version"] != sheet_version(tl):
+         base = find_version(tl, parsed["version"])
+All checks passed!
+All checks passed!
+
+codex
+The final targeted run passed all 323 tests. It also covers a parser fix for labels containing an escaped quote before `#`, which could otherwise truncate the text. The lint comparison found no new findings. I’ll now write the held handoff report and both commit-message files; no full suite, socket test, install, commit, or merge was run.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-commands')
+notes = root / 'notes'
+notes.mkdir(exist_ok=True)
+message = '''feat(timeline): capture bounded sheet edits as native commands
+
+Add a pinned cutsheet adapter for parent and occurrence clip starts and
+parent track labels, reusing the existing parser and row alignment.
+Preview without writes and commit captured batches through the session
+outbox, retaining original guards and retry identity.
+
+Preserve legacy read output, explicitly refuse unsupported cells and
+legacy application of native rows, and handle escaped quotes in comments.
+Prove portable captures, CLI/Python/sheet move parity, undo/redo, stale
+guards, and lost-ack restart retry with offline targeted tests.
+'''
+(root / 'commit-msg').write_text(message)
+(notes / 'commit-msg').write_text(message)
+report = '''# agt-m2-sheet-commands — HELD
+
+Implemented the first bounded sheet command adapter on base "'`51948d40`. No commits, merges, branch changes, pushes, dependency installs, Runtime/App changes, or integration-worktree writes. **Hold for the orchestrator'"'s M1 exit record; this is not an M2 merge request.**
+
+- Product changes: "'`astrid/sdk/timeline_sheet.py` only, 142 inserted / 6 removed lines. Added direct tests in `tests/sdk/test_timeline_sheet_native.py` and conformance cases beside the existing runner in `tests/editing_conformance/test_sheet_native_commands.py`.
+- `NativeSheet(bundle, basis=revision_publication_pair)` retains the untouched original bundle. Its `.text` uses the existing alignment and layer grammar with opt-in `clips`/`tracks` sections and scoped-ID `# ref` bindings. Existing `render_sheet` output is unchanged; the existing tiny-sheet golden still passes.
+- `.preview(edited_text)` / `.apply(edited_text)` return a native Plan (commands, records, preview bundle), with no persistence or transport. Supported edits: existing parent/occurrence clip absolute timeline start, parent track label. `label=clear` removes the field; `label=""` sets an empty string; `label="clear"` stores that literal string.
+- `.apply(edited_text, session=session, dry_run=False)` validates project/timeline, original revision/publication, and the pinned session bundle; atomically queues the captured batch into the session outbox and uses `session.flush(via="sheet")`. Identical pending batches retry original capture; other pending intent refuses visibly. No Checkout construction, save/journal, whole-config fallback, compiler/registry/schema changes, or guard recapture from a new head.
+- Native capture helpers remain authoritative. Unchanged/reformatted equal-value cells emit no commands; additions, removals, changed bindings, and unsupported cell edits refuse. Occurrence isolation, opaque data and metadata preservation, and exact undo/redo are checked against existing portable fixtures.
+- Fixed the shared comment scanner'"'s handling of escaped quotes: a label such as "'`say " # keep` must not be truncated. Added JSON string cases including backslashes, Unicode and newlines.
+
+**Evidence (offline, targeted only)**
+
+Final command, run from `/home/user/work/wt/agt-m2-sheet-commands`:
+
+```sh
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sheet.py tests/sdk/test_timeline_sheet_native.py tests/editing_conformance/test_sheet_native_commands.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_sync.py tests/packs/timeline/test_cli_commit_move.py
+```
+
+Result: **323 passed in 15.77s**, including 49 new cases. Exact serialized portable command goldens cover parent move, occurrence move, shared-source occurrence isolation and parent label set; CLI/Python/sheet move capture agrees. Real TimelineSession/outbox plus the existing generated transport fake proves atomic batch acceptance, lost acknowledgement + restart + exact request/key retry, accepted undo, stale original-guard conflict, and disjoint server rebase. No tests were skipped, disabled, weakened or converted to expected failures.
+
+```sh
+/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline_sheet.py --select E9,F63,F7,F82
+/home/user/work/venv-agent/bin/python -m ruff check tests/sdk/test_timeline_sheet_native.py tests/editing_conformance/test_sheet_native_commands.py
+git diff --check
+```
+
+All passed. A full-rule Ruff comparison of this product file against `git show HEAD:astrid/sdk/timeline_sheet.py` also found **10 existing findings before / 10 after, zero new findings**. No full suite, `make check`, browser, socket, live Runtime, or central-test request was run, per task scope. Real Runtime durability is not newly claimed by this offline slice.
+
+**Adapter decision and exact seam**
+
+Inspection found no existing scoped native row/revision-publication binding in `render_sheet`/`parse_sheet`; native recipe fixtures can have no named cuts at all. Legacy `Checkout.__init__` additionally migrates/conditionally flattens its input. Therefore the explicitly permitted minimal adapter is opt-in, reads native State collections, and reuses `_align`, `parse_sheet`, `_parse_layer`, `_tokens` and `_read_value`. Identity comes from the scoped binding comment; parser line numbers only associate a parsed row with its own comment. Names and row order never resolve commands. The class docstring documents this seam and the requirement to retain/reconstruct the pinned adapter beside edited text; no new checkout/JSON persistence format was added.
+
+Because this worker cannot change `sync.py`, batch queueing uses the existing private `session._state()`, `session._bundle(state)`, locked `session.outbox`, and public `session.flush()`. The CLI/session owner should adopt or expose this batch seam when wiring the product flow. Pending commands differing from this batch, a changed session basis, or a bundle mismatch refuse without replacing the outbox. A retry with additional newer pending intent must use the session'"'s existing flush path first.
+
+**Old writer consumers / deletion prerequisite**
+
+- "'`astrid/packs/timeline/cli.py::_cmd_apply` still calls `apply_sheet`, then `Checkout.save`. This is the remaining production caller found by repository search; it belongs to the separate CLI worker. `NativeSheet` is not wired into that CLI in this patch. Legacy application of native sections now refuses, including empty sections.
+- `astrid/packs/timeline/cli_show.py::print_sheet` and `astrid/sdk/timeline_address.py::describe_target` retain the read-side `render_sheet` consumers. They must continue to preserve their output.
+- `tests/editing_conformance/runner.py` still drives the old sheet route via CLI; its existing scenario corpus remains unchanged. New bounded native cases sit beside it and include the existing real CLI move parser/dispatch with the shared offline fake.
+- Delete the old sheet mutation helpers (`apply_sheet`, three-way merge and `_apply_parsed`/sound/cut writers) only after the CLI emits native commands, all distinct legacy sheet behavior has native recipe coverage or an explicitly held restoration test, and the legacy scenario corpus is migrated. This bounded slice does not claim full editable-sheet feature coverage.
+
+**Next steps / blocks**
+
+No implementation blocker. Keep HELD until M1 is recorded. CLI/session owner can wire the pinned adapter and batch seam, then expand supported cells through registered recipes. Full-suite and live Runtime acceptance remain for integration/central testing. No evidence was found requiring a settled plan decision to change.
+
+Commit message written identically to both absolute paths:
+
+- `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-commands/commit-msg`
+- `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-commands/notes/commit-msg`
+'"'''
+(notes / 'report.md').write_text(report)
+print(notes / 'report.md')
+print('Both commit messages written.')
+PY
+git status --short" in /home/user/work/wt/agt-m2-sheet-commands
+ succeeded in 278ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-commands/notes/report.md
+Both commit messages written.
+ M astrid/sdk/timeline_sheet.py
+?? tests/editing_conformance/test_sheet_native_commands.py
+?? tests/sdk/test_timeline_sheet_native.py
+
+codex
+Implemented the bounded `NativeSheet` adapter: scoped-ID bindings, pinned basis, native move/label captures, local preview, and session/outbox commits. Existing read output is preserved; unsupported edits refuse explicitly.
+
+Verification: **323 targeted tests passed**. Lint checks and `git diff --check` passed; no new lint findings. No full/socket suite was run.
+
+[Report with exact commands, API decisions, limitations, and remaining writer consumers](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-commands/notes/report.md). Both commit-message files are written.
+
+No implementation blocker. **HELD pending M1 record**; CLI wiring remains with its owner.
+tokens used
+142,774
+Implemented the bounded `NativeSheet` adapter: scoped-ID bindings, pinned basis, native move/label captures, local preview, and session/outbox commits. Existing read output is preserved; unsupported edits refuse explicitly.
+
+Verification: **323 targeted tests passed**. Lint checks and `git diff --check` passed; no new lint findings. No full/socket suite was run.
+
+[Report with exact commands, API decisions, limitations, and remaining writer consumers](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-commands/notes/report.md). Both commit-message files are written.
+
+No implementation blocker. **HELD pending M1 record**; CLI wiring remains with its owner.

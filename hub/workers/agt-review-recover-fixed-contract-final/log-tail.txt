@@ -1,0 +1,400 @@
+--- a/tests/sdk/test_timeline_sync.py
++++ b/tests/sdk/test_timeline_sync.py
+@@ -70,9 +70,17 @@ class Generated:
+             for publication in body["commands"][0]["args"]["publications"]:
+                 inverse_records.extend(self.records[publication])
+         try:
+-            plan = execute(self.bundles[body["base_revision_id"]], body["commands"], inverse_records=inverse_records)
+-            if self.head["revision_id"] != body["base_revision_id"]:
+-                plan = replay(plan, self.bundles[self.head["revision_id"]])
++            if body["commands"][0]["op"] == "timeline.restore":
++                target = body["commands"][0]["args"]["revision_id"]
++                plan = SimpleNamespace(
++                    bundle=copy.deepcopy(self.bundles[target]),
++                    commands=copy.deepcopy(body["commands"]),
++                    records=[],
++                )
++            else:
++                plan = execute(self.bundles[body["base_revision_id"]], body["commands"], inverse_records=inverse_records)
++                if self.head["revision_id"] != body["base_revision_id"]:
++                    plan = replay(plan, self.bundles[self.head["revision_id"]])
+         except TimelineEditError as exc:
+             raise ApiError(409, "conflict", str(exc), details={"status": "conflict", "reason": "guard_changed"}) from exc
+         ordinal = len(self.accepted) + 1
+@@ -192,6 +200,38 @@ def test_capture_and_same_value_write_are_sent_even_without_a_diff(connected):
+     assert client.reads == ["r0"]
+ 
+ 
++def test_restore_sends_exact_revision_and_digest_through_native_commit(connected):
++    session = open_session(connected)
++    _, generated, path = connected
++    digest = initial_bundle()["base_parent"]["content_digest"]
++    result = session.restore("r0", digest, idempotency_key="restore-r0")
++    body = json.loads(generated.calls[0][0])
++    assert body["commands"] == [{
++        "schema_version": 1,
++        "op": "timeline.restore",
++        "version": "1",
++        "select": None,
++        "args": {"revision_id": "r0", "content_digest": digest},
++    }]
++    assert result["data"]["status"] == "accepted"
++    assert json.loads(path.read_bytes())["pending"] == []
++    assert generated.head["revision_id"] == "r1"
++
++
++def test_restore_lost_ack_retries_exact_request_after_reload(connected):
++    session = open_session(connected)
++    _, generated, path = connected
++    digest = initial_bundle()["base_parent"]["content_digest"]
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        session.restore("r0", digest, idempotency_key="restore-r0")
++    flight = json.loads(path.read_bytes())["flight"]
++    open_session(connected).flush()
++    assert generated.calls[0] == generated.calls[1]
++    assert generated.calls[1] == (flight["body"].encode(), "restore-r0")
++    assert json.loads(path.read_bytes())["pending"] == []
++
++
+ @pytest.mark.parametrize("target", ["parent/clip:a", "parent/clip:b"])
+ def test_lost_ack_reload_retries_exact_request_before_sending_suffix(connected, target):
+     session = open_session(connected)
+diff --git a/tests/v10/test_domain_cli_projects_timelines.py b/tests/v10/test_domain_cli_projects_timelines.py
+index 24c35af3..212e104b 100644
+--- a/tests/v10/test_domain_cli_projects_timelines.py
++++ b/tests/v10/test_domain_cli_projects_timelines.py
+@@ -238,7 +238,13 @@ class _RecordingTimelines:
+         )
+         key = idempotency_key or "generated-key"
+         return DomainResult.success(
+-            {"timeline_id": "T-1", "status": "active", "changed": True},
++            {
++                "slug": ref,
++                "timeline_id": "T-1",
++                "archived": False,
++                "head_revision_id": "head-1",
++                "document_digest": "sha256:document",
++            },
+             receipt=_receipt("timeline.recover", key),
+             idempotency_key=key,
+         )
+@@ -1758,7 +1764,11 @@ def test_timelines_list_and_recover_are_one_sdk_call(capsys) -> None:
+             {"project": "demo", "ref": "main", "idempotency_key": None},
+         )
+     ]
+-    assert json.loads(capsys.readouterr().out)["data"]["status"] == "active"
++    envelope = json.loads(capsys.readouterr().out)
++    assert envelope["ok"] is True
++    assert envelope["data"]["archived"] is False
++    assert envelope["data"]["head_revision_id"] == "head-1"
++    assert envelope["data"]["document_digest"] == "sha256:document"
+ 
+ 
+ def test_timelines_history_is_one_sdk_call(capsys) -> None:
+
+codex
+Static review of the correction confirms the prior defect is removed: `TimelineSession._flush` now propagates the original `WorkspaceClientError` unchanged, while WC7’s `prepare`/`explicit_outbox` changes remain intact. The current delta also keeps catalog recovery on canonical catalog identity/version, preserves exact `timeline.restore` pins and outbox retry identity, and retains refusal of fresh historical flat-version requests. I’m submitting the single exact native-script gate now.
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-review-recover-fixed-contract-final native-script-current-integration --files "tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore") && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-review-recover-fixed-contract-final
+codex
+The requested gate is queued/running through the central test service with the exact node string and existing `native-script-current-integration` environment. No product or suite configuration changes were made.
+exec
+/bin/bash -lc 'ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210 2>/dev/null || true
+if test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210/log.txt; then tail -30 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210/log.txt; fi' in /home/user/work/wt/agt-review-recover-fixed-contract-final
+ succeeded in 0ms:
+total 20
+-rw-r--r-- 1 root root 314 Oct 20 20:26 ext
+-rw-r--r-- 1 root root 280 Oct 20 20:26 request
+-rw-r--r-- 1 root root 151 Oct 20 20:26 snap
+-rw-r--r-- 1 root root   7 Oct 20 20:26 status
+-rw-r--r-- 1 root root  38 Oct 20 20:26 why
+
+exec
+/bin/bash -lc "printf 'status='; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210/status
+printf 'why='; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210/why
+printf '%s\\n' '--- request ---'; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210/request
+printf '%s\\n' '--- snap ---'; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210/snap" in /home/user/work/wt/agt-review-recover-fixed-contract-final
+ succeeded in 0ms:
+status=queued
+why=2 targeted/named runs already running
+--- request ---
+target=agt-review-recover-fixed-contract-final
+repo=agent
+suite=native-script-current-integration
+files=tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore
+nocache=0
+requested=2026-10-20T20:26:21Z
+--- snap ---
+tree=36ae05830cb2078183075906f8da17f507bb87c4
+key=da2bbd4c99cc3366d9dd482b5d6b3aa9
+worktree=/home/user/work/wt/agt-review-recover-fixed-contract-final
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- test queue entries for this run ---'
+find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue -maxdepth 2 -type f -o -type l | rg 'agt-review-recover-fixed-contract-final|native-script-current-integration' | tail -40
+printf '%s\\n' '--- current identity/status ---'
+git rev-parse HEAD
+git rev-parse HEAD"'^{tree}
+git status --short' in /home/user/work/wt/agt-review-recover-fixed-contract-final
+ succeeded in 278ms:
+--- test queue entries for this run ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/pending/test-agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/pending/.test-agt-m2-wc7-owned-http-gate-native-script-current-integration-1020195754-27911.why
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/pending/.test-agt-review-native-sheet-delete-live-native-script-current-integration-1020145219-8390.why
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/pending/.test-agt-m2-wc6-current014-consumer-proof-native-script-current-integration-1020155053-1270.why
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/pending/.test-agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210.why
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/pending/.test-agt-m2-ag01-reason-preserving-final-cut-native-script-current-integration-1020182314-19789.why
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/pending/.test-agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020145633-1598.why
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/pending/.agt-review-recover-fixed-contract-final.why
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-current014-consumer-proof-native-script-current-integration-1020155053-1270
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-narration-command-slice-native-script-current-integration-1020162059-15242
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020150046-28371
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-tests-full10744-sprite-setup-native-script-current-integration-1020174604-32416
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-reload-inverse-repair-native-script-current-integration-1020145039-19170
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc7-owned-http-gate-native-script-current-integration-1020195754-27911
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020145849-19500
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-current014-consumer-proof-native-script-current-integration-1020154938-2006
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-review-native-sheet-delete-live-native-script-current-integration-1020145219-8390
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-narration-command-slice-native-script-current-integration-1020162005-22655
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/agt-review-recover-fixed-contract-final
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020145633-1598
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020145523-25723
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-narration-command-slice-native-script-current-integration-1020161924-32061
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-current014-consumer-proof-native-script-current-integration-1020155019-5943
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-ag01-reason-preserving-final-cut-native-script-current-integration-1020182314-19789
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020145948-8482
+--- current identity/status ---
+fed685bfe50150e9b8cf6ec38a11c155b127090d
+36ae05830cb2078183075906f8da17f507bb87c4
+
+exec
+/bin/bash -lc 'for d in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/*native-script-current-integration*; do if test "$(cat "$d/status" 2>/dev/null)" = running || test "$(cat "$d/status" 2>/dev/null)" = queued; then echo "$(basename "$d") $(cat "$d/status") $(cat "$d/why" 2>/dev/null)"; fi; done | tail -20' in /home/user/work/wt/agt-review-recover-fixed-contract-final
+ succeeded in 85ms:
+agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210 running 
+
+ succeeded in 60049ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210
+test agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210: pass exit=0 in 13s — native-script-current-integration on agt-review-recover-fixed-contract-final (agent tree 36ae05830cb2078183075906f8da17f507bb87c4)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore
+counts: 1 passed in 7.12s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210/log.txt ---
+.                                                                        [100%]
+1 passed in 7.12s
+
+codex
+The authorized HTTP gate passed: exact current tree `36ae05830cb2078183075906f8da17f507bb87c4` (commit `fed685bfe50150e9b8cf6ec38a11c155b127090d`), `1 passed in 7.12s`. I’m doing the final artifact/status checks and will record APPROVE only for this reviewed source; the orchestrator’s merge/qualification row remains subject to its stated consumer merge condition.
+exec
+/bin/bash -lc "printf '%s\\n' '--- neighboring worker artifacts ---'
+for w in agt-review-wc6-current014-final agt-review-recover-retirement-mapping agt-m2-recover-real-catalog-gate agt-review-native-sheet-delete-live; do d=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/"'$w; echo "### $w"; find "$d" -maxdepth 1 -type f -printf '"'%f\\n' 2>/dev/null | sort; done
+printf '%s\\n' '--- current task worker dir ---'
+find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final -maxdepth 1 -type f -printf '%f\\n' 2>/dev/null | sort
+printf '%s\\n' '--- final diff/status ---'
+git status --short --branch
+git diff --check 53af5383..HEAD
+git diff --name-only 53af5383..HEAD" in /home/user/work/wt/agt-review-recover-fixed-contract-final
+ succeeded in 317ms:
+--- neighboring worker artifacts ---
+### agt-review-wc6-current014-final
+DONE
+brief.md
+commit-msg
+commit-msg.txt
+ended
+exit
+log.txt
+meta
+recycled
+report.md
+### agt-review-recover-retirement-mapping
+DONE
+brief.md
+commit-msg
+commit-msg.txt
+ended
+exit
+log.txt
+meta
+recycled
+report.md
+tmpdir
+### agt-m2-recover-real-catalog-gate
+BLOCKED
+brief.md
+commit-msg
+commit.log
+ended
+exit
+log.txt
+meta
+recycled
+report.md
+tmpdir
+### agt-review-native-sheet-delete-live
+DONE
+brief.md
+commit-msg
+ended
+exit
+log.txt
+meta
+recycled
+report.md
+--- current task worker dir ---
+brief.md
+log.txt
+meta
+running
+tmpdir
+--- final diff/status ---
+## tl/agt-review-recover-fixed-contract-final
+astrid/sdk/remote.py
+astrid/sdk/timeline/sync.py
+tests/sdk/test_native_timeline_facades.py
+tests/sdk/test_timeline_checkout_history_runtime.py
+tests/sdk/test_timeline_sync.py
+tests/v10/test_domain_cli_projects_timelines.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d5f7ee15a438e10cc4438ef52466414bd576625e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/commit-msg
+@@ -0,0 +1,3 @@
++chore(timeline): approve recover contract review
++
++Record the final AG-RECOVER review and its single authorized native HTTP gate.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..d5f7ee15a438e10cc4438ef52466414bd576625e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/commit-msg.txt
+@@ -0,0 +1,3 @@
++chore(timeline): approve recover contract review
++
++Record the final AG-RECOVER review and its single authorized native HTTP gate.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f63ededd99106220e380c1f4879d42ccda4ba05e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/report.md
+@@ -0,0 +1,27 @@
++# AG-RECOVER final review
++
++Decision: **APPROVE** the reviewed source. The orchestrator’s qualification row remains **HELD until the qualified consumer is merged**, as directed.
++
++Source:
++
++- Commit: `fed685bfe50150e9b8cf6ec38a11c155b127090d`
++- Commit tree: `36ae05830cb2078183075906f8da17f507bb87c4`
++- Base: `53af5383`
++- Worktree: clean
++
++Scope was limited to the correction/current-port delta against the prior `7d9860fc` review. The prior blocking restore transport translation is removed: `TimelineSession._flush` now preserves the original `WorkspaceClientError` and exact flight identity. The review also confirms the exact native `timeline.restore` revision/digest pins, durable outbox retry, canonical catalog identity/version forwarding, explicit historical-flat-route refusal with `timeline.restore` guidance, and preservation of WC7 `_flush` `prepare`/`explicit_outbox` behavior. No silent old-flat writer or history exemption was introduced.
++
++Gate evidence:
++
++```text
++request-test agt-review-recover-fixed-contract-final native-script-current-integration \
++  --files "tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore"
++
++PASS — 1 passed in 7.12s
++```
++
++The gate used the existing native-script-current-integration environment, cleared default addopts, and ran the exact requested node. `git diff --check 53af5383..HEAD` also passed. No full suite or additional HTTP gate was run; no product files or test expectations were changed by this review.
++
++Blocked: none for this review.
++
++Next step: manager merges the qualified consumer, then clears the held row.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- artifacts ---'
+for f in report.md commit-msg commit-msg.txt DONE; do p=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/"'$f; test -e "$p" && { echo "### $f"; sed -n '"'1,220p' \""'$p"; }; done
+printf '"'%s\\n' '--- final source status ---'
+git status --porcelain=v1
+printf 'commit='; git rev-parse HEAD
+printf 'tree='; git rev-parse HEAD"'^{tree}
+printf '"'%s\\n' '--- gate result summary ---'
+sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210/summary" in /home/user/work/wt/agt-review-recover-fixed-contract-final
+ succeeded in 240ms:
+--- artifacts ---
+### report.md
+# AG-RECOVER final review
+
+Decision: **APPROVE** the reviewed source. The orchestrator’s qualification row remains **HELD until the qualified consumer is merged**, as directed.
+
+Source:
+
+- Commit: `fed685bfe50150e9b8cf6ec38a11c155b127090d`
+- Commit tree: `36ae05830cb2078183075906f8da17f507bb87c4`
+- Base: `53af5383`
+- Worktree: clean
+
+Scope was limited to the correction/current-port delta against the prior `7d9860fc` review. The prior blocking restore transport translation is removed: `TimelineSession._flush` now preserves the original `WorkspaceClientError` and exact flight identity. The review also confirms the exact native `timeline.restore` revision/digest pins, durable outbox retry, canonical catalog identity/version forwarding, explicit historical-flat-route refusal with `timeline.restore` guidance, and preservation of WC7 `_flush` `prepare`/`explicit_outbox` behavior. No silent old-flat writer or history exemption was introduced.
+
+Gate evidence:
+
+```text
+request-test agt-review-recover-fixed-contract-final native-script-current-integration \
+  --files "tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore"
+
+PASS — 1 passed in 7.12s
+```
+
+The gate used the existing native-script-current-integration environment, cleared default addopts, and ran the exact requested node. `git diff --check 53af5383..HEAD` also passed. No full suite or additional HTTP gate was run; no product files or test expectations were changed by this review.
+
+Blocked: none for this review.
+
+Next step: manager merges the qualified consumer, then clears the held row.
+### commit-msg
+chore(timeline): approve recover contract review
+
+Record the final AG-RECOVER review and its single authorized native HTTP gate.
+### commit-msg.txt
+chore(timeline): approve recover contract review
+
+Record the final AG-RECOVER review and its single authorized native HTTP gate.
+### DONE
+--- final source status ---
+commit=fed685bfe50150e9b8cf6ec38a11c155b127090d
+tree=36ae05830cb2078183075906f8da17f507bb87c4
+--- gate result summary ---
+test agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210: pass exit=0 in 13s — native-script-current-integration on agt-review-recover-fixed-contract-final (agent tree 36ae05830cb2078183075906f8da17f507bb87c4)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore
+counts: 1 passed in 7.12s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-review-recover-fixed-contract-final-native-script-current-integration-1020202621-25210/log.txt ---
+.                                                                        [100%]
+1 passed in 7.12s
+
+codex
+## AG-RECOVER review: APPROVE
+
+- Source: `fed685bfe50150e9b8cf6ec38a11c155b127090d`
+- Tree: `36ae05830cb2078183075906f8da17f507bb87c4`
+- Authorized HTTP gate: **1 passed in 7.12s**
+- `git diff --check 53af5383..HEAD`: passed
+- No product changes, assertion weakening, full suite, or additional HTTP gate.
+- Qualification row remains **HELD until consumer merge**.
+
+Artifacts written: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/report.md), `commit-msg.txt`, and `DONE`.
+tokens used
+117,618
+## AG-RECOVER review: APPROVE
+
+- Source: `fed685bfe50150e9b8cf6ec38a11c155b127090d`
+- Tree: `36ae05830cb2078183075906f8da17f507bb87c4`
+- Authorized HTTP gate: **1 passed in 7.12s**
+- `git diff --check 53af5383..HEAD`: passed
+- No product changes, assertion weakening, full suite, or additional HTTP gate.
+- Qualification row remains **HELD until consumer merge**.
+
+Artifacts written: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-recover-fixed-contract-final/report.md), `commit-msg.txt`, and `DONE`.

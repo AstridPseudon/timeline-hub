@@ -1,0 +1,400 @@
+.......................................................F................ [ 60%]
+................................................                         [100%]
+=================================== FAILURES ===================================
+_________ test_materialization_alias_is_exact_for_arbitrary_source_ids _________
+
+    def test_materialization_alias_is_exact_for_arbitrary_source_ids():
+        from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+    
+        parent, shots, internals = _closure()
+        source = 'shot-placement-' + 'a' * 64
+        shots[0]['shot_id'] = source
+        for row in parent['payload']['occurrences']:
+            row['shot_id'] = source
+        parent['content_digest'] = _digest(parent['payload'])
+        original = open_authoring_bundle(parent, shot_revisions=shots,
+                                         internal_timeline_revisions=internals)
+        ref = 'occurrence:occ-1/clip:picture-1'
+>       command = capture_move(original, ref, 1)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/editing_conformance/test_recipe_m1_commands.py:540: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/capture.py:243: in capture_move
+    return _capture(bundle, {'schema_version': 1, 'op': 'clip.move', 'version': '1',
+astrid/sdk/timeline/capture.py:231: in _capture
+    return execute(bundle, [command]).commands[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commands.py:137: in execute
+    operation.handler(ctx, command)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+ctx = <astrid.sdk.timeline._recording.Recording object at 0x7f265b0306b0>
+command = {'args': {'on': 1}, 'intent': {'anchor': 'fixed', 'ownership': 'occurrence', 'position': 'absolute', 'ripple': 'none'}, 'op': 'clip.move', 'schema_version': 1, ...}
+
+    def move(ctx, command):
+        ref = command['select']
+        if not isinstance(ref, str) or '/clip:' not in ref or '::' in ref:
+            raise CommandError("clip.move requires a scoped clip identity")
+        owner = ref.rsplit('/', 1)[0]
+        if owner != 'parent' and not owner.startswith('occurrence:'):
+            raise CommandError("clip.move v1 requires parent or occurrence ownership")
+        if ctx.select('move.target', owner, [ref]) != [ref]:
+            raise CommandError("move target disappeared", kind='identity_conflict', ref=ref)
+        for field in CLIP_FIELDS:
+            ctx.read(ref, [field])
+        clip = ctx.state.entity(ref)
+        for key in ('time_map', 'timeMap', 'clips', 'children', 'from_ms', 'to_ms'):
+            if clip.get(key) is not None:
+                raise CommandError(f"clip.move v1 does not support {key}", kind='unsupported_map', ref=ref)
+        for container in (['app'], ['app', 'astrid']):
+            state = ctx.state.get(ref, container)
+            if state['state'] == 'present' and isinstance(state['value'], dict):
+                continue
+            ctx.read(ref, container)
+            if state.get('value') is not None:
+                raise CommandError("intent container must be object or null", ref=ref, path=container)
+        for prefix in (['app'], ['app', 'astrid']):
+            for key in RELATIONS:
+                value = ctx.read(ref, prefix + [key])
+                if key in ('sequence', 'sequence_index', 'sequence_fit', 'formulas') and value is not None:
+                    if value != {}:
+                        raise CommandError(f"clip.move v1 does not support {key}", kind='unsupported_timing', ref=ref)
+        track = clip.get('track')
+        if not isinstance(track, str) or not track:
+            raise CommandError("move requires a referenced track", ref=ref)
+        track_ref = owner + '/track:' + track
+        for field in ('id', 'kind', 'role', 'enabled', 'active', 'disabled', 'hidden', 'deleted'):
+            ctx.read(track_ref, [field])
+        if ctx.state.entity(track_ref, optional=True) is None:
+            raise CommandError("move track disappeared", kind='identity_conflict', ref=track_ref)
+        ctx.bind('move.track', track_ref)
+        ctx.bind('move.owner', owner)
+        asset = clip.get('asset', clip.get('asset_id'))
+        source_dependencies = []
+        if asset is not None:
+            registry_ref = owner + '/registry'
+            source = {}
+            for key in ('media_id', 'object_id', 'digest', 'content_digest', 'type', 'duration',
+                        'duration_ms', 'duration_seconds', 'source'):
+                source[key] = ctx.read(registry_ref, ['assets', str(asset), key])
+            ctx.dependency('move.source', 'entity', {'ref': registry_ref, 'asset': asset, 'source': source})
+            source_dependencies.append('move.source')
+        fps = rate(ctx.read('parent', ['config', 'output', 'fps']))
+        if owner != 'parent':
+            child_fps = ctx.read(owner + '/source', ['output', 'fps'])
+            # Expose consumed child rate via the occurrence config view, not a revision ID.
+            if child_fps is not None and rate(child_fps) != fps:
+                raise CommandError("parent and child fps differ", kind='unsupported_timing')
+        ctx.dependency('move.quantization', 'time-map', {'numerator': fps.numerator,
+                                                       'denominator': fps.denominator,
+                                                       'rounding': 'half-toward-positive-infinity'})
+        on = number(command['args']['on'], 'on')
+        if on < 0:
+            raise CommandError("on must not be negative")
+        try:
+            frame = clip_start_frame({'at': on, 'hold': 1}, float(fps))
+        except (ValueError, OverflowError) as exc:
+            raise CommandError(str(exc), kind='unsupported_timing', ref=ref) from exc
+        quantized = Fraction(frame, 1) / fps
+        try:
+            duration = _duration(clip)
+        except ValueError as exc:
+            if isinstance(exc, CommandError):
+                raise
+            raise CommandError(str(exc), kind='unsupported_timing', ref=ref) from exc
+        origin = 0.0
+        if owner != 'parent':
+            ctx.read(owner, ['occurrence_id'])
+            ctx.read(owner + '/shot', ['shot_id'])
+            row = ctx.state.occurrence(owner)
+            for path in MAP_FIELDS:
+                ctx.read(owner, path)
+            for key in ('time_map', 'timeMap'):
+                if row.get(key) is not None:
+                    raise CommandError(f"unsupported occurrence {key}", kind='unsupported_map', ref=owner)
+            offset, speed = row.get('source_offset'), row.get('speed')
+            if (isinstance(offset, bool) or isinstance(speed, bool)
+                    or offset not in (None, 0) or speed not in (None, 1)):
+>               raise CommandError("clip.move v1 requires a translation-only occurrence map",
+                                   kind='unsupported_map', ref=owner)
+E               astrid.sdk.timeline._command_state.CommandError: clip.move v1 requires a translation-only occurrence map
+
+astrid/sdk/timeline/capture.py:187: CommandError
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_recipe_m1_commands.py::test_materialization_alias_is_exact_for_arbitrary_source_ids
+1 failed, 119 passed, 1 deselected in 34.05s
+
+exec
+/bin/bash -lc "sed -n '113,150p' tests/timeline/test_authoring_bundle.py; sed -n '56,85p' astrid/sdk/timeline/_command_state.py; sed -n '145,169p' astrid/sdk/timeline/commands.py" in /home/user/work/wt/agt-m1-core-integration-fix
+ succeeded in 214ms:
+            },
+        ],
+        "pools": [{"id": "pool-1", "opaque": "keep"}],
+        "selected_variants": {"pool-1": "variant-1"},
+        "provenance": {"source": "fixture", "shot_id_literal": "shot-shared"},
+        "generation_inputs": {"visual": {"object_id": OLD}},
+        "audio_bindings": [{"track_id": "voice", "object_id": AUDIO}],
+        "text_bindings": [{"slot": "voiceover", "text": "hello"}],
+        "internal_timeline_revision_id": "internal-1",
+        "opaque_shot": {"future_schema": 9},
+    }
+    occurrences = [
+        {
+            "occurrence_id": "occ-1",
+            "shot_id": "shot-shared",
+            "shot_revision_id": "shot-rev-1",
+            "placement": {"start_ms": 0, "track": "picture", "opaque_geometry": "keep"},
+            "source_offset": {"start": 0, "end": 1000},
+            "duration_ms": 1000,
+            "speed": {"numerator": 1, "denominator": 1},
+            "track": "picture",
+            "transform": {"scale": 1, "opaque_transform": [4, 5]},
+            "gain": 1,
+            "muted": False,
+            "provenance": {"placement": "first"},
+            "future_occurrence": {"round_trip": True},
+        }
+    ]
+    if shared:
+        second = copy.deepcopy(occurrences[0])
+        second["occurrence_id"] = "occ-2"
+        second["placement"]["start_ms"] = 1000
+        second["provenance"]["placement"] = "second"
+        occurrences.append(second)
+    parent_payload = {
+        "config": {
+            "tracks": [{"id": "picture", "kind": "visual"}],
+            "clips": [{"id": "direct", "track": "picture", "asset": "direct", "at": 3, "hold": 1}],
+                except ValueError as exc:
+                    raise CommandError("invalid quoted property token") from exc
+                if end >= len(path) or path[end] != ']':
+                    raise CommandError("missing property bracket")
+                pos = end + 1
+            else:
+                match = re.match(r'\[(0|[1-9][0-9]*)\]', path[pos:])
+                if not match:
+                    raise CommandError("invalid numeric property token")
+                value, pos = match[1], pos + match.end()
+        else:
+            match = re.match(r'[A-Za-z_][\w-]*', path[pos:])
+            if not match:
+                raise CommandError("invalid property token")
+            value, pos = match[0], pos + match.end()
+        result.append(value)
+        if pos < len(path) and path[pos] == '.':
+            pos += 1
+            if pos == len(path) or path[pos] == '[':
+                raise CommandError("invalid property separator")
+        elif pos < len(path) and path[pos] != '[':
+            raise CommandError("invalid property separator")
+    return tuple(result)
+
+
+def spelling(path):
+    return ''.join((('.' if i else '') + token if re.fullmatch(r'[A-Za-z_][\w-]*', token)
+                    else '[' + json.dumps(token, ensure_ascii=False) + ']')
+                   for i, token in enumerate(path))
+
+        ctx.compile_mirrors()
+        record = ctx.finish(capture=True)
+        for field in ('resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'):
+            if field not in command:
+                continue
+            matches = equal(command[field], record['command'][field])
+            if field == 'reads':
+                actual = record['command']['reads']
+                matches = len(command[field]) == len(actual) and all(
+                    claimed['ref'] == read['ref'] and claimed['path'] == read['path']
+                    and (equal(claimed['state'], read['state'])
+                         or (read['ref'].endswith('/shot')
+                             and ctx.state.matches(read['ref'], read['path'], claimed['state'])))
+                    for claimed, read in zip(command[field], actual))
+            if not matches:
+                raise CommandError(f"submitted {field} does not match authoritative capture", kind='capture_mismatch')
+        # Keep original claims and metadata after they have been verified.
+        record['command'].update({k: v for k, v in command.items() if k != 'intent'})
+        records.append(record)
+    return Plan(candidate, records)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/editing_conformance/test_recipe_m1_commands.py');s=p.read_text().replace(\"    for row in parent['payload']['occurrences']:\\n        row['shot_id'] = source\\n    parent['content_digest']\", \"    for index, row in enumerate(parent['payload']['occurrences']):\\n        row.update(shot_id=source, source_offset=0, speed=1)\\n        row['placement']['start_ms'] = index * 10000\\n    parent['content_digest']\");p.write_text(s)
+PY
+PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_structure.py tests/sdk/test_timeline_restructure.py --basetemp=/tmp/agt-m1-core-integration-final-checked-neighbors' in /home/user/work/wt/agt-m1-core-integration-fix
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=skip --ignore-missing-imports --cache-dir=/tmp/agt-m1-core-integration-mypy astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/inverse.py' in /home/user/work/wt/agt-m1-core-integration-fix
+ succeeded in 4205ms:
+Success: no issues found in 5 source files
+
+exec
+/bin/bash -lc 'git diff --check; /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/inverse.py; /home/user/work/venv-agent/bin/python -m ruff check --isolated --select E4,E7,E9,F,I,BLE tests/editing_conformance/test_recipe_m1_commands.py; cmp astrid/core/timeline/schema/edit-command.schema.json /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-command.schema.json; cmp astrid/core/timeline/schema/edit-command.schema.json /home/user/work/runtime/contract/schemas/edit-command.json; git diff --numstat -- astrid/sdk/timeline; git status --short' in /home/user/work/wt/agt-m1-core-integration-fix
+ succeeded in 413ms:
+All checks passed!
+All checks passed!
+30	3	astrid/sdk/timeline/_command_state.py
+26	2	astrid/sdk/timeline/_recording.py
+10	3	astrid/sdk/timeline/capture.py
+22	46	astrid/sdk/timeline/commands.py
+4	1	astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/fixtures/recipe_m1_move.json
+ M tests/editing_conformance/fixtures/recipe_m1_occurrence.json
+ M tests/editing_conformance/test_recipe_m1_commands.py
+?? tests/editing_conformance/fixtures/recipe_m1_shared.json
+
+ succeeded in 26790ms:
+........................................................................ [ 60%]
+................................................                         [100%]
+120 passed, 1 deselected in 24.48s
+
+exec
+/bin/bash -lc 'git diff --numstat -- tests/editing_conformance/test_recipe_m1_commands.py; wc -l astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py; tail -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-m1-coordination.md' in /home/user/work/wt/agt-m1-core-integration-fix
+ succeeded in 24ms:
+127	2	tests/editing_conformance/test_recipe_m1_commands.py
+  229 astrid/sdk/timeline/_command_state.py
+  146 astrid/sdk/timeline/_recording.py
+  250 astrid/sdk/timeline/capture.py
+  164 astrid/sdk/timeline/commands.py
+  148 astrid/sdk/timeline/inverse.py
+   11 astrid/sdk/timeline/rebase.py
+  948 total
+19:30 integration status: client/closure review merged26d69a1cb (203 focused tests; generated modules byte-equal reviewed Runtime; lock coverage refresh fromc423544 in app-m1-client-pin). app-m1-editor-wiring from26d69a1cb mounts actual port/session/undo, TOP priority; app-m1-real-journey builds actual mouse/Runtime restart proof in parallel. app-m1-authoring-basis reviewed:216 product lines, manager23 unit cases +5 exact Python closure/bundle goldens pass; merge requested. Its API authoringBundleFromDocument(document) is async and must be awaited before enabling capture. Pending capture-review must expose JSON clone-safe original basis and consume Agent corrected intent/blocker/shared-materialization goldens. No need for additional query schema/framework. Full App batch app-full-1019192621-29082 queued once; native-browser request remains separate proof.
+
+Capture refinement supersedes the isolated-ID normalization paragraph above: `/shot::shot_id` now records the ACTUAL source_mapping source shot identity, independent of conditional in-memory owner IDs. Core validates placement shot_id equals source or `_authoring_shot_id(project,timeline,occurrence,source,shared=True)`. Original source guard accepts identical source OR its EXACT deterministic materialized ID for this occurrence; accepted record captures actual head source, while original command claims remain unchanged. No `shot-placement-*` prefix heuristic: sharing an already materialized source is legal too. Goldens refreshed accordingly; `recipe_m1_shared.json` is now27KB with exact old sibling closure plus head/rebased bundles. Parent and occurrence fixtures remain8/12KB. Recipe documents exact rule. App capture can read mapping source directly; backend performs lineage guard comparison.
+
+19:32 Runtime FIRST basis recipe confirmed: existing ImmutableRevision.dependency_manifest field, not new route/DTO. Runtime rt-m1-read-basis fixes omitted service serialization from VERIFIED stored commit_manifest_json. Read history.head H, exact parentH + manifest-pinned shot/internal GETs using each internal timeline_id. Construct exact CanonicalDocument outer image fields (strip transport timestamps/scope, retain all payload fields and returned manifest incl documents). No guessed documents:[] or latest child reads. App authoringBundle adapter now MERGED50b35d967; editor worker may copy its exact reviewed files from integration per brief before checks.
+
+### app-m1-real-journey browser controls needed
+Spec now building actual `.clip-action[data-clip-id]` pointerdown/move/drop with DOM-measured scale; readonly native IndexedDB getAll proves original B payload/guards/IDs before and after reload/reopen. Need actual accessible recovery/retry/status control labels from editor wiring when ready. Planned: pending A durable lost ACK; B absolute7 captured over A5; independent Python core track.create under Agent credential; restart DB/CAS/realm; explicit old-owner recovery retries exact A body/key/path/method; B fresh baseHA/key and same original command; UI Undo emits inverse of B publication (then A) and readback keeps C. No window command injection. Harness seeds neutral first, enables fixed authoring profile after baseline case, exact source/PYTHONPATH pinned. Authoring-basis50b35d967 is reviewed/integration-ready; will copy reviewed product files verbatim only after remaining capture/session review notice.
+
+codex
+Final validation is green: 120 recipe and authoring/structure tests passed, and 50 provider tests passed against this core. Ruff, scoped mypy, whitespace checks, and schema comparisons passed. I’ll write the handoff and commit message; full and live integration validation remains for the central service after the merge batch.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-core-integration-fix/report.md <<'EOF'
+Corrected M1 core capture/replay without extending the registry (still clip.move + structural track.create proof).
+
+- Semantic occurrence ownership reads source_mapping's actual source identity at occurrence:o/shot::shot_id; physical placement must point to that source or its exact main deterministic isolated ID. Guard comparison permits identical source or this occurrence's exact deterministic materialization, with original command claims unchanged. No naming-prefix heuristic. Same-child disjoint edits work; actual source/owner changes and owner ABA still refuse.
+- Main nonempty payload.clips is authoritative, with config fallback for empty/missing payload.clips. Dual nonempty config.clips mirror is a recorded derived consequence, regenerated after move/replay/inverse. Complete opaque objects survive. Real main projection accepts saved shapes.
+- Core records exact verified, retained compiler DocumentPins (compile.document:<digest>) and ignores unused captures outside the retained manifest. Provider removed its recorder append loop and now passes core records unchanged. Retained transcript/config tests now preserve actual pinned binding/window/word provenance. Fixed moves guard/clear old anchors rather than evaluate words/settings; no mutable latest lookup was added. Image provenance stays entity.
+- M1 optional semantic_events=[]; removed unused event construction. Runtime still owns the publication edge. Parent intent omits ownership; occurrence intent includes occurrence. No schema change.
+- Refreshed compact parent/occurrence/shared goldens. Shared includes real main compiled/reopened first materialization with exact original sibling images, head_bundle and rebased_bundle. Published artifacts/query restrictions in m1-agent-coordination.md, app-m1-coordination.md and edit-recipe.md. App still refuses sibling/hard-duration snaps; fixed M1 consumes no projected extent query, so move.extent is deliberately absent. move.blockers records complete ordered membership/role/activity/absence.
+
+Final commands, from /home/user/work/wt/agt-m1-core-integration-fix:
+
+"'```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_structure.py tests/sdk/test_timeline_restructure.py --basetemp=/tmp/agt-m1-core-integration-final-checked-neighbors
+# 120 passed, 1 deselected in 24.48s (existing default-lane deselection).
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/agt-m1-core-integration-provider-overlay:$PWD:/home/user/work/wt/agt-m1-provider /home/user/work/venv-agent/bin/python -m pytest -q -c pyproject.toml -p no:cacheprovider --confcutdir=/home/user/work/wt/agt-m1-provider/tests/sdk --import-mode=importlib /home/user/work/wt/agt-m1-provider/tests/sdk/test_timeline_commit_provider.py /home/user/work/wt/agt-m1-provider/tests/sdk/test_timeline_commit_provider_document.py --basetemp=/tmp/agt-m1-core-integration-provider-verified
+# 50 passed in 9.70s, including test_shared_sibling_move_rebases_after_other_occurrence_materializes.
+
+/home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/inverse.py
+/home/user/work/venv-agent/bin/python -m ruff check --isolated --select E4,E7,E9,F,I,BLE tests/editing_conformance/test_recipe_m1_commands.py
+# Both pass.
+
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --follow-imports=skip --ignore-missing-imports --cache-dir=/tmp/agt-m1-core-integration-mypy astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/capture.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/inverse.py
+# Success: no issues found in 5 source files.
+
+git diff --check
+cmp astrid/core/timeline/schema/edit-command.schema.json /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/edit-command.schema.json
+cmp astrid/core/timeline/schema/edit-command.schema.json /home/user/work/runtime/contract/schemas/edit-command.json
+# All pass, schema byte-identical to frozen design and Runtime.
+```
+
+Provider overlay was temporary external sitecustomize.py (no source copies/stubs), containing:
+```python
+import astrid.sdk.timeline
+import tests.sdk
+astrid.sdk.timeline.__path__.append('"'/home/user/work/wt/agt-m1-provider/astrid/sdk/timeline')
+tests.sdk.__path__.append('/home/user/work/wt/agt-m1-provider/tests/sdk')
+"'```
+Recreate it to rerun the exact provider command; temporary overlay/basetemps/caches cleaned at worker exit. Only provider tests fake detached Runtime ABI/errors/port; core semantics are real. Initial exploratory failures were resolved; final commands above reflect final product.
+
+Product delta: +92/-55 Python lines, net +37 (948 core Python lines total); schema unchanged. Tests +127/-2 lines plus compact fixture refresh/new shared fixture. No provider/bridge/UI edits, git mutations or subagents.
+
+No remaining focused blocker. Full suite, make check, live Runtime accepted-store/restart, browser/socket and renderer-process journeys were NOT run/requested here, per task'"'s central-after-batch instruction. Next: merge core with provider/frontends, consume refreshed App fixtures, then central full + real Runtime/App restart/retry/undo journey. No claim of M1 end-to-end acceptance. Conventional message written to worker commit-msg (also commit-message.txt for task naming compatibility).
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-core-integration-fix/commit-msg <<'EOF'
+fix(timeline): close M1 capture and replay integration gaps
+
+Guard occurrence source ownership across deterministic materialization while
+preserving original claims and ancestry ABA protection. Record parent clip
+mirror consequences and exact retained compiler input pins in the core.
+
+Align parent move intent with the frozen contract and remove unadmitted M1
+event construction. Refresh parent, occurrence and shared materialization
+goldens, and cover main readback layouts, source changes and retained inputs.
+
+Validated 120 recipe/authoring/structure tests and 50 real provider source
+tests through an external import overlay. Ruff, scoped mypy, whitespace and
+schema comparisons pass. Full/live integration remains centrally scheduled.
+EOF
+cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-core-integration-fix/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-core-integration-fix/commit-message.txt
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m1-agent-coordination.md <<'EOF'
+
+### agt-m1-core-integration-fix FINAL handoff
+Final source ownership guard uses exact source identity + deterministic main materialization equivalence (NO prefix heuristic); arbitrary shot-placement-* source regression passes. Physical owner/source ABA, actual owner/source changes, same-child disjoint edits, original claims and strict capture completeness retained. Core owns all mirror and compiler-retained DocumentPin record production; provider copies Plan.records unchanged. M1 semantic_events=[]; parent ownership omitted. No registry/schema expansion. Three compact goldens ready, shared with original/reopened/rebased bundles; recipe/App notes explicitly explain absent unconsumed move.extent and refused snaps.
+Final focused+existing neighbors command: "'`PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_recipes.py tests/sdk/test_timeline_structure.py tests/sdk/test_timeline_restructure.py --basetemp=/tmp/agt-m1-core-integration-final-checked-neighbors` =>120 passed,1 default-lane deselected/24.48s. Exact external provider source command above, basetemp=/tmp/agt-m1-core-integration-provider-verified =>50 passed/9.70s (final provider, no shim/recorder extension). Product/test ruff pass, scoped mypy5 files pass, git diff --check pass, packaged schema cmp frozen design AND integration Runtime byte-identical. Python product +92/-55, net+37; core total948 lines, frozen schema unchanged. Final detailed report/exact commands/overlay reconstruction at orch/workers/agt-m1-core-integration-fix/report.md. Commit-msg and compatibility commit-message.txt written. No remaining focused blocker. Full/make check/socket/browser/live accepted-store restart journey unrun here; manager should request central integration after merge batch. No end-to-end M1 acceptance claim.
+EOF' in /home/user/work/wt/agt-m1-core-integration-fix
+ succeeded in 13ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root=Path.cwd()
+for name in ('__pycache__', '.pytest_cache', '.ruff_cache'):
+    for path in root.rglob(name):
+        if path.is_dir():
+            shutil.rmtree(path)
+for path in Path('/tmp').glob('agt-m1-core-integration-*'):
+    if path.is_dir():
+        shutil.rmtree(path)
+    elif path.is_file():
+        path.unlink()
+PY
+git diff --check
+git status --short" in /home/user/work/wt/agt-m1-core-integration-fix
+ succeeded in 1775ms:
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/capture.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/fixtures/recipe_m1_move.json
+ M tests/editing_conformance/fixtures/recipe_m1_occurrence.json
+ M tests/editing_conformance/test_recipe_m1_commands.py
+?? tests/editing_conformance/fixtures/recipe_m1_shared.json
+
+codex
+Implemented the M1 core corrections: stable source/ownership guards, recorded clip mirrors and retained input pins, empty semantic events, corrected parent intent, and refreshed App goldens.
+
+- Recipe + authoring/structure tests: **120 passed, 1 existing lane deselection**.
+- Real provider source tests: **50 passed**, including shared-sibling rebase.
+- Ruff, scoped mypy, whitespace checks, and both schema comparisons passed.
+- Product delta: **+37 Python lines net**; registry and schema unchanged.
+
+Fixed moves clear anchors without evaluating them. Unconsumed extent/snap queries remain absent; the App restrictions are documented.
+
+No focused blockers remain. Full/live/browser validation awaits the central integration batch. Commit messages are written; no git mutations performed.
+
+[Detailed report with exact commands, decisions, and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-core-integration-fix/report.md)
+tokens used
+234,364
+Implemented the M1 core corrections: stable source/ownership guards, recorded clip mirrors and retained input pins, empty semantic events, corrected parent intent, and refreshed App goldens.
+
+- Recipe + authoring/structure tests: **120 passed, 1 existing lane deselection**.
+- Real provider source tests: **50 passed**, including shared-sibling rebase.
+- Ruff, scoped mypy, whitespace checks, and both schema comparisons passed.
+- Product delta: **+37 Python lines net**; registry and schema unchanged.
+
+Fixed moves clear anchors without evaluating them. Unconsumed extent/snap queries remain absent; the App restrictions are documented.
+
+No focused blockers remain. Full/live/browser validation awaits the central integration batch. Commit messages are written; no git mutations performed.
+
+[Detailed report with exact commands, decisions, and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-core-integration-fix/report.md)

@@ -1,0 +1,9 @@
+name=agt-m2-placement-native
+repo=agent
+base=tl/agt-m2-semantic-reservations
+base_sha=5b51b936
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-placement-native
+started=2026-10-20T00:20:24Z

@@ -1,0 +1,9 @@
+name=agt-m3-render-request-source-carrier
+repo=agent
+base=tl/integration
+base_sha=a760ecca
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-render-request-source-carrier
+started=2026-10-20T19:20:32Z

@@ -1,0 +1,9 @@
+name=agt-m0-a-primitives
+repo=agent
+base=tl/integration
+base_sha=e51595c6
+model=gpt-5.6-luna
+effort=xhigh
+heavy=0
+worktree=/home/user/work/wt/agt-m0-a-primitives
+started=2026-10-19T18:38:44Z

@@ -1,0 +1,400 @@
++
++class CandidatePort:
++    """Portable ABI fixture: selected_media values and preview, never persistence."""
++
++    def __init__(self, document, verified):
++        self.document = copy.deepcopy(document)
++        self.verified = copy.deepcopy(verified)
++        self.base = {'revision_id': document['parent_revision']['revision_id'],
++                     'publication_id': 'fixture-base'}
++        self.current = copy.deepcopy(self.base)
++        self.selections = []
++        self.candidate = None
++        self.intervening = None
++
++    def head(self):
++        return copy.deepcopy(self.current)
++
++    def revision_closure(self, revision):
++        if revision == self.base['revision_id']:
++            return copy.deepcopy(self.document)
++        assert revision == self.current['revision_id']
++        return copy.deepcopy(self.intervening['document'])
++
++    def history_entry(self, publication):
++        assert publication == self.base['publication_id']
++        return {'revision_id': self.base['revision_id']}
++
++    def history(self, through, after_publication_id=None, cursor=None, limit=100):
++        assert through == self.current and after_publication_id == self.base['publication_id']
++        assert cursor is None
++        return {'head': self.head(), 'next_cursor': None, 'items': [{
++            **self.current, 'previous': copy.deepcopy(self.base), 'intent': 'recorded',
++            'records': {'schema_version': 1, 'commands': copy.deepcopy(self.intervening['records'])}}]}
++
++    def selected_media(self, pin):
++        self.selections.append(copy.deepcopy(pin))
++        matches = [value for value in self.verified if value['selection'] == pin]
++        if not matches:
++            raise refusal('dependency_unavailable')
++        return copy.deepcopy(matches[0])
++
++    def preview(self, prepared):
++        self.candidate = copy.deepcopy(prepared)
++        return copy.deepcopy(prepared)
++
++    def accept(self, prepared):
++        raise AssertionError('Runtime acceptance is deliberately unqualified in this held slice')
++
++
++def context(port, commands):
++    return {'request': {'project_id': 'project-1', 'timeline_id': 'film',
++                       'base_revision_id': port.base['revision_id'],
++                       'base_publication_id': port.base['publication_id'],
++                       'commands': commands, 'dry_run': True}}
++
++
++def test_provider_consumes_exact_official_selected_media_shape_and_prepares_candidate():
++    document, old, new, verified = inputs()
++    _, command, _ = captured()
++    port = CandidatePort(document, verified)
++    supplied = context(port, [command])
++    before = copy.deepcopy(supplied)
++    prepared = RuntimeCommitService('fixture-only').commit(supplied, port)
++    assert port.selections == [old, new]
++    assert supplied == before
++    assert prepared['records']['commands'][0]['command'] == command
++    assert prepared['canonical_document']['parent_revision']['payload']['clips'][0]['asset'] == new['asset']
++    assert [dep['pin'] for dep in prepared['records']['commands'][0]['dependencies']] == [old, new]
++    assert 'receipt' not in prepared
++    assert document_from_bundle(bundle_from_document(prepared['canonical_document'])) == prepared['canonical_document']
++
++
++def test_provider_replays_original_verified_pins_on_disjoint_head():
++    document, old, new, verified = inputs()
++    original, command, _ = captured()
++    other = capture_clip_set_params(original, 'parent/clip:clip-b', values={'other': None})
++    plan = execute(original, [other])
++    port = CandidatePort(document, verified)
++    head = document_from_bundle(plan.bundle)
++    port.current = {'revision_id': head['parent_revision']['revision_id'], 'publication_id': 'fixture-other'}
++    port.intervening = {'document': head, 'records': plan.records}
++    prepared = RuntimeCommitService('fixture-only').commit(context(port, [command]), port)
++    assert prepared['expected_head'] == port.current
++    assert port.selections == [old, new]
++    clips = prepared['canonical_document']['parent_revision']['payload']['clips']
++    assert clips[0]['asset'] == 'replacement'
++    assert clips[1]['params'] == {'other': None}
++
++
++@pytest.mark.parametrize('side', [0, 1])
++def test_provider_port_refusal_of_either_input_never_prepares_any_candidate(side):
++    document, _, _, verified = inputs()
++    _, command, _ = captured()
++    # Runtime owns foreign project, revocation, missing object and stale catalog
++    # decisions. Here we only prove its refusal propagates before candidate I/O.
++    verified.pop(side)
++    port = CandidatePort(document, verified)
++    before = copy.deepcopy(document)
++    with pytest.raises(CommitRejected) as exc:
++        RuntimeCommitService('fixture-only').commit(context(port, [command]), port)
++    assert exc.value.failure['details']['reason'] == 'dependency_unavailable'
++    assert port.candidate is None
++    assert port.document == before
+
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_media_swap.py tests/sdk/test_timeline_commit_provider_media.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_add_provider.py' in /home/user/work/wt/agt-m2-media-swap
+exec
+/bin/bash -lc 'PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/native_media_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/rebase.py tests/editing_conformance/test_recipe_m2_media_swap.py tests/sdk/test_timeline_commit_provider_media.py && git diff --check' in /home/user/work/wt/agt-m2-media-swap
+ succeeded in 258ms:
+All checks passed!
+
+exec
+/bin/bash -lc "git diff -- astrid/sdk/timeline/commit.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/rebase.py && wc -l astrid/sdk/timeline/native_media_commands.py && rg -n 'def test_' tests/editing_conformance/test_recipe_m2_media_swap.py tests/sdk/test_timeline_commit_provider_media.py" in /home/user/work/wt/agt-m2-media-swap
+ succeeded in 0ms:
+diff --git a/astrid/sdk/timeline/_recording.py b/astrid/sdk/timeline/_recording.py
+index 029ec680..9eb4e280 100644
+--- a/astrid/sdk/timeline/_recording.py
++++ b/astrid/sdk/timeline/_recording.py
+@@ -14,7 +14,7 @@ def active(row):
+ 
+ 
+ def selection(state, key, owner, members=()):
+-    if key == "move.target":
++    if key in ("move.target", "media.target"):
+         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
+     elif key in KINDS:
+         result = order(state, owner, KINDS[key])
+@@ -35,8 +35,9 @@ def selection(state, key, owner, members=()):
+ 
+ 
+ class Recording:
+-    def __init__(self, bundle, command, ordinal, *, closures=None):
++    def __init__(self, bundle, command, ordinal, *, closures=None, verified_media=()):
+         self.state = State(bundle, closures=closures)
++        self.verified_media = copy.deepcopy(verified_media)
+         self.input_state = None
+         parent = bundle['parent']
+         config = parent.get('config')
+diff --git a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py
+index afe6c6ef..6a81f367 100644
+--- a/astrid/sdk/timeline/commands.py
++++ b/astrid/sdk/timeline/commands.py
+@@ -36,9 +36,11 @@ def operations():
+     from ._clip_commands import clip_add
+     from ._scalar_commands import clip_set_params, track_set
+     from .capture import MOVE_INTENT, move, track_create
++    from .native_media_commands import swap_media
+     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
++            'clip.swap-media': Operation(_SCHEMA['$defs']['ClipSwapMediaArgs'], swap_media, {}, True),
+             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
+             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
+ 
+@@ -115,7 +117,7 @@ def _verify_claims(ctx, command):
+ 
+ 
+ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
+-            closures=None):
++            closures=None, verified_media=()):
+     """Execute atomically. History inputs must already be authenticated by provider.
+ 
+     Empty intervening_records means proven empty ancestry, never unavailable
+@@ -133,7 +135,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
+     candidate, records = copy.deepcopy(bundle), []
+     for ordinal, supplied in enumerate(commands):
+         command = _normalize(supplied)
+-        ctx = Recording(candidate, command, ordinal, closures=closures)
++        ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media)
+         _verify_claims(ctx, command)
+         operation = operations().get(command['op'])
+         if operation is not None:
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index 5f98b1db..ff06693a 100644
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -427,6 +427,13 @@ class RuntimeCommitService:
+         current = None
+         try:
+             calls = request["commands"]
++            verified_media = []
++            for call in calls:
++                if call['op'] == 'clip.swap-media':
++                    from .commands import validate_command
++                    validate_command(call)
++                    for key in ('old_media', 'media'):
++                        verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
+             restore = any(call["op"] == "timeline.restore" for call in calls)
+             if restore:
+                 current = port.head()
+@@ -525,7 +532,8 @@ class RuntimeCommitService:
+             if not closures:
+                 _hydrate(port, bundle)
+             original = execute(bundle, calls, inverse_records=inverse_records,
+-                               intervening_records=inverse_intervening, closures=closures)
++                               intervening_records=inverse_intervening, closures=closures,
++                               verified_media=verified_media)
+             for attempt in range(3):
+                 if attempt:
+                     current = port.head()
+@@ -541,7 +549,8 @@ class RuntimeCommitService:
+                         _hydrate(port, head_bundle)
+                     plan = replay(original, head_bundle, inverse_records=inverse_records,
+                                   intervening_records=[*inverse_intervening, *_records(
+-                                      entries, CommitRejected, base, current)], closures=closures)
++                                      entries, CommitRejected, base, current)], closures=closures,
++                                  verified_media=verified_media)
+                 _check_reservations(port, plan, current, CommitRejected, base)
+                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources)
+                 prepared = {
+diff --git a/astrid/sdk/timeline/rebase.py b/astrid/sdk/timeline/rebase.py
+index 34c68682..406e323a 100644
+--- a/astrid/sdk/timeline/rebase.py
++++ b/astrid/sdk/timeline/rebase.py
+@@ -5,7 +5,9 @@ from .commands import execute
+ from .inverse import check_intervening
+ 
+ 
+-def replay(plan, head_bundle, *, intervening_records=(), inverse_records=(), id_map=None, closures=None):
++def replay(plan, head_bundle, *, intervening_records=(), inverse_records=(), id_map=None, closures=None,
++           verified_media=()):
+     check_intervening(plan.records, intervening_records)
+     return execute(head_bundle, plan.commands, inverse_records=inverse_records,
+-                   intervening_records=intervening_records, id_map=id_map, closures=closures)
++                   intervening_records=intervening_records, id_map=id_map, closures=closures,
++                   verified_media=verified_media)
+125 astrid/sdk/timeline/native_media_commands.py
+tests/editing_conformance/test_recipe_m2_media_swap.py:51:def test_portable_golden_exact_capture_candidate_reload_inverse_and_replay():
+tests/editing_conformance/test_recipe_m2_media_swap.py:76:def test_video_keeps_nonzero_source_window_speed_and_half_open_end():
+tests/editing_conformance/test_recipe_m2_media_swap.py:88:def test_disjoint_other_clip_edit_survives_rebase_reload_and_inverse():
+tests/editing_conformance/test_recipe_m2_media_swap.py:99:def test_unchanged_swap_is_recorded_and_later_unchanged_writes_and_aba_block_undo():
+tests/editing_conformance/test_recipe_m2_media_swap.py:115:def test_move_then_swap_preserves_literal_intent_and_staged_inverse_restores_both():
+tests/editing_conformance/test_recipe_m2_media_swap.py:128:def test_registry_unchanged_write_blocks_inverse_and_disjoint_param_clear_survives():
+tests/editing_conformance/test_recipe_m2_media_swap.py:142:def test_mixed_batch_refusal_discards_earlier_supported_work():
+tests/editing_conformance/test_recipe_m2_media_swap.py:152:def test_original_asset_cleared_or_changed_refuses_without_mutating_input(value):
+tests/editing_conformance/test_recipe_m2_media_swap.py:166:def test_exact_verified_pin_required_and_not_guessed_from_display_or_object(damage):
+tests/editing_conformance/test_recipe_m2_media_swap.py:181:def test_registry_binding_never_allocated_or_repaired_implicitly(damage):
+tests/editing_conformance/test_recipe_m2_media_swap.py:203:def test_unsupported_source_and_timing_semantics_refuse_atomically(field, value):
+tests/editing_conformance/test_recipe_m2_media_swap.py:213:def test_closed_args_owner_and_media_clear_are_not_generic_replacement():
+tests/editing_conformance/test_recipe_m2_media_swap.py:230:def test_existing_parent_registry_codecs_are_read_exactly(nested):
+tests/sdk/test_timeline_commit_provider_media.py:75:def test_provider_consumes_exact_official_selected_media_shape_and_prepares_candidate():
+tests/sdk/test_timeline_commit_provider_media.py:91:def test_provider_replays_original_verified_pins_on_disjoint_head():
+tests/sdk/test_timeline_commit_provider_media.py:109:def test_provider_port_refusal_of_either_input_never_prepares_any_candidate(side):
+
+ succeeded in 19737ms:
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 50%]
+........................................................................ [ 67%]
+........................................................................ [ 84%]
+................................................................         [100%]
+424 passed in 19.19s
+
+exec
+/bin/bash -lc 'git diff --numstat && git diff --check && git status --short' in /home/user/work/wt/agt-m2-media-swap
+ succeeded in 207ms:
+68	0	astrid/core/timeline/schema/edit-command.schema.json
+3	2	astrid/sdk/timeline/_recording.py
+4	2	astrid/sdk/timeline/commands.py
+11	2	astrid/sdk/timeline/commit.py
+4	2	astrid/sdk/timeline/rebase.py
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/rebase.py
+?? astrid/sdk/timeline/native_media_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_media_swap.json
+?? tests/editing_conformance/test_recipe_m2_media_swap.py
+?? tests/sdk/test_timeline_commit_provider_media.py
+
+codex
+Final targeted validation passed: 424 tests, Ruff, and `git diff --check`. The slice remains **HELD, pending cross-owner meaning freeze**. Runtime’s ABI can carry the inputs, but real acceptance, retry, and lifecycle qualification await the official artifact handoff. The new provider tests exercise previews only and create no acceptance receipts.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-media-swap')
+(root / 'notes').mkdir(parents=True, exist_ok=True)
+report = '''# Bounded native parent media swap
+
+Status: **HELD — pending cross-owner meaning freeze.** Candidate semantics are executable; no real Runtime acceptance qualification or M2 merge is claimed. No merge requested. PLAN still requires the orchestrator's M1 exit record before M2 merging.
+
+## Delivered
+
+- Added "'`astrid/sdk/timeline/native_media_commands.py`: proposed `clip.swap-media` v1 and `capture_swap_media`. Closed args are `{old_media: MediaSelection, media: MediaSelection}`; target is an existing `parent/clip:<stable-id>`. No display-ID selection.
+- Provider obtains both inputs from the existing `port.selected_media` and passes detached VerifiedMedia values into deterministic execution and server replay. Client arguments cannot supply trusted intrinsic metadata. No new Runtime DTO, endpoint, authority, transport, renderer or persistence implementation.
+- Both explicit registry bindings must ALREADY exist. Each is checked against the exact selected object, type and any stored generation/variant and redundant object identities. Direct and config-nested parent registry codecs are guarded, including absence. Only the target clip'"'s "'`asset` field is written, including unchanged writes. Registry contents, clip ID/owner, opaque fields, timestamps, source windows, speed and timing are preserved. No IDs are allocated, including on replay.
+- Native selection/read/binding/dependency recording, guarded inverse and server replay are reused. Literal M1 move metadata (`fixed_start`, consistent numeric `on`/`for`) composes with swap without rewriting it. Video source windows must fit BOTH verified intrinsic durations, with the exact end accepted, and agree with authored hold/speed. Source anchors and unsupported shapes refuse atomically.
+- Added a portable JSON golden fixture and conformance/provider tests. The provider fixture implements preview only: its accept method raises. No accepted receipt, fake SQL acceptance or test persistence implementation was added.
+- Product increment: 125-line helper plus 90 added lines in existing schema/provider/recorder/replay files (8 existing lines replaced). No R4 infrastructure copied; its selected-media/registry helper was inspected as a parts reference and adapted to main'"'s smaller VerifiedMedia shape.
+
+## Exact existing input seam, established before implementation
+
+Read PLAN §4.1/main-wins, ORCH design/commit-contract.md (especially §4.1 and media-selection reads), design/app-writers.md popup slice, design/port-manifest.md; inspected frozen R4 commands/graph commands, main source-window/clear/transcript consumers, Runtime media-proof/parity branch reports and source, and App commit "'`3368b73fe`.
+
+- Runtime `runtime_protocol/timeline_commit.py`: ABI 1 `selected_media(selection: MediaSelection) -> VerifiedMedia`.
+- Runtime `contract/schemas/timeline-commit.json`: MediaSelection has exactly `asset`, `generation_id`, `variant_id`, `object_id`, `catalog_digest`. VerifiedMedia has `selection`, `media_type`, `size`, optional `duration_seconds`, `width`, `height`.
+- Existing GET `/v1/projects/{project_id}/media-selection`: either exact `(asset,generation_id,variant_id)` or `(association_id,object_id,version)`, returning that five-field selection. No SDK transport API was added.
+- `RequestCommitPort` declares nested objects in submitted commands, scopes selected_media to the request project, captures VerifiedMedia, then rechecks it at validate/accept. Its candidate-media authorization admits objects captured through that port. This ABI can carry both command pins already; no ABI counterexample or alternate seam is needed.
+- The association selector returns an authoritative asset binding (currently variant ID). Callers must retain that returned binding; this command never fabricates an alias from a display name. The existing registry slot must match it.
+- App `3368b73fe` exposes the generated getProjectMediaSelection read through DataProvider and validates the exact five-field result; popup command conversion remains future work.
+
+## Scope decisions and explicit gaps
+
+1. Reuse existing registry slots only. Creating a new slot would require agreed allocation/reservation and inverse-dependent rules; this slice has no hidden registry ID allocator or cleanup policy. Missing slots refuse. Registry is restored exactly by inverse because this operation preserves it throughout.
+2. Preserve visual literal clocks rather than borrow R4'"'s larger registry/media preparation machinery. Supported media are image and video of the same kind on a visual track. Still images use literal hold; videos require explicit source in/out, speed and matching hold. Unsupported maps, locator/format-bearing registry entries, conflicting selectors, source/transcript/beat anchors, and audio follow/beat behavior refuse. Existing public audio/asset APIs were not changed and their positive tests were not rewritten.
+3. Clear-asset authoring, media add, new-slot creation, occurrence/shared-shot ownership, and popup add/swap are EXPLICIT FUTURE GAPS. This is not popup qualification. Asset-cleared/null/stale input and unsupported clear args are tested as refusals; disjoint scalar clears remain preserved.
+4. Operation name, closed args and supported registry/clock subset are proposed Agent artifacts, pending Agent/Runtime/App meaning freeze. Runtime's pinned Agent schema/generated artifacts have not been updated in this task, so do not advertise this wire operation as available against the existing Runtime contract digest.
+
+## Verification
+
+Final targeted command (worktree cwd "'`/home/user/work/wt/agt-m2-media-swap`):
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_media_swap.py tests/sdk/test_timeline_commit_provider_media.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recorded_graph_roots.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_clip_add_provider.py
+```
+
+**424 passed in 19.19s**, exit 0. Of these, 36 are the new media conformance/provider cases. Earlier targeted runs: initial fixture construction exposed shared Python aliases/digest mismatch (fixed by detaching fixture JSON); next run exposed historical revision identity restoration needing authenticated source_bundles (fixed the test to use the existing provider boundary); 33 new cases then passed, and the first adjacent run passed 421 before adding the three composition/clear/atomicity cases. No passing behavior test was weakened, skipped or deleted.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/native_media_commands.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/rebase.py tests/editing_conformance/test_recipe_m2_media_swap.py tests/sdk/test_timeline_commit_provider_media.py
+```
+
+**All checks passed**, exit 0. Initial Ruff import-order findings were fixed. `git diff --check`: exit 0.
+
+Coverage: exact portable capture/output/records; deterministic replay without allocation; candidate reload and exact inverse with original immutable source boundary; shared child images preserved; M1 move→swap staged inverse; disjoint sibling params and clears; mixed-batch rollback; video nonzero window/speed and exact-end/short-source bounds; unchanged writes and ABA undo refusal; missing/mismatched exact verified pins; explicit registry absence/identity/locator refusal; stale cleared selections; closed args/parent ownership. Provider tests prove both official-shaped selected_media inputs are requested and passed into initial execution and stale-head replay, and either port refusal prevents candidate I/O.
+
+**Not run / not proven:** full suite, make check, central test service, installs, network, localhost/browser suites, real Runtime acceptance/reload/history/retry, lifecycle mutation between capture and atomic accept, actual foreign-project/revoked/unmanaged authority checks for THIS command, App gesture/popup conversion, or official generated artifact compatibility. Runtime media-proof `c709100` reports its own 63 targeted passes (including a real acceptance control); that report was inspected, not rerun and not counted as this slice'"'s qualification. Local provider refusal tests prove propagation only, not Runtime authority itself.
+
+## Recommended next steps
+
+- Agent/Runtime/App owners freeze the operation/registry and supported timing meaning, or reject/adjust this held proposal; then Runtime owner pins the Agent schema and regenerates official artifacts.
+- After those artifacts exist, qualify this exact command through the real request-scoped port: positive acceptance/reload/inverse plus old/new stale, foreign, revoked and missing lifecycle pins, mutation-at-accept rollback, durable exact retry and accepted ABA/history guards. Keep the source windows, registry, opaque bytes, disjoint edits and IDs asserted.
+- Plan registry creation/reservations and occurrence/shared-popup support separately. Do not treat this bounded existing-slot slice as closing popup writers, clear/add coverage or M2. Merge only after PLAN records M1 exit.
+'''
+(root / 'notes' / 'report.md').write_text(report)
+message = '''feat(timeline): add bounded native parent media swap
+
+Consume exact Runtime selected_media inputs for a closed parent-only swap
+between existing registry bindings. Preserve clip identity, literal timing,
+source windows and opaque data through recorded replay and guarded inverse.
+
+Add portable candidate, refusal and provider input tests without simulating
+Runtime acceptance. Keep new registry creation and occurrence/popup support
+held for cross-owner contract review and official artifact qualification.
+'''
+for name in ('commit-msg', 'commit-msg.txt'):
+    (root / name).write_text(message)
+print(root / 'notes' / 'report.md')
+PY" in /home/user/work/wt/agt-m2-media-swap
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-media-swap/notes/report.md
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+root = Path.cwd()
+for path in root.rglob('__pycache__'):
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+for name in ('.pytest_cache', '.ruff_cache'):
+    path = root / name
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+PY
+" in /home/user/work/wt/agt-m2-media-swap
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'git diff --check && git status --short' in /home/user/work/wt/agt-m2-media-swap
+ succeeded in 89ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/rebase.py
+?? astrid/sdk/timeline/native_media_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_media_swap.json
+?? tests/editing_conformance/test_recipe_m2_media_swap.py
+?? tests/sdk/test_timeline_commit_provider_media.py
+
+codex
+Implemented `clip.swap-media` with exact verified media pins, existing parent registry bindings, deterministic replay, and guarded inverse.
+
+- **Validation:** 424 targeted tests passed; Ruff and `git diff --check` passed.
+- **Scope:** existing image/video bindings only; no ID allocation. Add, clear, audio, occurrence and popup support remain gaps.
+- **Status:** **HELD, pending cross-owner meaning freeze.** Real Runtime acceptance/lifecycle qualification remains unverified. No merge requested.
+- Both commit messages written.
+
+[Report with exact commands, decisions and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-media-swap/notes/report.md).
+tokens used
+154,442
+Implemented `clip.swap-media` with exact verified media pins, existing parent registry bindings, deterministic replay, and guarded inverse.
+
+- **Validation:** 424 targeted tests passed; Ruff and `git diff --check` passed.
+- **Scope:** existing image/video bindings only; no ID allocation. Add, clear, audio, occurrence and popup support remain gaps.
+- **Status:** **HELD, pending cross-owner meaning freeze.** Real Runtime acceptance/lifecycle qualification remains unverified. No merge requested.
+- Both commit messages written.
+
+[Report with exact commands, decisions and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-media-swap/notes/report.md).

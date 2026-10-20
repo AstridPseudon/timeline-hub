@@ -1,0 +1,400 @@
+36922- succeeded in 0ms:
+36923-e86f44d04e0a5f183d82d4d1ac307951dd32c44e
+36924:a0dca16975dfe8f5e762703b99d9791a16cf7fd7
+36925-6ab3243972f8dc49105819e6d7ba7aef1a2888b8
+36926-
+36927-codex
+36928-The final targeted lanes are green: 154 SDK/native/conformance tests, plus the focused replacement/replay set. I’m recording the exact source pairing, runtime pin, test evidence, and the named-suite collection blocker for the orchestrator, then I’ll mark the worker complete.
+36929-apply patch
+36930-patch: completed
+36931:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-current014-real-consumer.md
+36932:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/commit-msg
+36933:diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-current014-real-consumer.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-current014-real-consumer.md
+36934-new file mode 100644
+36935-index 0000000000000000000000000000000000000000..9c0fdb8cc2f3ed0b26aaadfae8d813b3363c7ea9
+36936---- /dev/null
+36937:+++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-current014-real-consumer.md
+36938-@@ -0,0 +1,28 @@
+36939:+# WC3 current014 real-consumer handoff
+36940-+
+36941-+Implemented the WC3 native media replacement deletion in the Agent worktree.
+36942-+
+36943-+Reviewed delta/source pairing:
+36944-+
+36945-+- Current014 candidate: `e86f44d04e0a5f183d82d4d1ac307951dd32c44e`.
+36946-+- Donor reviewed: `tl/agt-m2-wc3-explicit-pin-type-guard`, `76c6c591` (native adapter plus explicit pending-pin type guard).
+36947-+- Prior review reports: `agent-review-wc3-media-swap-final.md` and `agent-review-wc3-exact-retry-final.md`.
+36948:+- Runtime used for real-provider integration: `/home/user/work/wt/rt-pin-a0dca169`, `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`.
+36949-+
+36950-+Changes:
+36951-+
+36952-+- `RemoteTimelines.replace_parent_media` now dispatches only to the native `TimelineSession` adapter; the old whole-closure writer remains absent/held.
+--
+36956-+- Added an exact replay assertion: after accepted-but-lost ACK and later head movement, replay uses the original body/key/base and returns the original receipt with one acceptance before the suffix is journaled.
+36957-+
+36958-+Evidence:
+36959-+
+36960:+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py tests/sdk/test_timeline_sync.py::test_lost_ack_reload_retries_exact_request_before_sending_suffix` — 22 passed.
+36961:+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_native_frontends.py` — 154 passed.
+36962:+- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_media_swap.py` — 22 passed.
+36963-+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline_media_replacement.py tests/test_timeline_clip_replacement.py tests/sdk/test_timeline_sync.py tests/editing_conformance/test_commit_runtime_parent_media_swap.py` — passed; `git diff --check` passed.
+36964-+- Central named suite `ordinary014-consumer-integration` was requested once and stopped during collection: 15,618 deselected and 2 errors from missing `vibecomfy` imports, before target tests ran. No full suite was requested.
+36965-+
+36966-+The direct integration command uses the real a0 Runtime provider and managed-media service; the central generated-client named lane did not reach collection, so that lane remains unverified in this worker.
+36967:diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/commit-msg
+36968-new file mode 100644
+36969-index 0000000000000000000000000000000000000000..421f5fc30d46320d7893445ea1a0ec78209fb76e
+36970---- /dev/null
+36971:+++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/commit-msg
+36972-@@ -0,0 +1,5 @@
+36973-+fix(sdk): route parent media replacement through native session
+36974-+
+36975:+Compose the explicit-pin native media replacement adapter onto current014,
+36976-+guard persisted pending swaps by exact five-field selections, and preserve
+36977-+opaque durable retry behavior and real-provider conformance coverage.
+36978-diff --git a/astrid/sdk/remote.py b/astrid/sdk/remote.py
+36979-index e8bd30f347f7d9ae63909e1146d43c57a3a9f7e7..3334ee039aff304800a58b8dacb60b37afcbb25d
+--
+38078- def test_incomplete_or_mismatched_selection_never_falls_back_to_publication() -> None:
+38079-
+38080-apply patch
+38081-patch: completed
+38082:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/DONE
+38083:diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-current014-real-consumer.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-current014-real-consumer.md
+38084-new file mode 100644
+38085-index 0000000000000000000000000000000000000000..9c0fdb8cc2f3ed0b26aaadfae8d813b3363c7ea9
+38086---- /dev/null
+38087:+++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-current014-real-consumer.md
+38088-@@ -0,0 +1,28 @@
+38089:+# WC3 current014 real-consumer handoff
+38090-+
+38091-+Implemented the WC3 native media replacement deletion in the Agent worktree.
+38092-+
+38093-+Reviewed delta/source pairing:
+38094-+
+38095-+- Current014 candidate: `e86f44d04e0a5f183d82d4d1ac307951dd32c44e`.
+38096-+- Donor reviewed: `tl/agt-m2-wc3-explicit-pin-type-guard`, `76c6c591` (native adapter plus explicit pending-pin type guard).
+38097-+- Prior review reports: `agent-review-wc3-media-swap-final.md` and `agent-review-wc3-exact-retry-final.md`.
+38098:+- Runtime used for real-provider integration: `/home/user/work/wt/rt-pin-a0dca169`, `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`.
+38099-+
+38100-+Changes:
+38101-+
+38102-+- `RemoteTimelines.replace_parent_media` now dispatches only to the native `TimelineSession` adapter; the old whole-closure writer remains absent/held.
+--
+38106-+- Added an exact replay assertion: after accepted-but-lost ACK and later head movement, replay uses the original body/key/base and returns the original receipt with one acceptance before the suffix is journaled.
+38107-+
+38108-+Evidence:
+38109-+
+38110:+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py tests/sdk/test_timeline_sync.py::test_lost_ack_reload_retries_exact_request_before_sending_suffix` — 22 passed.
+38111:+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_native_frontends.py` — 154 passed.
+38112:+- `ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_media_swap.py` — 22 passed.
+38113-+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline_media_replacement.py tests/test_timeline_clip_replacement.py tests/sdk/test_timeline_sync.py tests/editing_conformance/test_commit_runtime_parent_media_swap.py` — passed; `git diff --check` passed.
+38114-+- Central named suite `ordinary014-consumer-integration` was requested once and stopped during collection: 15,618 deselected and 2 errors from missing `vibecomfy` imports, before target tests ran. No full suite was requested.
+38115-+
+38116-+The direct integration command uses the real a0 Runtime provider and managed-media service; the central generated-client named lane did not reach collection, so that lane remains unverified in this worker.
+38117:diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/DONE
+38118-new file mode 100644
+38119-index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+38120:diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/commit-msg
+38121-new file mode 100644
+38122-index 0000000000000000000000000000000000000000..421f5fc30d46320d7893445ea1a0ec78209fb76e
+38123---- /dev/null
+38124:+++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/commit-msg
+38125-@@ -0,0 +1,5 @@
+38126-+fix(sdk): route parent media replacement through native session
+38127-+
+38128:+Compose the explicit-pin native media replacement adapter onto current014,
+38129-+guard persisted pending swaps by exact five-field selections, and preserve
+38130-+opaque durable retry behavior and real-provider conformance coverage.
+38131-diff --git a/astrid/sdk/remote.py b/astrid/sdk/remote.py
+38132-index e8bd30f347f7d9ae63909e1146d43c57a3a9f7e7..3334ee039aff304800a58b8dacb60b37afcbb25d
+--
+39230- 
+39231- def test_incomplete_or_mismatched_selection_never_falls_back_to_publication() -> None:
+39232-
+39233-exec
+39234:/bin/bash -lc "find .pytest_cache astrid/sdk/__pycache__ tests/__pycache__ tests/sdk/__pycache__ -type f -delete 2>/dev/null; find . -depth -type d \\( -name __pycache__ -o -name .pytest_cache \\) -empty -delete; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/DONE && echo DONE-present; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-current014-real-consumer/commit-msg && echo commit-msg-present; git status --short; git diff --check; git diff --stat" in /home/user/work/wt/agt-m2-wc3-current014-real-consumer
+39235- succeeded in 1230ms:
+39236-DONE-present
+39237-commit-msg-present
+39238- M astrid/sdk/remote.py
+--
+39247- tests/test_timeline_clip_replacement.py            | 333 +++++++++++++++----
+39248- 5 files changed, 641 insertions(+), 324 deletions(-)
+39249-
+39250-codex
+39251:Implemented WC3 native media replacement on current014.
+39252-
+39253:- Composed donor `76c6c591` onto current014 `e86f44d0`.
+39254-- Added exact five-field pin guards; malformed/unrelated pending swaps refuse without POST or outbox changes.
+39255-- Preserved native session/outbox/history behavior and added exact replay receipt assertions.
+39256-- Updated real-provider parent-media conformance coverage.
+39257-
+39258-Tests:
+39259-
+39260:- Targeted replacement/replay: 22 passed.
+39261-- Native/conformance suite: 154 passed.
+39262:- a0 Runtime integration: 22 passed.
+39263-- Ruff and `git diff --check`: passed.
+39264-- Central named suite stopped during collection due missing `vibecomfy` imports; no full suite requested.
+39265-
+39266-Handoff, commit message, and `DONE` marker written.
+39267-tokens used
+39268-320,049
+39269:Implemented WC3 native media replacement on current014.
+39270-
+39271:- Composed donor `76c6c591` onto current014 `e86f44d0`.
+39272-- Added exact five-field pin guards; malformed/unrelated pending swaps refuse without POST or outbox changes.
+39273-- Preserved native session/outbox/history behavior and added exact replay receipt assertions.
+39274-- Updated real-provider parent-media conformance coverage.
+39275-
+39276-Tests:
+39277-
+39278:- Targeted replacement/replay: 22 passed.
+39279-- Native/conformance suite: 154 passed.
+39280:- a0 Runtime integration: 22 passed.
+39281-- Ruff and `git diff --check`: passed.
+39282-- Central named suite stopped during collection due missing `vibecomfy` imports; no full suite requested.
+39283-
+39284-Handoff, commit message, and `DONE` marker written.
+
+codex
+The prior worker’s exact a0 qualification is reproducible from its handoff: it used `/home/user/work/wt/rt-pin-a0dca169` (not the older integration Runtime at `6ab3243`) and reported 22/22 provider cases. I found the older integration mismatch is an expected pre-0.2.14 schema, so I’ll use the pinned a0 Runtime for the requested actual-provider check and keep that distinction explicit in the report.
+exec
+/bin/bash -lc 'git -C /home/user/work/wt/rt-pin-a0dca169 status --short --branch; git -C /home/user/work/wt/rt-pin-a0dca169 rev-parse HEAD; PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_media_swap.py' in /home/user/work/wt/agt-review-wc3-current014-native-final
+ succeeded in 81026ms:
+## HEAD (no branch)
+a0dca16975dfe8f5e762703b99d9791a16cf7fd7
+......................                                                   [100%]
+22 passed in 79.02s (0:01:19)
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_native_frontends.py && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline_media_replacement.py tests/test_timeline_clip_replacement.py tests/sdk/test_timeline_sync.py tests/editing_conformance/test_commit_runtime_parent_media_swap.py && git diff --check e86f44d0..HEAD && git status --short --branch' in /home/user/work/wt/agt-review-wc3-current014-native-final
+ succeeded in 46969ms:
+........................................................................ [ 46%]
+........................................................................ [ 93%]
+..........                                                               [100%]
+154 passed in 45.50s
+All checks passed!
+## tl/agt-review-wc3-current014-native-final
+
+codex
+The pinned a0 real-provider lane passes all 22 cases, including the parent swap acceptance/reload/retry/inverse/rebase checks. The current integration branch’s 22 failures were solely the known pre-0.2.14 schema mismatch, so they do not overturn the a0 result. I’m doing the final exact focused count and invariant audit now, then I’ll publish the review as APPROVE with the bounded merge condition and note the separate HTTP limitation.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py tests/sdk/test_timeline_sync.py::test_lost_ack_reload_retries_exact_request_before_sending_suffix' in /home/user/work/wt/agt-review-wc3-current014-native-final
+ succeeded in 6129ms:
+......................                                                   [100%]
+22 passed in 4.54s
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worktree artifacts ---'; find . -type d \\( -name .pytest_cache -o -name __pycache__ \\) -print | sort | head -100; printf '%s\\n' '--- worktree status ---'; git status --short --branch; printf '%s\\n' '--- diff summary ---'; git diff --stat e86f44d0..HEAD; printf '%s\\n' '--- old route/body checks ---'; rg -n \"publish_parent_composition|open_authoring_bundle|publish_authoring_candidate|replace_parent_media\" astrid/sdk/remote.py astrid/sdk/timeline_media_replacement.py tests/test_timeline_clip_replacement.py" in /home/user/work/wt/agt-review-wc3-current014-native-final
+ succeeded in 388ms:
+--- worktree artifacts ---
+./.pytest_cache
+./tests/__pycache__
+--- worktree status ---
+## tl/agt-review-wc3-current014-native-final
+--- diff summary ---
+ astrid/sdk/remote.py                               | 242 +-------------
+ astrid/sdk/timeline_media_replacement.py           | 357 +++++++++++++++++++--
+ .../test_commit_runtime_parent_media_swap.py       |  29 ++
+ tests/sdk/test_timeline_sync.py                    |   4 +-
+ tests/test_timeline_clip_replacement.py            | 333 +++++++++++++++----
+ 5 files changed, 641 insertions(+), 324 deletions(-)
+--- old route/body checks ---
+astrid/sdk/remote.py:409:            elif operation == "publish_parent_composition": value = self._client.publish_parent_composition(*args, **kwargs)
+astrid/sdk/remote.py:534:            "publish_parent_composition", project_id, timeline_key, publication,
+astrid/sdk/remote.py:1199:        from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+astrid/sdk/remote.py:1240:            bundle = open_authoring_bundle(
+astrid/sdk/remote.py:1278:    def replace_parent_media(
+astrid/sdk/remote.py:2123:                {"status": 410, "operation": "shots.group", "replacement": "publish_parent_composition"},
+tests/test_timeline_clip_replacement.py:87:    result = RemoteTimelines(object()).replace_parent_media(
+tests/test_timeline_clip_replacement.py:99:    result = RemoteTimelines(object()).replace_parent_media(
+tests/test_timeline_clip_replacement.py:130:    result = RemoteTimelines(object()).replace_parent_media("project-1", "main", **kwargs)
+tests/test_timeline_clip_replacement.py:142:    failed = RemoteTimelines(transport).replace_parent_media(
+tests/test_timeline_clip_replacement.py:151:    retried = RemoteTimelines(transport).replace_parent_media(
+tests/test_timeline_clip_replacement.py:175:    result = RemoteTimelines(object()).replace_parent_media(
+tests/test_timeline_clip_replacement.py:193:    result = RemoteTimelines(object()).replace_parent_media(
+tests/test_timeline_clip_replacement.py:237:        def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
+tests/test_timeline_clip_replacement.py:241:    result = RemoteTimelines(transport).replace_parent_media(
+tests/test_timeline_clip_replacement.py:261:        def replace_parent_media(self, *args, **kwargs):
+tests/test_timeline_clip_replacement.py:358:    result = timelines.replace_parent_media(
+tests/test_timeline_clip_replacement.py:385:        result = RemoteTimelines(Transport()).replace_parent_media(
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- generated files touched since e86 ---'; git diff --name-only e86f44d0..HEAD | rg 'generated|contract_metadata|timeline_commit_types' || true; printf '%s\\n' '--- generated contract parity checks ---'; sha256sum astrid_runtime_client/generated.py astrid_runtime_client/contract_metadata.py /home/user/work/wt/rt-pin-a0dca169/packages/python/astrid_runtime_client/generated.py /home/user/work/wt/rt-pin-a0dca169/packages/python/astrid_runtime_client/contract_metadata.py; printf '%s\\n' '--- parent ownership in a0/current ---'; rg -n \"ownership.*parent|parent.*ownership\" /home/user/work/wt/rt-pin-a0dca169/packages/python/astrid_runtime_client/timeline_commit_types.py /home/user/work/wt/rt-pin-a0dca169/runtime_protocol/schemas/timeline-commit-bundle.json | head -20; printf '%s\\n' '--- source status ---'; git status --short --branch" in /home/user/work/wt/agt-review-wc3-current014-native-final
+ succeeded in 321ms:
+--- generated files touched since e86 ---
+--- generated contract parity checks ---
+53c9fc48cb3c5d0eb6c0e990d46f0a8b3b566297a5f60c762004b1681a7ac656  astrid_runtime_client/generated.py
+2c6e10946af46f0dfe2b66a299121fcdc1c45e8c0166ad6183e7b7a312fae2b5  astrid_runtime_client/contract_metadata.py
+53c9fc48cb3c5d0eb6c0e990d46f0a8b3b566297a5f60c762004b1681a7ac656  /home/user/work/wt/rt-pin-a0dca169/packages/python/astrid_runtime_client/generated.py
+2c6e10946af46f0dfe2b66a299121fcdc1c45e8c0166ad6183e7b7a312fae2b5  /home/user/work/wt/rt-pin-a0dca169/packages/python/astrid_runtime_client/contract_metadata.py
+--- parent ownership in a0/current ---
+/home/user/work/wt/rt-pin-a0dca169/packages/python/astrid_runtime_client/timeline_commit_types.py:16:Intent = TypedDict('Intent', {'ripple': NotRequired[Literal['none', 'selected', 'include-concurrent']], 'anchor': NotRequired[Literal['follow', 'fixed']], 'ownership': NotRequired[Literal['shared', 'occurrence', 'parent']], 'position': NotRequired[Literal['absolute', 'relative']]})
+--- source status ---
+## tl/agt-review-wc3-current014-native-final
+
+codex
+Final evidence is green on the requested pair: `22 passed` focused replacement/replay, `154 passed` native/conformance neighbours, and `22 passed` against the real a0 Runtime provider. Generated client bytes are byte-identical to the a0 pin and untouched by this candidate. I found no remaining unrelated-pending or non-mapping flush path, but I will explicitly leave the adapter-specific HTTP/lost-ACK claim unverified because the proof is generated-transport fake plus direct RuntimeService, not a live Runtime door.
+2026-10-20T16:05:29.478033Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc \\\"rm -rf .pytest_cache tests/__pycache__ && find . -type d \\\\\\\\( -name .pytest_cache -o -name __pycache__ \\\\\\\\) -print | sort | head -40\\\"` rejected: rm -f style commands are not permitted. Use a safer approach\")" }
+exec
+/bin/bash -lc "find .pytest_cache tests/__pycache__ -depth -delete 2>/dev/null || true; find . -type d \\( -name .pytest_cache -o -name __pycache__ \\) -print | sort | head -40" in /home/user/work/wt/agt-review-wc3-current014-native-final
+ succeeded in 186ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c2213b372b2e7f73af3de87970634a2326186cf0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg
+@@ -0,0 +1,4 @@
++docs(review): approve bounded WC3 current014 composition
++
++Approve the exact native media replacement candidate on current014 after
++focused, neighbouring, and pinned a0 Runtime provider checks.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c2213b372b2e7f73af3de87970634a2326186cf0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(review): approve bounded WC3 current014 composition
++
++Approve the exact native media replacement candidate on current014 after
++focused, neighbouring, and pinned a0 Runtime provider checks.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f1a5d0f4e1f07679411e79e22750902c6ebf494e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/report.md
+@@ -0,0 +1,32 @@
++# WC3 current014 final narrow review
++
++## Verdict
++
++**APPROVE — bounded Agent source only.**
++
++- Branch: `tl/agt-review-wc3-current014-native-final`
++- Tree: `3dae5bd4ed9e68295725272a9c34823401a8dd22`
++- Exact base: `e86f44d04e0a5f183d82d4d1ac307951dd32c44e`
++- Bounded merge scope: this candidate commit and its five changed files only.
++
++The old whole-closure replacement body is removed from `RemoteTimelines.replace_parent_media`; the replacement now captures the existing native command and stages it through `TimelineSession`. `replace_clip` remains the typed retired-route API, and the CLI does not restore the old command.
++
++## Verified
++
++- Persisted pending retry requires one exact owner/clip/op/intent and exact old/new five-field media mappings. Source identity, original head, and supplied publication are checked before `flush`; malformed, unrelated, ambiguous, stale-head, and stale-publication requests leave the outbox unchanged and perform zero flush/POST attempts.
++- Exact replay keeps the persisted request body, original idempotency key, original base pair, and accepted receipt after an acknowledgement loss, restart, and later head movement; the newer suffix remains unsent until the original flight is acknowledged.
++- Native capture retains the existing raw mirror/opaque/order, occurrence isolation, inverse/history, and renderer-independent provider behavior. The prior parent/occurrence positive coverage remains present; no new skip/xfail or weakened assertion was introduced.
++- Generated `astrid_runtime_client/generated.py` and `contract_metadata.py` are untouched since `e86f44d0` and byte-identical to the pinned a0 Runtime client.
++
++## Evidence
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py tests/sdk/test_timeline_sync.py::test_lost_ack_reload_retries_exact_request_before_sending_suffix` — **22 passed**.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_native_frontends.py` — **154 passed**.
++- `PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_media_swap.py` — **22 passed** against Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`.
++- Ruff on the four touched Python/test paths — **passed**; `git diff --check e86f44d0..HEAD` — **passed**; worktree clean after artifact cleanup.
++
++## Limits and next step
++
++The adapter-specific lost-ACK proof is not live HTTP: the retry test uses the generated transport fake, while the a0 provider lane calls `RuntimeService` directly. I therefore make no actual Runtime-door HTTP/lost-ACK claim. The current integration Runtime at `6ab3243` also predates the parent ownership schema and rejects these commands before the provider; that is a pair/version mismatch, not a failure of this Agent tree. Qualify the generated-client/live-door retry once the a0 contract is the integrated Runtime pair.
++
++Do not mark the WC3 ledger row `DELETED` until this exact old replacement body has actually replaced the old body on `tl/integration`; this review approves the bounded source, not integration completion.
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/BLOCKED && git status --short --branch && find . -type d '"\\( -name .pytest_cache -o -name __pycache__ \\) -print | head" in /home/user/work/wt/agt-review-wc3-current014-native-final
+ succeeded in 129ms:
+## tl/agt-review-wc3-current014-native-final
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c2213b372b2e7f73af3de87970634a2326186cf0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg
+@@ -0,0 +1,4 @@
++docs(review): approve bounded WC3 current014 composition
++
++Approve the exact native media replacement candidate on current014 after
++focused, neighbouring, and pinned a0 Runtime provider checks.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c2213b372b2e7f73af3de87970634a2326186cf0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(review): approve bounded WC3 current014 composition
++
++Approve the exact native media replacement candidate on current014 after
++focused, neighbouring, and pinned a0 Runtime provider checks.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f44e9a68c29f3ed70f3e7c3c0a2cdf35c3975406
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-wc3-current014-native-final/report.md
+@@ -0,0 +1,33 @@
++# WC3 current014 final narrow review
++
++## Verdict
++
++**APPROVE — bounded Agent source only.**
++
++- Branch: `tl/agt-review-wc3-current014-native-final`
++- Tree: `3dae5bd4ed9e68295725272a9c34823401a8dd22`
++- Exact base: `e86f44d04e0a5f183d82d4d1ac307951dd32c44e`
++- Bounded merge scope: this candidate commit and its five changed files only.
++
++The old whole-closure replacement body is removed from `RemoteTimelines.replace_parent_media`; the replacement now captures the existing native command and stages it through `TimelineSession`. `replace_clip` remains the typed retired-route API, and the CLI does not restore the old command.
++
++## Verified
++
++- Persisted pending retry requires one exact owner/clip/op/intent and exact old/new five-field media mappings. Source identity, original head, and supplied publication are checked before `flush`; malformed, unrelated, ambiguous, stale-head, and stale-publication requests leave the outbox unchanged and perform zero flush/POST attempts.
++- Exact replay keeps the persisted request body, original idempotency key, original base pair, and accepted receipt after an acknowledgement loss, restart, and later head movement; the newer suffix remains unsent until the original flight is acknowledged.
++- Native capture retains the existing raw mirror/opaque/order, occurrence isolation, inverse/history, and renderer-independent provider behavior. The prior parent/occurrence positive coverage remains present; no new skip/xfail or weakened assertion was introduced.
++- Generated `astrid_runtime_client/generated.py` and `contract_metadata.py` are untouched since `e86f44d0` and byte-identical to the pinned a0 Runtime client.
++
++## Evidence
++
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py tests/sdk/test_timeline_sync.py::test_lost_ack_reload_retries_exact_request_before_sending_suffix` — **22 passed**.
++- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_native_frontends.py` — **154 passed**.
++- `PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_parent_media_swap.py` — **22 passed** against Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`.
++- The same integration command against `/home/user/work/runtime` at `6ab3243` produced **12 passed / 10 failed before provider execution** because that older generated schema rejects `intent.ownership="parent"`; it was not used as qualification evidence.
++- Ruff on the four touched Python/test paths — **passed**; `git diff --check e86f44d0..HEAD` — **passed**; worktree clean after artifact cleanup.
++
++## Limits and next step
++
++The adapter-specific lost-ACK proof is not live HTTP: the retry test uses the generated transport fake, while the a0 provider lane calls `RuntimeService` directly. I therefore make no actual Runtime-door HTTP/lost-ACK claim. The current integration Runtime at `6ab3243` also predates the parent ownership schema and rejects these commands before the provider; that is a pair/version mismatch, not a failure of this Agent tree. Qualify the generated-client/live-door retry once the a0 contract is the integrated Runtime pair.
++
++Do not mark the WC3 ledger row `DELETED` until this exact old replacement body has actually replaced the old body on `tl/integration`; this review approves the bounded source, not integration completion.
+
+codex
+## WC3 review: APPROVE
+
+- Branch/tree: `tl/agt-review-wc3-current014-native-final` / `3dae5bd4`
+- Bounded scope: candidate commit atop `e86f44d0`, five changed files only.
+- Tests: 22 focused, 154 neighbouring, and 22 pinned-a0 Runtime-provider tests passed.
+- Ruff and `git diff --check` passed; worktree is clean.
+- Exact retry identity, receipt/base preservation, malformed/unrelated refusal, opaque/order/mirror preservation, and legacy API behavior verified.
+- Actual HTTP lost-ACK remains unverified: evidence uses a transport fake plus direct `RuntimeService`.
+- WC3 ledger row should remain non-DELETED until this body is integrated and replaces the old implementation on `tl/integration`.
+
+Reports, commit messages, and `DONE` marker written.
+tokens used
+257,791
+## WC3 review: APPROVE
+
+- Branch/tree: `tl/agt-review-wc3-current014-native-final` / `3dae5bd4`
+- Bounded scope: candidate commit atop `e86f44d0`, five changed files only.
+- Tests: 22 focused, 154 neighbouring, and 22 pinned-a0 Runtime-provider tests passed.
+- Ruff and `git diff --check` passed; worktree is clean.
+- Exact retry identity, receipt/base preservation, malformed/unrelated refusal, opaque/order/mirror preservation, and legacy API behavior verified.
+- Actual HTTP lost-ACK remains unverified: evidence uses a transport fake plus direct `RuntimeService`.
+- WC3 ledger row should remain non-DELETED until this body is integrated and replaces the old implementation on `tl/integration`.
+
+Reports, commit messages, and `DONE` marker written.

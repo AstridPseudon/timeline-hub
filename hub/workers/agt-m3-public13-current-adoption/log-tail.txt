@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-projection-exact/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-caller-current-gate/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-provider-current/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-provider-current/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-port-current/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-port-current/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-visual-cap-fade-vector/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-visual-cap-fade-vector/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-source-recover/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-host-extract/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-verified-source-host-extract/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-test-rebase/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-test-rebase/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-single-occurrence-cap-contract/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-single-occurrence-cap-contract/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-fade-join/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-fade-join/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-browser-env/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-browser-env/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-source-final/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-source-final/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-package/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-pair-compose-b/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sprite-current-artifact-gate/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sprite-current-artifact-gate/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-package-progress/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sprite-current-port/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sprite-current-port/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-sdk-current-gate/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-cas-only/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-cas-only/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sdk-source-guard/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sdk-source-guard/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-source-phase/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-source-phase/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sdk-scene-only-managed-caller/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-sdk-scene-only-managed-caller/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-source-consumer-compose/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-plate-preserve-fill-guard/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-pcm-inactive-port/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-consume12-current/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-capture-candidate-forward/report.md
+--- nearby completed worker artifacts ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-built-package
+brief.md
+commit-msg
+commit.log
+ended
+exit
+log.txt
+meta
+recycled
+report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-params-retained-wire
+brief.md
+commit-msg
+commit-msg.txt
+commit.log
+ended
+exit
+log.txt
+meta
+recycled
+report.md
+
+codex
+All required evidence is now available: central journey coverage passes 85/85 (2 deselected), local package/admission checks pass, and the Node-backed capture suite passes 20/20 using only the read-only shared dependency pool. I’m preparing the worker report and conventional commit message, then I’ll mark the task complete; no full suite or physical PCM/frame-parity claim will be made.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..70730612fe88660a0141779a5a063015455d59a7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg
+@@ -0,0 +1,5 @@
++chore(rendering): adopt Composition 0.0.13 consumer pin
++
++Carry the reviewed public13 archive, exact package integrity, runtime pin,
++and focused admission checks onto current Agent integration while retaining
++the existing 0.0.12 compatibility artifact and assertions.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..70730612fe88660a0141779a5a063015455d59a7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg.txt
+@@ -0,0 +1,5 @@
++chore(rendering): adopt Composition 0.0.13 consumer pin
++
++Carry the reviewed public13 archive, exact package integrity, runtime pin,
++and focused admission checks onto current Agent integration while retaining
++the existing 0.0.12 compatibility artifact and assertions.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..3485e85fa26aa749bc1df39532de7d38ffe87e5d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/report.md
+@@ -0,0 +1,38 @@
++# Agent public13 current-consumer adoption
++
++## What changed
++
++- Ported only reviewed remote `04f59c0c1` onto current `c73b1ab1`.
++- Updated the normal Remotion package pin, lockfile resolution/integrity, and
++  Agent runtime admission from Composition `0.0.12` to `0.0.13`.
++- Added the exact reviewed archive: 58,477 bytes, 77 regular members,
++  SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`,
++  lock integrity
++  `sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ==`.
++- Updated package admission tests and the direct Node test for valid
++  `encodedEnvelopeSource` plus four forged-source negatives.
++- Preserved current Mouth/labels/Scene/WC4/F1/source-reuse behavior and the
++  original `0.0.12` archive/compatibility assertions. No Runtime client pin,
++  unrelated source, deep import, DSP math, source-root change, repack, or
++  physical parity claim was added.
++
++## Evidence
++
++- `PYTHONPATH="$PWD" python3 -m pytest -q tests/packs/rendering/test_composition_package.py tests/core/timeline/test_clip_fields.py tests/journeys/test_journey_plumbing.py`
++  — 181 passed; 6 local socket tests could not create localhost sockets under
++  the worker sandbox (`EPERM`); 3 deselected.
++- `ASTRID_TEST_NODE_MODULES=/home/user/work/app/node_modules PYTHONPATH="$PWD" python3 -m pytest -q tests/packs/rendering/test_capture_scene_labels.py`
++  — 20 passed. The dependency pool was read-only; no shared install was
++  modified.
++- Central targeted service for `tests/journeys/test_journey_plumbing.py` — 85
++  passed, 2 deselected, exit 0.
++- Archive verification — exact SHA-256, 58,477 bytes, version `0.0.13`, 77
++  regular members, and lock integrity all passed.
++- `git diff --check` — passed.
++
++## Limits and next steps
++
++The worker did not run a full suite, browser/live renderer, or physical
++PCM/frame-parity qualification. The central journey result resolves the local
++socket restriction. Harness-commit this worktree, then proceed with the
++manager’s integration review.
+diff --git a/astrid/core/rendering/remotion_runtime.py b/astrid/core/rendering/remotion_runtime.py
+index 7dc959ee4c37bf9a7da9c944dd03418bc57c07b7..b147a2aa3c8e737340466b9da3a482cc144630d3
+--- a/astrid/core/rendering/remotion_runtime.py
++++ b/astrid/core/rendering/remotion_runtime.py
+@@ -45,7 +45,7 @@
+     "timeline-composition",
+ )
+ _COMPOSITION_PACKAGE_NAME = "@banodoco/timeline-composition"
+-_COMPOSITION_PACKAGE_VERSION = "0.0.12"
++_COMPOSITION_PACKAGE_VERSION = "0.0.13"
+ _REQUIRED_COMPOSITION_EXPORTS = (
+     ".",
+     "./evaluation",
+diff --git a/remotion/package-lock.json b/remotion/package-lock.json
+index 5d3c765daa707065e8da5db94f3f06d21d37b7a2..2b3bc9c1f881ff22426d216b324ca162146e6322
+--- a/remotion/package-lock.json
++++ b/remotion/package-lock.json
+@@ -7,7 +7,7 @@
+       "name": "tools-remotion",
+       "hasInstallScript": true,
+       "dependencies": {
+-        "@banodoco/timeline-composition": "file:artifacts/banodoco-timeline-composition-0.0.12.tgz",
++        "@banodoco/timeline-composition": "file:artifacts/banodoco-timeline-composition-0.0.13.tgz",
+         "@react-three/fiber": "8.18.0",
+         "@remotion/cli": "4.0.509",
+         "@remotion/google-fonts": "4.0.509",
+@@ -421,9 +421,9 @@
+       }
+     },
+     "node_modules/@banodoco/timeline-composition": {
+-      "version": "0.0.12",
+-      "resolved": "file:artifacts/banodoco-timeline-composition-0.0.12.tgz",
+-      "integrity": "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==",
++      "version": "0.0.13",
++      "resolved": "file:artifacts/banodoco-timeline-composition-0.0.13.tgz",
++      "integrity": "sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ==",
+       "peerDependencies": {
+         "@remotion/layout-utils": "4.0.509",
+         "@remotion/media": "4.0.509",
+diff --git a/remotion/package.json b/remotion/package.json
+index ce124300f1723b33c7e254f4318504130addbe66..8057a6d6b7cd63409bbaacc83d5408bc36f6aa2c
+--- a/remotion/package.json
++++ b/remotion/package.json
+@@ -15,7 +15,7 @@
+     "postinstall": "node scripts/apply-renderer-darwin-cpu-patch.mjs"
+   },
+   "dependencies": {
+-    "@banodoco/timeline-composition": "file:artifacts/banodoco-timeline-composition-0.0.12.tgz",
++    "@banodoco/timeline-composition": "file:artifacts/banodoco-timeline-composition-0.0.13.tgz",
+     "@react-three/fiber": "8.18.0",
+     "@remotion/cli": "4.0.509",
+     "@remotion/google-fonts": "4.0.509",
+diff --git a/tests/core/timeline/test_clip_fields.py b/tests/core/timeline/test_clip_fields.py
+index 02199a012aaaacebc5b75248fe2cef79dc32cc76..5d4aa950893213adf388f809788aace4de3200ac
+--- a/tests/core/timeline/test_clip_fields.py
++++ b/tests/core/timeline/test_clip_fields.py
+@@ -395,7 +395,7 @@
+ 
+ 
+ def test_render_status_defaults_to_pinned_union_composition():
+-    # The receiving lock pins timeline-composition 0.0.12; 0.0.7 remains an
++    # The receiving lock pins timeline-composition 0.0.13; 0.0.7 remains an
+     # explicit compatibility case above, not the receiving default.
+     assert cf.render_status("am-type", "opacity") == "renders"
+     assert cf.render_status("am-type", "opacity", "0.0.7") == "renders"
+diff --git a/tests/journeys/test_journey_plumbing.py b/tests/journeys/test_journey_plumbing.py
+index 2f456cf2e4b0fa229c37134606814730da476f5b..6797c508a0a193c13f01a74a680ef7869e362888
+--- a/tests/journeys/test_journey_plumbing.py
++++ b/tests/journeys/test_journey_plumbing.py
+@@ -125,7 +125,7 @@
+         (package / "dist" / f"{filename}.js").write_text("export {};\n")
+     (package / "package.json").write_text(json.dumps({
+         "name": "@banodoco/timeline-composition",
+-        "version": "0.0.12",
++        "version": "0.0.13",
+         "exports": exports,
+     }))
+ 
+diff --git a/tests/packs/rendering/test_capture_scene_labels.py b/tests/packs/rendering/test_capture_scene_labels.py
+index f74147e355aec853e206e3eaee646e502d7d3ac8..5f4aaee8da561a68ef86236d88f4701d3b1d986e
+--- a/tests/packs/rendering/test_capture_scene_labels.py
++++ b/tests/packs/rendering/test_capture_scene_labels.py
+@@ -50,7 +50,8 @@
+                                   json.loads((REMOTION / "package.json").read_text())["dependencies"]
+                                   ["@banodoco/timeline-composition"].removeprefix("file:")))
+     expected = {"0.0.10": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
+-                "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"}
++                "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
++                "0.0.13": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"}
+     with tarfile.open(artifact) as archive:
+         version = json.load(archive.extractfile("package/package.json"))["version"]
+         assert hashlib.sha256(artifact.read_bytes()).hexdigest() == expected[version]
+diff --git a/tests/packs/rendering/test_composition_package.py b/tests/packs/rendering/test_composition_package.py
+index dff0237e271cd198afe4566e36c032fe0b0d09c7..91071eb072cf95fcdd5dbd202a17580c0a8c5876
+--- a/tests/packs/rendering/test_composition_package.py
++++ b/tests/packs/rendering/test_composition_package.py
+@@ -16,8 +16,8 @@
+ 
+ ROOT = Path(__file__).resolve().parents[3]
+ REMOTION = ROOT / "remotion"
+-SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+-INTEGRITY = "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA=="
++SHA256 = "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"
++INTEGRITY = "sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ=="
+ REQUIRED_EXPORTS = (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
+                     "./animations.generated", "./transitions.generated", "./registry.generated")
+ 
+@@ -28,25 +28,28 @@
+     cli.write_text("// CLI")
+     package = project / "node_modules/@banodoco/timeline-composition"
+     package.parent.mkdir(parents=True)
+-    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz") as archive:
++    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz") as archive:
+         archive.extractall(project)
+     (project / "package").rename(package)
+     return package, json.loads((package / "package.json").read_text())
+ 
+ 
+ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
+-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
++    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz"
+     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
+     lock = json.loads((REMOTION / "package-lock.json").read_text())
+     package = lock["packages"]["node_modules/@banodoco/timeline-composition"]
+-    assert package["version"] == "0.0.12"
+-    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.12.tgz"
++    assert package["version"] == "0.0.13"
++    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.13.tgz"
+     assert package["integrity"] == INTEGRITY
+     with tarfile.open(artifact) as archive:
+         manifest_file = archive.extractfile("package/package.json")
+         assert manifest_file is not None
+         manifest = json.load(manifest_file)
+-        files = set(archive.getnames())
++        members = archive.getmembers()
++        files = {member.name for member in members}
++    assert len(members) == 77
++    assert all(member.isfile() for member in members)
+     assert not any(name.startswith("package/typescript/") for name in files)
+     for export in REQUIRED_EXPORTS:
+         for target in manifest["exports"][export].values():
+@@ -69,6 +72,40 @@
+     assert remotion_runtime.remotion_install_problem(package.parents[2]) is None
+ 
+ 
++def test_public13_evaluation_admits_valid_source_and_rejects_four_forged_sources(tmp_path):
++    project = tmp_path / "api"
++    _stage_locked_package(project)
++    script = r'''
++import assert from 'node:assert/strict';
++import {AudioEnvelopeError, encodedEnvelopeSource} from '@banodoco/timeline-composition/evaluation';
++
++const envelope = {keyframes: [{at: 0, value: 1}, {at: 1, value: 1}]};
++const prepared = {
++  file: 'https://example.test/prepared.wav',
++  envelope_key: '{"keyframes":[{"at":0,"value":1},{"at":1,"value":1}]}',
++  source_from: 2 / 30,
++  playback_rate: 1.5,
++};
++assert.equal(encodedEnvelopeSource(prepared, envelope, 2 / 30, 1.5), prepared.file);
++assert.equal('useAudioEnvelopeSource' in await import('@banodoco/timeline-composition/evaluation'), false);
++
++for (const [name, change] of Object.entries({
++  envelope: {envelope_key: '{}'},
++  sourceFrom: {source_from: 0.05},
++  playbackRate: {playback_rate: 1},
++  url: {file: 'blob:prepared'},
++})) {
++  const forged = {...prepared, ...change};
++  const before = JSON.stringify(forged);
++  assert.throws(() => encodedEnvelopeSource(forged, envelope, 2 / 30, 1.5),
++    (error) => error instanceof AudioEnvelopeError && error.code === 'ENVELOPE_UNRENDERED', name);
++  assert.equal(JSON.stringify(forged), before, name);
++}
++''';
++    subprocess.run([os.environ.get("ASTRID_NODE_EXECUTABLE", "node"), "--input-type=module", "-e", script],
++                   cwd=project, check=True, capture_output=True, text=True, timeout=30)
++
++
+ @pytest.mark.parametrize("mutation, expected", [
+     ("delete", "evaluation"),
+     ("missing", "missing"),
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/DONE
+printf '%s\\n' '--- final worker artifacts ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/DONE
+printf '%s\\n' '--- final repo status ---'
+git status --short --branch
+printf '%s\\n' '--- final diff check ---'
+git diff --check
+printf '%s\\n' '--- artifact final identity ---'
+sha256sum remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+python3 - <<'PY'
+import json, tarfile
+from pathlib import Path
+p=Path('remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz')
+with tarfile.open(p) as a:
+    ms=a.getmembers()
+    print(f'bytes={p.stat().st_size} members={len(ms)} regular={all(m.isfile() for m in ms)} version={json.load(a.extractfile(\"package/package.json\"))[\"version\"]}')
+PY
+printf '%s\\n' '--- commit message ---'
+sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg" in /home/user/work/wt/agt-m3-public13-current-adoption
+ succeeded in 305ms:
+--- final worker artifacts ---
+-rw-r--r-- 1 root root    0 Oct 20 17:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/DONE
+-rw-r--r-- 1 root root  267 Oct 20 17:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg
+-rw-r--r-- 1 root root  267 Oct 20 17:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/commit-msg.txt
+-rw-r--r-- 1 root root 2033 Oct 20 17:29 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-current-adoption/report.md
+--- final repo status ---
+## tl/agt-m3-public13-current-adoption
+ M astrid/core/rendering/remotion_runtime.py
+ M remotion/package-lock.json
+ M remotion/package.json
+ M tests/core/timeline/test_clip_fields.py
+ M tests/journeys/test_journey_plumbing.py
+ M tests/packs/rendering/test_capture_scene_labels.py
+ M tests/packs/rendering/test_composition_package.py
+?? remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+?? remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256
+--- final diff check ---
+--- artifact final identity ---
+9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738  remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+bytes=58477 members=77 regular=True version=0.0.13
+--- commit message ---
+chore(rendering): adopt Composition 0.0.13 consumer pin
+
+Carry the reviewed public13 archive, exact package integrity, runtime pin,
+and focused admission checks onto current Agent integration while retaining
+the existing 0.0.12 compatibility artifact and assertions.
+
+codex
+Implemented the reviewed Composition 0.0.13 adoption onto current `c73b1ab1`.
+
+- Added exact 58,477-byte/77-member archive with SHA-256 `9412ae25…d54738`.
+- Updated package, lockfile, runtime pin, and focused admission tests.
+- Preserved 0.0.12 compatibility artifacts and current behavior.
+- Central journey tests: 85 passed, 2 deselected.
+- Capture/static Node tests: 20 passed.
+- `git diff --check`: passed.
+- No full suite or physical PCM/frame-parity claim made.
+
+Local socket tests were sandbox-blocked, but passed via the central service. Report and commit message are written; `DONE` created.
+tokens used
+127,513
+Implemented the reviewed Composition 0.0.13 adoption onto current `c73b1ab1`.
+
+- Added exact 58,477-byte/77-member archive with SHA-256 `9412ae25…d54738`.
+- Updated package, lockfile, runtime pin, and focused admission tests.
+- Preserved 0.0.12 compatibility artifacts and current behavior.
+- Central journey tests: 85 passed, 2 deselected.
+- Capture/static Node tests: 20 passed.
+- `git diff --check`: passed.
+- No full suite or physical PCM/frame-parity claim made.
+
+Local socket tests were sandbox-blocked, but passed via the central service. Report and commit message are written; `DONE` created.

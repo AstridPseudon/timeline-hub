@@ -1,0 +1,400 @@
+The central projection lane is still running; the wait process has produced no completion yet. I’m checking its result log before polling again so I don’t duplicate or relaunch an active run.
+exec
+/bin/bash -lc 'ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-identity-fixture-only-projection-occupancy-integration-1020093159-2191/ && tail -40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-identity-fixture-only-projection-occupancy-integration-1020093159-2191/log.txt 2>/dev/null || true' in /home/user/work/wt/agt-m2-identity-fixture-only
+ succeeded in 0ms:
+total 20
+-rw-r--r-- 1 root root 471 Oct 20 09:32 ext
+-rw-r--r-- 1 root root 136 Oct 20 09:32 request
+-rw-r--r-- 1 root root 140 Oct 20 09:32 snap
+-rw-r--r-- 1 root root   7 Oct 20 09:32 status
+-rw-r--r-- 1 root root  38 Oct 20 09:32 why
+
+exec
+/bin/bash -lc "for f in status request why; do printf '%s: ' \""'$f"; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-identity-fixture-only-projection-occupancy-integration-1020093159-2191/$f; done' in /home/user/work/wt/agt-m2-identity-fixture-only
+ succeeded in 0ms:
+status: queued
+request: target=agt-m2-identity-fixture-only
+repo=agent
+suite=projection-occupancy-integration
+files=''
+nocache=0
+requested=2026-10-20T09:32:00Z
+why: 2 targeted/named runs already running
+
+exec
+/bin/bash -lc "for d in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-identity-fixture-only-*-integration-*; do printf '%s ' \""'$(basename "$d")"; cat "$d/status" 2>/dev/null; printf '"' '; cat \""'$d/why" 2>/dev/null; done' in /home/user/work/wt/agt-m2-identity-fixture-only
+ exited 1 in 0ms:
+agt-m2-identity-fixture-only-identity-pin94114269-integration-1020093201-3811 pass
+ agt-m2-identity-fixture-only-projection-occupancy-integration-1020093159-2191 fail
+ 
+ exited 1 in 90125ms:
+test agt-m2-identity-fixture-only-projection-occupancy-integration-1020093159-2191: fail exit=1 in 8s — projection-occupancy-integration on agt-m2-identity-fixture-only (agent tree c1d53f57b146b69276d5c6bbf422f0df9917b22d)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_identity.py
+counts: 2 failed, 3 passed in 5.08s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-identity-fixture-only-projection-occupancy-integration-1020093159-2191/log.txt ---
+
+astrid/sdk/client.py:129: WorkspaceClientError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1697/test_cli_python_outbox_restart1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc2eb330d60>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc2eac51310>
+film = (FilmFixture(source_root=PosixPath('/tmp/pytest-of-root/pytest-1697/test_cli_python_outbox_restart1/precut-v31-copy-a'...h', 'created_at': '2026-10-20T09:33:05.104+00:00', 'event_ids': ['3'], 'idempotency_key': 'm1-journey-baseline', ...}})
+wire = ([], set())
+real_runtime = <function real_runtime.<locals>.start at 0x7fc2ea8a0c20>
+touched_basis = True
+
+    @pytest.mark.parametrize("touched_basis", [False, True], ids=["disjoint-rebase-undo", "touched-basis-conflict"])
+    def test_cli_python_outbox_restart_and_guarded_inverse(
+        tmp_path: Path, monkeypatch, capsys, film, wire, real_runtime, touched_basis,
+    ):
+        from astrid.sdk.exceptions import ServiceUnavailableError
+        from astrid.sdk.timeline._common import TimelineEditError
+        from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+        from astrid.sdk.workspace_client import WorkspaceClientError
+    
+        fixture, original_parent, baseline = film
+        monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "client-data"))
+        observed, lose = wire
+        support = tmp_path / "support"
+    
+        def start(port=0):
+            return real_runtime(fixture.duplicate_root, support_root=support,
+                                port=port, authoring_profile="astrid")
+    
+        daemon = start()
+>       client = open_client(daemon)
+                 ^^^^^^^^^^^^^^^^^^^
+
+tests/editing_conformance/test_commit_runtime_m1.py:217: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_m1.py:114: in open_client
+    return AstridClient.open(
+astrid/sdk/client.py:310: in open
+    workspace = connect(endpoint_value, token)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+endpoint_value = 'http://127.0.0.1:42549'
+token = '5Zxhztn1lJkvYpGzuq1h7n6JA6am4nDr-yAXm_m5JrQ'
+
+    def connect(endpoint_value: str, token: str) -> Any:
+        workspace = WorkspaceClient(endpoint_value, token)
+        try:
+            _validate_health(workspace.health(), expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST)
+        except Exception as exc:
+>           raise unavailable(exc, operation="health") from exc
+E           astrid.sdk.exceptions.ServiceUnavailableError: runtime health response does not match this Astrid client contract (runtime health schema digest sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c does not match this Astrid client's expected sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf); expected schema digest sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf and component manifest sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5, runtime reports sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c.
+
+astrid/sdk/client.py:282: ServiceUnavailableError
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]
+FAILED tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict]
+2 failed, 3 passed in 5.08s
+
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-identity-fixture-only-projection-occupancy-integration-1020093159-2191; ls -l "$D"; printf '"'\\n--- log ---\\n'; cat \""'$D/log.txt" 2>/dev/null || true; printf '"'\\n--- identity result ---\\n'; D2=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-identity-fixture-only-identity-pin94114269-integration-1020093201-3811; ls -l \""'$D2"; cat "$D2/log.txt" 2>/dev/null || true' in /home/user/work/wt/agt-m2-identity-fixture-only
+ succeeded in 0ms:
+total 40
+-rw-r--r-- 1 root root     2 Oct 20 09:33 exit
+-rw-r--r-- 1 root root   628 Oct 20 09:33 ext
+-rw-r--r-- 1 root root 10605 Oct 20 09:33 log.txt
+-rw-r--r-- 1 root root   136 Oct 20 09:32 request
+-rw-r--r-- 1 root root     0 Oct 20 09:33 runner.log
+-rw-r--r-- 1 root root   140 Oct 20 09:33 snap
+-rw-r--r-- 1 root root     5 Oct 20 09:33 status
+-rw-r--r-- 1 root root  4384 Oct 20 09:33 summary
+
+--- log ---
+FF...                                                                    [100%]
+=================================== FAILURES ===================================
+___ test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo] ___
+
+endpoint_value = 'http://127.0.0.1:46227'
+token = '_s90jegfVrP322UPSJMnnTBO19ri-gQtm4yup-6Z6bc'
+
+    def connect(endpoint_value: str, token: str) -> Any:
+        workspace = WorkspaceClient(endpoint_value, token)
+        try:
+>           _validate_health(workspace.health(), expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST)
+
+astrid/sdk/client.py:280: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'protocol': 'workspace.v1', 'runtime_epoch': 4, 'runtime_instance_id': 'd70da76804e14c2195b968cea1a37634', 'runtime_session_id': '1378e103c7eb4f349a887a880bb4f1db', ...}
+
+    def _validate_health(value: Any, *, expected_protocol: str, expected_digest: str) -> None:
+        health = _require_mapping(value, field="health")
+        if frozenset(health) != _HEALTH_KEYS:
+            raise _protocol_error("health", "runtime health response has an unexpected schema")
+        if health.get("status") != "ok":
+            raise _protocol_error("health.status", "runtime health status is not ok")
+        if health.get("protocol") != expected_protocol:
+            raise _protocol_error("health.protocol", "runtime health protocol does not match workspace.v1")
+        if health.get("schema_digest") != expected_digest:
+>           raise _digest_mismatch("health", health.get("schema_digest"), expected_digest)
+E           astrid.sdk.workspace_client.WorkspaceClientError: runtime health schema digest sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c does not match this Astrid client's expected sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf
+
+astrid/sdk/client.py:129: WorkspaceClientError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1697/test_cli_python_outbox_restart0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc2eb332d70>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc2eb1f1a90>
+film = (FilmFixture(source_root=PosixPath('/tmp/pytest-of-root/pytest-1697/test_cli_python_outbox_restart0/precut-v31-copy-a'...h', 'created_at': '2026-10-20T09:33:04.057+00:00', 'event_ids': ['3'], 'idempotency_key': 'm1-journey-baseline', ...}})
+wire = ([], set())
+real_runtime = <function real_runtime.<locals>.start at 0x7fc2eaa28540>
+touched_basis = False
+
+    @pytest.mark.parametrize("touched_basis", [False, True], ids=["disjoint-rebase-undo", "touched-basis-conflict"])
+    def test_cli_python_outbox_restart_and_guarded_inverse(
+        tmp_path: Path, monkeypatch, capsys, film, wire, real_runtime, touched_basis,
+    ):
+        from astrid.sdk.exceptions import ServiceUnavailableError
+        from astrid.sdk.timeline._common import TimelineEditError
+        from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+        from astrid.sdk.workspace_client import WorkspaceClientError
+    
+        fixture, original_parent, baseline = film
+        monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "client-data"))
+        observed, lose = wire
+        support = tmp_path / "support"
+    
+        def start(port=0):
+            return real_runtime(fixture.duplicate_root, support_root=support,
+                                port=port, authoring_profile="astrid")
+    
+        daemon = start()
+>       client = open_client(daemon)
+                 ^^^^^^^^^^^^^^^^^^^
+
+tests/editing_conformance/test_commit_runtime_m1.py:217: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_m1.py:114: in open_client
+    return AstridClient.open(
+astrid/sdk/client.py:310: in open
+    workspace = connect(endpoint_value, token)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+endpoint_value = 'http://127.0.0.1:46227'
+token = '_s90jegfVrP322UPSJMnnTBO19ri-gQtm4yup-6Z6bc'
+
+    def connect(endpoint_value: str, token: str) -> Any:
+        workspace = WorkspaceClient(endpoint_value, token)
+        try:
+            _validate_health(workspace.health(), expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST)
+        except Exception as exc:
+>           raise unavailable(exc, operation="health") from exc
+E           astrid.sdk.exceptions.ServiceUnavailableError: runtime health response does not match this Astrid client contract (runtime health schema digest sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c does not match this Astrid client's expected sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf); expected schema digest sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf and component manifest sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5, runtime reports sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c.
+
+astrid/sdk/client.py:282: ServiceUnavailableError
+__ test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict] __
+
+endpoint_value = 'http://127.0.0.1:42549'
+token = '5Zxhztn1lJkvYpGzuq1h7n6JA6am4nDr-yAXm_m5JrQ'
+
+    def connect(endpoint_value: str, token: str) -> Any:
+        workspace = WorkspaceClient(endpoint_value, token)
+        try:
+>           _validate_health(workspace.health(), expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST)
+
+astrid/sdk/client.py:280: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'protocol': 'workspace.v1', 'runtime_epoch': 4, 'runtime_instance_id': '40d5c760943547b3a3f1acd343041d6a', 'runtime_session_id': '017ddbfbfa6c4bd8b139e19a6cdc6e46', ...}
+
+    def _validate_health(value: Any, *, expected_protocol: str, expected_digest: str) -> None:
+        health = _require_mapping(value, field="health")
+        if frozenset(health) != _HEALTH_KEYS:
+            raise _protocol_error("health", "runtime health response has an unexpected schema")
+        if health.get("status") != "ok":
+            raise _protocol_error("health.status", "runtime health status is not ok")
+        if health.get("protocol") != expected_protocol:
+            raise _protocol_error("health.protocol", "runtime health protocol does not match workspace.v1")
+        if health.get("schema_digest") != expected_digest:
+>           raise _digest_mismatch("health", health.get("schema_digest"), expected_digest)
+E           astrid.sdk.workspace_client.WorkspaceClientError: runtime health schema digest sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c does not match this Astrid client's expected sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf
+
+astrid/sdk/client.py:129: WorkspaceClientError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1697/test_cli_python_outbox_restart1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc2eb330d60>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc2eac51310>
+film = (FilmFixture(source_root=PosixPath('/tmp/pytest-of-root/pytest-1697/test_cli_python_outbox_restart1/precut-v31-copy-a'...h', 'created_at': '2026-10-20T09:33:05.104+00:00', 'event_ids': ['3'], 'idempotency_key': 'm1-journey-baseline', ...}})
+wire = ([], set())
+real_runtime = <function real_runtime.<locals>.start at 0x7fc2ea8a0c20>
+touched_basis = True
+
+    @pytest.mark.parametrize("touched_basis", [False, True], ids=["disjoint-rebase-undo", "touched-basis-conflict"])
+    def test_cli_python_outbox_restart_and_guarded_inverse(
+        tmp_path: Path, monkeypatch, capsys, film, wire, real_runtime, touched_basis,
+    ):
+        from astrid.sdk.exceptions import ServiceUnavailableError
+        from astrid.sdk.timeline._common import TimelineEditError
+        from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+        from astrid.sdk.workspace_client import WorkspaceClientError
+    
+        fixture, original_parent, baseline = film
+        monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "client-data"))
+        observed, lose = wire
+        support = tmp_path / "support"
+    
+        def start(port=0):
+            return real_runtime(fixture.duplicate_root, support_root=support,
+                                port=port, authoring_profile="astrid")
+    
+        daemon = start()
+>       client = open_client(daemon)
+                 ^^^^^^^^^^^^^^^^^^^
+
+tests/editing_conformance/test_commit_runtime_m1.py:217: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_m1.py:114: in open_client
+    return AstridClient.open(
+astrid/sdk/client.py:310: in open
+    workspace = connect(endpoint_value, token)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+endpoint_value = 'http://127.0.0.1:42549'
+token = '5Zxhztn1lJkvYpGzuq1h7n6JA6am4nDr-yAXm_m5JrQ'
+
+    def connect(endpoint_value: str, token: str) -> Any:
+        workspace = WorkspaceClient(endpoint_value, token)
+        try:
+            _validate_health(workspace.health(), expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST)
+        except Exception as exc:
+>           raise unavailable(exc, operation="health") from exc
+E           astrid.sdk.exceptions.ServiceUnavailableError: runtime health response does not match this Astrid client contract (runtime health schema digest sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c does not match this Astrid client's expected sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf); expected schema digest sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf and component manifest sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5, runtime reports sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c.
+
+astrid/sdk/client.py:282: ServiceUnavailableError
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]
+FAILED tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict]
+2 failed, 3 passed in 5.08s
+
+--- identity result ---
+total 28
+-rw-r--r-- 1 root root   2 Oct 20 09:32 exit
+-rw-r--r-- 1 root root 471 Oct 20 09:32 ext
+-rw-r--r-- 1 root root  98 Oct 20 09:32 log.txt
+-rw-r--r-- 1 root root 136 Oct 20 09:32 request
+-rw-r--r-- 1 root root   0 Oct 20 09:32 runner.log
+-rw-r--r-- 1 root root 140 Oct 20 09:32 snap
+-rw-r--r-- 1 root root   5 Oct 20 09:32 status
+-rw-r--r-- 1 root root 899 Oct 20 09:32 summary
+...                                                                      [100%]
+3 passed in 3.25s
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-identity-fixture-only-identity-pin94114269-integration-1020093201-3811' in /home/user/work/wt/agt-m2-identity-fixture-only
+ succeeded in 0ms:
+test agt-m2-identity-fixture-only-identity-pin94114269-integration-1020093201-3811: pass exit=0 in 5s — identity-pin94114269-integration on agt-m2-identity-fixture-only (agent tree c1d53f57b146b69276d5c6bbf422f0df9917b22d)
+cmd: test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py
+counts: 3 passed in 3.25s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-identity-fixture-only-identity-pin94114269-integration-1020093201-3811/log.txt ---
+...                                                                      [100%]
+3 passed in 3.25s
+
+codex
+The pinned `94114269` identity-only named lane passes exactly `3 passed`. The current-Runtime projection-occupancy lane reports `3 passed, 2 failed`; both failures are in pre-existing `test_commit_runtime_m1.py` health-schema digest mismatch, while the identity tests pass. I’m running the remaining integration-marked trusted-seed users directly to distinguish fixture coverage from that unrelated contract mismatch.
+exec
+/bin/bash -lc 'ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/sdk/test_capture_source_runtime.py tests/sdk/test_timeline_capture_projection.py' in /home/user/work/wt/agt-m2-identity-fixture-only
+ succeeded in 14593ms:
+xxxxx.................x.........                                         [100%]
+26 passed, 32 deselected, 6 xfailed in 13.75s
+
+codex
+The integration-marked trusted-seed consumers pass: `26 passed, 32 deselected, 6 xfailed`; the xfails are existing expectations in that lane. I’m doing the final diff/lint/status audit now, then I’ll write the harness commit message and DONE marker.
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_identity.py tests/helpers/trusted_seed.py && git diff --check && printf '\\n--- changed paths ---\\n' && git status --short && printf '\\n--- diff stat ---\\n' && git diff --stat && printf '\\n--- stage1 status ---\\n' && git diff --quiet -- tests/stage1/test_runtime_client_cutover.py; printf 'stage1_unchanged=%s\\n' \""'$?" && printf '"'\\n--- worktree untracked ---\\n' && git ls-files --others --exclude-standard" in /home/user/work/wt/agt-m2-identity-fixture-only
+ succeeded in 875ms:
+All checks passed!
+
+--- changed paths ---
+ M tests/editing_conformance/test_commit_runtime_identity.py
+ M tests/helpers/trusted_seed.py
+
+--- diff stat ---
+ .../editing_conformance/test_commit_runtime_identity.py | 17 +++++++++--------
+ tests/helpers/trusted_seed.py                           |  8 ++++++--
+ 2 files changed, 15 insertions(+), 10 deletions(-)
+
+--- stage1 status ---
+stage1_unchanged=0
+
+--- worktree untracked ---
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-identity-fixture-only/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-identity-fixture-only/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-identity-fixture-only/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-identity-fixture-only/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-identity-fixture-only/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-identity-fixture-only/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d20e4e6f8a2eb342e6322b9db3d215bdf2616130
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-identity-fixture-only/commit-msg
+@@ -0,0 +1,5 @@
++test(runtime): migrate identity fixtures to trusted acceptance
++
++Use public Runtime ingest and trusted accepted baselines for identity
++regressions, and merge current and incoming pinned closure children by
++identity so partial publications retain existing shot and internal images.
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- commit message ---' && sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-identity-fixture-only/commit-msg && printf '%s\\n' '--- markers ---' && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-identity-fixture-only/DONE && echo DONE-present && printf '%s\\n' '--- final status ---' && git status --short --branch" in /home/user/work/wt/agt-m2-identity-fixture-only
+ succeeded in 224ms:
+--- commit message ---
+test(runtime): migrate identity fixtures to trusted acceptance
+
+Use public Runtime ingest and trusted accepted baselines for identity
+regressions, and merge current and incoming pinned closure children by
+identity so partial publications retain existing shot and internal images.
+--- markers ---
+DONE-present
+--- final status ---
+## tl/agt-m2-identity-fixture-only
+ M tests/editing_conformance/test_commit_runtime_identity.py
+ M tests/helpers/trusted_seed.py
+
+codex
+Implemented only the valid two-file migration from `2961d3ce`:
+
+- Migrated identity fixtures to public Runtime ingest and trusted acceptance.
+- Updated closure seeding to retain existing pinned shot/internal images.
+- Preserved all original assertions; Stage 1 changes were excluded.
+
+Tests:
+
+- Identity current Runtime: `3 passed`
+- Pinned Runtime `94114269`: `3 passed`
+- Capture/trusted-seed integration: `26 passed, 32 deselected, 6 xfailed`
+- Ruff and diff checks: passed
+- Named projection lane: `3 passed, 2 failed` due unrelated Runtime health schema digest mismatch in M1 tests.
+
+Wrote commit message and `DONE` marker.
+tokens used
+76,777
+Implemented only the valid two-file migration from `2961d3ce`:
+
+- Migrated identity fixtures to public Runtime ingest and trusted acceptance.
+- Updated closure seeding to retain existing pinned shot/internal images.
+- Preserved all original assertions; Stage 1 changes were excluded.
+
+Tests:
+
+- Identity current Runtime: `3 passed`
+- Pinned Runtime `94114269`: `3 passed`
+- Capture/trusted-seed integration: `26 passed, 32 deselected, 6 xfailed`
+- Ruff and diff checks: passed
+- Named projection lane: `3 passed, 2 failed` due unrelated Runtime health schema digest mismatch in M1 tests.
+
+Wrote commit message and `DONE` marker.

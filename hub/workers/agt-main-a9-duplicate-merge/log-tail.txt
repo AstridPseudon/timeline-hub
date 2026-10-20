@@ -1,0 +1,400 @@
+--- worktree status ---
+## tl/agt-main-a9-duplicate-merge
+ M astrid/sdk/timeline/publish.py
+ M astrid/sdk/timeline_duplicate.py
+ M tests/sdk/test_timeline_checkout.py
+ M tests/sdk/test_timeline_restructure.py
+
+--- bytecode/build residue ---
+
+exec
+/bin/bash -lc 'unlink /tmp/agt-main-a9-duplicate-merge-index 2>/dev/null || true; test ! -e /tmp/agt-main-a9-duplicate-merge-index && echo temp_index_clean' in /home/user/work/wt/agt-main-a9-duplicate-merge
+ succeeded in 0ms:
+temp_index_clean
+
+exec
+/bin/bash -lc 'MSG=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge/commit-msg; if [ -e "$MSG" ]; then sed -n '"'1,80p' \""'$MSG"; else echo '"'(no existing commit message)'; fi; ls -ld /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge" in /home/user/work/wt/agt-main-a9-duplicate-merge
+ succeeded in 77ms:
+(no existing commit message)
+drwxr-xr-x 2 root root 4096 Oct 20 18:23 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..53fc0fe1f177c0b701e30e1b6c6501788e7ae4ad
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge/commit-msg
+@@ -0,0 +1,6 @@
++fix(timelines): preserve stored-form duplicate guards
++
++Port the five upstream duplicate and narration fixes onto current Main,
++retaining Main's core validation and draft-history behavior. Preserve repeated
++shot occurrences, compare the copied source against its own stored form, and
++adopt only an exact runtime narration binding after a lost document pin.
+diff --git a/astrid/sdk/timeline/publish.py b/astrid/sdk/timeline/publish.py
+index c15f83f8a5cda0a156fc69c0e322d69a82b910d7..62e7aa31d63e00902eaa58f4ac7575e81eef0cc0
+--- a/astrid/sdk/timeline/publish.py
++++ b/astrid/sdk/timeline/publish.py
+@@ -174,6 +174,26 @@
+                 changed[sid] = text
+         return changed
+ 
++    def _matching_binding(self, client: Any, sid: str, text: str, bound: Mapping[str, Any] | None) -> dict[str, Any] | None:
++        """The runtime's voiceover_script binding for ``sid`` iff its content hash is exactly ``text``'s (and it is the
++        document's own binding when the document carries one); None otherwise, so the conflict is reported."""
++        import hashlib
++
++        from astrid.sdk.pagination import page_pair
++
++        listed = client.shots.list_text_bindings(self.bundle["project_id"], shot_id=sid, kind="voiceover_script")
++        page = page_pair(getattr(listed, "data", None)) if getattr(listed, "ok", False) else None
++        if page is None or page[1] is not None:
++            return None
++        digest = "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
++        for row in page[0]:
++            if (isinstance(row, Mapping) and row.get("shot_id") == sid and row.get("kind") == "voiceover_script"
++                    and row.get("content_hash") == digest
++                    and (not bound or not bound.get("binding_id") or row.get("binding_id") == bound.get("binding_id"))
++                    and row.get("slot") == (bound or {}).get("slot")):
++                return dict(row)
++        return None
++
+     def pin_narration(self, client: Any, *, idempotency_key: str) -> list[str]:
+         """Register the changed narration per shot and pin it in the document (publish does this)."""
+         pinned = []
+@@ -184,6 +204,13 @@
+             result = client.shots.set_text_binding(self.bundle["project_id"], shot_id=sid, kind="voiceover_script", text=text,
+                                                     expected_head=expected,
+                                                     idempotency_key=f"{idempotency_key}-narration-{sid}"[:120])
++            err = getattr(result, "error", None)
++            if getattr(result, "ok", True) is False and getattr(err, "code", None) == "conflict":
++                # Adopt (never overwrite) a binding the document does not carry when the runtime already holds
++                # exactly this text for this shot (an earlier pin whose document write was lost).
++                adopted = self._matching_binding(client, sid, text, bound)
++                if adopted is not None:
++                    result = adopted
+             pin = getattr(result, "data", result)
+             if getattr(result, "ok", True) is False or not isinstance(pin, Mapping):
+                 raise TimelineEditError(f"could not register the narration for shot {sid}: {getattr(result, 'error', result)}")
+diff --git a/astrid/sdk/timeline_duplicate.py b/astrid/sdk/timeline_duplicate.py
+index 89bb2fc9d9aa1a9bc9cb50c56ebf6f2d69aa7dea..a780ebe877256c44b48ad89870c18df32fdb0916
+--- a/astrid/sdk/timeline_duplicate.py
++++ b/astrid/sdk/timeline_duplicate.py
+@@ -19,6 +19,7 @@
+ from astrid.core.timeline.astrid_ns import migrate_bundle
+ from astrid.sdk.timeline_checkout import Checkout, TimelineEditError
+ from astrid.sdk.timeline_editing import add_authoring_shot
++from astrid.sdk.timeline_restructure import STRUCTURE_KEY, flatten
+ 
+ __all__ = ["duplicate_timeline", "id_map", "copy_content"]
+ 
+@@ -78,7 +79,7 @@
+     placements = [dict(row) for row in source.get("placements") or []]
+     shot_ids = [str(row["shot_id"]) for row in placements]
+     occurrence_ids = [str(row["occurrence_id"]) for row in placements]
+-    shot_map = id_map(shot_ids, new_slug)
++    shot_map = id_map(list(dict.fromkeys(shot_ids)), new_slug)  # a shot the source places twice is ONE shot
+     occ_map = id_map(occurrence_ids, f"occ-{new_slug}")
+     ids = {**shot_map, **occ_map}
+ 
+@@ -101,6 +102,12 @@
+         src_shot = (source.get("shots") or {}).get(old_shot)
+         if not isinstance(src_shot, Mapping):
+             raise TimelineEditError(f"source shot {old_shot!r} has no content")
++        if new_shot in out["shots"]:  # placed again: same shot, another occurrence
++            again = _remap_values(copy.deepcopy(row), ids)
++            again["shot_id"], again["occurrence_id"] = new_shot, occ_map[str(row["occurrence_id"])]
++            out["placements"].append(again)
++            out["source_mapping"]["placements"][again["occurrence_id"]] = copy.deepcopy(again)
++            continue
+         # Seed the shot the way build_timeline does (add_authoring_shot). Its base_* stays the empty seed
+         # and the current content is the copy: that difference is what makes the compiler materialize it.
+         shot = add_authoring_shot(out, shot_id=new_shot, occurrence_id=occ_map[str(row["occurrence_id"])],
+@@ -128,9 +135,40 @@
+             notes.append(f"{text_bindings} narration text binding(s) not copied (these lines declare no script text); "
+                          "the words themselves are copied in each VO clip's app.words")
+     migrate_bundle(out)  # the source may be an old revision: the copy carries intent under app.astrid
++    assert_copy_equals_source(source, out, shot_map)
+     return out, notes
+ 
+ 
++def assert_copy_equals_source(source: Mapping[str, Any], copied: Mapping[str, Any], shot_map: Mapping[str, str]) -> None:
++    """Prove ``copied`` is a faithful copy of ``source`` (its input) under ``shot_map``, or raise.
++
++    This proves the copy equals the bundle it was given, not that the bundle is the right form of the film;
++    ``_duplicate`` separately compares against what the source itself stores.
++
++    Same number of placements; distinct source shots map to distinct new shots (a shot placed twice stays one shot
++    placed twice); each placement keeps its start and length; each shot's clips are the source's, ids remapped.
++    """
++    src_rows, new_rows = list(source.get("placements") or []), list(copied.get("placements") or [])
++    if len(src_rows) != len(new_rows):
++        raise TimelineEditError(f"the copy has {len(new_rows)} placements, its source has {len(src_rows)}")
++    if len(set(shot_map.values())) != len(shot_map):
++        raise TimelineEditError("the copy maps distinct source shots onto one shot id")
++    for a, b in zip(src_rows, new_rows):
++        if shot_map.get(str(a["shot_id"])) != str(b["shot_id"]):
++            raise TimelineEditError(f"placement of shot {a['shot_id']!r} was copied onto {b['shot_id']!r}, not {shot_map.get(str(a['shot_id']))!r}")
++        if (a.get("placement") or {}) != (b.get("placement") or {}) or a.get("duration_ms") != b.get("duration_ms"):
++            raise TimelineEditError(f"placement of shot {a['shot_id']!r} changed its start or length in the copy")
++    if len({str(r["shot_id"]) for r in new_rows}) != len({str(r["shot_id"]) for r in src_rows}):
++        raise TimelineEditError("the copy has a different number of distinct shots than its source")
++    source = copy.deepcopy(dict(source))
++    migrate_bundle(source)  # the copy carries intent under app.astrid
++    for old, new in shot_map.items():
++        want = _remap_values(copy.deepcopy(dict((source["shots"][old].get("internal_timeline")) or {})), shot_map)
++        got = (copied.get("shots") or {}).get(new, {}).get("internal_timeline") or {}
++        if (want.get("clips") or []) != (got.get("clips") or []):
++            raise TimelineEditError(f"shot {old!r} was not copied faithfully into {new!r} (its clips differ)")
++
++
+ def duplicate_timeline(project: str, source: str, *, slug: str | None = None, name: str | None = None,
+                        revision_id: str | None = None, client: Any = None) -> dict[str, Any]:
+     """Create a timeline with a copy of ``source``'s head (new shot ids) and publish it.
+@@ -169,9 +207,18 @@
+         raise TimelineEditError("the runtime created a timeline but returned no id")
+     try:
+         dst = Checkout.open(project, new_id, client=client)
+-        bundle, notes = copy_content(src.bundle, dst.bundle, new_slug=slug or new_id)
+-        dst.bundle = bundle
++        # A chapter film is read flat (ONE shot; its stored form is kept under structure_base). Copy the stored
++        # form: copying the flat shot would store the duplicate as a single shot whose chapters all share one id.
++        content = src.bundle.get(STRUCTURE_KEY) or src.bundle
++        bundle, notes = copy_content(content, dst.bundle, new_slug=slug or new_id)
++        dst.bundle = flatten(bundle)  # a chapter film is edited and published flat; publish splits it back into its stored form
+         dst.notes.extend(notes)
++        # What publish will store for the copy must have as many distinct shots as what the SOURCE stores. The source
++        # side is read independently of `content`, so copying the wrong form of the source is caught here.
++        copy_shots = {str(r["shot_id"]) for r in dst.stored_document()["placements"]}
++        source_shots = {str(r["shot_id"]) for r in src.stored_document()["placements"]}
++        if len(copy_shots) != len(source_shots):
++            raise TimelineEditError(f"the copy would be stored with {len(copy_shots)} distinct shots, its source stores {len(source_shots)}")
+         report = dst._check_core()
+         if not report.valid:
+             raise TimelineEditError("the copy is invalid: " + "; ".join(report.problems or [str(report)]))
+diff --git a/tests/sdk/test_timeline_checkout.py b/tests/sdk/test_timeline_checkout.py
+index f35ac6a4ebb84d60462c8292cadd2a8401e3a78c..85442b07d9dd205ca235e46f39f30dbd8628181a
+--- a/tests/sdk/test_timeline_checkout.py
++++ b/tests/sdk/test_timeline_checkout.py
+@@ -501,6 +501,9 @@
+                 idempotency_key=kwargs["idempotency_key"],
+             )
+ 
++        def list_text_bindings(self, project, **kwargs):
++            return DomainResult.success(([], None))
++
+     class Client:
+         def __init__(self):
+             self.shots = Shots()
+diff --git a/tests/sdk/test_timeline_restructure.py b/tests/sdk/test_timeline_restructure.py
+index 3524c6088c6f039eba0b24b30ef02fbf5dc6f105..c7bfbe564f04387d30d4cb14945e4312545654e9
+--- a/tests/sdk/test_timeline_restructure.py
++++ b/tests/sdk/test_timeline_restructure.py
+@@ -353,3 +353,132 @@
+                 t["app"] = {"scaleAppliesToPositionedClips": False}
+     with pytest.raises(TimelineEditError, match="conflicting track"):
+         flatten(stored)
++
++
++def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter(monkeypatch):
++    """A chapter film is read flat; duplicating must copy its stored form (a shot per chapter), not the one flat
++    shot, or the copy is stored as a single shot and every chapter reads back with the same shot id."""
++    from types import SimpleNamespace
++
++    from astrid.sdk import timeline_duplicate as td
++
++    stored = published(split(flat_film()))
++    assert len(stored["placements"]) == 3
++    src = Checkout(flatten(copy.deepcopy(stored)))
++    assert len(src.bundle["shots"]) == 1 and STRUCTURE_KEY in src.bundle
++    empty = flat_film()
++    empty["timeline_id"] = "dup"
++    dst = Checkout(empty)
++    for tl in (src, dst):  # the toy film has no real media identities; validity is not what this test is about
++        tl._check_core = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
++    opened = {"t": src, "dup": dst}
++    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: opened[t]))
++    stored_docs = []
++    monkeypatch.setattr(td.Checkout, "publish", lambda self, *a, **k: stored_docs.append(self.stored_document()) or {})
++    client = SimpleNamespace(timelines=SimpleNamespace(
++        create_empty=lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "dup"}),
++        archive=lambda *a: SimpleNamespace(ok=True)))
++    out = td._duplicate(client, "p", "t", slug="dup", name=None, revision_id=None)
++    doc = stored_docs[0]
++    shot_ids = [r["shot_id"] for r in doc["placements"]]
++    assert out["shots"] == 3 and len(set(shot_ids)) == 3 and set(shot_ids) == set(doc["shots"])
++    assert all(s.startswith("dup-") for s in shot_ids)
++    assert [doc["shots"][s]["payload"]["name"] for s in shot_ids] == ["01 ONE", "02 TWO", "03 THREE"]
++    assert len({r["occurrence_id"] for r in doc["placements"]}) == 3
++
++
++def test_duplicate_guard_refuses_a_copy_that_collapses_shots_and_keeps_a_repeated_shot_repeated():
++    """The copy is proven equal to its source: a shot placed twice stays ONE shot placed twice, and a copy that maps
++    distinct shots onto one id (or changes a placement or a shot's clips) is refused."""
++    from astrid.sdk.timeline_duplicate import assert_copy_equals_source, copy_content
++
++    stored = published(split(flat_film()))
++    stored["shots"] = {r["shot_id"]: stored["shots"][r["shot_id"]] for r in stored["placements"]}
++    ids = [r["shot_id"] for r in stored["placements"]]
++    again = copy.deepcopy(stored["placements"][1])  # the chapter placed a second time (as the owner's film does)
++    again["occurrence_id"] = "occ-again"
++    again["placement"] = {"start_ms": 12000}
++    stored["placements"].append(again)
++
++    out, _ = copy_content(stored, copy.deepcopy(flat_film()), new_slug="dup")
++    new_ids = [r["shot_id"] for r in out["placements"]]
++    assert len(new_ids) == 4 and len(set(new_ids)) == 3 and new_ids[1] == new_ids[3]
++    assert len(out["shots"]) == 3 and len({r["occurrence_id"] for r in out["placements"]}) == 4
++    shot_map = dict(zip(ids, new_ids[:3]))
++    assert_copy_equals_source(stored, out, shot_map)
++
++    collapsed = copy.deepcopy(out)
++    for row in collapsed["placements"]:
++        row["shot_id"] = new_ids[0]
++    with pytest.raises(TimelineEditError, match="copied onto"):
++        assert_copy_equals_source(stored, collapsed, shot_map)
++    with pytest.raises(TimelineEditError, match="onto one shot id"):
++        assert_copy_equals_source(stored, out, {ids[0]: "x", ids[1]: "x", ids[2]: "y"})
++    with pytest.raises(TimelineEditError, match="placements"):
++        assert_copy_equals_source(stored, {**out, "placements": out["placements"][:3]}, shot_map)
++    edited = copy.deepcopy(out)
++    edited["shots"][new_ids[2]]["internal_timeline"]["clips"].pop()
++    with pytest.raises(TimelineEditError, match="clips differ"):
++        assert_copy_equals_source(stored, edited, shot_map)
++
++
++def test_pin_narration_adopts_a_binding_the_document_lost():
++    """A shot whose binding exists in the runtime but not in the document (a lost pin) must not wedge publish."""
++    import hashlib
++    from types import SimpleNamespace
++
++    tl = Checkout(flat_film())
++    text = "hello there\n"
++    digest = "sha256:" + hashlib.sha256(text.encode()).hexdigest()
++    existing = {"binding_id": "b1", "shot_id": "film", "kind": "voiceover_script", "content_hash": digest, "head": 1, "slot": None}
++    err = SimpleNamespace(code="conflict", details={"actual_head": 1})
++    tl.narration_changes = lambda: {"film": text}
++    client = SimpleNamespace(shots=SimpleNamespace(
++        set_text_binding=lambda *a, **k: SimpleNamespace(ok=False, error=err),
++        list_text_bindings=lambda *a, **k: SimpleNamespace(ok=True, data=([existing], None))))
++    assert tl.pin_narration(client, idempotency_key="k") == ["film"]
++    assert tl.bundle["shots"]["film"]["payload"]["text_bindings"] == [existing]
++
++
++def test_pin_narration_does_not_adopt_a_different_text_and_reports_the_conflict():
++    from types import SimpleNamespace
++
++    tl = Checkout(flat_film())
++    other = {"binding_id": "b1", "shot_id": "film", "kind": "voiceover_script", "content_hash": "sha256:other", "head": 1, "slot": None}
++    err = SimpleNamespace(code="conflict", details={"actual_head": 1})
++    tl.narration_changes = lambda: {"film": "hello there\n"}
++    sets = []
++    client = SimpleNamespace(shots=SimpleNamespace(
++        set_text_binding=lambda *a, **k: sets.append(k) or SimpleNamespace(ok=False, error=err),
++        list_text_bindings=lambda *a, **k: SimpleNamespace(ok=True, data=([other], None))))
++    with pytest.raises(TimelineEditError, match="could not register"):
++        tl.pin_narration(client, idempotency_key="k")
++    assert len(sets) == 1  # never retried at the runtime's head
++
++
++def test_duplicate_refuses_when_the_wrong_form_of_the_source_is_copied(monkeypatch):
++    """Revert experiment as a test: if _duplicate copied the flat shot (ignoring structure_base), the copy stores one
++    shot while the source stores three, and the duplicate is refused before anything is published."""
++    from types import SimpleNamespace
++
++    from astrid.sdk import timeline_duplicate as td
++
++    src = Checkout(flatten(copy.deepcopy(published(split(flat_film())))))
++    empty = flat_film()
++    empty["timeline_id"] = "dup"
++    dst = Checkout(empty)
++    for tl in (src, dst):
++        tl._check_core = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
++    opened = {"t": src, "dup": dst}
++    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: opened[t]))
++    real = td.copy_content
++    monkeypatch.setattr(td, "copy_content", lambda content, target, **kw: real(src.bundle, target, **kw))  # the original bug
++    published_docs = []
++    monkeypatch.setattr(td.Checkout, "publish", lambda self, *a, **k: published_docs.append(1) or {})
++    archived = []
++    client = SimpleNamespace(timelines=SimpleNamespace(
++        create_empty=lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "dup"}),
++        archive=lambda *a: archived.append(a) or SimpleNamespace(ok=True)))
++    with pytest.raises(TimelineEditError, match="distinct shots"):
++        td._duplicate(client, "p", "t", slug="dup", name=None, revision_id=None)
++    assert not published_docs and archived
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge/DONE; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge/DONE && echo DONE=present; printf '"'\\n--- commit message ---\\n'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-main-a9-duplicate-merge/commit-msg; printf '\\n--- final status ---\\n'; git status --short --branch; printf '\\n--- final diff summary ---\\n'; git diff --stat; git diff --check" in /home/user/work/wt/agt-main-a9-duplicate-merge
+ succeeded in 714ms:
+DONE=present
+
+--- commit message ---
+fix(timelines): preserve stored-form duplicate guards
+
+Port the five upstream duplicate and narration fixes onto current Main,
+retaining Main's core validation and draft-history behavior. Preserve repeated
+shot occurrences, compare the copied source against its own stored form, and
+adopt only an exact runtime narration binding after a lost document pin.
+
+--- final status ---
+## tl/agt-main-a9-duplicate-merge
+ M astrid/sdk/timeline/publish.py
+ M astrid/sdk/timeline_duplicate.py
+ M tests/sdk/test_timeline_checkout.py
+ M tests/sdk/test_timeline_restructure.py
+
+--- final diff summary ---
+ astrid/sdk/timeline/publish.py         |  27 +++++++
+ astrid/sdk/timeline_duplicate.py       |  53 +++++++++++++-
+ tests/sdk/test_timeline_checkout.py    |   3 +
+ tests/sdk/test_timeline_restructure.py | 129 +++++++++++++++++++++++++++++++++
+ 4 files changed, 209 insertions(+), 3 deletions(-)
+
+codex
+Implemented the upstream duplicate merge onto Main.
+
+- Preserved Main’s `_check_core`, draft-history, reset behavior, and all unrelated features.
+- Added stored-form duplicate guards, repeated-shot preservation, exact copy validation, and exact narration binding adoption.
+- Added upstream regression tests.
+
+Incoming five commits applied:
+
+`ff55850f`, `3754c661`, `2ed38b18`, `add1fff3`, `a9a3550c`.
+
+Evidence:
+
+- Local focused tests: `174 passed, 17 deselected`
+- Central targeted runtime tests: `63 passed, 1 skipped, 48 deselected`
+- `ruff check astrid/sdk/timeline_duplicate.py`: passed
+- `git diff --check`: passed
+- Prospective tree: `4b578bf70c0fb217ea80ad1f022f6bc3ef554c92`
+
+The full touched-file Ruff check still reports pre-existing lint issues in `publish.py`, checkout tests, and restructure tests; none were introduced by the merge. No full/broad suite was run.
+
+Wrote commit message and `DONE` marker at the requested paths.
+tokens used
+185,121
+Implemented the upstream duplicate merge onto Main.
+
+- Preserved Main’s `_check_core`, draft-history, reset behavior, and all unrelated features.
+- Added stored-form duplicate guards, repeated-shot preservation, exact copy validation, and exact narration binding adoption.
+- Added upstream regression tests.
+
+Incoming five commits applied:
+
+`ff55850f`, `3754c661`, `2ed38b18`, `add1fff3`, `a9a3550c`.
+
+Evidence:
+
+- Local focused tests: `174 passed, 17 deselected`
+- Central targeted runtime tests: `63 passed, 1 skipped, 48 deselected`
+- `ruff check astrid/sdk/timeline_duplicate.py`: passed
+- `git diff --check`: passed
+- Prospective tree: `4b578bf70c0fb217ea80ad1f022f6bc3ef554c92`
+
+The full touched-file Ruff check still reports pre-existing lint issues in `publish.py`, checkout tests, and restructure tests; none were introduced by the merge. No full/broad suite was run.
+
+Wrote commit message and `DONE` marker at the requested paths.

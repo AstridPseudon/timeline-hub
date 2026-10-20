@@ -1,0 +1,400 @@
+@pytest.mark.parametrize('name', SOURCES)
+def test_every_dropped_definition_is_reported_even_when_not_referenced(name):
+    previous = baseline(name)
+    for definition in previous['$defs']:
+        candidate = copy.deepcopy(_SCHEMA)
+        del candidate['$defs'][definition]
+        assert f'$/$defs/{definition}: missing definition' in compatibility_errors(previous, candidate)
+
+
+@pytest.mark.parametrize('name', SOURCES)
+def test_every_dropped_operation_is_reported_despite_the_open_generic_envelope(name):
+    previous = baseline(name)
+    for condition in previous['$defs']['EditCommand']['allOf']:
+        op = condition['if']['properties']['op']['const']
+        candidate = copy.deepcopy(_SCHEMA)
+        candidate['$defs']['EditCommand']['allOf'] = [
+            item for item in candidate['$defs']['EditCommand']['allOf']
+            if item['if']['properties']['op']['const'] != op]
+        assert (f'$/$defs/EditCommand/allOf/{op}: missing supported operation'
+                in compatibility_errors(previous, candidate))
+
+
+def test_only_reviewed_producer_and_consumed_additions_change_current_schema():
+    previous = baseline('agent-current-c456b328')
+    candidate = copy.deepcopy(_SCHEMA)
+    for definition in ('ProducerAdmittedTarget', 'ProducerIdentity', 'ProducerAttemptPin',
+                       'ProducerGuardArgs', 'SettledProducerProposal'):
+        del candidate['$defs'][definition]
+    candidate['$defs']['EditCommand']['allOf'] = [
+        item for item in candidate['$defs']['EditCommand']['allOf']
+        if item['if']['properties']['op']['const'] != 'producer.guard']
+    for definition in ('OccurrenceAddMediaArgs', 'PlacementCreateArgs'):
+        del candidate['$defs'][definition]['properties']['consumed']
+    candidate['$defs']['ClipSetElementArgs'] = previous['$defs']['ClipSetElementArgs']
+    assert candidate == previous
+
+
+def test_s2_only_adds_the_reviewed_optional_element_source_to_frozen_s1():
+    previous = baseline('agent-frozen-s1-0a0ac7ba')
+    candidate = copy.deepcopy(_SCHEMA)
+    element = candidate['$defs']['ClipSetElementArgs']
+    assert element['properties'].pop('schema_source') == {'$ref': '#/$defs/DocumentPin'}
+    assert element['required'] == ['elementRef'] and element['additionalProperties'] is False
+    assert element['description'] == (
+        'Replace an existing clip elementRef with another revision of the same element id, '
+        'kind and selected pack owner. Admitted revisions require the exact retained '
+        'schema_source declaration pin. The retired element_ref alias is removed. '
+        'There is no clear: a clip keeps its element.')
+    element['description'] = previous['$defs']['ClipSetElementArgs']['description']
+    assert candidate == previous
+    assert len(_SCHEMA['$defs']) == 48
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 22
+
+
+@pytest.mark.parametrize('name', SOURCES)
+def test_existing_argument_narrowing_still_fails(name):
+    candidate = copy.deepcopy(_SCHEMA)
+    candidate['$defs']['ClipMoveArgs']['properties']['on']['type'] = 'integer'
+    assert compatibility_errors(baseline(name), candidate)
+
+
+def test_canonical_schema_is_byte_identical_to_approved_s2():
+    path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        'a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef')
+
+
+def test_all_published_floors_preserve_every_field_with_only_historical_pattern_widening():
+    sources = json.loads((FIXTURES / 'published-sources.json').read_text())
+    assert set(sources) == {'0.2.1', '0.2.2', '0.2.3', '0.2.8', '0.2.9', '0.2.10'}
+    for version, source in sources.items():
+        raw = (FIXTURES / source['file']).read_bytes()
+        assert hashlib.sha256(raw).hexdigest() == source['sha256']
+        previous, candidate = json.loads(raw), copy.deepcopy(_SCHEMA)
+        if version in ('0.2.1', '0.2.2'):
+            # The conservative checker cannot prove regex inclusion. Verify
+            # these exact additive alternatives, then check every other field.
+            for definition in ('AnchorIdentity', 'EntityRef', 'ScopedId', 'TargetKey'):
+                old = previous['$defs'][definition]['pattern']
+                widened = old.replace('(?:clip|track)', '(?:clip|track|asset)').replace(
+                    '|occurrence:[^/]+(?:/shot)?|cut:',
+                    '|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:')
+                assert candidate['$defs'][definition]['pattern'] == widened
+                candidate['$defs'][definition]['pattern'] = old
+            if version == '0.2.2':
+                old = next(item for item in previous['$defs']['EditCommand']['allOf']
+                           if item['if']['properties']['op']['const'] == 'track.set')
+                new = next(item for item in candidate['$defs']['EditCommand']['allOf']
+                           if item['if']['properties']['op']['const'] == 'track.set')
+                pattern = old['then']['properties']['select']['pattern']
+                assert new['then']['properties']['select']['pattern'] == pattern.replace(
+                    'parent/track:', '(?:parent|occurrence:[^/]+)/track:')
+                new['then']['properties']['select']['pattern'] = pattern
+        assert compatibility_errors(previous, candidate) == [], version
+"""Pure compiler cases converted from R4 onto main's authoring/transcript inputs."""
+from __future__ import annotations
+
+import copy
+import json
+from dataclasses import FrozenInstanceError, replace
+from fractions import Fraction
+
+import pytest
+
+from astrid.core.timeline.authoring_bundle import _digest
+from astrid.sdk.media_transcript import build_transcript, transcript_document_id
+from astrid.sdk.timeline.compiler import (
+    TimingCompileError,
+    TimingInputs,
+    WordBinding,
+    compile_timing,
+)
+
+MEDIA = "sha256:" + "1" * 64
+VOICE = ("occ", "shot", "voice")
+CARD = ("occ", "shot", "card")
+
+
+def film(fps=30):
+    """Main's bundle shape; words are v1 MEDIA source seconds, not clip-local rows."""
+    return {
+        "project_id": "project", "timeline_id": "timeline",
+        "parent": {"config": {"theme_overrides": {"visual": {"canvas": {"fps": fps}}}},
+                   "clips": []},
+        "placements": [{"occurrence_id": "occ", "shot_id": "shot",
+                        "placement": {"start_ms": 2000}, "duration_ms": 10000}],
+        "shots": {"shot": {"internal_timeline": {
+            "tracks": [{"id": "vo", "kind": "audio"}, {"id": "type", "kind": "visual"}],
+            "registry": {"assets": {"take": {"media_id": MEDIA}}},
+            "clips": [
+                {"id": "voice", "clipType": "media", "track": "vo", "asset": "take",
+                 "at": 1, "from": 2, "to": 6, "speed": 2},
+                {"id": "card", "clipType": "am-type", "track": "type", "at": 0,
+                 "hold": 1, "app": {"astrid": {"on": '"again" in line #2 +1f', "for": 0.5}}},
+            ]}}},
+    }
+
+
+def captured(bundle=None):
+    bundle = bundle or film()
+    content = build_transcript(MEDIA, "line", "again again stop", [
+        [2, 2.5, "again"], [3, 3.5, "again"], [5.5, 6, "stop"],
+    ])
+    document = {"document_id": transcript_document_id("project", MEDIA, content["source_id"]),
+                "version": 7, "project_id": "project", "kind": "media.transcript", "content": content}
+    document = {"document": document, "pin": {"document_id": document["document_id"],
+                "version": 7, "content_digest": _digest(content)}}
+    pin = WordBinding(CARD, "on", card(bundle)["app"]["astrid"]["on"], VOICE,
+                      document["document"]["document_id"], 7, _digest(content), (content["segments"][0]["words"][1]["id"],))
+    return bundle, document, pin
+
+
+def card(bundle):
+    return bundle["shots"]["shot"]["internal_timeline"]["clips"][1]
+
+
+def project(bundle, document=None, pins=(), **kwargs):
+    return compile_timing(TimingInputs(bundle, sources=[] if document is None else [document],
+                                       bindings=pins, **kwargs))
+
+
+def encoded(value):
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+
+
+def test_exact_binding_uses_selected_duplicate_word_and_preserves_authored_commands_and_clears():
+    bundle, document, pin = captured()
+    card(bundle).update(params={"clear": None, "opaque": [False, {"strange": "💫"}]}, to=None)
+    bundle["commands"] = [{"op": "clip.move", "args": {"to": None}, "opaque": [1, None]}]
+    bundle["parent"]["config"]["app"] = {"other": None}
+    before = encoded([bundle, document])
+    result = project(bundle, document, [pin])
+    interval = result.timings[CARD]
+    assert (interval["start"], interval["end"], interval["duration"]) == (
+        Fraction(53, 15), Fraction(121, 30), Fraction(1, 2))
+    assert (interval["start_frame"], interval["end_frame"]) == (106, 121)
+    assert encoded(result.bundle) == encoded(bundle)
+    assert encoded([bundle, document]) == before
+    assert project(bundle, document, [pin]) == result
+    assert project(result.bundle, document, [pin]) == result
+    result.bundle["commands"][0]["args"]["to"] = "output only"
+    assert encoded([bundle, document]) == before
+
+
+def test_inputs_capture_latest_once_and_are_deeply_immutable():
+    bundle, document, pin = captured()
+    inputs = TimingInputs(bundle, sources=[document], bindings=[pin])
+    expected = compile_timing(inputs)
+    document["document"]["version"] = 8
+    document["document"]["content"]["segments"][0]["words"][1]["start"] = 100
+    card(bundle)["app"]["astrid"]["on"] = None
+    inputs.bundle["shots"].clear()
+    inputs.sources[0]["document"]["content"].clear()
+    assert compile_timing(inputs) == expected
+    # Historical restoration remains the only admitted reuse.
+    restored = realm.call([inverse([deletion['receipt']['receipt_id']])])
+    assert any(clip['id'] == identity for clip in restored['data']['canonical_document']['parent_revision']['payload']['clips'])
+
+
+def test_native_delete_then_reallocate_in_same_batch_is_atomic(native_staging_operations):
+    from astrid.sdk.timeline.capture import capture_clip_delete
+
+    realm = DetachedRealm()
+    document = detached(realm.documents['parent-1'])
+    deletion = capture_clip_delete(bundle_from_document(document), 'parent/clip:clip-a')
+    create = {'schema_version': 1, 'op': 'fixture.clip-create', 'version': '1',
+              'select': 'parent', 'args': {'row': document['parent_revision']['payload']['clips'][0]}}
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([deletion, create])
+    assert error.value.failure['details']['reason'] == 'identity_collision'
+    assert realm.head == head and realm.accepted == [] and realm.documents == {'parent-1': document}
+
+
+def test_native_move_then_delete_succeeds_and_unsupported_batch_keeps_original_document():
+    from astrid.sdk.timeline.capture import capture_clip_delete
+
+    realm = DetachedRealm()
+    realm.call([realm.move()])
+    document = detached(realm.documents[realm.head['revision_id']])
+    call = capture_clip_delete(bundle_from_document(document), 'parent/clip:clip-a')
+    deletion = realm.call([call])
+    undo = realm.call([inverse([deletion['receipt']['receipt_id']])])
+    assert undo['data']['canonical_document'] == document
+    head, count = detached(realm.head), len(realm.accepted)
+    invalid = {'schema_version': 1, 'op': 'clip.delete', 'version': '1',
+               'select': 'occurrence:occ-a/clip:clip-a', 'args': {}}
+    with pytest.raises(CommitRejected) as error:
+        realm.call([realm.move(), invalid])
+    assert error.value.failure['details']['reason'] == 'unsupported_ownership'
+    assert realm.head == head and len(realm.accepted) == count
+
+
+@pytest.mark.parametrize("damage", ["missing", "revision", "gap", "scope", "digest"])
+def test_inverse_historical_source_requires_authenticated_boundaries(damage):
+    realm = DetachedRealm()
+    original = detached(realm.head)
+    realm.call([realm.move()])
+    target = realm.call([realm.move("parent/clip:clip-b", 8.008)])
+    previous = realm.entries[-1]["previous"]
+    if damage == "missing":
+        realm.entries[-1]["previous"] = None
+    elif damage == "revision":
+        previous["revision_id"] = "wrong-revision"
+    elif damage == "gap":
+        realm.entries[-1]["previous"] = original
+    elif damage == "scope":
+        realm.documents[previous["revision_id"]]["project_id"] = "foreign-project"
+    else:
+        realm.documents[previous["revision_id"]]["shot_revisions"][0]["payload"]["unknown"] = "tampered"
+    head, accepted = detached(realm.head), detached(realm.accepted)
+    with pytest.raises(CommitRejected):
+        realm.call([inverse([target["receipt"]["receipt_id"]])])
+    assert realm.head == head and realm.accepted == accepted
+tests/sdk/test_timeline_commit_provider.py:675:    import subprocess
+tests/sdk/test_timeline_commit_provider.py:698:    result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True,
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import difflib
+import subprocess
+
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-check-save-core-separation')
+notes = worker / 'notes'
+notes.mkdir(exist_ok=True)
+changed = [
+    'astrid/packs/timeline/cli.py', 'astrid/sdk/timeline/check.py',
+    'astrid/sdk/timeline/publish.py', 'astrid/sdk/timeline/store.py',
+    'astrid/sdk/timeline/transaction.py', 'tests/sdk/test_media_transcript.py',
+    'tests/sdk/test_timeline_checkout_history_boundaries.py',
+    'tests/sdk/test_timeline_persistence.py', 'tests/sdk/test_timeline_publish_connection.py',
+]
+patch = subprocess.run(['git', 'diff', '--', *changed], check=True, capture_output=True, text=True).stdout
+new = Path('tests/sdk/test_scene_save_core.py')
+patch += ''.join(difflib.unified_diff([], new.read_text().splitlines(keepends=True),
+                                    fromfile='/dev/null', tofile='b/' + str(new)))
+(notes / 'incomplete-separation.patch').write_text(patch)
+# Restore only this worker's listed edits; keep the incomplete proposal outside the harness's source commit.
+for name in changed:
+    original = subprocess.run(['git', 'show', 'HEAD:' + name], check=True, capture_output=True).stdout
+    Path(name).write_bytes(original)
+new.unlink()
+(worker / 'BLOCKED').write_text(
+    'Await orchestrator judgment on existing OFFCANVAS publication refusal: the authoritative core validator accepts a valid tiny_publishable candidate whose c1.rocket x=10000, but current check/publish refuse it solely via onscreen.layout_bounds in _sprite_problems. Excluding scene diagnostics from save removes that existing public refusal; preserving it keeps scene evaluation/import in save. Brief explicitly requires escalation of unavoidable public behavior changes. Shared D09 note and notes/report.md contain exact evidence. Worktree restored clean; incomplete proposal retained only in notes/incomplete-separation.patch.\\n')
+(worker / 'commit-msg').write_text(
+    'chore(timeline): record blocked Scene check save separation\\n\\n'
+    'Escalate the existing OFFCANVAS publication refusal before changing the save validation boundary.\\n'
+    'Keep the incomplete proposal and guard evidence in the worker report; leave source unchanged pending judgment.\\n')
+PY" in /home/user/work/wt/agt-m3-scene-check-save-core-separation
+ succeeded in 209ms:
+codex
+The existing neighboring tests passed: 437 passed, 26 deselected. The new renderer fences still fail at the unresolved scene boundary. I’ve preserved the incomplete proposal outside the source tree and restored the worktree to its starting state; the handoff and blocker report identify the OFFCANVAS decision needed to continue.
+
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-check-save-core-separation/notes/report.md <<'EOF'
+# Scene check / save core separation — BLOCKED
+
+Starting Agent head: "'`4ef1391c` (`Merge tl/agt-m3-verified-source-host-extract`). Source worktree restored to that starting state after investigation. No integration edits, git mutations, shared dependency writes, run.py/service/cache edits, pin changes, new public API, or D09 deletion claim.
+
+## Judgment needed
+
+The brief requires escalation of unavoidable public behavior changes and preservation of existing publication guards. There is a concrete conflict at `_CheckMixin._sprite_problems()`:
+
+- A `tiny_publishable.json` checkout with only `checkout.clip('"'c1.rocket').data['params']['x'] = 10000"'` passes the authoritative `validate_authoring_candidate` (`validation.valid == True`).
+- Existing public `check()` returns `valid == False`, with its only blocker `OFFCANVAS c1.rocket: sprite is never inside the 1920×1080 canvas (1.30–4.00 s); move it into frame`.
+- Existing public `publish(client=object())` refuses before transport: `not publishing: OFFCANVAS c1.rocket: sprite is never inside the 1920×1080 canvas (1.30–4.00 s); move it into frame`.
+- `_sprite_problems()` gets that result from `astrid.core.timeline.onscreen.layout_bounds`. Keeping it in save retains scene geometry evaluation/import. Omitting it changes that existing publication refusal. Duplicating the geometry in a second validity implementation would violate this task'"'s bounded single-implementation requirement.
+
+Recommended ruling: preserve OFFCANVAS exactly in **explicit check**, exclude sprite diagnostics from **save core** as intended by PLAN §2.5, and explicitly approve the resulting publication behavior difference. This is a recommendation, **not an assumed approval**. The question was raised through the user-input tool and appended to the authorized shared D09 handoff before diagnostic gating. No answer received before this report. "'`BLOCKED` exists; `DONE` does not.
+
+## Work prepared
+
+`notes/incomplete-separation.patch` retains the incomplete, uncommitted proposal and new guard tests for review/resumption. It is **not ready to apply/merge**: diagnostic gating is intentionally unfinished and its new guards fail. All source edits were restored before exit so the harness cannot commit a partial implementation.
+
+Proposed private boundary is `Checkout._check_core() -> CheckReport`, calling the one existing implementation through `_check(diagnostics=False)`; public `check()` calls `_check(diagnostics=True)`. Publish, both transaction branches, and the compatibility CLI'"'s implicit edit report route to core. Explicit CLI check/status/verify stay unchanged. Ordinary draft save and native commit already have independent paths and were not modified. Duplicate-timeline publication also calls "'`src.check()` / `dst.check()` explicitly before publish; its migration needs consideration if every implicit publication preflight is to become pure.
+
+The SDK authoring facade eagerly imports `authoring_render_preview`, which imports rendering modules. Proposed check/store call sites instead import the **same** authoritative validator/publisher directly from `astrid.core.timeline.authoring_bundle`; no alternate validator/compiler/provider was introduced.
+
+Exact proposed test-seam adaptations (all behavioral assertions unchanged):
+
+- `test_successful_publish_with_failed_reset_does_not_reopen_old_steps`: `monkeypatch.setattr(draft, "check", lambda: SimpleNamespace(valid=True))` → same stub on `"_check_core"`.
+- `test_publish_registers_after_timeline_commit_and_survives_document_failure`: same `tl.check` → `tl._check_core` stub adaptation.
+- Publisher connection tests and persistence child workers: patch `astrid.sdk.authoring_bundle.publish_authoring_candidate` → the identical function at its defining `astrid.core.timeline.authoring_bundle` module, because save must not import the renderer-bearing facade.
+- New `test_private_check_override_still_fences_publication` passes: a false private report prevents every writer call. New actual-invalid-candidate and positive-save fences remain unqualified because diagnostic separation is unfinished; equal/stronger overall guard is **not claimed**.
+
+No existing test was skipped, weakened, deleted, or marked xfail. No test was rewritten to expect lost behavior.
+
+## Commands and results
+
+1. Existing neighbors, directly in this worker'"'s worktree, on the incomplete routing-only proposal (all public diagnostics still execute):
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_scene_caller_preservation.py tests/sdk/test_coverage_empty_cut.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_checkout_history_boundaries.py tests/sdk/test_timeline_publish_connection.py tests/sdk/test_media_transcript.py tests/sdk/test_timeline_film_length.py tests/sdk/test_timeline_look.py tests/sdk/test_timeline_reflow_golden.py tests/sdk/test_timeline_reflow_keep.py tests/sdk/test_timeline_checkout_facade.py tests/sdk/test_timing_compiler.py tests/sdk/test_timeline_capture_projection.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py tests/sdk/test_timeline_current_union_schema.py
+```
+
+**437 passed, 26 deselected, 4 Pillow deprecation warnings, 141.76 seconds.** Includes unchanged scene formatter known/UNKNOWN/UNAVAILABLE/content-unknown cases, real sprite diagnostics, transaction/history/publication neighbors, pure source-capture/provider import fences, and approved S2 schema compatibility. These passing results do not qualify a completed separation.
+
+2. New renderer-fence tests, retained in the incomplete patch only:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_scene_save_core.py
+```
+
+Initial collection failed because the test imported the concrete Checkout module before the legacy facade (existing import cycle); corrected to the public facade. Rerun: **10 failed, 1 passed, 1.59 seconds**. The positive save/core/transaction tests reject diagnostic evaluation; the fresh-child test rejects actual `onscreen` import. Invalid-candidate tests also hit that unfinished diagnostic route before reaching their assertions. The private false-report publication guard passed. These are honest incomplete-proposal failures, not qualified positives.
+
+The new fence rejects actual `builtins.__import__` requests (including cached-module requests), any `subprocess.Popen`/`subprocess.run` launch, and calls to public `check`, `_on_screen`, `lint`, `_sprite_problems`, or `_text_overflow` during save. A separate fresh interpreter installs a meta-path import fence before importing Checkout. It does not replace scene results with green mocks.
+
+3. Reproducer (executed directly with the same Python/PYTHONPATH environment):
+
+```python
+from astrid.sdk.timeline_checkout import Checkout, TimelineEditError
+from tests.sdk.test_timeline_transaction import tiny
+candidate = Checkout(tiny())
+candidate.clip('"'c1.rocket').data['params']['x'] = 10000
+report = candidate.check()
+print({'core_validator': report.validation,
+       'explicit_valid': report.valid, 'blocking': report.blocking})
+try:
+    candidate.publish(client=object())
+except TimelineEditError as exc:
+    print(str(exc))
+"'```
+
+Result: core validator valid; explicit check invalid solely OFFCANVAS; publish refuses exactly as quoted above.
+
+4. Final `git status --short` and `git diff --check`: clean / exit 0 after restoring this worker'"'s changes.
+
+No full suite requested or run. No central test request submitted because source work stopped before a completed final tree existed. Renderer-off native M1/socket lanes, physical Scene/pixel/audio/cache parity, and current public13 transport qualification **not run**. This starting tree pins Composition **0.0.12**, and the shared handoff explicitly keeps public13 adoption separate; no public13 qualification is claimed.
+
+## Next steps
+
+1. Orchestrator rule on the OFFCANVAS inherited publication refusal and, if required, compatibility CLI diagnostic output before implicit save.
+2. Resume from the retained patch, finish the single implementation's diagnostic gating, and qualify all new positive/negative fences plus unchanged neighbors. Recheck duplicate-timeline implicit preflights and existing private override guards.
+3. After the final source change, use a targeted/named central lane for renderer-off M1 and source-capture/Scene transport neighbors; never request full*. Viewing separately owns the Root-prep lifetime and physical parity. D09 remains held.
+EOF
+cat >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/d09-scene-check-save-core-handoff.md <<'EOF'
+
+Agent outcome: **BLOCKED pending OFFCANVAS publication ruling**. Reproducer on "'`tiny_publishable`: set `c1.rocket.data.params.x=10000`; authoritative validation is valid, explicit check and publish refuse solely OFFCANVAS. No source change landed: worker restored its worktree clean and retained the incomplete routing/guard proposal only at `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-check-save-core-separation/notes/incomplete-separation.patch`. Existing unchanged neighbors on that routing-only proposal: 437 pass / 26 deselected; new fences: 10 fail / 1 pass because diagnostic gating is unfinished (not qualified). Exact report: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-check-save-core-separation/notes/report.md`. Private interface above is proposed, not available on the restored source tree. No Root-prep lifetime or public13/physical/cache qualification claimed; D09 remains held.
+EOF
+git status --short
+git diff --check' in /home/user/work/wt/agt-m3-scene-check-save-core-separation
+ succeeded in 196ms:
+codex
+Blocked on OFFCANVAS: removing scene evaluation from save also removes an existing publication refusal. Your brief requires orchestrator judgment before changing that behavior.
+
+- Existing neighbors: **437 passed, 26 deselected**.
+- New guards: **10 failed, 1 passed**; separation remains unfinished.
+- Worktree restored clean. Proposal preserved; `BLOCKED` written, no `DONE`.
+
+[Report, exact commands, and recommended ruling](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-check-save-core-separation/notes/report.md)
+tokens used
+175,871
+Blocked on OFFCANVAS: removing scene evaluation from save also removes an existing publication refusal. Your brief requires orchestrator judgment before changing that behavior.
+
+- Existing neighbors: **437 passed, 26 deselected**.
+- New guards: **10 failed, 1 passed**; separation remains unfinished.
+- Worktree restored clean. Proposal preserved; `BLOCKED` written, no `DONE`.
+
+[Report, exact commands, and recommended ruling](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-check-save-core-separation/notes/report.md)

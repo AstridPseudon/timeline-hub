@@ -1,0 +1,400 @@
+Private preparation and normal generation, from `$A`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 "$W/prepare-runtime.py"
+bash "$W/generate-runtime.sh"
+bash "$W/check-runtime.sh"
+```
+
+All exit 0. The scripts run the normal `generators/generate.py`, TypeScript conformance generator (copying outputs exactly to component-manifest source/metadata paths), `scripts/artifact_manifest.py`, then all three `--check` commands. No compatibility checker, generated DTO, bundle or digest is hand-edited. Final generation log: `notes/generate-runtime.log`; final checks: `notes/runtime-final-check.log`.
+
+Before changing either original strict legacy marker, from `$A`:
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=$R PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration --runxfail tests/editing_conformance/test_commit_runtime_text_binding.py::test_rebind_existing_main_descriptor_undo_is_exact tests/editing_conformance/test_commit_runtime_text_binding.py::test_clear_existing_main_descriptor_and_inverse_are_exact
+```
+
+**2 passed in 2.83s**, exit 0; `notes/legacy-original-runxfail.log`. This used the normally generated candidate, with the same S2+text schema semantics; the subsequent minimal source formatting correction regenerated the exact final digest recorded above.
+
+Final native service lane, after marker removal and strengthened success assertions:
+
+```sh
+ASTRID_RUNTIME_CHECKOUT=$R PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration --runxfail tests/editing_conformance/test_commit_runtime_text_binding.py
+```
+
+**21 passed in 22.46s**, exit 0; `notes/native-final.log`. This replaces the old 19-pass / 2-strict-xfail native result. No skipped/xfail/xpass cases.
+
+Original affected Agent unit subset, from `$A`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_text_binding_spike.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_scalar_commands.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_document.py
+```
+
+**450 passed, 1 deselected in 88.44s**, exit 0; `notes/agent-final.log`. Deselection is the spike'"'s integration-only port-presence check, not a lost behavior (native port is exercised in the service lane).
+
+Current schema/golden and native unit checks, from "'`$A`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_composed_schema.py tests/sdk/test_timeline_current_union_schema.py tests/editing_conformance/test_recipe_text_binding_native.py
+```
+
+**54 passed in 138.26s**, exit 0; `notes/schema-native-final.log`. This includes the same 25 native unit cases that, with the 21 service cases, correspond to the prior 46-test native pair. Counts overlap the 450 lane; do not sum them as unique coverage.
+
+Current duplicate/trim/unplace/selected-schema neighbors (inverse/state consumers), from `$A`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_duplicate.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_recipe_m2_video_unplace.py tests/sdk/test_timeline_selected_schema.py
+```
+
+**245 passed in 75.73s**, exit 0; `notes/current-neighbors.log`.
+
+Private current Runtime neighbors, from `$R`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-runtime/bin/python -m pytest -q -p no:cacheprovider tests/test_timeline_text_binding_clear.py tests/test_timeline_text_selection.py tests/test_timeline_text_legacy_custody.py tests/test_command_schema_compatibility.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-runtime/bin/python -m pytest -q -p no:cacheprovider tests/test_artifact_manifest.py
+```
+
+**199 passed in 117.42s**, exit 0 (`notes/runtime-targeted.log`); **3 passed in 2.07s**, exit 0 (`notes/runtime-artifacts.log`). These are current committed Runtime source plus the private normally generated full-S2+text schema, rather than the earlier S2+patch archive composition.
+
+Final source checks, from `$A`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/_collections.py astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/native_text_binding.py tests/editing_conformance/test_commit_runtime_text_binding.py tests/editing_conformance/test_recipe_text_binding_native.py tests/editing_conformance/test_recipe_text_binding_spike.py tests/sdk/test_timeline_current_union_schema.py
+git diff --check
+python3 "$W/identify-candidate.py"
+```
+
+All exit 0. `runtime.lock.json`, `astrid_runtime_client/` and Agent `artifacts.json` have zero diff.
+
+An initial Agent run of the 450 subset plus union-schema tests finished **473 passed / 1 failed / 1 deselected** in 196.50s (`notes/agent-targeted.log`). It collected before the schema fingerprint test was corrected: reserializing S2 expands existing compact settings and cannot reproduce its raw file SHA. The final test checks the complete approved S2 structural fingerprint; current raw schema bytes/digest are recorded independently. Both affected suites were rerun above. Initial patch conflicts in the current producer-aware registry/capture loop were resolved locally without replacing current files; all patch backup/reject files were removed.
+
+## Gaps and next steps
+
+- **Destructive media GC remains unverified:** this exact Runtime'"'s "'`ContentAddressedStore` is append-only and exposes no media collector. The native test proves deep reachability/non-orphan status and exact V1 read/inverse after V2/removal/restart. It does not manufacture a collector or claim post-collection survival. Retention/purge is deferred in PLAN.md. No source decision was changed. This gap is explicitly distinguished from the successful retained legacy pair.
+- No public package publication/install, TypeScript compile, App journey, browser/live-socket test, full/full* suite, legacy-writer retirement or deletion qualification was run or claimed. All pytest lanes above are targeted in-process tests; no central full-suite request was made.
+- Runtime owner should take this complete 49-definition/23-clause candidate through the official next release with a fresh authorized version and generated clients; coordinate the actual consumer pin/producer tuple and qualify it normally. The current published client/producer remains frozen and the integrated server correction remains a compatible internal service patch.
+- App text and candidate writers remain held until that release and actual journeys pass. No deletion or native public completion is marked. Any future GC claim needs its real owner-provided collector path and a retained-V1 journey through it.
+'"'''
+(w/'notes/report.md').write_text(report.format(**q))
+PY" in /home/user/work/wt/agt-m2-text-retained-current-pair
+ succeeded in 11ms:
+ succeeded in 3165ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-retained-current-pair')
+q=json.loads((w/'qualification.json').read_text())
+report=w/'notes/report.md'
+handoff=w.parents[1]/'design/agent-text-retained-current-handoff.md'
+handoff.write_text(f'''# Agent next-text candidate on current S2 — private qualification
+
+Both original retained legacy "'`text/plain` positives passed with `--runxfail` against current committed Runtime source, before either expected-failure marker was removed. Final native service tests pass **21/21**, with exact inverse/redo and no remaining text xfails. The reviewed native text command/capture/state/inverse changes are prepared on Agent `9cb10904`; the public release and App writers remain held.
+
+## Exact candidate
+
+| Item | Identity |
+| --- | --- |
+| Agent base | `{q['"'agent_base']}"'` |
+| Reviewed native source | `{q['"'native_provenance']}"'` |
+| Original strict positives | `{q['"'positive_provenance']}"'` |
+| Current committed Runtime producer base | `{q['"'runtime_base']}"'` |
+| Committed Runtime base tree | `{q['"'runtime_base_tree']}"'` |
+| Approved retained correction / merge | `e41f3d1e` / `{q['"'retained_merge']}"'` |
+| Private generated Runtime content tree | `{q['"'private_runtime_tree']}"'` |
+| Authored command schema SHA256 | `{q['"'command_schema_sha256']}"'` |
+| Normally generated schema digest | `{q['"'generated_schema_digest']}"'` |
+| Private artifact version (75 entries) | `{q['"'artifact_version']}"'` |
+| Complete Agent source/test patch SHA256 | `{q['"'agent_patch_sha256']}"'` |
+
+The private tree is calculated in Git tree format without writing Git objects; it is not an invented commit or published producer. Runtime base `129493b2` is a verified `a51267ec` descendant including reviewed retained correction `e41f3d1e`/tree `de8f95b2`. Private source is an archive of that exact committed source, with only the authored command schema plus 12 normal generated outputs differing. Runtime product source is unchanged. `runtime-candidate/` and `agent.patch` live in this worker directory; the harness assigns the Agent commit on exit.
+
+All **48 S2 definitions / 22 operation clauses** survive; the candidate has **49 / 23**. The only additions are reviewed native `TextBindingSetArgs`, `text-binding.set` and complete additive legacy/S2/native branches for `ScopedId`, `EntityRef`, `TargetKey`. The closed new-input descriptor remains canonical UTF-8 (including EMPTY); arbitrary legacy MIME is not admitted as a new selection. All five normal generation compatibility floors and Python/TypeScript conformance/artifact checks pass. Agent source and private Runtime command schema bytes are identical.
+
+Private contract input still says `0.2.13`; it is an unpublished experiment, **not permission to release changed bytes at that existing version**. Public producer `2c4ac180...` / client `0.2.13` and Agent lock/client/artifact files remain frozen. This handoff prepares the next schema source; it does not publish or repin it.
+
+## Qualified
+
+- Real main-API film backup, managed project CAS, actual Agent provider and normal port, accepted history, atomic projection, restart and exact retry. No schema override, fake Prepared/history/provider, positive SQL write, new endpoint/table or inline text authoring.
+- Exact original legacy `text/plain` document, descriptor/order and bytes after canonical replacement/restart/inverse, then exact redo.
+- Exact legacy clear, absent GET/list, restart/retry, inverse to original MIME/bytes/document and redo to absence. Only new text selections use `text_selection`.
+- First-birth undo to absence; EMPTY as present; whole clear/inverse at original row position; historical pins/events; V1 through V2/removal/restart/group inverse and deep reachability.
+- Same-field and unchanged-value authorship guards; different-field rebase; exclusive ownership; closed input, wrong project/hash/size/MIME/UTF-8 and atomic corruption refusals. Retained opaque authored values remain literal.
+
+Exact commands and logs: [worker report]({report}). Final targeted results:
+
+- Original two strict legacy positives with `--runxfail`: **2 passed** before marker promotion.
+- Native actual service: **21 passed** (the old 19 positive + 2 strict-gap cases).
+- Original affected Agent unit subset: **450 passed / 1 integration-only deselected**.
+- Native unit + current union/golden schema: **54 passed** (includes the prior 25 native cases; overlaps the 450 lane).
+- Current duplicate/trim/unplace/selected-schema neighbors: **245 passed**.
+- Current private Runtime clear/selection/legacy/schema neighbors: **199 passed**; artifact tests: **3 passed**.
+- Ruff, diff check, normal generation and all final generation/conformance/artifact `--check` commands: **exit 0**.
+
+An initial pre-correction schema fingerprint assertion failed because serialization changed old compact formatting. Final checks fingerprint the entire approved S2 object after removing exactly the text delta; all affected lanes were rerun. Details and the initial failure log are retained in the report.
+
+## Gaps and release boundary
+
+**Destructive media GC is unverified.** Current Runtime CAS is append-only and provides no media collector. The positive V1 test checks deep reachable/non-orphan status and exact bytes/inverse after removal and restart; it does not claim an actual collection cycle. PLAN.md defers retention/purge. A future GC claim needs its owner'"'s actual collector path and journey.
+
+No full/full* request, socket/browser/App journey, public package build/install/public TypeScript compile or public-tuple qualification occurred. No writer deletion or native public completion is marked. App text/candidate writers stay held.
+
+Next: Runtime owner takes this full S2+text source through an authorized fresh public release and normal client generation; owners coordinate consumer pins, qualify that exact tuple and run the actual App journeys before writer cutover. Preserve the two promoted strict legacy positives and all source/golden expectations. A later GC owner must supply a real collector qualification path before claiming destructive-GC survival.
+''')
+(w/'commit-msg').write_text('''feat(timeline): qualify retained native text bindings on current S2
+
+Port the reviewed occurrence text command and guarded capture/inverse changes
+onto current Agent, preserving every S2 definition and operation while adding
+the closed text args and additive references.
+
+Qualify both original retained text/plain inverse and clear positives against
+the current Runtime correction using a normally generated private candidate.
+Promote markers after real acceptance and retain exact bytes, MIME, presence,
+order, retry, redo, and concurrent-edit guards. Keep public release pins and
+App writer cutover held.
+''')
+print(handoff)
+PY" in /home/user/work/wt/agt-m2-text-retained-current-pair
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-text-retained-current-handoff.md
+
+codex
+All targeted checks passed: 450 Agent tests, 54 native/schema tests, 245 current inverse consumers, 199 Runtime neighbors and 3 artifact tests. Final generation checks and Ruff also passed. The report, handoff and commit message are written; public release and App cutover remain held, with destructive GC explicitly unverified.
+
+exec
+/bin/bash -lc 'python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-retained-current-pair/identify-candidate.py; git diff --check; git diff --stat; git status --short; tail -3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-retained-current-pair/notes/runtime-final-check.log' in /home/user/work/wt/agt-m2-text-retained-current-pair
+ succeeded in 1830ms:
+{
+  "runtime_base": "129493b2aff614560d9b7ac2577957e799cf30ec",
+  "runtime_base_tree": "330ea3969cb9cce77271404f31793c21abd5993f",
+  "retained_fix": "e41f3d1e",
+  "retained_merge": "a51267ec3dd94ea465a3161e3b4d8fbcd061009e",
+  "agent_base": "9cb1090458428fb09067e359be92cdbb6608a206",
+  "native_provenance": "cb1e907c6846341997e50d7f51aed65a84b6c335",
+  "positive_provenance": "9bf654387c8c1aaa2bc3ef74210fa4a6825956ad",
+  "public_pins_changed": false,
+  "private_runtime_tree": "fbca3c2fc63a2244370aacb9c7ec2c17eaa01406",
+  "command_schema_sha256": "b2dcbec7e212c1bccc7ea662367b98b973e6308c9b7a2f9aead42c6a9d807a78",
+  "generated_schema_digest": "sha256:7cc26d125d3e16bebb3694bf724c7e1e3fd7ada0398ef1fc3020dde245e494bf",
+  "artifact_version": "sha256:b8b5e14cb2b53b27ff07745b264c5d59e703fa7bc52dfb3e63c5bb6d58361d8c",
+  "artifact_entries": 75,
+  "agent_patch_sha256": "e7c092dda52fe60de5b98fda30dedd14559cc72820094dff7a4107e0dd841410"
+}
+ .../core/timeline/schema/edit-command.schema.json  | 186 ++++++++++++++++++++-
+ astrid/sdk/timeline/_collections.py                |  36 +++-
+ astrid/sdk/timeline/_command_state.py              |  29 ++++
+ astrid/sdk/timeline/_recording.py                  |  20 ++-
+ astrid/sdk/timeline/commands.py                    |  12 +-
+ astrid/sdk/timeline/commit.py                      |   2 +
+ astrid/sdk/timeline/inverse.py                     |  27 ++-
+ .../test_recipe_text_binding_spike.py              |  11 ++
+ tests/sdk/test_timeline_current_union_schema.py    |  38 +++--
+ 9 files changed, 327 insertions(+), 34 deletions(-)
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_collections.py
+ M astrid/sdk/timeline/_command_state.py
+ M astrid/sdk/timeline/_recording.py
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/commit.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_recipe_text_binding_spike.py
+ M tests/sdk/test_timeline_current_union_schema.py
+?? astrid/sdk/timeline/native_text_binding.py
+?? tests/editing_conformance/fixtures/recipe_m2_text_binding.json
+?? tests/editing_conformance/test_commit_runtime_text_binding.py
+?? tests/editing_conformance/test_recipe_text_binding_native.py
+contract/artifacts.json is current
+
+exec
+/bin/bash -lc "rg -n 'edit-command.schema|native_text_binding|timeline/commands.py' artifacts.json; sed -n '1,85p' scripts/artifact_manifest.py; head -50 tests/test_artifact_manifest.py; python3 - <<'PY'
+from pathlib import Path
+root=Path.cwd()
+paths=[p for p in root.rglob('*') if p.is_file() and (p.suffix in ('.orig','.rej','.pyc') or p.name in ('.coverage',))]
+print('temporary worktree output:',len(paths))
+PY" in /home/user/work/wt/agt-m2-text-retained-current-pair
+ succeeded in 293ms:
+"""Generate or check artifacts.json: the digest of every file consumers copy or rely on.
+
+    python scripts/artifact_manifest.py          # rewrite the manifest
+    python scripts/artifact_manifest.py --check  # exit 1, naming each changed path
+
+Consumers: astrid-app vendors the browser file set below into vendor/astrid-browser (its config/astrid-vendor-files.json
+declares the same set) and the tool catalog's bound pack files; cli-surface.json is generated by gen_cli_surface.py.
+astrid_runtime_client/ is a copy Astrid RECEIVES from the Runtime, so it is not an Astrid artifact.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = "artifacts.json"
+PRODUCER = "astrid-agent"
+TOOL_CATALOG = "astrid/tools/catalog.json"
+PATTERNS = [
+    "cli-surface.json",
+    "schemas/public-boundary/**/*.json",
+    "schemas/public-boundary/README.md",
+    "LICENSE",
+    TOOL_CATALOG,
+    "astrid/packs/rendering/elements/catalog.ts",
+    "astrid/packs/local/rendering/elements/**/*.ts",
+    "astrid/packs/local/rendering/elements/**/*.tsx",
+    "astrid/packs/local/rendering/elements/**/*.yaml",
+    "astrid/packs/local/shared/*.ts",
+    "astrid/packs/local/shared/*.tsx",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-1.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-2.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-3.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0-canonical-mink.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4-canonical-mink.png",
+    "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5-canonical-mink.png",
+    "astrid/packs/local/rendering/elements/effects/frame-overlay/assets/frame.png",
+    "astrid/packs/astrid_motion/rendering/elements/**/*.ts",
+    "astrid/packs/astrid_motion/rendering/elements/**/*.tsx",
+    "astrid/packs/astrid_motion/rendering/elements/**/*.yaml",
+    "astrid/packs/rendering/rendering/elements/**/*.ts",
+    "astrid/packs/rendering/rendering/elements/**/*.tsx",
+    "astrid/packs/rendering/rendering/elements/**/*.yaml",
+    "astrid/packs/rendering/shared/**/*.ts",
+    "astrid/packs/rendering/shared/**/*.tsx",
+    "astrid/packs/rendering/editor/**/*.ts",
+    "astrid/packs/rendering/editor/**/*.tsx",
+    "astrid/packs/rendering/ui/**/*.ts",
+    "astrid/packs/rendering/ui/**/*.tsx",
+    "remotion/src/fonts.ts",
+    "remotion/public/fonts/*.woff2",
+    "remotion/public/fonts/OFL-1.1.txt",
+    "remotion/public/fonts/FONT_PROVENANCE.md",
+]
+
+
+def _bound_pack_files(root: Path) -> set[Path]:
+    """The pack files each tool in the catalog binds (manifest, entry, resources)."""
+    try:
+        tools = json.loads((root / TOOL_CATALOG).read_text(encoding="utf-8"))["tools"]
+    except (OSError, ValueError, KeyError):
+        return set()
+    bound = set()
+    for tool in tools:
+        for ref in [tool["manifest"], tool["entry"], *tool.get("resources", [])]:
+            bound.add(root / "astrid" / "packs" / tool["pack_id"] / ref["path"])
+    return bound
+
+
+def digests(root: Path = ROOT, patterns: list[str] = PATTERNS) -> dict[str, str]:
+    paths = {p for pattern in patterns for p in root.glob(pattern) if p.is_file()} | {p for p in _bound_pack_files(root) if p.is_file()}
+    return {p.relative_to(root).as_posix(): "sha256:" + hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)}
+
+
+def build(root: Path = ROOT, patterns: list[str] = PATTERNS) -> dict:
+    artifacts = digests(root, patterns)
+    canonical = json.dumps(artifacts, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return {"producer": PRODUCER, "version": "sha256:" + hashlib.sha256(canonical).hexdigest(), "artifacts": artifacts}
+
+"""artifacts.json and cli-surface.json must match what they describe (testing plan C1, R-3)."""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+import shutil
+from pathlib import Path
+
+from scripts import gen_tool_catalog
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load(name: str):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / f"{name}.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+artifact_manifest = _load("artifact_manifest")
+gen_cli_surface = _load("gen_cli_surface")
+
+SAMPLE = ["astrid/tools/catalog.json", "astrid/packs/rendering/elements/catalog.ts"]
+
+
+def test_committed_artifact_manifest_is_current() -> None:
+    assert artifact_manifest.check() == [], "run `python scripts/gen_cli_surface.py && python scripts/artifact_manifest.py`"
+
+
+def test_cli_surface_is_current() -> None:
+    assert gen_cli_surface.check() == [], "run `python scripts/gen_cli_surface.py`"
+
+
+def test_tool_catalog_is_current() -> None:
+    assert gen_tool_catalog.main(["--check"]) == 0
+
+
+def test_planted_tool_catalog_drift_names_regenerate_command(tmp_path: Path, capsys) -> None:
+    catalog = tmp_path / "catalog.json"
+    shutil.copyfile(ROOT / "astrid/tools/catalog.json", catalog)
+    catalog.write_bytes(catalog.read_bytes() + b" ")
+
+    assert gen_tool_catalog.main([str(catalog), "--check"]) == 1
+    assert "is stale; run scripts/gen_tool_catalog.py" in capsys.readouterr().err
+
+
+def test_cli_surface_covers_the_timelines_verbs_consumers_prompt() -> None:
+    timelines = json.loads((ROOT / "cli-surface.json").read_text(encoding="utf-8"))["families"]["timelines"]["verbs"]
+temporary worktree output: 0
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-retained-current-pair')
+p=w/'notes/report.md'
+s=p.read_text()
+s+='\\nSource preparation and the current private retained-text pair are complete. GC is recorded as an unverified future-collector gap, not an invented acceptance result. "'`commit-msg` and `DONE` are written; no BLOCKED file is needed for the completed source/private-pair handoff. There are no build outputs, bytecode or patch backups in the Agent worktree. No Git mutation or integration edit was performed.'"\\n'
+p.write_text(s)
+(w/'DONE').touch()
+assert (w/'commit-msg').is_file()
+assert not (w/'BLOCKED').exists()
+print('report, handoff, commit-msg and DONE ready')
+PY" in /home/user/work/wt/agt-m2-text-retained-current-pair
+ succeeded in 35ms:
+report, handoff, commit-msg and DONE ready
+
+codex
+Prepared the current S2+text candidate against Runtime `129493b2` (`a51267ec` descendant). Both original legacy positives passed with `--runxfail` before marker removal.
+
+- Native service: **21 passed**
+- Agent: **450 passed**, 1 integration-only deselected
+- Schema/native: **54 passed**
+- Current neighbors: **245 passed**
+- Runtime: **199 passed**; artifacts: **3 passed**
+- Generation checks, Ruff and diff check passed.
+
+Exact commands, identities and decisions: [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-retained-current-pair/notes/report.md). [Candidate handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-text-retained-current-handoff.md).
+
+Destructive GC remains unverified: Runtime exposes append-only CAS and reachability checks. Public release and App cutover remain held pending official release and actual journeys.
+
+`commit-msg` and `DONE` written.
+tokens used
+174,296
+Prepared the current S2+text candidate against Runtime `129493b2` (`a51267ec` descendant). Both original legacy positives passed with `--runxfail` before marker removal.
+
+- Native service: **21 passed**
+- Agent: **450 passed**, 1 integration-only deselected
+- Schema/native: **54 passed**
+- Current neighbors: **245 passed**
+- Runtime: **199 passed**; artifacts: **3 passed**
+- Generation checks, Ruff and diff check passed.
+
+Exact commands, identities and decisions: [report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-text-retained-current-pair/notes/report.md). [Candidate handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-text-retained-current-handoff.md).
+
+Destructive GC remains unverified: Runtime exposes append-only CAS and reachability checks. Public release and App cutover remain held pending official release and actual journeys.
+
+`commit-msg` and `DONE` written.

@@ -1,0 +1,9 @@
+name=agt-baseline-fix-rest
+repo=agent
+base=tl/integration
+base_sha=7261b4ad
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-baseline-fix-rest
+started=2026-10-20T07:04:06Z

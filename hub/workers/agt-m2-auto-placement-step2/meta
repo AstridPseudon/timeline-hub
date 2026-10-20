@@ -1,0 +1,9 @@
+name=agt-m2-auto-placement-step2
+repo=agent
+base=tl/agt-m2-auto-placement-completion
+base_sha=fb21a629
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-auto-placement-step2
+started=2026-10-20T07:38:01Z

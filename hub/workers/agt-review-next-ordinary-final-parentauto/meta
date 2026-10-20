@@ -1,0 +1,9 @@
+name=agt-review-next-ordinary-final-parentauto
+repo=agent
+base=tl/agt-m2-next-ordinary-current-core-gate
+base_sha=310e5484
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-next-ordinary-final-parentauto
+started=2026-10-20T14:08:36Z

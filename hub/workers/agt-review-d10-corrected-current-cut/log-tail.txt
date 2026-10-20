@@ -1,0 +1,400 @@
+codex
+The source audit confirms the correction preserves the canonical `pack:rendering` winner and adds only the valid `pack:local` owner to the existing `text-card` selector; unknown owners still throw, and no second precedence system appears. I’m reproducing the cited 24-test qualification against a private `/tmp` Composition 0.0.13 overlay, keeping shared installs untouched, then I’ll write the approval record.
+exec
+/bin/bash -lc 'tmpd=$(mktemp -d /tmp/agt-review-d10.XXXXXX)
+mkdir -p "$tmpd/project/node_modules/@banodoco/timeline-composition"
+tar -xzf remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz -C "$tmpd/project/node_modules/@banodoco/timeline-composition" --strip-components=1
+mkdir -p "$tmpd/project/node_modules/@remotion"
+ln -s /home/user/work/app/node_modules/react "$tmpd/project/node_modules/react"
+ln -s /home/user/work/app/node_modules/react-dom "$tmpd/project/node_modules/react-dom"
+ln -s /home/user/work/app/node_modules/remotion "$tmpd/project/node_modules/remotion"
+ln -s /home/user/work/app/node_modules/@remotion/layout-utils "$tmpd/project/node_modules/@remotion/layout-utils"
+ln -s /home/user/work/app/node_modules/@remotion/media "$tmpd/project/node_modules/@remotion/media"
+export ASTRID_REMOTION_PROJECT_DIR="$tmpd/project"
+export ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH=$PWD
+/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_effect_registry_target.py tests/packs/rendering/test_remotion_element_generation.py tests/packs/test_composition_elements.py tests/core/test_editor_element_catalog.py tests/reshape/test_check_doc_references.py::test_committed_catalog_is_fresh_for_the_in_repo_packs
+pytest_status=$?
+/home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
+catalog_status=$?
+git diff --check d0a5072bbe7b7ce9489f43aa0a81027ec400343b HEAD
+diff_status=$?
+find "$tmpd" -depth -type f -delete
+find "$tmpd" -depth -type l -delete
+find "$tmpd" -depth -type d -empty -delete
+printf '"'pytest_status=%s catalog_status=%s diff_status=%s\\n' \""'$pytest_status" "$catalog_status" "$diff_status"
+exit $((pytest_status || catalog_status || diff_status))' in /home/user/work/wt/agt-review-d10-corrected-current-cut
+ succeeded in 40168ms:
+........................                                                 [100%]
+24 passed in 33.65s
+pytest_status=0 catalog_status=0 diff_status=0
+
+exec
+/bin/bash -lc "git cat-file -t f162a705a5ef32df080d8d0f8219fbc639a51b22 2>&1; git ls-tree -r --name-status f162a705a5ef32df080d8d0f8219fbc639a51b22 2>&1 | head -30; printf '\\n--- tree comparison ---\\n'; git diff --stat f162a705a5ef32df080d8d0f8219fbc639a51b22 HEAD 2>&1; git diff --name-status f162a705a5ef32df080d8d0f8219fbc639a51b22 HEAD 2>&1 | head -80; printf '\\n--- c1 object metadata ---\\n'; git cat-file -p c1d49291a7d4b1fabdb574acc919ded351cb106a | sed -n '1,12p'" in /home/user/work/wt/agt-review-d10-corrected-current-cut
+ succeeded in 17ms:
+fatal: git cat-file: could not get object info
+fatal: not a tree object
+
+--- tree comparison ---
+fatal: bad object f162a705a5ef32df080d8d0f8219fbc639a51b22
+fatal: bad object f162a705a5ef32df080d8d0f8219fbc639a51b22
+
+--- c1 object metadata ---
+tree b96f0246024d165abaf21e5b456ba6106472267f
+parent d0a5072bbe7b7ce9489f43aa0a81027ec400343b
+author Claude <noreply@anthropic.com> 1792526968 +0000
+committer Claude <noreply@anthropic.com> 1792526968 +0000
+gpgsig -----BEGIN SSH SIGNATURE-----
+ U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgrLzsfFISF4by8Q+FKz27YpkK1USsBB+m
+ amu1QkJnbDsAAAADZ2l0AAAAAAAAAAZzaGE1MTIAAABTAAAAC3NzaC1lZDI1NTE5AAAAQC9lnlbp
+ ZGTZrHmScSSd+BWZQPnD0vsm7aE8ykFi4ebKFP+TOHevF9NSuySUcW5YiNJ7TCOKQfA+hGaON9+E
+ 0gg=
+ -----END SSH SIGNATURE-----
+
+refactor(rendering): retire duplicate Composition wrapper sources
+
+exec
+/bin/bash -lc "git fsck --no-reflogs --unreachable 2>/dev/null | rg 'f162a705a5ef32df080d8d0f8219fbc639a51b22|c1d49291a7d4b1fabdb574acc919ded351cb106a|b96f0246024d165abaf21e5b456ba6106472267f' || true; printf '\\n--- commit tree vs expected handoff clues ---\\n'; git show --stat --oneline --decorate HEAD; printf '\\n--- worktree status ---\\n'; git status --short --branch" in /home/user/work/wt/agt-review-d10-corrected-current-cut
+ succeeded in 13298ms:
+
+--- commit tree vs expected handoff clues ---
+c1d49291 (HEAD -> tl/agt-review-d10-corrected-current-cut, hub/tl/agt-m2-d10-current-deletion-port, hub/timeline/agent/tl/agt-m2-d10-current-deletion-port, tl/agt-m2-d10-current-deletion-port) refactor(rendering): retire duplicate Composition wrapper sources
+ astrid/packs/rendering/elements/catalog.ts         |  18 +--
+ astrid/packs/rendering/pack.yaml                   |  27 ----
+ .../elements/animations/fade-up/component.tsx      |   3 -
+ .../elements/animations/fade/component.tsx         |   3 -
+ .../elements/animations/scale-in/component.tsx     |   3 -
+ .../elements/animations/slide-left/component.tsx   |   3 -
+ .../elements/animations/slide-up/component.tsx     |   3 -
+ .../elements/animations/type-on/component.tsx      |   3 -
+ .../elements/effects/text-card/component.tsx       |   3 -
+ .../elements/transitions/cross-fade/component.tsx  |   3 -
+ .../elements/transitions/fade/component.tsx        |   3 -
+ scripts/gen_effect_registry.py                     | 178 +++++++++++++++++++--
+ scripts/gen_element_catalog.py                     |  48 ++++++
+ .../packs/rendering/test_effect_registry_target.py |  41 ++++-
+ .../rendering/test_remotion_element_generation.py  | 148 ++++++++++++++++-
+ tests/packs/test_composition_elements.py           |  33 ++--
+ 16 files changed, 434 insertions(+), 86 deletions(-)
+
+--- worktree status ---
+## tl/agt-review-d10-corrected-current-cut
+
+exec
+/bin/bash -lc 'git status --short --branch; git show --stat --oneline HEAD; git rev-parse HEAD''^{tree}; test -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/tmpdir && find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/tmpdir -maxdepth 1 -printf '"'%f\\n' || true" in /home/user/work/wt/agt-review-d10-corrected-current-cut
+ succeeded in 50ms:
+## tl/agt-review-d10-corrected-current-cut
+c1d49291 refactor(rendering): retire duplicate Composition wrapper sources
+ astrid/packs/rendering/elements/catalog.ts         |  18 +--
+ astrid/packs/rendering/pack.yaml                   |  27 ----
+ .../elements/animations/fade-up/component.tsx      |   3 -
+ .../elements/animations/fade/component.tsx         |   3 -
+ .../elements/animations/scale-in/component.tsx     |   3 -
+ .../elements/animations/slide-left/component.tsx   |   3 -
+ .../elements/animations/slide-up/component.tsx     |   3 -
+ .../elements/animations/type-on/component.tsx      |   3 -
+ .../elements/effects/text-card/component.tsx       |   3 -
+ .../elements/transitions/cross-fade/component.tsx  |   3 -
+ .../elements/transitions/fade/component.tsx        |   3 -
+ scripts/gen_effect_registry.py                     | 178 +++++++++++++++++++--
+ scripts/gen_element_catalog.py                     |  48 ++++++
+ .../packs/rendering/test_effect_registry_target.py |  41 ++++-
+ .../rendering/test_remotion_element_generation.py  | 148 ++++++++++++++++-
+ tests/packs/test_composition_elements.py           |  33 ++--
+ 16 files changed, 434 insertions(+), 86 deletions(-)
+b96f0246024d165abaf21e5b456ba6106472267f
+tmpdir
+
+codex
+The independent qualification reproduced exactly: 24 targeted tests passed, catalog freshness passed, and the reviewed delta is whitespace-clean. I found no product defect. One bookkeeping discrepancy is recorded below: the handoff names an uncommitted tree `f162…`, but that object is absent here; the checked-out exact commit `c1d492…` resolves to tree `b96f…`, which is the tree I tested and reviewed.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d10-current-final-review.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d10-current-final-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d10-current-final-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..23f628a9cfdf17e53491e5efe6fcfc4e4dc99d9e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d10-current-final-review.md
+@@ -0,0 +1,70 @@
++# Agent D10 current final source-boundary review
++
++## Verdict
++
++**APPROVE** — the corrected current source cut preserves the D10 contract and
++is ready for the Home Agent manager to merge. This approval is for the Agent
++source boundary only; the D10 ledger remains open until that merge.
++
++## Exact source reviewed
++
++- Commit: `c1d49291a7d4b1fabdb574acc919ded351cb106a`
++- Parent/base: `d0a5072bbe7b7ce9489f43aa0a81027ec400343b`
++- Checked-out tree: `b96f0246024d165abaf21e5b456ba6106472267f`
++- Worktree: `/home/user/work/wt/agt-review-d10-corrected-current-cut`
++- Worktree status: clean
++
++The handoff records an uncommitted tree `f162a705a5ef32df080d8d0f8219fbc639a51b22`,
++but that object is not present in this repository. The review therefore
++qualifies the exact checked-out commit above, not an unavailable tree object.
++
++## Boundary decision
++
++The `d0a5072b..c1d49291` delta removes exactly the nine duplicate wrapper
++`component.tsx` files and their nine implementation resource declarations.
++The element descriptors, IDs, schemas, defaults, pack ownership, custom
++components, and assets remain. The catalog revisions change as normal
++content-addressed projections of the source deletions.
++
++The corrected generator uses Composition's existing
++`resolveElementRegistries(DEFAULT_THEME)` API for public membership. A
++source-less public rendering winner is retained in the host effect map when a
++valid local shadow exists: unqualified `text-card` resolves to the canonical
++Composition winner, while `packId: "local"` is routed through the existing
++owner selector to the local component. Unknown owners fail closed. This is
++not a second priority chooser or a blanket rendering omission. Missing
++non-public components remain diagnostic failures.
++
++## Evidence
++
++Using a private `/tmp` overlay of the pinned Composition 0.0.13 artifact,
++pinned Node v20.19.4, and read-only links to shared peer dependencies:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/packs/rendering/test_effect_registry_target.py \
++  tests/packs/rendering/test_remotion_element_generation.py \
++  tests/packs/test_composition_elements.py \
++  tests/core/test_editor_element_catalog.py \
++  tests/reshape/test_check_doc_references.py::test_committed_catalog_is_fresh_for_the_in_repo_packs
++  24 passed in 33.65s
++
++ASTRID_REMOTION_PROJECT_DIR=<private public13 overlay> \
++  ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node \
++  PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
++  passed
++
++git diff --check d0a5072bbe7b7ce9489f43aa0a81027ec400343b HEAD
++  passed
++```
++
++No App refresh, browser run, full suite, live socket, or release qualification
++was run; those are outside this review scope and the unchanged App consumer
++proof is already qualified in the handoff.
++
++## Next step
++
++Merge this exact Agent source unit through the normal manager queue, then keep
++D10 open until the merge is recorded. Do not rewrite catalog revisions or
++historical admissions during that merge.
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d10-current-final-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d10-current-final-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..23f628a9cfdf17e53491e5efe6fcfc4e4dc99d9e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d10-current-final-review.md
+@@ -0,0 +1,70 @@
++# Agent D10 current final source-boundary review
++
++## Verdict
++
++**APPROVE** — the corrected current source cut preserves the D10 contract and
++is ready for the Home Agent manager to merge. This approval is for the Agent
++source boundary only; the D10 ledger remains open until that merge.
++
++## Exact source reviewed
++
++- Commit: `c1d49291a7d4b1fabdb574acc919ded351cb106a`
++- Parent/base: `d0a5072bbe7b7ce9489f43aa0a81027ec400343b`
++- Checked-out tree: `b96f0246024d165abaf21e5b456ba6106472267f`
++- Worktree: `/home/user/work/wt/agt-review-d10-corrected-current-cut`
++- Worktree status: clean
++
++The handoff records an uncommitted tree `f162a705a5ef32df080d8d0f8219fbc639a51b22`,
++but that object is not present in this repository. The review therefore
++qualifies the exact checked-out commit above, not an unavailable tree object.
++
++## Boundary decision
++
++The `d0a5072b..c1d49291` delta removes exactly the nine duplicate wrapper
++`component.tsx` files and their nine implementation resource declarations.
++The element descriptors, IDs, schemas, defaults, pack ownership, custom
++components, and assets remain. The catalog revisions change as normal
++content-addressed projections of the source deletions.
++
++The corrected generator uses Composition's existing
++`resolveElementRegistries(DEFAULT_THEME)` API for public membership. A
++source-less public rendering winner is retained in the host effect map when a
++valid local shadow exists: unqualified `text-card` resolves to the canonical
++Composition winner, while `packId: "local"` is routed through the existing
++owner selector to the local component. Unknown owners fail closed. This is
++not a second priority chooser or a blanket rendering omission. Missing
++non-public components remain diagnostic failures.
++
++## Evidence
++
++Using a private `/tmp` overlay of the pinned Composition 0.0.13 artifact,
++pinned Node v20.19.4, and read-only links to shared peer dependencies:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
++  tests/packs/rendering/test_effect_registry_target.py \
++  tests/packs/rendering/test_remotion_element_generation.py \
++  tests/packs/test_composition_elements.py \
++  tests/core/test_editor_element_catalog.py \
++  tests/reshape/test_check_doc_references.py::test_committed_catalog_is_fresh_for_the_in_repo_packs
++  24 passed in 33.65s
++
++ASTRID_REMOTION_PROJECT_DIR=<private public13 overlay> \
++  ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node \
++  PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
++  passed
++
++git diff --check d0a5072bbe7b7ce9489f43aa0a81027ec400343b HEAD
++  passed
++```
++
++No App refresh, browser run, full suite, live socket, or release qualification
++was run; those are outside this review scope and the unchanged App consumer
++proof is already qualified in the handoff.
++
++## Next step
++
++Merge this exact Agent source unit through the normal manager queue, then keep
++D10 open until the merge is recorded. Do not rewrite catalog revisions or
++historical admissions during that merge.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..e776e261bd5e2d612d86aae8537e7b7bdb247e4c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/commit-msg.txt
+@@ -0,0 +1,4 @@
++docs(review): approve corrected D10 source cut
++
++Record the independent final Agent source-owner boundary approval for the
++corrected current D10 deletion cut.
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/DONE
+printf '%s\\n' '--- review artifact ---'
+sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d10-current-final-review.md
+printf '%s\\n' '--- commit message ---'
+sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/commit-msg.txt
+printf 'DONE size='; stat -c %s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/DONE
+printf 'worktree='; git status --porcelain=v1" in /home/user/work/wt/agt-review-d10-corrected-current-cut
+ succeeded in 125ms:
+--- review artifact ---
+# Agent D10 current final source-boundary review
+
+## Verdict
+
+**APPROVE** — the corrected current source cut preserves the D10 contract and
+is ready for the Home Agent manager to merge. This approval is for the Agent
+source boundary only; the D10 ledger remains open until that merge.
+
+## Exact source reviewed
+
+- Commit: `c1d49291a7d4b1fabdb574acc919ded351cb106a`
+- Parent/base: `d0a5072bbe7b7ce9489f43aa0a81027ec400343b`
+- Checked-out tree: `b96f0246024d165abaf21e5b456ba6106472267f`
+- Worktree: `/home/user/work/wt/agt-review-d10-corrected-current-cut`
+- Worktree status: clean
+
+The handoff records an uncommitted tree `f162a705a5ef32df080d8d0f8219fbc639a51b22`,
+but that object is not present in this repository. The review therefore
+qualifies the exact checked-out commit above, not an unavailable tree object.
+
+## Boundary decision
+
+The `d0a5072b..c1d49291` delta removes exactly the nine duplicate wrapper
+`component.tsx` files and their nine implementation resource declarations.
+The element descriptors, IDs, schemas, defaults, pack ownership, custom
+components, and assets remain. The catalog revisions change as normal
+content-addressed projections of the source deletions.
+
+The corrected generator uses Composition's existing
+`resolveElementRegistries(DEFAULT_THEME)` API for public membership. A
+source-less public rendering winner is retained in the host effect map when a
+valid local shadow exists: unqualified `text-card` resolves to the canonical
+Composition winner, while `packId: "local"` is routed through the existing
+owner selector to the local component. Unknown owners fail closed. This is
+not a second priority chooser or a blanket rendering omission. Missing
+non-public components remain diagnostic failures.
+
+## Evidence
+
+Using a private `/tmp` overlay of the pinned Composition 0.0.13 artifact,
+pinned Node v20.19.4, and read-only links to shared peer dependencies:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD \
+  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider \
+  tests/packs/rendering/test_effect_registry_target.py \
+  tests/packs/rendering/test_remotion_element_generation.py \
+  tests/packs/test_composition_elements.py \
+  tests/core/test_editor_element_catalog.py \
+  tests/reshape/test_check_doc_references.py::test_committed_catalog_is_fresh_for_the_in_repo_packs
+  24 passed in 33.65s
+
+ASTRID_REMOTION_PROJECT_DIR=<private public13 overlay> \
+  ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node \
+  PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
+  passed
+
+git diff --check d0a5072bbe7b7ce9489f43aa0a81027ec400343b HEAD
+  passed
+```
+
+No App refresh, browser run, full suite, live socket, or release qualification
+was run; those are outside this review scope and the unchanged App consumer
+proof is already qualified in the handoff.
+
+## Next step
+
+Merge this exact Agent source unit through the normal manager queue, then keep
+D10 open until the merge is recorded. Do not rewrite catalog revisions or
+historical admissions during that merge.
+--- commit message ---
+docs(review): approve corrected D10 source cut
+
+Record the independent final Agent source-owner boundary approval for the
+corrected current D10 deletion cut.
+DONE size=0
+worktree=
+codex
+## Report
+
+**APPROVE** — corrected D10 source boundary is safe to merge.
+
+- Reviewed `c1d49291...` against `d0a5072b`; tree: `b96f0246...`.
+- Confirmed nine wrapper/resource deletions, preserved descriptors and catalog semantics, dynamic Composition membership, canonical `text-card` winner, local owner routing, and fail-closed unknown owners.
+- Tests: targeted suite **24 passed**; catalog freshness **passed**; `git diff --check` **passed**.
+- No full, browser, App refresh, or live-socket tests run per scope.
+- Recorded handoff tree discrepancy: referenced `f162...` object is unavailable; reviewed checked-out commit tree instead.
+
+Artifacts:
+
+- [Final review](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d10-current-final-review.md>)
+- [Commit message](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/commit-msg.txt>)
+- `DONE` created.
+tokens used
+100,462
+## Report
+
+**APPROVE** — corrected D10 source boundary is safe to merge.
+
+- Reviewed `c1d49291...` against `d0a5072b`; tree: `b96f0246...`.
+- Confirmed nine wrapper/resource deletions, preserved descriptors and catalog semantics, dynamic Composition membership, canonical `text-card` winner, local owner routing, and fail-closed unknown owners.
+- Tests: targeted suite **24 passed**; catalog freshness **passed**; `git diff --check` **passed**.
+- No full, browser, App refresh, or live-socket tests run per scope.
+- Recorded handoff tree discrepancy: referenced `f162...` object is unavailable; reviewed checked-out commit tree instead.
+
+Artifacts:
+
+- [Final review](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-d10-current-final-review.md>)
+- [Commit message](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-d10-corrected-current-cut/commit-msg.txt>)
+- `DONE` created.

@@ -1,0 +1,400 @@
++
++Before changing product code, the actual persisted-outbox/real-command-engine fixture accepted registered `track.create` with `args.row.opaque = true`, then lost its acknowledgement. After reopening the session, submitting `opaque = 1` returned the original receipt, made a second send with the old body/key, kept accepted `opaque` as boolean true, and cleared the flight. A standalone diagnostic confirmed all five observations.
++
++The regression run before the fix produced **6 failed, 4 passed, 21 deselected**. All six failures were “DID NOT RAISE TimelineEditError”: true/1 and false/0, directly and nested in an object/array, plus captured boolean read and expect states changed to 1. The same focused command after the fix produced **10 passed, 21 deselected**. Each changed-type test now asserts refusal before another send, byte-for-byte preservation of the persisted outbox (including flight/body/key), and successful original-command retry with the identical receipt and original request. No guard recapture occurs.
++
++Numeric 2/2.0 retries still send the original integer bytes and return the original receipt. Empty, partial and full nonconflicting default-intent subsets still retry successfully. Existing passing behavior expectations remain; no skips or xfails were added.
++
++## Exact verification
++
++All local commands ran in the assigned worktree using the shared dependency-only venv.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sync_native.py -k 'changed_json_type or boolean_capture_claim or numeric_equivalence or default_intent'
++```
++
++Before: **6 failed, 4 passed, 21 deselected in 1.14s**, exit 1. After: **10 passed, 21 deselected in 0.87s**, exit 0.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_native.py tests/editing_conformance/test_parent_track_label.py tests/sdk/test_timeline_commit_provider_parent_track_label.py
++```
++
++**134 passed in 6.76s**, exit 0. Corrected count for this tree: the prior ingress report's corresponding batch had 125; this task adds nine cases (seven new cases plus two additional default-intent variants). Native-sync now has 31 cases, previously 22. The focused ten above are a subset, not ten additional tests.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_parity.py tests/sdk/test_native_timeline_facades.py tests/editing_conformance/test_recipe_m1_commands.py
++```
++
++**153 passed in 7.06s**, exit 0. Together the two local batches cover 287 distinct cases.
++
++One central existing ingress batch was requested after the final source edit because generic commit matching changed:
++
++```sh
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-ingress-json-identity commit-integration --files tests/editing_conformance/test_commit_runtime_parent_track_label.py
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-ingress-json-identity-commit-integration-1019234156-10693
++```
++
++The service executed:
++
++```sh
++env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_parent_track_label.py
++```
++
++**4 passed in 21.67s**, exit 0, no skips/xfails. This covers the existing actual Runtime M1 journey and native CLI/Python lost-ACK/suffix/restart flow; the new JSON counterexample itself is proven locally at the generated transport boundary, not through a new HTTP integration test.
++
++Result directory: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-ingress-json-identity-commit-integration-1019234156-10693/`. Snapshot tree `5fa7085b2e05672566e4db8d6d54fa7c493fc50d`, external Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316`.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/sync.py tests/sdk/test_timeline_sync_native.py
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --cache-dir=/tmp/agt-m2-ingress-json-identity-mypy astrid/sdk/timeline/sync.py
++git diff --check
++```
++
++All passed; mypy checked one source file. Temporary mypy and failed-reproduction pytest files were removed. No build output or test/lint caches were left in the worktree.
++
++## Decisions, limits and next steps
++
++Reused semantic equality without changing subset matching, numeric equivalence, or exact flight retry. No plan deviation or implementation blocker found. No full suite, make check, install, network access, or direct localhost test was run. Source-level central Runtime success does not qualify a released Runtime artifact.
++
++Both `commit-msg` and `commit-msg.txt` are written beside `notes/` for the harness. No git commit, merge, rebase, checkout, push, branch/ref mutation, or integration-worktree edit was performed. Review this bounded fix and keep M2 held until the orchestrator records the required M1 exit in PLAN and authorizes integration.
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index 7e4774b797af41cfaae95f99365f4de8b387b083..06484f5584da3ee4bb506a707c5f25d2fdf43dcb
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -195,13 +195,14 @@
+ 
+     def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
+         """Capture and flush one native command, or retry its original flight."""
++        from astrid.sdk.timeline._command_state import equal
+         from astrid.sdk.timeline.commands import execute
+ 
+         command = _native_command(command)
+         self._queue(lambda state: execute(self._bundle(state), [command]).commands[0],
+                     lambda pending: len(pending) == 1 and all(
+-                        pending[0].get(key) == value for key, value in command.items() if key != "intent")
+-                    and all(pending[0]["intent"].get(key) == value
++                        equal(pending[0].get(key), value) for key, value in command.items() if key != "intent")
++                    and all(equal(pending[0]["intent"].get(key), value)
+                             for key, value in command.get("intent", {}).items()))
+         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+ 
+diff --git a/tests/sdk/test_timeline_sync_native.py b/tests/sdk/test_timeline_sync_native.py
+index 7e93219057c40c34367e6996ab2f8aef0526220a..da007e2e26db2e1d6289a187ae0dbbaf52f5d8d6
+--- a/tests/sdk/test_timeline_sync_native.py
++++ b/tests/sdk/test_timeline_sync_native.py
+@@ -80,10 +80,12 @@
+     assert open_session(connected).commit(command)['data']['commands'] == [command]
+ 
+ 
+-def test_native_move_with_default_intent_retries_without_recapture(connected):
++@pytest.mark.parametrize('intent', [{}, {'ripple': 'none'},
++                                 {'ripple': 'none', 'anchor': 'fixed', 'position': 'absolute'}])
++def test_native_move_with_default_intent_retries_without_recapture(connected, intent):
+     client, generated, _ = connected
+     raw = {'schema_version': 1, 'op': 'clip.move', 'version': '1', 'select': 'parent/clip:a',
+-           'args': {'on': 5}, 'intent': {}}
++           'args': {'on': 5}, 'intent': intent}
+     generated.lose_ack = True
+     with pytest.raises(WorkspaceClientError):
+         open_session(connected).commit(raw)
+@@ -92,6 +94,77 @@
+     assert client.reads == ['r0']
+ 
+ 
++@pytest.mark.parametrize('value,changed', [(True, 1), (False, 0)])
++@pytest.mark.parametrize('nested', [False, True])
++def test_native_lost_ack_refuses_changed_json_type_before_send(connected, value, changed, nested):
++    client, generated, path = connected
++    raw = {'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
++           'args': {'row': {'id': 'new', 'kind': 'visual',
++                            'opaque': {'items': [value]} if nested else value}}}
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        open_session(connected).commit(raw, idempotency_key='original')
++    persisted = path.read_bytes()
++    accepted = copy.deepcopy(generated.accepted['original'][1])
++    changed_command = copy.deepcopy(raw)
++    changed_command['args']['row']['opaque'] = {'items': [changed]} if nested else changed
++    session = open_session(connected)
++    with pytest.raises(TimelineEditError, match='pending intent differs'):
++        session.commit(changed_command)
++    assert len(generated.calls) == 1
++    assert path.read_bytes() == persisted
++    retried = session.commit(raw)
++    assert retried['receipt'] == accepted['receipt']
++    assert generated.calls == [(json.loads(persisted)['flight']['body'].encode(), 'original')] * 2
++    assert client.reads == ['r0']
++
++
++@pytest.mark.parametrize('field', ['reads', 'expect'])
++def test_native_lost_ack_refuses_changed_boolean_capture_claim(connected, field):
++    client, generated, path = connected
++    clip = State(generated.bundles['r0']).entity('parent/clip:a')
++    clip.update(enabled=True, app={'astrid': {'fixed_start': True}})
++    raw = {'schema_version': 1, 'op': 'clip.move', 'version': '1', 'select': 'parent/clip:a',
++           'args': {'on': 5}}
++    captured = execute(generated.bundles['r0'], [raw]).commands[0]
++    changed = copy.deepcopy(captured)
++    if field == 'reads':
++        claim = next(read['state'] for read in changed['reads']
++                     if read['ref'] == 'parent/clip:a' and read['path'] == ['enabled'])
++    else:
++        claim = changed['expect']['parent/clip:a::app.astrid.fixed_start']
++    assert claim['value'] is True
++    claim['value'] = 1
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        open_session(connected).commit(captured, idempotency_key='captured')
++    persisted = path.read_bytes()
++    accepted = copy.deepcopy(generated.accepted['captured'][1])
++    session = open_session(connected)
++    with pytest.raises(TimelineEditError, match='pending intent differs'):
++        session.commit(changed)
++    assert len(generated.calls) == 1
++    assert path.read_bytes() == persisted
++    assert session.commit(captured)['receipt'] == accepted['receipt']
++    assert generated.calls[0] == generated.calls[1]
++    assert client.reads == ['r0']
++
++
++def test_native_lost_ack_numeric_equivalence_retries_original_bytes(connected):
++    client, generated, _ = connected
++    raw = {'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
++           'args': {'row': {'id': 'new', 'kind': 'visual', 'opaque': 2}}}
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        open_session(connected).commit(raw, idempotency_key='numeric')
++    accepted = copy.deepcopy(generated.accepted['numeric'][1])
++    raw['args']['row']['opaque'] = 2.0
++    assert open_session(connected).commit(raw)['receipt'] == accepted['receipt']
++    assert generated.calls[0] == generated.calls[1]
++    assert b'"opaque":2}' in generated.calls[1][0]
++    assert client.reads == ['r0']
++
++
+ @pytest.mark.parametrize('peer', ['disjoint', 'label', 'aba'])
+ def test_native_lost_ack_retry_precedes_original_suffix_with_fresh_key(connected, peer):
+     client, generated, path = connected
+
+exec
+/bin/bash -lc 'git diff --check; git status --short; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/commit-msg.txt /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/notes/report.md' in /home/user/work/wt/agt-m2-ingress-json-identity
+ succeeded in 202ms:
+ M astrid/sdk/timeline/sync.py
+ M tests/sdk/test_timeline_sync_native.py
+-rw-r--r-- 1 root root  524 Oct 19 23:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/commit-msg
+-rw-r--r-- 1 root root  524 Oct 19 23:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/commit-msg.txt
+-rw-r--r-- 1 root root 6118 Oct 19 23:43 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/notes/report.md
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/notes/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..9f65d8f39afb1b4951e5489f3eacf1691a5a016a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/notes/report.md
+@@ -0,0 +1,66 @@
++# Generic native ingress JSON identity fix — held M2
++
++Worktree: `/home/user/work/wt/agt-m2-ingress-json-identity`; base `5f4dc2470b388860498454bdeb2470b03a568c83`.
++
++Changed only generic `TimelineSession.commit()` matching in `sync.py` and its direct native-sync tests. The product diff is three added/two removed lines: import and use existing `_command_state.equal` for supplied command fields and the supplied intent subset. No new canonicalizer, schema, ABI or handler change. The original M1 move/suffix implementation and test files are unchanged. This is an M2 generic-ingress bug, not an M1 product bug.
++
++## Counterexample and correction
++
++Before changing product code, the actual persisted-outbox/real-command-engine fixture accepted registered `track.create` with `args.row.opaque = true`, then lost its acknowledgement. After reopening the session, submitting `opaque = 1` returned the original receipt, made a second send with the old body/key, kept accepted `opaque` as boolean true, and cleared the flight. A standalone diagnostic confirmed all five observations.
++
++The regression run before the fix produced **6 failed, 4 passed, 21 deselected**. All six failures were “DID NOT RAISE TimelineEditError”: true/1 and false/0, directly and nested in an object/array, plus captured boolean read and expect states changed to 1. The same focused command after the fix produced **10 passed, 21 deselected**. Each changed-type test now asserts refusal before another send, byte-for-byte preservation of the persisted outbox (including flight/body/key), and successful original-command retry with the identical receipt and original request. No guard recapture occurs.
++
++Numeric 2/2.0 retries still send the original integer bytes and return the original receipt. Empty, partial and full nonconflicting default-intent subsets still retry successfully. Existing passing behavior expectations remain; no skips or xfails were added.
++
++## Exact verification
++
++All local commands ran in the assigned worktree using the shared dependency-only venv.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sync_native.py -k 'changed_json_type or boolean_capture_claim or numeric_equivalence or default_intent'
++```
++
++Before: **6 failed, 4 passed, 21 deselected in 1.14s**, exit 1. After: **10 passed, 21 deselected in 0.87s**, exit 0.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_native.py tests/editing_conformance/test_parent_track_label.py tests/sdk/test_timeline_commit_provider_parent_track_label.py
++```
++
++**134 passed in 6.76s**, exit 0. Corrected count for this tree: the prior ingress report's corresponding batch had 125; this task adds nine cases (seven new cases plus two additional default-intent variants). Native-sync now has 31 cases, previously 22. The focused ten above are a subset, not ten additional tests.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/timeline/test_cli_edit_flags.py tests/packs/timeline/test_cli_parity.py tests/sdk/test_native_timeline_facades.py tests/editing_conformance/test_recipe_m1_commands.py
++```
++
++**153 passed in 7.06s**, exit 0. Together the two local batches cover 287 distinct cases.
++
++One central existing ingress batch was requested after the final source edit because generic commit matching changed:
++
++```sh
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-ingress-json-identity commit-integration --files tests/editing_conformance/test_commit_runtime_parent_track_label.py
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-ingress-json-identity-commit-integration-1019234156-10693
++```
++
++The service executed:
++
++```sh
++env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_parent_track_label.py
++```
++
++**4 passed in 21.67s**, exit 0, no skips/xfails. This covers the existing actual Runtime M1 journey and native CLI/Python lost-ACK/suffix/restart flow; the new JSON counterexample itself is proven locally at the generated transport boundary, not through a new HTTP integration test.
++
++Result directory: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-ingress-json-identity-commit-integration-1019234156-10693/`. Snapshot tree `5fa7085b2e05672566e4db8d6d54fa7c493fc50d`, external Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316`.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/sync.py tests/sdk/test_timeline_sync_native.py
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m mypy --cache-dir=/tmp/agt-m2-ingress-json-identity-mypy astrid/sdk/timeline/sync.py
++git diff --check
++```
++
++All passed; mypy checked one source file. Temporary mypy and failed-reproduction pytest files were removed. No build output or test/lint caches were left in the worktree.
++
++## Decisions, limits and next steps
++
++Reused semantic equality without changing subset matching, numeric equivalence, or exact flight retry. No plan deviation or implementation blocker found. No full suite, make check, install, external network access, or direct localhost test was run. Source-level central Runtime success does not qualify a released Runtime artifact.
++
++Both `commit-msg` and `commit-msg.txt` are written beside `notes/` for the harness. No git commit, merge, rebase, checkout, push, branch/ref mutation, or integration-worktree edit was performed. Review this bounded fix and keep M2 held until the orchestrator records the required M1 exit in PLAN and authorizes integration.
+diff --git a/astrid/sdk/timeline/sync.py b/astrid/sdk/timeline/sync.py
+index 7e4774b797af41cfaae95f99365f4de8b387b083..06484f5584da3ee4bb506a707c5f25d2fdf43dcb
+--- a/astrid/sdk/timeline/sync.py
++++ b/astrid/sdk/timeline/sync.py
+@@ -195,13 +195,14 @@
+ 
+     def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
+         """Capture and flush one native command, or retry its original flight."""
++        from astrid.sdk.timeline._command_state import equal
+         from astrid.sdk.timeline.commands import execute
+ 
+         command = _native_command(command)
+         self._queue(lambda state: execute(self._bundle(state), [command]).commands[0],
+                     lambda pending: len(pending) == 1 and all(
+-                        pending[0].get(key) == value for key, value in command.items() if key != "intent")
+-                    and all(pending[0]["intent"].get(key) == value
++                        equal(pending[0].get(key), value) for key, value in command.items() if key != "intent")
++                    and all(equal(pending[0]["intent"].get(key), value)
+                             for key, value in command.get("intent", {}).items()))
+         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+ 
+diff --git a/tests/sdk/test_timeline_sync_native.py b/tests/sdk/test_timeline_sync_native.py
+index 7e93219057c40c34367e6996ab2f8aef0526220a..da007e2e26db2e1d6289a187ae0dbbaf52f5d8d6
+--- a/tests/sdk/test_timeline_sync_native.py
++++ b/tests/sdk/test_timeline_sync_native.py
+@@ -80,10 +80,12 @@
+     assert open_session(connected).commit(command)['data']['commands'] == [command]
+ 
+ 
+-def test_native_move_with_default_intent_retries_without_recapture(connected):
++@pytest.mark.parametrize('intent', [{}, {'ripple': 'none'},
++                                 {'ripple': 'none', 'anchor': 'fixed', 'position': 'absolute'}])
++def test_native_move_with_default_intent_retries_without_recapture(connected, intent):
+     client, generated, _ = connected
+     raw = {'schema_version': 1, 'op': 'clip.move', 'version': '1', 'select': 'parent/clip:a',
+-           'args': {'on': 5}, 'intent': {}}
++           'args': {'on': 5}, 'intent': intent}
+     generated.lose_ack = True
+     with pytest.raises(WorkspaceClientError):
+         open_session(connected).commit(raw)
+@@ -92,6 +94,77 @@
+     assert client.reads == ['r0']
+ 
+ 
++@pytest.mark.parametrize('value,changed', [(True, 1), (False, 0)])
++@pytest.mark.parametrize('nested', [False, True])
++def test_native_lost_ack_refuses_changed_json_type_before_send(connected, value, changed, nested):
++    client, generated, path = connected
++    raw = {'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
++           'args': {'row': {'id': 'new', 'kind': 'visual',
++                            'opaque': {'items': [value]} if nested else value}}}
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        open_session(connected).commit(raw, idempotency_key='original')
++    persisted = path.read_bytes()
++    accepted = copy.deepcopy(generated.accepted['original'][1])
++    changed_command = copy.deepcopy(raw)
++    changed_command['args']['row']['opaque'] = {'items': [changed]} if nested else changed
++    session = open_session(connected)
++    with pytest.raises(TimelineEditError, match='pending intent differs'):
++        session.commit(changed_command)
++    assert len(generated.calls) == 1
++    assert path.read_bytes() == persisted
++    retried = session.commit(raw)
++    assert retried['receipt'] == accepted['receipt']
++    assert generated.calls == [(json.loads(persisted)['flight']['body'].encode(), 'original')] * 2
++    assert client.reads == ['r0']
++
++
++@pytest.mark.parametrize('field', ['reads', 'expect'])
++def test_native_lost_ack_refuses_changed_boolean_capture_claim(connected, field):
++    client, generated, path = connected
++    clip = State(generated.bundles['r0']).entity('parent/clip:a')
++    clip.update(enabled=True, app={'astrid': {'fixed_start': True}})
++    raw = {'schema_version': 1, 'op': 'clip.move', 'version': '1', 'select': 'parent/clip:a',
++           'args': {'on': 5}}
++    captured = execute(generated.bundles['r0'], [raw]).commands[0]
++    changed = copy.deepcopy(captured)
++    if field == 'reads':
++        claim = next(read['state'] for read in changed['reads']
++                     if read['ref'] == 'parent/clip:a' and read['path'] == ['enabled'])
++    else:
++        claim = changed['expect']['parent/clip:a::app.astrid.fixed_start']
++    assert claim['value'] is True
++    claim['value'] = 1
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        open_session(connected).commit(captured, idempotency_key='captured')
++    persisted = path.read_bytes()
++    accepted = copy.deepcopy(generated.accepted['captured'][1])
++    session = open_session(connected)
++    with pytest.raises(TimelineEditError, match='pending intent differs'):
++        session.commit(changed)
++    assert len(generated.calls) == 1
++    assert path.read_bytes() == persisted
++    assert session.commit(captured)['receipt'] == accepted['receipt']
++    assert generated.calls[0] == generated.calls[1]
++    assert client.reads == ['r0']
++
++
++def test_native_lost_ack_numeric_equivalence_retries_original_bytes(connected):
++    client, generated, _ = connected
++    raw = {'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
++           'args': {'row': {'id': 'new', 'kind': 'visual', 'opaque': 2}}}
++    generated.lose_ack = True
++    with pytest.raises(WorkspaceClientError):
++        open_session(connected).commit(raw, idempotency_key='numeric')
++    accepted = copy.deepcopy(generated.accepted['numeric'][1])
++    raw['args']['row']['opaque'] = 2.0
++    assert open_session(connected).commit(raw)['receipt'] == accepted['receipt']
++    assert generated.calls[0] == generated.calls[1]
++    assert b'"opaque":2}' in generated.calls[1][0]
++    assert client.reads == ['r0']
++
++
+ @pytest.mark.parametrize('peer', ['disjoint', 'label', 'aba'])
+ def test_native_lost_ack_retry_precedes_original_suffix_with_fresh_key(connected, peer):
+     client, generated, path = connected
+
+codex
+Fixed generic M2 ingress matching using the existing JSON equality helper. Boolean/number changes now fail before send and preserve the flight; numeric equivalence and default-intent retries remain supported. M1 implementation/tests are unchanged.
+
+- Before fix: **6 regression failures**.
+- After fix: **134 + 153 local tests passed**, **4 central ingress tests passed**.
+- Ruff, mypy and whitespace checks passed.
+- No implementation blockers. M2 remains held pending the orchestrator’s M1 gate.
+
+[Report with exact commands, counterexample and corrected counts](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/notes/report.md). Both commit-message files are written. Recommended next step: review the bounded diff; no merge attempted.
+tokens used
+71,443
+Fixed generic M2 ingress matching using the existing JSON equality helper. Boolean/number changes now fail before send and preserve the flight; numeric equivalence and default-intent retries remain supported. M1 implementation/tests are unchanged.
+
+- Before fix: **6 regression failures**.
+- After fix: **134 + 153 local tests passed**, **4 central ingress tests passed**.
+- Ruff, mypy and whitespace checks passed.
+- No implementation blockers. M2 remains held pending the orchestrator’s M1 gate.
+
+[Report with exact commands, counterexample and corrected counts](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-ingress-json-identity/notes/report.md). Both commit-message files are written. Recommended next step: review the bounded diff; no merge attempted.

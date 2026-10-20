@@ -1,0 +1,9 @@
+name=agt-m2-bundle2-popup-init
+repo=agent
+base=tl/integration
+base_sha=4a75f68f
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-bundle2-popup-init
+started=2026-10-20T04:13:02Z

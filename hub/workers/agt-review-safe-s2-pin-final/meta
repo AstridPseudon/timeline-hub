@@ -1,0 +1,9 @@
+name=agt-review-safe-s2-pin-final
+repo=agent
+base=tl/integration
+base_sha=cf7448ed
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-safe-s2-pin-final
+started=2026-10-20T11:54:56Z

@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-reviews-audio-mouth-scanner/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc5-voiceover-known-intent/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc5-voiceover-known-intent/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-ingress/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-ingress/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-wav829-raw014-compose/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-wav829-raw014-compose/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-current-union/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-element-current-union/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m1-destination-occupied/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m1-destination-occupied/report.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-custody-kernel-capability-proof/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-custody-kernel-capability-proof/report.md
+find: ‘standard output’: Broken pipe
+find: write error
+total 484
+drwxr-xr-x    2 root root   4096 Oct 20 00:45 .
+drwxr-xr-x 1061 root root  69632 Oct 20 17:34 ..
+-rw-r--r--    1 root root     54 Oct 20 00:45 INTERRUPTED
+-rw-r--r--    1 root root   2143 Oct 20 00:39 brief.md
+-rw-r--r--    1 root root      4 Oct 20 00:45 exit
+-rw-r--r--    1 root root 400902 Oct 20 00:43 log.txt
+-rw-r--r--    1 root root    209 Oct 20 00:39 meta
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-voiceover-native-admission/log.txt:14007:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m3-sdk-scene-only-managed-caller.md:1:Implement AgentSDKHALF owner16:40approvedprivateScene-only EXISTINGmanagedvisualizationinvocation. Base79b(currentlabelsauthority+save-core/Rootalreadylanded). Append ONEsharednote design/d09-scene-check-save-core-handoff.md withprivatecaller/executorinput-resultcontract; peerViewing viahub/inbox/viewing.md (orreportforrelayifreadonly). Viewingowns executor/query in_existing_prepared_remotion_root; DO NOTeditrun.py/executor/cacheroot. SDKreuses prepare_filmstrip saved/candidate capture +EXISTINGadmittedsource/managedoutputartifact; asksprivateScene-onlymode, NOPNGrender, receives EXISTINGSceneanswers/compiledID-addressmap/boundsourcelabel. Format viaexisting_scene_problems. Exactbase/candidate/source/mapbinding required; stale/missingresult advisory-unavailable. No caller source_ref/certification/authorityDTO/provider/store/endpoint/SourceFactory/copiedprojector/newpublicAPI. ExplicitCheckout.check ONLY; publish/transaction/save use_check_core NO Node/sceneimports/processes. PreserveOFFCANVASnegative+corevalidsavepositive andallexistingsaveNoNode/invalidcore/authorityguards. Waitfor actualViewingprivatekeysagreement ifneeded whilepreparingindependentpureSDKtests; no inventedparallelprotocol. Testsproportionate newmodeenvelope/staleadvisory/knownresult +all83save fences; ordinaryrealactivation ONLYafterViewingexecutorready, keepD09privatecrop/statisticsuntilparity. No full/newskip/xfail/unapprovedassertionconversion; one-to-onemapsledgerwherelegitimate. Productpaths sdk/check.py/sdk/timeline_filmstrip callerhelpers/directtests only. ShareddepsREADONLY/privatecache LUNAHIGH. report/commit-msg.txt/DONE; sharedhandoffnotreporeports.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-review-ordinary202-final-handoff/log.txt:3271:Read app-bootstrap-native-opaque-inverse-hold.md and ap2-m2-ordinary-projectdata-native-recipe.md viaSTATUS. Originalfouropaqueinitinversepositives nowassigned agt-m2-init-opaque-disjoint-inverse onreviewede86staged014; no wholeparentguardbypass, strictoverlapping/ABA andpristineinitguardsstay, actuala0pairrequired. Project-data replaceassigned agt-m2-project-data-replace-native-contract: firstMainstoragefilm-vscatalogclassification thenminimalexacttarget/keyrecordedreplacement/proposal, frozen6ba/a0unchanged. No App-only opguess orwholewriterretirement beforepair. Please keep originalpositivesstrictOPEN/nativeinitactivationheld. Requests notseen asdirectentries inourINBOXsoobservedfromsharednotes; futureappend managers/agent/INBOX.md directly (app2localshared exists). Native014normalpin requestseparateabove.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-review-ordinary202-final-handoff/log.txt:3357:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/INBOX.md:21:Read app-bootstrap-native-opaque-inverse-hold.md and ap2-m2-ordinary-projectdata-native-recipe.md viaSTATUS. Originalfouropaqueinitinversepositives nowassigned agt-m2-init-opaque-disjoint-inverse onreviewede86staged014; no wholeparentguardbypass, strictoverlapping/ABA andpristineinitguardsstay, actuala0pairrequired. Project-data replaceassigned agt-m2-project-data-replace-native-contract: firstMainstoragefilm-vscatalogclassification thenminimalexacttarget/keyrecordedreplacement/proposal, frozen6ba/a0unchanged. No App-only opguess orwholewriterretirement beforepair. Please keep originalpositivesstrictOPEN/nativeinitactivationheld. Requests notseen asdirectentries inourINBOXsoobservedfromsharednotes; futureappend managers/agent/INBOX.md directly (app2localshared exists). Native014normalpin requestseparateabove.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/brief.md:1:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:41:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:5410:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:6249:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:7612:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/brief.md:1:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:7616:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:41:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:7821:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/brief.md:1:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:7825:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:41:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:7839:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:5410:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:7843:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:6249:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:7875:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:7612:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/brief.md:1:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:7879:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:7616:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:41:M2 AG03 nextsmallrealconsumer: currentNativeSheetmove/label/hold/delete(stablebasisomission) already16actualPASS, oldapply_sheet/_apply_parsed/three-way-save consumersremain. IdentifyremainingREALsave/mergecaller thatcanrouteEXISTINGNativeSheet capturedcommands+durableTimelineSession/originalexportbasis; migrateitanddeleteitsdeadclientmerge/savepath. Preservelocalread/previewparsing ifnotacceptedwriter; don'tinventdeletionfromnamesalone. Stableexport#refs/owner/headbasis mandatory, no displayID/shot-trackinference/newwholerootwriter/genericdiffengine/guardrefresh. OldunboundunsafeinputrefusedvisiblywithSHEETTEXTdraftpreserved +equivalentnewstable-basisnativepositiveone-to-one ledger; allMaindistinctpositivebehaviorsnotcoveredstaystrictOPEN, no silentlylostgrammar/newclip/media/followcases. Fullregistryopsavailable22current13, newmedia14onstaged3c4 onlyifneededexplicitmatchedcandidate; no newoparg/schema/pin here. Oneboundedparserfeature/caller atatime, 0legacysavePOSTproof actualRuntimeservice/client, reload/retry/undo/stalemembership refusal; useexistingNativeSheetHTTPfixture. ExtractTimelineaddednativecodecohesivelyifgiantfilewoulddrift, no thresholdloosening. Keepacceptedoutboxcheckpoints. No full/newskip/xfail/deletedassertions/exhaustivegoldens. ShareddepsREADONLY/privatecache Luna high. Reportsource/test/precisescopecut/remainingfeatures, OWNledgerinprogressnotDELETEDuntilmerge, sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/log.txt:10645:/bin/bash -lc "find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers -maxdepth 2 -type f \\( -name 'commit-msg' -o -name 'report.md' -o -name 'notes' -o -name 'sharednote*' \\) | head -100; ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-sheet-cli 2>/dev/null | head -30; rg -n \"sharednote\" /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers -g '*.md' -g '*.txt' | head -30" in /home/user/work/wt/agt-m2-sheet-merge-save-next-consumer
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/log.txt:560:READ-ONLY currentowner review remote tl/vw-m3-labels-preserve-uncertified-controls d93b4ff6a against current Agentf133a879 after Root634 integrated. PLAN exactsourcehonesty, metadata-only CASUNCERTIFIED mustnotmintacceptedcertificate. Review small product/testdiff,18actualauthority/127directevidence; three expectationchanges mapone-to-one under existingledger/decision (notweakenunknown/refusals). Preserve oldsnapshotsreadability and verifiedfullgraph, caller reservedkey/forgedsource/replacementrefusals, explicitScene/save-core split; no SDK/save/pin changes. Run focusedlabel/refusalneighbors only, no newmatrix/full. Confirm cleanmerge/currentpaths, publishAPPROVE/HOLD exacthash/tree and ledgerboundary. No D09deleted/parityclaim. ShareddepsREADONLY/privateoverlay. Luna high. Never request suite full*; only targeted/named suites. No productedits/newskip/xfail/deletedassertion. report+commit-msg.txt in workers/agt-review-current-uncertified-labels, flatsharednoteORCH/design, DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/log.txt:601:READ-ONLY currentowner review remote tl/vw-m3-labels-preserve-uncertified-controls d93b4ff6a against current Agentf133a879 after Root634 integrated. PLAN exactsourcehonesty, metadata-only CASUNCERTIFIED mustnotmintacceptedcertificate. Review small product/testdiff,18actualauthority/127directevidence; three expectationchanges mapone-to-one under existingledger/decision (notweakenunknown/refusals). Preserve oldsnapshotsreadability and verifiedfullgraph, caller reservedkey/forgedsource/replacementrefusals, explicitScene/save-core split; no SDK/save/pin changes. Run focusedlabel/refusalneighbors only, no newmatrix/full. Confirm cleanmerge/currentpaths, publishAPPROVE/HOLD exacthash/tree and ledgerboundary. No D09deleted/parityclaim. ShareddepsREADONLY/privateoverlay. Luna high. Never request suite full*; only targeted/named suites. No productedits/newskip/xfail/deletedassertion. report+commit-msg.txt in workers/agt-review-current-uncertified-labels, flatsharednoteORCH/design, DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-labels-current-socket-gate/log.txt:825:READ-ONLY currentowner review remote tl/vw-m3-labels-preserve-uncertified-controls d93b4ff6a against current Agentf133a879 after Root634 integrated. PLAN exactsourcehonesty, metadata-only CASUNCERTIFIED mustnotmintacceptedcertificate. Review small product/testdiff,18actualauthority/127directevidence; three expectationchanges mapone-to-one under existingledger/decision (notweakenunknown/refusals). Preserve oldsnapshotsreadability and verifiedfullgraph, caller reservedkey/forgedsource/replacementrefusals, explicitScene/save-core split; no SDK/save/pin changes. Run focusedlabel/refusalneighbors only, no newmatrix/full. Confirm cleanmerge/currentpaths, publishAPPROVE/HOLD exacthash/tree and ledgerboundary. No D09deleted/parityclaim. ShareddepsREADONLY/privateoverlay. Luna high. Never request suite full*; only targeted/named suites. No productedits/newskip/xfail/deletedassertion. report+commit-msg.txt in workers/agt-review-current-uncertified-labels, flatsharednoteORCH/design, DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/brief.md:1:M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:40:M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:1457:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-accepted-journal-consumer-cut.md:1:M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:1520:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log:56017:+M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:1525:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log:56824:+M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:4693:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-accepted-journal-consumer-cut.md:1:M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:9273:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-m2-accepted-journal-consumer-cut.md:1:M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:9307:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log:56017:+M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:9351:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261020T1406Z.log:56824:+M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:9389:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/brief.md:1:M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:9414:/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-accepted-journal-consumer-cut/log.txt:40:M2 ledgerAG01 owner16:41deletionpriority: migrate firstremaining REALaccepted-journal/history/saveconsumer to EXISTING Runtime scopedhistory, removeitsduplicateacceptedwrite/readpath onceequivalentactualtestpasses. Currentpublic01379b. BriefresultsmallPR, notcensus-only unless no remainingconsumerfound. ReadledgerAG01/WC7/WC8/currentTimelineSessionjournal/outboxandpriorcensus; preserve existingoutbox pending originalintents/body/key/receipt checkpoints andD13accepted-receipt->pendingrenderSAMEoutbox! ThoseACKcheckpoints areallowed, notsecondacceptedhistory. No newstore/journal/DTO/endpoint/historyframework/fallbackwriter. Runtime soleacceptedhistory forinverse/rebase/reservations; useexistinghistory/history_entry/closure/clientfacades. Keepoldlegacyhistoryvisible, no fabricatedhistory; realunknown visiblyrefusesdraftkept. Moveoneconsumer+deleteonlydeadacceptedpath, originalsemanticpositive one-to-onereplacement inactualnativeSDK/Runtimeretry/reload/undo, alloriginalrequestbytes/head/opaque/assertionskept. No arbitrarymutableCheckout->genericdiff/candidate.apply. PreparebranchONLY; finalcutmergeWAITS historicalrawaudioANDregisteredcompletionpositive currenttuple perowner16:41 (dependenciesactive, don'tblockindependentprep). Ifalreadyoutbox-only/provenallowedreceipttokensreportexactnochangeinsteadofinventdeletion. ShareddepsREADONLY/privatecache Luna high. Neverrequestfull*/newskip/xfail/assertionloss/bigfixtures. UpdateOWNledgerrow inprogress(notDELETEDuntilmerge), report/sharednote/commit-msg.txt/DONE.
+
+exec
+/bin/bash -lc "rg -n \"_cmd_commit_edit\\(\" tests astrid -g '*.py'; git status --short; git diff --stat; git diff --check; git diff --numstat" in /home/user/work/wt/agt-m2-sheet-merge-save-next-consumer
+ succeeded in 470ms:
+astrid/packs/timeline/cli_native.py:111:        return _cmd_commit_edit(parsed, command=command)
+astrid/packs/timeline/cli.py:3273:        result = _cmd_commit_edit(parsed, edit=commit_trim)
+astrid/packs/timeline/cli.py:3595:    return _cmd_commit_edit(parsed, sheet=True)
+astrid/packs/timeline/cli.py:3600:        return _cmd_commit_edit(parsed, undo=True)
+astrid/packs/timeline/cli.py:3609:        return _cmd_commit_edit(parsed, undo=True)
+astrid/packs/timeline/cli.py:3898:def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=None, sheet=False, edit=None):
+ M astrid/packs/timeline/cli.py
+ M tests/editing_conformance/test_native_sheet_current_runtime.py
+ M tests/packs/timeline/test_cli_native_sheet.py
+ astrid/packs/timeline/cli.py                       | 29 +++++++----------
+ .../test_native_sheet_current_runtime.py           | 21 ++++++++++--
+ tests/packs/timeline/test_cli_native_sheet.py      | 37 ++++++++++++++++++++++
+ 3 files changed, 68 insertions(+), 19 deletions(-)
+12	17	astrid/packs/timeline/cli.py
+19	2	tests/editing_conformance/test_native_sheet_current_runtime.py
+37	0	tests/packs/timeline/test_cli_native_sheet.py
+
+exec
+/bin/bash -lc 'env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/timeline/test_verbs_working_copy.py::test_a_sheet_exported_before_an_edit_never_reverts_it' in /home/user/work/wt/agt-m2-sheet-merge-save-next-consumer
+ exited 1 in 2091ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_a_sheet_exported_before_an_edit_never_reverts_it _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3220/test_a_sheet_exported_before_a0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0583528c30>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f05838b5a90>
+
+    def test_a_sheet_exported_before_an_edit_never_reverts_it(tmp_path, monkeypatch, capsys):
+        """export -> edit via the verb -> apply the OLD sheet with an unrelated change: both survive; a clash refuses."""
+        from pathlib import Path
+    
+        from astrid.sdk.timeline_sheet import render_sheet
+    
+        root = Path(__file__).resolve().parents[2] / "fixtures" / "timeline_editing"
+        tiny = json.loads((root / "tiny.json").read_text(encoding="utf-8"))
+        monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "data"))
+        monkeypatch.setattr(tc, "resolve_ids", lambda project, timeline, client=None: ("p", "t", "rev-0"))
+        monkeypatch.setattr(tc, "fetch_bundle", lambda project, timeline, revision_id=None, client=None: copy.deepcopy(tiny))
+        assert _run("checkout", "t", "--project", "P") == 0
+        old = render_sheet(Checkout.draft("P", "t"))
+        sheet_file = tmp_path / "old.sheet"
+        assert _run("edit", "t", "--project", "P", "--clip", "c1.rocket", "--set", "x=120") == 0  # after the export
+        sheet_file.write_text(old.replace('"Live."', '"Now live."'), encoding="utf-8")  # an unrelated change
+        capsys.readouterr()
+>       assert _run("apply", "t", "--project", "P", str(sheet_file)) == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = _run('apply', 't', '--project', 'P', '/tmp/pytest-of-root/pytest-3220/test_a_sheet_exported_before_a0/old.sheet')
+E        +    where '/tmp/pytest-of-root/pytest-3220/test_a_sheet_exported_before_a0/old.sheet' = str(PosixPath('/tmp/pytest-of-root/pytest-3220/test_a_sheet_exported_before_a0/old.sheet'))
+
+tests/packs/timeline/test_verbs_working_copy.py:319: AssertionError
+----------------------------- Captured stderr call -----------------------------
+error timeline_edit_error: native sheet apply requires a connected Runtime client; legacy detached sheet save is not supported; edited sheet kept at /tmp/pytest-of-root/pytest-3220/test_a_sheet_exported_before_a0/old.sheet
+=========================== short test summary info ============================
+FAILED tests/packs/timeline/test_verbs_working_copy.py::test_a_sheet_exported_before_an_edit_never_reverts_it
+1 failed in 0.99s
+
+codex
+The real Runtime HTTP lane passes 9/9 after the final guard. The old detached working-copy test still fails by design, now with the explicit refusal and preserved sheet path; I’m leaving that positive behavior OPEN rather than weakening or deleting its assertions, as required. I’ll finalize the worker report with that boundary, exact evidence, and the ledger remaining in-progress.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..8689ecea18585b9a75c85118bd21f8c260eb1f7d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/commit-msg
+@@ -0,0 +1,5 @@
++feat(timeline): route sheet apply through native session
++
++Retire the detached cut-sheet CLI writer and route apply through the retained
++NativeSheet export and TimelineSession outbox. Preserve legacy sheet parsing
++for read/preview callers while refusing unbound legacy acceptance visibly.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a0f9c5e11dbbddab82f400be361fa9edc82389b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/report.md
+@@ -0,0 +1,55 @@
++# AG03 report
++
++## Source and scope
++
++- Read the settled `/tmp/.../PLAN.md` first.
++- Real remaining writer: `astrid/packs/timeline/cli.py::_cmd_apply`, which
++  previously called `apply_sheet`, performed the client-side three-way merge,
++  and saved a detached `Checkout`.
++- Changed only that CLI consumer and its focused tests. `apply_sheet`,
++  `merge_sheet`, `_apply_parsed`, `render_sheet`, and other read/preview
++  parsing remain available; they are not accepted writers in this slice.
++- `apply` now always uses the existing `NativeSheet.load(session).apply(...)`
++  path. The existing `--native` option remains a compatibility flag. Missing
++  native export, missing Runtime client, stale basis, unsupported grammar, and
++  pending/in-flight mismatches refuse visibly and include the edited text path.
++- The manager-owned AG03 deletion ledger remains `in-progress`; no DELETED
++  claim was made here.
++
++## Evidence
++
++- `env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/timeline/test_cli_native_sheet.py tests/packs/timeline/test_cli_commit_move.py tests/sdk/test_timeline_sheet_native.py`
++  - **72 passed**.
++- `env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m ruff check tests/packs/timeline/test_cli_native_sheet.py tests/editing_conformance/test_native_sheet_current_runtime.py`
++  - **passed**.
++- `git diff --check`
++  - **passed**.
++- Central named Runtime lane:
++  `request-test ... parent-label-proof --files tests/editing_conformance/test_native_sheet_current_runtime.py`
++  - **9 passed**, actual Runtime HTTP fixture; includes default CLI routing,
++    retained stable basis, reload/retry/undo, and refusal/no legacy commit
++    traffic.
++- Full editing-conformance command was intentionally not requested. The named
++  `conformance` run was diagnostic only: **2056 passed, 46 failed, 4 skipped,
++  217 deselected, 2 xfailed**. The 46 failures are the known legacy sheet
++  audio/look/structure/timing and runner positives that this bounded native
++  grammar does not cover; they remain OPEN and were not weakened or deleted.
++- The old detached positive
++  `tests/packs/timeline/test_verbs_working_copy.py::test_a_sheet_exported_before_an_edit_never_reverts_it`
++  now refuses with `native sheet apply requires a connected Runtime client;
++  legacy detached sheet save is not supported; edited sheet kept at ...`.
++  Its assertions remain unchanged as an explicit remaining legacy behavior.
++- Ruff on the touched giant CLI file reports **15 pre-existing diagnostics**;
++  no new lint cleanup was attempted.
++
++## Decisions and remaining work
++
++- No new command, schema, pin, generic diff engine, display-ID inference,
++  whole-root writer, or deletion-from-name behavior was added.
++- Native positive coverage is bounded to the existing stable `# ref` rows and
++  retained owner/head basis. Broader legacy grammar (new cuts, media/audio,
++  looks, structure, follow cases, and detached local merge behavior) remains
++  OPEN for later one-at-a-time migrations.
++- Recommended next step: preserve the current refusal and native HTTP evidence,
++  then migrate the next explicitly matched legacy grammar only after equivalent
++  native command coverage exists.
+diff --git a/astrid/packs/timeline/cli.py b/astrid/packs/timeline/cli.py
+index 338f12d37dfae928e7002bb274685a889e5073f1..70a815d47c22f30ce45a6c89cefe412b415d4c7d
+--- a/astrid/packs/timeline/cli.py
++++ b/astrid/packs/timeline/cli.py
+@@ -3587,20 +3587,12 @@
+ 
+ 
+ def _cmd_apply(parsed: argparse.Namespace) -> int:
+-    if parsed.native:
+-        return _cmd_commit_edit(parsed, sheet=True)
+-    if parsed.dry_run or parsed.idempotency_key or parsed.json:
+-        raise _VerbError("--native is required with commit apply options", 2)
+-    from astrid.sdk.timeline_sheet import apply_sheet
+-    tl = _edit_checkout(parsed)
+-    before = tl.document()
+-    changes = apply_sheet(tl, Path(parsed.sheet_file).read_text(encoding="utf-8"))
+-    if changes or before != tl.document():
+-        tl.save(quiet=True)
+-        print("applied sheet")
+-        return 0
+-    print("no change (the sheet matches the working copy)")
+-    return 3
++    # Sheet acceptance is always native now. The old branch applied an
++    # unbound projection to a detached Checkout, merged it locally, and then
++    # saved the whole document. A sheet file without a retained NativeSheet
++    # export is deliberately refused by _cmd_commit_edit, with the edited
++    # text path included in the user-facing error.
++    return _cmd_commit_edit(parsed, sheet=True)
+ 
+ 
+ def _cmd_undo(parsed: argparse.Namespace) -> int:
+@@ -3878,11 +3870,11 @@
+ 
+ def _configure_apply(subparser: argparse.ArgumentParser) -> None:
+     _add_project_arg(subparser, required=False)
+-    subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
++    subparser.add_argument("ref", help="Timeline id or slug with a retained native sheet export.")
+     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+-    subparser.add_argument("sheet_file", help="Path to the edited cut sheet.")
++    subparser.add_argument("sheet_file", help="Path to the edited native sheet export.")
+     subparser.add_argument("--native", action="store_true",
+-                           help="Commit using the original sheet export retained in the scoped outbox.")
++                           help="Compatibility flag; sheet acceptance always uses the retained native export.")
+     subparser.add_argument("--dry-run", action="store_true", help="Preview native commands locally without publishing.")
+     _add_idempotency_key(subparser)
+     _add_json_flag(subparser, default=False)
+@@ -3914,6 +3906,9 @@
+             raise TimelineEditError("--publication cannot be combined with local draft/step undo")
+         if sheet and parsed.draft:
+             raise TimelineEditError("--native cannot be combined with a local draft")
++        if sheet and parsed.client is None:
++            raise TimelineEditError("native sheet apply requires a connected Runtime client; "
++                                    "legacy detached sheet save is not supported")
+         batch = None
+         base = {}
+         if getattr(parsed, "commands_file", None) is not None:
+diff --git a/tests/editing_conformance/test_native_sheet_current_runtime.py b/tests/editing_conformance/test_native_sheet_current_runtime.py
+index 0fccde23142625eb59f3ad6ff48f66f591e05574..23b4ba04f452c4efe66fb48a71ea754ce823da27
+--- a/tests/editing_conformance/test_native_sheet_current_runtime.py
++++ b/tests/editing_conformance/test_native_sheet_current_runtime.py
+@@ -140,7 +140,7 @@
+     assert runtime.history()['head'] == head and len(runtime.history()['items']) == count
+ 
+ 
+-@pytest.mark.parametrize('entry', ['python', 'cli', 'sheet-python', 'sheet-cli'])
++@pytest.mark.parametrize('entry', ['python', 'cli', 'sheet-python', 'sheet-cli', 'sheet-cli-default'])
+ def test_http_semantic_batch_original_pins_reload_inverse_redo(runtime, tmp_path, capsys, entry):
+     seed(runtime)
+     session, sheet, path = export(runtime, capsys, tmp_path)
+@@ -158,9 +158,12 @@
+         result = json.loads(capsys.readouterr().out)
+     elif entry == 'sheet-python':
+         result = sheet.apply(path.read_text(), session=session, dry_run=False)
+-    else:
++    elif entry == 'sheet-cli':
+         assert run(runtime, 'apply', 'film', str(path), '--native') == 0
+         result = json.loads(capsys.readouterr().out)
++    else:
++        assert run(runtime, 'apply', 'film', str(path)) == 0
++        result = json.loads(capsys.readouterr().out)
+     body = json.loads(runtime.calls[-1][0])
+     assert body['base_revision_id'] == head['revision_id'] and body['base_publication_id'] == head['publication_id']
+     assert body['commands'] == expected.commands
+@@ -177,6 +180,20 @@
+     assert redone['data']['canonical_document'] == result['data']['canonical_document']
+ 
+ 
++def test_http_unbound_legacy_sheet_refuses_without_legacy_save(runtime, tmp_path, capsys):
++    path = tmp_path / 'legacy.sheet'
++    text = 'film "p" · "film"\nlines\n  s1  "draft"\n'
++    path.write_text(text)
++    before_calls = copy.deepcopy(runtime.calls)
++
++    assert run(runtime, 'apply', 'film', str(path)) == 1
++    output = json.loads(capsys.readouterr().out)
++    assert 'no original native sheet export' in output['error']['message']
++    assert 'edited sheet kept' in output['error']['message']
++    assert path.read_text() == text
++    assert runtime.calls == before_calls
++
++
+ def test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba(runtime, tmp_path, capsys, monkeypatch):
+     seed(runtime)
+     session, sheet, path = export(runtime, capsys, tmp_path)
+diff --git a/tests/packs/timeline/test_cli_native_sheet.py b/tests/packs/timeline/test_cli_native_sheet.py
+index e71e6d1a952dc7bcf72ce9d5553024e30d33078a..a24863c910ab5593f0ab02a160f6ecf847696c87
+--- a/tests/packs/timeline/test_cli_native_sheet.py
++++ b/tests/packs/timeline/test_cli_native_sheet.py
+@@ -72,6 +72,43 @@
+     assert path.read_text() == edited
+ 
+ 
++def test_apply_without_compatibility_flag_uses_the_retained_native_export(native_cli, tmp_path, capsys):
++    run, _, generated = native_cli
++    text = export(native_cli, capsys)
++    edited = edit_cell(text, "parent/clip:a", "5")
++    path = tmp_path / "edited.txt"
++    path.write_text(edited)
++
++    assert run("apply", "t", str(path), "--json") == 0
++    output = json.loads(capsys.readouterr().out)
++    assert output["data"]["commands"]
++    assert json.loads(generated.calls[0][0])["source"] == {"via": "sheet"}
++    assert generated.bundles["r1"]["parent"]["clips"][0]["at"] == 5
++    assert path.read_text() == edited
++
++
++def test_unbound_legacy_sheet_refuses_and_keeps_text(native_cli, tmp_path, capsys):
++    run, _, generated = native_cli
++    path = tmp_path / "legacy.sheet"
++    text = 'film "p" · "t"\nlines\n  s1  "draft"\n'
++    path.write_text(text)
++    before = generated.path.read_bytes() if generated.path.exists() else None
++
++    assert run("apply", "t", str(path), "--json") == 1
++    output = json.loads(capsys.readouterr().out)
++    assert "no original native sheet export" in output["error"]["message"]
++    assert "edited sheet kept" in output["error"]["message"]
++    assert path.read_text() == text
++    after = generated.path.read_bytes() if generated.path.exists() else None
++    if before is None:
++        assert after is not None
++        state = json.loads(after)
++        assert state["pending"] == [] and state["flight"] is None and "sheet" not in state
++    else:
++        assert after == before
++    assert generated.calls == []
++
++
+ @pytest.mark.parametrize("relevant", [False, True])
+ def test_stale_export_refuses_without_recapturing(native_cli, tmp_path, capsys, relevant):
+     run, client, generated = native_cli
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/DONE && git status --short && git diff --check && sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-sheet-merge-save-next-consumer/commit-msg" in /home/user/work/wt/agt-m2-sheet-merge-save-next-consumer
+ succeeded in 172ms:
+ M astrid/packs/timeline/cli.py
+ M tests/editing_conformance/test_native_sheet_current_runtime.py
+ M tests/packs/timeline/test_cli_native_sheet.py
+feat(timeline): route sheet apply through native session
+
+Retire the detached cut-sheet CLI writer and route apply through the retained
+NativeSheet export and TimelineSession outbox. Preserve legacy sheet parsing
+for read/preview callers while refusing unbound legacy acceptance visibly.
+
+codex
+## Report
+
+Implemented AG03 CLI cutover:
+
+- `timelines apply` now always uses retained `NativeSheet` + `TimelineSession`.
+- Removed detached `apply_sheet`/local merge/`Checkout.save` writer path.
+- Legacy parsing remains available for read/preview callers.
+- Unbound legacy sheets visibly refuse while preserving edited text.
+- Added unit and Runtime HTTP coverage.
+
+Tests:
+
+- Native targeted suite: **72 passed**
+- Runtime HTTP lane: **9 passed**
+- Ruff on touched tests: passed
+- `git diff --check`: passed
+- Full conformance was not run. Diagnostic conformance showed legacy unsupported grammar remains OPEN: 2056 passed, 46 failed.
+
+The manager-owned AG03 ledger remains `in-progress`, not deleted. Commit message, report, and `DONE` marker were written.
+tokens used
+265,001
+## Report
+
+Implemented AG03 CLI cutover:
+
+- `timelines apply` now always uses retained `NativeSheet` + `TimelineSession`.
+- Removed detached `apply_sheet`/local merge/`Checkout.save` writer path.
+- Legacy parsing remains available for read/preview callers.
+- Unbound legacy sheets visibly refuse while preserving edited text.
+- Added unit and Runtime HTTP coverage.
+
+Tests:
+
+- Native targeted suite: **72 passed**
+- Runtime HTTP lane: **9 passed**
+- Ruff on touched tests: passed
+- `git diff --check`: passed
+- Full conformance was not run. Diagnostic conformance showed legacy unsupported grammar remains OPEN: 2056 passed, 46 failed.
+
+The manager-owned AG03 ledger remains `in-progress`, not deleted. Commit message, report, and `DONE` marker were written.

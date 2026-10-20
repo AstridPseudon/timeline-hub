@@ -1,0 +1,400 @@
+   320	            "version": "1",
+   321	            "select": None,
+   322	            "args": {"revision_id": revision_id, "content_digest": content_digest},
+   323	        }
+   324	        with self.outbox.locked():
+   325	            state = self._state()
+   326	            if state["pending"] and state["pending"] != [command]:
+   327	                raise TimelineEditError("flush pending intent before restore")
+   328	            state["pending"] = [command]
+   329	            self.outbox.write(state)
+   330	        return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+   331	
+   332	    def flush(self, *, idempotency_key=None, dry_run=False, via="python"):
+   333	        """Send/retry exactly one prefix; leave newer local commands untouched."""
+   334	        with self.outbox.locked():
+   335	            state = self._state()
+   336	            flight = state["flight"]
+   337	            if flight is None:
+   338	                if not state["pending"]:
+   339	                    raise TimelineEditError("no pending timeline commands")
+   340	                body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
+  1630	            raise WorkspaceClientError(502, "protocol_error", "Runtime timeline listing has no valid version", {}) from exc
+  1631	    def archive(self, project, ref, *, expected_version=None, idempotency_key=None):
+  1632	        key = idempotency_key or uuid.uuid4().hex
+  1633	        try:
+  1634	            version = self._version(project, ref, expected_version)
+  1635	        except WorkspaceClientError as exc:
+  1636	            return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
+  1637	        return self._typed("archive_timeline", ref, key=key, expected_version=version, idempotency_key=key)
+  1638	    def recover(self, project, ref, *, expected_version=None, version=None, idempotency_key=None):
+  1639	        key = idempotency_key or uuid.uuid4().hex
+  1640	        resolved = self._resolve_timeline(project, ref)
+  1641	        if not resolved.ok or not isinstance(resolved.data, Mapping):
+  1642	            return DomainResult.failure(resolved.error, idempotency_key=key)
+  1643	        timeline_id = resolved.data.get("timeline_id")
+  1644	        if not isinstance(timeline_id, str) or not timeline_id:
+  1645	            return DomainResult.failure(
+  1646	                ErrorObject("protocol_error", "timeline listing has no canonical identity", {}),
+  1647	                idempotency_key=key,
+  1648	            )
+  1649	        try:
+  1650	            value = resolved.data.get("version", resolved.data.get("config_version", 1))
+  1651	            current_version = int(value)
+  1652	            expected = int(expected_version) if expected_version is not None else current_version
+  1653	            target = current_version if version is None else int(version)
+  1654	        except (TypeError, ValueError):
+  1655	            return DomainResult.failure(
+  1656	                ErrorObject("protocol_error", "Runtime timeline listing has no valid version", {}),
+  1657	                idempotency_key=key,
+  1658	            )
+  1659	        return self._typed(
+  1660	            "recover_timeline",
+  1661	            timeline_id,
+  1662	            key=key,
+  1663	            expected_version=expected,
+  1664	            version=target,
+  1665	            idempotency_key=key,
+  1666	        )
+  1667	
+  1668	
+  1669	class RemoteMedia(_RemoteFamily):
+  1670	    def open(
+  1671	        self,
+  1672	        project: str,
+  1673	        ref: Mapping[str, Any] | str,
+  1674	        *,
+  1675	        materialize: bool = False,
+     1	"""Public checkout history against the Runtime paired with the generated client."""
+     2	from __future__ import annotations
+     3	
+     4	import copy
+     5	
+     6	import pytest
+     7	
+     8	from tests.helpers.runtime import use_runtime
+     9	from tests.editing_conformance.test_commit_runtime_m1 import (
+    10	    assert_readback, cli, film, open_client, parent_of, renderer_off,
+    11	)
+    12	
+    13	pytestmark = pytest.mark.integration
+    14	# Keep this bounded real-HTTP qualification on the exact catalog-visibility
+    15	# candidate; do not switch either side of the public handshake to a fake route.
+    16	CATALOG_RUNTIME = "ca1f1b6df9a4df9a7febd03c4d3b3f9cd2260b99"
+    17	RUNTIME = use_runtime(CATALOG_RUNTIME)
+    18	import runtime_protocol  # noqa: F401  # lock the daemon fixture to CATALOG_RUNTIME
+    19	
+    20	
+    21	def test_checkout_reload_undo_cli_redo_uses_retained_history(
+    22	    tmp_path, monkeypatch, capsys, film, renderer_off, real_runtime,
+   136	
+   137	
+   138	def test_retained_restore_does_not_reopen_consumed_draft_steps(
+   139	    tmp_path, monkeypatch, film, renderer_off, real_runtime,
+   140	):
+   141	    from astrid.sdk.timeline import store
+   142	    from astrid.sdk.timeline._common import TimelineEditError
+   143	    from astrid.sdk.timeline.sync import TimelineSession
+   144	    from astrid.sdk.timeline_checkout import Checkout
+   145	
+   146	    fixture, _, _ = film
+   147	    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
+   148	    daemon = real_runtime(fixture.duplicate_root, support_root=tmp_path / 'support', authoring_profile='astrid')
+   149	    with open_client(daemon) as client:
+   150	        draft = Checkout.draft(fixture.project_id, fixture.timeline_id, client=client)
+   151	        original = copy.deepcopy(draft.bundle)
+   152	
+   153	        def local_move(on):
+   154	            with draft.step('move music'):
+   155	                draft.bundle['parent']['clips'][0]['at'] = on
+   156	                draft.bundle['parent']['config']['clips'] = copy.deepcopy(draft.bundle['parent']['clips'])
+   157	            draft.save(quiet=True)
+   158	
+   159	        local_move(1)
+   160	        local_move(2)
+   161	        assert len(list(store._history_dir(draft.path).glob('*.json'))) == 2
+   162	        session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client)
+   163	        accepted = session.move('parent/clip:music-bed', 2)
+   164	        draft._reset_base(client=client)
+   165	        assert draft.base_revision == accepted['data']['accepted_revision_id']
+   166	        restore_session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client)
+   167	        restored = restore_session.restore(
+   168	            original['base_parent']['revision_id'],
+   169	            original['base_parent']['content_digest'],
+   170	            idempotency_key='restore-retained-draft-base',
+   171	        )
+   172	        assert restored['data']['accepted_revision_id'] == original['base_parent']['revision_id']
+   173	        assert restored['receipt']['receipt_id'] != accepted['receipt']['receipt_id']
+   174	        draft._reset_base(client=client)
+   175	        draft = Checkout.load(draft.path)
+   176	        assert draft.document() == Checkout(original).document()
+   177	        for operation in (draft.undo, draft.redo):
+   178	            with pytest.raises(TimelineEditError, match='no unsent draft edit'):
+   179	                operation()
+   180	        base = draft.document()
+   181	        local_move(3)
+   182	        edited = draft.document()
+   183	        assert len(draft.undo(100)) == 1
+   184	        assert draft.document() == base
+   185	        draft.redo()
+   186	        assert draft.document() == edited
+   187	
+   188	
+   189	def test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore(
+   190	    tmp_path, monkeypatch, film, real_runtime,
+   191	):
+   192	    """Catalog visibility recovery leaves accepted film state untouched.
+   193	
+   194	    The direct recover operation is deliberately exercised through the normal
+   195	    WorkspaceClient transport.  Historical film recovery remains the one
+   196	    explicit TimelineSession restore path.
+   197	    """
+   198	    from astrid.sdk.timeline._common import TimelineEditError
+   199	    from astrid.sdk.timeline.sync import TimelineSession
+   200	    from astrid.sdk.workspace_client import WorkspaceClientError
+   201	
+   202	    fixture, _, _ = film
+   203	    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "client-data"))
+   204	    daemon = real_runtime(
+   205	        fixture.duplicate_root,
+   206	        support_root=tmp_path / "support",
+   207	        authoring_profile="astrid",
+   208	        commit=CATALOG_RUNTIME,
+   209	    )
+   210	    client = open_client(daemon)
+   211	    transport = client._remote._transport
+   212	
+   213	    def snapshot():
+   214	        timeline = transport.get_timeline(
+   215	            fixture.timeline_id, project_id=fixture.project_id,
+   216	        )
+   217	        revision = timeline["head_revision_id"]
+   218	        parent = transport.get_project_parent_composition_revision(
+   219	            fixture.project_id, fixture.timeline_id, revision,
+   220	        )
+   221	        manifest = parent.get("dependency_manifest", {})
+   222	        shots = {
+   223	            row["revision_id"]: transport.get_project_shot_revision(
+   224	                fixture.project_id, row["shot_id"], row["revision_id"],
+   225	            )
+    55	        assert project == "project-1"
+    56	        return {
+    57	            "project_id": "project-1",
+    58	            "slug": "demo",
+    59	            "metadata": {"default_timeline_id": "main"},
+    60	        }
+    61	
+    62	
+    63	class _CatalogTransport(_SelectedNativeTransport):
+    64	    def __init__(self) -> None:
+    65	        super().__init__()
+    66	        self.recover_calls = []
+    67	        self.catalog_version = 7
+    68	
+    69	    def list_timelines(self, project, *, cursor=None, limit=50):
+    70	        assert project == "project-1"
+    71	        return [[{
+    72	            "timeline_id": "tl-1",
+    73	            "slug": "main",
+    74	            "version": self.catalog_version,
+    75	            "archived": True,
+    76	            "head_revision_id": "head-7",
+    77	            "document_digest": "sha256:document",
+    78	        }], None]
+    79	
+    80	    def recover_timeline(self, timeline_id, *, expected_version, version, idempotency_key):
+    81	        self.recover_calls.append((timeline_id, expected_version, version, idempotency_key))
+    82	        return {
+    83	            "timeline_id": timeline_id,
+    84	            "archived": False,
+    85	            "version": 8,
+    86	            "head_revision_id": "head-7",
+    87	            "document_digest": "sha256:document",
+    88	        }
+    89	
+    90	
+    91	def test_remote_show_uses_runtime_current_project_and_project_default() -> None:
+    92	    transport = _SelectedNativeTransport()
+    93	    result = RemoteTimelines(transport).show(None, None)
+    94	    assert result.ok
+    95	    assert transport.inspect_calls[0][0:2] == ("project-1", "tl-1")
+    96	
+    97	
+    98	def test_remote_list_without_selection_returns_recovery_error() -> None:
+    99	    class _NoSelection(_SelectedNativeTransport):
+   100	        def current_project(self):
+   101	            return {"selection": None}
+   102	
+   103	    result = RemoteTimelines(_NoSelection()).list(None)
+   104	    assert not result.ok
+   105	    assert result.error.code == "not_found"
+   106	    assert result.error.details["next_action"] == "astrid projects select <project>"
+   107	
+   108	
+   109	def test_remote_default_timeline_must_belong_to_selected_project() -> None:
+   110	    class _CrossProjectDefault(_SelectedNativeTransport):
+   111	        def get_project(self, project):
+   112	            row = super().get_project(project)
+   113	            row["metadata"] = {"default_timeline_id": "other-project-timeline"}
+   114	            return row
+   115	
+   116	    result = RemoteTimelines(_CrossProjectDefault()).show(None, None)
+   117	    assert not result.ok
+   118	    assert result.error.code == "not_found"
+   119	    assert result.error.details == {
+   120	        "project": "project-1",
+   121	        "ref": "other-project-timeline",
+   122	    }
+   123	
+   124	
+   125	def test_catalog_recover_without_version_unarchives_current_entry_preserving_film() -> None:
+   126	    transport = _CatalogTransport()
+   127	    result = RemoteTimelines(transport).recover(
+   128	        "project-1", "main", idempotency_key="catalog-recover"
+   129	    )
+   130	
+   131	    assert result.ok
+   132	    assert transport.recover_calls == [("tl-1", 7, 7, "catalog-recover")]
+   133	    assert result.data == {
+   134	        "timeline_id": "tl-1",
+   135	        "archived": False,
+   136	        "version": 8,
+   137	        "head_revision_id": "head-7",
+   138	        "document_digest": "sha256:document",
+   139	    }
+   140	
+   141	    replay = RemoteTimelines(transport).recover(
+   142	        "project-1", "main", version=7, idempotency_key="catalog-recover"
+   143	    )
+   144	    assert replay.ok
+   145	    assert replay.data == result.data
+   146	    assert transport.recover_calls[-1] == ("tl-1", 7, 7, "catalog-recover")
+   147	
+   148	
+   149	def test_catalog_recover_current_version_unarchives_current_entry() -> None:
+   150	    transport = _CatalogTransport()
+   151	    result = RemoteTimelines(transport).recover(
+   152	        "project-1", "main", version=7, idempotency_key="catalog-current"
+   153	    )
+   154	
+   155	    assert result.ok
+   156	    assert transport.recover_calls == [("tl-1", 7, 7, "catalog-current")]
+   157	    assert result.data["archived"] is False
+   158	    assert result.data["head_revision_id"] == "head-7"
+   159	    assert result.data["document_digest"] == "sha256:document"
+   160	
+   161	
+   162	def test_catalog_recover_exact_retry_forwards_original_version_after_catalog_advance() -> None:
+   163	    transport = _CatalogTransport()
+   164	    first = RemoteTimelines(transport).recover(
+   165	        "project-1", "main", expected_version=7, version=7,
+   166	        idempotency_key="catalog-recover-retry",
+   167	    )
+   168	    transport.catalog_version = 8
+   169	
+   170	    replay = RemoteTimelines(transport).recover(
+   171	        "project-1", "main", expected_version=7, version=7,
+   172	        idempotency_key="catalog-recover-retry",
+   173	    )
+   174	
+   175	    assert first.ok and replay.ok
+   176	    assert replay.data == first.data
+   177	    assert transport.recover_calls == [
+   178	        ("tl-1", 7, 7, "catalog-recover-retry"),
+   179	        ("tl-1", 7, 7, "catalog-recover-retry"),
+   180	    ]
+   181	
+   182	
+   183	def test_legacy_timeline_recover_refuses_non_current_from_runtime_without_writes() -> None:
+   184	    # Forward fresh historical requests too: Runtime's ledger must distinguish
+   185	    # them from an exact accepted replay before refusing without film writes.
+   186	    class RuntimeRefusesHistorical(_CatalogTransport):
+   187	        def recover_timeline(self, timeline_id, *, expected_version, version, idempotency_key):
+   188	            self.recover_calls.append((timeline_id, expected_version, version, idempotency_key))
+   189	            raise WorkspaceClientError(
+   190	                410,
+   191	                "retired_route",
+   192	                "legacy timeline recover cannot restore a historical film version; restore a revision with timeline.restore",
+   193	                {
+   194	                    "status": "refused",
+   195	                    "reason": "timeline_restore_required",
+   196	                    "replacement": "timeline.restore",
+   197	                    "requested_version": version,
+   198	                    "current_version": self.catalog_version,
+   199	                },
+   200	            )
+   201	
+   202	    transport = RuntimeRefusesHistorical()
+   203	    result = RemoteTimelines(transport).recover(
+   204	        "project-1", "main", expected_version=7, version=6,
+   205	        idempotency_key="legacy-recover",
+   206	    )
+   207	    assert not result.ok
+   208	    assert result.idempotency_key == "legacy-recover"
+   209	    assert result.error.code == "retired_route"
+   210	    assert result.error.details == {
+   211	        "status": "refused",
+   212	        "reason": "timeline_restore_required",
+   213	        "replacement": "timeline.restore",
+   214	        "requested_version": 6,
+   215	        "current_version": 7,
+   216	    }
+   217	    assert "timeline.restore" in result.error.message
+   218	    assert "version" in result.error.message
+   219	    assert transport.recover_calls == [("tl-1", 7, 6, "legacy-recover")]
+   220	
+   221	
+   222	def test_remote_open_composition_uses_runtime_inspection_authority() -> None:
+   223	    transport = _NativeTransport()
+   224	    result = RemoteTimelines(transport).open_composition(
+   225	        "project-1", "main", occurrence="occ-1", neighbors=1
+fix(timeline): restore through native session
+
+Port exact revision restore through TimelineSession's existing commit outbox
+and forward catalog recover identity/version arguments without client-side
+historical preflight rejection. Add focused retry and catalog visibility
+coverage while retaining the real HTTP qualification assertions.
+
+codex
+## Report
+
+Implemented the scoped recovery port on `f82da322`:
+
+- Added native `TimelineSession.restore(...)` using `timeline.restore`.
+- Updated catalog recover to forward canonical timeline ID, original `version`, `expected_version`, and idempotency key.
+- Added focused native, retry, CLI-output, and real HTTP qualification assertions.
+- Preserved canonical-image/source-carrier code and made no CLI production changes.
+
+Tests:
+
+- `pytest -q tests/sdk/test_timeline_sync.py tests/sdk/test_native_timeline_facades.py tests/sdk/test_timeline_sync_native.py tests/v10/test_domain_cli_projects_timelines.py`
+  - **221 passed, 1 skipped**
+- Ruff syntax subset: **passed**
+- Real HTTP gate: **not run** per instruction; exact remaining node:
+  `tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore`
+
+The real gate still requires pairing with the exact reviewed Runtime SHA; no positive restore qualification is claimed.
+
+Created `commit-msg` and `DONE`.
+tokens used
+215,809
+## Report
+
+Implemented the scoped recovery port on `f82da322`:
+
+- Added native `TimelineSession.restore(...)` using `timeline.restore`.
+- Updated catalog recover to forward canonical timeline ID, original `version`, `expected_version`, and idempotency key.
+- Added focused native, retry, CLI-output, and real HTTP qualification assertions.
+- Preserved canonical-image/source-carrier code and made no CLI production changes.
+
+Tests:
+
+- `pytest -q tests/sdk/test_timeline_sync.py tests/sdk/test_native_timeline_facades.py tests/sdk/test_timeline_sync_native.py tests/v10/test_domain_cli_projects_timelines.py`
+  - **221 passed, 1 skipped**
+- Ruff syntax subset: **passed**
+- Real HTTP gate: **not run** per instruction; exact remaining node:
+  `tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore`
+
+The real gate still requires pairing with the exact reviewed Runtime SHA; no positive restore qualification is claimed.
+
+Created `commit-msg` and `DONE`.

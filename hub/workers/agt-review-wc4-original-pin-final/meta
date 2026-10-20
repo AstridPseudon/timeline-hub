@@ -1,0 +1,9 @@
+name=agt-review-wc4-original-pin-final
+repo=agent
+base=tl/agt-m2-wc4-original-pin-cut
+base_sha=47c1ee60
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-wc4-original-pin-final
+started=2026-10-20T14:20:21Z

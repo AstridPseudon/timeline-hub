@@ -1,0 +1,400 @@
+    -     assert error.value.kind == 'intervening_write'
+127 +         execute(
+128 +             back.bundle,
+129 +             [inverse(first.bundle, first.records).commands[0]],
+130 +             inverse_records=first.records,
+131 +             intervening_records=[*away.records, *back.records],
+132 +         )
+133 +     assert error.value.kind == "intervening_write"
+134 |
+135 |
+    - @pytest.mark.parametrize('bad', [
+    -     command('', 1),
+    -     command('key', 1, target='not valid'),
+    -     command('key', float('nan')),
+    -     command('key', 1, select='occurrence:occ-1'),
+    - ])
+136 + @pytest.mark.parametrize(
+137 +     "bad",
+138 +     [
+139 +         command("", 1),
+140 +         command("key", 1, target="not valid"),
+141 +         command("key", float("nan")),
+142 +         command("key", 1, select="occurrence:occ-1"),
+143 +     ],
+144 + )
+145 | def test_replace_contract_refuses_invalid_input_without_mutation(bad):
+--------------------------------------------------------------------------------
+153 | def test_private_schema_and_registry_are_closed():
+    -     assert 'project-data.write' in operations()
+    -     assert operations()['project-data.write'].parameters == _SCHEMA['$defs']['ProjectDataWriteArgs']
+154 +     assert "project-data.write" in operations()
+155 +     assert operations()["project-data.write"].parameters == _SCHEMA["$defs"]["ProjectDataWriteArgs"]
+156 |     validator = Draft202012Validator(_SCHEMA)
+    -     validator.validate(command('source', {'value': 1}))
+157 +     validator.validate(command("source", {"value": 1}))
+158 |     with pytest.raises(Exception):
+    -         validator.validate({**command('source', 1), 'args': {**command('source', 1)['args'], 'extra': True}})
+    -     assert json.loads(json.dumps(command('source', {'__proto__': 1}), allow_nan=False))
+159 +         validator.validate(
+160 +             {**command("source", 1), "args": {**command("source", 1)["args"], "extra": True}}
+161 +         )
+162 +     assert json.loads(json.dumps(command("source", {"__proto__": 1}), allow_nan=False))
+    |
+
+2 files would be reformatted
+
+context compacted
+codex
+The private candidate and handoff are in place. I’m doing the last formatting/status check now, then I’ll leave the required worker report, commit message, and completion marker intact.
+exec
+/bin/bash -lc 'ruff format --check astrid/sdk/timeline/_project_data_commands.py tests/editing_conformance/test_recipe_m2_project_data.py' in /home/user/work/wt/agt-m2-project-data-replace-native-contract
+ exited 1 in 0ms:
+unformatted: File would be reformatted
+  --> astrid/sdk/timeline/_project_data_commands.py:2:1
+   |
+1  | """Bounded replacement of one extension-owned project-data entry."""
+2  +
+3  | from __future__ import annotations
+--------------------------------------------------------------------------------
+13 | def _validate_target(target):
+   -     if (not isinstance(target, str) or len(target) == 0 or len(target) > 128
+   -             or _EXTENSION_ID.fullmatch(target) is None):
+14 +     if (
+15 +         not isinstance(target, str)
+16 +         or len(target) == 0
+17 +         or len(target) > 128
+18 +         or _EXTENSION_ID.fullmatch(target) is None
+19 +     ):
+20 |         raise CommandError("project-data.write requires an explicit extension target")
+--------------------------------------------------------------------------------
+30 |     """
+   -     if command.get('select') != 'parent':
+   -         raise CommandError('project-data.write requires the parent timeline scope')
+   -     args = command['args']
+   -     target, key, value = args['target'], args['key'], args['value']
+31 +     if command.get("select") != "parent":
+32 +         raise CommandError("project-data.write requires the parent timeline scope")
+33 +     args = command["args"]
+34 +     target, key, value = args["target"], args["key"], args["value"]
+35 |     _validate_target(target)
+36 |     if not isinstance(key, str) or not key.strip():
+   -         raise CommandError('project-data.write requires a non-empty project-data key')
+   -     if args.get('mode') != 'replace':
+37 +         raise CommandError("project-data.write requires a non-empty project-data key")
+38 +     if args.get("mode") != "replace":
+39 |         raise CommandError('project-data.write only supports mode "replace"')
+40 |     try:
+41 |         json.dumps(value, allow_nan=False)
+42 |     except (TypeError, ValueError) as exc:
+   -         raise CommandError('project-data.write value must be finite JSON') from exc
+43 +         raise CommandError("project-data.write value must be finite JSON") from exc
+44 |
+   -     ref, path = 'parent', ['config', 'app', target, key]
+45 +     ref, path = "parent", ["config", "app", target, key]
+46 |     # Containers are part of the authored scope.  Recording them when they
+47 |     # are first created lets inverse restore absent/null target containers
+48 |     # exactly; existing namespaces are touched only at the requested key.
+   -     ctx.object(ref, ['config'])
+   -     ctx.object(ref, ['config', 'app'])
+   -     ctx.object(ref, ['config', 'app', target])
+49 +     ctx.object(ref, ["config"])
+50 +     ctx.object(ref, ["config", "app"])
+51 +     ctx.object(ref, ["config", "app", target])
+52 |     ctx.write(ref, path, value)
+   |
+
+unformatted: File would be reformatted
+   --> tests/editing_conformance/test_recipe_m2_project_data.py:2:1
+    |
+1   | """Private candidate contract for authored extension project-data replacement."""
+2   +
+3   | from __future__ import annotations
+--------------------------------------------------------------------------------
+15  |
+    - TARGET = 'com.example.compiler-canary'
+16  + TARGET = "com.example.compiler-canary"
+17  |
+18  |
+    - def command(key, value, *, target=TARGET, select='parent'):
+19  + def command(key, value, *, target=TARGET, select="parent"):
+20  |     return {
+    -         'schema_version': 1,
+    -         'op': 'project-data.write',
+    -         'version': '1',
+    -         'select': select,
+    -         'args': {'target': target, 'key': key, 'value': value, 'mode': 'replace'},
+21  +         "schema_version": 1,
+22  +         "op": "project-data.write",
+23  +         "version": "1",
+24  +         "select": select,
+25  +         "args": {"target": target, "key": key, "value": value, "mode": "replace"},
+26  |     }
+27  |
+28  |
+29  | def project_data(value):
+    -     return State(value).config('parent').get('app', {})
+30  +     return State(value).config("parent").get("app", {})
+31  |
+32  |
+33  | def test_compiler_canary_source_and_source_map_are_one_ordered_native_batch():
+34  |     original = bundle()
+    -     source = command('__dsl__:dsl://com.example.compiler-canary/main.json', {'version': 1})
+    -     source_map = command('__dsl_sm__:sm-1', {'id': 'sm-1', 'sourceLine': 3})
+35  +     source = command("__dsl__:dsl://com.example.compiler-canary/main.json", {"version": 1})
+36  +     source_map = command("__dsl_sm__:sm-1", {"id": "sm-1", "sourceLine": 3})
+37  |
+38  |     plan = execute(original, [source, source_map])
+39  |
+    -     assert [record['ordinal'] for record in plan.records] == [0, 1]
+40  +     assert [record["ordinal"] for record in plan.records] == [0, 1]
+41  |     assert list(project_data(plan.bundle)[TARGET]) == [
+    -         '__dsl__:dsl://com.example.compiler-canary/main.json', '__dsl_sm__:sm-1',
+42  +         "__dsl__:dsl://com.example.compiler-canary/main.json",
+43  +         "__dsl_sm__:sm-1",
+44  |     ]
+    -     assert plan.bundle['parent']['clips'] == original['parent']['clips']
+    -     assert plan.bundle['placements'] == original['placements']
+    -     assert plan.bundle['shots'] == original['shots']
+    -     assert original['parent']['config'].get('app') is None
+45  +     assert plan.bundle["parent"]["clips"] == original["parent"]["clips"]
+46  +     assert plan.bundle["placements"] == original["placements"]
+47  +     assert plan.bundle["shots"] == original["shots"]
+48  +     assert original["parent"]["config"].get("app") is None
+49  |
+--------------------------------------------------------------------------------
+54  |     with pytest.raises(CommandError):
+    -         execute(original, [
+    -             command('source', {'version': 1}),
+    -             {'schema_version': 1, 'op': 'project-data.delete', 'version': '1',
+    -              'select': 'parent', 'args': {}},
+    -         ])
+55  +         execute(
+56  +             original,
+57  +             [
+58  +                 command("source", {"version": 1}),
+59  +                 {
+60  +                     "schema_version": 1,
+61  +                     "op": "project-data.delete",
+62  +                     "version": "1",
+63  +                     "select": "parent",
+64  +                     "args": {},
+65  +                 },
+66  +             ],
+67  +         )
+68  |     assert original == before
+69  |
+70  |
+    - @pytest.mark.parametrize('prior', [
+    -     {},
+    -     {'keep': {'opaque': True}, 'slot': None},
+    - ])
+71  + @pytest.mark.parametrize(
+72  +     "prior",
+73  +     [
+74  +         {},
+75  +         {"keep": {"opaque": True}, "slot": None},
+76  +     ],
+77  + )
+78  | def test_replace_preserves_namespace_and_restores_absent_null_and_opaque_values(prior):
+79  |     original = bundle()
+    -     original['parent']['config']['app'] = {TARGET: copy.deepcopy(prior)}
+80  +     original["parent"]["config"]["app"] = {TARGET: copy.deepcopy(prior)}
+81  |     before = copy.deepcopy(original)
+    -     value = {'__proto__': {'safe': True}, 'constructor': None, 'prototype': [1, 2]}
+    -     plan = execute(original, [command('source', value)])
+82  +     value = {"__proto__": {"safe": True}, "constructor": None, "prototype": [1, 2]}
+83  +     plan = execute(original, [command("source", value)])
+84  |
+    -     assert project_data(plan.bundle)[TARGET]['keep'] == prior.get('keep') if 'keep' in prior else True
+    -     assert project_data(plan.bundle)[TARGET]['source'] == value
+85  +     assert (
+86  +         project_data(plan.bundle)[TARGET]["keep"] == prior.get("keep") if "keep" in prior else True
+87  +     )
+88  +     assert project_data(plan.bundle)[TARGET]["source"] == value
+89  |     assert original == before
+90  |     validate_command(plan.commands[0])
+    -     assert plan.records[0]['command']['expect'][
+    -         f'parent::config.app["{TARGET}"].source'] == {'state': 'absent'}
+91  +     assert plan.records[0]["command"]["expect"][f'parent::config.app["{TARGET}"].source'] == {
+92  +         "state": "absent"
+93  +     }
+94  |
+--------------------------------------------------------------------------------
+102 |     original = bundle()
+    -     original['parent']['config']['app'] = {TARGET: {'source': None}}
+    -     plan = execute(original, [command('source', 'next')])
+    -     assert plan.records[0]['command']['expect'][
+    -         f'parent::config.app["{TARGET}"].source'] == {'state': 'present', 'value': None}
+103 +     original["parent"]["config"]["app"] = {TARGET: {"source": None}}
+104 +     plan = execute(original, [command("source", "next")])
+105 +     assert plan.records[0]["command"]["expect"][f'parent::config.app["{TARGET}"].source'] == {
+106 +         "state": "present",
+107 +         "value": None,
+108 +     }
+109 |     assert inverse(plan.bundle, plan.records).bundle == original
+--------------------------------------------------------------------------------
+113 |     original = bundle()
+    -     original['parent']['config']['app'] = {TARGET: {'existing': True}}
+    -     first = execute(original, [command('source', 'A')])
+    -     other = execute(original, [command('source-map', {'id': 'B'})])
+114 +     original["parent"]["config"]["app"] = {TARGET: {"existing": True}}
+115 +     first = execute(original, [command("source", "A")])
+116 +     other = execute(original, [command("source-map", {"id": "B"})])
+117 |     rebased = replay(first, other.bundle, intervening_records=other.records)
+    -     assert project_data(rebased.bundle)[TARGET] == {'existing': True, 'source-map': {'id': 'B'}, 'source': 'A'}
+118 +     assert project_data(rebased.bundle)[TARGET] == {
+119 +         "existing": True,
+120 +         "source-map": {"id": "B"},
+121 +         "source": "A",
+122 +     }
+123 |
+    -     away = execute(first.bundle, [command('source', 'B')])
+    -     back = execute(away.bundle, [command('source', 'A')])
+124 +     away = execute(first.bundle, [command("source", "B")])
+125 +     back = execute(away.bundle, [command("source", "A")])
+126 |     with pytest.raises(CommandError) as error:
+    -         execute(back.bundle, [inverse(first.bundle, first.records).commands[0]],
+    -                 inverse_records=first.records, intervening_records=[*away.records, *back.records])
+    -     assert error.value.kind == 'intervening_write'
+127 +         execute(
+128 +             back.bundle,
+129 +             [inverse(first.bundle, first.records).commands[0]],
+130 +             inverse_records=first.records,
+131 +             intervening_records=[*away.records, *back.records],
+132 +         )
+133 +     assert error.value.kind == "intervening_write"
+134 |
+135 |
+    - @pytest.mark.parametrize('bad', [
+    -     command('', 1),
+    -     command('key', 1, target='not valid'),
+    -     command('key', float('nan')),
+    -     command('key', 1, select='occurrence:occ-1'),
+    - ])
+136 + @pytest.mark.parametrize(
+137 +     "bad",
+138 +     [
+139 +         command("", 1),
+140 +         command("key", 1, target="not valid"),
+141 +         command("key", float("nan")),
+142 +         command("key", 1, select="occurrence:occ-1"),
+143 +     ],
+144 + )
+145 | def test_replace_contract_refuses_invalid_input_without_mutation(bad):
+--------------------------------------------------------------------------------
+153 | def test_private_schema_and_registry_are_closed():
+    -     assert 'project-data.write' in operations()
+    -     assert operations()['project-data.write'].parameters == _SCHEMA['$defs']['ProjectDataWriteArgs']
+154 +     assert "project-data.write" in operations()
+155 +     assert operations()["project-data.write"].parameters == _SCHEMA["$defs"]["ProjectDataWriteArgs"]
+156 |     validator = Draft202012Validator(_SCHEMA)
+    -     validator.validate(command('source', {'value': 1}))
+157 +     validator.validate(command("source", {"value": 1}))
+158 |     with pytest.raises(Exception):
+    -         validator.validate({**command('source', 1), 'args': {**command('source', 1)['args'], 'extra': True}})
+    -     assert json.loads(json.dumps(command('source', {'__proto__': 1}), allow_nan=False))
+159 +         validator.validate(
+160 +             {**command("source", 1), "args": {**command("source", 1)["args"], "extra": True}}
+161 +         )
+162 +     assert json.loads(json.dumps(command("source", {"__proto__": 1}), allow_nan=False))
+    |
+
+2 files would be reformatted
+
+codex
+The formatter found only style drift in the two new Python files; I’m applying the repository formatter and will rerun the focused checks afterward. No behavior change is involved.
+exec
+/bin/bash -lc 'ruff format astrid/sdk/timeline/_project_data_commands.py tests/editing_conformance/test_recipe_m2_project_data.py' in /home/user/work/wt/agt-m2-project-data-replace-native-contract
+ succeeded in 0ms:
+2 files reformatted
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_project_data.py tests/sdk/test_timeline_composed_schema.py' in /home/user/work/wt/agt-m2-project-data-replace-native-contract
+exec
+/bin/bash -lc 'ruff check astrid/sdk/timeline/_project_data_commands.py tests/editing_conformance/test_recipe_m2_project_data.py' in /home/user/work/wt/agt-m2-project-data-replace-native-contract
+exec
+/bin/bash -lc 'git diff --check' in /home/user/work/wt/agt-m2-project-data-replace-native-contract
+ succeeded in 22ms:
+All checks passed!
+
+ succeeded in 167ms:
+ succeeded in 3231ms:
+................                                                         [100%]
+16 passed in 2.03s
+
+codex
+Focused validation is green after formatting: 16 tests passed, Ruff passed, and `git diff --check` passed. I’m verifying the final file set and required handoff markers now; no full suite or browser/live-socket suite is being requested.
+exec
+/bin/bash -lc 'git status --short' in /home/user/work/wt/agt-m2-project-data-replace-native-contract
+ succeeded in 67ms:
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/commands.py
+?? astrid/sdk/timeline/_project_data_commands.py
+?? tests/editing_conformance/fixtures/recipe_m2_project_data.json
+?? tests/editing_conformance/test_recipe_m2_project_data.py
+
+exec
+/bin/bash -lc 'ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-replace-native-contract/ORCHREPORT.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-replace-native-contract/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-replace-native-contract/DONE' in /home/user/work/wt/agt-m2-project-data-replace-native-contract
+ succeeded in 81ms:
+-rw-r--r-- 1 root root    0 Oct 20 16:08 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-replace-native-contract/DONE
+-rw-r--r-- 1 root root 3013 Oct 20 16:08 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-replace-native-contract/ORCHREPORT.md
+-rw-r--r-- 1 root root  211 Oct 20 16:08 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-replace-native-contract/commit-msg
+
+codex
+## Report
+
+Implemented a private Agent candidate for bounded authored `project-data.write`:
+
+- Added schema and registry support.
+- Added native recording, inverse, rebase, ABA, opaque-key, and atomicity behavior.
+- Added compiler-canary fixture and focused tests.
+- Added design handoff: `handoff-ap2-m2-ordinary-projectdata-native-contract.md`.
+- No new store, endpoint, public registration, or App changes.
+
+Sources:
+
+- [Project-data command]( /home/user/work/wt/agt-m2-project-data-replace-native-contract/astrid/sdk/timeline/_project_data_commands.py )
+- [Schema]( /home/user/work/wt/agt-m2-project-data-replace-native-contract/astrid/core/timeline/schema/edit-command.schema.json )
+- [Focused tests]( /home/user/work/wt/agt-m2-project-data-replace-native-contract/tests/editing_conformance/test_recipe_m2_project_data.py )
+
+Tests:
+
+- Focused pytest: `16 passed`
+- Ruff check: passed
+- `git diff --check`: passed
+- Frozen union suite: `30 passed, 4 failed`, expected because the private candidate changes the frozen operation inventory; frozen tests were not modified.
+- Full, Runtime, App/browser suites: not run per instructions.
+
+Runtime schema/provider pairing and App migration remain for peer review and joint follow-up.
+
+Commit message written and `DONE` created.
+tokens used
+287,140
+## Report
+
+Implemented a private Agent candidate for bounded authored `project-data.write`:
+
+- Added schema and registry support.
+- Added native recording, inverse, rebase, ABA, opaque-key, and atomicity behavior.
+- Added compiler-canary fixture and focused tests.
+- Added design handoff: `handoff-ap2-m2-ordinary-projectdata-native-contract.md`.
+- No new store, endpoint, public registration, or App changes.
+
+Sources:
+
+- [Project-data command]( /home/user/work/wt/agt-m2-project-data-replace-native-contract/astrid/sdk/timeline/_project_data_commands.py )
+- [Schema]( /home/user/work/wt/agt-m2-project-data-replace-native-contract/astrid/core/timeline/schema/edit-command.schema.json )
+- [Focused tests]( /home/user/work/wt/agt-m2-project-data-replace-native-contract/tests/editing_conformance/test_recipe_m2_project_data.py )
+
+Tests:
+
+- Focused pytest: `16 passed`
+- Ruff check: passed
+- `git diff --check`: passed
+- Frozen union suite: `30 passed, 4 failed`, expected because the private candidate changes the frozen operation inventory; frozen tests were not modified.
+- Full, Runtime, App/browser suites: not run per instructions.
+
+Runtime schema/provider pairing and App migration remain for peer review and joint follow-up.
+
+Commit message written and `DONE` created.

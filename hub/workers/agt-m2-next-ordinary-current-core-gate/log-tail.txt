@@ -1,0 +1,400 @@
++@pytest.fixture
++def manifest_media(tmp_path, monkeypatch):
++    use_runtime()
++    from runtime_protocol.service import RuntimeService
++
++    from tests.editing_conformance.test_commit_runtime_parent_media_swap import (
++        editing as native_parent_media_fixture,
++    )
++
++    # This helper builds the film with historical public APIs in a separate
++    # interpreter, settles decodable PNGs, then opens it with current Runtime.
++    fixture = native_parent_media_fixture.__wrapped__(SimpleNamespace(param='image'), tmp_path, monkeypatch)
++    case = next(fixture)
++    try:
++        service, project = case.service, case.project
++        service.list_timeline_commits(project, 'film', authorize=case.authorize)
++        case.legacy = service.get_project_parent_composition_revision(project, 'film', 'popup-baseline')
++        commits, _ = service._timeline_commits()
++        document = commits.revision_closure(project, 'film', 'popup-baseline')
++        shot = copy.deepcopy(document['shot_revisions'][0])
++        binding = service.get_project_shot_text_binding(
++            project, shot['payload']['text_bindings'][0]['binding_id'])
++        descriptor = {key: binding[key] for key in (
++            'kind', 'slot', 'media_id', 'content_hash', 'byte_size', 'mime_type')}
++        assert service.cas.read(descriptor['media_id'].removeprefix('sha256:')) == b'A chapter'
++        assert descriptor['content_hash'] == descriptor['media_id']
++        assert descriptor['byte_size'] == len(b'A chapter')
++        case.binding = binding
++        shot.update(revision_id='manifest-shot')
++        shot['payload']['text_bindings'] = [descriptor]
++        parent = copy.deepcopy(document['parent_revision']['payload'])
++        for occurrence in parent['occurrences']:
++            occurrence['shot_revision_id'] = shot['revision_id']
++        # Approved TEST SETUP boundary: the current six-field descriptor refers
++        # to real retained legacy text, never inline text authority. No Agent
++        # command is credited with creating this authored baseline.
++        seed_trusted_parent(service, {
++            'project_id': project, 'timeline_id': 'film', 'expected_head': 'popup-baseline',
++            'parent_revision_id': 'media-baseline', 'parent_composition': parent,
++            'shot_revisions': [shot],
++        }, idempotency_key='media-baseline')
++        case.baseline = commits.revision_closure(project, 'film', 'media-baseline')
++        service.close()
++        case.service = RuntimeService(case.root)
++        yield case
++    finally:
++        fixture.close()
++
++
+ @pytest.mark.parametrize('operation', ['add', 'swap'])
+-def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeypatch, operation):
+-    runtime = use_runtime()
+-    monkeypatch.syspath_prepend(str(runtime / 'tests'))
+-    from runtime_protocol.auth import CredentialStore
++def test_real_media_manifest_inverse_retry_restart_and_history(monkeypatch, operation, manifest_media):
++    use_runtime()
+     from runtime_protocol.errors import RuntimeErrorBase
+     from runtime_protocol.service import RuntimeService
+     from runtime_protocol.timeline_commit_port import RequestCommitPort, route_path
+-    from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
+-    from timeline_commit_film_fixture import _binding_descriptor
+ 
+     from astrid.sdk.timeline import commands
+     from astrid.sdk.timeline.commit import RuntimeCommitService, create_runtime_commit_service
+-    from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
+ 
+-    def effect(project):
+-        return _effect(project, groups=[{'group_key': 'main', 'selectors': [
+-            {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': 'image'}
+-            for index, name in enumerate(('old', 'new'))]}])
++    service, project, authorize = manifest_media.service, manifest_media.project, manifest_media.authorize
++    old, new = manifest_media.old, manifest_media.new
+ 
+-    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
+-    project = project['id']
+-    credentials = CredentialStore(tmp_path / 'credentials')
+-    token, _ = credentials.provision('media-editor', ['projects:read', 'projects:write'])
+-
+-    def authorize():
+-        return credentials.require(token, 'projects:write')
+-
+     def introduce(ctx, command):
+         pin = command['args']['media']
+         owner = command['select']
+@@ -63,8 +100,7 @@
+ 
+     class RecipeProvider(RuntimeCommitService):
+         def commit(self, context, port):
+-            # The base worker predates the held native-media admission seam.
+-            # Use its exact ABI read; never replace captures or prepared output.
++            # Test-only recipe ABI adapter, not a production popup operation.
+             for call in context['request']['commands']:
+                 if call['op'] == 'test.media-provenance':
+                     port.selected_media(call['args']['media'])
+@@ -98,57 +134,17 @@
+                 'args': {'publications': [result['receipt']['receipt_id']]}}
+ 
+     try:
+-        outputs = [_output(name.encode(), output_port='image', group_key='main', variant_key=name,
+-                           ordinal=index, filename=name + '.png', media_type='image/png')
+-                   for index, name in enumerate(('old', 'new'))]
+-        _settle(service, attempt, outputs, effect=admitted)
+-        selections = {row['variant_key']: service.get_project_media_selection(project, {
+-            'association_id': row['association_id'], 'object_id': row['object_id'],
+-            'version': row['lifecycle']['version']}, authorize=authorize)
+-            for row in service.managed_outputs(task['task']['id'])}
+-        old, new = selections['old'], selections['new']
+-
+-        def replace(value):
+-            if value == MEDIA:
+-                return old['object_id']
+-            if isinstance(value, dict):
+-                return {key: replace(child) for key, child in value.items()}
+-            if isinstance(value, list):
+-                return [replace(child) for child in value]
+-            return value
+-
+-        document = replace(document_fixture())
+-        internal = document['internal_timeline_revisions'][0]
+-        internal['payload'].pop('source_window')
+-        internal['timeline_id'] = 'film'
+-        # Legacy seed publication's visual seam accepts numeric fps only.
+-        # Rational fps/source preservation remains in the detached proof.
+-        document['parent_revision']['payload']['config']['output']['fps'] = 24
+-        internal['payload']['output']['fps'] = 24
+-        for occurrence in document['parent_revision']['payload']['occurrences']:
+-            occurrence.update(source_offset=0, speed=1)
+-        document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
+-        service.create_project_shot(project, {'shot_id': 'chapter-shot', 'name': 'Chapter One'},
+-                                    idempotency_key='chapter-shot')
+-        binding = service.set_project_shot_text_binding(project, {
+-            'shot_id': 'chapter-shot', 'kind': 'transcript', 'text': 'A chapter', 'expected_head': 0,
+-        }, idempotency_key='chapter-text')['data']
+-        document['shot_revisions'][0]['payload']['text_bindings'] = [_binding_descriptor(binding, 'A chapter')]
+-        service.publish_parent_composition(project, 'film', {
+-            'project_id': project, 'timeline_id': 'film', 'expected_head': None,
+-            'parent_revision_id': 'media-baseline', 'parent_composition': document['parent_revision']['payload'],
+-            'shot_revisions': [{key: value for key, value in row.items() if key != 'content_digest'}
+-                               for row in document['shot_revisions']],
+-            'internal_timeline_revisions': [{key: value for key, value in internal.items()
+-                                             if key != 'content_digest'}],
+-        }, idempotency_key='media-baseline')
+         register()
+         request = body([{'schema_version': 1, 'op': 'test.media-provenance', 'version': '1',
+                          'select': 'occurrence:occ-a', 'args': {'media': new}}])
+         created = submit(request, 'introduce')
+         baseline = next(row for row in captured if row['parent_revision']['revision_id'] == 'media-baseline')
++        assert baseline == manifest_media.baseline
++        assert old['object_id'] in {pin['media_id'] for pin in baseline['dependency_manifest']['media']}
+         assert new['object_id'] not in {pin['media_id'] for pin in baseline['dependency_manifest']['media']}
+         assert new['object_id'] in {pin['media_id'] for pin in created['data']['canonical_document']['dependency_manifest']['media']}
++        assert ({pin['media_id'] for pin in created['data']['canonical_document']['dependency_manifest']['media']}
++                - {pin['media_id'] for pin in baseline['dependency_manifest']['media']}) == {new['object_id']}
+         undo_request = body([inverse(created)])
+         preview = submit(dict(undo_request, dry_run=True), 'undo-preview')
+         assert preview['data']['canonical_document'] == baseline
+@@ -159,7 +155,7 @@
+         # closure, while its result manifest omits it. History remains immutable.
+         assert created['data']['canonical_document'] in captured
+         before_restart = service.list_timeline_commits(project, 'film', authorize=authorize)
+-        root = tmp_path / 'publish'
++        root = manifest_media.root
+         service.close()
+         service = RuntimeService(root)
+         register()
+@@ -183,6 +179,8 @@
+         assert edge['records']['commands'][0]['dependencies'][0]['pin'] == new
+         stored = service.get_project_parent_composition_revision(project, 'film', created['data']['accepted_revision_id'])
+         assert stored['dependency_manifest'] == created['data']['canonical_document']['dependency_manifest']
++        assert service.get_project_shot_text_binding(project, manifest_media.binding['binding_id']) == manifest_media.binding
++        assert service.get_project_parent_composition_revision(project, 'film', 'popup-baseline') == manifest_media.legacy
+         assert service.store.integrity_report()['ok']
+     finally:
+         service.close()
+diff --git a/tests/editing_conformance/test_recipe_scalar_commands.py b/tests/editing_conformance/test_recipe_scalar_commands.py
+index f51d80de3099b92bca3b309668eda07ab946f1e3..83041541a5ec57813b7aa96519de87e25493f388
+--- a/tests/editing_conformance/test_recipe_scalar_commands.py
++++ b/tests/editing_conformance/test_recipe_scalar_commands.py
+@@ -32,6 +32,33 @@
+             'args': {'values': {} if values is None else values, 'clear': list(clear)}}
+ 
+ 
++@pytest.mark.parametrize('aba', [False, True])
++def test_inverse_refuses_same_batch_unchanged_or_aba_scalar_write(aba):
++    ref = 'parent/track:picture'
++    target = execute(bundle(), [call('track.set', ref, {'label': 'target'})])
++    undo = inverse(target.bundle, target.records).commands[0]
++    staged = ([call('track.set', ref, {'label': 'away'})] if aba else [])
++    staged.append(call('track.set', ref, {'label': 'target'}))
++    before = copy.deepcopy((target.bundle, target.records))
++    with pytest.raises(CommandError) as error:
++        execute(target.bundle, [*staged, undo], inverse_records=target.records)
++    assert error.value.kind == 'intervening_write'
++    assert (target.bundle, target.records) == before
++
++
++def test_inverse_allows_later_explicit_write_and_disjoint_prior_stages():
++    ref, other = 'parent/track:picture', 'occurrence:occ-1/track:picture'
++    target = execute(bundle(), [call('track.set', ref, {'label': 'target'})])
++    undo = inverse(target.bundle, target.records).commands[0]
++    plan = execute(target.bundle, [call('track.set', other, {'label': 'disjoint'}), undo,
++                                   call('track.set', ref, {'label': 'later'})],
++                   inverse_records=target.records)
++    assert State(plan.bundle).entity(ref)['label'] == 'later'
++    assert State(plan.bundle).entity(other)['label'] == 'disjoint'
++    assert replay(plan, target.bundle, inverse_records=target.records).records == plan.records
++    assert inverse(plan.bundle, plan.records).bundle == target.bundle
++
++
+ @pytest.fixture
+ def admitted_param_revisions(configured_project_pack):
+     # Main's real admission/registry path, including its immutable source snapshots.
+diff --git a/tests/helpers/trusted_seed.py b/tests/helpers/trusted_seed.py
+index 403b7ecb692c5606d9ae385d722c96697ba648eb..3024c24e1a5f66b21cc2e887f5e05ab3bf4a1033
+--- a/tests/helpers/trusted_seed.py
++++ b/tests/helpers/trusted_seed.py
+@@ -89,7 +89,8 @@
+     document = _closure(publication, current, digest)
+     before = {key: current["parent_revision"][key] for key in ("revision_id", "content_digest")}
+     after = {key: document["parent_revision"][key] for key in ("revision_id", "content_digest")}
+-    command = {"schema_version": 1, "op": "clip.move", "version": "1", "select": "parent/clip:seed", "args": {"on": 0}}
++    command = {"schema_version": 1, "op": "clip.move", "version": "1", "select": "parent/clip:seed",
++               "args": {"on": 0}, "created": []}
+     request = {"api_version": 1, "project_id": project, "timeline_id": timeline,
+                "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
+                "commands": [command], "rationale": "Trusted TEST SETUP for a saved parent; not Agent semantic acceptance"}
+diff --git a/tests/sdk/test_timeline_selected_schema_runtime.py b/tests/sdk/test_timeline_selected_schema_runtime.py
+index e6e97d179ef04fd481494167ac9b92ff6bc25ce6..e342fc1dfade650b100bc1465c0ac3bd3270f145
+--- a/tests/sdk/test_timeline_selected_schema_runtime.py
++++ b/tests/sdk/test_timeline_selected_schema_runtime.py
+@@ -150,6 +150,101 @@
+             'args': {'values': values, 'clear': list(clear), 'schema_source': case.pin}}
+ 
+ 
++def select_source(case, pin):
++    return {'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': REF,
++            'args': {'elementRef': case.selected, 'schema_source': pin}}
++
++
++@pytest.fixture
++def unchanged_selection(retained_pack):
++    case = retained_pack
++    first = copy.deepcopy(case.pin)
++    case.submit(case.request([select_source(case, first)]), 'retain-first-selection')
++    manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
++    test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
++    admitted = packs.admit_project_pack('realm', case.project)
++    assert case.selected in [{key: item['descriptor'][key] for key in case.selected}
++                             for item in admitted['elements']]
++    document = case.service.get_document(case.project, first['document_id'])
++    second = {'document_id': document['document_id'], 'version': document['version'],
++              'content_digest': commit._digest(document['content'])}
++    assert second['version'] > first['version']
++    body = case.request([select_source(case, first)])
++    before = case.bundle()
++    target = case.submit(body, 'unchanged-selection')
++    assert case.bundle() == before
++    return case, first, second, body, target
++
++
++def accepted_state(case):
++    head = case.head()
++    store = case.service._timeline_commits()[0]
++    document = store.revision_closure(case.project, 'film', head['revision_id'])
++    history = case.service.list_timeline_commits(case.project, 'film', authorize=lambda: None)
++    database = tuple(case.service.store.conn.iterdump())
++    objects = {str(path.relative_to(case.service.cas.root)): path.read_bytes()
++               for path in case.service.cas.root.rglob('*') if path.is_file()}
++    return head, document, history, database, objects
++
++
++@pytest.mark.parametrize('reselect', ['same-pin', 'new-pin'])
++def test_native_inverse_refuses_earlier_unchanged_selection_atomically(
++        unchanged_selection, monkeypatch, reselect):
++    from runtime_protocol.errors import RuntimeErrorBase
++
++    case, first, second, body, target = unchanged_selection
++    publication = target['receipt']['receipt_id']
++    record = case.service._timeline_commits()[0].history_entry(
++        case.project, 'film', publication)['records']['commands'][0]
++    assert record['writes'] and all(write['before'] == write['after'] for write in record['writes'])
++    before = accepted_state(case)
++    changes = case.service.store.conn.total_changes
++    request = case.request([select_source(case, first if reselect == 'same-pin' else second),
++                            inverse(publication)])
++    original = copy.deepcopy(request)
++    with pytest.raises(RuntimeErrorBase) as error:
++        case.submit(request, 'staged-selection-inverse')
++    assert error.value.status == 409
++    assert error.value.details['reason'] == 'intervening_write'
++    assert request == original
++    assert accepted_state(case) == before
++    assert case.service.store.conn.total_changes == changes
++    with monkeypatch.context() as retry:
++        retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('retry executed semantics'))
++        assert case.submit(body, 'unchanged-selection') == target
++    assert accepted_state(case) == before
++
++
++@pytest.mark.parametrize('grouped', [False, True])
++def test_native_disjoint_staged_label_and_inverse_preserve_opaque(unchanged_selection, grouped):
++    case, _, _, _, target = unchanged_selection
++    before = case.bundle()
++    undo = inverse(target['receipt']['receipt_id'])
++    if grouped:
++        params = case.submit(case.request([raw_params(case, {'seed': 8})]), 'grouped-params')
++        undo['args']['publications'].append(params['receipt']['receipt_id'])
++    label = capture_track_set(before, 'parent/track:picture', values={'label': 'staged label'})
++    result = case.submit(case.request([label, undo]), 'staged-label-inverse')
++    expected = copy.deepcopy(before)
++    State(expected).entity('parent/track:picture')['label'] = 'staged label'
++    assert result['data']['canonical_document'] == commit.document_from_bundle(expected)
++    assert State(case.bundle()).entity(REF)['params']['future'] == {'keep': [None, False, {}]}
++
++
++def test_native_inverse_then_selection_and_params_use_staged_pin(unchanged_selection):
++    case, _, second, _, target = unchanged_selection
++    case.pin = second
++    result = case.submit(case.request([inverse(target['receipt']['receipt_id']),
++                                      select_source(case, second), raw_params(case, {'seed': 8})]),
++                         'inverse-selection-params')
++    assert State(commit.bundle_from_document(result['data']['canonical_document'])).entity(
++        REF)['params'] == {'seed': 8, 'future': {'keep': [None, False, {}]}}
++    entry = case.service._timeline_commits()[0].history_entry(
++        case.project, 'film', result['receipt']['receipt_id'])
++    assert next(dependency['pin'] for dependency in entry['records']['commands'][2]['dependencies']
++                if dependency['key'] == 'params.schema') == second
++
++
+ def test_mixed_pack_readmission_keeps_old_and_new_native_param_sources(retained_pack, monkeypatch):
+     from runtime_protocol.errors import RuntimeErrorBase
+     from runtime_protocol.service import RuntimeService
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worktree status ---' && git status --short && printf '%s\\n' '--- diff stat ---' && git diff --stat && printf '%s\\n' '--- output files ---' && wc -c \\
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-next-ordinary-final-core-gate.md \\
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-current-core-gate/notes/report.md \\
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-current-core-gate/commit-msg \\
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-current-core-gate/DONE && printf '%s\\n' '--- final schema/protected checks ---' && sha256sum astrid/core/timeline/schema/edit-command.schema.json && git diff --quiet HEAD -- runtime.lock.json artifacts.json astrid_runtime_client && printf '%s\\n' 'public protected paths unchanged' && git diff --check" in /home/user/work/wt/agt-m2-next-ordinary-current-core-gate
+ succeeded in 573ms:
+--- worktree status ---
+ M astrid/sdk/timeline/commands.py
+ M astrid/sdk/timeline/inverse.py
+ M tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+ M tests/helpers/trusted_seed.py
+ M tests/sdk/test_timeline_selected_schema_runtime.py
+--- diff stat ---
+ astrid/sdk/timeline/commands.py                    |   2 +-
+ astrid/sdk/timeline/inverse.py                     |   4 +-
+ .../test_commit_runtime_media_manifest_inverse.py  | 130 ++++++++++-----------
+ .../test_recipe_scalar_commands.py                 |  27 +++++
+ tests/helpers/trusted_seed.py                      |   3 +-
+ tests/sdk/test_timeline_selected_schema_runtime.py |  95 +++++++++++++++
+ 6 files changed, 192 insertions(+), 69 deletions(-)
+--- output files ---
+ 3495 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-next-ordinary-final-core-gate.md
+ 7690 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-current-core-gate/notes/report.md
+  190 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-current-core-gate/commit-msg
+    0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-current-core-gate/DONE
+11375 total
+--- final schema/protected checks ---
+6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d  astrid/core/timeline/schema/edit-command.schema.json
+public protected paths unchanged
+
+codex
+Implemented the bounded F1 current-core port and approved media fixture migration.
+
+- Candidate tree: `c5a8a3ec…`
+- Patch SHA256: `af725bd4…`
+- Schema unchanged: 55 definitions / 29 operations
+- Six files changed; public locks/artifacts unchanged
+- Tests: 5 unit, 25 native F1, 2 media fixture, 4 join/parent-auto — all passed
+- Ruff and `git diff --check` passed
+- No full suite or release/freeze authorization claimed
+
+Reports:
+
+- [Design artifact](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-next-ordinary-final-core-gate.md)
+- [Detailed report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-current-core-gate/notes/report.md)
+
+Wrote the commit message and empty `DONE` marker.
+tokens used
+157,030
+Implemented the bounded F1 current-core port and approved media fixture migration.
+
+- Candidate tree: `c5a8a3ec…`
+- Patch SHA256: `af725bd4…`
+- Schema unchanged: 55 definitions / 29 operations
+- Six files changed; public locks/artifacts unchanged
+- Tests: 5 unit, 25 native F1, 2 media fixture, 4 join/parent-auto — all passed
+- Ruff and `git diff --check` passed
+- No full suite or release/freeze authorization claimed
+
+Reports:
+
+- [Design artifact](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-next-ordinary-final-core-gate.md)
+- [Detailed report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-next-ordinary-current-core-gate/notes/report.md)
+
+Wrote the commit message and empty `DONE` marker.

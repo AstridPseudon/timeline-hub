@@ -1,0 +1,64 @@
+test agent-full-remotion12-integration-1020093757-4565: fail exit=1 in 4287s — full-remotion12-integration on integration:agent (agent tree 36773419020503ba8c69672277e2d851a48e8a73)
+cmd: env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 3
+counts: 13 failed, 13390 passed, 453 skipped, 18 xfailed, 75 warnings, 58 errors, 565 subtests passed in 4284.67s (1:11:24) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-remotion12-integration-1020093757-4565/log.txt ---
+FAILED tests/sdk/test_timeline_occurrence_delete_provider.py::test_provider_equal_state_and_aba_child_publications_refuse_stale_delete[True]
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_real_host_labels_are_retained_once_and_drawn_without_private_math
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_mixed_or_missing_capture_cannot_retain_facts
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_other_source_or_uncaptured_frame_never_falls_back
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_unknown_public_geometry_is_an_answer_and_unavailability_is_not_empty
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_real_media_bounds_use_public_canvas_and_keep_uncertain_alpha
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[frame]
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[width]
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[height]
+ERROR tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[clipId]
+ERROR tests/packs/rendering/test_scene_host.py::test_native_host_default_custom_alias_capability_and_immutable_props
+ERROR tests/packs/rendering/test_scene_host.py::test_native_host_uses_exact_assets_and_runtime_theme
+ERROR tests/packs/rendering/test_scene_host.py::test_native_host_resolves_custom_transition_defaults_and_boundaries[start]
+ERROR tests/packs/rendering/test_scene_host.py::test_native_host_resolves_custom_transition_defaults_and_boundaries[center]
+ERROR tests/packs/rendering/test_scene_host.py::test_native_host_resolves_custom_transition_defaults_and_boundaries[end]
+ERROR tests/packs/rendering/test_scene_host.py::test_large_native_batch_is_not_truncated
+ERROR tests/packs/rendering/test_scene_host.py::test_native_host_rational_frame_clock_is_half_open
+ERROR tests/packs/rendering/test_scene_host.py::test_native_host_preserves_root_painter_order_and_current_roles
+ERROR tests/packs/rendering/test_scene_host.py::test_native_host_passes_public12_compiled_transitions_unchanged
+ERROR tests/packs/rendering/test_scene_host.py::test_missing_host_input_is_unavailable_not_an_empty_scene[theme]
+ERROR tests/packs/rendering/test_scene_host.py::test_missing_host_input_is_unavailable_not_an_empty_scene[assets]
+ERROR tests/packs/rendering/test_scene_host.py::test_missing_host_input_is_unavailable_not_an_empty_scene[tracks]
+ERROR tests/packs/rendering/test_scene_host.py::test_source_metadata_does_not_supply_missing_host_inputs
+ERROR tests/packs/rendering/test_scene_host.py::test_declared_background_has_known_empty_content
+ERROR tests/packs/rendering/test_scene_host.py::test_unknown_animation_diagnostics_and_root_tail_are_preserved
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-text-card]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-text]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-am-snap-plate]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-image]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-frame-overlay]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-capture]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-missing]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-copy]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-query]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-frames]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-no_callback]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-extra]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_canonical_basis_uses_whole_partial_canvas_and_rational_rate[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_candidate_retains_real_compiled_candidate_and_base_label[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_execute_handoff_uses_actual_provider_and_public_labels_in_exported_pack[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-text-card]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-image]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-frame-overlay]
+ERROR tests/packs/runpod/test_worker_staging.py::test_preparation_runs_real_child_probe_and_reuses_verified_content
+ERROR tests/packs/runpod/test_worker_staging.py::test_materialized_h3_bundle_stages_as_an_owned_workflow_root
+ERROR tests/packs/runpod/test_worker_staging.py::test_interrupted_upload_reconciles_remote_bytes_without_reupload
+ERROR tests/packs/runpod/test_worker_staging.py::test_remote_drift_fails_closed_then_explicit_refresh_repairs_owned_source
+ERROR tests/packs/runpod/test_worker_staging.py::test_workflow_pack_requires_its_unique_lock_pin_and_exact_checkout
+ERROR tests/packs/runpod/test_worker_staging.py::test_manifest_pinned_workflow_pack_cannot_omit_its_checkout_root
+ERROR tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[lock_leaf]
+ERROR tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[lock_parent]
+ERROR tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[node_leaf]
+ERROR tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[node_parent]
+ERROR tests/packs/runpod/test_worker_staging.py::test_changed_config_corrupt_journal_and_account_or_volume_mismatch_refuse_reuse
+ERROR tests/packs/runpod/test_worker_staging.py::test_empty_remote_observation_and_model_shadow_remain_unresolved
+ERROR tests/packs/runpod/test_worker_staging.py::test_release_manifest_datacenter_and_account_reference_are_mandatory
+ERROR tests/packs/runpod/test_worker_staging.py::test_manifest_volume_alias_is_optional_but_mismatch_and_effective_path_drift_fail_closed
+ERROR tests/packs/runpod/test_worker_staging.py::test_json_selection_uses_production_composition_and_real_cpu_staging
+13 failed, 13390 passed, 453 skipped, 18 xfailed, 75 warnings, 58 errors, 565 subtests passed in 4284.67s (1:11:24)

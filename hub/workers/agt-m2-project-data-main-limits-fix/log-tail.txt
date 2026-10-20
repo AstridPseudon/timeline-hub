@@ -1,0 +1,400 @@
++def _validate_key(key):
++    if not isinstance(key, str) or not key or key != key.strip():
++        raise CommandError("project-data.write requires an already-canonical project-data key")
++    if len(key.encode("utf-8")) > _MAX_KEY_BYTES:
++        raise CommandError("project-data.write project-data key exceeds 256 UTF-8 bytes")
++    if key in _RESERVED_KEYS:
++        raise CommandError(f"project-data.write project-data key {key!r} is reserved")
++
++
++def _validate_limits(ctx, target, key, value):
++    existing = ctx.state.get("parent", ["config", "app", target])
++    if existing["state"] == "present" and existing["value"] is not None and not isinstance(
++        existing["value"], dict
++    ):
++        # Let ctx.object report the malformed namespace through the same
++        # authored-container path used by the other native commands.
++        return
++    namespace = dict(existing.get("value") or {})
++    if _json_bytes(value) > _MAX_ENTRY_BYTES:
++        raise CommandError("project-data.write value exceeds the 64 KiB entry limit")
++    is_new_key = key not in namespace
++    namespace[key] = value
++    if is_new_key and len(namespace) > _MAX_ENTRIES_PER_EXTENSION:
++        raise CommandError("project-data.write exceeds the 128-entry extension limit")
++    total = sum(_json_bytes(entry) for entry in namespace.values())
++    if total > _MAX_EXTENSION_TOTAL_BYTES:
++        raise CommandError("project-data.write exceeds the 1 MiB extension limit")
++
++
+ def project_data_write(ctx, command):
+     """Replace exactly one key in the parent timeline's ``config.app`` map.
+ 
+@@ -33,14 +80,11 @@
+     args = command["args"]
+     target, key, value = args["target"], args["key"], args["value"]
+     _validate_target(target)
+-    if not isinstance(key, str) or not key.strip():
+-        raise CommandError("project-data.write requires a non-empty project-data key")
++    _validate_key(key)
+     if args.get("mode") != "replace":
+         raise CommandError('project-data.write only supports mode "replace"')
+-    try:
+-        json.dumps(value, allow_nan=False)
+-    except (TypeError, ValueError) as exc:
+-        raise CommandError("project-data.write value must be finite JSON") from exc
++    _json_bytes(value)
++    _validate_limits(ctx, target, key, value)
+ 
+     ref, path = "parent", ["config", "app", target, key]
+     # Containers are part of the authored scope.  Recording them when they
+diff --git a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py
+index 944a5302a48847de168f4069e6a31017dbb9b2ae..20ffef64bef02289e0e5821c6c28852d3b074b24
+--- a/astrid/sdk/timeline/commands.py
++++ b/astrid/sdk/timeline/commands.py
+@@ -31,6 +31,7 @@
+     from ._clip_commands import clip_add
+     from ._clip_scalar_commands import clip_set, clip_set_element
+     from ._delete_commands import delete
++    from ._project_data_commands import PROJECT_DATA_INTENT, project_data_write
+     from ._scalar_commands import clip_set_params, track_set
+     from ._shot_commands import SHOT_INTENT, shot_set
+     from ._split_commands import clip_split
+@@ -57,7 +58,6 @@
+     from .native_shot_pool_commands import POOL_INTENT, shot_pool
+     from .native_text_binding import TEXT_INTENT, text_binding_set
+     from .native_word_anchor import declare
+-    from ._project_data_commands import PROJECT_DATA_INTENT, project_data_write
+     from .producer import producer_guard
+     return {'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
+             'timeline.init': Operation(_SCHEMA['$defs']['TimelineInitArgs'], initialize, {}),
+@@ -156,14 +156,54 @@
+     return command
+ 
+ 
++def _project_data_container_claim(ctx, command, ref, path, expected):
++    """Allow a recorded namespace birth to merge through a disjoint key.
++
++    The property guards for the requested leaf remain authoritative.  A
++    missing/null config, app map, or extension namespace is only setup for
++    that leaf, so an ordinary replay may reuse a concurrently created object
++    while preserving its other members.  Malformed shapes still fail visibly
++    instead of being overwritten.
++    """
++    if not _is_project_data_container_path(command, ref, path):
++        return False
++    if expected["state"] == "present" and expected.get("value") is not None:
++        return False
++    actual = ctx.state.get(ref, path)
++    if actual["state"] == "absent" or (
++        actual["state"] == "present"
++        and (actual.get("value") is None or isinstance(actual.get("value"), dict))
++    ):
++        return True
++    raise CommandError(
++        "project-data namespace shape changed",
++        kind="dependency_changed",
++        ref=ref,
++        path=path,
++        base=expected,
++        theirs=actual,
++    )
++
++
++def _is_project_data_container_path(command, ref, path):
++    if command.get("op") != "project-data.write" or ref != "parent":
++        return False
++    target = command["args"]["target"]
++    return tuple(path) in (("config",), ("config", "app"), ("config", "app", target))
++
++
+ def _verify_claims(ctx, command):
+     for ref in command.get('created', []):
+         if ctx.state.entity(ref, optional=True) is not None:
+             raise CommandError('created identity is occupied', kind='identity_collision', ref=ref)
+     for key, expected in command.get('expect', {}).items():
+         ref, path = address(key, command.get('resolved', []))
++        if _project_data_container_claim(ctx, command, ref, path, expected):
++            continue
+         guard(ctx.state, ref, path, expected)
+     for read in command.get('reads', []):
++        if _project_data_container_claim(ctx, command, read['ref'], read['path'], read['state']):
++            continue
+         guard(ctx.state, read['ref'], read['path'], read['state'])
+     for selected in command.get('selections', []):
+         actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
+@@ -237,16 +277,54 @@
+                 matches = len(command[field]) == len(record['command'][field]) and all(
+                     selection_matches(claimed, actual)
+                     for claimed, actual in zip(command[field], record['command'][field]))
++            if field == 'expect':
++                authoritative = record['command'][field]
++                matches = set(authoritative).issubset(command[field]) and all(
++                    ctx.command_input.matches(
++                        *address(key, command.get('resolved', [])), authoritative[key]
++                    )
++                    for key in authoritative
++                )
++                matches = matches and all(
++                    _project_data_container_claim(
++                        ctx, command, *address(key, command.get('resolved', [])), expected
++                    )
++                    for key, expected in command[field].items()
++                    if key not in authoritative
++                )
++            if field == 'authorship':
++                authoritative = record['command'][field]
++                matches = set(authoritative).issubset(command[field]) and all(
++                    command[field][key] == authoritative[key] for key in authoritative
++                )
++                matches = matches and all(
++                    _is_project_data_container_path(
++                        command, *address(key, command.get('resolved', []))
++                    )
++                    and value == 'direct'
++                    for key, value in command[field].items()
++                    if key not in authoritative
++                )
+             if field == 'reads':
+-                actual = record['command']['reads']
+-                matches = len(command[field]) == len(actual) and all(
+-                    claimed['ref'] == read['ref'] and claimed['path'] == read['path']
+-                    and (equal(claimed['state'], read['state'])
+-                         or ctx.command_input.matches(read['ref'], read['path'], claimed['state']))
+-                    for claimed, read in zip(command[field], actual))
+-            if field == 'expect' and command[field].keys() == record['command'][field].keys():
+-                matches = all(ctx.command_input.matches(*address(key, command.get('resolved', [])), expected)
+-                              for key, expected in command[field].items())
++                supplied = [
++                    read for read in command[field]
++                    if not _is_project_data_container_path(command, read['ref'], read['path'])
++                ]
++                authoritative = record['command'][field]
++                matches = len(supplied) == len(authoritative) and all(
++                    claimed['ref'] == read['ref']
++                    and claimed['path'] == read['path']
++                    and (
++                        equal(claimed['state'], read['state'])
++                        or ctx.command_input.matches(read['ref'], read['path'], claimed['state'])
++                    )
++                    for claimed, read in zip(supplied, authoritative)
++                )
++                matches = matches and all(
++                    _project_data_container_claim(ctx, command, read['ref'], read['path'], read['state'])
++                    for read in command[field]
++                    if _is_project_data_container_path(command, read['ref'], read['path'])
++                )
+             if not matches:
+                 raise CommandError(f"submitted {field} does not match authoritative capture", kind='capture_mismatch')
+         # Keep original claims and metadata after they have been verified.
+diff --git a/tests/editing_conformance/test_recipe_m2_project_data.py b/tests/editing_conformance/test_recipe_m2_project_data.py
+index 829c79d0629065289f053108e99c5884aab90b31..2dd51da7724b744081c2d357b1a9e2d894d28501
+--- a/tests/editing_conformance/test_recipe_m2_project_data.py
++++ b/tests/editing_conformance/test_recipe_m2_project_data.py
+@@ -133,6 +133,89 @@
+     assert error.value.kind == "intervening_write"
+ 
+ 
++def test_disjoint_key_rebase_births_an_absent_namespace_without_losing_the_other_key():
++    original = bundle()
++    first = execute(original, [command("source", "A")])
++    other = execute(original, [command("source-map", {"id": "B"})])
++
++    rebased = replay(first, other.bundle, intervening_records=other.records)
++
++    assert project_data(rebased.bundle)[TARGET] == {
++        "source-map": {"id": "B"},
++        "source": "A",
++    }
++
++
++def test_disjoint_key_rebase_merges_through_a_null_namespace():
++    original = bundle()
++    original["parent"]["config"]["app"] = {TARGET: None}
++    first = execute(original, [command("source", "A")])
++    other = execute(original, [command("source-map", {"id": "B"})])
++
++    rebased = replay(first, other.bundle, intervening_records=other.records)
++
++    assert project_data(rebased.bundle)[TARGET] == {
++        "source-map": {"id": "B"},
++        "source": "A",
++    }
++
++
++def test_container_birth_keeps_empty_namespace_rebase_and_inverse_exact():
++    original = bundle()
++    original["parent"]["config"]["app"] = {TARGET: {}}
++    first = execute(original, [command("source", "A")])
++    other = execute(original, [command("source-map", {"id": "B"})])
++
++    rebased = replay(first, other.bundle, intervening_records=other.records)
++    assert project_data(rebased.bundle)[TARGET] == {
++        "source-map": {"id": "B"},
++        "source": "A",
++    }
++    assert inverse(first.bundle, first.records).bundle == original
++
++
++def test_inverse_of_container_birth_refuses_a_later_dependent_key_write():
++    original = bundle()
++    first = execute(original, [command("source", "A")])
++    later = execute(first.bundle, [command("source-map", {"id": "B"})])
++
++    with pytest.raises(CommandError) as error:
++        inverse(later.bundle, first.records, later.records)
++
++    assert error.value.kind == "intervening_write"
++    assert project_data(later.bundle)[TARGET]["source-map"] == {"id": "B"}
++
++
++def test_outer_key_is_trim_canonical_bounded_and_reserved():
++    original = bundle()
++    before = copy.deepcopy(original)
++    with pytest.raises(CommandError):
++        execute(original, [command(" source", 1)])
++    with pytest.raises(CommandError):
++        execute(original, [command("__proto__", 1)])
++    with pytest.raises(CommandError):
++        execute(original, [command("é" * 129, 1)])
++    assert original == before
++
++
++def test_project_data_entry_total_and_count_limits_are_enforced():
++    oversized = bundle()
++    with pytest.raises(CommandError):
++        execute(oversized, [command("large", "x" * (64 * 1024 - 1))])
++
++    total = bundle()
++    total["parent"]["config"]["app"] = {
++        TARGET: {f"entry-{index}": "x" * (64 * 1024 - 2) for index in range(16)}
++    }
++    with pytest.raises(CommandError):
++        execute(total, [command("next", "x")])
++
++    count = bundle()
++    count["parent"]["config"]["app"] = {TARGET: {f"entry-{index}": index for index in range(128)}}
++    with pytest.raises(CommandError):
++        execute(count, [command("next", "x")])
++
++
+ @pytest.mark.parametrize(
+     "bad",
+     [
+
+exec
+/bin/bash -lc "ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-main-limits-fix; wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-main-limits-fix/DONE; sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-main-limits-fix/report.md; printf '\\n--- final repo status ---\\n'; git status --short" in /home/user/work/wt/agt-m2-project-data-main-limits-fix
+ succeeded in 258ms:
+total 1212
+-rw-r--r-- 1 root root       0 Oct 20 16:31 DONE
+-rw-r--r-- 1 root root    1543 Oct 20 16:27 brief.md
+-rw-r--r-- 1 root root     214 Oct 20 16:31 commit-msg
+-rw-r--r-- 1 root root     214 Oct 20 16:31 commit-msg.txt
+-rw-r--r-- 1 root root 1219743 Oct 20 16:31 log.txt
+-rw-r--r-- 1 root root     254 Oct 20 16:27 meta
+-rw-r--r-- 1 root root    3277 Oct 20 16:31 report.md
+-rw-r--r-- 1 root root       0 Oct 20 16:27 running
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-main-limits-fix/DONE
+# Private project-data replace fix
+
+**Status: private peer-review candidate; no public adoption.**
+
+## Changes
+
+- Kept storage exactly at `parent.config.app[extension_id][key]` and the
+  closed `select: "parent"`, `mode: "replace"` command shape.
+- Matched the App policy for the outer project-data key: already-trimmed
+  spelling, a 256 UTF-8-byte maximum, and rejection of `__proto__`,
+  `constructor`, and `prototype`. Accepted commands are never silently
+  normalized.
+- Matched App project-data limits: 64 KiB per entry, 1 MiB per extension, and
+  128 entries per extension. JSON values remain finite and opaque; nested
+  `__proto__`, `constructor`, and `prototype` keys remain ordinary authored
+  data and are not blanket-rejected.
+- Ordinary rebase now permits the existing recorded container-creation
+  claims for `config`, `config.app`, and the target namespace to merge through
+  a disjoint key when the original shape was absent/null. The requested leaf
+  guard remains authoritative, and malformed namespace shapes still refuse
+  visibly with `dependency_changed`.
+- Kept container writes in accepted records, so exact inverse restores
+  absent/null containers. A later dependent write can therefore make the
+  original container birth refuse undo; no later key or whole parent is
+  deleted to force it.
+
+## Closed handoff contract
+
+Agent is the sole semantic provider for `project-data.write` v1, including
+validation, storage, recording, rebase, and guarded inverse behavior. Runtime
+must not add a second semantic handler: it only checks the official schema and
+registry compatibility while accepting the transaction. App cutover and
+Runtime pairing remain separate peer-review work; this private candidate does
+not authorize either cutover or normal generation.
+
+There is no project-catalog write, `TargetKey`, new table, endpoint, generic
+patch framework, or public command expansion in this change. The existing
+source/source-map callers may use one ordered native batch once peer reviews
+agree.
+
+## Exact source identity
+
+- Base/source revision: `b5984ac0c7e2aa9de710175188cef9a602c48c3d`
+- Worktree patch SHA-256: `4392a90a87acfa5bc515501f53bda1db6fc81d3b610b852059d1766ecae0b3e7`
+- Private schema SHA-256:
+  `89ed90ce0a4a95559a6d086d57f851fbcc6d224c9e7658f41467dfa9280eb0c3`
+- Changed sources:
+  - `astrid/core/timeline/schema/edit-command.schema.json`
+  - `astrid/sdk/timeline/_project_data_commands.py`
+  - `astrid/sdk/timeline/commands.py`
+  - `tests/editing_conformance/test_recipe_m2_project_data.py`
+
+## Evidence
+
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m2_project_data.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recording_clear.py` — **209 passed**.
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/_project_data_commands.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_m2_project_data.py` — **passed**.
+- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m json.tool astrid/core/timeline/schema/edit-command.schema.json` — **passed**.
+- `git diff --check` — **passed**.
+
+No Runtime, App/browser, schema-generation, localhost, or full suite was run.
+
+--- final repo status ---
+ M astrid/core/timeline/schema/edit-command.schema.json
+ M astrid/sdk/timeline/_project_data_commands.py
+ M astrid/sdk/timeline/commands.py
+ M tests/editing_conformance/test_recipe_m2_project_data.py
+
+exec
+/bin/bash -lc 'sha256sum astrid/core/timeline/schema/edit-command.schema.json astrid/sdk/timeline/_project_data_commands.py astrid/sdk/timeline/commands.py tests/editing_conformance/test_recipe_m2_project_data.py; git diff --no-ext-diff | sha256sum' in /home/user/work/wt/agt-m2-project-data-main-limits-fix
+ succeeded in 415ms:
+89ed90ce0a4a95559a6d086d57f851fbcc6d224c9e7658f41467dfa9280eb0c3  astrid/core/timeline/schema/edit-command.schema.json
+aef03cf2bf36a3f18f72cbbb4e0b009f849c9693b40e598f6664a111110e73e0  astrid/sdk/timeline/_project_data_commands.py
+a28951fb3454d52b9ea46a51d24c769dec20ea322ed756ca9b65d155686b6943  astrid/sdk/timeline/commands.py
+2d63c94c31cc2da9b9b53034b3fecb7788ab4ea43a0e92a2b35a9b09cd68a50d  tests/editing_conformance/test_recipe_m2_project_data.py
+4392a90a87acfa5bc515501f53bda1db6fc81d3b610b852059d1766ecae0b3e7  -
+
+codex
+Implemented the private Agent fix; no Runtime/App changes or public adoption.
+
+- Enforced canonical outer keys, 256 UTF-8-byte limit, reserved-key rejection, and App size/count limits.
+- Preserved nested `__proto__`/`constructor`/`prototype` JSON data.
+- Fixed absent/null/empty namespace disjoint rebases while preserving exact inverse and ABA protections.
+- Added focused regression coverage.
+
+Tests: `209 passed`; Ruff, schema parse, and `git diff --check` passed. No full/Runtime/App suites run.
+
+Private schema SHA-256: `89ed90ce0a4a95559a6d086d57f851fbcc6d224c9e7658f41467dfa9280eb0c3`
+
+Artifacts: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-main-limits-fix/report.md), commit message, and `DONE` marker created.
+tokens used
+221,275
+Implemented the private Agent fix; no Runtime/App changes or public adoption.
+
+- Enforced canonical outer keys, 256 UTF-8-byte limit, reserved-key rejection, and App size/count limits.
+- Preserved nested `__proto__`/`constructor`/`prototype` JSON data.
+- Fixed absent/null/empty namespace disjoint rebases while preserving exact inverse and ABA protections.
+- Added focused regression coverage.
+
+Tests: `209 passed`; Ruff, schema parse, and `git diff --check` passed. No full/Runtime/App suites run.
+
+Private schema SHA-256: `89ed90ce0a4a95559a6d086d57f851fbcc6d224c9e7658f41467dfa9280eb0c3`
+
+Artifacts: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-project-data-main-limits-fix/report.md), commit message, and `DONE` marker created.

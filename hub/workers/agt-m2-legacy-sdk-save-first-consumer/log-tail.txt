@@ -1,0 +1,400 @@
++
+ def configure_track_label(parser):
+     from astrid.packs.timeline.cli import (
+         _add_idempotency_key,
+diff --git a/tests/packs/timeline/test_cli_commit_move.py b/tests/packs/timeline/test_cli_commit_move.py
+index f6b1f23b343c3e4ca7a5ec0fc3d0edb6ccb11b6d..74e3bde79a8c2539506dfb9d3c0cd4af85e1899c
+--- a/tests/packs/timeline/test_cli_commit_move.py
++++ b/tests/packs/timeline/test_cli_commit_move.py
+@@ -43,6 +43,39 @@
+     assert output["receipt"]["receipt_id"] == "pub1"
+ 
+ 
++def test_ordinary_edit_literal_move_uses_native_outbox(command, capsys):
++    run, generated = command
++    assert run("edit", "t", "--clip", "a", "--on", "5", "--json") == 0
++    body = json.loads(generated.calls[0][0])
++    assert body["commands"] == [capture_move(initial_bundle(), "parent/clip:a", 5.0)]
++    assert body["source"] == {"via": "cli"}
++    output = json.loads(capsys.readouterr().out)
++    assert output["data"]["accepted_publication_id"] == "pub1"
++
++
++def test_ordinary_edit_literal_move_retries_the_persisted_flight(command, capsys):
++    run, generated = command
++    args = ("edit", "t", "--clip", "a", "--on", "5", "--json", "--idempotency-key", "ordinary-move")
++    generated.lose_ack = True
++    assert run(*args) == 1
++    capsys.readouterr()
++    assert run(*args) == 0
++    capsys.readouterr()
++    assert generated.calls[0] == generated.calls[1]
++
++
++def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, monkeypatch):
++    run, generated = command
++
++    def legacy(*args, **kwargs):
++        raise RuntimeError("legacy moment resolution")
++
++    monkeypatch.setattr(cli, "_edit_checkout", legacy)
++    with pytest.raises(RuntimeError, match="legacy moment resolution"):
++        run("edit", "t", "--clip", "a", "--on", 'after "Astrid"')
++    assert generated.calls == []
++
++
+ def test_move_preview_uses_current_project_and_does_not_claim_publication(command, capsys):
+     run, generated = command
+     assert run("edit", "move", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run") == 0
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/timeline/test_cli_commit_move.py tests/packs/timeline/test_cli_commit_trim.py tests/packs/timeline/test_cli_native.py tests/packs/timeline/test_cli_edit_flags.py tests/sdk/test_timeline_native_frontends.py tests/sdk/test_timeline_native_checkout.py' in /home/user/work/wt/agt-m2-legacy-sdk-save-first-consumer
+ succeeded in 13840ms:
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 12.98s
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m ruff check astrid/packs/timeline/cli_native.py tests/packs/timeline/test_cli_commit_move.py; git diff --check; git status --short --untracked-files=all' in /home/user/work/wt/agt-m2-legacy-sdk-save-first-consumer
+ succeeded in 342ms:
+All checks passed!
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_native.py
+ M tests/packs/timeline/test_cli_commit_move.py
+
+codex
+The combined targeted lane is green: 104 passed across the migrated CLI path, trim/native CLI neighbors, attached frontend/session tests, and legacy CLI edit coverage. Ruff passes on the new adapter and its tests; the full `cli.py` lint command still reports pre-existing baseline violations unrelated to this diff, so I’m not claiming `make check`. I’m finalizing the source diff and worker handoff markers now.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..bbb773015e782dd4a37eb90d740c4f72cae50c1c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/commit-msg
+@@ -0,0 +1,5 @@
++feat(timeline): route literal CLI moves through native session
++
++Capture numeric parent clip moves with the registered clip.move command and
++TimelineSession outbox, while retaining symbolic and unsupported edit families
++on the detached checkout path.
+diff --git a/astrid/packs/timeline/cli.py b/astrid/packs/timeline/cli.py
+index 338f12d37dfae928e7002bb274685a889e5073f1..57ded84393d2fd4f6edb7068549bf308944e9beb
+--- a/astrid/packs/timeline/cli.py
++++ b/astrid/packs/timeline/cli.py
+@@ -3267,14 +3267,24 @@
+     if parsed.extend is not None and parsed.for_seconds is not None:
+         raise _VerbError("--for/--duration and --extend both set a length; pick one", 2)
+ 
+-    from astrid.packs.timeline.cli_native import commit_trim, ordinary_trim_requested
++    from astrid.packs.timeline.cli_native import (
++        commit_move,
++        commit_trim,
++        ordinary_move_requested,
++        ordinary_trim_requested,
++    )
++
++    if ordinary_move_requested(parsed):
++        result = _cmd_commit_edit(parsed, edit=commit_move)
++        if result is not NotImplemented:
++            return result
+ 
+     if ordinary_trim_requested(parsed):
+         result = _cmd_commit_edit(parsed, edit=commit_trim)
+         if result is not NotImplemented:
+             return result
+     if parsed.dry_run or parsed.idempotency_key or parsed.json:
+-        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native trim; "
++        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native move or trim; "
+                          "other edit families still use the detached working copy", 2)
+ 
+     if parsed.file:
+diff --git a/astrid/packs/timeline/cli_native.py b/astrid/packs/timeline/cli_native.py
+index c358fe57d5aba80ccc52732be3779ed52d021d7d..50fcca6cb6abb75b1296db02f19293b81f6d7dae
+--- a/astrid/packs/timeline/cli_native.py
++++ b/astrid/packs/timeline/cli_native.py
+@@ -22,6 +22,26 @@
+     return store.find_draft(parsed.project, parsed.ref, client=parsed.client) is None
+ 
+ 
++def ordinary_move_requested(parsed):
++    from astrid.sdk.timeline import store
++
++    if (parsed.client is None or parsed.file or parsed.draft
++            or parsed.on is None):
++        return False
++    try:
++        float(parsed.on)
++    except (TypeError, ValueError):
++        # Symbolic moments (for example, ``after \"Astrid\"``) still need
++        # the detached checkout's authored-word resolution.
++        return False
++    accepted = {'project', 'ref', 'clip', 'cut', 'near', 'on', 'dry_run',
++                'idempotency_key', 'json', 'no_sweep'}
++    if not all(name in accepted or getattr(parsed, name) == default
++               for name, default in parsed.native_trim_defaults.items() if name != 'help'):
++        return False
++    return store.find_draft(parsed.project, parsed.ref, client=parsed.client) is None
++
++
+ def _trim_selector(bundle, parsed):
+     from astrid.core.timeline.cuts import bundle_fps
+     from astrid.core.timeline.duration import clip_timeline_duration
+@@ -80,6 +100,20 @@
+         return session.commit(command, **options)
+     return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
+ 
++
++def commit_move(session, parsed, options):
++    with session.outbox.locked():
++        state = session._state()
++    # Resolve aliases against the pinned original head. The native command
++    # stores the parent owner in its selection; it never infers ownership from
++    # a display id or recaptures it after a lost acknowledgement.
++    bundle = session._bundle({**state, 'pending': []})
++    select = _trim_selector(bundle, parsed)
++    if select is None or not select.startswith('parent/clip:'):
++        return NotImplemented
++    return session.move(select, float(parsed.on), **options)
++
++
+ def configure_track_label(parser):
+     from astrid.packs.timeline.cli import (
+         _add_idempotency_key,
+diff --git a/tests/packs/timeline/test_cli_commit_move.py b/tests/packs/timeline/test_cli_commit_move.py
+index f6b1f23b343c3e4ca7a5ec0fc3d0edb6ccb11b6d..74e3bde79a8c2539506dfb9d3c0cd4af85e1899c
+--- a/tests/packs/timeline/test_cli_commit_move.py
++++ b/tests/packs/timeline/test_cli_commit_move.py
+@@ -43,6 +43,39 @@
+     assert output["receipt"]["receipt_id"] == "pub1"
+ 
+ 
++def test_ordinary_edit_literal_move_uses_native_outbox(command, capsys):
++    run, generated = command
++    assert run("edit", "t", "--clip", "a", "--on", "5", "--json") == 0
++    body = json.loads(generated.calls[0][0])
++    assert body["commands"] == [capture_move(initial_bundle(), "parent/clip:a", 5.0)]
++    assert body["source"] == {"via": "cli"}
++    output = json.loads(capsys.readouterr().out)
++    assert output["data"]["accepted_publication_id"] == "pub1"
++
++
++def test_ordinary_edit_literal_move_retries_the_persisted_flight(command, capsys):
++    run, generated = command
++    args = ("edit", "t", "--clip", "a", "--on", "5", "--json", "--idempotency-key", "ordinary-move")
++    generated.lose_ack = True
++    assert run(*args) == 1
++    capsys.readouterr()
++    assert run(*args) == 0
++    capsys.readouterr()
++    assert generated.calls[0] == generated.calls[1]
++
++
++def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, monkeypatch):
++    run, generated = command
++
++    def legacy(*args, **kwargs):
++        raise RuntimeError("legacy moment resolution")
++
++    monkeypatch.setattr(cli, "_edit_checkout", legacy)
++    with pytest.raises(RuntimeError, match="legacy moment resolution"):
++        run("edit", "t", "--clip", "a", "--on", 'after "Astrid"')
++    assert generated.calls == []
++
++
+ def test_move_preview_uses_current_project_and_does_not_claim_publication(command, capsys):
+     run, generated = command
+     assert run("edit", "move", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run") == 0
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..bbb773015e782dd4a37eb90d740c4f72cae50c1c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/commit-msg
+@@ -0,0 +1,5 @@
++feat(timeline): route literal CLI moves through native session
++
++Capture numeric parent clip moves with the registered clip.move command and
++TimelineSession outbox, while retaining symbolic and unsupported edit families
++on the detached checkout path.
+diff --git a/astrid/packs/timeline/cli.py b/astrid/packs/timeline/cli.py
+index 338f12d37dfae928e7002bb274685a889e5073f1..57ded84393d2fd4f6edb7068549bf308944e9beb
+--- a/astrid/packs/timeline/cli.py
++++ b/astrid/packs/timeline/cli.py
+@@ -3267,14 +3267,24 @@
+     if parsed.extend is not None and parsed.for_seconds is not None:
+         raise _VerbError("--for/--duration and --extend both set a length; pick one", 2)
+ 
+-    from astrid.packs.timeline.cli_native import commit_trim, ordinary_trim_requested
++    from astrid.packs.timeline.cli_native import (
++        commit_move,
++        commit_trim,
++        ordinary_move_requested,
++        ordinary_trim_requested,
++    )
++
++    if ordinary_move_requested(parsed):
++        result = _cmd_commit_edit(parsed, edit=commit_move)
++        if result is not NotImplemented:
++            return result
+ 
+     if ordinary_trim_requested(parsed):
+         result = _cmd_commit_edit(parsed, edit=commit_trim)
+         if result is not NotImplemented:
+             return result
+     if parsed.dry_run or parsed.idempotency_key or parsed.json:
+-        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native trim; "
++        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native move or trim; "
+                          "other edit families still use the detached working copy", 2)
+ 
+     if parsed.file:
+diff --git a/astrid/packs/timeline/cli_native.py b/astrid/packs/timeline/cli_native.py
+index c358fe57d5aba80ccc52732be3779ed52d021d7d..50fcca6cb6abb75b1296db02f19293b81f6d7dae
+--- a/astrid/packs/timeline/cli_native.py
++++ b/astrid/packs/timeline/cli_native.py
+@@ -22,6 +22,26 @@
+     return store.find_draft(parsed.project, parsed.ref, client=parsed.client) is None
+ 
+ 
++def ordinary_move_requested(parsed):
++    from astrid.sdk.timeline import store
++
++    if (parsed.client is None or parsed.file or parsed.draft
++            or parsed.on is None):
++        return False
++    try:
++        float(parsed.on)
++    except (TypeError, ValueError):
++        # Symbolic moments (for example, ``after \"Astrid\"``) still need
++        # the detached checkout's authored-word resolution.
++        return False
++    accepted = {'project', 'ref', 'clip', 'cut', 'near', 'on', 'dry_run',
++                'idempotency_key', 'json', 'no_sweep'}
++    if not all(name in accepted or getattr(parsed, name) == default
++               for name, default in parsed.native_trim_defaults.items() if name != 'help'):
++        return False
++    return store.find_draft(parsed.project, parsed.ref, client=parsed.client) is None
++
++
+ def _trim_selector(bundle, parsed):
+     from astrid.core.timeline.cuts import bundle_fps
+     from astrid.core.timeline.duration import clip_timeline_duration
+@@ -80,6 +100,20 @@
+         return session.commit(command, **options)
+     return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
+ 
++
++def commit_move(session, parsed, options):
++    with session.outbox.locked():
++        state = session._state()
++    # Resolve aliases against the pinned original head. The native command
++    # stores the parent owner in its selection; it never infers ownership from
++    # a display id or recaptures it after a lost acknowledgement.
++    bundle = session._bundle({**state, 'pending': []})
++    select = _trim_selector(bundle, parsed)
++    if select is None or not select.startswith('parent/clip:'):
++        return NotImplemented
++    return session.move(select, float(parsed.on), **options)
++
++
+ def configure_track_label(parser):
+     from astrid.packs.timeline.cli import (
+         _add_idempotency_key,
+diff --git a/tests/packs/timeline/test_cli_commit_move.py b/tests/packs/timeline/test_cli_commit_move.py
+index f6b1f23b343c3e4ca7a5ec0fc3d0edb6ccb11b6d..74e3bde79a8c2539506dfb9d3c0cd4af85e1899c
+--- a/tests/packs/timeline/test_cli_commit_move.py
++++ b/tests/packs/timeline/test_cli_commit_move.py
+@@ -43,6 +43,39 @@
+     assert output["receipt"]["receipt_id"] == "pub1"
+ 
+ 
++def test_ordinary_edit_literal_move_uses_native_outbox(command, capsys):
++    run, generated = command
++    assert run("edit", "t", "--clip", "a", "--on", "5", "--json") == 0
++    body = json.loads(generated.calls[0][0])
++    assert body["commands"] == [capture_move(initial_bundle(), "parent/clip:a", 5.0)]
++    assert body["source"] == {"via": "cli"}
++    output = json.loads(capsys.readouterr().out)
++    assert output["data"]["accepted_publication_id"] == "pub1"
++
++
++def test_ordinary_edit_literal_move_retries_the_persisted_flight(command, capsys):
++    run, generated = command
++    args = ("edit", "t", "--clip", "a", "--on", "5", "--json", "--idempotency-key", "ordinary-move")
++    generated.lose_ack = True
++    assert run(*args) == 1
++    capsys.readouterr()
++    assert run(*args) == 0
++    capsys.readouterr()
++    assert generated.calls[0] == generated.calls[1]
++
++
++def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, monkeypatch):
++    run, generated = command
++
++    def legacy(*args, **kwargs):
++        raise RuntimeError("legacy moment resolution")
++
++    monkeypatch.setattr(cli, "_edit_checkout", legacy)
++    with pytest.raises(RuntimeError, match="legacy moment resolution"):
++        run("edit", "t", "--clip", "a", "--on", 'after "Astrid"')
++    assert generated.calls == []
++
++
+ def test_move_preview_uses_current_project_and_does_not_claim_publication(command, capsys):
+     run, generated = command
+     assert run("edit", "move", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run") == 0
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/BLOCKED && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/DONE && sed -n '"'1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-legacy-sdk-save-first-consumer/commit-msg && git status --short --untracked-files=all && git diff --stat" in /home/user/work/wt/agt-m2-legacy-sdk-save-first-consumer
+ succeeded in 363ms:
+feat(timeline): route literal CLI moves through native session
+
+Capture numeric parent clip moves with the registered clip.move command and
+TimelineSession outbox, while retaining symbolic and unsupported edit families
+on the detached checkout path.
+ M astrid/packs/timeline/cli.py
+ M astrid/packs/timeline/cli_native.py
+ M tests/packs/timeline/test_cli_commit_move.py
+ astrid/packs/timeline/cli.py                 | 14 ++++++++++--
+ astrid/packs/timeline/cli_native.py          | 34 ++++++++++++++++++++++++++++
+ tests/packs/timeline/test_cli_commit_move.py | 33 +++++++++++++++++++++++++++
+ 3 files changed, 79 insertions(+), 2 deletions(-)
+
+codex
+## Done
+
+Migrated literal numeric parent-clip CLI moves (`timelines edit --on`) to the registered `clip.move` command via `TimelineSession`. Symbolic moments, occurrence-scoped edits, drafts, and unsupported flags retain the legacy path.
+
+Tests:
+
+- 104 targeted pytest tests passed.
+- Ruff passed on changed adapter/tests.
+- `git diff --check` passed.
+- Full suite and `make check` not run.
+
+WC7/WC8 global helpers remain held for unsupported Checkout, narration, and whole-document consumers; AG02 remains `in-progress` in the ledger.
+
+Created `DONE` and the conventional commit message at the requested path.
+tokens used
+238,012
+## Done
+
+Migrated literal numeric parent-clip CLI moves (`timelines edit --on`) to the registered `clip.move` command via `TimelineSession`. Symbolic moments, occurrence-scoped edits, drafts, and unsupported flags retain the legacy path.
+
+Tests:
+
+- 104 targeted pytest tests passed.
+- Ruff passed on changed adapter/tests.
+- `git diff --check` passed.
+- Full suite and `make check` not run.
+
+WC7/WC8 global helpers remain held for unsupported Checkout, narration, and whole-document consumers; AG02 remains `in-progress` in the ledger.
+
+Created `DONE` and the conventional commit message at the requested path.

@@ -1,0 +1,400 @@
++                pass  # The production Popen/custody observer may already have reaped it.
++        self.closed = True
++
++    def __enter__(self) -> RealPackHost:
++        return self
++
++    def __exit__(self, *_exc) -> None:
++        self.close()
++
++
++def start_real_pack_host(*, realm_dir: Path, support_dir: Path, discovery_file: Path,
++                         source_checkout: Path, runtime_instance_id: str) -> RealPackHost:
++    """Attach a fresh production host; return only after real catalog readiness.
++
++    DirectHarness uses runtime_protocol.cli rather than the neutral launcher's
++    catalog layout. Feed its actual discovery into the same ensure_pack_host
++    call as ensure_runtime, without acquiring or restarting a Runtime.
++    """
++    value = _handoff(realm_dir, support_dir, discovery_file, source_checkout, runtime_instance_id)
++    support = Path(value["worker_credential_file"]).parent.parent
++    if any((support / name).exists() for name in ("generic-host.json", "generic-host.ready.json")):
++        raise RuntimeError("helper requires a fresh host registration")
++    client = RuntimeProtocolClient(value["endpoint"], Path(value["worker_credential_file"]).read_text().strip())
++    health = client.health()
++    if health["runtime_instance_id"] != runtime_instance_id:
++        raise RuntimeError("live Runtime differs from supplied discovery")
++    realm_id = client._authenticate_worker(host_bootstrap.PACK_HOST_ACTOR)
++    if realm_id != value["active_realm"]:
++        raise RuntimeError("worker credential belongs to another realm")
++    result = host_bootstrap.ensure_pack_host(
++        value, reconfigure_action="inspect the DirectHarness Runtime and selected render environment",
++        startup_idle_seconds=30,
++    )
++    try:
++        os.waitpid(result["host_pid"], os.WNOHANG)
++    except ChildProcessError as exc:
++        # A concurrent launcher could have won the freshness-check race.
++        # Never adopt or retire its host, even if ensure_pack_host reused it.
++        raise RuntimeError("returned host is not this helper's child") from exc
++    state = host_bootstrap._read_object(support / "generic-host.json")
++    handle = RealPackHost(support, state, result)
++    try:
++        if state.get("pid") != result["host_pid"]:
++            raise RuntimeError("host registration differs from launched host")
++        if (result["host_status"] != "ready"
++                or "rendering.render" not in result["host_ready_capabilities"]):
++            raise RuntimeError("rendering.render is not ready in the production host")
++        cursor = None
++        while True:
++            page, cursor = client.generated.list_capabilities(cursor=cursor)
++            if any(item.capability_id == "rendering.render" and item.status == "ready" for item in page):
++                return handle
++            if not cursor:
++                raise RuntimeError("rendering.render is not ready in the Runtime capability catalog")
++    except BaseException:
++        handle.close()
++        raise
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser(description=__doc__)
++    for name in ("realm-dir", "support-dir", "discovery-file", "source-checkout"):
++        parser.add_argument("--" + name, required=True, type=Path)
++    parser.add_argument("--runtime-instance-id", required=True)
++    args = parser.parse_args()
++
++    def interrupted(_signum, _frame):
++        raise SystemExit(1)
++
++    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGALRM):
++        signal.signal(sig, interrupted)
++    try:
++        signal.alarm(180)
++        with start_real_pack_host(**vars(args)) as host:
++            signal.alarm(0)
++            print(json.dumps({"status": "ready", **host.ready}), flush=True)
++            # A pipe held by the App wrapper is the lifetime handshake. EOF
++            # also cleans up when the wrapper exits unexpectedly.
++            command = sys.stdin.readline()
++            if command not in ("stop\n", ""):
++                raise ValueError("expected stop or EOF")
++        print(json.dumps({"status": "stopped", "host_pid": host.state["pid"]}), flush=True)
++        return 0
++    except Exception as exc:  # noqa: BLE001 - secret-free CLI error boundary
++        # Product exceptions may contain diagnostics: expose only their type,
++        # never a credential-bearing object or arbitrary exception text.
++        frames = traceback.extract_tb(exc.__traceback__)
++        print(json.dumps({"status": "failed", "error_type": type(exc).__name__,
++                          "error_location": f"{frames[-1].filename}:{frames[-1].lineno}"}), flush=True)
++        return 1
++    finally:
++        signal.alarm(0)
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/tests/packs/rendering/test_real_pack_host.py b/tests/packs/rendering/test_real_pack_host.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..075aaef717dd819bd619b7b5340c70db6927a462
+--- /dev/null
++++ b/tests/packs/rendering/test_real_pack_host.py
+@@ -0,0 +1,106 @@
++"""Offline handoff checks and centrally run real startup/catalog/cleanup smoke."""
++from __future__ import annotations
++
++import json
++import os
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++
++from astrid.core._shared.boot_manifest import load_boot_manifest_hash
++from astrid.core.execution.generic_host import (
++    RuntimeProtocolClient,
++    source_checkout_closure_digest,
++    source_checkout_digest,
++)
++from astrid.sdk import host_bootstrap
++from tests.packs.rendering.real_pack_host import RealPackHost, _handoff
++
++
++@pytest.mark.parametrize("change", ["instance", "realm", "credential", "scopes", "symlink"])
++def test_handoff_rejects_foreign_inputs_before_launch(tmp_path, change):
++    support = tmp_path / "support"
++    support.mkdir()
++    value = {
++        "runtime_instance_id": "instance", "realm_root": str(tmp_path / "realm"),
++        "worker_credential_file": str(support / "credentials" / "astrid-pack-host.token"),
++        "worker_actor": host_bootstrap.PACK_HOST_ACTOR,
++        "worker_scopes": list(host_bootstrap.PACK_HOST_SCOPES),
++    }
++    if change == "instance":
++        value["runtime_instance_id"] = "another"
++    elif change == "realm":
++        value["realm_root"] = str(tmp_path / "another")
++    elif change == "credential":
++        value["worker_credential_file"] = str(tmp_path / "foreign.token")
++    elif change == "scopes":
++        value["worker_scopes"] = ["admin"]
++    discovery = support / "discovery.json"
++    discovery.write_text(json.dumps(value))
++    if change == "symlink":
++        discovery.rename(support / "original.json")
++        discovery.symlink_to(support / "original.json")
++    with pytest.raises((ValueError, RuntimeError)):
++        _handoff(tmp_path / "realm", support, discovery, Path(__file__).resolve().parents[3], "instance")
++
++
++def test_cleanup_refuses_replaced_registration(tmp_path):
++    original = {"pid": 123, "process_birth_id": "original"}
++    replacement = {"pid": os.getpid(), "process_birth_id": "replacement"}
++    marker = tmp_path / "generic-host.json"
++    marker.write_text(json.dumps(replacement))
++    host = RealPackHost(tmp_path, original, {})
++    with pytest.raises(RuntimeError, match="registration changed"):
++        host.close()
++    assert json.loads(marker.read_text()) == replacement
++    assert not host.closed
++
++
++@pytest.mark.integration
++@pytest.mark.timeout(240)
++def test_real_host_cli_catalog_and_owned_group_cleanup(tmp_path, real_runtime, owned_process_groups):
++    # Match DirectHarness.start(), which creates private support before the daemon.
++    (tmp_path / "support").mkdir(mode=0o700)
++    daemon = real_runtime(production_worker_credentials=True)
++    source = Path(__file__).resolve().parents[3]
++    discovery = daemon.support_root / "discovery.json"
++    value = json.loads(discovery.read_text())
++    command = [sys.executable, "-m", "tests.packs.rendering.real_pack_host",
++               "--realm-dir", str(daemon.root), "--support-dir", str(daemon.support_root),
++               "--discovery-file", str(discovery), "--source-checkout", str(source),
++               "--runtime-instance-id", value["runtime_instance_id"]]
++    child_env = {**os.environ, "PYTHONPATH": str(source)}
++    # conftest adds a pytest bytecode cache override, which authentic launch
++    # validation correctly rejects. DirectHarness does not use that override.
++    child_env.pop("PYTHONPYCACHEPREFIX", None)
++    process = owned_process_groups.popen(
++        command, cwd=source, env=child_env,
++        start_new_session=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE, text=True,
++    )
++    try:
++        line = process.stdout.readline()
++        ready = json.loads(line)
++        assert ready["status"] == "ready", ready
++        pid = ready["host_pid"]
++        assert pid != os.getpid() and os.getpgid(pid) == pid
++        assert ready["host_runtime_instance_id"] == daemon.instance_id
++        assert ready["host_source_checkout_digest"] == source_checkout_digest(source)
++        assert ready["host_source_closure_digest"] == source_checkout_closure_digest(source)
++        assert ready["host_boot_manifest_hash"] == load_boot_manifest_hash(
++            Path(ready["host_boot_manifest_path"]), support_root=daemon.support_root)
++        assert "rendering.render" in ready["host_ready_capabilities"]
++        state = json.loads((daemon.support_root / "generic-host.json").read_text())
++        assert state["remotion_validation"]
++    finally:
++        stdout, stderr = process.communicate("stop\n", timeout=40)
++    assert process.returncode == 0, stderr
++    assert json.loads(stdout)["status"] == "stopped"
++    assert not host_bootstrap._group_survivors(pid)
++    assert not (daemon.support_root / "generic-host.json").exists()
++    assert not (daemon.support_root / "generic-host.ready.json").exists()
++    assert RuntimeProtocolClient(daemon.endpoint, daemon.worker_token).health().status == "ok"
++    with pytest.raises(ProcessLookupError):
++        os.kill(pid, 0)
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check tests/packs/rendering/real_pack_host.py tests/packs/rendering/test_real_pack_host.py; PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_real_pack_host.py' in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 1468ms:
+All checks passed!
+......                                                                   [100%]
+6 passed, 1 deselected in 0.53s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1019235847-6361/status; tail -15 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1019235847-6361/log.txt; date -u' in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 0ms:
+running
+Mon Oct 19 23:59:56 UTC 2026
+
+codex
+The catalog smoke is still running. A final review found one ownership gap: another launcher could win the race after the freshness check. I added a child-process check so the helper refuses to adopt or retire such a host. That change will need a final central run once the current snapshot finishes.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/pytest-of-root')
+logs=list(p.glob('pytest-*/test_real_host_cli_catalog_and0/support/generic-host.log'))
+if logs:
+    q=max(logs,key=lambda f:f.stat().st_mtime)
+    print(q)
+    print(q.read_text()[-1800:])
+PY
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1019235847-6361/snap" in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 0ms:
+/tmp/pytest-of-root/pytest-440/test_real_host_cli_catalog_and0/support/generic-host.log
+": "credentials:missing=OPENAI_API_KEY;sandbox:reason=host-managed provider broker requires an OS network sandbox", "understanding.scene_describe": "credentials:missing=GEMINI_API_KEY,OPENAI_API_KEY;sandbox:reason=host-managed provider broker requires an OS network sandbox", "understanding.understand": "credentials:missing=OPENAI_API_KEY;sandbox:reason=host-managed provider broker requires an OS network sandbox", "understanding.video_understand": "credentials:missing=GEMINI_API_KEY,OPENAI_API_KEY;sandbox:reason=host-managed provider broker requires an OS network sandbox", "understanding.visual_understand": "credentials:missing=OPENAI_API_KEY;sandbox:reason=host-managed provider broker requires an OS network sandbox", "vibecomfy.character_animation": "packages:missing=vibecomfy", "vibecomfy.edit": "packages:missing=vibecomfy", "vibecomfy.import": "packages:missing=vibecomfy", "vibecomfy.inspect": "packages:missing=vibecomfy", "vibecomfy.run": "packages:missing=vibecomfy", "vibecomfy.validate": "packages:missing=vibecomfy", "vibecomfy.video_enhance": "packages:missing=vibecomfy", "video_editing.animate_image": "credentials:missing=FAL_KEY;sandbox:reason=host-managed provider broker requires an OS network sandbox", "video_editing.event_talks": "binaries:missing=tesseract", "video_editing.logo_ideas": "credentials:missing=FAL_KEY,FIREWORKS_API_KEY;sandbox:reason=host-managed provider broker requires an OS network sandbox", "video_editing.vary_grid": "credentials:missing=FAL_KEY,FIREWORKS_API_KEY;sandbox:reason=host-managed provider broker requires an OS network sandbox", "youtube.youtube_audio": "binaries:missing=yt-dlp;sandbox:reason=host-managed provider broker requires an OS network sandbox"}, "withdrawn": []}
+generic host shutdown requested: signal=15 reason=SIGTERM
+[]
+
+tree=0d54ba2c9c5cc42aac2e0ef20cf7ab2467239e72
+key=a12260dcbc1ba4e5d6fc2b9030401b96
+worktree=/home/user/work/wt/agt-m2-real-pack-host-helper
+
+ succeeded in 59941ms:
+test agt-m2-real-pack-host-helper-real-pack-host-integration-1019235847-6361: pass exit=0 in 58s — real-pack-host-integration on agt-m2-real-pack-host-helper (agent tree 0d54ba2c9c5cc42aac2e0ef20cf7ab2467239e72)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/packs/rendering/test_real_pack_host.py
+counts: 1 passed, 6 deselected in 55.23s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1019235847-6361/log.txt ---
+.                                                                        [100%]
+1 passed, 6 deselected in 55.23s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1019235847-6361/status; wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1019235847-6361/log.txt; date -u' in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 0ms:
+pass
+113 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1019235847-6361/log.txt
+Tue Oct 20 00:00:17 UTC 2026
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-real-pack-host-helper real-pack-host-integration' in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 0ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770/
+
+codex
+The central smoke passed: real startup, `rendering.render` catalog readiness, stop acknowledgement, host-group cleanup, and a healthy Runtime afterward. One final central run is queued for the six-line ownership check added during review. I’m preparing the handoff report and commit messages.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+msg='''test(rendering): add real pack-host bootstrap helper for viewing
+
+Adapt DirectHarness discovery to the production ensure_pack_host lifecycle.
+Verify rendering.render in the authorized Runtime capability catalog and
+expose a stdin stop/EOF handshake with guarded process-group cleanup.
+
+Cover foreign handoff rejection offline and real source/boot-manifest
+identity, production worker credentials, startup and cleanup centrally.
+'''
+worker=root/'workers/agt-m2-real-pack-host-helper'
+for name in ('commit-msg','commit-msg.txt'):
+    (worker/name).write_text(msg)
+p=root/'design/viewing-coordination.md'
+s=p.read_text().replace('Qualification pending: first central real-pack-host-integration reached authentic Remotion validation and refused before host startup ("'`RemotionValidationError`); bounded diagnostic qualification is running. No startup/render/parity claim yet.'"', '''Qualification: central "'`real-pack-host-integration` request `agt-m2-real-pack-host-helper-real-pack-host-integration-1019235847-6361` passed (1 passed, 6 deselected, 55.23s). It proved actual production startup, catalog readiness, matching source/closure/boot metadata, valid launch validation, stop acknowledgement, absent host process/group/markers and a still-healthy Runtime. Final central qualification for the additional own-child race guard is queued as `agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770`. Offline checks: 6 passed; focused Ruff clean. No render/browser/App-wrapper/parity claim. The smoke uses the real Runtime fixture with production worker credentials and DirectHarness'"'s private support-directory shape, not Node DirectHarness itself.\\n\\nFixture corrections: remove only pytest conftest's injected "'`PYTHONPYCACHEPREFIX` from the smoke child environment (production validation rejects that unsupported override), and create support with mode 0700 exactly as DirectHarness does. The helper inherits the caller'"'s environment without stripping or disabling validation. The owner-only executor-observation endpoint is deliberately not used: readiness uses worker-authorized "'`list_capabilities` plus the production host'"'s ready capabilities. No owner credential is read or elevated. Candidate remains held for the M1 record; Viewing owns App integration.''')
+p.write_text(s)
+PY
+wc -l tests/packs/rendering/real_pack_host.py
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770/status" in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 0ms:
+161 tests/packs/rendering/real_pack_host.py
+running
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770 1' in /home/user/work/wt/agt-m2-real-pack-host-helper
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-m2-real-pack-host-helper'
+worker.joinpath('notes/report.md').write_text('''# Real pack-host helper for Viewing gate 6\\n\\nImplemented on Agent base "'`fc324e838fd668fc06cae906e8bcfccace86ad62`. Only repository additions are `tests/packs/rendering/real_pack_host.py` (161 lines) and `test_real_pack_host.py` (106 lines). No product/App changes, installs, network downloads, full-suite run, commit, merge or push. Candidate remains held pending M1 record. Both `commit-msg` and `commit-msg.txt` are written.'"\\n\\n## Behavior and handoff\\n\\nThe helper accepts realmDir, supportDir, discovery path, selected source checkout and expected real Runtime instance. It reads actual discovery, verifies the actual scoped astrid-pack-host handshake and live instance, calls the production launcher's existing "'`ensure_pack_host`, and waits for `rendering.render` in both production ready capabilities and the worker-authorized Runtime capability catalog. The production path composes the real boot manifest and measures source/closure/managed-source inventory. No validation/credential fabrication, source patch, authority bypass, owner token or replacement launcher.'"\\n\\nPython context manager: "'`start_real_pack_host(...)` / `RealPackHost.close()`. CLI: `python -m tests.packs.rendering.real_pack_host --realm-dir ... --support-dir ... --discovery-file ... --source-checkout ... --runtime-instance-id ...`. Ready JSON -> keep stdin open -> write `stop'"\\\\n"'` or EOF -> stopped JSON + exit 0. Production lifecycle lock and identity checks retire only the owned registered host group; explicit waitpid reaps the owned leader. Changed registrations and foreign/reused launcher ownership are refused. Startup alarm is 180 seconds, production idle budget 30 seconds; shutdown uses existing production retirement deadlines. Detailed wrapper instructions appended to `orch/design/viewing-coordination.md`.'"\\n\\n## Commands and results\\n\\nOffline (final source):\\n\\n"'```sh'"\\nPYTHONDONTWRITEBYTECODE=1 PYTHONPATH="'$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_real_pack_host.py'"\\n"'```'"\\n\\n**6 passed, 1 deselected in 0.53s** (integration deliberately deselected by the normal lane). Five foreign handoff checks cover instance, realm, credential location, scope and symlink; cleanup refuses a replacement registration.\\n\\n"'```sh'"\\n/home/user/work/venv-agent/bin/ruff check tests/packs/rendering/real_pack_host.py tests/packs/rendering/test_real_pack_host.py\\ngit diff --check\\n"'```'"\\n\\nBoth passed.\\n\\nAll host/localhost execution used the central named light suite (catalog startup only, no render/build):\\n\\n"'```sh'"\\nORCH_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch\\n\""'$ORCH_DIR/bin/request-test" agt-m2-real-pack-host-helper real-pack-host-integration'"\\n\""'$ORCH_DIR/bin/wait-test" agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770 1'"\\n"'```'"\\n\\nThe named suite was appended to "'`orch/tests/suites.conf`; exact execution:'"\\n\\n"'```sh'"\\nenv -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/packs/rendering/test_real_pack_host.py\\n"'```'"\\n\\nPrevious smoke snapshot "'`0d54ba2c9c5cc42aac2e0ef20cf7ab2467239e72`: **1 passed, 6 deselected in 55.23s**, request `agt-m2-real-pack-host-helper-real-pack-host-integration-1019235847-6361`. It proves authentic production Remotion validation, real host startup and render catalog readiness, source and closure digests, boot-manifest hash, stop acknowledgement, absent host process/group/markers, and a still-healthy Runtime. Final own-child race-guard snapshot qualification is pending request `agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770`; update below before exit.'"\\n\\nInitial central failures were not hidden: requests ending "'`1019235349-22615` and `1019235446-14195` hit pytest'"'s injected unsupported PYTHONPYCACHEPREFIX; "'`1019235527-18211` then hit fixture support permissions; `1019235646-31612` successfully registered 104 real capabilities (57 ready) but my unnecessary get_executor check was refused (owner-only endpoint). Fixed the fixture to match DirectHarness (no pytest cache override, support mode0700) and removed that unnecessary owner-only read. All positive expectations remain. The helper itself never strips validation settings or elevates credentials.'"\\n\\n## Decisions, limits and next step\\n\\n- DirectHarness runs "'`runtime_protocol.cli start` with arbitrary supportDir. Neutral `ensure_runtime()` requires data-root/runtime discovery plus a selected neutral catalog/product credential and cannot connect to that shape directly. This helper calls the **existing production launcher-owned ensure_pack_host function directly** with real discovery; it does not invoke neutral launcher acquisition or synthesize its state. If literal neutral-launcher invocation is required, escalate this precise missing custom-support connect seam before any product change.'"\\n- Public "'`stop_pack_host(data_root)` assumes data_root/runtime. For DirectHarness supportDir the helper reuses its existing production lock and registration-retirement functions, with an own-child check to avoid adopting a concurrent launcher'"'s host. No parallel lifecycle framework.\\n- Real smoke uses the repository real Runtime fixture with "'`production_worker_credentials=True` and DirectHarness'"'s private support shape, not Node DirectHarness itself. Runtime integration source is "'`9f9b25c000485e919f30f1411831fe2d5a3c1316`; selected Remotion runtime is `/home/user/work/runtimes/agent-remotion` with Node20.19.4 and the shared schema install. Tests use actual shipped packs and an empty external managed-source inventory; a populated external inventory is not separately qualified.'"\\n- No render, browser launch, frame/audio parity, actual App wrapper, EOF/signal cleanup journey, macOS or full-suite claim. The central smoke proves explicit stop cleanup on Linux. Wrapper inherits the parent-owned selected render/browser environment.\\n- Viewing can wire "'`bootstrap.ts::startRealPackHost` to the documented CLI handshake on its branch, then qualify its App-owned parity spec centrally. No M2 merge requested; held for M1 record.'"\\n''')
+PY
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770/status" in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 0ms:
+running
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+for name in ('.pytest_cache', '.ruff_cache'):
+    p=Path(name)
+    if p.is_dir():
+        shutil.rmtree(p)
+PY
+git status --short; git diff --check; cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770/status; date -u" in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 507ms:
+?? tests/packs/rendering/real_pack_host.py
+?? tests/packs/rendering/test_real_pack_host.py
+running
+Tue Oct 20 00:01:26 UTC 2026
+
+codex
+The report, Viewing handoff, and both commit-message files are written. The final central run is still in progress. The report distinguishes the successful startup/cleanup proof from the untested App wrapper, browser, render, and EOF/signal journeys.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770 1' in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 0ms:
+test agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770: pass exit=0 in 58s — real-pack-host-integration on agt-m2-real-pack-host-helper (agent tree a064422af8480318e328fc2795f3b63a59a8c83b)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/packs/rendering/test_real_pack_host.py
+counts: 1 passed, 6 deselected in 56.50s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770/log.txt ---
+.                                                                        [100%]
+1 passed, 6 deselected in 56.50s
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770/snap; wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770/log.txt' in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 0ms:
+tree=a064422af8480318e328fc2795f3b63a59a8c83b
+key=b754bb22c8829a9ca3272f47ba8a413b
+worktree=/home/user/work/wt/agt-m2-real-pack-host-helper
+113 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770/log.txt
+
+ succeeded in 59935ms:
+test agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770: pass exit=0 in 58s — real-pack-host-integration on agt-m2-real-pack-host-helper (agent tree a064422af8480318e328fc2795f3b63a59a8c83b)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/packs/rendering/test_real_pack_host.py
+counts: 1 passed, 6 deselected in 56.50s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770/log.txt ---
+.                                                                        [100%]
+1 passed, 6 deselected in 56.50s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+p=root/'workers/agt-m2-real-pack-host-helper/notes/report.md'
+s=p.read_text().replace('Final own-child race-guard snapshot qualification is pending request "'`agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770`; update below before exit.'"', '**Final source tree "'`a064422af8480318e328fc2795f3b63a59a8c83b`: 1 passed, 6 deselected in 56.50s**, request `agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770` (service exit 0, 58s total). This includes the own-child race guard. Exact log: `orch/tests/agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770/log.txt`. No startup/catalog/cleanup blocker remains for this test adapter.'"')
+p.write_text(s)
+p=root/'design/viewing-coordination.md'
+s=p.read_text().replace('Final central qualification for the additional own-child race guard is queued as "'`agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770`.'"', 'Final central qualification including the own-child race guard **PASSED: 1 passed, 6 deselected in 56.50s**, request "'`agt-m2-real-pack-host-helper-real-pack-host-integration-1020000020-16770`, Agent tree `a064422af8480318e328fc2795f3b63a59a8c83b`; no adapter startup/catalog/cleanup blocker remains.'"')
+p.write_text(s)
+print('Report: '+str(root/'workers/agt-m2-real-pack-host-helper/notes/report.md'))
+print('Both commit messages written.')
+PY
+git status --short; git diff --check" in /home/user/work/wt/agt-m2-real-pack-host-helper
+ succeeded in 678ms:
+Report: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-real-pack-host-helper/notes/report.md
+Both commit messages written.
+?? tests/packs/rendering/real_pack_host.py
+?? tests/packs/rendering/test_real_pack_host.py
+
+codex
+Implemented the 161-line helper/CLI with catalog readiness and guarded cleanup. Viewing’s handshake, full report, and both commit messages are written.
+
+Validation:
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_real_pack_host.py` — **6 passed, 1 deselected**.
+- Central `real-pack-host-integration` — **1 passed, 6 deselected in 56.50s** on final source, proving real startup, catalog readiness, cleanup, and Runtime survival.
+- Focused Ruff and `git diff --check` passed.
+
+Decision: calls production `ensure_pack_host` directly because DirectHarness lacks neutral-launcher catalog state. No product changes or credential elevation.
+
+App/browser/render parity remains unverified. Next: Viewing wires its wrapper. Branch held; no merge requested.
+
+[Full report and exact central commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-real-pack-host-helper/notes/report.md)
+tokens used
+202,538
+Implemented the 161-line helper/CLI with catalog readiness and guarded cleanup. Viewing’s handshake, full report, and both commit messages are written.
+
+Validation:
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_real_pack_host.py` — **6 passed, 1 deselected**.
+- Central `real-pack-host-integration` — **1 passed, 6 deselected in 56.50s** on final source, proving real startup, catalog readiness, cleanup, and Runtime survival.
+- Focused Ruff and `git diff --check` passed.
+
+Decision: calls production `ensure_pack_host` directly because DirectHarness lacks neutral-launcher catalog state. No product changes or credential elevation.
+
+App/browser/render parity remains unverified. Next: Viewing wires its wrapper. Branch held; no merge requested.
+
+[Full report and exact central commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-real-pack-host-helper/notes/report.md)

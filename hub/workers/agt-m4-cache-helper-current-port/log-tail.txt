@@ -1,0 +1,400 @@
++      path: actions/timeline_visualize/_filmstrip_cache.py
++    - kind: implementation
+       path: actions/timeline_visualize/assets.py
+     - kind: implementation
+       path: actions/timeline_visualize/audio_analysis.py
+diff --git a/tests/packs/rendering/test_capture_scene_labels.py b/tests/packs/rendering/test_capture_scene_labels.py
+index 5f4aaee8da561a68ef86236d88f4701d3b1d986e..f3b34c9de561482578b15a928379cff3713a3000
+--- a/tests/packs/rendering/test_capture_scene_labels.py
++++ b/tests/packs/rendering/test_capture_scene_labels.py
+@@ -40,15 +40,18 @@
+     (project / "src").mkdir()
+     modules = project / "node_modules"
+     modules.mkdir()
+-    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
++    runtime_project = Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION))).resolve()
++    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", str(runtime_project / "node_modules"))).resolve()
+     for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+         target = modules / peer
+         target.parent.mkdir(parents=True, exist_ok=True)
+         target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+         assert target.is_dir(), f"missing provisioned peer: {target}"
+-    artifact = Path(os.environ.get("ASTRID_TEST_COMPOSITION_ARTIFACT", REMOTION /
+-                                  json.loads((REMOTION / "package.json").read_text())["dependencies"]
+-                                  ["@banodoco/timeline-composition"].removeprefix("file:")))
++    artifact = Path(os.environ.get(
++        "ASTRID_TEST_COMPOSITION_ARTIFACT",
++        str(runtime_project / json.loads((runtime_project / "package.json").read_text())["dependencies"][
++            "@banodoco/timeline-composition"].removeprefix("file:")),
++    )).resolve()
+     expected = {"0.0.10": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
+                 "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+                 "0.0.13": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"}
+@@ -70,7 +73,8 @@
+ 
+ @pytest.fixture
+ def native(host, monkeypatch):
+-    node = resolve_pinned_node(REMOTION, override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
++    runtime_project = Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION))).resolve()
++    node = resolve_pinned_node(runtime_project, override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+     assert node.ok and node.version == "v20.19.4"
+     for key in ("NODE_OPTIONS", "NODE_PATH", "PYTHONPYCACHEPREFIX"):
+         monkeypatch.delenv(key, raising=False)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-cache-helper-current-port/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-cache-helper-current-port.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-cache-helper-current-port.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..eef32f73de5c743505e9914a3ebfc37355214b01
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-cache-helper-current-port.md
+@@ -0,0 +1,54 @@
++# Agent cache-helper current port
++
++## Result
++
++Ported the two requested units onto current Agent `4095a349`:
++
++- `dfa2fbb28`: extracted the existing `attach_frame_addresses` and
++  `_contact_overlay_for_layers` implementations into private
++  `astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py`,
++  retained the old public imports through `filmstrip_cards.py`, and declared
++  the helper in the existing `timeline_visualize` pack resource closure.
++- `929bed011`: applied only the native fixture environment resolution change
++  in `tests/packs/rendering/test_capture_scene_labels.py`.
++
++No cache key, source identity, PNG hash, fresh-only row minting, fallback,
++default-off, rendering, public graph, API, DTO, or policy behavior changed.
++
++## Counts and preservation
++
++- `filmstrip_cards.py`: 1,968 lines before (`f711cbd2`) -> 1,917 after.
++- New `_filmstrip_cache.py`: 63 lines.
++- Diff against `f711cbd2`: helper +63; cards +9/-60; pack resource +2; native
++  fixture +9/-5. No other files changed.
++- Exact file comparisons against source units passed for the extracted helper,
++  cards source, `pack.yaml`, and native fixture.
++- AST dumps for both moved functions match their original definitions.
++- Public compatibility import smoke passed: both functions resolve to the
++  extracted helper objects.
++
++## Tests
++
++- `ruff check --select I,F401 astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py` — PASS.
++- `pytest ... tests/reshape/test_compare_baselines.py::test_the_tree_has_exactly_the_baselined_structure_violations` — **1 passed**.
++- Cache/card/source neighbors, excluding native: `test_scene_cache_payload.py test_timeline_visualize_labels.py test_labels_overlay.py test_timeline_filmstrip_cards.py test_scene_source_carry.py -k 'not native'` — **133 passed, 19 deselected in 15.03s**.
++- Pack resource closure/discoverability: first-party pack validation plus
++  `tests/core/rendering/test_package_data.py` — **3 passed in 8.83s**.
++- Exact affected native selection (`test_scene_source_carry.py -k native`) on
++  public13 immutable graph `/home/user/work/runtimes/agent-remotion-0013`,
++  Node `v20.19.4` — **19 passed, 40 deselected in 17.31s**.
++- Additional direct neighbor check `test_capture_scene_labels.py` on the same
++  graph — **20 passed in 10.33s**.
++
++No full suite, browser journey, live socket suite, or renderer-wide run was
++requested or performed. Shared dependency graphs were read-only.
++
++## Decisions / blockers
++
++No new decisions were required. The current source retains the existing
++`f711cbd2` D10 and other current integration content; only the bounded helper,
++pack resource declaration, and the requested native fixture setup were ported.
++No blockers.
++
++Recommended next step: owner merges this qualified unit, then the orchestrator
++runs the single current full suite after the batch.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-cache-helper-current-port/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-cache-helper-current-port/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-cache-helper-current-port/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-cache-helper-current-port/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..fae21f6c8a56afecb65a2bac501e1e413c2e85f3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-cache-helper-current-port/commit-msg
+@@ -0,0 +1,5 @@
++refactor(rendering): port filmstrip cache helper to current source
++
++Extract the existing filmstrip cache joins into the private helper, declare
++its pack resource, and qualify the native fixture against the immutable
++Remotion graph without changing cache behavior.
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py b/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..43804a0d573c4c1cf1ab82791440f5f8f794a26f
+--- /dev/null
++++ b/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py
+@@ -0,0 +1,63 @@
++"""Current-frame cache joins for filmstrip receipts and contact tiles."""
++from __future__ import annotations
++
++import math
++from collections.abc import Mapping, Sequence
++from fractions import Fraction
++
++
++def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, frame_provider=None) -> dict:
++    """``addresses`` on each frame-index row: the layers on screen at that frame, top first (``c08.loras``).
++
++    ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
++    from .overlays.labels import addresses_at, canvas_of
++
++    config = snapshot.get("config") or {}
++    fps = float(Fraction(*snapshot["fps_rational"]))
++    canvas = canvas_of(config)
++    for row, card in zip(receipt.get("cards") or [], cards):
++        frame = int(card["frame"])
++        capture = getattr(frame_provider, "scene_for_frame", lambda frame: None)(frame)
++        if capture is None:
++            row["addresses"] = addresses_at(config, frame, fps, canvas)
++        else:
++            from .overlays.labels import MIN_OPACITY
++
++            labels, _canvas = capture.labels(frame, source_identity=frame_provider.source_identity)
++            row["addresses"] = [item.address for item in labels
++                                if item.opacity is None or item.opacity >= MIN_OPACITY]
++    return receipt
++
++
++def _contact_overlay_for_layers(
++    snapshot: Mapping, layer_names: Sequence[str], fps: float,
++    highlight: str | None = None, *, frame_provider=None,
++):
++    """Compose the selected bounds and address overlays for contact tiles."""
++    selected = set(layer_names or ())
++    if not selected.intersection({"bounds", "labels"}):
++        return None
++
++    contact_elements = None
++    if "bounds" in selected:
++        from .motion.sheet import snapshot_elements
++
++        _occurrences, contact_elements = snapshot_elements(snapshot)
++    config = snapshot.get("config") if isinstance(snapshot.get("config"), Mapping) else None
++
++    def overlay(image, seconds):
++        result = image
++        if contact_elements is not None:
++            from .layers.builtin import overlay_bounds
++
++            result = overlay_bounds(result, contact_elements, seconds, fps, labels=False, highlight=highlight)
++        if "labels" in selected and config is not None:
++            from .overlays.labels import overlay_labels_frame
++
++            frame = int(math.floor(float(seconds) * fps + 0.5))
++            capture = getattr(frame_provider, "scene_for_frame", lambda frame: None)(frame)
++            result = overlay_labels_frame(result, config, frame, fps, capture=capture,
++                                          source_identity=getattr(frame_provider, "source_identity", ""))
++        return result
++
++    return overlay
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py b/astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
+index c4afb032bfec0c70869610a3fe11a0a30ff21651..82d391dcdbe88e98541a74b31c030e998111f338
+--- a/astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
+@@ -10,26 +10,31 @@
+ import subprocess
+ import textwrap
+ import time
+-from collections.abc import Mapping, Sequence
++from collections.abc import Mapping
+ from copy import deepcopy
+ from fractions import Fraction
+ from pathlib import Path
+ from typing import Any
+ 
+-from astrid.core.timeline.astrid_ns import read_app
+ from urllib.parse import quote
+ 
++from astrid.core.timeline.astrid_ns import read_app
+ from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
+ 
++from ._filmstrip_cache import _contact_overlay_for_layers, attach_frame_addresses
+ from .audio_analysis import (
+     AudioAnalysisError,
+     analyze_audio,
+     audio_analysis_identity,
+     project_waveform,
+ )
+-from .inspection_contract import canonical_clip_identity, compact_render_receipt, project_input_window
+-from .provenance import snapshot_label
++from .inspection_contract import (
++    canonical_clip_identity,
++    compact_render_receipt,
++    project_input_window,
++)
+ from .inspector_navigation import build_inspector_navigation
++from .provenance import snapshot_label
+ 
+ 
+ def _q(value):
+@@ -1669,62 +1674,7 @@
+     try:
+         return envelope(elements, asset_files, start, end, bins=bins)
+     except Exception:  # noqa: BLE001 - an unreadable audio file must not lose the page
+-        return None
+-
+-
+-def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, frame_provider=None) -> dict:
+-    """``addresses`` on each frame-index row: the layers on screen at that frame, top first (``c08.loras``).
+-
+-    ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
+-    from .overlays.labels import addresses_at, canvas_of
+-
+-    config = snapshot.get("config") or {}
+-    fps = float(Fraction(*snapshot["fps_rational"]))
+-    canvas = canvas_of(config)
+-    for row, card in zip(receipt.get("cards") or [], cards):
+-        frame = int(card["frame"])
+-        capture = getattr(frame_provider, "scene_for_frame", lambda frame: None)(frame)
+-        if capture is None:
+-            row["addresses"] = addresses_at(config, frame, fps, canvas)
+-        else:
+-            from .overlays.labels import MIN_OPACITY
+-
+-            labels, _canvas = capture.labels(frame, source_identity=frame_provider.source_identity)
+-            row["addresses"] = [item.address for item in labels
+-                                if item.opacity is None or item.opacity >= MIN_OPACITY]
+-    return receipt
+-
+-
+-
+-def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], fps: float, highlight: str | None = None, *, frame_provider=None):
+-    """Compose the selected bounds and address overlays for contact tiles."""
+-    selected = set(layer_names or ())
+-    if not selected.intersection({"bounds", "labels"}):
+         return None
+-
+-    contact_elements = None
+-    if "bounds" in selected:
+-        from .motion.sheet import snapshot_elements
+-
+-        _occurrences, contact_elements = snapshot_elements(snapshot)
+-    config = snapshot.get("config") if isinstance(snapshot.get("config"), Mapping) else None
+-
+-    def overlay(image, seconds):
+-        result = image
+-        if contact_elements is not None:
+-            from .layers.builtin import overlay_bounds
+-
+-            result = overlay_bounds(result, contact_elements, seconds, fps, labels=False, highlight=highlight)
+-        if "labels" in selected and config is not None:
+-            from .overlays.labels import overlay_labels_frame
+-
+-            frame = int(math.floor(float(seconds) * fps + 0.5))
+-            capture = getattr(frame_provider, "scene_for_frame", lambda frame: None)(frame)
+-            result = overlay_labels_frame(result, config, frame, fps, capture=capture,
+-                                          source_identity=getattr(frame_provider, "source_identity", ""))
+-        return result
+-
+-    return overlay
+ 
+ 
+ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snapshot: dict, options: dict, frame_provider=None,
+diff --git a/astrid/packs/rendering/pack.yaml b/astrid/packs/rendering/pack.yaml
+index 461eb25c5cf081bd90459e4ab1257f9dc1e26f74..8fa0c2dba31d5f0417f5b590df1261dd737bb0a0
+--- a/astrid/packs/rendering/pack.yaml
++++ b/astrid/packs/rendering/pack.yaml
+@@ -565,6 +565,8 @@
+     - kind: implementation
+       path: actions/timeline_visualize/__init__.py
+     - kind: implementation
++      path: actions/timeline_visualize/_filmstrip_cache.py
++    - kind: implementation
+       path: actions/timeline_visualize/assets.py
+     - kind: implementation
+       path: actions/timeline_visualize/audio_analysis.py
+diff --git a/tests/packs/rendering/test_capture_scene_labels.py b/tests/packs/rendering/test_capture_scene_labels.py
+index 5f4aaee8da561a68ef86236d88f4701d3b1d986e..f3b34c9de561482578b15a928379cff3713a3000
+--- a/tests/packs/rendering/test_capture_scene_labels.py
++++ b/tests/packs/rendering/test_capture_scene_labels.py
+@@ -40,15 +40,18 @@
+     (project / "src").mkdir()
+     modules = project / "node_modules"
+     modules.mkdir()
+-    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
++    runtime_project = Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION))).resolve()
++    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", str(runtime_project / "node_modules"))).resolve()
+     for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
+         target = modules / peer
+         target.parent.mkdir(parents=True, exist_ok=True)
+         target.symlink_to((peers / peer).resolve(), target_is_directory=True)
+         assert target.is_dir(), f"missing provisioned peer: {target}"
+-    artifact = Path(os.environ.get("ASTRID_TEST_COMPOSITION_ARTIFACT", REMOTION /
+-                                  json.loads((REMOTION / "package.json").read_text())["dependencies"]
+-                                  ["@banodoco/timeline-composition"].removeprefix("file:")))
++    artifact = Path(os.environ.get(
++        "ASTRID_TEST_COMPOSITION_ARTIFACT",
++        str(runtime_project / json.loads((runtime_project / "package.json").read_text())["dependencies"][
++            "@banodoco/timeline-composition"].removeprefix("file:")),
++    )).resolve()
+     expected = {"0.0.10": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
+                 "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+                 "0.0.13": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"}
+@@ -70,7 +73,8 @@
+ 
+ @pytest.fixture
+ def native(host, monkeypatch):
+-    node = resolve_pinned_node(REMOTION, override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
++    runtime_project = Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION))).resolve()
++    node = resolve_pinned_node(runtime_project, override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+     assert node.ok and node.version == "v20.19.4"
+     for key in ("NODE_OPTIONS", "NODE_PATH", "PYTHONPYCACHEPREFIX"):
+         monkeypatch.delenv(key, raising=False)
+
+exec
+/bin/bash -lc "git diff --check; git status --short; printf '%s\\n' '--- commit message ---'; sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-cache-helper-current-port/commit-msg; printf '%s\\n' '--- markers ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-cache-helper-current-port/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-cache-helper-current-port.md; printf '%s\\n' '--- build output check ---'; find astrid tests -type f \\( -name '*.pyc' -o -name '*.pyo' \\) -print | head -20; find astrid tests -type d -name __pycache__ -print | head -20" in /home/user/work/wt/agt-m4-cache-helper-current-port
+ succeeded in 637ms:
+ M astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py
+ M astrid/packs/rendering/pack.yaml
+ M tests/packs/rendering/test_capture_scene_labels.py
+?? astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py
+--- commit message ---
+refactor(rendering): port filmstrip cache helper to current source
+
+Extract the existing filmstrip cache joins into the private helper, declare
+its pack resource, and qualify the native fixture against the immutable
+Remotion graph without changing cache behavior.
+--- markers ---
+-rw-r--r-- 1 root root 2913 Oct 20 21:03 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-cache-helper-current-port.md
+-rw-r--r-- 1 root root    0 Oct 20 21:03 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-cache-helper-current-port/DONE
+--- build output check ---
+
+codex
+## Completed
+
+- Ported `dfa2fbb28` cache helper extraction and pack resource declaration.
+- Ported `929bed011` native fixture environment setup.
+- Preserved cache behavior and public imports.
+- Verified AST/function parity and counts: `1968 → 1917` lines; helper is 63 lines.
+- Wrote [ORCH report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-cache-helper-current-port.md), commit message, and `DONE`.
+
+Tests:
+
+- Structure: **1 passed**
+- Cache/card/source neighbors: **133 passed, 19 deselected**
+- Pack resource checks: **3 passed**
+- Exact native lane: **19 passed, 40 deselected**
+- Additional capture-label neighbor: **20 passed**
+- Ruff and diff checks: **passed**
+
+No full suite or browser/live run performed. No blockers.
+tokens used
+174,241
+## Completed
+
+- Ported `dfa2fbb28` cache helper extraction and pack resource declaration.
+- Ported `929bed011` native fixture environment setup.
+- Preserved cache behavior and public imports.
+- Verified AST/function parity and counts: `1968 → 1917` lines; helper is 63 lines.
+- Wrote [ORCH report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-cache-helper-current-port.md), commit message, and `DONE`.
+
+Tests:
+
+- Structure: **1 passed**
+- Cache/card/source neighbors: **133 passed, 19 deselected**
+- Pack resource checks: **3 passed**
+- Exact native lane: **19 passed, 40 deselected**
+- Additional capture-label neighbor: **20 passed**
+- Ruff and diff checks: **passed**
+
+No full suite or browser/live run performed. No blockers.

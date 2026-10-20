@@ -1,0 +1,400 @@
+        raise WorkspaceClientError(0, error.code, error.message, dict(error.details))
+    return result.as_dict()
+
+
+def _pin(value):
+    if not isinstance(value, dict) or not all(isinstance(value.get(key), str) and value[key]
+                                             for key in ("revision_id", "publication_id")):
+        raise TimelineEditError("timeline has no verified publication; editing is unavailable")
+    return {key: value[key] for key in ("revision_id", "publication_id")}
+
+
+def _native_command(command):
+    from astrid.sdk.timeline.commands import operations, validate_command
+
+    command = copy.deepcopy(command)
+    assert retry['receipt'] == original_call[3]['receipt']
+    assert runtime.calls[-1][:2] == original_call[:2]
+    assert len(runtime.reads) == reads  # No recapture or inferred new head.
+    assert len(runtime.history()['items']) == count
+    assert path.read_bytes() == file_bytes
+    session = TimelineSession.open(runtime.project, 'film', client=runtime.client())
+    if peer in ('relevant', 'delete-recreate'):
+        with pytest.raises(CommitConflict):
+            session.flush()
+        assert json.loads(session.outbox.path.read_bytes())['pending'] == suffix
+    else:
+        accepted = session.flush()
+        assert accepted['data']['commands'] == suffix
+        assert accepted['data']['status'] == 'rebased'
+        assert State(bundle_from_document(accepted['data']['canonical_document'])).entity(
+            'parent/track:picture')['label'] == 'B'
+        assert State(bundle_from_document(accepted['data']['canonical_document'])).entity(
+            'parent/track:dependent')['label'] == 'B'
+    request = json.loads(runtime.calls[-1][0])
+    assert request['commands'] == suffix
+    assert request['base_revision_id'] == retry['data']['accepted_revision_id']
+    assert request['base_publication_id'] == retry['receipt']['receipt_id']
+    assert runtime.calls[-1][1] != 'batch-A'
+
+
+@pytest.mark.parametrize('aba', [False, True])
+def test_guarded_undo_still_refuses_intervening_equal_state_writes(runtime, aba):
+    runtime.session().commit_many(batch())
+    target = runtime.session().commit(label('A'))
+    peer = runtime.session(name='peer')
+    if aba:
+        peer.commit(label('Away'))
+    peer.commit(label('A'))
+    before = copy.deepcopy(runtime.history())
+    with pytest.raises(CommitConflict):
+        runtime.session().undo([target['receipt']['receipt_id']])
+    assert runtime.calls[-1][3]['error']['details']['reason'] == 'intervening_write'
+    assert runtime.history() == before
+
+
+@pytest.mark.parametrize('original,peer_value,conflict', [(2, 2.0, False), (True, 1, True)])
+def test_ordinary_rebase_preserves_numeric_equivalence_and_boolean_distinction(
+        runtime, original, peer_value, conflict):
+    runtime.session().commit_many(batch())
+
+    def params(value):
+        return command('clip.set-params', 'parent/clip:title', {'values': {'x': value}, 'clear': []})
+
+    session = runtime.session()
+    session.commit(params(original))
+    suffix = session.queue_many([params('B')])
+    runtime.session(name='peer').commit(params(peer_value))
+    if conflict:
+        with pytest.raises(CommitConflict):
+            session.flush()
+        assert json.loads(session.outbox.path.read_bytes())['pending'] == suffix
+    else:
+        accepted = session.flush()
+        assert accepted['data']['commands'] == suffix
+        assert accepted['data']['status'] == 'rebased'
+
+
+@pytest.mark.parametrize('captured', [False, True])
+@pytest.mark.parametrize('peer', ['disjoint', 'relevant'])
+def test_file_uses_original_pair_after_peer_advances_head(runtime, tmp_path, capsys, captured, peer):
+    runtime.session().commit_many(batch())
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p = Path('tests/editing_conformance/test_native_batch_ingress.py')
+s = p.read_text().replace(\"    with pytest.raises(CommitConflict):\\n        runtime.session().undo([target['receipt']['receipt_id']])\\n    assert runtime.calls[-1][3]['error']['details']['reason'] == 'intervening_write'\", \"    with pytest.raises(CommitConflict) as error:\\n        runtime.session().undo([target['receipt']['receipt_id']])\\n    assert error.value.failure['details']['reason'] == 'intervening_write'\")
+start = s.index(\"@pytest.mark.parametrize('original,peer_value,conflict'\")
+end = s.index(\"@pytest.mark.parametrize('captured'\", start)
+s = s[:start] + s[end:]
+p.write_text(s)
+p = Path('tests/editing_conformance/test_recipe_scalar_commands.py')
+s = p.read_text()
+start = s.index(\"@pytest.mark.parametrize('change', ['delete'\")
+s = s[:start] + \"\"\"@pytest.mark.parametrize('original,value,conflict', [(2, 2.0, False), (True, 1, True)])
+def test_ordinary_rebase_keeps_numeric_equivalence_and_boolean_distinction(original, value, conflict):
+    before = bundle()
+    clip(before, REF)['params'] = {'x': original}
+    plan = execute(before, [capture_clip_set_params(before, REF, values={'x': 'B'})])
+    head = copy.deepcopy(before)
+    clip(head, REF)['params']['x'] = value
+    history = [later(REF, ['params', 'x'], value)]
+    if conflict:
+        with pytest.raises(CommandError):
+            replay(plan, head, intervening_records=history)
+    else:
+        assert replay(plan, head, intervening_records=history).commands == plan.commands
+
+
+\"\"\" + s[start:]
+p.write_text(s)
+PY" in /home/user/work/wt/agt-m2-dependent-aba-proof
+ succeeded in 26ms:
+exec
+/bin/bash -lc 'PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_native_batch_ingress.py --tb=short' in /home/user/work/wt/agt-m2-dependent-aba-proof
+exec
+/bin/bash -lc 'PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py --tb=short' in /home/user/work/wt/agt-m2-dependent-aba-proof
+ succeeded in 17372ms:
+......................................................................   [100%]
+70 passed in 16.09s
+
+exec
+/bin/bash -lc "sed -n '28,42p' astrid/sdk/timeline/commit.py; rg -n 'revision_identity_mismatch|json_value|canonical' /home/user/work/runtime/runtime_protocol/timeline_commit*; tail -45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md; git diff --check" in /home/user/work/wt/agt-m2-dependent-aba-proof
+ succeeded in 185ms:
+        return json.dumps(value, sort_keys=True, separators=(",", ":"),
+                          ensure_ascii=False, allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise AuthoringBundleError("canonical document must be finite JSON") from exc
+
+
+def _digest(value):
+    return "sha256:" + hashlib.sha256(_json(value).encode("utf-8")).hexdigest()
+
+
+def _require(condition, message):
+    if not condition:
+        raise AuthoringBundleError(message)
+
+
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:23:from .util import canonical_json, now
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:34:# The acceptance worker adds these tables to the canonical Runtime schema.
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:146:    """Return the port-format digest of canonical finite JSON content."""
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:149:        encoded = canonical_json(content).encode("utf-8")
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:151:        raise ValidationError("document content must be canonical UTF-8 JSON") from exc
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:158:        encoded = canonical_json(content).encode("utf-8")
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:160:        raise ValidationError("document content must be canonical UTF-8 JSON") from exc
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:178:        raise ValidationError("document pin content_digest must be a canonical SHA-256 digest")
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:189:    return TRANSCRIPT_PREFIX + hashlib.sha256(canonical_json(identity).encode("utf-8")).hexdigest()
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:260:        raise ConflictError("retained document content digest or canonical bytes failed")
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:317:    # Canonicalize the live row before returning it. A non-canonical row is
+/home/user/work/runtime/runtime_protocol/timeline_commit_inputs.py:320:        raise ConflictError("live document content is not canonical")
+/home/user/work/runtime/runtime_protocol/timeline_commit_types.py:55:Candidate = TypedDict('Candidate', {'canonical_document': 'CanonicalDocument', 'document_digest': 'Digest', 'commands': list['EditCommand'], 'id_map': dict[str, 'ID'], 'provider_version': 'ID', 'compiler_version': 'ID'})
+/home/user/work/runtime/runtime_protocol/timeline_commit_types.py:56:PreparedCommit = TypedDict('PreparedCommit', {'expected_head': 'HeadPin', 'canonical_document': 'CanonicalDocument', 'document_digest': 'Digest', 'id_map': dict[str, 'ID'], 'provider_version': 'ID', 'compiler_version': 'ID', 'records': 'Recorder', 'semantic_events': list['DomainEvent']})
+/home/user/work/runtime/runtime_protocol/timeline_commit_types.py:57:CommitAccepted = TypedDict('CommitAccepted', {'status': Literal['accepted', 'rebased'], 'base_revision_id': 'ID', 'base_publication_id': 'ID', 'previous_revision_id': 'ID', 'previous_publication_id': 'ID', 'accepted_revision_id': 'ID', 'rebased_onto': Union['HeadPin', None], 'canonical_document': 'CanonicalDocument', 'document_digest': 'Digest', 'commands': list['EditCommand'], 'id_map': dict[str, 'ID'], 'provider_version': 'ID', 'compiler_version': 'ID', 'publisher': 'ID', 'source': NotRequired['Source'], 'label': NotRequired[str], 'rationale': NotRequired[str], 'group_id': NotRequired['ID']})
+/home/user/work/runtime/runtime_protocol/timeline_commit_types.py:58:CommitPreview = TypedDict('CommitPreview', {'status': Literal['preview'], 'base_revision_id': 'ID', 'base_publication_id': 'ID', 'evaluated_head': 'HeadPin', 'canonical_document': 'CanonicalDocument', 'document_digest': 'Digest', 'commands': list['EditCommand'], 'id_map': dict[str, 'ID'], 'provider_version': 'ID', 'compiler_version': 'ID'})
+/home/user/work/runtime/runtime_protocol/timeline_commit_port.py:16:from .util import canonical_json
+/home/user/work/runtime/runtime_protocol/timeline_commit_port.py:29:    return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
+/home/user/work/runtime/runtime_protocol/timeline_commit_port.py:269:            self.__media[canonical_json(selection)] = (copy.deepcopy(selection), value)
+/home/user/work/runtime/runtime_protocol/timeline_commit_port.py:278:            self.__takes[canonical_json(refs)] = (copy.deepcopy(refs), value)
+/home/user/work/runtime/runtime_protocol/timeline_commit_port.py:311:            self.__documents[canonical_json(pin)] = capture
+/home/user/work/runtime/runtime_protocol/timeline_commit_port.py:337:        manifest = prepared["canonical_document"]["dependency_manifest"]
+/home/user/work/runtime/runtime_protocol/timeline_commit_port.py:346:        if sorted(map(canonical_json, pins)) != sorted(self.__documents):
+/home/user/work/runtime/runtime_protocol/timeline_commit_port.py:358:        for ordinal, pin in enumerate(prepared["canonical_document"]["dependency_manifest"]["documents"]):
+/home/user/work/runtime/runtime_protocol/timeline_commit_port.py:359:            capture = self.__documents[canonical_json(pin)]
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:18:from .util import canonical_json, new_id, now
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:44:    return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:57:    return hashlib.sha256(canonical_json({"operation": invocation["operation"], "path": invocation["path"],
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:63:    return canonical_json([request["project_id"], request["timeline_id"]])
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:111:            document = data["canonical_document"]
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:114:                     and row["aggregate_id"] == canonical_json([edge["project_id"], edge["timeline_id"]])
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:245:                next_cursor = base64.urlsafe_b64encode(canonical_json({"scope": cursor_scope,
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:311:                    self._verify_inputs(json.loads(ledger[0]["result_json"])["canonical_document"])
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:323:                if digest(value) != row["content_digest"] or canonical_json(value) != row["content_json"] or len(row["content_json"].encode()) != row["content_size"]:
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:377:                        "placement_json": canonical_json(occurrence["placement"]),
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:378:                        **{k + "_json": canonical_json(occurrence.get(k, default)) for k, default in
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:414:                        or existing["payload_json"] != canonical_json(image["payload"]) or existing["content_digest"] != image["content_digest"]):
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:415:                    reject("revision_identity_mismatch")
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:417:                    if existing["commit_manifest_json"] != canonical_json(manifest):
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:418:                        reject("revision_identity_mismatch", "revision dependency closure changed")
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:430:                        reject("revision_identity_mismatch")
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:495:        if pins != sorted(pins, key=lambda p: (p["document_id"], p["version"], p["content_digest"])) or len({canonical_json(p) for p in pins}) != len(pins):
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:507:        document = prepared["canonical_document"]
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:539:        return {"canonical_document": document, "document_digest": prepared["document_digest"],
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:550:        document = prepared["canonical_document"]
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:669:                        "accepted_revision_id": candidate["canonical_document"]["parent_revision"]["revision_id"],
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:672:                self._persist_closure(candidate["canonical_document"])
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:682:                              "VALUES (?, ?, ?, ?, ?, ?)", (image["revision_id"], project_id, image["timeline_id"], canonical_json(image["payload"]), image["content_digest"], timestamp))
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:691:                              (shot_id, project_id, payload.get("name") or shot_id, canonical_json(payload.get("metadata", {})), timestamp, timestamp,
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:697:                                   item.get("source_frame"), canonical_json(item.get("metadata", {})), timestamp))
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:700:                                                             canonical_json(payload), image["content_digest"], timestamp))
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:708:                              "VALUES (?, ?, ?, ?, ?, ?, ?)", (parent["revision_id"], project_id, document["timeline_id"], canonical_json(parent["payload"]),
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:709:                                                             parent["content_digest"], canonical_json(manifest), timestamp))
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:715:                                   canonical_json(occurrence["placement"]), canonical_json(occurrence.get("source_offset", 0)), occurrence["duration_ms"],
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:716:                                   canonical_json(occurrence.get("speed", 1)), occurrence["track"], canonical_json(occurrence.get("transform", {})), occurrence.get("gain", 1),
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:717:                                   int(occurrence.get("muted", occurrence.get("mute", False))), canonical_json(occurrence.get("provenance", {}))))
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:726:                              (canonical_json(manifest), parent["revision_id"]))
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:731:        revision_id = data["canonical_document"]["parent_revision"]["revision_id"]
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:745:             previous["revision_id"], "recorded", canonical_json(records),
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:746:             canonical_json({k: request[k] for k in _METADATA if k in request}), data.get("provider_version"), data.get("compiler_version"),
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:762:                 entry["intent"], None, canonical_json({k: entry[k] for k in _METADATA if k in entry}),
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:784:            document = facts["canonical_document"]
+/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:791:                                  (canonical_json(manifest), entry["revision_id"]))
+/home/user/work/runtime/runtime_protocol/timeline_commit_baseline.py:17:from .util import canonical_json
+/home/user/work/runtime/runtime_protocol/timeline_commit_baseline.py:52:    return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
+/home/user/work/runtime/runtime_protocol/timeline_commit_baseline.py:65:    _require(all(row[key] == value for key, value in identity.items()), "revision_identity_mismatch")
+/home/user/work/runtime/runtime_protocol/timeline_commit_baseline.py:169:                    **{key + "_json": canonical_json(occurrence[key]) for key in
+/home/user/work/runtime/runtime_protocol/timeline_commit_baseline.py:359:            "canonical_document": current_document, "document_digest": _digest(current_document), "entries": entries,
+/home/user/work/runtime/runtime_protocol/timeline_commit_baseline.py:410:    document = facts["canonical_document"]
+/home/user/work/runtime/runtime_protocol/timeline_commit_baseline.py:412:    _require(canonical_json(fresh) == canonical_json(facts), "baseline_compare_failed")
+/home/user/work/runtime/runtime_protocol/timeline_commit_baseline.py:436:    _require(facts["canonical_document"] == expected and len(facts["entries"]) == 1, "bootstrap_requires_empty_initial_publication")
+
+Read orchestrator Agent INBOX01:45 approval before product edit. Only authoring_bundle.py helper now changes: explicit item_id/id codec (equal mirrors) and source_item_id/source_item dependency descriptor in metadata or record fallback. Unknown namespaces never traversed. Direct neighbors178PASS/1integrationdeselected; actual unchanged M1Runtime9f8PASS/3strictxfail (exact original closure inverse independently missing on f6). All three codec namespace journeys PASS through move/readback/restart/exactretry/undo. Reviewed d474 candidate exported in OWN temporary notes directory reproduces actual preservation failure1FAIL1.47s; replacing ONLY this helper there gives6PASS4.88s with --runxfail, INCLUDING exact full undo closure for all codecs. No schema/provider override, seed, pin, guard, historical publication rewrite, or other-worker edit. Report and reproducible candidate script/logs: workers/agt-m1-opaque-item-remap-probe/notes/. Both commit messages ready; harness commits. Recommend compose helper with reviewed historical-image reuse candidate and remove exact-undo xfail marker upon restoration; all M2 integration remains orchestrator-held.
+
+Worker1 concrete fixture issue: migrating generic test spec.inputs target directly to frozen spec.runtime_dependencies.publication.admitted_target makes REAL create_task refuse before tests: RealmStore._continuation_predecessors(store.py:2551) treats ANY raw runtime_dependencies as a two-child continuation and requires exactly two edges. Will preserve assertions, no store/admission change. Investigating fixture migration to an actual rendering.assemble_timeline continuation (existing publication test setup), rather than inventing two generic children or accepting old inputs as authority. This is a source precondition, not a request for permission or change to settled target placement.
+
+rt-m2-historical-render-impl boundary update: selector call defers only historical snapshot publication from the existing early publication loop to after capability/readiness/storage/continuation validation; exact retries return through original admission handling. Worker2 please retain this deferral when composing your admission link hooks. Reusing ONLY b3ce5aa's `pack_snapshot_objects` + `validate_pack_snapshot_objects` and PROJECT_PACK_KIND constant in timeline_commit_inputs.py; no producer/port helper touched. Historical freezer uses those descriptor validators on retained Document content, then hashes actual CAS bytes/size/project custody. This is selective helper source union, not b3 whole-file import or public artifact release.
+
+Worker1 progress/interface CONFIRMED: actual mapping implemented exactly above; render_intent = immutable publication.render or null (commit of guard approves it), no extra proposal fields. Producer requirements now 38PASS before first one-shot RED (worker2), source never writes consumption. Fixture now uses REAL rendering.assemble_timeline admission with ordered managed visual predecessor outputs; every existing assertion retained. Important production precondition for Agent: Runtime can verify declared authoring_proposal from immutable raw spec.outputs.authoring_proposal {type:file,...}, as fixture does. Current runtime_stitch.build_stitch_admission family/params raw spec has NO outputs declaration and Runtime capabilities rows retain only digest/resources, not port schema. Need Agent frozen producer admission to include the immutable declared output (or point us at existing immutable equivalent); no caller-supplied/dynamic pack manifest read accepted as authority. Also keep actual aggregation.order when supplied; validator checks kind/order and existing continuation_admissions snapshot rather than requiring fixture-only minimal aggregation shape.
+Worker2 source-union in OWN tree now consumes Worker1 actual module/Protocol/test setup bytes: timeline_commit_producer.py SHA256 f45f1ffa8c59c82633e2b4740009ea35664b83c925b6016ae7183f049176cfad, timeline_commit.py c3416fffdcb4b5f7b1e831a38d98c26b5289f7de143fe0271ac13fcc5fc656e9, producer_guards test6b5fc3741781fb3c29a2ec09f9d8dfda7b4154bbf7ff1e4a1bb1bc86268c1d07. Worker1 port constructor/method additions copied verbatim; validation calls own consumption wrapper which calls exact _producer_captures (avoids duplicate validator). Focused checkpoint fixture now likewise real assembler/two managed visual children. Current first isolated helper PASS; combined proof running. Worker3 please announce exact safe source union for historical freezer/deferred snapshot logic when stable; Worker2 hooks before freezer and all create_task returns are wired, no freezer edit. Report will state exact union/unreached behavior honestly; no full run.
+Worker2 combined first run: 50PASS/2FAIL 7.87s. Real checkpoint rollback/competing keys/cancel/pending identity reached and PASS. Worker1 existing exact-replay test fails at redundant service.register_timeline_commit_provider(PreparedProvider()) after _execute initialized commits: startup-only registration. Fixture already registered PreparedProvider used by ordinary head-advance commit; please remove redundant setup line on YOUR test source (no behavior assertion changes), announce hash so exact consumption retained. Own new historical handoff test same redundant setup now corrected; will expose actual missing historical selector next. Worker2 persist helper now takes existing TimelineCommitStore as first arg to reuse actual _lookup rather than instantiate another store/validator.
+Worker2 historical positive now reaches actual bug: 10PASS/1FAIL1.87s on source without Worker3: first admission after ACK/restart/C froze candidate-unrelated-c instead of candidate-accept-proposal. Assertion unchanged/unmarked. Completion helper now additionally compares actual admitted task timeline_authority's full accepted tuple before linking (will require Worker3 source). Worker3 source base76f includes replay fix absent Worker2 base851; propose consuming store.py exact Worker3 source+reapplying ONLY our before-freezer validation/all-return link hooks, plus exact inputs helper source/schema/handshake deltas and replay-fix neighbor tests. No historical helper rewrite, fake SQL or test downgrade. Please publish ready source hash when bounded proof stable; continuing independent one-shot coverage.
+
+Worker1 final-source refresh for worker2: producer helper now 6d2a57843785fd57c114e95498ed19819b4542666ae49ac145fd8e04a6d05b76; port b482f81e445bae92673cd505f50c4e9e0bcd2d14526d69371054bf0ab650e47d; Protocol unchanged c3416fffdcb4b5f7b1e831a38d98c26b5289f7de143fe0271ac13fcc5fc656e9; producer_guards c40bbc665b92ace513237e6dddd9e063bd7908400bcf0ba56f10f63dabbdaf30. Removed ONLY redundant late register_timeline_commit_provider setup (startup-only; original fixture provider already installed), all behavior assertions unchanged. Added standalone tests/test_timeline_commit_producer.py strict malformed pins/JSON/carriers/private detached accessor/boolean-record forgery/unconsumed persisted-epoch restart/selected child lifecycle. Important port refresh: authority-record equality now canonical JSON exact (bool cannot forge fence=1), prepared commands must value-equal request and cannot claim undo/restore. Helper matches primary visual child outputs only, verifies assembler order against actual selected outputs, retains all ordered outputs in admission snapshot; no false dependency on temporary auxiliary outputs. Guard detection traverses command batches only, never opaque data. Final bounded rerun in progress; no full.
+Worker2 current owner scope now additionally proves new actor/new key refusal and a real retry→new attempt→new settlement→fresh key cannot reaccept; exact original receipt still replays. On this main base the latter is rejected EARLIER as producer_dependency_unavailable at Worker1._output unique current-attempt managed association, not by checkpoint consumption. Will report that unreached consumption assertion honestly; competing valid keys/actors do reach producer_proposal_consumed. No source workaround to main managed association semantics. Worker3 first-admission actual positive still red/unmarked without historical source; no invented historical tuple. All legacy publisher tests preserved for bounded neighbor run.
+
+Worker1 bounded proof COMPLETE, stopping: final exact five-file source tree expected 78e3a920bb2f294b47f3e511a049ac675031d527 on base8514973 (no imports/merges). Combined producer+port+acceptance+execution+settlement+legacy publication final191PASS/1FAIL/1deselected29.28s. Sole RED is unchanged second-new-key one-shot requirement, worker2. Exact replay after completed cancel/expiry/restart/head advancement now reaches and PASSES all original assertions; no live guard used. New helper/test Ruff clean; all existing-file Ruff findings equal base; diff clean. Final bytes are the previous final-source refresh hashes; no subsequent source change. Both reports and both root commit message files written in workers/rt-m2-producer-authority-port/. Registered Agent qualification/output-declaration production precondition remains external; no full/HTTP/browser/official artifacts or integration/endpoint retirement claim.
+
+## Agent manager01:50 — source progress and M1 separation
+M1 opaque remapper875a9aff independently rerun against Runtime9f:6PASS/3strict exact-original-closure inverse xfails,6.77s. Namespace preservation itself passes allcodecs throughundo; strict fullclosure requirements remain honest until agt-m1-opaque-exact-inverse isolates authenticated historical-image reuse from reviewed d474. No M2registry/schema import. Final candidate will be new branch, then permanent actual qualification, ownerreview and M1merge.
+Runtime Bundle2 d691 reviewcandidate/source0.2.3 ready noted; schema472622 remains exactfrozeninput. Agent reviewed-product successor active with45c+28561mixed+0edhold+pureliteralhelper+approvedopaquehelper, no schema mutation, no official release claim before final pair.
+Materialization first candidate nowCOMMITTED c65c50b8e9c77248c55a68ac159c9b2f517c34d8; independentreview active agt-m2-materialization-review because+397productlines and pending approvedopaquehelper composition. Exactcarrierdecision remainsACK; Runtime own-slot worker finished tests-only while initialsourceunavailable, so actualimplementation isstillrequired after review+normalitemrefartifact. No actualmapacceptanceclaim. Do not treat preparednegativeblanketrefusals as joinvalidationproof.
+Producer Agent candidate1441bdf1a4795aad318cf27e8b26331146bc0d92 ready440PASS; producer.guard provider requires actual port.producer_attempt(pin)→{pin}, requester queue_proposal pinsoriginalbase/commands/rationale in existingoutbox. Artifacthashneverrecomputed byclient. Runtimeauthority/one-shot/historical workers active; no retirementapproval.
+Worker2 exact historical source snapshot consumed in OWN tree for combined proof (after reading Worker3 central43PASS source progress): store.py cc202289fd2aa3500b92625b92f754045417d699b84c7f3769d67366bfa765f7, service.py888a36948cfc27e54124256a05a47511e2a34843a4fa916addee24a3090b1e9b, timeline_commit_inputs.py07c82e6a796ef1a2b60fde590984ae32d43d53535b80637f04b27e30cc8fe61d, Task schema2bc3a98edcd9d5c7221944a7602a342876261fb2c927f7f909528719ba757ba3, OpenAPI52c63f328c0f14d3e1a298e923a894e0357335bff2d629095639866f75cd666e; historical tests0b026dfc9cb84a2d85e22146aa8cec66d974f68f8620759cdb93d91f725bd1cd and exact replay/identity/schema tests from same branch. Base76f replay fix included; no producer test deletion from that base. Own hooks reapplied ONLY before freezer/all create_task returns; freezer/replay/deferred publication source unchanged. No duplicate capture or selector implementation. Own focused checkpoint rerun now running. If Worker3 changes source subsequently, please flag exact final hashes before bounded central union request.
+
+## agt-m2-materialization-review — independent review in progress (base c65c50b8e9c77248c55a68ac159c9b2f517c34d8)
+
+Assigned successor source is /home/user/work/wt/agt-m2-materialization-review on tl/agt-m2-materialization-review; harness source SHA pending. Approved M1 opaque fix 875a9aff is being adapted to the candidate's single shared remapper, with its direct tests and six positive real-service requirements (no new xfails, no old-provider import). No Runtime/product pins/artifacts/Bundle2 changes.
+
+Concrete review findings: suffix-recursive remapping corrupts opaque namespaces; duplicate binding keys can coexist with an expected binding; tuple/Python equality conflates boolean/number provenance or ACK claims; source_entity accepts an empty /item: suffix as a shot payload request. These are bounded source fixes under existing exact carrier, with direct regressions. Readback source reuse also needs JSON value equality so a true-vs-1 authored edit is not discarded.
+
+Architectural gap requiring manager attention before widening: SDK inverse ACK verification is currently activated by the returned nonidentity map. An ACK which drops the entire inverse allocation map can bypass accepted-history validation. The manual inverse path also verifies only submitted fields plus allocation bindings, rather than reconstructing all inverse claims with the existing engine. Recommended successor: always obtain authenticated target history for inverse ACKs, reconstruct with the existing execute/AcceptedRecords boundary machinery, and compare all claims using equal(); do not add another inverse interpreter or DTO. General legacy inverse reconstruction requires its existing before/after closure reads. This review will not invent an alternative authority or silently change frozen M1 claims.
+
+Actual paired tests remain blocked: rt-m2-materialization-own-slot HEAD 237c51a is staged tests only; its report explicitly says new-form admission/own-slot implementation and matching official generated item-ref artifacts are absent. No schema override or attempted paired qualification here. Please publish the final reviewed Runtime source + normal generated item-ref release before central paired execution. Final Agent source SHA follows harness commit; use that SHA, not the parent c65c50b8, for any subsequent generation/qualification.
+
+
+## agt-m1-opaque-exact-inverse — M1 integration candidate ready
+
+Base exactly `875a9aff`; only product change is `commit.py`, 48 added / 4 removed (44 net, under 75). Isolated historical-image reuse from reviewed `d474`: accepted targeted before/after boundaries authenticated through existing history, pair, scope and digest checks; reuse requires the same occurrence and authoring identity plus matching authored shot/internal content. The parent is compiled normally; a historical parent ID is reused only after complete parent and manifest equality. No M2 registry/root/ordered/media/params/schema/capture import. Existing coalescing, guards, occupancy, retry and approved remapper are unchanged.
+
+All six opaque cases now PASS without xfails, including actual move → accept → persisted exact retry after restart → undo with complete original closure equality. Final focused tests: 187 PASS / 1 ordinary-lane integration deselected, 35.99s. Central unchanged Runtime9f: 19 PASS, 54.97s, final tree `2812273e0044c1aa5286b6c8740d77fffa3038a6`, run `agt-m1-opaque-exact-inverse-commit-integration-1020014815-17007` (all four requested files plus new shared controls). Five malformed historical-boundary refusals, newer sibling/parent preservation and touching ABA controls pass. Touched-file Ruff and diff check PASS.
+
+Two of four M2 shared-inverse cases ported unchanged (parameterized disjoint-parent controls). The two full shared redo journeys are incompatible: first exact undo PASS, then redo refuses with `inverse_dependency_changed` at unchanged `inverse.py:120`. Those journeys were not imported or claimed; no original M1 test was weakened/deleted and no guard changed. Keep full M2 shared redo separate.
+
+No full suite, manual socket, Runtime change, integration mutation, merge or push. Exact commands, provenance and limits: `workers/agt-m1-opaque-exact-inverse/notes/report.md`. Both commit-message files are ready; harness commit pending.
+Worker2 historical source union initially13checkpointPASS8.98s; broader repeat exposed legitimate existing StaleHead at competing-key loser before port.validate (head check intentionally precedes input validation). Test fixture PreparedProvider has no normal Agent head-race loop. Narrow TEST setup fix now retries exactly same original request/key once on StaleHead before asserting producer_proposal_consumed; no base/command/guard refresh and no store acceptance reorder or product source change. Other original regression command on pre-historical loaded source completed192PASS1deselected118.50s; final combined-source run still in progress. This race fixture correction preserves once-per-task assertion and exact ledger winner replay.
+
+exec
+/bin/bash -lc 'PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py tests/editing_conformance/test_native_batch_ingress.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recording_clear.py && git diff --check' in /home/user/work/wt/agt-m2-dependent-aba-proof
+ succeeded in 149ms:
+All checks passed!
+
+ succeeded in 43629ms:
+........................................                                 [100%]
+40 passed in 42.10s
+
+codex
+Verification is complete: the frozen-pair ingress file passes all 40 cases, including exact A retry after restart, unchanged B guards, A-created ID dependencies, equal-state ABA acceptance, real mismatch refusal, delete-and-restore refusal, and inverse ABA refusal. The focused recipe/provider/sync run passed 535 tests; neighboring suites passed 162, and the final scalar file passed 70. I’m writing the report and commit messages. M2 integration remains HELD.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+report = '''
+
+## agt-m2-dependent-aba-proof — ordinary suffix ABA fixed; M2 integration HELD
+
+Source: "'`/home/user/work/wt/agt-m2-dependent-aba-proof`, branch `tl/agt-m2-dependent-aba-proof`, base `a95c58f1a94ef7412cb8fef9e44e7024a96cca5d` (harness commit pending). Product diff: `astrid/sdk/timeline/inverse.py` +15/-1 and `astrid/sdk/timeline/rebase.py` +3/-1; 18 added product lines, two replaced lines. No Runtime, schema, DTO, generated client, API, capture, sync or commit changes.
+
+Classification: REAL provider rebase bug, not an inverse-suffix fixture. Both original xfails queue ordinary `track.set` and `clip.set-params` B; no `timeline.inverse` is injected. `commit.py` executes the original capture at HA, then `rebase.replay` unconditionally called the inverse'"'s full "'`check_intervening`, incorrectly refusing external A→Peer→A even when final original value/selection guards hold. Reproduced against the unmodified official Runtime `6be970633cc82ab412428151e6bf42f3e7fc3081` selected by `use_runtime(vendored_runtime_commit())`; no schema override. The generated client'"'s injected transport invokes real Runtime HTTP handlers in memory, without sockets.
+
+Fix: ordinary replay uses history to protect stable member/root identities and selected identities from replacement (including raw container aliases and owner replacement); execute still verifies ORIGINAL value/read/selection/binding/created-ID claims against the head. Inverse/restore replay and inverse application keep the original full intervening-write check. No whole-parent restore or recapture is introduced. Boolean/number equality code is unchanged.
+
+Tests: removed exactly the two strict ingress ABA xfails after reproducing both and proving the fix. Extended the existing lost-ACK schedule with an A-created track consumed by original B, plus clip delete→guarded restore before retry; retained every original retry/receipt/bytes/key/pin/file/pending-command assertion. Added actual Runtime equal-state/no-op inverse refusal controls. Corrected old ordinary-rebase refusal expectations in four adjacent recipe files to assert exact original commands/records succeed at equal final state; existing inverse ABA, mismatch, owner/container replacement and reservation assertions remain. This is a required distinction from the settled dependent/optimistic decision, not missing-behavior expectations. A direct recipe test verifies numeric equivalence and boolean/number distinction.
+
+Commands ran from the source worktree, dependency-only shared venv, PYTHONDONTWRITEBYTECODE=1:
+
+"'```sh
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_native_batch_ingress.py -k '"'lost_ack and aba' -rx
+# Before changes: 2 strict xfailed, 34 deselected, 3.07s.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_native_batch_ingress.py -k 'lost_ack and aba' --runxfail --tb=short
+# Before changes: 2 FAILED, 34 deselected, 2.73s; ordinary B flush => intervening_write.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_native_batch_ingress.py --tb=short
+# FINAL: 40 passed, 42.10s; official frozen pair above, no xfails/skips.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recording_clear.py tests/editing_conformance/test_recipe_m2_placement.py tests/sdk/test_timeline_commit_provider.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py --tb=short
+# 535 passed, 66.53s. Subsequent change only adds two scalar tests, verified below, plus final ingress fixture corrections.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_parent_track_label.py tests/editing_conformance/test_recipe_add_delete_composition.py tests/editing_conformance/test_recipe_internal_stages.py tests/editing_conformance/test_recipe_m2_clip_add.py tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_commit_provider_parent_track_label.py --tb=short
+# 162 passed, 18.77s.
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q tests/editing_conformance/test_recipe_scalar_commands.py --tb=short
+# FINAL scalar file: 70 passed, 16.09s (including two added JSON equality controls).
+PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/inverse.py astrid/sdk/timeline/rebase.py tests/editing_conformance/test_native_batch_ingress.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_m2_placement.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_recording_clear.py
+# All checks passed.
+git diff --check
+# PASS.
+"'```
+
+Exploration disclosure: the first six-file recipe/provider run after the product fix had 33 failed / 410 passed (50.30s), all old ordinary equal-state refusal expectations in the four recipe files subsequently corrected above; the inverse/provider assertions passed. An intermediate ingress run had 4 failed / 38 passed (52.19s): two new inverse tests incorrectly inspected the raw HTTP error envelope (corrected to the public CommitConflict.failure), and two new numeric probes hit `revision_identity_mismatch` on the peer'"'s sole x=2→2.0 or x=true→1 commit, BEFORE B rebase. Numeric/boolean guard probes now exercise execute/replay directly in the recipe file. The separate frozen-pair numeric acceptance issue is unmodified and unqualified here; do not interpret the passing retry numeric tests as numeric publication proof. Initial pytest cleanup also emitted a shared "'`/tmp/pytest-of-root/pytest-current` atexit race after the successful xfail reproduction; subsequent final runs exited normally.
+
+Limits/next steps: targeted tests only; no full suite, make check, sockets, browsers, installs, integration-worktree edits, leased/frozen source edits, merge, push or manual commit. Review this bounded patch, then compose via the manager when permitted; M2 integration remains HELD. Investigate the separate numeric revision-identity refusal in its owner'"'s existing workstream if not already covered. Both "'`workers/agt-m2-dependent-aba-proof/commit-msg` and `commit-msg.txt` are ready for the harness.
+'"'''
+with (root / 'design/runtime-coordination.md').open('a') as f:
+    f.write(report)
+message = '''fix(timeline): allow ordinary rebase across equal-state writes
+
+Separate ordinary replay identity protection from guarded inverse history
+checks. Verify original value and selection claims on the accepted head,
+while retaining delete-and-recreate, owner replacement and inverse ABA guards.
+
+Prove native dependent suffix acceptance through the frozen Runtime pair,
+including exact lost-ACK retry, restart and stable A-created IDs. Retain
+mismatch and inverse refusals and align adjacent equal-state replay tests.
+
+M2 integration remains held; no schema or Runtime artifact changes.
+'''
+worker = root / 'workers/agt-m2-dependent-aba-proof'
+for name in ('commit-msg', 'commit-msg.txt'):
+    (worker / name).write_text(message)
+PY" in /home/user/work/wt/agt-m2-dependent-aba-proof
+ succeeded in 0ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+cache = Path('/home/user/work/wt/agt-m2-dependent-aba-proof/.pytest_cache')
+if cache.is_dir():
+    shutil.rmtree(cache)
+PY
+ git status --short --ignored
+ git diff --check
+ git diff --stat" in /home/user/work/wt/agt-m2-dependent-aba-proof
+ succeeded in 86ms:
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+ M tests/editing_conformance/test_native_batch_ingress.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+ M tests/editing_conformance/test_recipe_m2_placement.py
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+ M tests/editing_conformance/test_recording_clear.py
+!! .ruff_cache/
+ astrid/sdk/timeline/inverse.py                     | 16 ++++++++++-
+ astrid/sdk/timeline/rebase.py                      |  4 ++-
+ .../test_native_batch_ingress.py                   | 32 ++++++++++++++++++----
+ .../editing_conformance/test_recipe_m1_commands.py | 11 ++++----
+ .../test_recipe_m2_placement.py                    | 13 ++++-----
+ .../test_recipe_scalar_commands.py                 | 31 +++++++++++++++------
+ tests/editing_conformance/test_recording_clear.py  |  9 +++---
+ 7 files changed, 81 insertions(+), 35 deletions(-)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+cache = Path('/home/user/work/wt/agt-m2-dependent-aba-proof/.ruff_cache')
+if cache.is_dir():
+    shutil.rmtree(cache)
+PY
+git status --short --ignored" in /home/user/work/wt/agt-m2-dependent-aba-proof
+ succeeded in 18ms:
+ M astrid/sdk/timeline/inverse.py
+ M astrid/sdk/timeline/rebase.py
+ M tests/editing_conformance/test_native_batch_ingress.py
+ M tests/editing_conformance/test_recipe_m1_commands.py
+ M tests/editing_conformance/test_recipe_m2_placement.py
+ M tests/editing_conformance/test_recipe_scalar_commands.py
+ M tests/editing_conformance/test_recording_clear.py
+
+codex
+Fixed a real provider bug: ordinary rebase incorrectly applied inverse ABA protection. The bounded fix adds 18 product lines; both strict xfails now pass. Identity replacement and guarded UNDO protections remain.
+
+- Frozen Runtime pair ingress: **40 passed**
+- Focused recipe/provider/sync: **535 passed**
+- Neighboring tests: **162 passed**
+- Final scalar tests: **70 passed**
+- Ruff and diff checks passed.
+
+[Report with exact commands, source and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md). A separate numeric publication refusal is documented and unchanged. No full/socket suite ran.
+
+Both commit-message files are ready. Next: manager review; **M2 integration remains HELD**.
+tokens used
+134,566
+Fixed a real provider bug: ordinary rebase incorrectly applied inverse ABA protection. The bounded fix adds 18 product lines; both strict xfails now pass. Identity replacement and guarded UNDO protections remain.
+
+- Frozen Runtime pair ingress: **40 passed**
+- Focused recipe/provider/sync: **535 passed**
+- Neighboring tests: **162 passed**
+- Final scalar tests: **70 passed**
+- Ruff and diff checks passed.
+
+[Report with exact commands, source and limitations](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-coordination.md). A separate numeric publication refusal is documented and unchanged. No full/socket suite ran.
+
+Both commit-message files are ready. Next: manager review; **M2 integration remains HELD**.

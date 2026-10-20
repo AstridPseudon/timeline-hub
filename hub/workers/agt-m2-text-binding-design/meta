@@ -1,0 +1,9 @@
+name=agt-m2-text-binding-design
+repo=agent
+base=tl/integration
+base_sha=156fa04b
+model=claude-haiku-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-text-binding-design
+started=2026-10-20T05:19:25Z

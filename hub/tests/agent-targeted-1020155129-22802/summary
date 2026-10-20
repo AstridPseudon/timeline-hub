@@ -1,0 +1,6 @@
+test agent-targeted-1020155129-22802: pass exit=0 in 3s — targeted on integration:agent (agent tree 3f38f816181d7564e5cd7db4d9672a0d6dea9ac3)
+cmd: /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/timeline/test_cli_assets.py tests/packs/timeline/test_cli_voice_bindings.py
+counts: 4 passed in 0.62s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-targeted-1020155129-22802/log.txt ---
+....                                                                     [100%]
+4 passed in 0.62s

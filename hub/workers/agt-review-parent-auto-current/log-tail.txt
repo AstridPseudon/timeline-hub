@@ -1,0 +1,400 @@
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/selectedProjectMedia.ts:57:  durationSeconds: number;
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/selectedProjectMedia.ts:72:    || !Number.isFinite(durationSeconds) || durationSeconds <= 0
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/selectedProjectMedia.ts:75:    || (typeof intrinsicDurationSeconds === 'number' && durationSeconds > intrinsicDurationSeconds)) {
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/selectedProjectMedia.ts:90:      duration: durationSeconds,
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/selectedProjectMedia.ts:124:      && typeof command.args.duration === 'number' && Number.isFinite(command.args.duration) && command.args.duration > 0;
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/selectedProjectMedia.test.ts:6:  clipId: 'allocated', at: 1, durationSeconds: 2, intrinsicDurationSeconds: 4, existingTrackIds: ['V1'], existingClipIds: ['old'] };
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/selectedProjectMedia.test.ts:11:    expect(command.args).toEqual({ media: selection, clip_id: 'allocated', at: 1, duration: 2 });
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/selectedProjectMedia.test.ts:31:      : { ...input, durationSeconds: 5 };
+........................................................................ [ 92%]
+............................................                             [100%]
+620 passed in 181.82s (0:03:01)
+      1       00:00 codex-linux-sandbox --sandbox-policy-cwd /home/user/work/wt/agt-review-parent-auto-current --command-cwd /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-parent-auto-current/notes --permission-profile {"type":"managed","file_system":{"type":"restricted","entries":[{"path":{"type":"special","value":{"kind":"root"}},"access":"read"},{"path":{"type":"path","path":"/home/user/work/wt/agt-review-parent-auto-current"},"access":"write"},{"path":{"type":"path","path":"/home/user/work"},"access":"write"},{"path":{"type":"path","path":"/home/user/peteromallet"},"access":"write"},{"path":{"type":"path","path":"/home/user/banodoco"},"access":"write"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch"},"access":"write"},{"path":{"type":"special","value":{"kind":"slash_tmp"}},"access":"write"},{"path":{"type":"special","value":{"kind":"tmpdir"}},"access":"write"},{"path":{"type":"path","path":"/home/user/work/wt/agt-review-parent-auto-current/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/wt/agt-review-parent-auto-current/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/wt/agt-review-parent-auto-current/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/wt/agt-review-parent-auto-current/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/work/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/peteromallet/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/home/user/banodoco/.aws"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/.aws"},"access":"read","missing_path_behavior":"skip"}]},"network":"restricted"} --apply-seccomp-then-exec -- /bin/bash -lc git -C /home/user/banodoco/reigh-app show origin/main:src/tools/video-editor/lib/timeline-domain.ts | sed -n '840,882p'; git -C /home/user/banodoco/reigh-app show origin/main:src/tools/video-editor/commands/mediaCommands.ts | head -40; rg -n 'duration|DEFAULT' /home/user/banodoco/reigh-app/src/tools/video-editor/commands/*Media* /home/user/banodoco/reigh-app/src/tools/video-editor/commands/*media* | head -60; tail -3 portable-review.log; ps -eo pid,etime,args | rg 'pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_parent_auto_completion.py'
+      2       00:00 /bin/bash -lc git -C /home/user/banodoco/reigh-app show origin/main:src/tools/video-editor/lib/timeline-domain.ts | sed -n '840,882p'; git -C /home/user/banodoco/reigh-app show origin/main:src/tools/video-editor/commands/mediaCommands.ts | head -40; rg -n 'duration|DEFAULT' /home/user/banodoco/reigh-app/src/tools/video-editor/commands/*Media* /home/user/banodoco/reigh-app/src/tools/video-editor/commands/*media* | head -60; tail -3 portable-review.log; ps -eo pid,etime,args | rg 'pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_parent_auto_completion.py'
+     20       00:00 rg pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_parent_auto_completion.py
+
+exec
+/bin/bash -lc "git -C /home/user/banodoco/reigh-app show origin/main:src/tools/video-editor/commands/media.ts | sed -n '45,88p'; git -C /home/user/banodoco/reigh-app show origin/main:src/tools/video-editor/commands/media.ts | sed -n '115,167p'; git -C /home/user/banodoco/reigh-app show origin/main:src/tools/video-editor/commands/provisioned-assets.ts | head -30; rg -n 'estimateProvisionedAssetDuration' /home/user/banodoco/reigh-app/src/tools/video-editor/commands; git -C /home/user/banodoco/reigh-app rev-parse origin/main" in /home/user/work/wt/agt-review-parent-auto-current
+ succeeded in 130ms:
+  insertAtTop?: boolean;
+  clipSpanSeconds?: number | null;
+  /** Use the clip id allocated by the caller's compound mutation. */
+  clipId?: string;
+  /** Duplicate an existing clip using the normal ripple and metadata rules. */
+  afterClipId?: string;
+  removeClipId?: string;
+  /** Remove several clips as part of the same prepared-media mutation. */
+  removeClipIds?: string[];
+  /** Replace an existing clip while preserving its id/history identity. */
+  replaceClipId?: string;
+  /** Keep group membership/metadata in the same editor save as the media. */
+  pinnedShotGroupsOverride?: PinnedShotGroup[];
+};
+
+export type PlacePreparedMediaCommand = Omit<TimelineCommand<'place-prepared-media', PlacePreparedMediaPayload>, 'payload'> & {
+  payload: PlacePreparedMediaPayload;
+};
+
+const roundSeconds = (value: number): number => Math.round(value * 1000) / 1000;
+
+const getTrackForClip = (
+  data: TimelineData,
+  clipId: string,
+) => {
+  const trackId = data.meta[clipId]?.track;
+  return trackId ? data.tracks.find((track) => track.id === trackId) ?? null : null;
+};
+
+const getClipMediaType = (
+  data: TimelineData,
+  clip: TimelineClip,
+): 'image' | 'video' | 'audio' => {
+  const track = getTrackForClip(data, clip.id);
+  if (track?.kind === 'audio') {
+    return 'audio';
+  }
+
+  return clip.clipType === 'hold' ? 'image' : 'video';
+};
+
+const getVisualClipType = (
+  asset: TimelineProvisionedAsset,
+): 'hold' | 'media' => {
+    errors.push({
+      path: `${path}.mediaType`,
+      code: 'invalid_media_type',
+      message: 'asset.mediaType must be image, video, or audio.',
+    });
+  }
+
+  return errors;
+};
+
+export const buildAddMediaCommandEffect = (
+  currentData: TimelineData,
+  payload: AddMediaCommand['payload'],
+): TimelineCommandEffect => {
+  const track = currentData.tracks.find((candidate) => candidate.id === payload.trackId);
+  if (!track) {
+    throw new Error(`Track ${payload.trackId} does not exist.`);
+  }
+
+  const clipId = getNextClipId(currentData.meta);
+  const duration = estimateProvisionedAssetDuration(payload.asset);
+  const isManual = track.fit === 'manual';
+  const clipType = track.kind === 'audio'
+    ? 'media'
+    : getVisualClipType(payload.asset);
+  const nextMeta = track.kind === 'audio'
+    ? {
+        asset: payload.asset.assetKey,
+        track: payload.trackId,
+        clipType: 'media',
+        from: 0,
+        to: duration,
+        speed: 1,
+        volume: 1,
+      }
+    : payload.asset.mediaType === 'image'
+      ? {
+          asset: payload.asset.assetKey,
+          track: payload.trackId,
+          clipType,
+          hold: 5,
+          opacity: 1,
+          x: isManual ? 100 : undefined,
+          y: isManual ? 100 : undefined,
+          width: isManual ? 320 : undefined,
+          height: isManual ? 240 : undefined,
+        }
+      : {
+          asset: payload.asset.assetKey,
+          track: payload.trackId,
+          clipType,
+          from: 0,
+          to: duration,
+fatal: path 'src/tools/video-editor/commands/provisioned-assets.ts' does not exist in 'origin/main'
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/provisioning.ts:80:export const estimateProvisionedAssetDuration = (
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/media.ts:16:  estimateProvisionedAssetDuration,
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/media.ts:135:  const duration = estimateProvisionedAssetDuration(payload.asset);
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/media.ts:237:  nextClip.to = roundSeconds(estimateProvisionedAssetDuration(asset));
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/media.ts:566:    ?? estimateProvisionedAssetDuration(payload.asset);
+/home/user/banodoco/reigh-app/src/tools/video-editor/commands/index.ts:22:  estimateProvisionedAssetDuration,
+17e46de99b7cef52fe494de1703a9865a8d4be24
+
+exec
+/bin/bash -lc "git -C /home/user/banodoco/reigh-app show origin/main:src/tools/video-editor/commands/provisioning.ts | sed -n '72,98p'; git -C /home/user/banodoco/reigh-app show origin/main:supabase/functions/complete_task/placement.ts | sed -n '160,186p'; git diff --numstat 537c2ecd tl/agt-m2-parent-auto-completion-current; git status --porcelain" in /home/user/work/wt/agt-review-parent-auto-current
+ succeeded in 557ms:
+    default:
+      return 'image/png';
+  }
+};
+
+export const estimateProvisionedAssetDuration = (
+  asset: TimelineProvisionedAsset,
+): number => {
+  if (asset.mediaType === 'audio') {
+    return asset.durationSeconds ?? 10;
+  }
+
+  if (asset.mediaType === 'image') {
+    return 5;
+  }
+
+  return asset.durationSeconds ?? 5;
+};
+
+export const provisionRegisteredTimelineMedia = (
+  assetKey: string,
+  entry: AssetRegistryEntry | null | undefined,
+  fallbackMediaType?: TimelineProvisionedMediaType,
+): TimelineProvisionedAsset | null => {
+  const mediaType = inferMediaType(entry, assetKey, fallbackMediaType);
+  if (!mediaType) {
+    return null;
+  const timelineState = await loadTimelineState(supabaseAdmin, placementIntent.timeline_id);
+  const anchorClip = findClip(timelineState.config, placementIntent.anchor_clip_id);
+
+  let targetTrackId: string;
+  let targetAt: number;
+  let usedFallback = false;
+
+  if (anchorClip) {
+    if (!trackExists(timelineState.config, placementIntent.preferred_track_id)) {
+      return {
+        status: "skipped",
+        issue: buildPlacementIssue(
+          "placement_preferred_track_missing",
+          `Preferred track ${placementIntent.preferred_track_id} no longer exists on timeline ${placementIntent.timeline_id}.`,
+        ),
+      };
+    }
+
+    targetTrackId = placementIntent.preferred_track_id;
+    targetAt = anchorClip.at + getPairTimelineClipDuration(anchorClip, timelineState.registry);
+  } else if (trackExists(timelineState.config, placementIntent.fallback_track_id)) {
+    targetTrackId = placementIntent.fallback_track_id;
+    targetAt = placementIntent.fallback_at;
+    usedFallback = true;
+  } else {
+    return {
+      status: "skipped",
+88	13	astrid/sdk/timeline/native_auto_placement.py
+12	0	astrid/sdk/timeline/native_parent_media_commands.py
+168	0	tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+0	4	tests/editing_conformance/test_recipe_m2_parent_media.py
+192	0	tests/editing_conformance/test_recipe_parent_auto_completion.py
+
+codex
+The targeted regression run passed all 620 tests, and the original four positives also passed with their original xfail markers retained under `--runxfail`. I found no blocking defect in this bounded private change. I’ll record an APPROVE bounded verdict, with the public-pair, App, requester-lifecycle, transport, and rendering qualification gaps left open.
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-parent-auto-current.md <<'EOF'
+# Parent automatic completion: independent review
+
+**Verdict: APPROVE bounded.** No blocking implementation defect found in this private parent-completion follow-up. This approves neither public schema/client adoption nor automatic production/App cutover.
+
+Reviewed immutable Agent commit **0937d6fd867c13ec55691966a830a708fdd3b0d3**, tree **6c44598437dc4b05197fc72d0c37155358435d1b**, whose direct parent is **537c2ecd28f92b391c79e383e0e045fd71b3258f**. The review worktree itself starts at another integration commit; every execution below used an archive of the reviewed commit, never that newer working tree. Runtime was privately archived from **2c4ac180c2220bdad966bc01e95ad230e99ce26a** and normally generated from the complete reviewed Agent schema. PLAN.md, the absolute parent-completion design, and the implementation worker report were read first. No product source, integration worktree, shared dependencies, or git state was changed.
+
+## Findings
+
+- The complete schema is byte-identical to the parent: SHA256 **8a55a9fd84d6fc188e48f63976dacc1c27ea25c7747ea88e7eba7589974dd85a**, **54 definitions / 28 operations**. Public "'`runtime.lock.json` and `artifacts.json` are also byte-identical. No new operation, wire argument, policy DTO, journal, coordinator, or whole-parent replacement was introduced.
+- The two original positive functions (four parametrized cases) are AST-identical after excluding decorators. Their only test-file changes remove two strict xfail markers and their restoration comments. I also executed the original parent-version file, with those markers retained, using `--runxfail`: **4 passed, 81 deselected**. The worker'"'s retained pre-removal log reports the same checkpoint; my reconstruction independently verifies the unchanged expectations against the committed implementation.
+- "'`native_auto_placement.py:154` resolves parent policy once into ordinary `clip.add-media` v1, with exactly `{row, media}`. The builder requires explicit parent ownership, an explicit track input and a caller-provided raw clip ID. The selected existing parent lane is validated by the ordinary birth, including visual/active/output status and occurrence-lane exclusion. No owner or latest lane is inferred.
+- Present anchor uses its end and saved preferred lane; absent anchor uses the saved fallback lane/time; only absent saved time consults lane extent. Empty, boolean and deleted selected saved lanes refuse. Saved fallback reads no unrelated extent. Lane-end reads each parent'"'s clip track, plus timing of clips on the selected lane, so other-lane timing changes rebase while movement into the selected lane refuses.
+- The provisional query recorder is not accepted as authority. "'`native_parent_media_commands.py:41` independently observes each permitted supplemental read with `ctx.read` in the same recorder as birth. Required fps, source-window, target-track, occurrence-lane, registry, collection-order/membership and collision guards remain those of the existing handler. Supplemental fields are restricted to existing raw parent clips and `at/at_ms/track/hold/from/to/speed`. My probes verify each anchor timing field appears in both the submitted command and the actual record; unsupported scope/path, absent/born identity and unknown policy keys refuse.
+- `commands.py` verifies original claims before calling the handler and compares its complete capture afterward. `commit.py` executes against the immutable base and rebases the original plan; it never invokes the automatic builder on the latest head. My stale-anchor/extent probes confirm an explicitly rebuilt new capture differs while original replay refuses, with original command/record/head unchanged. Caller-supplied snapshots cannot freshen the original guards.
+- Completion image is always five seconds, including supplied duration; video defaults to five seconds, or uses explicit completed duration, with source window `0..duration`, speed 1 and verified-media bounds. It does not silently use the full media length. Existing refusal for default placement of a video shorter than five seconds remains; explicit supported duration succeeds. Parent source windows remain unsupported and guarded. These are the stated bounded policies, not new broad legacy timing compatibility claims.
+- `_end_frame`, `_kind`, `_birth`, `auto_place_shared` and `unplace_shared` are AST-identical to the parent. The occurrence completion body is unchanged after the parent dispatch/new parent-only keyword guard. Occurrence goldens and timing/fallback/read tests pass; shared four-second extent, collision and pool tests pass. Read-only comparison with App `origin/main` **17e46de99b7cef52fe494de1703a9865a8d4be24** confirms anchor/preferred versus missing-anchor/saved-fallback precedence and image-five/video-explicit-or-five insertion policy. No App source or public client was changed or qualified.
+- The exact completed five-field selection reaches ordinary Runtime media verification and registry binding. Real managed settlement tests pass even after newer-primary promotion. IDs are created/reserved once: real reload/reopen retry avoids semantic execution; undo restores the disjoint head; reusing the retired ID refuses; redo restores exact state. My additional occupied-ID probe also refuses.
+
+The optional extra read constraints are deliberately not proof that a command originated in an approved producer. Removing them or rebuilding a literal row is another request. Automatic adoption still needs durable requester approval binding the original owner, immutable basis, saved policy, reserved ID, exact pin and exact request bytes. This review does not authorize anonymous old-task recovery or silent conflict recapture.
+
+## Independent execution evidence
+
+All commands used reviewer-owned source archives/overlays and read-only shared Python dependencies; pytest caches and bytecode writes were disabled. No sockets/browser, full/full* suite, or test-service full request was used.
+
+| Execution | Result |
+| --- | --- |
+| Six targeted parent/occurrence/shared/schema files, exact commands in notes report | **620 passed**, 181.82 s, exit 0 |
+| Normally generated private Runtime pair: new completion file plus pristine S3 composition journey | **15 passed**, 29.86 s, exit 0 |
+| Own adversarial read/policy/guard/owner/source-window/ID/default probes | **24 passed**, 1.59 s, exit 0 |
+| Original parent-version four positives with retained markers and `--runxfail` | **4 passed / 81 deselected**, 0.94 s, exit 0 |
+| Normal Runtime generation, generation check, artifact manifest generation/check | All four exit 0 |
+| Touched-file Ruff; candidate-versus-parent `git diff --check` | Both exit 0 |
+
+The 15-case service run includes the final six image/video stale move, hold and target-lane-label controls. They require no provider acceptance, zero mutating SQL statements, identical SQL dump/head, and an unchanged **nonempty** CAS/staging/snapshot file-byte map. No synthetic accepted history, SQL write, patched embedded schema, baseline publisher or renderer supplies the success path. Native managed-output fixtures contain synthetic media bytes; this proves custody/selection and edit persistence, not decodability or render output. Owner-lane exclusion and lane kind/deletion/extent/membership changes are covered by conformance fixtures and my probes; the real stale lane authoring uses the existing `track.set(label)` command. Do not claim all those hypothetical lane edits have a public operation/service journey.
+
+The normally generated Runtime bundle embeds the complete identical Agent schema. Its SHA256 is **a694f3caf7efcc7c39fa4083742c845761eba9d254f9d2f85e4bb9f5f83a0013**. All **11** changed Runtime input/generated/manifest files and hashes exactly match the implementation worker'"'s recorded private pair. External reviewer pytest collection reports one harmless unknown-integration-marker warning in each external probe run; no test was skipped, disabled or weakened.
+
+## Remaining release gaps and next action
+
+1. Manager-controlled integration/revalidation against the actual intended tuple; this verdict names the candidate commit above, not the newer review-worktree head.
+2. Existing S3/public review/adoption holds: released Runtime/Agent generated contract/client pairing and public route/transport qualification remain open.
+3. Real App requester submission/outbox/lost-ack/restart/conflict handling and the registered automatic producer-attempt admission/approval chain remain unqualified. Bind the original request and require explicit approval for recapture; no implicit owner or anonymous coordinator.
+4. Browser/HTTP, renderer-off public journey, pixels/audio, owner films and macOS were not run here. Synthetic media/private overlays are not a public App or render cut.
+5. Full repository/make-check suites were intentionally not requested under this brief. Selected-track whole-row conservatism and existing short-video default refusal remain disclosed limitations, not newly solved requirements.
+
+Recommended action: accept this bounded follow-up for the manager's controlled integration step; keep every release/adoption hold until its separate qualification. No blocker and no decision deviation arose.
+
+Exact commands, logs, probe source and source hashes: "'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-parent-auto-current/notes/report.md`.
+EOF' in /home/user/work/wt/agt-review-parent-auto-current
+ succeeded in 0ms:
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-parent-auto-current/notes/report.md <<'EOF'
+# Independent read-only parent-completion review
+
+**APPROVE bounded**, with no blocking source defect found. Full findings and explicit adoption holds: "'`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-parent-auto-current.md`.
+
+## Exact source and environment
+
+- Candidate `tl/agt-m2-parent-auto-completion-current`: commit `0937d6fd867c13ec55691966a830a708fdd3b0d3`, tree `6c44598437dc4b05197fc72d0c37155358435d1b`.
+- Direct parent: `537c2ecd28f92b391c79e383e0e045fd71b3258f`.
+- Review worktree HEAD was `4ef1391c2c104d5d11b3a27265035c51be296045`, tree `afb2ed8506a99a088d7be3dbadaf593338d2fb5a`; that is NOT the tested source.
+- Test source came from `git archive` of the candidate, extracted only under this worker'"'s notes. Runtime was archived from "'`/home/user/work/runtime` at `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, also only under these notes. No other worker'"'s source/notes were written.
+- Agent schema SHA256 "'`8a55a9fd84d6fc188e48f63976dacc1c27ea25c7747ea88e7eba7589974dd85a`: byte-identical to the parent, 54 definitions and 28 operations.
+- Generated private Runtime bundle SHA256 `a694f3caf7efcc7c39fa4083742c845761eba9d254f9d2f85e4bb9f5f83a0013`; its edit-command resource equals the entire candidate JSON object.
+- Public Agent lock/manifest unchanged. Exact hashes and independent AST comparisons: `source-review-facts.json`. Exact normal private generated delta: `private-runtime-review-delta.json` (all 11 files/hashes equal the implementation worker'"'s pair).
+- Shared "'`/home/user/work/venv-agent` and `venv-runtime` used as read-only dependencies. No installations, symlinks, shared caches, git mutations, source changes, central/full suite requests, daemon, browser or socket.
+
+The temporary source archives and Runtime test sandbox were removed after verification. Retained logs, the original positive-test reconstruction and own probe source are review artifacts, not product tests or adoption evidence.
+
+For commands below:
+
+```sh
+N=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-parent-auto-current/notes
+P=/home/user/work/venv-agent/bin/python
+```
+
+## Commands and observed results
+
+The archives were extracted with Python `tarfile` using `filter='"'data'"'` from the exact bytes of:
+
+```sh
+git archive 0937d6fd867c13ec55691966a830a708fdd3b0d3
+git -C /home/user/work/runtime archive 2c4ac180c2220bdad966bc01e95ad230e99ce26a
+```
+
+Normal private generation: copied only `agent-source/astrid/core/timeline/schema/edit-command.schema.json` to `runtime-private/contract/schemas/edit-command.json`, then ran these exact commands with cwd `$N/runtime-private`, `PYTHONDONTWRITEBYTECODE=1`, and `PYTHONPATH=$N/runtime-private`:
+
+```sh
+/home/user/work/venv-runtime/bin/python generators/generate.py
+/home/user/work/venv-runtime/bin/python generators/generate.py --check
+/home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py
+/home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py --check
+```
+
+**All exit 0**, `private-generation-review.log`. Compared every tracked archived file with the generated private tree; all changes are the normal input/generated/manifest files, exactly matching the implementation worker'"'s recorded private delta. No generated-file hand editing or embedded-schema replacement.
+
+Targeted regression lane, cwd "'`$N/agent-source`:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_parent_auto_completion.py tests/editing_conformance/test_recipe_m2_parent_media.py tests/editing_conformance/test_recipe_auto_placement_reads.py tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/sdk/test_timeline_current_union_schema.py > ../portable-review.log 2>&1
+```
+
+**620 passed in 181.82 s**, exit 0. Covers original/new parent tests; occurrence saved policies, guard narrowness, timing defaults; shared four-second append/collision/pool behavior; full schema/frozen-floor checks. This is a bounded six-file targeted run, not a full suite.
+
+Real in-process service subset, cwd `$N/agent-source`:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_RUNTIME_CHECKOUT="$(dirname "$PWD")/runtime-private" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration --basetemp="$(dirname "$PWD")/tmp-runtime-review" tests/editing_conformance/test_commit_runtime_parent_auto_completion.py tests/editing_conformance/test_s3_reviewed_cohort_runtime.py > ../runtime-review.log 2>&1
+```
+
+**15 passed in 29.86 s**, exit 0. This includes all final six stale controls with the nonempty persisted-file map assertion. They assert no accept, zero mutating SQL, unchanged SQL dump/current document and unchanged CAS/staging/snapshot bytes. The other cases cover managed image/video settlement, disjoint params acceptance, unchanged opaque data, exact completed variant despite newer-primary promotion, actual reopen/reload/retry, undo, retired-ID refusal, redo, and pristine S3 init/occurrence/media/parent swap/word anchor/grouped inverse. New automatic cases fail if legacy publication or rendering is called. In-process services need no live sockets; no central service was needed under the targeted-test rule.
+
+Own adversarial probes, cwd `$N`:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/agent-source" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider review_adversarial.py > adversarial-review.log 2>&1
+```
+
+**24 passed in 1.59 s**, exit 0. Retained probe file checks actual same-record timing observations; no whole-parent authored write; no duplicate created IDs; unsupported extra read scopes/paths/absent or born identities; unknown envelope/args/intent/read policy fields; original guards remain unchanged and refuse while a fresh explicit rebuild changes timing; concurrent occurrence lane exclusion; parent source-window guards/refusal; occupied clip ID; short-video default refusal with explicit-duration success. One external-collection unknown `integration` marker warning; no skips or changed product assertions.
+
+Original positives independently reconstructed verbatim with `git show 537c2ecd:tests/editing_conformance/test_recipe_m2_parent_media.py` into `$N/original_parent_positives.py` (the retained strict xfail markers remain). Cwd `$N`:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/agent-source" /home/user/work/venv-agent/bin/python -m pytest -q -c agent-source/pyproject.toml -o addopts= -p no:cacheprovider --runxfail original_parent_positives.py -k completion_builder > original-positives-review.log 2>&1
+```
+
+**4 passed, 81 deselected in 0.94 s**, exit 0, one external marker warning. Independently checked function AST equality after removing decorators and confirmed original strict markers exist only in the parent version. The implementation worker'"'s earlier pre-removal log was also read; this is an independent reconstruction, not a claim to have observed its original chronology.
+
+Lint, cwd "'`$N`:
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache agent-source/astrid/sdk/timeline/native_auto_placement.py agent-source/astrid/sdk/timeline/native_parent_media_commands.py agent-source/tests/editing_conformance/test_recipe_parent_auto_completion.py agent-source/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py agent-source/tests/editing_conformance/test_recipe_m2_parent_media.py > ruff-review.log 2>&1
+```
+
+**All checks passed**, exit 0.
+
+Read-only repository checks, cwd `/home/user/work/wt/agt-review-parent-auto-current`:
+
+```sh
+git diff --check 537c2ecd tl/agt-m2-parent-auto-completion-current
+git diff --quiet 537c2ecd tl/agt-m2-parent-auto-completion-current -- astrid/core/timeline/schema/edit-command.schema.json runtime.lock.json artifacts.json
+git status --short
+```
+
+All exit 0; status clean. Source diff is only two product files and three test files (460 insertions / 17 deletions). No marker/assertion weakening. Further read-only comparison used App `origin/main` `17e46de99b7cef52fe494de1703a9865a8d4be24`, `supabase/functions/complete_task/placement.ts`, `src/tools/video-editor/commands/media.ts`, and `commands/provisioning.ts` for saved lane/fallback and image/video insertion defaults. No App execution or cutover is claimed.
+
+## Judgment, limitations and next steps
+
+No settled plan decision was changed, no source fix was needed, and no blocker arose. Resolving once to literal birth with independently recorded narrow reads is consistent with the existing recipe. The extra constraints cannot carry unknown policy keys; they also do not authenticate a producer'"'s approval. Removing optional constraints/rebuilding is a new request. Automatic adoption must bind owner, original immutable basis, saved policy, ID, exact media and bytes through the durable requester; no silent recapture of an in-flight conflict.
+
+Track-kind/deletion and owner/extent guard coverage includes changed-head conformance fixtures and reviewer probes; native stale service lane authoring is "'`track.set(label)`. Synthetic media tests prove real custody and persistence, not decodable media/pixels. Conservative whole-row selected-track reads and the old short-video default refusal remain disclosed limitations.
+
+Recommended next action: manager-controlled integration of the reviewed commit followed by qualification of the actual public/generated tuple and requester. Remaining gates: public Runtime/Agent/client pair; HTTP/transport; App submit/outbox/lost-ack/restart/conflict/cutover; registered automatic producer-attempt approval/admission and old-task recovery policy; rendering/pixels/audio/owner films; macOS; repository full/make-check suites. No full/full* was requested under this brief, and this report does not substitute for those gates. Private overlays/probes never constituted a public App cut.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-parent-auto-current/commit-msg <<'"'EOF'
+docs(timeline): review guarded parent automatic completion
+
+Approve the bounded private follow-up after independent source review,
+normal private Runtime generation, targeted conformance and adversarial checks.
+Record exact candidate identity, schema, commands and remaining adoption gaps.
+EOF
+python3 - <<'PY'
+from pathlib import Path
+import shutil
+notes=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-parent-auto-current/notes')
+for name in ('agent-source','runtime-private','tmp-runtime-review'):
+    shutil.rmtree(notes/name)
+PY
+git status --short" in /home/user/work/wt/agt-review-parent-auto-current
+ succeeded in 10338ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=root/'workers/agt-review-parent-auto-current'
+for path in (root/'design/agent-review-parent-auto-current.md',worker/'notes/report.md',worker/'commit-msg'):
+    assert path.is_file() and path.stat().st_size
+for name, expected in [('portable-review.log','620 passed'),('runtime-review.log','15 passed'),('adversarial-review.log','24 passed'),('original-positives-review.log','4 passed')]:
+    assert expected in (worker/'notes'/name).read_text()
+assert not any((worker/'notes'/name).exists() for name in ('agent-source','runtime-private','tmp-runtime-review'))
+(worker/'DONE').touch()
+print('Review/report/commit message verified; temporary overlays removed; DONE created.')
+PY" in /home/user/work/wt/agt-review-parent-auto-current
+ succeeded in 108ms:
+Review/report/commit message verified; temporary overlays removed; DONE created.
+
+codex
+**APPROVE bounded** for `0937d6fd`. No blocking defect found; schema unchanged at 54 definitions / 28 operations.
+
+- Targeted regression: **620 passed**
+- Private Runtime/S3: **15 passed**, including six zero-write stale controls
+- Own adversarial probes: **24 passed**
+- Original deferred positives: **4 passed**, assertions unchanged
+
+Exact commands, findings, and release gaps are in [the report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-parent-auto-current/notes/report.md).
+
+Public/App/requester lifecycle and rendering qualification remain open. No source changes or full suites. Commit message and `DONE` written.
+tokens used
+123,822
+**APPROVE bounded** for `0937d6fd`. No blocking defect found; schema unchanged at 54 definitions / 28 operations.
+
+- Targeted regression: **620 passed**
+- Private Runtime/S3: **15 passed**, including six zero-write stale controls
+- Own adversarial probes: **24 passed**
+- Original deferred positives: **4 passed**, assertions unchanged
+
+Exact commands, findings, and release gaps are in [the report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-parent-auto-current/notes/report.md).
+
+Public/App/requester lifecycle and rendering qualification remain open. No source changes or full suites. Commit message and `DONE` written.

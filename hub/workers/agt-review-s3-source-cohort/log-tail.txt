@@ -1,0 +1,400 @@
+runtime_protocol/contract_metadata.py
+packages/python/pyproject.toml
+packages/typescript/package.json
+packages/typescript/package-lock.json
+packages/python/astrid_runtime_client/__init__.py
+packages/python/astrid_runtime_client/generated.py
+packages/typescript/src/generated.ts
+runtime_protocol/schemas/timeline-commit-bundle.json
+wrote contract/artifacts.json: 75 artifacts, sha256:8c131e8ab29589b8dff566d61b9c6019c79872aa6b7ddb37832e0e19236981fa
+contract/artifacts.json is current
+....................................................................
+exec
+/bin/bash -lc "git diff 9cb10904 537c2ecd -- tests | rg '"'^'"\\+.*(xfail|skip|skipif|pytestmark|assert |pytest.raises)' | tail -25 && git diff 9cb10904 537c2ecd -- astrid | rg '"'^'"\\+.*(text_handler|carrier|requester|producer.action|normalize)' && git status --short" in /home/user/work/wt/agt-review-s3-source-cohort
+ exited 1 in 65ms:
++        assert head() == initial
++        assert service.create_timeline(project, 'film', idempotency_key='create-film', name='Main') == created
++        assert document['parent_revision']['payload'] == GOLDEN['app_parent']
++        assert service.get_project_parent_composition_revision(project, 'film', revision)['payload'] == GOLDEN['app_parent']
++        assert submit(Outbox(outbox.path).read()['in_flight'], recovered['init_key']) == initialized
++        assert undone['data']['canonical_document']['parent_revision']['payload'] == {
++        assert retired['revision_id'] == initial['revision_id'] and retired != initial
++            assert submit(original, 'init-film') == initialized
++        assert head() == retired
++            with pytest.raises(RuntimeErrorBase) as error:
++            assert error.value.details['reason'] == 'not_pristine' and head() == retired
++        with pytest.raises(RuntimeErrorBase):
++        assert head() == retired
++        assert redone['data']['canonical_document'] == document
++        assert len(service.list_timeline_commits(project, 'film', authorize=lambda: None)['items']) == 4
++        assert result.ok, result.error
++        assert (project, timeline, key) == ('project-1', 'main', 'selected-' + str(occurrence))
++        assert body['base_revision_id'] == 'parent-1'
++        assert body['base_publication_id'] == 'publication-1'
++        assert call['select'] == ('parent' if occurrence is None else 'occurrence:occ-1') + '/clip:picture-1'
++        assert call['op'] == ('clip.swap-media' if occurrence is None else 'occurrence.swap-media')
++        assert call['args'] == {'old_media': old, 'media': new}
++    assert len(transport.committed) == 2
++        assert not result.ok
++        assert result.error.code == 'validation_error'
+
+exec
+/bin/bash -lc 'tail -10 runtime-final.log && tail -5 current.log && git -C /home/user/work/runtime rev-parse HEAD' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes
+ succeeded in 30ms:
+........................................................................ [ 63%]
+..................................................................................... [ 58%]
+....................................................                     [100%]
+124 passed in 29.23s
+b748ae723b51c6d578ba7a393209ce37d6e2b0c3
+
+codex
+The current-behavior subset passed **124 tests** across native facades, history recovery, video unplace and CLI sheets. Both original fixture-import nodes still fail at `_binding_descriptor`, as reported.
+
+I also found a minor evidence discrepancy: checking the committed diff against `9cb10904` reports three extra blank lines at EOF. I’ll record it as a nonblocking hygiene finding; the review remains read-only.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+n=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes')
+print([str(p) for p in (n/'tmp-birth').glob('*')])
+PY
+" in /home/user/work/wt/agt-review-s3-source-cohort
+ succeeded in 41ms:
+['/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes/tmp-birth/birth-runtime0', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes/tmp-birth/birth-runtimecurrent']
+
+exec
+/bin/bash -lc "git log -5 --format='%H %s'" in /home/user/work/runtime
+ succeeded in 15ms:
+b748ae723b51c6d578ba7a393209ce37d6e2b0c3 Merge tl/rt-m2-shell-strict-json-fix
+ff9d5c17bc75fb12b3293690a8d9acd8eded0db2 fix(runtime): reject duplicate legacy JSON during shell repair
+129493b2aff614560d9b7ac2577957e799cf30ec Merge tl/rt-m2-connector-live-commit-integration
+0e49e0228f5977b5a8b2b17b7f017a91b40eaf2d fix(timeline): bootstrap genuinely empty shells without a parent head
+b26e922125362f2294dfdc23feb44b64adf19a58 test(runtime): prove operation handles over real commit transport
+
+exec
+/bin/bash -lc "git diff 9cb10904 537c2ecd -- tests | rg '"'^'"\\+.*(xfail|skip|skipif)'" in /home/user/work/wt/agt-review-s3-source-cohort
+ succeeded in 0ms:
++@pytest.mark.xfail(strict=True, reason='Parent auto-placement saved-policy/consumed timing integration is a separate follow-up')
++@pytest.mark.xfail(strict=True, reason='Parent auto-placement track API is a separate follow-up')
+
+exec
+/bin/bash -lc "tail -5 runtime-final.log && python3 - <<'PY'
+from pathlib import Path
+import subprocess,io,tarfile,json,hashlib
+n=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes')
+p=n/'tmp-birth/birth-runtime0'
+repo='/home/user/work/runtime'
+refs=['b748ae723b51c6d578ba7a393209ce37d6e2b0c3','129493b2aff614560d9b7ac2577957e799cf30ec']
+out={}
+for ref in refs:
+ data=subprocess.check_output(['git','-C',repo,'archive',ref]); changed=[]
+ with tarfile.open(fileobj=io.BytesIO(data)) as tar:
+  for member in tar:
+   if not member.isfile():continue
+   original=tar.extractfile(member).read(); local=(p/member.name).read_bytes()
+   if original"'!=local:changed.append(member.name)
+ out[ref]=changed
+(n/'"'birth-source-comparison.json').write_text(json.dumps(out,indent=2)+'\\n')
+print(json.dumps(out,indent=2))
+PY" in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes
+ succeeded in 388ms:
+........................................................................ [ 63%]
+..............................{
+  "b748ae723b51c6d578ba7a393209ce37d6e2b0c3": [
+    "contract/artifacts.json",
+    "contract/schemas/edit-command.json",
+    "packages/python/astrid_runtime_client/contract_metadata.py",
+    "packages/python/astrid_runtime_client/generated.py",
+    "packages/python/astrid_runtime_client/timeline_commit_types.py",
+    "packages/typescript/src/contract-metadata.ts",
+    "packages/typescript/src/generated.ts",
+    "packages/typescript/src/timeline-commit-types.ts",
+    "runtime_protocol/contract_metadata.py",
+    "runtime_protocol/schemas/timeline-commit-bundle.json",
+    "runtime_protocol/timeline_commit_types.py"
+  ],
+  "129493b2aff614560d9b7ac2577957e799cf30ec": [
+    "contract/artifacts.json",
+    "contract/schemas/edit-command.json",
+    "packages/python/astrid_runtime_client/contract_metadata.py",
+    "packages/python/astrid_runtime_client/generated.py",
+    "packages/python/astrid_runtime_client/timeline_commit_types.py",
+    "packages/typescript/src/contract-metadata.ts",
+    "packages/typescript/src/generated.ts",
+    "packages/typescript/src/timeline-commit-types.ts",
+    "runtime_protocol/contract_metadata.py",
+    "runtime_protocol/schemas/timeline-commit-bundle.json",
+    "runtime_protocol/timeline_commit_store.py",
+    "runtime_protocol/timeline_commit_types.py",
+    "tests/test_timeline_empty_shell_repair.py"
+  ]
+}
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+from pathlib import Path
+n=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes')
+r=subprocess.check_output(['git','diff','9cb10904','537c2ecd','--numstat','--','astrid']).decode()
+(n/'product-delta.tsv').write_text(r)
+rows=[line.split('\\t') for line in r.splitlines()]
+print({'authored_files':sum(p.endswith('.py') for _,_,p in rows), 'authored_added':sum(int(a) for a,b,p in rows if p.endswith('.py')), 'authored_removed':sum(int(b) for a,b,p in rows if p.endswith('.py')), 'schema_net':sum(int(a)-int(b) for a,b,p in rows if p.endswith('.json'))})
+PY" in /home/user/work/wt/agt-review-s3-source-cohort
+ succeeded in 153ms:
+{'authored_files': 18, 'authored_added': 945, 'authored_removed': 50, 'schema_net': 521}
+
+exec
+/bin/bash -lc 'tail -5 runtime-final.log' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes
+ succeeded in 65ms:
+........................................................................ [ 63%]
+...................................
+ succeeded in 213150ms:
+exec
+/bin/bash -lc "cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes/report.md <<'EOF'
+# Independent S3 source cohort review
+
+**Verdict: APPROVE bounded source.** No blocking product defect found in the reviewed source or targeted checks. This approves the native Agent source cohort only; publication, freeze, artifacts, consumer pins and integration decisions remain with the orchestrator. Pending coverage below remains separate.
+
+**Exact subject.** Agent "'`537c2ecd28f92b391c79e383e0e045fd71b3258f`, branch `tl/agt-m2-s3-reviewed-source-compose`, tree `d291cf421e837b33e88132c3ac0760ad6812eda3`; comparison base `9cb1090458428fb09067e359be92cdbb6608a206`. My assigned review worktree was at `ce363f6d6d60e504dbd4d79803c2d6299f648ade`, so all execution used a private `git archive` of the subject, never that different worktree'"'s source. "'`audit_source.py` independently compared every archived tracked file with its git blob and checked approved schema slices directly against their actual source commits.
+
+Canonical schema `astrid/core/timeline/schema/edit-command.schema.json`: raw SHA256 **`8a55a9fd84d6fc188e48f63976dacc1c27ea25c7747ea88e7eba7589974dd85a`**, **54 definitions / 28 operations**. Complete frozen S2 is **48/22**, SHA256 `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`. All original definitions remain; all 22 operation clauses remain exactly equal. The six added definitions are `AssembledTargetArgs`, `ClipAddMediaArgs`, `ClipAnchorArgs`, `OccurrenceCreateArgs`, `TimelineInitArgs`, `WordAnchor`. The six operations are `timeline.assembled-target`, `clip.add-media`, `timeline.init`, `clip.anchor`, `occurrence.create`, `clip.swap-media`. Each added argument envelope is closed. Existing-definition changes are the additive parent ownership enum and approved `ClipSetArgs` description, plus the operation clauses. Removing those reviewed changes reproduces complete frozen S2. Source slices match actual `905cdcfa`, `487ca1e0`, `9f474fec`, `206f40fe`, `7afcd2da`. **55 is an incorrect estimate:** approved parent swap reuses `OccurrenceSwapMediaArgs`.
+
+**The three joint fixes.**
+
+1. `inverse.py:127,141,379` passes the original accepted records into `coalesce(..., cache_stages=...)`. It keeps `created`, selections/order and `AcceptedRecords` boundary access needed by first-shot birth plus child insertion. The earlier `9ccf10ec` synthetic write-only records would lose that metadata. `_root_inverse.py:11` still requires authenticated record equality, reconstructs each cache stage from accepted before/after boundaries, and guards the final roots. Only accepted parent word-cache `at`/`hold` writes are staged. No blanket cache exemption or new numeric normalization was introduced; existing numeric equality is unchanged. Portable grouped tests, the pristine service chain and independent explicit `at`/`hold` no-op and ABA probes pass.
+2. `commit.py:407` restores word transcript inputs only for a pin in the reversing accepted clip root, together with that transcript'"'s media in one of the same provider-loaded accepted boundary closures. The provider obtains these via scoped history ancestry and "'`_load`, before calling `_hydrate`; request args cannot supply records or closure images. The existing exact pin, content digest, version, project and transcript/media identity checks and Runtime source reads remain. A caller choice or latest transcript alone does not grant restoration authority. My real-service fault-injection probe rejects missing pin, missing media, a pin/media pair split between closures, caller-choice-only authority, foreign project, and changed content digest, with identical database dumps after each refusal; the untouched redo then completes and the original restart/retry assertions pass. These are internal boundary fault injections over real accepted history, not six claimed external exploits.
+3. `inverse.py:267` scans BOTH raw parent and `parent.config` declared asset dependents, replacing their clip mirrors with authoritative raw clips during reversal. It retains occurrence config and shot-payload checks. The three original `test_created_parent_asset_with_surviving_declared_dependent_refuses_undo[asset/asset_ref/owner_ref]` controls pass unchanged. Their complete test-function ASTs match reviewed `b5cfce50`; none of their refusal or atomicity assertions was dropped. Parent swap'"'s raw-clip dependent positive/negative tests also pass.
+
+"'`commit.py:164` retains both authenticated new-root replay via `Recording.create_entity(..., restoring=True)` and `restoration_orders(..., only=record)`/`arrange`, then compares the reconstructed accepted document. This preserves the birth compiler marker and historical insertion order together. Root absence, occupied/retired identity refusal, project-wide shot reservation and authenticated redo remain guarded. Normal-generated birth tests pass separately. The duplicate implementation remains byte-identical to base, including factory-derived `stable_deep_link` and `output_identity`.
+
+The mandatory joint test is `test_s3_reviewed_cohort_runtime.py::test_init_occurrence_media_parent_swap_word_grouped_inverse_reload_restart`: actual pristine bootstrap → init → first occurrence/shot/internal → child track/video → parent add/swap/delete → stable SECOND `again` word ID and exact transcript pin → whole-group undo/redo → immutable reload/restart/exact retries. It asserts literal original and final canonical documents, not just success codes. Referenced birth undo refuses without writes. It also passes inside my additional fault-injection probe.
+
+**All product deltas read against `9cb10904`.** Nineteen product paths total: schema plus 18 Python files; authored Python +945/-50 (net +895), schema net +521. `product-delta.tsv` records exact per-file counts.
+
+| Paths (under `astrid/sdk/` unless stated) | Reviewed change |
+| --- | --- |
+| `../core/timeline/schema/edit-command.schema.json` | Complete additive schema described above |
+| `remote.py`, `timeline_media_replacement.py` | Exact selected-media/head-pair native swap adapter; existing digest adapter remains during consumer migration |
+| `timeline/__init__.py`, `timeline/native_parent_media_commands.py` | Exported bounded capture builders; guarded parent media birth and explicit ordered replacement |
+| `timeline/native_initialize.py`, `timeline/native_occurrence_create.py` | Pristine-only initialization; reserved first semantic roots and current quantizer |
+| `timeline/native_word_anchor.py`, `timeline/_timing_evaluators.py` | Authored stable word choice/pin, bounded compiler adapter and half-open occurrence bounds; current timing helpers retained |
+| `timeline/native_occurrence_media_commands.py`, `timeline/_clip_scalar_commands.py` | Parent swap shares the occurrence recipe; raw windows/transitions preserved; only asset changes |
+| `timeline/_command_state.py`, `timeline/_collections.py` | Guarded parent registry aliases, shape observations and leaf writes; no relocation of malformed/opaque registries |
+| `timeline/_delete_commands.py` | Known child transition shapes no longer block unrelated parent delete; unknown reference-bearing shapes still refuse |
+| `timeline/_recording.py`, `timeline/_root_inverse.py`, `timeline/inverse.py`, `timeline/commit.py` | Accepted cache/root/pin/dependent composition described above |
+
+Producer implementation, scalar/PARAM handler, selected-schema and producer runtime controls, duplicate implementation, public `runtime.lock.json` and `artifacts.json` are byte-identical to base. Changed product paths contain no imported text handler/carrier map/requester implementation or producer-action cutover. No current App/public pair is claimed. Original occurrence-media test functions remain unchanged; its fixture adds defaulted shared hooks for the parent swap reuse and real source bytes, without deleting expectations. The timing-retained-input wrapper only forwards the new hydration keywords. Closed-root inventory and frozen-schema byte-count tests were adjusted for the newly public cohort while retaining invalid-shape and complete frozen-S2 containment checks.
+
+**Private Runtime.** `prepare_sources.py` archives immutable Runtime **`2c4ac180c2220bdad966bc01e95ad230e99ce26a`**, copies the complete subject schema to ordinary `contract/schemas/edit-command.json`, runs both normal generators and their checks, and compares every tracked Runtime file to that immutable source. `private-runtime-delta.json` contains exactly the schema input, generated types/clients/metadata/bundle and manifest: no Runtime product-source rewrite. Manifest reports 75 artifacts, `sha256:8c131e8ab29589b8dff566d61b9c6019c79872aa6b7ddb37832e0e19236981fa`. Historical word and parent fixtures use immutable `80973d34ae10e498d7213c30287012c9876f4b1a` and `b2a1d9fd82121a5509769531a2e91aece97d78b9` respectively. These seed through the actual historical APIs, then reopen current private Runtime; no fabricated history or database setup override. The additional self-generating birth fixture'"'s non-generated bytes match Runtime **"'`b748ae723b51c6d578ba7a393209ce37d6e2b0c3`**, verified in `birth-source-comparison.json`.
+
+**Commands and independent results.** All pytest selections below are targeted; these service tests call in-process RuntimeService and use no localhost/browser/live sockets. No full/full* or central full request. Counts overlap and are not unique-behavior totals.
+
+```sh
+N=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes
+P=/home/user/work/venv-agent/bin/python
+cd "$N/candidate"
+export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD"
+python3 "$N/prepare_sources.py"
+# Normal commands inside private runtime-s2, with PYTHONPATH set to that private tree:
+/home/user/work/venv-runtime/bin/python generators/generate.py
+/home/user/work/venv-runtime/bin/python generators/generate.py --check
+/home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py
+/home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py --check
+```
+
+Preparation and all four normal commands: **exit 0**, `private-generation.log`. Independent source/schema/AST audit: `PYTHONDONTWRITEBYTECODE=1 python3 "$N/audit_source.py"`, **exit 0**, `source-audit.json`/`.log`. It preserves 93 complete reviewed test-function ASTs across producer insertion, parent media, native word, grouped cache, occurrence birth and parent swap; this includes all original negative assertions and inherited strict xfail decorators.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q --basetemp="$N/tmp-portable" '"\\
+ tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timeline_composed_schema.py \\
+ tests/editing_conformance/test_pristine_initialize.py tests/editing_conformance/test_recipe_occurrence_create.py \\
+ tests/editing_conformance/test_recorded_graph_roots.py tests/editing_conformance/test_grouped_clip_cache_inverse.py \\
+ tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recipe_m2_parent_media.py \\
+ tests/editing_conformance/test_recipe_parent_media.py tests/editing_conformance/test_native_word_anchor_vectors.py \\
+ tests/sdk/test_timeline_pristine_initialize_provider.py tests/editing_conformance/test_recipe_occurrence_duplicate.py \\
+ tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py \\
+ tests/editing_conformance/test_recipe_clip_delete.py tests/test_timeline_clip_replacement.py \\
+ tests/editing_conformance/test_producer_insertion.py
+"'```
+
+**659 passed / 4 existing strict xfailed, 280.40s, exit 0**, `portable.log`. This includes all files in the reported final 249-test affected inverse lane, all 30 schema controls and the three repaired declared-dependent refusals.
+
+```sh
+export ASTRID_RUNTIME_CHECKOUT="$N/runtime-s2"
+export ASTRID_WORD_ANCHOR_SEED_RUNTIME="$N/historical-word"
+export ASTRID_PARENT_MEDIA_SEED_RUNTIME="$N/historical-parent"
+"$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration --runxfail '"\\
+ --basetemp=\""'$N/tmp-runtime-final" '"\\
+ tests/editing_conformance/test_commit_runtime_parent_media_swap.py \\
+ tests/editing_conformance/test_next_command_cohort_runtime.py \\
+ tests/editing_conformance/test_s3_reviewed_cohort_runtime.py \\
+ tests/sdk/test_timeline_selected_schema_runtime.py tests/sdk/test_timeline_producer_guard_runtime.py \\
+ tests/editing_conformance/test_native_word_anchor.py
+"'```
+
+RUNTIME_RESULT_PENDING
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime "$P" -m pytest -o addopts= -p no:cacheprovider '"\\
+ -q -m integration --basetemp=\""'$N/tmp-birth" tests/editing_conformance/test_commit_runtime_occurrence_create.py
+```
+
+**2 passed, 14.69s, exit 0**, `birth.log`; normal private schema and manifest generation/check inside the original fixture.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q --basetemp="$N/tmp-probes" ../review_probes.py
+```
+
+**5 passed / 5 unknown-marker warnings, 17.00s, exit 0**, `probes.log`. The external probe file runs outside the main test configuration, hence the marker-registration warnings; original main-suite tests run separately above. Four explicit authored cache-write cases and one complete service lifecycle containing six atomic fault-injection refusals plus healthy redo. For this invocation only `ASTRID_RUNTIME_CHECKOUT` was set, to the absolute private path.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q --basetemp="$N/tmp-current" '"\\
+ tests/sdk/test_native_timeline_facades.py tests/sdk/test_timeline_checkout_history.py \\
+ tests/sdk/test_timeline_checkout_restore_recovery.py tests/editing_conformance/test_recipe_m2_video_unplace.py \\
+ tests/packs/timeline/test_cli_native_sheet.py
+"'```
+
+**124 passed, 29.23s, exit 0**, `current.log`.
+
+```sh
+"$P" -m pytest -o addopts= -p no:cacheprovider -q -m integration '"\\
+ --basetemp=\""'$N/tmp-held-imports" tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+"$P" scripts/artifact_manifest.py --check
+git -C /home/user/work/wt/agt-review-s3-source-cohort diff --check 9cb10904 537c2ecd
+```
+
+Original manifest-inverse nodes: **2 failed, 0.60s, exit 1**, `held-imports.log`, both at unchanged line 26 importing retired Runtime `_binding_descriptor`, before Agent execution. Agent manifest: **exit 0**, `agent-manifest.log`. Committed-diff whitespace: **exit 2**, three added blank lines at EOF in `astrid/sdk/timeline/native_word_anchor.py:318`, `tests/editing_conformance/native_word_anchor_fixture.py:215`, `tests/editing_conformance/test_recipe_occurrence_create.py:179`. This is a nonblocking hygiene discrepancy with the candidate'"'s reported whitespace green; a clean-worktree "'`git diff --check` would not inspect the committed patch. No source change made to address it.
+
+Initial service invocation used the SAME six-file selection as the final service command but `--basetemp="$N/tmp-runtime"` and relative `ASTRID_RUNTIME_CHECKOUT=../runtime-s2`, `ASTRID_WORD_ANCHOR_SEED_RUNTIME=../historical-word`, `ASTRID_PARENT_MEDIA_SEED_RUNTIME=../historical-parent`. It returned **50 passed / 63 setup errors, 186.64s, exit 1**, `runtime.log`: the historical subprocess changes cwd, making the relative seed path invalid (`ModuleNotFoundError: runtime_protocol`). I corrected the invocation to absolute paths and reran; no source/fixture expectation was changed.
+
+**Pending coverage and limits.** The candidate report'"'s overlapping 565 portable, 249 inverse, 142 real-service plus two fixture failures, and 59 final-service plus two birth results are prior worker evidence, not counts I add to mine. My targeted runs above independently cover the affected inverse files, mandatory pristine chain, current retained schema/producer guards and original birth controls; I did not rerun its whole 1,173-test neighbor selection or all 142 original service positives.
+
+The two unchanged manifest-inverse fixture requirements remain unqualified by those nodes. The four parent-auto positives remain strict HELD (three parameterizations of "'`test_completion_builder_places_a_parent_clip_after_the_anchor_or_at_the_track_end`, plus `test_completion_builder_needs_a_parent_track_and_matching_ownership`), exactly as in the reviewed parent, for the separate worker. No new xfail/skip or deleted behavior expectation was introduced by composition. No full suite, HTTP transport, browser/App journey, public client pair, requester/producer-action cutover, legacy writer retirement, renderer/pixel/audio parity, owner film or macOS qualification is claimed.
+
+**Decisions and next steps.** Retained the settled 54/28 schema and reviewed closed source rather than treating the 55 estimate as a missing feature. Tested immutable archives because the review worktree head differs. No policy or architecture decision was changed. No blocker for this bounded review. The orchestrator may use this source approval for its next gate, keep the known parent-auto/fixture work separate, and decide whether to remove the three EOF blanks before a later qualified consumer/release step. No freeze/publication/merge was performed or authorized by this report.
+
+All outputs are under this worker'"'s notes and the requested design report. Shared dependencies were read-only; bytecode and pytest caches were disabled. Private archives and test realms are removed after evidence collection. The assigned worktree has no source changes; no git mutation, push or dependency installation occurred.
+EOF" in /home/user/work/wt/agt-review-s3-source-cohort
+ succeeded in 142ms:
+exec
+/bin/bash -lc 'tail -8 runtime-final.log && wc -l report.md && du -sh tmp-*' in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes
+ succeeded in 137ms:
+........................................................................ [ 63%]
+.........................................                                [100%]
+113 passed in 211.12s (0:03:31)
+123 report.md
+8.7M	tmp-birth
+4.0K	tmp-current
+64K	tmp-held-imports
+144K	tmp-portable
+1.2M	tmp-probes
+4.0K	tmp-runtime
+4.0K	tmp-runtime-final
+
+codex
+The corrected service run passed **113 tests**, including the pristine joint lifecycle, native word controls, parent swap, retained schema and producer guards. The separate normally generated birth tests passed **2/2**. I’m finalizing a bounded source approval, with the known coverage gaps and whitespace finding recorded separately.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+n=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes')
+p=n/'report.md'
+s=p.read_text().replace('RUNTIME_RESULT_PENDING', '**113 passed, 211.12s, exit 0**, "'`runtime-final.log`. Includes the reported final 59-test service selection plus all 54 native-word cases. `--runxfail` deliberately executes the existing producer positive against the private successor instead of crediting its older-public-pin expected-failure marker.'"')
+p.write_text(s)
+design=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-s3-source-cohort.md')
+design.write_text('''# Independent S3 source cohort review
+
+**APPROVE bounded source** — Agent "'`537c2ecd28f92b391c79e383e0e045fd71b3258f`, tree `d291cf421e837b33e88132c3ac0760ad6812eda3`, against `9cb1090458428fb09067e359be92cdbb6608a206`. No blocking product defect found. This is a source review, not public freeze/artifact/merge or current App/client qualification.
+
+Canonical raw schema SHA256 `8a55a9fd84d6fc188e48f63976dacc1c27ea25c7747ea88e7eba7589974dd85a`: **54 definitions / 28 operations**. Complete S2 48/22 survives with every original operation clause unchanged. Exact additions match actual approved source commits; all new argument envelopes are closed. The estimate of 55 was wrong because parent swap reuses `OccurrenceSwapMediaArgs`. Producer, schema_source/current guards, duplicate factory fields, public lock and artifacts remain intact.
+
+The three join fixes hold: cache coalescing preserves accepted record metadata and boundary/order proofs; restored word hydration requires the exact pin/media pair in the same authenticated accepted closure; parent inverse asset removal checks both declared parent.config dependents and authoritative raw parent clips. Root birth, never-recycle reservations, authenticated redo and restoration_orders/arrange are preserved. No broad cache exemption, numeric normalization, opaque rewrite, imported text/carrier/requester implementation or new weakened expectation found.
+
+Independent targeted results (overlapping): **659 passed / 4 existing strict xfailed** portable/schema/inverse; **113 passed** real service/native word/current retained schema/producer; **124 passed** current facade/history/video/CLI; **2 passed** normally generated birth; **5 passed** additional review probes. The mandatory real pristine init → occurrence/shot/internal → child track/video → parent add/swap/delete → SECOND same-echo word ID+pin → grouped undo/redo/reload/restart passed. Six injected restoration-authority faults refused atomically before healthy redo; explicit authored at/hold no-op and ABA writes still refuse undo.
+
+Private Runtime was normally generated from immutable `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, complete subject schema, normal generated artifacts and manifest/check only. All non-generated Runtime source stayed unchanged. No shared dependency writes or full/full* request.
+
+Known pending coverage remains separate: four original parent-auto positives stay strict HELD for the separate worker; two unchanged manifest-inverse nodes still fail importing retired `_binding_descriptor` before Agent execution (independently reproduced). No App/browser/HTTP/public-client/requester/owner-film/macOS gate is claimed. Initial relative historical-source paths caused 63 setup errors in my first service invocation; the corrected absolute-path run passed all 113 without a source change.
+
+Nonblocking hygiene discrepancy: `git diff --check 9cb10904 537c2ecd` exits 2 for extra blank lines at EOF in `native_word_anchor.py:318`, `native_word_anchor_fixture.py:215`, `test_recipe_occurrence_create.py:179`. The candidate'"'s reported clean-worktree check does not prove whitespace cleanliness of the committed patch. No source edits made.
+
+[Detailed report: exact commands, results, product deltas, source/schema provenance, pending coverage and next steps](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes/report.md).
+
+The orchestrator may use this bounded source approval for its next gate and decide whether to remove the three EOF blanks. No freeze, publication, merge or git mutation was performed. Review worktree source remains unchanged.
+''')
+for name in ('candidate','runtime-s2','historical-word','historical-parent',
+             'tmp-birth','tmp-current','tmp-held-imports','tmp-portable','tmp-probes','tmp-runtime','tmp-runtime-final'):
+    target=n/name
+    if target.exists():shutil.rmtree(target)
+worker=n.parent
+(worker/'commit-msg').write_text('docs(timeline): record independent S3 source cohort review\\n\\nApprove the bounded native source cohort with exact schema and targeted\\nservice evidence. Record held coverage and the committed whitespace finding.\\n')
+print(design)
+print(p)
+print('Private source archives and test realms removed.')
+PY" in /home/user/work/wt/agt-review-s3-source-cohort
+exec
+/bin/bash -lc 'git status --short && git rev-parse HEAD && git rev-parse 537c2ecd''^{tree}' in /home/user/work/wt/agt-review-s3-source-cohort
+ succeeded in 576ms:
+ce363f6d6d60e504dbd4d79803c2d6299f648ade
+d291cf421e837b33e88132c3ac0760ad6812eda3
+
+ succeeded in 14404ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-s3-source-cohort.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes/report.md
+Private source archives and test realms removed.
+
+exec
+/bin/bash -lc "rg -n 'PENDING|113 passed|Verdict' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes/report.md && ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes" in /home/user/work/wt/agt-review-s3-source-cohort
+ succeeded in 203ms:
+3:**Verdict: APPROVE bounded source.** No blocking product defect found in the reviewed source or targeted checks. This approves the native Agent source cohort only; publication, freeze, artifacts, consumer pins and integration decisions remain with the orchestrator. Pending coverage below remains separate.
+82:**113 passed, 211.12s, exit 0**, `runtime-final.log`. Includes the reported final 59-test service selection plus all 54 native-word cases. `--runxfail` deliberately executes the existing producer positive against the private successor instead of crediting its older-public-pin expected-failure marker.
+total 536
+drwxr-xr-x 2 root root   4096 Oct 20 13:15 .
+drwxr-xr-x 3 root root   4096 Oct 20 13:15 ..
+-rw-r--r-- 1 root root     26 Oct 20 13:10 agent-manifest.log
+-rw-r--r-- 1 root root   6155 Oct 20 13:09 audit_source.py
+-rw-r--r-- 1 root root   1351 Oct 20 13:12 birth-source-comparison.json
+-rw-r--r-- 1 root root     99 Oct 20 13:09 birth.log
+-rw-r--r-- 1 root root    181 Oct 20 13:10 current.log
+-rw-r--r-- 1 root root   3386 Oct 20 13:09 held-imports.log
+-rw-r--r-- 1 root root    843 Oct 20 13:09 portable.log
+-rw-r--r-- 1 root root   2095 Oct 20 13:04 prepare_sources.py
+-rw-r--r-- 1 root root    741 Oct 20 13:04 private-generation.log
+-rw-r--r-- 1 root root   1302 Oct 20 13:04 private-runtime-delta.json
+-rw-r--r-- 1 root root   2828 Oct 20 13:08 probes.log
+-rw-r--r-- 1 root root    847 Oct 20 13:12 product-delta.tsv
+-rw-r--r-- 1 root root  17681 Oct 20 13:14 report.md
+-rw-r--r-- 1 root root   5631 Oct 20 13:07 review_probes.py
+-rw-r--r-- 1 root root    192 Oct 20 13:12 runtime-final.log
+-rw-r--r-- 1 root root 441216 Oct 20 13:08 runtime.log
+-rw-r--r-- 1 root root   3136 Oct 20 13:09 source-audit.json
+-rw-r--r-- 1 root root   5625 Oct 20 13:09 source-audit.log
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+w=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort')
+assert (w/'commit-msg').is_file()
+assert 'RUNTIME_RESULT_PENDING' not in (w/'notes/report.md').read_text()
+(w/'DONE').touch()
+print('DONE created; review reports and commit message are complete.')
+PY" in /home/user/work/wt/agt-review-s3-source-cohort
+ succeeded in 27ms:
+DONE created; review reports and commit message are complete.
+
+codex
+**APPROVE bounded source** `537c2ecd`; no blocking product defect found.
+
+Targeted results: 659 passed / 4 existing xfails; 113 service, 124 current-behavior, 2 birth and 5 review-probe tests passed. Two unchanged fixture-import failures remain. Three EOF whitespace issues are nonblocking.
+
+[Verdict](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-s3-source-cohort.md) · [Detailed report and exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes/report.md)
+
+Source unchanged; commit-msg and DONE written. Public freeze/merge qualification remains separate.
+tokens used
+184,484
+**APPROVE bounded source** `537c2ecd`; no blocking product defect found.
+
+Targeted results: 659 passed / 4 existing xfails; 113 service, 124 current-behavior, 2 birth and 5 review-probe tests passed. Two unchanged fixture-import failures remain. Three EOF whitespace issues are nonblocking.
+
+[Verdict](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-s3-source-cohort.md) · [Detailed report and exact commands](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-s3-source-cohort/notes/report.md)
+
+Source unchanged; commit-msg and DONE written. Public freeze/merge qualification remains separate.

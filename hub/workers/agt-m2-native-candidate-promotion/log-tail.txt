@@ -1,0 +1,400 @@
+373:            manifests = self.conn.execute("SELECT DISTINCT json_extract(p.commit_manifest_json, '$.media'), "
+388:                    "media": document["dependency_manifest"]["media"], "documents": document["dependency_manifest"]["documents"]}
+409:        expected += [("media", p["media_id"], p["content_digest"]) for p in manifest["media"]]
+476:                            or not isinstance(item.get("item_id", item.get("id")), str) or not item.get("media_id")
+500:        media = manifest["media"]
+501:        if media != sorted(media, key=lambda item: item["media_id"]) or len({m["media_id"] for m in media}) != len(media):
+503:        for pin in media:
+504:            if not _DIGEST.fullmatch(pin["media_id"]) or pin["content_digest"] != pin["media_id"]:
+506:            row = self.conn.execute("SELECT o.size FROM objects o JOIN project_objects p ON p.digest=o.digest "
+507:                                    "WHERE p.project_id=? AND p.relation='managed' AND o.digest=?", (project_id, pin["media_id"][7:])).fetchone()
+511:            data = ContentAddressedStore(self.store.cas_root).read(pin["media_id"][7:])
+512:            if len(data) != row["size"] or "sha256:" + hashlib.sha256(data).hexdigest() != pin["media_id"]:
+514:        payload_media = set()
+518:                    if key in {"media_id", "object_id"} and isinstance(child, str):
+521:                            payload_media.add(normalized)
+528:        if not payload_media <= {m["media_id"] for m in media}:
+529:            reject("invalid_closure", "unaccounted media", status=422)
+737:        from .timeline_commit_port import verify_retained_text_object, verify_text_object
+752:            media = self.conn.execute("SELECT size, media_type FROM objects WHERE digest=?", (row["media_digest"],)).fetchone()
+753:            if media is None:
+754:                reject("dependency_unavailable", "bound text media is missing")
+755:            current = {"kind": row["kind"], "slot": row["slot"], "media_id": "sha256:" + row["media_digest"],
+756:                       "content_hash": "sha256:" + row["media_digest"], "byte_size": media["size"], "mime_type": media["media_type"]}
+757:        fields = ("kind", "slot", "media_id", "content_hash", "byte_size", "mime_type")
+766:            selection = {"object_id": descriptor.get("media_id"), "digest": descriptor.get("content_hash"),
+767:                         "size": descriptor.get("byte_size"), "media_type": descriptor.get("mime_type")}
+771:            if selection["media_type"] == "text/plain" and row is not None:
+    def _selected_project_media(self, project_id, selection):
+        """Reconstruct one record from managed authority; caller owns the mutex.
+
+        This is also called within acceptance's BEGIN IMMEDIATE, never through
+        a cached catalog or a mutable primary-variant lookup. No CAS bytes or
+        locations cross the semantic port.
+        """
+        project = self.store.get_project(project_id)
+        if project["id"] != project_id or project["realm_id"] != self.realm["id"]:
+            raise AuthorizationError("selected media project is outside the request realm")
+        row = self.store.conn.execute(
+            "SELECT g.type, g.status, g.source_task_id, g.metadata_json AS generation_metadata, "
+            "v.variant_type, v.metadata_json AS variant_metadata, o.digest AS object_digest, o.media_type, o.size, o.original_name "
+            "FROM generations g JOIN generation_variants v ON v.generation_id=g.id "
+            "JOIN objects o ON o.digest=v.object_id "
+            "JOIN project_objects po ON po.digest=o.digest AND po.project_id=g.project_id AND po.relation='managed' "
+            "WHERE g.project_id=? AND g.id=? AND v.id=? AND (? IS NULL OR o.digest=?)",
+            (project_id, selection["generation_id"], selection["variant_id"],
+             selection.get("object_id"), selection.get("object_id", "")[7:]),
+        ).fetchone()
+        if row is None:
+            raise NotFoundError("selected media is not a managed project generation/variant/object")
+        if row["status"] != "completed":
+            raise ConflictError("selected media generation is not completed")
+        try:
+            generation_metadata = json.loads(row["generation_metadata"])
+            variant_metadata = json.loads(row["variant_metadata"])
+            if not isinstance(generation_metadata, dict) or not isinstance(variant_metadata, dict):
+                raise ValueError("metadata must be objects")
+            params = generation_metadata.get("params", {})
+            if not isinstance(params, dict):
+
+exec
+/bin/bash -lc "sed -n '270,294p' /home/user/work/runtime/runtime_protocol/timeline_commit_store.py && sed -n '500,516p' /home/user/work/runtime/runtime_protocol/timeline_commit_store.py && sed -n '336,355p' /home/user/work/runtime/runtime_protocol/timeline_commit_store.py" in /home/user/work/wt/agt-m2-native-candidate-promotion
+ succeeded in 23ms:
+    def revision_closure(self, project_id, timeline_id, revision_id):
+        with self.store._mutex:
+            self._membership(project_id, timeline_id)
+            parent = self.conn.execute("SELECT * FROM parent_composition_revisions WHERE id=? AND project_id=? AND timeline_id=?",
+                                       (revision_id, project_id, timeline_id)).fetchone()
+            if parent is None:
+                reject("history_unavailable")
+            if parent["commit_manifest_json"] is None:
+                from .cas import ContentAddressedStore
+                from .timeline_commit_baseline import verify_revision_source
+                document = verify_revision_source(self.conn, project_id, timeline_id, revision_id,
+                                                   read_object=ContentAddressedStore(self.store.cas_root).read)
+                self._validate_closure(document)
+                return document
+            manifest = json.loads(parent["commit_manifest_json"])
+            document = {"schema_version": 1, "project_id": project_id, "timeline_id": timeline_id,
+                        "parent_revision": self._image(parent), "shot_revisions": [],
+                        "internal_timeline_revisions": [], "dependency_manifest": manifest}
+            for family, table in (("shot_revisions", "shot_revisions"), ("internal_timeline_revisions", "internal_timeline_revisions")):
+                pins = manifest["shots" if family == "shot_revisions" else "internal_timelines"]
+                for pin in pins:
+                    row = self.conn.execute(f"SELECT * FROM {table} WHERE id=? AND project_id=?", (pin["revision_id"], project_id)).fetchone()
+                    if row is None:
+                        reject("history_unavailable")
+                    image = self._image(row)
+        media = manifest["media"]
+        if media != sorted(media, key=lambda item: item["media_id"]) or len({m["media_id"] for m in media}) != len(media):
+            reject("invalid_closure", status=422)
+        for pin in media:
+            if not _DIGEST.fullmatch(pin["media_id"]) or pin["content_digest"] != pin["media_id"]:
+                reject("invalid_closure", status=422)
+            row = self.conn.execute("SELECT o.size FROM objects o JOIN project_objects p ON p.digest=o.digest "
+                                    "WHERE p.project_id=? AND p.relation='managed' AND o.digest=?", (project_id, pin["media_id"][7:])).fetchone()
+            if row is None:
+                reject("dependency_unavailable")
+            from .cas import ContentAddressedStore
+            data = ContentAddressedStore(self.store.cas_root).read(pin["media_id"][7:])
+            if len(data) != row["size"] or "sha256:" + hashlib.sha256(data).hexdigest() != pin["media_id"]:
+                reject("dependency_unavailable")
+        payload_media = set()
+        def collect(value):
+            if isinstance(value, dict):
+                elif edge["records_json"] is not None or ledger[0]["command_kind"] != "parent_composition.publish":
+                    raise ValueError("invented legacy provenance")
+            except Exception as exc:
+                errors.append({"table": "timeline_commit_history", "id": edge["publication_id"], "reason": str(exc)})
+        for key, expected in previous.items():
+            head = self.conn.execute("SELECT publication_id, revision_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?", key).fetchone()
+            if head is None or tuple(head) != expected:
+                errors.append({"table": "parent_composition_heads", "id": key[1], "reason": "publication head mismatch"})
+        for row in self.conn.execute("SELECT * FROM timeline_document_input_contents"):
+            try:
+                value = detached(json.loads(row["content_json"]))
+                if digest(value) != row["content_digest"] or canonical_json(value) != row["content_json"] or len(row["content_json"].encode()) != row["content_size"]:
+                    raise ValueError("retained input digest mismatch")
+            except Exception as exc:
+                errors.append({"table": "timeline_document_input_contents", "id": row["content_digest"], "reason": str(exc)})
+        for row in self.conn.execute("SELECT l.* FROM timeline_document_input_links l LEFT JOIN timeline_commit_history h "
+                                     "ON h.publication_id=l.publication_id AND h.project_id=l.project_id "
+                                     "AND h.timeline_id=l.timeline_id AND h.revision_id=l.revision_id WHERE h.publication_id IS NULL"):
+            errors.append({"table": "timeline_document_input_links", "id": row["publication_id"], "reason": "orphan retained input link"})
+        return errors
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import json
+s=json.load(open('astrid/core/timeline/schema/edit-command.schema.json'))
+for key in ('RecordedDependency','Dependency','DependencyPin','CommandRecord','PreparedCommit'):
+ if key in s['"'$defs'"']: print(key, s['"'$defs'"'][key])
+PY" in /home/user/work/wt/agt-m2-native-candidate-promotion
+ succeeded in 104ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md')
+with p.open('a') as f:
+ f.write('''\\n## PEER DETAIL from agt-m2-native-candidate-promotion — existing media carrier\\n\\nACK your14:18 no-unplaced-carrier response. Smallest media/source carrier needs NO new MediaSelection requirement: original positives use ingested project objects, not necessarily registered generations. Existing TimelineCommitStore._validate_closure lines500-513 verifies every manifest media pin against managed project membership, CAS length and actual sha256; revision_closure/shot_closure already retains that manifest. Reuse it. selected_media only accepts registered generation/variant identities and would silently narrow original capability. Remaining missing contract is explicit project-shot current-head guard + sole-recorder output/history ownership for an unplaced shot, not candidate byte verification infrastructure. Source report/probes being finalized; no new operation or schema generated.\\n''')
+PY" in /home/user/work/wt/agt-m2-native-candidate-promotion
+ succeeded in 110ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-native-candidate-promotion.md')
+p.write_text('''# Agent native candidate promotion — RT02 / AG-CUTOVER04
+
+Status: **BLOCKED on project-shot acceptance authority**, with an executable
+native counterexample. This is a bounded block, not an ordinary-release hold.
+No candidate command/schema/artifact was generated or registered. The original
+two Runtime promotion positives remain unchanged and open.
+
+## Exact source and peer agreement
+
+Agent source: "'`310e54840fa5fb8eb7e51bb64ed2c34b7a1063b3`, tree
+`c5a8a3ec7e9e01c61c5ae31834da53bed4be406a`. This worker adds only two direct
+test files. Runtime native probe source: `7f6dd8920e1ceec41b137358df5e7fecc304888d`,
+tree `4cccb2d643194df7df95d624e89a6cd9f6f268fc`.
+
+Reviewed the exact original assertions in Runtime
+`tests/test_shot_candidate_promotion.py`, and `origin/main:runtime_protocol/service.py`
+`promote_project_shot_candidate` (line 3644 in that ref). The old algorithm:
+receipt-first exact retry; expected project-shot version guard; exact candidate
+item identity; primary_visual/candidate validation; supplied metadata, recipe,
+provenance project/shot/target-role/output checks; managed candidate CAS bytes
+verified against digest; at most one old primary; atomic status flips; immutable
+shot revision; fixed-point dependency report; result persisted in the receipt.
+It does not require a timeline placement or registered generation.
+
+The 14:18:36Z Runtime PEER REPLY in Agent INBOX explicitly agrees that no mutable
+unplaced-shot carrier is currently agreed, `shot_closure` is read-only, and C4
+must remain intact. It requests no candidate freeze/generation or invented
+parent/library timeline/journal. Runtime dispatched
+`rt-m2-unplaced-shot-promotion-carrier` to investigate the preservation contract.
+This worker'"'s request and executable follow-up are in both manager INBOXes;
+the command/arguments below remain a proposal, not peer-approved schema.
+
+## Smallest existing carriers and their limits
+
+- Agent "'`commit.py:_verify_document` requires exactly the occurrence-reachable
+  shot/internal closure: orphan shots are refused. `bundle_from_document` cannot
+  open an unplaced project-shot aggregate.
+- `authoring_bundle.py:open_authoring_bundle` and
+  `_copy_shot_for_placement` retain source identities in `source_mapping`, but
+  remap shared project shot S/items I into occurrence-owned S-prime/I-prime.
+  Source provenance still names S. Promoting the copies would change ownership
+  and item identity; it would not promote the original project catalog item.
+- The existing `shot:<id>` recorder root can write a complete
+  `{payload, internal_timeline}` aggregate already in the bundle. Ordinary
+  recording cannot address item refs directly. The PRIVATE typed carrier
+  reviewed at Agent `3730d0bd51686a1692450359482205df64dcc839`
+  adds `shot:S/item:I` addressing and source-bound materialization guards;
+  `_materialization.source_entity` resolves authenticated immutable sources
+  read-only. It still writes occurrence-owned destinations, not unplaced S.
+  It is not part of the frozen ordinary source and was not composed here.
+- Runtime `RequestCommitPort.shot_closure(shot_id, revision_id)` is the smallest
+  existing exact source input: shot revision, internal revision, media and
+  document pins. It does not guard the CURRENT global project-shot head.
+  Its present store reader also recovers retained inputs from an existing
+  parent manifest; a never-placed legacy shot is not guaranteed readable by it.
+- Runtime `TimelineCommitStore._validate_closure` (lines 500–513 in tested source)
+  already verifies managed project media membership, CAS length and actual
+  sha256 for every immutable manifest pin. Reuse that carrier for candidate and
+  source digests. Requiring `MediaSelection` instead would lose the old ingest
+  object capability: `selected_media` requires a registered generation/variant.
+- Runtime acceptance/history is timeline-scoped. Merely reading an old shot
+  revision must continue not to repoint the newer global shot head (C4).
+  The existing occupied-destination/item-ownership guards remain required.
+
+Project catalog KEEP is preserved: the probe demonstrates that unplacement
+retains its catalog shot exactly. No catalog write/read API was reclassified.
+
+## Executable counterexample
+
+`tests/editing_conformance/test_candidate_promotion_scope_runtime.py` uses the
+existing ordinary birth test'"'s private normal-generator fixture (unchanged
+55-definition/29-operation schema), a new realm, normal trusted startup provider,
+authenticated commit callback and these accepted commands:
+
+1. Normal "'`create_project` and provider-backed `create_timeline` bootstrap.
+2. `track.create` then `occurrence.create` for `project-shot` / `occ`.
+3. Read exact born canonical shot/internal images and catalog shot.
+4. `occurrence.delete` removes the sole placement.
+5. Assert catalog shot is byte-equal and exact `shot_closure` remains readable.
+6. Assert current canonical closure contains no shot/internal images;
+   `State.entity('"'shot:project-shot')"'` refuses; adding retained images as orphan
+   canonical children refuses; all accepted/current/catalog bytes remain equal.
+
+No SQL, prepared provider, patched semantic provider, old writer, legacy
+publication, fabricated acceptance/history, socket, renderer or baseline is used.
+This is a reachable native state demonstrating missing authority, NOT a promotion
+positive. It does not fabricate candidate items through an unsupported writer.
+The original old fixtures require precisely the additional unplaced-project-shot
+capability; they are not narrowed to placed or generated candidates here.
+
+The pure neighboring file additionally proves shared S/I remapping, canonical
+orphan rejection, and exact full-root recorded status-flip undo/redo with
+same-value intervening-write refusal. Its manual recorder experiment deliberately
+claims no candidate provenance, byte validation, accepted history or public op.
+No pure inverse result is presented as a supported Runtime promotion inverse.
+
+## Smallest contract proposal (not implemented or frozen)
+
+Proposed single CLOSED `EditCommand` operation `shot.promote-candidate`, version
+`"1"`, `select: "shot:<exact project-shot id>"`, no intent override. Proposed
+required argument set, with no extras:
+
+```text
+shot_revision_id: exact immutable source revision
+shot_content_digest: source payload sha256
+internal_timeline_revision_id: exact source internal pin
+candidate_item_id: exact authored stable item id
+superseded_item_id: exact old primary id, or null when absent
+```
+
+Project identity comes from authenticated commit context. Media/source descriptors
+come from the exact shot closure and manifest, never caller-supplied authoritative
+payloads. Candidate/old primary selection must preserve authored IDs and reject
+ambiguity, missing/changed status, provenance/recipe scope, role, supplied output
+identity or digest mismatch before any write. Capture complete item membership,
+source descriptors and timeline-asset identity/selection guards. Atomically record
+primary/superseded status and the deterministic plate -> proxy -> timeline-asset
+fixed point through the existing record/result/history path. Keep generative
+invalidations distinct, as the existing analyzer does. Do not merely swap a clip.
+
+The missing contract is explicit, guarded project-shot publication authority in
+the SOLE recorder: compare the source against the current project-shot head at
+acceptance and distinguish this deliberate project mutation from C4'"'s immutable
+historical linking. Its accepted history must represent an unplaced shot without
+a dummy parent, hidden library timeline, new table/journal/endpoint or fallback
+writer. Reuse immutable shot/source/media images and existing recorded facts.
+The precise carrier/output/history representation needs Runtime/Agent agreement;
+current CanonicalDocument cannot express it. No extension to public DTOs is
+assumed authorized. If it requires such an extension, that is the exact bounded
+contract decision for the managers/orchestrator, not an implementation shortcut.
+Never-placed legacy source closure retention and the exact scope of dependent
+timeline assets also need definition; neither is supplied by inventing document
+roots or treating arbitrary caller descriptors as authored authority.
+
+## Tests and limits
+
+Exact commands, from this worker checkout:
+
+"'```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider tests/editing_conformance/test_candidate_promotion_scope.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_recipe_occurrence_delete.py tests/editing_conformance/test_recipe_internal_stages.py tests/sdk/test_timeline_commit_provider_document.py
+```
+
+**198 passed in 8.18s.** Includes staged inverse/F1 neighbors.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_candidate_promotion_scope_runtime.py
+```
+
+**1 passed in 5.86s** after final fixture-import cleanup. Direct service-only
+probe, no localhost/browser/live sockets; no central/full suite requested.
+
+```sh
+/home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/test_candidate_promotion_scope.py tests/editing_conformance/test_candidate_promotion_scope_runtime.py
+git diff --check
+```
+
+Both passed. Test files are below 150 lines each; no snapshot/golden copied.
+No original Runtime test or marker was changed. No promotion fixed-point,
+provenance-negative, exact receipt/retry, changed-guard zero-write, Runtime
+promotion inverse/restoration or candidate native acceptance is claimed green.
+Those original requirements remain open until the missing carrier is agreed.
+
+Ordinary schema bytes remain SHA-256
+`6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`:
+55 definitions, 27 registered recipes plus inverse/restore = 29 operations.
+F1 product code, public013, all product sources and shared dependencies remain
+unchanged. No integration edit, git mutation, public generation, release or pin.
+
+Next: Runtime carrier reviewer should use this native witness to settle the
+smallest project-shot authority/history representation. Then implement the one
+closed command on a separate private candidate cohort and port both original
+positive assertions through the real sole recorder before closing RT02/AG-CUTOVER04.
+'"''')
+PY" in /home/user/work/wt/agt-m2-native-candidate-promotion
+ succeeded in 0ms:
+codex
+Runtime’s peer reply confirms that no mutable unplaced-shot carrier is agreed yet and asks us to hold candidate generation. I’ve documented the counterexample and smallest contract proposal. Candidate byte checks can reuse the existing managed-media manifest verification; the unresolved part is project-shot head authority and history ownership.
+
+The targeted neighbors pass: 198 tests, plus the native scope probe.
+exec
+/bin/bash -lc "git status --short && rg --files --hidden --no-ignore -g '*.pyc' astrid | head -12 && ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-candidate-promotion" in /home/user/work/wt/agt-m2-native-candidate-promotion
+ succeeded in 237ms:
+?? tests/editing_conformance/test_candidate_promotion_scope.py
+?? tests/editing_conformance/test_candidate_promotion_scope_runtime.py
+astrid/sdk/__pycache__/__init__.cpython-313.pyc
+astrid/sdk/__pycache__/timeline_intent.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_shot_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_recording.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_delete_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_occurrence_delete.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/__init__.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/_scalar_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_placement_commands.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_occurrence_duplicate.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/native_initialize.cpython-313.pyc
+astrid/sdk/timeline/__pycache__/producer.cpython-313.pyc
+brief.md
+log.txt
+meta
+running
+
+exec
+/bin/bash -lc 'git diff --check && /home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/test_candidate_promotion_scope.py tests/editing_conformance/test_candidate_promotion_scope_runtime.py' in /home/user/work/wt/agt-m2-native-candidate-promotion
+ succeeded in 150ms:
+All checks passed!
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from pathlib import Path
+import shutil
+for root in (Path('astrid'),Path('tests')):
+ for directory in root.rglob('__pycache__'):
+  shutil.rmtree(directory)
+failed=Path('/tmp/pytest-of-root/pytest-2661')
+if failed.is_dir() and (failed/'test_native_unplacement_retain0').is_dir():
+ shutil.rmtree(failed)
+base=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=base/'workers/agt-m2-native-candidate-promotion'
+(worker/'commit-msg').write_text('''test(timeline): prove candidate promotion project-shot carrier gap
+
+Add native bootstrap/unplacement and pure recording probes for the RT02
+candidate-promotion replacement. Show that project shots remain readable
+outside occurrence-reachable canonical closures, and preserve exact root
+undo/redo plus intervening-write guards without changing product authority.
+
+Keep original promotion positives open pending agreement on project-shot
+head guards and history ownership. No command schema or public artifact changes.
+''')
+(worker/'BLOCKED').write_text('''RT02/AG-CUTOVER04: original unplaced project-shot candidate promotion cannot be represented by the current occurrence-reachable CanonicalDocument plus read-only shot_closure. Runtime peer14:18 confirms no mutable carrier agreed. Native bootstrap->birth->unplace counterexample passes; 198 targeted neighbor tests and1 native scope probe pass. Product/schema unchanged. Exact smallest source/authority/history proposal and limitations: design/agent-native-candidate-promotion.md. Needs Runtime/Agent contract decision, not a fabricated parent/library timeline or fallback writer. Original2promotion positives remain open.\\n''')
+for area in ('agent','runtime'):
+ with (base/'managers'/area/'INBOX.md').open('a') as f:
+  f.write('''\\n## PEER REPORT from agt-m2-native-candidate-promotion — bounded BLOCKED result\\n\\nFinal design/agent-native-candidate-promotion.md now contains exact source/carrier analysis, native executable unplacement counterexample, original algorithm/assertions mapping, your14:18 response, proposed CLOSED op/args and missing authority/history contract. Two new direct test files only;198pure/recorder/F1 neighbors PASS plus1real-provider native scope probe PASS, Ruff/diffcheck PASS. No candidate command/schema/public artifacts generated, no product modifications/newmarkers/fullsuite. Existing ordinary55defs29ops/hash6ba7 remains byte-identical. Original2promotion positives stay open. BLOCKED marker identifies the missing current project-shot head CAS and unplaced-shot accepted-history representation. Please route exact witness to rt-m2-unplaced-shot-promotion-carrier; do not close RT02 on refusal probes.\\n''')
+PY" in /home/user/work/wt/agt-m2-native-candidate-promotion
+ succeeded in 0ms:
+codex
+Blocked on project-shot publication authority. Native bootstrap → shot creation → unplacement proves the catalog shot remains readable but cannot be addressed by the writable canonical closure. Runtime confirms no mutable carrier is agreed.
+
+Added two direct probe files. Product code, schemas, public013, ordinary 55/29, and the original promotion positives remain unchanged.
+
+Validation: **198 targeted tests passed**, **1 native scope probe passed**, Ruff and `git diff --check` passed. No full suite ran. Promotion acceptance, invalidation, retry, and provenance remain unverified.
+
+Exact commands, source analysis, peer agreement, and the smallest contract proposal are in [the report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-native-candidate-promotion.md).
+
+Wrote `commit-msg` and `BLOCKED`. Next: agree guarded project-shot head publication and history ownership before implementing the private command.
+tokens used
+178,584
+Blocked on project-shot publication authority. Native bootstrap → shot creation → unplacement proves the catalog shot remains readable but cannot be addressed by the writable canonical closure. Runtime confirms no mutable carrier is agreed.
+
+Added two direct probe files. Product code, schemas, public013, ordinary 55/29, and the original promotion positives remain unchanged.
+
+Validation: **198 targeted tests passed**, **1 native scope probe passed**, Ruff and `git diff --check` passed. No full suite ran. Promotion acceptance, invalidation, retry, and provenance remain unverified.
+
+Exact commands, source analysis, peer agreement, and the smallest contract proposal are in [the report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-native-candidate-promotion.md).
+
+Wrote `commit-msg` and `BLOCKED`. Next: agree guarded project-shot head publication and history ownership before implementing the private command.

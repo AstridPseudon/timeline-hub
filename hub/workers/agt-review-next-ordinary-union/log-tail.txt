@@ -1,0 +1,400 @@
++   freeze. The candidate lacks `staged_records` in
++   `inverse.apply_inverse`; F1 adds that guard plus four product-line test
++   paths. Registry/schema are unchanged by F1. This review cannot claim final
++   core proof without it.
++2. Port separately approved fixture migration
++   `134f1c276a11b4703c7a76f25cbf13158e4a4416`. The source-union preparation
++   still reports two old fixture-import failures; this review did not reframe
++   them as join defects.
++3. Preserve the four existing renderer-request strict-xfail holds and keep
++   parent follow-up review, fresh-version normal Runtime generation, public
++   client/lock qualification, and release/freeze as separate gates. Do not
++   republish 0.2.13 or call the private Runtime pair a public tuple.
++
++No full/full* suite, make check, browser/socket/HTTP, App journey/outbox,
++renderer/audio/pixel, producer admission, destructive GC, macOS, or owner
++film qualification was run. No blocker defect remains in this bounded review.
+
+2026-10-20T13:50:56.886822Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid hunk at line 3, 'review(timeline): approve bounded ordinary source union' is not a valid hunk header. Valid hunk headers: '*** Add File: {path}', '*** Delete File: {path}', '*** Update File: {path}'
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-next-ordinary-union.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-next-ordinary-union.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..23ea7f372c4918715619e4861397bb15edcf73a3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-next-ordinary-union.md
+@@ -0,0 +1,129 @@
++# Bounded review: next ordinary Agent source union
++
++**APPROVE bounded additive union for the new source joins, with final ports
++and gates below.** This is not approval to publish, freeze, merge, or claim
++final core proof.
++
++Reviewed candidate commit `ce3e647f10f6b7950de19e4219da6d55af4d3939`
++(`feat(timeline): prepare complete next ordinary command union`), based on
++`4ef1391c2c104d5d11b3a27265035c51be296045`. Its content tree is
++`260f2615b869b5e0d8ab236d6c1fbc952c0f6186`, matching the handoff. The review
++worktree remained at `8e3107853d17453758a933d1f47215cc1c002660`; no product,
++test, integration, branch, or shared-dependency files were changed.
++
++## Scope and result
++
++I read PLAN, the source-union design/report, and the reviewed source tips
++`537c2ecd` (S3), `09ca873c` (native text), and `0937d6fd` (parent-auto
++completion). I did not re-review unchanged generator bulk. The new overlap is
++bounded to keyed text-binding collection/state/recording, inverse coalescing
++and staged cache replay, authenticated root-birth replay in reservation and
++media-inverse paths, exact source hydration, the parent-auto completion
++follow-up, and their tests.
++
++The two new join repairs are sound in the inspected paths:
++
++- A born occurrence/shot is replayed through `Recording.create_entity` only
++  when the exact root identity is present in the accepted record's `created`
++  facts. This preserves the source-free creation proof without a guessed
++  owner, cache blanket exemption, or opaque rewrite.
++- Keyed text rows use `binding_key`, preserve recorded insertion order, and
++  retain EMPTY versus ABSENT. `text-binding.owners` records an empty
++  membership/boundary when its occurrence is absent, allowing grouped redo
++  after root removal while retaining the normal ownership guard when present.
++- Staged cache writes remain separately guarded and are replayed with the
++  root's authored writes. Parent raw/config mirrors and asset dependents are
++  still checked through their authoritative structures.
++- Source hydration accepts a restored transcript pin only when the exact pin
++  and media pair occur in the authenticated inverse closure. Normal hydration
++  still reads the requested exact pin through the Runtime port and verifies
++  project, version, content digest, transcript identity, and media identity;
++  it does not use caller/latest state.
++
++No new root-cache blanket ignore, numeric normalization, opaque rewrite,
++schema override, fake history/SQL/Prepared provider, or lost operation/type
++was found. The candidate preserves **55 definitions / 29 operations** and
++the full S2 floor of **48 / 22**; the candidate's canonical schema has raw
++SHA256 `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
++and canonical JSON SHA256
++`63ac77b3c3e2c582f76ab4b2499be5011ea4836e8c92264b1938632b3bfacba7`.
++
++The parent-auto original guards, saved policy/defaults, and consumed reads
++remain covered by the candidate's retained tests. The current public
++schema/client/lock is not changed by this candidate.
++
++## Independent evidence
++
++All commands ran against a private archive of the candidate with
++`PYTHONDONTWRITEBYTECODE=1`, `PYTHONPATH` set to that archive, private
++pytest basetemps, and no full/full* suite.
++
++Normal private Runtime generation used committed Runtime `b748ae723b51c6d578ba7a393209ce37d6e2b0c3`, with only the candidate schema
++supplied as the ordinary schema input. Generator check, TypeScript
++conformance generation/check, and artifact manifest/check all passed. The
++normal private Runtime output had 13 generated changes and artifact identity
++`sha256:7e8fe2e485f036741369eed62ccc7a389e27719a166fd70b0009a161c9c7240d`.
++
++Source/schema/pristine/native-portable lane:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$CANDIDATE \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= \
++  -p no:cacheprovider --basetemp=$PRIVATE/tmp-schema \
++  tests/sdk/test_timeline_current_union_schema.py \
++  tests/editing_conformance/test_pristine_initialize.py \
++  tests/editing_conformance/test_recipe_text_binding_native.py \
++  tests/editing_conformance/test_recipe_parent_auto_completion.py
++```
++
++**184 passed in 202.29s; exit 0.** This covers current S2/schema floors,
++pristine stripping, native text semantics, and parent-auto portable cases.
++
++Native Runtime lane against the normally generated private pair:
++
++```sh
++ASTRID_RUNTIME_CHECKOUT=$PRIVATE/runtime-private \
++ASTRID_WORD_ANCHOR_SEED_RUNTIME=$PRIVATE/historical-word \
++ASTRID_PARENT_MEDIA_SEED_RUNTIME=$PRIVATE/historical-parent \
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$CANDIDATE \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= \
++  -p no:cacheprovider -m integration --basetemp=$PRIVATE/tmp-integration \
++  tests/editing_conformance/test_next_ordinary_union_runtime.py \
++  tests/editing_conformance/test_commit_runtime_text_binding.py \
++  tests/editing_conformance/test_commit_runtime_parent_auto_completion.py \
++  tests/sdk/test_timeline_selected_schema_runtime.py
++```
++
++**57 passed in 83.76s; exit 0.** This includes first initialization,
++occurrence birth plus media/text, clear and grouped inverse, exact order,
++redo, restart, exact idempotent retry, text source/MIME and stale/atomic
++negative cases, parent-auto stale guards, and selected-schema Runtime
++coverage.
++
++`git diff --check 4ef1391c..ce3e647f` also passed with no output. No full,
++browser, live socket/HTTP, renderer/audio/pixel, App, macOS, or public-client
++qualification was run or requested.
++
++## Required final ports and remaining gates
++
++These are required before public freeze; they are not defects found in this
++bounded review:
++
++1. Port current core F1 fix `8e3107853d17453758a933d1f47215cc1c002660`
++   into the final candidate. It adds staged-record intervening-write guards
++   in `inverse.apply_inverse` plus the command/inverse/conformance coverage.
++   The reviewed candidate has no `staged_records` implementation. Registry
++   and schema remain unchanged by F1. Do not claim final core proof until
++   this port is tested on the composed candidate.
++2. Port the separately approved media-fixture migration
++   `134f1c276a11b4703c7a76f25cbf13158e4a4416`; this source union still has
++   the two old fixture-import failures reported by the preparation worker.
++   They are migration residue, not a failure of the new birth/text joins.
++3. Keep the four existing renderer-request strict-xfail holds visible and
++   keep the parent follow-up/manager gates and fresh-version Runtime
++   generation/publication separate. Do not republish the existing 0.2.13
++   artifact or treat the private generated pair as a public tuple.
++
++No blocker defect remains in the reviewed new overlap. This bounded approval
++does not claim destructive GC, producer admission, App cutover/outbox,
++transport, renderer parity, or owner-film qualification.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..7a1d043f061ba65c2c5c9ef8fd87c7097915b316
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/commit-msg
+@@ -0,0 +1,4 @@
++review(timeline): approve bounded ordinary source union
++
++Independently review the committed Agent source union and record the
++required F1 and fixture ports before public freeze.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/notes/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/notes/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..dd22d1b62e0cd3ea66632b0e5407e0118986eae6
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/notes/report.md
+@@ -0,0 +1,138 @@
++# Independent review report: next ordinary source union
++
++## Verdict
++
++Bounded **APPROVE** for the new source-union joins in candidate
++`ce3e647f10f6b7950de19e4219da6d55af4d3939`. No blocker defect was found in
++the reviewed overlap. This is not a public freeze/release/merge approval and
++does not claim final core proof until the required F1 and fixture ports land.
++
++## Exact identities
++
++- Candidate commit: `ce3e647f10f6b7950de19e4219da6d55af4d3939`
++- Subject: `feat(timeline): prepare complete next ordinary command union`
++- Candidate parent/base: `4ef1391c2c104d5d11b3a27265035c51be296045`
++- Candidate content tree: `260f2615b869b5e0d8ab236d6c1fbc952c0f6186`
++- Review worktree remained at: `8e3107853d17453758a933d1f47215cc1c002660`
++- Reviewed tips: S3 `537c2ecd28f92b391c79e383e0e045fd71b3258f`, text
++  `09ca873c37b8e4702b1b13c431ddc1ee9e2011e5`, parent-auto
++  `0937d6fd867c13ec55691966a830a708fdd3b0d3`
++- Schema: 55 definitions / 29 operations; full S2 floor 48 / 22
++- Schema raw SHA256:
++  `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
++- Schema canonical JSON SHA256:
++  `63ac77b3c3e2c582f76ab4b2499be5011ea4836e8c92264b1938632b3bfacba7`
++- Private Runtime generation base:
++  `b748ae723b51c6d578ba7a393209ce37d6e2b0c3`
++- Private generated artifact identity:
++  `sha256:7e8fe2e485f036741369eed62ccc7a389e27719a166fd70b0009a161c9c7240d`
++
++## Review focus and result
++
++I read PLAN, the absolute source-union design/report, and the three reviewed
++tips above. I did not re-review unchanged generator bulk. The new overlap is
++bounded to keyed text-binding collection/state/recording, inverse coalescing
++and staged cache replay, authenticated root-birth replay in reservation and
++media-inverse paths, exact source hydration, the parent-auto completion
++follow-up, and their tests.
++
++The two new join repairs are sound in the inspected paths:
++
++- A born occurrence/shot is replayed through `Recording.create_entity` only
++  when the exact root identity is present in the accepted record's `created`
++  facts. This preserves the source-free creation proof without guessed owner,
++  cache blanket exemption, or opaque rewrite.
++- Keyed text rows use `binding_key`, preserve recorded insertion order, and
++  retain EMPTY versus ABSENT. `text-binding.owners` records empty
++  membership/boundary when its occurrence is absent, allowing grouped redo
++  after root removal while retaining normal ownership guards when present.
++- Staged cache writes remain separately guarded and are replayed with authored
++  writes. Parent raw/config mirrors and authoritative asset/clip dependents are
++  still checked.
++- Source hydration accepts a restored transcript pin only when the exact pin
++  and media pair occur in the authenticated inverse closure. Normal hydration
++  reads the requested exact pin through the Runtime port and verifies project,
++  version, digest, transcript identity, and media identity; it does not use
++  caller/latest state.
++
++No new root-cache blanket ignore, numeric normalization, opaque rewrite,
++schema override, fake history/SQL/Prepared provider, or lost operation/type
++was found. The candidate preserves 55/29 and the complete S2 floor 48/22.
++Parent-auto original guards, saved policy/defaults, and consumed reads remain
++covered by retained tests. Public schema/client/lock are unchanged.
++
++## Independent evidence
++
++The candidate was executed from a private `git archive` with private
++pytest basetemps, `PYTHONDONTWRITEBYTECODE=1`, `PYTHONPATH` set to that
++archive, and no full/full* suite.
++
++Normal private Runtime generation used committed Runtime
++`b748ae723b51c6d578ba7a393209ce37d6e2b0c3`, with only the candidate schema
++supplied to the ordinary schema input. Normal Python/TypeScript generation,
++TypeScript conformance generation/check, and artifact manifest/check all
++passed. The generated output was 75 artifacts with identity
++`sha256:7e8fe2e485f036741369eed62ccc7a389e27719a166fd70b0009a161c9c7240d`.
++
++Source/schema lane:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$CANDIDATE \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= \
++  -p no:cacheprovider --basetemp=$PRIVATE/tmp-schema \
++  tests/sdk/test_timeline_current_union_schema.py \
++  tests/editing_conformance/test_pristine_initialize.py \
++  tests/editing_conformance/test_recipe_text_binding_native.py \
++  tests/editing_conformance/test_recipe_parent_auto_completion.py
++```
++
++**184 passed in 202.29s; exit 0.**
++
++Native Runtime lane:
++
++```sh
++ASTRID_RUNTIME_CHECKOUT=$PRIVATE/runtime-private \
++ASTRID_WORD_ANCHOR_SEED_RUNTIME=$PRIVATE/historical-word \
++ASTRID_PARENT_MEDIA_SEED_RUNTIME=$PRIVATE/historical-parent \
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$CANDIDATE \
++  /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= \
++  -p no:cacheprovider -m integration --basetemp=$PRIVATE/tmp-integration \
++  tests/editing_conformance/test_next_ordinary_union_runtime.py \
++  tests/editing_conformance/test_commit_runtime_text_binding.py \
++  tests/editing_conformance/test_commit_runtime_parent_auto_completion.py \
++  tests/sdk/test_timeline_selected_schema_runtime.py
++```
++
++**57 passed in 83.76s; exit 0.** This includes first initialization,
++occurrence/media/anchor plus text, grouped inverse, clear, exact order, redo,
++restart, exact retry, text source/MIME and stale/atomic negatives, parent-auto
++stale negatives, and selected current-S2 schema Runtime coverage.
++
++Static check:
++
++```sh
++git diff --check 4ef1391c2c104d5d11b3a27265035c51be296045 \
++  ce3e647f10f6b7950de19e4219da6d55af4d3939
++```
++
++Passed with no output.
++
++## Required final ports and gates
++
++1. Port F1 fix `8e3107853d17453758a933d1f47215cc1c002660` before public
++   freeze. The candidate lacks `staged_records` in
++   `inverse.apply_inverse`; F1 adds that guard plus four product-line test
++   paths. Registry/schema are unchanged by F1. This review cannot claim final
++   core proof without it.
++2. Port separately approved fixture migration
++   `134f1c276a11b4703c7a76f25cbf13158e4a4416`. The source-union preparation
++   still reports two old fixture-import failures; this review did not reframe
++   them as join defects.
++3. Preserve the four existing renderer-request strict-xfail holds and keep
++   parent follow-up review, fresh-version normal Runtime generation, public
++   client/lock qualification, and release/freeze as separate gates. Do not
++   republish 0.2.13 or call the private Runtime pair a public tuple.
++
++No full/full* suite, make check, browser/socket/HTTP, App journey/outbox,
++renderer/audio/pixel, producer admission, destructive GC, macOS, or owner
++film qualification was run. No blocker defect remains in this bounded review.
+
+codex
+The review report, commit message, and completion marker are written. I’m removing only the private candidate archive/generation outputs I created under this worker’s orchestration directory so the review leaves no frozen source copy or build debris; the report and logs remain.
+exec
+/bin/bash -lc 'BASE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union
+for d in candidate runtime-private historical-word historical-parent conformance-generated tmp-schema tmp-integration; do
+  if test -e "$BASE/$d"; then find "$BASE/$d" -depth -delete; fi
+done
+for f in prepare-runtime-review.py private-runtime-delta-review.json runtime-generation-review.log; do
+  if test -e "$BASE/$f"; then find "$BASE/$f" -delete; fi
+done
+printf '"'%s\\n' 'remaining review worker files:'
+find \""'$BASE" -maxdepth 1 -mindepth 1 -printf '"'%f\\n' | sort" in /home/user/work/wt/agt-review-next-ordinary-union
+ succeeded in 2787ms:
+remaining review worker files:
+DONE
+brief.md
+commit-msg
+log.txt
+meta
+notes
+running
+
+exec
+/bin/bash -lc "git status --short --branch; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-next-ordinary-union.md && echo design-report-ok; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/notes/report.md && echo notes-report-ok; printf '%s\\n' '--- commit msg ---'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/commit-msg; printf '%s\\n' '--- done ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/DONE" in /home/user/work/wt/agt-review-next-ordinary-union
+ succeeded in 175ms:
+## tl/agt-review-next-ordinary-union
+design-report-ok
+notes-report-ok
+--- commit msg ---
+review(timeline): approve bounded ordinary source union
+
+Independently review the committed Agent source union and record the
+required F1 and fixture ports before public freeze.
+--- done ---
+-rw-r--r-- 1 root root 0 Oct 20 13:50 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/DONE
+
+codex
+## Review result
+
+**APPROVE bounded source-union joins.** No blocker defect found. Candidate: `ce3e647f`, tree `260f2615…`.
+
+Evidence:
+
+- Private normal Runtime generation/checks passed; 75 artifacts, identity `sha256:7e8fe2…`.
+- Schema: 55 definitions / 29 operations; raw SHA256 `6ba7b51e…`; canonical SHA256 `63ac77b3…`.
+- Source/schema lane: **184 passed**.
+- Native Runtime lane: **57 passed**, including birth + text, grouped undo/redo, restart, retry, stale guards, and selected-schema checks.
+- `git diff --check`: passed.
+- Worktree remains clean; no source or shared dependency changes.
+
+Required before public freeze:
+
+1. Port F1 fix `8e310785` (`staged_records` inverse guard).
+2. Port fixture migration `134f1c27`; two old fixture-import failures remain in this candidate.
+3. Preserve four existing renderer xfails and complete normal Runtime/public qualification.
+
+Reports:
+
+- [Review report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-next-ordinary-union.md>)
+- [Detailed notes](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/notes/report.md>)
+tokens used
+124,857
+## Review result
+
+**APPROVE bounded source-union joins.** No blocker defect found. Candidate: `ce3e647f`, tree `260f2615…`.
+
+Evidence:
+
+- Private normal Runtime generation/checks passed; 75 artifacts, identity `sha256:7e8fe2…`.
+- Schema: 55 definitions / 29 operations; raw SHA256 `6ba7b51e…`; canonical SHA256 `63ac77b3…`.
+- Source/schema lane: **184 passed**.
+- Native Runtime lane: **57 passed**, including birth + text, grouped undo/redo, restart, retry, stale guards, and selected-schema checks.
+- `git diff --check`: passed.
+- Worktree remains clean; no source or shared dependency changes.
+
+Required before public freeze:
+
+1. Port F1 fix `8e310785` (`staged_records` inverse guard).
+2. Port fixture migration `134f1c27`; two old fixture-import failures remain in this candidate.
+3. Preserve four existing renderer xfails and complete normal Runtime/public qualification.
+
+Reports:
+
+- [Review report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-next-ordinary-union.md>)
+- [Detailed notes](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-next-ordinary-union/notes/report.md>)

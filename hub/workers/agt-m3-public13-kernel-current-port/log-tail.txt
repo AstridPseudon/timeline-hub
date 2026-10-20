@@ -1,0 +1,400 @@
+-  "tests/core/timeline/test_clip_fields.py::test_write_refuses_bad_values_and_crop_sum_against_stored_crop",
+-  "tests/core/timeline/test_clip_fields.py::test_write_visual_entrance_and_read_back",
+-  "tests/core/timeline/test_clip_fields.py::test_write_volume_and_speed_store_plain_values",
+-  "tests/journeys/test_journey_plumbing.py::test_a_command_that_exits_nonzero_is_a_failure_not_a_hang",
+-  "tests/journeys/test_journey_plumbing.py::test_a_command_that_exits_zero_is_a_success",
+-  "tests/journeys/test_journey_plumbing.py::test_a_command_that_never_exits_is_hung_at_the_ceiling",
+-  "tests/journeys/test_journey_plumbing.py::test_a_failed_run_keeps_log_tails_but_not_credentials",
+-  "tests/journeys/test_journey_plumbing.py::test_a_failure_reports_stdout_when_stderr_holds_only_diagnostics",
+-  "tests/journeys/test_journey_plumbing.py::test_a_killed_task_that_lapsed_and_was_cancelled_passes",
+-  "tests/journeys/test_journey_plumbing.py::test_a_killed_task_that_was_re_run_to_completion_passes",
+-  "tests/journeys/test_journey_plumbing.py::test_a_killed_task_without_a_lapse_or_one_end_state_fails[events0-no task.lease_expired]",
+-  "tests/journeys/test_journey_plumbing.py::test_a_killed_task_without_a_lapse_or_one_end_state_fails[events1-exactly one end state, saw 0]",
+-  "tests/journeys/test_journey_plumbing.py::test_a_killed_task_without_a_lapse_or_one_end_state_fails[events2-exactly one end state, saw 2]",
+-  "tests/journeys/test_journey_plumbing.py::test_a_killed_task_without_a_lapse_or_one_end_state_fails[events3-exactly one end state, saw 2]",
+-  "tests/journeys/test_journey_plumbing.py::test_a_killed_task_without_a_lapse_or_one_end_state_fails[events4-ended before its lease expired]",
+-  "tests/journeys/test_journey_plumbing.py::test_a_killed_task_without_a_lapse_or_one_end_state_fails[events5-no task.lease_expired]",
+-  "tests/journeys/test_journey_plumbing.py::test_a_slow_phase_is_recorded_with_its_load_never_failed",
+-  "tests/journeys/test_journey_plumbing.py::test_app_render_admission_has_the_apps_exact_shape",
+-  "tests/journeys/test_journey_plumbing.py::test_app_render_admission_with_a_version_and_the_ffmpeg_selector",
+-  "tests/journeys/test_journey_plumbing.py::test_cli_passes_backend_app_checkout_and_range_through",
+-  "tests/journeys/test_journey_plumbing.py::test_cli_refuses_an_unknown_backend_and_a_missing_timeline",
+-  "tests/journeys/test_journey_plumbing.py::test_clone_refuses_catalog_outside_reference",
+-  "tests/journeys/test_journey_plumbing.py::test_collect_revisions_gathers_astrid_runtime_app_and_manifest_versions",
+-  "tests/journeys/test_journey_plumbing.py::test_disk_preflight_reports_its_numbers_and_refuses_below_floor_plus_scratch",
+-  "tests/journeys/test_journey_plumbing.py::test_disk_sample_counts_the_journeys_tree_not_the_volumes_free_space",
+-  "tests/journeys/test_journey_plumbing.py::test_doctor_requires_healthy_runtime_and_usable_renderer_node",
+-  "tests/journeys/test_journey_plumbing.py::test_duplicate_path_repeats_every_entry",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[ASTRID_NODE_EXECUTABLE]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[ASTRID_REMOTION_VALIDATION_PATH]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[ASTRID_RENDER_CACHE]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[ASTRID_TIMELINE_SCHEMA_PYTHONPATH]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[DYLD_INSERT_LIBRARIES]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[DYLD_LIBRARY_PATH]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[GIT_CONFIG_GLOBAL]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[GIT_DIR]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[GIT_WORK_TREE]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[LD_LIBRARY_PATH]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[LD_PRELOAD]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[NODE_ICU_DATA]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[NODE_OPTIONS]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[NODE_PATH]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[OPENSSL_CONF]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[OTTO_HEAVY_LEASE]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[PYTHONHOME]",
+-  "tests/journeys/test_journey_plumbing.py::test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces[PYTHONSTARTUP]",
+-  "tests/journeys/test_journey_plumbing.py::test_events_are_judged_in_sequence_order_and_only_for_the_task",
+-  "tests/journeys/test_journey_plumbing.py::test_every_runner_child_gets_the_scrubbed_env",
+-  "tests/journeys/test_journey_plumbing.py::test_expected_scratch_scales_with_the_window_and_backend",
+-  "tests/journeys/test_journey_plumbing.py::test_ffmpeg_backend_never_asks_for_review_and_detach_has_no_timeout",
+-  "tests/journeys/test_journey_plumbing.py::test_full_tier_is_accepted_and_unknown_tier_refused",
+-  "tests/journeys/test_journey_plumbing.py::test_generated_reference_needs_no_timeline_and_gets_the_short_excerpt",
+-  "tests/journeys/test_journey_plumbing.py::test_generator_pure_parts",
+-  "tests/journeys/test_journey_plumbing.py::test_git_revision_of_a_non_checkout_is_an_error_entry_not_an_exception",
+-  "tests/journeys/test_journey_plumbing.py::test_git_revision_reports_head_and_dirtiness",
+-  "tests/journeys/test_journey_plumbing.py::test_host_record_and_liveness",
+-  "tests/journeys/test_journey_plumbing.py::test_hung_command_is_stopped_at_the_hang_limit",
+-  "tests/journeys/test_journey_plumbing.py::test_journey_render_calls_use_the_backend_and_kill_render_drops_review_for_ffmpeg[rendering.ffmpeg-False]",
+-  "tests/journeys/test_journey_plumbing.py::test_journey_render_calls_use_the_backend_and_kill_render_drops_review_for_ffmpeg[rendering.remotion-True]",
+-  "tests/journeys/test_journey_plumbing.py::test_json_output_tolerates_a_preamble_but_not_garbage",
+-  "tests/journeys/test_journey_plumbing.py::test_lease_snapshot_and_capability_lookup",
+-  "tests/journeys/test_journey_plumbing.py::test_manifest_version_is_read_only_when_a_string",
+-  "tests/journeys/test_journey_plumbing.py::test_missing_renderer_node_fails_preflight_before_any_work",
+-  "tests/journeys/test_journey_plumbing.py::test_node_pin_preflight_runs_only_for_remotion",
+-  "tests/journeys/test_journey_plumbing.py::test_public_dev_journey_help",
+-  "tests/journeys/test_journey_plumbing.py::test_public_journey_refusal_writes_phase_summary",
+-  "tests/journeys/test_journey_plumbing.py::test_reference_realm_is_selected_from_catalog_without_copying",
+-  "tests/journeys/test_journey_plumbing.py::test_render_argv_defaults_to_remotion_with_review_and_wait",
+-  "tests/journeys/test_journey_plumbing.py::test_render_output_is_actual_prefixed_file",
+-  "tests/journeys/test_journey_plumbing.py::test_render_processes_are_the_hosts_remotion_descendants_only",
+-  "tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix",
+-  "tests/journeys/test_journey_plumbing.py::test_run_id_is_found_anywhere_in_a_large_result",
+-  "tests/journeys/test_journey_plumbing.py::test_run_refuses_to_start_on_a_full_disk_before_creating_anything",
+-  "tests/journeys/test_journey_plumbing.py::test_runtime_access_comes_from_discovery_and_the_astrid_credential",
+-  "tests/journeys/test_journey_plumbing.py::test_runtime_disk_floor_is_read_like_the_runtime_reads_it",
+-  "tests/journeys/test_journey_plumbing.py::test_runtime_request_adds_the_bearer_token_and_reports_refusals",
+-  "tests/journeys/test_journey_plumbing.py::test_runtime_restart_can_skip_the_app_render",
+-  "tests/journeys/test_journey_plumbing.py::test_runtime_restart_fails_when_the_app_render_does_not_complete",
+-  "tests/journeys/test_journey_plumbing.py::test_runtime_restart_restarts_then_admits_the_apps_request_and_waits",
+-  "tests/journeys/test_journey_plumbing.py::test_scrub_removes_what_remotion_refuses_and_keeps_the_rest",
+-  "tests/journeys/test_journey_plumbing.py::test_scrubbed_env_with_interactive_git_set_still_passes_validation",
+-  "tests/journeys/test_journey_plumbing.py::test_summary_records_the_revisions_in_json_and_text",
+-  "tests/journeys/test_journey_plumbing.py::test_task_events_follow_the_cursor",
+-  "tests/journeys/test_journey_plumbing.py::test_the_admission_travels_unchanged_over_http",
+-  "tests/journeys/test_journey_plumbing.py::test_the_probe_file_is_inside_the_host_source_closure",
+-  "tests/journeys/test_journey_plumbing.py::test_the_reported_state_must_agree_with_the_end_event",
+-  "tests/journeys/test_journey_plumbing.py::test_uninstalled_renderer_fails_the_preflight_not_render_1",
+-  "tests/journeys/test_journey_plumbing.py::test_wait_for_returns_when_true_or_falsy_at_deadline",
+-  "tests/journeys/test_journey_plumbing.py::test_walks_skip_directories_removed_underneath",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_cache_only_has_no_observation_to_retain",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[clipId]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[frame]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[height]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[width]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_missing_or_guessed_projected_identity_refuses[addresses0]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_missing_or_guessed_projected_identity_refuses[addresses1]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_mixed_or_missing_capture_cannot_retain_facts",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_only_actual_sorted_unique_capture_frames_are_accepted[frames0]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_only_actual_sorted_unique_capture_frames_are_accepted[frames1]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_only_actual_sorted_unique_capture_frames_are_accepted[frames2]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_only_actual_sorted_unique_capture_frames_are_accepted[frames3]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_only_actual_sorted_unique_capture_frames_are_accepted[frames4]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_other_source_or_uncaptured_frame_never_falls_back",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_real_host_labels_are_retained_once_and_drawn_without_private_math",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_real_media_bounds_use_public_canvas_and_keep_uncertain_alpha",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_stale_root_inputs_refuse_before_query[assets]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_stale_root_inputs_refuse_before_query[theme]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_stale_root_inputs_refuse_before_query[timeline]",
+-  "tests/packs/rendering/test_capture_scene_labels.py::test_unknown_public_geometry_is_an_answer_and_unavailability_is_not_empty",
+-  "tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[delete-evaluation]",
+-  "tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[missing-missing]",
+-  "tests/packs/rendering/test_composition_package.py::test_installed_package_refuses_incomplete_or_unsafe_built_exports[outside-escapes the package]",
+-  "tests/packs/rendering/test_composition_package.py::test_launch_input_binding_reuses_built_package_readiness",
+-  "tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme",
+-  "tests/packs/rendering/test_composition_package.py::test_public13_evaluation_admits_valid_source_and_rejects_four_forged_sources"
+-]
+\ No newline at end of file
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-public13-current-adoption.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-public13-current-adoption.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..88620cc7e08b5470e0c8ad16cff502f43323b2d7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-public13-current-adoption.md
+@@ -0,0 +1,47 @@
++# Agent public13 current adoption
++
++## Result
++
++The approved Composition 0.0.13 consumer delta `c73b1ab1..30da0a5e` was
++ported exactly onto current Agent `d999197aed9c471f7b133e664f8086a0efc6cb66`.
++The final current source tree, including the uncommitted worker delta, is:
++
++`2a7966420be037417ffa83fb70f3520d8b8365ec`
++
++The harness must commit this source and confirm that the resulting descendant
++has this tree. No merge request was created by this worker.
++
++## Pin and archive
++
++- Composition package: `@banodoco/timeline-composition` `0.0.13`.
++- Immutable public13 archive: 58,477 bytes, 77 regular members.
++- Archive SHA-256: `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`.
++- Lock integrity: `sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ==`.
++- Full `remotion/package-lock.json` SHA-256:
++  `c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24`.
++- The original public12 compatibility archive remains present and unchanged:
++  SHA-256 `0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3`.
++
++Runtime client013 bytes were not changed or adopted, and no client014 adoption
++was made. The reviewed pin bytes were not re-reviewed; the existing
++APPROVE193central/187local/31Node decision remains the governing review.
++
++## Scope and preservation
++
++Only the approved nine-path consumer delta was applied: runtime package
++version, public13 archive/checksum, package manifest/lock, and the five
++focused admission tests. Current Kernel19e4, labels, Mouth, F1, P1, and init
++work were preserved; the current Remotion host remains public12 and read-only.
++No host13 readiness or physical frame/audio parity is claimed.
++
++## Evidence and next step
++
++The archive member count, regular-file check, archive SHA, sidecar, manifest,
++package dependency, lock resolved path, lock integrity, retained public12
++archive SHA, and final source tree were checked on current source. The focused
++package/timeline/journey/label tests were run locally and through the central
++service; details and environment limits are in the worker report.
++
++The manager should request the owner’s separate installed13 profile, then run
++the normal gate against the committed descendant. This handoff does not claim
++that the shared current Remotion environment is public13-ready.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..a596151d06495fc6ce3a704859f4a13c85529429
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/commit-msg
+@@ -0,0 +1,5 @@
++chore(rendering): adopt Composition 0.0.13 consumer pin
++
++Port the approved public13 archive, exact package integrity, runtime pin, and
++focused admission checks onto current Agent while retaining public12
++compatibility and current kernel behavior.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..a596151d06495fc6ce3a704859f4a13c85529429
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/commit-msg.txt
+@@ -0,0 +1,5 @@
++chore(rendering): adopt Composition 0.0.13 consumer pin
++
++Port the approved public13 archive, exact package integrity, runtime pin, and
++focused admission checks onto current Agent while retaining public12
++compatibility and current kernel behavior.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..06ddfcd5d20532db99df7e045a64788a1c5a254c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/report.md
+@@ -0,0 +1,118 @@
++# Worker report: Agent public13 current port
++
++## What changed
++
++Ported only the approved `c73b1ab1..30da0a5e` delta onto current d999
++(`d999197aed9c471f7b133e664f8086a0efc6cb66`). The final uncommitted source
++tree hash is `2a7966420be037417ffa83fb70f3520d8b8365ec`; the harness still owns
++the commit. Changed paths are exactly:
++
++```text
++M astrid/core/rendering/remotion_runtime.py
++A remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
++A remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256
++M remotion/package-lock.json
++M remotion/package.json
++M tests/core/timeline/test_clip_fields.py
++M tests/journeys/test_journey_plumbing.py
++M tests/packs/rendering/test_capture_scene_labels.py
++M tests/packs/rendering/test_composition_package.py
++```
++
++The approved text patch compared byte-for-byte with the text portion of
++`git diff c73b1ab1 30da0a5e`. The binary archive was applied from that same
++approved delta. No Runtime client014 bytes, provider changes, public pin
++review, merge, push, or unrelated edit was made. Kernel19e4/labels/Mouth/F1/
++P1/init paths in current d999 were not touched.
++
++## Pin/archive/lock verification
++
++Command:
++
++```sh
++python3 - <<'PY'
++import hashlib, json, tarfile
++from pathlib import Path
++root = Path('.')
++artifact = root / 'remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz'
++lock = json.loads((root / 'remotion/package-lock.json').read_text())
++entry = lock['packages']['node_modules/@banodoco/timeline-composition']
++print(hashlib.sha256(artifact.read_bytes()).hexdigest())
++with tarfile.open(artifact) as archive:
++    members = archive.getmembers()
++    manifest = json.load(archive.extractfile('package/package.json'))
++print(len(members), all(m.isfile() for m in members), manifest['version'])
++print(entry['version'], entry['resolved'], entry['integrity'])
++print(hashlib.sha256((root / 'remotion/package-lock.json').read_bytes()).hexdigest())
++PY
++```
++
++Result: public13 SHA-256
++`9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`, 77
++members, all regular files, manifest/lock version `0.0.13`, resolved path
++`file:artifacts/banodoco-timeline-composition-0.0.13.tgz`, lock integrity
++`sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ==`, and full lock SHA-256
++`c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24`.
++The public13 archive is 58,477 bytes and its sidecar matches. Public12 remains
++58,444 bytes with SHA-256
++`0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3`.
++
++## Tests
++
++Direct local command (current source, shared venv read-only):
++
++```sh
++PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q \
++  tests/core/timeline/test_clip_fields.py \
++  tests/journeys/test_journey_plumbing.py \
++  tests/packs/rendering/test_capture_scene_labels.py \
++  tests/packs/rendering/test_composition_package.py
++```
++
++Result: **198 passed, 3 deselected, 6 failed, 9 errors**, 6 warnings. The 6
++journey failures were sandbox `EPERM` socket creation; the 9 capture-label
++setup errors were missing provisioned peers under the shared Remotion
++environment. The package, clip, and non-socket tests passed.
++
++Central generic targeted command:
++
++```sh
++R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test \
++  agt-m3-public13-kernel-current-port targeted \
++  --files "tests/core/timeline/test_clip_fields.py tests/journeys/test_journey_plumbing.py tests/packs/rendering/test_capture_scene_labels.py tests/packs/rendering/test_composition_package.py")
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"
++```
++
++Service ID:
++`agt-m3-public13-kernel-current-port-targeted-1020180037-13914`.
++Result: **204 passed, 3 deselected, 9 errors**, 6 warnings; the same missing
++peer provisioning affected capture-label setup. This run is not treated as a
++product failure.
++
++Central environment-backed named targeted command:
++
++```sh
++R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test \
++  agt-m3-public13-kernel-current-port agt-m3-labels-current-socket-gate-root-prep \
++  --files "tests/journeys/test_journey_plumbing.py tests/packs/rendering/test_capture_scene_labels.py")
++/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"
++```
++
++Service ID:
++`agt-m3-public13-kernel-current-port-agt-m3-labels-current-socket-gate-root-prep-1020180103-13107`.
++Result: **105 passed, 2 failed**, 37.70s, exit 1. All socket-backed journey
++and capture-label assertions passed. The two failures were pre-existing lane
++environment omissions: `runtime_protocol` and `astrid_runtime` could not be
++imported by integration tests because that named lane did not provide the
++Runtime checkout. No test was changed, skipped, xfailed, or weakened.
++
++No full or `full*` suite was requested. No host13 readiness, normal owner gate,
++physical frame/audio parity, Runtime client014 adoption, or shared dependency
++mutation is claimed. Shared current Remotion and shared dependencies remained
++read-only.
++
++## Handoff
++
++The manager should commit the worktree through the harness, verify the
++descendant has source tree `2a7966420be037417ffa83fb70f3520d8b8365ec`, request
++the owner’s separate installed13 profile, and then run the normal gate.
+
+exec
+/bin/bash -lc "set -e
+git status --short
+git diff --check
+printf '%s\\n' 'cache files:'
+find .pytest_cache -type f -print 2>/dev/null || true
+printf '%s\\n' 'handoff:'
+head -8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-public13-current-adoption.md
+printf '%s\\n' 'markers:'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/{commit-msg,commit-msg.txt,DONE,report.md}" in /home/user/work/wt/agt-m3-public13-kernel-current-port
+ succeeded in 886ms:
+ M astrid/core/rendering/remotion_runtime.py
+ M remotion/package-lock.json
+ M remotion/package.json
+ M tests/core/timeline/test_clip_fields.py
+ M tests/journeys/test_journey_plumbing.py
+ M tests/packs/rendering/test_capture_scene_labels.py
+ M tests/packs/rendering/test_composition_package.py
+?? remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+?? remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256
+cache files:
+handoff:
+# Agent public13 current adoption
+
+## Result
+
+The approved Composition 0.0.13 consumer delta `c73b1ab1..30da0a5e` was
+ported exactly onto current Agent `d999197aed9c471f7b133e664f8086a0efc6cb66`.
+The final current source tree, including the uncommitted worker delta, is:
+
+markers:
+-rw-r--r-- 1 root root    0 Oct 20 18:03 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/DONE
+-rw-r--r-- 1 root root  247 Oct 20 18:03 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/commit-msg
+-rw-r--r-- 1 root root  247 Oct 20 18:03 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/commit-msg.txt
+-rw-r--r-- 1 root root 5314 Oct 20 18:03 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/report.md
+
+codex
+Completed the approved public13 pin port onto d999.
+
+- Final source tree: `2a7966420be037417ffa83fb70f3520d8b8365ec`
+- Archive SHA-256: `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`, 77 members
+- `package-lock.json` SHA-256: `c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24`
+- Public12 compatibility archive retained unchanged.
+- No Runtime 014/client changes or host13 readiness claim.
+
+Evidence:
+
+- Exact approved text delta: matched.
+- `git diff --check`: passed.
+- Central named targeted lane: 105 passed; 2 unrelated Runtime-import failures.
+- Direct run: 198 passed; socket/peer setup failures were sandbox/environment limitations.
+
+Reports and handoff:
+
+- [Worker report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/report.md>)
+- [ORCH adoption handoff](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-public13-current-adoption.md>)
+
+`commit-msg`, `commit-msg.txt`, and `DONE` are present.
+tokens used
+136,823
+Completed the approved public13 pin port onto d999.
+
+- Final source tree: `2a7966420be037417ffa83fb70f3520d8b8365ec`
+- Archive SHA-256: `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`, 77 members
+- `package-lock.json` SHA-256: `c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24`
+- Public12 compatibility archive retained unchanged.
+- No Runtime 014/client changes or host13 readiness claim.
+
+Evidence:
+
+- Exact approved text delta: matched.
+- `git diff --check`: passed.
+- Central named targeted lane: 105 passed; 2 unrelated Runtime-import failures.
+- Direct run: 198 passed; socket/peer setup failures were sandbox/environment limitations.
+
+Reports and handoff:
+
+- [Worker report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-public13-kernel-current-port/report.md>)
+- [ORCH adoption handoff](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-public13-current-adoption.md>)
+
+`commit-msg`, `commit-msg.txt`, and `DONE` are present.

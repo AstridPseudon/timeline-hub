@@ -1,0 +1,400 @@
++                'duration_seconds': 8}
++    command = capture_clip_trim(original, REF, in_s=1, out_s=5,
++                                verified_media=[metadata])
++    plan = execute(original, [command], verified_media=[metadata])
++    changed = copy.deepcopy(original)
++    track = State(changed).entity('parent/track:music')
++    if change == 'kind':
++        track['kind'] = 'visual'
++    elif change == 'role':
++        track['role'] = 'source'
++    elif change == 'disabled':
++        track['disabled'] = True
++    elif change == 'identity':
++        track['id'] = 'renamed'
++    else:
++        State(changed).config('parent')['tracks'].remove(track)
++    with pytest.raises(CommandError, match='original authored guard changed'):
++        replay(plan, changed, verified_media=[metadata])
++
++
+ def test_raw_audio_trim_pin_is_the_exact_retained_base_pin():
+     original, pin = raw_audio_bundle()
+     document = original['source_mapping']['_runtime_document']
+
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py astrid/sdk/timeline/sync.py astrid/sdk/timeline/_trim_commands.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_commit_runtime_raw_audio_trim.py tests/sdk/test_timeline_sync_native.py
+git diff --check
+git status --short --branch
+find . -maxdepth 3 \\( -name '__pycache__' -o -name '.pytest_cache' -o -name '_test_raw_runtime_pair.py' \\) -print" in /home/user/work/wt/agt-m2-raw-trim-two-fixes-compose
+ succeeded in 269ms:
+All checks passed!
+## tl/agt-m2-raw-trim-two-fixes-compose
+ M astrid/sdk/timeline/_trim_commands.py
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-raw-trim-current-pair.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-raw-trim-current-pair.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..58eedb3250072c1661db6f7a8bf3db7ef6710375
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-raw-trim-current-pair.md
+@@ -0,0 +1,75 @@
++# Agent raw trim current pair
++
++Date: 2026-10-20
++
++## Composition
++
++Composed only the reviewed-manifest candidate `ef56a3fd55dd1efa9f529e7caf6e32e0f36a0766`
++and the disjoint-track-read candidate `9989adb34d55153424d3d71287dfe0d89688e770`,
++both applied to the same base `f97b2b87688abb20280572a5fc23e4f69ec9e3f8`.
++The duration-read fix `9bf503f98deb3051cb9caceeae3ea6a5ebd5f185` remains preserved
++through that base. The two workers' additive changes to
++`test_recipe_m2_clip_trim.py` are both retained.
++
++The harness commit SHA is not available until worker exit. Pre-harness combined
++identity:
++
++- clean worktree tree: `8cc3bb3c7e374ec8c93b2320e9f81f046655150a`
++- combined patch SHA-256 from `f97b2b87` to this worktree:
++  `d1f913712bf5f465a635ed16948e90c34f592a19efdd78162c4f0abbc44c4144`
++- candidate source tree before the additive delta:
++  `4812245b80d2e8b4180c930b6d7bb8264524c8df`
++
++Changed source blobs (SHA-256):
++
++- `astrid/sdk/timeline/commit.py`
++  `42b7088e509037d3b3f2baa393b685b10c001053c41779a5e8e9b14faa162ece`
++- `astrid/sdk/timeline/sync.py`
++  `57aa86f76a1820eadae976ec2c765594eb32c9c882fb46c97ad687fdc85fa1bc`
++- `astrid/sdk/timeline/_trim_commands.py`
++  `1baddedb63faa3f7e923d8cb5e51030a6982334c179f04b0a5bf8e02e221042b`
++- `tests/editing_conformance/test_recipe_m2_clip_trim.py`
++  `596afdd477b0a45d1ce364d67fd2ca88c076c2908311197eb79f8265f08a5589`
++- `tests/editing_conformance/test_commit_runtime_raw_audio_trim.py`
++  `36bb261752dbc7208b1f9b33699034f756009f7b05443e7bc8f5e5d9e6816dfc`
++- `tests/sdk/test_timeline_sync_native.py`
++  `881cfb52d0d3f9b0379bc57d6e93d50cfa07ad443a80df5c722d8aa00bd04329`
++
++No Runtime files, custody/D13/private-carrier machinery, new pin/release,
++latest-head or memo authority, or comprehensive journey changes are included.
++
++## Exact Runtime pair
++
++- inner reviewed Runtime 7d candidate: commit
++  `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`, tree
++  `ac693097189637d3bd0fc3a39299d9b166758853`
++- authorized named-suite outer Runtime tuple: commit
++  `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`, tree
++  `4b7dd0fe44be973c344bab3de568eaf0bdd28476`
++
++The existing exact-7d wrapper set `ASTRID_RUNTIME_CHECKOUT` to the inner 7d
++candidate. It exercised only the two actual public HTTP cases: genuine WAV with
++absent authored duration, and malformed bytes. The outer named suite supplied
++the authorized a0 tuple.
++
++## Evidence
++
++Focused union of the 236-neighbor and 158-overlap lanes:
++
++```text
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/agt-m2-raw-trim-two-fixes-union tests/editing_conformance/test_recipe_m2_clip_trim.py tests/packs/timeline/test_cli_commit_trim.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_clip_trim_provider.py tests/editing_conformance/test_cli_trim_runtime.py
++262 passed, 2 deselected in 49.39s
++```
++
++Existing exact-7d wrapper through the central test service:
++
++```text
++request: agt-m2-raw-trim-two-fixes-compose-native014-sockets-integration-1020181508-11875
++2 passed, 3 marker-registration warnings in 4.43s; exit 0
++```
++
++The six Session authority controls are covered by the focused union, and the
++two actual HTTP WAV/malformed cases are covered by the central wrapper. Ruff
++and `git diff --check` passed on the composed source. The original historical
++literal/comprehensive Runtime journey was not rerun; Runtime owns that single
++authorized rerun after this new Agent SHA is available.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..0d31255242862bdf41987dbc6c5086a53f1abb21
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg
+@@ -0,0 +1,6 @@
++fix(timeline): compose reviewed raw trim authority fixes
++
++Preserve original-base manifest reads for raw audio trim preflight and narrow
++track guards to consumed identity and eligibility fields. Retain the duration
++read and all additive conformance coverage for disjoint labels, stale tracks,
++public WAV trim/undo, and malformed media refusal.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..0d31255242862bdf41987dbc6c5086a53f1abb21
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg.txt
+@@ -0,0 +1,6 @@
++fix(timeline): compose reviewed raw trim authority fixes
++
++Preserve original-base manifest reads for raw audio trim preflight and narrow
++track guards to consumed identity and eligibility fields. Retain the duration
++read and all additive conformance coverage for disjoint labels, stale tracks,
++public WAV trim/undo, and malformed media refusal.
+diff --git a/astrid/sdk/timeline/_trim_commands.py b/astrid/sdk/timeline/_trim_commands.py
+index b39e068b04a2a8ff1539dc3edc081b1d251f5cf6..9e5f7f527f8d20fb803fb5f7ae350b5e1dd9d5df
+--- a/astrid/sdk/timeline/_trim_commands.py
++++ b/astrid/sdk/timeline/_trim_commands.py
+@@ -104,8 +104,11 @@
+     source_kind = _media_kind(source)
+     clip_kind = 'audio' if 'audio' in (clip['clipType'], clip['clip_type'], source_kind) else source_kind
+     if clip_kind == 'audio':
+-        track = ctx.read('parent/track:' + str(clip['track']))
+-        if not isinstance(track, dict) or track.get('kind') != 'audio' or not active(track):
++        track_ref = 'parent/track:' + str(clip['track'])
++        track = {key: ctx.read(track_ref, [key]) for key in
++                 ('id', 'kind', 'role', 'enabled', 'active', 'disabled', 'hidden', 'deleted')}
++        if (track['id'] != clip['track'] or track['kind'] != 'audio'
++                or track['role'] not in (None, 'output') or not active(track)):
+             raise CommandError('clip.trim requires an active raw audio track', ref=ref)
+         if source_kind != 'audio':
+             raise CommandError('clip.trim audio track requires an audio registry asset', ref=ref)
+diff --git a/tests/editing_conformance/test_recipe_m2_clip_trim.py b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+index 2cff5f1d0dbdaa722e6fcc1de5d45905a038bb27..64c5a747151506809f320e0fc078d0ad84a821c3
+--- a/tests/editing_conformance/test_recipe_m2_clip_trim.py
++++ b/tests/editing_conformance/test_recipe_m2_clip_trim.py
+@@ -145,6 +145,48 @@
+     assert clip(plan.bundle)['to'] == 8
+ 
+ 
++def test_raw_audio_trim_rebases_over_disjoint_track_label_and_records_only_track_guards():
++    original, pin = raw_audio_bundle()
++    metadata = {'object_id': pin, 'media_type': 'audio/wav', 'size': 1234,
++                'duration_seconds': 8}
++    command = capture_clip_trim(original, REF, in_s=1, out_s=5,
++                                verified_media=[metadata])
++    track_reads = [read for read in command['reads']
++                   if read['ref'] == 'parent/track:music']
++    assert [read['path'] for read in track_reads] == [
++        ['id'], ['kind'], ['role'], ['enabled'], ['active'], ['disabled'], ['hidden'], ['deleted']]
++    changed = copy.deepcopy(original)
++    State(changed).entity('parent/track:music')['label'] = 'Independent'
++    plan = execute(original, [command], verified_media=[metadata])
++    rebased = replay(plan, changed, verified_media=[metadata])
++    assert State(rebased.bundle).entity(REF)['to'] == 5
++    assert State(rebased.bundle).entity('parent/track:music')['label'] == 'Independent'
++
++
++@pytest.mark.parametrize('change', ['kind', 'role', 'disabled', 'identity', 'deleted'])
++def test_raw_audio_trim_replay_refuses_changed_track_eligibility_or_identity(change):
++    original, pin = raw_audio_bundle()
++    metadata = {'object_id': pin, 'media_type': 'audio/wav', 'size': 1234,
++                'duration_seconds': 8}
++    command = capture_clip_trim(original, REF, in_s=1, out_s=5,
++                                verified_media=[metadata])
++    plan = execute(original, [command], verified_media=[metadata])
++    changed = copy.deepcopy(original)
++    track = State(changed).entity('parent/track:music')
++    if change == 'kind':
++        track['kind'] = 'visual'
++    elif change == 'role':
++        track['role'] = 'source'
++    elif change == 'disabled':
++        track['disabled'] = True
++    elif change == 'identity':
++        track['id'] = 'renamed'
++    else:
++        State(changed).config('parent')['tracks'].remove(track)
++    with pytest.raises(CommandError, match='original authored guard changed'):
++        replay(plan, changed, verified_media=[metadata])
++
++
+ def test_raw_audio_trim_pin_is_the_exact_retained_base_pin():
+     original, pin = raw_audio_bundle()
+     document = original['source_mapping']['_runtime_document']
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- final source delta ---' && git diff --no-ext-diff --name-status f97b2b87688abb20280572a5fc23e4f69ec9e3f8 && printf '%s\\n' '--- final worktree status ---' && git status --short --branch && printf '%s\\n' '--- authority/scope scan in composed delta ---' && git diff --no-ext-diff f97b2b87688abb20280572a5fc23e4f69ec9e3f8 -- astrid/sdk/timeline/commit.py astrid/sdk/timeline/sync.py astrid/sdk/timeline/_trim_commands.py tests/editing_conformance/test_recipe_m2_clip_trim.py tests/editing_conformance/test_commit_runtime_raw_audio_trim.py tests/sdk/test_timeline_sync_native.py | rg -n -i \"latest|memo|custody|d13|private.?carrier|new.?pin|release|_runtime_document|duration_seconds|track\" | head -160" in /home/user/work/wt/agt-m2-raw-trim-two-fixes-compose
+ succeeded in 306ms:
+--- final source delta ---
+M	astrid/sdk/timeline/_trim_commands.py
+M	astrid/sdk/timeline/commit.py
+M	astrid/sdk/timeline/sync.py
+A	tests/editing_conformance/test_commit_runtime_raw_audio_trim.py
+M	tests/editing_conformance/test_recipe_m2_clip_trim.py
+M	tests/sdk/test_timeline_sync_native.py
+--- final worktree status ---
+## tl/agt-m2-raw-trim-two-fixes-compose
+ M astrid/sdk/timeline/_trim_commands.py
+ M tests/editing_conformance/test_recipe_m2_clip_trim.py
+--- authority/scope scan in composed delta ---
+9:-        track = ctx.read('parent/track:' + str(clip['track']))
+10:-        if not isinstance(track, dict) or track.get('kind') != 'audio' or not active(track):
+11:+        track_ref = 'parent/track:' + str(clip['track'])
+12:+        track = {key: ctx.read(track_ref, [key]) for key in
+14:+        if (track['id'] != clip['track'] or track['kind'] != 'audio'
+15:+                or track['role'] not in (None, 'output') or not active(track)):
+16:             raise CommandError('clip.trim requires an active raw audio track', ref=ref)
+18:             raise CommandError('clip.trim audio track requires an audio registry asset', ref=ref)
+36:-    manifest = bundle.get('source_mapping', {}).get('_runtime_document', {}) \
+39:+                bundle.get('source_mapping', {}).get('_runtime_document', {})
+111:+        clips = [{'id': 'music', 'track': 'music', 'clipType': 'audio', 'asset': 'music',
+116:+            'config': {'clips': copy.deepcopy(clips), 'tracks': [{'id': 'music', 'kind': 'audio'}],
+134:+    assert '_runtime_document' not in bundle['source_mapping']
+154:+            and read['path'] == ['duration_seconds']] == [{
+155:+                'ref': 'media:' + media, 'path': ['duration_seconds'],
+172:+def test_raw_audio_trim_rebases_over_disjoint_track_label_and_records_only_track_guards():
+175:+                'duration_seconds': 8}
+178:+    track_reads = [read for read in command['reads']
+179:+                   if read['ref'] == 'parent/track:music']
+180:+    assert [read['path'] for read in track_reads] == [
+183:+    State(changed).entity('parent/track:music')['label'] = 'Independent'
+187:+    assert State(rebased.bundle).entity('parent/track:music')['label'] == 'Independent'
+191:+def test_raw_audio_trim_replay_refuses_changed_track_eligibility_or_identity(change):
+194:+                'duration_seconds': 8}
+199:+    track = State(changed).entity('parent/track:music')
+201:+        track['kind'] = 'visual'
+203:+        track['role'] = 'source'
+205:+        track['disabled'] = True
+207:+        track['id'] = 'renamed'
+209:+        State(changed).config('parent')['tracks'].remove(track)
+216:     document = original['source_mapping']['_runtime_document']
+224:+    private = original['source_mapping'].pop('_runtime_document')
+236:+        original['source_mapping']['_runtime_document'] = private
+261: REF = 'parent/track:picture'
+271:+    bundle['parent']['config']['tracks'][0]['kind'] = 'audio'
+299:+        assert {'ref': 'media:' + media, 'path': ['duration_seconds'],
+311:     return {'schema_version': 1, 'op': 'track.set', 'version': '1', 'select': REF,
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/DONE
+: > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/DONE
+wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/DONE
+printf '%s\\n' '--- commit message ---'
+sed -n '1,120p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg
+printf '%s\\n' '--- design note ---'
+sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-raw-trim-current-pair.md" in /home/user/work/wt/agt-m2-raw-trim-two-fixes-compose
+ succeeded in 0ms:
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/DONE
+--- commit message ---
+fix(timeline): compose reviewed raw trim authority fixes
+
+Preserve original-base manifest reads for raw audio trim preflight and narrow
+track guards to consumed identity and eligibility fields. Retain the duration
+read and all additive conformance coverage for disjoint labels, stale tracks,
+public WAV trim/undo, and malformed media refusal.
+--- design note ---
+# Agent raw trim current pair
+
+Date: 2026-10-20
+
+## Composition
+
+Composed only the reviewed-manifest candidate `ef56a3fd55dd1efa9f529e7caf6e32e0f36a0766`
+and the disjoint-track-read candidate `9989adb34d55153424d3d71287dfe0d89688e770`,
+both applied to the same base `f97b2b87688abb20280572a5fc23e4f69ec9e3f8`.
+The duration-read fix `9bf503f98deb3051cb9caceeae3ea6a5ebd5f185` remains preserved
+through that base. The two workers' additive changes to
+`test_recipe_m2_clip_trim.py` are both retained.
+
+The harness commit SHA is not available until worker exit. Pre-harness combined
+identity:
+
+- clean worktree tree: `8cc3bb3c7e374ec8c93b2320e9f81f046655150a`
+- combined patch SHA-256 from `f97b2b87` to this worktree:
+  `d1f913712bf5f465a635ed16948e90c34f592a19efdd78162c4f0abbc44c4144`
+- candidate source tree before the additive delta:
+  `4812245b80d2e8b4180c930b6d7bb8264524c8df`
+
+Changed source blobs (SHA-256):
+
+- `astrid/sdk/timeline/commit.py`
+  `42b7088e509037d3b3f2baa393b685b10c001053c41779a5e8e9b14faa162ece`
+- `astrid/sdk/timeline/sync.py`
+  `57aa86f76a1820eadae976ec2c765594eb32c9c882fb46c97ad687fdc85fa1bc`
+- `astrid/sdk/timeline/_trim_commands.py`
+  `1baddedb63faa3f7e923d8cb5e51030a6982334c179f04b0a5bf8e02e221042b`
+- `tests/editing_conformance/test_recipe_m2_clip_trim.py`
+  `596afdd477b0a45d1ce364d67fd2ca88c076c2908311197eb79f8265f08a5589`
+- `tests/editing_conformance/test_commit_runtime_raw_audio_trim.py`
+  `36bb261752dbc7208b1f9b33699034f756009f7b05443e7bc8f5e5d9e6816dfc`
+- `tests/sdk/test_timeline_sync_native.py`
+  `881cfb52d0d3f9b0379bc57d6e93d50cfa07ad443a80df5c722d8aa00bd04329`
+
+No Runtime files, custody/D13/private-carrier machinery, new pin/release,
+latest-head or memo authority, or comprehensive journey changes are included.
+
+## Exact Runtime pair
+
+- inner reviewed Runtime 7d candidate: commit
+  `7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e`, tree
+  `ac693097189637d3bd0fc3a39299d9b166758853`
+- authorized named-suite outer Runtime tuple: commit
+  `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`, tree
+  `4b7dd0fe44be973c344bab3de568eaf0bdd28476`
+
+The existing exact-7d wrapper set `ASTRID_RUNTIME_CHECKOUT` to the inner 7d
+candidate. It exercised only the two actual public HTTP cases: genuine WAV with
+absent authored duration, and malformed bytes. The outer named suite supplied
+the authorized a0 tuple.
+
+## Evidence
+
+Focused union of the 236-neighbor and 158-overlap lanes:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/agt-m2-raw-trim-two-fixes-union tests/editing_conformance/test_recipe_m2_clip_trim.py tests/packs/timeline/test_cli_commit_trim.py tests/sdk/test_timeline_sync_native.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_clip_trim_provider.py tests/editing_conformance/test_cli_trim_runtime.py
+262 passed, 2 deselected in 49.39s
+```
+
+Existing exact-7d wrapper through the central test service:
+
+```text
+request: agt-m2-raw-trim-two-fixes-compose-native014-sockets-integration-1020181508-11875
+2 passed, 3 marker-registration warnings in 4.43s; exit 0
+```
+
+The six Session authority controls are covered by the focused union, and the
+two actual HTTP WAV/malformed cases are covered by the central wrapper. Ruff
+and `git diff --check` passed on the composed source. The original historical
+literal/comprehensive Runtime journey was not rerun; Runtime owns that single
+authorized rerun after this new Agent SHA is available.
+
+codex
+## Report
+
+- Composed `ef56a3fd` + `9989adb3` on base `f97b2b87`; preserved duration-read fix `9bf503f9`.
+- Worktree tree: `8cc3bb3c7e374ec8c93b2320e9f81f046655150a`
+- Patch SHA-256: `d1f913712bf5f465a635ed16948e90c34f592a19efdd78162c4f0abbc44c4144`
+- No Runtime edits or scope expansion.
+
+Tests:
+
+- Focused union: **262 passed, 2 deselected**
+- Exact-7d wrapper: **2 passed**, 3 expected marker warnings
+- Ruff and `git diff --check`: passed
+- No full suite or comprehensive journey run.
+
+Runtime tuple recorded: 7d commit/tree and authorized a0 commit/tree in [design note](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-raw-trim-current-pair.md>).
+
+Commit message: [commit-msg](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg>). `DONE` created. Runtime owner must rerun the original historical/literal nodes after the harness supplies the new commit SHA.
+tokens used
+179,723
+## Report
+
+- Composed `ef56a3fd` + `9989adb3` on base `f97b2b87`; preserved duration-read fix `9bf503f9`.
+- Worktree tree: `8cc3bb3c7e374ec8c93b2320e9f81f046655150a`
+- Patch SHA-256: `d1f913712bf5f465a635ed16948e90c34f592a19efdd78162c4f0abbc44c4144`
+- No Runtime edits or scope expansion.
+
+Tests:
+
+- Focused union: **262 passed, 2 deselected**
+- Exact-7d wrapper: **2 passed**, 3 expected marker warnings
+- Ruff and `git diff --check`: passed
+- No full suite or comprehensive journey run.
+
+Runtime tuple recorded: 7d commit/tree and authorized a0 commit/tree in [design note](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-raw-trim-current-pair.md>).
+
+Commit message: [commit-msg](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-raw-trim-two-fixes-compose/commit-msg>). `DONE` created. Runtime owner must rerun the original historical/literal nodes after the harness supplies the new commit SHA.

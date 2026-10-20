@@ -1,0 +1,400 @@
+     remove,
+     reorder_layers,
+     replace_media,
+-    retime_with_ripple,
+     sequence,
+-    source_to_timeline_time,
+-    timeline_to_source_time,
+ )
+ 
+ 
+@@ -90,28 +90,30 @@ def test_quantize_interval_reports_rounding_and_rejects_collapsed_ranges():
+         quantize_interval(0.01, 0.02, 24)
+ 
+ 
+-def test_ripple_is_track_scoped_and_never_moves_audio():
+-    candidate = _candidate()
+-    picture = add_track(candidate, kind="visual", track_id="picture")
+-    audio = add_track(candidate, kind="audio", track_id="music")
+-    first = place_media(candidate, "a", track=picture, start=0, end=1, clip_id="first")
+-    second = place_media(candidate, "b", track=picture, start=1, end=2, clip_id="second")
+-    music = place_media(candidate, "m", track=audio, start=0, end=2, clip_id="music")
+-    candidate["timeline"]["duration"] = 2
+-
+-    retime_with_ripple(candidate, first["id"], end=1.5, parent_duration="extend")
+-    assert (first["at"], first["from"], first["to"]) == (0, 0, 1.5)
+-    assert (second["at"], second["from"], second["to"]) == (1.5, 0, 1)
+-    assert (music["at"], music["from"], music["to"]) == (0, 0, 2)
+-    assert candidate["timeline"]["duration"] == 2.5
+-
+-    with pytest.raises(TimelineEditError, match="audio/voice/music"):
+-        retime_with_ripple(candidate, music["id"], end=3, parent_duration="extend")
+-    with pytest.raises(TimelineEditError, match="parent duration"):
+-        retime_with_ripple(candidate, first["id"], end=3, parent_duration="preserve")
+-
+-
+-def test_canonical_source_trim_speed_move_and_retime_intervals():
++def test_public_time_helpers_lazily_resolve_to_relocated_units():
++    from astrid.sdk import (
++        frame_time as public_frame_time,
++        grid as public_grid,
++        quantize_interval as public_quantize_interval,
++        quantize_time as public_quantize_time,
++        source_to_timeline_time as public_source_to_timeline_time,
++        timeline_to_source_time as public_timeline_to_source_time,
++    )
++    from astrid.sdk.timeline import units
++
++    for public, name in (
++        (public_frame_time, "frame_time"),
++        (public_source_to_timeline_time, "source_to_timeline_time"),
++        (public_timeline_to_source_time, "timeline_to_source_time"),
++        (public_quantize_time, "quantize_time"),
++        (public_quantize_interval, "quantize_interval"),
++        (public_grid, "grid"),
++    ):
++        assert public is getattr(units, name)
++        assert public.__module__ == "astrid.sdk.timeline.units"
++
++
++def test_canonical_source_trim_speed_and_move_intervals():
+     candidate = _candidate()
+     track = add_track(candidate, kind="visual")
+     clip = place_media(candidate, "trimmed", track=track, start=4, end=5,
+@@ -125,9 +127,7 @@ def test_canonical_source_trim_speed_move_and_retime_intervals():
+                     source_start=2, source_end=4, speed=2)
+     moved = move(candidate, clip["id"], track=track, start=10)
+     assert (moved["at"], moved["from"], moved["to"], moved["speed"]) == (10, 2, 4, 2)
+-    retime(moved, start=20)
+-    assert (moved["at"], moved["from"], moved["to"], moved["speed"]) == (20, 2, 4, 2)
+-    retime(moved, end=21.5)
++    move(candidate, moved["id"], track=track, start=20, end=21.5)
+     assert (moved["at"], moved["from"], moved["to"], moved["speed"]) == (20, 2, 5, 2)
+ 
+ 
+@@ -142,19 +142,6 @@ def test_place_media_rejects_timing_overrides_after_validation():
+     assert clip["hold"] == 2
+ 
+ 
+-def test_ripple_shifts_canonical_intervals_without_touching_audio():
+-    candidate = _candidate()
+-    picture = add_track(candidate, kind="visual", track_id="picture")
+-    audio = add_track(candidate, kind="audio", track_id="music")
+-    first = place_media(candidate, "a", track=picture, start=0, end=1, source_start=3, source_end=4)
+-    second = place_media(candidate, "b", track=picture, start=1, end=2, source_start=8, source_end=9)
+-    music = place_media(candidate, "m", track=audio, start=0, end=2)
+-    before_audio = dict(music)
+-    retime_with_ripple(candidate, first["id"], end=1.5, parent_duration="extend")
+-    assert (second["at"], second["from"], second["to"]) == (1.5, 8, 9)
+-    assert music == before_audio
+-
+-
+ def test_track_ownership_and_removal_cannot_leave_dangling_clips():
+     candidate = _candidate()
+     track = add_track(candidate, track_id="owned")
+?? astrid/sdk/timeline/_timing_evaluators.py
+?? astrid/sdk/timeline/compiler.py
+?? design/
+?? tests/editing_conformance/test_timing_retained_inputs.py
+?? tests/editing_conformance/test_word_binding_recipe.py
+?? tests/editing_conformance/word_binding_recipe.py
+?? tests/sdk/test_timing_compiler.py
+?? tests/sdk/test_timing_cycles.py
+All checks passed!
+
+exec
+/bin/bash -lc 'git show --stat --oneline 76737ca2 | head -65; git log -1 --oneline 76737ca2''^2; git show --stat --oneline 76737ca2''^2 | head -65; rg --files tests | rg '"'d07|legacy.*(edit|timing)|retire|intent|clip_trim'; git diff --check; wc -l astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py" in /home/user/work/wt/agt-m2-timing-kernel-current
+ succeeded in 153ms:
+76737ca2 Merge tl/agt-m2-d07-proof-finish
+
+ .../rendering/docs/references/document-checkout.md |  32 +---
+ astrid/sdk/__init__.py                             |  14 +-
+ astrid/sdk/timeline/units.py                       | 126 ++++++++++++-
+ astrid/sdk/timeline_editing.py                     | 208 +--------------------
+ docs/timeline-authoring-capabilities.md            |  12 +-
+ docs/timeline-editing-guide.md                     |  14 +-
+ .../test_recipe_m2_clip_trim.py                    |  46 ++++-
+ tests/test_timeline_editing_helpers.py             |  81 ++++----
+ 8 files changed, 227 insertions(+), 306 deletions(-)
+d01c3c49 test(timeline): finish D07 retime replacement proof
+d01c3c49 test(timeline): finish D07 retime replacement proof
+ .../rendering/docs/references/document-checkout.md | 32 ++++-----------
+ docs/timeline-authoring-capabilities.md            | 12 +++---
+ docs/timeline-editing-guide.md                     | 14 +++----
+ .../test_recipe_m2_clip_trim.py                    | 46 +++++++++++++++++++++-
+ tests/test_timeline_editing_helpers.py             | 23 +++++++++++
+ 5 files changed, 88 insertions(+), 39 deletions(-)
+tests/schemas/test_astrid_intent_schema.py
+tests/sdk/test_timeline_clip_trim_provider.py
+tests/sdk/test_intent_app_astrid.py
+tests/editing_conformance/fixtures/recipe_m2_clip_trim.json
+tests/editing_conformance/test_recipe_m2_clip_trim.py
+tests/stage1/test_supported_docs_no_retired_pack_guidance_luna.py
+tests/stage1/test_timeline_authority_retirement_luna.py
+tests/stage1/test_asset_cache_retired_luna.py
+  127 astrid/sdk/timeline/compiler.py
+  399 astrid/sdk/timeline/_timing_evaluators.py
+  320 tests/sdk/test_timing_compiler.py
+  114 tests/sdk/test_timing_cycles.py
+  960 total
+
+codex
+The 97 word-reference and neighbor cases passed, including distinct revisions for equal echoes with different IDs, authoritative-ID resolution, ambiguous-text refusal, and the unique-text control. Both new V1/V2 source-window and source-identity cases also passed. The API handoff is written and lists the remaining default wiring and parity work.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_clip_trim_provider.py --tb=short' in /home/user/work/wt/agt-m2-timing-kernel-current
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/editing_conformance/test_timing_retained_inputs.py tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/word_binding_recipe.py; git diff --check; git diff --exit-code HEAD -- astrid/sdk/timeline/units.py astrid/sdk/timeline_editing.py astrid/sdk/__init__.py astrid/sdk/timeline/commands.py astrid/sdk/timeline/commit.py runtime.lock.json remotion/package.json remotion/package-lock.json; git status --short --untracked-files=all' in /home/user/work/wt/agt-m2-timing-kernel-current
+ succeeded in 113ms:
+All checks passed!
+?? astrid/sdk/timeline/_timing_evaluators.py
+?? astrid/sdk/timeline/compiler.py
+?? design/agent-timing-kernel-current.md
+?? tests/editing_conformance/test_timing_retained_inputs.py
+?? tests/editing_conformance/test_word_binding_recipe.py
+?? tests/editing_conformance/word_binding_recipe.py
+?? tests/sdk/test_timing_compiler.py
+?? tests/sdk/test_timing_cycles.py
+
+ succeeded in 10156ms:
+........................................................................ [ 77%]
+.....................                                                    [100%]
+93 passed in 8.44s
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+files = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], text=True).splitlines()
+for name in files:
+    result = subprocess.run(['git', 'diff', '--no-index', '--check', '/dev/null', name], capture_output=True, text=True)
+    if result.returncode:
+        raise SystemExit(f'{name}: {result.stdout}{result.stderr}')
+print(f'Whitespace checks passed for {len(files)} new files')
+PY" in /home/user/work/wt/agt-m2-timing-kernel-current
+ exited 1 in 179ms:
+astrid/sdk/timeline/_timing_evaluators.py: 
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+import subprocess
+p=Path('tests/editing_conformance/test_timing_retained_inputs.py')
+s=p.read_text().replace('Keep the exact rational clock at both current canvas locations.', 'Keep the exact rational clock in current output and canvas settings.')
+p.write_text(s)
+files = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], text=True).splitlines()
+for name in files:
+    result = subprocess.run(['git', 'diff', '--no-index', '--check', '/dev/null', name], capture_output=True, text=True)
+    assert result.returncode in (0, 1) and not result.stdout and not result.stderr, (name, result.stdout, result.stderr)
+print(f'Whitespace checks passed for {len(files)} new files')
+cache = Path('.mypy_cache')
+if cache.exists():
+    shutil.rmtree(cache)
+    print('Removed private mypy cache')
+PY" in /home/user/work/wt/agt-m2-timing-kernel-current
+ succeeded in 509ms:
+Whitespace checks passed for 8 new files
+Removed private mypy cache
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+root = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-timing-kernel-current')
+(root / 'notes').mkdir(exist_ok=True)
+(root / 'notes/report.md').write_text('''# Current-integration timing kernel port
+
+Completed on base "'`df2739f903edac02bd36b4446deeea847524c040` in the assigned worktree.
+No integration worktree, shared dependency, Git metadata, lock, ledger or registration was changed.
+
+## Changes
+
+- Added only `astrid/sdk/timeline/compiler.py` and `_timing_evaluators.py` as product code.
+  Kernel/compiler/cycle cases come from `b8139a1acbb6d286fff791f95f09276e5492ea9f`.
+  The evaluator includes the authoritative stable-ID correction from
+  `fd27d5ebdb795b4855e42f5389793eb99637ae7e`.
+- Ported direct timing/cycle cases and the retained-input/word-reference experiments,
+  including the reviewed same-echo/different-ID distinct-revision test from
+  `a3ad4f967b1299f9f46db64bbf50b58cd38d717f`. No old branch was merged wholesale.
+- Adapted the retained fixture to current Runtime: an explicit test-only prepared
+  provider seeds the bounded film through the real acceptance port after a normal
+  empty bootstrap. Media comes from the Runtime managed-output fixture and is
+  captured with its real selection. No retired shot route, SQL seeding, fabricated
+  receipt or fallback writer is used. All subsequent measured commands use the
+  normal Agent provider (the word recipe remains test-local).
+- Preserved the current `_hydrate(port, bundle, calls)` argument/result contract in
+  both observation wrappers, including the fresh-interpreter probe. Exact rational
+  FPS is stored in output and canvas. Current units already have all six required
+  pure helper signatures, so no unit/helper copy or legacy import was needed.
+- Added two V1/V2 comparisons: exact captures coexist without latest substitution;
+  missing exact versions refuse; same-CAS/raw-source choices stay distinct; source
+  trims shift timing exactly; word end at source-out is accepted while excluded
+  words refuse; restart still hydrates retained V1 after the producer publishes V2.
+  The explicit V2 pure probe is a separately supplied verified capture, not a claim
+  that native commands adopted V2 or default compilation is active.
+- Added `design/agent-timing-kernel-current.md`: exact callable/types, Owner and source
+  row shape, source SHAs, error/result behavior, native-word handoff and remaining
+  default-wiring/parity work. Compiler module documentation now points adapters at
+  the authored revision rather than echo/history reconstruction.
+
+Product addition: 526 lines across the two modules (519 donor lines, six lines of
+net evaluator correction and one net module-doc line). Other new files are tests
+and the single requested design note. Existing authored data and default paths
+are untouched.
+
+## Passing commands
+
+Run from `/home/user/work/wt/agt-m2-timing-kernel-current`:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/sdk/test_timeline_checkout.py tests/sdk/test_timeline_reflow_golden.py tests/sdk/test_timeline_reflow_keep.py tests/sdk/test_media_transcript.py tests/sdk/test_intent_app_astrid.py tests/test_timeline_editing_helpers.py tests/sdk/test_timeline_cuts.py --tb=short
+```
+
+**201 passed, 17 deselected, four existing Pillow deprecation warnings**, 67.80s.
+The donor'"'s corresponding report said 202; current D07 removes two legacy ripple
+helper cases and adds the public relocated-units case (net minus one). Those current
+base changes were not overwritten. Its current native replacement proof also passes
+below. The ported compiler/cycle test files themselves preserve every donor case.
+
+"'```bash
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m '"'' tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/test_timing_retained_inputs.py tests/timeline/test_timeline_kernel_kinds.py tests/stage1/test_kernel_admission_runtime.py tests/sdk/test_timeline_commit_provider_runtime.py --tb=short
+"'```
+
+**97 passed, eight subtests passed**, 66.36s. This run was after all fixture adaptations,
+before adding the two extra version/window/source cases. All original distinct
+word-reference expectations pass, including zero xfails in that file.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -xq -p no:cacheprovider -m integration tests/editing_conformance/test_timing_retained_inputs.py -k explicit_v2 --tb=short
+```
+
+**2 passed, 6 deselected**, 3.68s. These are the two newly added cases; together with
+the prior run all 99 current word/retained-input/neighbor cases passed.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_m2_clip_trim.py tests/sdk/test_timeline_clip_trim_provider.py --tb=short
+```
+
+**93 passed**, 8.44s. Includes the current D07/native trim replacement and atomic
+refusals; no legacy helper was restored to reproduce an obsolete test count.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py tests/editing_conformance/test_timing_retained_inputs.py tests/editing_conformance/test_word_binding_recipe.py tests/editing_conformance/word_binding_recipe.py
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m mypy --follow-imports=skip astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py
+```
+
+**All lint checks passed; mypy: no issues in two source files.** The private mypy
+cache was removed. `git diff --check` passed; each of the eight new files was also
+checked with `git diff --no-index --check /dev/null PATH` (accepting the normal
+no-index status 1 for new content only when both output streams are empty).
+Existing tracked files have no diff; units, SDK public exports, provider/commands,
+Runtime lock and Remotion/package pins remain at the current base.
+
+## Diagnostic runs and decisions
+
+The initial 97-case command above, before adapting the seed, returned **50 passed,
+47 setup errors, eight subtests passed**: all 47 used `create_project_shot`, now a
+retired route. An isolated diagnostic command was then repeated while adapting:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -xq -p no:cacheprovider -m integration tests/editing_conformance/test_timing_retained_inputs.py --tb=short
+```
+
+Intermediate results: single setup errors for the retired route, missing bootstrap
+publication (provider registered too late), required occurrence track, required
+parent registry, uncaptured media and missing explicit gain in the fixture; then a
+single failure for the old two-argument hydration observer. The final isolated
+version passed **6 tests**, 9.82s, before the two new tests were added. No behavior
+expectation was weakened, skipped or xfailed. The gain diagnostic was a fixture
+normalization issue exposed on real restart admission; the prepared fixture now
+spells the same occurrence defaults that the donor publication API supplied.
+The first lint run identified only local import order; `ruff check --no-cache --fix`
+was run on `test_timing_retained_inputs.py`, followed by the clean checks above.
+
+All direct runs use service methods or pure functions: no localhost, browser or
+live-socket suite was run. No central/full suite was requested, per brief.
+No `make check`, renderer parity, cross-product journey or full-suite result is claimed.
+
+## Blockers and next steps
+
+No blocker for this bounded port. The pure compiler remains opt-in. The sibling
+native-word worker should use the design handoff to derive WordBindings from the
+stable authored reference, never echo/history, and own the production command and
+capture/default adapter separately. Current test-only parent support is not native
+all-owner coverage.
+
+Remaining work is listed explicitly in the design note: provider/Recording/default
+wiring and derived-write recording; migration/parity for Checkout, model, narration,
+music, sequences and sheet/CLI consumers; explicit-map and millisecond adapters;
+shared-shot materialization; reflow/formula/sequence/marker evaluators. Existing
+working paths remain in place until their adapters are qualified. No Runtime
+semantics/default activation, renderer parity or one-writer completion is claimed.
+'"''')
+(root / 'commit-msg').write_text('''feat(timeline): port pure timing kernel to current integration
+
+Add captured-input timing compilation and authoritative stable-word-ID
+resolution without changing default commands, providers or current units.
+
+Port timing, cycle and authored-reference conformance cases onto current
+Runtime fixtures, add V1/V2 source-window and identity comparisons, and
+document the API and remaining native adapter and parity work.
+''')
+print('Wrote worker notes/report.md and commit-msg')
+PY" in /home/user/work/wt/agt-m2-timing-kernel-current
+ succeeded in 159ms:
+Wrote worker notes/report.md and commit-msg
+
+exec
+/bin/bash -lc "git status --short --untracked-files=all; rg -n '@banodoco/timeline-composition|0.0.12' remotion/package.json; python3 - <<'PY'
+from pathlib import Path
+import subprocess
+names = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], text=True).splitlines()
+assert len(names) == 8, names
+for name in names:
+    result = subprocess.run(['git', 'diff', '--no-index', '--check', '/dev/null', name], capture_output=True, text=True)
+    assert result.returncode in (0, 1) and not result.stdout and not result.stderr, name
+assert subprocess.run(['git', 'diff', '--exit-code', 'HEAD'], capture_output=True).returncode == 0
+assert not Path('.mypy_cache').exists()
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-timing-kernel-current')
+assert (worker / 'notes/report.md').is_file() and (worker / 'commit-msg').is_file()
+(worker / 'DONE').touch()
+print('Final narrow-scope checks passed; DONE created')
+PY" in /home/user/work/wt/agt-m2-timing-kernel-current
+ succeeded in 444ms:
+?? astrid/sdk/timeline/_timing_evaluators.py
+?? astrid/sdk/timeline/compiler.py
+?? design/agent-timing-kernel-current.md
+?? tests/editing_conformance/test_timing_retained_inputs.py
+?? tests/editing_conformance/test_word_binding_recipe.py
+?? tests/editing_conformance/word_binding_recipe.py
+?? tests/sdk/test_timing_compiler.py
+?? tests/sdk/test_timing_cycles.py
+18:    "@banodoco/timeline-composition": "file:artifacts/banodoco-timeline-composition-0.0.12.tgz",
+Final narrow-scope checks passed; DONE created
+
+codex
+Ported the pure compiler and authoritative stable-ID evaluator correction. Current units, commands, pins, and default timing paths remain unchanged.
+
+Validation:
+
+- Kernel/cycle/checkout/reflow/transcript neighbors: **201 passed, 17 deselected**. Current D07 accounts for the donor’s 202→201 count.
+- Word-reference and retained-input neighbors: **97 passed**, plus **2 new V1/V2 cases passed**.
+- Current D07 trim replacement tests: **93 passed**.
+- Ruff and focused mypy: **passed**.
+
+Exact commands, diagnostic results, and decisions are in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-timing-kernel-current/notes/report.md). The [API handoff](/home/user/work/wt/agt-m2-timing-kernel-current/design/agent-timing-kernel-current.md) includes source SHAs, types, and missing wiring/parity work.
+
+No blocker. Native authored-reference/default wiring remains separate; no full suite or Runtime default-activation claim. `commit-msg` and `DONE` are written.
+tokens used
+217,684
+Ported the pure compiler and authoritative stable-ID evaluator correction. Current units, commands, pins, and default timing paths remain unchanged.
+
+Validation:
+
+- Kernel/cycle/checkout/reflow/transcript neighbors: **201 passed, 17 deselected**. Current D07 accounts for the donor’s 202→201 count.
+- Word-reference and retained-input neighbors: **97 passed**, plus **2 new V1/V2 cases passed**.
+- Current D07 trim replacement tests: **93 passed**.
+- Ruff and focused mypy: **passed**.
+
+Exact commands, diagnostic results, and decisions are in [notes/report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-timing-kernel-current/notes/report.md). The [API handoff](/home/user/work/wt/agt-m2-timing-kernel-current/design/agent-timing-kernel-current.md) includes source SHAs, types, and missing wiring/parity work.
+
+No blocker. Native authored-reference/default wiring remains separate; no full suite or Runtime default-activation claim. `commit-msg` and `DONE` are written.

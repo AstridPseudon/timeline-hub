@@ -1,0 +1,400 @@
+   782	        object.__setattr__(
+   783	            self,
+   784	            "backend_config",
+   785	            _coerce_namespaced_backend_config(self.backend_config, "backend_config"),
+   786	        )
+   787	        object.__setattr__(self, "metadata", _require_string_mapping(self.metadata, "metadata"))
+   788	        object.__setattr__(self, "materialized_root", _require_optional_string(self.materialized_root, "materialized_root"))
+   789	        handoff = _require_mapping(self.materialized_objects, "materialized_objects")
+   790	        normalized_handoff: dict[str, str] = {}
+   791	        for raw_key, raw_value in handoff.items():
+   792	            key = _require_string(raw_key, "materialized_objects key")
+   793	            normalized_handoff[key] = _require_string(raw_value, f"materialized_objects[{key!r}]")
+   794	        if normalized_handoff and self.materialized_root is None:
+   795	            raise ValueError("materialized_root is required with materialized_objects")
+   796	        object.__setattr__(self, "materialized_objects", normalized_handoff)
+   797	        source = inherited_source(self.timeline_path, self.assets_registry_path)
+   798	        if self.verified_source is not None and (
+   799	            type(self.verified_source) is not VerifiedTimelineSource or self.verified_source != source
+   800	        ):
+   801	            raise ValueError("verified timeline source cannot be caller replaced")
+   802	        object.__setattr__(self, "verified_source", source)
+   803	
+   804	    def to_dict(self) -> dict[str, Any]:
+   805	        return _json_safe_mapping(
+   806	            {
+   807	                "schema_version": self.schema_version,
+   808	                "timeline_path": self.timeline_path,
+   809	                "assets_registry_path": self.assets_registry_path,
+   810	                "output_name": self.output_name,
+   344	        # passed admission for the current request, producing misleading
+   345	        # replay metadata (especially when a backend fails during support).
+   346	        self._support_reports.clear()
+   347	        try:
+   348	            parsed = (
+   349	                request
+   350	                if isinstance(request, RenderRequest)
+   351	                else RenderRequest.from_dict(request)
+   352	            )
+   353	            from .verified_source import inherited_source
+   354	
+   355	            if parsed.verified_source != inherited_source(parsed.timeline_path, parsed.assets_registry_path):
+   356	                raise ValueError("verified source authority is unavailable or replaced")
+   357	            if parsed.verified_source is not None:
+   358	                parsed.verified_source.validate(parsed.timeline_path, parsed.assets_registry_path)
+   359	            self._validate_output_name(parsed)
+   360	            localized = self._absolute_input_paths(parsed)
+   361	            # Keep the caller's absolute-but-unresolved spellings for the
+   362	            # publication layer's symlink guard.  The private workspace uses
+   363	            # the resolved parent so its final move stays on the destination
+   364	            # filesystem.
+   365	            output = Path(out_path).expanduser().absolute()
+   366	            sidecar = Path(
+ M astrid/core/rendering/contracts.py
+ M astrid/core/rendering/service.py
+ M tests/packs/rendering/test_verified_source.py
+ M tests/sdk/test_capture_source_runtime.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c0d2c7816c28758bc694fae15535727fbf93f4a2
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/commit-msg
+@@ -0,0 +1,4 @@
++fix(rendering): restore verified source request carrier
++
++Restore the private VerifiedTimelineSource handoff through RenderRequest and
++revalidate it at RenderService without changing the public render wire shape.
+diff --git a/astrid/core/rendering/contracts.py b/astrid/core/rendering/contracts.py
+index d5b3044c0090c7d48cfacb1c79220f8738f11dfb..6e41c34e3337153525d6891069394d5caabe04aa
+--- a/astrid/core/rendering/contracts.py
++++ b/astrid/core/rendering/contracts.py
+@@ -18,6 +18,7 @@
+ 
+ from astrid.core.foundation.hash import canonical_json_digest, sha256_file
+ 
++from .verified_source import VerifiedTimelineSource, inherited_source, reject_source_keys
+ 
+ SCHEMA_VERSION = 1
+ 
+@@ -726,6 +727,7 @@
+     mapping = _require_mapping(value, label)
+     result: BackendConfig = {}
+     for raw_backend, raw_config in mapping.items():
++        reject_source_keys(_require_mapping(raw_config, label))
+         backend = _require_qualified_id(raw_backend, f"{label} key")
+         result[backend] = _json_safe_mapping(raw_config, label=f"{label}[{backend!r}]")
+     return result
+@@ -748,6 +750,8 @@
+     # they are never authority or durable media locators.
+     materialized_root: str | None = None
+     materialized_objects: dict[str, str] = field(default_factory=dict)
++    # Python-only authority. The public wire shape intentionally excludes it.
++    verified_source: VerifiedTimelineSource | None = field(default=None, repr=False, compare=False)
+ 
+     def __post_init__(self) -> None:
+         if type(self.schema_version) is not int or self.schema_version != SCHEMA_VERSION:
+@@ -790,6 +794,12 @@
+         if normalized_handoff and self.materialized_root is None:
+             raise ValueError("materialized_root is required with materialized_objects")
+         object.__setattr__(self, "materialized_objects", normalized_handoff)
++        source = inherited_source(self.timeline_path, self.assets_registry_path)
++        if self.verified_source is not None and (
++            type(self.verified_source) is not VerifiedTimelineSource or self.verified_source != source
++        ):
++            raise ValueError("verified timeline source cannot be caller replaced")
++        object.__setattr__(self, "verified_source", source)
+ 
+     def to_dict(self) -> dict[str, Any]:
+         return _json_safe_mapping(
+diff --git a/astrid/core/rendering/service.py b/astrid/core/rendering/service.py
+index 6b1f90e300462eeb6ed66430d10bc7ee90e568b2..c5f9bb42e167bcd47648d3ef0b8a3c7946946845
+--- a/astrid/core/rendering/service.py
++++ b/astrid/core/rendering/service.py
+@@ -350,6 +350,12 @@
+                 if isinstance(request, RenderRequest)
+                 else RenderRequest.from_dict(request)
+             )
++            from .verified_source import inherited_source
++
++            if parsed.verified_source != inherited_source(parsed.timeline_path, parsed.assets_registry_path):
++                raise ValueError("verified source authority is unavailable or replaced")
++            if parsed.verified_source is not None:
++                parsed.verified_source.validate(parsed.timeline_path, parsed.assets_registry_path)
+             self._validate_output_name(parsed)
+             localized = self._absolute_input_paths(parsed)
+             # Keep the caller's absolute-but-unresolved spellings for the
+diff --git a/tests/packs/rendering/test_verified_source.py b/tests/packs/rendering/test_verified_source.py
+index 5d4f9c43407c8040fb7e2408ea3cb3e3e1b7afba..cc89c7c42c6f917c1cd68ab9a662e8e4a293ee8d
+--- a/tests/packs/rendering/test_verified_source.py
++++ b/tests/packs/rendering/test_verified_source.py
+@@ -8,6 +8,9 @@
+ import pytest
+ 
+ from astrid.core.execution.generic_host import GenericPackHost, HostError
++from astrid.core.rendering.contracts import RenderRequest
++from astrid.core.rendering.errors import RendererException
++from astrid.core.rendering.service import RenderService
+ from astrid.core.rendering.verified_source import (
+     SOURCE_ENV,
+     PreparedTimelineInputs,
+@@ -70,6 +73,44 @@
+     return host, spec, snapshot, ref, values
+ 
+ 
++def request(values, **kwargs):
++    return RenderRequest(
++        schema_version=1,
++        timeline_path=values["timeline"],
++        assets_registry_path=values["assets_registry"],
++        output_name="result.mp4",
++        **kwargs,
++    )
++
++
++def test_render_request_keeps_verified_source_private_through_backend_projection(
++    tmp_path, monkeypatch,
++):
++    _, _, _, _, values = materialize(tmp_path, monkeypatch)
++    source = values.timeline_source
++    parsed = request(values)
++
++    assert parsed.verified_source == source
++    assert parsed.for_backend("rendering.remotion").verified_source == source
++    assert "verified_source" not in parsed.to_dict()
++
++
++def test_render_request_rejects_reserved_backend_source_config(tmp_path, monkeypatch):
++    _, _, _, _, values = materialize(tmp_path, monkeypatch)
++
++    with pytest.raises(ValueError, match="host-owned"):
++        request(values, backend_config={"rendering.remotion": {"verified_source": {}}})
++
++
++def test_render_service_refuses_lost_verified_source_authority(tmp_path, monkeypatch):
++    _, _, _, _, values = materialize(tmp_path, monkeypatch)
++    parsed = request(values)
++    monkeypatch.delenv(SOURCE_ENV)
++
++    with pytest.raises(RendererException, match="authority is unavailable"):
++        RenderService().render(parsed, out_path=tmp_path / "result.mp4")
++
++
+ @pytest.mark.parametrize("key", ["verified_source", "timeline_source", SOURCE_ENV])
+ @pytest.mark.parametrize("port", ["inputs", "params", "backend_config"])
+ def test_host_rejects_reserved_source_ports(tmp_path, port, key):
+diff --git a/tests/sdk/test_capture_source_runtime.py b/tests/sdk/test_capture_source_runtime.py
+index 48567945cf0663dd9e1a64143915dd4b687a6aba..d9ff9a65f62e67b1b2815b9e24fecbd363d45e25
+--- a/tests/sdk/test_capture_source_runtime.py
++++ b/tests/sdk/test_capture_source_runtime.py
+@@ -195,8 +195,6 @@
+             **expansion, "parent_content_digest": parent["content_digest"]}
+ 
+ 
+-# Renderer request propagation is still separate from the now-restored host handoff.
+-@pytest.mark.xfail(strict=True, reason="needs verified source propagation through RenderRequest")
+ @pytest.mark.parametrize("working_copy", [False, True])
+ @pytest.mark.parametrize("inline", [False, True])
+ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtime, tmp_path, monkeypatch, working_copy, inline):
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..c0d2c7816c28758bc694fae15535727fbf93f4a2
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/commit-msg
+@@ -0,0 +1,4 @@
++fix(rendering): restore verified source request carrier
++
++Restore the private VerifiedTimelineSource handoff through RenderRequest and
++revalidate it at RenderService without changing the public render wire shape.
+diff --git a/astrid/core/rendering/contracts.py b/astrid/core/rendering/contracts.py
+index d5b3044c0090c7d48cfacb1c79220f8738f11dfb..6e41c34e3337153525d6891069394d5caabe04aa
+--- a/astrid/core/rendering/contracts.py
++++ b/astrid/core/rendering/contracts.py
+@@ -18,6 +18,7 @@
+ 
+ from astrid.core.foundation.hash import canonical_json_digest, sha256_file
+ 
++from .verified_source import VerifiedTimelineSource, inherited_source, reject_source_keys
+ 
+ SCHEMA_VERSION = 1
+ 
+@@ -726,6 +727,7 @@
+     mapping = _require_mapping(value, label)
+     result: BackendConfig = {}
+     for raw_backend, raw_config in mapping.items():
++        reject_source_keys(_require_mapping(raw_config, label))
+         backend = _require_qualified_id(raw_backend, f"{label} key")
+         result[backend] = _json_safe_mapping(raw_config, label=f"{label}[{backend!r}]")
+     return result
+@@ -748,6 +750,8 @@
+     # they are never authority or durable media locators.
+     materialized_root: str | None = None
+     materialized_objects: dict[str, str] = field(default_factory=dict)
++    # Python-only authority. The public wire shape intentionally excludes it.
++    verified_source: VerifiedTimelineSource | None = field(default=None, repr=False, compare=False)
+ 
+     def __post_init__(self) -> None:
+         if type(self.schema_version) is not int or self.schema_version != SCHEMA_VERSION:
+@@ -790,6 +794,12 @@
+         if normalized_handoff and self.materialized_root is None:
+             raise ValueError("materialized_root is required with materialized_objects")
+         object.__setattr__(self, "materialized_objects", normalized_handoff)
++        source = inherited_source(self.timeline_path, self.assets_registry_path)
++        if self.verified_source is not None and (
++            type(self.verified_source) is not VerifiedTimelineSource or self.verified_source != source
++        ):
++            raise ValueError("verified timeline source cannot be caller replaced")
++        object.__setattr__(self, "verified_source", source)
+ 
+     def to_dict(self) -> dict[str, Any]:
+         return _json_safe_mapping(
+diff --git a/astrid/core/rendering/service.py b/astrid/core/rendering/service.py
+index 6b1f90e300462eeb6ed66430d10bc7ee90e568b2..c5f9bb42e167bcd47648d3ef0b8a3c7946946845
+--- a/astrid/core/rendering/service.py
++++ b/astrid/core/rendering/service.py
+@@ -350,6 +350,12 @@
+                 if isinstance(request, RenderRequest)
+                 else RenderRequest.from_dict(request)
+             )
++            from .verified_source import inherited_source
++
++            if parsed.verified_source != inherited_source(parsed.timeline_path, parsed.assets_registry_path):
++                raise ValueError("verified source authority is unavailable or replaced")
++            if parsed.verified_source is not None:
++                parsed.verified_source.validate(parsed.timeline_path, parsed.assets_registry_path)
+             self._validate_output_name(parsed)
+             localized = self._absolute_input_paths(parsed)
+             # Keep the caller's absolute-but-unresolved spellings for the
+diff --git a/tests/packs/rendering/test_verified_source.py b/tests/packs/rendering/test_verified_source.py
+index 5d4f9c43407c8040fb7e2408ea3cb3e3e1b7afba..cc89c7c42c6f917c1cd68ab9a662e8e4a293ee8d
+--- a/tests/packs/rendering/test_verified_source.py
++++ b/tests/packs/rendering/test_verified_source.py
+@@ -8,6 +8,9 @@
+ import pytest
+ 
+ from astrid.core.execution.generic_host import GenericPackHost, HostError
++from astrid.core.rendering.contracts import RenderRequest
++from astrid.core.rendering.errors import RendererException
++from astrid.core.rendering.service import RenderService
+ from astrid.core.rendering.verified_source import (
+     SOURCE_ENV,
+     PreparedTimelineInputs,
+@@ -70,6 +73,44 @@
+     return host, spec, snapshot, ref, values
+ 
+ 
++def request(values, **kwargs):
++    return RenderRequest(
++        schema_version=1,
++        timeline_path=values["timeline"],
++        assets_registry_path=values["assets_registry"],
++        output_name="result.mp4",
++        **kwargs,
++    )
++
++
++def test_render_request_keeps_verified_source_private_through_backend_projection(
++    tmp_path, monkeypatch,
++):
++    _, _, _, _, values = materialize(tmp_path, monkeypatch)
++    source = values.timeline_source
++    parsed = request(values)
++
++    assert parsed.verified_source == source
++    assert parsed.for_backend("rendering.remotion").verified_source == source
++    assert "verified_source" not in parsed.to_dict()
++
++
++def test_render_request_rejects_reserved_backend_source_config(tmp_path, monkeypatch):
++    _, _, _, _, values = materialize(tmp_path, monkeypatch)
++
++    with pytest.raises(ValueError, match="host-owned"):
++        request(values, backend_config={"rendering.remotion": {"verified_source": {}}})
++
++
++def test_render_service_refuses_lost_verified_source_authority(tmp_path, monkeypatch):
++    _, _, _, _, values = materialize(tmp_path, monkeypatch)
++    parsed = request(values)
++    monkeypatch.delenv(SOURCE_ENV)
++
++    with pytest.raises(RendererException, match="authority is unavailable"):
++        RenderService().render(parsed, out_path=tmp_path / "result.mp4")
++
++
+ @pytest.mark.parametrize("key", ["verified_source", "timeline_source", SOURCE_ENV])
+ @pytest.mark.parametrize("port", ["inputs", "params", "backend_config"])
+ def test_host_rejects_reserved_source_ports(tmp_path, port, key):
+diff --git a/tests/sdk/test_capture_source_runtime.py b/tests/sdk/test_capture_source_runtime.py
+index 48567945cf0663dd9e1a64143915dd4b687a6aba..d9ff9a65f62e67b1b2815b9e24fecbd363d45e25
+--- a/tests/sdk/test_capture_source_runtime.py
++++ b/tests/sdk/test_capture_source_runtime.py
+@@ -195,8 +195,6 @@
+             **expansion, "parent_content_digest": parent["content_digest"]}
+ 
+ 
+-# Renderer request propagation is still separate from the now-restored host handoff.
+-@pytest.mark.xfail(strict=True, reason="needs verified source propagation through RenderRequest")
+ @pytest.mark.parametrize("working_copy", [False, True])
+ @pytest.mark.parametrize("inline", [False, True])
+ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtime, tmp_path, monkeypatch, working_copy, inline):
+
+exec
+/bin/bash -lc 'test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/DONE && sed -n '"'1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-render-request-source-carrier/commit-msg && git status --short --branch && git diff --check" in /home/user/work/wt/agt-m3-render-request-source-carrier
+ succeeded in 1039ms:
+fix(rendering): restore verified source request carrier
+
+Restore the private VerifiedTimelineSource handoff through RenderRequest and
+revalidate it at RenderService without changing the public render wire shape.
+## tl/agt-m3-render-request-source-carrier
+ M astrid/core/rendering/contracts.py
+ M astrid/core/rendering/service.py
+ M tests/packs/rendering/test_verified_source.py
+ M tests/sdk/test_capture_source_runtime.py
+
+codex
+## Report
+
+- Restored the lost private `RenderRequest.verified_source` carrier in `astrid/core/rendering/contracts.py:754`.
+- Preserved reserved-key rejection, wire omission, caller-replacement guards, and RenderService authority validation (`service.py:353–358`).
+- Existing carrier confirmed: `PreparedTimelineInputs.timeline_source`; no new DTO/factory or Viewing logic touched.
+- Reactivated the four unchanged positive capture tests and added direct request/service tests.
+
+Tests:
+
+- `pytest ... test_verified_source.py test_contracts.py test_capture_source_runtime.py` — **134 passed**, 27 integration deselected.
+- Real claim/materialization control with `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime` — **4 passed**.
+- `git diff --check` — passed.
+- No full suite run.
+
+Source SHA256: `astrid/core/rendering/contracts.py` = `a8b7403f1247b30c00c14dda0d388ed264adb205151b91b3b5a0646ca64c0211`
+
+Commit message written and `DONE` marker created.
+tokens used
+140,994
+## Report
+
+- Restored the lost private `RenderRequest.verified_source` carrier in `astrid/core/rendering/contracts.py:754`.
+- Preserved reserved-key rejection, wire omission, caller-replacement guards, and RenderService authority validation (`service.py:353–358`).
+- Existing carrier confirmed: `PreparedTimelineInputs.timeline_source`; no new DTO/factory or Viewing logic touched.
+- Reactivated the four unchanged positive capture tests and added direct request/service tests.
+
+Tests:
+
+- `pytest ... test_verified_source.py test_contracts.py test_capture_source_runtime.py` — **134 passed**, 27 integration deselected.
+- Real claim/materialization control with `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime` — **4 passed**.
+- `git diff --check` — passed.
+- No full suite run.
+
+Source SHA256: `astrid/core/rendering/contracts.py` = `a8b7403f1247b30c00c14dda0d388ed264adb205151b91b3b5a0646ca64c0211`
+
+Commit message written and `DONE` marker created.

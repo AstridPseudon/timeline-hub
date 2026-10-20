@@ -1,0 +1,400 @@
++
++**Recommendation: APPROVE the bounded timing/lane/exclusive-owner correction in 5c6467da.** No remaining stale-position or occurrence-isolation blocker was reproduced in the requested branches. The answer to an unrestricted “EVERY builder read?” is still **no**: shared pool-promotion and legacy-group eligibility have pre-existing unrecorded reads, detailed below. Those belong to the explicitly separate pool/migration work; do not treat this approval as qualification of those behaviors or production automatic adoption.
++
++**Runtime generation is pending. This is Agent-only source/conformance evidence, NOT actual paired qualification.** No Runtime process, acceptance transaction, generated artifact pair, task/attempt fence, App outbox, browser, or pixels were exercised. No full suite was requested or run. No product, test-suite, integration-worktree, dependency, or git-ref edits were made.
++
++## Guard coverage and observed results
++
++Resolution arithmetic still happens in the pure builder, outside `Recording`. However, the emitted birth re-reads its consumed state through the existing recorder on that same supplied bundle. Merely observing that the arithmetic is outside the recorder is not a counterexample: the returned commands contain authoritative original-value reads, and execution verifies them before running the handler. No additional recorder is needed.
++
++| Read/branch | Authoritative guard and targeted evidence |
++| --- | --- |
++| Output fps | `native_occurrence_media_commands._owner` reads parent `config.output.fps` and child `output.fps` (lines 33–35). Independently changing either refuses across all eight image/video placement modes. |
++| Occurrence identity, start, home lane, extent, activity/map | `_owner` reads occurrence/shot identity and `capture.MAP_FIELDS`, including `placement.start_ms`, `at_ms`, `track`, `placement.track`, `duration_ms`, mapping and activity. Origin, home-lane and duration changes refuse in the matrix. These were already guarded before this patch. |
++| Anchor membership/absence and clip order | `_consume` always selects `collection.clips`, including when `consumed` is empty for saved fallback. `ctx.create` also selects the collection. Deletion, reordering, and inserting a previously absent named anchor refuse. Saved fallback does not discard the absence guard. |
++| Anchor timing / inherited lane / lane-end / shot extent / occupied starts | `_consume` records whole rows for the anchor (completion anchor mode) or all clips (completion lane-end/shared). Existing suites cover anchor movement and inherited lane change. Scratch probes use actual intervening native `placement.move` commands and their records for the three numeric cases below. |
++| Chosen track validity | `_clip` selects child tracks and reads the selected whole track (lines 120–126), checking active visual output status. Deleted, disabled, changed-kind and changed-role tracks refuse across the matrix. Saved nonhome image births use `occurrence.add-media` and receive the same checks. |
++| Exclusive owner | `add_media` unconditionally calls `_exclusive` before any media branch (lines 129–133). `placement.create` also checks it. Sixteen image/video mode combinations reject retargeting via `selection_changed`; fresh builder and raw handler calls reject with `unsupported_ownership`. Covers home/nonhome images, all videos, completion anchor/fallback/lane-end, and shared append/explicit/inherited lane. |
++| Public `consumed` args | IDs are membership-checked, values come from `ctx.read`, not caller-supplied snapshots. Omitting/replacing/adding IDs while retaining original capture claims refuses on the original basis; on a moved head, original reads refuse before handler execution. Raw commands captured on the original basis regenerate the same guards, which then refuse stale replay. No refreshed-guard bypass was reproduced. |
++
++The guard matrix has 176 cases: image/video × eight modes × eleven changes (parent fps, child fps, origin, home, duration, track kind/role/disabled/deletion, anchor membership, clip order). Each first verifies identical-record replay on the unchanged basis. Capture explanations are never used as commit authority.
++
++| Actual intervening native move | Before | Fresh result | Original command on changed head |
++| --- | --- | --- | --- |
++| Shared explicit request 390; move clip-a onto its previously selected start | Request 390 shifted to 391 | 392, skipping 390 and 391 | `dependency_changed`, image and video |
++| Completion lane-end; move clip-b from global 13 s to 14 s | 450 | 480 | `dependency_changed`, image and video |
++| Shared append; move overlay clip-c from global 9 s to 10 s | 510 | 540 | `dependency_changed`, image and video |
++
++On exact 931d7ec5, the same six positive stale-conflict requirements fail because replay accepts. Among ten compatible retarget cases on that base, six fail because replay accepts (all videos and shared inherited-lane image), while four existing home-image controls pass. Current source passes these cases. Intervening native-move fixtures widen occ-a and move the sibling to 100 s **before capture** so the tests measure guards rather than unrelated occurrence-boundary refusal. Retarget and the general mutation matrix use explicit changed-head fixtures; they do not establish a live Runtime retarget acceptance path.
++
++## Saved policy, duration and retry
++
++Missing anchor plus saved `fallback_at=22.25` and `fallback_track='overlay'` authors global frame 667 on overlay, rather than recalculating lane end. A sibling timing change rebases with the same start. Present anchor plus `preferred_track='overlay'` wins over the separately saved picture fallback, at frame 330. Deleted saved track refuses `dependency_changed`; invalid saved time outside the occurrence refuses `occurrence_boundary`. Track validity changes after capture refuse through existing reads. These are visible refusals, not implicit moves to another lane or hidden re-evaluations. With no saved time, lane-end computation remains available and guarded.
++
++An unchanged-basis replay is identical. A conflict is not authority to silently refresh the approved continuation: re-running the builder on a new head is a **new capture/re-evaluation**, to be retained and approved according to the requester policy. Existing docs saying “caller rebuilds” must not be interpreted as rewriting an in-flight request. Stripping all recorder claims and authoring a different explicit birth remains possible by design; it is not an exact retry of the captured request. No claim of server receipt/idempotency or restart proof is made here.
++
++Completion image remains 5 s (even with a supplied duration); completion video defaults to 5 s with source window 0..5, not the verified full 6 s; explicit video duration 3 uses 0..3. Shared image/video remain 4 s. A verified 3 s video refuses `unsupported_timing` for default completion and shared placement; explicit completion duration 3 succeeds. This short-source refusal **already exists in 931d7ec5** and remains an observable difference from old App behavior, not a newly qualified preservation policy. Keep old positive behavior requirements and the short-video/default-style follow-up open; do not rewrite success requirements to permanent refusal. Parent births, append growth, pool/keepAsPooled and video unplace are not closed by this review.
++
++## Nonblocking findings for this bounded patch
++
++1. **P2: whole-row reads overconflict with unrelated clip fields.** In completion anchor/lane-end and shared append/explicit modes, an actual native `clip.set-params` of clip-a to `params.unrelated=1` leaves the new builder's full capture identical but original replay refuses `dependency_changed`. Changing only `volume` to 0.5 in a changed-head fixture does the same. This is safe refusal, not stale placement or data loss, but exceeds PLAN's “only real clashes” goal. Minimal safe follow-up: replace `_consume`'s `ctx.read(ref)` with field-path reads for the timing and lane inputs (including absent fields, `at_ms` fallback, `hold`/trim/speed precedence and validation); retain collection guards. Conservatively guarding those fields for every consumed clip works without changing the public arg or adding a recorder. Add a positive unrelated-field rebase test while retaining all stale-conflict cases. Target-track whole-row reads are similarly conservative.
++
++2. **Pre-existing pool read remains outside the birth guard (separate pool item).** `native_auto_placement.py:196` reads pool membership to decide whether to emit `shot.pool remove`. Concrete counterexample: start with the reserved asset already bound to the exact registry pin, absent from pool and clips; capture shared append (one birth command); concurrently execute ordinary `shot.pool add` for that asset. Original birth replay accepts and leaves the asset **both pooled and placed**. Fresh capture emits birth plus removal (`promoted=true`). The diagnostic passes on both base and candidate, so this is not introduced by 5c6467da. Minimal correction in the pool cohort is a recorded pool read, including absence, using the existing recorder in shared placement's birth path, with matching browser goldens. This blocks blanket pool-promotion qualification, not the explicitly bounded timing/owner correction.
++
++3. **Pre-existing legacy eligibility read remains outside guards.** `native_auto_placement.py:158` checks `parent.config.pinnedShotGroups` only in the builder. Capturing on no groups, then changing that field to a nonempty legacy group permits original replay; a fresh builder refuses `migration_needed`. Same result on base and candidate. This is a changed-head fixture diagnostic; no supported concurrent migration/restore sequence or actual accepted Runtime legacy head was established, so it is not elevated to a new production blocker here. Preserve the migration hold; guard that precondition in the existing recorder when qualifying mixed legacy/canonical flows. A different recorder or whole-document guard is unnecessary.
++
++Documentation follow-up: the opening completion signature omits the new saved arguments and “New clip goes on the occurrence lane” is stale when a saved lane is used. The 08:46 contract itself need not change.
++
++## Exact commands and results
++
++Paths abbreviated below only for readability; they expand to the actual commands run:
++
++```sh
++REVIEW=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards
++SOURCE=/home/user/work/wt/agt-review-auto-guards
++PYTHON=/home/user/work/venv-agent/bin/python
++```
++
++From `$SOURCE`:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$SOURCE $PYTHON -m pytest -q -p no:cacheprovider --basetemp=$REVIEW/pytest-targeted tests/editing_conformance/test_recipe_m2_auto_placement.py tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
++```
++
++**173 passed in 10.06 s; exit 0**, `targeted.log`. Includes the unchanged main-suite portable goldens, exact inverse/redo and detached-provider tests. Their existing `runtime_abi` fixture supplies detached ABI exceptions/metadata; it is not a real Runtime pair.
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$SOURCE $PYTHON -m pytest -q -c /dev/null -p no:cacheprovider $REVIEW/scratch/test_review.py
++```
++
++**223 passed in 12.06 s; exit 0**, `probes.log`, before adding the independent pool diagnostic and direct raw-handler retarget assertions. No original requirement test was replaced. Two supplementary targeted runs on the final probe:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$SOURCE $PYTHON -m pytest -q -c /dev/null -p no:cacheprovider $REVIEW/scratch/test_review.py -k pool_precondition
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$SOURCE $PYTHON -m pytest -q -c /dev/null -p no:cacheprovider $REVIEW/scratch/test_review.py -k retarget
++```
++
++Pool: **1 passed, 223 deselected in 2.00 s; exit 0**, `pool-probe.log`. Retarget: see `handler-retarget.log` (all 16 cases). The scratch diagnostic tests intentionally describe observed overconflicts/precondition gaps; their green status is not conformance approval of those behaviors.
++
++Base comparison extracted only tracked `astrid`, `tests`, and `pyproject.toml` from 931d7ec5 using `git archive`/`git show`, without switching any worktree/ref. From `$REVIEW/scratch/base`:
++
++```sh
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD $PYTHON -m pytest -q -c /dev/null -p no:cacheprovider ../test_review.py -k 'stale_native_move or (retarget and not anchor-overlay and not fallback)'
++PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD $PYTHON -m pytest -q -c /dev/null -p no:cacheprovider ../test_review.py -k precondition_diagnostic
++```
++
++**12 failed, 4 passed, 208 deselected in 3.05 s; exit 1**, `baseline-focused.log`: all twelve failures are the intended positive `DID NOT RAISE` regressions described above. **2 passed, 222 deselected in 2.19 s; exit 0**, `baseline-preconditions.log`, confirms both precondition gaps predate this patch. Development-only broad baseline run included six unsupported-new-keyword failures and was narrowed; an initial extraction omitted `pyproject.toml`, causing one collection error before correction. Neither is counted as defect evidence. Scratch pytest runs report one harmless unregistered `integration` marker warning because `-c /dev/null` avoids loading repo-wide configuration/conftest.
++
++`git diff --check 931d7ec5 5c6467da` and final `git diff --check`: **exit 0**. `git status --short`: **empty**. Shared dependencies remained read-only. Extracted baseline source and pytest temp output are removed after review; the small repro and logs remain under this worker's scratch/report directory.
++
++## Handoff
++
++No execution blocker for this read-only task. Recommend accepting the bounded source fix, tracking the minimal field-read refinement and existing pool/migration gaps separately, and keeping production activation held for Runtime's normal regeneration/attempt-fence qualification and App's original-approval/outbox journey. No commit is required: repository tree is unchanged; worker `commit-msg` is empty. No merge, push or integration edit was performed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/scratch/test_review.py b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/scratch/test_review.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f5120b7cb359fe5d894719eb1f4e4cdea6a1faa
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/scratch/test_review.py
+@@ -0,0 +1,241 @@
++"""Read-only review probes; no Runtime or App qualification."""
++import copy
++
++import pytest
++
++from astrid.sdk.timeline._command_state import CommandError, State
++from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.commit import bundle_from_document
++from astrid.sdk.timeline.native_auto_placement import auto_place_completion, auto_place_shared
++from astrid.sdk.timeline.native_placement_commands import capture_placement
++from astrid.sdk.timeline.native_shot_pool_commands import capture_shot_pool
++from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.test_recipe_occurrence_media import inputs
++
++OWNER = 'occurrence:occ-a'
++CHILD = OWNER + '/clip:placed'
++MODES = ['anchor-home', 'anchor-overlay', 'fallback-home', 'fallback-overlay',
++         'lane-end', 'append-home', 'append-overlay', 'explicit']
++
++
++def setup(kind, mode):
++    document, _, pin, verified = inputs(kind)
++    bundle = bundle_from_document(document)
++    state = State(bundle)
++    state.occurrence(OWNER)['duration_ms'] = 30000
++    state.occurrence('occurrence:occ-b')['placement']['start_ms'] = 100000
++    state.config(OWNER)['tracks'].append({'id': 'overlay', 'kind': 'visual'})
++    state.config(OWNER)['clips'].append({'id': 'clip-c', 'track': 'overlay', 'asset': 'picture',
++                                       'clipType': 'media', 'at': 1, 'hold': 8})
++    return bundle, pin, verified, request(mode)
++
++
++def request(mode):
++    if mode.startswith('anchor'):
++        return auto_place_completion, {'anchor': 'clip-a', **(
++            {'preferred_track': 'overlay'} if mode.endswith('overlay') else {})}
++    if mode.startswith('fallback'):
++        return auto_place_completion, {'anchor': 'gone', 'fallback_at': 22.25,
++                                       'fallback_track': 'overlay' if mode.endswith('overlay') else 'picture'}
++    if mode == 'lane-end':
++        return auto_place_completion, {}
++    return auto_place_shared, ({'anchor': 'clip-c'} if mode == 'append-overlay' else
++                              {'frame': 390} if mode == 'explicit' else {})
++
++
++def build(bundle, pin, verified, req):
++    function, kwargs = req
++    return function(bundle, OWNER, 'placed', pin, ownership='occurrence', verified_media=verified, **kwargs)
++
++
++@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('mode,clip_id,on,old,fresh', [
++    ('explicit', 'clip-a', 391 * 1001 / 30000, 391, 392),
++    ('lane-end', 'clip-b', 14, 450, 480),
++    ('append-home', 'clip-c', 10, 510, 540),
++])
++def test_stale_native_move(kind, mode, clip_id, on, old, fresh):
++    bundle, pin, verified, req = setup(kind, mode)
++    result = build(bundle, pin, verified, req)
++    assert result['capture']['start_frame'] == old
++    plan = execute(bundle, result['commands'], verified_media=verified)
++    moved = execute(bundle, [capture_placement(bundle, OWNER, clip_id, on, ownership='occurrence')])
++    with pytest.raises(CommandError) as error:
++        replay(plan, moved.bundle, intervening_records=moved.records, verified_media=verified)
++    assert error.value.kind == 'dependency_changed'
++    assert build(moved.bundle, pin, verified, req)['capture']['start_frame'] == fresh
++
++
++@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('mode', MODES)
++def test_retarget(kind, mode):
++    bundle, pin, verified, req = setup(kind, mode)
++    result = build(bundle, pin, verified, req)
++    plan = execute(bundle, result['commands'], verified_media=verified)
++    head = copy.deepcopy(bundle)
++    head['placements'][1]['shot_id'] = head['placements'][0]['shot_id']
++    with pytest.raises(CommandError) as error:
++        replay(plan, head, verified_media=verified)
++    assert error.value.kind == 'selection_changed'
++    with pytest.raises(CommandError) as error:
++        build(head, pin, verified, req)
++    assert error.value.kind == 'unsupported_ownership'
++    command = result['commands'][0]
++    raw = {key: command[key] for key in ('schema_version', 'op', 'version', 'select', 'args', 'intent')}
++    with pytest.raises(CommandError) as error:
++        execute(head, [raw], verified_media=verified)
++    assert error.value.kind == 'unsupported_ownership'
++
++
++@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('mode', MODES)
++@pytest.mark.parametrize('change', ['parent-fps', 'child-fps', 'origin', 'home', 'duration',
++                                   'track-kind', 'track-role', 'track-disabled', 'track-delete',
++                                   'anchor-membership', 'order'])
++def test_guard_matrix(kind, mode, change):
++    bundle, pin, verified, req = setup(kind, mode)
++    result = build(bundle, pin, verified, req)
++    plan = execute(bundle, result['commands'], verified_media=verified)
++    assert replay(plan, bundle, verified_media=verified).records == plan.records
++    head = copy.deepcopy(bundle)
++    state = State(head)
++    lane = result['capture']['lane']
++    if change == 'parent-fps':
++        state.config('parent')['output']['fps'] = 24
++    elif change == 'child-fps':
++        state.config(OWNER)['output']['fps'] = 24
++    elif change == 'origin':
++        state.occurrence(OWNER)['placement']['start_ms'] += 1000
++    elif change == 'home':
++        state.occurrence(OWNER)['placement']['track'] = 'overlay'
++    elif change == 'duration':
++        state.occurrence(OWNER)['duration_ms'] += 1000
++    elif change.startswith('track-'):
++        track = state.entity(OWNER + '/track:' + lane)
++        if change == 'track-delete':
++            state.config(OWNER)['tracks'].remove(track)
++        else:
++            key, value = {'track-kind': ('kind', 'audio'), 'track-role': ('role', 'input'),
++                          'track-disabled': ('disabled', True)}[change]
++            track[key] = value
++    elif change == 'anchor-membership':
++        rows = state.config(OWNER)['clips']
++        if mode.startswith('fallback'):
++            rows.append({'id': 'gone', 'track': 'picture', 'at': 3, 'hold': 1})
++        else:
++            rows.pop(0)
++    elif change == 'order':
++        state.config(OWNER)['clips'].reverse()
++    with pytest.raises(CommandError):
++        replay(plan, head, verified_media=verified)
++
++
++@pytest.mark.parametrize('kind', ['image', 'video'])
++@pytest.mark.parametrize('mode', ['anchor-home', 'append-home'])
++@pytest.mark.parametrize('tamper', [[], ['clip-b'], ['clip-a', 'clip-b', 'clip-c'], ['foreign']])
++def test_consumed_cannot_refresh_original_claims(kind, mode, tamper):
++    bundle, pin, verified, req = setup(kind, mode)
++    command = build(bundle, pin, verified, req)['commands'][0]
++    if command['args']['consumed'] == tamper:
++        tamper = ['clip-b']
++    forged = copy.deepcopy(command)
++    forged['args']['consumed'] = tamper
++    with pytest.raises(CommandError):
++        execute(bundle, [forged], verified_media=verified)
++    head = copy.deepcopy(bundle)
++    State(head).entity(OWNER + '/clip:clip-a')['at'] = 2
++    with pytest.raises(CommandError) as error:
++        execute(head, [forged], verified_media=verified)
++    assert error.value.kind == 'dependency_changed'
++    raw = {key: command[key] for key in ('schema_version', 'op', 'version', 'select', 'args', 'intent')}
++    recaptured = execute(bundle, [raw], verified_media=verified)
++    assert recaptured.commands == [command]
++    with pytest.raises(CommandError):
++        replay(recaptured, head, verified_media=verified)
++
++
++@pytest.mark.parametrize('kind', ['image', 'video'])
++def test_saved_policy_and_invalid_targets(kind):
++    bundle, pin, verified, _ = setup(kind, 'anchor-home')
++    req = (auto_place_completion, {'anchor': 'gone', 'fallback_at': 22.25, 'fallback_track': 'overlay'})
++    result = build(bundle, pin, verified, req)
++    assert (result['capture']['resolution'], result['capture']['lane'], result['capture']['start_frame']) == (
++        'fallback-at', 'overlay', 667)
++    plan = execute(bundle, result['commands'], verified_media=verified)
++    head = copy.deepcopy(bundle)
++    State(head).entity(OWNER + '/clip:clip-b')['at'] = 6
++    assert replay(plan, head, verified_media=verified).commands == plan.commands
++    for anchor, lane_key in [('gone', 'fallback_track'), ('clip-a', 'preferred_track')]:
++        invalid = (auto_place_completion, {'anchor': anchor, lane_key: 'deleted', 'fallback_at': 22.25})
++        with pytest.raises(CommandError) as error:
++            build(bundle, pin, verified, invalid)
++        assert error.value.kind == 'dependency_changed'
++    with pytest.raises(CommandError) as error:
++        build(bundle, pin, verified, (auto_place_completion, {'anchor': 'gone', 'fallback_at': 1000}))
++    assert error.value.kind == 'occurrence_boundary'
++    preferred = build(bundle, pin, verified, (auto_place_completion, {
++        'anchor': 'clip-a', 'preferred_track': 'overlay', 'fallback_at': 22.25, 'fallback_track': 'picture'}))
++    assert preferred['capture']['lane'] == 'overlay'
++    assert preferred['capture']['start_frame'] == (330 if kind == 'image' else 330)
++
++
++@pytest.mark.parametrize('mode', ['anchor-home', 'append-home'])
++def test_short_video_does_not_silently_clamp_or_use_full_length(mode):
++    bundle, pin, verified, req = setup('video', mode)
++    hold = 5 if mode == 'anchor-home' else 4
++    assert build(bundle, pin, verified, req)['capture']['seconds'] == hold
++    verified[1]['duration_seconds'] = 3
++    with pytest.raises(CommandError) as error:
++        build(bundle, pin, verified, req)
++    assert error.value.kind == 'unsupported_timing'
++    if mode == 'anchor-home':
++        req[1]['duration'] = 3
++        assert build(bundle, pin, verified, req)['capture']['seconds'] == 3
++
++
++@pytest.mark.parametrize('mode', ['anchor-home', 'lane-end', 'append-home', 'explicit'])
++def test_overconflict_diagnostic(mode):
++    bundle, pin, verified, req = setup('image', mode)
++    original = build(bundle, pin, verified, req)
++    plan = execute(bundle, original['commands'], verified_media=verified)
++    changed = execute(bundle, [capture_clip_set_params(bundle, OWNER + '/clip:clip-a', values={'unrelated': 1})])
++    assert build(changed.bundle, pin, verified, req)['capture'] == original['capture']
++    with pytest.raises(CommandError) as error:
++        replay(plan, changed.bundle, intervening_records=changed.records, verified_media=verified)
++    assert error.value.kind == 'dependency_changed'
++    head = copy.deepcopy(bundle)
++    State(head).entity(OWNER + '/clip:clip-a')['volume'] = .5
++    assert build(head, pin, verified, req)['capture'] == original['capture']
++    with pytest.raises(CommandError):
++        replay(plan, head, verified_media=verified)
++
++
++def test_legacy_precondition_diagnostic():
++    bundle, pin, verified, req = setup('image', 'append-home')
++    original = build(bundle, pin, verified, req)
++    plan = execute(bundle, original['commands'], verified_media=verified)
++    head = copy.deepcopy(bundle)
++    State(head).config('parent')['pinnedShotGroups'] = [{'shotId': 'legacy', 'clipIds': []}]
++    assert replay(plan, head, verified_media=verified).commands == plan.commands
++    with pytest.raises(CommandError) as error:
++        build(head, pin, verified, req)
++    assert error.value.kind == 'migration_needed'
++
++
++def test_pool_precondition_diagnostic():
++    bundle, pin, verified, req = setup('image', 'append-home')
++    State(bundle).config(OWNER)['registry']['assets'][pin['asset']] = {
++        'media_id': pin['object_id'], 'type': 'image', 'generationId': pin['generation_id'],
++        'variantId': pin['variant_id']}
++    original = build(bundle, pin, verified, req)
++    assert len(original['commands']) == 1
++    plan = execute(bundle, original['commands'], verified_media=verified)
++    pooled = execute(bundle, [capture_shot_pool(bundle, OWNER, 'add', pin, ownership='occurrence',
++                                              verified_media=verified)], verified_media=verified)
++    rebased = replay(plan, pooled.bundle, intervening_records=pooled.records, verified_media=verified)
++    assert State(rebased.bundle).entity(CHILD)['asset'] == pin['asset']
++    assert State(rebased.bundle).config(OWNER)['app']['astrid']['pool'] == [pin['asset']]
++    fresh = build(pooled.bundle, pin, verified, req)
++    assert len(fresh['commands']) == 2
++    assert fresh['capture']['promoted'] is True
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/handler-retarget.log && git status --porcelain=v1 && git diff --check' in /home/user/work/wt/agt-review-auto-guards
+ succeeded in 852ms:
+................                                                         [100%]
+=============================== warnings summary ===============================
+tests/timeline/test_authoring_bundle.py:1034
+  /home/user/work/wt/agt-review-auto-guards/tests/timeline/test_authoring_bundle.py:1034: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration  # a real Runtime from a second checkout
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+16 passed, 208 deselected, 1 warning in 2.74s
+
+codex
+The review report is written. It recommends approval of the bounded guard correction and records concrete counterexamples for unrelated-field overconflicts and the pre-existing pool/legacy limits. The repository is unchanged. I’m removing temporary test output and writing the worker handoff files.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker = orch / 'workers/agt-review-auto-guards'
+report = orch / 'design/agent-review-auto-guards-current.md'
+body = report.read_text()
+body = body.replace('Retarget: see "'`handler-retarget.log` (all 16 cases).'"', 'Retarget: **16 passed, 208 deselected in 2.74 s; exit 0**, "'`handler-retarget.log`.'"')
+report.write_text(body)
+(worker / 'report.md').write_text(body)
+(worker / 'commit-msg').write_text('')
+for temporary in (worker / 'scratch/base', worker / 'pytest-targeted'):
+    if temporary.exists():
+        shutil.rmtree(temporary)
+print('Report and handoff written; extracted source and pytest temp output removed.')
+PY
+" in /home/user/work/wt/agt-review-auto-guards
+ succeeded in 461ms:
+Report and handoff written; extracted source and pytest temp output removed.
+
+exec
+/bin/bash -lc 'git status --porcelain=v1 && git diff --check && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/commit-msg' in /home/user/work/wt/agt-review-auto-guards
+ succeeded in 580ms:
+-rw-r--r-- 1 root root     0 Oct 20 09:32 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/commit-msg
+-rw-r--r-- 1 root root 14537 Oct 20 09:32 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/report.md
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-review-auto-guards/DONE' in /home/user/work/wt/agt-review-auto-guards
+ succeeded in 0ms:
+codex
+[Review completed](‌/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-auto-guards-current.md): approve the bounded timing/lane/exclusive-owner fix.
+
+- 173 existing targeted tests passed; scratch probes verified stale conflicts, saved targets, and all birth branches.
+- Documented unrelated-field overconflicts and pre-existing pool/legacy guard gaps.
+- Runtime regeneration remains pending; this is **not paired qualification**.
+- Exact commands/results are in the report. Repository unchanged; handoff files and `DONE` written.
+tokens used
+126,955
+[Review completed](‌/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-auto-guards-current.md): approve the bounded timing/lane/exclusive-owner fix.
+
+- 173 existing targeted tests passed; scratch probes verified stale conflicts, saved targets, and all birth branches.
+- Documented unrelated-field overconflicts and pre-existing pool/legacy guard gaps.
+- Runtime regeneration remains pending; this is **not paired qualification**.
+- Exact commands/results are in the report. Repository unchanged; handoff files and `DONE` written.

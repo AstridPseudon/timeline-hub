@@ -1,0 +1,400 @@
+    before = copy.deepcopy(session.state)
+    result = RemoteTimelines(object()).replace_parent_media(
+        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
+        source_object_id=new["object_id"], expected_head="parent-1",
+        expected_publication="publication-1", old_media=old, media=new,
+        idempotency_key="original-key",
+    )
+    assert (not result.ok and session.flush_calls == [] and session.state == before
+            and session.outbox.state == outbox_before)
+
+
+@pytest.mark.parametrize("change", ["source", "selection", "owner", "head", "publication"])
+def test_pending_swap_identity_controls_refuse_without_post(monkeypatch, change):
+    command, old, new = _pending_occurrence_swap()
+    assert retried.ok and retried.idempotency_key == "original-key"
+    assert restored.flush_calls == [(None, [command])]
+
+
+@pytest.mark.parametrize("kind", ["bool", "list", "str", "number", "nullmix"])
+def test_pending_swap_rejects_non_mapping_selections_without_flush(monkeypatch, kind):
+    command, old, new = _pending_occurrence_swap()
+    TimelineSession, session = _pending_session(command)
+    before = copy.deepcopy(session.state)
+    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
+    invalid = {
+        "bool": (True, False),
+        "list": ([], []),
+        "str": ("bad", "bad"),
+        "number": (7, 7),
+        "nullmix": (None, new),
+    }[kind]
+
+    result = RemoteTimelines(object()).replace_parent_media(
+        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
+        source_object_id=new["object_id"], expected_head="parent-1",
+        expected_publication="publication-1", old_media=invalid[0], media=invalid[1],
+        idempotency_key="original-key",
+    )
+
+    assert not result.ok and session.flush_calls == [] and session.state == before
+
+
+@pytest.mark.parametrize("supplied", [False, True], ids=["none-pair", "exact-mapping-pair"])
+def test_pending_swap_accepts_only_omitted_or_exact_selections(monkeypatch, supplied):
+    command, old, new = _pending_occurrence_swap()
+    TimelineSession, session = _pending_session(command)
+    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m2-wc3-explicit-pin-type-guard/tests/test_timeline_clip_replacement.py
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-explicit-pin-type-guard.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-explicit-pin-type-guard.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5d930185cd440aa57a638bab29b91867fb4784d8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-explicit-pin-type-guard.md
+@@ -0,0 +1,54 @@
++# WC3 explicit media-pin type guard
++
++## Exact diff
++
++```diff
++diff --git a/astrid/sdk/timeline_media_replacement.py b/astrid/sdk/timeline_media_replacement.py
++@@
++-    if isinstance(old_media, Mapping) or isinstance(media, Mapping):
++-        if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
++-            return False
++-        if dict(old_media) != dict(original_old) or dict(media) != dict(original_new):
++-            return False
++-    return True
+++    if old_media is None and media is None:
+++        return True
+++    if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
+++        return False
+++    return dict(old_media) == dict(original_old) and dict(media) == dict(original_new)
++```
++
++Tests add one parameterized pending-retry negative matrix for `bool`, `list`,
++`str`, `number`, and a `None`/mapping null mix. Each asserts validation failure,
++zero `flush` calls, and byte-for-byte unchanged session/outbox state. A second
++parameterized positive probe covers the allowed `None`/`None` pair and exact
++five-field mapping pair.
++
++## Source
++
++- `astrid/sdk/timeline_media_replacement.py:219-223` now accepts caller
++  selections only when both are omitted (`None`) or both are mappings exactly
++  equal to the persisted old/new five-field pins.
++- Existing owner, clip, source-object, head/publication, pending-count,
++  operation, intent, opaque-command, and persisted flight key/body guards are
++  unchanged.
++- No API, DTO, endpoint, schema, retry framework, source import, or sibling
++  WC6 change was added.
++
++## Tests
++
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py`
++  — **20 passed in 1.34s**.
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sync.py::test_lost_ack_reload_retries_exact_request_before_sending_suffix tests/sdk/test_timeline_sync.py::test_changed_intent_key_and_dry_run_cannot_replace_an_ambiguous_request`
++  — **3 passed in 1.13s**.
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline_media_replacement.py tests/test_timeline_clip_replacement.py`
++  — **All checks passed**.
++- `git diff --check` — passed.
++
++## Limits and notes
++
++- No full, 165-test, 2478-test, browser, live-socket, integration, or central
++  suite was run, per the task limits.
++- This proves the adapter’s type guard and fake-session refusal/positive control
++  flow only. It does not qualify the separate private Runtime parent-provider
++  cohort or claim that this guard alone restores whole WC3.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-explicit-pin-type-guard/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-explicit-pin-type-guard/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-explicit-pin-type-guard/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-explicit-pin-type-guard/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..83a2b54dafde99d04094ca6e53fd1a3c9b2df358
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-explicit-pin-type-guard/commit-msg
+@@ -0,0 +1,4 @@
++fix(timeline): reject malformed explicit media pins
++
++Require pending media-swap retries to omit both pins or match both persisted
++five-field selections exactly, preserving the outbox on malformed requests.
+diff --git a/astrid/sdk/timeline_media_replacement.py b/astrid/sdk/timeline_media_replacement.py
+index 97cca2563b1e7e52cfdb4f78c45ac40dc906a75d..340b3da20ddd6f5746cdf4d48791be42867c46f0
+--- a/astrid/sdk/timeline_media_replacement.py
++++ b/astrid/sdk/timeline_media_replacement.py
+@@ -216,12 +216,11 @@
+             return False
+     if original_new["object_id"] != source_object_id or original_old["object_id"] == source_object_id:
+         return False
+-    if isinstance(old_media, Mapping) or isinstance(media, Mapping):
+-        if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
+-            return False
+-        if dict(old_media) != dict(original_old) or dict(media) != dict(original_new):
+-            return False
+-    return True
++    if old_media is None and media is None:
++        return True
++    if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
++        return False
++    return dict(old_media) == dict(original_old) and dict(media) == dict(original_new)
+ 
+ 
+ def replace_selected_media(timelines, project, ref, *, occurrence_id, clip_id, source_object_id,
+diff --git a/tests/test_timeline_clip_replacement.py b/tests/test_timeline_clip_replacement.py
+index 54391deeae3be275388e2d01ab140ec3dc6d6f75..8d84c4e39a60f48b880d6b08878cfa84e72919b3
+--- a/tests/test_timeline_clip_replacement.py
++++ b/tests/test_timeline_clip_replacement.py
+@@ -157,6 +157,50 @@
+     assert restored.flush_calls == [(None, [command])]
+ 
+ 
++@pytest.mark.parametrize("kind", ["bool", "list", "str", "number", "nullmix"])
++def test_pending_swap_rejects_non_mapping_selections_without_flush(monkeypatch, kind):
++    command, _, new = _pending_occurrence_swap()
++    TimelineSession, session = _pending_session(command)
++    before = copy.deepcopy(session.state)
++    outbox_before = copy.deepcopy(session.outbox.state)
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
++    invalid = {
++        "bool": (True, False),
++        "list": ([], []),
++        "str": ("bad", "bad"),
++        "number": (7, 7),
++        "nullmix": (None, new),
++    }[kind]
++
++    result = RemoteTimelines(object()).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=invalid[0], media=invalid[1],
++        idempotency_key="original-key",
++    )
++
++    assert (not result.ok and session.flush_calls == [] and session.state == before
++            and session.outbox.state == outbox_before)
++
++
++@pytest.mark.parametrize("supplied", [False, True], ids=["none-pair", "exact-mapping-pair"])
++def test_pending_swap_accepts_only_omitted_or_exact_selections(monkeypatch, supplied):
++    command, old, new = _pending_occurrence_swap()
++    TimelineSession, session = _pending_session(command)
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
++    selections = {"old_media": old, "media": new} if supplied else {}
++
++    result = RemoteTimelines(object()).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", idempotency_key="original-key",
++        **selections,
++    )
++
++    assert result.ok, result.error
++    assert session.flush_calls == [("original-key", [command])]
++
++
+ def test_remote_timelines_replace_clip_is_typed_410() -> None:
+     class Transport:
+         def replace_timeline_clip(self, *args, **kwargs):
+
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py && PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline_media_replacement.py tests/test_timeline_clip_replacement.py && git diff --check && git status --short' in /home/user/work/wt/agt-m2-wc3-explicit-pin-type-guard
+ succeeded in 3630ms:
+....................                                                     [100%]
+20 passed in 1.79s
+All checks passed!
+ M astrid/sdk/timeline_media_replacement.py
+ M tests/test_timeline_clip_replacement.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-explicit-pin-type-guard.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-explicit-pin-type-guard.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-explicit-pin-type-guard.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..78ac0053573528b2ddeb7f2097981c0598770601
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-explicit-pin-type-guard.md
+@@ -0,0 +1,54 @@
++# WC3 explicit media-pin type guard
++
++## Exact diff
++
++```diff
++diff --git a/astrid/sdk/timeline_media_replacement.py b/astrid/sdk/timeline_media_replacement.py
++@@
++-    if isinstance(old_media, Mapping) or isinstance(media, Mapping):
++-        if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
++-            return False
++-        if dict(old_media) != dict(original_old) or dict(media) != dict(original_new):
++-            return False
++-    return True
+++    if old_media is None and media is None:
+++        return True
+++    if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
+++        return False
+++    return dict(old_media) == dict(original_old) and dict(media) == dict(original_new)
++```
++
++Tests add one parameterized pending-retry negative matrix for `bool`, `list`,
++`str`, `number`, and a `None`/mapping null mix. Each asserts validation failure,
++zero `flush` calls, and byte-for-byte unchanged session/outbox state. A second
++parameterized positive probe covers the allowed `None`/`None` pair and exact
++five-field mapping pair.
++
++## Source
++
++- `astrid/sdk/timeline_media_replacement.py:219-223` now accepts caller
++  selections only when both are omitted (`None`) or both are mappings exactly
++  equal to the persisted old/new five-field pins.
++- Existing owner, clip, source-object, head/publication, pending-count,
++  operation, intent, opaque-command, and persisted flight key/body guards are
++  unchanged.
++- No API, DTO, endpoint, schema, retry framework, source import, or sibling
++  WC6 change was added.
++
++## Tests
++
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/test_timeline_clip_replacement.py`
++  — **20 passed in 1.79s**.
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_sync.py::test_lost_ack_reload_retries_exact_request_before_sending_suffix tests/sdk/test_timeline_sync.py::test_changed_intent_key_and_dry_run_cannot_replace_an_ambiguous_request`
++  — **3 passed in 1.13s**.
++- `PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline_media_replacement.py tests/test_timeline_clip_replacement.py`
++  — **All checks passed**.
++- `git diff --check` — passed.
++
++## Limits and notes
++
++- No full, 165-test, 2478-test, browser, live-socket, integration, or central
++  suite was run, per the task limits.
++- This proves the adapter’s type guard and fake-session refusal/positive control
++  flow only. It does not qualify the separate private Runtime parent-provider
++  cohort or claim that this guard alone restores whole WC3.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-explicit-pin-type-guard/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-explicit-pin-type-guard/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-explicit-pin-type-guard/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-explicit-pin-type-guard/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..83a2b54dafde99d04094ca6e53fd1a3c9b2df358
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc3-explicit-pin-type-guard/commit-msg
+@@ -0,0 +1,4 @@
++fix(timeline): reject malformed explicit media pins
++
++Require pending media-swap retries to omit both pins or match both persisted
++five-field selections exactly, preserving the outbox on malformed requests.
+diff --git a/astrid/sdk/timeline_media_replacement.py b/astrid/sdk/timeline_media_replacement.py
+index 97cca2563b1e7e52cfdb4f78c45ac40dc906a75d..340b3da20ddd6f5746cdf4d48791be42867c46f0
+--- a/astrid/sdk/timeline_media_replacement.py
++++ b/astrid/sdk/timeline_media_replacement.py
+@@ -216,12 +216,11 @@
+             return False
+     if original_new["object_id"] != source_object_id or original_old["object_id"] == source_object_id:
+         return False
+-    if isinstance(old_media, Mapping) or isinstance(media, Mapping):
+-        if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
+-            return False
+-        if dict(old_media) != dict(original_old) or dict(media) != dict(original_new):
+-            return False
+-    return True
++    if old_media is None and media is None:
++        return True
++    if not isinstance(old_media, Mapping) or not isinstance(media, Mapping):
++        return False
++    return dict(old_media) == dict(original_old) and dict(media) == dict(original_new)
+ 
+ 
+ def replace_selected_media(timelines, project, ref, *, occurrence_id, clip_id, source_object_id,
+diff --git a/tests/test_timeline_clip_replacement.py b/tests/test_timeline_clip_replacement.py
+index 54391deeae3be275388e2d01ab140ec3dc6d6f75..8d84c4e39a60f48b880d6b08878cfa84e72919b3
+--- a/tests/test_timeline_clip_replacement.py
++++ b/tests/test_timeline_clip_replacement.py
+@@ -157,6 +157,50 @@
+     assert restored.flush_calls == [(None, [command])]
+ 
+ 
++@pytest.mark.parametrize("kind", ["bool", "list", "str", "number", "nullmix"])
++def test_pending_swap_rejects_non_mapping_selections_without_flush(monkeypatch, kind):
++    command, _, new = _pending_occurrence_swap()
++    TimelineSession, session = _pending_session(command)
++    before = copy.deepcopy(session.state)
++    outbox_before = copy.deepcopy(session.outbox.state)
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
++    invalid = {
++        "bool": (True, False),
++        "list": ([], []),
++        "str": ("bad", "bad"),
++        "number": (7, 7),
++        "nullmix": (None, new),
++    }[kind]
++
++    result = RemoteTimelines(object()).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", old_media=invalid[0], media=invalid[1],
++        idempotency_key="original-key",
++    )
++
++    assert (not result.ok and session.flush_calls == [] and session.state == before
++            and session.outbox.state == outbox_before)
++
++
++@pytest.mark.parametrize("supplied", [False, True], ids=["none-pair", "exact-mapping-pair"])
++def test_pending_swap_accepts_only_omitted_or_exact_selections(monkeypatch, supplied):
++    command, old, new = _pending_occurrence_swap()
++    TimelineSession, session = _pending_session(command)
++    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
++    selections = {"old_media": old, "media": new} if supplied else {}
++
++    result = RemoteTimelines(object()).replace_parent_media(
++        "project-1", "main", occurrence_id="occ-a", clip_id="clip-a",
++        source_object_id=new["object_id"], expected_head="parent-1",
++        expected_publication="publication-1", idempotency_key="original-key",
++        **selections,
++    )
++
++    assert result.ok, result.error
++    assert session.flush_calls == [("original-key", [command])]
++
++
+ def test_remote_timelines_replace_clip_is_typed_410() -> None:
+     class Transport:
+         def replace_timeline_clip(self, *args, **kwargs):
+
+codex
+Implemented the WC3 explicit pin-type guard.
+
+- `_pending_matches` now accepts only `None`/`None` or two exact five-field mappings.
+- Added parameterized malformed-type refusal tests and valid-form tests.
+- Verified outbox/session state remains unchanged on refusal.
+
+Tests:
+
+- Replacement tests: **20 passed**
+- Sync neighbor tests: **3 passed**
+- Ruff: **passed**
+- `git diff --check`: **passed**
+
+Handoff: [agent-wc3-explicit-pin-type-guard.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-explicit-pin-type-guard.md)
+
+No full suite or private Runtime qualification was run. Commit message and `DONE` marker were written as requested.
+tokens used
+78,235
+Implemented the WC3 explicit pin-type guard.
+
+- `_pending_matches` now accepts only `None`/`None` or two exact five-field mappings.
+- Added parameterized malformed-type refusal tests and valid-form tests.
+- Verified outbox/session state remains unchanged on refusal.
+
+Tests:
+
+- Replacement tests: **20 passed**
+- Sync neighbor tests: **3 passed**
+- Ruff: **passed**
+- `git diff --check`: **passed**
+
+Handoff: [agent-wc3-explicit-pin-type-guard.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc3-explicit-pin-type-guard.md)
+
+No full suite or private Runtime qualification was run. Commit message and `DONE` marker were written as requested.

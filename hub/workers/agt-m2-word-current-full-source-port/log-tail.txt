@@ -1,0 +1,400 @@
+@pytest.mark.parametrize('name', SOURCES)
+def test_every_dropped_definition_is_reported_even_when_not_referenced(name):
+    previous = baseline(name)
+    for definition in previous['$defs']:
+        candidate = copy.deepcopy(_SCHEMA)
+        del candidate['$defs'][definition]
+        assert f'$/$defs/{definition}: missing definition' in compatibility_errors(previous, candidate)
+
+
+@pytest.mark.parametrize('name', SOURCES)
+def test_every_dropped_operation_is_reported_despite_the_open_generic_envelope(name):
+    previous = baseline(name)
+    for condition in previous['$defs']['EditCommand']['allOf']:
+        op = condition['if']['properties']['op']['const']
+        candidate = copy.deepcopy(_SCHEMA)
+        candidate['$defs']['EditCommand']['allOf'] = [
+            item for item in candidate['$defs']['EditCommand']['allOf']
+            if item['if']['properties']['op']['const'] != op]
+        assert (f'$/$defs/EditCommand/allOf/{op}: missing supported operation'
+                in compatibility_errors(previous, candidate))
+
+
+def test_only_reviewed_producer_and_consumed_additions_change_current_schema():
+    previous = baseline('agent-current-c456b328')
+    candidate = s2_slice()
+    for definition in ('ProducerAdmittedTarget', 'ProducerIdentity', 'ProducerAttemptPin',
+                       'ProducerGuardArgs', 'SettledProducerProposal'):
+        del candidate['$defs'][definition]
+    candidate['$defs']['EditCommand']['allOf'] = [
+        item for item in candidate['$defs']['EditCommand']['allOf']
+        if item['if']['properties']['op']['const'] != 'producer.guard']
+    for definition in ('OccurrenceAddMediaArgs', 'PlacementCreateArgs'):
+        del candidate['$defs'][definition]['properties']['consumed']
+    candidate['$defs']['ClipSetElementArgs'] = previous['$defs']['ClipSetElementArgs']
+    assert candidate == previous
+
+
+def test_s2_only_adds_the_reviewed_optional_element_source_to_frozen_s1():
+    previous = baseline('agent-frozen-s1-0a0ac7ba')
+    candidate = s2_slice()
+    element = candidate['$defs']['ClipSetElementArgs']
+    assert element['properties'].pop('schema_source') == {'$ref': '#/$defs/DocumentPin'}
+    assert element['required'] == ['elementRef'] and element['additionalProperties'] is False
+    assert element['description'] == (
+        'Replace an existing clip elementRef with another revision of the same element id, '
+        'kind and selected pack owner. Admitted revisions require the exact retained '
+        'schema_source declaration pin. The retired element_ref alias is removed. '
+        'There is no clear: a clip keeps its element.')
+    element['description'] = previous['$defs']['ClipSetElementArgs']['description']
+    assert candidate == previous
+    assert len(candidate['$defs']) == 48
+    assert len(candidate['$defs']['EditCommand']['allOf']) == 22
+
+
+@pytest.mark.parametrize('name', SOURCES)
+def test_existing_argument_narrowing_still_fails(name):
+    candidate = copy.deepcopy(_SCHEMA)
+    candidate['$defs']['ClipMoveArgs']['properties']['on']['type'] = 'integer'
+    assert compatibility_errors(baseline(name), candidate)
+
+
+def s2_slice():
+    candidate = without_text(ordinary_schema())
+    for definition in ('WordAnchor', 'ClipAnchorArgs', 'TimelineInitArgs',
+                       'AssembledTargetArgs', 'ClipAddMediaArgs', 'OccurrenceCreateArgs'):
+        del candidate['$defs'][definition]
+    candidate['$defs']['EditCommand']['allOf'] = [
+        item for item in candidate['$defs']['EditCommand']['allOf']
+        if item['if']['properties']['op']['const'] not in
+        ('clip.anchor', 'timeline.init', 'timeline.assembled-target', 'clip.add-media',
+         'occurrence.create', 'clip.swap-media')]
+    previous = baseline('agent-frozen-s2-26ef2bbb')
+    assert candidate['$defs']['Intent']['properties']['ownership']['enum'].pop() == 'parent'
+    candidate['$defs']['ClipSetArgs']['description'] = previous['$defs']['ClipSetArgs']['description']
+    return candidate
+
+
+def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
+    assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
+    assert len(ordinary_schema()['$defs']) == 55
+    assert len(ordinary_schema()['$defs']['EditCommand']['allOf']) == 29
+    assert len(_SCHEMA['$defs']) == 58
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
+
+
+def test_each_added_definition_and_operation_matches_its_approved_source():
+    additions = json.loads((FIXTURES / 'next-command-additions.json').read_text())
+    ordinary = ordinary_schema()
+    conditions = {item['if']['properties']['op']['const']: item
+                  for item in ordinary['$defs']['EditCommand']['allOf']}
+    additions['text'] = json.loads((FIXTURES / 'text-command-additions.json').read_text())
+    for source in additions.values():
+        for name, value in source['definitions'].items():
+            assert ordinary['$defs'][name] == value
+        for name, value in source.get('updates', {}).items():
+            assert ordinary['$defs'][name] == value
+        for op, condition in source['operations'].items():
+            assert conditions[op] == condition
+
+
+def test_all_published_floors_preserve_every_field_with_only_historical_pattern_widening():
+    sources = json.loads((FIXTURES / 'published-sources.json').read_text())
+    assert set(sources) == {'0.2.1', '0.2.2', '0.2.3', '0.2.8', '0.2.9', '0.2.10'}
+    for version, source in sources.items():
+        raw = (FIXTURES / source['file']).read_bytes()
+        assert hashlib.sha256(raw).hexdigest() == source['sha256']
+        previous, candidate = json.loads(raw), without_text(ordinary_schema())
+        if version in ('0.2.1', '0.2.2'):
+            # The conservative checker cannot prove regex inclusion. Verify
+            # these exact additive alternatives, then check every other field.
+            for definition in ('AnchorIdentity', 'EntityRef', 'ScopedId', 'TargetKey'):
+                old = previous['$defs'][definition]['pattern']
+                widened = old.replace('(?:clip|track)', '(?:clip|track|asset)').replace(
+                    '|occurrence:[^/]+(?:/shot)?|cut:',
+                    '|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:')
+                assert candidate['$defs'][definition]['pattern'] == widened
+                candidate['$defs'][definition]['pattern'] = old
+            if version == '0.2.2':
+                old = next(item for item in previous['$defs']['EditCommand']['allOf']
+                           if item['if']['properties']['op']['const'] == 'track.set')
+                new = next(item for item in candidate['$defs']['EditCommand']['allOf']
+                           if item['if']['properties']['op']['const'] == 'track.set')
+                pattern = old['then']['properties']['select']['pattern']
+                assert new['then']['properties']['select']['pattern'] == pattern.replace(
+                    'parent/track:', '(?:parent|occurrence:[^/]+)/track:')
+                new['then']['properties']['select']['pattern'] = pattern
+        assert compatibility_errors(previous, candidate) == [], version
+
+
+def test_closed_union_operation_inventory_is_exactly_the_supported_cohort():
+    expected = {'text-binding.set', 'project-data.write', 'clip.swap-media', 'occurrence.create', 'clip.add', 'clip.add-media', 'clip.anchor', 'clip.delete', 'clip.move',
+                'clip.set', 'clip.set-element', 'clip.set-params', 'clip.split', 'clip.trim',
+                'occurrence.add-media', 'occurrence.delete', 'occurrence.duplicate',
+                'occurrence.swap-media', 'placement.create', 'placement.move',
+                'placement.unplace', 'producer.guard', 'shot.pool', 'shot.set',
+                'timeline.assembled-target', 'timeline.init', 'timeline.inverse',
+                'timeline.restore', 'timeline.migrate-groups', 'occurrence.move',
+                'track.create', 'track.set'}
+    actual = [item['if']['properties']['op']['const']
+              for item in _SCHEMA['$defs']['EditCommand']['allOf']]
+    assert len(actual) == len(set(actual)) == 32
+    assert set(actual) == expected == set(operations()) | {'timeline.inverse', 'timeline.restore'}
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib,json,subprocess
+from pathlib import Path
+from astrid.sdk.timeline.commands import _SCHEMA, operations
+schema=Path('astrid/core/timeline/schema/edit-command.schema.json')
+data=json.loads(schema.read_text())
+print('current tree',subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip())
+print('approved source',subprocess.check_output(['git','rev-parse','9f474fec'],text=True).strip())
+print('current schema sha256',hashlib.sha256(schema.read_bytes()).hexdigest())
+print('current defs',len(data['"'$defs'"']))
+conditions=data['"'$defs'"']['EditCommand']['allOf']
+ops=[item['if']['properties']['op']['const'] for item in conditions]
+print('schema operations',len(ops),len(set(ops)))
+print('registry operations',len(operations()))
+print('word registry',operations()['clip.anchor'])
+for key in ('DocumentPin','WordAnchor','ClipAnchorArgs'):
+ print(key, hashlib.sha256(json.dumps(data['"'$defs'"'][key],sort_keys=True,separators=(',',':')).encode()).hexdigest())
+for ref in ('caea687e','9f474fec'):
+ old=json.loads(subprocess.check_output(['git','show',f'{ref}:astrid/core/timeline/schema/edit-command.schema.json']))
+ raw=subprocess.check_output(['git','show',f'{ref}:astrid/core/timeline/schema/edit-command.schema.json'])
+ print(ref,'raw-sha',hashlib.sha256(raw).hexdigest(),'defs',len(old['"'$defs'"']),'ops',len(old['"'$defs'"']['EditCommand']['allOf']),'word-sha',hashlib.sha256(json.dumps(old['"'$defs'"']['WordAnchor'],sort_keys=True,separators=(',',':')).encode()).hexdigest())
+PY
+printf '%s\\n' '--- whitespace ---'; git diff --check; printf '%s\\n' '--- status ---'; git status --short --branch" in /home/user/work/wt/agt-m2-word-current-full-source-port
+ succeeded in 430ms:
+current tree c0644cf1a7b63c9bcff7f70502b953a07879c9f3
+approved source 9f474fec9d28b7d2e20dd2d5058f40f672e246e9
+current schema sha256 27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb
+current defs 58
+schema operations 32 32
+registry operations 30
+word registry Operation(parameters={'type': 'object', 'additionalProperties': False, 'required': ['field', 'declaration', 'choice'], 'properties': {'field': {'enum': ['on', 'until']}, 'declaration': {'type': ['string', 'null']}, 'choice': {'oneOf': [{'type': 'null'}, {'$ref': '#/$defs/WordAnchor'}]}}}, handler=<function declare at 0x7f50e4a92840>, intent={'anchor': 'follow'}, singleton=True)
+DocumentPin bf812740acfe092b2c1d35db96b8edf25038bbf3adadc2219aa95c4000c98b8b
+WordAnchor b0df3e8e6fd8466e81c8000480df2ea78cfec7c6be5059a713eb706976e0e39f
+ClipAnchorArgs 2c5bfc31d75f0dbfef5d729f159cba56073ddc35c3deebeab2a503203be63868
+caea687e raw-sha a058aa6ec55d86f84b74360f4e9c01d207ec1db86434170c5d5658b5c809130a defs 45 ops 22 word-sha b0df3e8e6fd8466e81c8000480df2ea78cfec7c6be5059a713eb706976e0e39f
+9f474fec raw-sha db6ac5f815abc76b5d39f60585832ba7ebf9f8e8b5876c3c80bdca21bdfe1723 defs 50 ops 23 word-sha b0df3e8e6fd8466e81c8000480df2ea78cfec7c6be5059a713eb706976e0e39f
+--- whitespace ---
+--- status ---
+## tl/agt-m2-word-current-full-source-port
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib,subprocess
+for f in ('astrid/sdk/timeline/native_word_anchor.py','astrid/sdk/timeline/compiler.py'):
+ cur=open(f,'rb').read(); cand=subprocess.check_output(['git','show','9f474fec:'+f])
+ print(f,'current',hashlib.sha256(cur).hexdigest(),'candidate',hashlib.sha256(cand).hexdigest(),'equal',cur==cand)
+# Compare evaluator with candidate after retaining current helper name.
+cur=open('astrid/sdk/timeline/_timing_evaluators.py').read().replace('_timing_number','_number')
+cand=subprocess.check_output(['git','show','9f474fec:astrid/sdk/timeline/_timing_evaluators.py'],text=True)
+print('evaluator after helper normalization equal',cur==cand)
+PY
+printf '%s\\n' '--- candidate approved source diff names relevant current ---'; git diff --name-status HEAD 9f474fec -- astrid/sdk/timeline/native_word_anchor.py astrid/sdk/timeline/compiler.py astrid/sdk/timeline/_timing_evaluators.py astrid/core/timeline/schema/edit-command.schema.json | sed -n '1,40p'" in /home/user/work/wt/agt-m2-word-current-full-source-port
+ succeeded in 0ms:
+astrid/sdk/timeline/native_word_anchor.py current d08d7473e89f6417a6df9b6a36c9118b89edb3773ecd32b75da1d68e773d3fd7 candidate 0815810b371141779a3efd8c1908f66898e33c0df9a2ba18d0885b4c99f32bed equal False
+astrid/sdk/timeline/compiler.py current b4264beb75a66d1c2172eeb43c95df95c26536943367ff177ed001f8845a145b candidate b4264beb75a66d1c2172eeb43c95df95c26536943367ff177ed001f8845a145b equal True
+evaluator after helper normalization equal True
+--- candidate approved source diff names relevant current ---
+M	astrid/core/timeline/schema/edit-command.schema.json
+M	astrid/sdk/timeline/_timing_evaluators.py
+M	astrid/sdk/timeline/native_word_anchor.py
+
+codex
+Audit result: current HEAD is `c0644cf1…`; approved source is `9f474fec…`. The current word anchor/compiler files are semantically identical to the approved source (compiler byte-identical; evaluator identical after preserving the required `_timing_number`; native file differs only by a trailing blank line), and current schema is the approved word slice composed with the retained floors. I’m recording this as an intentional no-op port rather than introducing a duplicate or stale whole-file replacement.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e3d38992a5986ceef7bbe92a9eaf036c3aa0f55c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/commit-msg
+@@ -0,0 +1,4 @@
++chore(timeline): verify existing word source port
++
++Confirm the approved bounded word-anchor source is already composed into the
++current full-group carrier without replacing current floors or timing helpers.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7d9c236f7e21606a242bbce6f07d251fbdc694aa
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/report.md
+@@ -0,0 +1,61 @@
++# Worker report
++
++## Result
++
++No product diff was needed. The assigned full-group base already contains the
++approved bounded word source port. I verified the source rather than copying
++the stale candidate's whole files: `native_word_anchor.py` has only a trailing
++blank-line difference from `9f474fec`; `compiler.py` is byte-identical; and
++`_timing_evaluators.py` is byte-identical after restoring the required current
++`_timing_number` spelling. The current schema contains the exact approved
++`DocumentPin`, `WordAnchor`, and `ClipAnchorArgs` definitions and preserves the
++current floors, group source, project-data, materialization, and timing rules.
++
++## Exact source/tree/schema audit
++
++- Current tree: `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`.
++- Approved bounded source: `9f474fec9d28b7d2e20dd2d5058f40f672e246e9`.
++- Current schema SHA256: `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
++- Current schema count: 58 definitions, 32 unique closed-envelope operations;
++  30 native registry operations plus inverse/restore.
++- Approved candidate schema SHA256: `db6ac5f815abc76b5d39f60585832ba7ebf9f8e8b5876c3c80bdca21bdfe1723`;
++  50 definitions and 23 operations.
++- Frozen S2 floor SHA256: `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`;
++  50 definitions and 23 operations. Current reconstruction is the tested
++  ordinary 55-definition/29-operation carrier plus the reviewed group
++  3-definition/3-operation addition, yielding 58/32.
++- `WordAnchor` semantic hash is unchanged across S2, approved candidate, and
++  current: `b0df3e8e6fd8466e81c8000480df2ea78cfec7c6be5059a713eb706976e0e39f`.
++
++## Tests
++
++Fresh executions in this worktree:
++
++```text
++python -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_native_word_anchor.py -k 'review_source_counterexamples or word_ending_at_occurrence_end or occurrence_window_is_rechecked or equal_text or authoritative_and_kernel or first_use_retains_v1 or raw_canonical_bundle or half_open_window'
++12 skipped, 42 deselected. The 12 are integration-marked and require the
++separate normal Runtime counterpart; no mismatched Runtime schema was generated.
++
++python -m pytest -o addopts= -p no:cacheprovider -q tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timing_compiler.py tests/editing_conformance/test_native_word_anchor_vectors.py -k 'full_current_candidate_preserves or word_successor or occurrence or source_window or unresolvable'
++14 passed, 75 deselected in 3.85s.
++
++python -m pytest -o addopts= -p no:cacheprovider -q tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py
++85 passed in 175.18s.
++
++git diff --check
++clean.
++```
++
++Reused, not rerun, from the approved review report: the bounded private
++Runtime acceptance had 12 passed, and the focused window/floor/schema controls
++had 19 passed. No full suite, Runtime generation, public freeze/pin/activation,
++HTTP, browser, or live-socket lane was run.
++
++## Decisions and blockers
++
++The only decision was to leave the product tree unchanged: current source
++already has the requested behavior, and transplanting `9f474fec` would remove
++current floors or regress `_timing_number`. Native provider acceptance remains
++blocked/skipped until the separately agreed normal Runtime counterpart is
++available. No other blocker remains.
++
+
+exec
+/bin/bash -lc "test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/DONE && echo DONE=present; test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/commit-msg && echo COMMIT_MSG=present; sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/report.md; git status --short --branch; git diff --check" in /home/user/work/wt/agt-m2-word-current-full-source-port
+ succeeded in 0ms:
+DONE=present
+COMMIT_MSG=present
+# Worker report
+
+## Result
+
+No product diff was needed. The assigned full-group base already contains the
+approved bounded word source port. I verified the source rather than copying
+the stale candidate's whole files: `native_word_anchor.py` has only a trailing
+blank-line difference from `9f474fec`; `compiler.py` is byte-identical; and
+`_timing_evaluators.py` is byte-identical after restoring the required current
+`_timing_number` spelling. The current schema contains the exact approved
+`DocumentPin`, `WordAnchor`, and `ClipAnchorArgs` definitions and preserves the
+current floors, group source, project-data, materialization, and timing rules.
+
+## Exact source/tree/schema audit
+
+- Current tree: `c0644cf1a7b63c9bcff7f70502b953a07879c9f3`.
+- Approved bounded source: `9f474fec9d28b7d2e20dd2d5058f40f672e246e9`.
+- Current schema SHA256: `27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb`.
+- Current schema count: 58 definitions, 32 unique closed-envelope operations;
+  30 native registry operations plus inverse/restore.
+- Approved candidate schema SHA256: `db6ac5f815abc76b5d39f60585832ba7ebf9f8e8b5876c3c80bdca21bdfe1723`;
+  50 definitions and 23 operations.
+- Frozen S2 floor SHA256: `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`;
+  50 definitions and 23 operations. Current reconstruction is the tested
+  ordinary 55-definition/29-operation carrier plus the reviewed group
+  3-definition/3-operation addition, yielding 58/32.
+- `WordAnchor` semantic hash is unchanged across S2, approved candidate, and
+  current: `b0df3e8e6fd8466e81c8000480df2ea78cfec7c6be5059a713eb706976e0e39f`.
+
+## Tests
+
+Fresh executions in this worktree:
+
+```text
+python -m pytest -o addopts= -p no:cacheprovider -q tests/editing_conformance/test_native_word_anchor.py -k 'review_source_counterexamples or word_ending_at_occurrence_end or occurrence_window_is_rechecked or equal_text or authoritative_and_kernel or first_use_retains_v1 or raw_canonical_bundle or half_open_window'
+12 skipped, 42 deselected. The 12 are integration-marked and require the
+separate normal Runtime counterpart; no mismatched Runtime schema was generated.
+
+python -m pytest -o addopts= -p no:cacheprovider -q tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timing_compiler.py tests/editing_conformance/test_native_word_anchor_vectors.py -k 'full_current_candidate_preserves or word_successor or occurrence or source_window or unresolvable'
+14 passed, 75 deselected in 3.85s.
+
+python -m pytest -o addopts= -p no:cacheprovider -q tests/sdk/test_timeline_current_union_schema.py tests/sdk/test_timing_compiler.py tests/sdk/test_timing_cycles.py
+85 passed in 175.18s.
+
+git diff --check
+clean.
+```
+
+Reused, not rerun, from the approved review report: the bounded private
+Runtime acceptance had 12 passed, and the focused window/floor/schema controls
+had 19 passed. No full suite, Runtime generation, public freeze/pin/activation,
+HTTP, browser, or live-socket lane was run.
+
+## Decisions and blockers
+
+The only decision was to leave the product tree unchanged: current source
+already has the requested behavior, and transplanting `9f474fec` would remove
+current floors or regress `_timing_number`. Native provider acceptance remains
+blocked/skipped until the separately agreed normal Runtime counterpart is
+available. No other blocker remains.
+
+## tl/agt-m2-word-current-full-source-port
+
+codex
+## Result
+
+No product changes were needed. The current base already contains the approved word-anchor port.
+
+- Current tree: `c0644cf1…`
+- Approved source: `9f474fec…`
+- Schema: 58 definitions / 32 operations; current floors preserved.
+- `compiler.py` is byte-identical; evaluator preserves `_timing_number`.
+- DONE and commit message written.
+
+Tests:
+
+- Pure bounded controls: **14 passed**
+- Current schema/timing neighbors: **85 passed**
+- Native Runtime lane: **12 skipped** because the separate matching Runtime counterpart is unavailable; no mismatched Runtime was generated.
+- `git diff --check`: clean
+
+Report: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/report.md`
+tokens used
+160,276
+## Result
+
+No product changes were needed. The current base already contains the approved word-anchor port.
+
+- Current tree: `c0644cf1…`
+- Approved source: `9f474fec…`
+- Schema: 58 definitions / 32 operations; current floors preserved.
+- `compiler.py` is byte-identical; evaluator preserves `_timing_number`.
+- DONE and commit message written.
+
+Tests:
+
+- Pure bounded controls: **14 passed**
+- Current schema/timing neighbors: **85 passed**
+- Native Runtime lane: **12 skipped** because the separate matching Runtime counterpart is unavailable; no mismatched Runtime was generated.
+- `git diff --check`: clean
+
+Report: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-word-current-full-source-port/report.md`

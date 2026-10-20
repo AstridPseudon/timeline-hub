@@ -1,0 +1,9 @@
+name=agt-m2-auto-pool-guard
+repo=agent
+base=tl/agt-m2-auto-placement-guards
+base_sha=5c6467da
+model=gpt-6.1-sol
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-auto-pool-guard
+started=2026-10-20T09:37:01Z

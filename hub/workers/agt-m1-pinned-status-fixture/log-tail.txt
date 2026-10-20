@@ -1,0 +1,400 @@
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:863:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:876:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:880:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:885:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:890:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:905:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:909:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:914:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:919:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:932:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:936:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:941:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:956:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:960:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:965:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:978:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:982:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:987:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:992:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:997:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1002:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1051:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1055:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1060:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1075:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1079:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1084:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1097:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1101:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1106:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1111:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1116:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1121:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1134:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1138:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1160:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1184:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1214:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1218:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1223:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1228:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1233:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1248:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1252:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1257:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1262:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1267:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1280:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1284:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1289:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1294:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1324:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1328:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1341:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1345:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1350:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1355:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1360:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1375:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1379:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1384:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1389:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1394:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1407:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1411:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1416:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1421:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1434:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1438:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1453:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1457:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1470:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1474:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1479:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1484:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1499:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1503:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1508:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1513:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1543:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1547:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1552:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1557:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1562:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1567:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1580:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1584:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1589:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1594:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1599:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1604:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1617:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1621:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1626:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1631:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1636:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1651:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1655:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1660:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1665:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1670:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1717:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1721:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1736:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1740:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1753:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1757:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1762:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1767:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1772:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1787:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1791:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1796:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1801:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1806:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1821:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1825:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1830:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1835:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1840:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1853:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1857:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1862:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1867:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1872:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1877:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1890:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1894:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1909:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1913:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1926:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1930:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1935:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1940:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1945:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1950:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1963:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1967:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1980:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:1984:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2014:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2018:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2023:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2028:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2033:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2046:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2050:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2055:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2060:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2065:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2080:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2084:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2089:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2094:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2099:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2114:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2118:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2123:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2128:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2133:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2148:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2152:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2157:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2162:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2167:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2197:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2201:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2231:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2235:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2240:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2245:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2260:          "coverage_class": "published_reachable",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2264:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2269:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2274:              "kind": "published_handover",
+/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/source-attachments/HISTORICAL-TIP-COVERAGE.json:2287:          "coverage_class": "published_reachable",
+
+codex
+Verification is consistent: the receiving `tools-remotion` lock resolves `@banodoco/timeline-composition` to 0.0.8, and the Composition repo’s package and lock are both version 0.0.8. The declarative published capability metadata marks `am-type`’s element `opacity` as supported since 0.0.7, so the actual 0.0.8 default must render. I’ll change only the stale default assertion and its explanatory comment.
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/timeline/test_clip_fields.py' in /home/user/work/wt/agt-m1-pinned-status-fixture
+ exited 1 in 1008ms:
+...................................................................F.... [ 70%]
+..............................                                           [100%]
+=================================== FAILURES ===================================
+___________ test_render_status_defaults_to_pinned_union_composition ____________
+
+    def test_render_status_defaults_to_pinned_union_composition():
+        # This isolated S0 still pins timeline-composition 0.0.6; 0.0.7 remains
+        # an explicit compatibility case above, not the receiving default.
+>       assert cf.render_status("am-type", "opacity") == "unrendered"
+E       AssertionError: assert 'renders' == 'unrendered'
+E         
+E         - unrendered
+E         + renders
+
+tests/core/timeline/test_clip_fields.py:400: AssertionError
+=========================== short test summary info ============================
+FAILED tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition
+1 failed, 101 passed in 0.51s
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-m1-pinned-status-fixture/tests/core/timeline/test_clip_fields.py
+diff --git a/tests/core/timeline/test_clip_fields.py b/tests/core/timeline/test_clip_fields.py
+index 7651d669295233ee288eb3844c2e2e9452ead7ef..64490517f061d401d7e938533401836eea8938dc
+--- a/tests/core/timeline/test_clip_fields.py
++++ b/tests/core/timeline/test_clip_fields.py
+@@ -395,9 +395,9 @@
+ 
+ 
+ def test_render_status_defaults_to_pinned_union_composition():
+-    # This isolated S0 still pins timeline-composition 0.0.6; 0.0.7 remains
+-    # an explicit compatibility case above, not the receiving default.
+-    assert cf.render_status("am-type", "opacity") == "unrendered"
++    # The receiving lock pins timeline-composition 0.0.8; 0.0.7 remains an
++    # explicit compatibility case above, not the receiving default.
++    assert cf.render_status("am-type", "opacity") == "renders"
+     assert cf.render_status("am-type", "opacity", "0.0.7") == "renders"
+ 
+ 
+
+exec
+/bin/bash -lc 'if [ -x /home/user/work/venv-agent/bin/ruff ]; then /home/user/work/venv-agent/bin/ruff check tests/core/timeline/test_clip_fields.py; else ruff check tests/core/timeline/test_clip_fields.py; fi' in /home/user/work/wt/agt-m1-pinned-status-fixture
+ exited 1 in 0ms:
+tests/core/timeline/test_clip_fields.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+   |
+ 1 |   """X-32: the universal clip fields, declared once (clip_fields.yaml)."""
+ 2 |
+ 3 | / from __future__ import annotations
+ 4 | |
+ 5 | | import dataclasses
+ 6 | |
+ 7 | | import jsonschema
+ 8 | | import pytest
+ 9 | |
+10 | | from astrid.core.timeline import clip_fields as cf
+11 | | from astrid.core.timeline import banodoco_schema
+12 | | from astrid.core.timeline.clip_fields import ClipFieldError, FIELDS, FieldSpec
+13 | | from astrid.core.timeline.validators.timeline import validate_timeline
+   | |______________________________________________________________________^ I001
+   |
+   = help: Organize imports
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/core/timeline/test_clip_fields.py' in /home/user/work/wt/agt-m1-pinned-status-fixture
+exec
+/bin/bash -lc 'git diff --check && git diff --stat && git diff -- tests/core/timeline/test_clip_fields.py && git status --short' in /home/user/work/wt/agt-m1-pinned-status-fixture
+ succeeded in 198ms:
+ tests/core/timeline/test_clip_fields.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+diff --git a/tests/core/timeline/test_clip_fields.py b/tests/core/timeline/test_clip_fields.py
+index 7651d669..64490517 100644
+--- a/tests/core/timeline/test_clip_fields.py
++++ b/tests/core/timeline/test_clip_fields.py
+@@ -395,9 +395,9 @@ def test_render_status_clip_type_entry_wins_over_element_kind():
+ 
+ 
+ def test_render_status_defaults_to_pinned_union_composition():
+-    # This isolated S0 still pins timeline-composition 0.0.6; 0.0.7 remains
+-    # an explicit compatibility case above, not the receiving default.
+-    assert cf.render_status("am-type", "opacity") == "unrendered"
++    # The receiving lock pins timeline-composition 0.0.8; 0.0.7 remains an
++    # explicit compatibility case above, not the receiving default.
++    assert cf.render_status("am-type", "opacity") == "renders"
+     assert cf.render_status("am-type", "opacity", "0.0.7") == "renders"
+ 
+ 
+ M tests/core/timeline/test_clip_fields.py
+
+ succeeded in 1119ms:
+........................................................................ [ 70%]
+..............................                                           [100%]
+102 passed in 0.53s
+
+codex
+The targeted file now passes all 102 tests. `git diff --check` passes and the diff is limited to the one default case/comment. Ruff reports a pre-existing import-order violation at the file’s unchanged import block; I will leave it untouched because the task permits only this case/comment and forbids unrelated edits. I’m recording the required conventional commit message files next.
+exec
+/bin/bash -lc 'for p in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg.txt; do if [ -e "$p" ]; then echo "--- $p"; sed -n '"'1,80p' \""'$p"; else echo "MISSING $p"; fi; done' in /home/user/work/wt/agt-m1-pinned-status-fixture
+ succeeded in 0ms:
+MISSING /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg
+MISSING /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg.txt
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..8dcc910ec05b141eca681fdd8c0e62a7ef3a4625
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): align render default with composition 0.0.8
++
++Update the pinned default render-status fixture for am-type opacity while
++preserving the explicit compatibility matrix.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..8dcc910ec05b141eca681fdd8c0e62a7ef3a4625
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg.txt
+@@ -0,0 +1,4 @@
++test(timeline): align render default with composition 0.0.8
++
++Update the pinned default render-status fixture for am-type opacity while
++preserving the explicit compatibility matrix.
+diff --git a/tests/core/timeline/test_clip_fields.py b/tests/core/timeline/test_clip_fields.py
+index 7651d669295233ee288eb3844c2e2e9452ead7ef..64490517f061d401d7e938533401836eea8938dc
+--- a/tests/core/timeline/test_clip_fields.py
++++ b/tests/core/timeline/test_clip_fields.py
+@@ -395,9 +395,9 @@
+ 
+ 
+ def test_render_status_defaults_to_pinned_union_composition():
+-    # This isolated S0 still pins timeline-composition 0.0.6; 0.0.7 remains
+-    # an explicit compatibility case above, not the receiving default.
+-    assert cf.render_status("am-type", "opacity") == "unrendered"
++    # The receiving lock pins timeline-composition 0.0.8; 0.0.7 remains an
++    # explicit compatibility case above, not the receiving default.
++    assert cf.render_status("am-type", "opacity") == "renders"
+     assert cf.render_status("am-type", "opacity", "0.0.7") == "renders"
+ 
+ 
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- commit-msg ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg; printf '%s\\n' '--- commit-msg.txt ---'; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m1-pinned-status-fixture/commit-msg.txt" in /home/user/work/wt/agt-m1-pinned-status-fixture
+ succeeded in 0ms:
+--- commit-msg ---
+test(timeline): align render default with composition 0.0.8
+
+Update the pinned default render-status fixture for am-type opacity while
+preserving the explicit compatibility matrix.
+--- commit-msg.txt ---
+test(timeline): align render default with composition 0.0.8
+
+Update the pinned default render-status fixture for am-type opacity while
+preserving the explicit compatibility matrix.
+
+exec
+/bin/bash -lc 'git status --short && git diff --check && git diff --numstat && git diff --unified=3 -- tests/core/timeline/test_clip_fields.py' in /home/user/work/wt/agt-m1-pinned-status-fixture
+ succeeded in 135ms:
+ M tests/core/timeline/test_clip_fields.py
+3	3	tests/core/timeline/test_clip_fields.py
+diff --git a/tests/core/timeline/test_clip_fields.py b/tests/core/timeline/test_clip_fields.py
+index 7651d669..64490517 100644
+--- a/tests/core/timeline/test_clip_fields.py
++++ b/tests/core/timeline/test_clip_fields.py
+@@ -395,9 +395,9 @@ def test_render_status_clip_type_entry_wins_over_element_kind():
+ 
+ 
+ def test_render_status_defaults_to_pinned_union_composition():
+-    # This isolated S0 still pins timeline-composition 0.0.6; 0.0.7 remains
+-    # an explicit compatibility case above, not the receiving default.
+-    assert cf.render_status("am-type", "opacity") == "unrendered"
++    # The receiving lock pins timeline-composition 0.0.8; 0.0.7 remains an
++    # explicit compatibility case above, not the receiving default.
++    assert cf.render_status("am-type", "opacity") == "renders"
+     assert cf.render_status("am-type", "opacity", "0.0.7") == "renders"
+ 
+ 
+
+codex
+## Report
+
+Updated only `tests/core/timeline/test_clip_fields.py`:
+
+- Default `am-type` opacity assertion now expects `renders`.
+- Preserved the explicit 0.0.6/0.0.7 matrix and all unsupported/unknown assertions.
+- Confirmed receiving Composition is pinned to 0.0.8; capability metadata supports opacity since 0.0.7.
+
+Tests:
+
+- Pytest: `102 passed`
+- `git diff --check`: passed
+- Ruff: pre-existing `I001` import-order failure at unchanged line 3; not modified due scope restriction.
+- Full/network suites not run per instructions.
+
+Commit messages written to both required paths.
+tokens used
+81,255
+## Report
+
+Updated only `tests/core/timeline/test_clip_fields.py`:
+
+- Default `am-type` opacity assertion now expects `renders`.
+- Preserved the explicit 0.0.6/0.0.7 matrix and all unsupported/unknown assertions.
+- Confirmed receiving Composition is pinned to 0.0.8; capability metadata supports opacity since 0.0.7.
+
+Tests:
+
+- Pytest: `102 passed`
+- `git diff --check`: passed
+- Ruff: pre-existing `I001` import-order failure at unchanged line 3; not modified due scope restriction.
+- Full/network suites not run per instructions.
+
+Commit messages written to both required paths.

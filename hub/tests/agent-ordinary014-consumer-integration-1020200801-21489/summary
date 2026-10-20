@@ -1,0 +1,44 @@
+test agent-ordinary014-consumer-integration-1020200801-21489: fail exit=2 in 64s — ordinary014-consumer-integration on integration:agent (agent tree 6adb4a1190dfb2874e101565f37eccd392b1ae2f)
+cmd: env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-a0dca169 ASTRID_PARENT_MEDIA_SEED_RUNTIME=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -m integration
+counts: 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-ordinary014-consumer-integration-1020200801-21489/log.txt ---
+
+==================================== ERRORS ====================================
+_ ERROR collecting tests/packs/test_vibecomfy_runtime_real_service_integration.py _
+ImportError while importing test module '/home/user/work/wt/.test-agent-ordinary014-consumer-integration-1020200801-21489/tests/packs/test_vibecomfy_runtime_real_service_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/test_vibecomfy_runtime_real_service_integration.py:19: in <module>
+    require_module("vibecomfy.porting.import_service")
+tests/lanes.py:80: in require_module
+    return importlib.import_module(name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'vibecomfy'
+____ ERROR collecting tests/packs/vibecomfy/test_media_canonical_loader.py _____
+ImportError while importing test module '/home/user/work/wt/.test-agent-ordinary014-consumer-integration-1020200801-21489/tests/packs/vibecomfy/test_media_canonical_loader.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/vibecomfy/test_media_canonical_loader.py:10: in <module>
+    vibecomfy = require_module("vibecomfy")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/lanes.py:80: in require_module
+    return importlib.import_module(name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'vibecomfy'
+=========================== short test summary info ============================
+ERROR tests/packs/test_vibecomfy_runtime_real_service_integration.py
+ERROR tests/packs/vibecomfy/test_media_canonical_loader.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+1 skipped, 15294 deselected, 2 errors in 49.29s

@@ -1,0 +1,400 @@
+     assert redone['data']['canonical_document']['shot_revisions'][0]['payload']['items'][0]['media_id'] == new_digest
+     aba_before = client2.timelines.history(project, 'film', limit=100).data
+
+exec
+/bin/bash -lc "git diff --check && PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import ast
+from pathlib import Path
+ast.parse(Path('tests/timeline/test_authoring_media.py').read_text())
+print('AST parse passed')
+PY
+nl -ba tests/timeline/test_authoring_media.py | sed -n '642,720p'" in /home/user/work/wt/agt-m2-wc6-http-ack-proof-finish
+ succeeded in 467ms:
+AST parse passed
+   642	    assert reloaded_document['shots'][first_id]['internal_timeline']['registry']['assets']['picture-1']['media_id'] == new_digest
+   643	
+   644	    from runtime_protocol.server import RuntimeHandler
+   645	
+   646	    original_send = RuntimeHandler._send
+   647	    lost = {'done': False}
+   648	    undo_wire = []
+   649	
+   650	    def lose_undo_ack(handler, status, payload=None, **kwargs):
+   651	        if (status == 200 and handler.command == 'POST' and handler.path.endswith('/commit')
+   652	                and handler.headers.get('Idempotency-Key') == 'wc6-undo'
+   653	                and getattr(handler, '_defer_response', False) and not lost['done']):
+   654	            undo_wire.append({
+   655	                'key': handler.headers['Idempotency-Key'],
+   656	                'body': handler._prefetched_body,
+   657	            })
+   658	            lost['done'] = True
+   659	            # Match the M1 real-HTTP seam: commit_timeline has durably
+   660	            # accepted the edit, but no response bytes have been sent.
+   661	            raise ConnectionError('WC6 proof dropped undo response after durable acceptance')
+   662	        if (handler.command == 'POST' and handler.path.endswith('/commit')
+   663	                and handler.headers.get('Idempotency-Key') == 'wc6-undo'
+   664	                and getattr(handler, '_defer_response', False)):
+   665	            undo_wire.append({
+   666	                'key': handler.headers['Idempotency-Key'],
+   667	                'body': handler._prefetched_body,
+   668	            })
+   669	        return original_send(handler, status, payload, **kwargs)
+   670	
+   671	    monkeypatch.setattr(RuntimeHandler, '_send', lose_undo_ack)
+   672	    undo_outbox = tmp_path / 'undo.outbox.json'
+   673	    undo_session = TimelineSession.open(
+   674	        project, 'film', client=client, outbox_path=undo_outbox,
+   675	    )
+   676	    with pytest.raises(WorkspaceClientError) as transport_error:
+   677	        undo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-undo')
+   678	    assert transport_error.value.status == 0
+   679	    assert transport_error.value.code == 'transport_error'
+   680	    flight = json.loads(undo_outbox.read_text())['flight']
+   681	    assert flight['key'] == 'wc6-undo'
+   682	    assert flight['body'].encode() == undo_wire[0]['body']
+   683	    restart_port = daemon.httpd.server_port
+   684	    daemon.stop()
+   685	    # Keep the stale disjoint session on the same HTTP endpoint across the
+   686	    # restart; the M1 real-HTTP proof uses this convention as well.
+   687	    restarted = real_runtime(
+   688	        realm, port=restart_port, commit='7f6dd89', authoring_profile='astrid'
+   689	    )
+   690	    client2 = open_client(restarted)
+   691	    retry_session = TimelineSession.open(
+   692	        project, 'film', client=client2, outbox_path=undo_outbox,
+   693	    )
+   694	    undone = retry_session.flush(idempotency_key='wc6-undo')
+   695	    assert undone['data']['canonical_document'] == baseline
+   696	    assert lost['done'] is True
+   697	    assert len(undo_wire) == 2
+   698	    assert undo_wire[1] == undo_wire[0]
+   699	    undo_receipt = undone['receipt']
+   700	    assert undo_receipt['receipt_id'] == undone['data']['accepted_publication_id']
+   701	    undo_history = client2.timelines.history(project, 'film', limit=100).data
+   702	    assert undo_history['head']['revision_id'] == undone['data']['accepted_revision_id']
+   703	    assert undo_history['head']['publication_id'] == undo_receipt['receipt_id']
+   704	    assert any(
+   705	        row['publication_id'] == undo_receipt['receipt_id']
+   706	        and row['receipt']['receipt_id'] == undo_receipt['receipt_id']
+   707	        for row in undo_history['items']
+   708	    )
+   709	
+   710	    # This stale session is intentionally committed after undo.  It is
+   711	    # unrelated to the media occurrence and must rebase without changing the
+   712	    # exact undo result.
+   713	    disjoint = disjoint_session.commit_many(
+   714	        [capture_move(base_bundle, 'parent/clip:music-bed', 1)],
+   715	        idempotency_key='wc6-disjoint', via='python',
+   716	    )
+   717	    assert disjoint['data']['status'] == 'rebased'
+   718	    disjoint_document = disjoint['data']['canonical_document']
+   719	    assert disjoint_document['parent_revision']['payload']['clips'][0]['at'] == 1
+   720	
+
+exec
+/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-wc6-http-ack-proof-finish native-script-current-integration --files '"'tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba') && printf '%s\\n' \""'$R"' in /home/user/work/wt/agt-m2-wc6-http-ack-proof-finish
+ succeeded in 5ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020150046-28371
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020150046-28371/
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020150046-28371' in /home/user/work/wt/agt-m2-wc6-http-ack-proof-finish
+ succeeded in 60637ms:
+test agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020150046-28371: pass exit=0 in 18s — native-script-current-integration on agt-m2-wc6-http-ack-proof-finish (agent tree f2a1a4bfad69332b059796c4a0260fb962c583ef)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+counts: 1 passed in 14.35s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020150046-28371/log.txt ---
+.                                                                        [100%]
+1 passed in 14.35s
+
+codex
+The final exact central run passes: 1 test passed in 14.35s. The proof now covers the real dropped response, public transport error identity, exact persisted body/key replay, durable undo receipt/head/history, preserved F1 verified-media guard, disjoint rebase, negative atomic refusal, redo, and ABA refusal. I’m writing the required design report and conventional commit message, then I’ll verify the final diff and mark DONE.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc6-http-ack-final-proof.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-http-ack-proof-finish/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-http-ack-proof-finish/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc6-http-ack-final-proof.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc6-http-ack-final-proof.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..009a55ea20c6cae29411b1b036d72744990ba9db
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc6-http-ack-final-proof.md
+@@ -0,0 +1,52 @@
++# Agent WC6 real-HTTP acknowledgement proof
++
++## Source and fault seam
++
++- Owned source: `tests/timeline/test_authoring_media.py`,
++  `test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba`.
++- The old `lose_undo_ack` called `RuntimeHandler._send` first and raised
++  afterwards. That could write the response and made the synthetic fixture
++  exception text an unreliable assertion across HTTP.
++- The corrected seam matches the existing M1 convention. For the undo request
++  it requires `POST`, `/commit`, status `200`, idempotency key `wc6-undo`, and
++  Runtime's deferred-response state (`_defer_response`). At that point
++  `commit_timeline` has returned its durable acceptance. The fixture records
++  `_prefetched_body`, then raises before calling the original `_send`, so no
++  HTTP response bytes are sent.
++
++## Public transport and durability proof
++
++- Request: `POST /v1/projects/<project>/timelines/film/commit` with
++  `Idempotency-Key: wc6-undo` and the inverse command body.
++- The client observes the documented public failure:
++  `astrid.sdk.workspace_client.WorkspaceClientError`, `status == 0`,
++  `code == "transport_error"`. The actual transport message is
++  `Remote end closed connection without response`; synthetic server-fixture
++  text is not asserted.
++- The persisted outbox flight retains key `wc6-undo`; its serialized body is
++  byte-equal to the first HTTP body. After restart, the retry is observed with
++  the same key and byte-identical body.
++- The retry returns the baseline canonical document and a receipt. The test
++  asserts that receipt is the accepted publication, is the durable history
++  head revision/publication pair, and is present in immutable history.
++- Restart keeps the original HTTP port so the intentionally stale disjoint
++  session remains bound to the same Runtime identity. The redo path re-reads
++  the exact old/new Runtime-verified media inputs and passes them to capture;
++  the F1 guard remains active.
++
++## Limits and result
++
++- Product code is unchanged from `841581fc`; only the owned test fixture and
++  its proof assertions changed.
++- No transport, scope, permission, marker, skip, normalization, fake session,
++  or SQL changes were made. Existing raw alias/payload opaque fields, mirrors,
++  selection, disjoint rebase, atomic negative, exact undo/retry, redo, and ABA
++  assertions remain.
++- No full suite was run. The required central run was:
++
++  `native-script-current-integration --files tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba`
++
++  with pinned Runtime checkout `7f6dd89`; result run
++  `agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020150046-28371`:
++  **1 passed in 14.35s**.
++
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-http-ack-proof-finish/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-http-ack-proof-finish/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-http-ack-proof-finish/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-http-ack-proof-finish/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..9c7d0afb69b9a61b9020fc1c7da3c533d7f7f2bc
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-http-ack-proof-finish/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): prove dropped HTTP undo acknowledgement
++
++Correct the WC6 real-HTTP fault seam to drop the deferred response before any
++bytes are sent, and assert the public transport error plus exact outbox replay
++and durable receipt/head proof.
+diff --git a/tests/timeline/test_authoring_media.py b/tests/timeline/test_authoring_media.py
+index ef7179d4b570c7160784d3cb70f3439841d053fb..9d2c90333f3d4c2b1fce4cc9ce7d46ddb6f95b90
+--- a/tests/timeline/test_authoring_media.py
++++ b/tests/timeline/test_authoring_media.py
+@@ -456,7 +456,7 @@
+     from astrid.sdk.timeline.capture import capture_move
+     from astrid.sdk.timeline.store import fetch_bundle
+     from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+-    from astrid.sdk.workspace_client import WorkspaceClient
++    from astrid.sdk.workspace_client import WorkspaceClient, WorkspaceClientError
+     from tests.helpers.runtime import use_runtime
+     from tests.helpers.trusted_seed import seed_trusted_parent
+ 
+@@ -645,26 +645,48 @@
+ 
+     original_send = RuntimeHandler._send
+     lost = {'done': False}
++    undo_wire = []
+ 
+     def lose_undo_ack(handler, status, payload=None, **kwargs):
+-        result = original_send(handler, status, payload, **kwargs)
+         if (status == 200 and handler.command == 'POST' and handler.path.endswith('/commit')
+-                and handler.headers.get('Idempotency-Key') == 'wc6-undo' and not lost['done']):
++                and handler.headers.get('Idempotency-Key') == 'wc6-undo'
++                and getattr(handler, '_defer_response', False) and not lost['done']):
++            undo_wire.append({
++                'key': handler.headers['Idempotency-Key'],
++                'body': handler._prefetched_body,
++            })
+             lost['done'] = True
+-            raise ConnectionError('WC6 proof lost undo acknowledgement after durable acceptance')
+-        return result
++            # Match the M1 real-HTTP seam: commit_timeline has durably
++            # accepted the edit, but no response bytes have been sent.
++            raise ConnectionError('WC6 proof dropped undo response after durable acceptance')
++        if (handler.command == 'POST' and handler.path.endswith('/commit')
++                and handler.headers.get('Idempotency-Key') == 'wc6-undo'
++                and getattr(handler, '_defer_response', False)):
++            undo_wire.append({
++                'key': handler.headers['Idempotency-Key'],
++                'body': handler._prefetched_body,
++            })
++        return original_send(handler, status, payload, **kwargs)
+ 
+     monkeypatch.setattr(RuntimeHandler, '_send', lose_undo_ack)
+     undo_outbox = tmp_path / 'undo.outbox.json'
+     undo_session = TimelineSession.open(
+         project, 'film', client=client, outbox_path=undo_outbox,
+     )
+-    with pytest.raises(Exception, match='lost undo acknowledgement|transport'):
++    with pytest.raises(WorkspaceClientError) as transport_error:
+         undo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-undo')
++    assert transport_error.value.status == 0
++    assert transport_error.value.code == 'transport_error'
+     flight = json.loads(undo_outbox.read_text())['flight']
+     assert flight['key'] == 'wc6-undo'
++    assert flight['body'].encode() == undo_wire[0]['body']
++    restart_port = daemon.httpd.server_port
+     daemon.stop()
+-    restarted = real_runtime(realm, commit='7f6dd89', authoring_profile='astrid')
++    # Keep the stale disjoint session on the same HTTP endpoint across the
++    # restart; the M1 real-HTTP proof uses this convention as well.
++    restarted = real_runtime(
++        realm, port=restart_port, commit='7f6dd89', authoring_profile='astrid'
++    )
+     client2 = open_client(restarted)
+     retry_session = TimelineSession.open(
+         project, 'film', client=client2, outbox_path=undo_outbox,
+@@ -672,6 +694,18 @@
+     undone = retry_session.flush(idempotency_key='wc6-undo')
+     assert undone['data']['canonical_document'] == baseline
+     assert lost['done'] is True
++    assert len(undo_wire) == 2
++    assert undo_wire[1] == undo_wire[0]
++    undo_receipt = undone['receipt']
++    assert undo_receipt['receipt_id'] == undone['data']['accepted_publication_id']
++    undo_history = client2.timelines.history(project, 'film', limit=100).data
++    assert undo_history['head']['revision_id'] == undone['data']['accepted_revision_id']
++    assert undo_history['head']['publication_id'] == undo_receipt['receipt_id']
++    assert any(
++        row['publication_id'] == undo_receipt['receipt_id']
++        and row['receipt']['receipt_id'] == undo_receipt['receipt_id']
++        for row in undo_history['items']
++    )
+ 
+     # This stale session is intentionally committed after undo.  It is
+     # unrelated to the media occurrence and must rebase without changing the
+@@ -702,8 +736,15 @@
+     redo_session = TimelineSession.open(
+         project, 'film', client=client2, outbox_path=tmp_path / 'redo.outbox.json',
+     )
++    # Re-read the exact Runtime-verified inputs after restart; this preserves
++    # the F1 media guard while replaying the unchanged command record.
++    redo_verified_media = [
++        transport.get_project_verified_media(project, record['args'][key])
++        for key in ('old_media', 'media')
++    ]
+     redone = redo_session.commit_many(
+         [record], idempotency_key='wc6-aba-rebind', via='python',
++        verified_media=redo_verified_media,
+     )
+     assert redone['data']['canonical_document']['shot_revisions'][0]['payload']['items'][0]['media_id'] == new_digest
+     aba_before = client2.timelines.history(project, 'film', limit=100).data
+
+exec
+/bin/bash -lc "git diff --check && printf '%s\\n' '--- changed files ---' && git status --short && printf '%s\\n' '--- diff stat ---' && git diff --stat && printf '%s\\n' '--- report ---' && sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc6-http-ack-final-proof.md && printf '%s\\n' '--- commit message ---' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-http-ack-proof-finish/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-wc6-http-ack-proof-finish/DONE && echo DONE=present" in /home/user/work/wt/agt-m2-wc6-http-ack-proof-finish
+ succeeded in 1050ms:
+--- changed files ---
+ M tests/timeline/test_authoring_media.py
+--- diff stat ---
+ tests/timeline/test_authoring_media.py | 55 +++++++++++++++++++++++++++++-----
+ 1 file changed, 48 insertions(+), 7 deletions(-)
+--- report ---
+# Agent WC6 real-HTTP acknowledgement proof
+
+## Source and fault seam
+
+- Owned source: `tests/timeline/test_authoring_media.py`,
+  `test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba`.
+- The old `lose_undo_ack` called `RuntimeHandler._send` first and raised
+  afterwards. That could write the response and made the synthetic fixture
+  exception text an unreliable assertion across HTTP.
+- The corrected seam matches the existing M1 convention. For the undo request
+  it requires `POST`, `/commit`, status `200`, idempotency key `wc6-undo`, and
+  Runtime's deferred-response state (`_defer_response`). At that point
+  `commit_timeline` has returned its durable acceptance. The fixture records
+  `_prefetched_body`, then raises before calling the original `_send`, so no
+  HTTP response bytes are sent.
+
+## Public transport and durability proof
+
+- Request: `POST /v1/projects/<project>/timelines/film/commit` with
+  `Idempotency-Key: wc6-undo` and the inverse command body.
+- The client observes the documented public failure:
+  `astrid.sdk.workspace_client.WorkspaceClientError`, `status == 0`,
+  `code == "transport_error"`. The actual transport message is
+  `Remote end closed connection without response`; synthetic server-fixture
+  text is not asserted.
+- The persisted outbox flight retains key `wc6-undo`; its serialized body is
+  byte-equal to the first HTTP body. After restart, the retry is observed with
+  the same key and byte-identical body.
+- The retry returns the baseline canonical document and a receipt. The test
+  asserts that receipt is the accepted publication, is the durable history
+  head revision/publication pair, and is present in immutable history.
+- Restart keeps the original HTTP port so the intentionally stale disjoint
+  session remains bound to the same Runtime identity. The redo path re-reads
+  the exact old/new Runtime-verified media inputs and passes them to capture;
+  the F1 guard remains active.
+
+## Limits and result
+
+- Product code is unchanged from `841581fc`; only the owned test fixture and
+  its proof assertions changed.
+- No transport, scope, permission, marker, skip, normalization, fake session,
+  or SQL changes were made. Existing raw alias/payload opaque fields, mirrors,
+  selection, disjoint rebase, atomic negative, exact undo/retry, redo, and ABA
+  assertions remain.
+- No full suite was run. The required central run was:
+
+  `native-script-current-integration --files tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba`
+
+  with pinned Runtime checkout `7f6dd89`; result run
+  `agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020150046-28371`:
+  **1 passed in 14.35s**.
+
+--- commit message ---
+test(timeline): prove dropped HTTP undo acknowledgement
+
+Correct the WC6 real-HTTP fault seam to drop the deferred response before any
+bytes are sent, and assert the public transport error plus exact outbox replay
+and durable receipt/head proof.
+DONE=present
+
+codex
+Implemented WC6 HTTP ACK proof correction in `tests/timeline/test_authoring_media.py`.
+
+- Drops the response before any HTTP bytes are sent.
+- Asserts `WorkspaceClientError`, status `0`, code `transport_error`.
+- Verifies identical outbox body/key replay, durable receipt/head/history, F1 verification, redo, and ABA guards.
+- Product code remains unchanged from `841581fc`.
+
+Test:
+
+```text
+native-script-current-integration --files tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+```
+
+Result: **1 passed in 14.35s**.
+
+Proof report: [agent-wc6-http-ack-final-proof.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc6-http-ack-final-proof.md>)
+
+Commit message and `DONE` written.
+tokens used
+163,253
+Implemented WC6 HTTP ACK proof correction in `tests/timeline/test_authoring_media.py`.
+
+- Drops the response before any HTTP bytes are sent.
+- Asserts `WorkspaceClientError`, status `0`, code `transport_error`.
+- Verifies identical outbox body/key replay, durable receipt/head/history, F1 verification, redo, and ABA guards.
+- Product code remains unchanged from `841581fc`.
+
+Test:
+
+```text
+native-script-current-integration --files tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+```
+
+Result: **1 passed in 14.35s**.
+
+Proof report: [agent-wc6-http-ack-final-proof.md](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc6-http-ack-final-proof.md>)
+
+Commit message and `DONE` written.

@@ -1,0 +1,9 @@
+name=agt-review-wc2-public-test-preservation
+repo=agent
+base=tl/agt-m2-wc2-dead-promotion-cut
+base_sha=5e12f831
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-review-wc2-public-test-preservation
+started=2026-10-20T20:36:04Z

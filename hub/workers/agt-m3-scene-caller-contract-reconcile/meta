@@ -1,0 +1,9 @@
+name=agt-m3-scene-caller-contract-reconcile
+repo=agent
+base=tl/agt-m3-sdk-scene-only-managed-caller
+base_sha=4f3cd32b
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m3-scene-caller-contract-reconcile
+started=2026-10-20T17:29:39Z

@@ -1,0 +1,400 @@
+
+Private candidate contract version: `0.2.14`; schema SHA256 `fafb1985a326e6121aa8c9fb34bbda196edc3dfaf462352070372e631bea1f52`; artifact manifest `sha256:48c7b6533e2774a70e36517948a18fd5cee07f4d30e8f339776be9b3ec74ed4e`.
+
+New tests reuse the actual registered action/GenericPackHost fixture. They use normal createTimeline, authenticated requester admission, real child settlements, actual action output and normal managed file settlement. They cover distinct and duplicate CAS ordered children, populated replacement, a peer edit after admission before settlement, exact original proposal queueing, real commit ACK loss, requester and Runtime restart, exact retry with unchanged receipt/history, changed request key/payload refusals, byte corruption/attempt/lifecycle/fence refusals at the read boundary, changed commands/rationale/digest refused by Runtime, cancellation, immutable readback, positive undo and guarded inverse refusal. Child bytes remain small fixtures labelled video; decoded media and rendering are not qualified.
+
+The peer rebase case edits the label of an unrelated existing track. Creating a track changes captured track membership and correctly conflicts; no original guard was refreshed or relaxed. The membership-conflict case adds a peer clip after admission and retains the original pending batch/base on refusal.
+
+Local final product checks:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_timeline_assembly.py tests/sdk/test_timeline_sync.py tests/sdk/test_timeline_sync_native.py tests/packs/rendering/test_runtime_stitch.py tests/packs/rendering/test_assemble_timeline.py
+```
+
+123 passed, 1 xfailed in 33.08s, exit 0. The new strict xfail is the explicitly retained admission-recovery requirement described below. Earlier local run: 123 passed, 1 xfailed in 15.33s; initial focused subset: 110 passed in 12.09s.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/assembly.py astrid/sdk/timeline/sync.py tests/helpers/registered_native_pair.py tests/sdk/test_timeline_assembly.py tests/packs/rendering/test_registered_native_assembler.py tests/packs/rendering/test_registered_native_pair.py tests/packs/rendering/test_registered_proposal_requester.py
+git diff --check
+```
+
+Both pass, exit 0. No full/full* suite or make check was requested or run. Shared dependencies and caches stayed read only; local bytecode and pytest/Ruff caches were disabled. No git mutation or integration checkout edits.
+
+Central commands:
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+$ORCH/bin/request-test agt-m2-registered-proposal-requester identity-pin94114269-integration --files tests/packs/rendering/test_registered_native_pair.py
+$ORCH/bin/wait-test <returned-id>
+```
+
+The named outer lane checks the pinned Runtime identity and runs the three unchanged identity controls plus the private wrapper. Inside the generated pair it runs:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<private-agent> ASTRID_RUNTIME_CHECKOUT=<private-runtime> /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/packs/rendering/test_registered_native_assembler.py tests/packs/rendering/test_registered_proposal_requester.py tests/packs/rendering/test_registered_assembler_admission.py tests/packs/rendering/test_registered_assembler_producer.py
+```
+
+Development results (all exit 1; no passing behavior expectations were changed to expect refusal):
+
+- `...-1020123424-17327`, source tree `4e7f0e64d7c3005e11b3ca28497b981d6ba6f102`: inner 4 failed/5 passed/2 xfailed; outer 1 failed/3 passed. Corrected public `succeeded` state/nested action spec and the conflict fixture'"'s missing destination track; aligned output-selector defaults with Runtime.
+- "'`...-1020123607-4416`, source tree `38e708a7ad7800020f9a7203e8e4f7684d9740a4`: inner 3 failed/6 passed/2 xfailed; outer 1 failed/3 passed. The actual commit correctly rejected changed track membership. Changed only the new rebase fixture to a genuinely independent existing-track label edit; kept the explicit membership-conflict test.
+- `...-1020123853-23166`, source tree `faadc54163588b1358c4601fdcc482b3c016771b`: inner 3 failed/6 passed/2 xfailed; outer 1 failed/3 passed. Native acceptance/restart/retry succeeded. Fixed two new test mistakes: an overbroad replay assertion forgot the newly created visual track, and `_send` was counted at both deferred and actual send stages. The lost-ACK observer now uses the same deferred-response boundary as M1.
+
+Named live requirement: **registered assembler admission ACK recovery requires the original create body/key durably retained in the existing outbox before send**. `tests/sdk/test_timeline_assembly.py::test_registered_admission_lost_ack_restart_retries_original_body_without_recapture` is a new `xfail(strict=True, raises=AssertionError)` preserving that behavior expectation. The current admission method does not persist its original task-create body/key. Restart can recapture a peer head under the old key; this is UNQUALIFIED and is not claimed as solved by the commit flight tests. This bounded unit intentionally retains that requirement rather than introducing a second journal.
+
+The two legacy registered completion positives remain unchanged strict xfails. Registered render, render admission/ACK recovery, native public release activation, D13 legacy hook deletion, App/browser, film decode and pixel/audio parity remain unqualified. File production or even a native authoring commit does not restore render. No new Runtime consumer gap has been observed on the reviewed private pair; final targeted confirmation is pending.
+
+Recommended next steps: compose the reviewed native full-schema/source cohort through the normal release process, retain/solve admission-create durability in the existing outbox, and qualify render separately before claiming restoration or retiring the held legacy path.
+EOF
+cat > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-proposal-requester/commit-msg <<'"'EOF'
+feat(timeline): queue settled registered assembly proposals through requester outbox
+
+Read and hash the exact completed assembler attempt's managed proposal through
+existing Runtime APIs, preserving its original target, commands and fences.
+Restore reviewed proposal batching and rationale in the existing commit outbox.
+
+Qualify normal registered artifacts, native acceptance, restart and exact retry,
+immutable history and guarded inverse using the private generated native pair.
+Keep admission ACK recovery as an explicit strict-xfail durability requirement.
+EOF" in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 0ms:
+ exited 124 in 60204ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124215-10897/status
+tail -12 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124215-10897/log.txt' in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 143ms:
+running
+...
+exec
+/bin/bash -lc "rg -n \"'parent'|registry|\\\"parent\\\"\" tests/sdk/test_timeline_sync.py | head -20
+sed -n '28,55p' tests/sdk/test_timeline_sync.py
+rg -n 'def bundle_from_document' astrid/sdk/timeline/commit.py -A55" in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 0ms:
+160:    assert generated.bundles["r1"]["parent"]["clips"][0]["at"] == 0
+291:    assert generated.bundles["r2"]["parent"] == initial_bundle()["parent"]
+549:    peer["parent"]["clips"][0]["hold" if change == "read" else "id"] = 2 if change == "read" else "replacement"
+def initial_bundle():
+    payload = {"config": {"output": {"fps": 30}, "tracks": [{"id": "picture", "kind": "visual"}]},
+               "clips": [{"id": name, "track": "picture", "clipType": "am-type", "at": 0,
+                          "hold": 1, "params": {"text": "café"}} for name in ("a", "b")],
+               "occurrences": []}
+    digest = "sha256:" + hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+    return open_authoring_bundle({"project_id": "p", "timeline_id": "t", "revision_id": "r0",
+                                  "content_digest": digest, "payload": payload},
+                                 shot_revisions=[], internal_timeline_revisions=[])
+
+
+class Generated:
+    """Only the generated method boundary is fake; command meaning stays core-owned."""
+    def __init__(self, path):
+        self.path = path
+        self.bundles = {"r0": initial_bundle()}
+        self.head = {"revision_id": "r0", "publication_id": "pub0"}
+        self.calls, self.accepted, self.records = [], {}, {}
+        self.lose_ack = False
+        self.refusal = None
+
+    def list_timeline_commits(self, project, timeline, *, cursor=None, limit):
+        assert (project, timeline, limit) == ("p", "t", 1)
+        return {"head": copy.deepcopy(self.head), "items": [], "next_cursor": None}
+
+    def commit_timeline(self, project, timeline, body, *, idempotency_key):
+        raw = request_bytes(body)
+        durable = json.loads(self.path.read_bytes())
+149:def bundle_from_document(document):
+150-    """Open a complete immutable Runtime document without a Runtime dependency."""
+151-    document = copy.deepcopy(document)
+152-    _verify_document(document)
+153-    project, timeline = document["project_id"], document["timeline_id"]
+154-    bundle = open_authoring_bundle(
+155-        {**document["parent_revision"], "project_id": project, "timeline_id": timeline},
+156-        shot_revisions=[{**row, "project_id": project} for row in document["shot_revisions"]],
+157-        internal_timeline_revisions=[{**row, "project_id": project}
+158-                                     for row in document["internal_timeline_revisions"]],
+159-    )
+160-    bundle["source_mapping"]["_runtime_document"] = document
+161-    return bundle
+162-
+163-
+164-def _inverse_media_removals(records, bundle):
+165-    """Only accepted edges can prove that a retained pin was introduced by writes."""
+166-    from ._collections import AcceptedRecords
+167-    from ._command_state import CommandError, State, equal
+168-
+169-    if not records:
+170-        return set()
+171-    if not isinstance(records, AcceptedRecords):
+172-        raise CommandError('media inverse needs accepted boundaries', kind='history_unavailable')
+173-    if not equal(list(records), [record for entry in records.entries
+174-                                for record in entry['records']['commands']]):
+175-        raise CommandError('media inverse records differ from accepted history', kind='history_unavailable')
+176-    removed = set()
+177-    for entry in reversed(records.entries):
+178-        before, after = records.load_boundary(entry)
+179-        images = [value['source_mapping']['_runtime_document'] for value in (before, after)]
+180-        for image, pin in zip(images, (entry['previous'], entry)):
+181-            _verify_document(image)
+182-            _require((image['project_id'], image['timeline_id']) ==
+183-                     (bundle['project_id'], bundle['timeline_id'])
+184-                     and image['parent_revision']['revision_id'] == pin['revision_id'],
+185-                     'inverse media boundary mismatch')
+186-        commands = entry['records']['commands']
+187-        # Whole-closure restoration already selects its exact source manifest.
+188-        if any(write['ref'] == 'timeline' for record in commands for write in record['writes']):
+189-            continue
+190-        prior_media, accepted_media = ({row['media_id'] for row in image['dependency_manifest']['media']}
+191-                                       for image in images)
+192-        introduced = accepted_media - prior_media
+193-        if prior_media - accepted_media and any(record['command']['op'] != 'timeline.inverse'
+194-                                                for record in commands):
+195-            raise CommandError('unproven media removal boundary', kind='history_unavailable')
+196-        removed.difference_update(prior_media - accepted_media)
+197-        if not introduced:
+198-            continue
+199-        state = State(copy.deepcopy(before))
+200-        for record in commands:
+201-            for write in [*record['writes'], *record['derived_writes']]:
+202-                if not state.matches(write['ref'], write['path'], write['before']):
+203-                    raise CommandError('media boundary differs from accepted writes', kind='history_unavailable')
+204-                state.set(write['ref'], write['path'], write['after'])
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/packs/rendering/test_registered_proposal_requester.py')
+s=p.read_text().replace(\"        transport = case.client._remote._transport\\n\", \"\"\"        transport = case.client._remote._transport
+        peer_payload = transport.get_project_parent_composition_revision(
+            case.project, 'main', case.peer.outbox.read()['base']['revision_id'])['payload']
+\"\"\",1)
+s=s.replace(\"            expected = case.capture['bundle']['parent']\\n            assert payload['clips'] == expected['clips']\", \"            assert payload == peer_payload\")
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/assembly.py astrid/sdk/timeline/sync.py tests/helpers/registered_native_pair.py tests/sdk/test_timeline_assembly.py tests/packs/rendering/test_registered_native_assembler.py tests/packs/rendering/test_registered_native_pair.py tests/packs/rendering/test_registered_proposal_requester.py
+git diff --check" in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 68ms:
+All checks passed!
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124215-10897 1' in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 0ms:
+test agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124215-10897: pass exit=0 in 164s — identity-pin94114269-integration on agt-m2-registered-proposal-requester (agent tree 58733d47f907324fdda90b15be8e90aea540b5be)
+cmd: test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/packs/rendering/test_registered_native_pair.py
+counts: 9 passed, 2 xfailed in 141.01s (0:02:21) 4 passed in 160.64s (0:02:40) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124215-10897/log.txt ---
+............xx                                                              [100%]
+9 passed, 2 xfailed in 141.01s (0:02:21)
+.                                                                     [100%]
+4 passed in 160.64s (0:02:40)
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-registered-proposal-requester identity-pin94114269-integration --files tests/packs/rendering/test_registered_native_pair.py' in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 0ms:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049
+
+codex
+The central lane passed: 9 private-pair tests and 3 unchanged identity controls, with the two legacy completion strict xfails retained.
+
+I’ve queued one final targeted run for two tighter assertions: creating the timeline through authenticated `createTimeline` HTTP, and comparing the entire post-undo parent payload with the peer revision. Admission-create ACK recovery remains the named open requirement.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-proposal-requester/notes/report.md')
+s=p.read_text().replace('Qualification in progress; final central result pending.', 'Requester/commit qualification passed on product source; final HTTP-create/exact-undo assertion run pending.')
+point='Named live requirement: **registered assembler admission ACK recovery'
+s=s.replace(point, '''First complete central pass: "'`agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124215-10897`, source tree `58733d47f907324fdda90b15be8e90aea540b5be`, exit 0, 164s service time. Inner **9 passed, 2 xfailed in 141.01s**; outer **4 passed in 160.64s**. No product source changed afterward; the final candidate tightens createTimeline to authenticated HTTP and checks exact complete post-undo payload equality.
+
+Named live requirement: **registered assembler admission ACK recovery'"''')
+p.write_text(s)
+PY
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049 1" in /home/user/work/wt/agt-m2-registered-proposal-requester
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/status
+tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/log.txt' in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 0ms:
+running
+...
+ exited 124 in 60083ms:
+still running after 1 min ; rerun wait-test
+
+codex
+No Runtime change was needed on the reviewed private pair. The requester uses existing APIs, and Runtime performs the authority check at commit.
+
+The final HTTP-create and exact-undo run is still executing; source edits are finished. The handoff will retain the admission durability requirement and the separate render gap.
+exec
+/bin/bash -lc 'git diff --check
+git status --short' in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 95ms:
+ M astrid/sdk/timeline/assembly.py
+ M astrid/sdk/timeline/sync.py
+ M tests/helpers/registered_native_pair.py
+ M tests/packs/rendering/test_registered_native_assembler.py
+ M tests/packs/rendering/test_registered_native_pair.py
+ M tests/sdk/test_timeline_assembly.py
+?? tests/packs/rendering/test_registered_proposal_requester.py
+
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049 1' in /home/user/work/wt/agt-m2-registered-proposal-requester
+ exited 124 in 60133ms:
+still running after 1 min ; rerun wait-test
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/status
+tail -10 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/log.txt' in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 106ms:
+running
+............xx                                                              [100%]
+9 passed, 2 xfailed in 99.03s (0:01:39)
+.
+codex
+The final inner run passed: 9 tests, with the two unchanged legacy strict xfails. Both CAS cases now prove authenticated HTTP creation, commit ACK loss and restart, exact retry, immutable history, and full payload restoration on undo.
+
+The outer runner is finishing. I’ll record its exact source tree and write the handoff and completion marker.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049 1' in /home/user/work/wt/agt-m2-registered-proposal-requester
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/running
+ls -ld /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/snap
+tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/log.txt' in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 28ms:
+11916
+-rw-r--r-- 1 root root 148 Oct 20 12:45 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/snap
+............xx                                                              [100%]
+9 passed, 2 xfailed in 99.03s (0:01:39)
+.                                                                     [100%]
+4 passed in 235.80s (0:03:55)
+
+exec
+/bin/bash -lc 'cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/snap
+cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/summary' in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 99ms:
+tree=4c000d64c9048910889266f00fd4036a47ffebd3
+key=bdc31d3c0178e56207debb2559494c6a
+worktree=/home/user/work/wt/agt-m2-registered-proposal-requester
+test agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049: pass exit=0 in 251s — identity-pin94114269-integration on agt-m2-registered-proposal-requester (agent tree 4c000d64c9048910889266f00fd4036a47ffebd3)
+cmd: test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/packs/rendering/test_registered_native_pair.py
+counts: 9 passed, 2 xfailed in 99.03s (0:01:39) 4 passed in 235.80s (0:03:55) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/log.txt ---
+............xx                                                              [100%]
+9 passed, 2 xfailed in 99.03s (0:01:39)
+.                                                                     [100%]
+4 passed in 235.80s (0:03:55)
+
+ succeeded in 30200ms:
+test agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049: pass exit=0 in 251s — identity-pin94114269-integration on agt-m2-registered-proposal-requester (agent tree 4c000d64c9048910889266f00fd4036a47ffebd3)
+cmd: test "$(git -C /home/user/work/wt/rt-pin-94114269 rev-parse HEAD)" = 94114269d1ce23ab3224d7eca5a85138ce2b5fed && env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-94114269 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_identity.py tests/packs/rendering/test_registered_native_pair.py
+counts: 9 passed, 2 xfailed in 99.03s (0:01:39) 4 passed in 235.80s (0:03:55) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/log.txt ---
+............xx                                                              [100%]
+9 passed, 2 xfailed in 99.03s (0:01:39)
+.                                                                     [100%]
+4 passed in 235.80s (0:03:55)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import hashlib
+import json
+orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+worker=orch/'workers/agt-m2-registered-proposal-requester'
+p=worker/'notes/report.md'
+s=p.read_text().replace('Requester/commit qualification passed on product source; final HTTP-create/exact-undo assertion run pending.', '**COMPLETE for the bounded registered requester/commit path.**')
+s=s.replace('No new Runtime consumer gap has been observed on the reviewed private pair; final targeted confirmation is pending.', 'No new Runtime consumer gap was observed on the reviewed private pair. No BLOCKED marker; the explicitly permitted admission durability requirement remains live.')
+s+='''
+
+Final qualification: "'`agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049`, Agent source tree **`4c000d64c9048910889266f00fd4036a47ffebd3`**, exit 0, service time 251s. Inner **9 passed, 2 xfailed in 99.03s**; outer **4 passed in 235.80s**. This final tree includes authenticated HTTP `createTimeline` and complete post-undo payload equality against the immutable peer revision. Both distinct and duplicate CAS cases pass. The two legacy completion strict xfails remain unchanged. [Final central log](../../tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/log.txt).
+
+Product diff is confined to `astrid/sdk/timeline/assembly.py` (+80) and `sync.py` (+31): +111 lines, no other product files changed. Other changes are the direct requester tests and reused private helper. All worktree changes are source/tests; no build output or temporary files remain. The harness owns commit creation; the conventional message is in this worker'"'s "'`commit-msg`. The exact qualified tuple and next consumer boundary are recorded at the task'"'s absolute handoff path below. Whole-task completion marker: "'`DONE`.
+
+Handoff: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-registered-requester-handoff.md`.
+'"'''
+# Use an absolute log link: notes is three levels below the shared tests directory.
+s=s.replace('(../../tests/agt-', '('+str(orch)+'/tests/agt-')
+p.write_text(s)
+paths=('astrid/core/contracts/runtime_orchestration.py', 'astrid/core/execution/generic_host.py',
+       'astrid/packs/rendering/actions/assemble_timeline/run.py', 'astrid/packs/rendering/pack.yaml',
+       'astrid/sdk/workspace_client.py', 'astrid/sdk/timeline/assembly.py', 'astrid/sdk/timeline/sync.py')
+hashes={name: hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in paths}
+handoff='''# Qualified registered assembler requester handoff
+
+2026-10-20. Worker "'`agt-m2-registered-proposal-requester`. Ready for orchestrator review/composition of this bounded requester unit. PLAN 4.1 remains the sole writer.
+
+Exact qualified source tuple:
+
+- Worker source: `/home/user/work/wt/agt-m2-registered-proposal-requester`, branch `tl/agt-m2-registered-proposal-requester`, base `0536d2467aa73bb89d16657bc21fd9b856a4a149`.
+- Final central source tree: **`4c000d64c9048910889266f00fd4036a47ffebd3`**. The harness has not yet committed this worker'"'s changes; this is a source-tree identity, not a claimed release/source lock.
+- Private native Agent parent: "'`b5cfce5096f91f39bfb86d39823f97f0f59ce8a2`, with the exact current overlays listed by `tests/helpers/registered_native_pair.py`. It retains reviewed native parent media and producer semantics and the complete 53-definition candidate including FULL S2. This worker'"'s complete "'`sync.py` is overlaid, preserving reviewed queue_proposal and adding the existing admission/current requester behavior.
+- Private Runtime: `2c4ac180c2220bdad966bc01e95ad230e99ce26a`.
+- Private generator input contract version: `0.2.14`.
+- Full candidate schema SHA256: `fafb1985a326e6121aa8c9fb34bbda196edc3dfaf462352070372e631bea1f52`.
+- Normally generated artifact manifest: `sha256:48c7b6533e2774a70e36517948a18fd5cee07f4d30e8f339776be9b3ec74ed4e`, all 75 artifact hashes checked. Normal Python/TypeScript generation and all generator/manifest check modes pass. No partial schema, hand-built artifact, public version mutation or fabricated source identity.
+
+Product overlay SHA256 values (unprefixed):
+
+```json
+'"'''+json.dumps(hashes,indent=2,sort_keys=True)+'''
+"'```
+
+Existing API consumption: authorized TimelineSession admits `rendering.assemble_timeline`, then calls `queue_assembly(task_id, attempt_id=...)` on the exact completed registered task/attempt. The requester reads public getTask plus task-scoped managed outputs, requires the declared authoring_proposal association with exact provenance, downloads/hashes its object bytes, strictly decodes/validates the frozen SettledProducerProposal and verifies its inner digest. It calls existing `queue_proposal` and `flush`; only the requester sends the normal `/v1/projects/{project}/timelines/{timeline}/commit`. Runtime atomically rechecks settled producer authority. The worker never commits or publishes.
+
+Final evidence: central request `agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049`, exit 0; inner **9 passed, 2 xfailed**, outer **4 passed** (three unchanged identity controls plus private wrapper). It proves authenticated HTTP createTimeline, original authorized admission, actual registered action and normal file settlement, native acceptance and immutable history, distinct and duplicate CAS order, original-base disjoint rebase versus real membership conflict after admission/before settlement, request ACK loss followed by requester+Runtime restart and byte-exact retry, changed value/rationale/digest/key refusal, cancellation/read-boundary tampering refusal, complete exact undo preserving the peer label edit, and guarded inverse refusal after a peer edits a born clip. The two legacy completion positives retain their unchanged strict xfails.
+
+Run through the central service (no full suite):
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+$ORCH/bin/request-test agt-m2-registered-proposal-requester identity-pin94114269-integration --files tests/packs/rendering/test_registered_native_pair.py
+$ORCH/bin/wait-test agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049
+```
+
+Local focused requester/neighbour tests: **123 passed, 1 xfailed**; Ruff and `git diff --check` pass. Exact commands/development results are in the worker report.
+
+Named remaining requirement: **registered assembler admission ACK recovery requires the original create body/key durably retained in the existing outbox before send**. This is NOT qualified. A new strict xfail keeps the expected exact original-body retry across admission ACK loss/restart live, without imposing a new outbox field or journal. The qualified restart above begins after the settled proposal is queued and the normal commit flight is durable.
+
+No new Runtime consumer gap on the reviewed pair. This is private native-cohort qualification; public native release activation must compose reviewed source/schema/generated artifacts normally. It is not render restoration: STITCH aliases remain rendering.render, the legacy hook is not deleted, and render admission/ACK recovery, historical render, film decode and pixel/audio parity remain separate. Do not close D13 or the held legacy completion requirements from file production/native authoring acceptance.
+
+Next steps: review/compose this requester patch with the reviewed native full-schema/source cohort; solve original assembler task-create durability using the existing outbox; qualify render separately before restoring claims or deleting its legacy path.
+
+Report: `'"'''+str(p)+'''"'`.
+'"'''
+(orch/'design/agent-registered-requester-handoff.md').write_text(handoff)
+(worker/'DONE').touch()
+PY" in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 437ms:
+exec
+/bin/bash -lc "ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-proposal-requester/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-proposal-requester/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-registered-requester-handoff.md
+rg -n 'pending|in progress|Final qualification' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-proposal-requester/notes/report.md" in /home/user/work/wt/agt-m2-registered-proposal-requester
+ succeeded in 223ms:
+-rw-r--r-- 1 root root 5977 Oct 20 12:50 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-registered-requester-handoff.md
+-rw-r--r-- 1 root root    0 Oct 20 12:50 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-proposal-requester/DONE
+-rw-r--r-- 1 root root  562 Oct 20 12:44 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-proposal-requester/commit-msg
+15:The peer rebase case edits the label of an unrelated existing track. Creating a track changes captured track membership and correctly conflicts; no original guard was refreshed or relaxed. The membership-conflict case adds a peer clip after admission and retains the original pending batch/base on refusal.
+61:Final qualification: `agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049`, Agent source tree **`4c000d64c9048910889266f00fd4036a47ffebd3`**, exit 0, service time 251s. Inner **9 passed, 2 xfailed in 99.03s**; outer **4 passed in 235.80s**. This final tree includes authenticated HTTP `createTimeline` and complete post-undo payload equality against the immutable peer revision. Both distinct and duplicate CAS cases pass. The two legacy completion strict xfails remain unchanged. [Final central log](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-registered-proposal-requester-identity-pin94114269-integration-1020124516-25049/log.txt).
+
+codex
+Completed the settled registered artifact → authorized requester outbox → native commit path, including restart, exact retry, immutable history and guarded undo.
+
+- Local: **123 passed, 1 strict xfail**.
+- Central private pair: **9 passed, 2 unchanged legacy xfails**; outer lane **4 passed**.
+- Ruff and diff checks passed.
+
+Admission-create ACK recovery remains an explicit durability requirement. Render remains unqualified. Next: compose the reviewed native cohort, then address those separate gaps.
+
+[Report with exact commands/results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-proposal-requester/notes/report.md) · [Qualified source handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-registered-requester-handoff.md)
+
+`commit-msg` and `DONE` written.
+tokens used
+222,359
+Completed the settled registered artifact → authorized requester outbox → native commit path, including restart, exact retry, immutable history and guarded undo.
+
+- Local: **123 passed, 1 strict xfail**.
+- Central private pair: **9 passed, 2 unchanged legacy xfails**; outer lane **4 passed**.
+- Ruff and diff checks passed.
+
+Admission-create ACK recovery remains an explicit durability requirement. Render remains unqualified. Next: compose the reviewed native cohort, then address those separate gaps.
+
+[Report with exact commands/results](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-registered-proposal-requester/notes/report.md) · [Qualified source handoff](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-registered-requester-handoff.md)
+
+`commit-msg` and `DONE` written.

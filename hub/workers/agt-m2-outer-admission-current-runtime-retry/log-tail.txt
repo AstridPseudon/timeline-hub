@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/escalations/closed/viewing-20261020T0602Z-default-theme-policy-needed.md-9-Recommended policy for owner/orchestrator: preserve existing final-export style as the default shared host theme; explicitly approve/document the corresponding change to implicit App preview. Then implement the smallest common-source adapter under owners' review (avoid long-term copied literal), update the original ordinary test to that explicitly approved behavior, and include default-theme differences in owner-local film viewing guidance. An alternative must name which existing output remains authoritative. No film rewrite or hidden fixture theme override.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/escalations/closed/viewing-20261020T0602Z-default-theme-policy-needed.md-10-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/escalations/closed/viewing-20261020T0602Z-default-theme-policy-needed.md-11-Meanwhile the capture fix/frozen candidate are ready; no broad render retry on a known default mismatch. Mouth/scanner/current public10 review continue. Gate6 stays OPEN.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/escalations/closed/agent-20261020T0445Z-runtime-6be9-checkout.md-1-# Need: Runtime worktree at 6be97063 (Agent public10 adoption)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/escalations/closed/agent-20261020T0445Z-runtime-6be9-checkout.md:2:agt-public10-adoption composed Bundle1 + Composition 0.0.10 onto 4a75f68f (580 + 1061 targeted pass; design/m2-public10-adoption.md). Blocked on the exact-pair check: suite bundle1-runtime6be9706-integration and vendor_lock.py check need /home/user/work/wt/rt-m2-track-public-export (Runtime tl/rt-m2-track-public-export @ 6be97063), which was recycled. I cannot run git worktree add. Please recreate that worktree (git worktree add /home/user/work/wt/rt-m2-track-public-export tl/rt-m2-track-public-export) or tell me an equivalent. Also: /home/user/work/runtimes/agent-remotion must be rebuilt on the 0.0.10 tarball before the Node-env suites (remotion gate, TextCard SSR) can run against the adoption branch. Old 0.0.8 tarball still needs git rm (rm denied to workers).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/escalations/closed/agent-20261020T0445Z-runtime-6be9-checkout.md-3-Meanwhile: other work continues.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-wc6-document-script-native.md-68-  `publish_authoring_candidate`, `publish_parent_composition`, and `Writer`).
+
+2026-10-20T20:59:26.059491Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:
+agent private952-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95202c2b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+runtime ordinary014-parent-agent7b3-integration env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-7b3e1205 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-7b3e1205 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration
+exec
+/bin/bash -lc "nl -ba /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf | sed -n '120,130p'" in /home/user/work/wt/agt-m2-outer-admission-current-runtime-retry
+ succeeded in 0ms:
+   120	
+   121	runtime catalog-history-agentafcb-integration test "$(git -C /home/user/work/wt/agt-pin-afcb326c rev-parse HEAD)" = afcb326c8bfb216e404502c1ff4a08bde5c735ca && test -z "$(git -C /home/user/work/wt/agt-pin-afcb326c status --porcelain)" && env ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-afcb326c ASTRID_RUNTIME_CHECKOUT=$PWD PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-afcb326c PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration
+   122	agent private952-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95202c2b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+   123	agent d13-native7d-public13-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+   124	runtime ordinary014-parent-agent7b3-integration env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-7b3e1205 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-7b3e1205 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration
+
+2026-10-20T20:59:33.910355Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:
+agent private952-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95202c2b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+agent d13-native7d-public13-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/nix/var/nix/profiles/default/bin:/root/.local/go/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+2026-10-20T20:59:40.123435Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:
+agent d13-native7d-public13-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index 6d03eec2a807330c6ef3044b62cf7c999ee11515..18e155570a9e53e113be67fc156b1395731c1994
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -122,3 +122,4 @@
+ agent private952-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95202c2b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+ agent d13-native7d-public13-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+ runtime ordinary014-parent-agent7b3-integration env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-7b3e1205 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-7b3e1205 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration
++agent outer-admission-current-fcf-sockets-integration test "$(git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD)" = fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3 && test "$(git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD^{tree})" = 69abf4e2a8340d7d39a955d71d08afbf3a311a35 && env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-fcf4c3d5 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+diff --git a/tests/packs/video_editing/test_outer_voiceover_native.py b/tests/packs/video_editing/test_outer_voiceover_native.py
+index d511940558564bd93c4711125bbcd5a19d8501a6..cb40a1b7bfb2ccda1af376daa35b9b4049f8aff5
+--- a/tests/packs/video_editing/test_outer_voiceover_native.py
++++ b/tests/packs/video_editing/test_outer_voiceover_native.py
+@@ -23,9 +23,9 @@
+ from astrid_runtime_client import contract_metadata
+ from astrid_runtime_client.generated import ApiError
+ from tests.packs.video_editing.test_draft_voiceover import fixture, synthesis
+-from tests.packs.video_editing.test_runtime_publication_chain import SPEECH_RUNTIME_COMMIT
+ 
+ OUTER = 'video_editing.sync_draft_voiceover'
++OUTER_RUNTIME_COMMIT = 'fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3'
+ 
+ 
+ class _MissingTargetCarrier(AssertionError):
+@@ -69,8 +69,6 @@
+ 
+ 
+ @pytest.mark.integration
+-@pytest.mark.xfail(strict=True, raises=_MissingTargetCarrier,
+-    reason='WC5 requires admitted_target plus script custody without fictitious continuation children')
+ def test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority(tmp_path, real_runtime, capsys):
+     root = Path(__file__).resolve().parents[3]
+     lock = json.loads((root / 'runtime.lock.json').read_text())
+@@ -78,7 +76,9 @@
+     assert lock['producer_version'] == 'sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0'
+     assert contract_metadata.CONTRACT_VERSION == '0.2.14'
+     assert contract_metadata.SCHEMA_DIGEST == 'sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59'
+-    daemon = real_runtime(commit=SPEECH_RUNTIME_COMMIT)
++    # The current ordinary014-compatible Runtime admits the publication-only
++    # producer carrier; the earlier ad97 probe was before that fix.
++    daemon = real_runtime(commit=OUTER_RUNTIME_COMMIT)
+     host = GenericPackHost(
+         pack_roots=[root / 'astrid/packs/video_editing'],
+         client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+
+exec
+/bin/bash -lc 'ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; R=$($ORCH/bin/request-test agt-m2-outer-admission-current-runtime-retry outer-admission-current-fcf-sockets-integration); echo "$R"; $ORCH/bin/wait-test "$R"' in /home/user/work/wt/agt-m2-outer-admission-current-runtime-retry
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620; cat "$D/status"; [ -f "$D/summary" ] && cat "$D/summary" || true; [ -f "$D/why" ] && cat "$D/why" || true; tail -80 "$D/log.txt" 2>/dev/null || true' in /home/user/work/wt/agt-m2-outer-admission-current-runtime-retry
+ succeeded in 0ms:
+running
+
+codex
+The local direct run reached the exact node but cannot open localhost sockets in this sandbox (`PermissionError: [Errno 1] Operation not permitted`), so the socket-dependent node is correctly being validated by the central service. I added one Agent-owned named suite with an exact `fcf4…` commit and tree guard plus the single explicit node selector; no default-file or full-suite selection is present. The central run is active now.
+exec
+/bin/bash -lc '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620 10' in /home/user/work/wt/agt-m2-outer-admission-current-runtime-retry
+exec
+/bin/bash -lc 'D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620; cat "$D/status"; stat -c '"'%y %s' \""'$D/log.txt" 2>/dev/null || true; tail -30 "$D/log.txt" 2>/dev/null || true' in /home/user/work/wt/agt-m2-outer-admission-current-runtime-retry
+ succeeded in 0ms:
+pass
+2026-10-20 21:00:05.777378922 +0000 4421
+OUTER_NORMAL_TASK_ID=24bf132da8b140a4a1cf93a67ea41a8b
+OUTER_NORMAL_SUBMIT={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "generation_intent": null, "idempotency_key": "outer-normal-submit", "input_object_ids": [], "project_id": "5cec09e04a094272824b8f6cf8b3972a", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}, "storage_estimate": null}
+OUTER_NORMAL_ADMITTED_SPEC={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "input_object_ids": [], "schema_version": "1", "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}}
+OUTER_WORKER_COMMIT_DENIED=401
+OUTER_PINNED_SUBMIT={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "execution_request": {"inputs": [{"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}], "target": {"kind": "default"}}, "generation_intent": null, "idempotency_key": "outer-pinned-submit", "input_object_ids": ["sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd"], "project_id": "5cec09e04a094272824b8f6cf8b3972a", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "script": {"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}, "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}, "runtime_dependencies": {"publication": {"admitted_target": {"base_publication_id": "txn-afff0afb55944204a33d68ca4b75ca89", "base_revision_id": "bootstrap-1fbb7287249140e096bae64cf178cca6", "project_id": "5cec09e04a094272824b8f6cf8b3972a", "timeline_id": "film"}}}}, "storage_estimate": null}
+OUTER_PINNED_TASK_ID=8af542e163a84db99d9ba964941a3008
+OUTER_PINNED_ADMITTED_SPEC={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "input_object_ids": ["sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd"], "schema_version": "1", "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "script": {"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}, "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}, "runtime_dependencies": {"publication": {"admitted_target": {"base_publication_id": "txn-afff0afb55944204a33d68ca4b75ca89", "base_revision_id": "bootstrap-1fbb7287249140e096bae64cf178cca6", "project_id": "5cec09e04a094272824b8f6cf8b3972a", "timeline_id": "film"}}}}}
+.                                                                        [100%]
+1 passed in 13.77s
+
+ succeeded in 29957ms:
+wait: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620/
+test agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620: pass exit=0 in 21s — outer-admission-current-fcf-sockets-integration on agt-m2-outer-admission-current-runtime-retry (agent tree 1c1403b3e1fd930a449d84dec4141f159cc3cf43)
+cmd: test "$(git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD)" = fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3 && test "$(git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD^{tree})" = 69abf4e2a8340d7d39a955d71d08afbf3a311a35 && env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-fcf4c3d5 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+counts: 1 passed in 13.77s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620/log.txt ---
+OUTER_NORMAL_TASK_ID=24bf132da8b140a4a1cf93a67ea41a8b
+OUTER_NORMAL_SUBMIT={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "generation_intent": null, "idempotency_key": "outer-normal-submit", "input_object_ids": [], "project_id": "5cec09e04a094272824b8f6cf8b3972a", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}, "storage_estimate": null}
+OUTER_NORMAL_ADMITTED_SPEC={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "input_object_ids": [], "schema_version": "1", "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}}
+OUTER_WORKER_COMMIT_DENIED=401
+OUTER_PINNED_SUBMIT={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "execution_request": {"inputs": [{"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}], "target": {"kind": "default"}}, "generation_intent": null, "idempotency_key": "outer-pinned-submit", "input_object_ids": ["sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd"], "project_id": "5cec09e04a094272824b8f6cf8b3972a", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "script": {"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}, "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}, "runtime_dependencies": {"publication": {"admitted_target": {"base_publication_id": "txn-afff0afb55944204a33d68ca4b75ca89", "base_revision_id": "bootstrap-1fbb7287249140e096bae64cf178cca6", "project_id": "5cec09e04a094272824b8f6cf8b3972a", "timeline_id": "film"}}}}, "storage_estimate": null}
+OUTER_PINNED_TASK_ID=8af542e163a84db99d9ba964941a3008
+OUTER_PINNED_ADMITTED_SPEC={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "input_object_ids": ["sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd"], "schema_version": "1", "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "script": {"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}, "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}, "runtime_dependencies": {"publication": {"admitted_target": {"base_publication_id": "txn-afff0afb55944204a33d68ca4b75ca89", "base_revision_id": "bootstrap-1fbb7287249140e096bae64cf178cca6", "project_id": "5cec09e04a094272824b8f6cf8b3972a", "timeline_id": "film"}}}}}
+.                                                                        [100%]
+1 passed in 13.77s
+
+ succeeded in 29956ms:
+test agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620: pass exit=0 in 21s — outer-admission-current-fcf-sockets-integration on agt-m2-outer-admission-current-runtime-retry (agent tree 1c1403b3e1fd930a449d84dec4141f159cc3cf43)
+cmd: test "$(git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD)" = fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3 && test "$(git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD^{tree})" = 69abf4e2a8340d7d39a955d71d08afbf3a311a35 && env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-fcf4c3d5 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+counts: 1 passed in 13.77s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620/log.txt ---
+OUTER_NORMAL_TASK_ID=24bf132da8b140a4a1cf93a67ea41a8b
+OUTER_NORMAL_SUBMIT={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "generation_intent": null, "idempotency_key": "outer-normal-submit", "input_object_ids": [], "project_id": "5cec09e04a094272824b8f6cf8b3972a", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}, "storage_estimate": null}
+OUTER_NORMAL_ADMITTED_SPEC={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "input_object_ids": [], "schema_version": "1", "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}}}
+OUTER_WORKER_COMMIT_DENIED=401
+OUTER_PINNED_SUBMIT={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "capability_id": "video_editing.sync_draft_voiceover", "child_delegation": null, "execution_request": {"inputs": [{"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}], "target": {"kind": "default"}}, "generation_intent": null, "idempotency_key": "outer-pinned-submit", "input_object_ids": ["sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd"], "project_id": "5cec09e04a094272824b8f6cf8b3972a", "required_facts": null, "schema_version": "1", "settlement_effect": null, "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "script": {"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}, "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}, "runtime_dependencies": {"publication": {"admitted_target": {"base_publication_id": "txn-afff0afb55944204a33d68ca4b75ca89", "base_revision_id": "bootstrap-1fbb7287249140e096bae64cf178cca6", "project_id": "5cec09e04a094272824b8f6cf8b3972a", "timeline_id": "film"}}}}, "storage_estimate": null}
+OUTER_PINNED_TASK_ID=8af542e163a84db99d9ba964941a3008
+OUTER_PINNED_ADMITTED_SPEC={"capability_digest": "sha256:beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704", "input_object_ids": ["sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd"], "schema_version": "1", "spec": {"authority_context": {"executor_version": "beb6828761f0e925ab491ddd2388995bb5dedcc272aca3882431d467988da704"}, "capability_id": "video_editing.sync_draft_voiceover", "extra_pack_roots": [], "inputs": {"occurrence_ids": ["o1"], "project": "5cec09e04a094272824b8f6cf8b3972a", "script": {"digest": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "filename": "script.txt", "name": "script", "object_id": "sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd", "required": true}, "timeline_ref": "film", "timing_policy": "ripple"}, "kind": "executor", "outputs": {}, "runtime_dependencies": {"publication": {"admitted_target": {"base_publication_id": "txn-afff0afb55944204a33d68ca4b75ca89", "base_revision_id": "bootstrap-1fbb7287249140e096bae64cf178cca6", "project_id": "5cec09e04a094272824b8f6cf8b3972a", "timeline_id": "film"}}}}}
+.                                                                        [100%]
+1 passed in 13.77s
+
+exec
+/bin/bash -lc "ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry && printf '\\n--- status/diff ---\\n' && git status --short && git diff --stat && git diff --check && printf '\\n--- suite line ---\\n' && tail -5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf" in /home/user/work/wt/agt-m2-outer-admission-current-runtime-retry
+ succeeded in 854ms:
+total 1128
+drwxr-xr-x    2 root root    4096 Oct 20 20:58 .
+drwxr-xr-x 1294 root root   69632 Oct 20 21:00 ..
+-rw-r--r--    1 root root    1532 Oct 20 20:58 brief.md
+-rw-r--r--    1 root root 1061140 Oct 20 21:00 log.txt
+-rw-r--r--    1 root root     267 Oct 20 20:58 meta
+-rw-r--r--    1 root root       0 Oct 20 20:58 running
+-rw-r--r--    1 root root      18 Oct 20 20:58 tmpdir
+
+--- status/diff ---
+ M tests/packs/video_editing/test_outer_voiceover_native.py
+ tests/packs/video_editing/test_outer_voiceover_native.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+--- suite line ---
+runtime catalog-history-agentafcb-integration test "$(git -C /home/user/work/wt/agt-pin-afcb326c rev-parse HEAD)" = afcb326c8bfb216e404502c1ff4a08bde5c735ca && test -z "$(git -C /home/user/work/wt/agt-pin-afcb326c status --porcelain)" && env ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-afcb326c ASTRID_RUNTIME_CHECKOUT=$PWD PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-afcb326c PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration
+agent private952-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95202c2b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+agent d13-native7d-public13-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+runtime ordinary014-parent-agent7b3-integration env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-7b3e1205 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-7b3e1205 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration
+agent outer-admission-current-fcf-sockets-integration test "$(git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD)" = fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3 && test "$(git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD^{tree})" = 69abf4e2a8340d7d39a955d71d08afbf3a311a35 && env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-fcf4c3d5 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+
+codex
+The central retry passed: the exact node is now `1 passed in 13.77s` on Runtime `fcf4…`, with the publication-only `admitted_target` plus ordered script manifest admitted successfully. The log also confirms the preserved worker `401` refusal and the exact `video_editing.sync_draft_voiceover` capability identity. I’m recording the exact source/tree/client tuple and bounded result now, then I’ll run final diff/metadata checks and mark the worker complete.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-outer-admission-current-fcf.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/report.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-outer-admission-current-fcf.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-outer-admission-current-fcf.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..df2bdd08a923a64653553b4c5f42c4b6acea9129
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-outer-admission-current-fcf.md
+@@ -0,0 +1,47 @@
++# Agent outer admission on current ordinary014 Runtime
++
++## Exact source and tuple
++
++- Agent source tree under test: `1c1403b3e1fd930a449d84dec4141f159cc3cf43`.
++- Runtime source: commit `fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3`.
++- Runtime source tree: `69abf4e2a8340d7d39a955d71d08afbf3a311a35`.
++- Runtime contains the approved generic producer admission fix from `0113bc7`.
++- Agent client metadata was unchanged: contract `0.2.14`, generated schema
++  `sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59`,
++  lock source `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`, producer
++  `sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa`,
++  and raw command schema `sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
++
++## Change and selector
++
++`tests/packs/video_editing/test_outer_voiceover_native.py` now locates the
++Runtime at the exact `fcf4…` commit. The obsolete strict xfail was removed from
++the outer admission node only, with a comment identifying the fixed source.
++The provenance carrier xfail and all original assembly/two-child controls are
++unchanged.
++
++The central Agent suite `outer-admission-current-fcf-sockets-integration` pins
++the exact Runtime commit and tree before selecting only:
++
++`tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority`
++
++It does not select a default file set or any full suite.
++
++## Result
++
++Central test service result:
++
++```text
++agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620
++1 passed in 13.77s
++```
++
++The node preserved the exact outer capability identity, admitted target,
++ordered script manifest, and successful pinned admission. It also preserved
++the worker credential `401` / `unauthorized` refusal and unchanged bootstrap
++history/head assertions. No outer execution, settlement, requester success,
++inner WAV pair, or other test node was run.
++
++The direct local invocation reached the node but could not open localhost
++sockets in the sandbox (`PermissionError: [Errno 1] Operation not permitted`);
++the central socket-capable result above is authoritative.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+index 6d03eec2a807330c6ef3044b62cf7c999ee11515..18e155570a9e53e113be67fc156b1395731c1994
+--- a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+@@ -122,3 +122,4 @@
+ agent private952-sockets-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-current ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95202c2b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-current/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+ agent d13-native7d-public13-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-7d1cfa6b ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration
+ runtime ordinary014-parent-agent7b3-integration env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-7b3e1205 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-7b3e1205 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration
++agent outer-admission-current-fcf-sockets-integration test "$(git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD)" = fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3 && test "$(git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD^{tree})" = 69abf4e2a8340d7d39a955d71d08afbf3a311a35 && env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-fcf4c3d5 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..4e225e9d6711b36f859a108adb0ce8b65a882d9f
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg
+@@ -0,0 +1,5 @@
++test(agent): retry outer admission on current runtime
++
++Use the exact ordinary014-compatible Runtime source for the outer voiceover
++admission node and remove its obsolete strict xfail. Keep the client tuple and
++admission/authority assertions unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..4e225e9d6711b36f859a108adb0ce8b65a882d9f
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg.txt
+@@ -0,0 +1,5 @@
++test(agent): retry outer admission on current runtime
++
++Use the exact ordinary014-compatible Runtime source for the outer voiceover
++admission node and remove its obsolete strict xfail. Keep the client tuple and
++admission/authority assertions unchanged.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/report.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/report.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..3ac1c4f76770d5ad378e9a530f10c369fc837b7e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/report.md
+@@ -0,0 +1,20 @@
++## Report
++
++- Updated only the outer admission test's Runtime source locator from the old `ad97…` probe to exact current-compatible Runtime `fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3`.
++- Removed only the obsolete strict xfail from the outer admission node; the provenance xfail and assembly/two-child controls remain unchanged.
++- Added the Agent-owned central named suite with exact Runtime commit/tree guards and one explicit test-node selector.
++- Client metadata remained unchanged: `a0dca169…` source, `f021…` producer, `6ba7…` raw schema, generated schema `ce3781…`.
++- Wrote [design/agent-outer-admission-current-fcf.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-outer-admission-current-fcf.md).
++
++### Tests
++
++- Direct exact-node command with `ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-fcf4c3d5`: reached the test but was blocked by sandbox localhost socket permission (`PermissionError: [Errno 1] Operation not permitted`).
++- Central named suite `outer-admission-current-fcf-sockets-integration`: **1 passed in 13.77s**.
++- Central result: `agt-m2-outer-admission-current-runtime-retry-outer-admission-current-fcf-sockets-integration-1020205949-8620`.
++- `git diff --check`: passed.
++
++The central log confirms successful ordinary outer admission with the exact
++`admitted_target` and ordered script manifest, plus the preserved worker 401
++authorization refusal and history/head assertions. No outer settlement,
++requester success, inner WAV rerun, other 41 tests, metadata lowering, or full
++suite was run.
+diff --git a/tests/packs/video_editing/test_outer_voiceover_native.py b/tests/packs/video_editing/test_outer_voiceover_native.py
+index d511940558564bd93c4711125bbcd5a19d8501a6..cb40a1b7bfb2ccda1af376daa35b9b4049f8aff5
+--- a/tests/packs/video_editing/test_outer_voiceover_native.py
++++ b/tests/packs/video_editing/test_outer_voiceover_native.py
+@@ -23,9 +23,9 @@
+ from astrid_runtime_client import contract_metadata
+ from astrid_runtime_client.generated import ApiError
+ from tests.packs.video_editing.test_draft_voiceover import fixture, synthesis
+-from tests.packs.video_editing.test_runtime_publication_chain import SPEECH_RUNTIME_COMMIT
+ 
+ OUTER = 'video_editing.sync_draft_voiceover'
++OUTER_RUNTIME_COMMIT = 'fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3'
+ 
+ 
+ class _MissingTargetCarrier(AssertionError):
+@@ -69,8 +69,6 @@
+ 
+ 
+ @pytest.mark.integration
+-@pytest.mark.xfail(strict=True, raises=_MissingTargetCarrier,
+-    reason='WC5 requires admitted_target plus script custody without fictitious continuation children')
+ def test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority(tmp_path, real_runtime, capsys):
+     root = Path(__file__).resolve().parents[3]
+     lock = json.loads((root / 'runtime.lock.json').read_text())
+@@ -78,7 +76,9 @@
+     assert lock['producer_version'] == 'sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0'
+     assert contract_metadata.CONTRACT_VERSION == '0.2.14'
+     assert contract_metadata.SCHEMA_DIGEST == 'sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59'
+-    daemon = real_runtime(commit=SPEECH_RUNTIME_COMMIT)
++    # The current ordinary014-compatible Runtime admits the publication-only
++    # producer carrier; the earlier ad97 probe was before that fix.
++    daemon = real_runtime(commit=OUTER_RUNTIME_COMMIT)
+     host = GenericPackHost(
+         pack_roots=[root / 'astrid/packs/video_editing'],
+         client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+
+exec
+/bin/bash -lc "set -o pipefail
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check --no-cache tests/packs/video_editing/test_outer_voiceover_native.py
+git diff --check
+git status --short
+git diff -- tests/packs/video_editing/test_outer_voiceover_native.py
+printf '\\n--- exact source/tree guards ---\\n'
+git -C /home/user/work/wt/rt-pin-fcf4c3d5 rev-parse HEAD HEAD"'^{tree}
+printf '"'\\n--- required artifacts ---\\n'
+for p in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-outer-admission-current-fcf.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg.txt; do test -s \""'$p" && echo "ok $p" || { echo "missing/empty $p"; exit 1; }; done' in /home/user/work/wt/agt-m2-outer-admission-current-runtime-retry
+ succeeded in 578ms:
+All checks passed!
+ M tests/packs/video_editing/test_outer_voiceover_native.py
+diff --git a/tests/packs/video_editing/test_outer_voiceover_native.py b/tests/packs/video_editing/test_outer_voiceover_native.py
+index d5119405..cb40a1b7 100644
+--- a/tests/packs/video_editing/test_outer_voiceover_native.py
++++ b/tests/packs/video_editing/test_outer_voiceover_native.py
+@@ -23,9 +23,9 @@ from astrid.sdk.workspace_client import WorkspaceClient
+ from astrid_runtime_client import contract_metadata
+ from astrid_runtime_client.generated import ApiError
+ from tests.packs.video_editing.test_draft_voiceover import fixture, synthesis
+-from tests.packs.video_editing.test_runtime_publication_chain import SPEECH_RUNTIME_COMMIT
+ 
+ OUTER = 'video_editing.sync_draft_voiceover'
++OUTER_RUNTIME_COMMIT = 'fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3'
+ 
+ 
+ class _MissingTargetCarrier(AssertionError):
+@@ -69,8 +69,6 @@ def test_outer_fixture_provenance_can_be_captured_without_a_snapshot_writer():
+ 
+ 
+ @pytest.mark.integration
+-@pytest.mark.xfail(strict=True, raises=_MissingTargetCarrier,
+-    reason='WC5 requires admitted_target plus script custody without fictitious continuation children')
+ def test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority(tmp_path, real_runtime, capsys):
+     root = Path(__file__).resolve().parents[3]
+     lock = json.loads((root / 'runtime.lock.json').read_text())
+@@ -78,7 +76,9 @@ def test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority(t
+     assert lock['producer_version'] == 'sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0'
+     assert contract_metadata.CONTRACT_VERSION == '0.2.14'
+     assert contract_metadata.SCHEMA_DIGEST == 'sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59'
+-    daemon = real_runtime(commit=SPEECH_RUNTIME_COMMIT)
++    # The current ordinary014-compatible Runtime admits the publication-only
++    # producer carrier; the earlier ad97 probe was before that fix.
++    daemon = real_runtime(commit=OUTER_RUNTIME_COMMIT)
+     host = GenericPackHost(
+         pack_roots=[root / 'astrid/packs/video_editing'],
+         client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+
+--- exact source/tree guards ---
+fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3
+69abf4e2a8340d7d39a955d71d08afbf3a311a35
+
+--- required artifacts ---
+ok /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-outer-admission-current-fcf.md
+ok /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/report.md
+ok /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg
+ok /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/commit-msg.txt
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-outer-admission-current-runtime-retry/DONE && echo DONE' in /home/user/work/wt/agt-m2-outer-admission-current-runtime-retry
+ succeeded in 0ms:
+DONE
+
+codex
+Implemented and completed.
+
+- Updated outer admission test to use Runtime `fcf4c3d5…`; removed only obsolete strict xfail.
+- Added exact guarded central suite selecting one node.
+- Preserved `a0 / f021 / 6ba`, admitted target, script manifest, capability, worker 401, and history/head assertions.
+- Central result: **1 passed in 13.77s**.
+- Ruff and `git diff --check`: passed.
+- Local socket run was sandbox-blocked; central socket-capable run passed.
+- Wrote design/report/commit metadata and `DONE`.
+
+[Design report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-outer-admission-current-fcf.md)
+tokens used
+151,374
+Implemented and completed.
+
+- Updated outer admission test to use Runtime `fcf4c3d5…`; removed only obsolete strict xfail.
+- Added exact guarded central suite selecting one node.
+- Preserved `a0 / f021 / 6ba`, admitted target, script manifest, capability, worker 401, and history/head assertions.
+- Central result: **1 passed in 13.77s**.
+- Ruff and `git diff --check`: passed.
+- Local socket run was sandbox-blocked; central socket-capable run passed.
+- Wrote design/report/commit metadata and `DONE`.
+
+[Design report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-outer-admission-current-fcf.md)

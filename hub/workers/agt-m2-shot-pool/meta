@@ -1,0 +1,9 @@
+name=agt-m2-shot-pool
+repo=agent
+base=tl/agt-m2-auto-placement-step2
+base_sha=d1277160
+model=claude-sonnet-5-5
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-m2-shot-pool
+started=2026-10-20T07:49:17Z
